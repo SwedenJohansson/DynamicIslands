@@ -12,6 +12,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next (not released yet)
 
 - **A bear den's hill can be kept small** (island makers): `cave.dome=<m>` on a cave piece keeps its rounded hill within that many metres of the den, as tall but steeper. Without it every den is as before.
+- **The Last Green World: dens kept small and ways out on six islands.** The bear dens on Ranger Landing, Riverfork Delta and The Rootcore keep their hills small (`cave.dome`), so paths and camps beside them stay walkable. Riverfork Delta's sign stands on grass on a gentle bank. Hollowtrunk Grove's bee box sits on the big tree's roots instead of in the sand. The Rootcore's deep tunnel now opens on the hill's west face with a small landing, so you can walk in and back out. Tracker's Rise, Ranger Landing and Rootweave Caves got small reach fixes.
 
 ## 3.4 alpha - 2026-11-10: Player fixes, new quest steps and islanders
 

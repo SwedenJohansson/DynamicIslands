@@ -729,10 +729,14 @@ namespace DynamicIslands
 			// traps, 11-09. A gated one (if./else./on.use) stays as the play left it)
 			{
 				int cut = 0;
+				// (every vine carries the machete check by default (ObjectProps.Defaults) - only a use line other than that
+				// default gates it; the default ones were all skipped, and the grid saw the cut's vines as walls, 11-10)
+				Dictionary<string, string> vdef = ObjectProps.Defaults(ContentCatalog.MacheteVines, false);
 				foreach (IslandObjectRef ir in e.Root.GetComponentsInChildren<IslandObjectRef>(false))
 				{
 					if (ir.ObjectName != ContentCatalog.MacheteVines) continue;
-					if (ir.Props.Keys.Any(k => k.StartsWith("if.") || k.StartsWith("else.") || k.StartsWith("on.") || k.StartsWith("beh."))) continue;
+					if (ir.Props.Any(kv => (kv.Key.StartsWith("if.") || kv.Key.StartsWith("else.") || kv.Key.StartsWith("on.") || kv.Key.StartsWith("beh."))
+						&& !(vdef.ContainsKey(kv.Key) && vdef[kv.Key] == kv.Value))) continue;
 					ir.gameObject.SetActive(false);
 					cut++;
 				}

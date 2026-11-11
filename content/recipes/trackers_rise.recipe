@@ -52,6 +52,8 @@ pop
 push at -9 -14 h=6
 call zipdeck y=2.6
 pop
+# (11-10 w02, REACH: the zip deck ladder's foot hung 1.2 m over the ground - a hand could not reach it; a step of ground under it)
+brush flatten at -10.7 -12.3 r=2 s=20 frames=120 h=7.3
 place ZiplinePath_Landmark towerzip at -2.53 -14.22 h=10.07
 zipto towerzip 2 -40
 clear at -6 -17 r=2.5
@@ -111,6 +113,11 @@ prop llamas creature.count=2
 clear from -32 60 to 12 64 r=15
 brush raise from -32 60 to 12 64 r=13 s=20 frames=12
 call ni8cave x=-10 z=60 h=3.2 yaw=180 al=ridgecave
+# (11-10 w02: its dome reached 40-60 m and buried the cache cut; cave.dome caps it)
+prop ridgecave cave.dome=18
+# (11-10 w02 k9 REACH: the capped dome's foot left a 2x2 m pocket at -21.6 40.5, 1.5 m down with no way out - filled)
+brush flatten at -21.6 40.5 r=2.2 s=20 frames=150 h=4.8
+brush smooth at -21.6 40.5 r=3.5 s=10 frames=12
 place Loot_ChestSmall dcavechest at -7.5 55 h=3.65 sit yaw=200
 prop dcavechest obj.name=dcavechest
 prop dcavechest beh.hidden=1

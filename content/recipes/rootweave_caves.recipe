@@ -341,7 +341,8 @@ clear from 9.5 24 to 9.2 17.5 r=2.6 all only=^Pickup_Landmark_(Mushroom|DirtPick
 place Note_Sign rwwarn at 9.3 25.8 h=14.5 sit drop yaw=18
 note rwwarn DANGER - THORN PIT | The floor past this sign dropped into a pit of root thorns. Walk the planks along the wall on your left, not the rubble.\n- Verdance survey team
 place SmallBoulder3 - at 8.2 22.4 h=12.6 sit scale=0.3 yaw=10
-place SmallBoulder3 - at 8.9 20.6 h=12.55 sit scale=0.35 yaw=130
+# (11-10 w02 CC: it lay on the branch's middle line - "cave gaps look" blocked; to the side)
+place SmallBoulder3 - at 7.7 20.6 h=12.55 sit scale=0.35 yaw=130
 place SmallBoulder3 - at 8.0 18.9 h=12.6 sit scale=0.3 yaw=250
 place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 8.55 21.7 h=13.1 sit scale=0.25 yaw=95
 place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 8.35 19.6 h=13.1 sit scale=0.25 yaw=80

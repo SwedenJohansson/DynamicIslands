@@ -33,6 +33,9 @@ for i 0 5 1
 brush flatten at {-15+1.5*$i} {29.3+0.45*$i} r=1.5 s=20 frames=200 h={-1+0.45*$i}
 next
 brush smooth from -15.5 29.2 to -7 31.7 r=2 s=10 frames=12
+# (11-10 w02, REACH: the north arm's bed at -6 27 rose 0.8 m in one step to the bank - wade in, no way out: a step between)
+brush flatten at -6.3 27.3 r=1.3 s=20 frames=200 h=-0.8
+brush flatten at -7.1 27.3 r=1.3 s=20 frames=200 h=-0.4
 brush sand from -22 30 to -22 -80 r=6 s=6 frames=30
 brush sand from 22 30 to 22 -80 r=6 s=6 frames=30
 brush sand from -22 30 to 22 30 r=6 s=6 frames=30
@@ -90,7 +93,8 @@ call hut w=3 d=2 y=0.1
 place Loot_Chest pressshed at 3.6 2.3 y=0.1 sit yaw=180
 place "Box Small" - at 0.8 2.3 y=0.1 sit
 # (REACH 11-09: on the box in the corner no spot could read it - on the floor by the box now)
-place Note_Paper rangerlog4 at 1.8 1.6 y=0.6 drop yaw=10
+# (11-10 w02: by the box no spot inside the shed was reached either - on the floor just inside the door now)
+place Note_Paper rangerlog4 at 1.1 0.9 y=0.6 drop yaw=10
 pop
 
 # --- REDO 10-24: three fuel cans from three river arms for the press; the machete taught three times ----------------
@@ -138,6 +142,12 @@ scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=64 seed=11188 free=2
 
 # --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): three ranger relays (fork sign, drawbridge, blighted vines), the timber-port crane on the east bluff (climb), the sunk barge (dive), the gorge hill, the otter den
 # the fork sign (RAFT_QUEST_MECHANICS M2): the three relays named where the river splits
+# (11-10 w02 r4, REACH: the bank under the sign rose 4 m in 2 m from the north arm (z 26 -> 24), and the only way up,
+#     at x=8, ran onto the capped den dome's foot - a ramp up the bank, west of it, from the river's edge)
+for k 0 5 1
+brush flatten at {6.5-1.2*$k} {27.6-0.6*$k} r=1.8 s=20 frames=150 h={1.2+0.85*$k}
+next
+brush smooth from 6.5 27.6 to 0.5 24.6 r=2.5 s=10 frames=12
 place Note_Sign forksign at 4 24 ground sit yaw=200
 # Relay Mouth by the landing (its fuse went down with the barge), Relay East over the drawbridge, Relay North behind
 # the blighted vines upriver. All three on -> the outpost's map screen shows the route code (M1 + M2 + M3)
@@ -186,6 +196,8 @@ loot dllook Rope*2;Scrap*2;Leather*1
 prop dllook loot.refill=0
 call vd_spot x=-48 z=41.5 al=dllookz id=dl_lookout r=3 msg="From the gorge hill the three arms shine like a hand laid on the jungle."
 call ni8cave x=-59 z=10 h=2 yaw=180 al=dlottercave
+# (11-10 w02: its den's dome reached 40-63 m - over the west arm, the ferry cut and the fork sign's bank: cave.dome caps it)
+prop dlottercave cave.dome=20
 place Loot_ChestSmall dlottercavebox at -56.5 5 h=2.45 sit yaw=200
 place Placeable_Lantern_Metal - at -61.6 6 h=2.45 sit
 note dlottercavebox Otter den stash | The river people kept their spare net and a jar of something strong here.
@@ -368,6 +380,9 @@ clear from 1.5 -18.5 to 5.5 -24.5 r=2.5 body
 # (11-08 b, box run: from 116 the mouth lay 11.1 m down and the den only 1 m over the sea - wet; now from 111, longer)
 # No rats: the den is reached only under water and gets no NavMesh floor.
 call kit_st x=111 z=30 yaw=270 len=63 slope=12 end=room size=0.7 hill=1 dirt=0 mush=2 stone=2 vines=1 as=rdcave
+# (11-10 w02: its den's dome buried the press shed 43 m off; cave.dome caps it - b: at 20 the capped dome cut the den
+#     room off its tunnel and stood a sheer face on the fork sign's path; 32 keeps the room and a walkable foot)
+prop rdcave cave.dome=32
 # (the hill over the tunnel and den raises the ground round any plants there: cleared)
 clear from 62 30 to 100 30 r=7 all body only=Tree|Palm|Mango|Bush|Rock|Pineapple|Flower
 clear at 40 30 r=10 all body only=Tree|Palm|Mango|Bush|Pineapple|Flower below=12

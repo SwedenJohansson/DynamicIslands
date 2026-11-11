@@ -9,7 +9,7 @@
 #
 # Built by the recipe player (CIRecipe the_rootcore) through the editor's own operations. Points (metres over the
 # sea): the hill round 0 -12, the cave mouth 0 10 (the cave runs south into the hill, to z -24), the meadow round 0 24,
-# Oda's camp 22 20, the landing beach 0 46.
+# Oda's camp 23 38, the landing beach 0 46.
 include lib_sea
 include lib_features
 include lib_gravity
@@ -31,10 +31,13 @@ brush rock at 0 -12 r=20 s=10 frames=40
 brush flatten at 0 26 r=12 s=20 frames=200 h=1.6
 brush grass at 0 26 r=12 s=6 frames=30
 brush flatten at 22 20 r=6 s=20 frames=150 h=1.8
+# (11-10 w02: the dome's hill comes down over 22 20 - Oda's camp moved 18 m north, onto the camp's path to the low land)
+brush flatten at 23 38 r=5 s=20 frames=150 h=2.1
 brush flatten at 0 46 r=7 s=20 frames=120 h=1.2
 brush sand at 0 46 r=9 s=10 frames=30
 clear at 0 26 r=10
 clear at 22 20 r=5
+clear at 23 38 r=4.5
 clear at 0 46 r=6
 # (agent Q 10-30, REACH: since the RESIZE the meadow, the landing beach and Oda's camp lay as pits in the bigger island,
 # ringed by sheer banks - whoever walked down into them found no way back up and out to the sea: gentle paths out of
@@ -60,6 +63,10 @@ brush flatten from 0 0 to 0 10 r=9 s=20 frames=30
 clear from 0 6 to 0 -34 r=8
 brush sand from 0 2 to 0 -34 r=7 s=10 frames=40
 place BalboaCave_Bear domecave at 1.2 -18.4 y=5.2 scale=1.15
+# (11-10 w02: a cave.dome cap of 30 left the dome too steep to climb to its mouth; uncapped, its skin (26.4 m high,
+#     reach 54 m to the side, 82 m back) lay 2.5 m over the deep cave's mouth and buried Jonas's camp - capped at 41,
+#     the side reach the deep cave's walk-out and the ramp were made for; Oda's camp and the overgrown chest stay moved)
+prop domecave cave.dome=41
 place Zone_Trigger mouthzone at 0 3 y=1.5
 place Zone_Trigger domezone at 1 -8 y=1.5
 place Zone_Trigger oldrootzone at 1 -22 y=1.5
@@ -74,20 +81,23 @@ pop
 #     a sheer face at its reach edge, and nobody got up to the mouth. The ramp now starts further west (x=-56) and runs
 #     0.5-0.9 m over the skin all the way (skin along z=41: 18.7 at x=-33, 22.3 at -25, 25.1 at -16), then drops to the
 #     mouth's ledge at 24.6 inside the way in; about 1:2.2)
-for i 0 24 1
-brush flatten at {-56+$i*1.5} 19 r=5 s=20 frames=25 h={9+$i*0.7}
+# (11-10 w02 b: the ramp's foot rose 3 m in 4 m from the sand at x=-60 (6 m) - a walker stuck there: the ramp now
+#     starts at x=-67 on the sand at 6.2 m; the dome grew 2.8 m taller (26.4 m) - the top runs 2 m higher, at 28)
+#     (s4: the beach under its foot lay at 2.5 m, not 6 - the foot at x=-70 now starts from 3 m)
+for i 0 34 1
+brush flatten at {-70+$i*1.5} 19 r=5 s=20 frames=25 h={3+$i*0.735}
 next
 for i 0 5 1
-brush flatten at {-18.5+$i*1.5} 19 r=5 s=20 frames=25 h=26
+brush flatten at {-18.5+$i*1.5} 19 r=5 s=20 frames=25 h=28
 next
-brush flatten at -9.5 19 r=4.5 s=20 frames=25 h=25.5
-brush flatten at -7.5 19 r=4.5 s=20 frames=25 h=25.1
-brush flatten at -5.5 19 r=4.5 s=20 frames=25 h=24.8
+brush flatten at -9.5 19 r=4.5 s=20 frames=25 h=27
+brush flatten at -7.5 19 r=4.5 s=20 frames=25 h=26
+brush flatten at -5.5 19 r=4.5 s=20 frames=25 h=25.2
 brush flatten at -4 19 r=4.5 s=20 frames=25 h=24.6
-brush smooth from -56 19 to -4 19 r=3.5 s=10 frames=12
-brush smooth from -60 19 to -52 19 r=4.5 s=10 frames=20
-brush grass from -56 19 to -4 19 r=4 s=6 frames=20
-clear from -56 19 to -4 19 r=5
+brush smooth from -70 19 to -4 19 r=3.5 s=10 frames=12
+brush smooth from -76 19 to -62 19 r=4.5 s=10 frames=20
+brush grass from -70 19 to -4 19 r=4 s=6 frames=20
+clear from -70 19 to -4 19 r=5
 # (11-09 w02, REACH: the deep cave's walk-out west stuck on the skin's reach edge at x=-33.5, z=27-30 - ground there
 #     1-1.5 m under it; a ramp of ground up to the skin's edge)
 brush flatten at -34.3 6 r=2.2 s=20 frames=150 h=16.3
@@ -99,15 +109,15 @@ zipto domezip 26 42
 
 # --- The meadow: the expedition sign; Oda's camp to the east with her farewell -----------------------------------
 place Note_Sign expedition at 0 31 ground sit yaw=180
-place campfire_1 - at 20 18 ground sit
-place Crate_Big_01 - at 24 21 ground sit yaw=30
-place Note_Sign farewell at 21 22.5 ground sit yaw=200
-place Zone_Trigger odacamp at 22 20 ground
+place campfire_1 - at 21 36 ground sit
+place Crate_Big_01 - at 25 39 ground sit yaw=30
+place Note_Sign farewell at 22 40.5 ground sit yaw=200
+place Zone_Trigger odacamp at 23 38 ground
 # REDO 10-24 (optional): Oda's own locker at her camp - the ranger key from Ranger Landing opens it
-place "Box Big" rangerlock at 20 23.5 ground sit yaw=200
+place "Box Big" rangerlock at 21 41.5 ground sit yaw=200
 beside Loot_ChestSmall rangercache rangerlock d=0.3
 # STORY 10-24: Burr the goat (Tracker's Rise, Rootweave) waits at Oda's camp, bell and all
-place Creature_Goat burrcamp at 24 18 ground
+place Creature_Goat burrcamp at 25 36 ground
 prop burrcamp creature.count=1
 prop burrcamp creature.respawn=0
 
@@ -121,16 +131,22 @@ prop treasure11054 treasure.loot=TitaniumOre*3
 call shallows x=0 z=-22 r=120 deep=5 n=2 seed=11116
 pop
 
+
 # --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; Van_1 + chest; vine-hidden chest; buried treasure; viewpoint ---
+# (11-10 w02 b, REACH: the camp lay on a slope 2.7 m under its own edge, Jonas's note on the box out of reach - levelled,
+#     the note on the ground by the fire)
+brush flatten at 1 -38 r=5 s=20 frames=150
+brush smooth at 1 -38 r=7 s=10 frames=12
 place campfire_1 - at 0.7 -39 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 3.7 -37 ground sit yaw=347
 place "Box Small" - at -1.3 -36.5 ground sit
-place Note_Paper dnote at -1.3 -36.5 ground y=1.6 drop yaw=20
+place Note_Paper dnote at 1.4 -37.2 ground y=0.3 drop yaw=20
 note dnote Jonas's last pot | JONAS - THE LOWER CAMP\n\nI followed Teodor down here with a pot of soup, because that is what I am for. He would not eat it. He said the dome was his to finish and the soup was mine to finish, and he was right about one of those.\n\nThe brood are only boar with the green on them. Fire scares them. Shouting does not; I tried.\n\nI hid the good chest behind the vines by the wreck - cut them if you need it more than I do. If you see Oda, tell her I kept the bees alive. If you see Marit, tell her nothing; she will only climb something.\n\nThe pot is still warm. Take it with you into the dome. Nobody should face that place hungry.\n\n- Jonas
-place Van_1 dvan at 34 29.5 ground yaw=107
+# (11-10 w02 k9: at 35 it leant on the dome's foot, half in it - 2 m out onto the sand)
+place Van_1 dvan at 37 48.5 ground yaw=107
 prop dvan tint.color=#5a4a32
 prop dvan tint.amount=0.5
-place Loot_ChestSmall dwreckchest at 30 32.5 ground sit yaw=47
+place Loot_ChestSmall dwreckchest at 30.5 51.5 ground sit yaw=47
 note dwreckchest Overgrown chest | A chest the green has half swallowed: rope, nails, and a warm shard of green wood the brood dragged off.
 # (box agent 10-25: a spare machete here - the vines need one, and a fresh world or a lost one from the delta left the island stuck)
 loot dwreckchest Rope*3;Nail*8;Stone*3;story:shard*1;Machete*1
@@ -206,6 +222,7 @@ prop rchens creature.count=3
 #     floor walks past it and both ways out miss it). Floors are planned (room 1.5 m over the sea); the Raft run checks
 #     them in the [CITEST] dig log (rows RC4).
 clear at -29 27 r=3
+clear at -34.5 27.3 r=3
 # (11-08 w02: the shaft first rose to a landing on the hillside - it came up in a 1 m pit wedged between the cliff and
 # the dome's hill, a bare dig slab round it, no way on; now it rises inside, into the descent's long leg)
 # the core room first: a fixed depth (floor = ground 14.38 - 12.88 = 1.5 m)
@@ -214,7 +231,11 @@ dig -21.5,-12.88,3 -21.5,13.8 r=3.0 slope=0 as=rootdeep
 dig -21.5,12 -16.6,14 r=1.8 slope=0 as=rootdeep
 dig -21.5,5.5 -27,3.5 r=1.8 slope=0 as=rootdeep
 # the descent: in at the mouth along the hill, a turn down beside the dome, a hairpin back into the room's near end
-dig -29,27 -14.5,26 r=1.9 slope=-20 as=rootdeep
+# (11-10 w02 s5-s7: from x=-29 the mouth lay 3 m inside the hill's hump - the tunnel's rim keeps the ground it was dug
+#     in (19.5 m at x=-32), so no brush could open it and nobody walked in or out. Started on the face itself (x=-33.6)
+#     the tunnel's ring stood as a lip over the ground; from x=-36.5 the stroke ran 2 m deeper and the shaft's ladder lost
+#     its top. Now it starts 1.4 m out from the face at x=-35, 12 degrees: a short cut into the gully, walked in and out)
+dig -35,27.3 -14.5,26 r=1.9 slope=-12 as=rootdeep
 dig -15.6,26 -14,12 -14,-3 -20.5,2.5 r=1.9 slope=-15 as=rootdeep
 # the shaft straight up from the foot into the long leg (its floor there 8.8 in plays; the shaft's top 9.3, ground 29.3)
 dig -16.6,14 -16.6,-20,14 shaft r=1.4 as=rootdeep
@@ -470,4 +491,7 @@ clear at -21.9 14 r=1.5 only=Palm
 # (box agent 10-25: names for the guide pictures' snap points)
 prop rcmast obj.name=rcmast
 prop rcwreck obj.name=rcwreck
+# (11-10 w02, REACH: a 6x2 m dip in the north beach at -11.8 97.5 - in, no way out: smoothed, its rocks cleared)
+brush smooth at -10 98 r=4 s=10 frames=30
+clear at -9 98.2 r=2.5
 save The Rootcore
