@@ -1,0 +1,39 @@
+# Pilot Rouhi and the pilots' shed on Lodestone Quay (CIPlay lodestone_quay_talk, 11-11 w06; in a test world 'CI ...').
+# Points as in the recipe: Rouhi fishing off the quay's edge at -3 -76; the pilots' shed from -12 to -18 and -70 to -76
+# (push yaw 180), its door (lqsheddoor) at -14.25 -70 facing inland, the hidden chest at -16.5 -74.5. The door is barred
+# before anyone talked to her; her three answers (journal, the orchard, four stones); then the door opens on the chest.
+island Lodestone Quay keep
+offset 0 0
+hour 11
+weather Calm
+expect hidden lqshedchest
+
+# The shed door: barred before anyone talked to Rouhi
+at -14.25 -67.5 h=1.6
+use lqsheddoor stay
+expect message shed is barred
+expect shown lqsheddoor
+expect hidden lqshedchest
+
+# Pilot Rouhi on the quay's edge
+snap lq_islander Pilot Rouhi 0 3.5 0.6
+use Pilot Rouhi
+expect step 0
+use Pilot Rouhi pick 1
+expect message lodestone under the sea
+use Pilot Rouhi pick 2
+expect message trees that grow upward
+use Pilot Rouhi pick 3
+expect message four stones
+expect item Stone 4
+
+# Now the shed opens on the chest
+at -14.25 -67.5 h=1.6
+use lqsheddoor stay
+expect message pilots' shed
+expect hidden lqsheddoor
+expect shown lqshedchest
+open Pilots' shed chest
+wait 2
+expect item Rope 2
+picture lq_shed -14.25 4 -66 -15 2 -73

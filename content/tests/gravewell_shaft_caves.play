@@ -1,0 +1,21 @@
+# Gravewell Shaft's trial bore (CIPlay gravewell_shaft_caves, 11-11 w06; in a test world 'CI ...'). Points as in the
+# recipe (45 m down): the mouth in the rim's floor at -7.5 -13, the drift down round the pit at 25 degrees to the bore's
+# chamber at -14.1 -5.13 .. -18.8 -6.84 (air zone gw_trialbore), the ladder shaft from -16.5 -6 straight up to the
+# rim's floor. Heights are guesses: rim floor ~10, chamber ~3.
+island Gravewell Shaft keep
+offset 0 0
+hour 11
+weather Calm
+
+picture gw_bore_out -4 12 -17 -7.5 9 -13
+walk -5.5 -15.5 to -7.5 -13 to -9.5 -11.3 to -11.49 -9.64 to -12.8 -7.4 to -14.1 -5.13 to -16.5 -6 below=-2
+air gw_trialbore here
+picture gw_bore_in -12 5 -8 -18.8 3 -6.8 light=20
+picture gw_bore_ladder -18.5 4 -6 -15.3 6 -6 light=20
+air gw_trialbore
+# Up the ladder shaft to the rim's floor
+at -15.3 -6 h=4
+wait 1
+use gwboreladder
+wait 3
+picture gw_shaft_top -12 13 -6 -16.5 9 -6

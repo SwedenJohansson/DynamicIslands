@@ -1,0 +1,17 @@
+# The Array Root's coolant store with a work suit (CIPlay array_root_acidsuit, 11-11 w06; in a test world 'CI ...').
+# The suit box by the door (arcoolsuits, -20.8 -29.6) gives 180 s of suit; across the spill to the locker and back
+# out, unhurt, with the acid still there.
+island The Array Root keep
+offset 0 0
+hour 11
+weather Calm
+at -21.2 -30.6 h=4.5
+use arcoolsuits
+expect shown arcool
+walk -21.2 -30.6 to -22.75 -30 to -22.75 -27 to -22 -25 to -20.8 -23.6
+wait 6
+expect unhurt
+open Coolant store locker
+wait 2
+walk -20.8 -23.6 to -22 -25 to -22.75 -27 to -22.75 -30
+expect unhurt

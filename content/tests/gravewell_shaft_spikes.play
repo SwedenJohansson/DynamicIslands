@@ -1,0 +1,21 @@
+# Gravewell Shaft's staked side pit (CIPlay gravewell_shaft_spikes, 11-11 w06; in a test world 'CI ...'). Points as in
+# the recipe: the side pit off the bore's chamber from -15.6 -6.6 down to -17.6 -12.2, stakes at -17.4 -11.8 and
+# -16.9 -10.4, the hazard zone gw_spikepit at -17.2 -11.3 (r 1.6, safe=none), the warning sign by the chamber. Into the
+# pit: hurt and the message; back up to the chamber: no more harm. Heights are guesses (pit floor ~1).
+island Gravewell Shaft keep
+offset 0 0
+hour 11
+weather Calm
+expect shown gwspikes
+
+at -16.5 -6 h=3.5
+wait 2
+read STAKES - KEEP OUT
+at -17.2 -11.3 h=1.8
+wait 3
+expect message staked this pit
+expect hurt 4
+picture gw_spikes -16 3 -8 -17.4 1 -11.8 light=20
+at -16.5 -6 h=3.5
+wait 3
+expect unhurt

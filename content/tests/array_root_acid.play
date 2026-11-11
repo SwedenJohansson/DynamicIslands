@@ -1,0 +1,31 @@
+# The Array Root's coolant store (CIPlay array_root_acid, 11-11 w06; in a test world 'CI ...'). Points as in the recipe
+# (35 m down, the seabed at 4): the store shed from -25 -28 to -19 -22, its open door at -23.5..-22 on the -28 side,
+# the acid zone ar_coolant at -22 -25 (r 2.6, safe=suit), the drain valve on the west wall at -25.9 -25, the locker at
+# -20.2 -23. Into the spill: hurt; out again; turn the valve: the acid gone; in to the locker unhurt.
+island The Array Root keep
+offset 0 0
+hour 11
+weather Calm
+
+picture ar_store_out -22.7 7 -36 -22 5 -26
+expect shown arcool
+at -22.75 -30 h=4.5
+walk -22.75 -30 to -22.75 -27 to -22 -25
+wait 5
+expect message acid coolant
+expect hurt 15
+picture ar_store_in -22.75 6 -27.5 -20.5 4.5 -23 light=20
+walk -22 -25 to -22.75 -27 to -22.75 -30
+expect hurt 1
+
+walk -22.75 -30 to -26.8 -29.5 to -26.8 -25
+use ardrain
+wait 2
+expect hidden arcool
+walk -26.8 -25 to -26.8 -29.5 to -22.75 -30 to -22.75 -27 to -22 -25 to -20.8 -23.6
+wait 5
+expect unhurt
+open Coolant store locker
+wait 2
+expect item Battery 2
+picture ar_store_dry -22.75 6 -27.5 -20.5 4.5 -23 light=20

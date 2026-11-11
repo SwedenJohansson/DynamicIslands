@@ -29,6 +29,7 @@ include lib_highwater
 # 15 -> 18 steps: the Iron Ridge, its survey note and Needle Knoll's top before the zipline. The keel zone moved out
 # past the new south coast (0 -76).
 include lib_lastpost
+include lib_caves
 # o4_dune: a dune or low hill along x1 z1 - x2 z2, h m over the sea at its crest: three rings of flatten (the outer one
 # no lower than the plain it stands on), lightly smoothed into one slope, painted by slope, the generator's plants cleared
 macro o4_dune x1=0 z1=0 x2=10 z2=0 h=8 r=4
@@ -273,5 +274,23 @@ quest reward=Battery*2;CopperIngot*2
 # Buried treasure (the story line's middle): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
 call treasure x=0 z=0 r=14 n=1 seed=8830
 prop treasure8830 treasure.loot=TitaniumOre*3
+
+# --- 11-11 (w06): the bob-cutters' cut - optional (plan 06 row: ST through the rock base; dirt 2, mushrooms 2). No
+# quest step needs it. The iron for the pendulum's bob was cut out of Bob Hill's foot: the cutters drove a short
+# straight cut along the hill's south foot, below the trail's turns, open at both ends, and left their wedges in it.
+# From the mouth at -44.5 -23.4 west to -60.4 -26.9 (both ends open, 3 m out from the hill's foot, away from the walks); a cave-tool cut (kit_st,
+# end=open) with its own rock over it, set along the foot's edge, not into the hill (pieces in the generator's rock stay
+# buried, lesson 108). No rats. cavecheck: 6 m and more from the bob-foot, the dune and the walks.
+origin
+clear at -44.5 -23.4 r=4 only=(?i)boulder|rock|tree|bush|bamboo
+clear at -60.4 -26.9 r=4 only=(?i)boulder|rock|tree|bush|bamboo
+call kit_st x=-44.5 z=-23.4 yaw=257.6 len=16.3 slope=0 end=open size=0.7 hill=1 dirt=2 mush=2 stone=0 vines=0 titanium=0 as=pibob
+prop pibob cave.rock=plain
+# cavecheck inside pibobbox
+place Loot_ChestSmall pibobbox at -52.4 -25.2 h=5.5 drop yaw=78
+prop pibobbox obj.name=pibobbox
+prop pibobbox loot.refill=0
+note pibobbox Bob-cutters' box | The cutters' box, left in the cut when the bob was hoisted: wedges, a worn hammer head, and the offcuts of the lodestone iron. Scratched inside the lid: 412 KG - SHE SWINGS.
+loot pibobbox MetalOre*2;Bolt*2;Nail*6;Rope*1
 
 save Pendulum Isle

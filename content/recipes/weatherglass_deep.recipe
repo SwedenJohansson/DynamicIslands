@@ -12,6 +12,7 @@ include lib_gravity
 include lib_areas
 include lib_features
 include lib_highwater
+include lib_caves
 # RESIZE 10-25 (box agent, older-storyline deep pass): Radius 24 -> 58, a side island of Raft's own size class; the
 # drowned station stays in the middle.
 # DEEP 10-25: the north keeper's drowned house in the north-west (an air pocket, his last note); a reef rock with a cave
@@ -119,5 +120,26 @@ step open|Drowned chest|1|Open the drowned chest
 step read|Twin's answer|1|Read the twin's answer
 quest done=Both weather stations are read. The glass on the shoal still says: falling toward the dark water.
 quest reward=TitaniumIngot*1;MetalIngot*2;Cooked_Mackerel*2
+
+# --- 11-11 (w06): the glass room - optional (plan 06 row: UW cave from the station's sea floor climbing into a dry
+# glass room; mush 2). No quest step. The keeper ran a sounding pipe from the station out under the rock to a room he
+# called the glass room, where he kept the spare glasses dry. The mouth sits on the sea floor east of the station's
+# flat, the bore climbs at 12 degrees under its own mound, and the room at the top holds a pocket of air and the
+# keeper's spare case. 20 m down: the room stays under the sea, so the air zone keeps a diver breathing there.
+call kit_uw x=19 z=0 yaw=70 len=8 slope=12 size=1 dirt=0 mush=2 stone=0 vines=0 titanium=0 light=0 wet=1 as=wgglass
+prop wgglass cave.rock=plain
+# cavecheck inside wgglassair wgglasscase
+place Zone_Trigger wgglassair at 38.3 7 h=5.5
+prop wgglassair obj.name=wgglassair
+prop wgglassair zone.id=wg_glassroom
+prop wgglassair zone.radius=8
+prop wgglassair zone.air=1
+prop wgglassair zone.repeat=1
+prop wgglassair zone.message=The glass room - the keeper's dry store at the top of the sounding bore. Old air, still good.
+place Loot_ChestSmall wgglasscase at 39.6 7.8 h=4.5 drop yaw=250
+prop wgglasscase obj.name=wgglasscase
+prop wgglasscase loot.refill=0
+note wgglasscase Keeper's spare case | Two spare glasses wrapped in oilcloth, a coil of line and the station compass. A tag: FOR WHEN THE BIG GLASS BREAKS.
+loot wgglasscase Glass*2;Rope*1;Compass*1
 
 save Weatherglass Deep
