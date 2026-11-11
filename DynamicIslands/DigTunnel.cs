@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -506,7 +506,7 @@ namespace DynamicIslands.Editor
 			RimWalls = CaveMountain.DressRimWalls(mr) ?? "";
 			SideRockOnly(mr, 1);
 			GroundTop(mr, land);
-			RimMatch = MatchSkin(mr); // (after SplitTop: it sorts the faces by their own normals)
+			RimMatch = MatchSkin(mr); // (after SplitTop: what it leaves in part 1 is the rim beside the hill's skin)
 		}
 
 		/// <summary>Texture pairs of Raft's top/side rock shader: the top one is drawn on faces turned up.</summary>
@@ -516,11 +516,10 @@ namespace DynamicIslands.Editor
 			// the sand layer over both came out a bright sand patch - the hill's steep faces are its rock layer, runbx12)
 			new[] { "_GrassDiffuse", "_RockDiffuse" }, new[] { "_GrassNormal", "_RockNormal" } };
 
-		/// <summary>The rim walls (part 1) wear the rock's side texture on every face, turned up or not (11-09 w03: a mouth dug
-		/// into a steep face keeps its rim there as rock - SplitTop - but Raft's rock shader drew the up-turned of those faces
-		/// with its sandy patterned top texture, a big patch up the cliff over Stalker's Hollow's south-west mouth; the cliff
-		/// round it is the ground's own steep rock, which the side texture matches). By a property block on that part, so the
-		/// shared material stays as it is.</summary>
+		/// <summary>The rim walls (part 1, since 11-11 only the faces beside a cave hill's skin - SplitTop) wear the rock's side
+		/// texture on every face, turned up or not (11-09 w03: Raft's rock shader drew the up-turned faces with its sandy
+		/// patterned top texture, a big patch up the cliff over Stalker's Hollow's south-west mouth). By a property block on that
+		/// part, so the shared material stays as it is.</summary>
 		public static void SideRockOnly(MeshRenderer mr, int part)
 		{
 			if (mr == null) return;
@@ -557,11 +556,12 @@ namespace DynamicIslands.Editor
 		/// nearby corners', weighted by distance) - the whole way at the rim's outer edge, its own again ~4 m in toward the
 		/// opening - and each face mapped as the skin maps it (CaveMountain's Quad: world metres / 14 from the side it faces most,
 		/// in the skin's own frame). 11-09 w03: with the skin's material, tint and light the dug mouths at Stalker's Hollow and Lumen
-		/// Shelf still sat in a brown patterned patch with a toothed outline in the hill's soft blue-grey rock: Raft's Mountains shader
+		/// Shelf still sat in a brown patterned patch with a toothed outline in the soft blue-grey rock round them (11-11: that rock
+		/// is the ground's own cliff, not the hill's skin - SplitTop now gives those faces the ground's look): Raft's Mountains shader
 		/// blends rock and sand by the normal and lays its texture by the uvs, and the rim's own rounded normals and voxel uvs
 		/// differ from the skin's smooth heightfield normals and planar uvs. Part 1 gets corners of its own (the lining keeps its);
 		/// the rim's own normals are kept in uv channel 3, so a second run (the hill dressing its tunnels again) starts from them.
-		/// Run after SplitTop, which sorts faces by their own normals.
+		/// Run after SplitTop, which leaves in part 1 only the faces beside the hill's skin.
 		/// </summary>
 		public static string MatchSkin(MeshRenderer mr)
 		{
@@ -577,12 +577,15 @@ namespace DynamicIslands.Editor
 				var sv = new List<Vector3>(); var sn = new List<Vector3>(); var su = new List<Vector2>();
 				skin.GetVertices(sv); skin.GetNormals(sn); skin.GetUVs(0, su);
 				if (sv.Count == 0 || sn.Count != sv.Count || su.Count != sv.Count) return "";
+				// (the skin's outside only: CaveMountain.TwoSided adds its faces again turned the other way after them - those
+				// normals face into the hill)
+				int front = skin.name.EndsWith("(both sides)", StringComparison.Ordinal) ? sv.Count / 2 : sv.Count;
 				Vector3 ob = SkinUvOrigin(sv, sn, su, st.position);
 				// (the skin's corners in the world, by 2 m squares over x/z)
-				const float Bin = 2f, Reach = 4f, Full = 0.75f, Fade = 3.5f;
+				const float Bin = 2f, Reach = 8f, Full = 3f, Fade = 4f;
 				var bins = new Dictionary<long, List<int>>();
-				var sw = new Vector3[sv.Count]; var swn = new Vector3[sv.Count];
-				for (int i = 0; i < sv.Count; i++)
+				var sw = new Vector3[front]; var swn = new Vector3[front];
+				for (int i = 0; i < front; i++)
 				{
 					sw[i] = st.TransformPoint(sv[i]); swn[i] = st.TransformDirection(sn[i]).normalized;
 					long key = BinKey(sw[i], Bin);
@@ -590,9 +593,14 @@ namespace DynamicIslands.Editor
 					l.Add(i);
 				}
 				var v = new List<Vector3>(); var n = new List<Vector3>(); var u = new List<Vector2>(); var own = new List<Vector3>();
-				mesh.GetVertices(v); mesh.GetNormals(n); mesh.GetUVs(0, u); mesh.GetUVs(3, own);
+				mesh.GetVertices(v); mesh.GetNormals(n); mesh.GetUVs(0, u);
 				if (n.Count != v.Count || u.Count != v.Count) return "";
-				if (own.Count != v.Count) own = new List<Vector3>(n);
+				// (the rim's own normals, for a second run: kept here, not in a uv channel of the mesh - Raft's rock shaders may
+				// read every channel)
+				List<Vector3> kept;
+				foreach (Mesh gone in rimOwn.Keys.Where(k => k == null).ToList()) rimOwn.Remove(gone);
+				if (rimOwn.TryGetValue(mesh, out kept) && kept.Count == v.Count) own = new List<Vector3>(kept);
+				else { mesh.GetUVs(3, own); if (own.Count != v.Count) own = new List<Vector3>(n); }
 				var parts = new List<int>[mesh.subMeshCount];
 				var elsewhere = new bool[v.Count];
 				for (int p = 0; p < parts.Length; p++)
@@ -602,7 +610,7 @@ namespace DynamicIslands.Editor
 				}
 				List<int> rim = parts[1];
 				var owner = new Dictionary<int, int>();
-				int blended = 0;
+				int blended = 0, full = 0, none = 0;
 				for (int t = 0; t + 2 < rim.Count; t += 3)
 				{
 					// (corners of its own: one mapping per face, as the skin's)
@@ -618,7 +626,8 @@ namespace DynamicIslands.Editor
 					for (int e = 0; e < 3; e++)
 					{
 						int i = rim[t + e];
-						Vector3 w = rt.TransformPoint(v[i]), o = rt.TransformDirection(own[i]).normalized;
+						Vector3 w = rt.TransformPoint(v[i]), o = rt.TransformDirection(own[i]);
+						o = o.sqrMagnitude > 1e-12f ? o.normalized : Vector3.up;
 						wp[e] = w;
 						Vector3 acc = Vector3.zero; float best = float.MaxValue;
 						int bx = Mathf.FloorToInt(w.x / Bin), bz = Mathf.FloorToInt(w.z / Bin), r = Mathf.CeilToInt(Reach / Bin);
@@ -628,8 +637,6 @@ namespace DynamicIslands.Editor
 								List<int> l; if (!bins.TryGetValue(((long)(bx + dx) << 32) ^ (uint)(bz + dz), out l)) continue;
 								foreach (int s in l)
 								{
-									// (the skin's outside only: its back side and walls turned from the rim's face don't count)
-									if (Vector3.Dot(swn[s], o) <= 0f) continue;
 									float d = (sw[s] - w).magnitude;
 									if (d > Reach) continue;
 									best = Mathf.Min(best, d);
@@ -638,7 +645,10 @@ namespace DynamicIslands.Editor
 							}
 						float k = acc.sqrMagnitude > 1e-12f ? Mathf.Clamp01(1f - (best - Full) / Fade) : 0f;
 						Vector3 nn = k > 0f ? Vector3.Slerp(o, acc.normalized, k) : o;
+						if (nn.sqrMagnitude < 1e-12f) nn = o;
 						if (k > 0f) blended++;
+						if (k >= 1f) full++;
+						if (acc.sqrMagnitude <= 1e-12f) none++;
 						n[i] = rt.InverseTransformDirection(nn).normalized;
 						sum += nn;
 					}
@@ -662,15 +672,18 @@ namespace DynamicIslands.Editor
 					}
 				}
 				if (v.Count > 65000) mesh.indexFormat = IndexFormat.UInt32;
-				mesh.SetVertices(v); mesh.SetNormals(n); mesh.SetUVs(0, u); mesh.SetUVs(3, own);
+				mesh.SetVertices(v); mesh.SetNormals(n); mesh.SetUVs(0, u);
+				mesh.uv4 = null; rimOwn[mesh] = own;
 				for (int p = 0; p < parts.Length; p++) mesh.SetTriangles(parts[p], p);
-				string said = "rim walls shaded as the hill's skin: " + blended + " of " + rim.Count + " corners blended";
+				string said = "rim walls shaded as the hill's skin: " + blended + " of " + rim.Count + " corners blended, " + full + " fully, " + none + " with no skin near";
 				if (!toldMatch) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's " + said);
 				toldMatch = true;
 				return said;
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's rim (skin match): " + e.Message); return ""; }
 		}
+
+		static readonly Dictionary<Mesh, List<Vector3>> rimOwn = new Dictionary<Mesh, List<Vector3>>();
 
 		static long BinKey(Vector3 w, float bin) { return ((long)Mathf.FloorToInt(w.x / bin) << 32) ^ (uint)Mathf.FloorToInt(w.z / bin); }
 
@@ -742,8 +755,9 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's rim: " + e.Message); }
 		}
 
-		/// <summary>Moves the rim's faces turned up (part 1) to a third part of their own, with their own corners, and lays
-		/// those corners on the ground's splat map (uv: where they are over the terrain, 0..1). False when there are none.</summary>
+		/// <summary>Moves the rim's faces (part 1) to a third part of their own, with their own corners, and lays those corners
+		/// on the ground's splat map (uv: where they are over the terrain, 0..1), lit as the ground there - all but the faces
+		/// beside a cave hill's skin (NearHillSkin), which keep the hill's rock. False when there are none.</summary>
 		static bool SplitTop(Mesh mesh, Transform at, Terrain land)
 		{
 			var verts = new List<Vector3>();
@@ -759,20 +773,17 @@ namespace DynamicIslands.Editor
 				var side = new List<int>();
 				mesh.GetTriangles(rim, 1);
 				var copy = new Dictionary<int, int>();
+				Func<Vector3, bool> nearSkin = NearHillSkin(at);
 				for (int i = 0; i + 2 < rim.Count; i += 3)
 				{
-					// (by its corners' normals: the way it faces, smooth across the rim as its light is)
-					Vector3 n = at.TransformDirection(norms[rim[i]] + norms[rim[i + 1]] + norms[rim[i + 2]]);
-					// (or lying on the ground, however steep the slope: the rim's skin over a steep slope kept the rock's paler look,
-					// saw-tooth shards along the line where it crosses the ground - Old Mine Islet's shore adit, 11-05)
-					bool up = n.sqrMagnitude >= 1e-12f && n.normalized.y >= TopUp;
-					// (but not on a steep slope: Raft's ground draws that as its own stretched cliff rock - its shader, not the splat
-					// map - which the baked top can't match; each dug mouth in a steep face sat in a patterned sand-rock patch up the
-					// wall, w03 11-09 Lumen/Stalker's. There the rim stays rock, its walls' look, beside the cliff's - every face over
-					// such ground, also one whose smoothed corners face up: those still left a patch over Stalker's south-west mouth)
+					// (every face fills the ground's cut cells in the ground's place - 11-11: by their own normals and slope, the
+					// faces over a steep face stayed rock, Raft's hill rock in a dark brown or tan patterned patch with a toothed
+					// outline round each mouth in Stalker's Hollow's and Lumen Shelf's cliffs - the cliff there is the ground's own,
+					// drawn by its shader from the splat map stretched down the slope, which the baked top, laid on the same map from
+					// above and lit by the ground's normals, matches; the hill's rock never did. Only beside a cave hill's skin the rim
+					// keeps the hill's rock)
 					Vector3 wa = at.TransformPoint(verts[rim[i]]), wb = at.TransformPoint(verts[rim[i + 1]]), wc = at.TransformPoint(verts[rim[i + 2]]);
-					if (OnSteepGround(land, (wa + wb + wc) / 3f)) up = false;
-					else if (!up && FaceOnGround(land, wa, wb, wc)) up = true;
+					bool up = nearSkin == null || !nearSkin((wa + wb + wc) / 3f);
 					if (!up) { side.Add(rim[i]); side.Add(rim[i + 1]); side.Add(rim[i + 2]); continue; }
 					for (int e = 0; e < 3; e++)
 					{
@@ -815,6 +826,46 @@ namespace DynamicIslands.Editor
 			mesh.SetUVs(0, uvs);
 			if (norms.Count == verts.Count) mesh.SetNormals(norms);
 			return tops.Count > 0;
+		}
+
+		/// <summary>How close to a cave hill's skin a rim face stays the hill's rock (SplitTop).</summary>
+		const float NearSkin = 1.5f;
+
+		/// <summary>Whether a point (world) lies within NearSkin of the cave hill's skin round this tunnel (its outside); null
+		/// when there is no hill.</summary>
+		static Func<Vector3, bool> NearHillSkin(Transform at)
+		{
+			CaveMountain hill = at != null ? at.GetComponentInParent<CaveMountain>() : null;
+			MeshRenderer sk = hill != null ? hill.SkinRenderer : null;
+			MeshFilter smf = sk != null ? sk.GetComponent<MeshFilter>() : null;
+			Mesh skin = smf != null ? smf.sharedMesh : null;
+			if (skin == null) return null;
+			var sv = new List<Vector3>();
+			skin.GetVertices(sv);
+			// (CaveMountain.TwoSided: the outside's corners, then the same again for the inside)
+			int front = skin.name.EndsWith("(both sides)", StringComparison.Ordinal) ? sv.Count / 2 : sv.Count;
+			Transform st = sk.transform;
+			const float Bin = 2f;
+			var bins = new Dictionary<long, List<Vector3>>();
+			for (int i = 0; i < front; i++)
+			{
+				Vector3 w = st.TransformPoint(sv[i]);
+				long key = BinKey(w, Bin);
+				List<Vector3> l; if (!bins.TryGetValue(key, out l)) bins[key] = l = new List<Vector3>();
+				l.Add(w);
+			}
+			if (bins.Count == 0) return null;
+			return p =>
+			{
+				int bx = Mathf.FloorToInt(p.x / Bin), bz = Mathf.FloorToInt(p.z / Bin);
+				for (int dx = -1; dx <= 1; dx++)
+					for (int dz = -1; dz <= 1; dz++)
+					{
+						List<Vector3> l; if (!bins.TryGetValue(((long)(bx + dx) << 32) ^ (uint)(bz + dz), out l)) continue;
+						foreach (Vector3 w in l) if ((w - p).sqrMagnitude < NearSkin * NearSkin) return true;
+					}
+				return false;
+			};
 		}
 
 		static bool toldNoGround, toldDeferred;
