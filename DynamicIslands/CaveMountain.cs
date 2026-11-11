@@ -1565,7 +1565,12 @@ namespace DynamicIslands.Editor
 				}
 				else if (atWay)
 				{
-					if (Mathf.Min(ga, gb) <= way - 0.15f) Band(e0, e, Mathf.Min(ga, way), Mathf.Min(gb, way), way, way, n, verts, norms, uvs, tris, origin);
+					// (beside a lone den's way out over the sand, where its cheek has dived into the sand, no higher than the skin's own
+					// edge: the skirt rose to the den's floor there, 8-11 m out from the arch, a flat tan panel from the sand up to the
+					// floor's height beside the sea skip's cells, Shelter Atoll 11-11 r73/r74)
+					float wy = way;
+					if (Why != null && (Why[i1, k1] == 'L' || Why[i2, k2] == 'L')) wy = Mathf.Min(way, Mathf.Max(e0.y, e.y));
+					if (Mathf.Min(ga, gb) <= wy - 0.15f) Band(e0, e, Mathf.Min(ga, wy), Mathf.Min(gb, wy), wy, wy, n, verts, norms, uvs, tris, origin);
 					// (cave.foot=dry: beside the opening, rock from head height over the way in up to the dome)
 					if (dry && Mathf.Min(e0.y, e.y) > way + DryHead) Band(e0, e, way + DryHead, way + DryHead, e0.y, e.y, n, verts, norms, uvs, tris, origin);
 				}
