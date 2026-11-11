@@ -439,6 +439,15 @@ brush flatten at -10 42 r=5.4 s=20 frames=600 h=8.1
 brush flatten at -10 42 r=6 s=20 frames=500 h=9
 brush smooth at -10 42 r=13.8 s=5 frames=70
 brush flatten at -10 42 r=6 s=20 frames=400 h=9
+# (11-11 w04: hill 3 raised a little - the egg-collectors' hollow is dug into its north side, see the end)
+brush flatten at -10 42 r=10 s=20 frames=600 h=6.5
+brush flatten at -10 42 r=7.5 s=20 frames=600 h=9
+brush flatten at -10 42 r=5 s=20 frames=600 h=11
+brush smooth at -10 42 r=13 s=5 frames=60
+# (and a spur north of the summit, over the hollow: the smooth above leaves only 5-6 m there, too thin a roof)
+brush flatten at -10 47 r=7.5 s=20 frames=600 h=10.5
+brush flatten at -10 47 r=5 s=20 frames=600 h=13
+brush smooth at -10 47 r=9 s=5 frames=15
 brush auto at -10 42 r=14.4 s=10 frames=25
 clear at -10 42 r=15
 # a ruin on hill 1: someone lived up here before the water rose
@@ -457,15 +466,15 @@ call ar_plants_hill x=-44 z=-18 r=12 seed=6200
 call ar_plants_hill x=44 z=60 r=12 seed=6210
 call ar_plants_hill x=70 z=-38 r=12 seed=6220
 
-# --- 11-11 (w04): the egg-collectors' hollow under the gull stacks (plan 04 row: DIG under the rookery - the gull
-# stacks, the birds' rookery; the spikes stay; dirt (the bed by the smithy, existing), mushrooms 2). No quest step.
-# The egg collectors dug a short hollow into the stacks' west end to keep the eggs cool. Mouth at the low west foot
-# -5 56, level east 8 m to a small room (to 9 56) under the stacks' west shoulder. 11 m and more from the gull stacks'
-# zone, Pip's note and the buried finds (cavecheck).
+# --- 11-11 (w04): the egg-collectors' hollow (plan 04 row: DIG under the rookery; the spikes stay; dirt (the bed by
+# the smithy, existing), mushrooms 2). No quest step. The egg collectors dug a short hollow into hill 3 (-10 42, raised
+# for it above) to keep the eggs cool. Mouth at the hill's low north foot -10 55.5, level south 10 m in under
+# the spur north of the summit (to -10 45.5; no wider room: it would drop the floor under 2.5 m). 11 m and more from the gull stacks' zone, Pip's note and the buried finds (cavecheck).
+# (Its first place, the stacks' west foot at -5 56, had no rock over it: the ground there is 7 m at most.)
 origin
-brush smooth at -5 56 r=5 s=8 frames=60
-clear at -5 56 r=3 only=(?i)boulder|rock|tree|bush|bamboo
-call kit_dig x=-5 z=56 yaw=90 len=8 flat=0 r=1.75 slope=0 room=1 roomr=3 roomlen=3 dirt=0 mush=2 stone=0 vines=0 titanium=0 as=rkhollow
+brush smooth at -10 55.5 r=5 s=8 frames=60
+clear at -10 55.5 r=3.5 only=(?i)boulder|rock|tree|bush|bamboo|plant|fern
+call kit_dig x=-10 z=55.5 yaw=180 len=10 flat=0 r=1.75 slope=0 room=0 dirt=0 mush=2 stone=0 vines=0 titanium=0 as=rkhollow
 prop rkhollow cave.rock=plain
 
 save Rookery Stacks

@@ -351,12 +351,6 @@ prop bwsmugair zone.message=A dry room at the top of the flooded tunnel - air. S
 place Loot_ChestSmall bwcontraband at 45.9 -34 h=3.3 drop yaw=160
 prop bwcontraband obj.name=bwcontraband
 prop bwcontraband loot.refill=0
-note bwcontraband Contraband | Crates with the Authority's seal cut off and a tally chalked on the lid:
-
-TWELVE COILS - SOLD AT THE ROW
-FOUR INGOTS - SOLD AT THE ROW
-ONE RADIO - KEPT
-
-Whoever ran this tunnel came in under the boom and went out to Raft Row Bazaar.
+note bwcontraband Contraband | Crates with the Authority's seal cut off and a tally chalked on the lid:\n\nTWELVE COILS - SOLD AT THE ROW\nFOUR INGOTS - SOLD AT THE ROW\nONE RADIO - KEPT\n\nWhoever ran this tunnel came in under the boom and went out to Raft Row Bazaar.
 loot bwcontraband MetalIngot*2;CopperIngot*1;Rope*2;Nail*6
 save Breakwater Customs

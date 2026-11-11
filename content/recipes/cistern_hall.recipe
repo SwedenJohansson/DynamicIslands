@@ -420,6 +420,10 @@ brush flatten at 64 -46 r=9.9 s=20 frames=600 h=14.4
 brush flatten at 64 -46 r=6 s=20 frames=500 h=16
 brush smooth at 64 -46 r=25.3 s=5 frames=70
 brush flatten at 64 -46 r=6 s=20 frames=400 h=16
+# (and over the room off the passage, round 47 -51: its roof broke through the slope there - sky through the ceiling;
+# kept 9 m and more off the mouth at 39 -47, whose ground sets the whole passage's floor)
+brush flatten at 46.5 -52.5 r=5.5 s=20 frames=600 h=11.5
+brush smooth at 46.5 -52.5 r=6.5 s=5 frames=15
 brush auto at 64 -46 r=26.4 s=10 frames=25
 clear at 64 -46 r=25
 # hill 2: 32 m across, 12 m over the sea
@@ -494,10 +498,10 @@ clear at 6.57 76.21 r=3 only=SmallBoulder4 all
 origin
 brush smooth at 39 -47 r=5 s=8 frames=60
 brush smooth at 39 -40 r=5 s=8 frames=60
-brush smooth at 62 -63.5 r=5 s=8 frames=60
+brush smooth at 62 -61.5 r=5 s=8 frames=60
 clear at 39 -47 r=3 only=(?i)boulder|rock|tree|bush
 clear at 39 -40 r=3 only=(?i)boulder|rock|tree|bush
-clear at 62 -63.5 r=3 only=(?i)boulder|rock|tree|bush
+clear at 62 -61.5 r=3 only=(?i)boulder|rock|tree|bush
 call kit_sys x=39 z=-47 yaw=90 side=-1 len=15 bend=5 branch=7 blen=1 gap=7 in2=11 r=1.75 roomr=3 dirt=2 mush=4 stone=0 vines=0 titanium=0 as=chcis
 prop chcis cave.rock=plain
 # the third cistern room, at the passage's bend under the summit
@@ -506,8 +510,9 @@ place Loot_ChestSmall chcischest at 48.5 -54 h=3.4 drop yaw=0
 note chcischest Cistern keeper's chest | The cistern keeper's chest, left in the dry cistern when the pump hall took the water: his gauges and the spare fittings.
 loot chcischest MetalIngot*1;Bolt*3;Rope*1;Glass*2
 prop chcischest loot.refill=0
-# the overflow channel and its acid
-call kit_dig x=62 z=-63.5 yaw=0 len=7 flat=0 r=1.75 slope=0 room=1 roomr=2.5 roomlen=4 dirt=0 mush=0 stone=0 vines=0 titanium=0 as=chflow
+# the overflow channel and its acid (its stroke starts 1 m out from the bank face: started on the face, the ring stood as a lip
+# at the mouth and reach found no way back out; the locker sits in the room's corner, off the way along it)
+call kit_dig x=62 z=-62.5 yaw=0 len=9 flat=0 r=1.75 slope=0 room=1 roomr=2.5 roomlen=4 dirt=0 mush=0 stone=0 vines=0 titanium=0 as=chflow
 prop chflow cave.rock=plain
 place Note_Sign chflowwarn at 54 -61 ground sit yaw=120
 note chflowwarn OVERFLOW - ACID SLUDGE | The pump hall's overflow drains in here. The sludge in the channel burns. Suits in the box at the mouth. Or shut the overflow with the valve by the mouth and let it run out to sea.\n- Sluice office
@@ -515,10 +520,10 @@ place "Box Big" chflowsuits at 53 -62.5 ground sit yaw=120
 prop chflowsuits obj.name=chflowsuits
 prop chflowsuits beh.use=Put on a sludge suit
 prop chflowsuits on.use=suit||180\nmessage||An old sluice-man's suit, oilskin and rubber boots - three minutes before the sludge gets through.
-place Zone_Trigger chflowacid at 62 -58.5 h=3
+place Zone_Trigger chflowacid at 62 -57 h=4.5
 prop chflowacid obj.name=chflowacid
 prop chflowacid zone.id=ch_overflow
-prop chflowacid zone.radius=2.5
+prop chflowacid zone.radius=3
 prop chflowacid zone.hazard=acid
 prop chflowacid zone.damage=4
 prop chflowacid zone.safe=suit
@@ -527,10 +532,12 @@ place UT_JumpPuzzle_LiftMechanism_Lever chflowvalve at 70.8 -62.5 ground sit yaw
 prop chflowvalve obj.name=chflowvalve
 prop chflowvalve beh.use=Turn the overflow valve
 prop chflowvalve on.use=hide|chflowacid\nmessage||The valve groans shut. In the channel the sludge drains away down a crack to the sea, and the floor steams dry.
-place Loot_ChestSmall chflowlocker at 62 -53.5 h=3.4 drop yaw=180
+place Loot_ChestSmall chflowlocker at 63.2 -50.2 h=5 drop yaw=225
 note chflowlocker Overflow locker | The overflow keeper's locker at the back of the channel, out of reach since the sludge came.
 loot chflowlocker Battery*1;CopperIngot*2;Bolt*2;Glass*2
 prop chflowlocker loot.refill=0
+# (a mango tree from the hill plants stood 2.3 m over the ground at 37 -32 after the west-foot smoothing: CIFloating)
+clear at 37 -32 r=1.5 all only=(?i)mango
 # cavecheck inside chcischest chflowlocker
 
 save Cistern Hall

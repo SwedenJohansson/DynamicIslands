@@ -12,9 +12,11 @@ picture bw_cave_out 68 2 -96 56 6 -66
 picture bw_cave_mouth 63 -3.5 -89 60 -4 -80
 
 # In: from the sea floor up the tunnel into the room, and breathe there
-walk 62.1 -85.6 to 60 -80 to 56.6 -70.6 to 53.2 -61.2 to 49.7 -51.8 to 47.3 -45.2 to 45.6 -40.5 below=-2
+# (swum into the mouth: the sea floor in front of it lies 2 m under the mouth's lip)
+swim 63.4 -89.4 -2 to 62.1 -85.6 -4.2 to 60 -80 -4.2 to 57.9 -74.4 -3.3
+walk 57.9 -74.4 to 56.6 -70.6 to 53.2 -61.2 to 49.7 -51.8 to 47.3 -45.2 to 45.6 -40.5 below=-2
 air bw_smugglers here
-picture bw_cave_in 51 3.5 -56 45 3 -38 light=20
+picture bw_cave_in 51.3 1.8 -56 46.5 2.6 -42 light=20
 picture bw_room_back 44 4 -33 48 2.5 -48 light=20
 open Contraband
 wait 2

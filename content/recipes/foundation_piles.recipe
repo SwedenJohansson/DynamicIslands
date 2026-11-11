@@ -376,7 +376,11 @@ clear at 72.92 -46.36 r=1 only=Bamboo
 # the jacks, the air pockets, the jack logs and the view zone (cavecheck).
 origin
 clear at -29.4 17.2 r=4 only=(?i)boulder|rock|tree|bush|bamboo
-call kit_dig x=-4 z=8 yaw=290 len=24 flat=3 r=1.75 slope=25 room=0 dirt=2 mush=0 stone=3 vines=0 titanium=0 as=fpdrift
+# (kit_dig's two strokes written out: the drift is flooded nearly all the way, so its loot goes on the wet floor -
+# caveloot wet=1, which kit_dig doesn't pass)
+dig -4,8 -6.819,9.026 r=1.75 as=fpdrift
+dig -6.819,9.026 -29.372,17.234 r=1.75 slope=25 as=fpdrift
+caveloot fpdrift dirt=2 mush=0 stone=3 vines=0 titanium=0 light=0 wet=1
 prop fpdrift cave.rock=plain
 
 save The Foundation Piles

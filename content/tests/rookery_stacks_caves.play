@@ -1,13 +1,13 @@
-# Rookery Stacks' egg-collectors' hollow under the gull stacks (CIPlay rookery_stacks_caves, 11-11; any world). Points as
-# in its recipe (the origin frame): the mouth at -5 56 on the low west foot of the stacks; level east 8 m to a small
-# room (about 3..9 56) under the west shoulder, 2 mushrooms inside. Dry, no air zone, no chest; the spikes stay.
+# Rookery Stacks' egg-collectors' hollow (CIPlay rookery_stacks_caves, 11-11; any world). Points as in its recipe (the
+# origin frame): the mouth at -10 55.5 on hill 3's low north foot; level south 10 m (to -10 45.5) under the spur north
+# of the summit, 2 mushrooms inside. Dry, no air zone, no chest; the spikes stay.
 island Rookery Stacks keep
 offset 0 0
 hour 11
 weather Calm
 
-picture rk_cave_out -14 4.5 56 -5 3 56
-walk -10 56 to -5 56 to 0 56 to 6 56
-picture rk_cave_in -3 4 56 7 3 56 light=20
+picture rk_cave_out -10 5 64 -10 4 55.5
+walk -10 61 to -10 55.5 to -10 51 to -10 47
+picture rk_cave_in -10 6.2 54 -10 5.2 46 light=20
 wait 2
-walk 6 56 to 0 56 to -5 56 to -10 56
+walk -10 47 to -10 51 to -10 55.5 to -10 61

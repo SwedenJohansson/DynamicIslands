@@ -5,13 +5,13 @@ island Cistern Hall keep
 offset 0 0
 hour 11
 weather Calm
-at 54 -64
+at 55 -62
 use chflowsuits
 expect shown chflowacid
-walk 54 -64 to 60 -65 to 62 -63.5 to 62 -58.5 to 62 -54.5
+walk 55 -62 to 62 -61.5 to 62 -57 to 62.4 -51.4
 wait 6
 expect unhurt
 open Overflow locker
 wait 2
-walk 62 -54.5 to 62 -58.5 to 62 -63.5 to 62 -65.5
+walk 62.4 -51.4 to 62 -57 to 62 -61.5 to 57 -61.5
 expect unhurt
