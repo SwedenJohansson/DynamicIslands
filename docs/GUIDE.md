@@ -442,6 +442,13 @@ page's (**K**, a star). They are copies of Raft's own key tabs and only remind y
 not a button): they show and hide with Raft's own key tabs, and say the new key at once when you change it in
 **Defaults... > Keys (this PC)**.
 
+The two keys are also at the bottom of Raft's own **Settings > Controls** list, as **Islands journal** and **Islands
+stats page** (in the main menu's settings and in the pause menu's). Click the key and press the new one, as for Raft's
+own keys; Esc keeps the old key. It is the same setting as in **Defaults... > Keys (this PC)**: a change in one shows in
+the other at once. The **Alt. key** column says *Not set* and can't be set (the mod's keys have one key each).
+Raft's own rule applies there: a key Raft already uses is allowed, and then that key does both things (Esc, Enter,
+Tab, Space, Backspace and mouse buttons are passed over). Raft's **Reset Keybinds** button puts them back to J and K.
+
 ![The journal](images/world-journal.jpg)
 *The journal: the custom quests done at the top, the Progress panel (quests, islands reached, notes, story items, journal pages, overall - hover a line for what it counts), the story items at the top left, the pages under Quest Pages by island with its quest and its notes found ("(1/1 notes)"), and the page "The vault" open, signed with the island, its quest and the day.*
 
@@ -4272,7 +4279,7 @@ get the settings they share at once.
 | Group | What is in it |
 |---|---|
 | **Random islands while sailing** | Random islands on or off (0 = off), the quiet minutes in a new world, the spacing, how far ahead an island appears (**Appear from** and **to**), and when a needed island returns |
-| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew), on the third line **Map zoom in** (=, the + key) and **Map zoom out** (-): click one, then press the new key (Esc keeps the old one). Beside them the **Minimap** button (ON) switches the island map off on this PC. A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why A fourth line, **Quest panel: Reset place**, puts a dragged quest panel back in its own place (lit while it was moved). |
+| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew), on the third line **Map zoom in** (=, the + key) and **Map zoom out** (-): click one, then press the new key (Esc keeps the old one). Beside them the **Minimap** button (ON) switches the island map off on this PC. A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why (Raft's **Settings > Controls** list has the Journal and Stats keys too, with Raft's looser rule). A fourth line, **Quest panel: Reset place**, puts a dragged quest panel back in its own place (lit while it was moved). |
 | **Shared with every player** | **Receiver dots** on or off, the **Receiver range**, **Unload beyond** and **Regrow days (new worlds)** |
 | **Generated islands** | The weight of new generated islands, the chance one flies, **Things to gather**, **Finds in the shallows** and how far down they go, the five styles (at least one stays lit) and a button for each kind of thing to gather (lit = on) |
 | **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look up / down** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |

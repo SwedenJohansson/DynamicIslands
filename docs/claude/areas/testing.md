@@ -186,3 +186,7 @@ Use `ci.ps1` in the repo root to run this mod's console commands (the CI* test c
 - `tools\raft.ps1 launch` sends `CIGfx low` to every Raft it starts (both players; `rebuild.ps1`, `mp.ps1` go through it). `$env:RAFT_GFX = "high"` skips it (`docshots.ps1` does, and sends `CIGfx high`).
 - Pictures stay at the user's quality: `RenderCam` (play, recipe, library pictures) and `PlayPicture` switch for the shot (`GfxShotBegin`/`GfxShotEnd`). `CIShot` captures the screen as it is: send `CIGfx high` first for full-size shots, `CIGfx low` after.
 - Nothing low is kept: `GfxSavePostfix` makes Raft's Settings.rgd save the user's values; quitting restores them; `tools\gfx.ps1 watch <pid>` (started by `raft.ps1`) puts Unity's registry values (`Screenmanager*`, `UnityGraphicsQuality*`) back from the backup once the first player's Raft closes. `gfx.ps1 check` compares with the backup.
+
+## Raft's Controls rows for the mod keys: CIControlsKeys (`DevTestsControlsKeys.cs`)
+
+- `CIControlsKeys` (main menu or a world): opens Settings > Controls, checks the two rows (not Raft keybinds, below Raft's last row, same size, label fits, alt key "Not set" and not settable), rebinds through the row (Esc keeps, Return passed over, a Raft key allowed), checks `world_rules.txt`, `ModKeys` and the hotbar tab, Raft's reset (J/K), a change from Defaults, then puts every key back. Writes `shot_controls_keys_<menu|world>.png` scrolled to the bottom. `CIControlsDump` writes the Controls UI tree to `controls_dump.txt`.

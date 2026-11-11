@@ -40,6 +40,7 @@
     <Compile Include="BlueprintSteps.cs" />
     <Compile Include="DevTestsRecipeLeaves.cs" />
     <Compile Include="DevTestsFix35.cs" />
+    <Compile Include="DevTestsControlsKeys.cs" />
     <Compile Include="DevTestsGapsRun.cs" />
     <Compile Include="DevTestsCaveGaps.cs" />
     <Compile Include="DevTestsPreFaults.cs" />
@@ -282,6 +283,7 @@
     <Compile Include="IslandTest.cs" />
     <Compile Include="Housekeeping.cs" />
     <Compile Include="HotkeyHints.cs" />
+    <Compile Include="RaftControlsKeys.cs" />
     <Compile Include="PlayerNotebook.cs" />
     <Compile Include="CameraPath.cs" />
     <Compile Include="Minimap.cs" />
