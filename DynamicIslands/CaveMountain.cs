@@ -58,6 +58,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Tests: a map of the last build (R roof, s side, c a way in, - cut off out past an open end, g lower than the ground, . nothing), one line per row.</summary>
 		public string LastMap;
+		static char[,] Why;
 		public int OverDug; // (cells over an open dug passage left without hill - tests)
 		public int SeaCutCells; // (last build: cells cut for the sea - cave.seacut - tests)
 
@@ -524,6 +525,8 @@ namespace DynamicIslands.Editor
 			// (out past an open end with no rock of its own and no other hill there: none - the rounding had spread the hill
 			// on over it again; a face down to the ground stands at the cut)
 			var cut = new bool[nx, nz];
+			Why = new char[nx, nz]; // (tests: what last set each cell, in LastMap)
+			var cutAhead = new bool[nx, nz]; // (cut only for lying out past a mouth over lower hill: a lone den's funnel may still ramp there)
 			OverDug = 0;
 			var sea = new bool[nx, nz];
 			string seaOpt;
@@ -536,9 +539,11 @@ namespace DynamicIslands.Editor
 					bool past = false;
 					for (int j = 0; j < mouths.Count && !past; j++) past = ahead[j][i, k] > 0.5f;
 					cut[i, k] = past && float.IsNaN(cover[i, k]) && !(raw[i, k] > ground[i, k] - 0.6f);
+					cutAhead[i, k] = cut[i, k];
+					if (cut[i, k]) Why[i, k] = 'k';
 					// (over a dug passage open to the sky - the dug rock is the highest ground there - none: the hill stood on over
 					// Ironreef's mouth C as a bridge 5-13 m over the dug cut, its underside blue-white in the shade - RF3, 11-05)
-					if (float.IsNaN(top[i, k]) && float.IsNaN(corridor[i, k]) && groundBy[i, k] != null && groundBy[i, k].StartsWith(DigTunnel.RockName, System.StringComparison.Ordinal)) { cut[i, k] = true; otherHill[i, k] = false; OverDug++; }
+					if (float.IsNaN(top[i, k]) && float.IsNaN(corridor[i, k]) && groundBy[i, k] != null && groundBy[i, k].StartsWith(DigTunnel.RockName, System.StringComparison.Ordinal)) { cut[i, k] = true; cutAhead[i, k] = false; otherHill[i, k] = false; OverDug++; }
 					// (nor out over the sea from a roof above it: the hill's skin over the water, its foot on the sea floor, closed a
 					// pool of sea under it - a swimmer under a roof with no air, Old Mine Islet's mound over its south shore 11-05;
 					// a cave's own roof under the sea keeps its hill, and the hill's surface under the water too)
@@ -585,7 +590,7 @@ namespace DynamicIslands.Editor
 			// (cave.foot=dry: out past a mouth the hill's sides by its opening slope up from its edge at ShoulderSlope - the shoulders'
 			// inner faces stood as sheer dark walls the shell's whole height, the den's other pieces' roofs reaching them unclamped,
 			// Shelter Atoll's ammo den 11-08; the strip beside the opening the cut took is a low ramp now, the opening itself stays cut)
-			if (dryFootOn) ShoulderRamps(mouths, ahead, cover, top, corridor, ground, height, on, cut, x0, z0, nx, nz);
+			if (dryFootOn) ShoulderRamps(mouths, ahead, cover, top, corridor, ground, height, on, cut, cutAhead, x0, z0, nx, nz);
 			// (one more ring round it, sunk under the ground: its edge slopes into the ground, not a stepped wall over it)
 			var rim = new List<int>();
 			for (int i = 0; i < nx; i++)
@@ -620,7 +625,7 @@ namespace DynamicIslands.Editor
 			{
 				int i = r / nz, k = r % nz;
 				height[i, k] = ground[i, k] - 0.8f;
-				on[i, k] = true;
+				on[i, k] = true; Why[i, k] = 'r';
 			}
 			// (cave.foot=dry: three more softening passes after the rim - its foot stood on the sand on a dark wall, and the cells off
 			// a roof's flat stood well under it, a jagged skyline of square steps along the den hill's top, 11-07 third review; a
@@ -686,7 +691,7 @@ namespace DynamicIslands.Editor
 			}
 			// (and no loose bits: a few cells of skin cut off from the hill, over no cave, stood alone on the shore as a slab with a
 			// wall under it - by Shelter Atoll's ammo den, where the cut past its mouth left one at its corner, 11-07)
-			if (dryFootOn) ShoulderRamps(mouths, ahead, cover, top, corridor, ground, height, on, cut, x0, z0, nx, nz); // (again: the passes above lifted them)
+			if (dryFootOn) ShoulderRamps(mouths, ahead, cover, top, corridor, ground, height, on, cut, cutAhead, x0, z0, nx, nz); // (again: the passes above lifted them)
 			LooseDropped = dryFootOn ? DropLoose(on, top, height, ground, nx, nz) : 0; // (only on a hill with cave.foot=dry)
 
 			var map = new System.Text.StringBuilder();
@@ -709,6 +714,16 @@ namespace DynamicIslands.Editor
 					float d = height[i, k] - ground[i, k];
 					map.Append(!float.IsNaN(corridor[i, k]) ? 'c' : !on[i, k] ? '.' : d < 0f ? '_' : d > 9.5f ? '+' : (char)('0' + Mathf.RoundToInt(d)));
 				}
+				map.Append('\n');
+			}
+			map.Append("what set each cell near the ways in (k cut, w way, o sea, x no hill behind, n past LoneRun, L lone ramp, S shoulder, r rim, E edge cap, G grid edge):\n");
+			for (int k = nz - 1; k >= 0; k--)
+			{
+				bool row = false;
+				for (int i = 0; i < nx && !row; i++)
+					for (int kb = Mathf.Max(k - 8, 0); kb <= Mathf.Min(k + 8, nz - 1) && !row; kb++) row = !float.IsNaN(corridor[i, kb]);
+				if (!row) continue;
+				for (int i = 0; i < nx; i++) map.Append(!float.IsNaN(corridor[i, k]) ? 'c' : Why[i, k] == (char)0 ? (on[i, k] ? 's' : '.') : Why[i, k]);
 				map.Append('\n');
 			}
 			var tall = new Dictionary<string, int>();
@@ -837,7 +852,7 @@ namespace DynamicIslands.Editor
 		/// <summary>cave.foot=dry: each cell out past a dry mouth (within DryWay + 4 m of its roof's end, on dry land, off any roof
 		/// or way in) is kept at most ShoulderSlope a m over the ground, less 0.6, for each m it lies to the side past the opening's
 		/// half width (cut cells stay cut: turning them into skin left dark slivers at the sand, 11-08).</summary>
-		static void ShoulderRamps(List<Mouth> mouths, float[][,] ahead, float[,] cover, float[,] top, float[,] corridor, float[,] ground, float[,] height, bool[,] on, bool[,] cut, float x0, float z0, int nx, int nz)
+		static void ShoulderRamps(List<Mouth> mouths, float[][,] ahead, float[,] cover, float[,] top, float[,] corridor, float[,] ground, float[,] height, bool[,] on, bool[,] cut, bool[,] cutAhead, float x0, float z0, int nx, int nz)
 		{
 			var near = new bool[nx, nz];
 			for (int j = 0; j < mouths.Count; j++)
@@ -853,27 +868,34 @@ namespace DynamicIslands.Editor
 						// hill round the arch, 11-09 user r41/r44)
 						bool lone = !float.IsNaN(m.Front) && past > 0f && float.IsNaN(top[i, k]);
 						if (!(past > -BackBand) || past > DryWay + 4f || (!float.IsNaN(cover[i, k]) && !lone) || !float.IsNaN(corridor[i, k])) continue;
-						if (lone && !cut[i, k])
+						// (and over the cells the cut took in front of it, where the hill's own shape lay under the sand: only the one row
+						// of skin past the plane was left, sunk by the edge cap, so the dome stood full height right at the plane - a flat
+						// sheer wall the den's width across with the arch at its foot, cut cells either side of the way in where the den's
+						// flat front showed, and vertical cheeks - Shelter Atoll 11-09..11-11 r63-r69; only where the hill stands behind)
+						bool aheadCut = lone && cut[i, k] && cutAhead[i, k];
+						if (lone && (!cut[i, k] || aheadCut))
 						{
 							// (a lone den: the hill goes on out past its wall and falls to the sand ahead, its cheeks right at the arch's
 							// rim as high as the arch and rising off it to the hill's face - not cut back to a sheer face the den's width
 							// across with the arch's wall standing in a box notch in it, 11-09 user r41-r45)
 							Vector3 cp = new Vector3(x0 + i * Cell, 0f, z0 + k * Cell);
 							float sl = Mathf.Abs(Vector3.Dot(cp - m.Pos, m.Side) - m.InsideSide) - (m.ArchHalf + LoneSlot);
-							if (sl < 0f) continue;
+							if (sl < 0f) { Why[i, k] = 'w'; continue; }
 							// (not out over the sea: there it stood as a flat square panel at the sea's foot, Caisson Yard and Shelter Atoll r48)
-							if (!on[i, k] && !(ground[i, k] > SeaLevel + DryBy)) continue;
+							if (!on[i, k] && !(ground[i, k] > SeaLevel + DryBy)) { Why[i, k] = 'o'; continue; }
 							float lf = Mathf.Max(ground[i, k], SeaLevel - SeaFootBy);
 							Vector3 bp = cp - m.Along * ((m.Plus ? 1f : -1f) * (past + Cell));
 							int bi = Mathf.RoundToInt((bp.x - x0) / Cell), bk = Mathf.RoundToInt((bp.z - z0) / Cell);
-							float face = bi >= 0 && bk >= 0 && bi < nx && bk < nz && on[bi, bk] ? height[bi, bk] : m.FloorY + m.ArchUp;
+							bool behind = bi >= 0 && bk >= 0 && bi < nx && bk < nz && on[bi, bk];
+							if (aheadCut && !behind) { Why[i, k] = 'x'; continue; }
+							float face = behind ? height[bi, bk] : m.FloorY + m.ArchUp;
 							float want = Mathf.Max(Mathf.Min(face, m.FloorY + m.ArchUp * Mathf.Clamp01(1f - past / LoneEdge) + LoneSide * sl * (1f + sl / ShoulderCurve)) - LoneFall * past, Mathf.Min(lf, ground[i, k]) - 0.6f);
-							if (past > LoneRun) continue;
+							if (past > LoneRun) { Why[i, k] = 'n'; continue; }
 							// (within LoneSink m of the ground it dives into it, LoneDive times as steep: it lay just over the flat sand
 							// as a pale flat panel with a hard edge, Caisson Yard and Shelter Atoll r48-r50)
 							if (want - lf < LoneSink) want = Mathf.Max(lf + LoneSink - (LoneSink - (want - lf)) * LoneDive, Mathf.Min(lf, ground[i, k]) - 0.6f);
 							height[i, k] = on[i, k] ? Mathf.Max(SoftMin(height[i, k], want), want) : want;
-							on[i, k] = true; near[i, k] = true;
+							on[i, k] = true; near[i, k] = true; cut[i, k] = false; Why[i, k] = 'L';
 							continue;
 						}
 						// (over the sea too, from just under the water: the den hill's flank fell into the sea cut before the mouth as a
@@ -883,7 +905,7 @@ namespace DynamicIslands.Editor
 						if (sd <= 0f) continue;
 						float back = Mathf.Max(-past, 0f); // (behind the opening's plane the cap rises fast: no seam where the ramps stop, 11-08 c)
 						float ramp = foot - 0.6f + ShoulderSlope * sd * (1f + sd / ShoulderCurve) + BackSlope * back * (1f + back / ShoulderCurve); // (curved, not a plane: a plane showed as flat wedges)
-						if (on[i, k] && !cut[i, k]) { height[i, k] = SoftMin(height[i, k], ramp); near[i, k] = true; } // (soft: a plain min left a crisp seam beside the mouth, 11-08 b)
+						if (on[i, k] && !cut[i, k]) { if (ramp < height[i, k]) Why[i, k] = 'S'; height[i, k] = SoftMin(height[i, k], ramp); near[i, k] = true; } // (soft: a plain min left a crisp seam beside the mouth, 11-08 b)
 					}
 			}
 			// (11-09: round a lone den the skin's edge goes into the ground, rising off it no faster than LoneEdgeRise per m in:
@@ -926,7 +948,7 @@ namespace DynamicIslands.Editor
 							float past = ahead[j][i, k];
 							if (!on[i, k] || cut[i, k] || !(past > 0f) || past > LoneRun + LoneEdgeBand || !float.IsNaN(top[i, k]) || !float.IsNaN(corridor[i, k])) continue;
 							float cap = ground[i, k] - 0.6f + LoneEdgeRise * Mathf.Max(dist[i, k] - Cell, 0f);
-							if (height[i, k] > cap) { height[i, k] = cap; near[i, k] = true; capped++; }
+							if (height[i, k] > cap) { height[i, k] = cap; near[i, k] = true; capped++; Why[i, k] = 'E'; }
 						}
 				}
 				if (capped > 0) Debug.Log("[CUSTOM ISLANDS] Lone den skin edge sunk into the ground at " + capped + " cells");
@@ -943,7 +965,7 @@ namespace DynamicIslands.Editor
 						float e = Mathf.Min(Mathf.Min(i, nx - 1 - i), Mathf.Min(k, nz - 1 - k)) * Cell;
 						if (e > LoneEdgeBand) continue;
 						float cap = ground[i, k] - 0.6f + LoneEdgeRise * e;
-						if (height[i, k] > cap) { height[i, k] = cap; near[i, k] = true; sunk++; }
+						if (height[i, k] > cap) { height[i, k] = cap; near[i, k] = true; sunk++; Why[i, k] = 'G'; }
 					}
 				if (sunk > 0) Debug.Log("[CUSTOM ISLANDS] Cave hill skin sunk into the ground at the grid's edge at " + sunk + " cells");
 			}
@@ -1380,7 +1402,7 @@ namespace DynamicIslands.Editor
 			{
 				Transform r = t.transform.Find(DigTunnel.RockName);
 				MeshRenderer mr = r != null ? r.GetComponent<MeshRenderer>() : null;
-				if (mr != null) t.RimWalls = DressRimWalls(mr) ?? "";
+				if (mr != null) { t.RimWalls = DressRimWalls(mr) ?? ""; t.RimMatch = DigTunnel.MatchSkin(mr); }
 			}
 		}
 
@@ -1543,7 +1565,12 @@ namespace DynamicIslands.Editor
 				}
 				else if (atWay)
 				{
-					if (Mathf.Min(ga, gb) <= way - 0.15f) Band(e0, e, Mathf.Min(ga, way), Mathf.Min(gb, way), way, way, n, verts, norms, uvs, tris, origin);
+					// (beside a lone den's way out over the sand, where its cheek has dived into the sand, no higher than the skin's own
+					// edge: the skirt rose to the den's floor there, 8-11 m out from the arch, a flat tan panel from the sand up to the
+					// floor's height beside the sea skip's cells, Shelter Atoll 11-11 r73/r74)
+					float wy = way;
+					if (Why != null && (Why[i1, k1] == 'L' || Why[i2, k2] == 'L')) wy = Mathf.Min(way, Mathf.Max(e0.y, e.y));
+					if (Mathf.Min(ga, gb) <= wy - 0.15f) Band(e0, e, Mathf.Min(ga, wy), Mathf.Min(gb, wy), wy, wy, n, verts, norms, uvs, tris, origin);
 					// (cave.foot=dry: beside the opening, rock from head height over the way in up to the dome)
 					if (dry && Mathf.Min(e0.y, e.y) > way + DryHead) Band(e0, e, way + DryHead, way + DryHead, e0.y, e.y, n, verts, norms, uvs, tris, origin);
 				}

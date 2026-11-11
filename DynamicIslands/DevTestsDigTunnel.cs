@@ -511,10 +511,11 @@ namespace DynamicIslands
 						string cover = RimCover(ct, t, cliffCut, out sunken);
 						int cshards = ct.RimTop == "" ? 0 : ct.RimShards(out _);
 						Check(ref ok, ct.RimColumns > 0 && sunken == 0 && cshards == 0, "the cliff mouth's rim: " + RimLook(ct) + "; the cut cells: " + cover + "; " + cshards + " rock shards on the ground" + (cshards > 0 ? " (" + RimShardsAt(ct) + ")" : ""));
-						// (11-09 w03: on the cliff's steep face the rim stays rock - no patch of the ground's baked layers there)
+						// (11-11 w03: on the cliff's steep face the rim wears the ground's look too - the cliff is the ground's own; the
+						// hill's rock there was a dark or tan patch with a toothed outline round the mouth)
 						string steepAt;
 						int steep = ct.RimSteepTop(out steepAt);
-						Check(ref ok, steep == 0, "the cliff mouth's rim on the steep face: " + steep + " faces wearing the ground's look" + (steep > 0 ? " (" + steepAt + ")" : ""));
+						Check(ref ok, steep > 0, "the cliff mouth's rim on the steep face: " + steep + " faces wearing the ground's look" + (steep > 0 ? " (" + steepAt + ")" : ""));
 						// (11-09 w03: and the rim walls draw no sandy top texture on their up-turned faces - SideRockOnly)
 						{
 							Transform crt = ct.transform.Find(DigTunnel.RockName);
