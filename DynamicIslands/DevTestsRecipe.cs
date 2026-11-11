@@ -654,6 +654,8 @@ namespace DynamicIslands
 				if (!Physics.Raycast(new Vector3(whole.center.x, whole.max.y + 0.05f, whole.center.z), Vector3.up, out up, 80f, ~0, QueryTriggerInteraction.Ignore)) continue;
 				EditorGameObject over = up.collider.GetComponentInParent<EditorGameObject>();
 				if (over == null || over == e || up.point.y < sea - 0.3f || up.point.y - whole.max.y < 4f) continue;
+				// (a cave's rock over it is no deck: Rootweave's drowned crate and air pocket lie in its sea cave by design, 11-09)
+				if ((over.GameObjectName ?? "").IndexOf("Cave", StringComparison.Ordinal) >= 0) continue;
 				underDeck++;
 				if (underDeck <= floatDetail) FLog("  on the sea floor under a deck: " + n + " at " + Num(whole.center.x - mid.x) + " " + Num(whole.center.z - mid.y) + ", top h=" + Num(whole.max.y - sea) + " - " + over.GameObjectName + " over it at h=" + Num(up.point.y - sea));
 			}

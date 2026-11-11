@@ -363,7 +363,7 @@ namespace DynamicIslands.Editor
 		}
 		/// <summary>How far under an open cave's floor its apron digs the ground (m: crossing the floor at a slant, not grazing it in a
 		/// notched line, gen-large r36), and within how far of the end the eased ground is kept out of the rounding.</summary>
-		const float OpenSink = 0.3f, ApronPin = 1.5f, OpenNose = 1.5f, OpenEdgeSlope = 0.4f, OpenEdgeReach = 1.5f; // (OpenEdgeSlope/Reach: the sand round an open floor's edge, m per m and how far)
+		const float OpenSink = 0.3f, ApronPin = 1.5f, OpenNose = 1.5f, OpenEdgeSlope = 0.4f, OpenEdgeReach = 3.5f; // (OpenEdgeSlope/Reach: the sand round an open floor's edge, m per m and how far - 1.5 m left the bank past it rising steeply to the floor, a sawtooth lip along the grid, gen-large r58)
 		 // (OpenNose: how far in from an open floor's edge the sand eases from SlabSink to SlabUnder under it)
 		/// <summary>How steeply a den's raised sand falls away to the sand round about (rise per metre), and how much further than
 		/// ApronReach it may spread.</summary>

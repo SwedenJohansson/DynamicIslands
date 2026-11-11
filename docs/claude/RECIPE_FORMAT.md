@@ -96,7 +96,8 @@ plan save
   lit shell colour over the hill rock's (`CaveMountain.RockAsDen`); sand on gentle slopes stays. Ignored when a cave of the hill is tinted.
   `cave.rock=plain`: Raft's plain big rock, one rock for hill and den wall (the standard since 11-08; Shelter Atoll uses it).
 - `prop <cave piece alias> cave.foot=dry` (`ObjectProps.CaveFoot`): the default for a bear den (`CaveTool.Room`) with no
-  `cave.foot` of its own (`CaveMountain.DryFootFor`, 11-08); `cave.foot=wet` keeps the old foot. Dry walled mouths also get
+  `cave.foot` of its own (`CaveMountain.DryFootFor`, 11-08); `cave.foot=wet` keeps the old foot. `cave.dome=<m>` (`ObjectProps.CaveDome`, 11-10) caps a dry
+  den's dome reach (side/back/front) at that many m, height kept, its roof cells keeping the hill's own slopes; unset = unchanged. Dry walled mouths also get
   `CaveGround.Apron` (ground rounded 4 m out down to the den floor). `CaveGround.CutIn` lets
   ground down only where `Walled()` (rock on 5 of 8 sides within 25 m), `CaveMountain` drops loose skin cells (`DropLoose`),
   puts the sunk rim on dry sea-cut cells (ground > `DryBy` 0.3) and caps every way in at `DryWay` 12 m past its roof; a

@@ -116,8 +116,16 @@ prop burr creature.respawn=0
 # trunk 3: the beekeepers' box among the hives; trunk 4: in the trunk store (zipline); trunk 5: behind a vine wall (machete)
 clear at -18.5 -44 r=1.6
 place UT_WaterPump towerpump at -18.5 -44 ground sit yaw=90
-clear at 34 -10 r=1.5
-place Loot_ChestSmall beebox at 34 -10 ground sit yaw=230
+# (11-10 w02, REACH: at 34 -10 it lay in a dip 1.8 m under the roots beside it - no spot reached could open it: up
+#     onto the roots' edge, 2 m west; h2: at 33.2 -11.6 still in a root pocket 1.8 m down - out past the roots, 7.5 m
+#     from the trunk; h3: there it sat up on a root 1.9 m over the ground beside it; h4: at 41 -13 the east hill's sand
+#     rose 2 m over it after it was set down - onto the spot the walker reached south of the roots, 35.5 -16.5;
+#     h5: buried again, set down at 2.6 m where the sand ends at 4.4-4.7; h6: a pad flattened to 4.4 last left the
+#     sand unchanged and h=4.4 put it at 3.5; h7: dropped from 8 m it still fell to 2.4 - what the walker stands on here
+#     is trunk 3's own root mesh (scale 2.6), which ground/drop look through. Now set at a fixed height on the roots'
+#     top (3.7 m at x=33 in the h7 surface probe), no sit/drop)
+clear at 33 -17.3 r=1.5
+place Loot_ChestSmall beebox at 33 -17.3 h=3.75 yaw=200
 clear at 24 26 r=2.5
 place Loot_ChestSmall trunk5chest at 24.5 26 ground sit yaw=40
 beside ChoppableVines trunk5vines trunk5chest d=1.6
@@ -255,7 +263,7 @@ prop seedstore obj.name=seedstore
 prop seedstore beh.hidden=1
 story pumppart|Pump part|Placeable_Lantern_Metal|A part of the water tower's pump: a valve, a gasket, a crank rod.
 story water|Water running|Placeable_Lantern_Metal|The water tower's pump runs; water reaches the greenhouse and the roots.
-note beebox Beekeepers' box | The Seedkeepers' bee box, wedged in trunk 3's roots: smoker, comb and a pump valve.
+note beebox Beekeepers' box | The Seedkeepers' bee box, at the foot of trunk 3's roots: smoker, comb and a pump valve.
 # (box agent 10-25: a spare machete here - the vines need one, and a fresh world or a lost one from the delta left the island stuck)
 loot beebox story:pumppart*1;HoneyComb*2;Machete*1
 prop beebox loot.refill=0

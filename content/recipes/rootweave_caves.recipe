@@ -341,7 +341,8 @@ clear from 9.5 24 to 9.2 17.5 r=2.6 all only=^Pickup_Landmark_(Mushroom|DirtPick
 place Note_Sign rwwarn at 9.3 25.8 h=14.5 sit drop yaw=18
 note rwwarn DANGER - THORN PIT | The floor past this sign dropped into a pit of root thorns. Walk the planks along the wall on your left, not the rubble.\n- Verdance survey team
 place SmallBoulder3 - at 8.2 22.4 h=12.6 sit scale=0.3 yaw=10
-place SmallBoulder3 - at 8.9 20.6 h=12.55 sit scale=0.35 yaw=130
+# (11-10 w02 CC: it lay on the branch's middle line - "cave gaps look" blocked; to the side)
+place SmallBoulder3 - at 7.7 20.6 h=12.55 sit scale=0.35 yaw=130
 place SmallBoulder3 - at 8.0 18.9 h=12.6 sit scale=0.3 yaw=250
 place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 8.55 21.7 h=13.1 sit scale=0.25 yaw=95
 place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 8.35 19.6 h=13.1 sit scale=0.25 yaw=80
@@ -363,7 +364,7 @@ prop rwspike2 zone.hazard=spikes
 prop rwspike2 zone.damage=4
 prop rwspike2 zone.safe=none
 prop rwspike2 zone.hazardMsg=Root thorns! Keep to the planks.
-place Loot_ChestSmall rwchest at 9.3 16.6 h=14.5 drop yaw=18
+place Loot_ChestSmall rwchest at 9.1 17.0 h=14.5 drop yaw=18
 note rwchest Survey kit | Left past the thorn pit when the floor went. Rope, a bar of metal and leather for the walk back - you crossed on the planks, so you know the way.
 loot rwchest Rope*2;MetalIngot*1;Leather*2;Bolt*2
 prop rwchest loot.refill=0
@@ -377,4 +378,6 @@ place Creature_Rat rwratB at 22.5 22 h=10.3
 prop rwratB creature.count=1
 prop rwratB creature.respawn=0
 
+# (11-09 w02: a generated banana bush hung 2.7 m over the slope here - CIFloating)
+clear at -13.55 -40.62 r=1.5 only=Banana_Bush
 save Rootweave Caves

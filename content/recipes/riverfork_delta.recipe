@@ -27,12 +27,30 @@ generate
 brush flatten from -22 30 to -22 -85 r=4 s=20 frames=300 h=-1.2
 brush flatten from 22 30 to 22 -85 r=4 s=20 frames=300 h=-1.2
 brush flatten from -22 30 to 22 30 r=4 s=20 frames=300 h=-1.2
+# (11-09 w02, REACH: the north arm west of the meadow had banks over 1.3 m high - a wader got down in and found no
+# way back up: a sand ramp up its north bank, along the bank to the flat at 1.4 m - the south bank rises 7 m)
+for i 0 5 1
+brush flatten at {-15+1.5*$i} {29.3+0.45*$i} r=1.5 s=20 frames=200 h={-1+0.45*$i}
+next
+brush smooth from -15.5 29.2 to -7 31.7 r=2 s=10 frames=12
+# (11-10 w02, REACH: the north arm's bed at -6 27 rose 0.8 m in one step to the bank - wade in, no way out: a step between)
+brush flatten at -6.3 27.3 r=1.3 s=20 frames=200 h=-0.8
+brush flatten at -7.1 27.3 r=1.3 s=20 frames=200 h=-0.4
 brush sand from -22 30 to -22 -80 r=6 s=6 frames=30
 brush sand from 22 30 to 22 -80 r=6 s=6 frames=30
 brush sand from -22 30 to 22 30 r=6 s=6 frames=30
 brush flatten at 0 -52 r=6 s=20 frames=200 h=1.4
 brush flatten at 0 -14.5 r=6 s=20 frames=200 h=1.6
 brush flatten from -10 2 to -15 7 r=3 s=20 frames=120 h=1.4
+# (11-09 w02, REACH: that cut was a trench shut at both ends in the 9 m hill - the west arm zone and the ferry log
+# could not be reached: now it runs on from the outpost pad, and down the bank into the west arm by the ferry)
+brush flatten from -2 -9 to -10 2 r=3 s=20 frames=120 h=1.5
+for i 0 5 1
+brush flatten at {-15.5-0.9*$i} 7 r=2.5 s=20 frames=150 h={1.3-0.3*$i}
+next
+brush smooth from -2 -9 to -19 7 r=3.5 s=10 frames=12
+clear from -2 -9 to -10 2 r=3.5
+clear from -15 7 to -19.5 7 r=3
 brush flatten at 0 45 r=12 s=20 frames=200 h=2
 brush flatten at 8.25 43.5 r=4 s=20 frames=200 h=2
 origin
@@ -74,7 +92,9 @@ push at 6 42 h=2
 call hut w=3 d=2 y=0.1
 place Loot_Chest pressshed at 3.6 2.3 y=0.1 sit yaw=180
 place "Box Small" - at 0.8 2.3 y=0.1 sit
-place Note_Paper rangerlog4 at 0.8 2.3 y=1.7 drop yaw=10
+# (REACH 11-09: on the box in the corner no spot could read it - on the floor by the box now)
+# (11-10 w02: by the box no spot inside the shed was reached either - on the floor just inside the door now)
+place Note_Paper rangerlog4 at 1.1 0.9 y=0.6 drop yaw=10
 pop
 
 # --- REDO 10-24: three fuel cans from three river arms for the press; the machete taught three times ----------------
@@ -122,6 +142,12 @@ scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=64 seed=11188 free=2
 
 # --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): three ranger relays (fork sign, drawbridge, blighted vines), the timber-port crane on the east bluff (climb), the sunk barge (dive), the gorge hill, the otter den
 # the fork sign (RAFT_QUEST_MECHANICS M2): the three relays named where the river splits
+# (11-10 w02 r4, REACH: the bank under the sign rose 4 m in 2 m from the north arm (z 26 -> 24), and the only way up,
+#     at x=8, ran onto the capped den dome's foot - a ramp up the bank, west of it, from the river's edge)
+for k 0 5 1
+brush flatten at {6.5-1.2*$k} {27.6-0.6*$k} r=1.8 s=20 frames=150 h={1.2+0.85*$k}
+next
+brush smooth from 6.5 27.6 to 0.5 24.6 r=2.5 s=10 frames=12
 place Note_Sign forksign at 4 24 ground sit yaw=200
 # Relay Mouth by the landing (its fuse went down with the barge), Relay East over the drawbridge, Relay North behind
 # the blighted vines upriver. All three on -> the outpost's map screen shows the route code (M1 + M2 + M3)
@@ -144,7 +170,8 @@ clear from 27 -40 to 33 -40 r=3
 place CaravanHubBridge3 eastbridge at 13.2 -40 h=1.1 yaw=90
 place UT_JumpPuzzle_LiftMechanism_Lever bridgelever at 10 -42.5 ground sit yaw=90
 # the outpost's map screen
-place RT_RadarScreen mapscreen at 6.5 -8.5 ground sit yaw=200
+# (11-09 w02, REACH: on the bank 5 m over the pad a reader found no way back down - on the pad by the hut now)
+place RT_RadarScreen mapscreen at 3 -12 ground sit yaw=200
 # the climb: a mountain (trail winding up from bearing 250), a 10-storey climbing tower on its top, the summit box
 call vd_mount x=55 z=25 top=22 r=20 a0=250 turns=1.25 hb=3
 call vd_tower x=55 z=25 h0=22 lv=10 a=dltw box=dlbox zal=dltopz zid=dl_top msg="The timber port's crane. The jib still points at the river mouth; the route strongbox sits out on its end."
@@ -169,6 +196,8 @@ loot dllook Rope*2;Scrap*2;Leather*1
 prop dllook loot.refill=0
 call vd_spot x=-48 z=41.5 al=dllookz id=dl_lookout r=3 msg="From the gorge hill the three arms shine like a hand laid on the jungle."
 call ni8cave x=-59 z=10 h=2 yaw=180 al=dlottercave
+# (11-10 w02: its den's dome reached 40-63 m - over the west arm, the ferry cut and the fork sign's bank: cave.dome caps it)
+prop dlottercave cave.dome=20
 place Loot_ChestSmall dlottercavebox at -56.5 5 h=2.45 sit yaw=200
 place Placeable_Lantern_Metal - at -61.6 6 h=2.45 sit
 note dlottercavebox Otter den stash | The river people kept their spare net and a jar of something strong here.
@@ -185,7 +214,8 @@ prop treasure11380 treasure.loot=Scrap*6;Bolt*3;Nail*10
 beside Note_Paper teodortrial mapscreen d=1.4
 note teodortrial Water trial, sheet 1 | SEEDKEEPERS - HEART LAB - WATER TRIAL, SHEET 1 - T. LIND\n\nSite: river people's outpost, Riverfork Delta.\nProblem: brown foam on the stones, fish belly-up in the drawbridge arm, children with rashes. Old oil in the silt from the timber barges.\n\nTrial: one dose of V-1 in the outpost's water barrel. V-1 is a spore that eats oil and gives back clean water and flowers. Nothing else. I have checked it two hundred times.\n\nDay 1: foam gone.\nDay 3: the drawbridge arm runs clear. Hedda says the water tastes sweet. Children say it tastes like sweets.\nDay 6: vines on the ferry rope. Small. Lovely, really.\n\nI am so happy I could cry. I will tell Marit tonight. She said I would never fix the river. I have fixed the river.
 # (REACH 10-28: at 0.3 over the ground it lay in the bank - dropped from 1 m)
-place Note_Paper ferrylog at -18.5 5 ground y=1.0 drop
+# (11-09 w02: at -18.5 5 it lay in the hill beside the cut - in the cut by the ferry zone now)
+place Note_Paper ferrylog at -13 5.3 ground y=1.0 drop
 note ferrylog Ferry log | FERRY LOG - HEDDA, ferry keeper\n\nCrossings today: 31. Fares paid: 4. Fares paid in fish: 9. Fares paid in "I will pay you tomorrow, Hedda": everyone else, as usual.\n\nThe rope is growing leaves. I cut them in the morning and by supper there are more. The lab man says it is good. The lab man has never had to wind a ferry with a salad on the rope.\n\nThe water smells sweet at night. People go down to the bank and stand there, just stand. Old Ulf stood there till midnight and said he heard singing upriver.\n\nI told him that was the boars. He did not laugh. He always laughs at my jokes; that is why he pays in fish.
 place Note_Paper fishernote at 28 -16 ground y=0.3 drop
 note fishernote Fisher's diary | ULF - FISHING, drawbridge arm\n\nThe puffers have come back to the barge wreck. They feed where it lies, off the mouth, ten metres down. I have not seen puffers here since I was a boy.\n\nThe fish taste of honey now. My wife says that is not natural. I say nothing about this river has been natural since the timber men came. This is the first nice thing.\n\nThere is singing upriver at night. Not people. More like a lot of leaves moving the same way at the same time.\n\nTomorrow the whole village is going up to see. Hedda says she is staying with the ferry. Hedda says that every time, and then she comes.
@@ -196,6 +226,8 @@ note pimnote Note in the otter den | MY HIDING PLACE, by PIM (age 9). KEEP OUT. 
 info title=Riverfork Delta
 info author=Custom Islands
 info description=A jungle delta cut by river arms: the river people's outpost, vines on the paths, a rope ferry and boars upriver. The third island of The Last Green World.
+# (REACH 11-09: the crane top is a ladder climb the 1x walker can't judge - the play climbs it and reads the cab note)
+island reach.byplay=Crane cab box;dl_top
 island on.arrive=message||Fresh water runs into the sea here - three river arms through the jungle. Somewhere a wheel creaks on a rope.
 
 story ferry|Ferry crossed|Note_Paper|The delta's rope ferry, wound across the ferry arm.
@@ -348,6 +380,9 @@ clear from 1.5 -18.5 to 5.5 -24.5 r=2.5 body
 # (11-08 b, box run: from 116 the mouth lay 11.1 m down and the den only 1 m over the sea - wet; now from 111, longer)
 # No rats: the den is reached only under water and gets no NavMesh floor.
 call kit_st x=111 z=30 yaw=270 len=63 slope=12 end=room size=0.7 hill=1 dirt=0 mush=2 stone=2 vines=1 as=rdcave
+# (11-10 w02: its den's dome buried the press shed 43 m off; cave.dome caps it - b: at 20 the capped dome cut the den
+#     room off its tunnel and stood a sheer face on the fork sign's path; 32 keeps the room and a walkable foot)
+prop rdcave cave.dome=32
 # (the hill over the tunnel and den raises the ground round any plants there: cleared)
 clear from 62 30 to 100 30 r=7 all body only=Tree|Palm|Mango|Bush|Rock|Pineapple|Flower
 clear at 40 30 r=10 all body only=Tree|Palm|Mango|Bush|Pineapple|Flower below=12
@@ -370,5 +405,8 @@ prop rdseeds obj.name=rdseeds
 prop rdseeds loot.refill=0
 note rdseeds Seed tin | The river people's seed tin, kept dry in the otter's den: seeds of the delta's own fruit.
 loot rdseeds Seed_Mango*2;Seed_Pineapple*2;Seed_Watermelon*2;Seed_Banana*1
+
+# (11-09 w02: a banana bush on the trial pit's new ramp stood 0.5 m off its smoothed bank)
+clear at -8.7 32.9 r=2 all body only=Banana
 
 save Riverfork Delta
