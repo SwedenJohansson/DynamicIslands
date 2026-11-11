@@ -16,6 +16,7 @@ include lib_huts
 include lib_highwater
 include lib_areas
 include lib_features
+include lib_caves
 # RESIZE 10-24b: Radius 36 -> 85 (Height 4 -> 5), the old content moved -42.3 -24.9 as one frame (push) so its sea side stays at
 # DEEP 10-24: Scrapjaw Heights: a scrap mountain with an old excavator at the top of a boom ladder, the Union strongroom sixteen metres down, and three cranes woken by one console.
 # the coast; the island grows behind it. The jetty and its drowned street stay on the coast (south-west); the clay barge and the two reefs were moved out to the new south and west coasts.
@@ -413,4 +414,17 @@ call ar_plants_hill x=18 z=-74 r=12 seed=5820
 # (hill rocks that stood off a steep slope, CIGroundIslands 10-25)
 clear at 56.16 43.4 r=1.2 only=SmallBoulder4 all
 clear at 61.25 46.23 r=1.2 only=SmallBoulder4 all
+# --- 11-11 (w04): the cut through the spoil heap's foot - optional, vines (the machete from Fleetbreak) -------------------
+# A straight cave (kit_st, open at both ends) through the base of the spoil heap's south-east end, from the yard's side
+# to the shore: the Union's old barrow cut, grown shut with vines at its yard mouth. A salvager's box halfway along.
+# No quest step needs it (the heap's top zone is 16 m off). No rats. cavecheck: 6 m and more from the quest's things.
+origin
+call kit_st x=42.5 z=0.5 yaw=33 len=28 slope=-2 end=open size=0.7 hill=1 dirt=2 mush=0 stone=0 vines=2 gate=1 as=hkcut
+prop hkcut cave.rock=plain
+# cavecheck inside hkcutbox
+place Loot_ChestSmall hkcutbox at 51.1 11.5 h=3.4 drop yaw=300
+prop hkcutbox obj.name=hkcutbox
+prop hkcutbox loot.refill=0
+note hkcutbox Barrow cut box | A salvager's box left in the cut under the spoil heap: a crowbar's worth of scrap, nails, a roll of tape. Chalked on the lid: CUT CLOSED - VINES. TAKE A BLADE.
+loot hkcutbox Scrap*4;Nail*8;Rope*1;MetalIngot*1
 save Hookline Stack

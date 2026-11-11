@@ -17,6 +17,7 @@ include lib_verdance
 include lib_concord
 include lib_highwater
 include lib_areas
+include lib_caves
 # RESIZE 10-24: Radius 52 -> 100 (Height 2 -> 3), the old content moved 26.4 0 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 # DEEP 10-24: Pile-driver's Hump: the derrick that drove the city's piles, a pump gallery eighteen metres down, and the jack pump that holds a leaning pile.
 new
@@ -365,5 +366,17 @@ clear at 26.1 21 r=1.5 only=SmallBoulder2
 # (G2 10-30: two bamboos on the rim of a drop, their trunks over it - CIGroundIslands 10-30)
 clear at -37.74 -62.31 r=1 only=Bamboo
 clear at 72.92 -46.36 r=1 only=Bamboo
+
+# --- 11-11 (w04): the old pile-drivers' drift (plan 04 row: DIG between the piles, UW mouth at the low end; stone 3,
+# dirt 2). No quest step. When the piles were driven the gangs cut a drift from the west bank down to the basin floor
+# to bring the stone in; the sea filled it when the basin was flooded. Its low mouth opens in the basin's west wall
+# between the outer piles (8 m and more from them), 10 m down; the drift climbs west-north-west at 25 degrees under the bank and
+# comes up as a flooded hole in the bank 24 m on, its last metres just under the sea. Points in the origin frame (the
+# pile field's push at 26.4 0 puts the basin's middle at 10.4 0): low mouth -4 8, high end -29.4 17.2. 10 m and more from
+# the jacks, the air pockets, the jack logs and the view zone (cavecheck).
+origin
+clear at -29.4 17.2 r=4 only=(?i)boulder|rock|tree|bush|bamboo
+call kit_dig x=-4 z=8 yaw=290 len=24 flat=3 r=1.75 slope=25 room=0 dirt=2 mush=0 stone=3 vines=0 titanium=0 as=fpdrift
+prop fpdrift cave.rock=plain
 
 save The Foundation Piles

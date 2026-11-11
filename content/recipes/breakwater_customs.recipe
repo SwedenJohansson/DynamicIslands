@@ -17,6 +17,7 @@ include lib_rt
 include lib_huts
 include lib_highwater
 include lib_areas
+include lib_caves
 # RESIZE 10-24: Radius 40 -> 85 (Height 4 -> 4), the old content moved 0 -24.8 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 # DEEP 10-24: Lantern Crag (climb, dive, signal box) - replaced 10-24 (story pass) by the Bonded Yard, a maze of seized-goods walls.
 # STORY 10-24: voices - Councillor Aldous Crane (the rules, his loop on 500), Nell the night clerk, Osric the old keeper,
@@ -331,4 +332,31 @@ call ar_plants_hill x=70 z=42 r=12 seed=5220
 
 # (hill rocks that stood off a steep slope, CIGroundIslands 10-25)
 clear at 53.16 53.76 r=1.2 only=SmallBoulder4 all
+# --- 11-11 (w04): the smugglers' tunnel under the east quay - optional ------------------------------------------------
+# An underwater mouth on the sea floor off the east shore (5 m down), a flooded tunnel climbing under the big east hill
+# into a dry room: the smugglers' store, contraband in a chest. No quest step needs it. No rats: reached only under water.
+# cavecheck: 6 m and more from the quest's things; the bonded yard (z -20 up) and the watch tower stay clear of the den.
+origin
+call kit_uw x=60 z=-80 yaw=340 len=37 slope=12 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 as=bwsmug
+prop bwsmug cave.rock=plain
+prop bwsmug cave.dome=18
+place Zone_Trigger bwsmugair at 43.5 -35 h=3.5
+prop bwsmugair obj.name=bwsmugair
+prop bwsmugair zone.id=bw_smugglers
+prop bwsmugair zone.radius=8
+prop bwsmugair zone.repeat=1
+prop bwsmugair zone.air=1
+prop bwsmugair zone.message=A dry room at the top of the flooded tunnel - air. Somebody kept goods here that never saw a customs stamp.
+# cavecheck inside bwcontraband
+place Loot_ChestSmall bwcontraband at 45.9 -34 h=3.3 drop yaw=160
+prop bwcontraband obj.name=bwcontraband
+prop bwcontraband loot.refill=0
+note bwcontraband Contraband | Crates with the Authority's seal cut off and a tally chalked on the lid:
+
+TWELVE COILS - SOLD AT THE ROW
+FOUR INGOTS - SOLD AT THE ROW
+ONE RADIO - KEPT
+
+Whoever ran this tunnel came in under the boom and went out to Raft Row Bazaar.
+loot bwcontraband MetalIngot*2;CopperIngot*1;Rope*2;Nail*6
 save Breakwater Customs

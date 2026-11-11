@@ -1,0 +1,35 @@
+# Cistern Hall's overflow channel (CIPlay cistern_hall_acid, 11-11; in a test world 'CI ...', under CIGapsWatchHealth,
+# no CIGapsSuit). Points as in its recipe (the origin frame): the channel's mouth at hill 1's south foot at 62 -63.5,
+# dug in to 62 -56 and its small room to 62 -52; the acid zone ch_overflow at 62 -58.5 (r 2.5, safe=suit); the suit box
+# at 53 -62.5 and the warning sign at 54 -61 west of the mouth; the overflow valve at 70.8 -62.5 east of it; the overflow
+# locker at 62 -53.5. Without the suit the floor burns; the valve hides the zone, then the floor is safe. The suit run
+# is cistern_hall_acidsuit.
+island Cistern Hall keep
+offset 0 0
+hour 11
+weather Calm
+
+picture ch_flow_out 62 5 -71 62 3.5 -60
+# In without a suit: the sludge burns
+expect shown chflowacid
+at 62 -65.5
+walk 62 -65.5 to 62 -63.5 to 62 -58.5
+wait 5
+expect message acid sludge
+expect hurt 15
+picture ch_flow_in 62 4 -62 62 3 -55 light=20
+walk 62 -58.5 to 62 -63.5 to 62 -65.5
+# (the way out is through the acid too: counted here, so the dry walk below starts from none)
+expect hurt 1
+
+# Along the foot to the valve: the sludge goes, the floor is safe
+walk 62 -65.5 to 69.5 -63.5
+use chflowvalve
+wait 2
+expect hidden chflowacid
+walk 69.5 -63.5 to 62 -65.5 to 62 -63.5 to 62 -58.5 to 62 -54.5
+wait 5
+expect unhurt
+open Overflow locker
+wait 2
+expect item Battery 1

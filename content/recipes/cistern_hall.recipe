@@ -18,6 +18,7 @@ include lib_features
 include lib_verdance
 include lib_highwater
 include lib_areas
+include lib_caves
 # RESIZE 10-24: Radius 40 -> 85 (Height 7 -> 7), the old content moved 4.9 -24.3 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 # DEEP 10-24: Overflow Tor: a surge tower over the cistern, a settling house drowned in the south, and sluice gates that must be pulled in the right order.
 new
@@ -412,6 +413,8 @@ quest reward=CopperOre*3;CaveMushroom*2
 origin
 # hill 1: 44 m across, 16 m over the sea
 brush flatten at 64 -46 r=22 s=20 frames=600 h=5.6
+# (11-11 w04: a shoulder on the hill's west side, over the old cistern rooms dug into it - see the cistern block below)
+brush flatten at 53 -46 r=13 s=20 frames=600 h=9.4
 brush flatten at 64 -46 r=15.8 s=20 frames=600 h=10.4
 brush flatten at 64 -46 r=9.9 s=20 frames=600 h=14.4
 brush flatten at 64 -46 r=6 s=20 frames=500 h=16
@@ -481,4 +484,53 @@ call ar_plants_hill x=32 z=-28 r=12 seed=6320
 # (hill rocks that stood off a steep slope, CIGroundIslands 10-25)
 clear at 54.1 -27.21 r=3 only=SmallBoulder4 all
 clear at 6.57 76.21 r=3 only=SmallBoulder4 all
+# --- 11-11 (w04): the old cisterns under hill 1 (plan 04 row: SYS of 3 cistern rooms joined + a DIG overflow channel;
+# mushrooms 4, dirt 2; an ACID overflow pool on the side, safe = suit, a valve hides it). No quest step.
+# The city's first cisterns were cut into the hill before the pump hall: two ways in at the hill's west foot (the
+# shoulder raised in the hill 1 block above holds them), one passage bending to a cistern room under the summit, a
+# second room off the passage, a third at the bend. The overflow channel is apart, at the hill's south foot by the
+# shore: still half full of acid sludge from the pump hall. The suit box and the valve are by its mouth, the overflow
+# locker at its back. All of it 13 m and more from the trail, the notes and the hall (cavecheck).
+origin
+brush smooth at 39 -47 r=5 s=8 frames=60
+brush smooth at 39 -40 r=5 s=8 frames=60
+brush smooth at 62 -63.5 r=5 s=8 frames=60
+clear at 39 -47 r=3 only=(?i)boulder|rock|tree|bush
+clear at 39 -40 r=3 only=(?i)boulder|rock|tree|bush
+clear at 62 -63.5 r=3 only=(?i)boulder|rock|tree|bush
+call kit_sys x=39 z=-47 yaw=90 side=-1 len=15 bend=5 branch=7 blen=1 gap=7 in2=11 r=1.75 roomr=3 dirt=2 mush=4 stone=0 vines=0 titanium=0 as=chcis
+prop chcis cave.rock=plain
+# the third cistern room, at the passage's bend under the summit
+dig 54,-42 58,-42 r=3 slope=0
+place Loot_ChestSmall chcischest at 48.5 -54 h=3.4 drop yaw=0
+note chcischest Cistern keeper's chest | The cistern keeper's chest, left in the dry cistern when the pump hall took the water: his gauges and the spare fittings.
+loot chcischest MetalIngot*1;Bolt*3;Rope*1;Glass*2
+prop chcischest loot.refill=0
+# the overflow channel and its acid
+call kit_dig x=62 z=-63.5 yaw=0 len=7 flat=0 r=1.75 slope=0 room=1 roomr=2.5 roomlen=4 dirt=0 mush=0 stone=0 vines=0 titanium=0 as=chflow
+prop chflow cave.rock=plain
+place Note_Sign chflowwarn at 54 -61 ground sit yaw=120
+note chflowwarn OVERFLOW - ACID SLUDGE | The pump hall's overflow drains in here. The sludge in the channel burns. Suits in the box at the mouth. Or shut the overflow with the valve by the mouth and let it run out to sea.\n- Sluice office
+place "Box Big" chflowsuits at 53 -62.5 ground sit yaw=120
+prop chflowsuits obj.name=chflowsuits
+prop chflowsuits beh.use=Put on a sludge suit
+prop chflowsuits on.use=suit||180\nmessage||An old sluice-man's suit, oilskin and rubber boots - three minutes before the sludge gets through.
+place Zone_Trigger chflowacid at 62 -58.5 h=3
+prop chflowacid obj.name=chflowacid
+prop chflowacid zone.id=ch_overflow
+prop chflowacid zone.radius=2.5
+prop chflowacid zone.hazard=acid
+prop chflowacid zone.damage=4
+prop chflowacid zone.safe=suit
+prop chflowacid zone.hazardMsg=The channel floor is acid sludge from the pump hall. Put on a suit from the box at the mouth - or shut the overflow with the valve outside.
+place UT_JumpPuzzle_LiftMechanism_Lever chflowvalve at 70.8 -62.5 ground sit yaw=210
+prop chflowvalve obj.name=chflowvalve
+prop chflowvalve beh.use=Turn the overflow valve
+prop chflowvalve on.use=hide|chflowacid\nmessage||The valve groans shut. In the channel the sludge drains away down a crack to the sea, and the floor steams dry.
+place Loot_ChestSmall chflowlocker at 62 -53.5 h=3.4 drop yaw=180
+note chflowlocker Overflow locker | The overflow keeper's locker at the back of the channel, out of reach since the sludge came.
+loot chflowlocker Battery*1;CopperIngot*2;Bolt*2;Glass*2
+prop chflowlocker loot.refill=0
+# cavecheck inside chcischest chflowlocker
+
 save Cistern Hall

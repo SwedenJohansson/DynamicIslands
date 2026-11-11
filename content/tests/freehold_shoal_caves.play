@@ -1,0 +1,15 @@
+# Freehold Shoal's squatters' shelter cave (CIPlay freehold_shoal_caves, 11-11; any world). Points as in its recipe (the
+# origin frame): the mouth at 40 6 on the open north-east sand, facing the landing; a short way in north to the room
+# (its middle about 40 30) on the cave tool's own mound; the squatters' tin chest at 40 30. Dry, no air zone.
+island Freehold Shoal keep
+offset 0 0
+hour 11
+weather Calm
+
+picture fh_cave_out 40 6 -8 40 4 8
+walk 40 0 to 40 6 to 40 16 to 40 27
+picture fh_cave_in 40 4.5 18 40 3.5 30 light=20
+open Squatters' tin chest
+wait 2
+expect item Plastic 2
+walk 40 27 to 40 16 to 40 6 to 40 0

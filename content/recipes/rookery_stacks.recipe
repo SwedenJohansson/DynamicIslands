@@ -16,6 +16,7 @@ include lib_huts
 include lib_features
 include lib_highwater
 include lib_areas
+include lib_caves
 # RESIZE 10-24: Radius 38 -> 80 (Height 4 -> 4), the old content moved -6.6 -22.1 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 # DEEP 10-24: Chimney Tor: the poor quarter's great chimney, a drowned bathhouse cellar, butler bots that guard the stack doors - and hot water for the Rookery.
 new
@@ -455,5 +456,16 @@ call ar_plants_hill x=-40 z=-62 r=12 seed=6190
 call ar_plants_hill x=-44 z=-18 r=12 seed=6200
 call ar_plants_hill x=44 z=60 r=12 seed=6210
 call ar_plants_hill x=70 z=-38 r=12 seed=6220
+
+# --- 11-11 (w04): the egg-collectors' hollow under the gull stacks (plan 04 row: DIG under the rookery - the gull
+# stacks, the birds' rookery; the spikes stay; dirt (the bed by the smithy, existing), mushrooms 2). No quest step.
+# The egg collectors dug a short hollow into the stacks' west end to keep the eggs cool. Mouth at the low west foot
+# -5 56, level east 8 m to a small room (to 9 56) under the stacks' west shoulder. 11 m and more from the gull stacks'
+# zone, Pip's note and the buried finds (cavecheck).
+origin
+brush smooth at -5 56 r=5 s=8 frames=60
+clear at -5 56 r=3 only=(?i)boulder|rock|tree|bush|bamboo
+call kit_dig x=-5 z=56 yaw=90 len=8 flat=0 r=1.75 slope=0 room=1 roomr=3 roomlen=3 dirt=0 mush=2 stone=0 vines=0 titanium=0 as=rkhollow
+prop rkhollow cave.rock=plain
 
 save Rookery Stacks
