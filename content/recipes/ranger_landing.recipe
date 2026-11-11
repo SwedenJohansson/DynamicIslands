@@ -195,7 +195,12 @@ loot rlcrate Bolt*4;Scrap*3;Rope*2
 #     quarry shelf cut level into the slope, over the hill's skin - ground shows only 0.6 m or more over it)
 # (11-10 w02: the shelf was terrain, and the hill's skin lies over the terrain there (13.2 m) - the chest sat under it at
 #     10 m. On the skin now; the terrain under a skin is never seen)
-place Loot_ChestSmall rlquarry at -30 60 h=13.15 sit yaw=0
+# (11-11 w02fix, CIFloating: the editor builds no skin, so on it the chest "touched nothing" 8 m over the terrain (5 m); a
+#     drop fell through to the terrain; a terrain post under it bent the skin down and showed through it as a patch.
+#     The chest sits on a plank (lying along the hill, x): in the editor the two touch each other; in a world the skin
+#     (13.5 at z 59 - 14.2 at z 58) covers the plank and the chest stands on it
+place FL_Plank3 rlqplank at -30.3 58.7 h=13.66 yaw=0
+place Loot_ChestSmall rlquarry at -30.3 58.7 h=13.68 sit yaw=0
 note rlquarry Quarry tool chest | Oda's hammer, left where the stone was split. A chalk note: RACK. YES I KNOW.
 loot rlquarry story:tool*1;Stone*6;Nail*6
 prop rlquarry loot.refill=0
@@ -355,4 +360,13 @@ prop rlwreck obj.name=rlwreck
 brush flatten at -60.3 70.6 r=1.4 s=20 frames=150 h=-0.2
 brush flatten at -61.2 69.6 r=1.4 s=20 frames=150 h=0.3
 brush smooth from -59.8 71.1 to -62.2 68.8 r=2 s=10 frames=12
+# (11-11 c1111, REACH: a 3x2 m pool at -50.8 73.8 (sea level, open sky) behind a 0.8 m lip - a swimmer got in, not out:
+# the pool filled up to a low shelf, the lip at its sea side let down)
+brush flatten at -50.8 73.8 r=2.2 s=20 frames=150 h=0.3
+brush flatten at -52.6 73.8 r=1.6 s=20 frames=150 h=0.2
+brush smooth from -49.5 73.8 to -53.5 73.8 r=2.2 s=10 frames=12
+# (11-11 w02fix, REACH: a roofed sea pocket under the same rocks at -56.5 69.6 (h -1.7..0) - its way out at -58 71 was a
+# 1.1 m step: a shelf from the pocket up to it)
+brush flatten at -57.5 70.4 r=1.2 s=20 frames=150 h=0.4
+brush smooth from -56.4 69.5 to -58.6 71.4 r=1.6 s=10 frames=12
 save Ranger Landing
