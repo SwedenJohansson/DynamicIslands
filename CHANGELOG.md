@@ -11,6 +11,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (not released yet)
 
+- **Worlds get their day back** (the calendar showed day 0 after a restart, the raft still there): before 3.4, *Esc > Quit game* made one more save after Raft had left the world, with the day already reset to 0 (and no world id). 3.4 stopped that save and gave such worlds their id back, but not their day. Now the day comes back too when the world loads, from the save Raft made just before (plus any days played since). The day may come back a few hours short: it is the day of the last good save.
 - **The journal and stats page keys in Raft's Controls settings**: at the bottom of **Settings > Controls** (main menu and pause menu) two rows, *Islands journal* (J) and *Islands stats page* (K), set like Raft's own keys. They are the same keys as **Defaults... > Keys (this PC)** and `world_rules.txt`; Raft's **Reset Keybinds** puts them back to J and K. The alt key column can't be set. Raft's list is now as tall as its rows, so Hotbar 8-10 can be scrolled to as well.
 - **Dug tunnel mouths in a cliff blend in**: the rim round a tunnel dug into an island's cliff now wears the cliff's own ground look, not a darker or tan rock patch with a jagged outline (seen at The Stalker's Hollow and Lumen Shelf). Beside a cave hill the rim keeps the hill's rock.
 - **A bear den's hill can be kept small** (island makers): `cave.dome=<m>` on a cave piece keeps its rounded hill within that many metres of the den, as tall but steeper. Without it every den is as before.
