@@ -348,6 +348,7 @@ namespace DynamicIslands.Editor
 		public const float PlugForward = 1.8f;
 		/// <summary>How far behind the hill's skin a lone den's wall's outside is set where the skin is just in front of it (m).</summary>
 		public const float SkinCover = 0.35f;
+		const float FlakeArea = 6f; // (r84: a loose bit of the wall's outside smaller than this, m2, is dropped - WallLikeHill)
 		/// <summary>A lone den's way in in shade: its wall's outside round the arch drawn darker, in bands out to the arch's size times
 		/// these (the first band darkest, by PlugShade), the rest as the hill. Each band's edge is a smooth, uneven line (the
 		/// triangles cut along it): whole 0.5 m cells drew it as a staircase, 11-06 review.</summary>
@@ -671,7 +672,7 @@ namespace DynamicIslands.Editor
 			MeshFilter mf = outT != null ? outT.GetComponent<MeshFilter>() : null;
 			if (r == null || mf == null || mf.sharedMesh == null || skin == null || skin.sharedMaterial == null) return false;
 			r.sharedMaterials = Enumerable.Repeat(skin.sharedMaterial, mf.sharedMesh.subMeshCount).ToArray();
-			r.shadowCastingMode = skin.shadowCastingMode;
+			r.shadowCastingMode = ShadowCastingMode.Off; // (r82: no shadow - see PlugOpening)
 			r.receiveShadows = skin.receiveShadows;
 			r.lightProbeUsage = skin.lightProbeUsage;
 			r.reflectionProbeUsage = skin.reflectionProbeUsage;
@@ -700,6 +701,39 @@ namespace DynamicIslands.Editor
 			// whole wall stretched the funnel's sides into stripes - the den's "zebra" frame, 11-08 user)
 			Vector3[] mv = m.vertices, mn = m.normals;
 			var nv = new List<Vector3>(); var nn = new List<Vector3>(); var nu = new List<Vector2>();
+			// (r84: bits of the outside not joined to the rest - its corners welded by place - and under FlakeArea m2 dropped:
+			// they hung in the air off the hill's side as rock flakes, Balboa Remade mouth 1, 11-11 user)
+			var weld = new Dictionary<Vector3Int, int>();
+			var vid = new int[mv.Length];
+			for (int v = 0; v < mv.Length; v++)
+			{
+				Vector3Int key = Vector3Int.RoundToInt(mv[v] * 50f);
+				int id;
+				if (!weld.TryGetValue(key, out id)) { id = weld.Count; weld[key] = id; }
+				vid[v] = id;
+			}
+			var root = Enumerable.Range(0, weld.Count).ToArray();
+			Func<int, int> find = null;
+			find = x => { while (root[x] != x) { root[x] = root[root[x]]; x = root[x]; } return x; };
+			for (int s = 0; s < m.subMeshCount; s++)
+			{
+				int[] st = m.GetTriangles(s);
+				for (int t = 0; t + 2 < st.Length; t += 3) { root[find(vid[st[t + 1]])] = find(vid[st[t]]); root[find(vid[st[t + 2]])] = find(vid[st[t]]); }
+			}
+			var area = new Dictionary<int, float>();
+			for (int s = 0; s < m.subMeshCount; s++)
+			{
+				int[] st = m.GetTriangles(s);
+				for (int t = 0; t + 2 < st.Length; t += 3)
+				{
+					int g = find(vid[st[t]]);
+					float ar = 0.5f * Vector3.Cross(outT.TransformVector(mv[st[t + 1]] - mv[st[t]]), outT.TransformVector(mv[st[t + 2]] - mv[st[t]])).magnitude;
+					float had; area.TryGetValue(g, out had); area[g] = had + ar;
+				}
+			}
+			float biggest = area.Count > 0 ? area.Values.Max() : 0f;
+			var flake = new HashSet<int>(area.Where(kv => kv.Value < FlakeArea && kv.Value < biggest).Select(kv => kv.Key));
+			Debug.Log("[CUSTOM ISLANDS] Plug " + den.name + ": outside in " + area.Count + " piece(s), " + flake.Count + " flake(s) dropped (" + string.Join(" ", area.Values.OrderByDescending(x => x).Take(8).Select(x => x.ToString("F1")).ToArray()) + " m2)");
 			var subs = new List<int>[m.subMeshCount];
 			for (int s = 0; s < subs.Length; s++)
 			{
@@ -707,6 +741,7 @@ namespace DynamicIslands.Editor
 				subs[s] = new List<int>(st.Length);
 				for (int t = 0; t + 2 < st.Length; t += 3)
 				{
+					if (flake.Contains(find(vid[st[t]]))) continue;
 					nearSkin = false;
 					Vector3 a = UnderSkin(outT.TransformPoint(mv[st[t]])), b = UnderSkin(outT.TransformPoint(mv[st[t + 1]])), c = UnderSkin(outT.TransformPoint(mv[st[t + 2]]));
 					Vector3 fn = Vector3.Cross(b - a, c - a);
@@ -1338,6 +1373,9 @@ namespace DynamicIslands.Editor
 			MeshRenderer wr = go.AddComponent<MeshRenderer>();
 			wr.sharedMaterial = rockLook != null ? rockLook.sharedMaterial : look.sharedMaterial;
 			go.AddComponent<MeshCollider>().sharedMesh = both;
+			// (r82: no shadow of its own - the sun nearly overhead, its rim leaning out over the sand before the arch (PlugLean)
+			// cast its 0.5 m cells' staircase outline there as a jagged teal patch, and a lone cell a dark square, Shelter Atoll r81)
+			wr.shadowCastingMode = ShadowCastingMode.Off;
 			var outGo = new GameObject(PlugOutName);
 			outGo.layer = go.layer;
 			outGo.transform.SetParent(go.transform, false);
@@ -1352,7 +1390,9 @@ namespace DynamicIslands.Editor
 			for (int b = 0; b < bands.Length - 1; b++) outMesh.SetTriangles(bands[b], b + 1);
 			outMesh.RecalculateBounds();
 			outGo.AddComponent<MeshFilter>().sharedMesh = outMesh;
-			outGo.AddComponent<MeshRenderer>().sharedMaterials = Enumerable.Repeat(wr.sharedMaterial, bands.Length).ToArray();
+			MeshRenderer outR = outGo.AddComponent<MeshRenderer>();
+			outR.sharedMaterials = Enumerable.Repeat(wr.sharedMaterial, bands.Length).ToArray();
+			outR.shadowCastingMode = ShadowCastingMode.Off;
 			// (and a short rock tunnel in the way in, seen from outside only (CaveVeil): the den room through the arch read blue, 11-08 user)
 			CaveVeil.Build(go, hcx, hcy, ha, hb, hp, archNoise, zf - PlugFunnel, my, wr.sharedMaterial);
 			// (lit as the den, its own parts looked up again, the outside too)
