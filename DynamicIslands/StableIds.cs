@@ -161,7 +161,7 @@ namespace DynamicIslands.Editor
 		// ---- Keys --------------------------------------------------------------------------------------------------
 
 		/// <summary>The keys whose number says the object's place in the file (Behaviours, CodeLock, QuestItemPickups).</summary>
-		static readonly int[] IndexBases = { Behaviours.StateBase, Behaviours.DoneBase, Behaviours.SharedOnceBase, CodeLock.LockKeyBase, QuestItemPickups.KeyBase, Survivors.KeyBase, BossPhases.KeyBase, Islanders.TalkedBase, Collectibles.KeyBase, TriggerSounds.KeyBase, Behaviours.StoryGivenBase, RaftVending.PackageKeyBase, GapWorld.CoopBase };
+		static readonly int[] IndexBases = new[] { Behaviours.StateBase, Behaviours.DoneBase, Behaviours.SharedOnceBase, CodeLock.LockKeyBase, QuestItemPickups.KeyBase, Survivors.KeyBase, BossPhases.KeyBase, Islanders.TalkedBase, Collectibles.KeyBase, TriggerSounds.KeyBase, Behaviours.StoryGivenBase, RaftVending.PackageKeyBase, GapWorld.CoopBase }.Concat(Taming.KeyBases).ToArray(); // (QE11 pens: 8 ranges)
 		const int TreasureLow = 0xC000;
 
 		/// <summary>Where each running number of an island's objects points: the object's place, and (pickups) which of its pickups.</summary>

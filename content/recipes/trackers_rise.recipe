@@ -39,17 +39,21 @@ clear at -11.75 -9.75 r=5
 clear at 0 -40 r=6
 
 # --- The trackers' watch tower on four posts: the tower chest on its deck; the zipline down to the cove ---------------
-push at -14 -12 h=6
-call stilt_hut y=2.6
+# (11-10 w02, REACH: the ground at the ladder's foot is 1.1 m over the push - the ladder stood 1.1 m over the deck, no
+#     floor to step off at its top; the tower 1.1 m up, its posts down to the old foot)
+push at -14 -12 h=7.1
+call stilt_hut y=2.6 foot=1.1
 place Loot_Chest towerchest at 3.6 3.6 y=2.7 sit yaw=180
 # REDO 10-24: the tower's map table (the island's machine) and Oda's map case it opens
-place MapTable maptable at 1.4 3.4 y=2.7 sit yaw=0
+place MapTable maptable at 1.4 3.4 y=2.66 sit yaw=0
 place Loot_ChestSmall mapcase at 3.6 1.0 y=2.7 sit yaw=270
 pop
 # (zip deck beside the tower)
 push at -9 -14 h=6
 call zipdeck y=2.6
 pop
+# (11-10 w02, REACH: the zip deck ladder's foot hung 1.2 m over the ground - a hand could not reach it; a step of ground under it)
+brush flatten at -10.7 -12.3 r=2 s=20 frames=120 h=7.3
 place ZiplinePath_Landmark towerzip at -2.53 -14.22 h=10.07
 zipto towerzip 2 -40
 clear at -6 -17 r=2.5
@@ -96,7 +100,8 @@ clear at -45 -10 r=8
 push at -47.25 -11.5 h=3.4
 call thatchhut w=3 d=2
 place "Box Small" - at 2.25 2.2 y=0.1 sit
-place Note_Paper rangerlog5 at 2.25 2.2 y=1.7 drop yaw=30
+# (REACH 11-09: on the box at the back 1 m short of a spot to read it - on the floor in front of the box now)
+place Note_Paper rangerlog5 at 2.25 1.2 y=0.6 drop yaw=30
 pop
 # REDO 10-24 (optional): Oda's ranger cache by the old hut, locked with her ranger key from Ranger Landing
 clear at -51 -14.5 r=2
@@ -108,6 +113,11 @@ prop llamas creature.count=2
 clear from -32 60 to 12 64 r=15
 brush raise from -32 60 to 12 64 r=13 s=20 frames=12
 call ni8cave x=-10 z=60 h=3.2 yaw=180 al=ridgecave
+# (11-10 w02: its dome reached 40-60 m and buried the cache cut; cave.dome caps it)
+prop ridgecave cave.dome=18
+# (11-10 w02 k9 REACH: the capped dome's foot left a 2x2 m pocket at -21.6 40.5, 1.5 m down with no way out - filled)
+brush flatten at -21.6 40.5 r=2.2 s=20 frames=150 h=4.8
+brush smooth at -21.6 40.5 r=3.5 s=10 frames=12
 place Loot_ChestSmall dcavechest at -7.5 55 h=3.65 sit yaw=200
 prop dcavechest obj.name=dcavechest
 prop dcavechest beh.hidden=1
@@ -119,15 +129,26 @@ place Placeable_Lantern_Metal - at -12.6 56 h=3.65 sit
 # a short cut beside the trail; the quest never goes through it, so the island still plays without a machete.
 brush flatten at -36 44 r=5 s=20 frames=120 h=3
 brush flatten at -36 69 r=5 s=20 frames=120 h=3
-# (11-08: the north mouth's floor ramps down to the beach - a 2 m step there kept a player out of the cut from the shore)
-brush flatten at -36 72.5 r=3.5 s=20 frames=80 h=2.2
-brush flatten at -36 75.5 r=3.5 s=20 frames=80 h=1.4
-brush smooth from -36 70 to -36 79 r=6 s=10 frames=40
 clear from -36 42 to -36 71 r=9
 call kit_st x=-36 z=46 yaw=0 len=21 slope=0 end=open dirt=2 mush=0 stone=0 vines=2 gate=1 as=trcut
 # (11-08 fix: the far vines stand in the 6 m passage, not in a narrow mouth - at their own 3.9 m width a player slipped
 # past them at the side; scale 1.6 = 6.2 m closes the whole passage)
 cavegate trcut at=-36,66 as=trcut_vines2 scale=1.6
+# (11-08: the north mouth's floor ramps down to the beach - a 2 m step there kept a player out of the cut from the shore)
+# (11-09 w02, REACH: the hill's skin closes the way in's far end at z=80 and runs 2.2-3.9 m along its west side - the
+#     floor's dip to 0 m made a pit with no way out; it stays level at 2.9 m now, the skin beside it is a step-off west)
+#     (after the cave tool: its open end digs the floor down, so a flatten before it did nothing)
+brush flatten at -35 73 r=3.5 s=20 frames=250 h=3
+brush flatten at -35 75.5 r=3.5 s=20 frames=250 h=3.1
+brush flatten at -35 78 r=3.5 s=20 frames=250 h=3.2
+# (11-10 w02, REACH: the channel still ended 1.8 m under the skin's slope at z=80 - a dead end; its last 6 m ramp up to the
+#     slope's 4.5 m, and from there the slope runs down west to the beach)
+for i 0 6 1
+brush flatten at -35 {74+$i} r=2.5 s=20 frames=250 h={3+0.27*$i}
+next
+brush smooth from -35 73 to -35 80 r=2.5 s=6 frames=6
+brush flatten at -35.5 80 r=3 s=20 frames=250 h=3.3
+brush smooth from -35 71 to -35 80 r=3 s=4 frames=6
 place Loot_ChestSmall trcutcache at -34.6 56 h=4.5 drop yaw=270
 note trcutcache Tracker's cache | TRACKERS - THE CUT. Sten's cache, half way through: rope, leather, dried meat. Cut the vines behind you; the goats find their way in otherwise.
 loot trcutcache Rope*2;Leather*2;Cooked_GenericMeat*1
@@ -232,6 +253,8 @@ note notchlog Notch log | NOTCH LOG - TRACKERS OF THE RISE\n\nOne notch for ever
 info title=Tracker's Rise
 info author=Custom Islands
 info description=A grass ridge with a meadow on top: goats and llamas, the trackers' watch tower, and a trail of broken bushes to a gully. The fourth island of The Last Green World.
+# (REACH 11-09: the stilt tower deck is a ladder climb the 1x walker can't judge - the play climbs it and opens the chest)
+island reach.byplay=Tower chest
 island on.arrive=message||A green ridge over the jungle. Something bleats up on the meadow - not like the goats.
 
 story burr|Burr|Note_Paper|Burr, a ranger's goat with a torn ear, freed from a cage of branches in the gully.
@@ -326,4 +349,12 @@ clear at -56.93 -23.17 r=1.5 only=CaravanIsland_SmallRock all
 # (box agent 10-25: names for the guide pictures' snap points)
 prop trnotch obj.name=trnotch
 prop trwreck obj.name=trwreck
+# (11-09 w02, REACH: two pools of sea under the north shore rocks met a 0.6-0.8 m lip - a swimmer got in and not
+# out: a shelf up out of the water at each)
+brush flatten at -39 82 r=1.4 s=20 frames=150 h=-0.2
+brush flatten at -39.9 81 r=1.4 s=20 frames=150 h=0.3
+brush smooth from -38.6 82.5 to -40.4 80.4 r=2 s=10 frames=12
+brush flatten at 21.6 90.7 r=1.2 s=20 frames=150 h=-0.2
+brush flatten at 22.6 90.7 r=1.2 s=20 frames=150 h=0.25
+brush smooth from 20.6 90.7 to 23.6 90.7 r=1.8 s=10 frames=12
 save Tracker's Rise

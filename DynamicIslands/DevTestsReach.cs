@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -571,7 +571,7 @@ namespace DynamicIslands
 		}
 
 		/// <summary>The play test (file name) with a "zone/open/reach &lt;name&gt;" line, or null.</summary>
-		public static string ByPlayFile(string target)
+		public static string ByPlayFile(string target, string verb = null)
 		{
 			try
 			{
@@ -579,7 +579,7 @@ namespace DynamicIslands
 					foreach (string l in File.ReadAllLines(f))
 					{
 						string[] w = l.Trim().Split(new[] { ' ' }, 2);
-						if (w.Length == 2 && (w[0] == "zone" || w[0] == "open" || w[0] == "reach") && string.Equals(w[1].Trim(), target, StringComparison.OrdinalIgnoreCase)) return Path.GetFileName(f);
+						if (w.Length == 2 && (verb != null ? w[0] == verb : (w[0] == "zone" || w[0] == "open" || w[0] == "reach" || w[0] == "read")) &&string.Equals(w[1].Trim(), target, StringComparison.OrdinalIgnoreCase)) return Path.GetFileName(f);
 					}
 			}
 			catch (Exception) { }
@@ -723,6 +723,24 @@ namespace DynamicIslands
 					gone++;
 				}
 				if (gone > 0) report.Add("REACH " + name + " | used-away | - | NOTE " + gone + " object(s) a player uses away (a hatch that hides itself) taken away as a player would");
+			}
+			// (Raft's machete vines with nothing of the island's on them (a cave kit's gate): cut, as a player with the machete
+			// does - the grid saw them as a wall, so Tracker's Rise's cut and its cache were "can't get there" and both mouths
+			// traps, 11-09. A gated one (if./else./on.use) stays as the play left it)
+			{
+				int cut = 0;
+				// (every vine carries the machete check by default (ObjectProps.Defaults) - only a use line other than that
+				// default gates it; the default ones were all skipped, and the grid saw the cut's vines as walls, 11-10)
+				Dictionary<string, string> vdef = ObjectProps.Defaults(ContentCatalog.MacheteVines, false);
+				foreach (IslandObjectRef ir in e.Root.GetComponentsInChildren<IslandObjectRef>(false))
+				{
+					if (ir.ObjectName != ContentCatalog.MacheteVines) continue;
+					if (ir.Props.Any(kv => (kv.Key.StartsWith("if.") || kv.Key.StartsWith("else.") || kv.Key.StartsWith("on.") || kv.Key.StartsWith("beh."))
+						&& !(vdef.ContainsKey(kv.Key) && vdef[kv.Key] == kv.Value))) continue;
+					ir.gameObject.SetActive(false);
+					cut++;
+				}
+				if (cut > 0) report.Add("REACH " + name + " | vines | - | NOTE " + cut + " machete vine(s) cut as a player with the machete would");
 			}
 			Physics.SyncTransforms();
 			// (what the grid looks through: the players and the animals - they move about)
@@ -1120,6 +1138,9 @@ namespace DynamicIslands
 					else if (reachSpeed > 0) yield return ReachWalkTarget(e, g, t, use, fwd, back, parent, backParent, sideNames, r => walked = r);
 					if (walked == null) report.Add(head + "PASS grid only, not walked (" + grid + ")");
 					else if (walked.StartsWith("PASS")) report.Add(head + walked + " (" + grid + ")");
+					// (a long ladder the walker sticks on at 1x but the island's play climbs: the play is the check - w02 11-10,
+					// Ranger's training tower and Riverfork's crane, 20 m ladders)
+					else if (playNote != null) report.Add(head + playNote + " - the walker: " + walked + " (the grid found a way: " + grid + ")");
 					else { problems++; report.Add(head + walked + " (the grid found a way: " + grid + ")"); }
 				}
 				else if (playNote != null) report.Add(head + playNote + " - the grid: " + string.Join("; ", bad.Distinct().ToArray()) + NearestReached(e, g, fwd, use, offset));
@@ -1780,6 +1801,9 @@ namespace DynamicIslands
 				// (a hazard zone - spikes, acid, a dark den - is a place to keep out of, not one to get to: the Stalker's Hollow's
 				// bone pit stakes sit inside their spike models and came out "no spot to use it from", 11-09 w03. Its play walks it)
 				if (!string.IsNullOrEmpty(z.Hazard)) continue;
+				// (a hazard zone - spikes, acid, a dark den - is a place to keep out of, not one to get to: the Stalker's Hollow's
+				// bone pit stakes sit inside their spike models and came out "no spot to use it from", 11-09 w03. Its play walks it)
+				if (!string.IsNullOrEmpty(z.Hazard)) continue;
 				list.Add(new ReachTarget { Kind = "zone", Name = z.Id, Root = z.transform, B = new Bounds(z.transform.position, Vector3.one * 2f * z.Radius), Zone = true });
 			}
 			var done = new HashSet<Transform>();
@@ -1855,8 +1879,11 @@ namespace DynamicIslands
 					if (hit.Count == 0)
 					{
 						// (an item a step wants may come from a creature, a dig, or a behaviour's give - not a fault of reach)
-						report.Add("REACH " + e.HostName + " | step target '" + tg + "' | " + label + " | " + (st.Type == "collect" || st.Type == "blueprint" ? "NOTE not in a chest or object found now (a behaviour, creature or dig gives it)" : "FAIL not found on the island now"));
-						if (st.Type != "collect" && st.Type != "blueprint") problems++;
+						// (a note a behaviour shows later - hidden at the start, so not here now - that the island's own play reads:
+						// checked by play, not a fault of reach; Rootcore, Tracker's Rise, Rootweave 11-09)
+						string readBy = st.Type == "read" ? ByPlayFile(tg, "read") : null;
+						report.Add("REACH " + e.HostName + " | step target '" + tg + "' | " + label + " | " + (st.Type == "collect" || st.Type == "blueprint" ? "NOTE not in a chest or object found now (a behaviour, creature or dig gives it)" : readBy != null ? "NOTE hidden now (a behaviour shows it): CHECKED BY PLAY (" + readBy + " reads it)" : "FAIL not found on the island now"));
+						if (st.Type != "collect" && st.Type != "blueprint" && readBy == null) problems++;
 						continue;
 					}
 					foreach (ReachTarget t in hit) t.Steps += (t.Steps.Length > 0 ? ", " : "") + label;

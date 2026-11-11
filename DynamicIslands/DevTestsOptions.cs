@@ -2421,8 +2421,11 @@ namespace DynamicIslands
 					if (m.Kind != IslandNetMessage.WorldOptions || m.Data != WorldOptions.Encode(on, WorldOptions.Seed)) why.Add("message");
 					if (StoryOrder.Active != on.Contains(WorldOptions.StoryOrder) || (StoryOrder.Order.SequenceEqual(StoryOrder.Chain) == on.Contains(WorldOptions.StoryOrder))) why.Add("story order");
 					if (ScrambledBlueprints.Movable.Count > 1 && ScrambledBlueprints.Active != on.Contains(WorldOptions.Blueprints)) why.Add("blueprints");
-					if (!PrivateStorage.MayOpen(999998u, 1UL)) why.Add("a storage without a builder refused");
-					if (PrivateStorage.MayOpen(999999u, 1UL) == on.Contains(WorldOptions.PrivateStorage)) why.Add("another's storage " + (on.Contains(WorldOptions.PrivateStorage) ? "opens" : "refused"));
+					// (another player: not the local one - offline Steam gives the local player id 1, and the host may open an absent builder's storage, T9)
+					Network_Player meP = RAPI.GetLocalPlayer();
+					ulong notMe = meP != null && meP.steamID.Id == 1UL ? 2UL : 1UL;
+					if (!PrivateStorage.MayOpen(999998u, notMe)) why.Add("a storage without a builder refused");
+					if (PrivateStorage.MayOpen(999999u, notMe) == on.Contains(WorldOptions.PrivateStorage)) why.Add("another's storage " + (on.Contains(WorldOptions.PrivateStorage) ? "opens" : "refused"));
 					if (!sig.Contains("options " + WorldOptions.Encode(on, WorldOptions.Seed))) why.Add("CIServerSig");
 					if ((DailyQuest.JournalText() != null) && !on.Contains(WorldOptions.DailyQuest)) why.Add("daily quest shown with the option off");
 					if (why.Count > 0) bad.Add(WorldOptions.Describe(on) + ": " + string.Join(", ", why.ToArray()));

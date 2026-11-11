@@ -4,6 +4,7 @@ using System.Linq;
 using HMLLibrary;
 using RaftModLoader;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DynamicIslands.Editor
@@ -20,16 +21,20 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public class IslandQuest
 	{
+		/// <summary>Timed steps: "step=seconds;..." (1-based steps; QE9). Its own key, so older versions just ignore it.</summary>
+		public const string KeyTimers = "quest.timers";
 		public const string KeyTitle = "quest.title", KeyIntro = "quest.intro", KeySteps = "quest.steps", KeyReward = "quest.reward", KeyDone = "quest.done";
-		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint", Islanders.QuestType, Collectibles.QuestType, Lights.QuestType, QuestSteps.Signal, QuestSteps.Bring, QuestSteps.Craft, QuestSteps.Fish, QuestSteps.Gather };
+		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint", Islanders.QuestType, Collectibles.QuestType, Lights.QuestType, IslanderWalks.QuestType, Taming.QuestType, QuestSteps.Signal, QuestSteps.Bring, QuestSteps.Craft, QuestSteps.Fish, QuestSteps.Gather, QuestWaitSteps.Time, QuestWaitSteps.Weather, QuestWaitSteps.Counter, QuestWaitSteps.Players };
 
 		/// <summary>Steps the crew's story book counts (the host checks them), not events.</summary>
-		public static bool Counted(string type) { return type == "collect" || type == "pages" || PlayerFeatures.Counted(type) || QuestSteps.Counted(type); }
+		public static bool Counted(string type) { return type == "collect" || type == "pages" || PlayerFeatures.Counted(type) || QuestSteps.Counted(type) || QuestWaitSteps.Counted(type); }
 
 		public class Step
 		{
 			public string Type = "reach", Target = "", Text = "";
 			public int Count = 1;
+			/// <summary>A time limit in seconds (0 = none): run out, the step starts again (QuestTimers, QE9).</summary>
+			public int Seconds;
 
 			/// <summary>What the player is told to do: the builder's text, or one made from the step.</summary>
 			public string Describe()
@@ -46,7 +51,7 @@ namespace DynamicIslands.Editor
 					case "pages": return "Find " + (Count > 1 ? Count + " pages" : "a page") + (Target == "all" ? " (on any island)" : " on this island");
 					case "blueprint": return Target.Length > 0 ? "Find the " + PlanChecker.Pretty(Target.Trim()) + " blueprint" : "Find one of Raft's blueprints";
 				}
-				return PlayerFeatures.DescribeStep(Type, Target, Count) ?? QuestSteps.Describe(Type, Target, Count) ?? Type;
+				return PlayerFeatures.DescribeStep(Type, Target, Count) ?? QuestSteps.Describe(Type, Target, Count) ?? QuestWaitSteps.Describe(Type, Target, Count) ?? Type;
 			}
 		}
 
@@ -114,6 +119,7 @@ namespace DynamicIslands.Editor
 				int count;
 				q.Steps.Add(new Step { Type = p[0], Target = p.Length > 1 ? p[1] : "", Count = p.Length > 2 && int.TryParse(p[2], out count) ? Mathf.Clamp(count, 1, 99) : 1, Text = p.Length > 3 ? text(p[3], 400) : "" });
 			}
+			QuestTimers.Read(ObjectProps.Get(props, Key(KeyTimers, n)), q.Steps);
 			return q;
 		}
 
@@ -123,12 +129,16 @@ namespace DynamicIslands.Editor
 		public void To(IDictionary<string, string> props, int n)
 		{
 			foreach (string k in new[] { KeyTitle, KeyIntro, KeySteps, KeyReward, KeyDone }) props.Remove(Key(k, n));
+			props.Remove(Key(KeyTimers, n));
 			if (!Exists) return;
 			if (Title.Trim().Length > 0) props[Key(KeyTitle, n)] = Title.Trim();
 			if (Intro.Trim().Length > 0) props[Key(KeyIntro, n)] = Intro.Trim();
 			if (Reward.Length > 0) props[Key(KeyReward, n)] = Reward;
 			if (Done.Trim().Length > 0) props[Key(KeyDone, n)] = Done.Trim();
 			props[Key(KeySteps, n)] = string.Join("\n", Steps.Select(s => s.Type + "|" + Clean(s.Target) + "|" + s.Count + "|" + Clean(s.Text)).ToArray());
+			props.Remove(Key(KeyTimers, n));
+			string timers = QuestTimers.Write(Steps);
+			if (timers.Length > 0) props[Key(KeyTimers, n)] = timers;
 		}
 
 		public string ShownTitle { get { return Title.Trim().Length > 0 ? Title.Trim() : "Quest"; } }
@@ -610,14 +620,145 @@ namespace DynamicIslands.Editor
 		/// <summary>Whether the quest panel is on screen (for the tests).</summary>
 		const float PanelTop = -160f;
 
-		/// <summary>10-31: under the corner island map while it shows (the map is drawn over the panel and hid its title and first step); back in its place when the map is hidden or the big map is open.</summary>
-		static void PlaceUnderMap()
+		/// <summary>The panel's own place (top right, under where the corner map is), in UI units from the screen's top right corner.</summary>
+		public static readonly Vector2 HomePlace = new Vector2(-20f, PanelTop);
+		/// <summary>The gap kept between the panel and the corner map, and from the screen's edges (UI units).</summary>
+		const float MapGap = 8f, EdgeGap = 4f;
+		/// <summary>This PC's world_rules.txt line for where the player dragged the panel ("questpanel=x,y"; empty = its own place).</summary>
+		public const string PlaceSetting = "questpanel";
+		static bool placeRead, dragging;
+		static Vector2? savedPlace;
+
+		/// <summary>Where the player dragged the panel on this PC (UI units from the top right corner), or null: its own place.</summary>
+		public static Vector2? SavedPlace
 		{
-			float y = Minimap.CornerShown ? Mathf.Min(PanelTop, -(Minimap.CornerBottom + 8f)) : PanelTop;
-			if (panel.anchoredPosition.y != y) panel.anchoredPosition = new Vector2(panel.anchoredPosition.x, y);
+			get
+			{
+				if (!placeRead) { placeRead = true; savedPlace = ParsePlace(WorldRules.ReadDefault(PlaceSetting)); }
+				return savedPlace;
+			}
+		}
+
+		internal static Vector2? ParsePlace(string s)
+		{
+			if (string.IsNullOrEmpty(s)) return null;
+			string[] p = s.Split(',');
+			float x, y;
+			if (p.Length != 2 || !float.TryParse(p[0].Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out x)
+				|| !float.TryParse(p[1].Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out y)) return null;
+			return new Vector2(Mathf.Min(0f, x), Mathf.Min(0f, y));
+		}
+
+		/// <summary>Keeps the panel where the player put it (null: back to its own place), in this PC's world_rules.txt.</summary>
+		public static void SavePlace(Vector2? place)
+		{
+			placeRead = true;
+			savedPlace = place;
+			WorldRules.SaveDefault(PlaceSetting, place.HasValue ? Mathf.Round(place.Value.x).ToString(System.Globalization.CultureInfo.InvariantCulture) + "," + Mathf.Round(place.Value.y).ToString(System.Globalization.CultureInfo.InvariantCulture) : "");
+		}
+
+		/// <summary>The panel back to its own place (double-click on it, or Defaults > Keys > Quest panel "Reset place").</summary>
+		public static void ResetPlace() { dragging = false; SavePlace(null); }
+
+		/// <summary>Tests: read the place from world_rules.txt again, as a new start of Raft would.</summary>
+		internal static void ForgetPlace() { placeRead = false; }
+
+		/// <summary>
+		/// Every frame (after the corner map's own tick): the panel at the player's place or its own, inside the screen, and
+		/// never under the corner island map. The user (11-09): the map covered the panel's title and first step. While the
+		/// map shows, a panel that would overlap it moves out by the shorter way that fits on the screen (its own place: always
+		/// under the map); with the map hidden it is back where it was. A drag in progress is left alone.
+		/// </summary>
+		public static void Place()
+		{
+			if (panel == null || !panel.gameObject.activeInHierarchy || dragging) return;
+			Vector2 want = AwayFromMap(OnScreen(SavedPlace ?? HomePlace), !SavedPlace.HasValue);
+			if ((panel.anchoredPosition - want).sqrMagnitude > 0.01f) panel.anchoredPosition = want;
+		}
+
+		/// <summary>The panel's place moved so the whole panel is on the screen (with EdgeGap).</summary>
+		static Vector2 OnScreen(Vector2 p)
+		{
+			RectTransform area = panel != null ? panel.parent as RectTransform : null;
+			if (area == null) return p;
+			Rect a = area.rect, r = panel.rect;
+			p.x = Mathf.Clamp(p.x, Mathf.Min(-EdgeGap, -(a.width - r.width - EdgeGap)), -EdgeGap);
+			p.y = Mathf.Clamp(p.y, Mathf.Min(-EdgeGap, -(a.height - r.height - EdgeGap)), -EdgeGap);
+			return p;
+		}
+
+		/// <summary>Out from under the corner map (with MapGap): under it or left of it, the shorter move that fits on the
+		/// screen; under it when under: true (the panel's own place) or when neither fits.</summary>
+		static Vector2 AwayFromMap(Vector2 p, bool under)
+		{
+			Rect map;
+			if (!Minimap.CornerScreenRect(out map)) return p;
+			RectTransform area = panel.parent as RectTransform;
+			Canvas c = panel.GetComponentInParent<Canvas>();
+			float s = c != null && c.rootCanvas != null ? Mathf.Max(0.01f, c.rootCanvas.scaleFactor) : 1f;
+			// (the map in this panel's units, from the screen's top right corner, with the gap)
+			float mxMin = (map.xMin - Screen.width) / s - MapGap, mxMax = (map.xMax - Screen.width) / s + MapGap;
+			float myMin = (map.yMin - Screen.height) / s - MapGap, myMax = (map.yMax - Screen.height) / s + MapGap;
+			Rect r = panel.rect;
+			bool overlaps = p.x - r.width < mxMax && p.x > mxMin && p.y - r.height < myMax && p.y > myMin;
+			if (!overlaps) return p;
+			Vector2 below = new Vector2(p.x, myMin), left = new Vector2(mxMin, p.y);
+			float h = area != null ? area.rect.height : Screen.height / s, w = area != null ? area.rect.width : Screen.width / s;
+			bool belowFits = below.y - r.height >= -h + EdgeGap, leftFits = left.x - r.width >= -w + EdgeGap;
+			if (under || !leftFits) return below;
+			if (!belowFits) return left;
+			return Mathf.Abs(p.y - below.y) <= Mathf.Abs(p.x - left.x) ? below : left;
+		}
+
+		/// <summary>The panel's screen rectangle in pixels (tests), or an empty rect.</summary>
+		internal static Rect PanelScreenRect()
+		{
+			if (panel == null) return new Rect();
+			var c = new Vector3[4];
+			panel.GetWorldCorners(c);
+			return Rect.MinMaxRect(c[0].x, c[0].y, c[2].x, c[2].y);
+		}
+		internal static RectTransform PanelRect { get { return panel; } }
+		/// <summary>How many drags the player finished (tests).</summary>
+		public static int Drags;
+
+		/// <summary>Drags the panel by its title and edges while the mouse is free (inventory, menus, the mod's windows; the
+		/// steps list scrolls instead when it is long), keeps it on the screen, and double-click puts it back in its place.</summary>
+		class PanelDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
+		{
+			public void OnBeginDrag(PointerEventData e) { dragging = e.button == PointerEventData.InputButton.Left && Cursor.lockState != CursorLockMode.Locked; }
+
+			public void OnDrag(PointerEventData e)
+			{
+				if (!dragging || panel == null) return;
+				Canvas c = GetComponentInParent<Canvas>();
+				float scale = c != null && c.rootCanvas != null ? c.rootCanvas.scaleFactor : 1f;
+				panel.anchoredPosition = OnScreen(panel.anchoredPosition + e.delta / Mathf.Max(0.01f, scale));
+			}
+
+			public void OnEndDrag(PointerEventData e)
+			{
+				if (!dragging || panel == null) return;
+				dragging = false;
+				SavePlace(OnScreen(panel.anchoredPosition));
+				Drags++;
+			}
+
+			public void OnPointerClick(PointerEventData e)
+			{
+				if (e.button == PointerEventData.InputButton.Left && e.clickCount >= 2 && Cursor.lockState != CursorLockMode.Locked) ResetPlace();
+			}
+
+			void OnDisable() { dragging = false; }
 		}
 
 		public static bool PanelShown { get { return panel != null && panel.gameObject.activeSelf; } }
+
+		/// <summary>Tests: the panel's current step line ("" when none shows).</summary>
+		internal static string PanelCurrent
+		{
+			get { Text t = stepLines.FirstOrDefault(x => x != null && x.gameObject.activeSelf && x.text.Contains("►")); return PanelShown && t != null ? t.text : ""; }
+		}
 		/// <summary>How many steps the panel shows at a time; a longer quest scrolls (the user, 2026-10-03: a 32-step quest
 		/// covered the right side of the screen).</summary>
 		public const int VisibleSteps = 5;
@@ -645,6 +786,7 @@ namespace DynamicIslands.Editor
 			nextHud = Time.unscaledTime + 0.5f;
 			tickQuests.Clear();
 			QuestSkip.Tick();
+			QuestTimers.Tick();
 			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); panelIsland = -1; doneSince.Clear(); closedKey = -1; DoneHideSeconds = 30f; if (panel != null) panel.gameObject.SetActive(false); return; }
 			TickCount++;
 			if (Raft_Network.IsHost) CheckCounted();
@@ -687,7 +829,6 @@ namespace DynamicIslands.Editor
 			}
 			panel.gameObject.SetActive(!hide);
 			if (hide) return;
-			PlaceUnderMap();
 			closeButton.onClick.RemoveAllListeners();
 			closeButton.onClick.AddListener(() => { closedKey = shownKey; closedStep = step; panel.gameObject.SetActive(false); });
 			titleText.text = q.ShownTitle + (step >= q.Steps.Count ? "  <color=#8fdc8f>\u221A done</color>" : "") + (open > 0 ? "  <color=#b39a6c>(+" + open + " more)</color>" : "");
@@ -739,6 +880,7 @@ namespace DynamicIslands.Editor
 			if (Mathf.Abs(size.preferredHeight - height) > 0.5f) UIKit.Size(stepsView.gameObject, -1, height);
 			bool scrolls = lines.Count > VisibleSteps;
 			stepsScroll.vertical = scrolls;
+			stepsScroll.GetComponent<Image>().raycastTarget = scrolls; // (a short list: a drag there moves the panel)
 			if (island != followedIsland || step != followedStep || !scrolls)
 			{
 				followedIsland = island; followedStep = step;
@@ -774,6 +916,7 @@ namespace DynamicIslands.Editor
 				return StoryBook.Pages.Count(p => p.Key.StartsWith("note:" + island + ":") || p.Key.StartsWith("act:" + island + ":"));
 			}
 			if (QuestSteps.Counted(s.Type)) return QuestSteps.Found(e, s);
+			if (QuestWaitSteps.Counted(s.Type)) return QuestWaitSteps.Found(e, s);
 			return PlayerFeatures.Found(e, s);
 		}
 
@@ -823,7 +966,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Host: whether any player is at the island (its land and the same reach as the rewards).</summary>
-		static bool AnyPlayerNear(IslandWorldState.Entry e) { return AnyPlayerNear(e, UnityEngine.Object.FindObjectsOfType<Network_Player>()); }
+		internal static bool AnyPlayerNear(IslandWorldState.Entry e) { return AnyPlayerNear(e, UnityEngine.Object.FindObjectsOfType<Network_Player>()); }
 
 		static bool AnyPlayerNear(IslandWorldState.Entry e, Network_Player[] players)
 		{
@@ -859,6 +1002,10 @@ namespace DynamicIslands.Editor
 			foreach (Graphic g in closeButton.GetComponentsInChildren<Graphic>()) g.raycastTarget = true;
 			// (only the list's own background and its scrollbar take the mouse: the wheel scrolls it while the cursor is free)
 			stepsScroll.GetComponent<Image>().raycastTarget = true;
+			// (11-09: the panel drags by its title and edges while the mouse is free; double-click puts it back - PanelDrag)
+			panel.GetComponent<Image>().raycastTarget = true;
+			titleText.raycastTarget = true;
+			panel.gameObject.AddComponent<PanelDrag>();
 			if (stepsScroll.verticalScrollbar != null)
 				foreach (Graphic g in stepsScroll.verticalScrollbar.GetComponentsInChildren<Graphic>()) g.raycastTarget = true;
 		}

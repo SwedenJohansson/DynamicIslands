@@ -121,6 +121,8 @@ namespace DynamicIslands.Editor
 			{
 				if (arm != null && arm.Phase < 2) Away("the option was switched off");
 				dayDue = stormDue = -1f; stormWaits = false;
+				// (storms while off are seen too: switching it on mid-storm rolls no arm for a storm that began while off - AUDIT_1110 I1)
+				if (StormSeas.On) seenStorms = StormSeas.Storms;
 				return;
 			}
 			int seed = WorldOptions.Seed, day = Today;

@@ -104,17 +104,56 @@ namespace DynamicIslands.Editor
 				Button b = UIKit.Button(prow, ps, () => { Set(target, Islanders.PoseProp, chosen); Refresh(); }, "The islander " + (ps == "stand" ? "stands" : ps == "sit" ? "sits" : ps == "fish" ? "fishes with a rod" : ps == "sleep" ? "lies asleep" : "leans") + " (place it where that fits: on a seat, at the water, against a wall)", -1, 26f, 11);
 				if (ps == pose) UIKit.Primary(b);
 			}
-			Text markup = UIKit.Label(g, "What it says. A line of only --- = next page. A line starting with > = an answer (up to 3). Hover for an example.", 12, UIKit.TextMuted, TextAnchor.UpperLeft);
+			// QE12: a walking path - names of objects or trigger zones, walked in a loop or there and back
+			InputField path = SurvivorField(g, "Walks to", IslanderWalks.PathOf(p), 26f, "A walking path (empty = it stays): the names of objects or trigger zones on this island, split by commas. It walks from where it stands through them, pausing at each, on the ground. Every player sees it at the same spot. An escort step or a \"move to\" action ends its walking");
+			path.characterLimit = 200;
+			path.onEndEdit.AddListener(v => { Set(target, IslanderWalks.PathProp, v.Trim().Length > 0 ? v.Trim() : null); Refresh(); });
+			amountFields.Add(path);
+			if (IslanderWalks.PathOf(p).Length > 0)
+			{
+				string mode = IslanderWalks.ModeOf(p);
+				RectTransform wrow = UIKit.Row(g, 26f, 3f, "IslanderWalk");
+				UIKit.Size(UIKit.Label(wrow, "Walk", 13, UIKit.TextMuted).gameObject, 80);
+				foreach (string m in IslanderWalks.Modes)
+				{
+					string chosen = m;
+					Button b = UIKit.Button(wrow, m == "loop" ? "loop" : "there and back", () => { Set(target, IslanderWalks.ModeProp, chosen == "loop" ? null : chosen); Refresh(); }, m == "loop" ? "After the last place it walks back to the start and round again" : "After the last place it walks the same way back", -1, 26f, 11);
+					if (m == mode) UIKit.Primary(b);
+				}
+				InputField spd = SurvivorField(g, "Speed m/s", IslanderWalks.SpeedOf(p).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture), 26f, "How fast it walks (0.3 to 4; Raft's players walk about 3)");
+				spd.onEndEdit.AddListener(v => { float f; if (float.TryParse(v.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out f)) Set(target, IslanderWalks.SpeedProp, Mathf.Clamp(f, 0.3f, 4f).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)); Refresh(); });
+				amountFields.Add(spd);
+				InputField ps2 = SurvivorField(g, "Pause s", IslanderWalks.PauseOf(p).ToString("0", System.Globalization.CultureInfo.InvariantCulture), 26f, "How long it stands at each place of its path (seconds)");
+				ps2.onEndEdit.AddListener(v => { float f; if (float.TryParse(v.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out f)) Set(target, IslanderWalks.PauseProp, Mathf.Clamp(f, 0f, 60f).ToString("0", System.Globalization.CultureInfo.InvariantCulture)); Refresh(); });
+				amountFields.Add(ps2);
+				List<string> missing = IslanderWalks.Missing(IslanderWalks.PathOf(p), PlacedEditorObjects());
+				if (missing.Count > 0) UIKit.Size(UIKit.Label(g, "Check: nothing on the island is called " + string.Join(", ", missing.ToArray()), 11, UIKit.Danger, TextAnchor.MiddleLeft).gameObject, -1, 16);
+			}
+			Text markup = UIKit.Label(g, "What it says. A line of only --- = next page. A line starting with > = an answer (up to 4 a page). #name starts a branch; > Answer -> name goes there. Hover for more.", 12, UIKit.TextMuted, TextAnchor.UpperLeft);
 			markup.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(markup.gameObject, -1, 48);
-			UIKit.Hint(markup.gameObject, "Example: \"Hello there.\", then a line ---, then \"Will you help me?\", then the lines \"> Yes\" and \"> Not now\". Answer 1 fires this islander's choice1 event, answer 2 choice2, answer 3 choice3. Closing the dialogue fires \"talk\" (what a quest's \"Talk to\" step waits for). In a \"show dialogue\" action, write \\n for a new line instead");
-			InputField text = UIKit.TextArea(g, "Hello there.\n---\nWill you help me?\n> Yes\n> Not now", 110f, "The dialogue players get with the interact key. Answer 1..3 fires the islander's choice1..choice3 event; closing it fires \"talk\"");
+			UIKit.Hint(markup.gameObject, "Example: \"Hello there.\", then a line ---, then \"Will you help me?\", then the lines \"> Yes\" and \"> Not now\". Answer 1 fires this islander's choice1 event, answer 2 choice2 (up to choice4). Closing the dialogue fires \"talk\" (what a quest's \"Talk to\" step waits for).\n" +
+				"Branches: a line \"#map\" starts lines of their own (left out when the dialogue is read in order). \"> Where are we? -> map\" goes there; \"-> end\" closes, \"-> start\" goes back to the top; an answer without -> closes the dialogue.\n" +
+				"Flags (the island's, shared by the crew): \"-> map +asked\" also sets the flag asked, \"-asked\" clears it; an answer with \"?asked\" only shows while it is set, \"?!asked\" while it isn't. Checks can read a flag: count|asked|>=1. In a \"show dialogue\" action, write \\n for a new line; its answers can branch but not set flags");
+			InputField text = UIKit.TextArea(g, "Hello there.\n---\nWill you help me?\n> Yes\n> Not now", 110f, "The dialogue players get with the interact key. Answer 1..4 fires the islander's choice1..choice4 event; closing it fires \"talk\"");
 			text.text = ObjectProps.Get(p, Islanders.TextProp);
-			text.characterLimit = 2000;
+			text.characterLimit = 4000;
 			text.onEndEdit.AddListener(v => Set(target, Islanders.TextProp, v.Trim().Length > 0 ? v.Trim() : null));
 			amountFields.Add(text);
-			int pages = Islanders.Parse(text.text).Count, answers = Islanders.Choices(text.text).Count;
-			UIKit.Size(UIKit.Label(g, pages + " page" + (pages == 1 ? "" : "s") + (answers > 0 ? ", " + answers + " answer" + (answers == 1 ? "" : "s") : "") + ". Events: Behaviour > \"talk\", \"choice1\"..", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic).gameObject, -1, 16);
+			int pages = Islanders.Parse(text.text).Count, answers = Islanders.Answers(text.text).Count, branches = Islanders.Sections(text.text).Count;
+			UIKit.Size(UIKit.Label(g, pages + " page" + (pages == 1 ? "" : "s") + (answers > 0 ? ", " + answers + " answer" + (answers == 1 ? "" : "s") : "") + (branches > 0 ? ", " + branches + " branch" + (branches == 1 ? "" : "es") : "") + ". Events: Behaviour > \"talk\", \"choice1\"..", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic).gameObject, -1, 16);
+			string problem = Islanders.BranchProblem(text.text);
+			if (problem != null)
+			{
+				Text warn = UIKit.Label(g, "Check: " + problem, 11, UIKit.Danger, TextAnchor.UpperLeft);
+				warn.horizontalOverflow = HorizontalWrapMode.Wrap;
+				UIKit.Size(warn.gameObject, -1, 32);
+			}
+			UIKit.Button(g, "Add an answer with its own lines", () =>
+			{
+				Set(target, Islanders.TextProp, Islanders.WithBranch(ObjectProps.Get(target.Props, Islanders.TextProp)));
+				Refresh();
+			}, "Adds \"> Answer N -> branchN\" under the first lines and a branch #branchN at the end, for what the islander says after it. Rename both as you like", -1, 26f, 11);
 		}
 
 		/// <summary>A piece of a collectible set (PF3): its set's name and how many pieces the island has.</summary>

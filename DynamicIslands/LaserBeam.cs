@@ -10,14 +10,26 @@ namespace DynamicIslands
 	/// beam is the mod's own. It shoots along the emitter's forward; an object marked as a mirror (beh.laser = mirror) sends
 	/// it on along the mirror's own forward (turning the mirror a quarter turns the beam); the first other object of the
 	/// island it reaches gets the event "laser" (on the host, once each time the beam comes to it). Every player sees the
-	/// beam: it follows the mirrors, which move for everyone.
+	/// beam: it follows the mirrors, which move for everyone. QE13 (11-10): any object can be an emitter or a mirror (the
+	/// Behaviour & events window's Laser row), with its own range (beh.laserRange); hiding the emitter turns its beam off.
 	/// </summary>
 	public class LaserBeam : MonoBehaviour
 	{
 		/// <summary>beh.laser: "beam" = an emitter, "mirror" = sends the beam on.</summary>
 		public const string Prop = "beh.laser", Beam = "beam", Mirror = "mirror";
 		public const string Event = "laser";
-		public const float Range = 60f, Width = 0.05f;
+		/// <summary>beh.laserRange (QE13): how far the beam goes from the emitter and from each mirror, in metres (empty = Range).</summary>
+		public const string RangeProp = "beh.laserRange";
+		public const float Range = 60f, MinRange = 1f, MaxRange = 200f, Width = 0.05f;
+
+		/// <summary>This emitter's range (beh.laserRange, kept within MinRange..MaxRange).</summary>
+		public float Reach = Range;
+
+		/// <summary>The range an emitter's settings give.</summary>
+		public static float RangeOf(IDictionary<string, string> props)
+		{
+			return Mathf.Clamp(ObjectProps.GetFloat(props, RangeProp, Range), MinRange, MaxRange);
+		}
 		public const int MaxMirrors = 8;
 
 		/// <summary>The object the beam ends on now (null: it ends in the air), and the mirrors it went by.</summary>
@@ -81,13 +93,13 @@ namespace DynamicIslands
 			for (int bounce = 0; ; bounce++)
 			{
 				RaycastHit? first = null;
-				foreach (RaycastHit h in Physics.RaycastAll(pos, dir, Range, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+				foreach (RaycastHit h in Physics.RaycastAll(pos, dir, Reach, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
 				{
 					if (h.collider.transform.IsChildOf(skip)) continue;
 					first = h;
 					break;
 				}
-				if (!first.HasValue) { Points.Add(pos + dir * Range); break; }
+				if (!first.HasValue) { Points.Add(pos + dir * Reach); break; }
 				Points.Add(first.Value.point);
 				HitCollider = first.Value.collider;
 				IslandObjectRef r = first.Value.collider.GetComponentInParent<IslandObjectRef>();

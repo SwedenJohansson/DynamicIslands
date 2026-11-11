@@ -41,6 +41,9 @@ namespace DynamicIslands.Editor
 		/// out over it outside is not let down (CaveGround.Walled), and the hill's sunk rim goes on over dry land the sea cut took
 		/// (CaveMountain, only near a way in's mouth), and the skin's foot is smoothed (CaveMountain.FootPasses). Shelter Atoll's ammo den, 11-07; without it nothing changes.</summary>
 		public const string CaveFoot = "cave.foot";
+		/// <summary>A dry-footed den's dome reaches at most this many m from its den (side, back and front; the roof under it is still
+		/// covered by the hill's own slopes). Unset: the dome as wide as it needs (11-10: w02's dens buried camps and sheds 40-60 m off).</summary>
+		public const string CaveDome = "cave.dome";
 		/// <summary>Loot: "UniqueItemName*amount;..." (Raft's item names), and "0" = never fills up again.</summary>
 		public const string LootItems = "loot.items", LootRefill = "loot.refill";
 		/// <summary>Buried treasure: Raft's treasure kind (its uniqueTreasureIndex; 0 = the common chest).</summary>

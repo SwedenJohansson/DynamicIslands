@@ -172,6 +172,7 @@ vending yardvend at 2 57 ground yaw=0
 # the mountain: a stepped path spirals up from its east foot (34.08 -66) to the summit tower
 call sk_peak x=12 z=-66 h=22 r=24
 call sk_pit x=-30 z=60 h0=-10
+brush flatten at -27 60 r=8 s=40 frames=300 h=-10.05
 call sk_cave x=66 z=-12 h=3 yaw=0 al=cycave2 chest=cycave2chest
 call sk_plants x=12 z=-66 r=26.4 seed=24610
 call sk_reef x=-20 z=66 r=5 seed=24630

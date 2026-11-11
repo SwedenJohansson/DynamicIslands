@@ -22,6 +22,27 @@ namespace DynamicIslands.Editor
 		public static KeyCode Journal { get { if (journal == null) journal = Read(JournalSetting, JournalDefault); return journal.Value; } }
 		public static KeyCode Stats { get { if (stats == null) stats = Read(StatsSetting, StatsDefault); return stats.Value; } }
 
+		/// <summary>Key names for hints, as bound now (AUDIT 11-09 #12: hints named fixed keys): the journal's, the stats page's,
+		/// and Raft's own notebook key (keybind "NoteBookToggle", which NoteBookUI reads; T when it can't be read).</summary>
+		public static string JournalName { get { return Name(Journal); } }
+		public static string StatsName { get { return Name(Stats); } }
+		public static string RaftNotebookName { get { return Name(RaftNotebook); } }
+		public static KeyCode RaftNotebook
+		{
+			get
+			{
+				try
+				{
+					Keybind k;
+					if (MyInput.Keybinds != null)
+						foreach (string n in new[] { "NoteBookToggle", "Notebook", "NoteBook" })
+							if (MyInput.Keybinds.TryGetValue(n, out k) && k != null && k.MainKey != KeyCode.None) return k.MainKey;
+				}
+				catch { }
+				return KeyCode.T;
+			}
+		}
+
 		/// <summary>While Defaults waits for a key to be pressed (and in the frame it got one): the journal and stats keys do nothing.</summary>
 		public static bool Listening { get { return listening || Time.frameCount == setFrame; } }
 		static bool listening;
@@ -56,8 +77,17 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The mod's keys in a world (stats, journal, notebook, minimap, ping) do nothing: someone is typing, or
-		/// Raft's pause menu is open (user 11-04: they opened their pages over it).</summary>
-		public static bool Blocked() { return SomeoneTyping() || PauseOpen(); }
+		/// Raft's pause menu is open (user 11-04: they opened their pages over it), or any other menu of Raft's is open -
+		/// inventory, crafting, trading post... (audit 11-09: J/K/U opened over the inventory, and when Tab closed it the
+		/// page stayed with the mouse locked). The mod's own freed mouse (ActiveMenu PauseMenu) doesn't count.</summary>
+		public static bool Blocked() { return SomeoneTyping() || PauseOpen() || RaftMenuOpen(); }
+
+		/// <summary>One of Raft's own menus is open (not the mod's PauseMenu marker for a freed mouse).</summary>
+		public static bool RaftMenuOpen()
+		{
+			try { return ModCursor.RaftMenu(CanvasHelper.ActiveMenu); }
+			catch (Exception) { return false; }
+		}
 
 		static GameObject chatField;
 		static System.Reflection.FieldInfo rmlChatOpen;

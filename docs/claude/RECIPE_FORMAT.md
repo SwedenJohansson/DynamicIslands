@@ -96,7 +96,8 @@ plan save
   lit shell colour over the hill rock's (`CaveMountain.RockAsDen`); sand on gentle slopes stays. Ignored when a cave of the hill is tinted.
   `cave.rock=plain`: Raft's plain big rock, one rock for hill and den wall (the standard since 11-08; Shelter Atoll uses it).
 - `prop <cave piece alias> cave.foot=dry` (`ObjectProps.CaveFoot`): the default for a bear den (`CaveTool.Room`) with no
-  `cave.foot` of its own (`CaveMountain.DryFootFor`, 11-08); `cave.foot=wet` keeps the old foot. Dry walled mouths also get
+  `cave.foot` of its own (`CaveMountain.DryFootFor`, 11-08); `cave.foot=wet` keeps the old foot. `cave.dome=<m>` (`ObjectProps.CaveDome`, 11-10) caps a dry
+  den's dome reach (side/back/front) at that many m, height kept, its roof cells keeping the hill's own slopes; unset = unchanged. Dry walled mouths also get
   `CaveGround.Apron` (ground rounded 4 m out down to the den floor). `CaveGround.CutIn` lets
   ground down only where `Walled()` (rock on 5 of 8 sides within 25 m), `CaveMountain` drops loose skin cells (`DropLoose`),
   puts the sunk rim on dry sea-cut cells (ground > `DryBy` 0.3) and caps every way in at `DryWay` 12 m past its roof; a
@@ -158,7 +159,7 @@ plan save
 | `beside` | `<Object> <alias\|-> <of-alias> [d=2] [yaw=] [turn=]` | On the ground d m in front of the first object of `of-alias` (its facing turned by `yaw`), facing it (+`turn`). |
 | `prop` / `beh` | `<alias> key=value` | An object setting on every object of the alias (`PropsCommand.Change`). Empty value removes it. The alias is not the object's name: actions and `state` checks find objects by `obj.name` only. |
 | `zipto` | `<alias> x z` | A zipline's far end on the ground there (the `zip.to` setting, `ZiplineEnds.ZipTo`). |
-| `loot` | `<alias> <items>` | Chest loot (`ObjectProps.LootItems`), e.g. `Wool*4;Rope*4`. |
+| `loot` | `<alias> <items> [pick=N]` | Chest loot (`ObjectProps.LootItems`), e.g. `Wool*4;Rope*4`. An item with `@<percent>` (`Wool*4@25;Rope*4`) or a `pick=N` at the end makes a random chest (`RandomLoot`, QE14): `loot.mode=random`, `loot.chance`, `loot.pick` (N different items weighted by chance; none = each item rolls its own). Without them the line works as before. |
 | `note` | `<alias> <title> \| <text>` | The note editor's Apply (`NoteEditorWindow.Apply`). |
 | `story` | `id\|name\|icon\|description[\|raft=<Raft item>]` | A story item added, or replaced by id (`StoryItemDef.Parse`). |
 | `quest` | `title=`, `intro=`, `done=` or `reward=` (one a line) | The island's quest. `quest2`..`quest9`: further quests. |

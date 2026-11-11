@@ -389,6 +389,11 @@ just done, the one you're on and what comes after. A longer quest scrolls - to y
 and with the mouse wheel over the panel while the cursor is free (the inventory, the journal, the Esc menu).
 Once every quest of the island is done, the panel goes by itself **30 seconds** later; its **×** (top right, while the
 cursor is free) closes it at any time - it comes back with the next step, or when you come to the island again.
+**Move the panel** by dragging its title or edge while the cursor is free (inventory open, the journal, the Esc menu);
+it stays on the screen and keeps that place on this PC (`questpanel` in `world_rules.txt`), also in other worlds.
+**Double-click** it, or **Defaults... > Keys (this PC) > Quest panel: Reset place**, to put it back top right. The
+panel never sits under the corner island map: while the map shows, the panel moves just below it (or to its left, if
+you put it there and that is the shorter way), and goes back to its place when the map is hidden (M) or off.
 
 **Stuck? Skip the current quest step.** If a step can no longer be done (a story key used up by the wrong lock, a
 lever that will not move), the host can skip it: **Esc > Custom Islands > Skip current quest step** (under **Stuck on a
@@ -565,8 +570,8 @@ edge, pointing the way). Green dots are **map markers** the builder placed.
 - **+** and **-** zoom in and out (1x, 2x, 4x), around you (the keypad's + and - too).
 - The map shows only near an island (within its land and 80 m; a ghost ship or a drifting raft counts as one); at open
   sea it hides. Its picture is taken when you come to the island and every 30 s.
-- A map you hid with **M** stays hidden on the next island until you press **M** again. At sea, where there is no
-  map, **M**, **+** and **-** do nothing.
+- A map you hid with **M** stays hidden on the next island until you press **M** again, in that world only: every
+  world you load or join starts with the map shown. At sea, where there is no map, **M**, **+** and **-** do nothing.
 - **G** **pings** the spot you look at (up to 300 m; looking at the sky, 50 m ahead): everyone in the world sees a red
   beam with your name there, a red dot on the map and hears a short sound, for 6 seconds. One ping a second at most;
   a new ping of yours replaces your last one.
@@ -1048,7 +1053,7 @@ Raft's own small island, large island and Balboa), peaks, hills and the coast.*
     own rock, so a brown den does not sit in blue-grey hill rock (Shelter Atoll's ammo cave has it; a tinted cave's tint wins).
     The setting `cave.foot=dry` on a cave piece sets the hill's foot firmly on dry land: no pits or pools dug beside a
     room's leaning outer walls, no loose bits of skin, the sunken rim kept on raised shore ground, and a cave's way in kept
-    clear for only 12 m past its roof, and the hill's foot smoothed so it meets the sand without a dark band, flaring out gently into it, with the rock beside the cave's opening sloping up from it rather than standing as a sheer face (Shelter Atoll's ammo cave has it). A bear den has it unless it is given `cave.foot=wet`, and the sand in front of its way in rounds down to its floor instead of ending as a square slab. The setting `cave.rock=plain` gives the hill and the den's wall Raft's plain mountain rock, one rock for both.
+    clear for only 12 m past its roof, and the hill's foot smoothed so it meets the sand without a dark band, flaring out gently into it, with the rock beside the cave's opening sloping up from it rather than standing as a sheer face (Shelter Atoll's ammo cave has it). A bear den has it unless it is given `cave.foot=wet`, and the sand in front of its way in rounds down to its floor instead of ending as a square slab. A bear den's rounded hill can reach 40 m or more round the den; the setting `cave.dome=20` (any number of metres) keeps it within that distance, as tall but steeper, so camps and huts nearby stay clear. The setting `cave.rock=plain` gives the hill and the den's wall Raft's plain mountain rock, one rock for both.
     Every cave piece's rock is drawn from outside as well as from inside (Raft draws it from inside only), and the
     island's ground where it runs through a cave's rooms is let down under the room's floor, or cut away where it lies
     wholly inside or runs steeply through (a hole dug down to a tunnel's end): from inside a cave you see only rock - no ground across a room, no sea or sky through a wall. The
@@ -1531,7 +1536,7 @@ moment, with other islands after it ([7.2](#72-your-first-world-plan-step-by-ste
    again with your island, where you left it.
 
 **Trying a long quest without playing it all:** press **F10** and type `QuestTest` near the island (in the test world
-or any world you host). `QuestTest` lists the island's quests and steps, the current one marked **>**.
+or any world you host). `QuestTest` lists the island's quests and steps, the current one marked **>** (for a time, weather, counter or players step also what the world says now).
 `QuestTest step 4` jumps the main quest to step 4 - back as well as forward (`QuestTest step 2 2` = quest 2's step 2,
 `QuestTest step done` finishes it, with its reward); `QuestTest signal gate-open` sends a signal on the island, as a
 lever or an action does; `QuestTest give brass_key 2` gives the crew a story item; `QuestTest skip` skips the nearest island's main quest's current step as
@@ -1634,11 +1639,15 @@ starting Raft:
 ![The note editor](images/editor-note-editor.jpg)
 *The note editor: the title, the text (Enter starts a new line), and a preview of the paper players will see.*
 
+**A note can unlock a Receiver frequency** (3.4): in the note editor, **Reading it unlocks** picks one of Raft's story islands (Radio Tower .. Utopia). The first time anyone reads the note, that island's frequency is unlocked for every player, exactly as finding Raft's own note there would (the notebook shows the note, the Receiver gets the frequency, the story order and a plan's story chain see it as usual). Any event can do it too: the action **unlock frequency** (`frequency|Vasagatan|`).
+
 ### 5.3 Chests and loot
 
 "Loot & chests" has chests, a crate, a wooden box, barrels and a wild beehive (honeycomb), and **any object can hold loot** (**A chest...**).
 **Fills up again** sets whether a looted chest is full again after the island's regrow days or never. A chest holds up to 12 kinds of items, up to 999 of each. **Empty** takes everything out; **Not a chest** makes the object plain again. A chest that
 holds a **story item** never fills up again, whatever is chosen (the story's key or log comes once - the panel says so).
+
+**Random chests** (3.4): **Gives: Random** makes the chest give a random part of its list. Each item gets a **%** (its chance; 100 = always). With **Pick** at 0 every item rolls its own chance, so a fill can now and then be empty (the panel says how often); with **Pick** 2 the chest gives exactly 2 different items, the higher chances picked more often. Hover a % to see each item's real odds. The roll is new for every fill (again after a refill) and the same for every player in multiplayer. Older versions of the mod give the whole list. In a recipe: `loot chest Plank*4@25;Nail*2;Rope@50 pick=1`.
 
 ![The loot inspector](images/editor-loot.jpg)
 *A chest's loot: planks, plastic, palm leaves, rope and nails. The Basics, Metal, Food and Treasure sets fill it
@@ -1810,8 +1819,9 @@ check, an island rule or a world plan can wait for. The signals: lever, crank, p
 pipe, wire, claw, scales, laser, socket, blast, collapse, vehicle.
 
 **Islander dialogue markup:** a line with only `---` starts the next page; a line starting with `>` is an answer (up to 3
-in a dialogue, under the page they follow); other lines are speech. Answer 1..3 fires the islander's **choice1..choice3**
-event, closing it fires **talk**. In a **show dialogue** action write `\n` for a new line (the action is one line).
+in a dialogue, under the page they follow; up to 4 a page in 3.4); other lines are speech. Answer 1..4 fires the islander's **choice1..choice4**
+event, closing it fires **talk**. `#name` starts a branch, `> Answer -> name` goes there, `+flag`/`-flag`/`?flag`/`?!flag` set,
+clear and test the island's flags (3.4, see Islanders below). In a **show dialogue** action write `\n` for a new line (the action is one line).
 
 ![The quest editor](images/editor-quest.jpg)
 *The quest "The lost camp": go to the camp, read the diary, open the supplies, chase off 2 warthogs. The reward is
@@ -1821,7 +1831,8 @@ name on the Receiver.*
 Steps: **go to** a trigger zone, **read** a note, **open** a chest (one of the mod's chests - Raft's abandoned raft crate doesn't count), **defeat** or **catch** a number of animals,
 **collect** a number of a story item, **find** journal pages, find a **Blueprint** of Raft's, **talk to** an islander
 (6.3; by its name, the **▾** lists the island's islanders), **find** a number of a collectible **set** (6.3), **light up** a number of a light group's puzzle lights (6.3),
-**Signal / object is**, **Bring items**, **Craft or cook**, **Catch fish** and **Gather / harvest** (below). Each step's kind is a **▼ list** (each kind says what it
+**escort** an islander to a zone (3.4), **tame** animals and lead them to a pen (3.4),
+**Signal / object is**, **Bring items**, **Craft or cook**, **Catch fish**, **Gather / harvest**, **Be there at a time**, **Weather is**, **Counter reaches** and **Players in a zone** (below). Each step's kind is a **▼ list** (each kind says what it
 asks). Steps point at things on the island by name: the small **▾** beside the name lists the names this island has
 for that kind - its trigger zones, note titles, chest titles or creatures - so you can pick one instead of typing it
 (place the zones, notes, chests and creatures first). A **collect** step picks its story item with **…**. **When the quest is done, bring a new island** (main quest only) chooses from a
@@ -1859,6 +1870,24 @@ up, or harvested from a tree or bush with the axe - within 40 m of the island's 
 `Plank`); empty = anything. Hooked from the sea, crafted or given as a reward doesn't count, nor what was gathered
 before the step came. Place what players gather on the island (the generator's **Gather** and **Shallows**, or loose
 items and plants) and say where in the step's text.
+**Timed steps** (3.4): the **time** box at the end of a step's row is a time limit in seconds (empty = none, up to 3600). While the step is active and a player is at the island, everyone near it sees a countdown at the top of the screen; when nobody is there the clock waits. If it runs out, the step starts again (its progress is set back) with a fresh clock, and players are told "Time's up". The clock is kept with the world. Best for reach, zone, talk and puzzle steps: what was killed, handed over or read stays done, so the editor warns on those kinds.
+
+
+**Be there at a time** waits until a player is at the island at that time of day: `night`, `day`, `dawn` (5:00-8:00),
+`dusk` (18:00-21:00), an hour range such as `20-6` (past midnight) or `12-14`, or one hour (`12`); commas mean any of them
+(`dawn,dusk`). **Weather is** waits for Raft's weather while a player is there: `clear`, `calm`, `fog`, `waves`,
+`rain`, `storm` or `snow` (commas = any; a storm counts as rain too). Both have no number; the **▾** lists the choices.
+
+**Counter reaches** waits until one of the island's counters (a **count** action of **Behaviour & events...**, such as
+`count|bells|+1` on a bell) reaches the number: `bells` 3 is done at the third ring. The **▾** lists the counters the
+island's count actions change; what was counted before the step came counts too.
+
+**Players in a zone** waits until that many players stand in a trigger zone at once (the **▾** lists the island's zones).
+Never more than are online: alone, one player is enough, as for a co-op zone. Raft has at most 8 players.
+
+The host decides all four (while a player is near the island) and every player sees the step move on. Check and the plan
+checker say when a time or weather is not one they know, when no count action changes the counter, and when the zone
+is missing. **QuestTest show** adds a line with the time, the weather, the counter's value or the players in the zone.
 **Steps done in another order count too:** a chest opened or animals defeated before their step has come are
 remembered, and count the moment their step comes - the guide's camp quest done backwards (warthogs, supplies, then
 the diary) finishes when the diary is read. If more than one later step could take the same work, the step that names
@@ -1932,6 +1961,11 @@ Select any object → **Behaviour & events...**. No code needed:
   **Keypad code** field under **Behaviour & events...** in the object panel; it shows once players can use the object) a keypad opens first, as on Tangaroa:
   the right digits run the object's use (its checks and actions), a wrong code says so, and once opened it stays open
   for everyone. Put the code on a note somewhere on the island.
+- **Laser:** any object can be a **laser emitter** (**Shoots a beam**: a red beam along its front, the blue gizmo arrow,
+  from its middle, **reaches** 1-200 m, 60 by default) or a **mirror** (sends a beam that reaches it on along its own
+  front; give it **Opens and closes** with a turn so players can turn it). The first object the beam reaches gets
+  "a laser beam reaches it". Hide the emitter to turn the beam off, show it to turn it on. Saved in the island; every
+  player sees the beam.
 - **Collision:** Raft's own, walk through, one box, or solid.
 - **When ... then:** when a player uses it, walks into a zone, reads a note, opens a chest, all the animals of a
   spot are defeated, a boss spot's second **phase** begins ([5.1](#51-creatures)), or a **laser beam** reaches it → show / hide objects, **show/hide** (hidden ones appear, shown ones
@@ -2033,7 +2067,9 @@ Select any object → **Behaviour & events...**. No code needed:
   food and drink; `heal||drink`, `heal||food`, `heal||health 20`, several with commas) is for the player who set it
   off: a well, a cook's meal, a healer. The ready piece **Drinking spring** (the object list, **Zones & triggers**) is a ring of stones round
   a pool that fills the thirst of whoever drinks from it, as often as they like; its own use actions run after the
-  drink (give it `heal||` instead to fill everything).
+  drink (give it `heal||` instead to fill everything). **unlock frequency** (shared, `frequency|Balboa|`) unlocks the
+  Receiver frequency of one of Raft's story islands for every player, through Raft's own note for it (nothing when
+  it is unlocked already).
 - **Trade stands** (2026-11-04): select any object → **Trade stand...** in the object panel (beside **Readable...**
   and **A chest...**). Players look at it and press E to trade: they pay what you set in **Players pay**
   (`Plank*12;Rope*2`; a story item, `story:old-coin*1`, is taken from the crew's) and get **They get** (Raft items or
@@ -2162,6 +2198,36 @@ islander with that name, and a quest's **Talk to** step (6.1) is done when the d
 show a dialogue: the action **show dialogue** (`dialogue|Old Finn|Hello!\n---\nBye`, `\n` for a new line in the
 action's one line) opens it for the player who set it off, said by the named object (its answers run that object's
 choice events). Check warns when a **Talk to** step names no islander of the island.
+
+**Dialogue branches and flags** (3.4). A page can have up to four answers. A line `#map` starts a branch: lines of
+their own that the dialogue skips when read in order. The answer `> Where are we? -> map` goes there, `-> start` goes
+back to the top, `-> end` (or an answer without `->`) closes the dialogue. Answers can set the island's flags, shared
+by the whole crew and saved: `> Tell me more -> map +asked` also sets the flag `asked`, `-asked` clears it. An answer
+with `?asked` only shows while the flag is set, `?!asked` only while it isn't, so an islander can say something else
+the second time. Checks read a flag as a counter (`count|asked|>=1`). The **Add an answer with its own lines** button
+in the Islander group adds an answer and its branch to rename; the group warns about an answer that goes to a branch
+that isn't there. In multiplayer the host sets the flags and every player sees the same answers.
+
+**Walking islanders** (3.4). In the Islander group, **Walks to** lists places by name (objects or trigger zones,
+comma between them: `well, pier, hut`). The islander walks from where it stands to each in turn, waits **Pause s**
+there (2 s) and walks on at **Speed m/s** (1.4): **loop** walks back to the start and round again, **there and back**
+walks the same way back. The walk runs on the world's clock, so every player in a multiplayer world sees it in the
+same place without extra traffic; it still talks when spoken to. The group warns about a place the island doesn't have.
+
+**Escort step** (3.4). The quest step **Escort** (`Mia@camp`) asks the players to bring an islander to a trigger zone.
+While it is the current step the islander follows the nearest player and waits when they are more than 12 m away;
+inside the zone it stops, the step is done and it stays there (after a reload too). The host leads it, so all players
+see it walk. The **▾** lists the island's islanders and zones; the plan check warns when either is missing.
+
+**Tame step** (3.4). The quest step **Tame** (`Goat@pen`, with a count) asks the players to tame animals of the
+island's creature spots and lead them into a trigger zone. It works with goats, llamas and chickens; `Goat` means any
+goat spot, or write a creature spot's own name. A player holds the animal's food in hand (the creature spot's **Tame
+with** in its Creature group; by default a raw beet for chickens and a raw potato for goats and llamas) within 3 m of
+one for a second: it eats one and follows that player. Without the food in hand a hint says what it wants. A tamed
+animal walks behind its player, and waits where it is when they are more than 30 m away or leave the island. In the
+zone it stays penned and counts for the step; up to 8 a spot are remembered in the world (saved, sent to joiners), and
+penned animals are back in their pen after a reload. When the step is no longer the current one, tamed animals that
+were not penned go back to roaming. The host decides who tamed what; every player can feed.
 
 **Collectible sets** (2026-10-25). **Loot & chests** has **Collectible (set piece)**: a gold coin with a gem, one
 piece of a set. Its **Collectible set** group in the inspector has the **Set** name (default Relics; every object
@@ -3204,7 +3270,7 @@ rule = id | what | when | where | message | Receiver name
 
 Two more parts put an island into the main story: `| first` / `after:<story island or rule id>` / `instead:<story island>` / `beside`
 and when it's done: `quest`, `visit`, `step:<n>`, `zone:<zone>`, `signal:<signal>`, `note:<note number>` (empty: its quest, or reaching it). Three more parts style its notebook tab: `| tab title | tab colour | tab intro`; the colour is a number, 1 pink, 2 sand, 4 purple, 5 teal, 6 olive, 7 red, 8 green, 9 blue, 10 light blue (there is no 3; empty or 0 = by the island's place in the story). Other lines: `description = ...`, `storyending = ...` (the last page; `\n` = a new line), `endingtitle = ...` and `credits = ...` (the credits' title and the makers' names, `\n` between names),
-`random = on/off` (no line: off), `story = on/off`, `storyleaveout = Balboa, Tangaroa`. The mod writes two more lines itself, which you leave as they are: `id = <12 letters and digits>` (which plan this is, whatever its name: a world remembers it, so a new plan later given an old plan's name isn't taken for an edit of it; plans from before 2026-10-10 and library plans have none) and `modversion = 3.3` (the version of the mod that saved the plan: a plan saved by a newer version keeps the lines this version can't read, and when it has some you are told to update the mod). Lines this version can't read are kept as they are. Save the file; the World plan window and the New Game box read it the
+`random = on/off` (no line: off), `story = on/off`, `storyleaveout = Balboa, Tangaroa`. The mod writes two more lines itself, which you leave as they are: `id = <12 letters and digits>` (which plan this is, whatever its name: a world remembers it, so a new plan later given an old plan's name isn't taken for an edit of it; plans from before 2026-10-10 and library plans have none) and `modversion = 3.4` (the version of the mod that saved the plan: a plan saved by a newer version keeps the lines this version can't read, and when it has some you are told to update the mod). Lines this version can't read are kept as they are. Save the file; the World plan window and the New Game box read it the
 next time they open.
 
 ## 8. Playing together
@@ -3331,7 +3397,7 @@ reach the worlds you saved yourself ([4.7](#47-saving-and-sharing)).
 #### Everyone runs the same version of the mod
 
 Joining with another version shows a warning naming both versions, and the game goes on. Every release of a version
-says the same number (3.3), so each build also carries a short stamp: another build of the same version shows a notice
+says the same number (3.4), so each build also carries a short stamp: another build of the same version shows a notice
 naming both stamps. Either way, everyone installs the same, newest release - check the **EXPERIMENTAL ALPHA RELEASE**
 box on the main menu, which shows the version - and updates **before** the next session, not in the middle of an
 adventure. A newer world hosted by an older version keeps the lines it doesn't know and warns ("saved by a newer Custom
@@ -3623,7 +3689,7 @@ hammer or the axe works exactly as before, and shark bait is eaten as fast as ev
 
 #### Shared EXP
 
-When a player defeats a monster, **every other player within 50 m** of it gets **60 %** of its EXP too (less what
+With the [level up system](#96-the-level-up-system) on, when a player defeats a monster, **every other player within 50 m** of it gets **60 %** of its EXP too (less what
 their own hits on it already earned, so a helper ends up with at least 60 %). It doesn't count as a defeated monster
 for them. Only defeated monsters are shared; playing alone nothing changes. See [Earning EXP](#earning-exp) for what each
 monster is worth.
@@ -3769,6 +3835,10 @@ juicer, recycler, sprinkler, the Receiver) and charges in the **battery charger*
 twice the fuel. In a machine it shows as a blue battery. Switch the option off and the upgrades are gone from the
 crafting menu again (large batteries already made keep working, what is built stays); switch it back on and the ones
 learned are back.
+
+Each upgrade has an item number of its own (29400 and up). If another mod already uses one of them, that upgrade
+moves to a free number (29600 and up) and the game tells you once; keep the same mods for that world, so its saved
+upgrades stay what they were.
 
 ##### The upgrade research table
 
@@ -4202,7 +4272,7 @@ get the settings they share at once.
 | Group | What is in it |
 |---|---|
 | **Random islands while sailing** | Random islands on or off (0 = off), the quiet minutes in a new world, the spacing, how far ahead an island appears (**Appear from** and **to**), and when a needed island returns |
-| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew), on the third line **Map zoom in** (=, the + key) and **Map zoom out** (-): click one, then press the new key (Esc keeps the old one). Beside them the **Minimap** button (ON) switches the island map off on this PC. A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why |
+| **Keys (this PC)** | The **Journal** key (J), the **Stats** key (K) and, on the second line, **Notebook** (U, your own notebook), **Map** (M, the minimap) and **Ping** (G, a ping for the crew), on the third line **Map zoom in** (=, the + key) and **Map zoom out** (-): click one, then press the new key (Esc keeps the old one). Beside them the **Minimap** button (ON) switches the island map off on this PC. A key Raft uses, a number key, Esc, Enter, Tab, Space or a mouse button is refused, and the line at the bottom says why A fourth line, **Quest panel: Reset place**, puts a dragged quest panel back in its own place (lit while it was moved). |
 | **Shared with every player** | **Receiver dots** on or off, the **Receiver range**, **Unload beyond** and **Regrow days (new worlds)** |
 | **Generated islands** | The weight of new generated islands, the chance one flies, **Things to gather**, **Finds in the shallows** and how far down they go, the five styles (at least one stays lit) and a button for each kind of thing to gather (lit = on) |
 | **Editor camera (this PC)** | The island editor's camera: **Look sensitivity**, **Move speed**, **Zoom speed**, **Pan speed**, **Drag up: look up / down** and **Wheel up: zoom in / out** - the same as the editor's **Camera...** button ([4.1](#41-the-screen)); kept in `world_rules.txt` |
@@ -4256,6 +4326,7 @@ there means plain Raft.
 | `raftgap` | `min-max`, for example `3-6` (min 2-20, max 4-50) | One random island after every min to max of Raft's own islands | **One after every ... to ...** under CHOOSE ISLANDS..., at once; `WorldIslandsGap <min>-<max>` in the main menu |
 | `journalkey`, `statskey` | A Unity key name, for example `J`, `K` or `F6` | The keys of the journal (J) and the stats page (K) in a world | **Defaults...** > **Keys (this PC)**, at once. A key that can't be used falls back to J or K, and the log says so |
 | `minimap` | `on` or `off` | Whether the island map can be used on this PC (Minimap button on the third line of the Keys group). Off: never shown, M and zoom do nothing, no picture is taken; pings still work. Only worlds with the World setting Island minimap on have a map at all | **Defaults...** > **Keys (this PC)**, at once. Empty = on |
+| `questpanel` | Two numbers `x,y` (UI units from the screen's top-right corner), or empty | Where you dragged the quest panel on this PC; empty = its own place, top right | Dragging the panel; **Defaults...** > **Keys (this PC)** > **Reset place** or a double-click on it empties it |
 | `notebookkey`, `mapkey`, `pingkey`, `mapzoominkey`, `mapzoomoutkey` | A Unity key name | The keys of your own notebook (U), the minimap (M), pings (G) and the map's zoom (= and -) | **Defaults...** > **Keys (this PC)**, at once. Empty = the default: the first of U/Y/O, M/N/Comma, G/H/B, Equals/RightBracket/PageUp, Minus/LeftBracket/PageDown that Raft doesn't use (its main or second key) and no key before it has |
 | `cameralook`, `cameraspeed`, `camerazoom`, `camerapan` | A multiplier, 1 = the mod's own: look 0.2-4, speed 0.1-10, zoom and pan 0.25-4 | The island editor camera's look sensitivity, flying speed, wheel zoom step and pan speed (this PC) | The editor's **Camera...** window or **Defaults... > Editor camera (this PC)**, a moment after a change |
 | `cameradragup`, `camerawheel` | `up` / `down`; `normal` / `reversed` | Which way dragging up turns the editor's view (up, the default; only a saved `down` turns it round) and the wheel's direction | The same |
@@ -4499,7 +4570,7 @@ the save you came from (the mod's islands and quests come back with it too).
 Raft closes (also with Alt+F4 or the window's X), about 3 seconds after each quest step, quest finish and story step
 (at most once a minute), and with Raft's own saves every few minutes; players who joined rely on the host's save. A
 crash, Task Manager or a power cut closes Raft without a save: the islands' chests, quests and story come back as at
-Raft's last save. **Esc > Main menu** is the safest way to stop; after changing a setting during play, let Raft save
+Raft's last save. Leaving with **Esc > Quit game** saves only if you answer Raft's question with a save (the mod adds no save of its own once Raft has let go of the world: such a save had no world id, and worlds saved that way shared one inventory before 3.4; such a world gets its own id back when it loads, from one of its older saves, with the inventory of that save; when no older save has it, the world gets a new id with the inventory it has now, and in the next 60 days a player who joins it and starts afresh there gets their own inventory from then back, once). **Esc > Main menu** is the safest way to stop; after changing a setting during play, let Raft save
 before you stop.
 
 **My island is far away / I can't find it.** Build Raft's Receiver: custom islands are green dots with their distance.
@@ -4640,7 +4711,7 @@ happened, and make it happen again on their own PC. Please include:
    - **Playing together:** the logs of every player, the host's first, and who was the host.
    - The logs may show your Windows user name (in file paths) and your Steam name and id.
 5. **The settings you used:**
-   - **the versions:** Custom Islands (the box at the top right of the main menu says, for example, 3.3), Raft (bottom
+   - **the versions:** Custom Islands (the box at the top right of the main menu says, for example, 3.4), Raft (bottom
      left of the main menu, for example 1.1.01), the mod loader (top of the main menu, for example v2.8.10), and which
      other mods you have;
    - **the world's settings:** Raft's game mode, the Custom Islands plan, and what you chose in World settings. In the
@@ -4688,7 +4759,7 @@ Steps to make it happen:
   3.
 What I expected:
 How often: every time / now and then / once
-Versions: Custom Islands 3.3, Raft 1.1.01, mod loader v2.8.10, other mods:
+Versions: Custom Islands 3.4, Raft 1.1.01, mod loader v2.8.10, other mods:
 Single player or together: (host / joined, how many players)
 World settings: (what WorldOptions, Monsters, BuildCost, Randomizer, WorldPlan, WorldIslands, SpawnPool print)
 Islands and world plans used: (names, files or download links)
@@ -5107,7 +5178,7 @@ vans, caravans, excavators, forklifts, cranes, ore wagons, snow vehicles, planes
 
 ---
 
-*This guide describes Custom Islands 3.3, the Experimental Alpha Release. It is kept up to date with the mod: every
+*This guide describes Custom Islands 3.4, the Experimental Alpha Release. It is kept up to date with the mod: every
 change to a feature updates this guide, the README and the PDF copy of this guide (`docs/Custom-Islands-Guide.pdf`)
 together.*
 

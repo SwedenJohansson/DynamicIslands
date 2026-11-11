@@ -74,10 +74,25 @@ namespace DynamicIslands.Editor
 		/// the screen's height it takes; zero when there is no panel.</summary>
 		internal static Vector2 PanelSize { get { return panel != null ? panel.sizeDelta : Vector2.zero; } }
 		internal static float PanelScreenShare { get { return panel != null && canvas != null && Screen.height > 0 ? panel.rect.height * canvas.scaleFactor / Screen.height : 0f; } }
-		/// <summary>The small map is on the screen in the top right corner (the quest panel moves under it).</summary>
+		/// <summary>The small map is on the screen in the top right corner (the quest panel keeps out of it: QuestTracker.Place).</summary>
 		public static bool CornerShown { get { return Mode == Corner && Shown && canvas != null && canvas.gameObject.activeSelf; } }
 		/// <summary>How far down from the top of the screen the corner map reaches, its island name under it included (UI units, see Layout).</summary>
 		public const float CornerBottom = CornerTop + CornerSize + 20f;
+		/// <summary>The corner map with its island name under it, in screen pixels, while it shows (the quest panel keeps out of it).</summary>
+		public static bool CornerScreenRect(out Rect r)
+		{
+			r = new Rect();
+			if (!CornerShown) return false;
+			var c = new Vector3[4];
+			panel.GetWorldCorners(c);
+			r = Rect.MinMaxRect(c[0].x, c[0].y, c[2].x, c[2].y);
+			if (title != null && title.gameObject.activeInHierarchy && !string.IsNullOrEmpty(title.text))
+			{
+				title.rectTransform.GetWorldCorners(c);
+				r = Rect.MinMaxRect(Mathf.Min(r.xMin, c[0].x), Mathf.Min(r.yMin, c[0].y), Mathf.Max(r.xMax, c[2].x), Mathf.Max(r.yMax, c[2].y));
+			}
+			return true;
+		}
 		const float CornerTop = 14f;
 
 		static Camera cam;
@@ -134,7 +149,8 @@ namespace DynamicIslands.Editor
 			UpdatePings();
 			if (Time.unscaledTime >= nextFind) { nextFind = Time.unscaledTime + 0.5f; FindIsland(me.transform.position); }
 			UpdateStart(me);
-			bool show = Available && Mode != Off && Island != null && Island.Root != null;
+			// (audit 11-09: the corner map, canvas 480, drew over Raft's inventory, crafting and trading menus)
+			bool show = Available && Mode != Off && Island != null && Island.Root != null && !ModKeys.RaftMenuOpen();
 			if (!show) { if (panel != null) panel.gameObject.SetActive(false); return; }
 			EnsureUi();
 			canvas.gameObject.SetActive(true);

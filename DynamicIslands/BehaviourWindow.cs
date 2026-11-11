@@ -59,6 +59,7 @@ namespace DynamicIslands.Editor
 			{ GapBehaviours.RandomVerb, "one at random" },
 			{ GapBehaviours.CountVerb, "count" },
 			{ GapBehaviours.HealVerb, "heal / feed / drink" },
+			{ ReceiverUnlock.Verb, "unlock frequency" },
 		};
 
 		/// <summary>What each action does (the action list's lines).</summary>
@@ -86,6 +87,7 @@ namespace DynamicIslands.Editor
 			{ GapBehaviours.RandomVerb, "Only ONE of the next actions runs, picked at random (how many: empty = 2; a wait ends the group). The same pick for every player" },
 			{ GapBehaviours.CountVerb, "A counter of this island goes up (+1 when empty; +N, -N, =N, reset): saved, the same for every player. The check \"counter\" asks its value (fish brought: 3 of 5...)" },
 			{ GapBehaviours.HealVerb, "The player who set it off gets health, food and drink back: empty or all = all three full; or health / food / drink, with an amount (drink 40), several with commas" },
+			{ ReceiverUnlock.Verb, "The Receiver gets the frequency of one of Raft's story islands (Radio Tower .. Utopia) for every player, as Raft's own note for it does: kept in the notebook and the save. With the story order on, the island chosen is the one it leads to" },
 		};
 
 		/// <summary>What each check asks (the check list's lines).</summary>
@@ -267,6 +269,14 @@ namespace DynamicIslands.Editor
 				help.horizontalOverflow = HorizontalWrapMode.Wrap;
 				UIKit.Size(help.gameObject, -1, 64);
 			}
+			foreach (string ev in Events())
+			{
+				// (QE13: an event that appears after a change, as "laser" when a laser piece is set back to none)
+				if (!actions.ContainsKey(ev)) actions[ev] = new List<ObjAction>();
+				if (!checks.ContainsKey(ev)) checks[ev] = new List<ObjCheck>();
+				if (!elses.ContainsKey(ev)) elses[ev] = new List<ObjAction>();
+				if (!anyOf.ContainsKey(ev)) anyOf[ev] = false;
+			}
 			foreach (string ev in Events()) EventGroup(ev);
 			if (Events().Count == 0) UIKit.Label(body, "<i>This object has no events. Make it usable (\"Players can use it\") to give it actions.</i>", 12, UIKit.TextMuted);
 			Summarise();
@@ -371,6 +381,7 @@ namespace DynamicIslands.Editor
 			}
 
 			if (helper) return;
+			LaserRow(g);
 			string mode = ObjectProps.Get(props, BehaviourProps.Collision);
 			RectTransform c = UIKit.Row(g, 26f, 6f, "Collision");
 			UIKit.Size(UIKit.Label(c, "Collision", 13, UIKit.TextMuted).gameObject, 110);
@@ -384,6 +395,52 @@ namespace DynamicIslands.Editor
 			}
 			UIKit.Label(c, "", 12);
 		}
+
+		/// <summary>QE13: any object can be a laser emitter (beh.laser=beam, its range beh.laserRange) or a mirror (beh.laser=mirror).</summary>
+		void LaserRow(Transform g)
+		{
+			string role = ObjectProps.Get(props, LaserBeam.Prop);
+			RectTransform l = UIKit.Row(g, 28f, 6f, "Laser");
+			UIKit.Size(UIKit.Label(l, "Laser", 13, UIKit.TextMuted).gameObject, 110);
+			Button no = UIKit.Button(l, "No", () => ChooseLaser(""), "Not a laser piece: a laser beam that reaches it fires its \"a laser beam reaches it\" event", 60, 26f, 12);
+			Button beam = UIKit.Button(l, "Shoots a beam", () => ChooseLaser(LaserBeam.Beam),
+				"A laser emitter: a red beam along its front (the blue gizmo arrow) from its middle; the first object it reaches gets the event \"a laser beam reaches it\". Hide it (\"hide\" action) to turn the beam off, show it to turn it on", 130, 26f, 12);
+			Button mirror = UIKit.Button(l, "Mirror", () => ChooseLaser(LaserBeam.Mirror),
+				"Sends a laser beam that reaches it on along its own front (level). Turning it (\"Opens and closes\" with a turn, used by players) turns the beam", 80, 26f, 12);
+			UIKit.SetActive(no, role != LaserBeam.Beam && role != LaserBeam.Mirror);
+			UIKit.SetActive(beam, role == LaserBeam.Beam);
+			UIKit.SetActive(mirror, role == LaserBeam.Mirror);
+			if (role == LaserBeam.Beam)
+			{
+				UIKit.Size(UIKit.Label(l, "reaches", 12, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 56);
+				Field(l, LaserBeam.Range.ToString("0", CultureInfo.InvariantCulture), ObjectProps.Get(props, LaserBeam.RangeProp), 56,
+					"How far the beam goes, from the emitter and again from each mirror (metres, " + LaserBeam.MinRange.ToString("0", CultureInfo.InvariantCulture) + "-" + LaserBeam.MaxRange.ToString("0", CultureInfo.InvariantCulture) + "; empty = " + LaserBeam.Range.ToString("0", CultureInfo.InvariantCulture) + ")", LaserRange);
+				UIKit.Size(UIKit.Label(l, "m", 12, UIKit.TextMuted).gameObject, 14);
+			}
+			UIKit.Label(l, "", 12);
+		}
+
+		/// <summary>The Laser row's buttons: "" = none, LaserBeam.Beam or LaserBeam.Mirror (tests call it as the buttons do).</summary>
+		public static void ChooseLaser(string role)
+		{
+			if (instance == null || instance.islandMode) return;
+			instance.Keep();
+			if (role == LaserBeam.Beam || role == LaserBeam.Mirror) instance.props[LaserBeam.Prop] = role; else instance.props.Remove(LaserBeam.Prop);
+			if (role != LaserBeam.Beam) instance.props.Remove(LaserBeam.RangeProp);
+			instance.Rebuild();
+		}
+
+		/// <summary>The Laser row's range field (metres; empty or 0 = the default, kept within LaserBeam.MinRange..MaxRange).</summary>
+		public static void LaserRange(string v)
+		{
+			if (instance == null) return;
+			float f;
+			if (float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out f) && f > 0f) instance.props[LaserBeam.RangeProp] = ObjectProps.Format(Mathf.Clamp(f, LaserBeam.MinRange, LaserBeam.MaxRange));
+			else instance.props.Remove(LaserBeam.RangeProp);
+		}
+
+		/// <summary>The Save button (tests).</summary>
+		public static void SaveNow() { if (IsOpen) instance.Save(); }
 
 		void EventGroup(string ev)
 		{
@@ -510,7 +567,7 @@ namespace DynamicIslands.Editor
 				a.Verb = verb;
 				if (a.Verb == "wait" && a.Seconds <= 0f) a.Arg = "5";
 				Rebuild();
-			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, sound, teleport to, send signal, journal page, wait, unlock character, play sound/music, stop sound, camera moment, protective suit, hurt creatures, pick up (carry), collapse, move to marker, camera fly-through, change weather, one at random, count, heal / feed / drink", 28f, 12);
+			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, sound, teleport to, send signal, journal page, wait, unlock character, play sound/music, stop sound, camera moment, protective suit, hurt creatures, pick up (carry), collapse, move to marker, camera fly-through, change weather, one at random, count, heal / feed / drink, unlock frequency", 28f, 12);
 			if (a.Verb == OrderPuzzle.Verb) OrderFields(row, a);
 			else if (ObjAction.HasTarget(a.Verb))
 			{
@@ -535,6 +592,9 @@ namespace DynamicIslands.Editor
 			else if (a.Verb == "flythrough") FlyFields(row, a);
 			else if (a.Verb == OrderPuzzle.Verb) { }
 			else if (GapBehaviours.Owns(a.Verb)) GapFields(row, a);
+			else if (a.Verb == ReceiverUnlock.Verb)
+				DropList.Make(row, "Drop_Frequency", ReceiverUnlock.Options("(choose)"), StoryOrder.Parse(a.Target) != ChunkPointType.None ? StoryOrder.Key(StoryOrder.Parse(a.Target)) : "",
+					v => { Keep(); a.Target = v; Rebuild(); }, 130, "Which story island's frequency the Receiver gets", 28f, 12);
 			else if (ObjAction.HasArg(a.Verb))
 			{
 				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : a.Verb == "journal" ? "What the page says" : a.Verb == "suit" ? "seconds (120)" : a.Verb == "hit" ? "% of their health (25)" : a.Verb == "collapse" ? "seconds (3)" : a.Verb == "moveto" ? "marker name, seconds (4)" : a.Verb == PlayerFeatures.DialogueVerb ? "What is said (\\n new line, --- new page, > answer)" : a.Verb == Lights.Verb ? "on, off or toggle" : "signal name (world plans wait for it)";
@@ -737,6 +797,9 @@ namespace DynamicIslands.Editor
 			if (ObjectProps.GetFloat(p, BehaviourProps.Bob, 0f) != 0f) parts.Add("bobs");
 			if (BehaviourProps.Moves(p)) parts.Add(BehaviourProps.Switches(p) ? "opens and closes" : "moves back and forth");
 			if (BehaviourProps.StartsHidden(p)) parts.Add("hidden at first");
+			string laser = ObjectProps.Get(p, LaserBeam.Prop);
+			if (laser == LaserBeam.Beam) parts.Add("shoots a laser beam (" + LaserBeam.RangeOf(p).ToString("0", CultureInfo.InvariantCulture) + " m)");
+			else if (laser == LaserBeam.Mirror) parts.Add("laser mirror");
 			if (ObjectProps.Get(p, BehaviourProps.Use).Length > 0) parts.Add("usable (\"" + ObjectProps.Get(p, BehaviourProps.Use) + "\")");
 			string col = ObjectProps.Get(p, BehaviourProps.Collision);
 			if (col.Length > 0) parts.Add(col == "none" ? "walk-through" : col == "box" ? "box collision" : "solid");

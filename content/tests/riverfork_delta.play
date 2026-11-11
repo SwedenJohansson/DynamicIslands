@@ -63,6 +63,7 @@ use mapscreen
 expect story rivercode 1
 expect step 15
 zone dl_top
+read Crane cab box
 expect step 16
 code cranepad 4172
 expect story route 1
