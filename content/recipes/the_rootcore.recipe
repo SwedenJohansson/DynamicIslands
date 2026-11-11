@@ -270,8 +270,11 @@ prop rc_seep zone.hazard=acid
 prop rc_seep zone.damage=5
 prop rc_seep zone.safe=suit
 prop rc_seep zone.hazardMsg=The seep water burns.
-place Zone_Trigger rc_seepwarn at -23.0 4.6 h=2.5
-prop rc_seepwarn zone.radius=2.2
+# (11-11 w02, REACH: at h=2.5 the zone sat 0.7 m under the cut's dug floor (h=3.2) - no spot had a clear line to it; on the floor now)
+# (11-11 w02fix, REACH: at h=4.0 (0.7 m over the floor) with radius 2.2 still "no spot" - a stand spot must be within
+#     radius-1 m of the zone's middle: lower to 0.3 m over the floor, radius 2.5)
+place Zone_Trigger rc_seepwarn at -23.0 4.6 h=3.6
+prop rc_seepwarn zone.radius=2.5
 prop rc_seepwarn zone.repeat=never
 prop rc_seepwarn zone.message=Green water seeps from the side cut and the air stings. It burns bare skin - keep to the room's floor.
 

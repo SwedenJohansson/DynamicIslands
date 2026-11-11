@@ -1,0 +1,20 @@
+island Ranger Landing
+offset 0 0
+hour 11
+weather Calm
+at -30 53
+wait 3
+picture chk_rlquarry -36 +5 53 -30 13 60
+picture chk_rlquarry_t -30 +14 59 -30 13 60
+at -58 -2.5
+wait 3
+picture chk_foxden -64 +5 -2.5 -58 3 4.5
+picture chk_foxden_t -58 +14 3.5 -58 3 4.5
+at 8.2 61.900000000000006
+wait 3
+picture chk_rlog3 2.1999999999999993 +5 61.900000000000006 8.2 3 68.9
+picture chk_rlog3_t 8.2 +14 67.9 8.2 3 68.9
+at -58 -14
+wait 3
+picture chk_knoll -60 +8 -14 -46 12 -10
+picture chk_knoll_t -46 +22 -4 -46 10 -10

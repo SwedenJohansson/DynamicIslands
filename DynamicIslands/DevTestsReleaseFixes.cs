@@ -335,6 +335,45 @@ namespace DynamicIslands
 					Log("     slant " + x + "," + y + " at " + h.point.ToString("F1") + " n " + h.normal.ToString("F2") + tri + " | " + (hill != null ? hill.CellText(h.point) : "-"));
 					told++;
 				}
+			// (the ground in front of a mouth, down the picture's middle: what each ray meets, and what stands between it and the sun -
+			// the teal patch before Shelter Atoll's arch, r81)
+			if (label.EndsWith("_q"))
+			{
+				// (the meshes with no collider near the mouth, in the picture's upper half: the floating flakes by Balboa's mouth 1, r80)
+				int listed = 0;
+				foreach (MeshRenderer r in UnityEngine.Object.FindObjectsOfType<MeshRenderer>())
+				{
+					if (listed >= 40 || r.GetComponent<Collider>() != null || !r.enabled) continue;
+					Bounds b = r.bounds;
+					if ((b.center - eye).magnitude > 45f) continue;
+					Vector3 lc = Quaternion.Inverse(rot) * (b.center - eye);
+					if (lc.z <= 0f || lc.y / lc.z < -0.1f * th) continue;
+					string path = r.name; for (Transform t = r.transform.parent; t != null && path.Length < 90; t = t.parent) path = t.name + "/" + path;
+					Log("     nocol " + path + " c " + b.center.ToString("F1") + " size " + b.size.ToString("F1") + " scr " + (lc.x / lc.z / tw).ToString("F2") + "," + (lc.y / lc.z / th).ToString("F2"));
+					listed++;
+				}
+			}
+			if (!label.EndsWith("_close")) return;
+			Light sun = RenderSettings.sun;
+			if (sun == null) foreach (Light l in UnityEngine.Object.FindObjectsOfType<Light>()) if (l.type == LightType.Directional && (sun == null || l.intensity > sun.intensity)) sun = l;
+			Log("     sun " + (sun != null ? sun.name + " dir " + sun.transform.forward.ToString("F2") + " shadows " + sun.shadows : "none"));
+			for (int y = 0; y < 16; y++)
+			{
+				var sb = new System.Text.StringBuilder("      v" + y);
+				foreach (float fx in new[] { 0.3f, 0.5f, 0.7f })
+				{
+					Vector3 d = rot * new Vector3((fx * 2f - 1f) * tw, (1f - (0.55f + y * 0.025f) * 2f) * th, 1f);
+					RaycastHit[] all = Physics.RaycastAll(eye, d, 60f, ~0, QueryTriggerInteraction.Ignore).OrderBy(q => q.distance).ToArray();
+					sb.Append(" |");
+					foreach (RaycastHit q in all.Take(3)) { string nm = q.collider.name; sb.Append(' ').Append(nm.Length > 12 ? nm.Substring(0, 12) : nm).Append('@').Append(q.point.y.ToString("F2")).Append('/').Append(q.distance.ToString("F1")); }
+					if (all.Length > 0 && sun != null)
+					{
+						RaycastHit s;
+						sb.Append(Physics.Raycast(all[0].point + Vector3.up * 0.05f, -sun.transform.forward, out s, 300f, ~0, QueryTriggerInteraction.Ignore) ? " shade:" + s.collider.name + "@" + s.point.ToString("F1") : " lit");
+					}
+				}
+				Log(sb.ToString());
+			}
 		}
 
 		static IEnumerator CaveIslandsRoutine(string only, int most, bool keep)
@@ -502,6 +541,9 @@ namespace DynamicIslands
 							eye.y = Mathf.Max(eye.y, 1.5f);
 							yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
 							PickGrid(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
+							// (r84 test: the same with the sun's shadows off - is a jagged line a shadow?)
+							Light sunL = UnityEngine.Object.FindObjectsOfType<Light>().FirstOrDefault(x => x.type == LightType.Directional && x.isActiveAndEnabled);
+							if (sunL != null) { LightShadows was = sunL.shadows; sunL.shadows = LightShadows.None; yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_closens" : "_qns")); sunL.shadows = was; }
 						}
 						Log("    mouth " + mv + " at " + (at - e.Root.transform.position).ToString("F1") + " facing " + outDir.ToString("F1"));
 						mv++;
