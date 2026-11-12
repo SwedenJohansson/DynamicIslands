@@ -1,0 +1,29 @@
+# Keeper Tala and the beacon tool locker on Beacon Saddle (CIPlay beacon_saddle_talk, 11-12 w08; in a test world 'CI ...').
+# Points as in the recipe: Tala sitting by the path up from the landing at -1.5 -30; the tool locker (bslocker) at the
+# foot of the beacon tower at 3.5 -1 on the saddle (4 m). The locker refuses before anyone talked to her; her three
+# answers (journal, a battery, goodbye); then the locker opens.
+island Beacon Saddle keep
+offset -0.2055 -0.0675
+hour 11
+weather Calm
+
+# The tool locker: padlocked before anyone talked to Tala
+open Beacon tool locker
+expect message padlocked
+
+# Keeper Tala by the path
+snap bs_islander Keeper Tala 0 3.5 0.6
+use Keeper Tala pick 1
+expect message Past this, nothing on the charts
+use Keeper Tala pick 2
+expect message keeper's last spare
+expect item Battery 1
+use Keeper Tala pick 3
+expect message Mind the breakwater
+
+# Now the locker opens
+open Beacon tool locker
+wait 2
+expect item Bolt 3
+expect item MetalIngot 2
+picture bs_tala 3 6 -36 -1.5 5 -30

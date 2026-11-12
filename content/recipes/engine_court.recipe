@@ -20,6 +20,7 @@ include lib_gravity
 include lib_concord
 include lib_areas
 include lib_deep14
+include lib_caves
 new
 # (nature 10-24: hills and Raft-like trees over the whole island - the coordinator's check after the resize)
 gen Trees=0.4 Bushes=0.4 Rocks=0.55 Harvest=0.3 BeachThings=0.3
@@ -351,6 +352,65 @@ prop ec_kbox else.open=message||The Keeper's strongbox. It wants the Keeper's ow
 place Note_Paper ectally at 1.7 22.3 ground drop yaw=15
 prop ectally obj.name=ectally
 prop ectally beh.hidden=1
+
+# --- 11-12 w08: the pump room - a dug cave in a rock knoll south-east of the court ----------------------------------------
+# The engine's coolant pump room, dug into a knoll of its own (the court is flat; as Stalker's Hollow's knolls, 11-12):
+# the stroke starts 1.4 m out from the knoll's foot and climbs 8 degrees to the room - stone, a lamp. Off the room, a
+# side cut still holds a pool of spent coolant: acid. Suits in the box by the mouth, or shut the coolant valve there.
+# The locker at the back of the side cut. cavecheck: 23 m and more from the crew locker; nothing else within 20 m.
+brush flatten at 50 -42 r=15 s=20 frames=300 h=8.1
+brush flatten at 50 -42 r=10.8 s=20 frames=300 h=15
+brush flatten at 50 -42 r=6 s=20 frames=300 h=18
+brush smooth at 50 -42 r=18 s=4 frames=60
+brush flatten at 50 -42 r=5.4 s=20 frames=200 h=18
+# (11-12 w08: CICaveInside found the pump tunnel's rock ring poking out of the knoll's steep north-west flank at 48.1 -36.7,
+# 2.4 m beside the tunnel - the top is carried out over it so the ground covers the ring)
+brush flatten at 47.9 -36.5 r=2.8 s=20 frames=200 h=17.2
+brush auto at 50 -42 r=19 s=10 frames=25
+clear at 50 -42 r=19 only=(?i)boulder|rock|tree|bush|palm|coral|algae|flower
+dig 40.2,-32.2 47.9,-39.9 r=1.75 slope=8 as=ecpump
+dig 47.9,-39.9 51.4,-43.4 r=3 as=ecpump
+dig 50.4,-42.4 46,-46.8 r=1.8 slope=0 as=ecpump
+caveloot ecpump dirt=0 mush=0 stone=2 vines=1 titanium=0 light=1
+prop ecpump cave.rock=plain
+# cavecheck inside eclocker ecacid ecpool ecpoolrock ecmist
+place TP_SeleneReactor_Water_Radiated ecpool at 46.8 -46 h=9.6 scale=0.1 yaw=45
+place SmallRock_02 ecpoolrock at 45.9 -45.3 h=11 drop yaw=60 scale=0.9 sy=0.22
+place SmallRock_02 ecpoolrock at 47.6 -46.9 h=11 drop yaw=170 scale=0.8 sy=0.22
+place SmallRock_02 ecpoolrock at 46 -47.2 h=11 drop yaw=280 scale=0.8 sy=0.22
+prop ecpoolrock tint.color=#a4c428
+prop ecpoolrock tint.amount=0.7
+place Zone_Atmosphere ecmist at 46.8 -46 h=9.8
+prop ecmist obj.name=ecmist
+prop ecmist zone.radius=3
+prop ecmist atmo.particles=steam
+prop ecmist atmo.fog=#8cc030
+prop ecmist atmo.fogAmount=0.35
+prop ecmist atmo.light=#c8ff70
+prop ecmist atmo.lightAmount=0.3
+place Zone_Trigger ecacid at 47 -45.8 h=9.9
+prop ecacid obj.name=ecacid
+prop ecacid zone.id=ec_coolant
+prop ecacid zone.radius=2.5
+prop ecacid zone.hazard=acid
+prop ecacid zone.damage=4
+prop ecacid zone.safe=suit
+prop ecacid zone.hazardMsg=Spent coolant on the floor - it burns. Put on a suit from the box by the mouth, or shut the coolant valve outside.
+place Note_Sign ecwarn at 34.5 -26.5 ground sit yaw=135
+note ecwarn PUMP ROOM - COOLANT | The spent coolant drains into the side cut. It burns. Suits in the box by the door. Or shut the coolant valve and let it run off.\n- Engine crew
+place "Box Big" ecsuits at 34.5 -37.9 ground sit yaw=90
+prop ecsuits obj.name=ecsuits
+prop ecsuits beh.use=Put on a coolant suit
+prop ecsuits on.use=suit||180\nmessage||An engine crew's rubber suit and gloves - three minutes before the coolant gets through.
+place UT_JumpPuzzle_LiftMechanism_Lever ecvalve at 45.9 -26.5 ground sit yaw=180
+prop ecvalve obj.name=ecvalve
+prop ecvalve beh.use=Turn the coolant valve
+prop ecvalve on.use=hide|ecacid\nhide|ecmist\nmessage||The valve squeals shut. Inside, the coolant drains off down a grate, and the side cut's floor steams dry.
+place Loot_ChestSmall eclocker at 45.6 -47.4 h=10.5 drop yaw=45
+prop eclocker obj.name=eclocker
+note eclocker Pump room locker | The pump crew's locker at the back of the side cut, out of reach since the coolant came.
+loot eclocker TitaniumOre*1;Battery*1;Bolt*2;MetalIngot*1
+prop eclocker loot.refill=0
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Engine Court

@@ -1,0 +1,17 @@
+# Stormworks' storm drain (CIPlay stormworks_caves, 11-12 w08; in a test world 'CI ...'). Points as in its recipe: the dug
+# drain system - mouth 1 at 38 -12 west to 18 -12 and on to 18 -20; the side branch at 22 -12 north to 22 -8 and its
+# chamber to 20 -2 (dirt, mushrooms, a lamp); mouth 2 at 38 -26 west to 24 -26 and on to 18 -20. The [CITEST] dig lines
+# give the real floors (all 9.9). In at mouth 1 to the chamber, back, on through the drain and out at mouth 2.
+island Stormworks keep
+offset 1.3157 -1.5104
+hour 11
+weather Calm
+where Pickup_Landmark_Mushroom
+where Pickup_Landmark_DirtPickup
+
+picture sw_cave_out 43 +1.7 -12 38 +1 -12
+walk 42 -12 to 38 -12 to 30 -12 to 22 -12 to 22 -8 to 20.5 -3
+picture sw_cave_in 32 11.6 -12 22 10.8 -12 light=20
+picture sw_chamber 22 11.6 -10 20.5 10.4 -3 light=20
+walk 20.5 -3 to 22 -8 to 22 -12 to 18 -12 to 18 -20 to 24 -26 to 30 -26 to 38 -26 to 42 -26
+picture sw_cave_out2 43 +1.7 -26 38 +1 -26
