@@ -90,6 +90,41 @@ call shallows r=62 deep=5 n=2
 
 pop
 
+# --- 11-12 (w12 prep): the franking press and its registration pins - optional hazard, no quest step (plan 12 row: SPIKES under the
+# franking press, zone.pulse timed with the press, safe=none, a lever stops it; no cave, no loot). On the yard's east side a
+# great franking press stands over its bed; the bed's registration pins thrust up and fall back in time with the die (hazard zone
+# r 3.4 round the bed, pulse 2 s up / 3 s down, spikes, safe=none: no suit helps), a warning sign at the bed's near edge, and the
+# foreman's stop lever on a post beyond it - 5.4 m from the bed's middle, reached round it, never over the pins. Nothing in the
+# quest crosses it: 8 m and more from stamp 3, the presses and the ink tanks; the bed is not on the only way anywhere.
+# Heights: all on the ground (the yard is a flat islet, ~2.5 m), the zone 0.3 m over it. The pins are the wooden spikes tinted iron.
+place VP_Forklift frankpress at 24 -51.5 ground sit yaw=0 scale=1.5
+prop frankpress obj.name=frankpress
+prop frankpress tint.color=#4b4f55
+prop frankpress tint.amount=0.7
+for _i 0 2 1
+for _j 0 2 1
+place "Balboa_DecorationPrefabBase_Wooden Spikes" fwspike at {22.5+1.5*$_i} {-48+1.5*$_j} ground scale=0.25 yaw={($_i*3+$_j)*40}
+next
+next
+prop fwspike obj.name=fwspike
+prop fwspike tint.color=#5a5a5e
+prop fwspike tint.amount=0.7
+place Zone_Trigger fwbed at 24 -46.5 ground y=0.3
+prop fwbed obj.name=fwbed
+prop fwbed zone.id=fw_bed
+prop fwbed zone.radius=3.4
+prop fwbed zone.hazard=spikes
+prop fwbed zone.damage=4
+prop fwbed zone.safe=none
+prop fwbed zone.pulse=2,3
+prop fwbed zone.hazardMsg=The press! The registration pins thrust up out of the bed with every stroke of the die. Wait for it to lift - or find the stop lever.
+place Note_Sign fwwarn at 19.2 -46.5 ground sit yaw=90
+note fwwarn PRESS LINE 4 - KEEP OFF THE BED | The die drops every five seconds and the pins come up with it. Do not cross the bed while she is running. The stop lever is on the post at the end of the line. - Foreman
+place UT_JumpPuzzle_LiftMechanism_Lever fwlever at 29.4 -44.4 ground sit yaw=270
+prop fwlever obj.name=fwlever
+prop fwlever beh.use=Throw the stop lever
+prop fwlever on.use=hide|fwbed\nhide|fwspike\nmessage||The lever clunks over. The press jams at the top of its stroke and the pins drop away into the bed.
+
 # --- POST 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Ink Hill ------
 # Ink Hill with works signal mast on it, Gull Cave, the ruined house where Bertil Gran waits (four lamps round it: a puzzle), a crashed plane,
 # a jump course, five printing plates about the island (a set), and at the hub the perforating machine that wants the perforating wheel and the ink roller

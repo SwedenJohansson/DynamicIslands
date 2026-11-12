@@ -1,0 +1,27 @@
+# Telegraph Narrows' cable room (CIPlay telegraph_narrows_caves, 11-12 w12 prep; in a test world 'CI ...').
+# Points as in the recipe: kit_uw mouth on the strait floor at 9 100 (floor flattened to -8 m), the tunnel climbing 12 degrees
+# south (7 pieces, size 0.7: floor +1.513 m per 7.12 m of z), the floor passes the sea level near z 62, the den 50.6 -> 28.3 with
+# the air zone tn_cable at 9 39.5 and the chest tncablechest at 10.2 38. Floors are guesses (-8 at the mouth, ~+2.6 in the den).
+# Offline-written, never run; swim heights are metres over the sea.
+island Telegraph Narrows keep
+offset 0 0
+hour 11
+weather Calm
+empty
+
+# The strait's north end from the air above the mouth
+picture tn_cable_out 9 +6 118 9 -2 100
+
+# Swim in along the flooded tunnel, climbing
+swim 9 98 -6.8 to 9 92 -5.5 to 9 84 -3.8 to 9 76 -2.2 to 9 70 -1.0 to 9 66 -0.2
+# Walk up the dry part to the room and breathe there
+walk 9 64 to 9 56 to 9 48 to 9 41
+air tn_cable here
+picture tn_cable_in 9 +2.5 47 9 +0.5 36 light=20
+open Cable clerks' box
+wait 2
+expect item Rope 2
+
+# Out again the way in
+walk 9 41 to 9 48 to 9 56 to 9 64
+swim 9 66 -0.2 to 9 70 -1.0 to 9 76 -2.2 to 9 84 -3.8 to 9 92 -5.5 to 9 98 -6.8

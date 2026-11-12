@@ -14,6 +14,7 @@ include lib_post
 include lib_areas
 include lib_highwater
 include lib_lastpost
+include lib_caves
 # RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 46 -> 85; the old island moved 39 m south (push frames), so its south shore stays on the coast and the new land is north
 # POST 10-26: the new land - Quarry Crag with quarry mast, Slate Cave, Greta Moberg at the ruined house (a lamp puzzle), a crashed plane, a jump course, a maze, a set of five parcel labels
 new
@@ -42,6 +43,13 @@ call hw_mount x=-38 z=46 b=24 h=22
 call hw_trail x=-38 z=46 b=24 h=22 a0=131.82 turn=300 n=40 h0=3
 brush flatten at 0 12 r=4 s=8 frames=60
 clear at 0 12 r=7
+# --- 11-12 (w12 prep): terrain of the cellar rock (the DIG cave below): a mountain b 17 h 22 on the east side, 24 m and more from
+# the lamps, the hens, the cave zone and the quest hub. Rings at 0.22 h = 4.84 m (the foot), 9.7, 14.5, 18.9, summit 22 m; the
+# mouth's shelf is cut level at the foot (4.84 m, a rule of hw_mount) so the dig starts on level ground.
+call hw_mount x=58 z=14 b=17 h=22
+brush flatten at 40 14 r=4 s=20 frames=60 h=4.84
+brush smooth at 37 14 r=7 s=6 frames=20
+clear at 40 14 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
 # (RESIZE 10-26: the old island, 39 m south)
 push at 0 -39
 clear at 0 2 r=13
@@ -254,6 +262,20 @@ call ar_plants_hill x=-69 z=11 r=14 seed=27593
 call ar_plants_hill x=67 z=15 r=14 seed=27594
 call ar_plants_hill x=15 z=31 r=14 seed=27595
 call ar_plants_hill x=44 z=-48 r=14 seed=27596
+# --- 11-12 (w12 prep): the sorters' cellar under the rock - optional, no quest step (plan 12 row: DIG under the sorting rock; dirt 3,
+# mushrooms 2). A cold cellar the sorters dug into the east flank of the rock to keep the perishable parcels until a boat came:
+# a dug tunnel (kit_dig: 3 m level from the mouth, then 12 m, a chamber at its end; plain rock cave.rock=plain). The two plants hills
+# at 31 7 and 67 15 touch the knoll's foot: their plants are cleared over it below. 24 m and more from the quest things and the walk
+# line. Floor = the knoll's foot 4.84 m (hw_mount ring); the chamber under the summit, ground ~22 m over it. HEIGHTS guessed:
+# the shelf 4.84, the natural ground blended by the smooth at r 17..19.
+clear at 58 14 r=19 all only=(?i)boulder|tree|bush|palm|bamboo|mango
+call kit_dig x=40 z=14 yaw=90 len=12 flat=3 r=1.75 slope=0 room=1 roomr=3.5 roomlen=6 dirt=3 mush=2 stone=0 vines=0 titanium=0 as=srcellar
+prop srcellar cave.rock=plain
+place Zone_Trigger srcellarz at 54 14 h=6
+prop srcellarz obj.name=srcellarz
+prop srcellarz zone.id=sr_cellar
+prop srcellarz zone.radius=5
+prop srcellarz zone.message=The sorters' cold cellar. They kept the perishables down here until a boat came, and some boats never did.
 call hw_machine x=0 z=12 yaw=180 al=qr_machine nm="Parcel crane" obj=RT_PowerBox sc=1 a=qr_top b=qr_cave done=qr_fixed rew=qr_rewchest rnote=qr_rewnote msg="It works." hint="It wants the crane hook from Quarry Crag and the crane chain from Slate Cave."
 call hw_note x=-2.6 z=13.2 yaw=200 al=qr_hint
 

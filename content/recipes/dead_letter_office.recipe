@@ -13,8 +13,9 @@ include lib_post
 include lib_areas
 include lib_highwater
 include lib_lastpost
+include lib_caves
 # RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 40 -> 82; the old island moved 42 m south (push frames), so its south shore stays on the coast and the new land is north
-# POST 10-26: the new land - Gull Knoll with old signal mast, Sack Cave, Sven Holm at the ruined house (a lamp puzzle), a crashed plane, a jump course, a maze, a set of five lost postcards
+# POST 10-26: the new land - Gull Knoll with old signal mast, Sack Cave, Clerk Rouhi (was Sven Holm) at the ruined house (a lamp puzzle), a crashed plane, a jump course, a maze, a set of five lost postcards
 new
 # (nature: a rocky skerry, Like Raft's small islands, few trees)
 gen Trees=0.1 Bushes=0.22 Rocks=0.45 Harvest=0.18 BeachThings=0.25
@@ -96,7 +97,7 @@ call shallows r=56 deep=5 n=2
 pop
 
 # --- POST 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Gull Knoll ------
-# Gull Knoll with old signal mast on it, Sack Cave, the ruined house where Sven Holm waits (four lamps round it: a puzzle), a crashed plane,
+# Gull Knoll with old signal mast on it, Sack Cave, the ruined house where Clerk Rouhi waits (four lamps round it: a puzzle), a crashed plane,
 # a jump course, a maze, five lost postcards about the island (a set), and at the hub the night lamp that wants the night lamp lens and the lamp wick spool
 call hw_zone x=-17.84 z=23.88 al=qd_trailz id=qd_trail r=5 msg="The trail up Gull Knoll starts here - round and up."
 call hw_zone x=-36 z=38 al=qd_summitz id=qd_summit r=8 h=1 msg="The top of Gull Knoll. The whole island below you."
@@ -108,8 +109,15 @@ prop qd_goats creature.count=2
 call ar_cave x=46 z=44 h=3 yaw=180 al=qd_caverock chest=qd_cavechest
 call hw_zone x=47 z=35 al=qd_cavez id=qd_cave r=4 h=1 msg="Sack Cave. Water drips somewhere in the dark."
 call ar_ruin x=56 z=-20 h=3 yaw=0 w=3 d=2 al=qd_ruin
-call lp_islander x=55 z=-24.5 yaw=200 al=qd_isl nm="Sven Holm" pose=lean
-prop qd_isl talk.text=A raft? Then the letters are moving again. I carried them on this skerry for thirty years.\n---\nWhen the Post shut they left the dead letters in the office - nobody to send them to, nobody to send them back. I stayed with them.\n---\nThe night lamp wants its lens back from the mast on Gull Knoll and the wick I hid in Sack Cave. Light it. A post boat should always find its way in.\n---\nAnd my lamps round the house: four, and each one you turn wakes its neighbour. All four lit, and look behind the back wall.
+# --- 11-12 (w12 prep): the islander upgraded - Clerk Rouhi (was Sven Holm), the office's clerk who stayed with the dead letters
+# when the Post shut; she sits at the ruined house on the shore. Her answers: a held letter (journal), where the letters go
+# now (shows the vault's hatch in the rock behind the office), and a stamp (message). The quest step 'talk' now names her.
+call lp_islander x=55 z=-24.5 yaw=200 al=qd_isl nm="Clerk Rouhi" pose=sit
+prop qd_isl islander.character=Rouhi
+prop qd_isl talk.text=Every letter we could not deliver ends up here. Some are for you.\n---\nA raft? Then the letters are moving again. I was the clerk who stayed with them when the Post shut: nobody to send them to, nobody to send them back.\n---\nThe night lamp wants its lens back from the mast on Gull Knoll and the wick I hid in Sack Cave. Light it. A post boat should always find its way in.\n---\nAnd my lamps round the house: four, and each one you turn wakes its neighbour. All four lit, and look behind the back wall.\n> For me?\n> Where do they go now?\n> Mark it returned.
+prop qd_isl on.choice1=journal|Rouhi's held letter|To the crew of the raft, care of the Coastal Post.\n\nThe Post is not finished, only late. I have gone out along the old round and left word at every stop. The letters in the pigeon-holes were never dead, only unclaimed: take them on, in the order of the route card. At the end of the round I keep the one that has waited longest.\n\n- A. Lind, Postmistress\nmessage||Rouhi slides a grey envelope across her knee. It is addressed to the crew of your raft, and the hand is Ada Lind's.
+prop qd_isl on.choice2=show|dlvaulthatch\nmessage||Down the stairs behind the counter.
+prop qd_isl on.choice3=message||Rouhi stamps the air over the pigeon-holes: RETURNED. "There. One less for the sea."
 call lp_lamp x=49 z=-21 al=qd_lamp1 nm="Carrier's lamp 1" grp="Carrier's lamps" on=0
 call lp_lamp x=55 z=-14 al=qd_lamp2 nm="Carrier's lamp 2" grp="Carrier's lamps" on=1
 call lp_lamp x=62 z=-21 al=qd_lamp3 nm="Carrier's lamp 3" grp="Carrier's lamps" on=0
@@ -122,6 +130,33 @@ prop qd_lamp1 on.alllit=show|qd_lampchest\nmessage||All four lamps burn. Behind 
 call lp_hidden x=57 z=-15.4 al=qd_lampchest
 place Creature_Chicken qd_hens at 64 -14 ground
 prop qd_hens creature.count=3
+# --- 11-12 (w12 prep): the held-mail vault (plan 12 row: ST vault under the office, talked-gated; dirt 2, the held mail in a
+# chest). A straight cave (kit_st, the cave tool) into a new knoll in the rock behind the office, 16 m off its back wall
+# (the office, its drawer, letters and route card sit 20 m and more off the den; a 6 m rule can't hold a vault right under
+# them), to a den: the vault where undeliverable mail is held. The held mail lies under a steel hatch in the den's floor, hidden
+# until Clerk Rouhi's second answer (Down the stairs behind the counter) shows it, and locked until someone talked to her.
+# Mouth (-10 -36), way in = +z, 1 tunnel (7.3 m), den ~22 m long behind it, mid-den ~18 m in (z -18). cave.dome 16 keeps
+# the dome off the office. Heights guessed: the den floor = the mouth's ground ~3.5 m over the sea (the pad's 2.2 m rising
+# to the natural ground), set down from 8 m. A sign for the vault 8 m off the mouth, clear of the office door's walk.
+call kit_st x=-10 z=-36 yaw=0 len=7.3 slope=0 end=room size=0.7 hill=1 dirt=2 mush=0 stone=0 vines=0 as=dlvault
+prop dlvault cave.rock=plain
+prop dlvault cave.dome=16
+place Note_Sign dlvaultsign at -10 -44.5 ground yaw=0
+note dlvaultsign HELD MAIL - VAULT | Undeliverable and unclaimed post is kept in the vault. Carriers and staff only. Ask the clerk before you try the hatch.
+# cavecheck inside dlvaulthatch dlvaultchest
+place TangaroaHatchRoom_Hatch dlvaulthatch at -10 -18.2 h=8 drop yaw=0
+prop dlvaulthatch obj.name=dlvaulthatch
+prop dlvaulthatch beh.hidden=1
+prop dlvaulthatch beh.use=Open the vault hatch
+prop dlvaulthatch if.use=talked|Clerk Rouhi
+prop dlvaulthatch on.use=hide|dlvaulthatch\nshow|dlvaultchest\nmessage||The hatch swings up on the held mail: bundles tied with string, each with a red HELD stamp.
+prop dlvaulthatch else.use=message||The vault hatch is padlocked. A tag on the lock: "Clerk's key. Ask Rouhi."
+place Loot_ChestSmall dlvaultchest at -9.4 -17 h=8 drop yaw=0
+prop dlvaultchest obj.name=dlvaultchest
+prop dlvaultchest beh.hidden=1
+prop dlvaultchest loot.refill=0
+note dlvaultchest Held mail | Bundles of dead letters tied with string, a HELD stamp on each. Nothing in them is for you, but the paper is good and the string is stronger than it looks.
+loot dlvaultchest Placeable_PaperBundle*3;Rope*2;TradeToken*1;Plank*2
 call ar_plane x=-56 z=-28 h=3 yaw=40 al=qd_plane crate=qd_planecrate
 place Note_Paper qd_pilot at -57.78 -23.9 ground y=0.1 drop yaw=70
 call hw_zone x=-56 z=-28 al=qd_planez id=qd_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
@@ -312,7 +347,7 @@ prop jettyzone zone.message=The office jetty: grey planks, a lantern, and up the
 story qd_top|Night lamp lens|Bolt|The thick glass lens of the office's night lamp, carried up the old signal mast on Gull Knoll out of the storms' way.
 story qd_cave|Lamp wick spool|Bolt|A spool of lamp wick, wrapped in a mail sack at the back of the cave to keep the damp off it.
 story qd_fixed|Night lamp working|Bolt|The night lamp, working again.
-note qd_hint Night clerk's notice | THE NIGHT LAMP IS OUT - no boat will find the office in the dark. The lens went up the old signal mast on Gull Knoll (the trail starts on the side toward the office) and the wick spool is in Sack Cave (in the rocks past Sven's house). Sven at the old house on the shore knows the rest.
+note qd_hint Night clerk's notice | THE NIGHT LAMP IS OUT - no boat will find the office in the dark. The lens went up the old signal mast on Gull Knoll (the trail starts on the side toward the office) and the wick spool is in Sack Cave (in the rocks past Rouhi's house). Clerk Rouhi at the old house on the shore knows the rest.
 note qd_topchest Old signal mast deck box | A box lashed to the deck rail at the top of the old signal mast.
 loot qd_topchest story:qd_top*1;Rope*2;Scrap*2
 note qd_cavechest Sack Cave chest | A chest at the back of Sack Cave, dry under the rock.
@@ -320,7 +355,7 @@ loot qd_cavechest story:qd_cave*1;Nail*6;Plank*3
 note qd_rewnote Night lamp log | The lamp catches and a long yellow beam swings out over the water, the way the post boats came in. In the lamp box, the night clerk's log: 'Lamp lit at nine. No boat. Lamp lit at nine. No boat.' The last page is blank.
 note qd_rewchest Night lamp reward | What the night lamp kept.
 loot qd_rewchest MetalIngot*2;Bolt*3;Rope*2
-note qd_lampchest Sven's satchel | Sven's old mail satchel under a stone behind the house: his cap badge, his whistle and his savings.
+note qd_lampchest Rouhi's satchel | Rouhi's old mail satchel under a stone behind the house: her cap badge, her whistle and her savings.
 loot qd_lampchest TradeToken*2;CopperIngot*2;Rope*2
 note qd_setchest Postcard rack | The office's postcard rack, every card back in its slot, and the stamp money in its drawer.
 loot qd_setchest TradeToken*2;Glass*2;MetalIngot*1
@@ -344,11 +379,11 @@ step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the counter dra
 step blueprint|Blueprint_Antenna|1|Take the antenna plans from the counter drawer
 step collect|story:deadletter|5|Take the five dead letters from the pigeon-holes
 step read|Night clerk's notice|1|Read the night clerk's notice by the night lamp
-step talk|Sven Holm|1|Talk to Sven Holm at the ruined house on the shore
+step talk|Clerk Rouhi|1|Talk to Clerk Rouhi at the ruined house on the shore
 step reach|qd_trail|1|Find the foot of the trail up Gull Knoll, below the signal mast
 step reach|qd_summit|1|Climb the trail to the top of Gull Knoll
 step collect|story:qd_top|1|Climb the old signal mast and take the night lamp lens from its deck
-step reach|qd_cave|1|Find Sack Cave in the rocks, past Sven's ruined house
+step reach|qd_cave|1|Find Sack Cave in the rocks, past Rouhi's ruined house
 step collect|story:qd_cave|1|Take the lamp wick spool from the chest at the back of the cave
 step read|Night lamp log|1|Bring both to the night lamp and read what it shows
 step read|Postmaster's route card|1|Read the postmaster's route card by the door

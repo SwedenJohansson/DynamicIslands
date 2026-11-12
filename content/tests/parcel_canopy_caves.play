@@ -1,0 +1,25 @@
+# Parcel Canopy's root cellar under the canopy roots (CIPlay parcel_canopy_caves, 11-12 w12 prep; in a test world 'CI ...').
+# Points as in the recipe (the origin frame): the root knoll hw_mount at 54 4 (b 18, h 24, foot 5.28 m); kit_dig mouth at 35 4
+# (way in = +x), 2 m level, the tunnel to 51 4, the chamber to 57 4; Raft's machete vines (pcroots_vines) across the mouth. Floor
+# ~5.28 (a guess). Offline-written, never run; the offset is the old one - re-read it after the build (the knoll may move the
+# land centre).
+island Parcel Canopy keep
+offset 0 26
+hour 11
+weather Calm
+
+# The knoll and the mouth shut by the vines
+picture pc_roots_out 20 +3 4 35 +1.5 4
+walk 30 4 to 33 4 to 36 4 blocked
+expect shown pcroots_vines
+use pcroots_vines
+expect hidden pcroots_vines
+picture pc_roots_cut 22 +2.5 4 35 +1.5 4
+
+# In along the tunnel to the chamber
+walk 31 4 to 35 4 to 42 4 to 51 4 to 55 4
+zone pc_roots
+picture pc_roots_in 43 +2.5 4 55 +0.5 4 light=20
+
+# Out again
+walk 55 4 to 51 4 to 42 4 to 35 4 to 30 4

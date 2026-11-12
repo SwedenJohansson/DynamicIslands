@@ -1,0 +1,19 @@
+# Clerk Rouhi at the Dead Letter Office (CIPlay dead_letter_office_talk, 11-12 w12 prep; in a test world 'CI ...').
+# Clerk Rouhi sits at the ruined house on the shore (55 -24.5). Answer 1: her held letter in the journal. Answer 2: shows the
+# vault hatch (dlvaulthatch) and says where it is. Answer 3: the returned stamp. Offline-written, never run.
+island The Dead Letter Office
+offset 0 42
+hour 11
+weather Calm
+expect hidden dlvaulthatch
+picture dl_islander 51.8 +2.4 -21.2 55 +0.9 -24.5
+use Clerk Rouhi
+expect step 0
+use Clerk Rouhi pick 1
+expect message grey envelope
+use Clerk Rouhi pick 3
+expect message One less for the sea
+expect hidden dlvaulthatch
+use Clerk Rouhi pick 2
+expect message stairs behind the counter
+expect shown dlvaulthatch

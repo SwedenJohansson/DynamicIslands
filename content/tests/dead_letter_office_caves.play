@@ -1,0 +1,33 @@
+# The Dead Letter Office's held-mail vault (CIPlay dead_letter_office_caves, 11-12 w12 prep; in a test world 'CI ...').
+# Points as in the recipe: the vault's mouth at -10 -36 (way in +z, one tunnel of 7.3 m), the den ~22 m long behind it,
+# its hatch at -10 -18.2 and chest at -9.4 -17 (locked until Clerk Rouhi's talk, shown by her answer 2). Floor ~3.5 m
+# (a guess). Rouhi at 55 -24.5. Offline-written, never run; re-read the offset after the build.
+island The Dead Letter Office keep
+offset 0 42
+hour 11
+weather Calm
+empty
+expect hidden dlvaulthatch
+expect hidden dlvaultchest
+
+# Rouhi first: the second answer shows the hatch
+use Clerk Rouhi pick 2
+expect message stairs behind the counter
+expect shown dlvaulthatch
+
+# In by the mouth, to the den
+picture dl_vault_out -10 +3 -50 -10 +1.5 -36
+walk -10 -44 to -10 -36 to -10 -30 to -10 -24 to -10 -20
+picture dl_vault_in -10 +3 -23 -10 +0.5 -18 light=20
+
+# The hatch opens on the held mail
+use dlvaulthatch stay
+expect message held mail
+expect hidden dlvaulthatch
+expect shown dlvaultchest
+open Held mail
+wait 2
+expect item Placeable_PaperBundle 3
+
+# And out again
+walk -10 -20 to -10 -26 to -10 -33 to -10 -38 to -10 -46

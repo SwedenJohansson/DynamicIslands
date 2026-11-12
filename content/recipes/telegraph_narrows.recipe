@@ -15,6 +15,7 @@ include lib_post
 include lib_areas
 include lib_highwater
 include lib_lastpost
+include lib_caves
 # RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 70 -> 90
 # POST 10-26: the new land - Wire Hill with repeater mast, Seal Cave, Dagny Ek at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five glass insulators
 new
@@ -207,6 +208,31 @@ call lp_cam x=80 z=-10 h=45 al=qt_cam4 path=qt_view order=4 look=qt_isl speed=9 
 call lp_cam x=0 z=-88 h=60 al=qt_cam5 path=qt_view order=5 look=qt_isl speed=9 hold=2
 call hw_machine x=-54 z=40 yaw=126.53 al=qt_machine nm="Line repeater" obj=TP_LaserControlPanel_lever sc=3 a=qt_top b=qt_cave done=qt_fixed rew=qt_rewchest rnote=qt_rewnote msg="It works." hint="It wants the relay coil from Wire Hill and the relay key from Seal Cave."
 call hw_note x=-56.6 z=41.2 yaw=146.53 al=qt_hint
+
+# --- 11-12 (w12 prep): the cable room under the narrows - optional, no quest step (plan 12 row: UW, an ST cable tunnel under the
+# narrows to an air room; a chest, stone 2). The telegraph's old sea cable came ashore through a tunnel cut up from the strait's
+# floor into a rock at the strait's north end, and ended in a dry cable room where the clerks spliced it. The mouth lies on the
+# strait floor (the brush at the top flattened it to 8 m down, x -22..22, past z 100), 9 m east of the middle, 6 m and more
+# from the puffers (0 80); the tunnel climbs 12 degrees south for 7 pieces (size 0.7, 50 m) to the room (kit_uw: the cave tool,
+# the dome is raised from the sea floor, plain rock cave.rock=plain). Room: end z 50.2, den 50.6 -> 28.3, middle z 39.5, x 9; its
+# air zone and chest dropped in. 25 m and more from the walk line (z 0), the stacks and the zipline; 27 m from the jump pad.
+# HEIGHTS guessed: the strait floor -8 (flatten rule), the den floor = -8 + 7 x 1.513 = +2.6 m over the sea (zone h 4, chest drop
+# from 5.5 m, safe for a floor of 1 to 4 m); whether the dome meets the east coast of the strait is not known.
+call kit_uw x=9 z=100 yaw=180 len=50 slope=12 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=tncable
+prop tncable cave.rock=plain
+# cavecheck inside tncableair tncablechest
+place Zone_Trigger tncableair at 9 39.5 h=4
+prop tncableair obj.name=tncableair
+prop tncableair zone.id=tn_cable
+prop tncableair zone.radius=8
+prop tncableair zone.repeat=1
+prop tncableair zone.air=1
+prop tncableair zone.message=The cable room under the narrows: dry, the air stale but good, the old cable rotted in its clamps.
+place Loot_ChestSmall tncablechest at 10.2 38 h=5.5 drop yaw=180
+prop tncablechest obj.name=tncablechest
+prop tncablechest loot.refill=0
+note tncablechest Cable clerks' box | The clerks' splicing box: spare insulators, a coil of line and a tin of fuse wire. Stencilled on the lid: STRAIT CABLE - SPLICE ROOM.
+loot tncablechest Rope*2;Glass*2;CopperIngot*2;Bolt*3
 
 # --- Settings, notes, behaviours, quest --------------------------------------------------------------------------------
 info title=Telegraph Narrows

@@ -15,6 +15,7 @@ include lib_post
 include lib_areas
 include lib_highwater
 include lib_lastpost
+include lib_caves
 # RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 64 -> 88; the old island moved 24 m south (push frames), so its south shore stays on the coast and the new land is north
 # POST 10-26: the new land - Pressure Hill with tube vent mast, Vent Cave, Otto Rask at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five tube tokens
 new
@@ -40,6 +41,15 @@ call hw_mount x=42 z=50 b=24 h=22
 call hw_trail x=42 z=50 b=24 h=22 a0=-123.69 turn=300 n=40 h0=3
 brush flatten at 0 22 r=4 s=8 frames=60
 clear at 0 22 r=7
+# --- 11-12 (w12 prep): terrain of the tube knoll (the SYS cave below, "the tubes' rock"): a mountain b 19 h 26 on the east side,
+# 28 m and more from the pieces, the plane and the trail's foot. Rings at 0.22 h = 5.72 m (foot), 11.4, 17.2, 22.4, summit 26 m;
+# the two mouths' shelves are cut level at the foot (5.72 m), a rounded rise behind them. HEIGHT 5.72 is a rule of hw_mount.
+call hw_mount x=57 z=2 b=19 h=26
+brush flatten at 36 2 r=4 s=20 frames=60 h=5.72
+brush flatten at 36 -6 r=4 s=20 frames=60 h=5.72
+brush smooth at 33 -2 r=8 s=6 frames=20
+clear at 36 2 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+clear at 36 -6 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
 # (RESIZE 10-26: the old island, 24 m south)
 push at 0 -24
 clear from 0 -40 to 0 -58 r=4
@@ -207,6 +217,21 @@ call ar_plants_hill x=72 z=8 r=14 seed=27492
 call ar_plants_hill x=-16 z=36 r=14 seed=27493
 call ar_plants_hill x=-48 z=16 r=14 seed=27494
 call ar_plants_hill x=8 z=48 r=12 seed=27495
+# --- 11-12 (w12 prep): the tubes' rock - optional, no quest step (plan 12 row: SYS, tube tunnels, 3 ST joined at a sorting room;
+# stone 2, mushrooms 2, titanium 1). The Post's pneumatic tubes ran through the east knoll to the exchange; the fitters dug three
+# tunnels to lay them - a trunk from the west mouth bending south, a second mouth beside it that meets the trunk's end, and a
+# branch off the trunk to the sorting room where the tubes were sorted by hand (kit_sys: dug tunnels, two mouths, joined). All
+# plain rock (cave.rock=plain). 30 m and more from every quest thing, the walk line and the pieces; the plants_hill at 72 8
+# leaves the knoll's flank: its scatter cleared there below. Floor = the foot, 5.72 m (hw_mount ring); the room 10.8 m from the knoll's
+# middle, the ground over it ~15 m. HEIGHTS guessed: the shelves keep 5.72, a rise of r 19..21 smoothed from the natural ground.
+clear at 57 2 r=21 all only=(?i)boulder|tree|bush|palm|bamboo|mango
+call kit_sys x=37 z=2 yaw=90 side=1 len=14 bend=6 branch=10 blen=3 gap=8 in2=9 r=1.75 roomr=4 dirt=0 mush=2 stone=2 vines=0 titanium=1 as=phtubes
+prop phtubes cave.rock=plain
+place Zone_Trigger phtubesz at 48 8 h=7
+prop phtubesz obj.name=phtubesz
+prop phtubesz zone.id=ph_tubes
+prop phtubesz zone.radius=5
+prop phtubesz zone.message=The sorting room. Brass tube mouths in every wall, a dead brass sorter's hand-wheel in the corner, and dust over all of it.
 call hw_machine x=0 z=22 yaw=180 al=qh_machine nm="North line pump" obj=TP_LaserControlPanel_lever sc=3 a=qh_top b=qh_cave done=qh_fixed rew=qh_rewchest rnote=qh_rewnote msg="It works." hint="It wants the pump gauge from Pressure Hill and the pump bellows from Vent Cave."
 call hw_note x=-2.6 z=23.2 yaw=200 al=qh_hint
 

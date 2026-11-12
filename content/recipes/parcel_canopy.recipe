@@ -15,6 +15,7 @@ include lib_post
 include lib_areas
 include lib_highwater
 include lib_lastpost
+include lib_caves
 # RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 62 -> 88; the old island moved 26 m south (push frames), so its south shore stays on the coast and the new land is north
 # POST 10-26: the new land - Parrot Peak with radio relay mast, Root Cave, Mira Dahl at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five air mail stamps
 new
@@ -50,6 +51,13 @@ call hw_mount x=-40 z=56 b=22 h=22
 call hw_trail x=-40 z=56 b=22 h=22 a0=118.81 turn=300 n=40 h0=3
 brush flatten at 0 34 r=4 s=8 frames=60
 clear at 0 34 r=7
+# --- 11-12 (w12 prep): terrain of the root knoll (the DIG cave below): a mountain b 18 h 24 on the east side, 40 m and more from
+# the plane, the hives and the den. Rings at 0.22 h = 5.28 m (the foot), 10.6, 15.8, 20.6, summit 24 m; the mouth's shelf is cut
+# level at the foot (5.28 m, a rule of hw_mount) so the dig starts on level ground.
+call hw_mount x=54 z=4 b=18 h=24
+brush flatten at 34 4 r=4 s=20 frames=60 h=5.28
+brush smooth at 31 4 r=7 s=6 frames=20
+clear at 34 4 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
 # (RESIZE 10-26: the old island, 26 m south)
 push at 0 -26
 clear at 6 -42 r=6
@@ -131,6 +139,21 @@ call hives x=28 z=24 r=10 n=1 seed=4314
 call shallows r=80 deep=5 n=3
 
 pop
+# --- 11-12 (w12 prep): under the canopy roots - optional, no quest step (plan 12 row: VINE + DIG under the canopy roots; mushrooms 4,
+# cave vines). Where the canopy's great roots have lifted a knoll of rock on the east side, the mail pilots dug a root cellar
+# to keep the parcels dry between flights; the mouth has grown over with vines again (gate=1: Raft's ChoppableVines across it,
+# cut with the machete from the camp chest, which is on the quest path at step 4, so nothing is locked out of the story). A dug
+# tunnel (kit_dig, flat 2 m then 14 m, a chamber at its end, plain rock cave.rock=plain). 40 m and more from every quest thing,
+# the plane, the den and the walk line. Floor = the knoll's foot 5.28 m (hw_mount ring); the chamber under the summit, the ground
+# over it ~24 m. HEIGHTS guessed: the shelf 5.28, the natural ground round the shelf blended by the smooth at r 18..20.
+clear at 54 4 r=20 all only=(?i)boulder|tree|bush|palm|bamboo|mango
+call kit_dig x=35 z=4 yaw=90 len=14 flat=2 r=1.75 slope=0 room=1 roomr=3.5 roomlen=6 dirt=0 mush=4 stone=0 vines=3 titanium=0 gate=1 as=pcroots
+prop pcroots cave.rock=plain
+place Zone_Trigger pcrootsz at 49 4 h=6.5
+prop pcrootsz obj.name=pcrootsz
+prop pcrootsz zone.id=pc_roots
+prop pcrootsz zone.radius=5
+prop pcrootsz zone.message=Under the canopy roots. Pale roots hang from the roof. The mail pilots kept their parcels dry down here between flights.
 
 # --- POST 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Parrot Peak ------
 # Parrot Peak with radio relay mast on it, Root Cave, the ruined house where Mira Dahl waits (four lamps round it: a puzzle), a crashed plane,

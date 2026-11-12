@@ -1,0 +1,37 @@
+# The Franking Works' press line 4 (CIPlay franking_works_spikes, 11-12 w12 prep; in a test world 'CI ...').
+# Points as in the recipe (the origin frame): the press frankpress at 24 -51.5, the bed's pins fwspike on 22.5..25.5 x -48..-45,
+# the hazard zone fwbed at 24 -46.5 (r 3.4, spikes, safe=none, pulse 2 s up / 3 s down), the warning sign fwwarn at 19.2 -46.5, the
+# stop lever fwlever at 29.4 -44.4. Into the bed: hurt and the message; the lever: bed and pins hidden; across unhurt.
+# Offline-written, never run; the yard is ~2.5 m, all on the ground.
+island The Franking Works keep
+offset 0 37
+hour 11
+weather Calm
+empty
+expect shown fwbed
+expect shown fwspike
+
+picture fw_press 14 +3.5 -58 24 +1.2 -47
+walk 15 -46.5 to 18 -46.5
+read PRESS LINE 4
+
+# Into the bed, through a whole stroke
+walk 19 -46.5 to 24 -46.5
+wait 7
+expect message registration pins
+expect hurt 4
+picture fw_pins 20 +2.5 -43 24 +0.3 -46.5
+at 18 -46.5
+wait 4
+expect unhurt
+
+# The lever stops it
+use fwlever
+wait 2
+expect hidden fwbed
+expect hidden fwspike
+expect message pins drop away
+wait 3
+walk 18 -46.5 to 24 -46.5 to 28 -46.5
+wait 4
+expect unhurt
