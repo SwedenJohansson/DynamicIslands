@@ -12,6 +12,13 @@ picture sr_cellar_out 24 +3 14 40 +1.5 14
 picture sr_cellar_side 36 +3 28 42 +1.5 14
 
 # In along the tunnel to the chamber
+# the boar in the cellar (11-12 mixed monsters): alive on the dug floor, under the rock
+wait 3
+expect animals Boar 1
+expect animalsinside Boar 1
+kill Boar
+expect animals Boar 0
+
 walk 35 14 to 40 14 to 46 14 to 55 14 to 59 14
 zone sr_cellar
 picture sr_cellar_in 46 +2.5 14 59 +0.5 14 light=20

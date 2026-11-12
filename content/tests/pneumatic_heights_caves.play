@@ -13,6 +13,13 @@ picture ph_tubes_out 24 +3 2 37 +1.5 -2
 picture ph_tubes_mouth2 28 +2.5 -12 37 +1.5 -6
 
 # In by the second mouth: along its tunnel to the trunk's end, up the trunk, then the branch to the sorting room
+# the bear in the sorting room (11-12 mixed monsters): alive on the dug floor, under the knoll's rock; then put down
+wait 3
+expect animals Bear 1
+expect animalsinside Bear 1
+kill Bear
+expect animals Bear 0
+
 walk 31 -6 to 37 -6 to 46 -6 to 51 -4 to 51 2 to 47 2 to 47 5 to 48 9
 zone ph_tubes
 picture ph_tubes_in 46 +2.5 4 49 +1 10 light=20

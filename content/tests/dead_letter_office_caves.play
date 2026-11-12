@@ -12,7 +12,7 @@ expect hidden dlvaultchest
 
 # Rouhi first: the second answer shows the hatch
 use Clerk Rouhi pick 2
-expect message stairs behind the counter
+expect message follow the HELD MAIL sign
 expect shown dlvaulthatch
 
 # In by the mouth, to the den

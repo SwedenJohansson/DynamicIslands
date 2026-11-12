@@ -112,11 +112,14 @@ call ar_ruin x=56 z=-20 h=3 yaw=0 w=3 d=2 al=qd_ruin
 # --- 11-12 (w12 prep): the islander upgraded - Clerk Rouhi (was Sven Holm), the office's clerk who stayed with the dead letters
 # when the Post shut; she sits at the ruined house on the shore. Her answers: a held letter (journal), where the letters go
 # now (shows the vault's hatch in the rock behind the office), and a stamp (message). The quest step 'talk' now names her.
+# a sitter needs a seat (on bare ground the sit pose floats - w10 Hollins r4): a wooden chair under her
+place Placeable_Chair_Wood qd_islchair at 55 -24.5 ground sit yaw=200
+prop qd_islchair obj.name=qd_islchair
 call lp_islander x=55 z=-24.5 yaw=200 al=qd_isl nm="Clerk Rouhi" pose=sit
 prop qd_isl islander.character=Rouhi
 prop qd_isl talk.text=Every letter we could not deliver ends up here. Some are for you.\n---\nA raft? Then the letters are moving again. I was the clerk who stayed with them when the Post shut: nobody to send them to, nobody to send them back.\n---\nThe night lamp wants its lens back from the mast on Gull Knoll and the wick I hid in Sack Cave. Light it. A post boat should always find its way in.\n---\nAnd my lamps round the house: four, and each one you turn wakes its neighbour. All four lit, and look behind the back wall.\n> For me?\n> Where do they go now?\n> Mark it returned.
 prop qd_isl on.choice1=journal|Rouhi's held letter|To the crew of the raft, care of the Coastal Post.\n\nThe Post is not finished, only late. I have gone out along the old round and left word at every stop. The letters in the pigeon-holes were never dead, only unclaimed: take them on, in the order of the route card. At the end of the round I keep the one that has waited longest.\n\n- A. Lind, Postmistress\nmessage||Rouhi slides a grey envelope across her knee. It is addressed to the crew of your raft, and the hand is Ada Lind's.
-prop qd_isl on.choice2=show|dlvaulthatch\nmessage||Down the stairs behind the counter.
+prop qd_isl on.choice2=show|dlvaulthatch\nmessage||The vault is in the rock behind the office - follow the HELD MAIL sign. The hatch is open to you now.
 prop qd_isl on.choice3=message||Rouhi stamps the air over the pigeon-holes: RETURNED. "There. One less for the sea."
 call lp_lamp x=49 z=-21 al=qd_lamp1 nm="Carrier's lamp 1" grp="Carrier's lamps" on=0
 call lp_lamp x=55 z=-14 al=qd_lamp2 nm="Carrier's lamp 2" grp="Carrier's lamps" on=1

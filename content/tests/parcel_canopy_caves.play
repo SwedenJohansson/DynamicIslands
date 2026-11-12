@@ -17,6 +17,12 @@ expect hidden pcroots_vines
 picture pc_roots_cut 22 +2.5 4 35 +1.5 4
 
 # In along the tunnel to the chamber
+# the two rats in the root cellar (11-12 mixed monsters): alive on the dug floor, under the knoll's rock
+expect animals Rat 2
+expect animalsinside Rat 2
+kill Rat
+expect animals Rat 0
+
 walk 31 4 to 35 4 to 42 4 to 51 4 to 55 4
 zone pc_roots
 picture pc_roots_in 43 +2.5 4 55 +0.5 4 light=20

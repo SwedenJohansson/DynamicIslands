@@ -15,5 +15,5 @@ use Clerk Rouhi pick 3
 expect message One less for the sea
 expect hidden dlvaulthatch
 use Clerk Rouhi pick 2
-expect message stairs behind the counter
+expect message follow the HELD MAIL sign
 expect shown dlvaulthatch
