@@ -1,0 +1,50 @@
+# Cinderfall's lava tubes and Forgekeeper Johnny (CIPlay cinderfall_caves, 11-12 w09; in a test world 'CI ...').
+# Points as in the recipe: mouth B on the ash field at -45 18.5, mouth A off the turbine hall's flats at -28 27, the
+# two meet at -36 9; the slag chamber round -16 -6, the annex branch from -39 10.5 to the annex at -46 -6 (hatch at
+# -46.5 -6.5, opened only after a talk with Johnny at 55 29.5). Floors ~4-4.5 (each stroke's own mouth).
+island Cinderfall keep
+offset 0.9743 -0.0458
+hour 11
+weather Calm
+# (a CI world's bag emptied first: a full bag drops the loot)
+empty
+expect hidden cf_annexchest
+
+# In by mouth B, through to the slag chamber
+picture cf_tubes_out -51 +3 25 -45 +1.5 18.5
+walk -48 22 to -45 18.5 to -42 12 to -36 9 to -33 11 to -27 3 to -21 -3 to -17 -5.5
+picture cf_tubes_in -17.5 5.0 -5.1 -26 4.6 2 light=20
+
+# The annex branch: the hatch locked before anyone talked to Johnny
+walk -21 -3 to -27 3 to -33 11 to -36 9 to -39 10.5 to -42 3 to -44 -2 to -45.2 -4.6
+use cf_annexhatch stay
+expect message Ask the forge
+expect shown cf_annexhatch
+expect hidden cf_annexchest
+
+# Forgekeeper Johnny by the ruined survey house
+picture cf_islander 53.4 4.3 25.6 55 4.0 29.5
+use Forgekeeper Johnny
+expect step 0
+
+# Now the hatch opens on the annex chest
+walk -45 18.5 to -42 12 to -39 10.5 to -42 3 to -44 -2 to -45.2 -4.6
+use cf_annexhatch stay
+expect message spare stock
+expect hidden cf_annexhatch
+expect shown cf_annexchest
+open Johnny's annex
+wait 2
+expect item CopperIngot 2
+
+# His answers: 1 the machete, 3 the offcuts, 2 the Drowned Gate (journal)
+use Forgekeeper Johnny pick 1
+expect message machete for the weed
+use Forgekeeper Johnny pick 3
+expect message three offcuts
+expect item Scrap 3
+use Forgekeeper Johnny pick 2
+expect message culverts under the wall
+
+# Out by mouth A
+walk -36 9 to -30 13 to -28 20 to -28 27 to -28 31

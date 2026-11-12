@@ -9,6 +9,7 @@ include lib_sea
 include lib_rt
 include lib_huts
 include lib_features
+include lib_caves
 new
 # (nature: forest: Like Raft's Balboa - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft; thicker than
 # that in the wild west and south of the mesa, where the town and the terraces were cleared out of it - CIIslandDensity)
@@ -564,6 +565,28 @@ place Creature_Chicken growerhens at -32 31 h=34.7
 place Creature_Goat pasture at -52 6 h=34.7
 place Creature_Turtle turtles at -9 116 h=-1.6
 place Creature_Dolphin dolphins at 24 156 h=-3
+
+# --- W09 11-12: the Corps' quarry under the rim - a dug system in the mesa's sea-side face (kit_sys: two mouths at the
+# cliff foot, three tunnels, a side chamber) and a dug gallery on from the trunk's end to the quarry hall, where the
+# Corps cut the stone for the town. Mouths start 1.4 m out from the foot (floors 2.5 m, the apron's ground) -------------
+call kit_sys x=-8 z=-75.5 yaw=0 side=1 len=24 bend=10 branch=12 blen=8 gap=16 in2=14 r=1.75 roomr=3.5 dirt=2 mush=2 stone=1 vines=0 titanium=0 light=0 as=frquarry
+dig 2,-51.5 2,-42 r=1.75 slope=0 as=frquarry
+dig 2,-42 2,-31 r=4.5 slope=0 as=frquarry
+caveloot frquarry dirt=2 mush=2 stone=2 vines=0 titanium=0 light=0 wet=0
+prop frquarry cave.rock=plain
+# cavecheck inside frquarryz frquarrychest frquarrynote
+place Zone_Trigger frquarryz at 2 -36 h=4.5
+prop frquarryz obj.name=frquarryz
+prop frquarryz zone.id=fr_quarry
+prop frquarryz zone.radius=6
+prop frquarryz zone.message=The Corps' quarry hall, deep under the rim. Every stone of the town above came out of this hill.
+place Loot_ChestSmall frquarrychest at 0.6 -33 h=5 drop yaw=90
+prop frquarrychest obj.name=frquarrychest
+prop frquarrychest loot.refill=0
+note frquarrychest Quarrymen's chest | The quarrymen's chest: the tools they left when the last stone went up the road, and their tally of the loads.
+loot frquarrychest MetalIngot*3;Bolt*4;Rope*2;Nail*10
+place Note_Paper frquarrynote at 3.6 -33.5 h=5 sit drop yaw=270
+note frquarrynote Quarry tally | Last load up the road: the hall's doorstep. Then the Commander said stop - leave the hill something to stand on.
 
 # --- Settings, story items, notes, behaviours, quest (Almost Home: 32 steps in six chapters - the finale) -------------------
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------

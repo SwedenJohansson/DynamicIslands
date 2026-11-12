@@ -16,6 +16,7 @@ include lib_features
 include lib_highwater
 include lib_areas
 include lib_raft2
+include lib_caves
 new
 # (nature: snowy: a few pines and snow drifts over Raft's near-bare Temperance; Rocks 0.25 gave 2.5 per 1000 m2 against Raft's 1.1)
 gen Trees=0.08 Bushes=0.15 Rocks=0.15 Harvest=0.05 BeachThings=0.3
@@ -170,6 +171,24 @@ prop wr_piece1 on.set=show|wr_setchest\nmessage||All five frozen lanterns found.
 call r2_hidden x=-55 z=-43 al=wr_setchest kind=Loot_Chest
 call treasure x=-70 z=40 r=5 n=1 seed=27378 kind=0
 prop treasure27378 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+
+# --- W09 11-12: the Corps ice store - a straight cave into the hill's east flank (kit_st, the cave tool), Raft's den room
+# at its end; ice at the mouth, a cold-store chest in the room, a zone that names it -------------------------------------
+call kit_st x=48 z=-15 yaw=270 len=16 slope=0 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=wricestore
+prop wricestore cave.rock=plain
+# cavecheck inside wricez wricechest
+place TP_StalagmiteCluster01_Snow - at 50.5 -9.5 ground yaw=120
+place TP_StalagmiteCluster03_Snow - at 50.5 -20.5 ground yaw=300
+place Zone_Trigger wricez at 27 -15 h=7
+prop wricez obj.name=wricez
+prop wricez zone.id=wr_icestore
+prop wricez zone.radius=6
+prop wricez zone.message=The Corps ice store. Frost on every wall - the camp kept its meat here, and a crate of spares.
+place Loot_ChestSmall wricechest at 25 -13.5 h=8 drop yaw=90
+prop wricechest obj.name=wricechest
+prop wricechest loot.refill=0
+note wricechest Ice store chest | The camp's cold-store chest, the lid frozen shut until you kick it: spares the cook kept away from the stores clerk. Chalked inside: FOR THE BOILER - NOT FOR TRADE.
+loot wricechest MetalIngot*2;Bolt*3;Hinge*2;Rope*1
 
 # --- Settings, story items, notes, behaviours, quest (23 steps) --------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): pines, flowers, berries ----------
