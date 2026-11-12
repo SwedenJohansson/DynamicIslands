@@ -176,6 +176,8 @@ prop treasure27378 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
 # at its end; ice at the mouth, a cold-store chest in the room, a zone that names it -------------------------------------
 call kit_st x=48 z=-15 yaw=270 len=16 slope=0 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=wricestore
 prop wricestore cave.rock=plain
+# (11-12 w09fix2: capped - its full dome joined Frost Cave's hill and the skin closed round that den's mouth)
+prop wricestore cave.dome=14
 # cavecheck inside wricez wricechest
 place TP_StalagmiteCluster01_Snow - at 50.5 -9.5 ground yaw=120
 place TP_StalagmiteCluster03_Snow - at 50.5 -20.5 ground yaw=300

@@ -254,7 +254,8 @@ place Reef_Wheelbarrow - at 7 40.4 h=34.7 sit yaw=70
 
 # --- The reservoir above the terraces: the Corps' big tank and its pump, two of Raft's water tanks, the sluice box (its
 # three valve wheels gone - they come back when it is used), the keeper's table with the note, the pipe down the terraces --
-place UT_WaterTank reservoirtank at -13 38.5 h=34.7 sit
+# (11-12 w09fix2: turned so its own ladder (at -15.4 41 before) stands clear of the sluice box at -10.5 40.9)
+place UT_WaterTank reservoirtank at -13 38.5 h=34.7 sit yaw=90
 place Placeable_WaterTank - at -21.5 36 h=34.7 sit yaw=90
 place Placeable_WaterTank - at -21.5 39.6 h=34.7 sit yaw=90
 place UT_WaterPump - at -4.5 37.5 h=34.7 sit yaw=90
