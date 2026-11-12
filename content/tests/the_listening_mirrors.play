@@ -126,7 +126,7 @@ expect story tooth 0
 expect step 30
 wait 2
 kill Angler fish
-expect step 31
+# (11-12: no 'expect step 31' here - the kill can drop the player on the pit floor, and step 32 then comes at once)
 zone pit_floor
 expect step 32
 read The last hymn

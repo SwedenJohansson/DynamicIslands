@@ -21,6 +21,7 @@ include lib_gravity
 include lib_concord
 include lib_areas
 include lib_deep14
+include lib_caves
 new
 gen Trees=0 Bushes=0 Rocks=0.35 Harvest=0 BeachThings=0
 gen Seed=14201 Radius=95 Height=8 Roughness=0.3 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.5 PeakShape=0.3
@@ -164,7 +165,9 @@ place "VG_DecorationPrefabBase_OfficeChair Variant" - at 4.1 3 ground sit yaw=20
 place MechanicGirl_Body crewpia at 4.6 4.1 ground sit yaw=250
 place BikerGuy_Body crewmako at 5 -0.9 ground sit yaw=300
 place Placeable_Table_Basic - at -2.6 6 ground sit yaw=0
-place RT_RadarScreen - at -2.6 6 ground y=0.9 yaw=180 scale=0.5
+# (11-12 w08: the screen's pivot sits 1.2 m off its body - CIFloating found it beside the table, 0.9 m up in the air; set so the
+# body stands on the table top)
+place RT_RadarScreen - at -2.02 4.96 ground y=0.9 yaw=180 scale=0.5
 place Tangaroa_OfficeKit_OfficeChair - at -2.6 4.9 ground sit yaw=180
 place MechanicGirl_Body crewmara at -1.7 4.1 ground sit yaw=20
 place Loot_ChestSmall maraspost at -1.2 6.2 ground sit yaw=180
@@ -317,6 +320,27 @@ prop cw_lock5 beh.use=Unlock the chain
 prop cw_lock5 if.use=!signal|cwchain5\ntake|story:chainkey|1
 prop cw_lock5 else.use=message||A chain lock. It wants a chain key - or it is open already.
 prop cw_lock5 on.use=message||The key turns and the chain rattles off the hatch (5 of 5).\nsignal||cwchain5
+
+# --- 11-12 w08: the sump - a room dug under the seabed, a shaft down to it ------------------------------------------------
+# South-west of the well, on the open seabed: a short iron-rimmed shaft straight down into the well's old sump, a room
+# under the floor where the crew grew mushrooms in the dark - mushrooms, a titanium vein, a lamp and the sump's own air.
+# A ladder on the shaft's wall (the climber faces the wall). The cellar's own mushrooms stay. cavecheck: 14 m and more
+# from the shaft's landings, the anglers and the dome.
+dig -22,-7,-24 -22,-37 r=2.4 slope=0 as=cwsump
+dig -22,-25.5 -22,0.3,-25.5 shaft r=1.6 as=cwsump
+caveloot cwsump dirt=0 mush=2 stone=0 vines=1 titanium=1 light=1 wet=1
+prop cwsump cave.rock=plain
+# cavecheck inside cwladder cwsumpair cwsumpbub
+place LandmarkLadder_6m cwladder at -22 -24.4 h=0.2 yaw=0
+place RT_PillarThick cwrim at -23.6 -27.1 ground sy=0.25
+place RT_PillarThick cwrim at -20.4 -27.1 ground sy=0.25
+place RT_PillarThick cwrim at -23.6 -23.9 ground sy=0.25
+place RT_PillarThick cwrim at -20.4 -23.9 ground sy=0.25
+prop cwrim tint.color=#4e5358
+prop cwrim tint.amount=0.6
+call shaftair x=-22 z=-29.5 h=0.2 id=cw_sump al=cwsumpair bub=cwsumpbub msg="The old sump under the seabed. Air still trapped under its roof - breathe. Mushrooms in the dark."
+# (11-12 w08 play: the pocket's bubble stops a swimmer 2.3 m short of its middle, just outside the 2.5 m air zone - zone widened)
+prop cwsumpair zone.radius=3.5
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Command Well

@@ -1,0 +1,21 @@
+# The Command Well's sump (CIPlay the_command_well_caves, 11-12 w08; in a test world 'CI ...'). Points as in its recipe
+# (heights over the island's base; the sea's surface at 30): the iron-rimmed shaft at -22 -25.5 on the seabed (6.6 m) down
+# to the sump dug under it (floor -0.3) from -22 -24 to -22 -35.7, the ladder on the shaft's wall, the sump's air zone
+# cw_sump at -22 -29.5. Swum down the shaft, air taken in the sump, swum back up.
+island The Command Well keep
+offset 0.5815 -1.121
+hour 11
+weather Calm
+where Pickup_Landmark_Mushroom
+where LandmarkLadder_6m
+
+picture cw_shaft_out -22 10 -19 -22 6 -25.5
+swim -22 -21 9 to -22 -25.5 9 to -22 -25.5 3 to -22 -25.5 1.2
+# (11-12 w08: along the flooded sump floor by walking, up to the air pocket's bubble - it stops a swimmer 2.3 m short of its middle)
+walk -22 -25.5 to -22 -27 below=2
+air cw_sump here
+picture cw_sump_in -22 1.6 -25.8 -22 0.8 -34 light=20
+picture cw_sump_up -22 1.2 -29 -22 6 -25.5 light=20
+air cw_sump
+walk -22 -27 to -22 -25.5 below=2
+swim -22 -25.5 1.2 to -22 -25.5 5 to -22 -25.5 9 to -22 -21 9

@@ -1,0 +1,29 @@
+# Static Shoals' shoal cave (CIPlay static_shoals_caves, 11-12 w08). Run it in a new world whose name does NOT start with
+# 'CI ' (e.g. 'W08 sscave'): in a 'CI ' world each `island` line empties the inventory and the machete is lost. Points as
+# in its recipe: the vine-hung mouth in the shoal rock at -35 40 (facing the channel), the level tunnel west to the room
+# round -58.5 40 (the relay spares crate at -60.1 42). The machete comes from Triangulation Rocks' survey camp, as in the plan.
+# Shut by the vines, cut, walked in, the crate opened, walked back out.
+island Triangulation Rocks
+offset 0 0
+open Survey camp
+wait 3
+expect item Machete 1
+
+island Static Shoals
+offset 0.8464 -0.6905
+hour 11
+weather Calm
+where ChoppableVines
+where Loot_ChestSmall
+
+picture ss_cave_out -24.5 8 40.5 -35 5 40
+walk -29.8 40 to -33.5 40 to -36 40 to -42 40 blocked
+expect shown sscave_vines
+use sscave_vines
+expect hidden sscave_vines
+walk -29.8 40 to -33.5 40 to -36 40 to -42 40 to -49.6 40 to -57 40.5 below=6
+picture ss_cave_in -50 4.6 40 -60 4 41.5 light=20
+open Relay spares crate
+wait 3
+expect item Battery 1
+walk -57 40.5 to -49.6 40 to -42 40 to -36 40 to -33.5 40 to -29.8 40 below=6
