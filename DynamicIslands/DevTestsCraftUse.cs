@@ -94,7 +94,8 @@ namespace DynamicIslands
 		}
 
 		static readonly Type[] CuToolTypes = { typeof(UsableTool), typeof(Throwable), typeof(Hook), typeof(FishingRod), typeof(Axe), typeof(Hammer),
-			typeof(ThrowableComponent), typeof(ThrowableComponent_Bow), typeof(Binoculars), typeof(Paddle), typeof(MeleeWeapon), typeof(Machete) };
+			typeof(ThrowableComponent), typeof(ThrowableComponent_Bow), typeof(Binoculars), typeof(Paddle), typeof(MeleeWeapon), typeof(Machete),
+			typeof(UseItemController) }; // (UseItemController.Update starts the swing: its Use() plays the item's AnimationOnUse, whose events hit)
 		static readonly string[] CuEventMethods = { "MeleeWeapon.OnMeleeStart", "MeleeWeapon.OnMeleeHit", "Paddle.OnPaddle", "Throwable.Animation_HookThrow",
 			"Axe.OnAxeStart", "Axe.OnAxeHit", "Hammer.OnHammerStart", "ThrowableComponent.CallStartChargeEvent", "ThrowableComponent.CallThrowEvent",
 			"ThrowableComponent.Throw", "FishingRod.OnThrow", "Hook.OnThrow" };
