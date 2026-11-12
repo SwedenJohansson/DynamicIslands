@@ -931,13 +931,16 @@ namespace DynamicIslands
 			Log("PASS: dig look probe " + mode);
 		}
 
-		[ConsoleCommand(name: "CIDigRimProbe", docs: "Dev, world or editor: every dug tunnel's mouths within 600 m - what each part of the lining wears (shader, texture, block), the rim top's baked texture (mean colour, share of the plain grey a bake leaves where no layer weighs), the ground's splat weights there; pictures of each mouth as drawn, with the parts in flat colours (lining green, rim walls blue, rim top magenta) and with the ground hidden (dig_rimprobe_<n>_<a|b|c>)")]
+		[ConsoleCommand(name: "CIDigRimProbe", docs: "Dev, world or editor: every dug tunnel's mouths within 2000 m - what each part of the lining wears (shader, texture, block), the rim top's baked texture (mean colour, share of the plain grey a bake leaves where no layer weighs), the ground's splat weights there; pictures of each mouth as drawn, with the parts in flat colours (lining green, rim walls blue, rim top magenta) and with the ground hidden (dig_rimprobe_<n>_<a|b|c>)")]
 		public static void DigRimProbeCommand(string[] args) { StartTest(DigRimProbeRoutine()); }
 
 		static IEnumerator DigRimProbeRoutine()
 		{
 			Vector3 me = Camera.main != null ? Camera.main.transform.position : Vector3.zero;
 			var tuns = Object.FindObjectsOfType<DigTunnel>().Where(x => x.PointCount > 0 && x.Openings.Count > 0 && x.transform.Find(DigTunnel.RockName) != null).ToList();
+			var all = Resources.FindObjectsOfTypeAll<DigTunnel>().Where(x => x.gameObject.scene.IsValid()).ToList();
+			Log("  " + all.Count + " dug tunnels in the scene (" + all.Count(x => x.gameObject.activeInHierarchy) + " active), " + tuns.Count + " with mouths and a lining; camera at " + me.ToString("F0"));
+			foreach (DigTunnel x in all.Take(12)) Log("    " + (x.transform.parent != null ? x.transform.parent.name + "/" : "") + x.name + " at " + x.transform.position.ToString("F0") + ": points " + x.PointCount + ", mouths " + x.Openings.Count + ", lining " + (x.transform.Find(DigTunnel.RockName) != null) + ", active " + x.gameObject.activeInHierarchy);
 			int n = 0;
 			foreach (DigTunnel t in tuns)
 			{
@@ -983,7 +986,7 @@ namespace DynamicIslands
 				{
 					Vector2 c2 = Vector2.zero; foreach (Vector2 q in g) c2 += q; c2 /= g.Count;
 					var at = new Vector3(c2.x, 0f, c2.y); at.y = land.SampleHeight(at) + lo.y;
-					if ((at - me).magnitude > 600f) continue;
+					if ((at - me).magnitude > 2000f) continue;
 					int ar = land.terrainData.alphamapResolution;
 					int ax = Mathf.Clamp(Mathf.FloorToInt((c2.x - 3f - lo.x) / size.x * ar), 0, ar - 1), az = Mathf.Clamp(Mathf.FloorToInt((c2.y - 3f - lo.z) / size.z * ar), 0, ar - 1);
 					int aw = Mathf.Clamp(Mathf.CeilToInt(6f / size.x * ar), 1, ar - ax), ah = Mathf.Clamp(Mathf.CeilToInt(6f / size.z * ar), 1, ar - az);
@@ -1012,7 +1015,7 @@ namespace DynamicIslands
 					n++;
 				}
 			}
-			if (n == 0) Fail("dig rim probe: no dug tunnel's mouth within 600 m");
+			if (n == 0) Fail("dig rim probe: no dug tunnel's mouth within 2000 m");
 			else Log("PASS: dig rim probe - " + n + " mouths of " + tuns.Count + " tunnels");
 		}
 
