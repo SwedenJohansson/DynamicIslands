@@ -447,6 +447,69 @@ namespace DynamicIslands.Editor
 			holder = null;
 		}
 
+		/// <summary>For tests: the last "placement check" result line.</summary>
+		public static string LastPlacementCheck;
+
+		/// <summary>
+		/// Each world load (and new world): every made upgrade must still be Raft's item at its index and name, the quick
+		/// lookup must know it, a buildable one must have all its block prefabs and be in BlockCreator's list. A 3.4 player
+		/// could not place the upgrade research table in an old world (no ghost at all) until a fresh world had been made;
+		/// the cause is not proven, so whatever is found broken here is mended and logged (11-12).
+		/// </summary>
+		public static void PlacementCheck()
+		{
+			if (all == null) return;
+			int ok = 0;
+			List<string> mended = new List<string>(), bad = new List<string>();
+			var buildables = Traverse.Create(typeof(BlockCreator)).Field("buildableItems").GetValue<List<Item_Base>>();
+			foreach (Upgrade u in Made.ToList())
+			{
+				try
+				{
+					List<string> fix = new List<string>();
+					Item_Base atIndex = ItemManager.GetItemByIndex(u.Index);
+					if (atIndex != u.Item)
+					{
+						if (atIndex == null) { RAPI.RegisterItem(u.Item); fix.Add("re-registered"); }
+						else { bad.Add(u.Name + " index " + u.Index + " is '" + atIndex.UniqueName + "'"); continue; }
+					}
+					if (ItemManager.GetItemByName(u.Name) != u.Item) bad.Add(u.Name + " by name is '" + (ItemManager.GetItemByName(u.Name) == null ? "none" : ItemManager.GetItemByName(u.Name).UniqueIndex.ToString()) + "'");
+					Upgrade had;
+					if (!byIndex.TryGetValue(u.Index, out had) || had != u) { byIndex[u.Index] = u; fix.Add("lookup"); }
+					Block[] basePrefabs = u.Base != null && u.Base.settings_buildable != null ? u.Base.settings_buildable.GetBlockPrefabs() : null;
+					if (basePrefabs != null && basePrefabs.Length > 0 && basePrefabs.All(p => p != null))
+					{
+						Block[] mine = u.Item.settings_buildable != null ? u.Item.settings_buildable.GetBlockPrefabs() : null;
+						if (mine == null || mine.Length != basePrefabs.Length || mine.Any(p => p == null || p.buildableItem != u.Item))
+						{
+							if (holder == null) { holder = new GameObject("DI_UpgradePrefabs"); holder.SetActive(false); UnityEngine.Object.DontDestroyOnLoad(holder); }
+							ItemInstance_Buildable b = u.Base.settings_buildable.Clone();
+							Traverse.Create(b).Field("blockPrefabs").SetValue(basePrefabs.Select(p => ClonePrefab(p, u.Base, u.Item, u)).ToArray());
+							Traverse.Create(b).Field("mirroredVersion").SetValue(null);
+							u.Item.settings_buildable = b;
+							fix.Add("prefabs re-cloned");
+						}
+						if (buildables != null && buildables.Count > 0 && !buildables.Contains(u.Item)) { buildables.Add(u.Item); fix.Add("buildable list"); }
+					}
+					if (fix.Count > 0) mended.Add(u.Name + " (" + string.Join(", ", fix.ToArray()) + ")"); else ok++;
+				}
+				catch (Exception e) { bad.Add(u.Name + ": " + e.Message); }
+			}
+			LastPlacementCheck = "placement check: " + ok + " ok, " + mended.Count + " mended" + (mended.Count > 0 ? " [" + string.Join("; ", mended.ToArray()) + "]" : "") +
+				", " + bad.Count + " wrong" + (bad.Count > 0 ? " [" + string.Join("; ", bad.ToArray()) + "]" : "");
+			if (mended.Count > 0 || bad.Count > 0) Warn(LastPlacementCheck); else Log(LastPlacementCheck);
+		}
+
+		static readonly HashSet<int> unknownLogged = new HashSet<int>();
+		/// <summary>The surface check met a DI_ item that the quick lookup doesn't know: logged once per item a session.</summary>
+		internal static void NoteUnknown(Item_Base item)
+		{
+			if (item == null || item.UniqueName == null || !item.UniqueName.StartsWith("DI_") || !unknownLogged.Add(item.UniqueIndex)) return;
+			Upgrade u = Everything.FirstOrDefault(x => x.Name == item.UniqueName);
+			Warn("placement: " + item.UniqueName + " (" + item.UniqueIndex + ") is not in the lookup" + (u == null ? " (no such upgrade)" :
+				", upgrade index " + u.Index + ", made " + (u.Item != null) + ", same item " + (u.Item == item)));
+		}
+
 		public static string CostText(CostMultiple[] cost)
 		{
 			return cost == null ? "-" : string.Join(", ", cost.Select(c => c.amount + " " + string.Join("/", (c.items ?? new Item_Base[0]).Where(i => i != null).Select(i => i.UniqueName).ToArray())).ToArray());
@@ -1307,6 +1370,7 @@ namespace DynamicIslands.Editor
 			try
 			{
 				ExtraUpgrades.Upgrade u = ExtraUpgrades.FindMade(__0);
+				if (u == null) ExtraUpgrades.NoteUnknown(__0);
 				if (u != null && u.Base != null && u.Base != __0) __result = __instance.AcceptsBlock(u.Base);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] Surface check: " + e.Message); }
