@@ -651,8 +651,13 @@ namespace DynamicIslands.Editor
 			}
 			Debug.Log("[CUSTOM ISLANDS] Apron " + cave.name + (raise ? " (both ways)" : " (down only)") + ": " + pts.Count + " room points, " + nearN + " near, "
 				+ moved + " moved, " + offSide + " to the side or behind, " + lower + " already there or lower, " + wet + " at the sea, " + slabHits + " to the slab's top");
-			if (moved == 0) return 0;
+			if (moved == 0)
+			{
+				if (!raise && dugTo == null) Skirt(land, cave, cols, mid, along, sideDir, open, endAt, endFloor, latLo, latHi);
+				return 0;
+			}
 			data.SetHeights(x0, z0, h);
+			if (!raise && dugTo == null) Skirt(land, cave, cols, mid, along, sideDir, open, endAt, endFloor, latLo, latHi);
 			if (dugTo != null)
 			{
 				// (as kept: the heights are stored rounded, and the editor puts back only a point still at its kept height)
@@ -665,6 +670,235 @@ namespace DynamicIslands.Editor
 					}
 			}
 			return moved;
+		}
+
+		/// <summary>An open cave's sand skirt (a child of the cave piece).</summary>
+		public const string SkirtName = "CaveSkirt";
+		/// <summary>How far a skirt reaches in over an open floor from where the sand comes up through it, how far out it lies on top,
+		/// how far further out it has dived under the sand and how deep (m); its points this far apart along the edge.</summary>
+		const float SkirtIn = 0.45f, SkirtTop = 0.3f, SkirtOut = 0.6f, SkirtDive = 0.3f, SkirtStep = 0.25f;
+		// (r82: the strip on out to SkirtWide past the edge, the sand under it held SkirtUnder below it - the sand's own grid
+		// points just past the edge, raised or let down every way, poked up through the narrow strip in teeth, gen-large r81)
+		const float SkirtWide = 2.6f, SkirtUnder = 0.08f;
+		static readonly float[] SkirtRows = { 0.9f, 1.5f, 2.1f };
+
+		/// <summary>
+		/// A strip of sand laid over an open cave's floor's front edge (11-11 user, gen-large r68): the sand's grid triangles cut the
+		/// floor's sloped dirt lip along a sawtooth line however the ground was eased (r26-r68). Along the open end, where the sand
+		/// comes up through the floor is found each SkirtStep m and that line evened out; the strip lies just over the floor and
+		/// sand from SkirtIn m inside it to SkirtTop m out, then dives under the sand, steeply: the dirt meets sand along the strip's
+		/// own smooth edge. Drawn in the ground's own look, baked (Raft's big rock if that fails). Not in the editor.
+		/// </summary>
+		static void Skirt(Terrain land, Transform cave, Collider[] cols, Vector3 mid, Vector3 along, Vector3 sideDir, bool[] open, float[] endAt, float[] endFloor, float[] latLo, float[] latHi)
+		{
+			Transform old = cave.Find(SkirtName);
+			if (old != null)
+			{
+				// (its baked look its own: let go with it)
+				MeshRenderer om = old.GetComponent<MeshRenderer>();
+				Material oldLook = om != null ? om.sharedMaterial : null;
+				if (oldLook != null && oldLook.name == "DigTunnelGroundBaked") { if (oldLook.mainTexture != null) UnityEngine.Object.DestroyImmediate(oldLook.mainTexture); UnityEngine.Object.DestroyImmediate(oldLook); }
+				UnityEngine.Object.DestroyImmediate(old.gameObject);
+			}
+			GameObject rock = PlaceableCatalog.Get(CaveTool.WallRock);
+			MeshRenderer rockLook = rock != null ? rock.GetComponentInChildren<MeshRenderer>(true) : null;
+			if (rockLook == null || rockLook.sharedMaterial == null) return;
+			float oy = land.transform.position.y;
+			Func<Vector3, float> terr = p => land.SampleHeight(p) + oy;
+			var verts = new List<Vector3>();
+			var tris = new List<int>();
+			int strips = 0;
+			for (int e = 0; e < 2; e++)
+			{
+				if (!open[e] || float.IsInfinity(endFloor[e]) || float.IsInfinity(latLo[e])) continue;
+				Vector3 outDir = e == 0 ? along : -along;
+				float lSign = e == 0 ? 1f : -1f; // (the strip's corners wound the same way round at either end)
+				float yFrom = endFloor[e] + SlabLook;
+				Func<float, float, Vector3> pt = (sv, l) => mid + outDir * sv + sideDir * l;
+				Func<Vector3, float> slab = p =>
+				{
+					float t = SlabTop(cols, new Vector3(p.x, yFrom, p.z));
+					return !float.IsNegativeInfinity(t) && Mathf.Abs(t - endFloor[e]) < SlabLook ? t : float.NegativeInfinity;
+				};
+				var ls = new List<float>();
+				var cs = new List<float>(); // (where the sand comes up through the floor, NaN: not found)
+				for (float l = latLo[e] - 1f; l <= latHi[e] + 1.01f; l += SkirtStep)
+				{
+					// (outward from well inside: the last point where the floor still lies over the sand, then where it doesn't)
+					float found = float.NaN;
+					bool over = false;
+					for (float sv = endAt[e] - 4f; sv <= endAt[e] + OpenEdgeReach + 1f; sv += 0.1f)
+					{
+						Vector3 p = pt(sv, l);
+						float t = slab(p);
+						bool o = !float.IsNegativeInfinity(t) && t > terr(p);
+						if (over && !o) { found = sv; break; }
+						over |= o;
+					}
+					ls.Add(l); cs.Add(found);
+				}
+				// (r75: the strip broke off where no point was found - gaps of up to 2.5 m bridged between their ends)
+				for (int j = 0; j < cs.Count; j++)
+				{
+					if (!float.IsNaN(cs[j])) continue;
+					int a0 = j - 1, a1 = j;
+					while (a1 < cs.Count && float.IsNaN(cs[a1])) a1++;
+					if (a0 >= 0 && a1 < cs.Count && (a1 - a0) * SkirtStep <= 2.5f)
+						for (int g = a0 + 1; g < a1; g++) cs[g] = Mathf.Lerp(cs[a0], cs[a1], (g - a0) / (float)(a1 - a0));
+					j = a1;
+				}
+				// (the line evened out along the edge, among its found points only: twice over 1.75 m)
+				for (int pass = 0; pass < 2; pass++)
+				{
+					var nc = new List<float>(cs);
+					for (int j = 0; j < cs.Count; j++)
+					{
+						if (float.IsNaN(cs[j])) continue;
+						float sum = 0f; int n = 0;
+						for (int d = -3; d <= 3; d++) { int a = j + d; if (a >= 0 && a < cs.Count && !float.IsNaN(cs[a])) { sum += cs[a]; n++; } }
+						nc[j] = sum / n;
+					}
+					cs = nc;
+				}
+				// (each row across the edge: its points out from the floor - inside on the floor, the edge, then on out over the sand
+				// to SkirtWide, its height there the sand's own evened out - and their heights; then the dive under the sand)
+				int nr = 3 + SkirtRows.Length;
+				var rowS = new float[cs.Count][];
+				var rowY = new float[cs.Count][];
+				Func<Vector3, float> even = p =>
+				{
+					float sum = 0f;
+					for (int q = 0; q < 9; q++) sum += terr(p + outDir * ((q % 3 - 1) * 0.6f) + sideDir * ((q / 3 - 1) * 0.6f));
+					return sum / 9f;
+				};
+				for (int j = 0; j < cs.Count; j++)
+				{
+					if (float.IsNaN(cs[j])) continue;
+					float c = cs[j], l = ls[j];
+					var sv = new float[nr];
+					var yv = new float[nr];
+					sv[0] = c - SkirtIn; sv[1] = c + SkirtTop; sv[nr - 1] = c + SkirtWide;
+					for (int r = 0; r < SkirtRows.Length; r++) sv[2 + r] = c + SkirtRows[r];
+					for (int r = 0; r < 2; r++)
+					{
+						Vector3 a = pt(sv[r], l);
+						float ta = slab(a);
+						yv[r] = Mathf.Max(float.IsNegativeInfinity(ta) ? float.NegativeInfinity : ta, terr(a)) + 0.04f;
+					}
+					float yOut = even(pt(sv[nr - 1], l)) + 0.04f;
+					yv[nr - 1] = yOut;
+					for (int r = 2; r < nr - 1; r++)
+					{
+						float f = (sv[r] - sv[1]) / (sv[nr - 1] - sv[1]);
+						// (between the edge and the sand out there: the straight line, or the sand evened out where that is higher)
+						yv[r] = Mathf.Max(Mathf.Lerp(yv[1], yOut, f), even(pt(sv[r], l)) + 0.04f);
+					}
+					rowS[j] = sv; rowY[j] = yv;
+				}
+				int prev = -1;
+				for (int j = 0; j < cs.Count; j++)
+				{
+					if (rowS[j] == null) { prev = -1; continue; }
+					int n0 = verts.Count;
+					for (int r = 0; r < nr; r++) { Vector3 a = pt(rowS[j][r], ls[j]); verts.Add(new Vector3(a.x, rowY[j][r], a.z)); }
+					Vector3 d = pt(rowS[j][nr - 1] + SkirtOut, ls[j]);
+					verts.Add(new Vector3(d.x, terr(d) - SkirtDive, d.z));
+					if (prev >= 0)
+					{
+						// (from above: prev row then this one, wound so its face is up whichever end)
+						for (int r = 0; r < nr; r++)
+						{
+							int p0 = prev + r, p1 = prev + r + 1, q0 = n0 + r, q1 = n0 + r + 1;
+							if (lSign > 0f) tris.AddRange(new[] { p0, q0, q1, p0, q1, p1 });
+							else tris.AddRange(new[] { p0, q1, q0, p0, p1, q1 });
+						}
+						strips++;
+					}
+					prev = n0;
+				}
+				// (the sand's grid points under the strip held just under it: from its edge on out, to the strip's height there;
+				// over the floor's edge, let down only)
+				Func<int, float, float> rowAt = (j, v) =>
+				{
+					float[] sv = rowS[j], yv = rowY[j];
+					if (v <= sv[0]) return yv[0];
+					for (int r = 1; r < sv.Length; r++)
+						if (v <= sv[r]) return Mathf.Lerp(yv[r - 1], yv[r], (v - sv[r - 1]) / (sv[r] - sv[r - 1]));
+					return yv[sv.Length - 1];
+				};
+				TerrainData data = land.terrainData;
+				int res = data.heightmapResolution;
+				float gx = data.size.x / (res - 1), gz = data.size.z / (res - 1), gy = data.size.y;
+				Vector3 lo0 = land.transform.position;
+				float minX = float.MaxValue, maxX = float.MinValue, minZ = float.MaxValue, maxZ = float.MinValue;
+				for (int j = 0; j < cs.Count; j++)
+				{
+					if (rowS[j] == null) continue;
+					foreach (float v in new[] { rowS[j][0], rowS[j][nr - 1] })
+					{
+						Vector3 a = pt(v, ls[j]);
+						minX = Mathf.Min(minX, a.x); maxX = Mathf.Max(maxX, a.x); minZ = Mathf.Min(minZ, a.z); maxZ = Mathf.Max(maxZ, a.z);
+					}
+				}
+				if (minX > maxX) continue;
+				int hx0 = Mathf.Clamp(Mathf.FloorToInt((minX - lo0.x) / gx), 0, res - 1), hx1 = Mathf.Clamp(Mathf.CeilToInt((maxX - lo0.x) / gx), 0, res - 1);
+				int hz0 = Mathf.Clamp(Mathf.FloorToInt((minZ - lo0.z) / gz), 0, res - 1), hz1 = Mathf.Clamp(Mathf.CeilToInt((maxZ - lo0.z) / gz), 0, res - 1);
+				float[,] hh = data.GetHeights(hx0, hz0, hx1 - hx0 + 1, hz1 - hz0 + 1);
+				int held = 0;
+				for (int z = hz0; z <= hz1; z++)
+					for (int x = hx0; x <= hx1; x++)
+					{
+						Vector3 pw = new Vector3(lo0.x + x * gx, 0f, lo0.z + z * gz) - mid;
+						float v = Vector3.Dot(pw, outDir), l = Vector3.Dot(pw, sideDir);
+						float fj = (l - ls[0]) / SkirtStep;
+						int j0 = Mathf.FloorToInt(fj);
+						if (j0 < 0 || j0 + 1 >= cs.Count || rowS[j0] == null || rowS[j0 + 1] == null) continue;
+						float t = fj - j0;
+						float c = Mathf.Lerp(cs[j0], cs[j0 + 1], t);
+						if (v < c - SkirtIn || v > c + SkirtWide - 0.15f) continue;
+						float want = Mathf.Lerp(rowAt(j0, v), rowAt(j0 + 1, v), t) - SkirtUnder;
+						float cur = hh[z - hz0, x - hx0] * gy + lo0.y;
+						if (v < c + 0.15f ? cur <= want : Mathf.Abs(cur - want) < 0.005f) continue;
+						hh[z - hz0, x - hx0] = Mathf.Clamp01((want - lo0.y) / gy); held++;
+					}
+				if (held > 0) data.SetHeights(hx0, hz0, hh);
+				Debug.Log("[CUSTOM ISLANDS] Skirt " + cave.name + ": " + held + " sand points held under its strip");
+			}
+			if (tris.Count == 0) return;
+			var go = new GameObject(SkirtName);
+			go.layer = cave.gameObject.layer;
+			go.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+			go.transform.SetParent(cave, true);
+			var local = verts.Select(v => go.transform.InverseTransformPoint(v)).ToList();
+			var mesh = new Mesh { name = SkirtName };
+			mesh.SetVertices(local);
+			mesh.SetTriangles(tris, 0);
+			// (its winding checked by its normals: any facing down are turned over)
+			mesh.RecalculateNormals();
+			if (mesh.normals.Length > 0 && go.transform.TransformDirection(mesh.normals[0]).y < 0f)
+			{
+				for (int t = 0; t < tris.Count; t += 3) { int x = tris[t + 1]; tris[t + 1] = tris[t + 2]; tris[t + 2] = x; }
+				mesh.SetTriangles(tris, 0);
+			}
+			// (lit as flat sand: the rock's shader draws sand on faces that look up)
+			Vector3 upLocal = go.transform.InverseTransformDirection(Vector3.up).normalized;
+			mesh.SetNormals(Enumerable.Repeat(upLocal, local.Count).ToList());
+			// (r75: Raft's rock drew its sand ochre beside the ground's - the strip wears the ground's own look, its layers
+			// baked as the dug tunnel's rim bakes them, laid by where each corner is over the terrain; the rock if that fails)
+			Vector3 lo = land.transform.position, size = land.terrainData.size;
+			var uv = verts.Select(v => new Vector2((v.x - lo.x) / size.x, (v.z - lo.z) / size.z)).ToList();
+			float u0 = uv.Min(q => q.x), u1 = uv.Max(q => q.x), v0 = uv.Min(q => q.y), v1 = uv.Max(q => q.y);
+			Material look = null;
+			try { look = DigTunnel.BakedGround(land, Rect.MinMaxRect(u0, v0, Mathf.Max(u1, u0 + 1e-4f), Mathf.Max(v1, v0 + 1e-4f)), ref look); }
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Skirt " + cave.name + ": the ground's look - " + ex.Message); look = null; }
+			if (look != null) mesh.SetUVs(0, uv);
+			else mesh.SetUVs(0, verts.Select(v => new Vector2(v.x, v.z) / 14f).ToList());
+			mesh.RecalculateBounds();
+			go.AddComponent<MeshFilter>().sharedMesh = mesh;
+			var mr = go.AddComponent<MeshRenderer>();
+			mr.sharedMaterial = look ?? rockLook.sharedMaterial;
+			mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+			Debug.Log("[CUSTOM ISLANDS] Skirt " + cave.name + ": " + strips + " pieces over its open floor's edge");
 		}
 
 		/// <summary>

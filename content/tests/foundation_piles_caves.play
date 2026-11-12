@@ -1,0 +1,18 @@
+# The Foundation Piles' pile-drivers' drift (CIPlay foundation_piles_caves, 11-11; any world). Points as in its recipe
+# (the origin frame; the pile field's push at 26.4 0 puts the basin's middle at 10.4 0): the drift's high end, a flooded
+# hole in the west bank, at -29.4 17.2; the drift down at 25 degrees to its low mouth in the basin's west wall at -4 8,
+# 10 m down between the outer piles. No chest, no air: in from the bank, down the drift, out into the basin.
+island The Foundation Piles keep
+offset 0 0
+hour 11
+weather Calm
+
+# The flooded hole in the bank
+picture fp_drift_out -38 6 22 -29.4 2 17.2
+walk -34 19 to -31 17.9
+# Down the drift to the basin
+swim -29.4 17.2 -0.5 to -27.5 16.5 -1.2 to -21.8 14.5 -3.8 to -14.3 11.7 -7.5
+picture fp_drift_in -18 -4 13 -10 -8 10.3 light=20
+swim -14.3 11.7 -7.5 to -6.8 9 -11 to -4 8 -11 to 0 6.5 -9
+picture fp_drift_mouth 4 -8 5 -4 -10 8 light=20
+swim 0 6.5 -9 to 0 6.5 -2

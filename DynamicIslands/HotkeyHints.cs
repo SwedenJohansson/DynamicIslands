@@ -124,7 +124,8 @@ namespace DynamicIslands.Editor
 			{
 				var k = (KeyCode)Enum.Parse(typeof(KeyCode), v.Trim(), true);
 				// (a number, "7", parses as KeyCode 7, which no key has: Alpha7 is meant)
-				if (Enum.IsDefined(typeof(KeyCode), k) && Problem(k) == null) return k;
+				// (a key Raft also uses is kept: Raft's Controls tab sets one as Raft does its own - both happen, 3.5)
+				if (Enum.IsDefined(typeof(KeyCode), k) && HardProblem(k) == null) return k;
 			}
 			catch { }
 			Debug.LogWarning("[CUSTOM ISLANDS] " + WorldRules.DefaultFileName + ": " + setting + "=" + v + " is not a key that can be used - " + fallback + " instead");
@@ -134,11 +135,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Why a key can't be one of the mod's keys, or null.</summary>
 		public static string Problem(KeyCode k)
 		{
-			if (k == KeyCode.None) return "no key";
-			if (k == KeyCode.Escape) return "Esc closes windows";
-			if (k >= KeyCode.Mouse0 && k <= KeyCode.Mouse6) return "a mouse button";
-			if (k >= KeyCode.JoystickButton0) return "a controller button";
-			if (k == KeyCode.Return || k == KeyCode.KeypadEnter || k == KeyCode.Tab || k == KeyCode.Space || k == KeyCode.Backspace) return "it is used to type and to play";
+			string hard = HardProblem(k);
+			if (hard != null) return hard;
 			// (a key Raft's own controls use - movement, interact, hotbar numbers - would do both: CA29)
 			try
 			{
@@ -149,6 +147,40 @@ namespace DynamicIslands.Editor
 			catch { }
 			if (k >= KeyCode.Alpha0 && k <= KeyCode.Alpha9) return "the number keys pick hotbar slots";
 			return null;
+		}
+
+		/// <summary>Why a key can never be one of the mod's keys (Raft's Controls tab refuses these too), or null. Keys Raft
+		/// uses are not among them: Problem() adds those for the Defaults window.</summary>
+		public static string HardProblem(KeyCode k)
+		{
+			if (k == KeyCode.None) return "no key";
+			if (k == KeyCode.Escape) return "Esc closes windows";
+			if (k >= KeyCode.Mouse0 && k <= KeyCode.Mouse6) return "a mouse button";
+			if (k >= KeyCode.JoystickButton0) return "a controller button";
+			if (k == KeyCode.Return || k == KeyCode.KeypadEnter || k == KeyCode.Tab || k == KeyCode.Space || k == KeyCode.Backspace) return "it is used to type and to play";
+			return null;
+		}
+
+		/// <summary>3.5: sets the journal's or stats page's key from its row in Raft's Settings > Controls, the way Raft sets its
+		/// own rows: a key Raft or another of the mod's keys already uses is taken all the same (both then happen, as with two
+		/// of Raft's rows on one key). Only HardProblem keys are refused (the reason, or null when set).</summary>
+		public static string SetFromControls(bool forJournal, KeyCode k)
+		{
+			string problem = HardProblem(k);
+			if (problem != null) return Name(k) + " can't be used: " + problem + ".";
+			WorldRules.SaveDefault(forJournal ? JournalSetting : StatsSetting, k.ToString());
+			if (forJournal) journal = k; else stats = k;
+			HotkeyHints.KeysChanged();
+			return null;
+		}
+
+		/// <summary>Raft's Controls "reset to default": the journal and stats page back to J and K (the other keys stay).</summary>
+		public static void ResetMain()
+		{
+			WorldRules.SaveDefaults(new System.Collections.Generic.Dictionary<string, string> { { JournalSetting, JournalDefault.ToString() }, { StatsSetting, StatsDefault.ToString() } });
+			journal = JournalDefault;
+			stats = StatsDefault;
+			HotkeyHints.KeysChanged();
 		}
 
 		/// <summary>Sets one of the keys (forJournal: the journal's, else the stats page's); the reason when it can't be, or null.</summary>

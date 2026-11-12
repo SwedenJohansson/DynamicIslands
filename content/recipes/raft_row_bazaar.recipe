@@ -439,4 +439,35 @@ call ar_plants_hill x=16 z=-18 r=12 seed=6220
 clear at -53.67 9.45 r=3 only=SmallBoulder4 all
 # (11-03 fixC, CIFloatingSweep: a hill palm 2.5 m over the ground at 37.2 23.2)
 clear at 37.2 23.2 r=1.5 only=Tree_Palm all
+# --- 11-11 (w04): Fixer Johnny and his strongroom by the causeway foot - optional ----------------------------------------
+# A small concrete storey on the key east of the causeway's foot: the Row's back way, its door locked until someone
+# talked to Fixer Johnny (talked gate); his third answer opens it too. Behind the door, a chest in a strongroom. No quest
+# step needs it. cavecheck: 6 m and more from the market's things, the garden and the walks between them.
+origin
+push at 22 52 h=2.6
+call rt_storey a=concrete f2=none
+place RT_Floor concrete at 0 4.5 y=3
+place PlantationDoor rbbackdoor at -1.5 -4.5 y=0.05 sit yaw=0
+place Loot_ChestSmall rbstrongchest at -3 2 y=0.1 sit yaw=180
+pop
+prop rbbackdoor obj.name=rbbackdoor
+prop rbbackdoor beh.use=Open the back door
+prop rbbackdoor if.use=talked|Fixer Johnny
+prop rbbackdoor on.use=hide|rbbackdoor\nshow|rbstrongchest\nmessage||The back door gives with a shove. Johnny's strongroom: one chest, one lamp hook, no lamp.
+prop rbbackdoor else.use=message||The back door is bolted from inside. Ask the fixer on the key.
+prop rbstrongchest obj.name=rbstrongchest
+prop rbstrongchest beh.hidden=1
+prop rbstrongchest loot.refill=0
+note rbstrongchest Johnny's strongroom | What the Row does not put on a stall: a tin of rivets, two coils of good rope, a battery wrapped in oilcloth. A tag on the lid: IF IT IS GONE, JOHNNY KNOWS WHO.
+loot rbstrongchest Rope*2;Nail*8;Battery*1;Bolt*2
+# Fixer Johnny on the key, leaning on a crate (a leaner needs something at his back), facing the causeway
+place Crate_Big_01 - at 12.9 46.5 ground sit yaw=30
+place Story_Islander rbjohnny at 12 47 ground yaw=300
+prop rbjohnny obj.name=Fixer Johnny
+prop rbjohnny islander.character=Johnny
+prop rbjohnny islander.pose=lean
+prop rbjohnny talk.text=Welcome to the Row. Everything floats here, even the prices.\n> Who runs the city?\n> Got work?\n> Show me the back way.
+prop rbjohnny on.choice1=journal|Fixer Johnny: the city|The Crown runs the city - the council up on the bridgeworks. But the Crown only runs it because the pumps run. Whoever keeps the pumps going keeps the streets dry, and whoever keeps the streets dry gets to make the rules. The Row floats, so the Row does not need the pumps. That is why the Crown hates us.\nmessage||Johnny tells you who runs the city: the Crown, and the pumps under it. It is in your journal.
+prop rbjohnny on.choice2=give||Rope*2\nmessage||Johnny wants the rope back with interest.
+prop rbjohnny on.choice3=hide|rbbackdoor\nshow|rbstrongchest\nmessage||Johnny slides a bolt somewhere you cannot see. The back door of his strongroom is open.
 save Raft Row Bazaar

@@ -192,8 +192,10 @@ for k 0 5 1
 brush flatten at -6 {-54+(-1)*$k} r=1.8 s=20 frames=200 h={24.3+0.6*$k}
 next
 # (REACH 10-29 (2): walkers come up the north side (stalled at 23.7, z -72.5) - steps there too (24.2 at z -72, 27 at -71))
-for k 0 4 1
-brush flatten at -6 {-75+$k} r=1.8 s=20 frames=200 h={23.2+0.8*$k}
+# (11-11 c1111, REACH: swimmers at the north foot (-8.6 -72, at the surface h 23.9) met a 2.3 m step - the steps start
+#     lower, further out and wider now, 0.5 m a step, from 1.5 m under the surface up to the tower's pad)
+for k 0 10 1
+brush flatten at -6.5 {-78+$k} r=2.4 s=20 frames=200 h={22.4+0.5*$k}
 next
 call ladtower x=-6 z=-66 h0=27.5 lv=3 a=lutower
 place Loot_ChestSmall lulocker at -6.75 -65.25 h=35.2 drop yaw=180

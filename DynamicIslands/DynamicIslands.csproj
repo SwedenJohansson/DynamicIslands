@@ -40,6 +40,7 @@
     <Compile Include="BlueprintSteps.cs" />
     <Compile Include="DevTestsRecipeLeaves.cs" />
     <Compile Include="DevTestsFix35.cs" />
+    <Compile Include="DevTestsControlsKeys.cs" />
     <Compile Include="DevTestsGapsRun.cs" />
     <Compile Include="DevTestsCaveGaps.cs" />
     <Compile Include="DevTestsPreFaults.cs" />
@@ -194,7 +195,9 @@
     <Compile Include="Quest.cs" />
     <Compile Include="SaveSoon.cs" />
     <Compile Include="WorldIdRepair.cs" />
+    <Compile Include="DayRepair.cs" />
     <Compile Include="DevTestsInvFix.cs" />
+    <Compile Include="DevTestsDayKeep.cs" />
     <Compile Include="QuestEditorWindow.cs" />
     <Compile Include="QuestSteps.cs" />
     <Compile Include="QuestWaitSteps.cs" />
@@ -282,6 +285,7 @@
     <Compile Include="IslandTest.cs" />
     <Compile Include="Housekeeping.cs" />
     <Compile Include="HotkeyHints.cs" />
+    <Compile Include="RaftControlsKeys.cs" />
     <Compile Include="PlayerNotebook.cs" />
     <Compile Include="CameraPath.cs" />
     <Compile Include="Minimap.cs" />
