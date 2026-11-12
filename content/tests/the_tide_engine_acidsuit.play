@@ -1,0 +1,19 @@
+# The Tide Engine's coolant sump with a work suit (CIPlay the_tide_engine_acidsuit, 11-12 w07; in a test world 'CI ...').
+# The suit box at the rim (tesumpsuits, 35.6 -35.2) gives 180 s of suit; into the sump to the keepers' locker and
+# back out, unhurt, with the coolant still there.
+island The Tide Engine keep
+offset 0 0
+hour 11
+weather Calm
+at 36.6 -34.4 h=5.5
+use tesumpsuits
+expect shown tesump
+walk 36.6 -34.4 to 33 -32 to 30.8 -30.8
+wait 6
+expect unhurt
+open Keepers' locker
+wait 2
+expect item TitaniumIngot 1
+picture te_sump_in 34 6 -34 30 4 -30
+walk 30.8 -30.8 to 33 -32 to 37 -35
+expect unhurt

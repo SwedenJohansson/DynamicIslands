@@ -15,6 +15,7 @@ include lib_sea
 include lib_features
 include lib_areas
 include lib_highwater
+include lib_caves
 new
 # (nature: a tropical key at Raft's density - palms, bushes, a few rocks; a reef ring round it)
 gen Trees=0.3 Bushes=0.4 Rocks=0.35 Harvest=0.3 BeachThings=0.3
@@ -126,6 +127,37 @@ place Note_Sign banner at 2.2 -10 h=3 sit yaw=180
 # --- The ambush: the Syndicate's hyenas, tan and lean, waiting by the landing path once the journal is out -----------
 place Zone_Trigger ambushzone at 0 -16 h=3
 place Creature_Hyena hyenas at -10 -24 ground
+
+# --- 11-12 (w07): the museum's vault and Keeper Shogo - optional, no quest step. The museum kept its real pieces out of
+# the halls: a straight cave (kit_st) into a low rise beside the museum, to a den - the vault. Its chest lies under a
+# steel hatch in the den's floor, locked until someone talked to Shogo, the museum's night keeper, who stayed behind
+# when the curator left; his second answer opens it too. 12 m and more from the museum's walls, the flowers' and the
+# dirt patch's edges; no rats. cavecheck: the museum's things 12 m off.
+call kit_st x=-20 z=2 yaw=270 len=12 slope=0 end=room size=0.7 hill=1 dirt=2 mush=1 stone=1 vines=0 as=mkvault
+prop mkvault cave.dome=18
+# cavecheck inside mkvaulthatch mkvaultchest
+# (den floor = the mouth's ground, ~3 m (slope 0): set down from 4.5 m; 26 m from the mouth as Ranger Landing's cache)
+place TangaroaHatchRoom_Hatch mkvaulthatch at -46 2 h=7.7 drop yaw=270
+prop mkvaulthatch obj.name=mkvaulthatch
+prop mkvaulthatch beh.use=Open the vault hatch
+prop mkvaulthatch if.use=talked|Keeper Shogo
+prop mkvaulthatch on.use=hide|mkvaulthatch\nshow|mkvaultchest\nmessage||The hatch swings up on the museum's vault - the pieces the curator never put on show.
+prop mkvaulthatch else.use=message||The vault hatch is locked. The museum's keeper has the word for it.
+place Loot_ChestSmall mkvaultchest at -47.2 2.6 h=7.7 drop yaw=270
+prop mkvaultchest obj.name=mkvaultchest
+prop mkvaultchest beh.hidden=1
+prop mkvaultchest loot.refill=0
+note mkvaultchest Museum vault | The real pieces: a sea king's copper weight, a tide chart on oiled cloth, and the curator's spare cells. The card under them reads "Exhibit 7 - the copy went upstairs".
+loot mkvaultchest CopperIngot*3;MetalIngot*2;Battery*2;TradeToken*3
+# Keeper Shogo inside the museum, by the door, facing the halls
+place Story_Islander mkshogo at -2.6 -4.4 h=3.6 drop yaw=0
+prop mkshogo obj.name=Keeper Shogo
+prop mkshogo islander.character=Shogo
+prop mkshogo islander.pose=stand
+prop mkshogo talk.text=The Seventh Tide relic? Half this museum is fakes. The other half is cursed. I keep both.\n> Which half is real?\n> Tell me about the Tide Engine.\n> I will look around.
+prop mkshogo on.choice1=hide|mkvaulthatch\nshow|mkvaultchest\nmessage||The real pieces were never upstairs. The vault is in the rise beside the museum - the hatch is open for you now.
+prop mkshogo on.choice2=journal|Keeper Shogo: the Tide Engine|The curator said the sea kings built an engine that moved the tide itself, and broke it into gears so no one king could turn it. Every gear went to a different island.\nmessage||Shogo taps the empty case: one gear, one island. The curator went looking for them.
+prop mkshogo on.choice3=message||Mind the glass. The curator left in a hurry and nobody swept.
 
 # --- Things to gather, reefs ----------------------------------------------------------------------------------------
 scatter "Pickup_Landmark_PineappleLandmark" 2 at 22 -24 r=12 seed=9211 free=3

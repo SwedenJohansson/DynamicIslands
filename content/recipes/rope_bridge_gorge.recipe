@@ -88,6 +88,28 @@ prop porchpillars tint.color=#8b7d62
 prop idols tint.color=#7a6a50
 prop idols tint.amount=0.5
 
+# --- 11-12 (w07): the gorge grotto - optional, no quest step (plan 07 row: a cave off the gorge). On the west half,
+# a stone's throw from the gorge's lip: the builders' grotto, cut level into a knoll of its own (cave.rock=plain, top
+# ~14 m, a steep front to the gorge) to a dry room where they kept rope for the bridge. All dug; the mouth is 1.4 m out
+# from the knoll's front, its floor the plateau's (4 m). 20 m and more from the bridge and the path.
+# (first try 11-12: the mouth half under the water on the gorge floor - a dug mouth under the sea is shut by its rock)
+brush flatten at -21 -25 r=11 s=20 frames=200 h=9
+brush flatten at -21 -25 r=8 s=20 frames=200 h=12
+brush flatten at -22 -25.5 r=5 s=20 frames=200 h=14
+brush flatten at -14 -25 r=3 s=20 frames=200 h=10
+brush smooth at -22 -25 r=6 s=8 frames=30
+clear at -21 -25 r=13 only=(?i)boulder|rock|tree|bush|bamboo
+dig -10,-25 -16,-25 -21,-25.5 r=1.75 slope=0 as=rbgrotto
+dig -21,-25.5 -26,-27 r=3 slope=0 as=rbgrotto
+caveloot rbgrotto dirt=2 mush=2 stone=2 vines=0 titanium=0 light=0 wet=0
+prop rbgrotto cave.rock=plain
+# cavecheck inside rbgrottochest
+place Loot_ChestSmall rbgrottochest at -26.6 -27.6 h=5.2 drop yaw=60
+prop rbgrottochest obj.name=rbgrottochest
+prop rbgrottochest loot.refill=0
+note rbgrottochest Bridge builders' store | Rope for the bridge, kept dry in the rock. Whoever crosses next: check the knots at the far posts.
+loot rbgrottochest Rope*4;Plank*6;Nail*10;Scrap*2
+
 # --- The temple's warthogs, things to gather, the reef --------------------------------------------------------------
 place Zone_Trigger templeground at 14 0 h=4
 place Creature_Boar hogs at 28 -10 ground
