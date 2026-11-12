@@ -49,6 +49,16 @@ namespace DynamicIslands
 		}
 
 		/// <summary>
+		/// A key that sorts Raft's save folders by time. The names are yyyy.MM.dd-H.mm with the hour not padded
+		/// ("2026.11.12-9.59" sorted after "2026.11.12-10.00" by name), so every number is padded here.
+		/// </summary>
+		internal static string SaveOrderKey(string dir)
+		{
+			string name = Path.GetFileName(dir).Replace("-Latest", "");
+			return Regex.Replace(name, @"\d+", m => m.Value.PadLeft(4, '0'));
+		}
+
+		/// <summary>
 		/// The day in the newest save of the world with the id <paramref name="id"/> that is followed by a save without an id
 		/// (the quit save that reset the day), or -1.
 		/// </summary>
@@ -57,8 +67,8 @@ namespace DynamicIslands
 			from = null;
 			string[] dirs;
 			try { dirs = Directory.GetDirectories(world); } catch { return -1; }
-			// (folder names are dates, yyyy.MM.dd-HH.mm, the newest with "-Latest"; oldest first here)
-			List<string> order = dirs.OrderBy(d => Path.GetFileName(d).Replace("-Latest", ""), StringComparer.Ordinal).ToList();
+			// (folder names are dates, yyyy.MM.dd-H.mm, the newest with "-Latest"; oldest first here)
+			List<string> order = dirs.OrderBy(SaveOrderKey, StringComparer.Ordinal).ToList();
 			if (order.Count > MaxBackups) order = order.Skip(order.Count - MaxBackups).ToList();
 			var files = new List<string>();
 			var ids = new List<Guid?>(); // (null: none or several ids in it - not one of ours)
