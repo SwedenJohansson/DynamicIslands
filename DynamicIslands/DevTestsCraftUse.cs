@@ -29,21 +29,25 @@ namespace DynamicIslands
 		static MethodInfo CuInput(string name) => typeof(CustomInputConfig).GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
 			.FirstOrDefault(m => m.Name == name && m.GetParameters().Length == 2 && m.GetParameters()[1].ParameterType == typeof(string));
 
+		// the ids Raft asked for while faking, and the held item's own use button (UsableTool asks for that one, not "LMB")
+		static readonly HashSet<string> cuIds = new HashSet<string>();
+		static string cuUseId;
+		static bool CuIsUse(string id) { if (cuFake && id != null) cuIds.Add(id); return id == "LMB" || (cuUseId != null && id == cuUseId); }
 		static bool CuIsPressedShim(object cfg, object action, string id)
 		{
-			if (cuFake && id == "LMB") return cuDown;
+			if (cuFake && CuIsUse(id)) return cuDown;
 			if (cuFake && id == "RMB") return false;
 			return (bool)cuIsPressed.Invoke(cfg, new[] { action, id });
 		}
 		static bool CuWasPressedShim(object cfg, object action, string id)
 		{
-			if (cuFake && id == "LMB") return cuDown && Time.frameCount == cuChangeFrame;
+			if (cuFake && CuIsUse(id)) return cuDown && Time.frameCount == cuChangeFrame;
 			if (cuFake && id == "RMB") return false;
 			return (bool)cuWasPressed.Invoke(cfg, new[] { action, id });
 		}
 		static bool CuWasReleasedShim(object cfg, object action, string id)
 		{
-			if (cuFake && id == "LMB") return !cuDown && Time.frameCount == cuChangeFrame;
+			if (cuFake && CuIsUse(id)) return !cuDown && Time.frameCount == cuChangeFrame;
 			if (cuFake && id == "RMB") return false;
 			return (bool)cuWasReleased.Invoke(cfg, new[] { action, id });
 		}
@@ -150,6 +154,12 @@ namespace DynamicIslands
 
 		static int CuInventoryTotal(Network_Player p) => p.Inventory.allSlots.Where(s => s != null && !s.IsEmpty).Sum(s => s.itemInstance.Amount);
 
+		static void CuUse(string item)
+		{
+			Item_Base it = ItemManager.GetItemByName(item);
+			cuUseId = it != null && it.settings_usable != null ? it.settings_usable.GetUseButtonName() : null;
+		}
+
 		static IEnumerator CuClick(float hold, Action each = null)
 		{
 			CuSet(true);
@@ -211,7 +221,7 @@ namespace DynamicIslands
 							float baseDrop = -1f, mineDrop = -1f;
 							foreach (string item in new[] { u.BaseName, u.Name })
 							{
-								GrHold(player, item);
+								GrHold(player, item); CuUse(item);
 								yield return new WaitForSeconds(0.8f);
 								GameObject model = CuHandModel(player, item);
 								MeleeWeapon w = model != null ? model.GetComponentInChildren<MeleeWeapon>(true) : null;
@@ -237,12 +247,12 @@ namespace DynamicIslands
 									boar.networkEntity.stat_health.Value = boar.networkEntity.stat_health.Max;
 									yield return CuWait(0.3f, hold);
 									float hp0 = boar.networkEntity.stat_health.Value;
-									yield return CuClick(0.15f, hold);
+									yield return CuClick(0.4f, hold);
 									yield return CuWait(1.6f, hold);
 									if (boar != null && boar.networkEntity != null) best = Mathf.Max(best, hp0 - boar.networkEntity.stat_health.Value);
 								}
 								List<string> ev = cuHits.Skip(hits0).Where(h => h.Value != null && model != null && h.Value.transform.IsChildOf(model.transform)).Select(h => h.Key).ToList();
-								Log("  " + item + " (damage " + dmg + ", range " + range.ToString("F1") + "): events " + string.Join(",", ev.ToArray()) + "; warthog lost " + best.ToString("F1") + " health");
+								Log("  " + item + " (use button '" + cuUseId + "', damage " + dmg + ", range " + range.ToString("F1") + "): events " + string.Join(",", ev.ToArray()) + "; warthog lost " + best.ToString("F1") + " health");
 								if (item == u.Name) mineDrop = best; else baseDrop = best;
 								if (item == u.Name) Check(ref ok, ev.Contains("OnMeleeHit") && best > 0f, u.Name + " hits the warthog (OnMeleeHit on its own hand model) and takes " + best.ToString("F1") + " health");
 							}
@@ -261,14 +271,14 @@ namespace DynamicIslands
 					var forces = new Dictionary<string, float>();
 					foreach (string item in new[] { pad.BaseName, pad.Name })
 					{
-						GrHold(player, item);
+						GrHold(player, item); CuUse(item);
 						yield return new WaitForSeconds(0.8f);
 						GameObject model = CuHandModel(player, item);
 						Vector3 fwd = Vector3.ProjectOnPlane(player.CameraTransform.forward, Vector3.up).normalized;
 						Action look = () => { KeepAlive(player); Look(player, player.transform.localEulerAngles.y, 55f); };
 						int h0 = cuHits.Count, f0 = cuPaddleForces.Count;
 						yield return CuWait(0.3f, look);
-						yield return CuClick(0.15f, look);
+						yield return CuClick(0.4f, look);
 						yield return CuWait(1.8f, look);
 						List<string> ev = cuHits.Skip(h0).Where(h => h.Value != null && model != null && h.Value.transform.IsChildOf(model.transform)).Select(h => h.Key).ToList();
 						float f = cuPaddleForces.Skip(f0).DefaultIfEmpty(0f).Max();
@@ -298,7 +308,7 @@ namespace DynamicIslands
 					foreach (string item in new[] { u.BaseName, u.Name })
 					{
 						if (item.Contains("bow") || item == "Bow") player.Inventory.AddItem("Arrow_Stone", 5);
-						GrHold(player, item);
+						GrHold(player, item); CuUse(item);
 						yield return new WaitForSeconds(0.8f);
 						GameObject model = CuHandModel(player, item);
 						bool throws = u.Name == "DI_TitaniumRod" || u.Name == "DI_Longbow";
@@ -321,6 +331,7 @@ namespace DynamicIslands
 				if (patched != null) foreach (MethodBase m in patched) try { harmony.Unpatch(m, HarmonyPatchType.All, CuHarmonyId); } catch (Exception e) { Log("  (unpatching " + m.Name + ": " + e.Message + ")"); }
 				if (boar != null && boar.networkEntity != null) try { boar.networkEntity.stat_health.Value = 0f; UnityEngine.Object.Destroy(boar.gameObject); } catch { }
 			}
+			Log("  input ids asked while faking: " + string.Join(", ", cuIds.ToArray()));
 			if (ok) Log("PASS: craft use"); else Fail("craft use");
 		}
 
@@ -328,7 +339,7 @@ namespace DynamicIslands
 		/// floating debris where it lies and holds the button to pull it in. res[0] = in the water, res[1] = debris pulled in.</summary>
 		static IEnumerator CuHookRun(Network_Player player, string item, bool[] res)
 		{
-			GrHold(player, item);
+			GrHold(player, item); CuUse(item);
 			yield return new WaitForSeconds(0.8f);
 			GameObject model = CuHandModel(player, item);
 			Hook hook = model != null ? model.GetComponentInChildren<Hook>(true) : null;

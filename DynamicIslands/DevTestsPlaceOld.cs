@@ -26,10 +26,10 @@ namespace DynamicIslands
 			string line = null;
 			try { line = Traverse.Create(typeof(ExtraUpgrades)).Field("LastPlacementCheck").GetValue<string>(); } catch { }
 			Log("place old: " + (line ?? "no placement check line in this build"));
-			if (line != null) Check(ref ok, line.Contains(", 0 wrong"), "place old: the world load's placement check found nothing it could not mend");
+			if (line != null) Check(ref ok, line.Contains(", 0 wrong"), "the world load's placement check found nothing it could not mend (old world)");
 			List<ExtraUpgrades.Upgrade> ups = ExtraUpgrades.Registered.Concat(ExtraUpgrades.CosmeticItems)
 				.Where(u => u.Base != null && u.Base.settings_buildable != null && u.Base.settings_buildable.HasBuildablePrefabs).ToList();
-			Check(ref ok, ups.Count > 0, "place old: " + ups.Count + " buildable upgrades and cosmetics made");
+			Check(ref ok, ups.Count > 0, ups.Count + " buildable upgrades and cosmetics made (old world)");
 			var names = new List<string>();
 			foreach (ExtraUpgrades.Upgrade u in ups)
 			{
@@ -62,6 +62,22 @@ namespace DynamicIslands
 			var placed = new List<string>();
 			bool[] placeOk = { true };
 			yield return PlaceRealCore(names.ToArray(), "place old", placeOk, placed);
+			// an item with no green spot is tried again as Raft's own base item: when that finds none either, this old raft has
+			// no room for the kind (a net needs the raft's edge, an engine a free foundation) - not a fault of the mod's item
+			List<string> missed = names.Except(placed).ToList();
+			if (missed.Count > 0)
+			{
+				var baseOf = ups.Where(u => missed.Contains(u.Name) && u.Base != null).ToDictionary(u => u.Name, u => u.Base.UniqueName);
+				var basePlaced = new List<string>();
+				yield return PlaceRealCore(baseOf.Values.Distinct().ToArray(), "place old (Raft's own, as a control)", new[] { true }, basePlaced);
+				placeOk[0] = true;
+				foreach (string n in missed)
+				{
+					string b; bool noRoom = baseOf.TryGetValue(n, out b) && !basePlaced.Contains(b);
+					if (noRoom) Log("  " + n + ": no room on this raft - Raft's own " + b + " found no green spot either");
+					else { placeOk[0] = false; Log("FAIL: " + n + " not placed, while Raft's own " + (b ?? "?") + " was"); }
+				}
+			}
 			foreach (Block b in grown) if (b != null) BlockCreator.RemoveBlockNetwork(b, null, true);
 			if (!placeOk[0]) ok = false;
 			Log("place old: placed " + placed.Count + "/" + names.Count + (placed.Count < names.Count ? "; not: " + string.Join(", ", names.Except(placed).ToArray()) : ""));
