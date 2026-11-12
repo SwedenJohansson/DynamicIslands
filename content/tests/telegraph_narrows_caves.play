@@ -4,7 +4,7 @@
 # the air zone tn_cable at 9 39.5 and the chest tncablechest at 10.2 38. Floors are guesses (-8 at the mouth, ~+2.6 in the den).
 # Offline-written, never run; swim heights are metres over the sea.
 island Telegraph Narrows keep
-offset 0 0
+offset 0.35 5.1
 hour 11
 weather Calm
 empty

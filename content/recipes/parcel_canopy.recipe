@@ -151,10 +151,10 @@ call kit_dig x=35 z=4 yaw=90 len=14 flat=2 r=1.75 slope=0 room=1 roomr=3.5 rooml
 prop pcroots cave.rock=plain
 # 11-12 user: mixed cave monsters - rats nest in the root cellar (two, one per place, the floor + 0.3, no drop).
 # cavecheck inside pcratA pcratB
-place Creature_Rat pcratA at 54 3 h=5.6
+place Creature_Rat pcratA at 54 3 h=4.8
 prop pcratA creature.count=1
 prop pcratA creature.respawn=0
-place Creature_Rat pcratB at 56 5.2 h=5.6
+place Creature_Rat pcratB at 55 5 h=4.8
 prop pcratB creature.count=1
 prop pcratB creature.respawn=0
 place Zone_Trigger pcrootsz at 49 4 h=6.5

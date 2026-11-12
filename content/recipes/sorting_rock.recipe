@@ -273,7 +273,7 @@ call kit_dig x=40 z=14 yaw=90 len=12 flat=3 r=1.75 slope=0 room=1 roomr=3.5 room
 prop srcellar cave.rock=plain
 # 11-12 user: mixed cave monsters - a boar has dug in among the old perishables (one, the floor + 0.3, no drop).
 # cavecheck inside srboar
-place Creature_Boar srboar at 58 14 h=5.1
+place Creature_Boar srboar at 58 14 h=4.6
 prop srboar creature.count=1
 prop srboar creature.respawn=0
 place Zone_Trigger srcellarz at 54 14 h=6

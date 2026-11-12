@@ -70,16 +70,16 @@ call stilt_hut y=2.6 foot=1.5
 place Loot_ChestSmall letterbox at 2.25 3.6 y=2.7 sit yaw=180
 pop
 push at 8 -31 h=6
-call stilt_hut y=2.6 w1=ReefHuts_PlasticWall4
+call stilt_hut y=2.6 w1=ReefHuts_PlasticWall4 foot=2.1
 pop
 place Creature_Rat rats at -12 -34 ground
 
 # --- Terrace 2: houses 2 and 5, the three tube valves on posts along the terrace ----------------------------------------
 push at -20 -13 h=11
-call stilt_hut y=2.6 w2=ReefHuts_Wall2 foot=2.5
+call stilt_hut y=2.6 w2=ReefHuts_Wall2 foot=4
 pop
 push at 12 -13 h=11
-call stilt_hut y=2.6 w3=ReefHuts_Wall3 foot=1.5
+call stilt_hut y=2.6 w3=ReefHuts_Wall3 foot=3.6
 pop
 macro valve al=valve1 x=0 z=0 yaw=0
 place RT_Pillar - at $x $z ground sy=0.5
@@ -230,7 +230,7 @@ prop phtubes cave.rock=plain
 # 11-12 user: mixed cave monsters - a bear has made the sorting room its den (this world: bear here, rats under Parcel
 # Canopy, a boar in Sorting Rock's cellar, none in the vault or the cable room). One per place, the floor + 0.3, no drop.
 # cavecheck inside phbear
-place Creature_Bear phbear at 48 9 h=6.0
+place Creature_Bear phbear at 48 9 h=3.8
 prop phbear creature.count=1
 prop phbear creature.respawn=0
 place Zone_Trigger phtubesz at 48 8 h=7
