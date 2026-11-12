@@ -859,7 +859,95 @@ namespace DynamicIslands.Editor
 				try { TintAll(o, u.Tint, u.Whiten); o.transform.localScale *= HeldGrow; Shine(o, u.Tint); u.Held(o); }
 				catch (Exception e) { Warn(u + ": " + e.Message); }
 				list.Add(new ItemConnection { name = u.Name, inventoryItem = u.Item, obj = o, objs = b.objs });
+				int n = CopyAnimationEvents(c, b.obj, o);
+				HeldEvents[u.Name] = n;
+				Log(u.Name + ": hand model with " + n + " animation event(s) of " + u.BaseName);
 			}
+			try { MacheteAsWeapon(list); } catch (Exception e) { Warn("titanium machete as a weapon: " + e.Message); }
+		}
+
+		/// <summary>The titanium machete's weapon stats after MacheteAsWeapon: Raft's machete's damage and attack layers, and what
+		/// the titanium one got (for CI checks and the report).</summary>
+		public static string MacheteNote = "";
+
+		/// <summary>User 11-12: the titanium machete must also hurt creatures. Raft's machete is a MeleeWeapon of its own; when
+		/// it cannot hurt one (no damage, or its attack layers miss the layers the titanium sword hits creatures on), the
+		/// titanium machete gets the sword's attack layers on top of its own (so it still cuts vines and quest plants) and a
+		/// damage between the titanium spear's and the greatsword's.</summary>
+		static void MacheteAsWeapon(List<ItemConnection> list)
+		{
+			MeleeWeapon Of(string name)
+			{
+				ItemConnection k = list.FirstOrDefault(x => x != null && x.inventoryItem != null && x.obj != null && x.inventoryItem.UniqueName == name);
+				return k != null ? k.obj.GetComponentInChildren<MeleeWeapon>(true) : null;
+			}
+			MeleeWeapon machete = Of("Machete"), mine = Of("DI_TitaniumMachete"), spear = Of("DI_TitaniumSpear"), sword = Of("DI_TitaniumGreatsword");
+			if (mine == null || sword == null) return;
+			int baseDamage = machete != null ? Traverse.Create(machete).Field("damage").GetValue<int>() : -1;
+			int baseMask = machete != null ? machete.attackMask.value : 0, swordMask = sword.attackMask.value;
+			bool hurts = baseDamage > 0 && (baseMask & swordMask) == swordMask;
+			MacheteNote = "Raft's machete: damage " + baseDamage + ", attack layers " + baseMask + " (sword " + swordMask + ")";
+			if (hurts) { MacheteNote += ": it hurts creatures, the titanium one keeps x" + WeaponDamageFactor; Log(MacheteNote); return; }
+			int lo = spear != null ? Traverse.Create(spear).Field("damage").GetValue<int>() : 0;
+			int hi = Traverse.Create(sword).Field("damage").GetValue<int>();
+			int dmg = Mathf.Max(Traverse.Create(mine).Field("damage").GetValue<int>(), Mathf.RoundToInt((lo + hi) / 2f));
+			Traverse.Create(mine).Field("damage").SetValue(dmg);
+			mine.attackMask = mine.attackMask.value | swordMask;
+			MacheteNote += ": the titanium machete gets damage " + dmg + " (spear " + lo + ", greatsword " + hi + ") and layers " + mine.attackMask.value;
+			Log(MacheteNote);
+		}
+
+		/// <summary>Hand-held upgrade name -> animation events its hand model got from the base item (for CI checks).</summary>
+		public static readonly Dictionary<string, int> HeldEvents = new Dictionary<string, int>();
+
+		/// <summary>Raft's AnimationEventCaller sends each animation event (OnMeleeHit, Animation_HookThrow, the paddle stroke...)
+		/// to a fixed GameObject: the base item's hand model. A cloned hand model gets none of them, so a cloned weapon swung
+		/// but never hit and a cloned hook never threw (11-12 player report). Every connection whose receiver is the base
+		/// model or one of its children gets a copy aimed at the same spot in the clone; the caller only sends to active
+		/// objects, so the hidden base model and the clone never both get it.</summary>
+		static int CopyAnimationEvents(UseItemController c, GameObject from, GameObject to)
+		{
+			int n = 0;
+			Network_Player np = c.GetComponentInParent<Network_Player>();
+			Transform root = np != null ? np.transform : c.transform.root;
+			foreach (AnimationEventCaller caller in root.GetComponentsInChildren<AnimationEventCaller>(true))
+			{
+				var cons = Traverse.Create(caller).Field("connections").GetValue<List<AnimationConnection>>();
+				if (cons == null) continue;
+				foreach (AnimationConnection a in cons.ToList())
+				{
+					if (a == null || a.objectReciever == null) continue;
+					Transform t = Twin(from.transform, to.transform, a.objectReciever.transform);
+					if (t == null) continue;
+					cons.Add(new AnimationConnection
+					{
+						name = a.name, layerName = a.layerName, stateName = a.stateName, functionName = a.functionName,
+						functionParameter = a.functionParameter, objectReciever = t.gameObject, timeOfEvent = a.timeOfEvent,
+						active = a.active, calledEvent = false, lastNormalizedTime = a.lastNormalizedTime
+					});
+					n++;
+				}
+			}
+			return n;
+		}
+
+		/// <summary>The transform in clone <paramref name="to"/> at the same child path as <paramref name="t"/> has under
+		/// <paramref name="from"/>; null when t is not from or one of its children.</summary>
+		static Transform Twin(Transform from, Transform to, Transform t)
+		{
+			var path = new List<int>();
+			for (Transform x = t; x != from; x = x.parent)
+			{
+				if (x == null) return null;
+				path.Add(x.GetSiblingIndex());
+			}
+			Transform r = to;
+			for (int i = path.Count - 1; i >= 0; i--)
+			{
+				if (path[i] >= r.childCount) return null;
+				r = r.GetChild(path[i]);
+			}
+			return r;
 		}
 
 		/// <summary>In PlayerEquipment.Awake, before it gathers its Equipment: each worn upgrade gets a copy of its base item's
