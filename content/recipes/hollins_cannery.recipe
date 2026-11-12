@@ -19,6 +19,7 @@ include lib_features
 include lib_sl1
 include lib_areas
 include lib_highwater
+include lib_caves
 new
 # (nature: a bare concrete shelf - Raft-like, bushes low: Trees 0.06, Bushes 0.15, Rocks 0.35)
 gen Trees=0.06 Bushes=0.15 Rocks=0.35 Harvest=0.12 BeachThings=0.35
@@ -74,6 +75,50 @@ pop
 place Block_Pillar_Wood - at -0.8 -3.6 ground sy=0.5
 place RT_PowerBox coldkeypad at -0.8 -3.6 ground y=1.6 sit drop yaw=180
 
+# --- 11-12 (w10): the spoiled vats room - optional, no quest step (plan 10 row: ACID, safe=suit). A metal annex behind
+# the hall (its door on the far side from the yard): the night shift's brine vats went bad and the floor between them
+# is a pool of green pickling acid; the foreman's spare locker sank in it. Work suits in the box by the door, a sign
+# beside it. 5 x 4 cells, its pad levelled to the yard's 3 m; the dry strip inside the door is the way out.
+brush flatten from -10 10 to -3.5 10 r=6 s=20 frames=300 h=3
+brush smooth from -10 10 to -3.5 10 r=8 s=6 frames=20
+brush flatten from -10 10 to -3.5 10 r=4.5 s=20 frames=200 h=3
+clear from -10 10 to -3.5 10 r=7 only=(?i)boulder|rock|tree|bush|bamboo
+push at -3 13 h=3 yaw=180
+call shed w=5 d=4 door=2
+place TP_SeleneReactor_Water_Radiated hcvatpool at 3.75 3.6 y=0.25 scale=0.17
+for _vx 0.8 6.7 5.9
+place TP_Moontown_Barrel01 hcvat at $_vx 0.9 y=0.3 sit drop
+place TP_Moontown_Barrel01 hcvat at $_vx 5.2 y=0.3 sit drop
+next
+place Zone_Atmosphere hcvatmist at 3.75 3.2 y=1.2
+place Zone_Trigger hcvats at 3.75 3.6 y=1
+place Loot_ChestSmall hcvatlocker at 3.75 3.9 y=0.6 sit drop yaw=180
+pop
+prop hcvat tint.color=#a4c428
+prop hcvat tint.amount=0.45
+prop hcvatmist zone.radius=3.5
+prop hcvatmist atmo.particles=steam
+prop hcvatmist atmo.fog=#8cc030
+prop hcvatmist atmo.fogAmount=0.3
+prop hcvatmist atmo.light=#c8ff70
+prop hcvatmist atmo.lightAmount=0.3
+prop hcvats obj.name=hcvats
+prop hcvats zone.id=hc_vats
+prop hcvats zone.radius=2.2
+prop hcvats zone.hazard=acid
+prop hcvats zone.damage=4
+prop hcvats zone.safe=suit
+prop hcvats zone.hazardMsg=The floor between the vats is a pool of spoiled pickling brine - it burns. A work suit from the box by the door keeps it off.
+note hcvatlocker Foreman's spare locker | The foreman's spare locker, sunk in the brine when the vats burst: a gutting knife's whetstone, spare cells for the hall's radio and a coil of good rope.
+loot hcvatlocker Battery*2;Rope*3;Nail*8;CopperIngot*1
+prop hcvatlocker loot.refill=0
+place "Box Big" hcvatsuits at -9.4 14.6 ground sit yaw=0
+prop hcvatsuits obj.name=hcvatsuits
+prop hcvatsuits beh.use=Put on a gutter's work suit
+prop hcvatsuits on.use=suit||180\nmessage||A gutter's oilskin suit, rubber boots and gloves - three minutes before the brine gets through.
+place Note_Sign hcvatwarn at -4.2 14.6 ground sit yaw=0
+note hcvatwarn VATS ROOM - KEEP OUT | The brine vats burst. The floor burns skin and boots. Suits in the box by the door.\n- E. Hollins
+
 # --- The yard: the plank conveyor on posts, barrels and crates on the ground --------------------------------------
 push at -1 -9 h=3
 for cx 0.75 8.25 1.5
@@ -100,6 +145,22 @@ place Block_Pillar_Wood - at -10.4 -16 ground
 place Placeable_Lantern_Metal - at -10.4 -16 ground y=2.8 sit drop
 place Zone_Trigger slipway at -8 -26 ground y=1
 
+# --- 11-12 (w10): Mrs. Elaine Hollins - the islander of The Lullaby Frequency (optional, no quest step). The owner's
+# widow sits on the yard's concrete by the barrels, facing the slipway the player comes up; she hears the song through
+# the floor. Her first answer opens the cellar hatch in the sea cave under Smokehouse Hill (journal page), her second
+# names the night shift (journal page), her third is a goodbye.
+# (r4: on a chair - a sitter needs a seat: on the bare ground the sit pose floats, as at Shelter Atoll)
+place Placeable_Chair_Wood hcelainechair at -15 -9 ground sit yaw=90
+prop hcelainechair obj.name=hcelainechair
+place Story_Islander hcelaine at -15 -9 ground yaw=90
+prop hcelaine obj.name=Mrs. Elaine Hollins
+prop hcelaine islander.character=Elaine
+prop hcelaine islander.pose=sit
+prop hcelaine talk.text=You hear it too? The lullaby. It comes up through the floor.\n> Where does it come from?\n> Who else heard it?\n> I hear nothing.
+prop hcelaine on.choice1=journal|Mrs. Elaine Hollins: the cellar|Elaine says the song is loudest in the sea cave under Smokehouse Hill, the hill with the radio mast. Her husband kept the cannery's cellar in there, under a steel hatch. The cave's mouth is on the shore at the foot of the hill, by the water. She has unlocked the hatch for you.\nmessage||Under the hill. My husband's cellar is in the sea cave at the foot of Smokehouse Hill, by the water - I have unlocked the hatch. Go and listen.
+prop hcelaine on.choice2=journal|Mrs. Elaine Hollins: who heard it|Ada Brann heard it first, on the radio at the mast. Then Jonna Hale at the gutting table, Tobias Grell in the ice cave and Rolf Iversen up in his spotter plane. The whole night shift heard it and walked down to the water. Only the boy Pim stayed - he hums it now.\nmessage||Ada first, on the radio. Then Jonna, Tobias, Rolf. They all walked down to the water. Only Pim stayed.
+prop hcelaine on.choice3=message||No? Then sit with me a while. At twelve past three you will.
+
 # --- Things to gather -------------------------------------------------------------------------------------------------
 scatter "Pickup_Landmark_PineappleLandmark" 2 at 0 0 r=34 seed=1211 free=4
 scatter "Pickup_Landmark_Flower_Yellow" 2 at 0 0 r=34 seed=1212 free=4
@@ -123,6 +184,29 @@ scatter Bush 6 at 42 38 r=26 seed=30003 free=1
 scatter Bush2 4 at 42 38 r=26 seed=30004 free=1
 scatter "Pickup_Landmark_Rock 1" 3 at 42 38 r=26 seed=30005 free=2
 place Creature_Goat hillgoats at 24.98 22.88 ground
+
+# --- 11-12 (w10): the Hollinses' cellar - optional, no quest step (plan 10 row: ST cellar to a sea cave, talked hatch).
+# A straight cave (kit_st) from the shore at Smokehouse Hill's foot, by the water, into the hill's flank to a den - the
+# family's cellar, where the song is loudest. Its chest lies under a steel hatch, locked until someone talked to Mrs.
+# Elaine Hollins in the yard; her first answer opens it. Echo cave: no lamps. cavecheck: the mast's chest and Ada's log
+# 7 m and more off the den, the hill's foot zone and the goats 9 m and more; the trail's free sector is over the den.
+call kit_st x=66 z=22 yaw=258 len=6 slope=0 end=room size=0.7 hill=1 dirt=2 mush=2 stone=0 vines=0 as=hccellar
+prop hccellar cave.rock=plain
+prop hccellar cave.dome=14
+# cavecheck inside hccellarhatch hccellarchest
+# (den floor = the mouth's ground, ~3.3 m (slope 0); the hatch 20 m in from the mouth, the den's middle)
+place TangaroaHatchRoom_Hatch hccellarhatch at 46.4 17.8 h=6 drop yaw=78
+prop hccellarhatch obj.name=hccellarhatch
+prop hccellarhatch beh.use=Open the cellar hatch
+prop hccellarhatch if.use=talked|Mrs. Elaine Hollins
+prop hccellarhatch on.use=hide|hccellarhatch\nshow|hccellarchest\nmessage||The hatch swings up on the Hollinses' cellar. Down here the lullaby is louder than anywhere - it comes from the sea.
+prop hccellarhatch else.use=message||The cellar hatch is locked. Mrs. Hollins, sitting in the cannery's yard, has the key.
+place Loot_ChestSmall hccellarchest at 45.2 17.6 h=6 drop yaw=78
+prop hccellarchest obj.name=hccellarchest
+prop hccellarchest beh.hidden=1
+prop hccellarchest loot.refill=0
+note hccellarchest Hollins cellar | The family's cellar stores: oiled rope, a box of nails, the hall radio's spare cells and the copper wire Mr. Hollins meant for a better aerial.
+loot hccellarchest Rope*3;Nail*10;Battery*1;CopperIngot*2;Scrap*3
 prop hillgoats creature.count=2
 # --- The net loft (south-east), drowned in a hole 14 m down, an air pocket: Jonna's note, the back room's chest ---------
 call hw_sunkhouse x=24 z=-74 h=-14 yaw=0 a=netloft chest=loftchest air=loftair bub=loftbub dal=loftdoor

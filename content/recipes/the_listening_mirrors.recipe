@@ -24,6 +24,7 @@ include lib_features
 include lib_sl1
 include lib_areas
 include lib_highwater
+include lib_caves
 new
 # (nature: a bare grey quarry - trees 0.1, rocks 0.5)
 gen Trees=0.1 Bushes=0.12 Rocks=0.5 Harvest=0.1 BeachThings=0.3
@@ -508,4 +509,12 @@ quest reward=HealingSalve_Good*2;TitaniumIngot*3;TradeToken*12
 call treasure x=0 z=0 r=36 n=1 seed=8824
 prop treasure8824 treasure.loot=TitaniumOre*3
 
+# --- CONTENT 11-12 (w10): the echo caves - a joined system (kit_sys) dug into Watcher's Fell's face beside the steps' foot,
+# two mouths, a side chamber: the quarrymen's test bores, where the mirrors' builders listened for the song in the rock.
+# (r2b: 3 m further out than first set - the slope up to the old mouth was too steep to walk)
+call kit_sys x=-43 z=36.6 yaw=240 side=-1 len=13 bend=3 branch=10 blen=1 gap=10 in2=8 r=1.75 roomr=2.5 dirt=0 mush=3 stone=2 vines=0 titanium=1 as=lmecho
+prop lmecho cave.rock=plain
+place Note_Sign lmechosign at -33 36 ground sit yaw=240
+prop lmechosign obj.name=lmechosign
+note lmechosign ECHO CAVES | Test bores of the mirror works, two ways into the Fell's face behind this sign. Before the mirrors were built we listened down here first. Speak and the rock answers. Sometimes it answers with her song.
 save The Listening Mirrors
