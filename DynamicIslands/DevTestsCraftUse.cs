@@ -41,7 +41,7 @@ namespace DynamicIslands
 		}
 		static bool CuWasPressedShim(object cfg, object action, string id)
 		{
-			if (cuFake && CuIsUse(id)) return cuDown && Time.frameCount == cuChangeFrame;
+			if (cuFake && CuIsUse(id)) { bool r = cuDown && Time.frameCount == cuChangeFrame; if (r) cuPressTrue++; return r; }
 			if (cuFake && id == "RMB") return false;
 			return (bool)cuWasPressed.Invoke(cfg, new[] { action, id });
 		}
@@ -51,6 +51,9 @@ namespace DynamicIslands
 			if (cuFake && id == "RMB") return false;
 			return (bool)cuWasReleased.Invoke(cfg, new[] { action, id });
 		}
+		// (diagnostics: Update calls on the watched tool, and pressed-this-frame answers given)
+		static int cuPressTrue, cuUpdCalls; static object cuWatch;
+		static void CuUpdProbe(object __instance) { if (cuFake && __instance != null && ReferenceEquals(__instance, cuWatch)) cuUpdCalls++; }
 		static MethodInfo cuReadValueOriginal;
 		static float CuReadValueShim(object action)
 		{
@@ -122,6 +125,8 @@ namespace DynamicIslands
 				foreach (MethodInfo m in ms)
 					try { harmony.Patch(m, postfix: probe); done.Add(m); } catch (Exception e) { Log("  (probe on " + em + ": " + e.Message + ")"); }
 			}
+			MethodInfo ut = AccessTools.Method(typeof(UsableTool), "Update");
+			if (ut != null) { harmony.Patch(ut, postfix: new HarmonyMethod(AccessTools.Method(typeof(DevTests), "CuUpdProbe"))); done.Add(ut); }
 			MethodInfo pp = AccessTools.Method(typeof(Paddle), "PaddlePaddle");
 			if (pp != null) { harmony.Patch(pp, postfix: new HarmonyMethod(AccessTools.Method(typeof(DevTests), "CuPaddleProbe"))); done.Add(pp); }
 			Log("  (patched " + done.Count + " methods: " + string.Join(", ", done.Select(m => m.DeclaringType.Name + "." + m.Name).ToArray()) + ")");
@@ -255,6 +260,8 @@ namespace DynamicIslands
 									boar.transform.position = target - off;
 									LookAt(player, target);
 								};
+								cuWatch = w; cuUpdCalls = 0; cuPressTrue = 0;
+								string wstate = w == null ? "no MeleeWeapon" : "setItemHit " + Traverse.Create(w).Field("setItemHitAnimation").GetValue<bool>() + ", enabled " + w.enabled + ", active " + w.gameObject.activeInHierarchy + ", thisItem " + (Traverse.Create(w).Field("thisItem").GetValue<Item_Base>() != null ? Traverse.Create(w).Field("thisItem").GetValue<Item_Base>().UniqueName : "null") + ", playerNetwork " + (Traverse.Create(w).Field("playerNetwork").GetValue<Network_Player>() != null);
 								int hits0 = cuHits.Count;
 								float best = 0f;
 								string diag = null; int downFrames = 0;
@@ -270,6 +277,7 @@ namespace DynamicIslands
 									if (boar != null && boar.networkEntity != null) best = Mathf.Max(best, hp0 - boar.networkEntity.stat_health.Value);
 								}
 								List<string> ev = cuHits.Skip(hits0).Where(h => h.Value != null && model != null && h.Value.transform.IsChildOf(model.transform)).Select(h => h.Key).ToList();
+								Log("    weapon: " + wstate + "; its Update ran " + cuUpdCalls + "x, pressed-this-frame answered yes " + cuPressTrue + "x");
 								Log("    swing: " + (diag ?? "no frame with the button down") + "; all events: " + string.Join(",", cuHits.Skip(hits0).Select(h => h.Key + "@" + (h.Value != null ? h.Value.name : "?")).Distinct().ToArray()));
 								Log("  " + item + " (use button '" + cuUseId + "', damage " + dmg + ", range " + range.ToString("F1") + "): events " + string.Join(",", ev.ToArray()) + "; warthog lost " + best.ToString("F1") + " health");
 								if (item == u.Name) mineDrop = best; else baseDrop = best;
