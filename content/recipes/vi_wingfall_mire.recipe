@@ -94,6 +94,86 @@ call shallows r=76 deep=5 n=2 seed=865
 place Creature_Turtle turtles at -40 -30 h=-2
 prop turtles creature.count=2
 
+# ===== 11-12 (w16 prep): the acid bog (plan 16 row: ACID bog pools, safe=suit, planks across). Where the airliner's fuel
+# and battery acid drained: a long bog (from 8 26 to 24 18, 0.6 m under the sea like the other pools) on the knoll-side of
+# the deep pool's track, planks across its middle on posts (deck ~1 m, rope rails); acid in the water on both sides of the
+# planks (four zones r 2 at -0.4 m, 2.45 m and more from the planks' edge: on the planks you are out of it), a green tint
+# and mist. On the far side the plane's lost engine cowling and the cargo locker it shook loose. The suit box and a sign
+# at the near end. Side only (the island has no quest).
+# HEIGHTS: guesses - the banks at ~1 m (the planks' deck 1.0; if the banks are higher the planks' ends sit in them); the
+# bog floor -0.6 (the recipe's pool depth).
+brush flatten from 8 26 to 24 18 r=3 s=20 frames=80 h=-0.6
+brush seabed at 10 25 r=2.5 s=20 frames=15
+brush seabed at 16 22 r=2.5 s=20 frames=15
+brush seabed at 22 19 r=2.5 s=20 frames=15
+clear from 8 26 to 24 18 r=4
+clear at 19.5 28.5 r=3 
+push at 14.66 17.65 h=-3.3 yaw=-63.4
+call boardwalk n=6 wide=1 y=4.3
+pop
+place TP_SeleneReactor_Water_Radiated wmpoolA at 18.86 20.57 h=-0.05 scale=0.3 yaw=193
+place Zone_Trigger wmacidA at 18.86 20.57 h=-0.4
+prop wmacidA obj.name=wmacidA
+prop wmacidA zone.id=wm_bogA
+prop wmacidA zone.radius=2
+prop wmacidA zone.hazard=acid
+prop wmacidA zone.damage=4
+prop wmacidA zone.safe=suit
+prop wmacidA zone.hazardMsg=The bog water burns - fuel and battery acid from the wreck. Keep to the planks, or wear a suit.
+place TP_SeleneReactor_Water_Radiated wmpoolB at 13.14 23.43 h=-0.05 scale=0.3 yaw=162
+place Zone_Trigger wmacidB at 13.14 23.43 h=-0.4
+prop wmacidB obj.name=wmacidB
+prop wmacidB zone.id=wm_bogB
+prop wmacidB zone.radius=2
+prop wmacidB zone.hazard=acid
+prop wmacidB zone.damage=4
+prop wmacidB zone.safe=suit
+prop wmacidB zone.hazardMsg=The bog water burns - fuel and battery acid from the wreck. Keep to the planks, or wear a suit.
+place TP_SeleneReactor_Water_Radiated wmpoolC at 22.08 18.96 h=-0.05 scale=0.3 yaw=211
+place Zone_Trigger wmacidC at 22.08 18.96 h=-0.4
+prop wmacidC obj.name=wmacidC
+prop wmacidC zone.id=wm_bogC
+prop wmacidC zone.radius=2
+prop wmacidC zone.hazard=acid
+prop wmacidC zone.damage=4
+prop wmacidC zone.safe=suit
+prop wmacidC zone.hazardMsg=The bog water burns - fuel and battery acid from the wreck. Keep to the planks, or wear a suit.
+place TP_SeleneReactor_Water_Radiated wmpoolD at 9.92 25.04 h=-0.05 scale=0.3 yaw=144
+place Zone_Trigger wmacidD at 9.92 25.04 h=-0.4
+prop wmacidD obj.name=wmacidD
+prop wmacidD zone.id=wm_bogD
+prop wmacidD zone.radius=2
+prop wmacidD zone.hazard=acid
+prop wmacidD zone.damage=4
+prop wmacidD zone.safe=suit
+prop wmacidD zone.hazardMsg=The bog water burns - fuel and battery acid from the wreck. Keep to the planks, or wear a suit.
+place Zone_Atmosphere wmmistA at 19.5 20.3 h=0.6
+prop wmmistA zone.radius=4.5
+prop wmmistA atmo.particles=steam
+prop wmmistA atmo.fog=#a0b040
+prop wmmistA atmo.fogAmount=0.3
+prop wmmistA atmo.light=#d8f070
+prop wmmistA atmo.lightAmount=0.25
+place Zone_Atmosphere wmmistB at 12.5 23.7 h=0.6
+prop wmmistB zone.radius=4.5
+prop wmmistB atmo.particles=steam
+prop wmmistB atmo.fog=#a0b040
+prop wmmistB atmo.fogAmount=0.3
+prop wmmistB atmo.light=#d8f070
+prop wmmistB atmo.lightAmount=0.25
+place VP_Rubble_MetalPiece02 - at 20.8 29.2 ground sit yaw=75
+place Loot_ChestSmall wmcowlchest at 19.2 28.2 y=0.5 drop yaw=200
+prop wmcowlchest obj.name=wmcowlchest
+prop wmcowlchest loot.refill=0
+note wmcowlchest Cargo locker | A cargo locker shaken out of the wing when the engine tore off: tools in oilcloth, wire and the spares for an engine nobody will fix.
+loot wmcowlchest MetalIngot*2;CopperIngot*2;Bolt*3;Hinge*1
+place "Box Big" wmsuits at 12.4 15.8 y=0.5 drop yaw=30
+prop wmsuits obj.name=wmsuits
+prop wmsuits beh.use=Put on a salvage suit
+prop wmsuits on.use=suit||180\nmessage||The salvage crew's rubber suit, still folded in its box - three minutes before the bog finds the seams.
+place Note_Sign wmbogsign at 13.8 15.4 ground yaw=30
+note wmbogsign BOG - ACID | Fuel and acid from the wreck in the water. Planks across. Suits in the box. - Salvage crew
+
 info title=Wingfall Mire
 info author=Custom Islands
 info description=A low swamp of pools, bamboo and birch where a small airliner came down on its belly. A van sunk in a deep pool, three plastic boats left in the pools, and a hermit in a blue caravan on the dry knoll.

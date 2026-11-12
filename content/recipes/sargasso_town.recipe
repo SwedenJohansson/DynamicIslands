@@ -16,6 +16,7 @@
 # lookout's pad at 51 -4 (4.6 m), its deck 12.1 m, its ladder at 51.75 -5.7.
 include lib_huts
 include lib_sea
+include lib_sl1
 new
 # (nature: volcanic - scrub and a few hardy trees on the rim, black sand; the lagoon weedy)
 gen Trees=0.2 Bushes=0.3 Rocks=0.5 Harvest=0.25 BeachThings=0.3
@@ -49,7 +50,14 @@ clear at 51 -4 r=4
 # ===== The streets: decks of planks on posts from the lagoon's floor - the quay, the north street to Fen's pier, the west,
 # east and south-east streets; lanterns, awnings, the market raft's box, the hens; the Council's notice on the quay ========
 push at 1.5 -26 h=-3.3 yaw=270
-call boardwalk n=15 wide=2 y=4.3
+call boardwalk n=15 wide=2 y=4.3 rn=none
+# (11-12 w16: the quay's lagoon-side rope fence by hand, left out where the harbourmaster's store fronts the quay)
+for bx 0.75 3.75 1.5
+place Block_Wall_Fence_Rope - at $bx 3 y=4.3
+next
+for bx 9.75 21.75 1.5
+place Block_Wall_Fence_Rope - at $bx 3 y=4.3
+next
 pop
 push at 1.5 7 h=-3.3 yaw=270
 call boardwalk n=10 wide=1 y=4.3
@@ -219,6 +227,40 @@ place Creature_Dolphin dolphins at -20 25 h=-1.6
 place Loot_SunkenBarrel sunkcrate at -8 -15 ground
 place Zone_Sound creak at 0 0 h=2
 call shallows r=110 deep=5 n=1
+
+# --- 11-12 (w16 prep): Harbourmaster Rouhi and her store (plan 16 row: islander Rouhi - the weed town's story (journal),
+# the way through the weed (landmarks), leave; talked opens a store). No quest step. Rouhi stands on the quay's edge
+# (-0.8 -16.3, dropped onto the deck at 1 m), 1.5 m off the play's quay walk (x 0.75). Her store: a shed on a short deck
+# of its own off the quay's side (x -1.5..-6, z -21.5..-17, deck 1 m like the streets), its door on the quay (-1.5
+# -19.25); the quay's rope fence is placed by hand above and left out along the store's front. The door is barred until
+# you have talked to her; then her chest shows inside. HEIGHTS: the decks' 1 m is the recipe's own.
+place Story_Islander sgrouhi at -0.8 -16.3 h=2.5 drop yaw=90
+prop sgrouhi obj.name=Harbourmaster Rouhi
+prop sgrouhi islander.character=Rouhi
+prop sgrouhi islander.pose=stand
+prop sgrouhi talk.text=Welcome to Sargasso. Keep moving on the planks - the weed holds on to anything that stands still too long.\n> How did a town get here?\n> How do I get through the weed?\n> Fair winds, harbourmaster.
+prop sgrouhi on.choice1=journal|Harbourmaster Rouhi: the weed town|The first ships came into the crater to wait out a storm. By morning the weed had them by the rudders. They waited for a wind that never came, lashed their hulls together, laid planks from deck to deck - and that was the town. Every captain who comes in to trade stays a season, then another. The Council of Captains decides everything by vote, and nobody has ever sailed out the same year they came in. I keep the quay, the tide book and the store, and I make sure nobody forgets the way out.
+prop sgrouhi on.choice2=message||The way out is the cut through the rim, the one water the weed won't take. From the quay's head keep the two stone posts behind you and the clear channel under your keel, straight out between the black rocks to the open sea. Coming home, steer for the council's flags and the lanterns on the quay. Never cut across the weed - it wraps a rudder in a minute. And my store on the quay is open to you now.
+prop sgrouhi on.choice3=message||Rouhi touches her cap. 'Fair winds - and if they don't come, there's always a plank and a hammer here.'
+push at -1.5 -21.5 h=-3.3 yaw=270
+call boardwalk n=3 wide=3 y=4.3 rs=none rn=none
+pop
+push at -1.5 -21.5 h=1 yaw=270
+call shed w=3 d=3 door=1 floor=none y=0
+place PlantationDoor sgstoredoor at 2.25 0 y=0 sit yaw=0
+place Loot_ChestSmall sgstorechest at 3.4 3.4 y=0.05 sit yaw=180
+place "Box Small" - at 1 3.6 y=0.05 sit yaw=20
+pop
+prop sgstoredoor obj.name=sgstoredoor
+prop sgstoredoor beh.use=Open the harbourmaster's store
+prop sgstoredoor if.use=talked|Harbourmaster Rouhi
+prop sgstoredoor on.use=hide|sgstoredoor\nshow|sgstorechest\nmessage||The harbourmaster's store: coils of line, a keg of nails, and Rouhi's chest at the back.
+prop sgstoredoor else.use=message||The store is barred from inside. Harbourmaster Rouhi, on the quay, keeps the way in.
+prop sgstorechest obj.name=sgstorechest
+prop sgstorechest beh.hidden=1
+prop sgstorechest loot.refill=0
+note sgstorechest Harbourmaster's store chest | What the harbourmaster keeps for ships in trouble: line, planks, nails and hinges for a broken hatch.
+loot sgstorechest Rope*3;Plank*6;Nail*8;Hinge*2
 
 # ===== Settings, story items, notes, behaviours, quest (15 steps) =========================================================
 info title=Sargasso Town

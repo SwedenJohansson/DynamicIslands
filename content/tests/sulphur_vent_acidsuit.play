@@ -1,0 +1,20 @@
+# Sulphur Vent's vent pool A with a suit (CIPlay sulphur_vent_acidsuit, 11-12 w16 prep; in a test world 'CI ...'). The suit
+# box svsuits (-16 20.5, by the bunkhouse) gives 180 s of suit; straight through pool A (sv_poolA, -20.5 12.5) unhurt.
+# Offline-written, never run; re-read the offset after the build.
+island Sulphur Vent keep
+offset 0 0
+hour 11
+weather Calm
+
+empty
+at -1 20.5 h=11.5
+walk -1 20 to -2 16 h=10.3
+walk -2 16 to -4 19.5 to -15.5 19.6
+use svsuits
+walk -15.5 19.6 to -17 17 to -20.5 12.5
+wait 6
+expect unhurt
+walk -20.5 12.5 to -24 8
+open Diggers' crate
+wait 2
+expect item Scrap 3

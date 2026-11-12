@@ -1,0 +1,33 @@
+# Harbourmaster Rouhi on Sargasso Town's quay (CIPlay sargasso_town_talk, 11-12 w16 prep; in a test world 'CI ...'). She
+# stands at -0.8 -16.3 (deck 1). Her store: a shed off the quay (x -1.5..-6, z -21.5..-17), door sgstoredoor at -1.5 -19.25,
+# barred until you have talked to her; then the door goes and the chest sgstorechest shows. Answers: the weed town
+# (journal), the way through the weed (landmarks), leave.
+# Offline-written, never run; re-read the offset after the build.
+island Sargasso Town keep
+offset 0.0553 1.1623
+hour 11
+weather Calm
+
+at 0.75 -25 h=2
+walk 0.75 -25 to 0.75 -19.25 to -0.6 -19.25 h=1
+picture sg_store 2.5 +2 -19.25 -3 +1 -19.25
+expect hidden sgstorechest
+use sgstoredoor
+expect message barred
+expect shown sgstoredoor
+walk -0.6 -19.25 to 0.6 -17.5 h=1
+use Harbourmaster Rouhi pick 1
+read Harbourmaster Rouhi: the weed town
+use Harbourmaster Rouhi pick 2
+expect message cut through the rim
+use Harbourmaster Rouhi pick 3
+expect message Fair winds
+walk 0.6 -17.5 to -0.6 -19.25 h=1
+use sgstoredoor
+expect hidden sgstoredoor
+expect shown sgstorechest
+walk -0.6 -19.25 to -2.5 -19.25 to -4.2 -18.6 h=1
+open Harbourmaster's store chest
+wait 2
+expect item Hinge 2
+expect item Plank 6

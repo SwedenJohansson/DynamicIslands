@@ -1,0 +1,36 @@
+# Smith Tala on Twin Forges' saddle (CIPlay twin_forges_talk, 11-12 w16 prep; in a test world 'CI ...'). She stands at
+# 11.23 -8.89 (30 m) by the Anvil's open front. The forge annex: a shed beside the Anvil (frame 12.36 -7.27 yaw 59, pad 30),
+# door tfannexdoor at 13.52 -9.2, barred until you have talked to her; then the door goes and the chest tfannexchest shows
+# (~17 -8.4). Answers: the two forges (journal), sharpen my tools (2 metal ingots), leave. The Forge-Warden is not killed:
+# if she wakes on this walk, kill her first (the quest play's route is the bridge, 5 m and more off).
+# Offline-written, never run; re-read the offset after the build.
+island Twin Forges keep
+offset 0 0
+hour 11
+weather Calm
+
+at 2.5 -8.5 h=31.5
+walk 2.5 -8.5 to 12 -3 h=30.05
+walk 12 -3 to 10.5 -7 h=30
+picture tf_annex 8 +2.5 -7 14.5 +1 -9
+at 12.83 -9.61 h=31
+use tfannexdoor
+expect message smith's wedge
+expect hidden tfannexchest
+at 10.5 -7 h=31
+use Smith Tala pick 1
+read Smith Tala: the two forges
+use Smith Tala pick 2
+expect message good iron
+expect item MetalIngot 2
+use Smith Tala pick 3
+expect message I built it
+at 12.83 -9.61 h=31
+use tfannexdoor
+expect hidden tfannexdoor
+expect shown tfannexchest
+walk 12.83 -9.61 to 14.8 -8.43 to 16.1 -8.5 h=30
+open Tala's stock chest
+wait 2
+expect item Hinge 2
+expect item Bolt 3

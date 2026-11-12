@@ -201,6 +201,49 @@ scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=44.1 seed=4503 free=3
 # --- Raft's finds in the shallows round the stacks (lib_sea) ----------------------------------------------------------------
 call shallows r=83 deep=5 n=1
 
+# --- 11-12 (w16 prep): the weir stakes (plan 16 row: SPIKES in two dead ends of the maze, zone.pulse, safe=none). The
+# maze's two empty dead ends (cells 25 -27 and 31 -15; the puffers' two and the barrel's are left as they were) hold an old
+# fish-weir: sharpened stakes on the channel floor (3x2, scale 0.6, grey) and a hazard zone over each (r 2.5 at -1 m,
+# pulse 2 s on / 3 s off, safe=none). 6 m from the quest's swim line (z -21). Side only.
+# HEIGHTS: the channel floor -3.5 is the recipe's own; the stakes' size at scale 0.6 is a guess (they should reach about
+# halfway up the water).
+place "Balboa_DecorationPrefabBase_Wooden Spikes" rmstakeA at 24 -27.6 h=-3 drop scale=0.6 yaw=0
+place "Balboa_DecorationPrefabBase_Wooden Spikes" rmstakeA at 25 -27.6 h=-3 drop scale=0.6 yaw=20
+place "Balboa_DecorationPrefabBase_Wooden Spikes" rmstakeA at 26 -27.6 h=-3 drop scale=0.6 yaw=40
+place "Balboa_DecorationPrefabBase_Wooden Spikes" rmstakeA at 24 -26.4 h=-3 drop scale=0.6 yaw=50
+place "Balboa_DecorationPrefabBase_Wooden Spikes" rmstakeA at 25 -26.4 h=-3 drop scale=0.6 yaw=70
+place "Balboa_DecorationPrefabBase_Wooden Spikes" rmstakeA at 26 -26.4 h=-3 drop scale=0.6 yaw=90
+prop rmstakeA obj.name=rmstakeA
+prop rmstakeA tint.color=#5a5a5e
+prop rmstakeA tint.amount=0.7
+place Zone_Trigger rmspikesA at 25 -27 h=-1
+prop rmspikesA obj.name=rmspikesA
+prop rmspikesA zone.id=rm_weirA
+prop rmspikesA zone.radius=2.5
+prop rmspikesA zone.hazard=spikes
+prop rmspikesA zone.damage=4
+prop rmspikesA zone.safe=none
+prop rmspikesA zone.pulse=2,3
+prop rmspikesA zone.hazardMsg=Sharpened stakes on the channel floor - an old fish-weir. The swell lifts you onto them and drops you off: time it, or turn back.
+place "Balboa_DecorationPrefabBase_Wooden Spikes" rmstakeB at 30 -15.6 h=-3 drop scale=0.6 yaw=0
+place "Balboa_DecorationPrefabBase_Wooden Spikes" rmstakeB at 31 -15.6 h=-3 drop scale=0.6 yaw=20
+place "Balboa_DecorationPrefabBase_Wooden Spikes" rmstakeB at 32 -15.6 h=-3 drop scale=0.6 yaw=40
+place "Balboa_DecorationPrefabBase_Wooden Spikes" rmstakeB at 30 -14.4 h=-3 drop scale=0.6 yaw=50
+place "Balboa_DecorationPrefabBase_Wooden Spikes" rmstakeB at 31 -14.4 h=-3 drop scale=0.6 yaw=70
+place "Balboa_DecorationPrefabBase_Wooden Spikes" rmstakeB at 32 -14.4 h=-3 drop scale=0.6 yaw=90
+prop rmstakeB obj.name=rmstakeB
+prop rmstakeB tint.color=#5a5a5e
+prop rmstakeB tint.amount=0.7
+place Zone_Trigger rmspikesB at 31 -15 h=-1
+prop rmspikesB obj.name=rmspikesB
+prop rmspikesB zone.id=rm_weirB
+prop rmspikesB zone.radius=2.5
+prop rmspikesB zone.hazard=spikes
+prop rmspikesB zone.damage=4
+prop rmspikesB zone.safe=none
+prop rmspikesB zone.pulse=2,3
+prop rmspikesB zone.hazardMsg=Sharpened stakes on the channel floor - an old fish-weir. The swell lifts you onto them and drops you off: time it, or turn back.
+
 # ===== Settings, story items, notes, behaviours, quest (10 steps) ==========================================================
 info title=Redstack Maze
 info author=Custom Islands

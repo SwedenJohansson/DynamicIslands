@@ -88,6 +88,77 @@ scatter "Pickup_Landmark_Tree_Palm 3" 3 at 0 0 r=31.5 seed=4304 free=5
 scatter "Pickup_Landmark_Tree_Mango" 3 at 0 0 r=31.5 seed=4314 free=5
 scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=31.5 seed=4324 free=3
 
+# --- 11-12 (w16 prep): the vent pools (plan 16 row: ACID vent pools on the side paths, safe=suit, a visible way round).
+# Two side paths off the works' pad, neither on the timed run (vent - works - boathouse; 9 m and more away): the diggers'
+# path from the pad's end by the bunkhouse door (-17 17) to the old diggings (-24 8), the samplers' path from the pad's
+# other end (1 12) to the samplers' ledge (8 6). Each runs straight through a vent pool (acid, zone r 1.8, safe=suit,
+# mist over it); a second trail bends round the pool, in plain sight, to the same end. A chest at each path's end. The
+# suit box by the bunkhouse; a sign at each path's start. Side only: no quest needs them.
+# HEIGHTS: guesses - the paths are flattened from the pad's 10.3 m down to 9.5 m (the ground there is the cone's slope,
+# maybe 6-14 m: the trails cut or fill it); pools, signs, chests on the ground (y= over it).
+call trail -17 17 10.3 -24 8 9.5 4
+call trail -17 17 10.3 -25.6 16.5 9.8 4
+call trail -25.6 16.5 9.8 -24 8 9.5 4
+call trail 1 12 10.3 8 6 9.5 4
+call trail 1 12 10.3 8.7 13.9 9.8 4
+call trail 8.7 13.9 9.8 8 6 9.5 4
+clear from -17 17 to -24 8 r=3 
+clear from -17 17 to -25.6 16.5 r=3 
+clear from -25.6 16.5 to -24 8 r=3 
+clear from 1 12 to 8 6 r=3 
+clear from 1 12 to 8.7 13.9 r=3 
+clear from 8.7 13.9 to 8 6 r=3 
+place TP_SeleneReactor_Water_Radiated svpoolA at -20.5 12.5 y=-0.1 scale=0.25 yaw=106
+place Zone_Atmosphere svmistA at -20.5 12.5 y=0.6
+prop svmistA zone.radius=3.5
+prop svmistA atmo.particles=steam
+prop svmistA atmo.fog=#a0b040
+prop svmistA atmo.fogAmount=0.3
+prop svmistA atmo.light=#d8f070
+prop svmistA atmo.lightAmount=0.25
+place Zone_Trigger svacidA at -20.5 12.5 y=0.4
+prop svacidA obj.name=svacidA
+prop svacidA zone.id=sv_poolA
+prop svacidA zone.radius=1.8
+prop svacidA zone.hazard=acid
+prop svacidA zone.damage=4
+prop svacidA zone.safe=suit
+prop svacidA zone.hazardMsg=A vent pool - the water is hot acid. Go round by the other trail, or put on a suit from the box by the bunkhouse.
+place TP_SeleneReactor_Water_Radiated svpoolB at 4.5 9 y=-0.1 scale=0.25 yaw=58
+place Zone_Atmosphere svmistB at 4.5 9 y=0.6
+prop svmistB zone.radius=3.5
+prop svmistB atmo.particles=steam
+prop svmistB atmo.fog=#a0b040
+prop svmistB atmo.fogAmount=0.3
+prop svmistB atmo.light=#d8f070
+prop svmistB atmo.lightAmount=0.25
+place Zone_Trigger svacidB at 4.5 9 y=0.4
+prop svacidB obj.name=svacidB
+prop svacidB zone.id=sv_poolB
+prop svacidB zone.radius=1.8
+prop svacidB zone.hazard=acid
+prop svacidB zone.damage=4
+prop svacidB zone.safe=suit
+prop svacidB zone.hazardMsg=A vent pool - the water is hot acid. Go round by the other trail, or put on a suit from the box by the bunkhouse.
+place Loot_ChestSmall svdigchest at -24.6 7.2 y=0.5 drop yaw=40
+prop svdigchest obj.name=svdigchest
+prop svdigchest loot.refill=0
+note svdigchest Diggers' crate | The sulphur diggers' crate at the end of their path: ore they never carried up, scrap from their picks, a jar of glass beads.
+loot svdigchest MetalOre*2;Scrap*3;Glass*1
+place Loot_ChestSmall svsamplechest at 8.6 5.4 y=0.5 drop yaw=300
+prop svsamplechest obj.name=svsamplechest
+prop svsamplechest loot.refill=0
+note svsamplechest Samplers' tin | Dr. Varga's samplers left their tin on the ledge: copper wire, bolts, a coil of rope for the lowering line.
+loot svsamplechest CopperIngot*1;Bolt*2;Rope*1
+place "Box Big" svsuits at -16 20.5 h=11 drop yaw=20
+prop svsuits obj.name=svsuits
+prop svsuits beh.use=Put on a works acid suit
+prop svsuits on.use=suit||180\nmessage||A rubber works suit with a hood and gauntlets - three minutes before the fumes find the seams.
+place Note_Sign svsignA at -18.2 14.2 ground yaw=240
+note svsignA DIGGINGS PATH - VENT POOL | The pool on the path is acid since the vent woke. Take the long way round it, or a suit from the box. - Works manager
+place Note_Sign svsignB at 2.4 10 ground yaw=120
+note svsignB SAMPLERS' PATH - VENT POOL | Acid in the pool on the path. Round by the other trail, or suit up first. - Works manager
+
 # ===== Settings, story items, notes, behaviours, quest (5 steps) ==========================================================
 info title=Sulphur Vent
 info author=Custom Islands

@@ -1,0 +1,31 @@
+# Redstack Maze's weir stakes (CIPlay redstack_maze_spikes, 11-12 w16 prep; in a test world 'CI ...'). Two dead ends of
+# the maze (25 -27 off the channel at 25 -21; 31 -15 off 31 -21) hold stakes and a spikes zone (rm_weirA/B, r 2.5 at -1 m,
+# pulse 2 s on / 3 s off, safe=none). The quest's swim along z -21 stays unhurt; into each dead end: hurt.
+# Offline-written, never run; re-read the offset after the build.
+island Redstack Maze keep
+offset -0.3026 0.6476
+hour 11
+weather Calm
+
+empty
+at 2.25 -43.75 h=2.6
+walk 2.25 -43.75 to 15.5 -43.75 h=1.6
+walk 15.5 -43.75 to 19 -43.75 to 19 -33 h=-1.2
+walk 19 -33 to 13 -33 to 13 -21 h=-1.2
+walk 13 -21 to 37 -21 h=-1.2
+wait 3
+expect unhurt
+picture rm_weirB 31 1 -22 31 -3 -15
+walk 37 -21 to 31 -21 to 31 -15 h=-1.2
+wait 7
+expect message fish-weir
+expect hurt 4
+walk 31 -15 to 31 -21 to 25 -21 h=-1.2
+wait 3
+expect unhurt
+walk 25 -21 to 25 -27 h=-1.2
+wait 7
+expect hurt 4
+walk 25 -27 to 25 -21 to 13 -21 h=-1.2
+wait 3
+expect unhurt

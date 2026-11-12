@@ -1,0 +1,30 @@
+# Maya on the jetty of Halcyon Cove (CIPlay halcyon_cove_talk, 11-12 w16 prep; in a test world 'CI ...'). She fishes at
+# the jetty's end (-2.25 82.6, deck 1.6). The crew's boathouse (shed x -12..-7.5, z 65.5..70, street 3.2; doorway -9.75 70)
+# holds a chest padlocked until you have talked to her. Her answers: the cove (journal), bait (3 simple baits), leave.
+# Offline-written, never run; re-read the offset after the build.
+island Halcyon Cove keep
+offset 0 0
+hour 11
+weather Calm
+
+at -9.75 72 h=4
+walk -9.75 72 to -9.75 69 to -10.4 67.4 h=3.2
+picture hc_boathouse -9.75 +2 74 -9.75 +1 68
+open Crew's boathouse chest
+expect message padlocked
+at -2.25 79.5 h=2.5
+walk -2.25 79.5 to -2.25 81 h=1.6
+picture hc_maya -2.25 +1.5 78.5 -2.25 +0.8 82.6
+use Maya pick 1
+read Maya: the cove
+use Maya pick 2
+expect message three baits
+expect item FishingBait_Simple 3
+use Maya pick 3
+expect message quarter past nine
+at -9.75 72 h=4
+walk -9.75 72 to -9.75 69 to -10.4 67.4 h=3.2
+open Crew's boathouse chest
+wait 2
+expect item FishingBait_Advanced 2
+expect item Rope 3
