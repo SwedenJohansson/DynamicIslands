@@ -4,7 +4,7 @@
 # the landing 0 -34, the tide marker -3 -32; the east bar's note on a crate at 22 8. DEEP 10-25: the Pyre Dune at -50 29
 # (foot zone hillfoot at -31.83 18.47), the drowned boathouse at 38 66 (-14 m), the Choir's cave zone at 50 35.
 island Effigy Shoals
-offset 0 0
+offset 1.4812 -1.9664
 expect step 0
 expect title Count Them Again
 wait 3

@@ -1,0 +1,14 @@
+# Saint Agnes Sanatorium's old cold cellars (CIPlay saint_agnes_sanatorium_caves, 11-12 w10; in a test world 'CI ...').
+# Points as in its recipe: the dug tunnel (kit_dig) from Chapel Hill's foot at -19.7 35.5 (ground ~8), 10 m on level at
+# yaw 310 into the hill to the cold room -27.4 41.9 .. -29.7 43.9 (floor ~8); the sign at -13 30.5. In to the room and out.
+island Saint Agnes Sanatorium keep
+offset 0 0
+hour 11
+weather Calm
+at -14 28.5 h=9.5
+wait 2
+read OLD COLD CELLARS
+picture sa_cave_out -12 13 27 -19.7 8.5 35.5
+walk -15.5 30.5 to -18.1 33.6 to -19.7 35.5 to -22.8 38.1 to -25.1 40 to -27.4 41.9 to -29.3 43.5 below=10
+picture sa_cave_in -22.8 9.5 38.1 -29.3 8.5 43.5 light=20
+walk -29.3 43.5 to -27.4 41.9 to -25.1 40 to -22.8 38.1 to -19.7 35.5 to -18.1 33.6 to -15.5 30.5 below=10

@@ -19,6 +19,7 @@ include lib_sl1
 include lib_huts
 include lib_areas
 include lib_highwater
+include lib_caves
 new
 # (nature: forest headland, Like Raft: Trees 0.3, Bushes 0.28, Rocks 0.43)
 gen Trees=0.3 Bushes=0.28 Rocks=0.43 Harvest=0.25 BeachThings=0.3
@@ -297,4 +298,13 @@ quest reward=TitaniumIngot*1;MetalIngot*4;CopperIngot*2;Battery*1
 
 # --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
 place VP_Forklift - at -3.5 -25 ground sit yaw=0
+# --- CONTENT 11-12 (w10): the old cold cellars - a dug tunnel (kit_dig) into Chapel Hill's face beside the hill's foot, level
+# to a cold room where the sanatorium kept its ice and the night nurses heard the lullaby through the rock. A sign says so.
+# (r3b: at yaw 320 the room ran under the hill's north flank and the ground showed through 13 m in - turned 10 degrees
+# towards the hill's middle, 2 m shorter and a narrower room: 8 m of hill over it, 6 m clear of the bell tower's things)
+call kit_dig x=-19.7 z=35.5 yaw=310 flat=0 len=10 slope=0 r=1.6 room=1 roomr=2.5 roomlen=3 dirt=2 mush=3 stone=0 vines=0 titanium=0 as=sacellar
+prop sacellar cave.rock=plain
+place Note_Sign sacellarsign at -13 30.5 ground sit yaw=300
+prop sacellarsign obj.name=sacellarsign
+note sacellarsign OLD COLD CELLARS | Dug into Chapel Hill for the kitchens' ice. Closed 1951: the night nurses would not go down any more - they said the rock sings. The way in is the dark cut in the hill's face, just past this sign.
 save Saint Agnes Sanatorium
