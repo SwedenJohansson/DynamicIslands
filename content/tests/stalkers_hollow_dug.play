@@ -1,0 +1,40 @@
+# The Stalker's Hollow's two dug caves and the south alcove (CIPlay stalkers_hollow_dug, 11-12 w03b; in a test world
+# 'CI ...'). Both bear dens were dropped for dug caves in knolls of their own: the Stalker's cave (mouth 64 19.6 off the
+# arena, room round 64 32.5, floor ~8.5, the hoard and an air pocket) and the warden's spare cave (mouth 86 -6.1, room
+# round 86 -18.5, floor ~6.9). Swim in to each chest and out again; then into the south alcove from the arena, which the
+# reach walk only finds over the alcove's roof, the north alcove and the boat's locker. Heights in the island frame (sea floor ~3, sea 40).
+island The Stalker's Hollow keep
+offset 0.6508 1.0124
+hour 11
+weather Calm
+
+# The Stalker's cave: outside, in to the hoard, breathe, out
+picture sh_dug_a_out 56 13 9 64 9 21 light=20
+swim 64 12 10.6 to 64 19.6 9.6 to 64 25 9.5 to 64 31 9.5
+picture sh_dug_a_in 64 10.1 24 65 9.2 33 light=20
+open Stalker's hoard
+swim 64 31 9.5 to 64 32.5 9.5
+air sh_air here
+air sh_air
+swim 64 32.5 9.5 to 64 25 9.5 to 64 19.6 9.6 to 64 12 10.6
+
+# The warden's spare cave: in to its chest and out
+picture sh_dug_b_out 79 12 1 86 8 -8 light=20
+swim 86 2 8.8 to 86 -6.1 8.3 to 86 -12 8.3 to 86 -17.5 8.3
+picture sh_dug_b_in 86 8.4 -10 86 7.6 -20 light=20
+open Warden's spare chest
+swim 86 -17.5 8.3 to 86 -12 8.3 to 86 -6.1 8.3 to 86 2 8.8
+
+# The south alcove from the arena floor
+swim 0 -5 3.8 to 0 -10 3.6 to 0 -13.5 3.5
+air alcove_3
+swim 0 -13.5 3.5 to 0 -5 3.8
+
+# The north alcove the same way (the reach walk again only finds its roof)
+swim 0 5 3.8 to 0 10 3.6 to 0 13.5 3.5
+air alcove_1
+swim 0 13.5 3.5 to 0 5 3.8
+
+# The boat's locker at the wreck (the reach walk ends 2 m short of it)
+swim 6 -74 4.5 to 6 -80 3.6
+open Boat's locker
