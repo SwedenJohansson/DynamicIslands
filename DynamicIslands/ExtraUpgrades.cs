@@ -923,7 +923,6 @@ namespace DynamicIslands.Editor
 				catch (Exception e) { Warn(u + ": " + e.Message); }
 				list.Add(new ItemConnection { name = u.Name, inventoryItem = u.Item, obj = o, objs = b.objs });
 				int n = CopyAnimationEvents(c, b.obj, o);
-				HeldEvents[u.Name] = n;
 				Log(u.Name + ": hand model with " + n + " animation event(s) of " + u.BaseName);
 			}
 			try { MacheteAsWeapon(list); } catch (Exception e) { Warn("titanium machete as a weapon: " + e.Message); }
@@ -959,9 +958,6 @@ namespace DynamicIslands.Editor
 			MacheteNote += ": the titanium machete gets damage " + dmg + " (spear " + lo + ", greatsword " + hi + ") and layers " + mine.attackMask.value;
 			Log(MacheteNote);
 		}
-
-		/// <summary>Hand-held upgrade name -> animation events its hand model got from the base item (for CI checks).</summary>
-		public static readonly Dictionary<string, int> HeldEvents = new Dictionary<string, int>();
 
 		/// <summary>Raft's AnimationEventCaller sends each animation event (OnMeleeHit, Animation_HookThrow, the paddle stroke...)
 		/// to a fixed GameObject: the base item's hand model. A cloned hand model gets none of them, so a cloned weapon swung
