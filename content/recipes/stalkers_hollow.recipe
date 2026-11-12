@@ -148,10 +148,20 @@ call sk_ridge x1=-62 z1=54 x2=-36 z2=78 h=4 top=5 r=8
 call sk_reef x=-49 z=66 r=6 seed=11061
 call sk_reef x=-36 z=78 r=5 seed=11071
 call sk_zone x=-49 z=66 al=sh_ridge id=sh_ridge r=7 msg="The lip ridge. The trench wall goes straight up from here to the Spire, and something big moves along the bottom."
-call sk_cave x=64 z=26 h=2 yaw=180 al=sh_caverock chest=sh_cavechest
-call sk_zone x=64 z=21 al=sh_cave id=sh_cave r=4 msg="A cave in the rock wall. The Stalker's scratches go all the way in."
-call sk_dark x=64 z=21 h=1 r=7 al=sh_dark
-call airpocketat x=61.4 z=22 h=3.6 id=sh_air al=sh_air bub=sh_airbub r=2.2 msg="Air under the rock - breathe."
+# (11-12 w03b: was a bear den (sk_cave x=64 z=26 yaw=180). Its dome rose 24 m and ran 64 m back over the warren's slope
+# and the bone pit's way, and after the den rounds 3-4 its mouth could not be reached (CC reach: cave, air and hoard all
+# "can't get there"). Now a dug cave (user 11-11: a cave need not be a den) in a rock knoll of its own, the mouth to the
+# arena side, the stroke started 1.4 m out from the knoll's foot and climbing 8 degrees (CAVE_LESSONS 136))
+call sk_seamount x=64 z=34 top=20 r=16
+dig 64,19.6 64,30 r=1.75 slope=8 as=sh_caverock
+dig 64,30 64,35 r=3 as=sh_caverock
+prop sh_caverock cave.rock=plain
+# cavecheck inside sh_cavechest
+place Loot_ChestSmall sh_cavechest at 65.6 33.6 h=9.1 drop yaw=240
+place Placeable_Lantern_Metal - at 62.4 32 h=9.1 drop
+call sk_zone x=64 z=20.5 al=sh_cave id=sh_cave r=4 msg="A cave in the rock wall. The Stalker's scratches go all the way in."
+call sk_dark x=64 z=21 h=1 r=6 al=sh_dark
+call airpocketat x=64 z=32.5 h=8.5 id=sh_air al=sh_air bub=sh_airbub r=2.2 msg="Air under the rock - breathe."
 call sk_ruin x=-62 z=-22 h=2 al=sh_ruin
 call sk_notebox x=-59.5 z=-26.5 yaw=10 al=sh_ruinnote
 call sk_wreck x=0 z=-84 h=2 yaw=100 v=BoatStranded al=sh_wreck crate=sh_wreckcrate scale=1
@@ -177,7 +187,16 @@ brush flatten at 39 78 r=1.8 s=20 frames=200 h=41.2
 brush flatten at 40.3 78 r=1.6 s=20 frames=200 h=42
 brush smooth at 38.2 78 r=3 s=4 frames=20
 call sk_pit x=-50 z=-74 h0=-6
-call sk_cave x=86 z=-16 h=2 yaw=0 al=shcave2 chest=shcave2chest
+# (11-12 w03b: was a bear den (sk_cave x=86 z=-16 yaw=0) whose mouth reach could not get to; now a dug cave in a knoll,
+# the mouth north to the open floor, started 1.4 m out from the knoll's foot)
+# (11-12 (2): knolls raised (top 14 -> 20, 13 -> 18): the first ones were so low that the rooms broke out through their tops)
+call sk_seamount x=86 z=-20 top=18 r=15
+dig 86,-6.1 86,-16 r=2.2 slope=8 as=shcave2
+dig 86,-16 86,-21 r=3 as=shcave2
+prop shcave2 cave.rock=plain
+# cavecheck inside shcave2chest
+place Loot_ChestSmall shcave2chest at 86.6 -19.6 h=7.5 drop yaw=20
+place Placeable_Lantern_Metal - at 84.4 -18 h=7.5 drop
 call sk_reef x=65.6 z=80 r=6 seed=24910
 call sk_reef x=27.2 z=94.4 r=6 seed=24920
 call sk_reef x=-40 z=-68 r=5 seed=24930
@@ -193,7 +212,7 @@ call treasure x=46.5 z=82 r=12 n=1 seed=24911
 prop treasure24911 treasure.loot=TitaniumOre*3;CopperOre*2
 call treasure x=69.29 z=-12.89 r=5 n=1 seed=24912
 prop treasure24912 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
-call sk_dark x=86 z=-14 h=1 r=7 al=shcave2dark
+call sk_dark x=86 z=-6.5 h=1 r=6 al=shcave2dark
 
 # the drowned building: the warden house, its ground floor 46 m down; the deep chest at the bottom, air on storey 1
 call sk_drowned x=-50 z=-74 h0=-6 n=3 w=RT_WallWindowBroken a=shbld cap=0 cal=shcap
@@ -365,7 +384,7 @@ prop shsysair zone.radius=5
 prop shsysair zone.repeat=1
 prop shsysair zone.air=1
 prop shsysair zone.message=Air under the lip rock - the Stalker's own hollow. The floor is scraped smooth where it lies.
-# The bone pit behind the den rock: the Stalker drops what it does not eat into a hollow in the basin floor, and the
+# The bone pit behind the cave knoll: the Stalker drops what it does not eat into a hollow in the basin floor, and the
 # wardens drove stakes in to keep it from nesting there. A plank ledge runs round the rim; the pit floor hurts.
 # (11-09 w03: was a dug pit - 3.7 m deep, its floor under the sea, pale dig rock inside and no way out; now a sand
 # hollow a metre deep whose soft sides walk out)
@@ -373,6 +392,7 @@ prop shsysair zone.message=Air under the lip rock - the Stalker's own hollow. Th
 # at 34.5 and buried its planks and stakes)
 # (11-09 w03 (3): the den's whole back slope is dome (17 m up at 41.5, 8 m at 56); now on the flat sea floor (h 3)
 # between the dome's foot and the lip rock, east of the rock, 7 m short of the warren's east tunnel)
+# (11-12 w03b: the den and its dome are gone (a dug cave in a knoll at 64 34 now); the pit stays where it is)
 brush flatten from 66.5 62.5 to 71.5 62.5 r=2 s=20 frames=200 h=1
 place Note_Sign shpitwarn at 64.5 62.5 ground sit yaw=167
 note shpitwarn DANGER - BONE PIT | The Stalker's bone pit. Stakes in the floor, under the bones. Keep to the planks round the rim.\n- G. Fennick, warden
