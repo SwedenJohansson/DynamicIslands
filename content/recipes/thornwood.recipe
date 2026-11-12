@@ -11,6 +11,7 @@ include lib_sea
 include lib_features
 include lib_areas
 include lib_highwater
+include lib_caves
 new
 # (nature: a jungle: three times Raft's trees, two and a half times its bushes - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.5 Bushes=0.45 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -161,6 +162,36 @@ place Creature_Boar guards at 10 28 ground
 place Zone_Trigger temple at 15 22 y=1.5
 place Zone_Atmosphere templeair at 15 25 y=3
 place Zone_Sound jungle at 0 0 y=8
+
+# --- 11-12 (w15 prep): the thorn burrow (plan 15 row: DIG under the thorns; mushrooms 3, dirt 2). A new knoll in the empty
+# east of the island, hw_mount at 82 -15 (b 14, h 16: foot 3.52, summit plateau r 9 at 16), a bamboo thicket on top ("the
+# thorns"); the burrow: kit_dig from the knoll's west foot (68 -15, way in yaw 90), 3 m level, 10 m on, a chamber under the
+# summit (81..87); plain rock. 40 m and more from the temple hill, the bamboo by the Shrine of the Hill and every walk line;
+# 35 m and more from the gorge; past the wild hives' 60 m scatter ring (cavecheck keeps 6 m off it). 11-12 user: mixed cave monsters - a rat and a hyena in the chamber (no boars: the quest kills
+# Warthog|3). HEIGHTS guessed: the shelf cut level at the foot 3.52 (hw_mount rule), floor 3.52; if the natural ground here is
+# much higher the knoll's foot ring cuts a step - check it in Raft.
+call hw_mount x=82 z=-15 b=14 h=16
+brush flatten at 68 -15 r=4 s=20 frames=60 h=3.52
+brush smooth at 65 -15 r=6 s=6 frames=20
+clear at 68 -15 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+clear at 82 -15 r=15 all only=(?i)boulder|tree|bush|palm|bamboo
+call kit_dig x=68 z=-15 yaw=90 len=10 flat=3 r=1.75 slope=0 room=1 roomr=3.5 roomlen=6 dirt=2 mush=3 stone=0 vines=0 titanium=0 as=twthorn
+prop twthorn cave.rock=plain
+scatter Bamboo_3 6 at 84 -15 r=7 seed=6151
+place Note_Sign twthornsign at 61 -19 ground yaw=90
+note twthornsign (the explorer's tag on a stake) | A burrow under the thorn knoll. Something with teeth lives in it, and something with more teeth comes to visit. Not worth it for the mushrooms. - the Expedition
+# cavecheck inside twrat twhyena twthornz
+place Creature_Rat twrat at 82 -13.5 h=3.8
+prop twrat creature.count=1
+prop twrat creature.respawn=0
+place Creature_Hyena twhyena at 85 -16 h=3.8
+prop twhyena creature.count=1
+prop twhyena creature.respawn=0
+place Zone_Trigger twthornz at 77 -15 h=5
+prop twthornz obj.name=twthornz
+prop twthornz zone.id=tw_thorn
+prop twthornz zone.radius=5
+prop twthornz zone.message=A burrow under the thorn knoll. Gnawed bones, a nest of bamboo leaves - and mushrooms in every crack.
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, flowers, pineapples ----------

@@ -14,6 +14,7 @@ include lib_selene
 include lib_features
 include lib_areas
 include lib_highwater
+include lib_caves
 new
 # (nature: snowy: a few pines and snow drifts over Raft's near-bare Temperance - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.08 Bushes=0.15 Rocks=0.25 Harvest=0.05 BeachThings=0.3
@@ -95,6 +96,39 @@ place TP_Telescope - at 1 1 sit yaw=120
 scatter TP_PineTreeSnowy 4 at -10 10 r=8 seed=51
 scatter TP_SmallRock03 2 at 8 16 r=6 seed=52
 scatter TP_SnowDrift01 5 at 6 -6 r=14 seed=53
+
+# --- 11-12 (w15 prep): the ice hollows (plan 15 row: SYS ice hollows, 3 ST + DIG; mushrooms 2, stone 3, titanium 1). DONE
+# AS: one dug system (kit_sys: three tunnels, two mouths, plain rock) - no ST pieces (the island is small and its land all
+# used; the dens would have run out over the lab or the village). A new knoll on the island's lab side, hw_mount at -40 10
+# (b 18, h 16: foot 3.52, summit plateau r 9 at 16; partly over the sea - it widens the island). Mouths at its inner foot:
+# the hollows' door (-23 10) and the ice chimney (-23 19), both way in yaw 270. The trunk runs 14 m in to (-37 10), then 6 m
+# to the main hollow (-37 16) under the summit; the side branch 8 m in turns 3 m to the cold room (toward -33 1); the second
+# mouth runs 10 m in and joins the trunk's end. 12 m and more from the lab, 20 m and more from the shed, the bear and the
+# telescope; off every walk line. 11-12 user: mixed cave monsters - two rats in the cold room.
+# HEIGHTS guessed: both mouth shelves cut level at 3.52 (the knoll's foot), floors 3.52; the rats at 3.8, the zone 5.
+call hw_mount x=-40 z=10 b=18 h=16
+brush flatten at -23 10 r=4 s=20 frames=60 h=3.52
+brush smooth at -20 10 r=6 s=6 frames=20
+clear at -23 10 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+brush flatten at -23 19 r=4 s=20 frames=60 h=3.52
+brush smooth at -20 19 r=6 s=6 frames=20
+clear at -23 19 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+call kit_sys x=-23 z=10 yaw=270 side=1 len=14 bend=6 branch=8 blen=3 gap=9 in2=10 r=1.75 roomr=3 dirt=0 mush=2 stone=3 vines=0 titanium=1 as=fhhollow
+prop fhhollow cave.rock=plain
+place Note_Sign fhhollowsign at -16 14 ground yaw=270
+note fhhollowsign ICE HOLLOWS - KEEP OUT | The hollows go deeper than the survey thought. Two doors, one cold room, rats in the stores. Rope up. - the lab
+# cavecheck inside fhratA fhratB fhhollowz
+place Creature_Rat fhratA at -32 2.5 h=3.8
+prop fhratA creature.count=1
+prop fhratA creature.respawn=0
+place Creature_Rat fhratB at -33.5 1.5 h=3.8
+prop fhratB creature.count=1
+prop fhratB creature.respawn=0
+place Zone_Trigger fhhollowz at -36 14 h=5
+prop fhhollowz obj.name=fhhollowz
+prop fhhollowz zone.id=fh_hollows
+prop fhhollowz zone.radius=5
+prop fhhollowz zone.message=The ice hollows under the knoll. The walls glitter, the air bites - and a seam of titanium shows in the rock.
 
 # --- Settings, story item, notes, behaviours, quest -----------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): pines, berries, flowers ----------

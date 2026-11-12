@@ -1,0 +1,28 @@
+# Frost Hollow's ice hollows (CIPlay frost_hollow_cave, 11-12 w15 prep; in a test world 'CI ...'). Points as in the recipe:
+# the new knoll hw_mount at -40 10 (b 18, h 16); kit_sys, the hollows' door at -23 10 (yaw 270: way in = -x), the trunk
+# 14 m to -37 10, then 6 m to the main hollow at -37 16; the side branch from -31 10 to -31 7 and the cold room toward
+# -33 1 (two rats); the ice chimney's mouth at -23 19, 10 m in to -33 19 and on to the trunk's end. The sign fhhollowsign
+# at -16 14; zone fh_hollows at -36 14. Floors 3.52 (the shelves; a guess).
+# Offline-written, never run; re-read the offset after the build (a new hill may move the land centre).
+island Frost Hollow keep
+offset 0.34 -6.17
+hour 11
+weather Calm
+
+picture fh_hollow_out -14 +3 14 -23 +1.5 14
+read ICE HOLLOWS
+
+# The rats in the cold room (11-12 mixed monsters)
+wait 3
+expect animals Rat 2
+expect animalsinside Rat 2
+kill Rat
+expect animals Rat 0
+
+# In by the hollows' door, a look into the cold room, on to the main hollow, out by the ice chimney
+walk -18 10 to -23 10 to -31 10 to -31 7 to -32 4
+picture fh_cold_in -31 +2 8 -33 +0.5 1 light=20
+walk -32 4 to -31 7 to -31 10 to -37 10 to -36 14
+zone fh_hollows
+picture fh_hollow_in -37 +2.5 11 -37 +0.5 16 light=20
+walk -36 14 to -37 16 to -33 19 to -23 19 to -18 19

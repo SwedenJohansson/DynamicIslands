@@ -1,0 +1,20 @@
+# Scrapyard Haven's battery dump (CIPlay scrapyard_haven_acid, 11-12 w15 prep; in a test world 'CI ...'). Points as in the
+# recipe: the pool shacidpool and the acid zone sh_acid at 16 -55 (r 2.5, safe=suit), the spares box at 17.8 -56 inside it;
+# the suit box shsuits at 10.5 -52 and the sign shacidsign at 10 -55.5. Into the acid without a suit: hurt; out again.
+# Offline-written, never run; re-read the offset after the build (a new hill may move the land centre).
+island Scrapyard Haven keep
+hour 11
+weather Calm
+
+empty
+expect shown shacid
+walk 6 -52 to 9 -54 to 11 -55
+read BATTERY DUMP
+picture sh_acid 9 +2.5 -55 16 +0 -55
+walk 11 -55 to 13.5 -55 to 16 -55
+wait 5
+expect message Battery acid
+expect hurt 10
+walk 16 -55 to 13 -55 to 10 -55
+wait 3
+expect unhurt

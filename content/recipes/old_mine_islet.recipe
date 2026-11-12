@@ -437,7 +437,7 @@ place Creature_Rat oldrats at 59.0 -15.8 h=6.0 drop
 prop oldrats creature.count=2
 prop oldrats creature.respawn=0
 caveloot oldwork dirt=3 mush=2 stone=2 vines=2
-# cavecheck inside minerchest
+# cavecheck inside minerchest oldrats
 place Loot_ChestSmall minerchest at 53.0 -0.7 h=5.5 drop yaw=240
 prop minerchest obj.name=minerchest
 prop minerchest loot.refill=0

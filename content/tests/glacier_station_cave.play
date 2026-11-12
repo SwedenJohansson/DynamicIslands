@@ -1,0 +1,28 @@
+# Glacier Station's ice cave (CIPlay glacier_station_cave, 11-12 w15 prep; in a test world 'CI ...'). Points as in the
+# recipe: kit_st mouth on a shore shelf at -62 78 (2.5 m; yaw 300: way in = -x +z), tunnel 7.3 m, the den ~22 m on (middle
+# ~-77.8 87.2) under its own knoll (hill=1); the sign gsicesign at -55 72; a brown bear (gsbear) in the den (the queen is a
+# Polar Bear: 'kill Bear' leaves her); the chest "Supply cache 3" at -79.5 88.2; zone gs_icecave at -72 84. Floors ~2.5.
+# Offline-written, never run; re-read the offset after the build (a new hill may move the land centre).
+island Glacier Station keep
+hour 11
+weather Calm
+
+empty
+picture gs_ice_out -53.3 +3 73 -62 +1.5 78
+read SUPPLY CACHE 3
+
+# The bear in the cache (11-12 mixed monsters)
+wait 3
+expect animals Bear 1
+expect animalsinside Bear 1
+kill Bear
+expect animals Bear 0
+
+walk -56.8 75 to -62 78 to -68.3 81.7 to -72 84
+zone gs_icecave
+picture gs_ice_in -69.8 +2.5 82.5 -77.8 +0.5 87.2 light=20
+walk -72 84 to -76 86.3 to -78.6 87.7
+open Supply cache 3
+wait 2
+expect item Battery 1
+walk -78.6 87.7 to -72 84 to -68.3 81.7 to -62 78 to -56.8 75

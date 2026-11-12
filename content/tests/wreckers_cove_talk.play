@@ -1,0 +1,18 @@
+# Wrecker Elaine at the jetty's head on Wreckers' Cove (CIPlay wreckers_cove_talk, 11-12 w15 prep; in a test world
+# 'CI ...'). She stands at -6.5 -3.5 on the hamlet's terrace (2.4 m). Her three answers: the false lantern (journal), the
+# way under Jory's Crown (shows the land way's sign wcvinesign, hidden till then), sail on. No quest step.
+# Offline-written, never run; re-read the offset after the build (a new hill may move the land centre).
+island Wreckers' Cove keep
+hour 11
+weather Calm
+
+expect hidden wcvinesign
+picture wc_islander -7.5 +2.4 -8 -6.5 +0.9 -3.5
+use Wrecker Elaine pick 1
+expect message Two lights on the point
+read The false lantern
+use Wrecker Elaine pick 2
+expect message Mind the stakes
+expect shown wcvinesign
+use Wrecker Elaine pick 3
+expect message sail wide of the point

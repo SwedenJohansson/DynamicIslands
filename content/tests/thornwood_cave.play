@@ -1,0 +1,25 @@
+# Thornwood's thorn burrow (CIPlay thornwood_cave, 11-12 w15 prep; in a test world 'CI ...'). Points as in the recipe: the
+# new knoll hw_mount at 82 -15 (b 14, h 16) with bamboo on top; kit_dig mouth at 68 -15 (yaw 90: way in = +x), 3 m level,
+# 10 m on, a chamber at the end (81..87); the sign twthornsign at 61 -19; a rat (twrat) and a hyena (twhyena) inside; zone
+# tw_thorn at 77 -15. Floor 3.52 (the shelf; a guess).
+# Offline-written, never run; re-read the offset after the build (a new hill may move the land centre).
+island Thornwood keep
+hour 11
+weather Calm
+
+picture tw_thorn_out 59 +3 -15 68 +1.5 -15
+read explorer's tag
+
+# The burrow's animals (11-12 mixed monsters): a rat and a hyena, both inside
+wait 3
+expect animalsinside Rat 1
+expect animalsinside Hyena 1
+kill Rat
+kill Hyena
+expect animals Rat 0
+expect animals Hyena 0
+
+walk 62 -17 to 68 -15 to 71 -15 to 77 -15
+zone tw_thorn
+picture tw_thorn_in 73 +2.5 -15 84 +0.5 -15 light=20
+walk 77 -15 to 71 -15 to 68 -15 to 62 -17

@@ -1,0 +1,68 @@
+# The wreckers' land way under Jory's Crown on Wreckers' Cove (CIPlay wreckers_cove_vines, 11-12 w15 prep). In a test world
+# NOT named 'CI ...' (vines are cut only outside CI worlds, as in hookline_stack_caves). Points as in the recipe: kit_dig
+# mouth on a shelf at -52 9.5 (7.04 m, the Crown's foot ring; way in = +z), 3 m level, 10 m on (to z 22.5), the room to
+# z 27.5; the vines (wcvine_vines) across the mouth; the stakes (wcspike) and the hazard zone wcspikes at -52 17 (r 2,
+# pulse 2 s up / 3 s down, safe=none); the lever wclever at -53 26.5; the strongbox wcbox at -50.5 25 (talked-gated by
+# Wrecker Elaine at -6.5 -3.5) over the hidden chest wcvinechest. Floors 7.04 (the shelf; the slope round it a guess).
+# Offline-written, never run.
+# The machete first: Thornwood's temple offering (a start island of this world)
+island Thornwood
+open Temple offering
+wait 3
+expect item Machete 1
+
+island Wreckers' Cove
+hour 11
+weather Calm
+where ChoppableVines
+
+# The vines across the mouth: blocked, cut, then in
+expect hidden wcvinesign
+picture wc_vine_out -52 +3 2 -52 +1.5 9.5
+walk -52 4 to -52 9.5 to -52 14 blocked
+expect shown wcvine_vines
+use wcvine_vines
+expect hidden wcvine_vines
+
+# Onto the stakes: hurt and the message
+expect shown wcspikes
+expect shown wcspike
+walk -52 4 to -52 9.5 to -52 13 to -52 17
+wait 7
+expect message wreckers' trap
+expect hurt 4
+picture wc_spikes -52 +2 12.5 -52 +0 17 light=20
+
+# On into the room: the lever stops the stakes; the strongbox is letter-locked (nobody talked to Elaine)
+walk -52 17 to -52 20 to -52 24 to -52.5 25.5
+zone wc_crowncellar
+use wclever
+expect hidden wcspikes
+expect hidden wcspike
+use wcbox
+expect message letter lock
+expect hidden wcvinechest
+picture wc_cellar_in -52 +2.5 20 -52 +0.5 26 light=20
+
+# Back out over the dead stakes: unhurt
+walk -52.5 25.5 to -52 24 to -52 17 to -52 13 to -52 9.5 to -52 4
+wait 5
+expect unhurt
+
+# Elaine at the jetty's head: her second answer names the strongbox's word
+at -8 -7
+use Wrecker Elaine pick 2
+expect message Mind the stakes
+expect shown wcvinesign
+
+# Back to the cellar: the strongbox opens on the chest
+at -52 4
+walk -52 4 to -52 9.5 to -52 17 to -52 24 to -51.5 25
+use wcbox
+expect message hasp springs open
+expect hidden wcbox
+expect shown wcvinechest
+open Wreckers' strongbox
+wait 2
+expect item Battery 1
+walk -51.5 25 to -52 24 to -52 9.5 to -52 4

@@ -1,0 +1,20 @@
+# Coral Observatory's viewing room (CIPlay coral_observatory_cave, 11-12 w15 prep; in a test world 'CI ...'). Points as in
+# the recipe: kit_uw mouth on the lagoon floor at 18 18 (pad -5; yaw 45: way in = +x +z), tunnel 29.1 m up 15 degrees
+# (+7.5 m), the den beyond (middle ~48.4 48.4) under the ring's reef; air zone co_viewroom there, the chest coviewroomchest.
+# Heights are guesses: the pad -5, the den floor ~+2.5.
+# Offline-written, never run; re-read the offset after the build (a new hill may move the land centre).
+island Coral Observatory keep
+hour 11
+weather Calm
+
+empty
+picture co_viewroom_out 0.3 6 0.3 48.4 3 48.4
+# From the sea outside the mouth, down to it and up the tunnel (15 degrees, 4 pieces) into the dry den
+at 12.3 12.3 h=-2
+swim 12.3 12.3 -3.5 to 18 18 -3.5 to 24.4 24.4 -1.5 to 31.4 31.4 1 to 37.8 37.8 3.2 to 48.4 48.4 3.5
+air co_viewroom here
+picture co_viewroom_in 39.2 4 39.2 48.4 3 48.4 light=20
+open Observers' chest
+wait 2
+expect item Glass 2
+swim 48.4 48.4 3.5 to 37.8 37.8 3.2 to 31.4 31.4 1 to 24.4 24.4 -1.5 to 18 18 -3.5 to 12.3 12.3 -2

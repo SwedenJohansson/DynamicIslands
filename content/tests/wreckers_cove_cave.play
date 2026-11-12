@@ -1,0 +1,20 @@
+# Wreckers' Cove's sea room (CIPlay wreckers_cove_cave, 11-12 w15 prep; in a test world 'CI ...'). Points as in the recipe:
+# kit_uw mouth on the sea floor at -20 -34 (pad -5; yaw 225: way in = -x -z), tunnel 29.1 m up 15 degrees (+7.5 m), the den
+# beyond (middle ~-50.4 -64.4) under a new sea stack; air zone wc_seacave there, the chest wcseacavechest.
+# Heights are guesses: the pad -5, the den floor ~+2.5.
+# Offline-written, never run; re-read the offset after the build (a new hill may move the land centre).
+island Wreckers' Cove keep
+hour 11
+weather Calm
+
+empty
+picture wc_seacave_out -2.3 6 -16.3 -50.4 3 -64.4
+# From the sea outside the mouth, down to it and up the tunnel (15 degrees, 4 pieces) into the dry den
+at -14.3 -28.3 h=-2
+swim -14.3 -28.3 -3.5 to -20 -34 -3.5 to -26.4 -40.4 -1.5 to -33.4 -47.4 1 to -39.8 -53.8 3.2 to -50.4 -64.4 3.5
+air wc_seacave here
+picture wc_seacave_in -41.2 4 -55.2 -50.4 3 -64.4 light=20
+open Wreckers' sea chest
+wait 2
+expect item TradeToken 3
+swim -50.4 -64.4 3.5 to -39.8 -53.8 3.2 to -33.4 -47.4 1 to -26.4 -40.4 -1.5 to -20 -34 -3.5 to -14.3 -28.3 -2

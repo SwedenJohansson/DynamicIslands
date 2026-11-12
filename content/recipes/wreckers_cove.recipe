@@ -20,6 +20,7 @@ include lib_rt
 include lib_features
 include lib_areas
 include lib_highwater
+include lib_caves
 new
 # (nature: Like Raft, with more driftwood on the wreckers' beaches - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.45
@@ -158,6 +159,105 @@ place Note_Paper keeperlog at -1.5 3 y=0.05 sit
 place Pickup_Landmark_Plank_Land - at -2.5 -1.2 y=0.6 drop yaw=33
 place Pickup_Landmark_Plastic3_Land - at -3.2 2.0 y=0.6 drop yaw=172
 pop
+
+# --- 11-12 (w15 prep): the wreckers' caves and Wrecker Elaine (plan 15 row: UW wreckers' tunnel to an air room, optional VINE
+# land mouth; loot in a chest, stone 2; SPIKES wreckers' trap (side), safe=none; the islander Wrecker Elaine, new).
+#  (a) The sea tunnel: an underwater straight cave (kit_uw, plain rock) from the sea floor off the cove's mouth (-20 -34), way
+#      in yaw 225, to a dry air room (middle ~-50.4 -64.4) under a new sea stack; the wreckers' sea chest in it (stone 2). 12 m
+#      and more from the jetty, the Marigold and the captain's chest; off every walk line.
+#  (b) The land way (optional, vines): a dug passage (kit_dig, plain rock) into Jory's Crown's foot on the side that looks over
+#      Bess Harrow's ruin (-52 9.5, way in yaw 0): 3 m level, 10 m on, a room at its end (z 22.5..27.5) under the Crown's flank,
+#      the vines across its mouth (gate=1; the machete is Thornwood's, a start island of this world). NOT joined to the sea
+#      tunnel's room: two caves (a join through the Crown's foot to the sea stack could not be placed offline). The
+#      wreckers' trap in the passage: stakes in the floor (zone r 2, pulse 2 s up / 3 s down, safe=none) - time them; the
+#      shut-off lever in the room makes the way back safe. The wreckers' strongbox in the room is letter-locked until someone
+#      talked to Wrecker Elaine. The mouth's sign is hidden until her second answer. 15 m and more from the Crown's trail,
+#      the lookout chest and Jory's log; 30 m and more from the ruin and its treasure.
+#  (c) Wrecker Elaine at the jetty's head (-6.5 -3.5): three answers - the false lantern (journal), the way under the Crown
+#      (shows the mouth's sign), sail on (message). No quest step: she and the land way are optional.
+#  Monsters (11-12 mixed): none in either cave - the den's rats are the quest's (kill|Rat|4).
+# HEIGHTS: the land mouth's shelf at 7.04 (the Crown's foot ring, hw_mount rule), so the passage and room floor 7.04 (the
+# smoothed slope round it is a guess); things dropped from 9.5 m, zones 7.3-8.5. The sea cave: see below.
+# The sea mouth's pad flattened to 5 m down (smoothed out); the tunnel climbs 15 degrees for 4 pieces (size 0.7, 29.1 m,
+# +7.5 m) to the den (~22 m long; the cave tool raises the dome from the sea floor). HEIGHTS guessed: the pad -5 (if the
+# natural sea floor is much deeper the pad stands as a plinth - lower it or move the mouth in), the den floor ~+2.5 m; the
+# air zone h 4, the chest dropped from 5.5 m. Sea caves get no monsters (11-12).
+brush flatten at -20 -34 r=6 s=20 frames=60 h=-5
+brush smooth at -20 -34 r=9 s=6 frames=20
+call kit_uw x=-20 z=-34 yaw=225 len=29.1 slope=15 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=wcseacave
+prop wcseacave cave.rock=plain
+# cavecheck inside wcseacaveair wcseacavechest
+place Zone_Trigger wcseacaveair at -50.4 -64.4 h=4
+prop wcseacaveair obj.name=wcseacaveair
+prop wcseacaveair zone.id=wc_seacave
+prop wcseacaveair zone.radius=8
+prop wcseacaveair zone.repeat=1
+prop wcseacaveair zone.air=1
+prop wcseacaveair zone.message=The wreckers' sea room: dry, a rope ladder down to the water, salvage hooks on the rock, a lamp with a white glass.
+place Loot_ChestSmall wcseacavechest at -52.9 -66.9 h=5.5 drop yaw=225
+prop wcseacavechest obj.name=wcseacavechest
+prop wcseacavechest loot.refill=0
+note wcseacavechest Wreckers' sea chest | The wreckers' own chest, kept out of the longhouse share: ship's brass, a sextant with a cracked mirror, rope and a purse of tokens.
+loot wcseacavechest TradeToken*3;CopperIngot*2;Rope*3;Glass*2
+# (b) the land way under the Crown
+brush flatten at -52 9.5 r=4 s=20 frames=60 h=7.04
+brush smooth at -52 6.5 r=6 s=6 frames=20
+clear at -52 9.5 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+clear at -52 20 r=9 all only=(?i)boulder|tree|bush|palm|bamboo
+call kit_dig x=-52 z=9.5 yaw=0 len=10 flat=3 r=1.75 slope=0 room=1 roomr=3.5 roomlen=5 dirt=2 mush=0 stone=0 vines=2 titanium=0 gate=1 as=wcvine
+prop wcvine cave.rock=plain
+place Note_Sign wcvinesign at -57 3 ground yaw=30
+prop wcvinesign beh.hidden=1
+note wcvinesign THE CROWN'S CELLAR | Crew only. The stakes are live - wait for them to drop, then go. Lever at the far end. Box opens to the right word. - J. V.
+# cavecheck inside wcvinez wcspike wcspikes wclever wcbox wcvinechest
+place Zone_Trigger wcvinez at -52 24 h=8.5
+prop wcvinez obj.name=wcvinez
+prop wcvinez zone.id=wc_crowncellar
+prop wcvinez zone.radius=4
+prop wcvinez zone.message=The wreckers' cellar under the Crown: hooks, coils of rope, a white lamp with its glass painted over - and a strongbox.
+place "Balboa_DecorationPrefabBase_Wooden Spikes" wcspike at -52.6 16.2 h=9.5 drop scale=0.25 yaw=0
+place "Balboa_DecorationPrefabBase_Wooden Spikes" wcspike at -51.4 16.2 h=9.5 drop scale=0.25 yaw=20
+place "Balboa_DecorationPrefabBase_Wooden Spikes" wcspike at -52.6 17 h=9.5 drop scale=0.25 yaw=50
+place "Balboa_DecorationPrefabBase_Wooden Spikes" wcspike at -51.4 17 h=9.5 drop scale=0.25 yaw=70
+place "Balboa_DecorationPrefabBase_Wooden Spikes" wcspike at -52.6 17.8 h=9.5 drop scale=0.25 yaw=100
+place "Balboa_DecorationPrefabBase_Wooden Spikes" wcspike at -51.4 17.8 h=9.5 drop scale=0.25 yaw=120
+prop wcspike obj.name=wcspike
+prop wcspike tint.color=#5a5a5e
+prop wcspike tint.amount=0.7
+place Zone_Trigger wcspikes at -52 17 h=7.3
+prop wcspikes obj.name=wcspikes
+prop wcspikes zone.id=wc_spikes
+prop wcspikes zone.radius=2
+prop wcspikes zone.hazard=spikes
+prop wcspikes zone.damage=4
+prop wcspikes zone.safe=none
+prop wcspikes zone.pulse=2,3
+prop wcspikes zone.hazardMsg=Sharpened stakes punch up through the floor and drop back. The wreckers' trap - time it, or find their lever.
+place UT_JumpPuzzle_LiftMechanism_Lever wclever at -53 26.5 h=9.5 drop yaw=180
+prop wclever obj.name=wclever
+prop wclever beh.use=Throw the wreckers' lever
+prop wclever on.use=hide|wcspikes\nhide|wcspike\nmessage||The lever thumps over. Under the passage a beam drops into its socket, and the stakes stay down.
+place "Box Big" wcbox at -50.5 25 h=9.5 drop yaw=270
+prop wcbox obj.name=wcbox
+prop wcbox beh.use=Open the wreckers' strongbox
+prop wcbox if.use=talked|Wrecker Elaine
+prop wcbox on.use=hide|wcbox\nshow|wcvinechest\nmessage||A letter lock, six rings. You try the name of the woman at the jetty - E, L, A, I, N, E - and the hasp springs open.
+prop wcbox else.use=message||The wreckers' strongbox: a letter lock of six rings. Somebody on this island knows the word.
+place Loot_ChestSmall wcvinechest at -50.5 25 h=9.5 drop yaw=270
+prop wcvinechest obj.name=wcvinechest
+prop wcvinechest beh.hidden=1
+prop wcvinechest loot.refill=0
+note wcvinechest Wreckers' strongbox | The old crew's share, never taken out: a ship's bell, bolts, good rope - and a battery for the white lamp that drew the ships in.
+loot wcvinechest Battery*1;Bolt*4;Rope*2;MetalIngot*2
+# (c) Wrecker Elaine at the jetty's head
+place Story_Islander wcelaine at -6.5 -3.5 ground yaw=200
+prop wcelaine obj.name=Wrecker Elaine
+prop wcelaine islander.character=Elaine
+prop wcelaine islander.pose=stand
+prop wcelaine talk.text=Ships do not wreck here by chance. Not any more.\n---\nMy father kept the lantern on the point. Red by the door for the channel, white on the rocks for open water. Move the white one onto the reef, and a ship that trusts it comes straight on.\n---\nI mend nets now. The longhouse shares out nothing these days. But the old crews left their things where they always did.\n> You wrecked them?\n> What did the crews leave?\n> I will sail on.
+prop wcelaine on.choice1=journal|The false lantern|Wrecker Elaine, at the jetty's head:\n\n"Two lights on the point. The red one by the lantern-house door showed the channel; the white one on the rocks showed open water. Put the white one where the reef is and a ship comes straight in. When the hull struck we rang for the boats - for the cargo, not the crew."\n\nShe does not look at the point while she says it.
+prop wcelaine on.choice2=show|wcvinesign\nmessage||"Under Jory's Crown. Walk round the hill's foot to the side that looks over Bess Harrow's ruin - the cut is behind the creepers. Mind the stakes in the floor: my father set them for the excise men. His lever is in the room at the end, and the strongbox there knows my name."
+prop wcelaine on.choice3=message||"Then sail wide of the point. The lantern is out - the reef is not."
 
 # --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): palms, melons, pineapples ----------

@@ -18,6 +18,7 @@ include lib_selene
 include lib_features
 include lib_areas
 include lib_highwater
+include lib_caves
 include lib_lastpost
 new
 # (nature: Like Raft (as thick on the land as Raft's own tropical islands) - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
@@ -93,6 +94,32 @@ place Loot_ChestSmall casec at -26 -8 ground sit yaw=45
 place UT_LightBottle03 - at -25 -6.6 ground sit
 place Creature_AnglerFish lanternjaw at -26 -8 h=-8
 place Zone_Trigger edge at -26 -8 h=-4
+
+# --- 11-12 (w15 prep): the viewing room (plan 15 row: UW, ST to a viewing room under the reef; chest, stone 2). The
+# observers' old viewing room: an underwater straight cave (kit_uw, the cave tool, plain rock) from the lagoon floor in the
+# ring's empty quarter (18 18), way in yaw 45, to a dry room (middle ~48.4 48.4) under the ring's reef; the observers' chest
+# in it. 30 m and more from Survey Hill, the divers' cave and the blue hole; off every walk line.
+# The sea mouth's pad flattened to 5 m down (smoothed out); the tunnel climbs 15 degrees for 4 pieces (size 0.7, 29.1 m,
+# +7.5 m) to the den (~22 m long; the cave tool raises the dome from the sea floor). HEIGHTS guessed: the pad -5 (if the
+# natural sea floor is much deeper the pad stands as a plinth - lower it or move the mouth in), the den floor ~+2.5 m; the
+# air zone h 4, the chest dropped from 5.5 m. Sea caves get no monsters (11-12).
+brush flatten at 18 18 r=6 s=20 frames=60 h=-5
+brush smooth at 18 18 r=9 s=6 frames=20
+call kit_uw x=18 z=18 yaw=45 len=29.1 slope=15 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=coviewroom
+prop coviewroom cave.rock=plain
+# cavecheck inside coviewroomair coviewroomchest
+place Zone_Trigger coviewroomair at 48.4 48.4 h=4
+prop coviewroomair obj.name=coviewroomair
+prop coviewroomair zone.id=co_viewroom
+prop coviewroomair zone.radius=8
+prop coviewroomair zone.repeat=1
+prop coviewroomair zone.air=1
+prop coviewroomair zone.message=The old viewing room under the reef: a bench, a cracked port in the rock, the logbook's last page still pinned up.
+place Loot_ChestSmall coviewroomchest at 50.9 50.9 h=5.5 drop yaw=45
+prop coviewroomchest obj.name=coviewroomchest
+prop coviewroomchest loot.refill=0
+note coviewroomchest Observers' chest | The observers' chest from the first survey: a spare lens, sample tubes, copper wire and a tin of biscuits gone to dust.
+loot coviewroomchest Glass*2;CopperIngot*2;Plastic*3;Rope*1
 
 # --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, bananas, palms ----------
