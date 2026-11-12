@@ -118,8 +118,15 @@ prop dolphins creature.count=2
 call ar_cave x=58 z=-48 h=3 yaw=0 al=cf_caverock chest=cf_cavechest
 call hw_zone x=57 z=-39 al=cf_cavez id=cf_cave r=4 h=1 msg="Slag Cave. The rock is warm to the touch."
 call ar_ruin x=56 z=34 h=2.6 yaw=0 w=3 d=2 al=cf_ruin
-call r2_islander x=55 z=29.5 yaw=200 al=cf_isl nm="Tomas Reyes" pose=lean
-prop cf_isl talk.text=You came for the plant? Take your time - it's not going anywhere. Neither am I.\n---\nI surveyed this rock before they built the plant. Told them the mountain breathes. They built it anyway.\n---\nThe survey crew left their samples in Slag Cave, in the rocks by the shore. And my lads built a maze out of the slag heaps east of here, for fun. There's a box in the middle.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+# 11-12 (w09): the islander upgraded - Forgekeeper Johnny, who kept the plant's forge lit for the Corps, waits at the
+# ruined survey house now (Tomas Reyes, the surveyor, is gone; his lamps and box stay). His answers: the machete, the
+# Drowned Gate (journal), a few offcuts. Talking to him opens the forge annex's hatch in the lava tubes (cf_annexhatch).
+call r2_islander x=55 z=29.5 yaw=200 al=cf_isl nm="Forgekeeper Johnny" pose=stand
+prop cf_isl islander.character=Johnny
+prop cf_isl talk.text=The ash never stops. Neither does the forge. I kept it lit for the Corps, and I keep it lit now they're gone.\n---\nTomas Reyes surveyed this rock before they built the plant. Told them the mountain breathes. His samples are still in Slag Cave, in the rocks by the shore. And the lads built a maze out of the slag heaps east of here, for fun. There's a box in the middle.\n---\nTomas's lamps - four round this house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.\nAnd the old lava tubes in the mountain's foot, past the turbine hall - my annex is down there, off the tube. Tell the hatch Johnny sent you.\n> How do I cut the weed?\n> What is beyond the gate?\n> Need anything?
+prop cf_isl on.choice1=message||The Corps drew up a machete for the weed. Its blueprint is in the plant's store, the locker in the turbine hall - it opens to the three valve tags.
+prop cf_isl on.choice2=journal|Forgekeeper Johnny: the Drowned Gate|Past the frontier the Corps built a sea gate across a drowned valley: two lock gates, a pump hall, the keeper's house on the wall. It has been shut since the water rose. Under the wall the old culverts still climb to a dry store - the divers kept their kit there.\nmessage||Johnny scratches the gate on a slate for you: two locks, a pump hall, the culverts under the wall.
+prop cf_isl on.choice3=give||Scrap*3\nmessage||Johnny tips three offcuts off the anvil into your hands. Better in your raft than in my ash.
 call r2_lamp x=49 z=33 al=cf_lamp1 nm="Survey lamp 1" grp="Survey lamps" on=0
 call r2_lamp x=55 z=40 al=cf_lamp2 nm="Survey lamp 2" grp="Survey lamps" on=1
 call r2_lamp x=62 z=33 al=cf_lamp3 nm="Survey lamp 3" grp="Survey lamps" on=1
@@ -270,6 +277,84 @@ clear at 35.68 24.95 r=1.5 all only=BigSharpRock_5
 clear at 51.44 -34.89 r=1.5 all only=CaravanIsland_BrownGrass
 clear at 25.62 23.09 r=1.5 all only=CaravanIsland_SmallRock
 clear at 35.67 34.96 r=1.5 all only=BigSharpRock_5
+# --- 11-12 (w09): the old lava tubes - optional, no quest step (plan 09 row: DIG lava tubes from the forge to the ash
+# field). Two mouths in the mountain's foot west of the turbine hall: one off the hall's flats (A, -28 27), one on the
+# ash field (B, -45 18.5); each stroke takes its floor from its own mouth (~4.5 m), the two meet inside. A branch climbs
+# no further than the floor to the slag chamber (stone, mushrooms) deep under the cone; a second branch runs to Johnny's
+# forge annex, its hatch opened only for someone Johnny sent (talked gate). Mouths 1.4-2 m out from the foot's slope;
+# 6 m and more from the valves, the nest, the shards and the treasure. All dug, plain rock (cave.rock=plain).
+dig -45,18.5 -42,12 -36,9 r=2 slope=0 as=cftubes
+dig -28,27 -28,20 -30,13 -36,9 r=2 slope=0 as=cftubes
+dig -33,11 -27,3 -21,-3 r=2 slope=0 as=cftubes
+dig -21,-3 -16,-6 r=3.5 slope=0 as=cftubes
+dig -39,10.5 -42,3 -44,-2 r=1.75 slope=0 as=cftubes
+dig -44,-2 -46,-6 r=3 slope=0 as=cftubes
+caveloot cftubes dirt=0 mush=2 stone=3 vines=0 titanium=0 light=0 wet=0
+prop cftubes cave.rock=plain
+# cavecheck inside cf_annexhatch cf_annexchest
+place TangaroaHatchRoom_Hatch cf_annexhatch at -46.5 -6.5 h=6 drop yaw=200
+prop cf_annexhatch obj.name=cf_annexhatch
+prop cf_annexhatch beh.use=Open the annex hatch
+prop cf_annexhatch if.use=talked|Forgekeeper Johnny
+prop cf_annexhatch on.use=hide|cf_annexhatch\nshow|cf_annexchest\nmessage||The hatch lifts on Johnny's annex - the forge's spare stock, dry under the mountain.
+prop cf_annexhatch else.use=message||The hatch is chained shut. A tag on the chain: "Ask the forge. - J."
+place Loot_ChestSmall cf_annexchest at -45.4 -7.4 h=6 drop yaw=200
+prop cf_annexchest obj.name=cf_annexchest
+prop cf_annexchest beh.hidden=1
+prop cf_annexchest loot.refill=0
+note cf_annexchest Johnny's annex | The forge's spare stock, kept where the ash can't reach: bar iron, copper, a tin of bolts. Chalked on the lid: "Borrow it, bring it back. - J."
+loot cf_annexchest MetalIngot*3;CopperIngot*2;Bolt*4;Scrap*4
+
+# --- 11-12 (w09): the vent pool on the high plateau - optional, no quest step (plan 09 row: ACID hot ash pool, side,
+# safe=suit). A vent under the plateau keeps a pool of scalding, sulphur-green water in a dish of ash; the Corps
+# surveyors lost a locker in it. Their heat suits wait in the box at the rim. The dish's sides are a gentle slope (a
+# way out all round). 20 m and more from the west valve, the ramp up and the lava tubes.
+brush flatten at -38 -48 r=5 s=20 frames=300 h=9.2
+brush flatten at -38 -48 r=3.5 s=20 frames=300 h=9
+brush smooth at -38 -48 r=5.5 s=6 frames=15
+clear at -38 -48 r=7 only=(?i)boulder|rock|tree|bush|bamboo
+# the way up to the plateau from the east valley (CC reach 11-12: the walker found no way up to the pool): a graded
+# slope of ash from the valley floor (~6.6 at 20 -64) to the plateau (~9.8 at 6 -60), cleared of rocks and scrub
+clear from 22 -65 to -28 -54 r=3 only=(?i)boulder|rock|tree|bush|bamboo
+brush flatten at 19 -64.5 r=3 s=20 frames=300 h=6.9
+brush flatten at 15.5 -63.5 r=3 s=20 frames=300 h=7.8
+brush flatten at 12 -62.5 r=3 s=20 frames=300 h=8.7
+brush flatten at 8.5 -61.5 r=3 s=20 frames=300 h=9.5
+brush smooth at 14 -63 r=7 s=6 frames=15
+place TP_SeleneReactor_Water_Radiated cf_ventpool at -38 -48 ground scale=0.3 yaw=30
+prop cf_ventpool obj.name=cf_ventpool
+place SmallRock_02 cf_ventrock at -40.6 -49.6 h=11 drop yaw=60 scale=0.45 sy=0.5
+place SmallRock_02 cf_ventrock at -35.6 -46.2 h=11 drop yaw=170 scale=0.45 sy=0.5
+place SmallRock_02 cf_ventrock at -36.2 -50.6 h=11 drop yaw=280 scale=0.45 sy=0.5
+prop cf_ventrock tint.color=#c8b040
+prop cf_ventrock tint.amount=0.6
+place Zone_Atmosphere cf_ventmist at -38 -48 h=10
+prop cf_ventmist zone.radius=4
+prop cf_ventmist atmo.particles=steam
+prop cf_ventmist atmo.fog=#a09060
+prop cf_ventmist atmo.fogAmount=0.3
+prop cf_ventmist atmo.light=#ffb060
+prop cf_ventmist atmo.lightAmount=0.3
+place Zone_Trigger cf_vent at -38 -48 h=10
+prop cf_vent obj.name=cf_vent
+prop cf_vent zone.id=cf_vent
+prop cf_vent zone.radius=3.4
+prop cf_vent zone.hazard=acid
+prop cf_vent zone.damage=4
+prop cf_vent zone.safe=suit
+prop cf_vent zone.hazardMsg=The pool scalds - vent water, ash and sulphur. A Corps heat suit from the box at the rim keeps it off.
+place Loot_ChestSmall cf_ventlocker at -38 -48 h=10.5 drop yaw=200
+note cf_ventlocker Surveyors' locker | The Corps surveyors' locker, lost in the vent pool: a spare cell, a gauge board and a bar of titanium for the plant's turbine.
+loot cf_ventlocker Battery*1;CircuitBoard*1;TitaniumIngot*1;Bolt*3
+prop cf_ventlocker loot.refill=0
+place "Box Big" cf_ventsuits at -32.4 -53.2 ground sit yaw=225
+prop cf_ventsuits obj.name=cf_ventsuits
+prop cf_ventsuits beh.use=Put on a Corps heat suit
+prop cf_ventsuits on.use=suit||180\nmessage||A Corps heat suit, quilted and silvered, sealed at the wrists and boots - three minutes before the heat gets through.
+place Note_Sign cf_ventwarn at -31.2 -51.6 ground sit yaw=240
+note cf_ventwarn VENT POOL - SCALDING | The vent under this plateau keeps the pool near boiling. It burns skin and boots. Wear a heat suit from the box.\n- Corps survey, T. Reyes
+place TP_Moontown_Barrel02 - at -44.4 -53.4 ground sit yaw=80
+place TP_Moontown_Barrel02 - at -45.4 -52.2 ground sit yaw=200
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): palms, pineapples, flowers ----------
 scatter "Pickup_Landmark_Tree_Palm 3" 6 at 0 0 r=56.0 seed=4476 free=5
@@ -360,7 +445,7 @@ step kill|Screecher|1|Drive off the stone birds' matriarch by the third valve
 step collect|story:valvetag|3|Shut the last valve - three brass tags, and the hiss dies
 step reach|hall|1|Go down to the turbine hall at the volcano's foot
 step kill|Roach|3|Clear the roaches out of the turbine hall
-step talk|Tomas Reyes|1|Talk to Tomas Reyes at the ruined house on the ash plain
+step talk|Forgekeeper Johnny|1|Talk to Forgekeeper Johnny at the ruined house on the ash plain
 step reach|cf_cave|1|Find Slag Cave, the cave mouth in the rocks by the shore
 step open|Slag Cave chest|1|Open the chest at the back of Slag Cave
 step open|Plant store|1|Open the plant's store with the three valve tags
