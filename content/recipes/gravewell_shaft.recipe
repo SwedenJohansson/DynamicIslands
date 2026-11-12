@@ -230,8 +230,15 @@ quest reward=MetalIngot*4;CopperIngot*2
 # 1: it blocked a mouth at 315 degrees) and the stair's posts (w06 try 2, under the turns at 45 degrees: the dig took
 # two posts and left their planks in the air).
 origin
-# the drift: from the pit's wall (r 6.8: started at r 5 it left a loose rim patch on the pit floor by the stair), level out under the rim, then the chamber
-dig -3.4,5.89 -6.2,7.2 -8.5,8.5 r=1.5 slope=0 as=gwbore
+# the drift: from the pit floor 1 m out from the wall's foot (r 5.2), rising 6 degrees under the rim, the way
+# Stalker's Hollow's knoll caves start; then the chamber. Tried 11-12: from r 6.8 the floor took the wall's height,
+# 6.4, and cut an open notch through the rim (b1); level from the wall's foot (r 5.8), at its height or sunk 1 m, the
+# walk met a step it could not climb (b3, b5).
+# (11-12: the bore is level from the pit floor: a climb branched off inside it left a rock lip the walk stuck on)
+# (the wall is near sheer here: no ground point fell inside the drift, so no ground was cut; a shelf half way up the
+# drift into the foot gives the cut its ground)
+brush flatten at -4.3 5.55 r=1.2 s=20 frames=150 h=2.4
+dig -2.1,3.64 -6.2,7.2 -8.5,8.5 r=1.5 slope=0 as=gwbore
 dig -8.5,8.5 -11.3,11.3 r=2.5 slope=0 as=gwbore
 caveloot gwbore dirt=0 mush=0 stone=3 vines=0 titanium=1 wet=1
 prop gwbore cave.rock=plain

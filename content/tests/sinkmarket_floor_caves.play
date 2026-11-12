@@ -11,8 +11,8 @@ empty
 picture sm_cave_out 3.5 +2 -3.5 9 1.2 -9
 walk 6.2 -6.2 to 9 -9 to 13 -13 to 18.9 -18.9 to 23 -23 to 26.7 -26.7 below=-2
 air sm_bondedcellar here
-picture sm_cave_in 14 1.7 -14 27 1.2 -27 light=20
-picture sm_room_back 30 2 -30 19 1.2 -19 light=20
+picture sm_cave_in 10.6 4.5 -10.6 20 4.2 -20 light=20
+picture sm_room_back 25.6 5.2 -25.6 17 4.5 -17 light=20
 open Bonded goods
 wait 2
 expect item Glass 2

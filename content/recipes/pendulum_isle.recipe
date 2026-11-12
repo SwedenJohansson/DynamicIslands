@@ -279,18 +279,28 @@ prop treasure8830 treasure.loot=TitaniumOre*3
 # quest step needs it. The iron for the pendulum's bob was cut out of Bob Hill's foot: the cutters drove a short
 # drift into the hill's south-east flank, below the trail's first turn, and opened a working room at its end where
 # they left their wedges. A dug cave (11-12: the kit_st cut along the foot showed a square slab face at both ends and
-# a see-through shell; the plan allows a dig where a kit looks poor): mouth at -50.1 -21.6 (r 23 from the hill's
-# middle -58 0), the drift 7 m in towards the middle, the room to -53.5 -12.3 (r 13, under 18 m of hill). The trail's
-# pad over the drift (-50.8 -19.7, h about 11) stays 3 m over its roof. No rats. cavecheck: away from the bob-foot zone and the walks.
+# a see-through shell; the plan allows a dig where a kit looks poor): mouth at -49.4 -23.5 (r 25 from the hill's
+# middle -58 0), the drift 9 m in towards the middle, the room to -53.5 -12.3 (r 13, under 18 m of hill). The trail's
+# pad over the drift (-50.8 -19.7, h about 11) stays 3 m over its roof. The mouth is in the hill's foot step, from the sand
+# at -49.4 -23.5 (r 25), 1.4 m out from the step's foot, rising 8 degrees (the way Stalker's Hollow's knoll caves start):
+# dug from the step's top (8) the drift ran as an open trench through the lower terrace (11-12 run b1); a smoothed
+# ramp to a sunk mouth (b3) and a level start on the sand (b5: a level stroke on flat ground sinks for cover) each left
+# a step the walk could not climb. The box sits to the room's side, off the drift's line (b3: it blocked the cave check's way). No rats.
+# cavecheck: away from the bob-foot zone and the walks.
 origin
-brush smooth at -50.1 -21.6 r=5 s=8 frames=60
-clear at -50.1 -21.6 r=4 only=(?i)boulder|rock|tree|bush|bamboo
-dig -50.1,-21.6 -52.5,-15 r=1.5 slope=0 as=pibob
+clear at -49.8 -22.4 r=4 only=(?i)boulder|rock|tree|bush|bamboo
+# (11-12: a sloped stroke from the sand cut no ground at all at the foot - 0 cells, the face stood in the way; the mouth
+# stroke is level, as at Rootcellar, and the climb is a branch from inside it)
+# (the face is near sheer here: no ground point fell inside the drift, so no ground was cut; a shelf half way up the drift
+# into the foot gives the cut its ground)
+brush flatten at -49.75 -21.9 r=1.2 s=20 frames=150 h=4.2
+dig -49.3,-24.4 -49.9,-20.6 r=1.75 slope=0 as=pibob
+dig -49.9,-20.6 -52.5,-15 r=1.75 slope=22 as=pibob
 dig -52.5,-15 -53.5,-12.3 r=2.5 slope=0 as=pibob
 caveloot pibob dirt=2 mush=2 stone=0 vines=0 titanium=0
 prop pibob cave.rock=plain
 # cavecheck inside pibobbox
-place Loot_ChestSmall pibobbox at -53.6 -13.4 h=7 drop yaw=160
+place Loot_ChestSmall pibobbox at -54.3 -14.3 h=6.5 drop yaw=160
 prop pibobbox obj.name=pibobbox
 prop pibobbox loot.refill=0
 note pibobbox Bob-cutters' box | The cutters' box, left in the cut when the bob was hoisted: wedges, a worn hammer head, and the offcuts of the lodestone iron. Scratched inside the lid: 412 KG - SHE SWINGS.

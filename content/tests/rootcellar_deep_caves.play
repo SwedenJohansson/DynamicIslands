@@ -9,7 +9,7 @@ weather Calm
 # (a CI world's bag emptied first: a full bag drops the loot)
 empty
 
-picture rc_cave_out -3 +2 18 -7.2 4.5 22.2
+picture rc_cave_out -4.6 +2.5 16.8 -7.2 4.5 22.2
 picture rc_cave_out2 2.5 +2 35 -1.4 4.5 35
 walk -4.6 19.4 to -7.2 22.2 to -10.3 25.5 to -13.4 28.8 to -17.2 34.3 below=6.5
 picture rc_cave_junction -12.4 5.6 27.7 -17.2 5 34.3 light=20
