@@ -483,6 +483,8 @@ namespace DynamicIslands.Editor
 						if (mine == null || mine.Length != basePrefabs.Length || mine.Any(p => p == null || p.buildableItem != u.Item))
 						{
 							if (holder == null) { holder = new GameObject("DI_UpgradePrefabs"); holder.SetActive(false); UnityEngine.Object.DontDestroyOnLoad(holder); }
+							// the old clones of this item go first, so a mend doesn't leave them piling up in the holder
+							if (mine != null) foreach (Block old in mine) if (old != null && old.transform.parent == holder.transform) UnityEngine.Object.Destroy(old.gameObject);
 							ItemInstance_Buildable b = u.Base.settings_buildable.Clone();
 							Traverse.Create(b).Field("blockPrefabs").SetValue(basePrefabs.Select(p => ClonePrefab(p, u.Base, u.Item, u)).ToArray());
 							Traverse.Create(b).Field("mirroredVersion").SetValue(null);
@@ -504,7 +506,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The surface check met a DI_ item that the quick lookup doesn't know: logged once per item a session.</summary>
 		internal static void NoteUnknown(Item_Base item)
 		{
-			if (item == null || item.UniqueName == null || !item.UniqueName.StartsWith("DI_") || !unknownLogged.Add(item.UniqueIndex)) return;
+			if (item == null || item.UniqueName == null || !item.UniqueName.StartsWith("DI_", StringComparison.Ordinal) || !unknownLogged.Add(item.UniqueIndex)) return;
 			Upgrade u = Everything.FirstOrDefault(x => x.Name == item.UniqueName);
 			Warn("placement: " + item.UniqueName + " (" + item.UniqueIndex + ") is not in the lookup" + (u == null ? " (no such upgrade)" :
 				", upgrade index " + u.Index + ", made " + (u.Item != null) + ", same item " + (u.Item == item)));
