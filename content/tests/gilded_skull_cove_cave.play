@@ -1,0 +1,21 @@
+# Gilded Skull Cove's pirates' sea cave (CIPlay gilded_skull_cove_cave, 11-12 w14 prep; in a test world 'CI ...'). Points
+# as in the recipe: kit_uw mouth on the sea floor at 14 -58 (pad -5; yaw 335: way in = -x +z), tunnel 29.1 m up 15 degrees
+# (+7.5 m), the den beyond (middle ~-3 -18.5) under the headland; air zone gs_seacave there, the chest gsseacavechest.
+# Heights are guesses: the pad -5, the den floor ~+2.5.
+# Offline-written, never run; the offset is the old one - re-read it after the build (a new hill may move the land centre).
+island Gilded Skull Cove keep
+offset 0 0
+hour 11
+weather Calm
+
+empty
+picture gs_seacave_out 24.6 6 -80.7 -3 3 -18.5
+# From the sea outside the mouth, down to it and up the tunnel (15 degrees, 4 pieces) into the dry den
+at 17.4 -65.3 h=-2
+swim 17.4 -65.3 -3.5 to 14 -58 -3.5 to 10.2 -49.8 -1.5 to 6 -40.8 1 to 2.2 -32.6 3.2 to -3 -18.5 3.5
+air gs_seacave here
+picture gs_seacave_in 1.3 4 -30.8 -3 3 -18.5 light=20
+open Pirates' sea chest
+wait 2
+expect item TradeToken 3
+swim -3 -18.5 3.5 to 2.2 -32.6 3.2 to 6 -40.8 1 to 10.2 -49.8 -1.5 to 14 -58 -3.5 to 17.4 -65.3 -2

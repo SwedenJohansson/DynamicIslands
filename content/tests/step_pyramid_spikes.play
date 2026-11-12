@@ -1,0 +1,32 @@
+# The Step Pyramid's robbers' way (CIPlay step_pyramid_spikes, 11-12 w14 prep; in a test world 'CI ...'). Points as in
+# the recipe: the robbers' way from its mouth at 22 -36 west to 12 -36; the stakes (spspike, 3x2) at 15.8..17 -36.8..-35.2,
+# the hazard zone sp_spikes at 16.4 -36 (r 2, pulse 2 s up / 3 s down, safe=none); the carving spspikewarn at 20.5 -34.8;
+# the priests' lever splever at 11.5 -37.2 (reached from the hall by the tomb door). Floors ~2.5 m (a guess).
+# Offline-written, never run; the offset is the old one - re-read it after the build (a new hill may move the land centre).
+island The Step Pyramid keep
+offset -1.8093 10.1439
+hour 11
+weather Calm
+
+expect shown spspikes
+expect shown spspike
+
+# In by the robbers' way: onto the stakes - hurt and the message; back out - no more harm
+walk 26 -36 to 22 -36 to 19 -36 to 16.4 -36
+wait 7
+expect message priests' trap
+expect hurt 4
+picture sp_spikes 20 +2 -36 16.4 +0 -36 light=20
+walk 16.4 -36 to 19 -36 to 22 -36
+wait 3
+expect unhurt
+
+# Round by the tomb door to the hall, the lever: the stakes stay down; then the robbers' way is safe
+walk 22 -36 to 25 -41 to 22 -46 to 8 -46 to 8 -38 to 10.5 -37.2
+use splever
+expect hidden spspikes
+expect hidden spspike
+walk 10.5 -37.2 to 12 -36 to 16.4 -36 to 19 -36
+wait 5
+expect unhurt
+walk 19 -36 to 22 -36 to 26 -36

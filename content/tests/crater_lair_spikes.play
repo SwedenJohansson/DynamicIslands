@@ -1,0 +1,32 @@
+# Crater Lair's service way (CIPlay crater_lair_spikes, 11-12 w14 prep; in a test world 'CI ...'). Points as in the recipe:
+# the service way from its mouth at -10 -30 north to -10 -16, then to the hall at -4 -12; the pins (clspike, 3x2) at
+# -10.8..-9.2 -22..-20.8, the hazard zone cl_spikes at -10 -21.4 (r 2.2, pulse 2 s up / 3 s down, safe=none); the sign
+# clspikewarn at -11.2 -27.5; the shut-off lever cllever at -9 -17 (reached from the hall by the main gate). Floors ~5 m.
+# Offline-written, never run; the offset is the old one - re-read it after the build (a new hill may move the land centre).
+island Crater Lair keep
+offset 0.5101 0.0433
+hour 11
+weather Calm
+
+expect shown clspikes
+expect shown clspike
+
+# In by the service way: onto the pins - hurt and the message; back out - no more harm
+walk -10 -36 to -10 -30 to -10 -25 to -10 -21.4
+wait 7
+expect message Steel pins
+expect hurt 4
+picture cl_spikes -10 +2 -26 -10 +0 -21.4 light=20
+walk -10 -21.4 to -10 -25 to -10 -30
+wait 3
+expect unhurt
+
+# Round by the main gate and the hall to the lever: the pins die; then the service way is safe
+walk -10 -30 to -2 -34 to 6 -30 to 6 -12 to -4 -12 to -9 -16
+use cllever
+expect hidden clspikes
+expect hidden clspike
+walk -9 -16 to -10 -18 to -10 -21.4 to -10 -25
+wait 5
+expect unhurt
+walk -10 -25 to -10 -30 to -10 -36

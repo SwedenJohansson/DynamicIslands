@@ -1,0 +1,21 @@
+# Tiki Lagoon's lagoon cave (CIPlay tiki_lagoon_cave, 11-12 w14 prep; in a test world 'CI ...'). Points as in the recipe:
+# kit_uw mouth on the sea floor at 10 -60 (pad -5; yaw 0: way in = +z), tunnel 29.1 m up 15 degrees (+7.5 m), the den
+# beyond (middle ~10 -20) under a new dune; air zone tl_seacave there, the chest tlseacavechest.
+# Heights are guesses: the pad -5, the den floor ~+2.5.
+# Offline-written, never run; the offset is the old one - re-read it after the build (a new hill may move the land centre).
+island Tiki Lagoon keep
+offset 0.7206 -4.2301
+hour 11
+weather Calm
+
+empty
+picture tl_seacave_out 10 6 -85 10 3 -20
+# From the sea outside the mouth, down to it and up the tunnel (15 degrees, 4 pieces) into the dry den
+at 10 -68 h=-2
+swim 10 -68 -3.5 to 10 -60 -3.5 to 10 -51 -1.5 to 10 -41 1 to 10 -32 3.2 to 10 -20 3.5
+air tl_seacave here
+picture tl_seacave_in 10 4 -30 10 3 -20 light=20
+open Staff stash
+wait 2
+expect item Battery 1
+swim 10 -20 3.5 to 10 -32 3.2 to 10 -41 1 to 10 -51 -1.5 to 10 -60 -3.5 to 10 -68 -2

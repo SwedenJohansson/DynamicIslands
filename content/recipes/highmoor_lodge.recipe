@@ -15,6 +15,7 @@
 include lib_huts
 include lib_sea
 include lib_features
+include lib_caves
 new
 # (nature: snowy, Like Raft's Temperance - a few pines and drifts, near-bare)
 gen Trees=0.08 Bushes=0.15 Rocks=0.25 Harvest=0.05 BeachThings=0.3
@@ -325,6 +326,31 @@ scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=31.5 seed=4220 free=3
 
 # --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
 call shallows r=60 deep=5
+
+# --- 11-12 (w14 prep): the lodge's wine cellar (plan 14 row: ST wine cellar; dirt 2, mushrooms 2). The lodge kept its wine and
+# its winter stores in a cellar cut into the slope east of the kitchen yard: a straight cave (kit_st, the cave tool, size 0.7,
+# hill=1 domes a knoll over the den, plain rock) from a mouth 6 m past the yard's east end (15 10), way in east-south-east (yaw
+# 120), one tunnel 7.3 m, the den ~22 m on behind it (middle ~30.6 1). 17 m and more from the boiler room, the valves and the
+# kitchen rats; 25 m and more from the maze, its bear and the goats; off the walk line (maze -> lodge). cave.dome 14 keeps the
+# dome off the lodge. 11-12 user: mixed cave monsters - a boar has got in among the casks (the lodge already has the maze's
+# polar bear and the kitchen rats). HEIGHTS guessed: the mouth on the natural ground ~4-6 m (the yard is 3.4), so the den
+# floor ~5 m; the boar at 5.3 dropped, the zone 6.5.
+clear at 15 10 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+clear at 30.6 1 r=13 all only=(?i)boulder|tree|bush|palm|bamboo
+call kit_st x=15 z=10 yaw=120 len=7.3 slope=0 end=room size=0.7 hill=1 dirt=2 mush=2 stone=0 vines=0 as=hlcellar
+prop hlcellar cave.rock=plain
+prop hlcellar cave.dome=14
+place Note_Sign hlcellarsign at 7 4 ground yaw=60
+note hlcellarsign WINE CELLAR | Staff only. Mind the step. Keep the door shut - the boar from the woods has been in once already. - the Steward
+# cavecheck inside hlboar hlcellarz
+place Creature_Boar hlboar at 30.6 1 h=5.3
+prop hlboar creature.count=1
+prop hlboar creature.respawn=0
+place Zone_Trigger hlcellarz at 25 4 h=6.5
+prop hlcellarz obj.name=hlcellarz
+prop hlcellarz zone.id=hl_cellar
+prop hlcellarz zone.radius=5
+prop hlcellarz zone.message=The lodge's wine cellar. Racks of empty bottles, a cask stove in - and the smell of pig.
 
 # ===== Settings, story items, notes, behaviours, quest (7 steps) ==========================================================
 info title=Highmoor Lodge

@@ -1,0 +1,18 @@
+# Counsellor Shogo at the ruined house (CIPlay camp_blackwater_talk, 11-12 w14 prep; in a test world 'CI ...').
+# He sits on a chair at -79 -8.5 (was Walt Pruitt, lean). Answer 1: the boathouse cellar in the journal. Answer 2: why he stays.
+# Answer 3: shows the strongroom hatch (cbcellarhatch) with "Your funeral.". The quest's step 12 names him. Offline-written, never run.
+island Camp Blackwater
+offset -0.4374 -1.2402
+hour 11
+weather Calm
+expect hidden cbcellarhatch
+picture cb_islander -75.5 +2.4 -5 -79 +0.9 -8.5
+use Counsellor Shogo pick 1
+expect message long time before he answers
+read The boathouse cellar
+use Counsellor Shogo pick 2
+expect message flare from the lookout
+expect hidden cbcellarhatch
+use Counsellor Shogo pick 3
+expect message Your funeral
+expect shown cbcellarhatch

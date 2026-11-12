@@ -17,6 +17,7 @@ include lib_features
 include lib_areas
 include lib_highwater
 include lib_silver
+include lib_caves
 
 # tierwall: the face of one of the pyramid's tiers - the radio tower's stone blocks (2.4 m square, 3 m tall, their tops
 # level with the tier) all round a square of half-size a (a = 1.2 + 1.2 x n), so each tier ends in a straight wall and not
@@ -422,6 +423,64 @@ call ar_plants_tropical x=-60 z=60 r=24 seed=26498
 # (REACH 10-31 N: the calendar stone's pad, carried out to the cliff's edge, left a palm on its steep rim with its foot
 # buried: no trees on the pad or its rim)
 clear at 93 -7 r=7 all only=Palm|Bamboo|Banana|Bush
+
+# --- 11-12 (w14 prep): the tomb galleries (plan 14 row: SYS tomb galleries, 3 ST + DIG; dirt 3, mushrooms 2; SPIKES trap
+# corridor, safe=none, lever). DONE AS: one dug system (kit_sys: three tunnels, two mouths, plain rock), no ST pieces (their dens
+# could not be kept off the quest's chests and mirrors offline). Mouths on the mesa's foot by the flat south-east cove (the
+# 2.5 m flat at 38 -36): the tomb door (22 -46) and the robbers' way (22 -36), both way in west (yaw 270). The trunk runs 14 m
+# west to (8 -46), bends 8 m north into the burial hall (8 -38); the side gallery 7 m in turns south 6 m to the offering room
+# (13..15, -52..-58); the robbers' way runs 10 m west and joins the hall. 10 m and more from the twin chests (jcsp), 18 m and
+# more from the king's chest, the mirrors and the cenote's offering box; off every walk line.
+#  - SPIKES: the robbers' way is the trap corridor - pins in its floor (zone r 2, pulse 2 s up / 3 s down, safe=none), a
+#    carved warning at its mouth, the old priests' lever at its inner end (reached from the hall by the tomb door).
+#  - 11-12 user: mixed cave monsters - two rats in the offering room.
+# HEIGHTS guessed: both mouth shelves cut level at 2.5 m (the cove's flat), floors ~2.5 m; things dropped from 5 m, zones 2.8-4.
+brush flatten at 22 -46 r=4 s=20 frames=60 h=2.5
+brush flatten at 22 -36 r=4 s=20 frames=60 h=2.5
+brush smooth at 25 -46 r=6 s=6 frames=20
+brush smooth at 25 -36 r=6 s=6 frames=20
+clear at 22 -46 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+clear at 22 -36 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+call kit_sys x=22 z=-46 yaw=270 side=1 len=14 bend=8 branch=7 blen=6 gap=10 in2=10 r=1.75 roomr=3.5 dirt=3 mush=2 stone=0 vines=0 titanium=0 as=sptomb
+prop sptomb cave.rock=plain
+place Note_Sign sptombsign at 30 -49 ground yaw=270
+note sptombsign (Dr. Quintero's tag on a stake) | Tomb door, south gallery. The second passage to the north is the robbers' way - the priests trapped it. Do NOT go in that way. - Q.
+# cavecheck inside spratA spratB sptombz spspike spspikes spspikewarn splever
+place Creature_Rat spratA at 14 -55 h=2.8
+prop spratA creature.count=1
+prop spratA creature.respawn=0
+place Creature_Rat spratB at 13.5 -57 h=2.8
+prop spratB creature.count=1
+prop spratB creature.respawn=0
+place Zone_Trigger sptombz at 8 -41 h=4
+prop sptombz obj.name=sptombz
+prop sptombz zone.id=sp_tomb
+prop sptombz zone.radius=5
+prop sptombz zone.message=The burial hall of the Rain Kings. Niches in every wall - all of them long since emptied.
+place "Balboa_DecorationPrefabBase_Wooden Spikes" spspike at 17 -36.8 h=4.5 drop scale=0.25 yaw=0
+place "Balboa_DecorationPrefabBase_Wooden Spikes" spspike at 15.8 -36.8 h=4.5 drop scale=0.25 yaw=20
+place "Balboa_DecorationPrefabBase_Wooden Spikes" spspike at 17 -36 h=4.5 drop scale=0.25 yaw=50
+place "Balboa_DecorationPrefabBase_Wooden Spikes" spspike at 15.8 -36 h=4.5 drop scale=0.25 yaw=70
+place "Balboa_DecorationPrefabBase_Wooden Spikes" spspike at 17 -35.2 h=4.5 drop scale=0.25 yaw=100
+place "Balboa_DecorationPrefabBase_Wooden Spikes" spspike at 15.8 -35.2 h=4.5 drop scale=0.25 yaw=120
+prop spspike obj.name=spspike
+prop spspike tint.color=#6a5e4a
+prop spspike tint.amount=0.6
+place Zone_Trigger spspikes at 16.4 -36 h=2.8
+prop spspikes obj.name=spspikes
+prop spspikes zone.id=sp_spikes
+prop spspikes zone.radius=2
+prop spspikes zone.hazard=spikes
+prop spspikes zone.damage=4
+prop spspikes zone.safe=none
+prop spspikes zone.pulse=2,3
+prop spspikes zone.hazardMsg=Stone stakes stab up through the floor slabs and sink back. The priests' trap still works - time it, or find their lever.
+place Note_Sign spspikewarn at 20.5 -34.8 h=5 drop yaw=270
+note spspikewarn (a carving over the passage) | Robber, the floor bites. Only the priests' hand at the hall's end can stay it.
+place UT_JumpPuzzle_LiftMechanism_Lever splever at 11.5 -37.2 h=5 drop yaw=90
+prop splever obj.name=splever
+prop splever beh.use=Pull the priests' lever
+prop splever on.use=hide|spspikes\nhide|spspike\nmessage||The stone lever grinds over. Under the robbers' way something heavy drops into place, and the stakes stay down.
 
 # ===== Settings, story items, notes, behaviours, quest (20 steps) =========================================================
 info title=The Step Pyramid

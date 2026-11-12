@@ -1,0 +1,25 @@
+# Crater Lair's lower halls (CIPlay crater_lair_cave, 11-12 w14 prep; in a test world 'CI ...'). Points as in the recipe:
+# kit_sys, the halls' gate at 6 -30 (yaw 0: way in = +z), the trunk 18 m to 6 -12, then 10 m west to the main hall at -4 -12
+# (the bear clbear); the side branch from 6 -21 east to 14 -21 and the vat room toward 20 -19 (see crater_lair_acid); the
+# service way from -10 -30 north to -10 -16 and on to the hall (its trap: see crater_lair_spikes). The sign clhallsign at
+# 13 -37; zone cl_halls at 2 -12. Floors ~5 m (a guess).
+# Offline-written, never run; the offset is the old one - re-read it after the build (a new hill may move the land centre).
+island Crater Lair keep
+offset 0.5101 0.0433
+hour 11
+weather Calm
+
+picture cl_halls_out 6 +4 -40 6 +1.5 -30
+read LOWER HALLS
+
+# The Chief's pet (11-12 mixed monsters): a bear in the main hall
+wait 3
+expect animals Bear 1
+expect animalsinside Bear 1
+kill Bear
+expect animals Bear 0
+
+walk 9 -36 to 6 -30 to 6 -21 to 6 -12 to 2 -12
+zone cl_halls
+picture cl_halls_in 5 +2.5 -12 -4 +0.5 -12 light=20
+walk 2 -12 to 6 -12 to 6 -21 to 6 -30 to 9 -36

@@ -1,0 +1,23 @@
+# Crater Lair's coolant vat (CIPlay crater_lair_acid, 11-12 w14 prep; in a test world 'CI ...'). Points as in the recipe:
+# the side branch from 6 -21 east to 14 -21, the vat room toward 20 -19; the pool clvatpool and the acid zone cl_vat at
+# 18.5 -19.5 (r 2.5, safe=suit); the locker clvatlocker at 20.5 -18.6 behind it; the suit box clvatsuits at 14.6 -22.6 and
+# the sign clvatwarn at 14.4 -19.6 by the door. Into the vat without a suit: hurt; out again. Floors ~5 m (a guess).
+# Offline-written, never run; the offset is the old one - re-read it after the build (a new hill may move the land centre).
+island Crater Lair keep
+offset 0.5101 0.0433
+hour 11
+weather Calm
+
+# (a CI world's bag emptied first: a full bag drops the loot)
+empty
+walk 9 -36 to 6 -30 to 6 -21 to 13 -21
+read VAT ROOM
+picture cl_vat_in 13 +2.5 -21 18.5 +0.5 -19.5 light=20
+walk 13 -21 to 16 -20.5 to 18.5 -19.5
+wait 5
+expect message coolant burns
+expect hurt 10
+walk 18.5 -19.5 to 16 -20.5 to 13 -21
+wait 3
+expect unhurt
+walk 13 -21 to 6 -21 to 6 -30 to 9 -36

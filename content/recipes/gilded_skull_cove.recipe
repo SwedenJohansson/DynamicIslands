@@ -14,6 +14,7 @@
 include lib_huts
 include lib_sea
 include lib_features
+include lib_caves
 new
 # (nature: tropical, Like Raft - palms and jungle on the peaks as on Raft's own tropical islands, CIGenLikeRaft)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -200,6 +201,33 @@ where lookoutbox
 where campbarrel
 where blackflag
 where hens
+
+# --- 11-12 (w14 prep): the pirates' sea cave (plan 14 row: UW pirate cave, optional VINE land mouth; treasure in a chest,
+# stone 2). The crew's bolt-hole under the south headland: an underwater straight cave (kit_uw, the cave tool, plain rock) from
+# the sea floor off the south shore (14 -58), way in north-north-west (yaw 335), to a dry den under the headland (middle ~-3
+# -18.5); the crew's treasure chest in it. 12 m and more from the standing stones and the hoard, the lookout ladder and the
+# cook's cache. The optional VINE land mouth is NOT built: this world has no machete (plan 14), so a vine gate could not be cut.
+# The mouth on the sea floor, its pad flattened to 5 m down (smoothed out); the tunnel climbs 15 degrees for 4 pieces (size 0.7,
+# 29.1 m, +7.5 m) to the den (~22 m long; the cave tool raises the dome from the sea floor). HEIGHTS guessed: the pad -5 (the
+# natural sea floor there is not known: if it is much deeper the pad stands as a plinth - lower the pad or move the mouth in),
+# the den floor -5 + 7.5 = +2.5 m over the sea; air zone h 4, the chest dropped from 5.5 m. Sea caves get no monsters (11-12).
+brush flatten at 14 -58 r=6 s=20 frames=60 h=-5
+brush smooth at 14 -58 r=9 s=6 frames=20
+call kit_uw x=14 z=-58 yaw=335 len=29.1 slope=15 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=gsseacave
+prop gsseacave cave.rock=plain
+# cavecheck inside gsseacaveair gsseacavechest
+place Zone_Trigger gsseacaveair at -3 -18.5 h=4
+prop gsseacaveair obj.name=gsseacaveair
+prop gsseacaveair zone.id=gs_seacave
+prop gsseacaveair zone.radius=8
+prop gsseacaveair zone.repeat=1
+prop gsseacaveair zone.air=1
+prop gsseacaveair zone.message=The pirates' bolt-hole: dry, a tarred rope down to the water, the crew's marks cut in the rock.
+place Loot_ChestSmall gsseacavechest at -4.5 -15.5 h=5.5 drop yaw=335
+prop gsseacavechest obj.name=gsseacavechest
+prop gsseacavechest loot.refill=0
+note gsseacavechest Pirates' sea chest | The crew's own chest, hidden from their captain: a bag of coins with a skull on every one, a spyglass lens and a coil of good rope.
+loot gsseacavechest TradeToken*3;Glass*2;Rope*3;MetalIngot*2
 
 # --- Settings, story items, notes, behaviours, quest (7 steps) ---------------------------------------------------------
 # --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea

@@ -1,0 +1,41 @@
+# Camp Blackwater's boathouse cellar (CIPlay camp_blackwater_cave, 11-12 w14 prep; in a test world 'CI ...').
+# Points as in the recipe (the origin frame): kit_st mouth at 43.5 47 (yaw 35: way in = +x +z), tunnel 7.3 m, the den ~22 m on
+# (centre ~54 62, on the pad flattened to 3 m); the sign cbcellarsign at 36 42; the hidden strongroom hatch cbcellarhatch at
+# 55 63.5 and chest cbcellarchest at 56 64.8; two rats; zone cb_cellar at 50.5 56.5. Floor ~3 m (a guess).
+# Offline-written, never run; the offset is the old one - re-read it after the build (the cave hill may move the land centre).
+island Camp Blackwater keep
+offset -0.4374 -1.2402
+hour 11
+weather Calm
+expect hidden cbcellarhatch
+expect hidden cbcellarchest
+
+# The knoll and the mouth from the boathouse path
+picture cb_cellar_out 34 +3 38 43.5 +1.5 47
+picture cb_cellar_side 52 +4 40 43.5 +1.5 47
+read BOATHOUSE CELLAR
+
+# The rats in the cellar (11-12 mixed monsters): alive, inside the cave
+wait 3
+expect animals Rat 2
+expect animalsinside Rat 2
+kill Rat
+expect animals Rat 0
+
+# In along the tunnel to the den
+walk 36 41 to 43.5 47 to 47.5 52.7 to 51 57.5 to 54 62
+zone cb_cellar
+picture cb_cellar_in 46 +2.5 51 54 +0.5 62 light=20
+
+# The hatch is hidden until Counsellor Shogo's third answer, then locked till talked: he is talked by the pick
+use Counsellor Shogo pick 3
+expect message Your funeral
+expect shown cbcellarhatch
+use cbcellarhatch
+expect hidden cbcellarhatch
+expect shown cbcellarchest
+open Camp strongroom
+picture cb_cellar_chest 52 +2.5 60 56 +0.5 64.8 light=20
+
+# Out again
+walk 54 62 to 51 57.5 to 47.5 52.7 to 43.5 47 to 36 41

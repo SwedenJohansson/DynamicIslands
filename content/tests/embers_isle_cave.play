@@ -1,0 +1,26 @@
+# Embers Isle's lava tube (CIPlay embers_isle_cave, 11-12 w14 prep; in a test world 'CI ...'). Points as in the recipe: the
+# new knoll hw_mount at -18 -20 (b 14, h 18); kit_dig mouth at -8 -28 (yaw 315: way in = -x +z), 3 m level, 10 m on, a room
+# at the end (~-21 -16.5); the sign eitubesign at -2 -34; a boar (eiboar) and a rat (eirat) inside; zone ei_tube at
+# -13.5 -22.5. Floor 3.96 (the shelf; a guess). The hunters' boars outside are not killed (kill takes every boar).
+# Offline-written, never run; the offset is the old one - re-read it after the build (a new hill may move the land centre).
+island Embers Isle keep
+offset 1.8103 -0.3116
+hour 11
+weather Calm
+
+# The knoll and the mouth from the south shore
+picture ei_tube_out -1 +3 -36 -8 +1.5 -28
+read scratched on a board
+
+# The cave's animals (11-12 mixed monsters): a boar and a rat, both inside
+wait 3
+expect animalsinside Boar 1
+expect animalsinside Rat 1
+kill Rat
+expect animalsinside Rat 0
+
+# In along the tube to the chamber (the boar is left alive: it attacks)
+walk -3 -33 to -8 -28 to -10.1 -25.9 to -13.5 -22.5
+zone ei_tube
+picture ei_tube_in -10 +2.5 -26 -20 +0.5 -17.5 light=20
+walk -13.5 -22.5 to -10.1 -25.9 to -8 -28 to -3 -33

@@ -1,0 +1,25 @@
+# Primeval Park's raptor burrow (CIPlay primeval_park_cave, 11-12 w14 prep; in a test world 'CI ...'). Points as in the
+# recipe: the new knoll hw_mount at 55 50 (b 16, h 16); kit_dig mouth at 38 50 (yaw 90: way in = +x), 3 m level, 10 m on,
+# a room at the end (~51..57); the sign ppburrowsign at 30 45; two hyenas inside; zone pp_burrow at 47 50. Floor 3.52 (a guess).
+# Offline-written, never run; the offset is the old one - re-read it after the build (a new hill may move the land centre).
+island Primeval Park keep
+offset -11.3586 -2.7132
+hour 11
+weather Calm
+
+# The knoll and the burrow's mouth from the paddock
+picture pp_burrow_out 30 +3 50 38 +1.5 50
+read RAPTOR BURROW
+
+# The "raptors" (11-12 mixed monsters): two hyenas, inside
+wait 3
+expect animals Hyena 2
+expect animalsinside Hyena 2
+kill Hyena
+expect animals Hyena 0
+
+# In to the chamber
+walk 31 47 to 34 50 to 38 50 to 41 50 to 47 50
+zone pp_burrow
+picture pp_burrow_in 43 +2.5 50 54 +0.5 50 light=20
+walk 47 50 to 41 50 to 38 50 to 34 50

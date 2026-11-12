@@ -12,6 +12,8 @@
 include lib_huts
 include lib_sea
 include lib_features
+include lib_highwater
+include lib_caves
 new
 gen Trees=0.2 Bushes=0.3 Rocks=0.5 Harvest=0.25 BeachThings=0.3
 gen Seed=9008 Radius=45 Height=14 Roughness=0.5 Peaks=2 Shape=6 Style=4 BeachWidth=0.5 Cliffs=0.2 PeakShape=0.45
@@ -180,6 +182,35 @@ where satchel
 where hunterstore
 where bountifulbarrel
 where boat
+
+# --- 11-12 (w14 prep): the lava tube (plan 14 row: DIG lava tubes from the vine cave piece; stone 3, mushrooms 2). DONE AS: a
+# separate dug tube in a new knoll on the south-west slope, not joined to Balboa's vine cave - that cave's passage and plug lie
+# under the raised ridge (x -3..14) and their exact place can't be known offline, so a dig into them could break its walls or
+# the boat's way out. The knoll: hw_mount at -18 -20 (b 14, h 18: foot 3.96, rings 7.9, 11.9, 15.5, summit 18), 12 m and more
+# from the hunters' boars, west of the ridge. The tube: kit_dig from the knoll's south-east foot (-8 -28, way in north-west,
+# yaw 315), 3 m level, 10 m on, a chamber at its end under the summit (~-21 -16.5); plain rock. 11-12 user: mixed cave monsters
+# - a boar and a rat in the tube. HEIGHTS guessed: the shelf cut level at the foot 3.96 (hw_mount rule), floor 3.96.
+call hw_mount x=-18 z=-20 b=14 h=18
+brush flatten at -8 -28 r=4 s=20 frames=60 h=3.96
+brush smooth at -6 -30 r=6 s=6 frames=20
+clear at -8 -28 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+clear at -18 -20 r=15 all only=(?i)boulder|tree|bush|palm|bamboo
+call kit_dig x=-8 z=-28 yaw=315 len=10 flat=3 r=1.75 slope=0 room=1 roomr=3.5 roomlen=6 dirt=0 mush=2 stone=3 vines=0 titanium=0 as=eitube
+prop eitube cave.rock=plain
+place Note_Sign eitubesign at -2 -34 ground yaw=315
+note eitubesign (scratched on a board) | Fire-mountain hole. Old lava made it. Warm inside. A pig lives there. - K.
+# cavecheck inside eiboar eirat eitubez
+place Creature_Boar eiboar at -20 -17.5 h=4.3
+prop eiboar creature.count=1
+prop eiboar creature.respawn=0
+place Creature_Rat eirat at -14 -23 h=4.3
+prop eirat creature.count=1
+prop eirat creature.respawn=0
+place Zone_Trigger eitubez at -13.5 -22.5 h=5.5
+prop eitubez obj.name=eitubez
+prop eitubez zone.id=ei_tube
+prop eitubez zone.radius=5
+prop eitubez zone.message=A lava tube. The rock is glassy black and still faintly warm.
 
 # --- Settings, story items, notes, behaviours, quest (5 steps) ---------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): flowers, pineapples, palms ----------

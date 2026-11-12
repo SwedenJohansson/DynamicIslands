@@ -14,6 +14,7 @@ include lib_rt
 include lib_relay
 include lib_sea
 include lib_features
+include lib_caves
 new
 # (nature: volcanic - few trees, scrub on the ash, black beaches; as Raft 2's volcanic islands have it)
 gen Trees=0.2 Bushes=0.3 Rocks=0.5 Harvest=0.25 BeachThings=0.3
@@ -275,6 +276,93 @@ where pet
 where getawaylocker
 where dockexit
 where dockbarrel
+
+# --- 11-12 (w14 prep): the lair halls under the volcano (plan 14 row: SYS big finale, 3 ST + DIG lair halls; titanium 1, stone
+# 3; ACID vat (side, safe=suit); SPIKES trap corridor (zone.pulse, lever)). DONE AS: one dug system (kit_sys: three tunnels, two
+# mouths, plain rock) into the volcano's south flank - no ST pieces, as their dens could not be kept off the hangar offline.
+# Mouths on the south slope: the halls' gate (6 -30) and the old service way (-10 -30), both way in north (yaw 0). The trunk
+# runs 18 m north to (6 -12), then bends 10 m west into the main hall (-4 -12) under the crater (the crater floor ~20 m over
+# it); the side branch 9 m in turns east 8 m to the vat room (14..20, -21..-19); the service way runs 14 m north and joins the
+# hall. 11 m and more from the generator, 30 m and more from the hangar and the dock; off every walk line (all on the west).
+#  - ACID: the vat room - a pool of the lair's coolant (zone r 2.5 round it, acid, safe=suit), the lair's spare-parts locker
+#    behind it; a suit box and a warning sign at the room's door. Side room: nothing else needs it.
+#  - SPIKES: the service way is the trap corridor - pins in its floor (zone r 2.2, pulse 2 s up / 3 s down, safe=none), a
+#    sign at its mouth, the shut-off lever at its inner end (reached from the hall by the main gate, never over the pins).
+#  - 11-12 user: mixed cave monsters - a bear in the main hall.
+# HEIGHTS guessed: both mouth shelves cut level at 5 m (the volcano's slope there not known, maybe 6-10 m: the cut is smoothed),
+# so every floor ~5 m; things dropped from 7.5 m, the zones at 5.3-6.5.
+brush flatten at 6 -30 r=4 s=20 frames=60 h=5
+brush flatten at -10 -30 r=4 s=20 frames=60 h=5
+brush smooth at 6 -33 r=6 s=6 frames=20
+brush smooth at -10 -33 r=6 s=6 frames=20
+clear at 6 -30 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+clear at -10 -30 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+call kit_sys x=6 z=-30 yaw=0 side=-1 len=18 bend=10 branch=9 blen=8 gap=16 in2=14 r=1.75 roomr=3.5 dirt=0 mush=0 stone=3 vines=0 titanium=1 as=clhalls
+prop clhalls cave.rock=plain
+place Note_Sign clhallsign at 13 -37 ground yaw=330
+note clhallsign LAIR - LOWER HALLS | Authorised staff only. Coolant vat room: suits ON. Service way: trap live unless the shut-off is down. The Chief's pet is loose in the main hall. - Operations
+# cavecheck inside clbear clhallz clvatpool clvatacid clvatlocker clvatsuits clvatwarn clspike clspikes clspikewarn cllever
+place Creature_Bear clbear at -3 -12 h=5.3
+prop clbear creature.count=1
+prop clbear creature.respawn=0
+place Zone_Trigger clhallz at 2 -12 h=6.5
+prop clhallz obj.name=clhallz
+prop clhallz zone.id=cl_halls
+prop clhallz zone.radius=5
+prop clhallz zone.message=The lair's main hall under the crater. Pipes run up into the dark - and something big is breathing.
+# the vat room (side branch): the pool, its mist, the acid zone, the locker beyond the pool; the suits and the sign at the door
+place TP_SeleneReactor_Water_Radiated clvatpool at 18.5 -19.5 h=4.9 scale=0.3 yaw=10
+place Zone_Atmosphere clvatmist at 18.5 -19.5 h=5.5
+prop clvatmist zone.radius=4
+prop clvatmist atmo.particles=steam
+prop clvatmist atmo.fog=#8cc030
+prop clvatmist atmo.fogAmount=0.3
+prop clvatmist atmo.light=#c8ff70
+prop clvatmist atmo.lightAmount=0.3
+place Zone_Trigger clvatacid at 18.5 -19.5 h=5.3
+prop clvatacid obj.name=clvatacid
+prop clvatacid zone.id=cl_vat
+prop clvatacid zone.radius=2.5
+prop clvatacid zone.hazard=acid
+prop clvatacid zone.damage=4
+prop clvatacid zone.safe=suit
+prop clvatacid zone.hazardMsg=The vat's coolant burns through boots and skin. A suit from the box at the door keeps it off.
+place Loot_ChestSmall clvatlocker at 20.5 -18.6 h=7.5 drop yaw=270
+prop clvatlocker obj.name=clvatlocker
+prop clvatlocker loot.refill=0
+note clvatlocker Vat room locker | The coolant crew's locker behind the vat: spare valves, a titanium bar and a can of sealant.
+loot clvatlocker TitaniumIngot*1;Bolt*4;CircuitBoard*1;Battery*1
+place "Box Big" clvatsuits at 14.6 -22.6 h=7.5 drop yaw=0
+prop clvatsuits obj.name=clvatsuits
+prop clvatsuits beh.use=Put on a coolant suit
+prop clvatsuits on.use=suit||180\nmessage||A rubber coolant suit, the lair's own, sealed at the wrists and boots - three minutes before the coolant gets through.
+place Note_Sign clvatwarn at 14.4 -19.6 h=7.5 drop yaw=90
+note clvatwarn VAT ROOM - SUITS ON | The coolant in the vat burns. Suits in the box by the door. Do not lean over the rail. - Operations
+# the service way (the second mouth's tunnel): pins in the floor 6..10 m in, the zone, the sign at its mouth, the lever inside
+place "Balboa_DecorationPrefabBase_Wooden Spikes" clspike at -10.8 -22 h=7 drop scale=0.25 yaw=0
+place "Balboa_DecorationPrefabBase_Wooden Spikes" clspike at -10.8 -20.8 h=7 drop scale=0.25 yaw=20
+place "Balboa_DecorationPrefabBase_Wooden Spikes" clspike at -10 -22 h=7 drop scale=0.25 yaw=50
+place "Balboa_DecorationPrefabBase_Wooden Spikes" clspike at -10 -20.8 h=7 drop scale=0.25 yaw=70
+place "Balboa_DecorationPrefabBase_Wooden Spikes" clspike at -9.2 -22 h=7 drop scale=0.25 yaw=100
+place "Balboa_DecorationPrefabBase_Wooden Spikes" clspike at -9.2 -20.8 h=7 drop scale=0.25 yaw=120
+prop clspike obj.name=clspike
+prop clspike tint.color=#5a5a5e
+prop clspike tint.amount=0.7
+place Zone_Trigger clspikes at -10 -21.4 h=5.3
+prop clspikes obj.name=clspikes
+prop clspikes zone.id=cl_spikes
+prop clspikes zone.radius=2.2
+prop clspikes zone.hazard=spikes
+prop clspikes zone.damage=4
+prop clspikes zone.safe=none
+prop clspikes zone.pulse=2,3
+prop clspikes zone.hazardMsg=Steel pins punch up out of the floor and drop back. A trap on the service way - time it, or find the shut-off.
+place Note_Sign clspikewarn at -11.2 -27.5 h=7.5 drop yaw=0
+note clspikewarn SERVICE WAY - TRAP LIVE | The floor pins fire every five seconds. Staff use the main gate. The shut-off lever is at the hall end of this passage. - Security
+place UT_JumpPuzzle_LiftMechanism_Lever cllever at -9 -17 h=7.5 drop yaw=180
+prop cllever obj.name=cllever
+prop cllever beh.use=Throw the trap's shut-off lever
+prop cllever on.use=hide|clspikes\nhide|clspike\nmessage||The lever clanks down. Somewhere in the floor a motor dies, and the pins sink away for good.
 
 # --- Settings, story items, notes, behaviours, quest (7 steps) ---------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): pineapples, palms, flowers ----------

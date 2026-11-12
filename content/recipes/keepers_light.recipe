@@ -15,6 +15,7 @@ include lib_relay
 include lib_huts
 include lib_sea
 include lib_features
+include lib_caves
 new
 # (nature: forest, Like Raft - pines clinging to the stacks' tops; Height 14 instead of the draft's 24: the stacks stand
 # 8-14 m out of the sea, low enough to join with bridges and stairs)
@@ -281,6 +282,33 @@ where oilbox
 where cisternthing
 where supplybarrel
 where goats
+
+# --- 11-12 (w14 prep): the sea cave under the light (plan 14 row: UW, ST sea cave under the light; chest, stone 2). The
+# keepers' smugglers' cave beside the lighthouse stack: an underwater straight cave (kit_uw, the cave tool, plain rock) from
+# the sea floor east of the light (68 46), way in west (yaw 270), to a dry den under a new sea stack off the light's shore
+# (middle ~29 46) - beside the light, not under it: the 6 m rule keeps a cave off the lamp, the horn, the locker, the keeper's
+# diary and the dolphins (the den stops 6 m and more from all of them). The keepers' cache in a chest.
+# The mouth on the sea floor, its pad flattened to 5 m down (smoothed out); the tunnel climbs 15 degrees for 4 pieces (size 0.7,
+# 29.1 m, +7.5 m) to the den (~22 m long; the cave tool raises the dome from the sea floor). HEIGHTS guessed: the pad -5 (the
+# natural sea floor there is not known: if it is much deeper the pad stands as a plinth - lower the pad or move the mouth in),
+# the den floor -5 + 7.5 = +2.5 m over the sea; air zone h 4, the chest dropped from 5.5 m. Sea caves get no monsters (11-12).
+brush flatten at 68 46 r=6 s=20 frames=60 h=-5
+brush smooth at 68 46 r=9 s=6 frames=20
+call kit_uw x=68 z=46 yaw=270 len=29.1 slope=15 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=klseacave
+prop klseacave cave.rock=plain
+# cavecheck inside klseacaveair klseacavechest
+place Zone_Trigger klseacaveair at 29 46 h=4
+prop klseacaveair obj.name=klseacaveair
+prop klseacaveair zone.id=kl_seacave
+prop klseacaveair zone.radius=8
+prop klseacaveair zone.repeat=1
+prop klseacaveair zone.air=1
+prop klseacaveair zone.message=A dry cave under the lighthouse stack. The light's beam once swept the water at its mouth - now only the dark.
+place Loot_ChestSmall klseacavechest at 31 47.5 h=5.5 drop yaw=270
+prop klseacavechest obj.name=klseacavechest
+prop klseacavechest loot.refill=0
+note klseacavechest Keepers' cache | The keepers' cache below the light: lamp oil, a spare wick, a tin of tobacco and a bottle with no label.
+loot klseacavechest Glass*2;Plastic*3;Rope*2;CopperIngot*1
 
 # --- Settings, story items, notes, behaviours, quest (6 steps) ---------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): flowers, birches, berries ----------

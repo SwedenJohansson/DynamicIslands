@@ -1,0 +1,28 @@
+# The Step Pyramid's tomb galleries (CIPlay step_pyramid_cave, 11-12 w14 prep; in a test world 'CI ...'). Points as in the
+# recipe: kit_sys, the tomb door at 22 -46 (yaw 270: way in = -x), the trunk 14 m to 8 -46, then 8 m to the burial hall at
+# 8 -38; the side gallery from 15 -46 down to 15 -52 and its room toward 13 -58 (two rats); the robbers' way from 22 -36 to
+# 12 -36 and on to the hall (its trap: see step_pyramid_spikes). The sign sptombsign at 30 -49; zone sp_tomb at 8 -41.
+# Floors ~2.5 m (a guess).
+# Offline-written, never run; the offset is the old one - re-read it after the build (a new hill may move the land centre).
+island The Step Pyramid keep
+offset -1.8093 10.1439
+hour 11
+weather Calm
+
+picture sp_tomb_out 31 +3 -46 22 +1.5 -46
+read Quintero's tag
+
+# The rats in the offering room (11-12 mixed monsters)
+wait 3
+expect animals Rat 2
+expect animalsinside Rat 2
+kill Rat
+expect animals Rat 0
+
+# In by the tomb door, a look into the offering room, on to the burial hall
+walk 28 -46 to 22 -46 to 15 -46 to 15 -51 to 14 -55
+picture sp_offering_in 15 +2 -48 13.5 +0.5 -57 light=20
+walk 14 -55 to 15 -51 to 15 -46 to 8 -46 to 8 -41
+zone sp_tomb
+picture sp_tomb_in 8 +2 -45 8 +0.5 -38 light=20
+walk 8 -41 to 8 -46 to 22 -46 to 28 -46

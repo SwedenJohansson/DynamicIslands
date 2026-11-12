@@ -12,7 +12,7 @@
 # (canteen blueprint).
 #
 # Built by the recipe player (CIRecipe camp_blackwater) through the editor's own operations.
-# SILVER 10-26: the new land - Pike Knob with the ranger's radio mast, Bear Hollow, Walt Pruitt at the ruined house (a lamp puzzle), a plane wreck, a jump course, a set of five camp badges
+# SILVER 10-26: the new land - Pike Knob with the ranger's radio mast, Bear Hollow, Counsellor Shogo (was Walt Pruitt) at the ruined house (a lamp puzzle), a plane wreck, a jump course, a set of five camp badges
 include lib_huts
 include lib_relay
 include lib_sea
@@ -20,6 +20,7 @@ include lib_areas
 include lib_highwater
 include lib_features
 include lib_silver
+include lib_caves
 new
 # (nature: forest, Like Raft's Balboa - birch and pine round the lake; the camp clearing the recipe's own)
 gen Trees=0.21 Bushes=0.38 Rocks=0.42 Harvest=0.1 BeachThings=0.3
@@ -239,7 +240,7 @@ call shallows r=72 deep=5 n=2
 call shallows x=12 z=38 r=14 deep=3 seed=90
 
 # --- SILVER 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Pike Knob ------
-# Pike Knob with the ranger's radio mast on it, Bear Hollow, the ruined house where Walt Pruitt waits (four lamps round it: a puzzle), a plane wreck,
+# Pike Knob with the ranger's radio mast on it, Bear Hollow, the ruined house where Counsellor Shogo (was Walt Pruitt) waits (four lamps round it: a puzzle), a plane wreck,
 # a jump course, five camp badges about the island (a set), and at the house the camp loudspeaker that wants the radio valve and the amplifier fuse
 call hw_zone x=55.07 z=4.35 al=cb_trailz id=cb_trail r=5 msg="The trail up Pike Knob starts here - round and up."
 call hw_zone x=76 z=6 al=cb_summitz id=cb_summit r=8 h=1 msg="The top of Pike Knob. The whole island below you."
@@ -249,8 +250,18 @@ call hw_mast x=73 z=8 h0=18 lv=6 a=cb_mast chest=cb_topchest top=Placeable_Lante
 call ar_cave x=-10 z=-80 h=3 yaw=0 al=cb_caverock chest=cb_cavechest
 call hw_zone x=-11 z=-71 al=cb_cavez id=cb_cave r=4 h=1 msg="Bear Hollow. Water drips somewhere in the dark."
 call ar_ruin x=-78 z=-4 h=3.5 yaw=0 w=3 d=2 al=cb_ruin
-call ss_islander x=-79 z=-8.5 yaw=200 al=cb_isl nm="Walt Pruitt" pose=lean
-prop cb_isl talk.text=You came in by boat? Then you missed the ranger too. He came once a week. Then he stopped.\n---\nI'm the caretaker. Thirty summers. I stay when the kids go home - somebody has to mend the canoes.\n---\nThe loudspeaker wants its valve back from the radio mast on Pike Knob, and the fuse the kids hid in Bear Hollow. Bring both and we hear the old reel again.\n---\nAnd my porch lamps - four round the cottage. Each one you turn wakes the next one too. Light all four and look behind the back wall.
+# --- 11-12 (w14 prep): the islander upgraded - Counsellor Shogo (was Walt Pruitt, the caretaker), the camp counsellor who stayed
+# behind with Dana; he sits at the ruined house (a chair under him: on bare ground the sit pose floats - w10 Hollins r4). His
+# answers: what is in the boathouse (journal), why he is still here (message), I am going in (shows the strongroom hatch in the
+# boathouse cellar, the knoll behind the boathouse; the hatch is also locked until someone talked to him). The quest step names him.
+place Placeable_Chair_Wood cb_islchair at -79 -8.5 ground sit yaw=200
+prop cb_islchair obj.name=cb_islchair
+call ss_islander x=-79 z=-8.5 yaw=200 al=cb_isl nm="Counsellor Shogo" pose=sit
+prop cb_isl islander.character=Shogo
+prop cb_isl talk.text=Whatever you do, do not go into the boathouse after dark.\n---\nYou came in by boat? Then you missed the ranger too. He came once a week. Then he stopped.\n---\nI'm a counsellor here. Was. The kids went home early and I stayed with Dana to close up. Somebody has to mend the canoes.\n---\nThe loudspeaker wants its valve back from the radio mast on Pike Knob, and the fuse the kids hid in Bear Hollow. Bring both and we hear the old reel again.\n---\nAnd my porch lamps - four round the cottage. Each one you turn wakes the next one too. Light all four and look behind the back wall.\n> What is in the boathouse?\n> Why are you still here?\n> I am going in.
+prop cb_isl on.choice1=journal|The boathouse cellar|Counsellor Shogo, at the ruined house:\n\nIn the knoll behind the old boathouse there is a cellar the first camp dug for the ice and the canoe gear. We told the kids it was haunted so they would keep out. Then the bear came off the ridge, and the noises down there stopped being a story.\n\nThe hatch at the back of the cellar is the camp's strongroom: the season's spare kit and everything we took off the kids. The padlock key is on my belt.\nmessage||Shogo looks across the lake at the boathouse for a long time before he answers.
+prop cb_isl on.choice2=message||"Dana said she would fire the flare from the lookout. I am waiting to see it." He does not look up at the hill.
+prop cb_isl on.choice3=show|cbcellarhatch\nmessage||"Your funeral." He unhooks a key from his belt. "The cellar is in the knoll behind the boathouse, up the path from its shore. The hatch at the back is open to you now."
 call ss_lamp x=-85 z=-5 al=cb_lamp1 nm="Porch lamp 1" grp="Porch lamps" on=0
 call ss_lamp x=-79 z=2 al=cb_lamp2 nm="Porch lamp 2" grp="Porch lamps" on=1
 call ss_lamp x=-72 z=-5 al=cb_lamp3 nm="Porch lamp 3" grp="Porch lamps" on=0
@@ -325,6 +336,47 @@ call ar_plants_hill x=54 z=62 r=16 seed=26494
 call ar_plants_hill x=48 z=-52 r=15 seed=26495
 call ar_plants_hill x=-60 z=-58 r=14 seed=26496
 call ar_plants_hill x=76 z=6 r=22 seed=26497
+
+# --- 11-12 (w14 prep): the boathouse cellar (plan 14 row: ST boathouse cellar, talked-gated; dirt 2, mushrooms 2). The first camp
+# dug a cellar into the knoll behind the old boathouse for the ice and the canoe gear: a straight cave (kit_st, the cave tool,
+# size 0.7, hill=1: the cave hill domes a knoll over the empty pad at 54 62, plain rock) up the path from the boathouse's shore.
+# The mouth (43.5 47) faces down the path to the boathouse (12 m and more from the boathouse zone, the last note, the bait and the
+# Ridge Bear); one tunnel 7.3 m, the den ~22 m on behind it (centre ~54 62, on the pad). In the den's floor the strongroom hatch,
+# hidden until Counsellor Shogo's third answer (I am going in) shows it and locked until someone talked to him; under it the
+# camp's strongroom chest. 11-12 user: mixed cave monsters - two rats in the cellar (this world: rats here, a polar bear in the
+# Highmoor wine cellar, hyenas in Primeval Park's burrows, a boar in the Embers lava tubes, a bear in Crater Lair's halls, rats in
+# the Step Pyramid's tomb; the sea caves none). HEIGHTS guessed: the pad and the path are flattened to 3 m, so the den floor ~3 m;
+# hatch and chest dropped from 8 m, rats at 3.3, the zone at 4.5.
+clear at 54 62 r=13 all only=(?i)boulder|tree|bush|palm|bamboo|mango
+call kit_st x=43.5 z=47 yaw=35 len=7.3 slope=0 end=room size=0.7 hill=1 dirt=2 mush=2 stone=0 vines=0 as=cbcellar
+prop cbcellar cave.rock=plain
+place Note_Sign cbcellarsign at 36 42 ground yaw=55
+note cbcellarsign BOATHOUSE CELLAR - KEEP OUT | Ice store and canoe gear. Campers keep out. Counsellors only, and never after dark. Ask a counsellor for the strongroom key.
+# cavecheck inside cbcellarhatch cbcellarchest cbratA cbratB cbcellarz
+place TangaroaHatchRoom_Hatch cbcellarhatch at 55 63.5 h=8 drop yaw=35
+prop cbcellarhatch obj.name=cbcellarhatch
+prop cbcellarhatch beh.hidden=1
+prop cbcellarhatch beh.use=Open the strongroom hatch
+prop cbcellarhatch if.use=talked|Counsellor Shogo
+prop cbcellarhatch on.use=hide|cbcellarhatch\nshow|cbcellarchest\nmessage||The hatch swings up on the camp's strongroom: canoe paddles, a first-aid tin and a crate the kids were never meant to find.
+prop cbcellarhatch else.use=message||The strongroom hatch is padlocked. Scratched on the lid: "Key - Shogo."
+place Loot_ChestSmall cbcellarchest at 56 64.8 h=8 drop yaw=35
+prop cbcellarchest obj.name=cbcellarchest
+prop cbcellarchest beh.hidden=1
+prop cbcellarchest loot.refill=0
+note cbcellarchest Camp strongroom | The camp's strongroom under the cellar: spare canoe gear, the first-aid tin and the confiscated box - fireworks, a penknife and a bag of sweets.
+loot cbcellarchest Rope*3;HealingSalve*2;Leather*2;Nail*8;Plank*3
+place Creature_Rat cbratA at 51 58.5 h=3.3
+prop cbratA creature.count=1
+prop cbratA creature.respawn=0
+place Creature_Rat cbratB at 57.5 60 h=3.3
+prop cbratB creature.count=1
+prop cbratB creature.respawn=0
+place Zone_Trigger cbcellarz at 50.5 56.5 h=4.5
+prop cbcellarz obj.name=cbcellarz
+prop cbcellarz zone.id=cb_cellar
+prop cbcellarz zone.radius=5
+prop cbcellarz zone.message=The boathouse cellar. Cold, damp, and something scratching at the back of it.
 
 # ===== Settings, story items, notes, behaviours, quest (19 steps) ==========================================================
 info title=Camp Blackwater
@@ -405,7 +457,7 @@ prop forest zone.radius=60
 story cb_top|Radio valve|Bolt|The big glass valve out of the ranger's radio set, still warm from the sun on the mast.
 story cb_cave|Amplifier fuse|Bolt|The camp loudspeaker's fuse, which the kids hid in the bear's old den for a dare.
 story cb_fixed|Camp loudspeaker working|Bolt|The camp loudspeaker, working again.
-note cb_hint Caretaker's chalk board | LOUDSPEAKER DEAD. Wants the valve off the ranger's radio mast on top of Pike Knob and the fuse the kids hid in Bear Hollow. Ask Walt at the cottage.
+note cb_hint Caretaker's chalk board | LOUDSPEAKER DEAD. Wants the valve off the ranger's radio mast on top of Pike Knob and the fuse the kids hid in Bear Hollow. Ask Counsellor Shogo at the cottage.
 note cb_topchest Ranger's radio mast box | A box lashed to the top of the ranger's radio mast.
 loot cb_topchest story:cb_top*1;Rope*2;Scrap*2
 note cb_cavechest Bear Hollow chest | A chest at the back of Bear Hollow, dry under the rock.
@@ -413,7 +465,7 @@ loot cb_cavechest story:cb_cave*1;Nail*6;Plank*3
 note cb_rewnote Last broadcast | The loudspeaker crackles and a reel starts: the farewell song of the last session, and then the camp director: 'Camp is closed. Go home. Do not go up the ridge.' Somebody cut the tape right after.
 note cb_rewchest Camp loudspeaker reward | What the camp loudspeaker kept.
 loot cb_rewchest CopperIngot*2;Bolt*3;Rope*2
-note cb_lampchest Walt's tackle box | Walt's tackle box under a stone behind the cottage: his lures, his tobacco tin and his savings.
+note cb_lampchest Shogo's tackle box | Shogo's tackle box under a stone behind the cottage: his lures, his whistle tin and his savings.
 loot cb_lampchest CopperIngot*2;TradeToken*2;Rope*2
 note cb_setchest Lost and found box | The camp's lost and found: every badge back in its place, and what the kids left behind.
 loot cb_setchest Glass*3;Bolt*4;MetalIngot*1
@@ -439,7 +491,7 @@ step read|Dana's last note|1|Read the note pinned inside the old boathouse
 step reach|lookout|1|Climb to the fire lookout on the hill
 step collect|story:lockerkey|1|Fire the flare for the ranger boat and take the key from the nail by the post
 step read|Caretaker's chalk board|1|Read the caretaker's chalk board at the ruined house by the camp loudspeaker
-step talk|Walt Pruitt|1|Talk to Walt Pruitt at the ruined house
+step talk|Counsellor Shogo|1|Talk to Counsellor Shogo at the ruined house
 step reach|cb_trail|1|Find the foot of the trail up Pike Knob, the big hill
 step reach|cb_summit|1|Climb the trail to the top of Pike Knob
 step collect|story:cb_top|1|Climb the ranger's radio mast and take the radio valve from its box
