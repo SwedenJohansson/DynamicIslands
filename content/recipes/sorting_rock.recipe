@@ -271,6 +271,11 @@ call ar_plants_hill x=44 z=-48 r=14 seed=27596
 clear at 58 14 r=19 all only=(?i)boulder|tree|bush|palm|bamboo|mango
 call kit_dig x=40 z=14 yaw=90 len=12 flat=3 r=1.75 slope=0 room=1 roomr=3.5 roomlen=6 dirt=3 mush=2 stone=0 vines=0 titanium=0 as=srcellar
 prop srcellar cave.rock=plain
+# 11-12 user: mixed cave monsters - a boar has dug in among the old perishables (one, the floor + 0.3, no drop).
+# cavecheck inside srboar
+place Creature_Boar srboar at 58 14 h=5.1
+prop srboar creature.count=1
+prop srboar creature.respawn=0
 place Zone_Trigger srcellarz at 54 14 h=6
 prop srcellarz obj.name=srcellarz
 prop srcellarz zone.id=sr_cellar

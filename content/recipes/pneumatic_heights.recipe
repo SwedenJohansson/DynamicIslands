@@ -227,6 +227,12 @@ call ar_plants_hill x=8 z=48 r=12 seed=27495
 clear at 57 2 r=21 all only=(?i)boulder|tree|bush|palm|bamboo|mango
 call kit_sys x=37 z=2 yaw=90 side=1 len=14 bend=6 branch=10 blen=3 gap=8 in2=9 r=1.75 roomr=4 dirt=0 mush=2 stone=2 vines=0 titanium=1 as=phtubes
 prop phtubes cave.rock=plain
+# 11-12 user: mixed cave monsters - a bear has made the sorting room its den (this world: bear here, rats under Parcel
+# Canopy, a boar in Sorting Rock's cellar, none in the vault or the cable room). One per place, the floor + 0.3, no drop.
+# cavecheck inside phbear
+place Creature_Bear phbear at 48 9 h=6.0
+prop phbear creature.count=1
+prop phbear creature.respawn=0
 place Zone_Trigger phtubesz at 48 8 h=7
 prop phtubesz obj.name=phtubesz
 prop phtubesz zone.id=ph_tubes

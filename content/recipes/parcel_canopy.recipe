@@ -149,6 +149,14 @@ pop
 clear at 54 4 r=20 all only=(?i)boulder|tree|bush|palm|bamboo|mango
 call kit_dig x=35 z=4 yaw=90 len=14 flat=2 r=1.75 slope=0 room=1 roomr=3.5 roomlen=6 dirt=0 mush=4 stone=0 vines=3 titanium=0 gate=1 as=pcroots
 prop pcroots cave.rock=plain
+# 11-12 user: mixed cave monsters - rats nest in the root cellar (two, one per place, the floor + 0.3, no drop).
+# cavecheck inside pcratA pcratB
+place Creature_Rat pcratA at 54 3 h=5.6
+prop pcratA creature.count=1
+prop pcratA creature.respawn=0
+place Creature_Rat pcratB at 56 5.2 h=5.6
+prop pcratB creature.count=1
+prop pcratB creature.respawn=0
 place Zone_Trigger pcrootsz at 49 4 h=6.5
 prop pcrootsz obj.name=pcrootsz
 prop pcrootsz zone.id=pc_roots
