@@ -1,17 +1,18 @@
-# Pendulum Isle's bob-cutters' cut (CIPlay pendulum_isle_caves, 11-11 w06; in a test world 'CI ...'). Points as in
-# the recipe: an open cut along Bob Hill's foot from -44.5 -23.4 to -60.4 -26.9 under its own mound, the cutters' box
-# at -52.4 -25.2. Walk through end to end and back. Heights over the island's water are guesses.
+# Pendulum Isle's bob-cutters' drift (CIPlay pendulum_isle_caves, 11-11 w06, dug 11-12; in a test world 'CI ...').
+# Points as in the recipe: the mouth in Bob Hill's south-east flank at -50.1 -21.6, the drift to -52.5 -15, the
+# working room to -53.5 -12.3 with the cutters' box at -53.6 -13.4. Walk in from the sand, open the box, walk out.
 island Pendulum Isle keep
 offset 0 0
 hour 11
 weather Calm
+# (a CI world's bag emptied first: a full bag drops the loot)
+empty
 
-picture pi_cut_out -38 6 -21 -46 4 -24
-walk -41.5 -22.7 to -44.5 -23.4 to -48.5 -24.3 to -52.4 -25.2 below=10
-picture pi_cut_in -45 5 -23.5 -56 4 -26 light=20
+picture pi_cut_out -48.4 +2 -26.3 -50.1 6 -21.6
+walk -48.4 -26.3 to -50.1 -21.6 to -51.3 -18.3 to -52.5 -15 to -53 -13.6 below=12
+picture pi_cut_in -51 8 -19 -53.6 6.5 -13 light=20
 open Bob-cutters' box
 wait 2
 expect item Nail 6
-walk -52.4 -25.2 to -56.4 -26 to -60.4 -26.9 to -63.4 -27.6 below=10
-picture pi_cut_far -66 5 -28.3 -55 4 -25.8
-walk -63.4 -27.6 to -60.4 -26.9 to -52.4 -25.2 to -44.5 -23.4 to -41.5 -22.7 below=10
+picture pi_cut_back -53.3 7.5 -13 -50.1 6.5 -21.6 light=20
+walk -53 -13.6 to -52.5 -15 to -51.3 -18.3 to -50.1 -21.6 to -48.4 -26.3 below=12

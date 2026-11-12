@@ -275,19 +275,22 @@ quest reward=Battery*2;CopperIngot*2
 call treasure x=0 z=0 r=14 n=1 seed=8830
 prop treasure8830 treasure.loot=TitaniumOre*3
 
-# --- 11-11 (w06): the bob-cutters' cut - optional (plan 06 row: ST through the rock base; dirt 2, mushrooms 2). No
+# --- 11-11 (w06): the bob-cutters' drift - optional (plan 06 row: ST through the rock base; dirt 2, mushrooms 2). No
 # quest step needs it. The iron for the pendulum's bob was cut out of Bob Hill's foot: the cutters drove a short
-# straight cut along the hill's south foot, below the trail's turns, open at both ends, and left their wedges in it.
-# From the mouth at -44.5 -23.4 west to -60.4 -26.9 (both ends open, 3 m out from the hill's foot, away from the walks); a cave-tool cut (kit_st,
-# end=open) with its own rock over it, set along the foot's edge, not into the hill (pieces in the generator's rock stay
-# buried, lesson 108). No rats. cavecheck: 6 m and more from the bob-foot, the dune and the walks.
+# drift into the hill's south-east flank, below the trail's first turn, and opened a working room at its end where
+# they left their wedges. A dug cave (11-12: the kit_st cut along the foot showed a square slab face at both ends and
+# a see-through shell; the plan allows a dig where a kit looks poor): mouth at -50.1 -21.6 (r 23 from the hill's
+# middle -58 0), the drift 7 m in towards the middle, the room to -53.5 -12.3 (r 13, under 18 m of hill). The trail's
+# pad over the drift (-50.8 -19.7, h about 11) stays 3 m over its roof. No rats. cavecheck: away from the bob-foot zone and the walks.
 origin
-clear at -44.5 -23.4 r=4 only=(?i)boulder|rock|tree|bush|bamboo
-clear at -60.4 -26.9 r=4 only=(?i)boulder|rock|tree|bush|bamboo
-call kit_st x=-44.5 z=-23.4 yaw=257.6 len=16.3 slope=0 end=open size=0.7 hill=1 dirt=2 mush=2 stone=0 vines=0 titanium=0 as=pibob
+brush smooth at -50.1 -21.6 r=5 s=8 frames=60
+clear at -50.1 -21.6 r=4 only=(?i)boulder|rock|tree|bush|bamboo
+dig -50.1,-21.6 -52.5,-15 r=1.5 slope=0 as=pibob
+dig -52.5,-15 -53.5,-12.3 r=2.5 slope=0 as=pibob
+caveloot pibob dirt=2 mush=2 stone=0 vines=0 titanium=0
 prop pibob cave.rock=plain
 # cavecheck inside pibobbox
-place Loot_ChestSmall pibobbox at -52.4 -25.2 h=5.5 drop yaw=78
+place Loot_ChestSmall pibobbox at -53.6 -13.4 h=7 drop yaw=160
 prop pibobbox obj.name=pibobbox
 prop pibobbox loot.refill=0
 note pibobbox Bob-cutters' box | The cutters' box, left in the cut when the bob was hoisted: wedges, a worn hammer head, and the offcuts of the lodestone iron. Scratched inside the lid: 412 KG - SHE SWINGS.

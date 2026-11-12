@@ -18,7 +18,8 @@ expect hidden lqshedchest
 # Pilot Rouhi on the quay's edge
 snap lq_islander Pilot Rouhi 0 3.5 0.6
 use Pilot Rouhi
-expect step 0
+# (standing on the quay already did step 0, "reach quay"; talking moves no step)
+expect step 1
 use Pilot Rouhi pick 1
 expect message lodestone under the sea
 use Pilot Rouhi pick 2

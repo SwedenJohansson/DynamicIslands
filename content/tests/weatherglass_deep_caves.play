@@ -5,14 +5,18 @@ island Weatherglass Deep keep
 offset 0 0
 hour 11
 weather Calm
+# (a CI world's bag emptied first: a full bag drops the loot)
+empty
 
-picture wg_cave_out 13 4 -2 20 2 0.5
-walk 15 -1.4 to 19 0 to 24.6 2 to 30.3 4.1 to 35 5.8 to 38.3 7 below=-2
+picture wg_cave_out 12.5 +2.5 -2.5 19.5 +1 0.3
+walk 15 -1.4 to 19 0 to 24.6 2 to 30.3 4.1 below=5
+# (the zone placed at 38.3 7 ends up with its middle at 29.7 5.2 (CIReach, 11-12); 38.3 7 is 8+ m off it, so check the air here)
 air wg_glassroom here
+walk 30.3 4.1 to 35 5.8 to 38.3 7 below=7.5
 picture wg_cave_in 28 5 3.4 39 4.5 7.5 light=20
 picture wg_room_back 42 6 8.5 30 4 4 light=20
 open Keeper's spare case
 wait 2
 expect item Glass 2
 air wg_glassroom
-walk 38.3 7 to 35 5.8 to 30.3 4.1 to 24.6 2 to 19 0 to 15 -1.4 below=-2
+walk 38.3 7 to 35 5.8 to 30.3 4.1 to 24.6 2 to 19 0 to 15 -1.4 below=7.5

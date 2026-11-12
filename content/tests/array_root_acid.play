@@ -6,6 +6,8 @@ island The Array Root keep
 offset 0 0
 hour 11
 weather Calm
+# (a CI world's bag emptied first: a full bag drops the loot)
+empty
 
 picture ar_store_out -22.7 7 -36 -22 5 -26
 expect shown arcool

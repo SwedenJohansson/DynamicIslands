@@ -237,6 +237,7 @@ prop buoyzone on.enter=camera|buoy|rootcam|6|40
 # across: the crew's work suits in the box by the door, or the drain valve on the store's side wall, which hides the
 # acid. The store's open door faces away from the pit; the box and the warning board stand beside it.
 brush flatten at -22 -25 r=6 s=20 frames=200 h=4
+brush flatten at -22.75 -30.5 r=3 s=20 frames=200 h=4
 clear at -22 -25 r=5 only=(?i)boulder|rock|tree|bush|bamboo|coral
 push at -25 -28 h=4
 call shed w=4 d=4 door=1
