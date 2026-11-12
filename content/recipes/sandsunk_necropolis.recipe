@@ -17,6 +17,7 @@ include lib_sea
 include lib_features
 include lib_areas
 include lib_highwater
+include lib_caves
 new
 # (nature: a desert island at Raft's density - few trees, rocks, cactus and dry bushes; one reef far out)
 gen Trees=0.05 Bushes=0.3 Rocks=0.25 Harvest=0.15 BeachThings=0.3
@@ -41,6 +42,16 @@ call hw_mount x=-40 z=45 b=18 h=22
 call hw_trail x=-40 z=45 b=18 h=22 a0=135 turn=300 n=32 h0=3
 call ar_cave x=62 z=-10 h=2 yaw=180 al=embalmrock chest=embalmchest
 call hw_basin x=50 z=-62 r=12 h=-10
+# (11-12 w07: the embalmers' knoll behind the west tomb fronts - its own rock (cave.rock=plain) over the dug galleries,
+# summit ~18 m; the old west dune at -33 2 goes under it. Its plaza face is steep, so the galleries start in the fronts)
+brush flatten at -46 -2 r=20 s=20 frames=200 h=8
+brush flatten at -46 -2 r=15 s=20 frames=200 h=13
+brush flatten at -47 -3 r=10 s=20 frames=200 h=18
+brush smooth at -46 -2 r=19 s=8 frames=40
+brush flatten from -22.2 -10 to -22.2 10 r=1.6 s=20 frames=60 h=3
+# (11-12: the knoll falls off over the side gallery near -32 11, where a bit of its rim rock stood out of the ground)
+brush flatten at -31.5 10.5 r=3.5 s=20 frames=80 h=9
+clear at -46 -2 r=21 only=(?i)boulder|rock|tree|bush|bamboo|cactus
 origin
 clear at 0 2 r=26
 clear from 0 -74 to 0 -20 r=5
@@ -174,10 +185,12 @@ prop gate tint.amount=0.7
 
 # --- Tomb fronts half-buried in the dune slopes, west and east: sandstone fronts of three blocks with a pillar each
 # side, their backs in the dune ------------------------------------------------------------------------------------------
+# (11-12 w07: the west fronts at 0 and 6 stand open now - the embalmers' galleries go in behind them; only the
+# front at -6 keeps its blocks)
+place Block_Wall_Tier3 frontwest at -24.4 -7.5 h=3.05 yaw=90 sy=1.3
+place Block_Wall_Tier3 frontwest at -24.4 -6 h=3.05 yaw=90 sy=1.3
+place Block_Wall_Tier3 frontwest at -24.4 -4.5 h=3.05 yaw=90 sy=1.3
 for tz -6 6 6
-place Block_Wall_Tier3 frontwest at -24.4 {$tz-1.5} h=3.05 yaw=90 sy=1.3
-place Block_Wall_Tier3 frontwest at -24.4 $tz h=3.05 yaw=90 sy=1.3
-place Block_Wall_Tier3 frontwest at -24.4 {$tz+1.5} h=3.05 yaw=90 sy=1.3
 place RT_PillarThick frontwestcol at -23.6 {$tz-2.4} h=3 sy=0.55
 place RT_PillarThick frontwestcol at -23.6 {$tz+2.4} h=3 sy=0.55
 place Block_Wall_Tier3 fronteast at 24.4 {$tz-1.5} h=3.05 yaw=90 sy=1.3
@@ -239,6 +252,47 @@ prop shrinechest loot.refill=0
 note shrinechest Shrine offering box | The harbour shrine's offering box: green glass, copper and iron, and two of the sea kings' tokens.
 call treasure x=36 z=-58 r=12 n=1 seed=31017 kind=0
 prop treasure31017 treasure.loot=MetalOre*2;Glass*3;Rope*2
+
+# --- 11-12 (w07): the embalmers' galleries behind the tomb fronts - optional, no quest step. Two of the tomb fronts
+# the dune slopes swallowed were never false: the embalmers cut galleries behind them into the knoll's rock, a long
+# hall where the dead were laid out, a niche room for the jars. Off the hall a narrow passage to the embalmers' own
+# store, and the stakes they set in it against grave robbers still thrust up and fall back (zone.pulse) - a lever at
+# the passage's start stops them. All dug (cave.rock=plain): a 3 m floor from the plaza, the knoll's top 18 m.
+# cavecheck: 3 m and more from the kept front, its pillars outside the mouths; the hall 15 m from the great tomb.
+dig -23,0 -34,0 r=1.75 slope=0 as=sngal
+dig -34,0 -41,0 r=3.2 as=sngal
+dig -23,6 -33,6.5 -38,3 r=1.75 slope=0 as=sngal
+dig -41,1.5 -45,6.5 r=3 as=sngal
+caveloot sngal dirt=4 mush=3 stone=2 vines=0 titanium=0 light=0 wet=0
+prop sngal cave.rock=plain
+# the store passage, off the hall's far end and away from the plaza, then the store (its own group: no loot among the stakes)
+dig -40,-2 -43,-6 -45.5,-10 r=1.6 as=snspike
+dig -45.5,-10 -47.5,-14.5 r=3 as=snspike
+prop snspike cave.rock=plain
+# cavecheck inside snwarn snlever snstakes snstake1 snstake2 snstore
+place Note_Sign snwarn at -38.6 -2.6 h=5.8 sit drop yaw=150
+note snwarn THE STORE OF THE EMBALMERS | Who goes on to the store without the lever's word goes in among the dead. The stakes rise and fall with the breath of the sea.\n- the embalmers
+place UT_JumpPuzzle_LiftMechanism_Lever snlever at -39.4 -3.4 h=5.8 sit drop yaw=135
+prop snlever obj.name=snlever
+prop snlever beh.use=Pull the embalmers' lever
+prop snlever on.use=hide|snstakes\nhide|snstake1\nhide|snstake2\nmessage||Stone grinds on stone deep in the rock. The stakes in the passage sink into the floor and stay down.
+place "Balboa_DecorationPrefabBase_Wooden Spikes" snstake1 at -42.6 -5.4 h=5.8 sit drop scale=0.25 yaw=40
+prop snstake1 obj.name=snstake1
+place "Balboa_DecorationPrefabBase_Wooden Spikes" snstake2 at -43.6 -6.8 h=5.8 sit drop scale=0.25 yaw=220
+prop snstake2 obj.name=snstake2
+place Zone_Trigger snstakes at -43 -6 h=5.6
+prop snstakes obj.name=snstakes
+prop snstakes zone.id=sn_stakes
+prop snstakes zone.radius=1.7
+prop snstakes zone.hazard=spikes
+prop snstakes zone.damage=4
+prop snstakes zone.safe=none
+prop snstakes zone.pulse=2,2
+prop snstakes zone.hazardMsg=Stakes! They thrust up out of the floor and fall back. Time the gap - or find the lever that stops them.
+place Loot_ChestSmall snstore at -48 -15.4 h=5.8 drop yaw=20
+note snstore Embalmers' store | The embalmers' store: linen, resin and the oils for the kings, and a handful of trade tokens no robber reached.
+loot snstore TradeToken*3;Rope*2;Leather*2;Bolt*2
+prop snstore loot.refill=0
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Sandsunk Necropolis

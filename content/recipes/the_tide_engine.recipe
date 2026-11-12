@@ -202,6 +202,49 @@ place Creature_PolarBear beast at 0 -10 h=2.2
 prop core tint.color=#a8743c
 prop core tint.amount=0.4
 
+# --- 11-12 (w07): the Engine's coolant sump - optional, no quest step (plan 07 row: ACID, safe=suit). The Engine ran
+# cool on sea water and the kings' green salts; what it spent drained into a sump in the ring's floor, and it still
+# burns. The keepers' locker sank in the middle of it. The keepers' work suits wait in the box at the sump's rim; the
+# sump's sides are a gentle slope (a way out all round). 12 m and more from the halls, the shop and the sluice.
+brush flatten at 30 -30 r=5 s=20 frames=300 h=3.6
+brush flatten at 30 -30 r=3.5 s=20 frames=300 h=3.4
+brush smooth at 30 -30 r=5.5 s=6 frames=15
+clear at 30 -30 r=7 only=(?i)boulder|rock|tree|bush|bamboo
+# (the coolant: a pool of green water in the dish, crusted rocks at its edge, a green steam - the Abyss's vent look)
+place TP_SeleneReactor_Water_Radiated tesumppool at 30 -30 ground scale=0.3 yaw=30
+place SmallRock_02 tesumprock at 27.4 -31.6 h=5 drop yaw=60 scale=0.45 sy=0.5
+place SmallRock_02 tesumprock at 32.4 -28.2 h=5 drop yaw=170 scale=0.45 sy=0.5
+place SmallRock_02 tesumprock at 31.8 -32.6 h=5 drop yaw=280 scale=0.45 sy=0.5
+prop tesumprock tint.color=#a4c428
+prop tesumprock tint.amount=0.7
+place Zone_Atmosphere tesumpmist at 30 -30 h=4
+prop tesumpmist zone.radius=4
+prop tesumpmist atmo.particles=steam
+prop tesumpmist atmo.fog=#8cc030
+prop tesumpmist atmo.fogAmount=0.3
+prop tesumpmist atmo.light=#c8ff70
+prop tesumpmist atmo.lightAmount=0.3
+place Zone_Trigger tesump at 30 -30 h=4
+prop tesump obj.name=tesump
+prop tesump zone.id=te_sump
+prop tesump zone.radius=3.4
+prop tesump zone.hazard=acid
+prop tesump zone.damage=4
+prop tesump zone.safe=suit
+prop tesump zone.hazardMsg=The sump burns - the Engine's spent coolant, green salts and sea water. A keeper's work suit from the box at the rim keeps it off.
+place Loot_ChestSmall tesumplocker at 30 -30 h=4.5 drop yaw=200
+note tesumplocker Keepers' locker | The keepers' locker, dropped in the sump when the Engine stopped: their spare cells, a gauge board and a bar of the kings' titanium.
+loot tesumplocker Battery*2;CircuitBoard*1;TitaniumIngot*1;Bolt*3
+prop tesumplocker loot.refill=0
+place "Box Big" tesumpsuits at 35.6 -35.2 ground sit yaw=225
+prop tesumpsuits obj.name=tesumpsuits
+prop tesumpsuits beh.use=Put on a keeper's work suit
+prop tesumpsuits on.use=suit||180\nmessage||A keeper's work suit, waxed cloth sealed at the wrists and boots - three minutes before the salts get through.
+place Note_Sign tesumpwarn at 36.9 -33.6 ground sit yaw=240
+note tesumpwarn THE SUMP - COOLANT | The Engine's spent coolant drains here. It burns skin and boots. Wear a work suit from the box.\n- the keepers of the Engine
+place TP_Moontown_Barrel02 - at 23.6 -35.4 ground sit yaw=80
+place TP_Moontown_Barrel02 - at 24.6 -36.6 ground sit yaw=200
+
 # --- Things to gather, reefs ----------------------------------------------------------------------------------------
 scatter "Pickup_Landmark_PineappleLandmark" 2 at -24 -30 r=10 seed=9711 free=3
 call dirt x=30 z=30 r=10 n=3 seed=9712

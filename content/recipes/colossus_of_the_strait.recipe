@@ -17,6 +17,7 @@ include lib_sea
 include lib_features
 include lib_areas
 include lib_highwater
+include lib_caves
 new
 # (nature: two forest headlands at Raft's density - trees, bushes, a few rocks; three reefs)
 gen Trees=0.35 Bushes=0.75 Rocks=0.6 Harvest=0.3 BeachThings=0.3
@@ -214,6 +215,28 @@ prop cisternchest else.open=message||The builders' chest is chained shut with br
 note cisternchest Builders' chest | The builders' chest: the last of their titanium, copper and iron, and the sea kings' tokens they were paid in.
 call treasure x=-44 z=64 r=12 n=1 seed=31034 kind=0
 prop treasure31034 treasure.loot=TitaniumIngot*1;MetalOre*2;Glass*2
+
+# --- 11-12 (w07): the builders' bolt store - optional, no quest step (plan 07 row: UW, an air room). A mouth on the
+# strait's floor (4 m down) beside the giant's east leg: the builders' culvert climbs out of the water under the east
+# headland into a dry chamber where they kept the giant's spare bolts - air, stone and their chest. hill=1: the
+# headland is low (5 m), the ridge keeps the room under rock. No rats: reached only under water. cavecheck: 12 m and
+# more from the leg, the trading post and Strait Head's trail.
+call kit_st x=3 z=16 yaw=110 len=26 slope=18 end=room size=0.7 hill=1 dirt=0 mush=1 stone=2 vines=1 as=cobolts
+prop cobolts cave.rock=plain
+prop cobolts cave.dome=16
+place Zone_Trigger coboltsair at 35.9 4 h=9.5
+prop coboltsair obj.name=coboltsair
+prop coboltsair zone.id=co_boltstore
+prop coboltsair zone.radius=8
+prop coboltsair zone.repeat=1
+prop coboltsair zone.air=1
+prop coboltsair zone.message=A dry chamber at the top of the culvert - air. The builders kept the giant's spare bolts here.
+# cavecheck inside coboltchest
+place Loot_ChestSmall coboltchest at 37.2 4.5 h=9 drop yaw=270
+prop coboltchest obj.name=coboltchest
+prop coboltchest loot.refill=0
+note coboltchest Bolt store | Master builder Hesk's mark on the lid. Spare bolts for the giant's knees, and a note: the strait gets in everywhere, keep the store high.
+loot coboltchest Bolt*6;MetalIngot*2;CopperIngot*2;Rope*2
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Colossus of the Strait

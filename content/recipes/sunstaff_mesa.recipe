@@ -72,7 +72,7 @@ place Banana_Bush_3 - at 6.5 -24.5 ground scale=0.8
 place Bush2 - at -2 -30 ground
 place Creature_Boar hogs at 2 -22 ground
 place Zone_Trigger wellzone at 0 -28 h=2
-push at 0 -28 h=2
+push at 0 -28 h=2.15
 place Block_Wall_Tier3 wellring at 0 -0.75 y=0 sy=0.35
 place Block_Wall_Tier3 wellring at 0 0.75 y=0 sy=0.35
 place Block_Wall_Tier3 wellring at -0.75 0 y=0 sy=0.35 yaw=90

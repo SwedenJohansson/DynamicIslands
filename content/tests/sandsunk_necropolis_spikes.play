@@ -1,0 +1,32 @@
+# Sandsunk Necropolis's staked store passage (CIPlay sandsunk_necropolis_spikes, 11-12 w07; in a test world 'CI ...').
+# Points as in its recipe: the passage off the hall from -40 -2 to -45.5 -10, the stakes zone snstakes at -43 -6
+# (r 1.7, safe=none, pulse 2 s up / 2 s down), the lever snlever at -39.4 -3.4 in the hall, the store at -47.5 -14.5.
+# Into the stakes: hurt and the message; the lever: stakes down; through to the store unhurt. Floors ~3 m.
+island Sandsunk Necropolis keep
+offset 0 0
+hour 11
+weather Calm
+expect shown snstakes
+
+walk -20 0 to -23 0 to -34 0 to -39 -1.5 below=8
+read THE STORE OF THE EMBALMERS
+at -43 -6 h=5.7
+wait 5
+at -39 -1.5 h=5.7
+expect message thrust up out of the floor
+expect hurt 4
+picture sn_stakes -40.5 6.8 -2.5 -43.5 5.6 -6.5 light=20
+wait 2
+
+use snlever
+wait 2
+expect hidden snstakes
+expect hidden snstake1
+expect message stay down
+wait 3
+walk -39 -1.5 to -40 -2 to -43 -6 to -45.5 -10 to -47.5 -14 below=8
+wait 3
+expect unhurt
+open Embalmers' store
+expect item TradeToken 3
+picture sn_store -45.5 6.8 -10 -48 5.6 -15.4 light=20

@@ -1,0 +1,29 @@
+# The Hollow Fang's guardians' grotto (CIPlay the_hollow_fang_caves, 11-12 w07). Run it in a new world whose name does
+# NOT start with 'CI ' (e.g. 'W07 fang'): in a 'CI ' world each `island` line empties the inventory and the machete is
+# lost on the way. Points as in its recipe: the mouth in the cleft's west wall at -3.6 -59 (floor 3 m), cave vines at
+# -6 -59, the dug passage west under its knoll to the room -12.5 -59.5 .. -18 -60, the guardians' chest at -18.6 -60.4.
+# The machete comes from Sunstaff Mesa's camp trunk, as in the plan. Shut by the vines, cut, in to the chest and out.
+island Sunstaff Mesa
+offset 0 0
+open Kett's camp trunk
+wait 3
+expect item Machete 1
+
+island The Hollow Fang
+offset 0 0
+hour 11
+weather Calm
+where ChoppableVines
+picture hf_grotto_out 2 4.8 -64 -6 4 -59
+walk 0 -62 to -2 -59 to -9 -59 blocked
+expect shown hfgrot_vines
+use hfgrot_vines
+expect hidden hfgrot_vines
+picture hf_grotto_cut 1 4.8 -61 -6 4 -59
+walk -2 -59 to -9 -59 to -12.5 -59.5 to -17 -60
+picture hf_grotto_in -10 6.8 -59.4 -18 5.6 -60 light=20
+open Guardians' store
+wait 2
+expect item TitaniumOre 1
+walk -17 -60 to -12.5 -59.5 to -9 -59 to -2 -59 to 0 -62
+picture hf_knoll 6 14 -76 -16 10 -59
