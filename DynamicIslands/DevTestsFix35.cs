@@ -295,7 +295,10 @@ namespace DynamicIslands
 				.OrderBy(q => (q.transform.position - player.transform.position).sqrMagnitude).Take(120).ToList();
 			foreach (BlockQuad q in quads)
 			{
-				realAim = SurfacePoint(q, FaceFor(q, item).Value);
+				// (a surface can go while the loop waits: a block taken down or a raft piece rebuilt)
+				Vector3? face = q != null ? FaceFor(q, item) : null;
+				if (!face.HasValue) continue;
+				realAim = SurfacePoint(q, face.Value);
 				CanvasHelper.ActiveMenu = MenuType.None;
 				yield return null; yield return null; yield return null;
 				Block ghost = Traverse.Create(bc).Field("selectedBlock").GetValue<Block>();
