@@ -1,0 +1,21 @@
+# Gannet Cliff's caves (CIPlay gannet_cliff_caves, 11-12 w10; in a test world 'CI ...'). Points as in its recipe:
+# Gannet Hole's mouth at -35 15.4 on the flat plateau (kit_st yaw 0, len 6, den floor ~5-6) to the den -35 22 .. -35 43;
+# the sign at -41 9.5. The vine side cave in the plateau's west cliff at -23.5 6 (kit_dig yaw 90, gate=1) is shut by
+# its vines - no machete in this plan, so it stays an extra (the cave check's reach cuts it with a lent machete).
+island Gannet Cliff keep
+offset 0 0
+hour 11
+weather Calm
+at -40 7.5 h=7
+wait 2
+read GANNET HOLE
+picture gc_cave_out -29 10 6 -35 6.5 15.4
+walk -35 9 to -35 15.4 to -35 21.5 to -35 28 to -35 35 below=9
+picture gc_cave_in -35 8 22 -35 6 34 light=20
+walk -35 35 to -35 28 to -35 21.5 to -35 15.4 to -35 9 below=9
+
+# The side cave: shut by its vines
+where ChoppableVines
+picture gc_vines_out -30 9 6 -23 7 6
+walk -29 6 to -26 6 to -20 6 blocked
+expect shown gcside_vines

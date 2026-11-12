@@ -1,0 +1,19 @@
+# Hollins Cannery's vats room with a work suit (CIPlay hollins_cannery_acidsuit, 11-12 w10; in a test world 'CI ...').
+# The suit box by the annex door (hcvatsuits, -9.4 14.6) gives 180 s of suit; into the vats room to the foreman's
+# locker and back out, unhurt, with the brine still there.
+island Hollins Cannery keep
+offset 0 0
+hour 11
+weather Calm
+at -9 16 h=4.5
+use hcvatsuits
+expect shown hcvats
+walk -9 16 to -6.75 13 to -6.75 9.8
+wait 6
+expect unhurt
+open Foreman's spare locker
+wait 2
+expect item CopperIngot 1
+picture hc_vats_in -6.75 5.2 12.6 -6.75 3.4 9.4 light=20
+walk -6.75 9.8 to -6.75 13 to -6.75 16.5
+expect unhurt

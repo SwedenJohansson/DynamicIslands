@@ -19,6 +19,7 @@ include lib_sea
 include lib_features
 include lib_areas
 include lib_highwater
+include lib_caves
 new
 # (nature: a bird rock - Rocks 0.5, bushes low, few trees)
 gen Trees=0.12 Bushes=0.12 Rocks=0.5 Harvest=0.15 BeachThings=0.35
@@ -314,4 +315,25 @@ clear at -57.28 57.63 r=1.2 all only=SmallBoulder
 # (G2 10-30: a bush floating 1 m over the slope - CIGroundIslands 10-30)
 clear at -22.31 -18.38 r=1.5 only=Bush
 
+# --- CONTENT 11-12 (w10): Gannet Hole - a cliff cave (kit_st) in a hill at the ridge's foot, on the flat plateau (r2b: in the
+# ridge face itself the native slope cut through the den's entrance - a step too high), where the
+# egg collectors dried their nets out of the wind; a sign at its mouth. And a side cave in the plateau's own cliff,
+# grown shut with vines (a machete brought from another island opens it; nothing needs it): the collectors' tally box.
+call kit_st x=-35 z=15.4 yaw=0 len=6 slope=0 end=room size=0.7 hill=1 dirt=3 mush=2 stone=0 vines=0 as=gchole
+prop gchole cave.rock=plain
+prop gchole cave.dome=14
+place Note_Sign gcholesign at -41 9.5 ground sit yaw=180
+prop gcholesign obj.name=gcholesign
+note gcholesign GANNET HOLE | The collectors' drying cave, in the hill behind this sign. Nets in summer, nobody in winter. Since the Choir came, the birds will not nest over it - they say it hums.
+# (r3b: CICaveInside found 9 points of the mouth's rim rock standing loose out of the steep face beside it, first at
+# -21.9 -0.2 - that face smoothed, so the ground lies over the tunnel's shell, as at Stalker's Hollow)
+brush smooth at -21.9 0.5 r=2.5 s=8 frames=60
+call kit_dig x=-23.5 z=6 yaw=90 len=6 flat=0 r=1.6 slope=0 room=1 roomr=2.5 roomlen=3 dirt=0 mush=0 stone=0 vines=0 titanium=0 gate=1 as=gcside
+prop gcside cave.rock=plain
+# cavecheck inside gctally
+# (r3b: the box sits to the room's side, off the tunnel's line - on it, it blocked the cave check's way)
+place Loot_ChestSmall gctally at -15.5 7.4 h=9 drop yaw=180
+prop gctally loot.refill=0
+loot gctally Rope*2;Nail*6;Bolt*2;Hinge*1
+note gctally Collectors' tally box | The egg collectors' tally box, left in the cliff when the vines grew over: rope, nails, a hinge - and a slate of eggs counted per day. The last line is not eggs: "3.12 - she sang again".
 save Gannet Cliff

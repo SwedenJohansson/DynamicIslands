@@ -159,6 +159,24 @@ call tzone x=-18.61 z=-52.11 al=bsrim id=bs_rim r=5 msg="The cistern rim. The pi
 call treasure x=-17.26 z=-48.34 r=12 n=1 seed=14902
 prop treasure14902 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 
+# --- 11-12 (w08): Keeper Tala and the beacon tool locker (plan 08 row: islander Tala; a talked-gate locker). No quest step.
+# Tala keeps what is left of the beacon since the keeper died: she sits by the path up from the landing, mending a net,
+# and knows where the charts stop. Her three answers: what is out there (a journal page on the end of the charts), a
+# spare battery, goodbye. The tool locker at the foot of the beacon tower is hers: it stays shut until you have talked.
+origin
+place Story_Islander bstala at -1.5 -30 ground yaw=90
+prop bstala obj.name=Keeper Tala
+prop bstala islander.character=Tala
+prop bstala islander.pose=sit
+prop bstala talk.text=Past the breakwater the charts stop. So do the fish.\n> What is out there?\n> Can you spare a battery?\n> Goodbye.
+prop bstala on.choice1=journal|Keeper Tala: the end of the charts|Every chart on the saddle ends at the same line, south of the breakwater, drawn in the same red ink: NOTHING SURVEYED. The keeper sailed past it once and came back in a day with no fish and a compass that would only point down. He said the sea out there is flat as a table, and that under it something hums.\nmessage||Tala draws a line in the dirt with her netting needle. Past this, nothing on the charts - only the hum.
+prop bstala on.choice2=give||Battery*1\nmessage||Tala takes a battery out of her coat. The keeper's last spare. The beacon will not need it now - and take what is in the tool locker by the tower, it is open to you.
+prop bstala on.choice3=message||Tala goes back to her net. Mind the breakwater. It bites.
+place Loot_ChestSmall bslocker at 3.5 -1 ground sit yaw=200
+prop bslocker obj.name=bslocker
+prop bslocker if.open=talked|Keeper Tala
+prop bslocker else.open=message||The beacon tool locker is padlocked. Keeper Tala, by the path up from the landing, has the key.
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Beacon Saddle
 info author=Custom Islands
@@ -176,6 +194,9 @@ loot towerchest Blueprint_Antenna*1;Blueprint_Recycler*1;Scrap*3;Bolt*2
 prop towerchest loot.refill=0
 loot radiochest Blueprint_Reciever*1;Blueprint_HeadLight*1;Battery*1;CircuitBoard*1
 prop radiochest loot.refill=0
+note bslocker Beacon tool locker | The keeper's tools, oiled and wrapped: spare fuses, a coil of rope, two bars of metal.
+loot bslocker Bolt*3;CircuitBoard*1;Rope*2;MetalIngot*2
+prop bslocker loot.refill=0
 
 prop radioset obj.name=radioset
 prop radioset beh.use=Record the pulse off the radio set

@@ -17,6 +17,7 @@ include lib_rt
 include lib_concord
 include lib_areas
 include lib_deep14
+include lib_caves
 new
 # (nature 10-24: snowy, so Raft's snowy big-island density - few pines and drifts, rocks spread over the hills)
 gen Trees=0.06 Bushes=0.12 Rocks=0.22 Harvest=0.15 BeachThings=0.3
@@ -188,6 +189,58 @@ call tzone x=-43.61 z=37.59 al=swrim id=sw_rim r=5 msg="The quench pool's rim." 
 call treasure x=-40.58 z=34.98 r=2 n=1 seed=14962
 prop treasure14962 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 call dp_hazard x=-56 z=17 al=sw_dark kind=dark r=4 dmg=1 msg="Pitch dark in the ore cave - a headlight would help." y=1
+
+# --- 11-12 w08: the storm drains - the works' rain tunnels under the south-east hill -----------------------------------
+# Two drain mouths in the hill's east face (38 -12 and 38 -26), dug level into it and joined at the back; a side drain
+# off the first ends in a chamber where the runoff left its silt - dirt, mushrooms, vines. Out in front, between the
+# mouths, the drain grate pit: the grate rusted away, stakes in the silt under it, plank ledges along both rims.
+# cavecheck: the hall and its quest things are over the hill to the west, 14 m and more.
+brush smooth at 38 -12 r=4 s=8 frames=60
+brush smooth at 38 -26 r=4 s=8 frames=60
+clear at 38 -12 r=3 only=(?i)boulder|rock|tree|bush
+clear at 38 -26 r=3 only=(?i)boulder|rock|tree|bush
+call kit_sys x=38 z=-12 yaw=270 side=-1 len=20 bend=8 branch=16 blen=4 gap=14 in2=14 r=1.75 roomr=3 dirt=3 mush=3 stone=0 vines=1 titanium=0 as=swdrain
+prop swdrain cave.rock=plain
+# the grate pit (1 m deep, the ground round it about 6)
+brush flatten from 46 -17 to 51 -17 r=2 s=20 frames=200 h=5
+# (11-12 w08: a big rock of the island's own stood on the west end of the south plank - cleared off the pit and its planks)
+clear from 44 -17 to 53 -17 r=3.5 only=(?i)boulder|rock|tree|bush
+place Note_Sign swpitwarn at 44 -17.5 ground sit yaw=90
+note swpitwarn DANGER - DRAIN PIT | The grate over the storm drain rusted through. There are stakes in the silt under it. Keep to the planks along the rims.\n- Works foreman
+place Block_Floor_Wood - at 46.25 -14.9 ground drop yaw=0
+place Block_Floor_Wood - at 46.25 -19.1 ground drop yaw=0
+place Block_Floor_Wood - at 47.75 -14.9 ground drop yaw=0
+place Block_Floor_Wood - at 47.75 -19.1 ground drop yaw=0
+place Block_Floor_Wood - at 49.25 -14.9 ground drop yaw=0
+place Block_Floor_Wood - at 49.25 -19.1 ground drop yaw=0
+place Block_Floor_Wood - at 50.75 -14.9 ground drop yaw=0
+place Block_Floor_Wood - at 50.75 -19.1 ground drop yaw=0
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 46.5 -17 h=5 sit scale=0.25 yaw=40
+place SmallBoulder3 - at 47.4 -16.2 h=5 sit scale=0.3 yaw=100
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 48.5 -17 h=5 sit scale=0.25 yaw=150
+place SmallBoulder3 - at 49.4 -17.8 h=5 sit scale=0.3 yaw=210
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 50.5 -17 h=5 sit scale=0.25 yaw=265
+place Zone_Trigger swspike1 at 46.5 -17 h=5.5
+prop swspike1 zone.id=swspike1
+prop swspike1 zone.radius=1.5
+prop swspike1 zone.hazard=spikes
+prop swspike1 zone.damage=4
+prop swspike1 zone.safe=none
+prop swspike1 zone.hazardMsg=Stakes in the silt under the grate! Back up onto the planks.
+place Zone_Trigger swspike2 at 48.5 -17 h=5.5
+prop swspike2 zone.id=swspike2
+prop swspike2 zone.radius=1.5
+prop swspike2 zone.hazard=spikes
+prop swspike2 zone.damage=4
+prop swspike2 zone.safe=none
+prop swspike2 zone.hazardMsg=Stakes in the silt under the grate! Back up onto the planks.
+place Zone_Trigger swspike3 at 50.5 -17 h=5.5
+prop swspike3 zone.id=swspike3
+prop swspike3 zone.radius=1.5
+prop swspike3 zone.hazard=spikes
+prop swspike3 zone.damage=4
+prop swspike3 zone.safe=none
+prop swspike3 zone.hazardMsg=Stakes in the silt under the grate! Back up onto the planks.
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Stormworks
