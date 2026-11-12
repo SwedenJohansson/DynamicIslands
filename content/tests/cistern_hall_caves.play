@@ -1,7 +1,7 @@
 # Cistern Hall's old cisterns (CIPlay cistern_hall_caves, 11-11; any world). Points as in its recipe (the origin frame):
 # two mouths at hill 1's west foot, 39 -47 and 39 -40 (a shoulder raised on the hill holds them), the passage east from
-# the first to the bend at 54 -42 and the third room past it to 58 -42; the second room off the passage at 46..48.5
-# -48..-54 with the cistern keeper's chest at 48.5 -54; the second mouth's passage in along z -40 to the bend. Dry, no
+# the first to the bend at 54 -42 and the third room past it to 58 -42; the second room off the passage at 46..47.6
+# -48..-53 with the cistern keeper's chest at 48.2 -54.3 past its end; the second mouth's passage in along z -40. Dry, no
 # air zone. In by the first mouth, chest, bend room, out by the second.
 island Cistern Hall keep
 offset 0 0
@@ -10,13 +10,13 @@ weather Calm
 
 # Outside: both mouths in the shoulder's foot
 picture ch_cave_out 28 6 -44 40 4 -44
-walk 33 -47 to 39 -47 to 46 -47 to 46.5 -49 to 48 -52
-picture ch_cave_room 46 4 -47 48.5 3 -54 light=20
+walk 33 -47 to 39 -47 to 46 -47 to 46.5 -49 to 47.6 -52.8
+picture ch_cave_room 46 6.5 -47 48.2 5.5 -54.3 light=20
 open Cistern keeper's chest
 wait 2
 expect item Bolt 3
 # On to the bend and the third room under the summit
-walk 48 -52 to 46.5 -49 to 46 -47 to 54 -47 to 54 -42 to 57 -42
+walk 47.6 -52.8 to 46.5 -49 to 46 -47 to 54 -47 to 54 -42 to 57 -42
 picture ch_cave_bend 51 4 -46 57 3.5 -42 light=20
 # Out by the second mouth
 walk 57 -42 to 54 -42 to 50 -40 to 39 -40 to 33 -40

@@ -1,36 +1,35 @@
 # Cistern Hall's overflow channel (CIPlay cistern_hall_acid, 11-11; in a test world 'CI ...', under CIGapsWatchHealth,
-# no CIGapsSuit). Points as in its recipe (the origin frame): the channel's mouth at hill 1's south foot at 62 -61.5,
-# dug in to 62 -53.5 and its small room to 62 -49.5; the acid zone ch_overflow at 62 -57 (r 3, safe=suit); the suit box
-# at 53 -62.5 and the warning sign at 54 -61 west of the mouth; the overflow valve at 70.8 -62.5 east of it; the overflow
-# locker at 63.2 -50.2. Without the suit the floor burns; the valve hides the zone, then the floor is safe. The suit run
-# is cistern_hall_acidsuit.
+# no CIGapsSuit). Points as in its recipe (the origin frame): the channel's mouth at the waterline under hill 1's south
+# bank at 62 -64.3, dug in and up (15 deg) to 62 -54.3 and its small room to 62 -50.3; the acid zone ch_overflow at
+# 62 -57 (r 3, safe=suit); the suit box at 53 -62.5 and the warning sign at 54 -61 on the bank west of the mouth; the
+# overflow valve at 70.8 -62.5 on the bank east of it; the overflow locker at 62.9 -51.2. Without the suit the floor
+# burns; the valve hides the zone, then the floor is safe. The suit run is cistern_hall_acidsuit.
 island Cistern Hall keep
 offset 0 0
 hour 11
 weather Calm
 
-picture ch_flow_out 62 5 -71 62 3.5 -60
+picture ch_flow_out 62 2.5 -72 62 1.5 -62
 # In without a suit: the sludge burns
 expect shown chflowacid
-at 57 -61.5
-walk 57 -61.5 to 62 -61.5 to 62 -57
+at 62 -64.6
+walk 62 -64.6 to 62 -61 to 62 -57
 wait 5
 expect message acid sludge
 expect hurt 15
-picture ch_flow_in 62 4.6 -61 62 3.8 -55 light=20
-walk 62 -57 to 62 -61.5 to 57 -61.5
+picture ch_flow_in 62 2.4 -63.5 62 2.6 -55 light=20
+walk 62 -57 to 62 -64.6
 # (the way out is through the acid too: counted here, so the dry walk below starts from none)
 expect hurt 1
 
-# Along the bank to the valve: the sludge goes, the floor is safe
-walk 57 -61.5 to 69 -62
+# Along the bank to the valve (over the channel's roof): the sludge goes, the floor is safe
+at 57 -60
+walk 57 -60 to 68 -60 to 69.5 -62
 use chflowvalve
 wait 2
 expect hidden chflowacid
-# (set back where the first walk started: the walk to the valve shows the bank's way; walked back over the mouth's
-# lip, the walker slips off the bank's edge to the beach)
-at 57 -61.5
-walk 57 -61.5 to 62 -61.5 to 62 -57 to 62.4 -51.4
+at 62 -64.6
+walk 62 -64.6 to 62 -61 to 62 -57 to 62.3 -52.4
 wait 5
 expect unhurt
 open Overflow locker

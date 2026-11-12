@@ -1,6 +1,7 @@
 # Cistern Hall's overflow channel with the suit on (CIPlay cistern_hall_acidsuit, 11-11; in a test world 'CI ...', under
-# CIGapsWatchHealth, no CIGapsSuit): the suit from the box west of the mouth (53 -62.5), then the acid takes nothing
-# (expect unhurt) all the way to the overflow locker and back. cistern_hall_acid is the run without the suit and the valve.
+# CIGapsWatchHealth, no CIGapsSuit): the suit from the box on the bank west of the mouth (53 -62.5), down to the mouth at
+# the waterline (62 -64.3), then the acid takes nothing (expect unhurt) all the way to the overflow locker and back.
+# cistern_hall_acid is the run without the suit and the valve.
 island Cistern Hall keep
 offset 0 0
 hour 11
@@ -8,10 +9,11 @@ weather Calm
 at 55 -62
 use chflowsuits
 expect shown chflowacid
-walk 55 -62 to 62 -61.5 to 62 -57 to 62.4 -51.4
+at 62 -64.6
+walk 62 -64.6 to 62 -61 to 62 -57 to 62.3 -52.4
 wait 6
 expect unhurt
 open Overflow locker
 wait 2
-walk 62.4 -51.4 to 62 -57 to 62 -61.5 to 57 -61.5
+walk 62.3 -52.4 to 62 -57 to 62 -61 to 62 -64.6
 expect unhurt

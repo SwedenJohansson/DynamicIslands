@@ -332,25 +332,18 @@ call ar_plants_hill x=70 z=42 r=12 seed=5220
 
 # (hill rocks that stood off a steep slope, CIGroundIslands 10-25)
 clear at 53.16 53.76 r=1.2 only=SmallBoulder4 all
-# --- 11-11 (w04): the smugglers' tunnel under the east quay - optional ------------------------------------------------
-# An underwater mouth on the sea floor off the east shore (5 m down), a flooded tunnel climbing under the big east hill
-# into a dry room: the smugglers' store, contraband in a chest. No quest step needs it. No rats: reached only under water.
-# cavecheck: 6 m and more from the quest's things; the bonded yard (z -20 up) and the watch tower stay clear of the den.
+# --- 11-11 (w04): the wreckers' cave in the shore rocks - optional ---------------------------------------------------
+# The keeper's log names it: a dug tunnel (the Dig brush) from the waterline at hill 2's south foot (started up the
+# slope, its mouth ring stood as a lip over the beach), climbing 10 deg in under the summit to a dry room: the smugglers' store, contraband in a chest. No quest step needs it.
+# cavecheck: 6 m and more from the quest's things; the bonded yard (z -20 up) and the watch tower stay clear of it.
 origin
-call kit_uw x=60 z=-80 yaw=340 len=37 slope=12 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 as=bwsmug
+clear at 53 -64 r=3.5 only=(?i)boulder|rock|tree|bush|plant|palm
+call kit_dig x=53 z=-65 yaw=0 len=13 flat=0 r=1.75 slope=10 room=1 roomr=2.5 roomlen=4 dirt=0 mush=0 stone=2 vines=0 titanium=0 as=bwsmug
 prop bwsmug cave.rock=plain
-prop bwsmug cave.dome=18
-place Zone_Trigger bwsmugair at 43.5 -35 h=3.5
-prop bwsmugair obj.name=bwsmugair
-prop bwsmugair zone.id=bw_smugglers
-prop bwsmugair zone.radius=8
-prop bwsmugair zone.repeat=1
-prop bwsmugair zone.air=1
-prop bwsmugair zone.message=A dry room at the top of the flooded tunnel - air. Somebody kept goods here that never saw a customs stamp.
 # cavecheck inside bwcontraband
-place Loot_ChestSmall bwcontraband at 45.9 -34 h=3.3 drop yaw=160
+place Loot_ChestSmall bwcontraband at 53.4 -47.3 h=5.5 drop yaw=200
 prop bwcontraband obj.name=bwcontraband
 prop bwcontraband loot.refill=0
-note bwcontraband Contraband | Crates with the Authority's seal cut off and a tally chalked on the lid:\n\nTWELVE COILS - SOLD AT THE ROW\nFOUR INGOTS - SOLD AT THE ROW\nONE RADIO - KEPT\n\nWhoever ran this tunnel came in under the boom and went out to Raft Row Bazaar.
+note bwcontraband Contraband | Crates with the Authority's seal cut off and a tally chalked on the lid:\n\nTWELVE COILS - SOLD AT THE ROW\nFOUR INGOTS - SOLD AT THE ROW\nONE RADIO - KEPT\n\nWhoever ran this cave landed on the beach at new moon and went out to Raft Row Bazaar.
 loot bwcontraband MetalIngot*2;CopperIngot*1;Rope*2;Nail*6
 save Breakwater Customs

@@ -8,6 +8,6 @@ weather Calm
 
 picture rk_cave_out -10 5 64 -10 4 55.5
 walk -10 61 to -10 55.5 to -10 51 to -10 47
-picture rk_cave_in -10 6.2 54 -10 5.2 46 light=20
+picture rk_cave_in -10 5 54 -10 4.4 46 light=20
 wait 2
 walk -10 47 to -10 51 to -10 55.5 to -10 61
