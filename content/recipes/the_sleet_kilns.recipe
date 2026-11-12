@@ -12,6 +12,7 @@ include lib_huts
 include lib_areas
 include lib_highwater
 include lib_rain
+include lib_caves
 # RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 56 -> 85; the old island moved 29 m south (push frames), so its south shore stays on the coast and the new land is north
 # RAIN 10-26: the new land - Cinder Knoll with salt-drop chimney, Ash Cave, Kalle Strom at the ruined house (a lamp puzzle), a crashed plane, a jump course, a maze, a set of five salt crystals
 new
@@ -300,6 +301,13 @@ call rn_piece x=-52 z=-17 al=sk_piece2 set="Salt crystals"
 call rn_piece x=40 z=24 al=sk_piece3 set="Salt crystals"
 call rn_piece x=-10 z=60 al=sk_piece4 set="Salt crystals"
 call rn_piece x=16 z=38 al=sk_piece5 set="Salt crystals"
+
+# --- 11-12 (w11 prep): the old kiln cave (plan 11 row: ST kiln cave; stone 3, dirt 2) -----------------------------
+# Before the bottle kilns the salt men fired their first batches in a cave east of the yard: a straight cave into the
+# hill (its own ridge, hill=1), soot on the roof, a room at the end where the first kiln stood. No quest step.
+# (prep, offline only: not yet seen in Raft)
+call kit_st x=30 z=-45 yaw=90 len=26 slope=0 end=room size=0.8 hill=1 dirt=2 mush=0 stone=3 vines=1 as=skkilncave
+prop skkilncave cave.rock=plain
 prop sk_piece1 on.set=show|sk_setchest\nmessage||All five salt crystals found.
 call rn_hidden x=5 z=14 al=sk_setchest kind=Loot_Chest
 call treasure x=24 z=56 r=5 n=1 seed=26778 kind=0

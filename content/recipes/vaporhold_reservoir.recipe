@@ -13,6 +13,7 @@ include lib_huts
 include lib_areas
 include lib_highwater
 include lib_rain
+include lib_caves
 # RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 52 -> 85; the old island moved 33 m south (push frames), so its south shore stays on the coast and the new land is north
 # RAIN 10-26: the new land - Spillway Hill with survey mast, Seep Cave, Ove Strand at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five survey pegs
 new
@@ -223,6 +224,38 @@ call ar_plants_hill x=30 z=22 r=14 seed=26592
 call ar_plants_hill x=-30 z=4 r=14 seed=26593
 call ar_plants_hill x=40 z=-40 r=14 seed=26594
 call ar_plants_hill x=66 z=36 r=10 seed=26595
+
+# --- 11-12 (w11 prep): the reservoir intakes (plan 11 row: UW SYS - 2 ST + DIG; mushrooms 3, stone 2, titanium 1) -----
+# Two old intake tunnels leave the reservoir floor (7 m under) on the west side, away from the pump hall, and climb
+# 12 deg under the embankment: the long intake ends in the dry valve chamber (air, loot), the short one in a flooded
+# sump room with an air pocket. A dug service passage comes in level from the outer slope to the valve chamber: the
+# dry way in and out (no swim needed back). No quest step.
+# (prep, offline only: the service passage's mouth height and both rooms not yet seen in Raft - probe first)
+call kit_st x=-10 z=-37 yaw=250 len=52 slope=12 end=room size=0.7 hill=1 dirt=0 mush=2 stone=1 vines=1 titanium=1 as=vrintake1
+prop vrintake1 cave.rock=plain
+call kit_st x=-8 z=-46 yaw=225 len=41.6 slope=12 end=room size=0.7 hill=1 dirt=0 mush=1 stone=1 vines=0 wet=1 as=vrintake2
+prop vrintake2 cave.rock=plain
+dig -74,-49 -64,-55.5 r=1.75 slope=0 as=vrservice
+prop vrservice cave.rock=plain
+# cavecheck inside vrvalveair vrsumpair vrvalvechest
+place Zone_Trigger vrvalveair at -66.4 -57.5 h=5
+prop vrvalveair obj.name=vrvalveair
+prop vrvalveair zone.id=vr_valvechamber
+prop vrvalveair zone.radius=8
+prop vrvalveair zone.repeat=1
+prop vrvalveair zone.air=1
+prop vrvalveair zone.message=The valve chamber at the top of the intake - dry, and a service passage out to the slope.
+place Zone_Trigger vrsumpair at -43.1 -81.1 h=2.5
+prop vrsumpair obj.name=vrsumpair
+prop vrsumpair zone.id=vr_sump
+prop vrsumpair zone.radius=7
+prop vrsumpair zone.repeat=1
+prop vrsumpair zone.air=1
+prop vrsumpair zone.message=Air under the sump room's roof - breathe.
+place Loot_ChestSmall vrvalvechest at -65 -58.5 h=6 drop yaw=70
+prop vrvalvechest loot.refill=0
+note vrvalvechest Intake valve store | The intake crew's store in the valve chamber: a spare spindle, rope, and a tin of bolts.
+loot vrvalvechest Bolt*3;Rope*2;MetalIngot*1
 call hw_machine x=0 z=18 yaw=180 al=vr_machine nm="Outflow gate" obj=TP_LaserControlPanel_lever sc=3 a=vr_top b=vr_cave done=vr_fixed rew=vr_rewchest rnote=vr_rewnote msg="It works." hint="It wants the level float from Spillway Hill and the outflow gate key from Seep Cave."
 call hw_note x=-2.6 z=19.2 yaw=200 al=vr_hint
 

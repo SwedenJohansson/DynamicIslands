@@ -309,6 +309,24 @@ prop fw_piece1 on.set=show|fw_setchest\nmessage||All five shift tokens found.
 call rn_hidden x=5 z=22 al=fw_setchest kind=Loot_Chest
 call treasure x=30 z=56 r=5 n=1 seed=26478 kind=0
 prop treasure26478 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+
+# --- 11-12 (w11 prep): the fog cellars (plan 11 row: DIG fog cellars under the works; dirt 3, mushrooms 2) -----------
+# Behind the pump hall the works banked up a knoll of spoil over their fog cellars: cold rooms where the fog was kept
+# before the lines took it out to the bay. A level passage from the yard (3 m) runs in under the knoll to the long
+# cellar, a side passage to the small cellar. Its own rock (cave.rock=plain), the knoll's top 17 m. No quest step.
+# (prep, offline only: not yet seen in Raft - check the knoll's face at the mouth and its height over the cellars)
+brush flatten at -56 -26 r=20 s=20 frames=200 h=7
+brush flatten at -56 -26 r=15 s=20 frames=200 h=12
+brush flatten at -57 -27 r=10 s=20 frames=200 h=17
+brush smooth at -56 -26 r=19 s=8 frames=40
+brush flatten from -34 -26 to -38.5 -26 r=1.6 s=20 frames=60 h=3
+clear at -56 -26 r=21 only=(?i)boulder|rock|tree|bush|bamboo|cactus
+dig -37.5,-26 -50,-26 r=1.75 slope=0 as=fwcellar
+dig -50,-26 -57,-26 r=3.2 as=fwcellar
+dig -45,-26 -47,-34 r=1.75 slope=0 as=fwcellar
+dig -47,-34 -51,-37 r=3 as=fwcellar
+caveloot fwcellar dirt=3 mush=2 stone=0 vines=1
+prop fwcellar cave.rock=plain
 call ar_plants_hill x=-8 z=46 r=16 seed=26491
 call ar_plants_hill x=30 z=22 r=14 seed=26492
 call ar_plants_hill x=-30 z=4 r=14 seed=26493

@@ -12,6 +12,7 @@ include lib_features
 include lib_areas
 include lib_highwater
 include lib_rain
+include lib_caves
 # RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 48 -> 85; the old island moved 37 m south (push frames), so its south shore stays on the coast and the new land is north
 # RAIN 10-26: the new land - Sleet Knoll with rain gauge mast, Drip Cave, Brita Sand at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five hailstones
 new
@@ -213,6 +214,43 @@ call ar_plants_hill x=66 z=36 r=10 seed=26195
 call hw_machine x=0 z=18 yaw=180 al=hw_machine nm="Sluice two hoist" obj=TP_LaserControlPanel_lever sc=3 a=hw_top b=hw_cave done=hw_fixed rew=hw_rewchest rnote=hw_rewnote msg="It works." hint="It wants the gauge funnel from Sleet Knoll and the weir crank pawl from Drip Cave."
 call hw_note x=-2.6 z=19.2 yaw=200 al=hw_hint
 
+
+# --- 11-12 (w11 prep): Weirkeeper Maya and the culvert below sluice three (plan 11 row: islander Maya; UW cave behind
+# the sluice, opened by talking). No quest step. Maya keeps the weir since the company left: she fishes the deep pool
+# behind sluice three from the east bank. Her answers: who ordered the rain (a journal page, the Isobar Club), open the
+# sluice (she winds the culvert gate up: the old spill culvert under the east bank opens - an underwater mouth in the
+# pool's floor, climbing to the dry gauge store in the bank, air and the keeper's chest), stay dry. The pool is dug 6 m
+# under the sea behind sluice three; the culvert climbs 12 deg upriver under the bank (hill=1 keeps rock over it).
+# (prep, offline only: positions from the recipe, not yet seen in Raft - probe the pool floor and the room first)
+push at 0 -37
+brush flatten at 5 -25 r=5 s=20 frames=200 h=-6
+brush smooth at 5 -25 r=7 s=4 frames=20
+clear at 5 -25 r=7 body
+call kit_st x=5 z=-25 yaw=20 len=41.6 slope=12 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=1 as=hwculvert
+prop hwculvert cave.rock=plain
+place UT_Drawbridge hwculvertgate at 5 -23.6 h=-6 rot=0,20,0
+prop hwculvertgate obj.name=hwculvertgate
+# cavecheck inside hwculvertair hwgaugechest
+place Zone_Trigger hwculvertair at 22.0 21.6 h=4
+prop hwculvertair obj.name=hwculvertair
+prop hwculvertair zone.id=hw_culvert
+prop hwculvertair zone.radius=8
+prop hwculvertair zone.repeat=1
+prop hwculvertair zone.air=1
+prop hwculvertair zone.message=The gauge store at the top of the culvert - dry, and air to breathe.
+place Loot_ChestSmall hwgaugechest at 20.5 20.6 h=5 drop yaw=240
+prop hwgaugechest loot.refill=0
+place Story_Islander hwmaya at 14 -24.5 ground yaw=270
+pop
+prop hwmaya obj.name=Weirkeeper Maya
+prop hwmaya islander.character=Maya
+prop hwmaya islander.pose=fish
+prop hwmaya talk.text=Rain on order, they said. Now it will not stop.\n> Who ordered it?\n> Open the sluice.\n> Stay dry.
+prop hwmaya on.choice1=journal|Weirkeeper Maya's page|The Isobar Club ordered it. The directors of Nimbus Works and their guests, up on the granite shelf with the pianos: they bought weather by the week, sunshine for the regatta, rain for the gardens. One of them ordered rain for a season and forgot to cancel it. The seeders upriver are still firing on that order.\nmessage||Maya spits into the pool. Rain on order - the Isobar Club's order. Nobody ever cancelled it.
+prop hwmaya on.choice2=hide|hwculvertgate\nmessage||Maya leans on the old wheel and the culvert gate under the pool grinds up. Below the weir the water drops away.
+prop hwmaya on.choice3=message||Maya pulls her hood up. Stay dry. Nobody has managed it yet.
+note hwgaugechest Gauge store | The weirkeeper's dry store at the top of the spill culvert: the spare gauge glass, rope, and a tin of bolts.
+loot hwgaugechest Glass*2;Rope*2;Bolt*3;TitaniumOre*1
 # RAIN 10-26: rocks left hanging by the new hills
 clear at -26.2 20 r=2 only=BigRock_2
 clear at -35.9 -24.15 r=1.5 only=SmallRock_03

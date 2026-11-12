@@ -15,6 +15,7 @@ include lib_huts
 include lib_areas
 include lib_highwater
 include lib_rain
+include lib_caves
 # RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 64 -> 88; the old island moved 24 m south (push frames), so its south shore stays on the coast and the new land is north
 # RAIN 10-26: the new land - Spark Bluff with storm watch mast, Basalt Cave, Signe Lund at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five fulgurites
 new
@@ -246,6 +247,14 @@ call rn_piece x=-54 z=-21 al=ta_piece2 set="Fulgurites"
 call rn_piece x=42 z=28 al=ta_piece3 set="Fulgurites"
 call rn_piece x=-6 z=62 al=ta_piece4 set="Fulgurites"
 call rn_piece x=76 z=-14 al=ta_piece5 set="Fulgurites"
+
+# --- 11-12 (w11 prep): the cable cave under the array (plan 11 row: ST under the array, optional VINE mouth; dirt 2,
+# mushrooms 2) - the array's earth cables ran down the cliff into a cave off the beach east of the landing; the vines
+# have grown over its mouth since (machete, from The Kite Meadow: optional - no quest step). hill=0: the cliff and the
+# plateau over it are the rock.
+# (prep, offline only: not yet seen in Raft - check the cliff foot at the mouth and the plateau's height over the room)
+call kit_st x=35 z=-70 yaw=0 len=26 slope=0 end=room size=0.8 hill=0 dirt=2 mush=2 stone=0 vines=2 gate=1 as=tacablecave
+prop tacablecave cave.rock=plain
 prop ta_piece1 on.set=show|ta_setchest\nmessage||All five fulgurites found.
 call rn_hidden x=5 z=26 al=ta_setchest kind=Loot_Chest
 call treasure x=36 z=72 r=5 n=1 seed=26678 kind=0
