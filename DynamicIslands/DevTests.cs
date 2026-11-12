@@ -1326,8 +1326,11 @@ namespace DynamicIslands
 		static IEnumerator PushRaftRoutine(float seconds)
 		{
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
-			GameObject island = NearestIsland(raft.body.position);
-			if (island == null) { Fail("no custom island"); yield break; }
+			// (only islands with land: a ghost raft or a sea-only island has no Terrain to push towards)
+			Vector3 from = raft.body.position;
+			GameObject island = UnityEngine.Object.FindObjectsOfType<GameObject>().Where(g => g.transform.parent == null && g.name.StartsWith("CustomIsland_") && g.GetComponentInChildren<Terrain>() != null)
+				.OrderBy(g => (g.transform.position - from).sqrMagnitude).FirstOrDefault();
+			if (island == null) { Fail("no custom island with land loaded"); yield break; }
 			yield return PushTowards(HighestPoint(island.GetComponentInChildren<Terrain>()), seconds, island.name);
 		}
 
