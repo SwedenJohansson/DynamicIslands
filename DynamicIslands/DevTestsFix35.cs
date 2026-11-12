@@ -231,6 +231,14 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPlaceReal", docs: "Dev, world (host, a raft with foundations), RT18: the upgrade research table, a fast juicer and the golden shark trophy each held in the hotbar and placed by Raft's own BlockCreator.Update - its raycast from the camera (only the view turned to a raft surface), its ghost and build check (green), and a faked left click; the block is the upgrade, the hotbar item is used up; then taken down")]
 		public static void PlaceRealCommand() { StartTest(PlaceRealRoutine()); }
 
+		static IEnumerator PlaceRealRoutine()
+		{
+			bool[] ok = { true };
+			var names = new[] { ExtraUpgrades.TableName, "DI_FastJuicer", Cosmetics.GoldenShark };
+			yield return PlaceRealCore(names, "place real", ok, null);
+			if (ok[0]) Log("PASS: place real"); else Fail("place real");
+		}
+
 		static Vector3? realAim;
 		static int realClickFrame = -1;
 		static bool realPatched;
@@ -298,19 +306,20 @@ namespace DynamicIslands
 			}
 		}
 
-		static IEnumerator PlaceRealRoutine()
+		/// <summary>Each named item held and placed by Raft's own aim, ghost and click (RT18; CIPlaceOld for all of them).
+		/// ok[0] false on any failed check; placedNames (if given) gets the items placed.</summary>
+		static IEnumerator PlaceRealCore(string[] names, string label, bool[] okOut, List<string> placedNames)
 		{
 			bool ok = true;
 			Network_Player player = RAPI.GetLocalPlayer();
-			if (player == null || !Raft_Network.IsHost) { Fail("place real: host, in a world"); yield break; }
-			try { PatchPlaceReal(); } catch (Exception e) { Fail("place real: patch: " + e.Message); yield break; }
+			if (player == null || !Raft_Network.IsHost) { Check(ref ok, false, label + ": host, in a world"); okOut[0] = false; yield break; }
+			try { PatchPlaceReal(); } catch (Exception e) { Check(ref ok, false, label + ": patch: " + e.Message); okOut[0] = false; yield break; }
 			BlockCreator bc = player.BlockCreator;
 			Hotbar hotbar = Traverse.Create(player.Inventory).Field("hotbar").GetValue<Hotbar>();
 			var opts = new HashSet<string>(WorldOptions.Current);
 			bool optionWas = opts.Contains(WorldOptions.Upgrades);
 			if (!optionWas) { opts.Add(WorldOptions.Upgrades); WorldOptions.Set(opts); }
 			MenuType menuWas = CanvasHelper.ActiveMenu;
-			var names = new[] { ExtraUpgrades.TableName, "DI_FastJuicer", Cosmetics.GoldenShark };
 			int placed = 0;
 			Block wall = null;
 			try
@@ -357,7 +366,12 @@ namespace DynamicIslands
 						}
 					}
 					string last = found[1]; int quadsCount = found[0] != null ? 1 : 0;
-					if (spot == null) { Check(ref ok, false, name + ": no raft surface where the ghost is green (last: " + last + ")"); realAim = null; continue; }
+					if (spot == null) { Check(ref ok, false, name + ": no raft surface where the ghost is green (last: " + last + ")"); realAim = null; into.Reset(); continue; }
+					{
+						Block g0 = Traverse.Create(bc).Field("selectedBlock").GetValue<Block>();
+						BlockQuad q0 = Traverse.Create(bc).Field("quadAtCursor").GetValue<BlockQuad>();
+						Check(ref ok, q0 != null && g0 != null && g0.gameObject.activeInHierarchy, name + ": aimed, a surface at the cursor (" + (q0 != null) + ") and the ghost shown (" + (g0 != null && g0.gameObject.activeInHierarchy) + ")");
+					}
 					HashSet<Block> before = new HashSet<Block>(BlockCreator.GetPlacedBlocks());
 					CanvasHelper.ActiveMenu = MenuType.None;
 					// (the click is held a few frames until Raft places it: one press, so at most one block)
@@ -378,7 +392,7 @@ namespace DynamicIslands
 					Check(ref ok, made != null && made.buildableItem == item, name + ": placed by the click (" + (made != null ? made.buildableItem.UniqueName : "nothing") + ")");
 					Check(ref ok, ub != null && ub.Upgrade != null, name + ": an upgrade block");
 					Check(ref ok, now == had, name + ": the hotbar item was used up (" + had + " -> " + now + ", slot " + intoIndex + ", selected " + (hotbar != null ? hotbar.GetSelectedSlotIndex() : -1) + ")");
-					if (made != null) { placed++; BlockCreator.RemoveBlockNetwork(made, null, true); }
+					if (made != null) { placed++; if (placedNames != null && made.buildableItem == item) placedNames.Add(name); BlockCreator.RemoveBlockNetwork(made, null, true); }
 					yield return new WaitForSecondsRealtime(0.3f);
 					int extra = player.Inventory.GetItemCount(name) - had;
 					if (extra > 0) player.Inventory.RemoveItem(name, extra);
@@ -391,8 +405,8 @@ namespace DynamicIslands
 				CanvasHelper.ActiveMenu = menuWas;
 				if (!optionWas) { opts.Remove(WorldOptions.Upgrades); WorldOptions.Set(opts); }
 			}
-			Log("place real: " + placed + "/" + names.Length + " placed by Raft's own click");
-			if (ok) Log("PASS: place real"); else Fail("place real");
+			Log(label + ": " + placed + "/" + names.Length + " placed by Raft's own click");
+			if (!ok) okOut[0] = false;
 		}
 	}
 }
