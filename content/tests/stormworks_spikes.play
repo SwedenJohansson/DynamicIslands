@@ -1,0 +1,22 @@
+# Stormworks' drain pit (CIPlay stormworks_spikes, 11-12 w08; in a test world 'CI ...', under CIGapsWatchHealth). Points as
+# in its recipe: the pit flattened from 46 -17 to 51 -17 (floor 5 m), stakes at 46.5 / 48.5 / 50.5 -17 (zones swspike1-3,
+# r 1.5, damage 4), the warning sign at 44 -17.5, planks along both rims (z -14.9 and -19.1). In the pit the stakes cost
+# health; along the planks they cost none.
+island Stormworks keep
+offset 1.3157 -1.5104
+hour 11
+weather Calm
+where Block_Floor_Wood
+where VP_SpikeTrap
+
+picture sw_pit 43 8.5 -17 49 5.5 -17
+at 48.5 -17 h=6
+wait 3
+expect message Stakes in the silt
+expect hurt 4
+at 43.5 -14.9
+expect unhurt
+walk 43.5 -14.9 to 46.25 -14.9 to 50.75 -14.9 to 52.5 -14.9
+expect unhurt
+walk 52.5 -19.1 to 50.75 -19.1 to 46.25 -19.1 to 43.5 -19.1
+expect unhurt

@@ -17,6 +17,7 @@ include lib_gravity
 include lib_concord
 include lib_areas
 include lib_deep14
+include lib_caves
 new
 # (nature 10-24: hills and Raft-like trees over the whole island - the coordinator's check after the resize)
 gen Trees=0.4 Bushes=0.42 Rocks=0.55 Harvest=0.35 BeachThings=0.3
@@ -216,6 +217,26 @@ place UT_WaterChallengeWheel1 cl_wheel3 at -54.1 43.6 ground y=0.1 scale=0.4 yaw
 prop cl_wheel3 obj.name=cl_wheel3
 prop cl_wheel3 beh.use=Turn the sluice wheel
 prop cl_wheel3 on.use=message||The wheel grinds round. Water gurgles somewhere down in the lock chamber (3 of 3).\nsignal||lw3
+
+# --- 11-12 w08: the lock culvert - a flooded bypass under the west bank -----------------------------------------------
+# An underwater mouth in the canal's west wall past the second lock, the old bypass culvert climbing 12 degrees under the west
+# bank to a dry valve room - air, stone and the lock keeper's chest. hill=1 keeps the room under rock where the
+# bank is low. No rats: reached only under water. cavecheck: clear of the bear, the crane, the crops, the ridge and the walk to it.
+call kit_st x=-3 z=3 yaw=250 len=22 slope=12 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=1 as=clculv
+prop clculv cave.rock=plain
+place Zone_Trigger clculvair at -31.2 -7.2 h=4.5
+prop clculvair obj.name=clculvair
+prop clculvair zone.id=cl_culvert
+prop clculvair zone.radius=8
+prop clculvair zone.repeat=1
+prop clculvair zone.air=1
+prop clculvair zone.message=The bypass culvert's valve room - dry, and air. The keeper's chest stands by the old wheel.
+# cavecheck inside clculvchest
+place Loot_ChestSmall clculvchest at -33.8 -5.5 h=4 drop yaw=70
+prop clculvchest obj.name=clculvchest
+prop clculvchest loot.refill=0
+note clculvchest Bypass keeper's chest | Lock keeper, bypass room: grease, a spare seal, rope. If the gates jam, open the bypass. If the bypass floods, swim.
+loot clculvchest Rope*2;MetalIngot*1;Bolt*2;Scrap*3
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Current Locks

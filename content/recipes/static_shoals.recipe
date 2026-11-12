@@ -2,8 +2,8 @@
 # Two low sand bars under a grey sky that never lifts, four tall radio masts strung with cable, and static on every band:
 # the masts still shout the engine's old traffic into the air. The Fleet's last radio barge is beached on the main bar;
 # Teo left his note in it - the Fleet's way south ends here. Screechers nest on the masts. A zipline runs from mast 1
-# over the channel to mast 4's hut on the east bar. Quest "Static" (14 steps): Teo's note, the engine control plans in
-# the barge, the screechers, the zipline to mast 4, the metal detector plans in its hut, the flare locker, the workshop.
+# over the channel to mast 4's hut on the east bar. Quest "Static" (15 steps): Teo's note, the engine control plans in
+# the barge, the screechers, the zipline to mast 4, the metal detector plans in its hut, the flare locker, the relay spares crate in the vine-hung shoal cave, the workshop.
 #
 # Built by the recipe player (CIRecipe static_shoals) through the editor's own operations. Points (metres over the sea):
 # the main bar at 1.5 m round -10 -4 (r 12), the radio barge at -4 0, mast 1 at -14 2 (the zipline's start), mast 2 at
@@ -16,6 +16,7 @@ include lib_gravity
 include lib_concord
 include lib_areas
 include lib_deep14
+include lib_caves
 new
 # (nature 10-24: hills and Raft-like trees over the whole island - the coordinator's check after the resize)
 gen Trees=0.38 Bushes=0.35 Rocks=0.5 Harvest=0.15 BeachThings=0.5
@@ -357,6 +358,29 @@ prop ssgoats creature.count=2
 call treasure x=-28.34 z=-34.28 r=12 n=1 seed=14932
 prop treasure14932 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 
+# --- 11-12 w08: the relay spares store - a cut through the shoal rock, vines over its mouth -------------------------------
+# The Fleet's spares store for the masts, dug into the shoal's west rock: machete vines over the mouth (the machete is
+# Triangulation Rocks' camp chest, the plan's island before), a straight cut under the ridge to a dry room - dirt, cave
+# vines and the relay spares crate (a quest step). hill=1 keeps the room under rock where the ridge falls to the sea.
+# cavecheck: clear of the ridge zone and the treasure on the ridge top.
+# cavecheck machete
+# (11-12 w08 play: the mouth stood 4 m over the channel's water with no way up - a stepped beach out of the water to it,
+# 0.7 m a step, and the shore rocks cleared off it)
+clear from -29 40 to -34 40 r=3 only=(?i)boulder|rock|tree|bush|palm|coral|algae
+brush flatten at -29.4 40 r=1.6 s=20 frames=150 h=0.2
+brush flatten at -30.6 40 r=1.5 s=20 frames=150 h=0.9
+brush flatten at -31.8 40 r=1.4 s=20 frames=150 h=1.6
+brush flatten at -33 40 r=1.3 s=20 frames=150 h=2.3
+brush smooth from -29 40 to -33.5 40 r=1.8 s=4 frames=20
+call kit_st x=-35 z=40 yaw=270 len=14 slope=0 end=room size=0.7 hill=1 dirt=2 mush=0 stone=0 vines=2 gate=1 as=sscave
+prop sscave cave.rock=plain
+# cavecheck inside ssspares
+place Loot_ChestSmall ssspares at -60.1 42 h=5 drop yaw=110
+prop ssspares obj.name=ssspares
+prop ssspares loot.refill=0
+note ssspares Relay spares crate | FLEET - MAST SPARES. Valves, wire, a spare insulator. Signed out to: Teo (twice). Signed back in: never.
+loot ssspares CopperIngot*2;Scrap*3;Rope*1;Battery*1
+
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Static Shoals
 info author=Custom Islands
@@ -420,6 +444,7 @@ step blueprint|Blueprint_Firework|1|Take the firework plans from the flare locke
 step read|Net house book|1|Read the catch book in the ruined net house out on the bar
 step open|Mechanic's toolbox|1|Find the mechanic's toolbox by the humming cave in the bar's rocks
 step collect|story:teovoice|1|Start the net house generator and listen to its radio
+step open|Relay spares crate|1|Cut the vines from the cave mouth in the shoal rock and open the relay spares crate inside
 step open|Supply drop|1|Open the supply drop crate by the crashed spotter plane
 step reach|ss_maze|1|Find your way into the dark cable store by the dune peak
 step collect|story:genpart2|1|Find the coil pack in the cable store's coil room
