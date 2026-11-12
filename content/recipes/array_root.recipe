@@ -18,6 +18,7 @@ include lib_gravity
 include lib_areas
 include lib_features
 include lib_highwater
+include lib_sl1
 # RESIZE 10-25 (box agent, older-storyline deep pass): Radius 34 -> 100, the finale's size: the pylon ring, pit,
 # chambers and buoy stay in the middle; round them the seabed under the crown.
 # DEEP 10-25: Anchor Rock in the north-east - a 39 m climb up from the seabed to a dry crown 4 m over the sea, with the
@@ -229,6 +230,42 @@ prop buoyzone zone.radius=4
 prop buoyzone zone.repeat=never
 prop buoyzone zone.message=At the buoy, on the surface. Far above, the torn islands hang still - and the compass needle is steady.
 prop buoyzone on.enter=camera|buoy|rootcam|6|40
+
+# --- 11-11 (w06): the coolant store - optional (plan 06 row: ACID room, safe=suit, hidden by a valve). No quest step.
+# The root crew's coolant store, a shed on the seabed beside the pit: the coolant tanks split when the crown went wild
+# and the floor is still awash with the crew's acid coolant. The store locker is at the back past the spill. Two ways
+# across: the crew's work suits in the box by the door, or the drain valve on the store's side wall, which hides the
+# acid. The store's open door faces away from the pit; the box and the warning board stand beside it.
+brush flatten at -22 -25 r=6 s=20 frames=200 h=4
+brush flatten at -22.75 -30.5 r=3 s=20 frames=200 h=4
+clear at -22 -25 r=5 only=(?i)boulder|rock|tree|bush|bamboo|coral
+push at -25 -28 h=4
+call shed w=4 d=4 door=1
+place TP_Moontown_Barrel02 - at 4.8 4.9 y=0.2 sit yaw=80
+place TP_Moontown_Barrel02 - at 5.0 3.6 y=0.2 sit yaw=200
+pop
+place Note_Sign arcoolwarn at -24.6 -29.4 ground sit yaw=200
+note arcoolwarn COOLANT STORE - ACID | The tanks split when the crown went wild. Acid coolant on the floor. Work suits in the box by the door. The drain valve is on the side wall of the store.\n- Root crew foreman
+place "Box Big" arcoolsuits at -20.8 -29.6 ground sit yaw=250
+prop arcoolsuits obj.name=arcoolsuits
+prop arcoolsuits beh.use=Put on a work suit
+prop arcoolsuits on.use=suit||180\nmessage||A root crew work suit, sealed at the wrists and boots - three minutes before the coolant gets through.
+place Zone_Trigger arcool at -22 -25 h=4.6
+prop arcool obj.name=arcool
+prop arcool zone.id=ar_coolant
+prop arcool zone.radius=2.6
+prop arcool zone.hazard=acid
+prop arcool zone.damage=4
+prop arcool zone.safe=suit
+prop arcool zone.hazardMsg=The floor is awash with acid coolant. Put on a work suit from the box by the door - or drain it with the valve on the store's side wall.
+place UT_JumpPuzzle_LiftMechanism_Lever ardrain at -25.9 -25 ground sit yaw=270
+prop ardrain obj.name=ardrain
+prop ardrain beh.use=Turn the coolant drain valve
+prop ardrain on.use=hide|arcool\nmessage||The drain valve groans open and the coolant runs off into the pit's sump. The store floor clears.
+place Loot_ChestSmall arcoollocker at -20.2 -23 h=4.3 drop yaw=200
+note arcoollocker Coolant store locker | The crew's store locker, shut when the tanks split: spare cells, a pump board and the foreman's titanium.
+loot arcoollocker Battery*2;CircuitBoard*1;TitaniumOre*1;Bolt*2
+prop arcoollocker loot.refill=0
 
 quest title=The Root
 quest intro=The Array's root, 35 m under the sea. Make for the rock with the mast and dive to its pylon ring.

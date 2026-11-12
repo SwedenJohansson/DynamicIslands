@@ -16,6 +16,7 @@ include lib_gravity
 include lib_areas
 include lib_features
 include lib_highwater
+include lib_caves
 # RESIZE 10-25 (box agent, older-storyline deep pass): Radius 30 -> 82: the hill's whole root plate on the seabed; the
 # old farmhouse, well and root cave stay in the middle.
 # DEEP 10-25: the Root Stack - the hill's great taproot stands up from the seabed in the north-west and breaks the
@@ -177,5 +178,44 @@ step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the root cave
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the root cave cache
 quest done=Marta has her apples. Her radio gives the next band: the market that went up with the hill - Altitude Market, 900.
 quest reward=MetalIngot*3;Bolt*2
+
+# --- 11-11 (w06): the root cellar galleries under the Root Stack (plan 06 row: SYS (big) of root-cellar galleries,
+# two levels; dirt 5, mushrooms 4, stone 2). No quest step. The farm's old cellars ran on under the stack: two ways in
+# at its foot on the side away from the trail, two level galleries joining in a low hall, a ramp (22 degrees) up from
+# the hall to the upper store, where the last air of the drowning is still held under the rock. All dug, not cave-tool
+# pieces: the stack is the generator's own rock and pieces laid in it stay buried (lesson 108), as at Lumen and
+# Rootweave. Flooded (the island is 25 m down): no rats. Mouths 3 m out from the stack's foot (angles 128 and 100 from
+# its middle), 7 m and more from the stack-foot and crown walks, the farmhouse and the root cave (cavecheck).
+origin
+brush smooth at -7.2 22.2 r=5 s=8 frames=60
+brush smooth at -1.4 35 r=5 s=8 frames=60
+clear at -7.2 22.2 r=4 only=(?i)boulder|rock|tree|bush|bamboo
+clear at -1.4 35 r=4 only=(?i)boulder|rock|tree|bush|bamboo
+# (sand painted round both mouths: the dig's rim rock showed as a ragged pale flap on the green seabed, 11-12)
+brush sand at -7.2 22.2 r=4.5 s=20 frames=30
+brush sand at -1.4 35 r=4.5 s=20 frames=30
+# the lower level: gallery A from the south mouth, gallery B from the east mouth, the low hall where they meet
+dig -7.15,22.15 -13.4,28.8 -17.2,34.3 r=1.75 slope=0 as=rcgal
+dig -1.44,34.96 -10.6,35.2 -17.2,34.3 r=1.75 slope=0 as=rcgal
+dig -17.2,34.3 -20.9,35.9 r=3.2 slope=0 as=rcgal
+# the upper level: a ramp up from the hall's far side, bending back east into the upper store (11 m and more from the
+# crown's tower straight over it, 10 m from the hall)
+dig -18.5,36.5 -19,41 -16.5,45 r=1.75 slope=22 as=rcgal
+dig -16.5,45 -14.5,46 r=2.8 slope=0 as=rcgal
+caveloot rcgal dirt=5 mush=4 stone=2 vines=0 titanium=0 wet=1
+prop rcgal cave.rock=plain
+place Zone_Trigger rcgalair at -15.5 45.5 h=8.5
+prop rcgalair obj.name=rcgalair
+prop rcgalair zone.id=rc_upperstore
+prop rcgalair zone.radius=4.5
+prop rcgalair zone.repeat=1
+prop rcgalair zone.air=1
+prop rcgalair zone.message=The upper store, up the ramp: the last of the farm's air, held under the rock since the drowning. Breathe.
+# cavecheck inside rcgalair rcgalchest
+place Loot_ChestSmall rcgalchest at -14.2 46.6 h=7.5 drop yaw=240
+prop rcgalchest obj.name=rcgalchest
+prop rcgalchest loot.refill=0
+note rcgalchest Upper store crate | The farm's last crate in the upper store, carried up the ramp when the water came into the cellars. Chalked on the lid: SEED - FOR THE OTHER HALF.
+loot rcgalchest Seed_Pine*2;Seed_Mango*1;Rope*2;Scrap*3
 
 save Rootcellar Deep

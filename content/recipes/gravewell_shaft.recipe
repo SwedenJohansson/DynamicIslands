@@ -17,6 +17,7 @@ include lib_gravity
 include lib_areas
 include lib_features
 include lib_highwater
+include lib_caves
 # RESIZE 10-25 (box agent, older-storyline deep pass): Radius 34 -> 82: the seabed round the shaft as big as Raft's own
 # big islands; the rim, pit, stair, galleries and pump hall stay in the middle.
 # DEEP 10-25: Pump Ridge in the south-east - a 30 m climb up the seabed to the pump keeper's drowned house on its top
@@ -217,5 +218,52 @@ step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor pla
 step read|Halvard's log 7|1|Read Halvard's log 7
 quest done=Both halves must be shut off - the Array's crown and its root. Halvard went up to the Stair of Hours: band 1100.
 quest reward=MetalIngot*4;CopperIngot*2
+
+# --- 11-11 (w06): the trial bore and its spike pit - optional (plan 06 row: DIG a side drift off the shaft, titanium 1,
+# stone 3; SPIKES in a side pit at the bottom, safe=none). No quest step. Before the gravewell's galleries were cut the
+# Institute drove a trial bore out of the pit's foot: a level drift from the pit's wall in the stair's one gap (330
+# degrees, between its plank foot at 300 and its top at 0; the stair is the way back up), bending west under the rim's
+# floor to the bore's chamber (12-16 m from the pit's middle, rock over it) with the last of its air, and off the chamber a short side pit
+# where the drillers set stakes to keep the anglers out. All dug (the seabed is the generator's rock); no shaft to the
+# rim - the chamber stays under rock (w04 lesson: sky over a passage fails the cave check). Flooded, 45 m down: no rats.
+# Kept clear: the skylift (0 10.5) 6 m and more off the drift, the pump hall (z to 2.5), the stair's plank foot (w06 try
+# 1: it blocked a mouth at 315 degrees) and the stair's posts (w06 try 2, under the turns at 45 degrees: the dig took
+# two posts and left their planks in the air).
+origin
+# the drift: from the pit floor 1 m out from the wall's foot (r 5.2), rising 6 degrees under the rim, the way
+# Stalker's Hollow's knoll caves start; then the chamber. Tried 11-12: from r 6.8 the floor took the wall's height,
+# 6.4, and cut an open notch through the rim (b1); level from the wall's foot (r 5.8), at its height or sunk 1 m, the
+# walk met a step it could not climb (b3, b5).
+# (11-12: the bore is level from the pit floor: a climb branched off inside it left a rock lip the walk stuck on)
+# (the wall is near sheer here: no ground point fell inside the drift, so no ground was cut; a shelf half way up the
+# drift into the foot gives the cut its ground)
+brush flatten at -4.3 5.55 r=1.2 s=20 frames=150 h=2.4
+dig -2.1,3.64 -6.2,7.2 -8.5,8.5 r=1.5 slope=0 as=gwbore
+dig -8.5,8.5 -11.3,11.3 r=2.5 slope=0 as=gwbore
+caveloot gwbore dirt=0 mush=0 stone=3 vines=0 titanium=1 wet=1
+prop gwbore cave.rock=plain
+# the side pit off the chamber, down and away from the pit (its own group: no loot among the stakes)
+dig -10.8,11.6 -13.6,9.4 -15.6,7.6 r=1.6 slope=-25 as=gwpit
+prop gwpit cave.rock=plain
+# cavecheck inside gwboreair gwpitwarn gwspikes
+place Zone_Trigger gwboreair at -9.9 9.9 h=3
+prop gwboreair obj.name=gwboreair
+prop gwboreair zone.id=gw_trialbore
+prop gwboreair zone.radius=2.5
+prop gwboreair zone.air=1
+prop gwboreair zone.repeat=1
+prop gwboreair zone.message=The trial bore's chamber - a pocket of old air under the rock. The way back is the drift, then the stair.
+place Note_Sign gwpitwarn at -9.2 11.2 h=2 sit drop yaw=210
+note gwpitwarn STAKES - KEEP OUT | The side pit is staked against the anglers. Do not swim down into it. The way out is back along the drift to the stair.\n- Trial bore crew
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at -15.2 8 h=-1 sit scale=0.25 yaw=20
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at -14.2 8.9 h=-0.6 sit scale=0.25 yaw=200
+place Zone_Trigger gwspikes at -14.8 8.4 h=-0.6
+prop gwspikes obj.name=gwspikes
+prop gwspikes zone.id=gw_spikepit
+prop gwspikes zone.radius=1.6
+prop gwspikes zone.hazard=spikes
+prop gwspikes zone.damage=4
+prop gwspikes zone.safe=none
+prop gwspikes zone.hazardMsg=Stakes! The drillers staked this pit against the anglers. Back up to the chamber.
 
 save Gravewell Shaft

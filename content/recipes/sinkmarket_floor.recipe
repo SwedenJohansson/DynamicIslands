@@ -18,6 +18,7 @@ include lib_gravity
 include lib_areas
 include lib_features
 include lib_highwater
+include lib_caves
 # RESIZE 10-25 (box agent, older-storyline deep pass): Radius 32 -> 82: the whole lower town's ground on the seabed;
 # the old square, bell, cistern and cage stay in the middle.
 # DEEP 10-25: Lookout Rock - the town's old signal rock in the north-east climbs out of the sea: its dry crown (4 m over
@@ -185,7 +186,7 @@ prop valve if.use=quest|9\nhas|story:valvewheel|1\n!signal|drained
 prop valve on.use=signal||drained\nhide|cisternwater\nshow|cisternair\ngive||story:drained*1\nmessage||The valve squeals round. The pipes gulp, and the cistern hall drains - air bubbles up under its roof.\nsound||event:/exploring/obstacles/keypad/keypad_correct
 prop valve else.use=message||The valve has no wheel - only a bare spindle. (If it has its wheel, the cistern is drained already.)
 prop cisternstore if.open=signal|drained
-prop cisternstore else.open=message||The store is under the cistern's water. Drain the hall first - the valve on its west side.
+prop cisternstore else.open=message||The store is under the cistern's water. Drain the hall first - the valve is on the hall's far wall, by the pipes.
 
 prop hallzone zone.id=cistern_hall
 prop hallzone zone.radius=7
@@ -230,5 +231,31 @@ step read|Marn's map of the pendulum|1|Read Marn's map of the pendulum
 step reach|cable_bottom|1|Swim to the cable car's bottom station
 quest done=Ilse Marn is aboard. Her map shows the pendulum island, 12 m over the water - band 1000.
 quest reward=MetalIngot*3;Rope*4
+
+# --- 11-11 (w06): the market's bonded cellar - optional (plan 06 row: underwater ST from the sunken market floor to an
+# air room; market goods in a chest, stone 2). No quest step needs it. The market kept its dues-unpaid goods in a
+# cellar under a mound off the square's south-east corner; the mound held its air when the market went down. Mouth at
+# 9 -9 at the square's edge, a flooded passage south-east under the mound into the room (its middle about 27 -27), an
+# air zone in the room. hill=1, not the plan's hill=0: on the flat seabed hill=0 pieces stay buried (lesson 108) and
+# there would be no rock over the room. No rats (under water). cavecheck: 6 m and more from the square's stalls, the
+# cistern, the cage, Ada's house and the walks between them.
+origin
+clear at 9 -9 r=4 only=(?i)boulder|rock|tree|bush|bamboo
+call kit_st x=9 z=-9 yaw=135 len=14 slope=0 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=0 titanium=0 wet=1 as=smcellar
+prop smcellar cave.rock=plain
+prop smcellar cave.dome=18
+place Zone_Trigger smcellarair at 26.7 -26.7 h=4.5
+prop smcellarair obj.name=smcellarair
+prop smcellarair zone.id=sm_bondedcellar
+prop smcellarair zone.radius=7
+prop smcellarair zone.air=1
+prop smcellarair zone.repeat=1
+prop smcellarair zone.message=The bonded cellar under the mound - air, held in since the market went down. Crates with the dues still unpaid.
+# cavecheck inside smcellarair smcellarchest
+place Loot_ChestSmall smcellarchest at 28.2 -28.2 h=3.6 drop yaw=315
+prop smcellarchest obj.name=smcellarchest
+prop smcellarchest loot.refill=0
+note smcellarchest Bonded goods | Market goods held for unpaid dues, each with a tag: STALL 4 - OWES 3 DAYS. STALL 9 - OWES A WEEK. The dues were never paid; the market went down first.
+loot smcellarchest Rope*2;Glass*2;CopperIngot*1;Plastic*3
 
 save Sinkmarket Floor

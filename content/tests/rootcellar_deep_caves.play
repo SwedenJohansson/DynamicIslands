@@ -1,0 +1,27 @@
+# Rootcellar Deep's root gallery and upper store (CIPlay rootcellar_deep_caves, 11-11 w06; in a test world 'CI ...').
+# Points as in the recipe (25 m down, all flooded): two mouths in the hill's foot at -7.2 22.2 and -1.4 35, the drifts
+# meeting at the junction -17.2 34.3, the chamber to -20.9 35.9, the ramp up from -18.5 36.5 to the upper store round
+# -15.5 45.5 (air zone rc_upperstore, the farm's crate at -14.2 46.6). Floors (island frame): drifts 3.8, store 7.2-7.8; below= under the roofs.
+island Rootcellar Deep keep
+offset 0 0
+hour 11
+weather Calm
+# (a CI world's bag emptied first: a full bag drops the loot)
+empty
+
+picture rc_cave_out -4.6 +2.5 16.8 -7.2 4.5 22.2
+picture rc_cave_out2 2.5 +2 35 -1.4 4.5 35
+walk -4.6 19.4 to -7.2 22.2 to -10.3 25.5 to -13.4 28.8 to -17.2 34.3 below=6.5
+picture rc_cave_junction -12.4 5.6 27.7 -17.2 5 34.3 light=20
+walk -17.2 34.3 to -18.5 36.5 to -19 41 to -16.5 45 to -15.5 45.5 below=9
+air rc_upperstore here
+picture rc_store_in -18.5 9 39 -14.5 8 46 light=20
+open Upper store crate
+wait 2
+expect item Rope 2
+air rc_upperstore
+
+# Out by the other drift
+at -17.2 34.3 h=5
+wait 1
+walk -17.2 34.3 to -10.6 35.2 to -1.44 34.96 to 2 35 below=6.5

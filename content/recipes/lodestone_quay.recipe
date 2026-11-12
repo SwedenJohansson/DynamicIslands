@@ -14,6 +14,7 @@ include lib_huts
 include lib_gravity
 include lib_areas
 include lib_highwater
+include lib_sl1
 # RESIZE 10-25 (box agent, older-storyline deep pass): Radius 42 -> 85, Height 15 -> 18; the old quay moved 0 -40 as one
 # frame (push) so it stays on the south shore; the island grows behind it.
 # DEEP 10-25: Cut Hill - the Institute's survey mast on a hill north of the quay holds the compass ring's lever pin
@@ -170,6 +171,37 @@ note idaletter Ida Kristen's letter | Erik -\n\nThey said it was safe. They said
 note brandtbook Harbour master Brandt's tide book | TIDE BOOK - Lodestone Quay. H. Brandt, harbour master.\n\nMon: high water 06:10. The needles twitch at noon. Nobody says why.\nTue: an anchor chain stood up off the quay. Straight up, like a rope trick. The Institute says 'magnetite'.\nWed: dug into the seam beside the quay. The rock pulls the nails out of your boots. I have stopped wearing boots.\nThu: LIFT DAY. Seven rowing boats went up with the hill. Ours came down in the afternoon, without its oars. The tide office went the other way.\n\nFor whoever keeps this book after me: the seam runs under Cut Hill and out to sea. Halvard's Array is built on the end of it. That is not a coincidence.
 note pilotnote Mail pilot's note | Put her down in the long grass by the hill. The compass went round in circles from the coast in, and the wings got heavy, as if somebody was sitting on them. The Institute's mail is in the crate. I am not flying back over that hill. - R. Lind, island post
 note lassechalk Survey hand Lasse's note | LASSE WAS HERE. Four storeys of ladder for a view of a hole in the sky. The pin is in the box at the top, like the Director said. Don't tell Halvard I ate his lunch up here. Again.
+# --- 11-11 (w06): Pilot Rouhi and the pilots' shed (plan 06 row: islander Rouhi; a talked-gate store). No quest step.
+# Rouhi is the quay's pilot: she fishes off the quay's edge by the forklift and knows the pull. Her three answers: why
+# it pulls (a journal page on the lodestone under the sea), where to start (the orchard - the trees that grow upward),
+# and ballast (four stones). The pilots' shed on the quay's edge is barred until you have talked to her; inside, her
+# spare rope and her compass. The shed's door faces inland, towards the instrument hut.
+origin
+place Story_Islander lqrouhi at -3 -76 ground yaw=180
+prop lqrouhi obj.name=Pilot Rouhi
+prop lqrouhi islander.character=Rouhi
+prop lqrouhi islander.pose=fish
+prop lqrouhi talk.text=Hold on to something. The pull changes with the tide.\n> Why does it pull?\n> Where do I start?\n> Lend me ballast.
+prop lqrouhi on.choice1=journal|Pilot Rouhi's page|There is a lodestone under this sea, bigger than any island. The Institute found it and built the Array to pull on it. Now the Array's crown hangs dark over the water and the lodestone pulls back. Everything loose up here leans towards it: the needles on the quay, the trees, the boats.\nmessage||Rouhi taps the needles on the quay: the lodestone under the sea is what they point at. She writes it down for you.
+prop lqrouhi on.choice2=message||Start at the orchard - the trees that grow upward, hanging over the sea. The Kristens kept their apples in a store under the hill there. After that, follow the needles.
+prop lqrouhi on.choice3=give||Stone*4\nmessage||Rouhi hands you four stones from her bucket. Ballast - keep them low in your pack when the pull turns. And take what is in the pilots' shed, it is open to you now.
+push at -12 -70 h=1.5 yaw=180
+call shed w=4 d=4 door=1
+place PlantationDoor lqsheddoor at 2.25 0 y=0.05 sit yaw=0
+place Loot_ChestSmall lqshedchest at 4.5 4.5 y=0.2 sit yaw=180
+place "Box Small" - at 1 5 y=0.2 sit yaw=20
+pop
+prop lqsheddoor obj.name=lqsheddoor
+prop lqsheddoor beh.use=Open the pilots' shed
+prop lqsheddoor if.use=talked|Pilot Rouhi
+prop lqsheddoor on.use=hide|lqsheddoor\nshow|lqshedchest\nmessage||The pilots' shed. Rouhi's spare line and her old compass are in the chest at the back.
+prop lqsheddoor else.use=message||The pilots' shed is barred. Pilot Rouhi, fishing off the quay, has the bar's peg.
+prop lqshedchest obj.name=lqshedchest
+prop lqshedchest beh.hidden=1
+prop lqshedchest loot.refill=0
+note lqshedchest Pilots' shed chest | Pilot Rouhi's spare line and her old compass. The needle swings towards the sea before it settles.
+loot lqshedchest Rope*2;Compass*1;Stone*2
+
 quest title=Lift Day
 quest intro=A harbour with a hill sliced flat behind it. Make for the flat-topped hill and go up onto the quay below it.
 step reach|quay|1|Make for the flat-topped hill; go onto the harbour quay below it

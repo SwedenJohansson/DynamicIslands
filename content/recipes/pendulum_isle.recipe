@@ -29,6 +29,7 @@ include lib_highwater
 # 15 -> 18 steps: the Iron Ridge, its survey note and Needle Knoll's top before the zipline. The keel zone moved out
 # past the new south coast (0 -76).
 include lib_lastpost
+include lib_caves
 # o4_dune: a dune or low hill along x1 z1 - x2 z2, h m over the sea at its crest: three rings of flatten (the outer one
 # no lower than the plain it stands on), lightly smoothed into one slope, painted by slope, the generator's plants cleared
 macro o4_dune x1=0 z1=0 x2=10 z2=0 h=8 r=4
@@ -273,5 +274,36 @@ quest reward=Battery*2;CopperIngot*2
 # Buried treasure (the story line's middle): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
 call treasure x=0 z=0 r=14 n=1 seed=8830
 prop treasure8830 treasure.loot=TitaniumOre*3
+
+# --- 11-11 (w06): the bob-cutters' drift - optional (plan 06 row: ST through the rock base; dirt 2, mushrooms 2). No
+# quest step needs it. The iron for the pendulum's bob was cut out of Bob Hill's foot: the cutters drove a short
+# drift into the hill's south-east flank, below the trail's first turn, and opened a working room at its end where
+# they left their wedges. A dug cave (11-12: the kit_st cut along the foot showed a square slab face at both ends and
+# a see-through shell; the plan allows a dig where a kit looks poor): mouth at -49.4 -23.5 (r 25 from the hill's
+# middle -58 0), the drift 9 m in towards the middle, the room to -53.5 -12.3 (r 13, under 18 m of hill). The trail's
+# pad over the drift (-50.8 -19.7, h about 11) stays 3 m over its roof. The mouth is in the hill's foot step, from the sand
+# at -49.4 -23.5 (r 25), 1.4 m out from the step's foot, rising 8 degrees (the way Stalker's Hollow's knoll caves start):
+# dug from the step's top (8) the drift ran as an open trench through the lower terrace (11-12 run b1); a smoothed
+# ramp to a sunk mouth (b3) and a level start on the sand (b5: a level stroke on flat ground sinks for cover) each left
+# a step the walk could not climb. The box sits to the room's side, off the drift's line (b3: it blocked the cave check's way). No rats.
+# cavecheck: away from the bob-foot zone and the walks.
+origin
+clear at -49.8 -22.4 r=4 only=(?i)boulder|rock|tree|bush|bamboo
+# (11-12: a sloped stroke from the sand cut no ground at all at the foot - 0 cells, the face stood in the way; the mouth
+# stroke is level, as at Rootcellar, and the climb is a branch from inside it)
+# (the face is near sheer here: no ground point fell inside the drift, so no ground was cut; a shelf half way up the drift
+# into the foot gives the cut its ground)
+brush flatten at -49.75 -21.9 r=1.2 s=20 frames=150 h=4.2
+dig -49.3,-24.4 -49.9,-20.6 r=1.75 slope=0 as=pibob
+dig -49.9,-20.6 -52.5,-15 r=1.75 slope=22 as=pibob
+dig -52.5,-15 -53.5,-12.3 r=2.5 slope=0 as=pibob
+caveloot pibob dirt=2 mush=2 stone=0 vines=0 titanium=0
+prop pibob cave.rock=plain
+# cavecheck inside pibobbox
+place Loot_ChestSmall pibobbox at -54.3 -14.3 h=6.5 drop yaw=160
+prop pibobbox obj.name=pibobbox
+prop pibobbox loot.refill=0
+note pibobbox Bob-cutters' box | The cutters' box, left in the cut when the bob was hoisted: wedges, a worn hammer head, and the offcuts of the lodestone iron. Scratched inside the lid: 412 KG - SHE SWINGS.
+loot pibobbox MetalOre*2;Bolt*2;Nail*6;Rope*1
 
 save Pendulum Isle

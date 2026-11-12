@@ -1,0 +1,32 @@
+# Upfall Orchard's apple store (CIPlay upfall_orchard_caves, 11-11 w06). Run it in a new world NOT named 'CI ...'
+# (e.g. 'W06 ufcaves'): in a 'CI ' world each `island` line empties the inventory, and the machete comes from Altitude
+# Market's porter's toolbox first. Points as in the recipe: the mouth in the hill's foot at -22 -18, the cut running
+# yaw 215 for 8 m, the vines gate (ufstore_vines) at the mouth, the store room past it round -32.9 -33.6 (the Kristens'
+# apple chest). Heights over the island's own water level are guesses: below= keeps the walker on the ground.
+island Altitude Market
+offset 0 0
+open Porter's toolbox
+wait 3
+expect item Machete 1
+
+island Upfall Orchard
+offset 0 0
+hour 11
+weather Calm
+where ChoppableVines
+where Pickup_Landmark_Mushroom
+where Pickup_Landmark_DirtPickup
+
+picture uf_cave_out -16.3 +2.5 -9.8 -22.5 9 -18.7
+walk -18.6 -13.1 to -20.3 -15.5 to -23.2 -19.6 below=8 blocked
+expect shown ufstore_vines
+use ufstore_vines
+expect hidden ufstore_vines
+picture uf_cave_cut -16.3 +2.5 -9.8 -22.5 9 -18.7
+walk -20.3 -15.5 to -22 -18 to -24.3 -21.3 to -26.6 -24.6 to -29.4 -28.6 to -31.7 -31.9 below=8
+picture uf_cave_in -24.3 9.8 -21.3 -32.9 9 -33.6 light=20
+picture uf_room_back -34.5 9.8 -35.8 -26.6 9 -24.6 light=20
+open Apple store chest
+wait 2
+expect item Seed_Mango 2
+walk -31.7 -31.9 to -29.4 -28.6 to -26.6 -24.6 to -24.3 -21.3 to -22 -18 to -20.3 -15.5 below=8

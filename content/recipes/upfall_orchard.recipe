@@ -14,6 +14,7 @@ include lib_gravity
 include lib_areas
 include lib_features
 include lib_highwater
+include lib_caves
 # RESIZE 10-25 (box agent, older-storyline deep pass): Radius 30 -> 85, Height 11 -> 14: the whole torn hilltop, not
 # only its orchard; the old orchard stays in the middle.
 # DEEP 10-25: Bee Hill - the old hill's own summit rides on the plate's north end with Erik Kristen's bee tower on
@@ -181,5 +182,23 @@ place Creature_Llama llamas at -9 0 ground
 prop llamas creature.count=1
 place Creature_Chicken hens at -5 -10 ground
 prop hens creature.count=3
+
+# --- 11-11 (w06): the Kristens' apple store - optional, vines (plan 06 row: ST under the orchard terraces, an optional
+# VINE mouth; dirt 3, mushrooms 2). No quest step needs it. Before the lift the Kristens kept the winter apples in a
+# store dug into a mound past the orchard's south-west edge, its mouth turned to the farmhouse; the plate tore off with
+# the store in it and the brambles grew over the door. Mouth at -22 -18, a short way in south-south-west to the room
+# (its middle about -33 -34); the mound is the cave tool's own. A chest of apples and seed at the back.
+# cavecheck: 6 m and more from the farmhouse, the baskets, the root cave and the walks between them.
+origin
+clear at -22 -18 r=4 only=(?i)boulder|rock|tree|bush|bamboo
+call kit_st x=-22 z=-18 yaw=215 len=8 slope=0 end=room size=0.7 hill=1 dirt=3 mush=2 stone=0 vines=0 titanium=0 gate=1 as=ufstore
+prop ufstore cave.rock=plain
+prop ufstore cave.dome=18
+# cavecheck inside ufstorechest
+place Loot_ChestSmall ufstorechest at -32.9 -33.6 h=5.5 drop yaw=35
+prop ufstorechest obj.name=ufstorechest
+prop ufstorechest loot.refill=0
+note ufstorechest Apple store chest | The Kristens' apple chest at the back of the store, packed in straw the autumn before the lift. A tag in Ida's hand: KEEP CLOSED - THEY BRUISE.
+loot ufstorechest Seed_Mango*2;Rope*1;Plank*3;Nail*4
 
 save Upfall Orchard
