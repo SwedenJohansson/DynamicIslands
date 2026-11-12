@@ -15,6 +15,7 @@ include lib_features
 include lib_verdance
 include lib_highwater
 include lib_areas
+include lib_caves
 # RESIZE 10-24: Radius 34 -> 60 (Height 3 -> 3), the old content moved 5.3 -13.3 as one frame (push) so its sea side stays at the coast; the island grows behind it.
 # DEEP 10-24: Lookout Hill: Freehold's first watch on a hill over the shoal, the first squatters' hut drowned off the beach, and a founding bell.
 # DEEP 10-24: Radius 60 -> 80 (the user: Raft-big islands, 80-95), the old content frame moved on 7.4 -18.6 to stay at the coast.
@@ -243,7 +244,10 @@ origin
 # hill 1: 40 m across, 15 m over the sea
 brush flatten at 40 54 r=20 s=20 frames=600 h=5.2
 brush flatten at 40 54 r=14.4 s=20 frames=600 h=9.8
+# (11-11 w04: a spur south over the squatters' shelter cave, so the dug way and its room lie deep under the hill)
+brush flatten at 40 41 r=5 s=20 frames=600 h=9.8
 brush flatten at 40 54 r=9.0 s=20 frames=600 h=13.5
+brush flatten at 40 46.5 r=4.5 s=20 frames=600 h=13.5
 brush flatten at 40 54 r=6 s=20 frames=500 h=15
 brush smooth at 40 54 r=23.0 s=5 frames=70
 brush flatten at 40 54 r=6 s=20 frames=400 h=15
@@ -291,4 +295,22 @@ clear at 21.88 36.42 r=1 only=SmallBoulder2
 clear at 22.68 39.76 r=1 only=SmallBoulder2
 clear at 23.26 33.06 r=1 only=SmallBoulder2
 clear at 29.11 26.19 r=1 only=SmallBoulder2
+# --- 11-11 (w04): the squatters' shelter cave (plan 04 row: ST shelter cave; dirt 3, mushrooms 2, chest).
+# No quest step. Before the first huts stood, the squatters slept in a hollow they dug into the foot of hill 1 (the ruin
+# hill) on the open north-east sand, its mouth turned south to the landing; a few blankets and a tin chest are still in
+# it. A dug tunnel (the Dig brush; the den on its own mound showed holes in its shell and was dropped, 11-11) from the
+# sand at 40 32.6 (the foot of a spur of the hill), climbing 8 deg north in under it to a dry room round 40 47 (its end 48.2); the chest
+# past the room's end. Away from Rook's van, the salvage
+# chest and the view (cavecheck).
+origin
+clear at 40 33 r=3.5 only=(?i)boulder|rock|tree|bush|bamboo|plant|palm
+call kit_dig x=40 z=32.6 yaw=0 len=13 flat=0 r=1.75 slope=8 room=1 roomr=2.5 roomlen=4 dirt=3 mush=2 stone=0 vines=0 titanium=0 as=fhshelter
+prop fhshelter cave.rock=plain
+# cavecheck inside fhshelterchest
+place Loot_ChestSmall fhshelterchest at 40.2 49.6 h=6.5 drop yaw=200
+prop fhshelterchest obj.name=fhshelterchest
+prop fhshelterchest loot.refill=0
+note fhshelterchest Squatters' tin chest | The squatters' tin chest at the back of the shelter: what they kept dry before there was a roof on the shoal.
+loot fhshelterchest Rope*2;Nail*6;CopperIngot*1;Plastic*2
+
 save Freehold Shoal
