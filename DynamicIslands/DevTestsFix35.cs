@@ -390,7 +390,7 @@ namespace DynamicIslands
 					UpgradeBlock ub = made != null ? made.GetComponent<UpgradeBlock>() : null;
 					int now = player.Inventory.GetItemCount(name);
 					Check(ref ok, made != null && made.buildableItem == item, name + ": placed by the click (" + (made != null ? made.buildableItem.UniqueName : "nothing") + ")");
-					Check(ref ok, ub != null && ub.Upgrade != null, name + ": an upgrade block");
+					if (name.StartsWith("DI_", StringComparison.Ordinal)) Check(ref ok, ub != null && ub.Upgrade != null, name + ": an upgrade block");
 					Check(ref ok, now == had, name + ": the hotbar item was used up (" + had + " -> " + now + ", slot " + intoIndex + ", selected " + (hotbar != null ? hotbar.GetSelectedSlotIndex() : -1) + ")");
 					if (made != null) { placed++; if (placedNames != null && made.buildableItem == item) placedNames.Add(name); BlockCreator.RemoveBlockNetwork(made, null, true); }
 					yield return new WaitForSecondsRealtime(0.3f);

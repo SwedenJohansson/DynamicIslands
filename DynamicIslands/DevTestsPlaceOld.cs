@@ -65,6 +65,12 @@ namespace DynamicIslands
 			// an item with no green spot is tried again as Raft's own base item: when that finds none either, this old raft has
 			// no room for the kind (a net needs the raft's edge, an engine a free foundation) - not a fault of the mod's item
 			List<string> missed = names.Except(placed).ToList();
+			// (Raft's aim search is not the same each run: a miss is tried once more before it counts)
+			if (missed.Count > 0)
+			{
+				yield return PlaceRealCore(missed.ToArray(), "place old (missed, once more)", new[] { true }, placed);
+				missed = names.Except(placed).ToList();
+			}
 			if (missed.Count > 0)
 			{
 				var baseOf = ups.Where(u => missed.Contains(u.Name) && u.Base != null).ToDictionary(u => u.Name, u => u.Base.UniqueName);

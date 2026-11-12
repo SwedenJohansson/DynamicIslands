@@ -160,6 +160,21 @@ namespace DynamicIslands
 			cuUseId = it != null && it.settings_usable != null ? it.settings_usable.GetUseButtonName() : null;
 		}
 
+		// the state a swing meets: item in hand, Raft's menu, the animator's ItemHit and clips (why a swing makes no hit events)
+		static string CuDiag(Network_Player p)
+		{
+			try
+			{
+				Animator a = p.Animator != null ? p.Animator.anim : null;
+				Item_Base inHand = p.PlayerItemManager.useItemController.GetCurrentItemInHand();
+				string st = "";
+				if (a != null) for (int l = 0; l < a.layerCount; l++) { AnimatorClipInfo[] ci = a.GetCurrentAnimatorClipInfo(l); if (ci.Length > 0) st += l + ":" + ci[0].clip.name + " "; }
+				return "in hand " + (inHand != null ? inHand.UniqueName : "none") + ", menu " + CanvasHelper.ActiveMenu + ", ItemHit " + (a != null && a.GetBool("ItemHit")) + ", culling " + (a != null ? a.cullingMode.ToString() : "-")
+					+ ", animator on " + (a != null && a.isActiveAndEnabled) + ", speed " + (a != null ? a.speed.ToString("F1") : "-") + ", clips " + st;
+			}
+			catch (Exception e) { return "diag: " + e.Message; }
+		}
+
 		static IEnumerator CuClick(float hold, Action each = null)
 		{
 			CuSet(true);
@@ -242,6 +257,9 @@ namespace DynamicIslands
 								};
 								int hits0 = cuHits.Count;
 								float best = 0f;
+								string diag = null; int downFrames = 0;
+								Action hold0 = hold;
+								hold = () => { hold0(); if (cuDown && ++downFrames == 8 && diag == null) diag = CuDiag(player); };
 								for (int swing = 0; swing < 3 && best <= 0f && boar != null && boar.networkEntity != null; swing++)
 								{
 									boar.networkEntity.stat_health.Value = boar.networkEntity.stat_health.Max;
@@ -252,6 +270,7 @@ namespace DynamicIslands
 									if (boar != null && boar.networkEntity != null) best = Mathf.Max(best, hp0 - boar.networkEntity.stat_health.Value);
 								}
 								List<string> ev = cuHits.Skip(hits0).Where(h => h.Value != null && model != null && h.Value.transform.IsChildOf(model.transform)).Select(h => h.Key).ToList();
+								Log("    swing: " + (diag ?? "no frame with the button down") + "; all events: " + string.Join(",", cuHits.Skip(hits0).Select(h => h.Key + "@" + (h.Value != null ? h.Value.name : "?")).Distinct().ToArray()));
 								Log("  " + item + " (use button '" + cuUseId + "', damage " + dmg + ", range " + range.ToString("F1") + "): events " + string.Join(",", ev.ToArray()) + "; warthog lost " + best.ToString("F1") + " health");
 								if (item == u.Name) mineDrop = best; else baseDrop = best;
 								if (item == u.Name) Check(ref ok, ev.Contains("OnMeleeHit") && best > 0f, u.Name + " hits the warthog (OnMeleeHit on its own hand model) and takes " + best.ToString("F1") + " health");
