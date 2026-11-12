@@ -931,6 +931,91 @@ namespace DynamicIslands
 			Log("PASS: dig look probe " + mode);
 		}
 
+		[ConsoleCommand(name: "CIDigRimProbe", docs: "Dev, world or editor: every dug tunnel's mouths within 600 m - what each part of the lining wears (shader, texture, block), the rim top's baked texture (mean colour, share of the plain grey a bake leaves where no layer weighs), the ground's splat weights there; pictures of each mouth as drawn, with the parts in flat colours (lining green, rim walls blue, rim top magenta) and with the ground hidden (dig_rimprobe_<n>_<a|b|c>)")]
+		public static void DigRimProbeCommand(string[] args) { StartTest(DigRimProbeRoutine()); }
+
+		static IEnumerator DigRimProbeRoutine()
+		{
+			Vector3 me = Camera.main != null ? Camera.main.transform.position : Vector3.zero;
+			var tuns = Object.FindObjectsOfType<DigTunnel>().Where(x => x.PointCount > 0 && x.Openings.Count > 0 && x.transform.Find(DigTunnel.RockName) != null).ToList();
+			int n = 0;
+			foreach (DigTunnel t in tuns)
+			{
+				MeshRenderer mr = t.transform.Find(DigTunnel.RockName).GetComponent<MeshRenderer>();
+				Mesh mesh = mr.GetComponent<MeshFilter>().sharedMesh;
+				Terrain land = t.SkinLand;
+				if (mesh == null || land == null) continue;
+				Vector3 lo = land.transform.position, size = land.terrainData.size;
+				// (the mouths: the cut cells in clusters 6 m apart)
+				var groups = new List<List<Vector2>>();
+				foreach (Vector2 q in t.Openings)
+				{
+					List<Vector2> g = groups.FirstOrDefault(gr => gr.Any(p => (p - q).sqrMagnitude < 36f));
+					if (g == null) groups.Add(g = new List<Vector2>());
+					g.Add(q);
+				}
+				var parts = new List<string>();
+				Material[] ms = mr.sharedMaterials;
+				for (int i = 0; i < mesh.subMeshCount; i++)
+				{
+					Material m = i < ms.Length ? ms[i] : null;
+					var b = new MaterialPropertyBlock(); mr.GetPropertyBlock(b, i);
+					Texture bt = b.isEmpty ? null : b.GetTexture("_MainTex");
+					parts.Add("part " + i + ": " + mesh.GetTriangles(i).Length / 3 + " faces, " + (m == null ? "none" : m.shader.name + " main " + (m.HasProperty("_MainTex") && m.mainTexture != null ? m.mainTexture.name : "-") + " colour " + (m.HasProperty("_Color") ? m.color.ToString() : "-")
+						+ (bt != null ? " block main " + bt.name : "") + (m.HasProperty("_TopDiffuse") ? " top " + (b.isEmpty || b.GetTexture("_TopDiffuse") == null ? (m.GetTexture("_TopDiffuse") != null ? m.GetTexture("_TopDiffuse").name : "-") : b.GetTexture("_TopDiffuse").name) : "")));
+				}
+				Log("  tunnel " + t.transform.parent.name + "/" + t.name + " at " + t.transform.position.ToString("F1") + ": " + groups.Count + " mouths, " + t.Openings.Count + " cells cut, " + t.RimColumns + " rim columns, top " + (t.RimTop == "" ? "rock" : t.RimTop) + "; " + string.Join("; ", parts.ToArray()));
+				if (ms.Length > 2 && ms[2] != null && ms[2].HasProperty("_MainTex") && ms[2].mainTexture != null)
+				{
+					Texture2D c = DigTunnel.Readable(ms[2].mainTexture, 64);
+					if (c != null)
+					{
+						Color32[] px = c.GetPixels32();
+						float r = 0f, g = 0f, bl = 0f; int grey = 0;
+						foreach (Color32 p in px) { r += p.r; g += p.g; bl += p.b; if (Mathf.Abs(p.r - 128) < 3 && Mathf.Abs(p.g - 128) < 3 && Mathf.Abs(p.b - 128) < 3) grey++; }
+						Log("    rim top's baked texture " + ms[2].mainTexture.width + "x" + ms[2].mainTexture.height + ": mean " + (r / px.Length).ToString("0") + "," + (g / px.Length).ToString("0") + "," + (bl / px.Length).ToString("0") + ", plain grey " + (100f * grey / px.Length).ToString("0") + "%, scale " + ms[2].mainTextureScale + " offset " + ms[2].mainTextureOffset);
+					}
+				}
+				TerrainLayer[] layers = land.terrainData.terrainLayers;
+				Log("    ground " + land.name + " shader " + (land.materialTemplate != null ? land.materialTemplate.shader.name : "built-in") + ", layers " + string.Join(", ", layers.Select(l => l == null ? "null" : (l.diffuseTexture != null ? l.diffuseTexture.name + " " + l.diffuseTexture.width : "NO TEXTURE") + " tile " + l.tileSize.x).ToArray())
+					+ ", pixel error " + land.heightmapPixelError + ", basemap " + land.basemapDistance);
+				foreach (List<Vector2> g in groups)
+				{
+					Vector2 c2 = Vector2.zero; foreach (Vector2 q in g) c2 += q; c2 /= g.Count;
+					var at = new Vector3(c2.x, 0f, c2.y); at.y = land.SampleHeight(at) + lo.y;
+					if ((at - me).magnitude > 600f) continue;
+					int ar = land.terrainData.alphamapResolution;
+					int ax = Mathf.Clamp(Mathf.FloorToInt((c2.x - 3f - lo.x) / size.x * ar), 0, ar - 1), az = Mathf.Clamp(Mathf.FloorToInt((c2.y - 3f - lo.z) / size.z * ar), 0, ar - 1);
+					int aw = Mathf.Clamp(Mathf.CeilToInt(6f / size.x * ar), 1, ar - ax), ah = Mathf.Clamp(Mathf.CeilToInt(6f / size.z * ar), 1, ar - az);
+					float[,,] w = land.terrainData.GetAlphamaps(ax, az, aw, ah);
+					var mean = new float[w.GetLength(2)];
+					for (int z = 0; z < ah; z++) for (int x = 0; x < aw; x++) for (int l = 0; l < mean.Length; l++) mean[l] += w[z, x, l] / (aw * ah);
+					Vector3 nrm = land.terrainData.GetInterpolatedNormal((c2.x - lo.x) / size.x, (c2.y - lo.z) / size.z);
+					Vector3 outw = new Vector3(nrm.x, 0f, nrm.z);
+					if (outw.magnitude < 0.2f) { List<Vector3> line = DigLine(t); Vector3 mid = line[line.Count / 2]; outw = at - mid; outw.y = 0f; }
+					outw.Normalize();
+					Vector3 eye = at + outw * 9f + Vector3.up * 3f; eye.y = Mathf.Max(eye.y, land.SampleHeight(eye) + lo.y + 1.5f);
+					Log("    mouth " + n + " at " + at.ToString("F1") + ": " + g.Count + " cells, slope " + Vector3.Angle(nrm, Vector3.up).ToString("0") + " deg, splat " + string.Join(" ", mean.Select(v => v.ToString("0.00")).ToArray()) + "; eye " + eye.ToString("F1"));
+					Vector3 look = at + Vector3.up * 1f;
+					yield return CameraShot(eye, look, "dig_rimprobe_" + n + "_a");
+					var flat = new Material[ms.Length];
+					Color[] cols = { Color.green, Color.blue, Color.magenta };
+					Shader unlit = Shader.Find("Unlit/Color");
+					for (int i = 0; i < ms.Length; i++) { flat[i] = new Material(unlit); flat[i].color = cols[Mathf.Min(i, 2)]; }
+					mr.sharedMaterials = flat;
+					yield return CameraShot(eye, look, "dig_rimprobe_" + n + "_b");
+					land.drawHeightmap = false;
+					yield return CameraShot(eye, look, "dig_rimprobe_" + n + "_c");
+					land.drawHeightmap = true;
+					mr.sharedMaterials = ms;
+					foreach (Material f in flat) Object.Destroy(f);
+					n++;
+				}
+			}
+			if (n == 0) Fail("dig rim probe: no dug tunnel's mouth within 600 m");
+			else Log("PASS: dig rim probe - " + n + " mouths of " + tuns.Count + " tunnels");
+		}
+
 		[ConsoleCommand(name: "CIDigTunnelCamera", docs: "Dev, editor: the editor camera and a dug tunnel - a tunnel dug into a generated island's hill (24 m in, round a bend), the camera flown (its own controls, normal speed, steered at the passage's points) from in front of the mouth to the end: every step in the passage, under the hill's surface, near the path, not too fast; into the wall it stays inside, up into the roof it stops; God mode on: on up through the rock, and into the hillside away from the mouth (off: kept over the ground). Pictures from inside")]
 		public static void DigTunnelCameraCommand(string[] args) { StartTest(DigTunnelCameraRoutine()); }
 
