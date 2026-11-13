@@ -134,6 +134,8 @@ namespace DynamicIslands.Editor
 		public Button MainButton, AltButton;
 		ColorBlock colors;
 		bool waiting;
+		/// <summary>The key MainText shows now (None-1: something else, e.g. the "-" while waiting).</summary>
+		KeyCode shown = (KeyCode)(-1);
 		/// <summary>Why the last pressed key was refused (for tests), or null.</summary>
 		public string LastRefusal;
 
@@ -187,6 +189,7 @@ namespace DynamicIslands.Editor
 			KeybindInterface.AssigningKey = true;
 			ModKeys.Listen(true);
 			if (MainText != null) { MainText.text = "-"; MainText.color = colors.highlightedColor; }
+			shown = (KeyCode)(-1);
 		}
 
 		/// <summary>A key pressed while waiting (Update passes the real one; tests call it). Esc keeps the old key, a key
@@ -213,7 +216,12 @@ namespace DynamicIslands.Editor
 
 		void Refresh()
 		{
-			if (MainText != null && !waiting) { string s = RaftControlsKeys.Shown(Bound); if (MainText.text != s) MainText.text = s; }
+			// (every frame while the Controls tab is open: the key's name is made only when the key changed)
+			if (MainText == null || waiting) return;
+			KeyCode k = Bound;
+			if (k == shown) return;
+			shown = k;
+			MainText.text = RaftControlsKeys.Shown(k);
 		}
 
 		void Update()

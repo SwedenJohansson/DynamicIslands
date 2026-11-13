@@ -754,7 +754,7 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
   with Raft's brown island rock, closed all round under the ground; only its mouth, where it comes out of the hill, is
   open to the sky. The mouth gets a low, uneven rim of rock round it that blends into the slope: its top is drawn
   with the ground's own textures in the editor (grass on a grassy hill, rock on a cliff; the same in a world), with bare rock on its sides and at the opening; before a
-  cliff the floor runs straight out onto the ground (the cliff above the mouth stays whole, no sky through it). The
+  cliff the floor runs straight out onto the ground, in the ground's own look where it is out in the open, not the lining's rock (the cliff above the mouth stays whole, no sky through it). The
   lining inside is smooth rock, and it grows darker the farther in you are, in the editor and in a world (the floor just inside the mouth is dark rock too, not lit pale by the sun). Placed objects the passage goes through, that reach into it (a boulder on the rim of a room that breaks out of the ground) or that its rim would bury (a boulder, a bush, a buried rock) are taken away
   with the stroke. Each stroke is one **Ctrl+Z** (it brings them back too). A dug tunnel is saved with the island and comes along into Test and
   multiplayer; it follows the ground if you sculpt over it later. It has no move arrows: dig, fill or undo it. (Recipes can also lay a straight **ladder shaft** with `dig ... shaft`: up from a dug room to the ground at any angle; the ladders go in by hand.)
@@ -3823,7 +3823,7 @@ the thing it improves (the **base**), once it is learned at the **upgrade resear
 | **Floodlight** | An advanced head light that lights **twice as far** and half again as bright; it lasts twice as long | 2x the advanced head light | Advanced head light |
 | **Steel pot** | A cooking pot that **cooks twice as fast** | 2x the cooking pot | Cooking pot |
 | **Fast juicer** | A juicer that **makes juice twice as fast** | 2x the juicer | Juicer |
-| **Titanium machete** | A machete that **hits half again as hard**; it lasts twice as long | 2x the machete + 2 titanium ingots | Machete |
+| **Titanium machete** | A machete that **hits half again as hard** - creatures too, like Raft's machete - and still cuts vines and harvests; it lasts twice as long | 2x the machete + 2 titanium ingots | Machete |
 | **Sturdy scarecrow** | An advanced scarecrow that **never wears out** | 2x the advanced scarecrow | Advanced scarecrow |
 | **Master hammer** | A building hammer that **repairs twice as much per swing**; it lasts twice as long | 2x the building hammer | Building hammer |
 | **Longbow** | A bow that **draws half again as fast and shoots half again as far**; it lasts twice as long | 2x the bow | Bow |

@@ -155,6 +155,33 @@ call r2_hidden x=-41 z=51 al=ig_setchest kind=Loot_Chest
 call treasure x=70 z=30 r=5 n=1 seed=27278 kind=0
 prop treasure27278 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
 
+# --- W09 11-12: the staked hull (optional) - a wreck drawn up on the east flats, ringed by the wreckers' scrap stakes
+# (rusted spikes, 12 spike zones r 2.8 round it, safe=none: no suit helps) with their salvage chest at its bow. A sign on the
+# way up from the cave warns. The ring is an ellipse round the hull (7 x 13 m) -------------------------------------------
+place BoatStranded igwreck at 66.5 2 ground yaw=5 roll=-10 scale=0.8
+for _i 0 11 1
+set _a {$_i*30}
+place "Balboa_DecorationPrefabBase_Wooden Spikes" igstakes at {66.5+7*sin($_a)} {2+13*cos($_a)} ground scale=0.25 yaw={$_a}
+place "Balboa_DecorationPrefabBase_Wooden Spikes" igstakes at {66.5+7*sin($_a+15)} {2+13*cos($_a+15)} ground scale=0.22 yaw={$_a+190}
+place Zone_Trigger igspike$_i at {66.5+7*sin($_a)} {2+13*cos($_a)} h=3
+prop igspike$_i obj.name=igspike$_i
+prop igspike$_i zone.id=ig_spike$_i
+prop igspike$_i zone.radius=2.8
+prop igspike$_i zone.hazard=spikes
+prop igspike$_i zone.damage=4
+prop igspike$_i zone.safe=none
+prop igspike$_i zone.hazardMsg=Scrap stakes! The wreckers ringed their hull with sharpened iron. Step back out of the ring.
+next
+prop igstakes tint.color=#8a4a2a
+prop igstakes tint.amount=0.6
+place Note_Sign igstakewarn at 61 -16 ground sit yaw=200
+note igstakewarn STAKED - KEEP OFF | This hull is ours. The ring is sharpened scrap, and it bites. Whatever is in her, it is not worth your feet. - the wreckers
+place Loot_ChestSmall igwreckchest at 66.5 10.8 h=4 drop yaw=180
+prop igwreckchest obj.name=igwreckchest
+prop igwreckchest loot.refill=0
+note igwreckchest Wreckers' chest | The wreckers' salvage, kept inside their ring of stakes: the best of the hull, sorted and greased.
+loot igwreckchest Scrap*4;MetalIngot*2;Bolt*3;CircuitBoard*1
+
 # --- Settings, story items, notes, behaviours, quest (18 steps) -------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): date palms, melons, pineapples ----------
 scatter "Pickup_Landmark_Tree_Palm 2" 4 at 0 0 r=59.5 seed=4127 free=5

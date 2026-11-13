@@ -55,7 +55,11 @@ expect message Twenty seconds
 expect step 12
 use lever
 expect message still open
+# (the gate takes 2 s to sink into the floor)
+wait 2
 walk 0 28.5 to 0 31 to 0 32.5 h=0.9
+picture mc_gatehouse 9 7 16 -10 3 40
+picture mc_denhill -10 12 24 -40 6 58
 open Pilgrim's satchel
 expect item Spear_Scrap 1
 expect done
