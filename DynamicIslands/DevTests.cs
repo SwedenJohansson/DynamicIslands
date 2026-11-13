@@ -1742,7 +1742,7 @@ namespace DynamicIslands
 			Vector3 peak = target;
 			Vector3 dir = Flat(peak - body.position).normalized;
 			Log("Pushing raft towards " + label + " at 4 m/s; layers RaftCollision/BakedBlocks vs Obstruction collide: " + !Physics.GetIgnoreLayerCollision(9, 16) + "/" + !Physics.GetIgnoreLayerCollision(18, 16));
-			Vector3 lastLogged = body.position; float stuckTime = 0; float t = 0;
+			Vector3 lastLogged = body.position; float stuckTime = 0; float t = 0; float closest = Flat(peak - body.position).magnitude;
 			while (t < seconds)
 			{
 				yield return new WaitForFixedUpdate();
@@ -1755,7 +1755,11 @@ namespace DynamicIslands
 					RaycastHit hit;
 					string below = Physics.Raycast(body.position + Vector3.up * 5f, Vector3.down, out hit, 40f, 1 << IslandSpawner.TerrainLayer) ? "ground " + (body.position.y - hit.point.y).ToString("F1") + " m below" : "open water";
 					Log(string.Format("t={0:F0}s raft {1} moved {2:F1} m in 2 s, {3}, {4:F0} m from peak", t, body.position, moved, below, Flat(peak - body.position).magnitude));
-					stuckTime = moved < 0.5f ? stuckTime + 2f : 0f;
+					// (stopped = no longer getting closer: a raft held on a sloping shore jitters 0.2-2 m sideways but stays
+					// ~45 m out - 11-13 Ribcage Reef ran out the 120 s that way - so judge the gain towards the peak, not the moving)
+					float dist = Flat(peak - body.position).magnitude;
+					stuckTime = (moved < 0.5f || closest - dist < 1f) ? stuckTime + 2f : 0f;
+					closest = Mathf.Min(closest, dist);
 					lastLogged = body.position;
 					if (stuckTime >= 6f) { Log("PASS: the raft is stopped by the island (" + Flat(peak - body.position).magnitude.ToString("F0") + " m from the peak)"); body.velocity = Vector3.zero; yield break; }
 				}
