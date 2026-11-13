@@ -1026,7 +1026,7 @@ namespace DynamicIslands.Editor
 		/// The ground's look over part of the terrain (r: 0..1 over it) baked into a texture: each layer's diffuse texture
 		/// tiled as the terrain tiles it, mixed by the splat map's weights there - on the legacy diffuse shader, as the
 		/// ground's (no shine), which the world's deferred camera lights as it lights the ground. With normals: the layers'
-		/// normal maps mixed the same way into a normal map of its own, on the legacy bumped diffuse shader (the mesh's
+		/// normal maps mixed the same way into a normal map of its own, on a bumped shader without shine (BumpedShader; the mesh's
 		/// tangents along x, as the terrain's - SplitTop). The layers' textures can't be read by the mod: each is
 		/// copied back from the graphics card once (Graphics.Blit to a small RenderTexture). mat: made once, its textures
 		/// replaced. Null when the ground has no layers.
@@ -1052,7 +1052,7 @@ namespace DynamicIslands.Editor
 			var nh = new int[nl];
 			bool anyNormal = false;
 			// (the bumped look's shader; without it the top stays flat, as before 11-13)
-			Shader bumped = normals ? Shader.Find("Legacy Shaders/Bumped Diffuse") ?? Shader.Find("Bumped Diffuse") : null;
+			Shader bumped = normals ? BumpedShader() : null;
 			int lim = FullSizeTextures();
 			try
 			{
@@ -1146,6 +1146,10 @@ namespace DynamicIslands.Editor
 				mat.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
 				mat.SetFloat("_GlossyReflections", 0f);
 				mat.EnableKeyword("_GLOSSYREFLECTIONS_OFF");
+				// (Standard's specular twin with a black specular colour: no shine at all, in the deferred camera's reflections
+				// too - they take the specular colour from the G-buffer, black there)
+				if (mat.HasProperty("_SpecColor")) mat.SetColor("_SpecColor", Color.black);
+				if (s.name.StartsWith("Standard", StringComparison.Ordinal) && ntex != null) mat.EnableKeyword("_NORMALMAP");
 			}
 			else
 			{
@@ -1166,6 +1170,22 @@ namespace DynamicIslands.Editor
 			else if (ntex != null) Destroy(ntex);
 			return mat;
 		}
+
+		/// <summary>The baked top's shader with normal maps and no shine, the first of these Raft has (11-13: Raft's build has no
+		/// legacy bumped diffuse - the top stayed flat); null when none.</summary>
+		static Shader BumpedShader()
+		{
+			if (bumpedLooked) return bumpedShader;
+			bumpedLooked = true;
+			foreach (string n in new[] { "Legacy Shaders/Bumped Diffuse", "Bumped Diffuse", "Mobile/Bumped Diffuse", "Standard (Specular setup)" })
+			{
+				Shader s = Shader.Find(n);
+				if (s != null && s.isSupported) return bumpedShader = s;
+			}
+			return null;
+		}
+		static Shader bumpedShader;
+		static bool bumpedLooked;
 
 		/// <summary>Drops a baked material with its textures.</summary>
 		static void DropBaked(Material m)
