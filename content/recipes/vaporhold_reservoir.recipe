@@ -238,12 +238,14 @@ call kit_st x=-10 z=-37 yaw=250 len=41.6 slope=12 end=room size=0.7 hill=1 dirt=
 prop vrintake1 cave.rock=plain
 call kit_st x=-8 z=-46 yaw=225 len=41.6 slope=12 end=room size=0.7 hill=1 dirt=0 mush=1 stone=1 vines=0 wet=1 as=vrintake2
 prop vrintake2 cave.rock=plain
-dig -91,-50 -78,-50 r=1.75 slope=0 as=vrservice
-dig -78,-50 -74,-50 r=3 as=vrservice
+# (11-13 w11c: with the long intake shortened its hill no longer reaches the west shore - -91 -50 became sea bed
+# (dig floor -3.8, all wet); the mouth moved up the slope to -82, where the ground rises about 1.1 m a metre)
+dig -82,-50 -72,-50 r=1.75 slope=0 as=vrservice
+dig -72,-50 -68,-50 r=3 as=vrservice
 caveloot vrservice dirt=2 mush=1 stone=1 vines=0
 prop vrservice cave.rock=plain
 # cavecheck inside vrvalveair vrsumpair vrvalvechest vrrats
-place Creature_Rat vrrats at -76 -50 h=6.5 drop
+place Creature_Rat vrrats at -70 -50 h=6.5 drop
 prop vrrats creature.count=2
 prop vrrats creature.respawn=0
 place Zone_Trigger vrvalveair at -56.5 -54 h=3.5

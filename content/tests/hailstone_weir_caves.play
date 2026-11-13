@@ -23,4 +23,5 @@ open Gauge store
 wait 2
 expect item Glass 2
 walk 20.8 -18.5 to 19.2 -22.9 to 17.3 -28.2 to 15.3 -33.8 to 13.2 -39.4 to 11.2 -45.1 below=4
-swim 9.1 -50.7 0.2 to 7.05 -56.4 -0.9 to 5 -63 -1.6 to 5 -66 -1.8 to 5 -70 -1
+# (w11c: out of the culvert keep low under the mouth's lip - the way out stuck at it at -1.8 coming down from -0.9)
+swim 9.1 -50.7 0.2 to 7.05 -56.4 -0.9 to 6 -60 -1.9 to 5 -63 -2.1 to 5 -66 -1.8 to 5 -70 -1
