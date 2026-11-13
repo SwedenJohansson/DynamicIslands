@@ -754,7 +754,7 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
   with Raft's brown island rock, closed all round under the ground; only its mouth, where it comes out of the hill, is
   open to the sky. The mouth gets a low, uneven rim of rock round it that blends into the slope: its top is drawn
   with the ground's own textures in the editor (grass on a grassy hill, rock on a cliff; the same in a world), with bare rock on its sides and at the opening; before a
-  cliff the floor runs straight out onto the ground (the cliff above the mouth stays whole, no sky through it). The
+  cliff the floor runs straight out onto the ground, in the ground's own look where it is out in the open, not the lining's rock (the cliff above the mouth stays whole, no sky through it). The
   lining inside is smooth rock, and it grows darker the farther in you are, in the editor and in a world (the floor just inside the mouth is dark rock too, not lit pale by the sun). Placed objects the passage goes through, that reach into it (a boulder on the rim of a room that breaks out of the ground) or that its rim would bury (a boulder, a bush, a buried rock) are taken away
   with the stroke. Each stroke is one **Ctrl+Z** (it brings them back too). A dug tunnel is saved with the island and comes along into Test and
   multiplayer; it follows the ground if you sculpt over it later. It has no move arrows: dig, fill or undo it. (Recipes can also lay a straight **ladder shaft** with `dig ... shaft`: up from a dug room to the ground at any angle; the ladders go in by hand.)

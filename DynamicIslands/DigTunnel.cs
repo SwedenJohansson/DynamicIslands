@@ -733,8 +733,8 @@ namespace DynamicIslands.Editor
 			if (land == null || RimColumns == 0 || mesh == null || mesh.subMeshCount < 2) return;
 			// (11-02: in a world - Raft's camera draws deferred there - the terrain shader on a mesh came out a flat grey-blue
 			// patch, its textures set and lit or not; the editor's is right. TN2, 11-03: in a world the top wears the ground's
-			// look baked into a texture of its own - the layers mixed by the splat map - on Unity's Standard shader, which
-			// draws in the deferred camera as the ground does.)
+			// look baked into a texture of its own - the layers mixed by the splat map - on the legacy diffuse shader (Standard
+			// until 11-13: its shine laid a grey veil on it), which draws in the deferred camera as the ground does.)
 			bool world = !DynamicIslands.InEditor();
 			try
 			{
@@ -904,8 +904,8 @@ namespace DynamicIslands.Editor
 
 		/// <summary>
 		/// The ground's look over part of the terrain (r: 0..1 over it) baked into a texture: each layer's diffuse texture
-		/// tiled as the terrain tiles it, mixed by the splat map's weights there - on Unity's Standard shader, matt, so the
-		/// world's deferred camera lights it as it lights the ground. The layers' textures can't be read by the mod: each is
+		/// tiled as the terrain tiles it, mixed by the splat map's weights there - on the legacy diffuse shader, as the
+		/// ground's (no shine), which the world's deferred camera lights as it lights the ground. The layers' textures can't be read by the mod: each is
 		/// copied back from the graphics card once (Graphics.Blit to a small RenderTexture). mat: made once, its texture
 		/// replaced. Null when the ground has no layers.
 		/// </summary>
@@ -965,7 +965,10 @@ namespace DynamicIslands.Editor
 			tex.Apply(true, true);
 			if (mat == null)
 			{
-				Shader s = Shader.Find("Standard");
+				// (11-13: the legacy diffuse shader, lit as the ground's own Nature/Terrain/Diffuse is - no shine. On Standard,
+				// even matt, the deferred camera added the sky's grey reflection: round every mouth a pale grey veil over the
+				// dark ash, its albedo hardly mattering - Cinderfall's lava tubes, The Frontier's quarry)
+				Shader s = Shader.Find("Legacy Shaders/Diffuse") ?? Shader.Find("Diffuse") ?? Shader.Find("Standard");
 				if (s == null) { Destroy(tex); return null; }
 				mat = new Material(s) { name = "DigTunnelGroundBaked" };
 				mat.SetFloat("_Glossiness", 0f);
@@ -1422,12 +1425,14 @@ namespace DynamicIslands.Editor
 
 			// (the rock's field: below 0 rock; and which air is the hill's own, past the rock's outside)
 			var top = new float[nx * nz]; // the rock's top (object space y), per column when upright
+			float[] groundAt = upright && land != null ? new float[nx * nz] : null; // the ground's own height (object space y)
 			if (upright)
 				for (int z = 0; z < nz; z++)
 					for (int x = 0; x < nx; x++)
 					{
 						Vector3 w = transform.TransformPoint(new Vector3(o.x + x * h, 0f, o.z + z * h));
 						top[x + z * nx] = (GroundY(land, w) - Under - transform.position.y) / sY;
+						if (groundAt != null) groundAt[x + z * nx] = (GroundY(land, w) - transform.position.y) / sY;
 					}
 			// (the mouth's rim: over the cut ground the rock's top is a skin just over the ground, so the cut's square cells are
 			// under rock; past the cut it sinks gently back under the ground by RimOut, along a ragged line; round the opening,
@@ -1558,6 +1563,22 @@ namespace DynamicIslands.Editor
 						}
 					}
 			dist = null; floorAt = null; radAt = null;
+
+			// (the passage's air out in the open, over the ground's own height - in front of a steep face, where the dig starts
+			// outside it: the rock there is the rim's, the ground's look, not the lining's. 11-13: the lining's floor came out of
+			// every mouth in a steep face as a pale slab on the sand or ash with a sawtooth edge - the cut cells' squares -
+			// Cinderfall's lava tubes, The Frontier's quarry, Listening Mirrors)
+			if (groundAt != null)
+				for (int z = 0; z < nz; z++)
+					for (int x = 0; x < nx; x++)
+					{
+						float gy = groundAt[x + z * nx];
+						for (int y = 0; y < ny; y++)
+						{
+							int i = x + y * sy + z * sz;
+							if (passage[i] && o.y + y * h > gy) passage[i] = false;
+						}
+					}
 
 			// (the surface, smoothed: toward the passage, or the open air over the rock's top - the mouth's rim, which takes the
 			// ground's look on its top; not toward the hill's own air past the rock)
