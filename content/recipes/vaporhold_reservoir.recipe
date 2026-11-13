@@ -230,7 +230,7 @@ call ar_plants_hill x=66 z=36 r=10 seed=26595
 # 12 deg under the embankment: the long intake ends in the dry valve chamber (air, loot), the short one in a flooded
 # sump room with an air pocket. No quest step. 11-13 w11 probe: the service passage was moved out to the west slope
 # (5-6 m there; the old line met the hill at 15 m, over the chamber): a dug passage that once led to the valve chamber,
-# fallen in after 18 m - two rats nest at its end. The way back from the chamber is the short swim down the intake.
+# fallen in after 10 m - two rats nest at its end. The way back from the chamber is the short swim down the intake.
 # (prep, offline only: the service passage's mouth height and both rooms not yet seen in Raft - probe first)
 # (11-13 w11b: at len 52 - seven pieces, the room 15 m under the embankment - the long intake had no room at its end in
 # Raft: an open end, the chest and mushrooms buried in the hill, the player fell out of it; six pieces like the sump's)
@@ -244,12 +244,15 @@ brush flatten at -10.4 -48.4 r=1.8 s=20 frames=200 h=1.9
 brush smooth at -10.4 -48.4 r=3 s=5 frames=15
 # (11-13 w11c: with the long intake shortened its hill no longer reaches the west shore - -91 -50 became sea bed
 # (dig floor -3.8, all wet); the mouth moved up the slope to -82, where the ground rises about 1.1 m a metre)
-dig -82,-50 -72,-50 r=1.75 slope=0 as=vrservice
-dig -72,-50 -68,-50 r=3 as=vrservice
+# (11-13 w11e: east along -50 to -68 its strokes met the valve chamber's den (its box from -74 -49.4 back to -53 -42 on
+# this side) and a dig takes what it digs into away - the den went whole, the chest and mushrooms left in the rock. Now
+# up the slope away from the den, its room 1.5 m short of the den's box)
+dig -82,-50 -76.5,-46.3 r=1.75 slope=0 as=vrservice
+dig -76.5,-46.3 -73.5,-44.3 r=2.8 as=vrservice
 caveloot vrservice dirt=2 mush=1 stone=1 vines=0
 prop vrservice cave.rock=plain
 # cavecheck inside vrvalveair vrsumpair vrvalvechest vrrats
-place Creature_Rat vrrats at -70 -50 h=6.5 drop
+place Creature_Rat vrrats at -74 -44.6 h=6.5 drop
 prop vrrats creature.count=2
 prop vrrats creature.respawn=0
 place Zone_Trigger vrvalveair at -56.5 -54 h=3.5
