@@ -1052,7 +1052,7 @@ namespace DynamicIslands.Editor
 			var nh = new int[nl];
 			bool anyNormal = false;
 			// (the bumped look's shader; without it - Raft's build has none - the normal maps' relief is baked into the colour)
-			Shader bumped = normals ? BumpedShader() : null;
+			Shader bumped = !normals ? null : TestLook == 1 ? Shader.Find("Standard") : TestLook == 2 ? null : BumpedShader();
 			int lim = FullSizeTextures();
 			try
 			{
@@ -1120,7 +1120,7 @@ namespace DynamicIslands.Editor
 				}
 			// (no bumped shader in the game: the normal maps' relief shaded into the colour instead, the top on plain diffuse)
 			bool relief = bumped == null && outNrm != null;
-			if (relief) { Relief(outPix, outNrm); outNrm = null; }
+			if (relief) { Relief(outPix, outNrm, TestLook == 2); outNrm = null; }
 			var tex = new Texture2D(tw, th, TextureFormat.RGBA32, true) { name = relief ? ReliefName : "DigTunnelGroundBaked", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
 			tex.SetPixels32(outPix);
 			ApplyFullSize(tex);
@@ -1140,7 +1140,7 @@ namespace DynamicIslands.Editor
 				// dark ash, its albedo hardly mattering - Cinderfall's lava tubes, The Frontier's quarry. Its bumped twin with
 				// the layers' normal maps, 11-13: flat, the top was a soft pale sheet on The Frontier's quarry face beside the
 				// ground's crisp, blue-shadowed rock)
-				Shader s = (ntex != null ? bumped : null) ?? Shader.Find("Legacy Shaders/Diffuse") ?? Shader.Find("Diffuse") ?? Shader.Find("Standard");
+				Shader s = (TestLook == 2 ? Shader.Find("Standard") : null) ?? (ntex != null ? bumped : null) ?? Shader.Find("Legacy Shaders/Diffuse") ?? Shader.Find("Diffuse") ?? Shader.Find("Standard");
 				if (s == null) { Destroy(tex); if (ntex != null) Destroy(ntex); return null; }
 				mat = new Material(s) { name = "DigTunnelGroundBaked" };
 				mat.SetFloat("_Glossiness", 0f);
@@ -1199,7 +1199,24 @@ namespace DynamicIslands.Editor
 		/// sharpness 0.5 against 2.8 on Cinderfall). The mixed normal maps' relief is shaded into the colour instead: lit
 		/// from high up (the sun's side when there is one, 55 degrees up) half and half with light from all round, each
 		/// texel against the mean of all - the cracks dark, the mean colour as baked.</summary>
-		static void Relief(Color32[] pix, Color32[] nrm)
+		/// <summary>Test only (CIDigMouthLook's comparisons): 1 - the top on Standard with its baked normal map; 2 - on Standard,
+		/// the relief shaded in against flat ground (absolute) rather than its mean. 0: the game's look.</summary>
+		internal static int TestLook;
+
+		/// <summary>Test only: the rim top baked again in a look to compare (TestLook), a material of its own; null when none.</summary>
+		internal Material BakeForTest(int look)
+		{
+			Material m = null;
+			int was = TestLook;
+			TestLook = look;
+			try { return BakedGround(skinLand, topRect, ref m, true); }
+			finally { TestLook = was; }
+		}
+
+		/// <summary>Test only: a material BakeForTest made, with its textures.</summary>
+		internal static void DropTestBake(Material m) { if (m != null) DropBaked(m); }
+
+		static void Relief(Color32[] pix, Color32[] nrm, bool absolute = false)
 		{
 			Vector3 l = new Vector3(0f, 0f, 1f);
 			Light sun = RenderSettings.sun;
@@ -1218,6 +1235,8 @@ namespace DynamicIslands.Editor
 				f[k] = s; sum += s;
 			}
 			float mean = (float)(sum / Mathf.Max(1, pix.Length));
+			// (absolute: against a flat normal's shading - the relief only darkens/lightens as the light on bumpy ground would)
+			if (absolute) mean = 0.5f + 0.5f * Mathf.Max(0f, l.z);
 			if (mean < 1e-3f) return;
 			for (int k = 0; k < pix.Length; k++)
 			{

@@ -1070,10 +1070,14 @@ namespace DynamicIslands
 			else Log("PASS: dig rim probe - " + n + " mouths of " + tuns.Count + " tunnels");
 		}
 
-		[ConsoleCommand(name: "CIDigMouthLook", docs: "Dev, in a world: every dug tunnel's mouths within 2000 m look as the ground round them (11-13 mouth fix) - the rim's top on a shader without shine (not Standard: a grey veil), the lining not out in the open in front of a face (a pale slab with a sawtooth edge: under 3% of its area), and each mouth's rim top, pictured, within 14 of the ground beside it in mean colour and at least 0.6 of its sharpness (dig_mouthlook_<n>_<a|f|l>). 'standard': the same baked textures on Standard for the run instead, to compare")]
-		public static void DigMouthLookCommand(string[] args) { StartTest(DigMouthLookRoutine(args.Length > 0 && args[0] == "standard")); }
+		[ConsoleCommand(name: "CIDigMouthLook", docs: "Dev, in a world: every dug tunnel's mouths within 2000 m look as the ground round them (11-13 mouth fix) - the rim's top on a shader without shine (not Standard: a grey veil), the lining not out in the open in front of a face (a pale slab with a sawtooth edge: under 3% of its area), and each mouth's rim top, pictured, within 14 of the ground beside it in mean colour and at least 0.6 of its sharpness (dig_mouthlook_<n>_<a|f|l>). 'standard': the same baked textures on Standard for the run instead, to compare; 'stdnormal': baked again on Standard with the mixed normal map; 'stdabs': baked again on Standard, the relief shaded in against flat ground")]
+		public static void DigMouthLookCommand(string[] args)
+		{
+			string a = args.Length > 0 ? args[0] : "";
+			StartTest(DigMouthLookRoutine(a == "standard" || a == "stdnormal" || a == "stdabs", a == "stdnormal" ? 1 : a == "stdabs" ? 2 : 0));
+		}
 
-		static IEnumerator DigMouthLookRoutine(bool standard)
+		static IEnumerator DigMouthLookRoutine(bool standard, int cmpLook = 0)
 		{
 			Vector3 me = Camera.main != null ? Camera.main.transform.position : Vector3.zero;
 			var tuns = Object.FindObjectsOfType<DigTunnel>().Where(x => x.PointCount > 0 && x.Openings.Count > 0 && x.transform.Find(DigTunnel.RockName) != null && x.SkinLand != null
@@ -1090,7 +1094,14 @@ namespace DynamicIslands
 				Material[] ms = mr.sharedMaterials;
 				if (mesh == null || mesh.subMeshCount < 3 || ms.Length < 3 || ms[2] == null) { Log("  tunnel at " + t.transform.position.ToString("F0") + ": no rim top (" + t.RimTop + ") - skipped"); continue; }
 				Material[] kept = null;
-				if (standard && Shader.Find("Standard") != null)
+				if (standard && cmpLook > 0)
+				{
+					// (for comparing: the rim top baked again in another look, for this run only)
+					Material tb = t.BakeForTest(cmpLook);
+					if (tb != null) { kept = ms; mr.sharedMaterials = new[] { ms[0], ms[1], tb }; ms = mr.sharedMaterials; }
+					Log("  (comparison look " + cmpLook + ": " + (tb != null ? tb.shader.name + (tb.IsKeywordEnabled("_NORMALMAP") ? ", normal map" : "") + ", " + tb.mainTexture.name : "none") + ")");
+				}
+				else if (standard && Shader.Find("Standard") != null)
 				{
 					// (for comparing: the rim top's textures on Standard - matt, its normal map if baked - for this run only)
 					Material b = ms[2], sm = new Material(Shader.Find("Standard")) { name = "DigMouthLookStandard" };
@@ -1228,7 +1239,7 @@ namespace DynamicIslands
 						+ " against the ground beside it " + (inG[0] / cG).ToString("0") + "," + (inG[1] / cG).ToString("0") + "," + (inG[2] / cG).ToString("0") + " (" + cT + "/" + cG + " samples): off by " + worst.ToString("0") + "; sharpness " + sharp.ToString("0.0") + " against " + sharpBy.ToString("0.0") + (blurred ? " (blurred)" : ""));
 					n++;
 				}
-				if (kept != null) { Material sm = ms[2]; mr.sharedMaterials = kept; Object.Destroy(sm); }
+				if (kept != null) { Material sm = ms[2]; mr.sharedMaterials = kept; if (cmpLook > 0) DigTunnel.DropTestBake(sm); else Object.Destroy(sm); }
 			}
 			if (standard) Log("(standard: the rim tops were on Standard for comparison only)");
 			if (ok) Log("PASS: dig mouth look - " + n + " mouths of " + tuns.Count + " tunnels");
