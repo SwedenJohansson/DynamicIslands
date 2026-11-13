@@ -1083,6 +1083,10 @@ namespace DynamicIslands
 			var tuns = Object.FindObjectsOfType<DigTunnel>().Where(x => x.PointCount > 0 && x.Openings.Count > 0 && x.transform.Find(DigTunnel.RockName) != null && x.SkinLand != null
 				&& (x.transform.position - me).magnitude < 2000f).ToList();
 			if (tuns.Count == 0) { Fail("dig mouth look: no dug tunnel's mouth within 2000 m"); yield break; }
+			// (CIGfx low: the user's quality for the whole check, and time for the rims to bake again at its texture limit - a
+			// player plays at one quality; a top baked under the test run's limit is soft until then)
+			bool gfx = GfxShotBegin();
+			yield return new WaitForSecondsRealtime(2.5f);
 			bool ok = true;
 			int n = 0;
 			Shader unlit = Shader.Find("Unlit/Color") ?? Shader.Find("Hidden/Internal-Colored");
@@ -1242,6 +1246,7 @@ namespace DynamicIslands
 				if (kept != null) { Material sm = ms[2]; mr.sharedMaterials = kept; if (cmpLook > 0) DigTunnel.DropTestBake(sm); else Object.Destroy(sm); }
 			}
 			if (standard) Log("(standard: the rim tops were on Standard for comparison only)");
+			GfxShotEnd(gfx);
 			if (ok) Log("PASS: dig mouth look - " + n + " mouths of " + tuns.Count + " tunnels");
 			else Fail("dig mouth look: a mouth's rim or lining stands out (BAD lines)");
 		}
