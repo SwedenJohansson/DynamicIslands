@@ -1270,6 +1270,14 @@ namespace DynamicIslands.Editor
 		/// read (302115ef, 003033a2) made Unity load every texture of the game again at full size, each time - a Raft building
 		/// an island with dens and dug mouths grew to 12-23 GB and hung. Now never touched: a top baked under a limit is baked
 		/// again when the limit comes down (Update), the copies cached per limit.</summary>
+		/// <summary>Tests (CIMemory): the readable copies cached, how many and their size.</summary>
+		internal static string CacheReport()
+		{
+			long b = 0; int n = 0;
+			foreach (var d in new[] { readable, readableLinear }) foreach (Texture2D t in d.Values) if (t != null) { n++; b += (long)t.width * t.height * 4; }
+			return "readable copies " + n + " (" + (b >> 20) + " MB)";
+		}
+
 		static int ReadLimit() { return Mathf.Clamp(QualitySettings.masterTextureLimit, 0, 7); }
 
 		/// <summary>A copy of a texture the mod can read, size x size: drawn into a RenderTexture (halved step by step, so
