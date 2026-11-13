@@ -740,16 +740,16 @@ namespace DynamicIslands.Editor
 			{
 				Material ground = world ? null : GroundMaterial(land);
 				if (!world && ground == null) { if (!toldNoGround) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: the ground's shader (" + (land.materialTemplate != null ? land.materialTemplate.shader.name : "built-in") + ") is not a terrain shader; its top stays rock"); toldNoGround = true; return; }
-				if (!SplitTop(mesh, mr.transform, land)) return;
+				if (!SplitTop(mesh, mr.transform, land, Openings)) return;
 				if (world)
 				{
 					topRect = TopRect(mesh, Openings, land);
-					ground = BakedGround(land, topRect, ref bakedTop);
+					ground = BakedGround(land, topRect, ref bakedTop, true);
 					if (ground == null) { if (!toldDeferred) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: the ground has no layers to bake; its top stays rock"); toldDeferred = true; return; }
 				}
 				Material[] mats = mr.sharedMaterials;
 				mr.sharedMaterials = new[] { mats[0], mats[1], ground };
-				RimTop = world ? "the ground's baked (" + ground.shader.name + ", " + bakedTop.mainTexture.width + "x" + bakedTop.mainTexture.height + ")" : "the ground's own (" + ground.shader.name + ")";
+				RimTop = world ? "the ground's baked (" + ground.shader.name + ", " + bakedTop.mainTexture.width + "x" + bakedTop.mainTexture.height + (bakedTop.HasProperty("_BumpMap") && bakedTop.GetTexture("_BumpMap") != null ? ", normals" : ", flat") + ")" : "the ground's own (" + ground.shader.name + ")";
 				Dressed(land);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's rim: " + e.Message); }
@@ -758,14 +758,19 @@ namespace DynamicIslands.Editor
 		/// <summary>Moves the rim's faces (part 1) to a third part of their own, with their own corners, and lays those corners
 		/// on the ground's splat map (uv: where they are over the terrain, 0..1), lit as the ground there - all but the faces
 		/// beside a cave hill's skin (NearHillSkin), which keep the hill's rock. False when there are none.</summary>
-		static bool SplitTop(Mesh mesh, Transform at, Terrain land)
+		static bool SplitTop(Mesh mesh, Transform at, Terrain land, List<Vector2> cut = null)
 		{
 			var verts = new List<Vector3>();
 			var norms = new List<Vector3>();
 			var uvs = new List<Vector2>();
+			var tans = new List<Vector4>();
 			mesh.GetVertices(verts);
 			mesh.GetNormals(norms);
 			mesh.GetUVs(0, uvs);
+			mesh.GetTangents(tans);
+			if (tans.Count != verts.Count) tans.Clear();
+			// (the top's corners that keep their own normals: the lining's floor at the mouth, flat as it is)
+			var own = new HashSet<int>();
 			if (mesh.subMeshCount == 2)
 			{
 				var rim = new List<int>();
@@ -774,6 +779,34 @@ namespace DynamicIslands.Editor
 				mesh.GetTriangles(rim, 1);
 				var copy = new Dictionary<int, int>();
 				Func<Vector3, bool> nearSkin = NearHillSkin(at);
+				var lining = new List<int>();
+				mesh.GetTriangles(lining, 0);
+				// (11-13: the lining's floor at the foot of each mouth lay out under the open sky, in full sun - a pale grey lip
+				// and ring of Raft's rock round the opening, brightest at its foot, on Cinderfall's dark ash: those faces wear the
+				// ground's look too, as the ground running in)
+				bool[] lip = OpenLining(verts, lining, rim, at, land, cut, norms);
+				var linCopy = new Dictionary<int, int>();
+				var keep = new List<int>(lining.Count);
+				for (int i = 0; i + 2 < lining.Count; i += 3)
+				{
+					if (!lip[i / 3]) { keep.Add(lining[i]); keep.Add(lining[i + 1]); keep.Add(lining[i + 2]); continue; }
+					for (int e = 0; e < 3; e++)
+					{
+						int v = lining[i + e], to;
+						if (!linCopy.TryGetValue(v, out to))
+						{
+							to = verts.Count;
+							linCopy[v] = to;
+							verts.Add(verts[v]);
+							norms.Add(norms[v]);
+							uvs.Add(uvs[v]);
+							if (tans.Count > 0) tans.Add(tans[v]);
+							own.Add(to);
+						}
+						top.Add(to);
+					}
+				}
+				lining = keep;
 				for (int i = 0; i + 2 < rim.Count; i += 3)
 				{
 					// (every face fills the ground's cut cells in the ground's place - 11-11: by their own normals and slope, the
@@ -795,13 +828,12 @@ namespace DynamicIslands.Editor
 							verts.Add(verts[v]);
 							norms.Add(norms[v]);
 							uvs.Add(uvs[v]);
+							if (tans.Count > 0) tans.Add(tans[v]);
 						}
 						top.Add(to);
 					}
 				}
 				if (top.Count == 0) return false;
-				var lining = new List<int>();
-				mesh.GetTriangles(lining, 0);
 				if (verts.Count > 65000) mesh.indexFormat = IndexFormat.UInt32;
 				mesh.SetVertices(verts);
 				mesh.SetNormals(norms);
@@ -817,15 +849,87 @@ namespace DynamicIslands.Editor
 			// (and turned as the ground there is: lit as the slope beside it, not as the rim's own rounded shape - in a world
 			// its outline showed as a lighter patch, TN2 11-03)
 			if (norms.Count != verts.Count) { norms.Clear(); mesh.GetNormals(norms); }
+			if (tans.Count != verts.Count) { tans.Clear(); mesh.GetTangents(tans); }
 			foreach (int v in tops)
 			{
 				Vector3 w = at.TransformPoint(verts[v]);
 				uvs[v] = new Vector2((w.x - lo.x) / size.x, (w.z - lo.z) / size.z);
-				if (v < norms.Count) norms[v] = at.InverseTransformDirection(land.terrainData.GetInterpolatedNormal(uvs[v].x, uvs[v].y)).normalized;
+				if (v < norms.Count && !own.Contains(v)) norms[v] = at.InverseTransformDirection(land.terrainData.GetInterpolatedNormal(uvs[v].x, uvs[v].y)).normalized;
+				// (turned for the baked ground's normal map as the terrain turns its own: along x, its binormal along z)
+				if (v < tans.Count && v < norms.Count)
+				{
+					Vector3 n = at.TransformDirection(norms[v]);
+					Vector3 t = Vector3.Cross(n, Vector3.forward);
+					t = t.sqrMagnitude > 1e-4f ? t.normalized : Vector3.right;
+					t = at.InverseTransformDirection(t).normalized;
+					tans[v] = new Vector4(t.x, t.y, t.z, -1f);
+				}
 			}
 			mesh.SetUVs(0, uvs);
 			if (norms.Count == verts.Count) mesh.SetNormals(norms);
+			if (tans.Count == verts.Count) mesh.SetTangents(tans);
 			return tops.Count > 0;
+		}
+
+		/// <summary>How far under the ground (m) the lining's floor at a mouth still takes the ground's look (OpenLining).</summary>
+		const float LipDepth = 2f;
+
+		/// <summary>Which of the lining's faces (part 0, by face) lie at the foot of a mouth under the open sky: over or round
+		/// the ground's cut cells (cut: their centres, world x and z), turned up, at most LipDepth under the ground there, and
+		/// with nothing of the tunnel's own (lining or rim) over them - the floor running out of the opening, in full sun.</summary>
+		static bool[] OpenLining(List<Vector3> verts, List<int> lining, List<int> rim, Transform at, Terrain land, List<Vector2> cut, List<Vector3> norms)
+		{
+			var lip = new bool[lining.Count / 3];
+			if (land == null || land.terrainData == null || cut == null || cut.Count == 0 || at == null) return lip;
+			float half = 0.5f * land.terrainData.size.x / Mathf.Max(1, land.terrainData.holesResolution) + 0.75f;
+			// (every face of the tunnel, binned by where it lies (x, z), for the look straight up)
+			const float Bin = 1f;
+			var world = new Vector3[verts.Count];
+			for (int i = 0; i < verts.Count; i++) world[i] = at.TransformPoint(verts[i]);
+			var bins = new Dictionary<long, List<int>>();
+			var all = new List<int>(lining.Count + rim.Count);
+			all.AddRange(lining); all.AddRange(rim);
+			for (int f = 0; f + 2 < all.Count; f += 3)
+			{
+				Vector3 a = world[all[f]], b = world[all[f + 1]], c = world[all[f + 2]];
+				int bx0 = Mathf.FloorToInt(Mathf.Min(a.x, Mathf.Min(b.x, c.x)) / Bin), bx1 = Mathf.FloorToInt(Mathf.Max(a.x, Mathf.Max(b.x, c.x)) / Bin);
+				int bz0 = Mathf.FloorToInt(Mathf.Min(a.z, Mathf.Min(b.z, c.z)) / Bin), bz1 = Mathf.FloorToInt(Mathf.Max(a.z, Mathf.Max(b.z, c.z)) / Bin);
+				for (int bx = bx0; bx <= bx1; bx++)
+					for (int bz = bz0; bz <= bz1; bz++)
+					{
+						long key = ((long)bx << 32) ^ (uint)bz;
+						List<int> l; if (!bins.TryGetValue(key, out l)) bins[key] = l = new List<int>();
+						l.Add(f);
+					}
+			}
+			for (int i = 0; i + 2 < lining.Count; i += 3)
+			{
+				Vector3 a = world[lining[i]], b = world[lining[i + 1]], c = world[lining[i + 2]];
+				Vector3 mid = (a + b + c) / 3f;
+				if (Vector3.Cross(b - a, c - a).sqrMagnitude < 1e-8f) continue;
+				Vector3 n = norms.Count == verts.Count ? at.TransformDirection(norms[lining[i]] + norms[lining[i + 1]] + norms[lining[i + 2]]).normalized : Vector3.up;
+				if (n.y < 0.2f || mid.y < GroundY(land, mid) - LipDepth) continue;
+				bool inCut = false;
+				foreach (Vector2 q in cut) if (Mathf.Abs(mid.x - q.x) <= half && Mathf.Abs(mid.z - q.y) <= half) { inCut = true; break; }
+				if (!inCut) continue;
+				// (nothing of the tunnel over it: the look straight up meets none of its faces)
+				bool covered = false;
+				List<int> near;
+				if (bins.TryGetValue(((long)Mathf.FloorToInt(mid.x / Bin) << 32) ^ (uint)Mathf.FloorToInt(mid.z / Bin), out near))
+					foreach (int f in near)
+					{
+						if (f == i) continue;
+						Vector3 p = world[all[f]], q = world[all[f + 1]], r = world[all[f + 2]];
+						float d = (q.z - r.z) * (p.x - r.x) + (r.x - q.x) * (p.z - r.z);
+						if (Mathf.Abs(d) < 1e-6f) continue;
+						float u = ((q.z - r.z) * (mid.x - r.x) + (r.x - q.x) * (mid.z - r.z)) / d;
+						float v = ((r.z - p.z) * (mid.x - r.x) + (p.x - r.x) * (mid.z - r.z)) / d;
+						if (u < 0f || v < 0f || u + v > 1f) continue;
+						if (u * p.y + v * q.y + (1f - u - v) * r.y > mid.y + 0.1f) { covered = true; break; }
+					}
+				lip[i / 3] = !covered;
+			}
+			return lip;
 		}
 
 		/// <summary>How close to a cave hill's skin a rim face stays the hill's rock (SplitTop).</summary>
@@ -877,8 +981,7 @@ namespace DynamicIslands.Editor
 		void OnDestroy()
 		{
 			if (bakedTop == null) return;
-			if (bakedTop.mainTexture != null) Destroy(bakedTop.mainTexture);
-			Destroy(bakedTop);
+			DropBaked(bakedTop);
 		}
 
 		/// <summary>Where the rim's top (part 2) lies over the terrain: its corners' uvs (SplitTop lays them 0..1 over the
@@ -922,11 +1025,13 @@ namespace DynamicIslands.Editor
 		/// <summary>
 		/// The ground's look over part of the terrain (r: 0..1 over it) baked into a texture: each layer's diffuse texture
 		/// tiled as the terrain tiles it, mixed by the splat map's weights there - on the legacy diffuse shader, as the
-		/// ground's (no shine), which the world's deferred camera lights as it lights the ground. The layers' textures can't be read by the mod: each is
-		/// copied back from the graphics card once (Graphics.Blit to a small RenderTexture). mat: made once, its texture
+		/// ground's (no shine), which the world's deferred camera lights as it lights the ground. With normals: the layers'
+		/// normal maps mixed the same way into a normal map of its own, on the legacy bumped diffuse shader (the mesh's
+		/// tangents along x, as the terrain's - SplitTop). The layers' textures can't be read by the mod: each is
+		/// copied back from the graphics card once (Graphics.Blit to a small RenderTexture). mat: made once, its textures
 		/// replaced. Null when the ground has no layers.
 		/// </summary>
-		internal static Material BakedGround(Terrain land, Rect r, ref Material mat)
+		internal static Material BakedGround(Terrain land, Rect r, ref Material mat, bool normals = false)
 		{
 			TerrainData td = land != null ? land.terrainData : null;
 			TerrainLayer[] layers = td != null ? td.terrainLayers : null;
@@ -941,6 +1046,13 @@ namespace DynamicIslands.Editor
 			var pix = new Color32[nl][];
 			var pw = new int[nl];
 			var ph = new int[nl];
+			// (the layers' normal maps, read as stored - not as colours)
+			var npix = new Color32[nl][];
+			var nw = new int[nl];
+			var nh = new int[nl];
+			bool anyNormal = false;
+			// (the bumped look's shader; without it the top stays flat, as before 11-13)
+			Shader bumped = normals ? Shader.Find("Legacy Shaders/Bumped Diffuse") ?? Shader.Find("Bumped Diffuse") : null;
 			int lim = FullSizeTextures();
 			try
 			{
@@ -953,10 +1065,18 @@ namespace DynamicIslands.Editor
 				Texture2D c = Readable(d, want);
 				if (c == null) continue;
 				pix[l] = c.GetPixels32(); pw[l] = c.width; ph[l] = c.height;
+				Texture nm = bumped != null ? tl.normalMapTexture : null;
+				if (nm == null) continue;
+				int wantN = Mathf.Clamp(Mathf.NextPowerOfTwo(Mathf.CeilToInt(Mathf.Max(tl.tileSize.x, tl.tileSize.y) * BakePerMetre)), 32, Mathf.Min(BakeMax, Mathf.Max(nm.width, nm.height)));
+				Texture2D cn = Readable(nm, wantN, true);
+				if (cn == null) continue;
+				npix[l] = cn.GetPixels32(); nw[l] = cn.width; nh[l] = cn.height;
+				anyNormal = true;
 			}
 			}
 			finally { QualitySettings.masterTextureLimit = lim; }
 			var outPix = new Color32[tw * th];
+			Color32[] outNrm = anyNormal ? new Color32[tw * th] : null;
 			int wz = w.GetLength(0), wx = w.GetLength(1);
 			for (int j = 0; j < th; j++)
 				for (int i = 0; i < tw; i++)
@@ -967,6 +1087,7 @@ namespace DynamicIslands.Editor
 					int x0 = Mathf.Min((int)fx, wx - 1), z0 = Mathf.Min((int)fz, wz - 1), x1 = Mathf.Min(x0 + 1, wx - 1), z1 = Mathf.Min(z0 + 1, wz - 1);
 					float tx = fx - x0, tz = fz - z0;
 					float cr = 0f, cg = 0f, cb = 0f, sum = 0f;
+					float nx = 0f, ny = 0f, nz = 0f;
 					float lx = u * size.x, lz = v * size.z;
 					for (int l = 0; l < nl; l++)
 					{
@@ -978,20 +1099,45 @@ namespace DynamicIslands.Editor
 						int px = ((int)Mathf.Floor(su * pw[l]) % pw[l] + pw[l]) % pw[l], py = ((int)Mathf.Floor(sv * ph[l]) % ph[l] + ph[l]) % ph[l];
 						Color32 c = pix[l][py * pw[l] + px];
 						cr += c.r * wt; cg += c.g * wt; cb += c.b * wt; sum += wt;
+						if (outNrm == null) continue;
+						// (as the terrain's shader mixes them: each unpacked - x from red times alpha, the DXT5nm way or plain -
+						// scaled by the layer's normal scale, weighted; a layer without one counts as flat)
+						if (npix[l] == null) { nz += wt; continue; }
+						int qx = ((int)Mathf.Floor(su * nw[l]) % nw[l] + nw[l]) % nw[l], qy = ((int)Mathf.Floor(sv * nh[l]) % nh[l] + nh[l]) % nh[l];
+						Color32 q = npix[l][qy * nw[l] + qx];
+						float ex = (q.r * q.a / 65025f * 2f - 1f) * tl.normalScale, ey = (q.g / 255f * 2f - 1f) * tl.normalScale;
+						float ez = Mathf.Sqrt(Mathf.Max(0f, 1f - Mathf.Clamp01(ex * ex + ey * ey)));
+						nx += ex * wt; ny += ey * wt; nz += ez * wt;
 					}
-					if (sum <= 0f) { outPix[j * tw + i] = new Color32(128, 128, 128, 255); continue; }
+					if (sum <= 0f) { outPix[j * tw + i] = new Color32(128, 128, 128, 255); if (outNrm != null) outNrm[j * tw + i] = new Color32(128, 128, 255, 255); continue; }
 					outPix[j * tw + i] = new Color32((byte)Mathf.Clamp(cr / sum, 0f, 255f), (byte)Mathf.Clamp(cg / sum, 0f, 255f), (byte)Mathf.Clamp(cb / sum, 0f, 255f), 255);
+					if (outNrm == null) continue;
+					float len = Mathf.Sqrt(nx * nx + ny * ny + nz * nz);
+					if (len < 1e-5f) { outNrm[j * tw + i] = new Color32(128, 128, 255, 255); continue; }
+					nx /= len; ny /= len; nz /= len;
+					outNrm[j * tw + i] = new Color32((byte)Mathf.Clamp(nx * 127.5f + 127.5f, 0f, 255f), (byte)Mathf.Clamp(ny * 127.5f + 127.5f, 0f, 255f), (byte)Mathf.Clamp(nz * 127.5f + 127.5f, 0f, 255f), 255);
 				}
 			var tex = new Texture2D(tw, th, TextureFormat.RGBA32, true) { name = "DigTunnelGroundBaked", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
 			tex.SetPixels32(outPix);
 			ApplyFullSize(tex);
+			Texture2D ntex = null;
+			if (outNrm != null)
+			{
+				ntex = new Texture2D(tw, th, TextureFormat.RGBA32, true, true) { name = "DigTunnelGroundBakedNormal", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
+				ntex.SetPixels32(outNrm);
+				ApplyFullSize(ntex);
+			}
+			// (made for the other look - with or without normals: made again)
+			if (mat != null && (ntex != null) != mat.HasProperty("_BumpMap")) { DropBaked(mat); mat = null; }
 			if (mat == null)
 			{
 				// (11-13: the legacy diffuse shader, lit as the ground's own Nature/Terrain/Diffuse is - no shine. On Standard,
 				// even matt, the deferred camera added the sky's grey reflection: round every mouth a pale grey veil over the
-				// dark ash, its albedo hardly mattering - Cinderfall's lava tubes, The Frontier's quarry)
-				Shader s = Shader.Find("Legacy Shaders/Diffuse") ?? Shader.Find("Diffuse") ?? Shader.Find("Standard");
-				if (s == null) { Destroy(tex); return null; }
+				// dark ash, its albedo hardly mattering - Cinderfall's lava tubes, The Frontier's quarry. Its bumped twin with
+				// the layers' normal maps, 11-13: flat, the top was a soft pale sheet on The Frontier's quarry face beside the
+				// ground's crisp, blue-shadowed rock)
+				Shader s = (ntex != null ? bumped : null) ?? Shader.Find("Legacy Shaders/Diffuse") ?? Shader.Find("Diffuse") ?? Shader.Find("Standard");
+				if (s == null) { Destroy(tex); if (ntex != null) Destroy(ntex); return null; }
 				mat = new Material(s) { name = "DigTunnelGroundBaked" };
 				mat.SetFloat("_Glossiness", 0f);
 				mat.SetFloat("_GlossMapScale", 0f);
@@ -1001,14 +1147,37 @@ namespace DynamicIslands.Editor
 				mat.SetFloat("_GlossyReflections", 0f);
 				mat.EnableKeyword("_GLOSSYREFLECTIONS_OFF");
 			}
-			else if (mat.mainTexture != null) Destroy(mat.mainTexture);
+			else
+			{
+				if (mat.mainTexture != null) Destroy(mat.mainTexture);
+				if (mat.HasProperty("_BumpMap") && mat.GetTexture("_BumpMap") != null) Destroy(mat.GetTexture("_BumpMap"));
+			}
 			mat.mainTexture = tex;
-			mat.mainTextureScale = new Vector2(1f / r.width, 1f / r.height);
-			mat.mainTextureOffset = new Vector2(-r.xMin / r.width, -r.yMin / r.height);
+			var scale = new Vector2(1f / r.width, 1f / r.height);
+			var offset = new Vector2(-r.xMin / r.width, -r.yMin / r.height);
+			mat.mainTextureScale = scale;
+			mat.mainTextureOffset = offset;
+			if (mat.HasProperty("_BumpMap"))
+			{
+				mat.SetTexture("_BumpMap", ntex);
+				mat.SetTextureScale("_BumpMap", scale);
+				mat.SetTextureOffset("_BumpMap", offset);
+			}
+			else if (ntex != null) Destroy(ntex);
 			return mat;
 		}
 
+		/// <summary>Drops a baked material with its textures.</summary>
+		static void DropBaked(Material m)
+		{
+			if (m == null) return;
+			if (m.mainTexture != null) Destroy(m.mainTexture);
+			if (m.HasProperty("_BumpMap") && m.GetTexture("_BumpMap") != null) Destroy(m.GetTexture("_BumpMap"));
+			Destroy(m);
+		}
+
 		static readonly Dictionary<KeyValuePair<Texture, int>, Texture2D> readable = new Dictionary<KeyValuePair<Texture, int>, Texture2D>();
+		static readonly Dictionary<KeyValuePair<Texture, int>, Texture2D> readableLinear = new Dictionary<KeyValuePair<Texture, int>, Texture2D>();
 		static bool fullSizeLogged;
 
 		/// <summary>Uploads a made texture with its mip maps and drops the mod's copy - with the card's textures at full size: one
@@ -1037,12 +1206,14 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>A copy of a texture the mod can read, size x size: drawn into a RenderTexture (halved step by step, so
-		/// nothing is skipped) and read back. Cached.</summary>
-		internal static Texture2D Readable(Texture src, int size)
+		/// nothing is skipped) and read back. Cached. linear: the values as stored, not as colours (a normal map).</summary>
+		internal static Texture2D Readable(Texture src, int size, bool linear = false)
 		{
 			var key = new KeyValuePair<Texture, int>(src, size);
+			var cache = linear ? readableLinear : readable;
+			RenderTextureReadWrite rw = linear ? RenderTextureReadWrite.Linear : RenderTextureReadWrite.sRGB;
 			Texture2D got;
-			if (readable.TryGetValue(key, out got) && got != null) return got;
+			if (cache.TryGetValue(key, out got) && got != null) return got;
 			int lim = FullSizeTextures();
 			RenderTexture prev = RenderTexture.active;
 			var temps = new List<RenderTexture>();
@@ -1053,19 +1224,19 @@ namespace DynamicIslands.Editor
 				while (cw > size * 2 || ch > size * 2)
 				{
 					cw = Mathf.Max(size, cw / 2); ch = Mathf.Max(size, ch / 2);
-					RenderTexture h = RenderTexture.GetTemporary(cw, ch, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+					RenderTexture h = RenderTexture.GetTemporary(cw, ch, 0, RenderTextureFormat.ARGB32, rw);
 					temps.Add(h);
 					Graphics.Blit(cur, h);
 					cur = h;
 				}
-				RenderTexture rt = RenderTexture.GetTemporary(size, size, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+				RenderTexture rt = RenderTexture.GetTemporary(size, size, 0, RenderTextureFormat.ARGB32, rw);
 				temps.Add(rt);
 				Graphics.Blit(cur, rt);
 				RenderTexture.active = rt;
-				got = new Texture2D(size, size, TextureFormat.RGBA32, false);
+				got = new Texture2D(size, size, TextureFormat.RGBA32, false, linear);
 				got.ReadPixels(new Rect(0, 0, size, size), 0, 0);
 				got.Apply();
-				readable[key] = got;
+				cache[key] = got;
 				return got;
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's rim: the ground's layer couldn't be read (" + e.Message + ")"); return null; }
@@ -1132,7 +1303,7 @@ namespace DynamicIslands.Editor
 				Texture want0, wantS;
 				Wanted(skinLand, out want0, out wantS);
 				if (want0 == lookControl && wantS == lookSplat) return;
-				Material ground = DynamicIslands.InEditor() ? GroundMaterial(skinLand) : BakedGround(skinLand, topRect, ref bakedTop);
+				Material ground = DynamicIslands.InEditor() ? GroundMaterial(skinLand) : BakedGround(skinLand, topRect, ref bakedTop, true);
 				if (ground == null) return;
 				mats[2] = ground;
 				mr.sharedMaterials = mats;
