@@ -118,6 +118,13 @@ namespace DynamicIslands
 					if (Mathf.Max(Mathf.Abs(d.x), Mathf.Abs(d.z)) < 0.95f * cell) wrong.Add(pieces[i].buildableItem.UniqueName.Replace("Placeable_", "") + " on " + pieces[j].buildableItem.UniqueName.Replace("Placeable_", ""));
 				}
 			Check(ref ok, wrong.Count == 0, "the layout: stations in the middle, nets in the water, nothing overlapping" + (wrong.Count > 0 ? " - " + string.Join(", ", wrong.Take(12).ToArray()) : ""));
+			if (wrong.Count > 0)
+			{
+				// (what the check measured against: a joiner that holds extra or misplaced foundations shows it here)
+				Log("layout floor: " + floorAt.Count + " foundations, x " + minX.ToString("0.0") + ".." + maxX.ToString("0.0") + ", z " + minZ.ToString("0.0") + ".." + maxZ.ToString("0.0") + "; "
+					+ string.Join(" ", floorAt.Select(f => "(" + f.x.ToString("0.0") + "," + f.y.ToString("0.0") + "," + f.z.ToString("0.0") + ")").ToArray()));
+				Log("layout pieces: " + string.Join(" ", pieces.Select(x => x.buildableItem.UniqueName.Replace("Placeable_", "") + local(x.transform).ToString("0.0")).ToArray()));
+			}
 			// (on the floor: each placeable's solid bottom at the foundations' top, the nets in the water)
 			Physics.SyncTransforms();
 			Block floor = HeadStart.Foundations(raft).FirstOrDefault();

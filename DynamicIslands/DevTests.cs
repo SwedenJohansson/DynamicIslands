@@ -1328,10 +1328,12 @@ namespace DynamicIslands
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
 			// (only islands with land: a ghost raft or a sea-only island has no Terrain to push towards)
 			Vector3 from = raft.body.position;
-			GameObject island = UnityEngine.Object.FindObjectsOfType<GameObject>().Where(g => g.transform.parent == null && g.name.StartsWith("CustomIsland_") && g.GetComponentInChildren<Terrain>() != null)
+			// (an island being respawned can hold a Terrain whose terrainData is not set yet: skip it)
+			Func<GameObject, Terrain> land = g => g.GetComponentsInChildren<Terrain>(true).FirstOrDefault(t => t != null && t.terrainData != null);
+			GameObject island = UnityEngine.Object.FindObjectsOfType<GameObject>().Where(g => g.transform.parent == null && g.name.StartsWith("CustomIsland_") && land(g) != null)
 				.OrderBy(g => (g.transform.position - from).sqrMagnitude).FirstOrDefault();
 			if (island == null) { Fail("no custom island with land loaded"); yield break; }
-			yield return PushTowards(HighestPoint(island.GetComponentInChildren<Terrain>()), seconds, island.name);
+			yield return PushTowards(HighestPoint(land(island)), seconds, island.name);
 		}
 
 		[ConsoleCommand(name: "CIPushTo", docs: "Dev, in game: pushes the raft towards world point <x> <z> for up to <seconds> and logs where it stops")]
