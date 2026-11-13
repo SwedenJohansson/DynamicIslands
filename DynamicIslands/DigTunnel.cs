@@ -749,7 +749,7 @@ namespace DynamicIslands.Editor
 				}
 				Material[] mats = mr.sharedMaterials;
 				mr.sharedMaterials = new[] { mats[0], mats[1], ground };
-				RimTop = world ? "the ground's baked (" + ground.shader.name + ", " + bakedTop.mainTexture.width + "x" + bakedTop.mainTexture.height + (bakedTop.HasProperty("_BumpMap") && bakedTop.GetTexture("_BumpMap") != null ? ", normals" : ", flat") + ")" : "the ground's own (" + ground.shader.name + ")";
+				RimTop = world ? "the ground's baked (" + ground.shader.name + ", " + bakedTop.mainTexture.width + "x" + bakedTop.mainTexture.height + (bakedTop.HasProperty("_BumpMap") && bakedTop.GetTexture("_BumpMap") != null ? ", normals" : bakedTop.mainTexture.name == ReliefName ? ", relief" : ", flat") + ")" : "the ground's own (" + ground.shader.name + ")";
 				Dressed(land);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's rim: " + e.Message); }
@@ -1051,7 +1051,7 @@ namespace DynamicIslands.Editor
 			var nw = new int[nl];
 			var nh = new int[nl];
 			bool anyNormal = false;
-			// (the bumped look's shader; without it the top stays flat, as before 11-13)
+			// (the bumped look's shader; without it - Raft's build has none - the normal maps' relief is baked into the colour)
 			Shader bumped = normals ? BumpedShader() : null;
 			int lim = FullSizeTextures();
 			try
@@ -1065,7 +1065,8 @@ namespace DynamicIslands.Editor
 				Texture2D c = Readable(d, want);
 				if (c == null) continue;
 				pix[l] = c.GetPixels32(); pw[l] = c.width; ph[l] = c.height;
-				Texture nm = bumped != null ? tl.normalMapTexture : null;
+				// (without a bumped shader the normal maps still count: their relief is shaded into the colour - Relief)
+				Texture nm = normals ? tl.normalMapTexture : null;
 				if (nm == null) continue;
 				int wantN = Mathf.Clamp(Mathf.NextPowerOfTwo(Mathf.CeilToInt(Mathf.Max(tl.tileSize.x, tl.tileSize.y) * BakePerMetre)), 32, Mathf.Min(BakeMax, Mathf.Max(nm.width, nm.height)));
 				Texture2D cn = Readable(nm, wantN, true);
@@ -1117,7 +1118,10 @@ namespace DynamicIslands.Editor
 					nx /= len; ny /= len; nz /= len;
 					outNrm[j * tw + i] = new Color32((byte)Mathf.Clamp(nx * 127.5f + 127.5f, 0f, 255f), (byte)Mathf.Clamp(ny * 127.5f + 127.5f, 0f, 255f), (byte)Mathf.Clamp(nz * 127.5f + 127.5f, 0f, 255f), 255);
 				}
-			var tex = new Texture2D(tw, th, TextureFormat.RGBA32, true) { name = "DigTunnelGroundBaked", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
+			// (no bumped shader in the game: the normal maps' relief shaded into the colour instead, the top on plain diffuse)
+			bool relief = bumped == null && outNrm != null;
+			if (relief) { Relief(outPix, outNrm); outNrm = null; }
+			var tex = new Texture2D(tw, th, TextureFormat.RGBA32, true) { name = relief ? ReliefName : "DigTunnelGroundBaked", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
 			tex.SetPixels32(outPix);
 			ApplyFullSize(tex);
 			Texture2D ntex = null;
@@ -1186,6 +1190,42 @@ namespace DynamicIslands.Editor
 		}
 		static Shader bumpedShader;
 		static bool bumpedLooked;
+
+		/// <summary>The baked top's texture name when its normal maps' relief is shaded into its colour.</summary>
+		internal const string ReliefName = "DigTunnelGroundBakedRelief";
+
+		/// <summary>11-13: Raft's build has no bumped shader without shine, so the top on the legacy diffuse shader came out
+		/// soft beside the ground, whose normal maps draw the cracks and pebbles in light and shade (CIDigMouthLook's
+		/// sharpness 0.5 against 2.8 on Cinderfall). The mixed normal maps' relief is shaded into the colour instead: lit
+		/// from high up (the sun's side when there is one, 55 degrees up) half and half with light from all round, each
+		/// texel against the mean of all - the cracks dark, the mean colour as baked.</summary>
+		static void Relief(Color32[] pix, Color32[] nrm)
+		{
+			Vector3 l = new Vector3(0f, 0f, 1f);
+			Light sun = RenderSettings.sun;
+			if (sun != null && sun.type == LightType.Directional)
+			{
+				Vector3 to = -sun.transform.forward;
+				var flat = new Vector2(to.x, to.z);
+				if (flat.sqrMagnitude > 1e-4f) { flat.Normalize(); float c = Mathf.Cos(55f * Mathf.Deg2Rad); l = new Vector3(flat.x * c, flat.y * c, Mathf.Sin(55f * Mathf.Deg2Rad)); }
+			}
+			var f = new float[pix.Length];
+			double sum = 0;
+			for (int k = 0; k < pix.Length; k++)
+			{
+				float x = nrm[k].r / 127.5f - 1f, y = nrm[k].g / 127.5f - 1f, z = nrm[k].b / 127.5f - 1f;
+				float s = 0.5f * (0.5f + 0.5f * z) + 0.5f * Mathf.Max(0f, x * l.x + y * l.y + z * l.z);
+				f[k] = s; sum += s;
+			}
+			float mean = (float)(sum / Mathf.Max(1, pix.Length));
+			if (mean < 1e-3f) return;
+			for (int k = 0; k < pix.Length; k++)
+			{
+				float s = Mathf.Clamp(f[k] / mean, 0.35f, 1.6f);
+				Color32 c = pix[k];
+				pix[k] = new Color32((byte)Mathf.Clamp(c.r * s, 0f, 255f), (byte)Mathf.Clamp(c.g * s, 0f, 255f), (byte)Mathf.Clamp(c.b * s, 0f, 255f), 255);
+			}
+		}
 
 		/// <summary>Drops a baked material with its textures.</summary>
 		static void DropBaked(Material m)
