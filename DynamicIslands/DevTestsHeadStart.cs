@@ -58,6 +58,9 @@ namespace DynamicIslands
 			int level = 0;
 			if (args == null || args.Length == 0 || !int.TryParse(args[0], out level) || level < 1 || level > HeadStart.Max) { Fail("head start check: CIHeadStartCheck <1-" + HeadStart.Max + "> [client]"); yield break; }
 			bool client = args.Length > 1 && args[1] == "client";
+			// (first the world itself: until its file is read, HeadStart still holds the last world's "built" - 11-13 a slow
+			// load let the check run on that and fail, the build following 30 s later)
+			yield return WaitForWorld();
 			// (the host builds a moment after the world is there: up to 30 s for it)
 			float until = Time.realtimeSinceStartup + 30f;
 			while (!client && !HeadStart.Done && Time.realtimeSinceStartup < until) yield return new WaitForSecondsRealtime(0.5f);
