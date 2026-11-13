@@ -1174,6 +1174,18 @@ namespace DynamicIslands
 					if (pa == null || pf == null) { Log("  (mouth " + n + ": no pictures to measure)"); n++; continue; }
 					const int W = 1920, H = 1080, S = 4, R = 8;
 					int gw = W / S, gh = H / S;
+					// (the ground beside it: only pixels whose look from the shot's camera (60 degrees, 16:9) meets the island's
+					// ground - not the cliff rock, a tree or the sky round the mouth)
+					Collider landCol = land.GetComponent<TerrainCollider>();
+					Quaternion camRot = Quaternion.LookRotation(look - eye);
+					float tanV = Mathf.Tan(30f * Mathf.Deg2Rad), tanH = tanV * W / H;
+					System.Func<int, int, Collider> seen = (gx, gy) =>
+					{
+						Vector3 d = camRot * new Vector3((2f * (gx * S + 0.5f) / W - 1f) * tanH, (2f * (gy * S + 0.5f) / H - 1f) * tanV, 1f);
+						RaycastHit h;
+						return Physics.Raycast(eye, d.normalized, out h, 200f, ~0, QueryTriggerInteraction.Ignore) ? h.collider : null;
+					};
+					System.Func<int, int, bool> onGround = (gx, gy) => seen(gx, gy) == landCol;
 					var top = new bool[gw * gh];
 					var lin = new bool[gw * gh];
 					for (int y = 0; y < gh; y++)
@@ -1182,7 +1194,12 @@ namespace DynamicIslands
 							int i = y * S * W + x * S;
 							Color32 a = pa[i], f = pf[i];
 							lin[y * gw + x] = pl != null && pl[i].g > 200 && pl[i].r < 80 && pl[i].b < 80;
-							top[y * gw + x] = !lin[y * gw + x] && Mathf.Abs(a.r - f.r) + Mathf.Abs(a.g - f.g) + Mathf.Abs(a.b - f.b) > 24;
+							// (11-13: only where the look meets this tunnel - grass and trees swaying in the wind between the two
+							// pictures differed too, and the ground round them, leaves and sky, counted as beside the top: Cinderfall
+							// 'off by 16' against a rim the ground's own colour by eye)
+							Collider hc;
+							top[y * gw + x] = !lin[y * gw + x] && Mathf.Abs(a.r - f.r) + Mathf.Abs(a.g - f.g) + Mathf.Abs(a.b - f.b) > 24
+								&& (hc = seen(x, y)) != null && hc.transform.IsChildOf(t.transform);
 						}
 					double[] inT = new double[3], inG = new double[3]; int cT = 0, cG = 0;
 					// (how sharp each is: the mean step in brightness to the next pixel right and up - the baked top smeared down a
@@ -1190,17 +1207,6 @@ namespace DynamicIslands
 					double sharpT = 0, sharpG = 0;
 					System.Func<int, float> lum = i => 0.3f * pa[i].r + 0.59f * pa[i].g + 0.11f * pa[i].b;
 					System.Func<int, float> step = i => Mathf.Abs(lum(i + 1) - lum(i)) + Mathf.Abs(lum(i + W) - lum(i));
-					// (the ground beside it: only pixels whose look from the shot's camera (60 degrees, 16:9) meets the island's
-					// ground - not the cliff rock, a tree or the sky round the mouth)
-					Collider landCol = land.GetComponent<TerrainCollider>();
-					Quaternion camRot = Quaternion.LookRotation(look - eye);
-					float tanV = Mathf.Tan(30f * Mathf.Deg2Rad), tanH = tanV * W / H;
-					System.Func<int, int, bool> onGround = (gx, gy) =>
-					{
-						Vector3 d = camRot * new Vector3((2f * (gx * S + 0.5f) / W - 1f) * tanH, (2f * (gy * S + 0.5f) / H - 1f) * tanV, 1f);
-						RaycastHit h;
-						return Physics.Raycast(eye, d.normalized, out h, 200f, ~0, QueryTriggerInteraction.Ignore) && h.collider == landCol;
-					};
 					for (int y = 0; y < gh; y++)
 						for (int x = 0; x < gw; x++)
 						{
