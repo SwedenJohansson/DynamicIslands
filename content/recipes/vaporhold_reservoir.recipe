@@ -228,23 +228,31 @@ call ar_plants_hill x=66 z=36 r=10 seed=26595
 # --- 11-12 (w11 prep): the reservoir intakes (plan 11 row: UW SYS - 2 ST + DIG; mushrooms 3, stone 2, titanium 1) -----
 # Two old intake tunnels leave the reservoir floor (7 m under) on the west side, away from the pump hall, and climb
 # 12 deg under the embankment: the long intake ends in the dry valve chamber (air, loot), the short one in a flooded
-# sump room with an air pocket. A dug service passage comes in level from the outer slope to the valve chamber: the
-# dry way in and out (no swim needed back). No quest step.
+# sump room with an air pocket. No quest step. 11-13 w11 probe: the service passage was moved out to the west slope
+# (5-6 m there; the old line met the hill at 15 m, over the chamber): a dug passage that once led to the valve chamber,
+# fallen in after 18 m - two rats nest at its end. The way back from the chamber is the short swim down the intake.
 # (prep, offline only: the service passage's mouth height and both rooms not yet seen in Raft - probe first)
-call kit_st x=-10 z=-37 yaw=250 len=52 slope=12 end=room size=0.7 hill=1 dirt=0 mush=2 stone=1 vines=1 titanium=1 as=vrintake1
+# (11-13 w11b: at len 52 - seven pieces, the room 15 m under the embankment - the long intake had no room at its end in
+# Raft: an open end, the chest and mushrooms buried in the hill, the player fell out of it; six pieces like the sump's)
+call kit_st x=-10 z=-37 yaw=250 len=41.6 slope=12 end=room size=0.7 hill=1 dirt=0 mush=2 stone=1 vines=1 titanium=1 as=vrintake1
 prop vrintake1 cave.rock=plain
 call kit_st x=-8 z=-46 yaw=225 len=41.6 slope=12 end=room size=0.7 hill=1 dirt=0 mush=1 stone=1 vines=0 wet=1 as=vrintake2
 prop vrintake2 cave.rock=plain
-dig -74,-49 -64,-55.5 r=1.75 slope=0 as=vrservice
+dig -91,-50 -78,-50 r=1.75 slope=0 as=vrservice
+dig -78,-50 -74,-50 r=3 as=vrservice
+caveloot vrservice dirt=2 mush=1 stone=1 vines=0
 prop vrservice cave.rock=plain
-# cavecheck inside vrvalveair vrsumpair vrvalvechest
-place Zone_Trigger vrvalveair at -66.4 -57.5 h=5
+# cavecheck inside vrvalveair vrsumpair vrvalvechest vrrats
+place Creature_Rat vrrats at -76 -50 h=6.5 drop
+prop vrrats creature.count=2
+prop vrrats creature.respawn=0
+place Zone_Trigger vrvalveair at -56.5 -54 h=3.5
 prop vrvalveair obj.name=vrvalveair
 prop vrvalveair zone.id=vr_valvechamber
 prop vrvalveair zone.radius=8
 prop vrvalveair zone.repeat=1
 prop vrvalveair zone.air=1
-prop vrvalveair zone.message=The valve chamber at the top of the intake - dry, and a service passage out to the slope.
+prop vrvalveair zone.message=The valve chamber at the top of the intake - dry, and air to breathe. The way out is back down the intake.
 place Zone_Trigger vrsumpair at -43.1 -81.1 h=2.5
 prop vrsumpair obj.name=vrsumpair
 prop vrsumpair zone.id=vr_sump
@@ -252,7 +260,7 @@ prop vrsumpair zone.radius=7
 prop vrsumpair zone.repeat=1
 prop vrsumpair zone.air=1
 prop vrsumpair zone.message=Air under the sump room's roof - breathe.
-place Loot_ChestSmall vrvalvechest at -65 -58.5 h=6 drop yaw=70
+place Loot_ChestSmall vrvalvechest at -57.5 -55.5 h=4.5 drop yaw=70
 prop vrvalvechest loot.refill=0
 note vrvalvechest Intake valve store | The intake crew's store in the valve chamber: a spare spindle, rope, and a tin of bolts.
 loot vrvalvechest Bolt*3;Rope*2;MetalIngot*1

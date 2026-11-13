@@ -1,0 +1,11 @@
+# The Sleet Kilns' old kiln cave (CIPlay the_sleet_kilns_caves, 11-13 w11; in a test world 'CI ...'). Points as in its
+# recipe: a straight cave (kit_st, its own rock ridge) from the mouth at 30 -45 east (yaw 90, len 26, level) to the room
+# where the first kiln stood, about 62 -45. In and out on foot.
+island The Sleet Kilns keep
+offset 3.8844 -2.5952
+hour 11
+weather Calm
+picture sk_cave_out 16 18 -60 31 11 -45
+walk 31.5 -45 to 38 -45 to 46 -45 to 54 -45 to 59 -45 below=15
+picture sk_cave_in 40 13.6 -45 60 12 -45 light=20
+walk 59 -45 to 54 -45 to 46 -45 to 38 -45 to 31.5 -45 below=15

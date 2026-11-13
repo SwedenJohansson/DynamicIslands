@@ -1,0 +1,17 @@
+# The Rain Engine's seeding vat with a mixer's suit (CIPlay the_rain_engine_acidsuit, 11-13 w11; a fresh test world
+# 'CI ...'). The suit box reseedsuits on the rim gives 180 s of suit; into the vat, open the mixers' locker, out unhurt.
+island The Rain Engine keep
+hour 11
+weather Calm
+at 24 -62.5 h=13
+use reseedsuits
+expect shown reseedvat
+walk 24 -62.5 to 21.5 -61.5 to 19.6 -60.8
+wait 6
+expect unhurt
+open Mixers' locker
+wait 2
+expect item Battery 2
+picture re_vat_in 22.5 14 -63.5 18 11 -60 light=20
+walk 19.6 -60.8 to 22 -61.5 to 25 -62
+expect unhurt

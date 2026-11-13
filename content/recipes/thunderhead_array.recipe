@@ -264,6 +264,11 @@ call ar_plants_hill x=30 z=22 r=14 seed=26692
 call ar_plants_hill x=-30 z=4 r=14 seed=26693
 call ar_plants_hill x=40 z=-40 r=14 seed=26694
 call ar_plants_hill x=66 z=36 r=10 seed=26695
+# 11-13 w11: the cable cave cut the ground under these (CIFloating) - take them off
+clear at 34.0 -42.1 r=1 all body only=Pickup_Landmark_Tree_Palm
+clear at 36.0 -39.6 r=1.2 all body only=SmallBoulder4
+clear at 38.0 -36.2 r=0.8 all body only=Bush2
+clear at 35.2 -64.0 r=0.8 all body only=Pickup_Landmark_DirtPickup
 call hw_machine x=0 z=30 yaw=180 al=ta_machine nm="Earthing switch" obj=TP_LaserControlPanel_lever sc=3 a=ta_top b=ta_cave done=ta_fixed rew=ta_rewchest rnote=ta_rewnote msg="It works." hint="It wants the storm meter from Spark Bluff and the earth spike from Basalt Cave."
 call hw_note x=-2.6 z=31.2 yaw=200 al=ta_hint
 

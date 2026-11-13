@@ -279,24 +279,26 @@ call hw_zone x=-44 z=62 al=re_hillz id=re_hill r=8 h=1 msg="Storm Spur. The whol
 # spent seed still green in it and burning. The mixers' locker sank in the middle. Their rubber suits wait in the box
 # at the pit's rim; the pit's sides are a gentle slope (a way out all round). No quest step; 14 m from the gatehouse.
 # (prep, offline only: the pad's ground not yet seen in Raft - check the slope east of the Foot)
-brush flatten at 18 -60 r=6 s=20 frames=300 h=3
-brush flatten at 18 -60 r=3.5 s=20 frames=300 h=2.4
-brush flatten at 18 -60 r=2.5 s=20 frames=300 h=2.2
-brush smooth at 18 -60 r=6.5 s=6 frames=15
-clear at 18 -60 r=8 only=(?i)boulder|rock|tree|bush|bamboo
-place TP_SeleneReactor_Water_Radiated reseedpool at 18 -60 ground scale=0.3 yaw=30
-place SmallRock_02 reseedrock at 15.4 -61.6 h=5 drop yaw=60 scale=0.45 sy=0.5
-place SmallRock_02 reseedrock at 20.4 -58.2 h=5 drop yaw=170 scale=0.45 sy=0.5
+# 11-13 w11 probe: the pad here is the 12.5 m snow plateau - a vat dug to 3 m was an 8 m sheer pit; now a shallow
+# basin 1.5-2 m under the plateau, its sides a walkable slope
+brush flatten at 18 -60 r=6 s=20 frames=300 h=11.6
+brush flatten at 18 -60 r=3.5 s=20 frames=300 h=11.0
+brush flatten at 18 -60 r=2.5 s=20 frames=300 h=10.8
+brush smooth at 18 -60 r=7 s=6 frames=20
+clear at 18 -60 r=9 all body only=(?i)boulder|rock|tree|bush|bamboo|ice|snow
+place TP_SeleneReactor_Water_Radiated reseedpool at 18 -60 ground y=0.2 scale=0.3 yaw=30
+place SmallRock_02 reseedrock at 15.4 -61.6 h=13 drop yaw=60 scale=0.45 sy=0.5
+place SmallRock_02 reseedrock at 20.4 -58.2 h=13 drop yaw=170 scale=0.45 sy=0.5
 prop reseedrock tint.color=#a4c428
 prop reseedrock tint.amount=0.7
-place Zone_Atmosphere reseedmist at 18 -60 h=3.5
+place Zone_Atmosphere reseedmist at 18 -60 h=11.5
 prop reseedmist zone.radius=4
 prop reseedmist atmo.particles=steam
 prop reseedmist atmo.fog=#8cc030
 prop reseedmist atmo.fogAmount=0.3
 prop reseedmist atmo.light=#c8ff70
 prop reseedmist atmo.lightAmount=0.3
-place Zone_Trigger reseedvat at 18 -60 h=3.5
+place Zone_Trigger reseedvat at 18 -60 h=11.5
 prop reseedvat obj.name=reseedvat
 prop reseedvat zone.id=re_seedvat
 prop reseedvat zone.radius=3.4
@@ -304,7 +306,7 @@ prop reseedvat zone.hazard=acid
 prop reseedvat zone.damage=4
 prop reseedvat zone.safe=suit
 prop reseedvat zone.hazardMsg=The vat burns - spent cloud seed, salts and acid. A mixer's rubber suit from the box at the rim keeps it off.
-place Loot_ChestSmall reseedlocker at 18 -60 h=4 drop yaw=200
+place Loot_ChestSmall reseedlocker at 18 -60 h=12.5 drop yaw=200
 note reseedlocker Mixers' locker | The mixers' locker, dropped in the vat when the Engine went on by itself: spare cells, a gauge board, a bar of titanium.
 loot reseedlocker Battery*2;CircuitBoard*1;TitaniumIngot*1;Bolt*3
 prop reseedlocker loot.refill=0

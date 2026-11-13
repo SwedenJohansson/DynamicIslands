@@ -1,0 +1,30 @@
+# Vaporhold Reservoir's intakes and the fallen-in service passage (CIPlay vaporhold_reservoir_caves, 11-13 w11; in a
+# test world 'CI ...'). Points as in its recipe: the long intake leaves the reservoir floor (-7) at -10 -37 and climbs
+# 12 deg (kit_st yaw 250, len 41.6: six pieces) under the embankment to the dry valve chamber about -56.5 -54 (the
+# store at -57.5 -55.5); the service passage dug from the west slope at -91 -50 east to its rat den at -76 -50.
+# (w11b: swim 2 m over the tunnel's floor - the lake floor and the culvert floors stood higher than reckoned; walk
+# starts below the tunnel's roof, or the walk began on the embankment over it)
+island Vaporhold Reservoir keep
+offset -7.2692 -10.0553
+hour 11
+weather Calm
+picture vr_intake_out 6 9 -22 -8 -5 -36
+swim -4 -34.5 -1 to -6.5 -35.7 -3 to -10 -37 -5 to -17.05 -39.57 -3.4 to -24.1 -42.1 -1.8 to -31.1 -44.7 -0.3
+walk -38.2 -47.3 to -45.2 -49.8 to -50.1 -51.6 to -55.5 -53.6 below=2.5
+air vr_valvechamber here
+picture vr_valve_in -47.6 3.6 -50.7 -56.5 2 -54 light=20
+open Intake valve store
+wait 2
+expect item Rope 2
+walk -55.5 -53.6 to -50.1 -51.6 to -45.2 -49.8 to -38.2 -47.3 below=6
+swim -31.1 -44.7 -0.3 to -24.1 -42.1 -1.8 to -17.05 -39.57 -3.4 to -10 -37 -5 to -6.5 -35.7 -3 to -4 -34.5 -1
+
+picture vr_service_out -100 10 -54 -91 6 -50
+expect animals Rat 2
+expect animalsinside Rat 2
+walk -90 -50 to -85 -50 below=8.5
+picture vr_rats -85 7.2 -50 -76 5.5 -50 aim=Rat light=20
+kill Rat
+expect animals Rat 0
+walk -85 -50 to -80 -50 to -76.5 -50 below=8.5
+walk -76.5 -50 to -85 -50 to -90 -50 below=8.5

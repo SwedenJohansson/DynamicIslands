@@ -327,6 +327,13 @@ dig -45,-26 -47,-34 r=1.75 slope=0 as=fwcellar
 dig -47,-34 -51,-37 r=3 as=fwcellar
 caveloot fwcellar dirt=3 mush=2 stone=0 vines=1
 prop fwcellar cave.rock=plain
+# 11-13 w11: a boar has made the long cellar its den (cave monsters mixed across the world: rats at Vaporhold, none in the ST caves)
+# cavecheck inside fwboar
+place Creature_Boar fwboar at -54 -26 h=4.5 drop
+prop fwboar creature.count=1
+prop fwboar creature.respawn=0
+# the knoll brushes left a landmark rock 1 m up on its slope (CIFloating)
+clear at -44.8 -40.0 r=1.2 all body only=Pickup_Landmark_Rock
 call ar_plants_hill x=-8 z=46 r=16 seed=26491
 call ar_plants_hill x=30 z=22 r=14 seed=26492
 call ar_plants_hill x=-30 z=4 r=14 seed=26493

@@ -1,0 +1,26 @@
+# Hailstone Weir's spill culvert (CIPlay hailstone_weir_caves, 11-13 w11; in a test world 'CI ...'). Points as in its
+# recipe: Weirkeeper Maya fishing at 14 -61.5 on the east bank; the pool behind sluice three dug to -7 at 5 -62, the
+# culvert's mouth in its floor, climbing 12 deg (kit_st yaw 20, len 41.6) under the bank to the dry gauge store about
+# 22 -15.4 (floor ~1.7). Talk: "Stay dry" and "Open the sluice" (the gate goes), swim in, breathe, open the store, out.
+island Hailstone Weir keep
+offset -0.2805 0.3196
+hour 11
+weather Calm
+expect shown hwculvertgate
+picture hw_maya 10 5.5 -57 14 3 -61.5
+use Weirkeeper Maya pick 3
+expect message Nobody has managed it yet
+use Weirkeeper Maya pick 2
+expect message culvert gate under the pool grinds up
+expect hidden hwculvertgate
+picture hw_pool_out 4 7 -75 5 -4 -62
+# (w11b: the mouth's floor is near -2.3 and the culvert is dry from about 11 -45 on - swim in high, walk the rest)
+swim 5 -70 -1 to 5 -66 -1.8 to 5 -63 -1.6 to 7.05 -56.4 -0.9 to 9.1 -50.7 0.2
+walk 11.2 -45.1 to 13.2 -39.4 to 15.3 -33.8 to 17.3 -28.2 to 19.2 -22.9 to 20.8 -18.5 below=4
+air hw_culvert here
+picture hw_culvert_in 20.3 6.4 -19.9 22.5 5 -13.8 light=20
+open Gauge store
+wait 2
+expect item Glass 2
+walk 20.8 -18.5 to 19.2 -22.9 to 17.3 -28.2 to 15.3 -33.8 to 13.2 -39.4 to 11.2 -45.1 below=4
+swim 9.1 -50.7 0.2 to 7.05 -56.4 -0.9 to 5 -63 -1.6 to 5 -66 -1.8 to 5 -70 -1
