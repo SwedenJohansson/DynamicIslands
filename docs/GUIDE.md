@@ -3823,7 +3823,7 @@ the thing it improves (the **base**), once it is learned at the **upgrade resear
 | **Floodlight** | An advanced head light that lights **twice as far** and half again as bright; it lasts twice as long | 2x the advanced head light | Advanced head light |
 | **Steel pot** | A cooking pot that **cooks twice as fast** | 2x the cooking pot | Cooking pot |
 | **Fast juicer** | A juicer that **makes juice twice as fast** | 2x the juicer | Juicer |
-| **Titanium machete** | A machete that **hits half again as hard**; it lasts twice as long | 2x the machete + 2 titanium ingots | Machete |
+| **Titanium machete** | A machete that **hits half again as hard** - creatures too, like Raft's machete - and still cuts vines and harvests; it lasts twice as long | 2x the machete + 2 titanium ingots | Machete |
 | **Sturdy scarecrow** | An advanced scarecrow that **never wears out** | 2x the advanced scarecrow | Advanced scarecrow |
 | **Master hammer** | A building hammer that **repairs twice as much per swing**; it lasts twice as long | 2x the building hammer | Building hammer |
 | **Longbow** | A bow that **draws half again as fast and shoots half again as far**; it lasts twice as long | 2x the bow | Bow |

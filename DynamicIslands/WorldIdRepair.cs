@@ -74,8 +74,8 @@ namespace DynamicIslands
 			from = null;
 			string[] dirs;
 			try { dirs = Directory.GetDirectories(world); } catch { return Guid.Empty; }
-			// (folder names are dates, yyyy.MM.dd-HH.mm, the newest with "-Latest")
-			foreach (string d in dirs.OrderByDescending(d => Path.GetFileName(d).Replace("-Latest", ""), StringComparer.Ordinal).Take(MaxBackups))
+			// (folder names are dates, yyyy.MM.dd-H.mm, the newest with "-Latest")
+			foreach (string d in dirs.OrderByDescending(DayRepair.SaveOrderKey, StringComparer.Ordinal).Take(MaxBackups))
 			{
 				try
 				{

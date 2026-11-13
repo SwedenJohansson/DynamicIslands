@@ -172,6 +172,9 @@ namespace DynamicIslands.Editor
 			IslandNetwork.SendToEveryone(new IslandNetMessage { Kind = IslandNetMessage.Mech, Name = "walk", Ids = new[] { e.Id, index }, Offsets = new[] { local.x, local.y, local.z, yaw } });
 		}
 
+		/// <summary>A player keeps a place the host sent this long (s); the host sends a standing escort's place again sooner.</summary>
+		internal const float RemoteHold = 3f, KeepAlive = 1.5f;
+
 		public static void Reset() { escorts.Clear(); }
 
 		#endregion
@@ -184,7 +187,7 @@ namespace DynamicIslands.Editor
 		IslandWorldState.Entry entry;
 		readonly List<Vector3> route = new List<Vector3>();
 		readonly List<float> legStart = new List<float>();
-		float cycle, speed, pause, nextLook, nextSend, stuck, shownSpeed, remoteUntil, remoteYaw;
+		float cycle, speed, pause, nextLook, nextSend, lastSentAt = -100f, stuck, shownSpeed, remoteUntil, remoteYaw;
 		bool built, saved, arrived;
 		Vector3 home, remoteAt, lastSent;
 		string zone;
@@ -250,7 +253,7 @@ namespace DynamicIslands.Editor
 
 		internal void Remote(Vector3 local, float yaw)
 		{
-			remoteAt = local; remoteYaw = yaw; remoteUntil = Time.time + 3f;
+			remoteAt = local; remoteYaw = yaw; remoteUntil = Time.time + IslanderWalks.RemoteHold;
 		}
 
 		void Update()
@@ -379,8 +382,11 @@ namespace DynamicIslands.Editor
 		{
 			if (!Raft_Network.IsHost || entry == null) return;
 			Vector3 l = transform.localPosition;
-			if (!now && (Time.time < nextSend || (l - lastSent).sqrMagnitude < 0.0025f)) return;
-			nextSend = Time.time + 0.25f; lastSent = l;
+			// (also when she stands: a player keeps a sent place KeepAlive s, then walked her home or on her path, and one who
+			// joined while she stood had her at home until she moved again)
+			bool stale = Time.time >= lastSentAt + IslanderWalks.KeepAlive;
+			if (!now && (Time.time < nextSend || ((l - lastSent).sqrMagnitude < 0.0025f && !stale))) return;
+			nextSend = Time.time + 0.25f; lastSent = l; lastSentAt = Time.time;
 			IslanderWalks.Send(entry, Ref.Index, l, transform.localEulerAngles.y);
 		}
 
