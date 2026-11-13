@@ -743,7 +743,7 @@ namespace DynamicIslands.Editor
 				if (!SplitTop(mesh, mr.transform, land)) return;
 				if (world)
 				{
-					topRect = TopRect(mesh);
+					topRect = TopRect(mesh, Openings, land);
 					ground = BakedGround(land, topRect, ref bakedTop);
 					if (ground == null) { if (!toldDeferred) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: the ground has no layers to bake; its top stays rock"); toldDeferred = true; return; }
 				}
@@ -882,8 +882,11 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Where the rim's top (part 2) lies over the terrain: its corners' uvs (SplitTop lays them 0..1 over the
-		/// terrain), with half a metre's margin.</summary>
-		static Rect TopRect(Mesh mesh)
+		/// terrain), with half a metre's margin - and of that only round the ground's cut cells (cut: their centres, world x
+		/// and z), the only place it shows: the rest lies under the ground. (11-13: the whole top, mostly under the ground, took
+		/// 30-60 m a side, so the baked texture's BakeMax pixels came to a third of the ground's sharpness or less - a blurred
+		/// sheet over each mouth, smeared down The Frontier's quarry face.)</summary>
+		static Rect TopRect(Mesh mesh, List<Vector2> cut = null, Terrain land = null)
 		{
 			var uvs = new List<Vector2>();
 			var tops = new List<int>();
@@ -893,6 +896,17 @@ namespace DynamicIslands.Editor
 			foreach (int v in tops) { Vector2 u = uvs[v]; x0 = Mathf.Min(x0, u.x); x1 = Mathf.Max(x1, u.x); z0 = Mathf.Min(z0, u.y); z1 = Mathf.Max(z1, u.y); }
 			if (x1 < x0) return new Rect(0f, 0f, 1f, 1f);
 			const float m = 0.002f;
+			if (cut != null && cut.Count > 0 && land != null)
+			{
+				// (the cut cells' own rect, with TopMargin round them for the faces that rise over the ground beside a hole)
+				Vector3 lo = land.transform.position, size = land.terrainData.size;
+				float cx0 = float.MaxValue, cz0 = float.MaxValue, cx1 = float.MinValue, cz1 = float.MinValue;
+				foreach (Vector2 q in cut) { cx0 = Mathf.Min(cx0, q.x); cx1 = Mathf.Max(cx1, q.x); cz0 = Mathf.Min(cz0, q.y); cz1 = Mathf.Max(cz1, q.y); }
+				float half = 0.5f * size.x / Mathf.Max(1, land.terrainData.holesResolution) + TopMargin;
+				x0 = Mathf.Max(x0, (cx0 - half - lo.x) / size.x); x1 = Mathf.Min(x1, (cx1 + half - lo.x) / size.x);
+				z0 = Mathf.Max(z0, (cz0 - half - lo.z) / size.z); z1 = Mathf.Min(z1, (cz1 + half - lo.z) / size.z);
+				if (x1 < x0 || z1 < z0) return new Rect(0f, 0f, 1f, 1f);
+			}
 			return Rect.MinMaxRect(x0 - m, z0 - m, x1 + m, z1 + m);
 		}
 
@@ -900,6 +914,9 @@ namespace DynamicIslands.Editor
 		/// over 8 m), up to BakeMax a side. (11-03: 48 was a third of that, so the top came out a blurred, smoother patch than
 		/// the ground round it, its grass blades gone.)</summary>
 		const float BakePerMetre = 128f;
+
+		/// <summary>How far round the ground's cut cells the baked top reaches (TopRect).</summary>
+		const float TopMargin = 2f;
 		const int BakeMax = 2048;
 
 		/// <summary>
@@ -960,7 +977,7 @@ namespace DynamicIslands.Editor
 					if (sum <= 0f) { outPix[j * tw + i] = new Color32(128, 128, 128, 255); continue; }
 					outPix[j * tw + i] = new Color32((byte)Mathf.Clamp(cr / sum, 0f, 255f), (byte)Mathf.Clamp(cg / sum, 0f, 255f), (byte)Mathf.Clamp(cb / sum, 0f, 255f), 255);
 				}
-			var tex = new Texture2D(tw, th, TextureFormat.RGBA32, true) { name = "DigTunnelGroundBaked", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 16 };
+			var tex = new Texture2D(tw, th, TextureFormat.RGBA32, true) { name = "DigTunnelGroundBaked", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
 			tex.SetPixels32(outPix);
 			tex.Apply(true, true);
 			if (mat == null)
