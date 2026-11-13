@@ -1091,6 +1091,10 @@ namespace DynamicIslands
 				if (mesh == null || mesh.subMeshCount < 3 || ms.Length < 3 || ms[2] == null) { Log("  tunnel at " + t.transform.position.ToString("F0") + ": no rim top (" + t.RimTop + ") - skipped"); continue; }
 				string sh = ms[2].shader.name;
 				if (sh == "Standard") { ok = false; Log("  BAD: tunnel at " + t.transform.position.ToString("F0") + ": its rim top is on Standard (the grey veil)"); }
+				Texture bt = ms[2].mainTexture;
+				TerrainLayer[] tls = land.terrainData.terrainLayers;
+				Log("  (filtering: the rim top's " + (bt != null ? bt.width + "x" + bt.height + " aniso " + bt.anisoLevel : "none") + ", the ground's layers aniso "
+					+ string.Join("/", tls.Where(l => l != null && l.diffuseTexture != null).Select(l => l.diffuseTexture.anisoLevel.ToString()).ToArray()) + ", quality " + QualitySettings.anisotropicFiltering + ")");
 				// (the lining's faces whose air is out in the open: over the ground's own height a little way off the face)
 				var vs = new List<Vector3>(); var ns = new List<Vector3>();
 				mesh.GetVertices(vs); mesh.GetNormals(ns);
@@ -1153,6 +1157,11 @@ namespace DynamicIslands
 							top[y * gw + x] = !lin[y * gw + x] && Mathf.Abs(a.r - f.r) + Mathf.Abs(a.g - f.g) + Mathf.Abs(a.b - f.b) > 24;
 						}
 					double[] inT = new double[3], inG = new double[3]; int cT = 0, cG = 0;
+					// (how sharp each is: the mean step in brightness to the next pixel right and up - the baked top smeared down a
+					// steep face, The Frontier's quarry, came out a blurred sheet of the ground's own mean colour)
+					double sharpT = 0, sharpG = 0;
+					System.Func<int, float> lum = i => 0.3f * pa[i].r + 0.59f * pa[i].g + 0.11f * pa[i].b;
+					System.Func<int, float> step = i => Mathf.Abs(lum(i + 1) - lum(i)) + Mathf.Abs(lum(i + W) - lum(i));
 					// (the ground beside it: only pixels whose look from the shot's camera (60 degrees, 16:9) meets the island's
 					// ground - not the cliff rock, a tree or the sky round the mouth)
 					Collider landCol = land.GetComponent<TerrainCollider>();
@@ -1168,7 +1177,7 @@ namespace DynamicIslands
 						for (int x = 0; x < gw; x++)
 						{
 							int j = y * gw + x; Color32 a = pa[y * S * W + x * S];
-							if (top[j]) { inT[0] += a.r; inT[1] += a.g; inT[2] += a.b; cT++; continue; }
+							if (top[j]) { inT[0] += a.r; inT[1] += a.g; inT[2] += a.b; cT++; if (y < gh - 1) sharpT += step(y * S * W + x * S); continue; }
 							if (lin[j]) continue;
 							bool near = false;
 							for (int dy = -R; dy <= R && !near; dy++)
@@ -1178,14 +1187,16 @@ namespace DynamicIslands
 									if (xx < 0 || yy < 0 || xx >= gw || yy >= gh) continue;
 									if (top[yy * gw + xx]) { near = true; break; }
 								}
-							if (near && onGround(x, y)) { inG[0] += a.r; inG[1] += a.g; inG[2] += a.b; cG++; }
+							if (near && onGround(x, y)) { inG[0] += a.r; inG[1] += a.g; inG[2] += a.b; cG++; if (y < gh - 1) sharpG += step(y * S * W + x * S); }
 						}
 					if (cT < 50 || cG < 50) { Log("  mouth " + n + " at " + at.ToString("F0") + ": rim top " + cT + " samples, ground beside " + cG + " - too few to measure"); n++; continue; }
 					float dr = (float)(inT[0] / cT - inG[0] / cG), dg = (float)(inT[1] / cT - inG[1] / cG), db = (float)(inT[2] / cT - inG[2] / cG);
 					float worst = Mathf.Max(Mathf.Abs(dr), Mathf.Abs(dg), Mathf.Abs(db));
-					if (worst > 14f) ok = false;
-					Log("  " + (worst > 14f ? "BAD" : "ok") + ": mouth " + n + " at " + at.ToString("F0") + ": rim top " + (inT[0] / cT).ToString("0") + "," + (inT[1] / cT).ToString("0") + "," + (inT[2] / cT).ToString("0")
-						+ " against the ground beside it " + (inG[0] / cG).ToString("0") + "," + (inG[1] / cG).ToString("0") + "," + (inG[2] / cG).ToString("0") + " (" + cT + "/" + cG + " samples): off by " + worst.ToString("0"));
+					float sharp = (float)(sharpT / cT), sharpBy = (float)(sharpG / cG);
+					bool blurred = sharp < 0.6f * sharpBy;
+					if (worst > 14f || blurred) ok = false;
+					Log("  " + (worst > 14f || blurred ? "BAD" : "ok") + ": mouth " + n + " at " + at.ToString("F0") + ": rim top " + (inT[0] / cT).ToString("0") + "," + (inT[1] / cT).ToString("0") + "," + (inT[2] / cT).ToString("0")
+						+ " against the ground beside it " + (inG[0] / cG).ToString("0") + "," + (inG[1] / cG).ToString("0") + "," + (inG[2] / cG).ToString("0") + " (" + cT + "/" + cG + " samples): off by " + worst.ToString("0") + "; sharpness " + sharp.ToString("0.0") + " against " + sharpBy.ToString("0.0") + (blurred ? " (blurred)" : ""));
 					n++;
 				}
 			}
