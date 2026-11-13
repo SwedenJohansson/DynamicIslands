@@ -941,6 +941,9 @@ namespace DynamicIslands.Editor
 			var pix = new Color32[nl][];
 			var pw = new int[nl];
 			var ph = new int[nl];
+			int lim = FullSizeTextures();
+			try
+			{
 			for (int l = 0; l < nl; l++)
 			{
 				TerrainLayer tl = layers[l];
@@ -951,6 +954,8 @@ namespace DynamicIslands.Editor
 				if (c == null) continue;
 				pix[l] = c.GetPixels32(); pw[l] = c.width; ph[l] = c.height;
 			}
+			}
+			finally { QualitySettings.masterTextureLimit = lim; }
 			var outPix = new Color32[tw * th];
 			int wz = w.GetLength(0), wx = w.GetLength(1);
 			for (int j = 0; j < th; j++)
@@ -1004,6 +1009,22 @@ namespace DynamicIslands.Editor
 		}
 
 		static readonly Dictionary<KeyValuePair<Texture, int>, Texture2D> readable = new Dictionary<KeyValuePair<Texture, int>, Texture2D>();
+		static bool fullSizeLogged;
+
+		/// <summary>Puts the graphics card's textures at full size for a read-back and returns the texture limit to restore
+		/// (11-13: under a low quality - the test runs' CIGfx low, a player's lowest Texture setting - the card holds every
+		/// texture at half size or less; a copy read then stayed that soft for good, and the mouth's rim top was a blurred
+		/// sheet beside the sharp ground once the quality was back up).</summary>
+		static int FullSizeTextures()
+		{
+			int lim = QualitySettings.masterTextureLimit;
+			if (lim > 0)
+			{
+				if (!fullSizeLogged) { fullSizeLogged = true; Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: ground textures read at full size (texture limit " + lim + " lifted while reading)"); }
+				QualitySettings.masterTextureLimit = 0;
+			}
+			return lim;
+		}
 
 		/// <summary>A copy of a texture the mod can read, size x size: drawn into a RenderTexture (halved step by step, so
 		/// nothing is skipped) and read back. Cached.</summary>
@@ -1012,6 +1033,7 @@ namespace DynamicIslands.Editor
 			var key = new KeyValuePair<Texture, int>(src, size);
 			Texture2D got;
 			if (readable.TryGetValue(key, out got) && got != null) return got;
+			int lim = FullSizeTextures();
 			RenderTexture prev = RenderTexture.active;
 			var temps = new List<RenderTexture>();
 			try
@@ -1041,6 +1063,7 @@ namespace DynamicIslands.Editor
 			{
 				RenderTexture.active = prev;
 				foreach (RenderTexture t in temps) RenderTexture.ReleaseTemporary(t);
+				QualitySettings.masterTextureLimit = lim;
 			}
 		}
 

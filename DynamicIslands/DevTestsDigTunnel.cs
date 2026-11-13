@@ -1094,7 +1094,7 @@ namespace DynamicIslands
 				Texture bt = ms[2].mainTexture;
 				TerrainLayer[] tls = land.terrainData.terrainLayers;
 				Log("  (filtering: the rim top's " + (bt != null ? bt.width + "x" + bt.height + " aniso " + bt.anisoLevel : "none") + ", the ground's layers aniso "
-					+ string.Join("/", tls.Where(l => l != null && l.diffuseTexture != null).Select(l => l.diffuseTexture.anisoLevel.ToString()).ToArray()) + ", quality " + QualitySettings.anisotropicFiltering + ")");
+					+ string.Join("/", tls.Where(l => l != null && l.diffuseTexture != null).Select(l => l.diffuseTexture.anisoLevel.ToString()).ToArray()) + ", quality " + QualitySettings.anisotropicFiltering + ", texture limit " + QualitySettings.masterTextureLimit + ")");
 				// (the lining's faces whose air is out in the open: over the ground's own height a little way off the face)
 				var vs = new List<Vector3>(); var ns = new List<Vector3>();
 				mesh.GetVertices(vs); mesh.GetNormals(ns);
