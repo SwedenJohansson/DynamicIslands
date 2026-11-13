@@ -2,7 +2,7 @@
 # Points as in the recipe: kit_uw mouth on the strait floor at 9 100 (floor flattened to -8 m), the tunnel climbing 12 degrees
 # south (7 pieces, size 0.7: floor +1.513 m per 7.12 m of z), the floor passes the sea level near z 62, the den 50.6 -> 28.3 with
 # the air zone tn_cable at 9 39.5 and the chest tncablechest at 10.2 38. Floors are guesses (-8 at the mouth, ~+2.6 in the den).
-# Offline-written, never run; swim heights are metres over the sea.
+# Swim heights are metres over the sea; walks follow the floor (below=: start under that height).
 island Telegraph Narrows keep
 offset 0.35 5.1
 hour 11
@@ -12,16 +12,15 @@ empty
 # The strait's north end from the air above the mouth
 picture tn_cable_out 9 +6 118 9 -2 100
 
-# Swim in along the flooded tunnel, climbing
-swim 9 98 -6.8 to 9 92 -5.5 to 9 84 -3.8 to 9 76 -2.2 to 9 70 -1.0 to 9 66 -0.2
-# Walk up the dry part to the room and breathe there
-walk 9 64 to 9 56 to 9 48 to 9 41
+# Walk in along the flooded tunnel floor from the mouth and up its dry end to the room (as Effigy Shoals' undercroft;
+# 11-13 box run: the floor climbs faster than guessed and a walk from above started on the land over the room)
+walk 9 99 to 9 92 to 9 84 to 9 76 to 9 68 to 9 60 to 9 52 to 9 46 to 9 41 below=-6
 air tn_cable here
-picture tn_cable_in 9 +2.5 47 9 +0.5 36 light=20
+picture tn_cable_in 9 4.8 47 9 3.2 36 light=20
 open Cable clerks' box
 wait 2
 expect item Rope 2
 
-# Out again the way in
-walk 9 41 to 9 48 to 9 56 to 9 64
-swim 9 66 -0.2 to 9 70 -1.0 to 9 76 -2.2 to 9 84 -3.8 to 9 92 -5.5 to 9 98 -6.8
+# Out again the way in: down the room and the tunnel floor, then swim out of the mouth
+walk 9 41 to 9 48 to 9 56 to 9 64 to 9 72 to 9 80 to 9 88 to 9 96 below=4.5
+swim 9 99 -6.5 to 9 104 -6 to 9 112 -3

@@ -138,12 +138,14 @@ prop qd_hens creature.count=3
 # (the office, its drawer, letters and route card sit 20 m and more off the den; a 6 m rule can't hold a vault right under
 # them), to a den: the vault where undeliverable mail is held. The held mail lies under a steel hatch in the den's floor, hidden
 # until Clerk Rouhi's second answer (Down the stairs behind the counter) shows it, and locked until someone talked to her.
-# Mouth (-10 -36), way in = +z, 1 tunnel (7.3 m), den ~22 m long behind it, mid-den ~18 m in (z -18). cave.dome 16 keeps
+# Mouth (-10 -36), way in = +z, 1 tunnel (7.3 m), den ~22 m long behind it, mid-den ~18 m in (z -18). cave.dome 22 keeps
 # the dome off the office. Heights guessed: the den floor = the mouth's ground ~3.5 m over the sea (the pad's 2.2 m rising
 # to the natural ground), set down from 8 m. A sign for the vault 8 m off the mouth, clear of the office door's walk.
 call kit_st x=-10 z=-36 yaw=0 len=7.3 slope=0 end=room size=0.7 hill=1 dirt=2 mush=0 stone=0 vines=0 as=dlvault
 prop dlvault cave.rock=plain
-prop dlvault cave.dome=16
+# (11-13 w12 box run: at 16 the capped dome stood a terrain slope in the room just past the tunnel - "a step too high", green
+#     faces in the den; as Riverfork's rdcave, a bigger cap keeps the room: 22)
+prop dlvault cave.dome=22
 place Note_Sign dlvaultsign at -10 -44.5 ground yaw=0
 note dlvaultsign HELD MAIL - VAULT | Undeliverable and unclaimed post is kept in the vault. Carriers and staff only. Ask the clerk before you try the hatch.
 # cavecheck inside dlvaulthatch dlvaultchest

@@ -16,7 +16,7 @@ walk 15 -46.5 to 18 -46.5
 read PRESS LINE 4
 
 # Into the bed, through a whole stroke
-walk 19 -46.5 to 24 -46.5
+walk 19 -46.5 to 21.6 -46.5
 wait 7
 expect message registration pins
 expect hurt 4
