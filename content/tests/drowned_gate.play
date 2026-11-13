@@ -4,7 +4,7 @@
 # the lock chamber under the deck (water, 4 m deep) between the two gates, the flooded pump hall beside it (its door in
 # the chamber's north wall, the chest on its floor 3.95 m down).
 island The Drowned Gate
-offset -0.4723 -0.419
+offset 2.5038 -5.1355
 expect step 0
 expect title Locks and Pumps
 wait 5
