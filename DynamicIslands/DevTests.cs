@@ -1330,9 +1330,20 @@ namespace DynamicIslands
 			Vector3 from = raft.body.position;
 			// (an island being respawned can hold a Terrain whose terrainData is not set yet: skip it)
 			Func<GameObject, Terrain> land = g => g.GetComponentsInChildren<Terrain>(true).FirstOrDefault(t => t != null && t.terrainData != null);
-			GameObject island = UnityEngine.Object.FindObjectsOfType<GameObject>().Where(g => g.transform.parent == null && g.name.StartsWith("CustomIsland_") && land(g) != null)
-				.OrderBy(g => (g.transform.position - from).sqrMagnitude).FirstOrDefault();
-			if (island == null) { Fail("no custom island with land loaded"); yield break; }
+			// (right after sailing back the island near the raft is still loading again: up to 60 s for one - 11-13 UW12's
+			// second push came straight after CISail and found none)
+			GameObject island = null;
+			float until = Time.realtimeSinceStartup + 60f;
+			while (true)
+			{
+				from = raft.body.position;
+				island = UnityEngine.Object.FindObjectsOfType<GameObject>().Where(g => g.transform.parent == null && g.name.StartsWith("CustomIsland_") && land(g) != null)
+					.OrderBy(g => (g.transform.position - from).sqrMagnitude).FirstOrDefault();
+				if (island != null || Time.realtimeSinceStartup > until) break;
+				yield return new WaitForSecondsRealtime(2f);
+			}
+			if (island == null) { Fail("no custom island with land loaded (waited 60 s)"); yield break; }
+			Log("pushing towards '" + island.name + "', " + Flat(island.transform.position - from).magnitude.ToString("F0") + " m away");
 			yield return PushTowards(HighestPoint(land(island)), seconds, island.name);
 		}
 
