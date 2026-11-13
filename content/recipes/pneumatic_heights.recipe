@@ -225,15 +225,22 @@ call ar_plants_hill x=8 z=48 r=12 seed=27495
 # leaves the knoll's flank: its scatter cleared there below. Floor = the foot, 5.72 m (hw_mount ring); the room 10.8 m from the knoll's
 # middle, the ground over it ~15 m. HEIGHTS guessed: the shelves keep 5.72, a rise of r 19..21 smoothed from the natural ground.
 clear at 57 2 r=21 all only=(?i)boulder|tree|bush|palm|bamboo|mango
-call kit_sys x=37 z=2 yaw=90 side=1 len=14 bend=6 branch=10 blen=3 gap=8 in2=9 r=1.75 roomr=4 dirt=0 mush=2 stone=2 vines=0 titanium=1 as=phtubes
+# 11-13: kit_sys written out - its room (47 5 -> 49 11, r 4) sat under the knoll's 11.4 m ring with its top at 13.7 m and broke
+# out of the flank (a dark gash over the mouths; the bear not under a roof). The room now turns in toward the knoll's middle
+# (47 5 -> 50 9, r 3.2: top ~12 m under the 17.2 m ring).
+dig 37,2 51,2 51,-4 r=1.75 as=phtubes
+dig 47,2 47,5
+dig 47,5 50,9 r=3.2
+dig 37,-6 46,-6 51,-4 r=1.75 as=phtubes
+caveloot phtubes dirt=0 mush=2 stone=2 vines=0 titanium=1 light=0
 prop phtubes cave.rock=plain
 # 11-12 user: mixed cave monsters - a bear has made the sorting room its den (this world: bear here, rats under Parcel
 # Canopy, a boar in Sorting Rock's cellar, none in the vault or the cable room). One per place, the floor + 0.3, no drop.
 # cavecheck inside phbear
-place Creature_Bear phbear at 48 9 h=3.8
+place Creature_Bear phbear at 48.5 7 h=3.8
 prop phbear creature.count=1
 prop phbear creature.respawn=0
-place Zone_Trigger phtubesz at 48 8 h=7
+place Zone_Trigger phtubesz at 48.5 7 h=7
 prop phtubesz obj.name=phtubesz
 prop phtubesz zone.id=ph_tubes
 prop phtubesz zone.radius=5
