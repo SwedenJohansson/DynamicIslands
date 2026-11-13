@@ -1,0 +1,25 @@
+# The Drowned Gate's two culverts (CIPlay drowned_gate_caves, 11-12 w09; in a test world 'CI ...'). Points as in the
+# recipe: culvert 1's mouth on the outer floor at 45 -22 (4 m down), climbing at 12 degrees (yaw 180) to the divers'
+# store round 45 -66 (air zone dg_diversstore, the divers' kit at 46.2 -73.5); culvert 2 (kit 20 -5) climbing
+# yaw 200 to the pump sump round 6 -45. Walks along the floor as weatherglass_deep_caves (11-12: swims stuck on the mouth pieces).
+island The Drowned Gate keep
+offset -0.4723 -0.419
+hour 11
+weather Calm
+empty
+
+# Culvert 1: walk in along the floor (under the sea, as weatherglass_deep_caves), up out of the water to the divers' store
+picture dg_cave_out 46 -1.0 -12 45.5 -2.5 -22 light=20
+walk 45 -17 to 45 -22 to 45 -32 to 45 -42 to 45 -52 to 45 -62 to 45 -69 below=0
+air dg_diversstore here
+picture dg_cave_in 45 8.0 -64.5 45.8 7.0 -74 light=20
+open Divers' kit
+wait 2
+expect item Battery 2
+walk 45 -69 to 45 -60 to 45 -50 to 45 -40 to 45 -30 below=7.5
+
+# Culvert 2: its pieces lie 3.6 m to the side of the kit line (CC 11-12: first piece 17 -2.6, last 5 -35.6, room 0 -46.6),
+# so the walk follows that axis: from the sea floor outside the mouth (17.7 0.6), up the culvert into the pump sump room
+walk 20.1 5 to 18.2 0.6 to 16.1 -5 to 13.4 -12.5 to 9.9 -22 to 6.6 -31.3 to 4.1 -38 to 2 -42 below=-3
+picture dg_sump 1 6.6 -44.5 8.4 2.0 -24 light=20
+walk 2 -42 to 4.1 -38 to 6.6 -31.3 to 9.9 -22 to 13.4 -12.5 below=7.5

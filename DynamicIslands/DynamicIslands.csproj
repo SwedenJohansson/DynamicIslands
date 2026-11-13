@@ -41,6 +41,8 @@
     <Compile Include="DevTestsRecipeLeaves.cs" />
     <Compile Include="DevTestsFix35.cs" />
     <Compile Include="DevTestsGhosts.cs" />
+    <Compile Include="DevTestsCraftUse.cs" />
+    <Compile Include="DevTestsPlaceOld.cs" />
     <Compile Include="DevTestsControlsKeys.cs" />
     <Compile Include="DevTestsGapsRun.cs" />
     <Compile Include="DevTestsCaveGaps.cs" />
