@@ -939,6 +939,7 @@ namespace DynamicIslands.Editor
 			Log("A new world has started");
 			IslandWorldState.OnWorldLoaded();
 			try { CreatureSpawner.OnWorldLoaded(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Creatures in the new world: " + e.Message); }
+			try { Editor.ExtraUpgrades.PlacementCheck(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Upgrades in the new world: " + e.Message); }
 			worldHandled = true;
 		}
 
