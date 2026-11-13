@@ -8,7 +8,7 @@ hour 11
 weather Calm
 
 # The knoll and the mouth from outside
-picture sr_cellar_out 24 +3 14 40 +1.5 14
+picture sr_cellar_out 31 +2.2 14 40 +1.5 14
 picture sr_cellar_side 36 +3 28 42 +1.5 14
 
 # In along the tunnel to the chamber
@@ -21,7 +21,7 @@ expect animals Warthog 0
 
 walk 35 14 to 40 14 to 46 14 to 55 14 to 59 14
 zone sr_cellar
-picture sr_cellar_in 46 +2.5 14 59 +0.5 14 light=20
+picture sr_cellar_in 46 6.8 14 59 5.6 14 light=20
 
 # Out again
 walk 59 14 to 55 14 to 46 14 to 40 14 to 35 14

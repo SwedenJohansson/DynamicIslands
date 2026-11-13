@@ -20,9 +20,9 @@ picture ph_tubes_out 24 +3 2 37 +1.5 -2
 picture ph_tubes_mouth2 28 +2.5 -12 37 +1.5 -6
 
 # In by the second mouth: along its tunnel to the trunk's end, up the trunk, then the branch to the sorting room
-walk 31 -6 to 37 -6 to 46 -6 to 51 -4 to 51 2 to 47 2 to 47 5 to 48 9
+walk 31 -6 to 37 -6 to 46 -6 to 51 -4 to 51 2 to 47 2 to 47 5 to 48.5 7
 zone ph_tubes
-picture ph_tubes_in 46 +2.5 4 49 +1 10 light=20
+picture ph_tubes_in 47 6.3 3 49.5 5.3 8 light=20
 
 # Out by the first mouth
-walk 48 9 to 47 5 to 47 2 to 37 2 to 31 2
+walk 48.5 7 to 47 5 to 47 2 to 37 2 to 31 2

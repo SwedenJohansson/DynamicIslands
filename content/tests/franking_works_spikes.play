@@ -20,8 +20,8 @@ walk 19 -46.5 to 24 -46.5
 wait 7
 expect message registration pins
 expect hurt 4
+at 15 -46.5
 picture fw_pins 20 +2.5 -43 24 +0.3 -46.5
-at 18 -46.5
 wait 4
 expect unhurt
 

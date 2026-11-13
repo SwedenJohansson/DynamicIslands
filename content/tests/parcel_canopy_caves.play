@@ -29,7 +29,7 @@ expect animals Rat 0
 
 walk 31 4 to 35 4 to 42 4 to 51 4 to 55 4
 zone pc_roots
-picture pc_roots_in 43 +2.5 4 55 +0.5 4 light=20
+picture pc_roots_in 43 7 4 55 5.8 4 light=20
 
 # Out again
 walk 55 4 to 51 4 to 42 4 to 35 4 to 30 4
