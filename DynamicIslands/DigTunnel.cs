@@ -1117,16 +1117,8 @@ namespace DynamicIslands.Editor
 			// (no bumped shader in the game: the normal maps' relief shaded into the colour instead, the top on plain diffuse)
 			bool relief = bumped == null && outNrm != null;
 			if (relief) { Relief(outPix, outNrm, TestLook == 2); outNrm = null; }
-			var tex = new Texture2D(tw, th, TextureFormat.RGBA32, true) { name = relief ? ReliefName : "DigTunnelGroundBaked", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
-			tex.SetPixels32(outPix);
-			tex.Apply(true, true);
-			Texture2D ntex = null;
-			if (outNrm != null)
-			{
-				ntex = new Texture2D(tw, th, TextureFormat.RGBA32, true, true) { name = "DigTunnelGroundBakedNormal", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
-				ntex.SetPixels32(outNrm);
-				ntex.Apply(true, true);
-			}
+			Texture tex = Upload(outPix, tw, th, relief ? ReliefName : "DigTunnelGroundBaked", false);
+			Texture ntex = outNrm != null ? Upload(outNrm, tw, th, "DigTunnelGroundBakedNormal", true) : null;
 			// (made for the other look - with or without normals: made again)
 			if (mat != null && (ntex != null) != mat.HasProperty("_BumpMap")) { DropBaked(mat); mat = null; }
 			if (mat == null)
@@ -1189,6 +1181,25 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The baked top's texture name when its normal maps' relief is shaded into its colour.</summary>
 		internal const string ReliefName = "DigTunnelGroundBakedRelief";
+
+		/// <summary>A baked texture on the card at its full size, with mip maps: a render texture. The texture limit
+		/// (QualitySettings.masterTextureLimit, Raft's texture quality) drops the top mip levels of every texture with mip maps,
+		/// the mod's made ones too - at limit 3 a 2024 px top showed 253 px, the rim soft beside the ground (11-13). Render
+		/// textures are left whole; the pixels go up once without mip maps (no limit on those), the card makes the mips.</summary>
+		static Texture Upload(Color32[] pix, int w, int h, string name, bool linear)
+		{
+			var flat = new Texture2D(w, h, TextureFormat.RGBA32, false, linear) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+			flat.SetPixels32(pix);
+			flat.Apply(false, true);
+			var rt = new RenderTexture(w, h, 0, RenderTextureFormat.ARGB32, linear ? RenderTextureReadWrite.Linear : RenderTextureReadWrite.sRGB)
+				{ name = name, useMipMap = true, autoGenerateMips = true, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
+			if (!rt.Create()) { Destroy(rt); flat.name = name; flat.filterMode = FilterMode.Trilinear; flat.anisoLevel = 4; return flat; }
+			RenderTexture prev = RenderTexture.active;
+			Graphics.Blit(flat, rt);
+			RenderTexture.active = prev;
+			Destroy(flat);
+			return rt;
+		}
 
 		/// <summary>11-13: Raft's build has no bumped shader without shine, so the top on the legacy diffuse shader came out
 		/// soft beside the ground, whose normal maps draw the cracks and pebbles in light and shade (CIDigMouthLook's
