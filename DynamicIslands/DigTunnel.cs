@@ -167,7 +167,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < px.Length; i++) { Color32 p = px[i]; px[i] = new Color32((byte)Mathf.Min(255f, p.r * fr), (byte)Mathf.Min(255f, p.g * fg), (byte)Mathf.Min(255f, p.b * fb), p.a); }
 			got = new Texture2D(size, size, TextureFormat.RGBA32, true) { name = src.name + (tag ?? " (tinted)"), wrapMode = src.wrapMode, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
 			got.SetPixels32(px);
-			got.Apply(true, true);
+			ApplyFullSize(got);
 			scaled[key] = got;
 			return got;
 		}
@@ -733,8 +733,8 @@ namespace DynamicIslands.Editor
 			if (land == null || RimColumns == 0 || mesh == null || mesh.subMeshCount < 2) return;
 			// (11-02: in a world - Raft's camera draws deferred there - the terrain shader on a mesh came out a flat grey-blue
 			// patch, its textures set and lit or not; the editor's is right. TN2, 11-03: in a world the top wears the ground's
-			// look baked into a texture of its own - the layers mixed by the splat map - on Unity's Standard shader, which
-			// draws in the deferred camera as the ground does.)
+			// look baked into a texture of its own - the layers mixed by the splat map - on the legacy diffuse shader (Standard
+			// until 11-13: its shine laid a grey veil on it), which draws in the deferred camera as the ground does.)
 			bool world = !DynamicIslands.InEditor();
 			try
 			{
@@ -743,7 +743,7 @@ namespace DynamicIslands.Editor
 				if (!SplitTop(mesh, mr.transform, land)) return;
 				if (world)
 				{
-					topRect = TopRect(mesh);
+					topRect = TopRect(mesh, Openings, land);
 					ground = BakedGround(land, topRect, ref bakedTop);
 					if (ground == null) { if (!toldDeferred) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: the ground has no layers to bake; its top stays rock"); toldDeferred = true; return; }
 				}
@@ -882,8 +882,11 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Where the rim's top (part 2) lies over the terrain: its corners' uvs (SplitTop lays them 0..1 over the
-		/// terrain), with half a metre's margin.</summary>
-		static Rect TopRect(Mesh mesh)
+		/// terrain), with half a metre's margin - and of that only round the ground's cut cells (cut: their centres, world x
+		/// and z), the only place it shows: the rest lies under the ground. (11-13: the whole top, mostly under the ground, took
+		/// 30-60 m a side, so the baked texture's BakeMax pixels came to a third of the ground's sharpness or less - a blurred
+		/// sheet over each mouth, smeared down The Frontier's quarry face.)</summary>
+		static Rect TopRect(Mesh mesh, List<Vector2> cut = null, Terrain land = null)
 		{
 			var uvs = new List<Vector2>();
 			var tops = new List<int>();
@@ -893,6 +896,17 @@ namespace DynamicIslands.Editor
 			foreach (int v in tops) { Vector2 u = uvs[v]; x0 = Mathf.Min(x0, u.x); x1 = Mathf.Max(x1, u.x); z0 = Mathf.Min(z0, u.y); z1 = Mathf.Max(z1, u.y); }
 			if (x1 < x0) return new Rect(0f, 0f, 1f, 1f);
 			const float m = 0.002f;
+			if (cut != null && cut.Count > 0 && land != null)
+			{
+				// (the cut cells' own rect, with TopMargin round them for the faces that rise over the ground beside a hole)
+				Vector3 lo = land.transform.position, size = land.terrainData.size;
+				float cx0 = float.MaxValue, cz0 = float.MaxValue, cx1 = float.MinValue, cz1 = float.MinValue;
+				foreach (Vector2 q in cut) { cx0 = Mathf.Min(cx0, q.x); cx1 = Mathf.Max(cx1, q.x); cz0 = Mathf.Min(cz0, q.y); cz1 = Mathf.Max(cz1, q.y); }
+				float half = 0.5f * size.x / Mathf.Max(1, land.terrainData.holesResolution) + TopMargin;
+				x0 = Mathf.Max(x0, (cx0 - half - lo.x) / size.x); x1 = Mathf.Min(x1, (cx1 + half - lo.x) / size.x);
+				z0 = Mathf.Max(z0, (cz0 - half - lo.z) / size.z); z1 = Mathf.Min(z1, (cz1 + half - lo.z) / size.z);
+				if (x1 < x0 || z1 < z0) return new Rect(0f, 0f, 1f, 1f);
+			}
 			return Rect.MinMaxRect(x0 - m, z0 - m, x1 + m, z1 + m);
 		}
 
@@ -900,12 +914,15 @@ namespace DynamicIslands.Editor
 		/// over 8 m), up to BakeMax a side. (11-03: 48 was a third of that, so the top came out a blurred, smoother patch than
 		/// the ground round it, its grass blades gone.)</summary>
 		const float BakePerMetre = 128f;
+
+		/// <summary>How far round the ground's cut cells the baked top reaches (TopRect).</summary>
+		const float TopMargin = 2f;
 		const int BakeMax = 2048;
 
 		/// <summary>
 		/// The ground's look over part of the terrain (r: 0..1 over it) baked into a texture: each layer's diffuse texture
-		/// tiled as the terrain tiles it, mixed by the splat map's weights there - on Unity's Standard shader, matt, so the
-		/// world's deferred camera lights it as it lights the ground. The layers' textures can't be read by the mod: each is
+		/// tiled as the terrain tiles it, mixed by the splat map's weights there - on the legacy diffuse shader, as the
+		/// ground's (no shine), which the world's deferred camera lights as it lights the ground. The layers' textures can't be read by the mod: each is
 		/// copied back from the graphics card once (Graphics.Blit to a small RenderTexture). mat: made once, its texture
 		/// replaced. Null when the ground has no layers.
 		/// </summary>
@@ -924,6 +941,9 @@ namespace DynamicIslands.Editor
 			var pix = new Color32[nl][];
 			var pw = new int[nl];
 			var ph = new int[nl];
+			int lim = FullSizeTextures();
+			try
+			{
 			for (int l = 0; l < nl; l++)
 			{
 				TerrainLayer tl = layers[l];
@@ -934,6 +954,8 @@ namespace DynamicIslands.Editor
 				if (c == null) continue;
 				pix[l] = c.GetPixels32(); pw[l] = c.width; ph[l] = c.height;
 			}
+			}
+			finally { QualitySettings.masterTextureLimit = lim; }
 			var outPix = new Color32[tw * th];
 			int wz = w.GetLength(0), wx = w.GetLength(1);
 			for (int j = 0; j < th; j++)
@@ -962,10 +984,13 @@ namespace DynamicIslands.Editor
 				}
 			var tex = new Texture2D(tw, th, TextureFormat.RGBA32, true) { name = "DigTunnelGroundBaked", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
 			tex.SetPixels32(outPix);
-			tex.Apply(true, true);
+			ApplyFullSize(tex);
 			if (mat == null)
 			{
-				Shader s = Shader.Find("Standard");
+				// (11-13: the legacy diffuse shader, lit as the ground's own Nature/Terrain/Diffuse is - no shine. On Standard,
+				// even matt, the deferred camera added the sky's grey reflection: round every mouth a pale grey veil over the
+				// dark ash, its albedo hardly mattering - Cinderfall's lava tubes, The Frontier's quarry)
+				Shader s = Shader.Find("Legacy Shaders/Diffuse") ?? Shader.Find("Diffuse") ?? Shader.Find("Standard");
 				if (s == null) { Destroy(tex); return null; }
 				mat = new Material(s) { name = "DigTunnelGroundBaked" };
 				mat.SetFloat("_Glossiness", 0f);
@@ -984,6 +1009,32 @@ namespace DynamicIslands.Editor
 		}
 
 		static readonly Dictionary<KeyValuePair<Texture, int>, Texture2D> readable = new Dictionary<KeyValuePair<Texture, int>, Texture2D>();
+		static bool fullSizeLogged;
+
+		/// <summary>Uploads a made texture with its mip maps and drops the mod's copy - with the card's textures at full size: one
+		/// uploaded under a texture limit kept only its smaller mips, and with no copy left to upload again it stayed blurred
+		/// once the quality was back up (11-13: the rim top under CIGfx low, the shots at the user's quality).</summary>
+		static void ApplyFullSize(Texture2D t)
+		{
+			int lim = FullSizeTextures();
+			try { t.Apply(true, true); }
+			finally { QualitySettings.masterTextureLimit = lim; }
+		}
+
+		/// <summary>Puts the graphics card's textures at full size for a read-back and returns the texture limit to restore
+		/// (11-13: under a low quality - the test runs' CIGfx low, a player's lowest Texture setting - the card holds every
+		/// texture at half size or less; a copy read then stayed that soft for good, and the mouth's rim top was a blurred
+		/// sheet beside the sharp ground once the quality was back up).</summary>
+		static int FullSizeTextures()
+		{
+			int lim = QualitySettings.masterTextureLimit;
+			if (lim > 0)
+			{
+				if (!fullSizeLogged) { fullSizeLogged = true; Debug.Log("[CUSTOM ISLANDS] Dug tunnels: textures read and made at full size (texture limit " + lim + " lifted meanwhile)"); }
+				QualitySettings.masterTextureLimit = 0;
+			}
+			return lim;
+		}
 
 		/// <summary>A copy of a texture the mod can read, size x size: drawn into a RenderTexture (halved step by step, so
 		/// nothing is skipped) and read back. Cached.</summary>
@@ -992,6 +1043,7 @@ namespace DynamicIslands.Editor
 			var key = new KeyValuePair<Texture, int>(src, size);
 			Texture2D got;
 			if (readable.TryGetValue(key, out got) && got != null) return got;
+			int lim = FullSizeTextures();
 			RenderTexture prev = RenderTexture.active;
 			var temps = new List<RenderTexture>();
 			try
@@ -1021,6 +1073,7 @@ namespace DynamicIslands.Editor
 			{
 				RenderTexture.active = prev;
 				foreach (RenderTexture t in temps) RenderTexture.ReleaseTemporary(t);
+				QualitySettings.masterTextureLimit = lim;
 			}
 		}
 
@@ -1422,12 +1475,14 @@ namespace DynamicIslands.Editor
 
 			// (the rock's field: below 0 rock; and which air is the hill's own, past the rock's outside)
 			var top = new float[nx * nz]; // the rock's top (object space y), per column when upright
+			float[] groundAt = upright && land != null ? new float[nx * nz] : null; // the ground's own height (object space y)
 			if (upright)
 				for (int z = 0; z < nz; z++)
 					for (int x = 0; x < nx; x++)
 					{
 						Vector3 w = transform.TransformPoint(new Vector3(o.x + x * h, 0f, o.z + z * h));
 						top[x + z * nx] = (GroundY(land, w) - Under - transform.position.y) / sY;
+						if (groundAt != null) groundAt[x + z * nx] = (GroundY(land, w) - transform.position.y) / sY;
 					}
 			// (the mouth's rim: over the cut ground the rock's top is a skin just over the ground, so the cut's square cells are
 			// under rock; past the cut it sinks gently back under the ground by RimOut, along a ragged line; round the opening,
@@ -1558,6 +1613,22 @@ namespace DynamicIslands.Editor
 						}
 					}
 			dist = null; floorAt = null; radAt = null;
+
+			// (the passage's air out in the open, over the ground's own height - in front of a steep face, where the dig starts
+			// outside it: the rock there is the rim's, the ground's look, not the lining's. 11-13: the lining's floor came out of
+			// every mouth in a steep face as a pale slab on the sand or ash with a sawtooth edge - the cut cells' squares -
+			// Cinderfall's lava tubes, The Frontier's quarry, Listening Mirrors)
+			if (groundAt != null)
+				for (int z = 0; z < nz; z++)
+					for (int x = 0; x < nx; x++)
+					{
+						float gy = groundAt[x + z * nx];
+						for (int y = 0; y < ny; y++)
+						{
+							int i = x + y * sy + z * sz;
+							if (passage[i] && o.y + y * h > gy) passage[i] = false;
+						}
+					}
 
 			// (the surface, smoothed: toward the passage, or the open air over the rock's top - the mouth's rim, which takes the
 			// ground's look on its top; not toward the hill's own air past the rock)

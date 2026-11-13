@@ -1,0 +1,17 @@
+# The Listening Mirrors' echo caves (CIPlay the_listening_mirrors_caves, 11-12 w10; in a test world 'CI ...'). Points
+# as in its recipe: a kit_sys dug into Watcher's Fell's foot - mouth one at -43 36.6 (ground ~5.5), the trunk on at
+# yaw 240 to -54.3 30.1 bending to -52.8 27.5, mouth two at -38 27.9 (ground ~6) by -44.9 23.9 joining it there, the
+# side chamber off the trunk -52.2 32.5 .. -56.9 36.7; the sign at -33 36. In at one mouth, out at the other, then
+# into the chamber and back.
+island The Listening Mirrors keep
+offset 0 0
+hour 11
+weather Calm
+at -31 34.5 h=7
+wait 2
+read ECHO CAVES
+picture lm_cave_out -30 11 40 -41 6.5 32
+walk -38.7 39.1 to -43 36.6 to -48.6 33.4 to -54.3 30.1 to -52.8 27.5 to -44.9 23.9 to -38 27.9 to -33.7 30.4 below=12
+walk -38.7 39.1 to -43 36.6 to -51.7 31.6 to -52.2 32.5 to -54.9 34.8 below=12
+picture lm_cave_in -52.4 7.3 32.8 -56.4 6.2 36.3 light=20
+walk -54.9 34.8 to -52.2 32.5 to -51.7 31.6 to -43 36.6 to -38.7 39.1 below=10

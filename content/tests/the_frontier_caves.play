@@ -1,0 +1,19 @@
+# The Frontier's quarry (CIPlay the_frontier_caves, 11-12 w09; in a test world 'CI ...'). Points as in the recipe: two
+# mouths at the mesa's foot (-8 -75.5 and 8 -75.5, floors ~2.5), the trunk to -8 -51.5 and over to 2 -51.5, a side
+# branch from -8 -63.5 to a chamber round -19 -62.5, the second mouth's tunnel joining at 2 -51.5, the gallery on to
+# the quarry hall (2 -42 to 2 -31, zone fr_quarry; chest at 0.6 -33, tally at 3.6 -33.5).
+island The Frontier keep
+hour 11
+weather Calm
+empty
+picture fr_cave_out 0 +4 -88 0 +3 -75.5
+walk -8 -80 to -8 -75.5 to -8 -63.5 to -14 -63.5 to -19 -62.5
+walk -19 -62.5 to -14 -63.5 to -8 -63.5 to -8 -51.5 to 2 -51.5 to 2 -42 to 2 -37
+wait 2
+expect message quarry hall
+read Quarry tally
+open Quarrymen's chest
+wait 2
+expect item Nail 10
+picture fr_cave_in 2 5.2 -45 2 4.6 -32 light=25
+walk 2 -37 to 2 -51.5 to 8 -61.5 to 8 -75.5 to 8 -80

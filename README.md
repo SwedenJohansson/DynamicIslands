@@ -618,7 +618,7 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   1.5x, gathers 2x as fast), titanium rod (bites 2x as fast), swift flippers (x1.8 swimming), large air tank
   (loses air half as fast), rapid charger (2x per fuel), fast recycler (2x as fast), bright lantern (2x as far),
   telescope (2x zoom), titanium greatsword and spear (1.5x damage), long paddle (2x push), floodlight (2x as far),
-  steel pot and fast juicer (2x as fast), titanium machete (1.5x damage), sturdy scarecrow (never wears out), master hammer
+  steel pot and fast juicer (2x as fast), titanium machete (1.5x damage, creatures too; still cuts), sturdy scarecrow (never wears out), master hammer
   (2x repair), longbow (1.5x draw and range), bright head light and bright lamp (2x as far), lumber axe (2x as fast) and marine binoculars (2x zoom, titanium;
   see furthest with Binoculars see through fog). Item numbers 29400 and up; one another mod already uses moves to a
   free number (29600 and up), with one warning in game.

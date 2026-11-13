@@ -420,8 +420,10 @@ namespace DynamicIslands.Editor
 			// a grid wide enough for the whole dome, so its bell runs out into the ground on its own)
 			if (dome != null && pad <= Reach && DomeAtEdge(dome, ground, nx, nz))
 			{
-				Debug.Log("[CUSTOM ISLANDS] Cave mountain: dome reaches the grid's edge, grid widened to " + (LastDomeReach + DomePad).ToString("0") + " m");
-				Build(Mathf.Max(Reach, LastDomeReach + DomePad));
+				// (always wider than Reach: Build(Reach) again would come back here, over and over, until the stack overflowed)
+				float wide = Mathf.Max(Reach + DomePad, LastDomeReach + DomePad);
+				Debug.Log("[CUSTOM ISLANDS] Cave mountain: dome reaches the grid's edge, grid widened to " + wide.ToString("0") + " m");
+				Build(wide);
 				return;
 			}
 			// The surface: over a roof, the highest roof around it; elsewhere falling away from the roofs nearby
