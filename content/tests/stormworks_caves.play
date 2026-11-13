@@ -9,6 +9,15 @@ weather Calm
 where Pickup_Landmark_Mushroom
 where Pickup_Landmark_DirtPickup
 
+# (11-13 cavemix, TODO 0f) the cave's rat: alive, on the dug floor under the hill's rock, then dealt with
+at 43 -12
+wait 2
+expect animals Rat 2
+expect animalsinside Rat 2
+wait 2
+picture sw_rats 22 11.6 -10 21.5 10.3 -5 aim=Rat light=20
+kill Rat
+expect animals Rat 0
 picture sw_cave_out 43 +1.7 -12 38 +1 -12
 walk 42 -12 to 38 -12 to 30 -12 to 22 -12 to 22 -8 to 20.5 -3
 picture sw_cave_in 32 11.6 -12 22 10.8 -12 light=20

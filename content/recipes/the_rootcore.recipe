@@ -247,6 +247,13 @@ place LandmarkLadder_6m rootladder at -15.5 14 h=1.5 yaw=90
 place Creature_Rat rootrats at -14 13 h=9.4 drop
 prop rootrats creature.count=2
 prop rootrats creature.respawn=0
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear, a hyena or nothing, so nobody can guess what is inside)
+# a bear in the core room (6 m wide, 11 m long: z 3 to 13.8, floor 1.5), two ways out (the descent's foot at -20.5 2.5
+# and the ladder shaft at -16.6 14), 7 m from the acid seep; a plain bear - the quest's Blightmother is a Mama bear
+# cavecheck inside rootbear
+place Creature_Bear rootbear at -22 10 h=1.8
+prop rootbear creature.count=1
+prop rootbear creature.respawn=0
 # the seep: a small pool of green water at the cut's end, crusted rocks, a green steam (the Abyss's vent look)
 place TP_SeleneReactor_Water_Radiated seeppool at -25.4 4.05 h=1.56 scale=0.1 yaw=70
 place SmallRock_02 seeprock at -26.2 3.6 h=2.5 drop yaw=60 scale=0.9 sy=0.22

@@ -512,6 +512,15 @@ dig 54,-42 58,-42 r=3 slope=0
 place Loot_ChestSmall chcischest at 48.2 -54.3 h=6.5 drop yaw=250
 note chcischest Cistern keeper's chest | The cistern keeper's chest, left in the dry cistern when the pump hall took the water: his gauges and the spare fittings.
 loot chcischest MetalIngot*1;Bolt*3;Rope*1;Glass*2
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear, a hyena or nothing, so nobody can guess what is inside)
+# rats in the dry cistern: one in the side chamber by the keeper's chest (floor ~5), one in the end room (floor 4.7)
+# cavecheck inside chcisratA chcisratB
+place Creature_Rat chcisratA at 46.6 -50.8 h=5.4
+prop chcisratA creature.count=1
+prop chcisratA creature.respawn=0
+place Creature_Rat chcisratB at 57 -42 h=5.0
+prop chcisratB creature.count=1
+prop chcisratB creature.respawn=0
 prop chcischest loot.refill=0
 # the overflow channel and its acid (its stroke starts at the waterline under the bank and climbs 15 deg: started up on
 # the bank, its floor lay 2.7 m under the bank top and reach found no way back out; now the mouth opens on the sea)

@@ -264,6 +264,12 @@ dig -34,0 -41,0 r=3.2 as=sngal
 dig -23,6 -33,6.5 -38,3 r=1.75 slope=0 as=sngal
 dig -41,1.5 -45,6.5 r=3 as=sngal
 caveloot sngal dirt=4 mush=3 stone=2 vines=0 titanium=0 light=0 wet=0
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear, a hyena or nothing, so nobody can guess what is inside)
+# a hyena in the gallery's end room (r=3, off the hall's far end; floor ~5), away from the spike passage's turn at -40 -2
+# cavecheck inside snhyena
+place Creature_Hyena snhyena at -43.5 4.5 h=5.4
+prop snhyena creature.count=1
+prop snhyena creature.respawn=0
 prop sngal cave.rock=plain
 # the store passage, off the hall's far end and away from the plaza, then the store (its own group: no loot among the stakes)
 dig -40,-2 -43,-6 -45.5,-10 r=1.6 as=snspike

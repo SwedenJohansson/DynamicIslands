@@ -14,6 +14,15 @@ offset 0 0
 hour 11
 weather Calm
 where ChoppableVines
+# (11-13 cavemix, TODO 0f) the cave's rat: alive, on the dug floor under the hill's rock, then dealt with
+at 0 -62
+wait 2
+expect animals Rat 1
+expect animalsinside Rat 1
+wait 2
+picture hf_rat -10 6.8 -59.4 -15 5.2 -59.8 aim=Rat light=20
+kill Rat
+expect animals Rat 0
 picture hf_grotto_out 2 4.8 -64 -6 4 -59
 walk 0 -62 to -2 -59 to -9 -59 blocked
 expect shown hfgrot_vines

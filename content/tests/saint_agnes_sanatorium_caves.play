@@ -8,6 +8,13 @@ weather Calm
 at -14 28.5 h=9.5
 wait 2
 read OLD COLD CELLARS
+# (11-13 cavemix, TODO 0f) the cave's rat: alive, on the dug floor under the hill's rock, then dealt with
+expect animals Rat 1
+expect animalsinside Rat 1
+wait 2
+picture sa_rat -25.1 9.5 40 -28.3 8.2 42.6 aim=Rat light=20
+kill Rat
+expect animals Rat 0
 picture sa_cave_out -12 13 27 -19.7 8.5 35.5
 walk -15.5 30.5 to -18.1 33.6 to -19.7 35.5 to -22.8 38.1 to -25.1 40 to -27.4 41.9 to -29.3 43.5 below=10
 picture sa_cave_in -22.8 9.5 38.1 -29.3 8.5 43.5 light=20

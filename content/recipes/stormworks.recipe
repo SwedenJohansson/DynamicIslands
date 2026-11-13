@@ -201,6 +201,15 @@ clear at 38 -12 r=3 only=(?i)boulder|rock|tree|bush
 clear at 38 -26 r=3 only=(?i)boulder|rock|tree|bush
 call kit_sys x=38 z=-12 yaw=270 side=-1 len=20 bend=8 branch=16 blen=4 gap=14 in2=14 r=1.75 roomr=3 dirt=3 mush=3 stone=0 vines=1 titanium=0 as=swdrain
 prop swdrain cave.rock=plain
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear, a hyena or nothing, so nobody can guess what is inside)
+# two rats in the side drain's silt chamber (22,-8 to 20,-2, r=3; floor ~9.9), 10 m and more from the grate pit outside
+# cavecheck inside swratA swratB
+place Creature_Rat swratA at 21.2 -4 h=10.2
+prop swratA creature.count=1
+prop swratA creature.respawn=0
+place Creature_Rat swratB at 21.8 -6.5 h=10.2
+prop swratB creature.count=1
+prop swratB creature.respawn=0
 # the grate pit (1 m deep, the ground round it about 6)
 brush flatten from 46 -17 to 51 -17 r=2 s=20 frames=200 h=5
 # (11-12 w08: a big rock of the island's own stood on the west end of the south plank - cleared off the pit and its planks)

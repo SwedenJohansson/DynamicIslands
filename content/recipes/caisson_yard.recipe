@@ -350,10 +350,12 @@ place SmallBoulder3 - at -31 14.5 ground sit scale=0.7 yaw=30
 place SmallBoulder3 - at -31.5 9 ground sit scale=0.6 yaw=140
 # (11-09 user rule: some caves get rats) one rat in the powder cave (sk_cave at -24 -56, its floor h=2): on the bear cave's
 # floor 2 m behind its middle, under its rock (the ramp's dry top was an open cut - a rat there stood under the sky, w03 11-09)
-# cavecheck inside cyratA
-place Creature_Rat cyratA at -24 -54.5 h=2.3
-prop cyratA creature.count=1
-prop cyratA creature.respawn=0
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear, a hyena or nothing, so nobody can guess what is inside)
+# the powder cave is Raft's own bear den (roomy, one wide mouth, off the quest): a bear in it now instead of the rat
+# cavecheck inside cybear
+place Creature_Bear cybear at -24 -54.5 h=2.3
+prop cybear creature.count=1
+prop cybear creature.respawn=0
 
 quest title=The Caisson Yard
 quest intro=The survey team ran to this construction yard over the trench. Climb onto the yard caisson.

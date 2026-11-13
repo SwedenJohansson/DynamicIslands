@@ -521,6 +521,12 @@ brush flatten from -38 27.94 to -35.8 29.19 r=2.8 s=20 frames=150
 brush rock at -41.7 37.35 r=4.5 s=20 frames=30
 brush rock at -36.7 28.69 r=4.5 s=20 frames=30
 call kit_sys x=-43 z=36.6 yaw=240 side=-1 len=13 bend=3 branch=10 blen=1 gap=10 in2=8 r=1.75 roomr=2.5 dirt=0 mush=3 stone=2 vines=0 titanium=1 as=lmecho
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear, a hyena or nothing, so nobody can guess what is inside)
+# a boar in the echo room (-52.2,32.5 to -56.9,36.7, r=2.5; floor ~5.6) - two mouths to run for; hyenas are the quest's
+# cavecheck inside lmboar
+place Creature_Boar lmboar at -54.6 34.6 h=5.9
+prop lmboar creature.count=1
+prop lmboar creature.respawn=0
 prop lmecho cave.rock=plain
 place Note_Sign lmechosign at -33 36 ground sit yaw=240
 prop lmechosign obj.name=lmechosign

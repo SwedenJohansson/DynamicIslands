@@ -5,6 +5,15 @@ island Sandsunk Necropolis keep
 offset 0 0
 hour 11
 weather Calm
+# (11-13 cavemix, TODO 0f) the cave's hyena: alive, on the dug floor under the hill's rock, then dealt with
+at -18 0
+wait 2
+expect animals Hyena 1
+expect animalsinside Hyena 1
+wait 2
+picture sn_hyena -40 6.8 0.5 -43.5 5.5 4.5 aim=Hyena light=20
+kill Hyena
+expect animals Hyena 0
 picture sn_fronts -12 5 3 -24 4.5 3
 walk -20 0 to -23 0 to -34 0 to -40 0 below=8
 picture sn_hall -26 6.8 0 -40 5.6 0 light=20

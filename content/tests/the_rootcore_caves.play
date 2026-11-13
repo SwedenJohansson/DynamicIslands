@@ -18,6 +18,13 @@ wait 8
 expect animalsmoved Rat 0.5
 kill Rat
 expect animals Rat 0
+# (11-13 cavemix, TODO 0f) the cave's bear in the core room (the player still up on the descent's long leg): alive, on the dug floor under the hill's rock, then dealt with
+expect animals Bear 1
+expect animalsinside Bear 1
+wait 2
+picture rc_bear -21.5 3.2 3.5 -22 2 10 aim=Bear light=25
+kill Bear
+expect animals Bear 0
 walk -14.1 14 to -14 4 to -14 -1.5 to -19.5 1.8 to -21 4 to -21 10 below=20
 expect unhurt
 picture rc_cave_in -21.5 3.2 3.5 -21.5 2.5 12 light=25
