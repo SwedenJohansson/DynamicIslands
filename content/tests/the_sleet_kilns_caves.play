@@ -1,11 +1,17 @@
 # The Sleet Kilns' old kiln cave (CIPlay the_sleet_kilns_caves, 11-13 w11; in a test world 'CI ...'). Points as in its
-# recipe: a straight cave (kit_st, its own rock ridge) from the mouth at 30 -45 east (yaw 90, len 26, level) to the room
-# where the first kiln stood, about 62 -45. In and out on foot.
+# recipe: the mouth strip (3 m) from 30 -45 east into the spoil knoll; the level passage to the kiln room (46..53 -45).
+# A bear sleeps in the room.
 island The Sleet Kilns keep
 offset 3.8844 -2.5952
 hour 11
 weather Calm
-picture sk_cave_out 16 18 -60 31 11 -45
-walk 31.5 -45 to 38 -45 to 46 -45 to 54 -45 to 59 -45 below=15
-picture sk_cave_in 40 13.6 -45 60 12 -45 light=20
-walk 59 -45 to 54 -45 to 46 -45 to 38 -45 to 31.5 -45 below=15
+picture sk_cave_out 22 8 -39 34 4 -45
+expect animals Bear 1
+expect animalsinside Bear 1
+walk 29 -45 to 32 -45 to 36 -45 below=6
+picture sk_bear 36 4.6 -45 49 3.6 -45 aim=Bear light=20
+kill Bear
+expect animals Bear 0
+walk 36 -45 to 41 -45 to 46 -45 to 51.5 -45 below=6
+picture sk_cave_in 42 4.6 -45 52 3.4 -45 light=20
+walk 51.5 -45 to 46 -45 to 41 -45 to 36 -45 to 29 -45 below=6

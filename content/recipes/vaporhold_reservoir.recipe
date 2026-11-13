@@ -238,6 +238,10 @@ call kit_st x=-10 z=-37 yaw=250 len=41.6 slope=12 end=room size=0.7 hill=1 dirt=
 prop vrintake1 cave.rock=plain
 call kit_st x=-8 z=-46 yaw=225 len=41.6 slope=12 end=room size=0.7 hill=1 dirt=0 mush=1 stone=1 vines=0 wet=1 as=vrintake2
 prop vrintake2 cave.rock=plain
+# (11-13 w11c: CC found the short intake's roof open 3.3 m in from its mouth - rays from above reached its floor;
+# ground raised over that stretch, short of the mouth itself)
+brush flatten at -10.4 -48.4 r=1.8 s=20 frames=200 h=1.9
+brush smooth at -10.4 -48.4 r=3 s=5 frames=15
 # (11-13 w11c: with the long intake shortened its hill no longer reaches the west shore - -91 -50 became sea bed
 # (dig floor -3.8, all wet); the mouth moved up the slope to -82, where the ground rises about 1.1 m a metre)
 dig -82,-50 -72,-50 r=1.75 slope=0 as=vrservice
