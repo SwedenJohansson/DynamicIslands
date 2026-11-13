@@ -1003,15 +1003,38 @@ namespace DynamicIslands
 					yield return CameraShot(eye, look, "dig_rimprobe_" + n + "_a");
 					var flat = new Material[ms.Length];
 					Color[] cols = { Color.green, Color.blue, Color.magenta };
-					Shader unlit = Shader.Find("Unlit/Color");
-					for (int i = 0; i < ms.Length; i++) { flat[i] = new Material(unlit); flat[i].color = cols[Mathf.Min(i, 2)]; }
-					mr.sharedMaterials = flat;
-					yield return CameraShot(eye, look, "dig_rimprobe_" + n + "_b");
-					land.drawHeightmap = false;
-					yield return CameraShot(eye, look, "dig_rimprobe_" + n + "_c");
-					land.drawHeightmap = true;
-					mr.sharedMaterials = ms;
-					foreach (Material f in flat) Object.Destroy(f);
+					Shader unlit = Shader.Find("Unlit/Color") ?? Shader.Find("Hidden/Internal-Colored");
+					if (unlit == null) { Log("    (no flat shader in this build: no b/c pictures)"); }
+					else
+					{
+						for (int i = 0; i < ms.Length; i++) { flat[i] = new Material(unlit); flat[i].color = cols[Mathf.Min(i, 2)]; }
+						mr.sharedMaterials = flat;
+						yield return CameraShot(eye, look, "dig_rimprobe_" + n + "_b");
+						land.drawHeightmap = false;
+						yield return CameraShot(eye, look, "dig_rimprobe_" + n + "_c");
+						land.drawHeightmap = true;
+						mr.sharedMaterials = ms;
+						foreach (Material f in flat) if (f != null) Object.Destroy(f);
+					}
+					// (d: the rim top's albedo black - what is left is the Standard shader's own shine, the sky's reflection and
+					// the sun's highlight; e: the rim top on the legacy diffuse shader the ground wears, its baked texture kept)
+					if (ms.Length > 2 && ms[2] != null)
+					{
+						var dark = new Material(ms[2]); dark.color = Color.black;
+						Material[] m2 = (Material[])ms.Clone(); m2[2] = dark; mr.sharedMaterials = m2;
+						yield return CameraShot(eye, look, "dig_rimprobe_" + n + "_d");
+						Object.Destroy(dark);
+						Shader leg = Shader.Find("Legacy Shaders/Diffuse") ?? Shader.Find("Nature/Terrain/Diffuse");
+						Log("    legacy diffuse shader: " + (leg != null ? leg.name : "none in this build"));
+						if (leg != null)
+						{
+							var ld = new Material(leg); ld.mainTexture = ms[2].mainTexture; ld.mainTextureScale = ms[2].mainTextureScale; ld.mainTextureOffset = ms[2].mainTextureOffset;
+							m2[2] = ld; mr.sharedMaterials = m2;
+							yield return CameraShot(eye, look, "dig_rimprobe_" + n + "_e");
+							Object.Destroy(ld);
+						}
+						mr.sharedMaterials = ms;
+					}
 					n++;
 				}
 			}
