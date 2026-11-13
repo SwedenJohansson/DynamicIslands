@@ -16,19 +16,19 @@ weather Calm
 where ChoppableVines
 # (11-13 cavemix, TODO 0f) the cave's rat: alive, on the dug floor under the hill's rock, then dealt with
 at 0 -62
-wait 2
-expect animals Rat 1
-expect animalsinside Rat 1
-wait 2
-picture hf_rat -10 6.8 -59.4 -15 5.2 -59.8 aim=Rat light=20
-kill Rat
-expect animals Rat 0
 picture hf_grotto_out 2 4.8 -64 -6 4 -59
 walk 0 -62 to -2 -59 to -9 -59 blocked
 expect shown hfgrot_vines
 use hfgrot_vines
 expect hidden hfgrot_vines
 picture hf_grotto_cut 1 4.8 -61 -6 4 -59
+# (the rat after the vines: checked before them, 'kill' left the machete out of hand and 'use' cut nothing)
+expect animals Rat 1
+expect animalsinside Rat 1
+wait 2
+picture hf_rat -10 6.8 -59.4 -15 5.2 -59.8 aim=Rat light=20
+kill Rat
+expect animals Rat 0
 walk -2 -59 to -9 -59 to -12.5 -59.5 to -17 -60
 picture hf_grotto_in -10 6.8 -59.4 -18 5.6 -60 light=20
 open Guardians' store
