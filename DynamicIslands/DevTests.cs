@@ -1754,10 +1754,15 @@ namespace DynamicIslands
 			Vector3 dir = Flat(peak - body.position).normalized;
 			Log("Pushing raft towards " + label + " at 4 m/s; layers RaftCollision/BakedBlocks vs Obstruction collide: " + !Physics.GetIgnoreLayerCollision(9, 16) + "/" + !Physics.GetIgnoreLayerCollision(18, 16));
 			Vector3 lastLogged = body.position; float stuckTime = 0; float t = 0; float closest = Flat(peak - body.position).magnitude;
+			// (on the raft and kept alive as CISail does: 11-13 UW12's second push came after CISail had left the player
+			// ~1 km behind in the sea, who drowned during the push - a test death, not the island's)
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player != null) player.transform.position = body.position + Vector3.up * 3f;
 			while (t < seconds)
 			{
 				yield return new WaitForFixedUpdate();
 				t += Time.fixedDeltaTime;
+				KeepAlive(player);
 				Vector3 before = body.position;
 				body.velocity = dir * 4f + Vector3.up * body.velocity.y;
 				if (Mathf.Repeat(t, 2f) < Time.fixedDeltaTime)
