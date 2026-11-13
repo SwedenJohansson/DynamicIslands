@@ -1153,6 +1153,17 @@ namespace DynamicIslands
 							top[y * gw + x] = !lin[y * gw + x] && Mathf.Abs(a.r - f.r) + Mathf.Abs(a.g - f.g) + Mathf.Abs(a.b - f.b) > 24;
 						}
 					double[] inT = new double[3], inG = new double[3]; int cT = 0, cG = 0;
+					// (the ground beside it: only pixels whose look from the shot's camera (60 degrees, 16:9) meets the island's
+					// ground - not the cliff rock, a tree or the sky round the mouth)
+					Collider landCol = land.GetComponent<TerrainCollider>();
+					Quaternion camRot = Quaternion.LookRotation(look - eye);
+					float tanV = Mathf.Tan(30f * Mathf.Deg2Rad), tanH = tanV * W / H;
+					System.Func<int, int, bool> onGround = (gx, gy) =>
+					{
+						Vector3 d = camRot * new Vector3((2f * (gx * S + 0.5f) / W - 1f) * tanH, (2f * (gy * S + 0.5f) / H - 1f) * tanV, 1f);
+						RaycastHit h;
+						return Physics.Raycast(eye, d.normalized, out h, 200f, ~0, QueryTriggerInteraction.Ignore) && h.collider == landCol;
+					};
 					for (int y = 0; y < gh; y++)
 						for (int x = 0; x < gw; x++)
 						{
@@ -1167,7 +1178,7 @@ namespace DynamicIslands
 									if (xx < 0 || yy < 0 || xx >= gw || yy >= gh) continue;
 									if (top[yy * gw + xx]) { near = true; break; }
 								}
-							if (near) { inG[0] += a.r; inG[1] += a.g; inG[2] += a.b; cG++; }
+							if (near && onGround(x, y)) { inG[0] += a.r; inG[1] += a.g; inG[2] += a.b; cG++; }
 						}
 					if (cT < 50 || cG < 50) { Log("  mouth " + n + " at " + at.ToString("F0") + ": rim top " + cT + " samples, ground beside " + cG + " - too few to measure"); n++; continue; }
 					float dr = (float)(inT[0] / cT - inG[0] / cG), dg = (float)(inT[1] / cT - inG[1] / cG), db = (float)(inT[2] / cT - inG[2] / cG);
