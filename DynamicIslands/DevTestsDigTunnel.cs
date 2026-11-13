@@ -979,6 +979,27 @@ namespace DynamicIslands
 						Log("    rim top's baked texture " + ms[2].mainTexture.width + "x" + ms[2].mainTexture.height + ": mean " + (r / px.Length).ToString("0") + "," + (g / px.Length).ToString("0") + "," + (bl / px.Length).ToString("0") + ", plain grey " + (100f * grey / px.Length).ToString("0") + "%, scale " + ms[2].mainTextureScale + " offset " + ms[2].mainTextureOffset);
 					}
 				}
+				if (ms.Length > 2 && ms[2] != null && ms[2].mainTexture != null)
+				{
+					// (the baked texture itself, as a file; the rim top's block; how steep its faces are against the ground under them)
+					Texture2D full = DigTunnel.Readable(ms[2].mainTexture, Mathf.Min(2048, ms[2].mainTexture.width));
+					if (full != null) System.IO.File.WriteAllBytes(System.IO.Path.Combine(DynamicIslands.assetpath, "shot_dig_rimprobe_bake_" + tuns.IndexOf(t) + ".png"), full.EncodeToPNG());
+					var blk = new MaterialPropertyBlock(); mr.GetPropertyBlock(blk, 2);
+					Log("    rim top's block: " + (blk.isEmpty ? "empty" : "colour " + blk.GetColor("_Color") + ", main " + (blk.GetTexture("_MainTex") != null ? blk.GetTexture("_MainTex").name : "-")) + "; terrain size " + size);
+					var tv = new List<Vector3>(); mesh.GetVertices(tv);
+					int[] tt = mesh.GetTriangles(2);
+					float area = 0f, steepF = 0f, steepG = 0f, over = 0f;
+					for (int k = 0; k + 2 < tt.Length; k += 3)
+					{
+						Vector3 wa = mr.transform.TransformPoint(tv[tt[k]]), wb = mr.transform.TransformPoint(tv[tt[k + 1]]), wc = mr.transform.TransformPoint(tv[tt[k + 2]]);
+						Vector3 cr = Vector3.Cross(wb - wa, wc - wa); float ar2 = cr.magnitude * 0.5f; if (ar2 < 1e-6f) continue;
+						Vector3 mid = (wa + wb + wc) / 3f;
+						Vector3 gn = land.terrainData.GetInterpolatedNormal((mid.x - lo.x) / size.x, (mid.z - lo.z) / size.z);
+						area += ar2; steepF += ar2 * Vector3.Angle(cr, Vector3.up); steepG += ar2 * Vector3.Angle(gn, Vector3.up);
+						over += ar2 * (mid.y - land.SampleHeight(mid) - lo.y);
+					}
+					if (area > 0f) Log("    rim top: " + area.ToString("0.0") + " m2, its faces " + (steepF / area).ToString("0") + " deg steep against the ground's " + (steepG / area).ToString("0") + " deg under them, " + (over / area).ToString("0.00") + " m over it");
+				}
 				TerrainLayer[] layers = land.terrainData.terrainLayers;
 				Log("    ground " + land.name + " shader " + (land.materialTemplate != null ? land.materialTemplate.shader.name : "built-in") + ", layers " + string.Join(", ", layers.Select(l => l == null ? "null" : (l.diffuseTexture != null ? l.diffuseTexture.name + " " + l.diffuseTexture.width : "NO TEXTURE") + " tile " + l.tileSize.x).ToArray())
 					+ ", pixel error " + land.heightmapPixelError + ", basemap " + land.basemapDistance);
@@ -1033,8 +1054,15 @@ namespace DynamicIslands
 							yield return CameraShot(eye, look, "dig_rimprobe_" + n + "_e");
 							Object.Destroy(ld);
 						}
+						// (f: the rim top not drawn at all - what is in front of it and behind it)
+						mr.sharedMaterials = new[] { ms[0], ms[1] };
+						yield return CameraShot(eye, look, "dig_rimprobe_" + n + "_f");
 						mr.sharedMaterials = ms;
 					}
+					// (every other renderer whose bounds hold the mouth: anything drawn over the rim)
+					var bnd = new Bounds(at, new Vector3(8f, 8f, 8f));
+					Log("    renderers at the mouth: " + string.Join("; ", Object.FindObjectsOfType<Renderer>().Where(x => x.enabled && x.gameObject.activeInHierarchy && x != mr && x.bounds.Intersects(bnd) && x.bounds.size.magnitude < 400f)
+						.Take(20).Select(x => x.name + " (" + (x.sharedMaterial != null ? x.sharedMaterial.shader.name + " q" + x.sharedMaterial.renderQueue : "-") + ")").ToArray()));
 					n++;
 				}
 			}
