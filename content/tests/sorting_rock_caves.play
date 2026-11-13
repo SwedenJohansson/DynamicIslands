@@ -3,7 +3,7 @@
 # (way in = +x), 3 m level to 43 14, the tunnel to 55 14, the chamber to 61 14; zone sr_cellar at 54 14. Floor ~4.84 (a guess).
 # Offline-written, never run; the offset is the old one - re-read it after the build (the knoll may move the land centre).
 island Sorting Rock keep
-offset 0 39
+offset 0 0
 hour 11
 weather Calm
 

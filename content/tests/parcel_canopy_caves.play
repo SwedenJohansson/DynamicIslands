@@ -4,7 +4,7 @@
 # ~5.28 (a guess). Offline-written, never run; the offset is the old one - re-read it after the build (the knoll may move the
 # land centre).
 island Parcel Canopy keep
-offset 0 26
+offset 0 0
 hour 11
 weather Calm
 
@@ -12,6 +12,10 @@ weather Calm
 picture pc_roots_out 20 +3 4 35 +1.5 4
 walk 30 4 to 33 4 to 36 4 blocked
 expect shown pcroots_vines
+# the machete from the pilot's camp chest (the vines need it)
+open Pilot's camp chest
+wait 2
+expect item Machete 1
 use pcroots_vines
 expect hidden pcroots_vines
 picture pc_roots_cut 22 +2.5 4 35 +1.5 4
