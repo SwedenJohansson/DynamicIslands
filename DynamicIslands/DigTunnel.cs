@@ -769,8 +769,6 @@ namespace DynamicIslands.Editor
 			mesh.GetUVs(0, uvs);
 			mesh.GetTangents(tans);
 			if (tans.Count != verts.Count) tans.Clear();
-			// (the top's corners that keep their own normals: the lining's floor at the mouth, flat as it is)
-			var own = new HashSet<int>();
 			if (mesh.subMeshCount == 2)
 			{
 				var rim = new List<int>();
@@ -801,7 +799,6 @@ namespace DynamicIslands.Editor
 							norms.Add(norms[v]);
 							uvs.Add(uvs[v]);
 							if (tans.Count > 0) tans.Add(tans[v]);
-							own.Add(to);
 						}
 						top.Add(to);
 					}
@@ -847,14 +844,15 @@ namespace DynamicIslands.Editor
 			mesh.GetTriangles(tops, 2);
 			Vector3 lo = land.transform.position, size = land.terrainData.size;
 			// (and turned as the ground there is: lit as the slope beside it, not as the rim's own rounded shape - in a world
-			// its outline showed as a lighter patch, TN2 11-03)
+			// its outline showed as a lighter patch, TN2 11-03. The lining's floor run out of the mouth too - 11-13: flat, facing
+			// the sun, it was a pale crescent at the foot of The Frontier's quarry face, 24 lighter than the ground beside it)
 			if (norms.Count != verts.Count) { norms.Clear(); mesh.GetNormals(norms); }
 			if (tans.Count != verts.Count) { tans.Clear(); mesh.GetTangents(tans); }
 			foreach (int v in tops)
 			{
 				Vector3 w = at.TransformPoint(verts[v]);
 				uvs[v] = new Vector2((w.x - lo.x) / size.x, (w.z - lo.z) / size.z);
-				if (v < norms.Count && !own.Contains(v)) norms[v] = at.InverseTransformDirection(land.terrainData.GetInterpolatedNormal(uvs[v].x, uvs[v].y)).normalized;
+				if (v < norms.Count) norms[v] = at.InverseTransformDirection(land.terrainData.GetInterpolatedNormal(uvs[v].x, uvs[v].y)).normalized;
 				// (turned for the baked ground's normal map as the terrain turns its own: along x, its binormal along z)
 				if (v < tans.Count && v < norms.Count)
 				{
