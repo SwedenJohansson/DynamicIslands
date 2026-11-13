@@ -1189,6 +1189,22 @@ namespace DynamicIslands
 								}
 							if (near && onGround(x, y)) { inG[0] += a.r; inG[1] += a.g; inG[2] += a.b; cG++; if (y < gh - 1) sharpG += step(y * S * W + x * S); }
 						}
+					// (what the picture shows, by what a look through every 8th sample meets: the top third, the middle, the bottom)
+					var seenBy = new string[3];
+					for (int band = 0; band < 3; band++)
+					{
+						var hits = new Dictionary<string, int>();
+						for (int y = band * gh / 3; y < (band + 1) * gh / 3; y += 8)
+							for (int x = 0; x < gw; x += 8)
+							{
+								Vector3 d = camRot * new Vector3((2f * (x * S + 0.5f) / W - 1f) * tanH, (2f * (y * S + 0.5f) / H - 1f) * tanV, 1f);
+								RaycastHit h;
+								string what = Physics.Raycast(eye, d.normalized, out h, 200f, ~0, QueryTriggerInteraction.Ignore) ? (h.collider.transform.parent != null ? h.collider.transform.parent.name + "/" : "") + h.collider.name + (top[y * gw + x] ? " (rim top)" : "") : "nothing";
+								int c; hits.TryGetValue(what, out c); hits[what] = c + 1;
+							}
+						seenBy[band] = string.Join(", ", hits.OrderByDescending(kv => kv.Value).Take(4).Select(kv => kv.Key + " " + kv.Value).ToArray());
+					}
+					Log("    (mouth " + n + " seen: low " + seenBy[0] + " | mid " + seenBy[1] + " | high " + seenBy[2] + ")");
 					if (cT < 50 || cG < 50) { Log("  mouth " + n + " at " + at.ToString("F0") + ": rim top " + cT + " samples, ground beside " + cG + " - too few to measure"); n++; continue; }
 					float dr = (float)(inT[0] / cT - inG[0] / cG), dg = (float)(inT[1] / cT - inG[1] / cG), db = (float)(inT[2] / cT - inG[2] / cG);
 					float worst = Mathf.Max(Mathf.Abs(dr), Mathf.Abs(dg), Mathf.Abs(db));
