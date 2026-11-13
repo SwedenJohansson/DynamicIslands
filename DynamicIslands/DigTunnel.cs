@@ -167,7 +167,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < px.Length; i++) { Color32 p = px[i]; px[i] = new Color32((byte)Mathf.Min(255f, p.r * fr), (byte)Mathf.Min(255f, p.g * fg), (byte)Mathf.Min(255f, p.b * fb), p.a); }
 			got = new Texture2D(size, size, TextureFormat.RGBA32, true) { name = src.name + (tag ?? " (tinted)"), wrapMode = src.wrapMode, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
 			got.SetPixels32(px);
-			got.Apply(true, true);
+			ApplyFullSize(got);
 			scaled[key] = got;
 			return got;
 		}
@@ -984,7 +984,7 @@ namespace DynamicIslands.Editor
 				}
 			var tex = new Texture2D(tw, th, TextureFormat.RGBA32, true) { name = "DigTunnelGroundBaked", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
 			tex.SetPixels32(outPix);
-			tex.Apply(true, true);
+			ApplyFullSize(tex);
 			if (mat == null)
 			{
 				// (11-13: the legacy diffuse shader, lit as the ground's own Nature/Terrain/Diffuse is - no shine. On Standard,
@@ -1011,6 +1011,16 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<KeyValuePair<Texture, int>, Texture2D> readable = new Dictionary<KeyValuePair<Texture, int>, Texture2D>();
 		static bool fullSizeLogged;
 
+		/// <summary>Uploads a made texture with its mip maps and drops the mod's copy - with the card's textures at full size: one
+		/// uploaded under a texture limit kept only its smaller mips, and with no copy left to upload again it stayed blurred
+		/// once the quality was back up (11-13: the rim top under CIGfx low, the shots at the user's quality).</summary>
+		static void ApplyFullSize(Texture2D t)
+		{
+			int lim = FullSizeTextures();
+			try { t.Apply(true, true); }
+			finally { QualitySettings.masterTextureLimit = lim; }
+		}
+
 		/// <summary>Puts the graphics card's textures at full size for a read-back and returns the texture limit to restore
 		/// (11-13: under a low quality - the test runs' CIGfx low, a player's lowest Texture setting - the card holds every
 		/// texture at half size or less; a copy read then stayed that soft for good, and the mouth's rim top was a blurred
@@ -1020,7 +1030,7 @@ namespace DynamicIslands.Editor
 			int lim = QualitySettings.masterTextureLimit;
 			if (lim > 0)
 			{
-				if (!fullSizeLogged) { fullSizeLogged = true; Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: ground textures read at full size (texture limit " + lim + " lifted while reading)"); }
+				if (!fullSizeLogged) { fullSizeLogged = true; Debug.Log("[CUSTOM ISLANDS] Dug tunnels: textures read and made at full size (texture limit " + lim + " lifted meanwhile)"); }
 				QualitySettings.masterTextureLimit = 0;
 			}
 			return lim;
