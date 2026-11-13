@@ -167,7 +167,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < px.Length; i++) { Color32 p = px[i]; px[i] = new Color32((byte)Mathf.Min(255f, p.r * fr), (byte)Mathf.Min(255f, p.g * fg), (byte)Mathf.Min(255f, p.b * fb), p.a); }
 			got = new Texture2D(size, size, TextureFormat.RGBA32, true) { name = src.name + (tag ?? " (tinted)"), wrapMode = src.wrapMode, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
 			got.SetPixels32(px);
-			ApplyFullSize(got);
+			got.Apply(true, true);
 			scaled[key] = got;
 			return got;
 		}
@@ -744,6 +744,7 @@ namespace DynamicIslands.Editor
 				if (world)
 				{
 					topRect = TopRect(mesh, Openings, land);
+					bakedLimit = ReadLimit();
 					ground = BakedGround(land, topRect, ref bakedTop);
 					if (ground == null) { if (!toldDeferred) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: the ground has no layers to bake; its top stays rock"); toldDeferred = true; return; }
 				}
@@ -872,6 +873,8 @@ namespace DynamicIslands.Editor
 
 		/// <summary>In a world: the rim top's own material and the ground baked for it, and where that lies on the terrain (0..1).</summary>
 		[NonSerialized] Material bakedTop;
+		/// <summary>The texture limit bakedTop was baked under (ReadLimit).</summary>
+		[NonSerialized] int bakedLimit;
 		[NonSerialized] Rect topRect;
 
 		void OnDestroy()
@@ -941,9 +944,6 @@ namespace DynamicIslands.Editor
 			var pix = new Color32[nl][];
 			var pw = new int[nl];
 			var ph = new int[nl];
-			int lim = FullSizeTextures();
-			try
-			{
 			for (int l = 0; l < nl; l++)
 			{
 				TerrainLayer tl = layers[l];
@@ -954,8 +954,6 @@ namespace DynamicIslands.Editor
 				if (c == null) continue;
 				pix[l] = c.GetPixels32(); pw[l] = c.width; ph[l] = c.height;
 			}
-			}
-			finally { QualitySettings.masterTextureLimit = lim; }
 			var outPix = new Color32[tw * th];
 			int wz = w.GetLength(0), wx = w.GetLength(1);
 			for (int j = 0; j < th; j++)
@@ -984,7 +982,7 @@ namespace DynamicIslands.Editor
 				}
 			var tex = new Texture2D(tw, th, TextureFormat.RGBA32, true) { name = "DigTunnelGroundBaked", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 4 };
 			tex.SetPixels32(outPix);
-			ApplyFullSize(tex);
+			tex.Apply(true, true);
 			if (mat == null)
 			{
 				// (11-13: the legacy diffuse shader, lit as the ground's own Nature/Terrain/Diffuse is - no shine. On Standard,
@@ -1009,41 +1007,21 @@ namespace DynamicIslands.Editor
 		}
 
 		static readonly Dictionary<KeyValuePair<Texture, int>, Texture2D> readable = new Dictionary<KeyValuePair<Texture, int>, Texture2D>();
-		static bool fullSizeLogged;
-
-		/// <summary>Uploads a made texture with its mip maps and drops the mod's copy - with the card's textures at full size: one
-		/// uploaded under a texture limit kept only its smaller mips, and with no copy left to upload again it stayed blurred
-		/// once the quality was back up (11-13: the rim top under CIGfx low, the shots at the user's quality).</summary>
-		static void ApplyFullSize(Texture2D t)
-		{
-			int lim = FullSizeTextures();
-			try { t.Apply(true, true); }
-			finally { QualitySettings.masterTextureLimit = lim; }
-		}
-
-		/// <summary>Puts the graphics card's textures at full size for a read-back and returns the texture limit to restore
-		/// (11-13: under a low quality - the test runs' CIGfx low, a player's lowest Texture setting - the card holds every
-		/// texture at half size or less; a copy read then stayed that soft for good, and the mouth's rim top was a blurred
-		/// sheet beside the sharp ground once the quality was back up).</summary>
-		static int FullSizeTextures()
-		{
-			int lim = QualitySettings.masterTextureLimit;
-			if (lim > 0)
-			{
-				if (!fullSizeLogged) { fullSizeLogged = true; Debug.Log("[CUSTOM ISLANDS] Dug tunnels: textures read and made at full size (texture limit " + lim + " lifted meanwhile)"); }
-				QualitySettings.masterTextureLimit = 0;
-			}
-			return lim;
-		}
+		
+		/// <summary>The texture limit (QualitySettings.masterTextureLimit) the copies were read under: the card holds every
+		/// game texture that many mip steps smaller, and a copy read from it is that soft. 11-13: lifting the limit for each
+		/// read (302115ef, 003033a2) made Unity load every texture of the game again at full size, each time - a Raft building
+		/// an island with dens and dug mouths grew to 12-23 GB and hung. Now never touched: a top baked under a limit is baked
+		/// again when the limit comes down (Update), the copies cached per limit.</summary>
+		static int ReadLimit() { return Mathf.Clamp(QualitySettings.masterTextureLimit, 0, 7); }
 
 		/// <summary>A copy of a texture the mod can read, size x size: drawn into a RenderTexture (halved step by step, so
 		/// nothing is skipped) and read back. Cached.</summary>
 		internal static Texture2D Readable(Texture src, int size)
 		{
-			var key = new KeyValuePair<Texture, int>(src, size);
+			var key = new KeyValuePair<Texture, int>(src, size * 8 + ReadLimit());
 			Texture2D got;
 			if (readable.TryGetValue(key, out got) && got != null) return got;
-			int lim = FullSizeTextures();
 			RenderTexture prev = RenderTexture.active;
 			var temps = new List<RenderTexture>();
 			try
@@ -1073,12 +1051,12 @@ namespace DynamicIslands.Editor
 			{
 				RenderTexture.active = prev;
 				foreach (RenderTexture t in temps) RenderTexture.ReleaseTemporary(t);
-				QualitySettings.masterTextureLimit = lim;
 			}
 		}
 
 		float nextLookCheck;
 		static bool toldLookBack;
+		static bool toldSharper;
 		// (what the top was dressed with: the terrain shaders don't declare their splat maps, so the material can't be asked)
 		Texture lookControl, lookSplat;
 		/// <summary>For the tests: the splat map and first layer the rim's top was last dressed with, and whether the ground
@@ -1131,14 +1109,18 @@ namespace DynamicIslands.Editor
 				if (mats.Length < 3 || mats[2] == null) return;
 				Texture want0, wantS;
 				Wanted(skinLand, out want0, out wantS);
-				if (want0 == lookControl && wantS == lookSplat) return;
-				Material ground = DynamicIslands.InEditor() ? GroundMaterial(skinLand) : BakedGround(skinLand, topRect, ref bakedTop);
+				bool editor = DynamicIslands.InEditor();
+				// (or the texture limit came down since the top was baked: baked again from the sharper textures)
+				bool sharper = !editor && bakedTop != null && bakedLimit > ReadLimit();
+				if (want0 == lookControl && wantS == lookSplat && !sharper) return;
+				if (!editor) bakedLimit = ReadLimit();
+				Material ground = editor ? GroundMaterial(skinLand) : BakedGround(skinLand, topRect, ref bakedTop);
 				if (ground == null) return;
 				mats[2] = ground;
 				mr.sharedMaterials = mats;
 				Dressed(skinLand);
-				if (!toldLookBack) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: the ground's paint changed after the rim was made - its top takes it again");
-				toldLookBack = true;
+				if (sharper) { if (!toldSharper) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: the texture limit came down - its top baked again from the sharper textures"); toldSharper = true; }
+				else { if (!toldLookBack) Debug.Log("[CUSTOM ISLANDS] Dug tunnel's rim: the ground's paint changed after the rim was made - its top takes it again"); toldLookBack = true; }
 			}
 			catch (Exception e) { nextLookCheck = Time.unscaledTime + 30f; Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's rim: " + e.Message); }
 		}
