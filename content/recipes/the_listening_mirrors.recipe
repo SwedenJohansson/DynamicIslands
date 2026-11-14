@@ -77,6 +77,10 @@ brush flatten at 79.7 -24.8 r=1.4 s=20 frames=200 h=-1.3
 clear from 80.8 -23.2 to 79.7 -24.8 r=2.4 body
 # (T 11-01, REACH: out of the water the walk met a shelf 1 m up at 85-89 -21..-25 with a 3-4 m bank above it on its
 # north and east sides - stuck on every way out of the pump house: a stair up the bank, 0.5 m a step, to the land at 92.5)
+# (w10fix3 11-13, REACH: a 2x2 m pocket 8.5 m deep at 84 -22.4 between the underwater steps and this stair - a
+# swimmer in it could not climb out: filled, two steps from just under the water up to the stair)
+brush flatten at 83.2 -22.9 r=1.6 s=20 frames=200 h=0.1
+brush flatten at 84.5 -22.6 r=1.6 s=20 frames=200 h=0.7
 brush flatten at 85.5 -22.5 r=1.8 s=20 frames=200 h=1.4
 brush flatten at 86.5 -22.5 r=1.8 s=20 frames=200 h=1.9
 brush flatten at 87.5 -22.5 r=1.8 s=20 frames=200 h=2.4
@@ -88,16 +92,18 @@ brush flatten at 92.5 -22.5 r=1.8 s=20 frames=200 h=4.8
 clear from 85.5 -22.5 to 92.5 -22.5 r=2.4 body
 # (T 11-01, REACH: the road met the pit with a 3 m drop at the altar (4.4 m at 0 2, 1.5 m at 0 4) and nothing
 # reached the water - the pit floor and the last hymn unreachable: a stair down from the altar into the water, 0.5 m a step)
-brush flatten at 0 2.5 r=1.8 s=20 frames=200 h=4.0
-brush flatten at 0 3.5 r=1.8 s=20 frames=200 h=3.5
-brush flatten at 0 4.5 r=1.8 s=20 frames=200 h=3.0
-brush flatten at 0 5.5 r=1.8 s=20 frames=200 h=2.5
-brush flatten at 0 6.5 r=1.8 s=20 frames=200 h=2.0
-brush flatten at 0 7.5 r=1.8 s=20 frames=200 h=1.5
-brush flatten at 0 8.5 r=1.8 s=20 frames=200 h=1.0
-brush flatten at 0 9.5 r=1.8 s=20 frames=200 h=0.5
-brush flatten at 0 10.5 r=1.8 s=20 frames=200 h=0.0
-clear from 0 2.5 to 0 10.5 r=2.4 body
+# (w10fix3 11-13, REACH: those strokes 1 m apart on ground rows 1.95 m apart left 8.2 m at 0 0 over 3.5 m at 0 2 - in
+# by a drop, no way back up (the pit a trap); a smooth over it made one 10 m slope too steep to stand. Now one ramp cut
+# down from the rim, 0.5 m a metre, a stroke every 0.5 m high to low (each row ends at the last stroke over it):
+# 8.6 at 0 -9 to -0.4 at 0 9, in the water, the altar at its side halfway)
+# (w10fix3 11-14, REACH: cut on one line the ramp was a trench one ground point wide - its sides tilted every point
+# under the feet (n 0.2-0.5, no standing from 0 -7 to 0 4): now three lines side by side, x -1.95, 0 and 1.95)
+for k 0 36
+brush flatten at -1.95 {-9+0.5*$k} r=1.8 s=20 frames=200 h={8.6-0.25*$k}
+brush flatten at 0 {-9+0.5*$k} r=1.8 s=20 frames=200 h={8.6-0.25*$k}
+brush flatten at 1.95 {-9+0.5*$k} r=1.8 s=20 frames=200 h={8.6-0.25*$k}
+next
+clear from 0 -9 to 0 9 r=4 body
 origin
 clear at 0 4 r=35
 clear from 0 -66 to 0 -32 r=5
@@ -306,7 +312,10 @@ note treasury Choir treasury | The Choir's treasury: everything the drowned town
 loot treasury TitaniumIngot*4;TradeToken*10;MetalIngot*4;CopperIngot*4
 prop treasury loot.refill=0
 prop treasury obj.name=treasury
-prop treasury beh.hidden=1
+# (w10fix3 11-14, REACH: a hidden chest is not on the island at the start, so the step to open it could not be checked -
+# now it stands there from the start, locked until mirror 1 has silenced the song)
+prop treasury if.open=has|story:silence|1
+prop treasury else.open=message||The Choir's treasury is shut fast. While the song still plays, the lid will not give.
 prop treasury on.open=show|pimdrawing
 note pimdrawing Pim's drawing | A child's drawing in wax crayon: a raft, a big yellow sun, and a lady made of light, waving goodbye.\n\nOn the back, in big letters: I CAN SLEEP NOW. - PIM
 prop pimdrawing obj.name=pimdrawing
