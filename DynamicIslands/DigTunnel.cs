@@ -1204,7 +1204,7 @@ namespace DynamicIslands.Editor
 		/// <summary>11-13: Raft's build has no bumped shader without shine, so the top on the legacy diffuse shader came out
 		/// soft beside the ground, whose normal maps draw the cracks and pebbles in light and shade (CIDigMouthLook's
 		/// sharpness 0.5 against 2.8 on Cinderfall). The mixed normal maps' relief is shaded into the colour instead: lit
-		/// from high up (the sun's side when there is one, 55 degrees up) half and half with light from all round, each
+		/// from high up (the sun's side when there is one, 55 degrees up), with ReliefAround of light from all round, each
 		/// texel against the mean of all - the cracks dark, the mean colour as baked.</summary>
 		/// <summary>Test only (CIDigMouthLook's comparisons): 1 - the top on Standard with its baked normal map; 2 - on Standard,
 		/// the relief shaded in against flat ground (absolute) rather than its mean. 0: the game's look.</summary>
@@ -1223,6 +1223,11 @@ namespace DynamicIslands.Editor
 		/// <summary>Test only: a material BakeForTest made, with its textures.</summary>
 		internal static void DropTestBake(Material m) { if (m != null) DropBaked(m); }
 
+		/// <summary>The share of the relief's light from all round; the rest from the sun's side. 11-14: half and half left
+		/// the lit pebbles' edges flatter than the ground's, whose normal maps the sun lights pixel by pixel (Cinderfall's
+		/// mouth: as sharp as the ground in its dark tones, 0.53/0.64 against 0.77/1.79 in its lit ones).</summary>
+		const float ReliefAround = 0.3f;
+
 		static void Relief(Color32[] pix, Color32[] nrm, bool absolute = false)
 		{
 			Vector3 l = new Vector3(0f, 0f, 1f);
@@ -1238,12 +1243,12 @@ namespace DynamicIslands.Editor
 			for (int k = 0; k < pix.Length; k++)
 			{
 				float x = nrm[k].r / 127.5f - 1f, y = nrm[k].g / 127.5f - 1f, z = nrm[k].b / 127.5f - 1f;
-				float s = 0.5f * (0.5f + 0.5f * z) + 0.5f * Mathf.Max(0f, x * l.x + y * l.y + z * l.z);
+				float s = ReliefAround * (0.5f + 0.5f * z) + (1f - ReliefAround) * Mathf.Max(0f, x * l.x + y * l.y + z * l.z);
 				f[k] = s; sum += s;
 			}
 			float mean = (float)(sum / Mathf.Max(1, pix.Length));
 			// (absolute: against a flat normal's shading - the relief only darkens/lightens as the light on bumpy ground would)
-			if (absolute) mean = 0.5f + 0.5f * Mathf.Max(0f, l.z);
+			if (absolute) mean = ReliefAround + (1f - ReliefAround) * Mathf.Max(0f, l.z);
 			if (mean < 1e-3f) return;
 			for (int k = 0; k < pix.Length; k++)
 			{
