@@ -1039,7 +1039,9 @@ namespace DynamicIslands
 			int errors = 0; string firstError = null;
 			Application.LogCallback watch = (msg, trace, type) =>
 			{
-				if ((type == LogType.Exception || type == LogType.Error) && (msg.Contains("[CUSTOM ISLANDS]") || (trace ?? "").Contains("DynamicIslands")) && !msg.Contains("[CITEST]"))
+				if ((type == LogType.Exception || type == LogType.Error) && (msg.Contains("[CUSTOM ISLANDS]") || (trace ?? "").Contains("DynamicIslands")) && !msg.Contains("[CITEST]")
+					// (Unity's own notice when the sea grass sets the grass on its copy of Raft's terrain data - SeaGrass.MakeTemplate, once a game - not a fault)
+					&& !msg.StartsWith("only implemented in editor"))
 				{ errors++; if (firstError == null) firstError = msg.Split('\n')[0]; }
 			};
 			Application.logMessageReceived += watch;
