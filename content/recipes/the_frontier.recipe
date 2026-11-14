@@ -49,6 +49,14 @@ brush smooth from 74 75 to 38 75 r=3.5 s=10 frames=12
 brush smooth from 74 75 to 82 74 r=4.5 s=10 frames=20
 brush smooth from -2 66.4 to -32 66.4 r=3.5 s=10 frames=12
 brush smooth from 2 51.4 to 36 51.4 r=3.5 s=10 frames=12
+# RAFT2 11-14: the second ramp cut the middle terrace's front back to z 62 and its smoothing left that face at ~55 deg:
+# the reach grid climbed it (by -11.5 65), the walker slid off. A timber retaining wall along the terrace's edge (z 62, its
+# fence on top) stands 2-3 m over that face, so the way up to the middle terrace and the reservoir is the ramp's top landing
+for wx -28.5 -3 1.5
+place Block_Foundation_Tier3 frwall at $wx 62 h=23.9 sy=22
+next
+prop frwall tint.color=#6b6258
+prop frwall tint.amount=0.35
 brush flatten from 39 74 to 35 73 r=4 s=20 frames=60 h=12.5
 brush flatten from -33 66 to -32 59 r=4 s=20 frames=60 h=23.6
 brush flatten from 36 50.5 to 39 45 r=4 s=20 frames=80 h=34.7

@@ -91,6 +91,17 @@ brush flatten at 15.5 78.4 r=2.6 s=20 frames=200 h=18.05
 brush flatten at 21.2 77.4 r=2 s=20 frames=100 h=19.1
 brush auto at 18 80 r=24 s=10 frames=25
 call hw_trail x=18 z=80 b=20 h=18 a0=-149.22 turn=300 n=34 h0=3
+# RAFT2 11-14: the reach grid found a pocket on the trail's west turn (pads 5-14, 5.5-7.5 m, by 7.5 84): the pads there
+# are cut into the shoulders and did not come down level in 220 frames, so a 1.1 m step closed it in. Cut again at half
+# the pad spacing with more frames, so the trail climbs there in even 0.22 m steps; the low spot inside the turn filled
+# to the trail's height and joined to it
+for k 10 28 1
+set t {$k/68}
+set rr {21-13*$t}
+set aa {-149.22+300*$t}
+brush flatten at {18+$rr*sin($aa)} {80+$rr*cos($aa)} r=3.2 s=20 frames=500 h={3+15*$t}
+next
+brush flatten from 7.5 84 to 2.2 85 r=2.2 s=20 frames=200 h=6.9
 brush flatten at -38 -14 r=4 s=8 frames=60
 clear at -38 -14 r=7
 clear at 1 9 r=9
@@ -190,6 +201,9 @@ zipto ss_zip -34 -10
 place Creature_Goat ss_goats at 11.25 64.96 ground
 prop ss_goats creature.count=2
 call ar_cave x=56 z=-74 h=3 yaw=0 al=ss_caverock chest=ss_cavechest
+# RAFT2 11-14: the den's dome reached 66 m back over the south sea and its skin roofed shore pockets (by 76.8 -105.4):
+# capped, its height kept
+prop ss_caverock cave.dome=18
 call hw_zone x=55 z=-65 al=ss_cavez id=ss_cave r=4 h=1 msg="Lightning Cave. The thunder sounds far away in here."
 call ar_ruin x=78 z=-4 h=3 yaw=0 w=3 d=2 al=ss_ruin
 call r2_islander x=77 z=-8.5 yaw=200 al=ss_isl nm="Ivo Brand" pose=sit
