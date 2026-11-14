@@ -90,6 +90,12 @@ brush flatten at 90.5 -22.5 r=1.8 s=20 frames=200 h=3.9
 brush flatten at 91.5 -22.5 r=1.8 s=20 frames=200 h=4.4
 brush flatten at 92.5 -22.5 r=1.8 s=20 frames=200 h=4.8
 clear from 85.5 -22.5 to 92.5 -22.5 r=2.4 body
+# (w10fix3 11-14 r16, REACH: from the shelf the walk out went east at 91.4 -27.1 and met the bank 0.9 -> 4.7 m in 1 m:
+# a second stair cut up into it there, 0.5 m a step)
+for k 0 6
+brush flatten at {92+0.9*$k} -27 r=1.6 s=20 frames=200 h={1.4+0.5*$k}
+next
+clear from 92 -27 to 97.4 -27 r=2.2 body
 # (T 11-01, REACH: the road met the pit with a 3 m drop at the altar (4.4 m at 0 2, 1.5 m at 0 4) and nothing
 # reached the water - the pit floor and the last hymn unreachable: a stair down from the altar into the water, 0.5 m a step)
 # (w10fix3 11-13, REACH: those strokes 1 m apart on ground rows 1.95 m apart left 8.2 m at 0 0 over 3.5 m at 0 2 - in
@@ -98,7 +104,9 @@ clear from 85.5 -22.5 to 92.5 -22.5 r=2.4 body
 # 8.6 at 0 -9 to -0.4 at 0 9, in the water, the altar at its side halfway)
 # (w10fix3 11-14, REACH: cut on one line the ramp was a trench one ground point wide - its sides tilted every point
 # under the feet (n 0.2-0.5, no standing from 0 -7 to 0 4): now three lines side by side, x -1.95, 0 and 1.95)
-for k 0 36
+# (w10fix3 11-14 r16, REACH: the ramp ended at -0.4 over a 9 m drop - a swimmer had no floor under him to step up
+# from (a lip; the whole pit a trap): on down into the water to -2.4 at 0 13, a slope to swim up onto)
+for k 0 44
 brush flatten at -1.95 {-9+0.5*$k} r=1.8 s=20 frames=200 h={8.6-0.25*$k}
 brush flatten at 0 {-9+0.5*$k} r=1.8 s=20 frames=200 h={8.6-0.25*$k}
 brush flatten at 1.95 {-9+0.5*$k} r=1.8 s=20 frames=200 h={8.6-0.25*$k}
