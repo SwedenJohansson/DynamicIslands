@@ -621,7 +621,7 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   steel pot and fast juicer (2x as fast), titanium machete (1.5x damage, creatures too; still cuts), sturdy scarecrow (never wears out), master hammer
   (2x repair), longbow (1.5x draw and range), bright head light and bright lamp (2x as far), lumber axe (2x as fast) and marine binoculars (2x zoom, titanium;
   see furthest with Binoculars see through fog). Item numbers 29400 and up; one another mod already uses moves to a
-  free number (29600 and up), with one warning in game.
+  free number (29600 and up), with one warning in game; the world keeps that number and joining players get it.
 - The host can change them in a world: `WorldOptions` shows them; `WorldOptions +ghostrafts -privatestorage` (any
   option: blueprints, storyorder, ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, stormseas, ufo, glowsea, lightning, ghostship, whalebreach, fogbanks, kraken, fogsight, mirrorislands, minimap, fullerislands).
 - Multiplayer: the options, their seed and the storages' builders are in the world file and sent to every player
@@ -771,7 +771,7 @@ The level up system comes on in a world by the **Level up system** switch in Wor
 | `GenerateIsland [seed] [size m] [height m] [roughness 0-1] [peaks] [objects 0-1] [style]` | Editor | Generates a random island (a random seed if none is given) |
 | `ListIslands` | Anywhere | Lists saved islands |
 | `DeleteGroup <name>` | Editor | Deletes a saved object group (or: Manage... beside Save as group - rename or delete groups and stamps) |
-| `SpawnIsland <name> [distance] [height]` | Game, host | Spawns an island ahead of the raft (default 250 m, 20-390 m), at its saved height or the given one (-100 to 250 m). Says **Careful** if it would overlap one of Raft's own islands (players can fall through the ground there), or reach over the raft or within 10 m of it (it suggests a larger distance); the island is spawned anyway. An island this world already has as a story or plan island, not finished, comes back instead of a fresh copy (its quest kept, still counted in the notebook). |
+| `SpawnIsland <name> [distance] [height]` | Game, host | Spawns an island ahead of the raft (default 250 m, 20-390 m), at its saved height or the given one (-100 to 250 m). Says **Careful** if it would overlap one of Raft's own islands (players can fall through the ground there), or reach over the raft or within 10 m of it (it suggests a larger distance); the island is spawned anyway. An island this world already has as a story or plan island, not finished, comes back instead of a fresh copy (its quest kept, still counted in the notebook); one the world has without a rule isn't doubled either. |
 | `RegrowDays [days]` | World | This world's days until things come back (kept with the world; host changes it; 0 = never) |
 | `ExportMapType <type> [file name]` | Anywhere | Writes a built-in map type as a `.maptype` file in `maptypes\` (never over an existing one) |
 | `ReloadMapTypes` | Anywhere | Reads the `maptypes\` files again |

@@ -136,9 +136,12 @@ namespace DynamicIslands.Editor
 		/// <summary>Tests: why the last local tick did not feed.</summary>
 		internal static string Why = "";
 
-		/// <summary>Clients: the food of a feed sent to the host, taken from the bag only when the host answers that the animal
-		/// follows (a refusal - not hungry, too far, already tamed - keeps it); no answer within PendingSeconds: kept too.</summary>
+		/// <summary>Clients: the food of a feed sent to the host. It is taken from the bag as the feed goes out and given back
+		/// when the host refuses (not hungry, too far, already tamed) or doesn't answer within PendingSeconds (taken only on the
+		/// host's yes, food moved out of the bag meanwhile tamed the animal for nothing - sweep 11-14).</summary>
 		static string pendingFood;
+		/// <summary>Clients: food given back for a feed the host answered too late; a late yes takes it after all.</summary>
+		static string lateFood;
 		static float pendingUntil;
 		const float PendingSeconds = 6f;
 
@@ -173,7 +176,7 @@ namespace DynamicIslands.Editor
 						}
 						if (Time.time < feedPause) { Why = "pause"; return; }
 						if (pendingFood != null && Time.time < pendingUntil) { Why = "waiting for the host"; return; }
-						pendingFood = null;
+						if (pendingFood != null) { GiveFoodBack(); }
 						held += 0.25f;
 						if (held < FeedSeconds) { Why = "holding " + held; return; }
 						Why = "fed";
@@ -194,16 +197,32 @@ namespace DynamicIslands.Editor
 		/// <summary>Client: a feed to the host; the food waits for its answer (OnTamed).</summary>
 		internal static void SendFeed(IslandWorldState.Entry e, int spot, Vector3 at, string food)
 		{
+			if (pendingFood != null) GiveFoodBack();
+			if (!TakeFood(RAPI.GetLocalPlayer(), food)) { Why = "no " + food + " in the bag"; return; }
 			pendingFood = food;
+			lateFood = null;
 			pendingUntil = Time.time + PendingSeconds;
 			IslandNetwork.SendToTheHost(new IslandNetMessage { Kind = IslandNetMessage.Mech, Name = "feed", Ids = new[] { e.Id, spot }, Offsets = new[] { at.x, at.y, at.z } });
 		}
 
-		static void TakeFood(Network_Player p, string food)
+		static bool TakeFood(Network_Player p, string food)
 		{
-			if (p == null || p.Inventory == null || string.IsNullOrEmpty(food) || p.Inventory.GetItemCount(food) <= 0) return;
+			if (p == null || p.Inventory == null || string.IsNullOrEmpty(food) || p.Inventory.GetItemCount(food) <= 0) return false;
 			p.Inventory.RemoveItem(food, 1);
 			FoodTaken++;
+			return true;
+		}
+
+		/// <summary>Clients: the food of a feed the host refused or didn't answer goes back to the bag.</summary>
+		static void GiveFoodBack()
+		{
+			string food = pendingFood;
+			pendingFood = null;
+			Network_Player p = RAPI.GetLocalPlayer();
+			if (food == null || p == null || p.Inventory == null) return;
+			p.Inventory.AddItem(food, 1);
+			FoodTaken--;
+			if (Time.time >= pendingUntil) lateFood = food;
 		}
 
 		/// <summary>The spot's animal nearest this player within FeedDistance (host: its own list, not tamed yet; clients: by kind near the spot).</summary>
@@ -287,9 +306,9 @@ namespace DynamicIslands.Editor
 			string[] f = (msg.Data ?? "").Split('|');
 			ulong who;
 			if (f.Length < 2 || !ulong.TryParse(f[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out who) || who != MechFeatures.LocalId) return;
-			// the answer to this player's feed: the food goes only if the animal took it
-			if (msg.Count == 1 && pendingFood != null) TakeFood(RAPI.GetLocalPlayer(), pendingFood);
-			if (msg.Count == 0 || msg.Count == 1) pendingFood = null;
+			// the answer to this player's feed: the food (taken as it went out) stays taken on a yes, comes back on a no
+			if (msg.Count == 1) { if (pendingFood == null && lateFood != null) TakeFood(RAPI.GetLocalPlayer(), lateFood); pendingFood = null; lateFood = null; }
+			else if (msg.Count == 0) { if (pendingFood != null) GiveFoodBack(); lateFood = null; }
 			Told(msg.Count, f[1]);
 		}
 
@@ -448,6 +467,7 @@ namespace DynamicIslands.Editor
 			steps.Clear();
 			held = 0f;
 			pendingFood = null;
+			lateFood = null;
 			nearby = new AI_NetworkBehaviour[0];
 		}
 	}

@@ -958,6 +958,10 @@ namespace DynamicIslands.Editor
 			all.Add(entry);
 			SaveInstalled(all);
 			NoteUpdated(updated, info.title);
+			// (worlds on a kept copy of an updated island: the update reached them only through the editor's box - a library fix
+			// for a stuck quest never came to worlds already moved to a copy; as an editor save, those whose state can be
+			// carried get the new file now - sweep 11-14. After installed.json: the install can't be rolled back any more)
+			foreach (string t in updated) CarryOlderWorlds(t, report);
 
 			if (types || (old != null && old.files.Any(f => f.kind == KindMapType))) MapTypeFiles.LoadAll();
 
@@ -1124,6 +1128,29 @@ namespace DynamicIslands.Editor
 				string candidate = Fit(name, " (" + clean + ")" + (i > 1 ? " " + i : ""));
 				if (!File.Exists(WorldPlan.PathFor(candidate)) && !WorldPlan.IsBuiltIn(candidate)) return candidate;
 			}
+		}
+
+		/// <summary>
+		/// After an update: saved worlds that play an older copy of the island get the new file when what was used there can be
+		/// carried to the same objects (rules and quest steps in their places, R1b) - as after an editor save. The others keep
+		/// their copy (the editor's "Give my worlds this version" box can still move them). Returns how many worlds moved.
+		/// </summary>
+		internal static int CarryOlderWorlds(string island, Report report)
+		{
+			try
+			{
+				if (WorldsOnOlderVersion(island).Count == 0) return 0;
+				List<string> moved;
+				int carried;
+				List<string> changed = GiveWorldsThisVersion(island, out moved, true, out carried);
+				if (changed.Count > 0 && report != null)
+					report.Add(string.Join(", ", changed.Select(w => "'" + w + "'").ToArray()) + " play" + (changed.Count == 1 ? "s" : "") + " the new '" + island + "' now (what was used there stays with the same objects)");
+				List<string> left = WorldsOnOlderVersion(island);
+				if (left.Count > 0 && report != null)
+					report.Add(string.Join(", ", left.Select(w => "'" + w + "'").ToArray()) + " keep" + (left.Count == 1 ? "s" : "") + " an older '" + island + "' (its rules or quest steps changed places)");
+				return changed.Count;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Giving saved worlds the new '" + island + "': " + e.Message); return 0; }
 		}
 
 		/// <summary>Before an island file is replaced: saved worlds that use it keep playing this version (as its hash copy).</summary>

@@ -436,7 +436,7 @@ finished step.*
 
 The **journal** is the crew's book of the custom islands' story: what you found on them and what you carry for them.
 Press **J** in a world to open it; **J**, **Esc** or **Close** closes it. (Esc closes only the window: Raft's pause menu doesn't open on the same press. The same goes for a note, the code lock, the stats page, a choice and the info windows. Every window of the mod - in a world, on the main menu and in the editor - closes with Esc, the topmost one first, one per press. A window with changes you haven't saved - World plans, a quest, a note, story items, behaviour and events - asks first: **Save and close**, **Close without saving** or **Keep editing**.) (J and the stats page's K can be changed in **Defaults... > Keys (this PC)**: click one, press the new key.) (J does nothing while you type in the chat
-or console, while a note is open, or in the editor.) Its key is also shown at the hotbar: after Raft's notebook tab
+or console, while a note is open, or in the editor, nor while an islander talks to you, a code lock, a choice, the ending credits or a camera moment is open; the same goes for K, U, M and G.) Its key is also shown at the hotbar: after Raft's notebook tab
 (**T**) come the journal's tab (**J**, an open book) and, while the level up system is on in the world, the stats
 page's (**K**, a star). They are copies of Raft's own key tabs and only remind you of the key (press the key; the tab is
 not a button): they show and hide with Raft's own key tabs, and say the new key at once when you change it in
@@ -3844,8 +3844,9 @@ crafting menu again (large batteries already made keep working, what is built st
 learned are back.
 
 Each upgrade has an item number of its own (29400 and up). If another mod already uses one of them, that upgrade
-moves to a free number (29600 and up) and the game tells you once; keep the same mods for that world, so its saved
-upgrades stay what they were.
+moves to a free number (29600 and up) and the game tells you once. The world saves the number it moved to and uses it
+again on every load, and players who join get the host's numbers; still, keep the same mods for that world, so its
+saved upgrades stay what they were.
 
 ##### The upgrade research table
 
@@ -4393,7 +4394,7 @@ Press **F10** for RML's console.
 
 | Command | Where | What it does |
 |---|---|---|
-| `SpawnIsland <name> [distance] [height]` | World, host | An island ahead of the raft (default 250 m, 20-390 m), at its own height unless you give one (-100 to 250 m above the sea). It says **Careful** when the island would overlap one of Raft's own islands (players can fall through the ground there), or reach over the raft or within 10 m of it (it suggests a larger distance); the island is spawned anyway. If the world already has this island as a story or plan island that isn't finished, that one comes back instead (its quest as you left it, still the story's; it says so if it is already here) |
+| `SpawnIsland <name> [distance] [height]` | World, host | An island ahead of the raft (default 250 m, 20-390 m), at its own height unless you give one (-100 to 250 m above the sea). It says **Careful** when the island would overlap one of Raft's own islands (players can fall through the ground there), or reach over the raft or within 10 m of it (it suggests a larger distance); the island is spawned anyway. If the world already has this island as a story or plan island that isn't finished, that one comes back instead (its quest as you left it, still the story's; it says so if it is already here). An island the world already has without a rule isn't doubled either: it comes back, or it says it is already here or on its way |
 | `RemoveIsland <name>` / `RemoveIsland all` | World, host | Removes custom islands |
 | `ListIslands` / `ListSpawned` | Anywhere / world | Your saved islands / the world's custom islands with their distance |
 | `SpawnPool` | Anywhere | Which islands appear on their own, and how often. A player who joined is told that the host's `spawnpool.txt` decides, and which islands the host left out (until the host's copy of the world has come: that it comes with the host's next save) |

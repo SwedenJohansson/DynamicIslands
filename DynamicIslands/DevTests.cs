@@ -2064,7 +2064,7 @@ namespace DynamicIslands
 			while (root == null && Time.realtimeSinceStartup < timeout)
 			{
 				yield return new WaitForSeconds(0.5f);
-				IslandWorldState.Entry added = IslandWorldState.Islands.FirstOrDefault(e => !before.Contains(e.Id) && e.Name == TestIsland);
+				IslandWorldState.Entry added = IslandWorldState.Islands.FirstOrDefault(e => !before.Contains(e.Id) && e.Name == TestIsland) ?? CustomIslandSpawner.InWorld(TestIsland); // (one the world has comes again - sweep 11-14)
 				root = added != null && !added.Loading ? added.Root : null;
 			}
 			if (root == null) { Fail("island root did not appear within 90s"); yield break; }

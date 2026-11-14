@@ -162,7 +162,7 @@ namespace DynamicIslands
 				}
 				Check(ref ok, IslandNetwork.HostOnlyKinds.Count >= 21, "host-only kinds checked: " + IslandNetwork.HostOnlyKinds.Count);
 				Check(ref ok, IslandNetwork.HostOnlyKinds.Contains(IslandNetMessage.PlayerPlace) && IslandNetwork.HostOnlyKinds.Contains(IslandNetMessage.Moment), "a player's place and moments (credits, cutscenes) only from the host");
-				foreach (int kind in new[] { IslandNetMessage.ObjectUsed, IslandNetMessage.QuestStep, IslandNetMessage.FileRequest, IslandNetMessage.FileChunk, IslandNetMessage.Claim, IslandNetMessage.Ping })
+				foreach (int kind in new[] { IslandNetMessage.ObjectUsed, IslandNetMessage.QuestStep, IslandNetMessage.FileRequest, IslandNetMessage.FileChunk, IslandNetMessage.Ping })
 					Check(ref ok, !IslandNetwork.NotFromHost(new IslandNetMessage { Kind = kind }, 222UL, false), "kind " + kind + " (players send it) passes");
 				Check(ref ok, !IslandNetwork.NotFromHost(new IslandNetMessage { Kind = IslandNetMessage.Islands }, 0UL, false), "unknown sender: passes (never drops on missing data)");
 				IslandNetwork.HostIdOverride = 0UL;

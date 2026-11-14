@@ -1224,6 +1224,19 @@ namespace DynamicIslands
 				Notify("'" + name + "' is this world's story island and you finished it already - it isn't spawned again", true);
 				return;
 			}
+			// An island without a story rule this world already has: it comes back as it was, like the spawn pool brings it
+			// (a second, fresh copy had its chests, pickups and quest anew - sweep 11-14)
+			IslandWorldState.Entry known = CustomIslandSpawner.InWorld(name);
+			if (known != null && string.IsNullOrEmpty(known.Rule) && !known.Excluded && !known.WaitingForFile)
+			{
+				if (known.Root != null || known.Loading) { Notify("'" + name + "' is already here (this world's copy, as you left it)", false); return; }
+				float at;
+				if (handBrought.TryGetValue(known.Id, out at) && Time.unscaledTime - at < HandBringSeconds) { Notify("'" + name + "' is on its way: it comes into sight ahead of the raft", false); return; }
+				known.Failed = false;
+				if (!ReturningIslands.BringAgain(known, origin, false)) Notify("'" + name + "' is already in this world: no free spot ahead of the raft yet - sail on a little and try again", true);
+				else handBrought[known.Id] = Time.unscaledTime;
+				return;
+			}
 			// The island's y is its elevation above sea level (0 = a normal island)
 			position.y = height ?? IslandSpawner.ElevationOf(name);
 			// On top of one of Raft's own islands, players can fall through the ground: say so (the automatic spawner avoids it)

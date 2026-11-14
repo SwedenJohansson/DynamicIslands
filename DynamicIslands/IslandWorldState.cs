@@ -170,6 +170,9 @@ namespace DynamicIslands.Editor
 			// memory - the plan, km sailed, the story book - still belongs to the world played before, and writing it
 			// here gave the new world that world's journal and km, and lost the plan chosen for it (two-player test).
 			if (loadedFor != WorldKey) return;
+			// Not while the player leaves the world, except Raft's own save (SaveGuard vets that one): a save from the mod's
+			// own code then (a reward, a tick) wrote what was half torn down already, as SaveSoon never does (sweep 11-14)
+			if (!WorldCopy.InRaftSave && (GameManager.IsLeavingGame || GameManager.IsQuittingGame)) { Debug.Log("[CUSTOM ISLANDS] Island list not saved: the world is being left"); return; }
 			// (the world's file couldn't be read: saving what little was read would write over the good file - AU12)
 			if (loadFailed)
 			{
@@ -287,6 +290,7 @@ namespace DynamicIslands.Editor
 			ResetStep("TriggerZone.ForgetStoryLootLine", () => TriggerZone.ForgetStoryLootLine());
 			ResetStep("MissingIslandsCheck.Forget", () => MissingIslandsCheck.Forget()); // (before the early return below: the last world's "Main menu" held the story; review 10-30 A)
 			ResetStep("BuriedTreasure.ForgetGiven", () => BuriedTreasure.ForgetGiven()); // (chest indexes come from the island ids of this world: another world's would block its loot - audit 10-30)
+			ResetStep("ContentState.Reset", () => ContentState.Reset()); // (its "someone got here first" times are kept by island id, and ids repeat between worlds - sweep 11-14)
 			ResetStep("QuestCount.Reset", () => QuestCount.Reset()); // (the last world's count isn't shown here - review 10-30)
 			ResetStep("Collectibles.Reset", () => Collectibles.Reset()); // (set counts are kept by island id, and ids repeat between worlds - review 10-30)
 			// (the Raft save the world loads from, before Choose uses up its stamp: a quest reward given after it isn't in it - review 10-30)

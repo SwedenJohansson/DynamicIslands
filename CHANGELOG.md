@@ -11,6 +11,14 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (not released yet)
 
+- **A library update reaches every world**: when an island was updated from the library, worlds that played a kept copy of an earlier version (a world received from a host, or saved before an earlier update) stayed on that old copy; they now move to the new version with their state, like worlds that played the island itself.
+- **`SpawnIsland` doesn't double an island the world already has**: an island already in the world (or on its way) is brought back instead of a second copy beside it; one that is already here says so.
+- **Mod keys wait while a talk, a code lock or a cutscene is open**: J, K, U, M and G (journal, stats page, upgrades, map, guide) no longer open a window over an islander's talk, a code lock, a choice, the ending credits or a camera moment (as Esc already didn't).
+- **A full journal still takes a new note**: when the journal was full, a note picked up after that was lost; the oldest message page now makes room for it.
+- **Leaving a world never writes a half-empty island save**: the islands' state is no longer saved again while Raft is already leaving the world.
+- **Dropped items far away are kept**: items you dropped that were out of sight (far from the raft) when the world was saved were left out of the saved item list.
+- **Multiplayer: the host stays in charge** (a modified game in a lobby could cheat these): a host's yes to use a shared object runs out after a short while if it isn't used; a research item goes back in your bag if the host doesn't answer within a minute or says no; taming food goes back when the host says no or doesn't answer, and a feed without food in the bag isn't sent; the shared state messages (claims, Kraken, machines, story, levels, research table) are only taken from the host.
+- **Upgrade numbers stay with the world**: when another mod's item takes an upgrade's number, the number the upgrade moved to is saved with the world and used again when it loads (the order mods load in can't change it), and joining players get the host's numbers.
 - **Esc skips a camera moment or fly-through and nothing else**: the same press opened Raft's pause menu too.
 - **Hazard suit ends with its world**: a suit put on in one world stayed on in a brand-new world started in the same session (a loaded world already ended it).
 - **Multiplayer: a trader raft's goods are never held for nobody**: when the host said yes to a trade after the unit was sold or your payment left your inventory, that unit stayed held for everyone until the world was loaded again.

@@ -252,7 +252,7 @@ namespace DynamicIslands.Editor
 				case "optionsused": used = true; return true;
 				case "optionseed": int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out Seed); Notify(); return true;
 			}
-			return global::DynamicIslands.Editor.HeadStart.ReadLine(key, value) || global::DynamicIslands.Editor.PrivateStorage.ReadLine(key, value) || global::DynamicIslands.Editor.GhostRafts.ReadLine(key, value) || global::DynamicIslands.Editor.DailyQuest.ReadLine(key, value) || global::DynamicIslands.Editor.RogueShark.ReadLine(key, value) || global::DynamicIslands.Editor.TraderRaft.ReadLine(key, value) || global::DynamicIslands.Editor.UpgradeTable.ReadLine(key, value) || global::DynamicIslands.Editor.StormSeas.ReadLine(key, value);
+			return global::DynamicIslands.Editor.HeadStart.ReadLine(key, value) || global::DynamicIslands.Editor.PrivateStorage.ReadLine(key, value) || global::DynamicIslands.Editor.GhostRafts.ReadLine(key, value) || global::DynamicIslands.Editor.DailyQuest.ReadLine(key, value) || global::DynamicIslands.Editor.RogueShark.ReadLine(key, value) || global::DynamicIslands.Editor.TraderRaft.ReadLine(key, value) || global::DynamicIslands.Editor.UpgradeTable.ReadLine(key, value) || global::DynamicIslands.Editor.StormSeas.ReadLine(key, value) || global::DynamicIslands.Editor.ExtraUpgrades.ReadIndexLine(key, value);
 		}
 
 		internal static IEnumerable<string> WriteLines()
@@ -274,9 +274,10 @@ namespace DynamicIslands.Editor
 			foreach (string l in global::DynamicIslands.Editor.TraderRaft.WriteLines()) yield return l;
 			foreach (string l in global::DynamicIslands.Editor.UpgradeTable.WriteLines()) yield return l;
 			foreach (string l in global::DynamicIslands.Editor.StormSeas.WriteLines()) yield return l;
+			foreach (string l in global::DynamicIslands.Editor.ExtraUpgrades.IndexLines()) yield return l;
 		}
 
-		internal static bool HasState { get { return Current.Count > 0 || used || global::DynamicIslands.Editor.PrivateStorage.HasState || global::DynamicIslands.Editor.HeadStart.HasState; } }
+		internal static bool HasState { get { return Current.Count > 0 || used || global::DynamicIslands.Editor.PrivateStorage.HasState || global::DynamicIslands.Editor.HeadStart.HasState || global::DynamicIslands.Editor.ExtraUpgrades.HasIndexState; } }
 
 		#endregion
 

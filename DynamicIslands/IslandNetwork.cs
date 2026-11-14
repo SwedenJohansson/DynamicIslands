@@ -713,15 +713,23 @@ namespace DynamicIslands.Editor
 			// (only the host sends these too: a modified peer moved every player or ran the ending credits and cutscenes - sweep 11-14)
 			IslandNetMessage.PlayerPlace, IslandNetMessage.Moment };
 
+		/// <summary>Kinds both ways (a player asks the host, the host answers or tells everyone): the host takes them from anyone,
+		/// a player only from the host - nothing is ever sent player to player (a modified peer granted itself claims, set the
+		/// Kraken, mechanisms, story pages, levels and upgrades on the other players - sweep 11-14). (Quest steps and daily
+		/// quests: the quest code's own checks.)</summary>
+		internal static readonly HashSet<int> FromHostOnPlayers = new HashSet<int> {
+			IslandNetMessage.Claim, IslandNetMessage.Kraken, IslandNetMessage.Mech, IslandNetMessage.Story, IslandNetMessage.Levels,
+			IslandNetMessage.UpgradeTable };
+
 		/// <summary>Tests: how many host-only messages from someone else a player dropped.</summary>
 		internal static int DroppedNotFromHost;
 		/// <summary>Tests: the host's id a player checks against (0: Raft's HostID).</summary>
 		internal static ulong HostIdOverride;
 
-		/// <summary>On a player: a host-only kind (HostOnlyKinds) sent by someone other than the host (known). The host takes all.</summary>
+		/// <summary>On a player: a host-only kind (HostOnlyKinds, FromHostOnPlayers) sent by someone other than the host (known). The host takes all.</summary>
 		internal static bool NotFromHost(IslandNetMessage msg, ulong from, bool isHost)
 		{
-			if (isHost || msg == null || !HostOnlyKinds.Contains(msg.Kind)) return false;
+			if (isHost || msg == null || !(HostOnlyKinds.Contains(msg.Kind) || FromHostOnPlayers.Contains(msg.Kind))) return false;
 			ulong host = HostIdOverride;
 			if (host == 0UL)
 				try { Raft_Network network = ComponentManager<Raft_Network>.Value; host = network != null ? network.HostID.Id : 0UL; } catch { }
@@ -763,6 +771,7 @@ namespace DynamicIslands.Editor
 							JoinPart("story", () => StoryBook.StateMessage(), to, true);
 							JoinPart("world options", () => WorldOptions.Message(), to);
 							JoinPart("daily quest", () => global::DynamicIslands.Editor.DailyQuest.Message(), to);
+							JoinPart("upgrade numbers", () => global::DynamicIslands.Editor.UpgradeTable.IndexMessage(), to);
 							JoinPart("upgrade table", () => global::DynamicIslands.Editor.UpgradeTable.Message(), to);
 							JoinPart("rogue shark", () => global::DynamicIslands.Editor.RogueShark.Message("state"), to);
 							JoinPart("story chain", () => global::DynamicIslands.Editor.StoryChain.Message(), to);

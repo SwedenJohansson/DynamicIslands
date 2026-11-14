@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Globalization;
 using System.Linq;
 using HarmonyLib;
@@ -70,7 +71,7 @@ namespace DynamicIslands.Editor
 
 		#region World file, reset
 
-		internal static void Reset() { researched.Clear(); learned.Clear(); migrate = false; hasLines = false; migrateAt = -1f; UpgradeTableMenu.Refresh(); }
+		internal static void Reset() { researched.Clear(); learned.Clear(); pendingResearch.Clear(); migrate = false; hasLines = false; migrateAt = -1f; UpgradeTableMenu.Refresh(); }
 
 		/// <summary>The world file's "@options=" line was read (WorldOptions.ReadLine): with upgrades on and no lines of the
 		/// table after it, the world is from before the table.</summary>
@@ -139,8 +140,49 @@ namespace DynamicIslands.Editor
 			slot.RemoveItem(1);
 			UpgradeTableMenu.ResearchSound();
 			if (Raft_Network.IsHost) ResearchOnHost(item.UniqueIndex, "host");
-			else Send(new IslandNetMessage { Name = "research", Index = item.UniqueIndex }, null);
+			else
+			{
+				pendingResearch[item.UniqueIndex] = Time.unscaledTime;
+				Send(new IslandNetMessage { Name = "research", Index = item.UniqueIndex }, null);
+				if (DynamicIslands.instance != null) DynamicIslands.instance.StartCoroutine(ResearchNoAnswer(item.UniqueIndex, ResearchAnswerSeconds));
+			}
 			return true;
+		}
+
+		/// <summary>A player: items used up for research the host hasn't answered yet (index -> when). Given back when the host
+		/// refuses, or doesn't answer in time; only these are given back (a "refund" of anything else did nothing but hand out
+		/// items - sweep 11-14: the item was spent before the host answered and lost when no answer came).</summary>
+		static readonly Dictionary<int, float> pendingResearch = new Dictionary<int, float>();
+		internal const float ResearchAnswerSeconds = 60f;
+		internal static int PendingResearchCount { get { return pendingResearch.Count; } }
+
+		static IEnumerator ResearchNoAnswer(int itemIndex, float seconds)
+		{
+			float asked;
+			if (!pendingResearch.TryGetValue(itemIndex, out asked)) yield break;
+			while (Time.unscaledTime - asked < seconds) { yield return null; float now; if (!pendingResearch.TryGetValue(itemIndex, out now) || now != asked) yield break; }
+			// (an older host says nothing when it took it: researched by then, kept)
+			if (researched.Contains(itemIndex)) { pendingResearch.Remove(itemIndex); yield break; }
+			GiveBack(itemIndex, "the host didn't answer");
+		}
+
+		/// <summary>A player: an item used up for research comes back (only one still waiting for the host's answer).</summary>
+		internal static bool GiveBack(int itemIndex, string why)
+		{
+			if (!pendingResearch.Remove(itemIndex)) { Log("item " + itemIndex + " not given back (" + why + "): no research of it is waiting"); return false; }
+			Item_Base item = ItemManager.GetItemByIndex(itemIndex);
+			Network_Player me = ComponentManager<Network_Player>.Value;
+			if (item == null || me == null) return false;
+			me.Inventory.AddItem(item.UniqueName, 1);
+			Log("research not done (" + why + "): " + item.UniqueName + " given back");
+			return true;
+		}
+
+		/// <summary>Tests: a research waiting for the host's answer, as AskResearch leaves it on a player.</summary>
+		internal static void PendForTest(int itemIndex, float seconds)
+		{
+			pendingResearch[itemIndex] = Time.unscaledTime;
+			if (seconds > 0f) DynamicIslands.instance.StartCoroutine(ResearchNoAnswer(itemIndex, seconds));
 		}
 
 		/// <summary>The upgrade menu's Learn button.</summary>
@@ -186,6 +228,13 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost) { Send(Message(), null); IslandWorldState.Save(); }
 		}
 
+		/// <summary>Host: the upgrades' numbers in this world, for a player who joins (sent before the table's state).</summary>
+		internal static IslandNetMessage IndexMessage()
+		{
+			string map = ExtraUpgrades.IndexMapText();
+			return map.Length == 0 ? null : new IslandNetMessage { Kind = IslandNetMessage.UpgradeTable, Name = "indexes", Data = map };
+		}
+
 		internal static IslandNetMessage Message()
 		{
 			return new IslandNetMessage { Kind = IslandNetMessage.UpgradeTable, Name = "state", Data = State() };
@@ -199,6 +248,7 @@ namespace DynamicIslands.Editor
 			{
 				// (two players researching the same item at once: the second one's item, already taken from its slot, goes back)
 				if (msg.Name == "research" && !ResearchOnHost(msg.Index, NameOf(from))) { Log("research of item " + msg.Index + " by " + NameOf(from) + " refused, item given back"); Send(new IslandNetMessage { Name = "refund", Index = msg.Index }, from); }
+				else if (msg.Name == "research") Send(new IslandNetMessage { Name = "done", Index = msg.Index }, from);
 				else if (msg.Name == "learn") LearnOnHost(msg.Index, from.Id);
 				return;
 			}
@@ -209,11 +259,11 @@ namespace DynamicIslands.Editor
 				UpgradeTableMenu.Learned(ExtraUpgrades.Find(msg.Index), by);
 				return;
 			}
+			if (msg.Name == "indexes") { ExtraUpgrades.ApplyIndexMap(ExtraUpgrades.ParseIndexMap(msg.Data), "the host's numbers"); return; }
+			if (msg.Name == "done") { pendingResearch.Remove(msg.Index); return; } // (the host's yes to this player's research)
 			if (msg.Name == "refund")
 			{
-				Item_Base item = ItemManager.GetItemByIndex(msg.Index);
-				Network_Player me = ComponentManager<Network_Player>.Value;
-				if (item != null && me != null) { me.Inventory.AddItem(item.UniqueName, 1); Log("research refused (already researched): " + item.UniqueName + " given back"); }
+				GiveBack(msg.Index, "refused: already researched");
 				return;
 			}
 			if (msg.Name != "state") return;

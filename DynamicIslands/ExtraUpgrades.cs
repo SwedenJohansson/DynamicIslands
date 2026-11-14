@@ -332,6 +332,114 @@ namespace DynamicIslands.Editor
 			return byIndex.TryGetValue(live, out u) && u.Declared != 0 ? u.Declared : live;
 		}
 
+		#region The world's upgrade numbers (sweep 11-14)
+
+		/// <summary>The world file's line of the moved upgrades' numbers ("declared:live,..."). A moved upgrade's number comes
+		/// from the items other mods registered first: with mods loaded in another order, or a player with other mods, the
+		/// same upgrade had another number, and the world's saved upgrades (by number) turned into other items. The world
+		/// keeps the numbers it was played with; a load moves the upgrades back to them, and the host sends them to each
+		/// player who joins.</summary>
+		internal const string IndexLineKey = "upgradeindex";
+
+		/// <summary>The moved upgrades as "declared:live,..." in declared order ("" when none moved).</summary>
+		internal static string IndexMapText()
+		{
+			return string.Join(",", Made.Where(u => u.Index != u.Declared && u.Declared != 0).OrderBy(u => u.Declared)
+				.Select(u => u.Declared.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":" + u.Index.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToArray());
+		}
+
+		internal static bool HasIndexState { get { return IndexMapText().Length > 0; } }
+
+		internal static IEnumerable<string> IndexLines()
+		{
+			string map = IndexMapText();
+			if (map.Length > 0) yield return "@" + IndexLineKey + "=" + map;
+		}
+
+		internal static Dictionary<int, int> ParseIndexMap(string text)
+		{
+			var map = new Dictionary<int, int>();
+			foreach (string pair in (text ?? "").Split(','))
+			{
+				string[] f = pair.Split(':');
+				int d, l;
+				if (f.Length == 2 && int.TryParse(f[0].Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out d)
+					&& int.TryParse(f[1].Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out l)) map[d] = l;
+			}
+			return map;
+		}
+
+		/// <summary>The world file's line (WorldOptions.ReadLine): the upgrades go to the world's numbers.</summary>
+		internal static bool ReadIndexLine(string key, string value)
+		{
+			if (key != IndexLineKey) return false;
+			ApplyIndexMap(ParseIndexMap(value), "the world's numbers");
+			return true;
+		}
+
+		/// <summary>Raft read the world's id (RGD_World.RestoreWorld, before the raft and the bags are restored): the
+		/// upgrades go to the numbers in the world file, so the saved items are read as the same upgrades.</summary>
+		internal static void AfterWorldRead()
+		{
+			if (!Made.Any()) return;
+			string file = IslandWorldState.WorldFilePath;
+			if (!System.IO.File.Exists(file)) return;
+			string prefix = "@" + IndexLineKey + "=";
+			string line = System.IO.File.ReadAllLines(file).FirstOrDefault(l => l.StartsWith(prefix, StringComparison.Ordinal));
+			if (line != null) ApplyIndexMap(ParseIndexMap(line.Substring(prefix.Length)), "the world's numbers");
+		}
+
+		/// <summary>Moves made upgrades to the numbers in <paramref name="map"/> (declared -> live) where that number is free
+		/// (or held by another upgrade that moves too); returns how many moved. Upgrades not in the map stay.</summary>
+		internal static int ApplyIndexMap(Dictionary<int, int> map, string why)
+		{
+			if (map == null || map.Count == 0) return 0;
+			var moves = new Dictionary<Upgrade, int>();
+			foreach (KeyValuePair<int, int> kv in map)
+			{
+				Upgrade u = Made.FirstOrDefault(x => x.Declared == kv.Key);
+				if (u == null || u.Index == kv.Value) continue;
+				if (kv.Value != u.Declared && (kv.Value < ClashBase || kv.Value >= 32767)) { Warn(u.Display + ": number " + kv.Value + " (" + why + ") isn't one an upgrade moves to - kept at " + u.Index); continue; }
+				moves[u] = kv.Value;
+			}
+			// (a number held by an item that doesn't move - another mod's, or an upgrade staying - can't be taken)
+			bool dropped = true;
+			while (dropped && moves.Count > 0)
+			{
+				dropped = false;
+				foreach (KeyValuePair<Upgrade, int> m in moves.ToList())
+				{
+					Item_Base at = ItemManager.GetItemByIndex(m.Value);
+					if (at == null || moves.Keys.Any(x => x.Item == at)) continue;
+					Warn(m.Key.Display + ": number " + m.Value + " (" + why + ") is taken by '" + at.UniqueName + "' - kept at " + m.Key.Index + ". Load this world with the mods it was played with.");
+					moves.Remove(m.Key);
+					dropped = true;
+				}
+			}
+			foreach (Upgrade u in moves.Keys) { Upgrade had; if (byIndex.TryGetValue(u.Index, out had) && had == u) byIndex.Remove(u.Index); }
+			foreach (KeyValuePair<Upgrade, int> m in moves)
+			{
+				Upgrade u = m.Key;
+				int from = u.Index;
+				SetItemIndex(u.Item, m.Value);
+				u.Index = m.Value;
+				byIndex[u.Index] = u;
+				if (u.Index == u.Declared) clashed.Remove(u.Display); else Clash(u.Display);
+				Log(u.Display + " moved " + from + " -> " + u.Index + " (" + why + ")");
+			}
+			if (moves.Count > 0) UpgradeTableMenu.Refresh();
+			return moves.Count;
+		}
+
+		static void SetItemIndex(Item_Base item, int index)
+		{
+			Traverse f = Traverse.Create(item).Field("uniqueIndex");
+			if (f.FieldExists()) f.SetValue(index);
+			if (item.UniqueIndex != index) item.Initialize(index, item.UniqueName, item.MaxUses);
+		}
+
+		#endregion
+
 		/// <summary>Once a session, in a world: tells the player which upgrades had to move or are missing (AUDIT 11-09 #8).</summary>
 		static void TellClashes()
 		{
