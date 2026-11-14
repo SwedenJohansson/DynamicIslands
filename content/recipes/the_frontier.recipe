@@ -49,6 +49,14 @@ brush smooth from 74 75 to 38 75 r=3.5 s=10 frames=12
 brush smooth from 74 75 to 82 74 r=4.5 s=10 frames=20
 brush smooth from -2 66.4 to -32 66.4 r=3.5 s=10 frames=12
 brush smooth from 2 51.4 to 36 51.4 r=3.5 s=10 frames=12
+# RAFT2 11-14: the second ramp cut the middle terrace's front back to z 62 and its smoothing left that face at ~55 deg:
+# the reach grid climbed it (by -11.5 65), the walker slid off. A timber retaining wall along the terrace's edge (z 62, its
+# fence on top) stands 2-3 m over that face, so the way up to the middle terrace and the reservoir is the ramp's top landing
+for wx -28.5 -3 1.5
+place Block_Foundation_Tier3 frwall at $wx 62 h=23.9 sy=22
+next
+prop frwall tint.color=#6b6258
+prop frwall tint.amount=0.35
 brush flatten from 39 74 to 35 73 r=4 s=20 frames=60 h=12.5
 brush flatten from -33 66 to -32 59 r=4 s=20 frames=60 h=23.6
 brush flatten from 36 50.5 to 39 45 r=4 s=20 frames=80 h=34.7
@@ -254,7 +262,8 @@ place Reef_Wheelbarrow - at 7 40.4 h=34.7 sit yaw=70
 
 # --- The reservoir above the terraces: the Corps' big tank and its pump, two of Raft's water tanks, the sluice box (its
 # three valve wheels gone - they come back when it is used), the keeper's table with the note, the pipe down the terraces --
-place UT_WaterTank reservoirtank at -13 38.5 h=34.7 sit
+# (11-12 w09fix2: turned so its own ladder (at -15.4 41 before) stands clear of the sluice box at -10.5 40.9)
+place UT_WaterTank reservoirtank at -13 38.5 h=34.7 sit yaw=90
 place Placeable_WaterTank - at -21.5 36 h=34.7 sit yaw=90
 place Placeable_WaterTank - at -21.5 39.6 h=34.7 sit yaw=90
 place UT_WaterPump - at -4.5 37.5 h=34.7 sit yaw=90
@@ -572,6 +581,13 @@ place Creature_Dolphin dolphins at 24 156 h=-3
 call kit_sys x=-8 z=-75.5 yaw=0 side=1 len=24 bend=10 branch=12 blen=8 gap=16 in2=14 r=1.75 roomr=3.5 dirt=2 mush=2 stone=1 vines=0 titanium=0 light=0 as=frquarry
 dig 2,-51.5 2,-42 r=1.75 slope=0 as=frquarry
 dig 2,-42 2,-31 r=4.5 slope=0 as=frquarry
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear or nothing, so nobody can guess what is inside)
+# a boar in the quarry hall (9 m wide, 11 m long; floor ~2.5-3.5), the long way back through the system behind it; not a
+# bear or a hyena - those are the quest's kills on this island
+# cavecheck inside frboar
+place Creature_Boar frboar at 2 -39.5 h=3.0
+prop frboar creature.count=1
+prop frboar creature.respawn=0
 caveloot frquarry dirt=2 mush=2 stone=2 vines=0 titanium=0 light=0 wet=0
 prop frquarry cave.rock=plain
 # cavecheck inside frquarryz frquarrychest frquarrynote

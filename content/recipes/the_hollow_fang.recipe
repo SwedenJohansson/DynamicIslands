@@ -198,6 +198,12 @@ dig -3.6,-59 -9,-59 -12.5,-59.5 r=1.75 slope=0 as=hfgrot
 dig -12.5,-59.5 -18,-60 r=3 slope=0 as=hfgrot
 cavegate hfgrot at=-6,-59 as=hfgrot_vines scale=1.1
 caveloot hfgrot dirt=2 mush=2 stone=1 vines=0 titanium=0 light=0 wet=0
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear or nothing, so nobody can guess what is inside)
+# one rat in the vine-gated grotto's room (r=3); the island's mercenary bears are the quest's
+# cavecheck inside hfrat
+place Creature_Rat hfrat at -15 -59.8 h=5.1
+prop hfrat creature.count=1
+prop hfrat creature.respawn=0
 prop hfgrot cave.rock=plain
 # cavecheck inside hfgrotchest hfgrot_vines
 place Loot_ChestSmall hfgrotchest at -18.6 -60.4 h=5.9 drop yaw=60

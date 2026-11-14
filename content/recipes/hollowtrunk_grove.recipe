@@ -221,13 +221,8 @@ caveloot rootden dirt=2 mush=4 stone=0 vines=2
 place SmallBoulder3 - at 10.3 -6.3 ground y=-0.4 yaw=30 scale=1.3
 place SmallBoulder4 - at 5.0 -8.9 ground y=-0.4 yaw=200 scale=1.2
 place SmallRock_02 - at 7.9 -4.7 ground y=-0.1 yaw=80
-# cavecheck inside rootratA rootratB
-place Creature_Rat rootratA at 12.3 -16.7 h=4.0 drop
-prop rootratA creature.count=1
-prop rootratA creature.respawn=0
-place Creature_Rat rootratB at 13.6 -18.1 h=4.0 drop
-prop rootratB creature.count=1
-prop rootratB creature.respawn=0
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear or nothing, so nobody can guess what is inside)
+# the root den is empty now - only its mushrooms and dirt; the island's boar is the quest's and stays outside
 call vd_spot x=-35 z=61 al=hglook id=hg_view r=5 msg="From the lookout rocks the five trunks stand like pillars holding the sky up."
 
 # --- STORY 10-24: Jonas's bee notes by the bee box, the greenhouse log, Oda's note on Owl Hill
