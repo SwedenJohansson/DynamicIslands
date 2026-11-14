@@ -262,6 +262,8 @@ it - its quest where it was, opened chests still open - and a banner says "Back 
 
 - an island whose quest you began and didn't finish: it comes back up to **three times** (an island you left on purpose
   stops coming back by itself, but the spawn pool may still bring it at random);
+- a **main story** island not finished yet: it comes back every time, with no limit - also one you sailed past without
+  setting foot on it;
 - an island a world plan still waits for - one that leads to the next island, like The Abyss Expedition's sunken
   island: it comes back every time, until you've done there what the plan waits for;
 - an island a plan brought on a set day or distance with **again until done** ([7.4](#74-everything-a-rule-can-do)): it

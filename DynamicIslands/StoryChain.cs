@@ -627,7 +627,7 @@ namespace DynamicIslands.Editor
 			// (failed but there: an error after its land and objects were made - it plays, so it counts - review 2026-10-06)
 			if (entries.All(e => e.Failed && e.Root == null || !System.IO.File.Exists(IslandSpawner.PathFor(e.Name)))) return false;
 			string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
-			if (kind.Length == 0) kind = IslandQuest.From(IslandCache.PropsOf(entries[0])).Steps.Count > 0 ? "quest" : "visit";
+			if (kind.Length == 0) kind = IslandQuest.From(IslandCache.PropsOf(entries.FirstOrDefault(e => System.IO.File.Exists(IslandSpawner.PathFor(e.Name))) ?? entries[0])).Steps.Count > 0 ? "quest" : "visit"; // (a copy whose file is gone read as quest-less: a visit counted it done - questdeepA)
 			if (kind == "note") return entries.Any(e => StoryBook.Pages.Any(p => p.Key.Equals("note:" + StoryBook.PageIsland(e) + ":" + arg.Trim(), StringComparison.OrdinalIgnoreCase)));
 			IslandWorldState.Entry at;
 			var done = new IntroRule { When = kind, WhenRef = r.Id, WhenArg = arg };
@@ -667,10 +667,16 @@ namespace DynamicIslands.Editor
 			bool grew = false;
 			try
 			{
-				InstallFrequencies();
+				// (each part on its own: one throwing used to skip the unlock list below, so the receiver lost the chain's islands)
+				try { InstallFrequencies(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] frequencies: " + e); }
 				List<ChunkPointType> unlocked = NoteBook.unlockedChunkPointType;
 				if (unlocked == null) return;
-				if (active && Raft_Network.IsHost) { int d = Done.Count, u = Unlocked.Count; ReplayNotes(); grew = Done.Count > d || Unlocked.Count > u; }
+				if (active && Raft_Network.IsHost)
+				{
+					int d = Done.Count, u = Unlocked.Count;
+					try { ReplayNotes(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] notes: " + e); }
+					grew = Done.Count > d || Unlocked.Count > u;
+				}
 				unlocked.RemoveAll(t => (int)t >= ModTypeBase);
 				if (active)
 				{
@@ -679,7 +685,7 @@ namespace DynamicIslands.Editor
 				}
 				for (int i = 0; i < Frequencies.Count; i++)
 					if (Fired.Contains(Frequencies[i].Key)) unlocked.Add((ChunkPointType)(ModTypeBase + i));
-				StoryOrder.RelabelAll();
+				try { StoryOrder.RelabelAll(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] labels: " + e); }
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + e); }
 			finally { rebuilding = false; }
