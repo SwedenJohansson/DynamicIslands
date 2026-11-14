@@ -240,7 +240,9 @@ namespace DynamicIslands.Editor
 				for (int i = 0; i < lights.Length; i++) if (lights[i] != null) lights[i].intensity = power[i] * (1f - k);
 				yield return null;
 			}
-			if (Raft_Network.IsHost && IslandWorldState.Contains(e)) Remove(e, "dawn");
+			// (not after the host left the world mid-sink: WorldOptions.Forget has cleared the options by then, and Remove's save
+			// wrote the world file without them; the saved ship goes at once when the world loads by day)
+			if (Raft_Network.IsHost && LoadSceneManager.IsGameSceneLoaded && IslandWorldState.Contains(e)) Remove(e, "dawn");
 			// (a player keeps it as sinking until the host's word that it is gone comes, so it never sinks twice)
 			if (Raft_Network.IsHost && sinking == e) sinking = null;
 		}

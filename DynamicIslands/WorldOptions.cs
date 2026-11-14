@@ -323,6 +323,11 @@ namespace DynamicIslands.Editor
 			used = false;
 			ScrambledBlueprints.Reset();
 			global::DynamicIslands.Editor.UpgradeTable.Reset();
+			// (a player's fog notice, saucer and an unfinished head start build don't follow them into the next world: a joiner's
+			// Reset skips these, and the head start's wait would build at the menu after 120 s)
+			ResetStep("FogBanks.Reset", () => global::DynamicIslands.Editor.FogBanks.Reset());
+			ResetStep("UfoSightings.Reset", () => global::DynamicIslands.Editor.UfoSightings.Reset());
+			ResetStep("HeadStart.Reset", () => global::DynamicIslands.Editor.HeadStart.Reset(false));
 		}
 
 		/// <summary>Client: a host's world arrived: none until the host's come.</summary>

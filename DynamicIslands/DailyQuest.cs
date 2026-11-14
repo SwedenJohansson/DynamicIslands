@@ -92,7 +92,7 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		internal static void Reset() { Current = new Task(); previous = null; gotDay = -1; TestDay = null; nextCheck = 0f; }
+		internal static void Reset() { Current = new Task(); previous = null; gotDay = -1; TestDay = null; nextCheck = 0f; DailyQuestGather.Clear(); }
 
 		#region What a day asks for
 
@@ -298,7 +298,7 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost)
 			{
 				if (msg.Name == "add") AddOnHost(msg.Index, msg.Count);
-				else if (msg.Name == "got" && msg.Index == Current.Day && from.Id != 0UL && Current.Rewarded.Add(from.Id)) { PlayerLevels.CreditXp(from.Id, Xp); Send(Message(), null); IslandWorldState.Save(); } // (CB2: the host credits the reward's EXP)
+				else if (msg.Name == "got" && msg.Index == Current.Day && Current.State == "done" && from.Id != 0UL && Current.Rewarded.Add(from.Id)) { PlayerLevels.CreditXp(from.Id, Xp); Send(Message(), null); IslandWorldState.Save(); } // (CB2: the host credits the reward's EXP)
 				else if (msg.Name == "got" && previous != null && previous.Day >= 0 && previous.Day != Current.Day && msg.Index == previous.Day && previous.State == "done" && from.Id != 0UL && previous.Rewarded.Add(from.Id)) { PlayerLevels.CreditXp(from.Id, Xp); Log("A player's reward of day " + previous.Day + " came after the next day began: its EXP credited"); }
 				return;
 			}
@@ -371,6 +371,9 @@ namespace DynamicIslands.Editor
 	static class DailyQuestGather
 	{
 		static int depth, before;
+
+		/// <summary>A new world: a pick-up that threw between Before and After (no postfix then) no longer blocks the count.</summary>
+		internal static void Clear() { depth = 0; before = -1; }
 
 		static PlayerInventory Inventory(Network_Player p) { return p != null && p.IsLocalPlayer ? p.Inventory : null; }
 
