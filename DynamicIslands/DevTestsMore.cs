@@ -1006,6 +1006,18 @@ namespace DynamicIslands
 
 		#region A long sail
 
+		// (objects by their top object, digits and "(Clone)" left out: which kind of object a long sail leaves behind)
+		static Dictionary<string, int> SailRootCounts()
+		{
+			var r = new Dictionary<string, int>();
+			foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
+			{
+				string n = System.Text.RegularExpressions.Regex.Replace(t.root.name.Replace("(Clone)", ""), "[0-9]+", "#").Trim();
+				r[n] = (r.TryGetValue(n, out int c) ? c : 0) + 1;
+			}
+			return r;
+		}
+
 		[ConsoleCommand(name: "CILongSail", docs: "Dev, in game (host, Normal world): sails about 14 km with automatic islands (one tried every 850 m - the spacing between islands is 800 m - or 150 m on when Raft's islands left no room), then checks the islands behind unloaded and memory, frame time and errors stayed flat. CILongSail [km] [m/s]")]
 		public static void LongSailCommand(string[] args)
 		{
@@ -1027,11 +1039,15 @@ namespace DynamicIslands
 			int errors = 0; string firstError = null;
 			Application.LogCallback watch = (msg, trace, type) =>
 			{
-				if ((type == LogType.Exception || type == LogType.Error) && (msg.Contains("[CUSTOM ISLANDS]") || (trace ?? "").Contains("DynamicIslands")) && !msg.Contains("[CITEST]"))
+				if ((type == LogType.Exception || type == LogType.Error) && (msg.Contains("[CUSTOM ISLANDS]") || (trace ?? "").Contains("DynamicIslands")) && !msg.Contains("[CITEST]")
+					// (Unity's own notice when the sea grass sets the grass on its copy of Raft's terrain data - SeaGrass.MakeTemplate, once a game - not a fault)
+					&& !msg.StartsWith("only implemented in editor"))
 				{ errors++; if (firstError == null) firstError = msg.Split('\n')[0]; }
 			};
 			Application.logMessageReceived += watch;
 			int n0 = IslandWorldState.Islands.Count, spawned = 0, unloaded = 0;
+			int objs0 = UnityEngine.Object.FindObjectsOfType<Transform>().Length;
+			Dictionary<string, int> roots0 = SailRootCounts();
 			Application.LogCallback unloads = (msg, trace, type) => { if (msg.Contains("Unloaded island")) unloaded++; };
 			Application.logMessageReceived += unloads;
 			var samples = new List<float[]>(); // sailed m, frame ms, managed MB, Unity MB (0 if the build does not report it), loaded islands
@@ -1088,7 +1104,25 @@ namespace DynamicIslands
 			Check(ref ok, m1 < m0 + 400f && g1 < g0 + 150f, "memory stays flat: Unity " + m0.ToString("F0") + " -> " + m1.ToString("F0") + " MB, managed " + g0.ToString("F0") + " -> " + g1.ToString("F0") + " MB");
 			Check(ref ok, errors == 0, errors + " errors from the mod while sailing" + (firstError != null ? " (first: " + firstError + ")" : ""));
 			// (the test world stays as it was: no automatic islands left behind, unless kept for a check after)
+			// (where the frame time goes when it grows - 11-14 IX8 solo: 64 ms at 3 km, 190-526 ms after 24 km, memory flat:
+			// the same frames measured again once the sail's islands are gone, and the scene's objects counted)
+			bool grew = f1 >= Mathf.Max(f0 * 1.5f, f0 + 8f);
+			int objsEnd = UnityEngine.Object.FindObjectsOfType<Transform>().Length;
+			Log("  objects: " + objs0 + " at the start, " + objsEnd + " at the end");
+			foreach (var kv in SailRootCounts().Select(kv => new KeyValuePair<string, int>(kv.Key, kv.Value - (roots0.TryGetValue(kv.Key, out int c0) ? c0 : 0))).Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Take(12))
+				Log("    more at the end: " + kv.Key + " +" + kv.Value + " objects");
 			if (!keep) IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(n0).Select(x => x.Id).ToList(), true);
+			if (grew && !keep)
+			{
+				yield return new WaitForSeconds(5f);
+				float ta = Time.realtimeSinceStartup;
+				for (int i = 0; i < 60; i++) yield return null;
+				float msAfter = (Time.realtimeSinceStartup - ta) / 60f * 1000f;
+				Log("  frame time grew: " + f1.ToString("F1") + " ms at the end with " + objsEnd + " objects (" + objs0 + " at the start), " + msAfter.ToString("F1") + " ms with the sail's islands removed, " + UnityEngine.Object.FindObjectsOfType<Transform>().Length + " objects");
+				Dictionary<string, int> roots1 = SailRootCounts();
+				foreach (var kv in roots1.Select(kv => new KeyValuePair<string, int>(kv.Key, kv.Value - (roots0.TryGetValue(kv.Key, out int c0) ? c0 : 0))).Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Take(12))
+					Log("    left after removal: " + kv.Key + " +" + kv.Value + " objects");
+			}
 			if (ok) Log("PASS: a long sail"); else Fail("a long sail");
 		}
 
