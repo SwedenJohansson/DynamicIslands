@@ -855,6 +855,17 @@ namespace DynamicIslands.Editor
 			if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
 		}
 
+		/// <summary>Leaving a world or joining another host (questfix 11-14): the events still waiting for a host's answer, the
+		/// signal locks and the last taken items belong to the last world - island ids repeat between worlds, and a late "no"
+		/// from the new host for the same id gave back the last world's items.</summary>
+		internal static void ForgetWorld()
+		{
+			awaiting.Clear();
+			signalLocks.Clear();
+			sharedAt.Clear();
+			LastTaken.Clear();
+		}
+
 		class Awaiting { public int OnceKey; public List<KeyValuePair<string, int>> Taken; public float At; }
 		/// <summary>Client: events waiting for the host's yes or no (RK3), by island, object and event.</summary>
 		static readonly Dictionary<string, Awaiting> awaiting = new Dictionary<string, Awaiting>();

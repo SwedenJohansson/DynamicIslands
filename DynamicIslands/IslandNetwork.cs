@@ -208,6 +208,9 @@ namespace DynamicIslands.Editor
 			global::DynamicIslands.Editor.QuestCount.Reset();
 			global::DynamicIslands.Editor.Collectibles.Reset();
 			global::DynamicIslands.Editor.QuestRewards.OnWorldReceived();
+			global::DynamicIslands.Editor.Behaviours.ForgetWorld(); // (a late answer for the last host's event: questfix 11-14)
+			global::DynamicIslands.Editor.ContentState.ForgetWorld();
+			QuestTimers.Reset(); // (questfix 11-14: the last world's clocks)
 			toldRefused.Clear(); // (a new host: its left-out islands are told again - review 10-30)
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Select(e => e.Id).ToList(), false);
 			synced = false;
@@ -726,6 +729,15 @@ namespace DynamicIslands.Editor
 			return host != 0UL && from != 0UL && from != host;
 		}
 
+		/// <summary>On a player: the sender is known and isn't the host (any kind; questfix 11-14).</summary>
+		internal static bool NotHostSender(ulong from)
+		{
+			ulong host = HostIdOverride;
+			if (host == 0UL)
+				try { Raft_Network network = ComponentManager<Raft_Network>.Value; host = network != null ? network.HostID.Id : 0UL; } catch { }
+			return host != 0UL && from != 0UL && from != host;
+		}
+
 		/// <summary>Returns true if the message was ours.</summary>
 		public static bool OnMessage(object message, Network_UserId from)
 		{
@@ -828,6 +840,15 @@ namespace DynamicIslands.Editor
 							{
 								SendQuestCorrection(from, msg.Ids[0], questNo);
 								if (msg.Name == "add") QuestTracker.GiveBack(msg.Ids[0], questNo, msg.Index, msg.Count, from.Id, "refused"); // (a bring hand-over's items)
+								break;
+							}
+							// (questfix 11-14: a player takes quest steps from the host only - another player's "set" moved its quest back
+							// or on; the host takes a player's plain step (an older version's) one step on at most - it jumped to the end)
+							if (!Raft_Network.IsHost && NotHostSender(from.Id)) { DroppedNotFromHost++; break; }
+							if (Raft_Network.IsHost && msg.Name != "add" && from.Id != 0UL && !QuestTracker.MayTakeStep(msg.Ids[0], questNo, msg.Index))
+							{
+								Debug.Log("[CUSTOM ISLANDS] [quest] A player's step " + (msg.Index + 1) + " of quest " + (questNo + 1) + " on island " + msg.Ids[0] + " is refused: more than one step on");
+								SendQuestCorrection(from, msg.Ids[0], questNo);
 								break;
 							}
 							// (the host's answer to a refused step: the host's step, even an older one)

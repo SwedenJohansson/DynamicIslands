@@ -3149,8 +3149,10 @@ island on the Receiver doesn't come back by itself (its frequency shows the way)
 ### 7.5 Check: finding and fixing problems
 
 Click **Check** any time. It goes through the plan the way a world will play it, and looks **inside the islands** too:
-each island's quest step by step (is there a zone, a note, a chest or creatures with the name each step needs?), its
-trigger zones and signals, and - for new islands of a map type - a sample island of that type. Then a report opens:
+each island's quests step by step - the main quest and quests 2-9, also in the island editor's own Check (is there a zone,
+a note, a chest or creatures with the name each step needs? a chest to open that has nothing in it, a creature the net
+launcher can't catch, a story item to collect that nothing on the island gives, a step line with a kind the game
+doesn't know and skips), its trigger zones and signals, and - for new islands of a map type - a sample island of that type. Then a report opens:
 
 ![Check's report](images/plan-check.jpg)
 *Check's report: each finding with its level, the rule it is about, why, how to fix it, and **Show rule** to go to its card.*

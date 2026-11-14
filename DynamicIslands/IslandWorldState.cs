@@ -274,6 +274,9 @@ namespace DynamicIslands.Editor
 			ResetStep("StoryBook.Reset", () => StoryBook.Reset());
 			ResetStep("PlayerPlaces.Reset", () => PlayerPlaces.Reset());
 			ResetStep("Claims.Reset", () => Claims.Reset());
+			ResetStep("Behaviours.ForgetWorld", () => Behaviours.ForgetWorld());
+			ResetStep("ContentState.ForgetWorld", () => ContentState.ForgetWorld());
+			ResetStep("QuestTimers.Reset", () => QuestTimers.Reset()); // (island ids repeat between worlds: the last world's clock set a step back here - questfix 11-14)
 			// (a story island brought back by hand in the world before isn't "on its way" in this one - RK12 L2)
 			ResetStep("handBrought", () => DynamicIslands.handBrought.Clear());
 			ResetStep("MechFeatures.Reset", () => MechFeatures.Reset());

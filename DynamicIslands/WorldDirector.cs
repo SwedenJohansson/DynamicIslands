@@ -2025,6 +2025,9 @@ namespace DynamicIslands.Editor
 			bool begun = e.State.ContainsKey(WorldDirector.VisitKey) || step > 0;
 			// (a side quest begun and not done too: its rewards are only there - code audit 2026-10-30)
 			if ((steps == 0 || step >= steps || !begun) && !QuestTracker.SideQuestOpen(e)) return null;
+			// (a main story island with no frequency of its own: back until its quests are done, no cap - after 3 returns the
+			// story was lost for good; the user 11-08: main story islands come back until done - questfix 11-14)
+			if (brought != null && brought.MainStory) return "quest";
 			return Returns(e) < MaxReturns ? "quest" : null;
 		}
 

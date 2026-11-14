@@ -198,10 +198,13 @@ namespace DynamicIslands
 				Check(ref ok, QuestTimers.HudText.StartsWith("Time left 0:0") && QuestTimers.HudText.Contains("Reach the far rock"), "the countdown shows (" + QuestTimers.HudText + ")");
 				Screenshot(new[] { "qe9_countdown" });
 				int fails = QuestTimers.Fails;
+				// (questfix 11-14: work done early for step 2 - a chest opened meanwhile - must outlive the time-out)
+				e.State[QuestTracker.EarlyKeyBase + 1] = new ObjectState { Active = true, Yield = 1, Day = 0 };
 				yield return new WaitForSeconds(4.0f);
 				t = QuestTimers.Of(e.Id, 0);
 				Check(ref ok, QuestTimers.Fails == fails + 1, "the time ran out once (" + (QuestTimers.Fails - fails) + ")");
 				Check(ref ok, QuestTracker.StepOf(e, 0) == 0 && t != null && t.LeftNow > 1.5f, "the step started again with a fresh clock (" + (t != null ? t.LeftNow.ToString("0.0") : "none") + " s)");
+				Check(ref ok, e.State.ContainsKey(QuestTracker.EarlyKeyBase + 1), "the time-out kept the early credit for step 2 (questfix)");
 				Check(ref ok, (IslandInfo.LastMessage ?? "").StartsWith("Time's up"), "a message told the player (" + IslandInfo.LastMessage + ")");
 				ObjectState st;
 				Check(ref ok, e.State.TryGetValue(QuestTimers.KeyBase, out st) && st.Day == 0 && st.Yield > 0 && st.Yield <= 4, "the seconds left are kept in the island state (" + (e.State.ContainsKey(QuestTimers.KeyBase) ? e.State[QuestTimers.KeyBase].Yield.ToString() : "none") + ")");

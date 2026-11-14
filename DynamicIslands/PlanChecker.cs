@@ -35,12 +35,19 @@ namespace DynamicIslands.Editor
 			public IslandQuest Quest = new IslandQuest();
 			/// <summary>The island's other quests (Quest 2 is [0]): a rule may wait for one of them (ROADMAP CB6).</summary>
 			public List<IslandQuest> MoreQuests = new List<IslandQuest>();
+			/// <summary>Step lines the game skips (an unknown kind, a typo, a space before it), by quest number (0 = main):
+			/// the quest runs without them, which the author doesn't see (questfix 11-14).</summary>
+			public readonly Dictionary<int, List<string>> SkippedSteps = new Dictionary<int, List<string>>();
 			public readonly HashSet<string> Zones = new HashSet<string>(StringComparer.OrdinalIgnoreCase), Signals = new HashSet<string>(StringComparer.OrdinalIgnoreCase),
 				Notes = new HashSet<string>(StringComparer.OrdinalIgnoreCase), Chests = new HashSet<string>(StringComparer.OrdinalIgnoreCase),
 				Counters = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			public readonly Dictionary<string, int> Creatures = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 			public readonly HashSet<string> CreaturesComeBack = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			public int NoteCount, ChestCount, RaftCrates, Objects;
+			/// <summary>Chests with nothing in their loot: Raft can't open them (only read their note), so they never count for an
+			/// "open" step - and their titles (questfix 11-14).</summary>
+			public int EmptyChestCount;
+			public readonly HashSet<string> EmptyChests = new HashSet<string>(StringComparer.OrdinalIgnoreCase), FullChests = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			/// <summary>Journal pages the island can give: notes with text (an empty note gives none) and "journal" actions.</summary>
 			public int PageCount;
 			/// <summary>The island's own rules: plan rules may point at the islands they bring by their names.</summary>
@@ -80,6 +87,14 @@ namespace DynamicIslands.Editor
 		{
 			var x = new Facts { Name = name, Sample = sample, Quest = IslandQuest.From(f.Props), Objects = f.Objects.Count, Rules = WorldDirector.RulesFromProps(f.Props) };
 			for (int q = 1; q < IslandQuest.CountIn(f.Props); q++) x.MoreQuests.Add(IslandQuest.From(f.Props, q));
+			for (int q = 0; q < IslandQuest.MaxQuests; q++)
+				foreach (string line in ObjectProps.Get(f.Props, IslandQuest.Key(IslandQuest.KeySteps, q)).Split('\n'))
+					if (line.Trim().Length > 0 && !IslandQuest.Types.Contains(line.Split('|')[0]))
+					{
+						List<string> had;
+						if (!x.SkippedSteps.TryGetValue(q, out had)) x.SkippedSteps[q] = had = new List<string>();
+						had.Add(line.Trim());
+					}
 			var text = new System.Text.StringBuilder();
 			foreach (var kv in f.Props) if (kv.Key != StoryItems.Key) text.Append(kv.Value).Append('\n');
 			var read = new System.Text.StringBuilder(text.ToString());
@@ -91,16 +106,25 @@ namespace DynamicIslands.Editor
 			foreach (IslandObject o in f.Objects)
 			{
 				IDictionary<string, string> p = o.Props ?? new Dictionary<string, string>();
-				if (o.Name == ContentCatalog.TriggerZone) { string z = ObjectProps.Get(p, ObjectProps.ZoneId); if (z.Length > 0) x.Zones.Add(IslandQuest.AsTarget(z)); }
+				// (names as a step compares them: cleaned and trimmed - QuestTracker.Matches; "Gate " was a false Problem)
+				if (o.Name == ContentCatalog.TriggerZone) { string z = IslandQuest.Clean(ObjectProps.Get(p, ObjectProps.ZoneId)); if (z.Length > 0) x.Zones.Add(z); }
 				PlayerFeatures.AddFacts(x.Player, o.Name, p);
 				QuestSteps.AddFacts(x.Steps, o.Name, p);
 				if (ObjectProps.IsNote(o.Name, p))
 				{
 					x.NoteCount++;
-					string t = ObjectProps.Get(p, ObjectProps.NoteTitle); if (t.Length > 0) x.Notes.Add(IslandQuest.AsTarget(t));
+					string t = IslandQuest.Clean(ObjectProps.Get(p, ObjectProps.NoteTitle)); if (t.Length > 0) x.Notes.Add(t);
 					if (ObjectProps.Get(p, ObjectProps.NoteText).Trim().Length > 0) x.PageCount++;
 				}
-				if (ObjectProps.IsLoot(o.Name, p)) { x.ChestCount++; string t = ObjectProps.Get(p, ObjectProps.NoteTitle); if (t.Length > 0) x.Chests.Add(IslandQuest.AsTarget(t)); }
+				if (ObjectProps.IsLoot(o.Name, p))
+				{
+					x.ChestCount++;
+					string t = IslandQuest.Clean(ObjectProps.Get(p, ObjectProps.NoteTitle));
+					if (t.Length > 0) x.Chests.Add(t);
+					bool empty = ObjectProps.Loot(p).Count == 0; // (LootCrate: no items = can't be opened)
+					if (empty) x.EmptyChestCount++;
+					if (t.Length > 0) (empty ? x.EmptyChests : x.FullChests).Add(t);
+				}
 				if (o.Name == PlaceableCatalog.RaftCrate) x.RaftCrates++;
 				ContentCatalog.CreatureKind k = ContentCatalog.CreatureOf(o.Name);
 				if (k != null)
@@ -134,7 +158,9 @@ namespace DynamicIslands.Editor
 			x.GivesTools.UnionWith(RaftFeatures.GivenIn(x.AllText));
 			FindTools(f, x);
 			// Story items: wanted by checks, given by everything else (loot, zone items, give actions) and by Raft's pickups
-			var owners = new List<List<KeyValuePair<string, string>>> { f.Props.Where(kv => kv.Key != StoryItems.Key).ToList() };
+			// (not the quests' steps: a "collect story:key" step wants the key - it counted as giving it, so a quest whose
+			// key nothing gave passed the check - questfix 11-14)
+			var owners = new List<List<KeyValuePair<string, string>>> { f.Props.Where(kv => kv.Key != StoryItems.Key && !IsStepsKey(kv.Key)).ToList() };
 			foreach (IslandObject o in f.Objects)
 			{
 				if (o.Props != null) owners.Add(o.Props.ToList());
@@ -172,6 +198,12 @@ namespace DynamicIslands.Editor
 			foreach (string g in x.GivesStory) { RaftFeatures.Tool st = RaftFeatures.ToolOfStory(g); if (st != null) x.GivesTools.Add(st.Item); }
 			if (!sample) FindTraps(f, x, islandNever);
 			return x;
+		}
+
+		static bool IsStepsKey(string key)
+		{
+			for (int n = 0; n < IslandQuest.MaxQuests; n++) if (key == IslandQuest.Key(IslandQuest.KeySteps, n)) return true;
+			return false;
 		}
 
 		static HashSet<string> SignalsSent(List<KeyValuePair<string, string>> props)
@@ -336,6 +368,8 @@ namespace DynamicIslands.Editor
 			public Facts Own; // (island mode: the island being edited)
 			public List<Finding> Out = new List<Finding>();
 			public HashSet<string> SavedNames;
+			/// <summary>Quest steps already checked ("island#quest#step"): a step is told once, by the first rule that waits for it.</summary>
+			public HashSet<string> QuestSeen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			/// <summary>Rules on the islands the plan brings (and on the islands those bring), by name, with their island: a
 			/// world finds the island one of them brought by the rule's name, as it does a plan rule's.</summary>
 			public Dictionary<string, KeyValuePair<IntroRule, Facts>> IslandRules = new Dictionary<string, KeyValuePair<IntroRule, Facts>>(StringComparer.OrdinalIgnoreCase);
@@ -395,6 +429,7 @@ namespace DynamicIslands.Editor
 				if (!islandMode) CheckStory(c, i);
 			}
 			CheckTraps(c);
+			CheckIslandQuests(c);
 			CheckOrder(c);
 			if (!islandMode && rules.Count > 0 && !plan.Random && !rules.Any(r => r.When == "start" || r.When == "km" || r.When == "day" || r.Where == "receiver"))
 				c.Add(-1, Level.Warning, "Nothing of the plan comes by itself: no rule starts with the world, a distance or a day, and random islands are off. Every rule waits for another island - so none ever comes.",
@@ -944,6 +979,8 @@ namespace DynamicIslands.Editor
 				// (a rule waiting for Quest 2 or later of the island)
 				if (questNo - 2 >= f.MoreQuests.Count || f.MoreQuests[questNo - 2].Steps.Count == 0)
 					c.Add(i, Level.Problem, who + " waits for quest " + questNo + " of " + f.Describe + ", which has " + (f.MoreQuests.Count == 0 ? "only its main quest" : "quests up to " + (f.MoreQuests.Count + 1)) + ": it never comes.", "Use a quest number the island has (empty = its main quest).");
+				// (its steps, as the main quest's are: before, only the main quest's were looked at - questfix 11-14)
+				else CheckQuest(c, i, f, questNo - 1, f.MoreQuests[questNo - 2].Steps.Count, who, true);
 				return;
 			}
 			if (kind == "quest" || kind == "step")
@@ -951,7 +988,7 @@ namespace DynamicIslands.Editor
 				if (!f.Quest.Exists) { c.Add(i, Level.Problem, who + " waits for the quest of " + f.Describe + ", which has no quest: it never " + (part == "STORY" ? "counts as done" : "comes") + ".", f.Sample ? "Use \"When players reach an island\" for this map type, or a map type with a quest (camp, treasure, stacks, swamp...)." : "Use \"When players reach an island\", or give '" + f.Name + "' a quest (open it in the editor: Island tab > Edit quest...)."); return; }
 				int need = f.Quest.Steps.Count;
 				if (kind == "step" && int.TryParse(arg, out int n)) { if (n > need) c.Add(i, Level.Problem, who + " waits for " + n + " quest steps of " + f.Describe + ", but its quest has only " + need + ".", "Wait for at most " + need + " steps."); need = Math.Min(n, need); }
-				CheckQuest(c, i, f, need, who);
+				CheckQuest(c, i, f, 0, need, who, true);
 			}
 			else if (kind == "zone")
 			{
@@ -977,19 +1014,40 @@ namespace DynamicIslands.Editor
 		{
 			var c = new Ctx { Plan = new WorldPlan(), IslandMode = true, SavedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) };
 			Facts x = FromFile(f, f.Name ?? "island", false);
-			CheckQuest(c, -1, x, x.Quest.Steps.Count, "The island");
+			CheckAllQuests(c, -1, x, "The island");
 			return c.Out;
 		}
 
-		/// <summary>The first `steps` steps of an island's quest: can each be done there?</summary>
-		static void CheckQuest(Ctx c, int i, Facts f, int steps, string who)
+		/// <summary>Every quest of the island (main and Quest 2-9), each step, and the step lines the game skips. Island
+		/// mode: the island in the editor; a plan: each saved island it brings, once (before, an island's own quest was
+		/// checked only when a rule waited for it - questfix 11-14).</summary>
+		static void CheckAllQuests(Ctx c, int i, Facts f, string who)
 		{
-			for (int s = 0; s < steps && s < f.Quest.Steps.Count; s++)
+			for (int n = 0; n <= f.MoreQuests.Count; n++)
 			{
-				IslandQuest.Step st = f.Quest.Steps[s];
+				IslandQuest q = n == 0 ? f.Quest : f.MoreQuests[n - 1];
+				List<string> skipped;
+				if (f.SkippedSteps.TryGetValue(n, out skipped) && skipped.Count > 0 && c.QuestSeen.Add(f.Name + "#" + n + "#skipped"))
+					c.Add(i, Level.Warning, who + ": " + (n == 0 ? "the quest" : "quest " + (n + 1)) + " of " + f.Describe + " has " + (skipped.Count == 1 ? "a step line" : skipped.Count + " step lines") + " the game skips (" + string.Join("; ", skipped.Take(3).Select(l => "\"" + (l.Length > 40 ? l.Substring(0, 40) + "..." : l) + "\"").ToArray()) + (skipped.Count > 3 ? "; ..." : "") + "): the step kind is unknown, mistyped or has a space or capital in it. The quest runs without " + (skipped.Count == 1 ? "it" : "them") + ".",
+						"Open the island in the editor and set the step again (Island tab > Edit quest...), or fix the kind in the file (reach, read, open, kill, catch, collect...).");
+				if (q.Exists) CheckQuest(c, i, f, n, q.Steps.Count, who, false);
+			}
+		}
+
+		/// <summary>The first `steps` steps of quest n of an island (0 = its main quest): can each be done there? forRule: a
+		/// rule waits for it (the finding says the rule never comes).</summary>
+		static void CheckQuest(Ctx c, int i, Facts f, int n, int steps, string who, bool forRule)
+		{
+			IslandQuest q = n == 0 ? f.Quest : n - 1 < f.MoreQuests.Count ? f.MoreQuests[n - 1] : null;
+			if (q == null) return;
+			for (int s = 0; s < steps && s < q.Steps.Count; s++)
+			{
+				// (each step once: two rules waiting for one quest, or a rule and the island's own check)
+				if (!f.Sample && !c.QuestSeen.Add(f.Name + "#" + n + "#" + s)) continue;
+				IslandQuest.Step st = q.Steps[s];
 				string t = st.Target.Trim();
-				string head = who + ": step " + (s + 1) + " of the quest of " + f.Describe + " (\"" + st.Describe() + "\")";
-				string tail = " - the quest can't be finished, so the rule never " + (who.Contains("STORY") ? "counts as done" : "comes") + ".";
+				string head = who + ": step " + (s + 1) + " of " + (n == 0 ? "the quest" : "quest " + (n + 1)) + " of " + f.Describe + " (\"" + st.Describe() + "\")";
+				string tail = forRule ? " - the quest can't be finished, so the rule never " + (who.Contains("STORY") ? "counts as done" : "comes") + "." : " - the quest can't be finished.";
 				string fix = f.Sample ? "Choose another map type, or \"When players reach an island\"." : "Open '" + f.Name + "' in the editor and fix its quest (Island tab > Edit quest...), or the object it names.";
 				switch (st.Type)
 				{
@@ -1004,11 +1062,22 @@ namespace DynamicIslands.Editor
 					case "open":
 						if (t.Length > 0 && !f.Chests.Contains(t)) c.Add(i, Level.Problem, head + " needs a chest titled \"" + t + "\", which the island doesn't have" + (f.Chests.Count > 0 ? " (its chests: " + List(f.Chests) + ")" : "") + tail, fix);
 						else if (t.Length == 0 && f.ChestCount == 0) c.Add(i, Level.Problem, head + " needs a chest to open, and the island has none" + (f.RaftCrates > 0 ? " (its abandoned raft crates don't count: place a chest from Loot & chests)" : "") + tail, fix);
+						// (a chest with no loot can't be opened - players only read its note: the step never counts)
+						else if (t.Length > 0 && f.EmptyChests.Contains(t) && !f.FullChests.Contains(t)) c.Add(i, Level.Problem, head + " needs the chest \"" + t + "\" opened, and it has nothing in it: Raft can't open an empty chest (players only read its note)" + tail, "Put something in it (its Loot items), or make the step \"Read\" its note.");
+						else if (t.Length == 0 && f.ChestCount > 0 && f.EmptyChestCount == f.ChestCount) c.Add(i, Level.Problem, head + " needs a chest opened, and every chest of the island is empty: Raft can't open an empty chest" + tail, "Put something in a chest (its Loot items).");
 						break;
 					case "kill":
 					case "catch":
-						int have = t.Length > 0 ? (f.Creatures.TryGetValue(t, out int h) ? h : 0) : f.Creatures.Values.Sum();
-						if (have == 0) c.Add(i, Level.Problem, head + " needs " + (t.Length > 0 ? t.ToLowerInvariant() + "s" : "creatures") + ", and the island has none" + tail, fix);
+						// (only Raft's net launcher catches: chickens, goats, llamas - "catch 2 sharks" never counted. Questfix 11-14)
+						bool catching = st.Type == "catch";
+						Func<string, bool> catchable = label => ContentCatalog.Creatures.Any(k => k.Label.Equals(label, StringComparison.OrdinalIgnoreCase) && k.Category == ContentCatalog.CatchableCategory);
+						if (catching && t.Length > 0 && ContentCatalog.Creatures.Any(k => k.Label.Equals(t, StringComparison.OrdinalIgnoreCase)) && !catchable(t))
+						{
+							c.Add(i, Level.Problem, head + " needs " + t.ToLowerInvariant() + "s caught, and Raft's net launcher can't catch those (only " + string.Join(", ", ContentCatalog.Creatures.Where(k => k.Category == ContentCatalog.CatchableCategory).Select(k => k.Label.ToLowerInvariant() + "s").ToArray()) + ")" + tail, "Make it a \"Defeat\" step, or catch an animal the net launcher takes.");
+							break;
+						}
+						int have = t.Length > 0 ? (f.Creatures.TryGetValue(t, out int h) ? h : 0) : f.Creatures.Where(kv => !catching || catchable(kv.Key)).Sum(kv => kv.Value);
+						if (have == 0) c.Add(i, Level.Problem, head + " needs " + (t.Length > 0 ? t.ToLowerInvariant() + "s" : catching ? "animals to catch (chickens, goats or llamas)" : "creatures") + ", and the island has none" + tail, fix);
 						else if (st.Count > have && !(t.Length > 0 ? f.CreaturesComeBack.Contains(t) : f.CreaturesComeBack.Count > 0))
 							c.Add(i, Level.Warning, head + " needs " + st.Count + ", but the island has only " + have + " and they don't come back: players can't reach " + st.Count + " there.", "Place more, or set them to come back after some days, or lower the number in the quest.");
 						else if (st.Count > have)
@@ -1020,7 +1089,8 @@ namespace DynamicIslands.Editor
 							c.Add(i, Level.Tip, head + " needs " + t.ToLowerInvariant() + "s, and in " + string.Join(" and ", without.ToArray()) + " worlds Raft has none (as on its own islands): there the quest can't be finished.", "Fine for worlds in the other game modes; for every mode, use another creature.");
 						break;
 					case "collect":
-						if (t.Length > 0 && !f.AllText.Contains(StoryItems.Ref(StoryItems.IdOf(t))))
+						// (what the island gives - not the quest's own "collect story:key" line, which matched itself: questfix 11-14)
+						if (t.Length > 0 && !f.GivesStory.Contains(StoryItems.IdOf(t)))
 							c.Add(i, Level.Warning, head + " needs the story item " + StoryItems.Label(t) + ", but nothing on the island gives it (no chest, zone or action). It works only if players got it on another island.", "Put it in a chest or a zone's items on this island, or make sure another island gives it first.");
 						break;
 					case "blueprint":
@@ -1064,6 +1134,21 @@ namespace DynamicIslands.Editor
 				foreach (Facts f in Brings(c, c.Plan.Rules[i]))
 					if (!f.Sample && seen.Add(f.Name))
 						foreach (Finding t in f.Traps) c.Add(i, t.Level, R(c, i) + " brings " + f.Describe + ": " + t.Text, t.Fix);
+		}
+
+		/// <summary>The quests of the island being edited, or of each saved island the plan brings (once, at the first rule
+		/// that brings it): a step that can't be done there, a step line the game skips (questfix 11-14).</summary>
+		static void CheckIslandQuests(Ctx c)
+		{
+			if (c.IslandMode)
+			{
+				if (c.Own != null) CheckAllQuests(c, -1, c.Own, "This island");
+				return;
+			}
+			var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			for (int i = 0; i < c.Plan.Rules.Count; i++)
+				foreach (Facts f in Brings(c, c.Plan.Rules[i]))
+					if (!f.Sample && seen.Add(f.Name)) CheckAllQuests(c, i, f, R(c, i));
 		}
 
 		/// <summary>The when/then sounds and camera moments (RF1/RF2): a sound Raft doesn't have, a marker or look-at name no object has.</summary>
@@ -1123,7 +1208,8 @@ namespace DynamicIslands.Editor
 			var used = new HashSet<string>(x.NeedsStory.Concat(x.GivesStory), StringComparer.OrdinalIgnoreCase);
 			for (int n = 0, quests = IslandQuest.CountIn(f.Props); n < quests; n++)
 				foreach (IslandQuest.Step st in IslandQuest.From(f.Props, n).Steps)
-					if (StoryItems.IsStory(st.Target)) used.Add(StoryItems.IdOf(st.Target));
+					// (a collect step counts story items with or without "story:" before the id: "collect|key" wants story:key)
+					if (StoryItems.IsStory(st.Target) || st.Type == "collect" && st.Target.Trim().Length > 0) used.Add(StoryItems.IdOf(st.Target));
 			List<string> unknown = used.Where(id => id.Length > 0 && !defined.Contains(id) && QuestItemPickups.Def(id) == null).OrderBy(id => id).ToList();
 			if (unknown.Count > 0)
 				x.Traps.Add(new Finding(-1, Level.Warning, "the story item" + (unknown.Count > 1 ? "s " : " ") + string.Join(", ", unknown.Select(id => "'" + id + "'").ToArray()) +
