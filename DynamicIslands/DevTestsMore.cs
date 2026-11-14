@@ -1032,6 +1032,7 @@ namespace DynamicIslands
 			};
 			Application.logMessageReceived += watch;
 			int n0 = IslandWorldState.Islands.Count, spawned = 0, unloaded = 0;
+			int objs0 = UnityEngine.Object.FindObjectsOfType<Transform>().Length;
 			Application.LogCallback unloads = (msg, trace, type) => { if (msg.Contains("Unloaded island")) unloaded++; };
 			Application.logMessageReceived += unloads;
 			var samples = new List<float[]>(); // sailed m, frame ms, managed MB, Unity MB (0 if the build does not report it), loaded islands
@@ -1088,7 +1089,19 @@ namespace DynamicIslands
 			Check(ref ok, m1 < m0 + 400f && g1 < g0 + 150f, "memory stays flat: Unity " + m0.ToString("F0") + " -> " + m1.ToString("F0") + " MB, managed " + g0.ToString("F0") + " -> " + g1.ToString("F0") + " MB");
 			Check(ref ok, errors == 0, errors + " errors from the mod while sailing" + (firstError != null ? " (first: " + firstError + ")" : ""));
 			// (the test world stays as it was: no automatic islands left behind, unless kept for a check after)
+			// (where the frame time goes when it grows - 11-14 IX8 solo: 64 ms at 3 km, 190-526 ms after 24 km, memory flat:
+			// the same frames measured again once the sail's islands are gone, and the scene's objects counted)
+			bool grew = f1 >= Mathf.Max(f0 * 1.5f, f0 + 8f);
+			int objsEnd = grew ? UnityEngine.Object.FindObjectsOfType<Transform>().Length : 0;
 			if (!keep) IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(n0).Select(x => x.Id).ToList(), true);
+			if (grew && !keep)
+			{
+				yield return new WaitForSeconds(5f);
+				float ta = Time.realtimeSinceStartup;
+				for (int i = 0; i < 60; i++) yield return null;
+				float msAfter = (Time.realtimeSinceStartup - ta) / 60f * 1000f;
+				Log("  frame time grew: " + f1.ToString("F1") + " ms at the end with " + objsEnd + " objects (" + objs0 + " at the start), " + msAfter.ToString("F1") + " ms with the sail's islands removed, " + UnityEngine.Object.FindObjectsOfType<Transform>().Length + " objects");
+			}
 			if (ok) Log("PASS: a long sail"); else Fail("a long sail");
 		}
 
