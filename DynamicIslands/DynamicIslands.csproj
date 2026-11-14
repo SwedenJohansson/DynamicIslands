@@ -124,6 +124,7 @@
     <Compile Include="DevTestsRelease.cs" />
     <Compile Include="DevTestsOptions.cs" />
     <Compile Include="DevTestsHeadStart.cs" />
+    <Compile Include="DevTestsNewWorld.cs" />
     <Compile Include="DevTestsWorldIslands.cs" />
     <Compile Include="DevTestsIslandPicker.cs" />
     <Compile Include="DevTestsStoryChain.cs" />
