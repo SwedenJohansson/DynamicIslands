@@ -136,7 +136,7 @@ note saltchest Salt cellar box | Ada's box: the cistern valve's wheel, wrapped i
 # --- Ada's house (south), drowned, an air pocket: a secret ------------------------------------------------------------
 call hw_sunkhouse x=10 z=-50 h=2 yaw=20 a=adahouse chest=adachest air=adaair bub=adabub dal=adadoor
 call hw_zone x=10 z=-50 al=adahousez id=adahouse r=7 h=1 msg="The salt merchant's house. Its front room holds the bell's old air."
-loot adachest CopperOre*3;Battery*1;Salt*4;TradeToken*2
+loot adachest CopperOre*3;Battery*1;Sand*4;TradeToken*2
 prop adachest loot.refill=0
 note adachest Ada's strongbox | Ada Sund's strongbox: copper, salt and the tokens the upper market still owes her.
 call treasure x=-20 z=-45 r=4 n=1 seed=9595 kind=0

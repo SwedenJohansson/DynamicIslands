@@ -267,12 +267,12 @@ prop darkedge zone.radius=12
 prop puffers creature.count=2
 
 note lu_cavechest Lamp-man's box | The lamp-man's box: wicks, lamp glass, copper wire.
-loot lu_cavechest Glass*2;Copper*2;Rope*2;Battery*1
+loot lu_cavechest Glass*2;CopperOre*2;Rope*2;Battery*1
 prop lu_cavechest loot.refill=0
 note lu_ruinnote Surveyor's hut note | SURVEYOR'S HUT (K. Lindqvist)\n\nThe anglers keep out of the lamplight. So we lit a line of lamps to the cave, and we walked inside the light like children on the cracks in a pavement.\nPast the lamps we never went without a headlight. Past the cave we never went at all.\nThen the Spire turned the shelf feed to half from a hundred miles away, and the anglers started coming to the edge of the light and waiting there. Not attacking. Waiting.\nSomething bigger comes behind them some nights. You only see its lure: one teal lamp that is not ours, walking the line the wrong way.
 note lu_wrecknote Caravan logbook | CARAVAN LOGBOOK - SURVEY TEAM\n\nThe survey team's caravan, lowered on the crane from Thalassa. Bunks for four, kettle for one, arguments for everybody.\nWe slept in it the first week. Then the lights started going out.\nWeek three: a party of children came through on the lamp line with the door warden from the Commons. Twelve. We gave them cocoa and the warden ate three biscuits per child "for morale".\nOne little boy was crying because he had left his whale on the shuttle. The warden promised him he'd see it again. I don't know why people promise things down here.
 note lu_wreckcrate Survey team's crate | The survey team's crate: a spare battery and the team's rope.
-loot lu_wreckcrate Battery*1;Rope*3;Copper*2;Scrap*2
+loot lu_wreckcrate Battery*1;Rope*3;CopperOre*2;Scrap*2
 prop lu_wreckcrate loot.refill=0
 prop lulamp1 beh.repel=8
 prop lulamp2 beh.repel=8

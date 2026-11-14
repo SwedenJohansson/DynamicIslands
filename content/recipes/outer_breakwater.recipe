@@ -163,7 +163,7 @@ loot smugbox TitaniumOre*3;Battery*1;Bolt*4;Rope*2
 prop smugbox loot.refill=0
 prop wallcavechest if.open=has|story:raft-Tangaroa_KeyCard|1
 prop wallcavechest else.open=message||The smugglers' chest has a card slot stamped CONCORD. A keycard would open it.
-loot wallcavechest Scrap*4;Nail*10;Rope*2;Copper*1;TitaniumOre*2
+loot wallcavechest Scrap*4;Nail*10;Rope*2;CopperOre*1;TitaniumOre*2
 
 # --- Deep (10-24, SL14 DEEP 1-HOUR PASS): the climb - a 36 m scaffold tower on its pad beside a raised peak, a plank
 # bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the

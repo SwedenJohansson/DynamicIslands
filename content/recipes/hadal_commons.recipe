@@ -310,7 +310,7 @@ prop darkcity atmo.lightAmount=0.25
 prop darkcity zone.radius=40
 
 note hc_cavechest Quarry chest | A quarryman's chest: chisels gone to rust, and titanium chips he kept.
-loot hc_cavechest TitaniumOre*2;Rope*2;Bolt*2;Copper*1
+loot hc_cavechest TitaniumOre*2;Rope*2;Bolt*2;CopperOre*1
 prop hc_cavechest loot.refill=0
 note hc_ruinnote Warden's lodge note | WARDEN'S LODGE - G. FENNICK\n\nSpare tanks are in the cage by the lodge. The cage key went with Ines. If you have bolt cutters, take what you need, and close the lid after, I am not your mother.\nThe lever for the great doors is on the post by my lodge. Behind them is the strongroom of the Commons, which holds everything the council saved for the day the Spire answered. It has not answered.\nIf you are the Stalker, go home. I have said this on every door in the Network now, and you have not gone home once. I am beginning to think you cannot read.
 note hc_wrecknote Wagon driver's chit | WAGON DRIVER'S CHIT\n\nTwo wagons of quarry stone, Commons terrace 3. Signed, N. Abara.\nThe rails ran out at the trench floor. So did I.\nOn the back: I was hauling stone when the lights went out across the whole Commons at once. Not a fault. A switch. Somebody flicked us off from up the trench like a bedroom light.\nThen it got very quiet. And in the quiet, from the Hollow under the lip, something started to sing the lift's bell back at us. Ding. Ding. Calling.
@@ -325,7 +325,7 @@ prop lodgechest loot.refill=0
 prop lodgechest if.open=signal|wardencage
 prop lodgechest else.open=message||The chest is chained to the cage. Open the cage first.
 note trenchchest Trench box | A box dropped down the dark trench: copper and a battery, dry in wax.
-loot trenchchest Copper*3;Battery*1;CircuitBoard*1
+loot trenchchest CopperOre*3;Battery*1;CircuitBoard*1
 prop trenchchest loot.refill=0
 prop hctrenchdark zone.radius=9
 prop hctrenchdark zone.hazard=dark

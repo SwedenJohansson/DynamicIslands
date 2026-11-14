@@ -70,6 +70,10 @@ namespace DynamicIslands.Editor
 		public string StoryPlace = "";
 		/// <summary>When it counts as done in the chain: "" (its quest, or reaching it), quest, visit, step:n, zone:name, signal:name.</summary>
 		public string StoryDone = "";
+		/// <summary>What the line said where the game could read nothing (questdeepB 11-14): a story place, done-when or
+		/// distance it can't read used to be dropped without a word (the island left out of the story, its done-when back to
+		/// its quest, its distance the default). Not saved; the plan checker reports them.</summary>
+		public string BadPlace = "", BadDone = "", BadDistance = "";
 		/// <summary>Main story islands (in the chain) get a tab in Raft's notebook (QuestBook): its title ("" = the receiver
 		/// label, else the island's name), its colour (1-10, 0 = by its place) and the intro on its first page ("" = an automatic line).</summary>
 		public string TabTitle = "", TabIntro = "";
@@ -152,6 +156,8 @@ namespace DynamicIslands.Editor
 			var r = new IntroRule { Id = CleanId(p[0]), Message = p.Length > 4 ? p[4] : "", Label = p.Length > 5 ? p[5] : "",
 				StoryPlace = p.Length > 6 ? NormalPlace(p[6]) : "", StoryDone = p.Length > 7 ? NormalDone(p[7]) : "",
 				TabTitle = p.Length > 8 ? p[8] : "", TabIntro = p.Length > 10 ? UnMulti(p[10]) : "" };
+			if (p.Length > 6 && p[6].Length > 0 && r.StoryPlace.Length == 0) r.BadPlace = p[6];
+			if (p.Length > 7 && p[7].Length > 0 && r.StoryDone.Length == 0) r.BadDone = p[7];
 			int colour;
 			if (p.Length > 9 && int.TryParse(p[9], NumberStyles.Integer, CultureInfo.InvariantCulture, out colour)) r.TabColour = Mathf.Clamp(colour, 0, TabColours);
 
@@ -188,6 +194,8 @@ namespace DynamicIslands.Editor
 				r.Distance = where.Length > 2 && float.TryParse(where[2], NumberStyles.Float, CultureInfo.InvariantCulture, out d) ? d : 600f;
 				r.Direction = where.Length > 3 && where[3].Length > 0 ? where[3].ToLowerInvariant() : "any";
 			}
+			int at = r.Where == "near" ? 2 : 1;
+			if (where.Length > at && where[at].Length > 0 && !float.TryParse(where[at], NumberStyles.Float, CultureInfo.InvariantCulture, out d)) r.BadDistance = where[at];
 			r.Distance = Mathf.Clamp(r.Distance, 50f, 5000f);
 			return r;
 		}
@@ -219,6 +227,13 @@ namespace DynamicIslands.Editor
 		public static List<IntroRule> ParseLines(string text)
 		{
 			return (text ?? "").Split('\n').Select(Parse).Where(r => r != null).ToList();
+		}
+
+		/// <summary>The lines of an island's own rules that ParseLines drops (no rule this version can read): the checker
+		/// tells them (questdeepB 11-14: they were dropped without a word).</summary>
+		public static List<string> UnreadLines(string text)
+		{
+			return (text ?? "").Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0 && Parse(l) == null).ToList();
 		}
 
 		public static string ToLines(IEnumerable<IntroRule> rules)
@@ -325,6 +340,9 @@ namespace DynamicIslands.Editor
 		public string EndingTitle = "", Credits = "";
 		/// <summary>Lines this version can't read (a newer one's settings or rules): written back as they are (AU5).</summary>
 		public List<string> Kept = new List<string>();
+		/// <summary>Of the Kept lines, the rule lines (an unreadable rule's island never comes), and the rules renamed because
+		/// another had the name first ("old -> new"). Not saved; the checker reports both (questdeepB 11-14).</summary>
+		public List<string> UnreadRules = new List<string>(), Renamed = new List<string>();
 		/// <summary>The mod version that saved the plan ("" before 2026-10-06).</summary>
 		public string ModVersion = "";
 		/// <summary>Which plan this is, whatever its name (UW2): made with the plan (New, Copy... make their own), kept by edits.
@@ -401,7 +419,7 @@ namespace DynamicIslands.Editor
 					case "rule":
 						IntroRule r = IntroRule.Parse(value);
 						if (r != null) plan.Rules.Add(r);
-						else { plan.Kept.Add(line); Debug.LogWarning("[CUSTOM ISLANDS] World plan '" + name + "': a rule this version can't read is kept as it is: " + value); }
+						else { plan.Kept.Add(line); plan.UnreadRules.Add(value); Debug.LogWarning("[CUSTOM ISLANDS] World plan '" + name + "': a rule this version can't read is kept as it is: " + value); }
 						break;
 					default: plan.Kept.Add(line); break;
 				}
@@ -416,7 +434,9 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < plan.Rules.Count; i++)
 			{
 				if (plan.Rules[i].Id.Length == 0) plan.Rules[i].Id = "rule" + (i + 1);
+				string was = plan.Rules[i].Id;
 				while (!seen.Add(plan.Rules[i].Id)) plan.Rules[i].Id += "b";
+				if (plan.Rules[i].Id != was) plan.Renamed.Add(was + " -> " + plan.Rules[i].Id);
 			}
 			return plan;
 		}

@@ -182,7 +182,7 @@ loot portertools Machete*1;Rope*1
 prop portertools loot.refill=0
 loot clockroom TradeToken*4;Rope*3;Bolt*2
 prop clockroom loot.refill=0
-loot fireworks Blueprint_Firework*1;Firework*2;Rope*2
+loot fireworks Blueprint_Firework*1;Placeable_Firework*2;Rope*2
 prop fireworks loot.refill=0
 loot riggerchest Blueprint_ZiplineBase*1;Blueprint_ZiplineTool*1;Blueprint_BatteryCharger*1;Rope*4;Scrap*2;OxygenBottle*1
 prop riggerchest loot.refill=0

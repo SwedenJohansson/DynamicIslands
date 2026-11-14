@@ -420,6 +420,20 @@ namespace DynamicIslands.Editor
 				else if (ids.ContainsKey(r.Id)) c.Add(i, Level.Problem, R(c, i) + " has the same name as rule " + (ids[r.Id] + 1) + ": rules that point at '" + r.Id + "' can't tell them apart.", "Give each rule its own name.");
 				else ids[r.Id] = i;
 			}
+			// (questdeepB 11-14: these were dropped or changed when the plan was read, without a word)
+			foreach (string bad in plan.UnreadRules)
+				c.Add(-1, Level.Problem, "A rule line the game can't read (\"" + (bad.Length > 60 ? bad.Substring(0, 60) + "..." : bad) + "\"): it is kept in the file, but its island never comes.",
+					"Make the rule again, or fix its WHAT / WHEN / WHERE words in the file (a plan from a newer Custom Islands: update the mod).");
+			foreach (string ren in plan.Renamed)
+				c.Add(-1, Level.Problem, "Two rules have the same name in the file: the later one was renamed (" + ren + ") - rules and the world that point at the old name find the first one.",
+					"Give each rule its own name in the file.");
+			for (int i = 0; i < rules.Count; i++)
+			{
+				IntroRule r = rules[i];
+				if (r.BadPlace.Length > 0) c.Add(i, Level.Problem, R(c, i) + "'s place in Raft's story ('" + r.BadPlace + "') can't be read: the island is left out of the story.", "STORY: choose its place again (first, after an island, in place of one).");
+				if (r.BadDone.Length > 0) c.Add(i, Level.Warning, R(c, i) + "'s \"done when\" ('" + r.BadDone + "') can't be read: the story counts the island's quest instead.", "STORY: choose \"done when\" again.");
+				if (r.BadDistance.Length > 0) c.Add(i, Level.Warning, R(c, i) + "'s distance ('" + r.BadDistance + "') isn't a number: the island comes at the default distance.", "WHERE: type the distance in metres (e.g. 300).");
+			}
 			for (int i = 0; i < rules.Count; i++)
 			{
 				CheckWhen(c, i);
@@ -1151,6 +1165,50 @@ namespace DynamicIslands.Editor
 					if (!f.Sample && seen.Add(f.Name)) CheckAllQuests(c, i, f, R(c, i));
 		}
 
+		/// <summary>
+		/// What an island's file says that the game drops without a word (questdeepB 11-14): Raft items it doesn't have in loot,
+		/// zones, trade stands, give actions and quest rewards (TriggerZone.Give only logs them - the player gets nothing; 14
+		/// library islands had Copper, Firework, Salt or Candle), action lines with no verb the game knows (a journal page or
+		/// message typed with a real line break is cut there: the rest of the page is read as actions and dropped), and lines of
+		/// the island's own rules no rule can be read from (the island they would bring never comes).
+		/// </summary>
+		static void FindDataTraps(IslandFile f, Facts x, List<IDictionary<string, string>> objects)
+		{
+			var badItems = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+			var cutLines = new List<string>();
+			// (the item list is empty before Raft has loaded its items: nothing to say then)
+			bool items = ItemManager.GetAllItems() != null && ItemManager.GetAllItems().Count > 0;
+			Action<string> checkItems = list =>
+			{
+				if (!items) return;
+				foreach (var l in ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, list ?? "" } }))
+					if (!StoryItems.IsStory(l.Key) && ItemManager.GetItemByName(l.Key) == null) badItems.Add(l.Key);
+			};
+			foreach (IDictionary<string, string> p in objects.Concat(new[] { (IDictionary<string, string>)(f.Props ?? new Dictionary<string, string>()) }))
+			{
+				foreach (string key in new[] { ObjectProps.LootItems, ObjectProps.TreasureLoot, TradeStand.GiveProp, TradeStand.GetProp }) checkItems(ObjectProps.Get(p, key));
+				foreach (var kv in p.Where(kv => kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix)))
+					foreach (string line in (kv.Value ?? "").Split('\n'))
+					{
+						if (line.Trim().Length == 0) continue;
+						ObjAction a = ObjAction.Parse(line);
+						if (a == null) cutLines.Add(line.Trim());
+						else if (a.Verb == "give") checkItems(a.Arg);
+					}
+			}
+			for (int n = 0, quests = IslandQuest.CountIn(f.Props); n < quests; n++) checkItems(IslandQuest.From(f.Props, n).Reward);
+			if (badItems.Count > 0)
+				x.Traps.Add(new Finding(-1, Level.Warning, "it gives or asks for items Raft doesn't have: " + string.Join(", ", badItems.Select(n => "'" + n + "'").ToArray()) + " - a typo or an old name? Players get nothing for them (a trade asking for one can't be done).",
+					"Choose the item again with the ... button (loot, trade stand, give action or quest reward): e.g. CopperOre, Placeable_Firework, Placeable_Candlestick."));
+			if (cutLines.Count > 0)
+				x.Traps.Add(new Finding(-1, Level.Warning, "an action has " + (cutLines.Count == 1 ? "a line" : cutLines.Count + " lines") + " the game skips (" + string.Join("; ", cutLines.Take(3).Select(l => "\"" + (l.Length > 40 ? l.Substring(0, 40) + "..." : l) + "\"").ToArray()) + (cutLines.Count > 3 ? "; ..." : "") + "): no action starts with it. A journal page or message with a line break in it is cut there - the rest is lost.",
+					"Write \\n for a line break in a journal page or message, or fix the action's first word (show, give, journal, message...)."));
+			List<string> unread = IntroRule.UnreadLines(ObjectProps.Get(f.Props, WorldDirector.IslandRulesKey));
+			if (unread.Count > 0)
+				x.Traps.Add(new Finding(-1, Level.Problem, "its own rules have " + (unread.Count == 1 ? "a line" : unread.Count + " lines") + " the game can't read as a rule (" + string.Join("; ", unread.Take(2).Select(l => "\"" + (l.Length > 50 ? l.Substring(0, 50) + "..." : l) + "\"").ToArray()) + "): the island " + (unread.Count == 1 ? "it brings" : "they bring") + " never comes.",
+					"Open the island's rules (Island tab > Rules...) and set the rule again, or fix its WHAT / WHEN / WHERE words in the file."));
+		}
+
 		/// <summary>The when/then sounds and camera moments (RF1/RF2): a sound Raft doesn't have, a marker or look-at name no object has.</summary>
 		static void FindMomentTraps(IslandFile f, Facts x, List<IDictionary<string, string>> objects)
 		{
@@ -1202,6 +1260,7 @@ namespace DynamicIslands.Editor
 		{
 			var objects = f.Objects.Select(o => new KeyValuePair<IslandObject, IDictionary<string, string>>(o, o.Props ?? new Dictionary<string, string>())).ToList();
 			FindMomentTraps(f, x, objects.Select(o => o.Value).ToList());
+			FindDataTraps(f, x, objects.Select(o => o.Value).ToList());
 			// A story item the island uses that isn't in its Story items list (deleted there, or a typo): another island
 			// of the world may define it (StoryItems.Find), otherwise it shows with its id for a name and no picture
 			var defined = new HashSet<string>(StoryItems.Of(f.Props).Select(d => d.Id), StringComparer.OrdinalIgnoreCase);
@@ -1460,6 +1519,20 @@ namespace DynamicIslands.Editor
 				!(r.When == "rule" && c.Plan.Rules.Any(o => o != r && o.InStory && o.Id.Equals(r.WhenRef, StringComparison.OrdinalIgnoreCase))))
 				c.Add(i, Level.Warning, R(c, i) + " is in the story, but its WHEN isn't \"When the world starts\": when its turn in the story comes it still waits for that, and nothing tells the players why (its note shows #---- until then).",
 					"WHEN: choose \"When the world starts\" - the story's order already decides when it comes.");
+			// (questdeepB 11-14: islands placed after each other in a circle - or after themselves - never get their turn)
+			if (r.StoryPlace.StartsWith("after:") && StoryOrder.Parse(r.StoryPlace.Substring(6)) == ChunkPointType.None)
+			{
+				var met = new HashSet<IntroRule>();
+				IntroRule at = r;
+				while (at != null && met.Add(at) && at.StoryPlace.StartsWith("after:"))
+				{
+					string name = at.StoryPlace.Substring(6);
+					at = c.Plan.Rules.FirstOrDefault(o => o.InStory && o.Id.Equals(name, StringComparison.OrdinalIgnoreCase));
+				}
+				if (at == r)
+					c.Add(i, Level.Problem, R(c, i) + " comes in the story after '" + r.StoryPlace.Substring(6) + "', " + (r.StoryPlace.Substring(6).Equals(r.Id, StringComparison.OrdinalIgnoreCase) ? "itself" : "which comes after it (a circle)") + ": none of them ever gets its turn.",
+						"STORY: place one of them first or after one of Raft's islands.");
+			}
 			string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
 			foreach (Facts f in Brings(c, r))
 			{
