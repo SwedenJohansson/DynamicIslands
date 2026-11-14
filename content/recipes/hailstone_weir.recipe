@@ -230,9 +230,10 @@ brush flatten at 5 -25 r=5 s=20 frames=200 h=-6
 brush flatten at 5 -25 r=3.5 s=20 frames=400 h=-7.5
 brush smooth at 5 -25 r=7 s=4 frames=20
 brush flatten at 11.5 -32.5 r=2.5 s=20 frames=200 h=1.75
-# (11-13 w11e: the weir walk still ended in the pool - the clear below at r=7 took six of the deck plates past the middle
-# pier (the island had 14 of the old 20); r=5.5 stops short of the deck, whose nearest plate edge is 5.85 m off)
-clear at 5 -25 r=5.5 body
+# (11-14 w11g: r=5.5 did not save the deck - the island still had 14 plates, and the culvert swim stuck at its mouth;
+# back to r=7. The plates past the east pier were left out as buried when placed, before the brushes above lowered the
+# bank under them, so the walk stepped off the deck's end into the pool: they are placed again after the culvert below)
+clear at 5 -25 r=7 body
 call kit_st x=5 z=-25 yaw=20 len=41.6 slope=12 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=1 as=hwculvert
 prop hwculvert cave.rock=plain
 place UT_Drawbridge hwculvertgate at 5 -23.6 h=-6 rot=0,20,0
@@ -248,6 +249,13 @@ prop hwculvertair zone.message=The gauge store at the top of the culvert - dry, 
 place Loot_ChestSmall hwgaugechest at 20.5 20.6 h=5 drop yaw=240
 prop hwgaugechest loot.refill=0
 place Story_Islander hwmaya at 14 -24.5 ground yaw=270
+# the weir deck's east end again, now the bank under it is cut (a plate still under the ground is left out as before)
+place Block_Floor_Tier3 - at 3.2 -31.6 h=1.62
+place Block_Floor_Tier3 - at 4.8 -31.6 h=1.62
+for d 6.4 11.2 1.6
+place Block_Floor_Tier3 - at $d -31.6 h=1.62
+place Block_Floor_Tier3 - at $d -32.4 h=1.62
+next
 pop
 prop hwmaya obj.name=Weirkeeper Maya
 prop hwmaya islander.character=Maya
