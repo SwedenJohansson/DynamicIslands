@@ -8,6 +8,15 @@ hour 11
 weather Calm
 
 # Outside: the hill and the mouth from the beach
+# (11-13 cavemix, TODO 0f) the cave's boar: alive, on the dug floor under the hill's rock, then dealt with
+at 53 -70
+wait 2
+expect animals Warthog 1
+expect animalsinside Warthog 1
+wait 2
+picture bw_boar 53 3.9 -57 53 4 -50.8 aim=Warthog light=20
+kill Warthog
+expect animals Warthog 0
 picture bw_cave_out 53 3 -76 53 3 -60
 picture bw_cave_mouth 53 2.4 -69 53 2.4 -60
 
