@@ -11,6 +11,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (not released yet)
 
+- **Esc skips a camera moment or fly-through and nothing else**: the same press opened Raft's pause menu too.
+- **Hazard suit ends with its world**: a suit put on in one world stayed on in a brand-new world started in the same session (a loaded world already ended it).
+- **Multiplayer: a trader raft's goods are never held for nobody**: when the host said yes to a trade after the unit was sold or your payment left your inventory, that unit stayed held for everyone until the world was loaded again.
+- **Multiplayer: only the host can move players or start cutscenes**: a modified game in a lobby could move every player (the "where you stood" message) or show the ending credits, camera moments and timers to everyone.
+- **A received world's save on a morning keeps a dated name**: when a received world's own "-Latest" save was moved aside before 10:00, it got a name with " (2)" instead of the minute before (Raft writes the hour without a leading 0).
 - **Crafted weapons and tools work again** (3.4: the titanium greatsword, titanium spear and titanium machete never hit anything, the long paddle didn't row, and the magnet hook only worked for mining): the upgrades held in the hand now get Raft's own swing, stroke and throw signals, as the item they upgrade does. The magnet hook pulls floating debris in again; the greatsword, spear and machete hit creatures half again as hard as Raft's own (the machete still cuts vines and harvests); the long paddle pushes twice as hard.
 - **Upgrades placeable in every world**: each time a world loads, the mod checks that every buildable upgrade (research table, engines, nets...) still has its building pieces and mends any that went missing, so an old world never shows no ghost for one.
 - **Worlds get their day back** (the calendar showed day 0 after a restart, the raft still there): before 3.4, *Esc > Quit game* made one more save after Raft had left the world, with the day already reset to 0 (and no world id). 3.4 stopped that save and gave such worlds their id back, but not their day. Now the day comes back too when the world loads, from the save Raft made just before (plus any days played since). The day may come back a few hours short: it is the day of the last good save.

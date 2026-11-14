@@ -298,6 +298,16 @@ namespace DynamicIslands
 			yield return null;
 			yield return null;
 			Check(ref ok, !EscGuard.Blocks(), "two frames later: the pause menu takes Esc again");
+			// (a cutscene skips on Esc: the pause menu opened on the same press - sweep 11-14)
+			Transform cam = Camera.main != null ? Camera.main.transform : null;
+			CameraMoment.Begin(cam != null ? cam.position + cam.forward * 5f : Vector3.up * 5f, Quaternion.identity, 30f);
+			yield return null;
+			Check(ref ok, CameraMoment.Active && EscGuard.Blocks(), "camera moment: the pause menu skips Esc");
+			CameraMoment.Skip();
+			Check(ref ok, !CameraMoment.Active && EscGuard.Blocks(), "moment skipped on this press: still skipped");
+			yield return null;
+			yield return null;
+			Check(ref ok, !EscGuard.Blocks(), "two frames after the moment: the pause menu takes Esc again");
 			if (ok) Log("PASS: esc guard"); else Fail("esc guard");
 		}
 

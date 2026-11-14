@@ -110,6 +110,8 @@ namespace DynamicIslands
 				Check(ref ok, Directory.Exists(Path.Combine(w, "2026.11.10-15.00")), "own -Latest, name free -> dated");
 				Check(ref ok, Directory.GetDirectories(w).Count(d => d.EndsWith("-Latest")) == 0, "no -Latest left");
 				Check(ref ok, WorldSaveShare.FreeDatedName(Path.Combine(w, "not a date")).EndsWith("not a date (2)"), "an undated name gets (2)");
+				// (Raft's hour is unpadded: before 10:00 the name never parsed and got " (2)" - sweep 11-14)
+				Check(ref ok, WorldSaveShare.FreeDatedName(Path.Combine(w, "2026.11.10-9.00")).EndsWith("2026.11.10-8.59"), "a morning name (unpadded hour) -> the minute before, Raft's format");
 
 				// 5. the host renamed the world: the old folder (marker = this world) moves to the new name
 				Guid g = Guid.NewGuid();
@@ -158,8 +160,9 @@ namespace DynamicIslands
 					if (IslandNetwork.NotFromHost(m, 111UL, false)) Check(ref ok, false, "kind " + kind + " from the host dropped");
 					if (IslandNetwork.NotFromHost(m, 222UL, true)) Check(ref ok, false, "kind " + kind + " dropped on the host");
 				}
-				Check(ref ok, IslandNetwork.HostOnlyKinds.Count >= 19, "host-only kinds checked: " + IslandNetwork.HostOnlyKinds.Count);
-				foreach (int kind in new[] { IslandNetMessage.ObjectUsed, IslandNetMessage.QuestStep, IslandNetMessage.FileRequest, IslandNetMessage.FileChunk, IslandNetMessage.Claim, IslandNetMessage.Ping, IslandNetMessage.PlayerPlace })
+				Check(ref ok, IslandNetwork.HostOnlyKinds.Count >= 21, "host-only kinds checked: " + IslandNetwork.HostOnlyKinds.Count);
+				Check(ref ok, IslandNetwork.HostOnlyKinds.Contains(IslandNetMessage.PlayerPlace) && IslandNetwork.HostOnlyKinds.Contains(IslandNetMessage.Moment), "a player's place and moments (credits, cutscenes) only from the host");
+				foreach (int kind in new[] { IslandNetMessage.ObjectUsed, IslandNetMessage.QuestStep, IslandNetMessage.FileRequest, IslandNetMessage.FileChunk, IslandNetMessage.Claim, IslandNetMessage.Ping })
 					Check(ref ok, !IslandNetwork.NotFromHost(new IslandNetMessage { Kind = kind }, 222UL, false), "kind " + kind + " (players send it) passes");
 				Check(ref ok, !IslandNetwork.NotFromHost(new IslandNetMessage { Kind = IslandNetMessage.Islands }, 0UL, false), "unknown sender: passes (never drops on missing data)");
 				IslandNetwork.HostIdOverride = 0UL;

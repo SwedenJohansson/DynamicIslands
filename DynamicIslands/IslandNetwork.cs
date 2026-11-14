@@ -709,7 +709,9 @@ namespace DynamicIslands.Editor
 			IslandNetMessage.ObjectSet, IslandNetMessage.QuestItemsBack, IslandNetMessage.WorldNewId, IslandNetMessage.AlphaHealth, IslandNetMessage.WorldOptions,
 			IslandNetMessage.Randomizer, IslandNetMessage.RogueShark, IslandNetMessage.WorldCopy, IslandNetMessage.WorldSave,
 			IslandNetMessage.StormSeas, IslandNetMessage.WhaleBreach, IslandNetMessage.VendingHatch, IslandNetMessage.StoryChain,
-			IslandNetMessage.QuestCount, IslandNetMessage.CreatureSpots, IslandNetMessage.Announce };
+			IslandNetMessage.QuestCount, IslandNetMessage.CreatureSpots, IslandNetMessage.Announce,
+			// (only the host sends these too: a modified peer moved every player or ran the ending credits and cutscenes - sweep 11-14)
+			IslandNetMessage.PlayerPlace, IslandNetMessage.Moment };
 
 		/// <summary>Tests: how many host-only messages from someone else a player dropped.</summary>
 		internal static int DroppedNotFromHost;

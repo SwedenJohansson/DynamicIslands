@@ -938,6 +938,8 @@ namespace DynamicIslands.Editor
 			if (!isNew || CustomIslandSpawner.RaftPosition == null || SaveAndLoad.WorldGuid == Guid.Empty) return;
 			Log("A new world has started");
 			IslandWorldState.OnWorldLoaded();
+			// (a suit put on in another world ended only on a load, not in a new world - sweep 11-14)
+			Hazards.SuitUntil = 0f;
 			try { CreatureSpawner.OnWorldLoaded(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Creatures in the new world: " + e.Message); }
 			try { Editor.ExtraUpgrades.PlacementCheck(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Upgrades in the new world: " + e.Message); }
 			worldHandled = true;
