@@ -1209,6 +1209,63 @@ namespace DynamicIslands.Editor
 					"Open the island's rules (Island tab > Rules...) and set the rule again, or fix its WHAT / WHEN / WHERE words in the file."));
 		}
 
+		static readonly System.Text.RegularExpressions.Regex ContainerRx = new System.Text.RegularExpressions.Regex(@"\b(chest|crate|box|barrel|locker|safe|trunk|cabinet|cupboard|case|drawer|stash|coffer|strongbox|hold|shed|cache|wardrobe|bin|basket|sack|bag|hive|lockbox|tin|fridge)(e?s)?\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+		/// <summary>
+		/// Quest text rules (questdeepB 11-14): a collect step whose story item lies only in a chest or crate says so - a
+		/// container word, the chest's own name (its last word: "the fuel drum"), or an earlier step of the quest opens that
+		/// chest or collects the same item. Otherwise players search the ground and the rooms for it, not the chests.
+		/// </summary>
+		static void FindChestWording(IslandFile f, Facts x, List<KeyValuePair<IslandObject, IDictionary<string, string>>> objects)
+		{
+			var holders = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+			var free = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			var owners = new List<KeyValuePair<string, IDictionary<string, string>>> { new KeyValuePair<string, IDictionary<string, string>>(null, f.Props ?? new Dictionary<string, string>()) };
+			foreach (var o in objects)
+			{
+				owners.Add(new KeyValuePair<string, IDictionary<string, string>>(o.Key.Name, o.Value));
+				if (QuestItemPickups.IsModel(o.Key.Name)) { string id = QuestItemPickups.StoryId(o.Key.Name); if (id != null) free.Add(id); }
+			}
+			foreach (var ow in owners)
+			{
+				bool chest = ow.Key != null && ObjectProps.IsLoot(ow.Key, ow.Value);
+				foreach (var kv in ow.Value)
+				{
+					if (kv.Key == StoryItems.Key || IsStepsKey(kv.Key) || kv.Key.StartsWith(BehaviourProps.CheckPrefix) || kv.Key == TradeStand.GiveProp) continue;
+					bool inChest = chest && kv.Key == ObjectProps.LootItems;
+					foreach (System.Text.RegularExpressions.Match m in GiveRx.Matches(kv.Value ?? ""))
+					{
+						if (!inChest) { free.Add(m.Groups[1].Value); continue; }
+						HashSet<string> t;
+						if (!holders.TryGetValue(m.Groups[1].Value, out t)) holders[m.Groups[1].Value] = t = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+						string title = ObjectProps.Get(ow.Value, ObjectProps.NoteTitle).Trim();
+						if (title.Length > 0) t.Add(title);
+					}
+				}
+			}
+			var bad = new List<string>();
+			for (int n = 0, quests = IslandQuest.CountIn(f.Props); n < quests; n++)
+			{
+				List<IslandQuest.Step> steps = IslandQuest.From(f.Props, n).Steps;
+				for (int s = 0; s < steps.Count; s++)
+				{
+					IslandQuest.Step st = steps[s];
+					if (st.Type != "collect") continue;
+					string id = StoryItems.IdOf(st.Target);
+					HashSet<string> titles;
+					if (id.Length == 0 || free.Contains(id) || !holders.TryGetValue(id, out titles)) continue;
+					string text = st.Text ?? "";
+					if (ContainerRx.IsMatch(text)) continue;
+					if (titles.Any(t => System.Text.RegularExpressions.Regex.IsMatch(text, @"\b" + System.Text.RegularExpressions.Regex.Escape(t.Split(' ').Last()) + @"s?\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))) continue;
+					if (steps.Take(s).Any(e => e.Type == "open" && titles.Contains(e.Target.Trim()) || e.Type == "collect" && StoryItems.IdOf(e.Target).Equals(id, StringComparison.OrdinalIgnoreCase))) continue;
+					bad.Add((quests > 1 ? "quest " + (n + 1) + " " : "") + "step " + (s + 1) + " \"" + (text.Length > 40 ? text.Substring(0, 40) + "..." : text) + "\"");
+				}
+			}
+			if (bad.Count > 0)
+				x.Traps.Add(new Finding(-1, Level.Warning, "a collect step's story item lies only in a chest or crate and the step doesn't say so (" + string.Join("; ", bad.Take(3).ToArray()) + (bad.Count > 3 ? "; ..." : "") + "): players search the ground for it, not the chests.",
+					"Say where it lies in the step's text: \"in a chest\", \"from the box on its deck\", \"in the crate in the hut\" (quest text rules)."));
+		}
+
 		/// <summary>The when/then sounds and camera moments (RF1/RF2): a sound Raft doesn't have, a marker or look-at name no object has.</summary>
 		static void FindMomentTraps(IslandFile f, Facts x, List<IDictionary<string, string>> objects)
 		{
@@ -1261,6 +1318,7 @@ namespace DynamicIslands.Editor
 			var objects = f.Objects.Select(o => new KeyValuePair<IslandObject, IDictionary<string, string>>(o, o.Props ?? new Dictionary<string, string>())).ToList();
 			FindMomentTraps(f, x, objects.Select(o => o.Value).ToList());
 			FindDataTraps(f, x, objects.Select(o => o.Value).ToList());
+			FindChestWording(f, x, objects);
 			// A story item the island uses that isn't in its Story items list (deleted there, or a typo): another island
 			// of the world may define it (StoryItems.Find), otherwise it shows with its id for a name and no picture
 			var defined = new HashSet<string>(StoryItems.Of(f.Props).Select(d => d.Id), StringComparer.OrdinalIgnoreCase);

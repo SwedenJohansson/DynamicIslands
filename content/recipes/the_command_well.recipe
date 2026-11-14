@@ -439,7 +439,7 @@ step read|Mara's last call|1|Read what Mara left at her post
 step read|Keeper's log: Well|1|Read the Keeper's last log on her desk
 step reach|wellridge|1|Swim out to the sunken ridge, where the rings' glow comes up
 step read|Pump house book|1|Read the book in the drowned pump house beyond the ridge
-step collect|story:wellfuse|3|Find the three fuses: the cable cave, the supply plane and the pump house
+step collect|story:wellfuse|3|Find the three fuses in chests: the cable cave, the supply plane and the pump house
 step open|Pump house locker|1|Fit the fuses in the pump house fuse box and open the locker
 step open|Chained hatch|1|Unlock the five chains on the islet's hatch and open it
 step reach|shaft_top|1|Go back up the shaft to the deck

@@ -60,7 +60,7 @@ FISH = {'Raw_Pomfret', 'Raw_Mackerel', 'Raw_Herring', 'Raw_Tilapia', 'Raw_Catfis
 NEED_RX = re.compile(r'^(?:has|take)\|story:([^|;*\s]+)')
 GIVE_RX = re.compile(r'story:([^|;*\s]+)(?:\*(\d+))?')
 COMPASS_RX = re.compile(r'\b(north|south|east|west)(ern|wards?|-?east|-?west)?\b|\b(NE|NW|SE|SW)\b')
-CONTAINER_RX = re.compile(r'\b(chest|crate|box|barrel|locker|safe|trunk|cabinet|cupboard|case|drawer|stash|coffer|strongbox|hold|shed|cache|wardrobe|bin|basket|sack|bag|hive)s?\b', re.I)
+CONTAINER_RX = re.compile(r'\b(chest|crate|box|barrel|locker|safe|trunk|cabinet|cupboard|case|drawer|stash|coffer|strongbox|hold|shed|cache|wardrobe|bin|basket|sack|bag|hive|lockbox|tin|fridge)(e?s)?\b', re.I)
 # Raft items only some sources give (the resource check: gather/bring/craft needs them in the world)
 SPECIAL = {'Egg': 'chicken', 'Feather': 'chicken', 'Bucket_Milk': 'goat', 'Wool': 'llama'}
 TITANIUM = {'TitaniumOre', 'TitaniumIngot'}
@@ -217,7 +217,7 @@ def facts(path):
     x = {'path': path, 'name': isl['name'], 'file': os.path.splitext(os.path.basename(path))[0], 'props': P,
          'zones': set(), 'signals': set(), 'notes': set(), 'chests_full': set(), 'chests_empty': set(), 'notecount': 0,
          'pages': 0, 'chestcount': 0, 'emptychests': 0, 'creatures': {}, 'tamable': {}, 'needs': set(), 'gives': {},
-         'loot_gives': set(), 'names': set(), 'islanders': set(), 'receivers': set(), 'receivercount': 0, 'sets': {},
+         'loot_gives': set(), 'gives_free': {}, 'holders': {}, 'names': set(), 'islanders': set(), 'receivers': set(), 'receivercount': 0, 'sets': {},
          'lights': {}, 'counters': set(), 'note_idx': [], 'targets': [], 'storydefs': set(), 'alltext': '',
          'badverbs': [], 'raftitems': {}}
     for line in (P.get('story.items') or '').split('\n'):
@@ -255,7 +255,8 @@ def facts(path):
                 if t: x['chests_empty'].add(t)
             elif t: x['chests_full'].add(t)
             for it, n in items:
-                if it.lower().startswith('story:'): x['loot_gives'].add(low(it[6:]))
+                if it.lower().startswith('story:'):
+                    x['loot_gives'].add(low(it[6:])); x['holders'].setdefault(low(it[6:]), set()).add(t)
                 else: x['raftitems'][it] = 'loot'
         if nm.startswith('Creature_') and nm[9:] in CREATURES:
             lab = low(CREATURES[nm[9:]])
@@ -317,8 +318,10 @@ def facts(path):
             elif k == 'trade.give':
                 for m in GIVE_RX.finditer(v or ''): x['needs'].add(low(m.group(1)))
             else:
+                chest = k == 'loot.items' and i > 0 and not O[i - 1]['name'].startswith('Zone_')
                 for m in GIVE_RX.finditer(v or ''):
                     sid = low(m.group(1)); x['gives'][sid] = x['gives'].get(sid, 0) + int(m.group(2) or 1)
+                    if not chest: x['gives_free'][sid] = x['gives_free'].get(sid, 0) + 1
     x['quests'] = []; x['dropped'] = []; x['badcount'] = []; x['cut'] = []
     for n in range(MAX_QUESTS):
         st, dr, bc, cut = quest_of(P, n)
@@ -367,6 +370,12 @@ def check_recipes():
                     if not item_ok(it): add('ERROR', 'recipe', '%s:%d' % (os.path.basename(f), i + 1), "item '%s': Raft has no such item (given as nothing)" % it)
                     elif ITEMS[it.lower()] != it: add('WARN', 'recipe', '%s:%d' % (os.path.basename(f), i + 1), "item '%s': Raft's name is '%s' (case)" % (it, ITEMS[it.lower()]))
     STATS['recipe item lists'] += n
+    # quest text rules: no compass words in a recipe's quest texts either (islands not built or shipped yet too)
+    for f, lines in sorted(RECIPE_LINES.items()):
+        for i, l in enumerate(lines):
+            m = re.match(r'^(step\d* [^|]*\|[^|]*\|[^|]*\||quest\d* (?:intro|done)=)(.*)$', l.rstrip('\r'))
+            c = m and COMPASS_RX.search(m.group(2))
+            if c: add('WARN', 'recipe', '%s:%d' % (os.path.basename(f), i + 1), "quest text says '%s' (compass direction: point at landmarks)" % c.group(0))
 
 
 # ---------------- plans (WorldPlan.Parse / IntroRule.Parse) ----------------
@@ -729,6 +738,19 @@ def given_before(c, fired, rule, what, sid=None, blueprint=None):
     return best
 
 
+def says_container(f, qi, s, sid, text):
+    """Quest text rules (user 10-27): a story item that lies only in a chest or crate - the step says so: a container word,
+    the chest's own name (its last word: 'the fuel drum'), or an earlier step of the quest that opens that chest or
+    collects the same item (the player was told already)."""
+    if CONTAINER_RX.search(text): return True
+    titles = {h for h in f['holders'].get(sid, ()) if h}
+    if any(re.search(r'\b%ss?\b' % re.escape(h.split()[-1]), text, re.I) for h in titles): return True
+    for e in f['quests'][qi][:s]:
+        if e['type'] == 'open' and low(e['target']) in titles: return True
+        if e['type'] == 'collect' and low(e['target'][6:] if low(e['target']).startswith('story:') else e['target']) == sid: return True
+    return False
+
+
 def check_step(f, scope, c, rule, fired, qi, s, st):
     nm = f['file']; t = st['target'].strip(); lt = low(t); ty = st['type']; cnt = st['count']
     w = rloc(nm, 'step ' + ty + '|' + t + '|') if t else rloc(nm, 'step ' + ty + '|')
@@ -762,8 +784,8 @@ def check_step(f, scope, c, rule, fired, qi, s, st):
         if g == 0:
             where = given_before(c, fired, rule, 'story', sid=sid)
             if where in (None, 'later'): E("nothing %s gives story:%s" % ('in the world before it' if where == 'later' else 'in this world' if c else 'on the island', sid))
-        elif sid in f['loot_gives'] and not CONTAINER_RX.search(text) and f['gives'].get(sid, 0) == 0:
-            W("story:%s lies in a chest or crate, its text doesn't say so ('%s')" % (sid, text[:60]))
+        elif sid in f['loot_gives'] and f['gives_free'].get(sid, 0) == 0 and not says_container(f, qi, s, sid, text):
+            W("story:%s lies only in a chest or crate, its text doesn't say so ('%s' - say \"in a chest\": quest text rules)" % (sid, text[:60]))
     elif ty == 'blueprint':
         if t and not item_ok(t): E("Raft has no blueprint '%s'" % t)
         elif t and (t + '*').lower() not in f['alltext'].lower():

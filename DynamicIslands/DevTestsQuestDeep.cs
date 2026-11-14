@@ -10,7 +10,7 @@ namespace DynamicIslands
 {
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CIQuestDeepCheck", docs: "Dev, anywhere (the main menu is quickest): questdeepB 11-14 - Check tells what the game drops without a word: an unreadable rule line, a renamed duplicate rule, a story place / done-when / distance it can't read, story places in a circle, Raft items that don't exist, action lines cut by a real line break, an island's own rule line it can't read")]
+		[ConsoleCommand(name: "CIQuestDeepCheck", docs: "Dev, anywhere (the main menu is quickest): questdeepB 11-14 - Check tells what the game drops without a word: an unreadable rule line, a renamed duplicate rule, a story place / done-when / distance it can't read, story places in a circle, Raft items that don't exist, action lines cut by a real line break, an island's own rule line it can't read; and a story item only in a chest whose step doesn't say so")]
 		public static void QuestDeepCheckCommand(string[] args) { StartTest(QuestDeepCheckRoutine()); }
 
 		static IslandFile QdIsland(string name)
@@ -87,6 +87,26 @@ namespace DynamicIslands
 				Check(ref ok, has(x.Traps, "second line of the page"), "an action line cut by a real line break is told");
 				Check(ref ok, x.Traps.Any(t => t.Level == PlanChecker.Level.Problem && t.Text.Contains("whenever")), "an island's own rule line the game can't read is a Problem");
 				Check(ref ok, !has(x.Traps, "\"next |"), "the island's readable rule isn't told");
+			}
+
+			// Quest text rules: a story item that lies only in a chest - the step says so
+			IslandFile words = QdIsland("ciquestdeep2");
+			words.Objects.Add(QdChest("Mast deck box", "story:lens*1;Rope*1"));
+			words.Objects.Add(QdChest("Sea chest", "story:seal*1"));
+			words.Objects.Add(QdChest("Fuel drum", "story:fuel*1"));
+			words.Objects.Add(QdChest("Hut box", "story:gem*1"));
+			words.Objects.Add(new IslandObject { Name = "Placeable_Storage_Small", Position = Vector3.zero, Props = new Dictionary<string, string> {
+				{ ObjectProps.NoteTitle, "Note" }, { ObjectProps.NoteText, "x" }, { BehaviourProps.EventPrefix + "use", "give|story:gem|1" } } });
+			words.Props["quest.title"] = "Words";
+			words.Props["quest.steps"] = "collect|story:lens|1|Climb the mast and take the lens\ncollect|story:seal|1|Find the seal in the sea chest\ncollect|story:fuel|1|Fill up from the fuel drum\ncollect|story:gem|1|Find the gem by the cliff\ncollect|story:lens|1|Take the lens again";
+			x = null; thrown = null;
+			try { x = PlanChecker.FromFile(words, words.Name, false); } catch (Exception e) { thrown = e.GetType().Name + " " + e.Message; }
+			Check(ref ok, thrown == null && x != null, "Facts of the chest-wording island" + (thrown != null ? " - " + thrown : ""));
+			if (x != null)
+			{
+				PlanChecker.Finding cw = x.Traps.FirstOrDefault(t => t.Text.Contains("lies only in a chest"));
+				Check(ref ok, cw != null && cw.Level == PlanChecker.Level.Warning && cw.Text.Contains("step 1 ") && !cw.Text.Contains("step 2") && !cw.Text.Contains("step 3") && !cw.Text.Contains("step 4") && !cw.Text.Contains("step 5"),
+					"a chest-only story item whose step doesn't say \"chest\" is a Warning; a container word, the chest's own name, an item given elsewhere and an item collected before are not (" + show(x.Traps) + ")");
 			}
 
 			if (ok) Log("PASS: CIQuestDeepCheck - Check tells what the game drops without a word");

@@ -351,7 +351,7 @@ step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the fuel cach
 step collect|story:fuelcan|3|Find three fuel cans: by the ferry landing, in the drawbridge camp and in the fuel cache crate
 step collect|story:pressed|1|Cut the vines by the pressing shed and fill the press
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the pressing shed
-step collect|story:fuse|1|Dive to the sunk barge off the mouth for the relay fuse
+step collect|story:fuse|1|Dive to the sunk barge off the mouth for the relay fuse in its fuse box
 step collect|story:relay|3|Switch on three relays: by the landing, over the drawbridge, behind the vines
 step collect|story:rivercode|1|Read the route code on the outpost's map screen
 step reach|dl_top|1|Climb the timber port's crane on the bluff
