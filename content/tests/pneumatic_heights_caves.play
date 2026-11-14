@@ -8,10 +8,9 @@ offset 0 0
 hour 11
 weather Calm
 
-# the bear in the sorting room (11-12 mixed monsters): checked first, before it wanders out; alive on the dug floor, under the knoll's rock; then put down
-wait 3
-expect animals Bear 1
+# the bear in the trunk's south leg (11-12 mixed monsters; 11-14 moved off the room): checked first, before it wanders out; alive on the dug floor, under the knoll's rock; then put down
 expect animalsinside Bear 1
+expect animals Bear 1
 kill Bear
 expect animals Bear 0
 

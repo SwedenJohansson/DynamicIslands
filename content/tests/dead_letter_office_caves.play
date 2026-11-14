@@ -1,7 +1,7 @@
 # The Dead Letter Office's held-mail vault (CIPlay dead_letter_office_caves, 11-12 w12 prep; in a test world 'CI ...').
-# Points as in the recipe: the vault's mouth at -10 -36 (way in +z, one tunnel of 7.3 m), the den ~22 m long behind it,
-# its hatch at -10 -18.2 and chest at -9.4 -17 (locked until Clerk Rouhi's talk, shown by her answer 2). Floor ~3.5 m
-# (a guess). Rouhi at 55 -24.5. Offline-written, never run; re-read the offset after the build.
+# Points as in the recipe (11-14 dug): the knoll at -18 -22, the vault's mouth at -18 -37 (way in +z, 3 m level then 9 m),
+# the chamber -25 -> -19, its hatch at -18 -22.5 and chest at -17.2 -21.2 (locked until Clerk Rouhi's talk, shown by her
+# answer 2). Floor = the knoll's foot ~4 m (a guess). Rouhi at 55 -24.5. Offline-written, never run; re-read the offset after the build.
 island The Dead Letter Office keep
 offset 0 0
 hour 11
@@ -16,9 +16,9 @@ expect message follow the HELD MAIL sign
 expect shown dlvaulthatch
 
 # In by the mouth, to the den
-picture dl_vault_out -10 +3 -50 -10 +1.5 -36
-walk -10 -44 to -10 -36 to -10 -30 to -10 -24 to -10 -20
-picture dl_vault_in -10 4.6 -25 -10 3.2 -17 light=20
+picture dl_vault_out -18 +3 -51 -18 +1.5 -37
+walk -18 -45 to -18 -37 to -18 -31 to -18 -26 to -18 -23.5
+picture dl_vault_in -18 5.9 -28 -18 4.7 -20 light=20
 
 # The hatch opens on the held mail
 use dlvaulthatch stay
@@ -30,4 +30,4 @@ wait 2
 expect item Placeable_PaperBundle 3
 
 # And out again
-walk -10 -20 to -10 -26 to -10 -33 to -10 -38 to -10 -46
+walk -18 -23.5 to -18 -28 to -18 -34 to -18 -39 to -18 -46

@@ -76,8 +76,8 @@ call mailsack x=0.6 z=2.9 yaw=10 al=sacks
 pop
 
 # --- Outside: more sacks by the door, a lantern, the postbox stand --------------------------------------------------
-call mailsack x=-4.5 z=-16.5 yaw=30 al=sacks
-call mailsack x=-5.2 z=-14.6 yaw=95 al=sacks
+call mailsack x=-3.5 z=-15.5 yaw=30 al=sacks
+call mailsack x=-3.8 z=-13.4 yaw=95 al=sacks
 place "Box Big" - at 3.5 -17.5 ground yaw=20
 place "Box Small" - at 4.4 -16.6 ground yaw=-15
 place Placeable_Lantern_Metal - at 3.5 -17.5 h=6 sit drop
@@ -134,29 +134,29 @@ call lp_hidden x=57 z=-15.4 al=qd_lampchest
 place Creature_Chicken qd_hens at 64 -14 ground
 prop qd_hens creature.count=3
 # --- 11-12 (w12 prep): the held-mail vault (plan 12 row: ST vault under the office, talked-gated; dirt 2, the held mail in a
-# chest). A straight cave (kit_st, the cave tool) into a new knoll in the rock behind the office, 16 m off its back wall
-# (the office, its drawer, letters and route card sit 20 m and more off the den; a 6 m rule can't hold a vault right under
-# them), to a den: the vault where undeliverable mail is held. The held mail lies under a steel hatch in the den's floor, hidden
+# chest), to a den: the vault where undeliverable mail is held. The held mail lies under a steel hatch in the den's floor, hidden
 # until Clerk Rouhi's second answer (Down the stairs behind the counter) shows it, and locked until someone talked to her.
-# Mouth (-10 -36), way in = +z, 1 tunnel (7.3 m), den ~22 m long behind it, mid-den ~18 m in (z -18). cave.dome 22 keeps
-# the dome off the office. Heights guessed: the den floor = the mouth's ground ~3.5 m over the sea (the pad's 2.2 m rising
-# to the natural ground), set down from 8 m. A sign for the vault 8 m off the mouth, clear of the office door's walk.
-call kit_st x=-10 z=-36 yaw=0 len=7.3 slope=0 end=room size=0.7 hill=1 dirt=2 mush=0 stone=0 vines=0 as=dlvault
+# 11-14 w12fix: the kit_st den (cave pieces + a capped dome) failed twice - the capped dome stood a terrain step in the room
+# just past the tunnel ("a step too high" at cave.dome 16 and 22) and showed a brown dome cap over the hill with flat sheets
+# beside the mouth. Now dug ("dig caves too", as Sorting Rock's cellar): a knoll in the rock behind the office (hw_mount at
+# -18 -22, b 14 h 18; the office 28 m off, the pier 20 m, the sacks moved off its slope) and a dug tunnel into it (kit_dig:
+# mouth -18 -37, way in +z, 3 m level then 9 m, a chamber -25 -> -19 under the summit; plain rock). Floor = the knoll's foot
+# (hw_mount ring); hatch and chest set down from 8 m onto the chamber's floor. HEIGHTS guessed.
+call hw_mount x=-18 z=-22 b=14 h=18
+clear at -18 -22 r=16 all only=(?i)boulder|tree|bush|palm|bamboo|mango
+call kit_dig x=-18 z=-37 yaw=0 len=9 flat=3 r=1.75 slope=0 room=1 roomr=3.5 roomlen=6 dirt=2 mush=0 stone=0 vines=0 titanium=0 as=dlvault
 prop dlvault cave.rock=plain
-# (11-13 w12 box run: at 16 the capped dome stood a terrain slope in the room just past the tunnel - "a step too high", green
-#     faces in the den; as Riverfork's rdcave, a bigger cap keeps the room: 22)
-prop dlvault cave.dome=22
-place Note_Sign dlvaultsign at -10 -44.5 ground yaw=0
+place Note_Sign dlvaultsign at -18 -45.5 ground yaw=0
 note dlvaultsign HELD MAIL - VAULT | Undeliverable and unclaimed post is kept in the vault. Carriers and staff only. Ask the clerk before you try the hatch.
 # cavecheck inside dlvaulthatch dlvaultchest
-place TangaroaHatchRoom_Hatch dlvaulthatch at -10 -18.2 h=8 drop yaw=0
+place TangaroaHatchRoom_Hatch dlvaulthatch at -18 -22.5 h=8 drop yaw=0
 prop dlvaulthatch obj.name=dlvaulthatch
 prop dlvaulthatch beh.hidden=1
 prop dlvaulthatch beh.use=Open the vault hatch
 prop dlvaulthatch if.use=talked|Clerk Rouhi
 prop dlvaulthatch on.use=hide|dlvaulthatch\nshow|dlvaultchest\nmessage||The hatch swings up on the held mail: bundles tied with string, each with a red HELD stamp.
 prop dlvaulthatch else.use=message||The vault hatch is padlocked. A tag on the lock: "Clerk's key. Ask Rouhi."
-place Loot_ChestSmall dlvaultchest at -9.4 -17 h=8 drop yaw=0
+place Loot_ChestSmall dlvaultchest at -17.2 -21.2 h=8 drop yaw=0
 prop dlvaultchest obj.name=dlvaultchest
 prop dlvaultchest beh.hidden=1
 prop dlvaultchest loot.refill=0

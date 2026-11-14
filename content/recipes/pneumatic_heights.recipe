@@ -236,8 +236,10 @@ caveloot phtubes dirt=0 mush=2 stone=2 vines=0 titanium=1 light=0
 prop phtubes cave.rock=plain
 # 11-12 user: mixed cave monsters - a bear has made the sorting room its den (this world: bear here, rats under Parcel
 # Canopy, a boar in Sorting Rock's cellar, none in the vault or the cable room). One per place, the floor + 0.3, no drop.
+# (11-14 w12fix: put in the room it spawned at the branch (the room's floor carries no NavMesh it could find within 8 m)
+#     and walked out to the west mouth's lip in 3 runs of 5; now set in the trunk's south leg, 14 m and more from both mouths)
 # cavecheck inside phbear
-place Creature_Bear phbear at 48.5 7 h=3.8
+place Creature_Bear phbear at 51 -1 h=3.8
 prop phbear creature.count=1
 prop phbear creature.respawn=0
 place Zone_Trigger phtubesz at 48.5 7 h=7

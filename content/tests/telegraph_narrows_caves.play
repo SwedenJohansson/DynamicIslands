@@ -23,4 +23,5 @@ expect item Rope 2
 
 # Out again the way in: down the room and the tunnel floor, then swim out of the mouth
 walk 9 41 to 9 48 to 9 56 to 9 64 to 9 72 to 9 80 to 9 88 to 9 96 below=4.5
-swim 9 99 -6.5 to 9 104 -6 to 9 112 -3
+# (11-14 w12fix: the swim at -6.5 went into the mouth's roof and the swimmer came up on the hill at 9 m; at floor + 1)
+swim 9 99 -10 to 9 104 -9 to 9 112 -4
