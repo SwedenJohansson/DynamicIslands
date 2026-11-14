@@ -346,7 +346,7 @@ prop bwcontraband obj.name=bwcontraband
 prop bwcontraband loot.refill=0
 note bwcontraband Contraband | Crates with the Authority's seal cut off and a tally chalked on the lid:\n\nTWELVE COILS - SOLD AT THE ROW\nFOUR INGOTS - SOLD AT THE ROW\nONE RADIO - KEPT\n\nWhoever ran this cave landed on the beach at new moon and went out to Raft Row Bazaar.
 loot bwcontraband MetalIngot*2;CopperIngot*1;Rope*2;Nail*6
-# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear, a hyena or nothing, so nobody can guess what is inside)
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear or nothing, so nobody can guess what is inside)
 # a boar in the smugglers' room (r=2.5, 4 m; floor ~3.5-4.4), the tunnel behind it the way out; no quest step here
 # cavecheck inside bwboar
 place Creature_Boar bwboar at 53 -50.8 h=4.0

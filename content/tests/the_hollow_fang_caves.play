@@ -22,7 +22,7 @@ expect shown hfgrot_vines
 use hfgrot_vines
 expect hidden hfgrot_vines
 picture hf_grotto_cut 1 4.8 -61 -6 4 -59
-# (the rat after the vines: checked before them, 'kill' left the machete out of hand and 'use' cut nothing)
+# (the rat checked once the vines are cut, from the cleft)
 expect animals Rat 1
 expect animalsinside Rat 1
 wait 2

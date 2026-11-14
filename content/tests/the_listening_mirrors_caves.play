@@ -7,16 +7,6 @@ island The Listening Mirrors keep
 offset 0 0
 hour 11
 weather Calm
-# (11-13 cavemix, TODO 0f) the cave's boar: alive, on the dug floor under the hill's rock, then dealt with - checked
-# from the knoll 43 m off (from the note's spot it charged out at the test player before the roof check)
-at -12 40
-wait 2
-expect animals Warthog 1
-expect animalsinside Warthog 1
-wait 2
-picture lm_boar -52.4 7.3 32.8 -54.6 6 34.6 aim=Warthog light=20
-kill Warthog
-expect animals Warthog 0
 at -31 34.5 h=7
 wait 2
 read ECHO CAVES

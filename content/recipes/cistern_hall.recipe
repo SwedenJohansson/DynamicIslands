@@ -512,7 +512,7 @@ dig 54,-42 58,-42 r=3 slope=0
 place Loot_ChestSmall chcischest at 48.2 -54.3 h=6.5 drop yaw=250
 note chcischest Cistern keeper's chest | The cistern keeper's chest, left in the dry cistern when the pump hall took the water: his gauges and the spare fittings.
 loot chcischest MetalIngot*1;Bolt*3;Rope*1;Glass*2
-# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear, a hyena or nothing, so nobody can guess what is inside)
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear or nothing, so nobody can guess what is inside)
 # rats in the dry cistern: one in the side chamber by the keeper's chest (floor ~5), one in the end room (floor 4.7)
 # cavecheck inside chcisratA chcisratB
 place Creature_Rat chcisratA at 46.6 -50.8 h=5.4

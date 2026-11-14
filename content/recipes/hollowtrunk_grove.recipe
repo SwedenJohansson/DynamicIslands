@@ -221,7 +221,7 @@ caveloot rootden dirt=2 mush=4 stone=0 vines=2
 place SmallBoulder3 - at 10.3 -6.3 ground y=-0.4 yaw=30 scale=1.3
 place SmallBoulder4 - at 5.0 -8.9 ground y=-0.4 yaw=200 scale=1.2
 place SmallRock_02 - at 7.9 -4.7 ground y=-0.1 yaw=80
-# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear, a hyena or nothing, so nobody can guess what is inside)
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear or nothing, so nobody can guess what is inside)
 # the root den is empty now - only its mushrooms and dirt; the island's boar is the quest's and stays outside
 call vd_spot x=-35 z=61 al=hglook id=hg_view r=5 msg="From the lookout rocks the five trunks stand like pillars holding the sky up."
 

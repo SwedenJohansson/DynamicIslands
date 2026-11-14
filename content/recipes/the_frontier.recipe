@@ -572,7 +572,7 @@ place Creature_Dolphin dolphins at 24 156 h=-3
 call kit_sys x=-8 z=-75.5 yaw=0 side=1 len=24 bend=10 branch=12 blen=8 gap=16 in2=14 r=1.75 roomr=3.5 dirt=2 mush=2 stone=1 vines=0 titanium=0 light=0 as=frquarry
 dig 2,-51.5 2,-42 r=1.75 slope=0 as=frquarry
 dig 2,-42 2,-31 r=4.5 slope=0 as=frquarry
-# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear, a hyena or nothing, so nobody can guess what is inside)
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear or nothing, so nobody can guess what is inside)
 # a boar in the quarry hall (9 m wide, 11 m long; floor ~2.5-3.5), the long way back through the system behind it; not a
 # bear or a hyena - those are the quest's kills on this island
 # cavecheck inside frboar
