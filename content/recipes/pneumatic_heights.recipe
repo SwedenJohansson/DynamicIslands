@@ -228,6 +228,11 @@ clear at 57 2 r=21 all only=(?i)boulder|tree|bush|palm|bamboo|mango
 # 11-13: kit_sys written out - its room (47 5 -> 49 11, r 4) sat under the knoll's 11.4 m ring with its top at 13.7 m and broke
 # out of the flank (a dark gash over the mouths; the bear not under a roof). The room now turns in toward the knoll's middle
 # (47 5 -> 50 9, r 3.2: top ~12 m under the 17.2 m ring).
+# (11-14 w12fix: CICaveInside found 6 points of the south tube's rim rock standing loose out of the knoll's toe where it
+# bends in at ~49 -5 (ground 5-8 m over the floor there, the shell just under it) - the toe raised and blended, as at the
+# Necropolis gallery, so the ground lies over the tube's shell)
+brush flatten at 48.8 -5.2 r=2.6 s=20 frames=80 h=15
+brush smooth at 48.8 -5.2 r=4 s=4 frames=20
 dig 37,2 51,2 51,-4 r=1.75 as=phtubes
 dig 47,2 47,5
 dig 47,5 50,9 r=3.2

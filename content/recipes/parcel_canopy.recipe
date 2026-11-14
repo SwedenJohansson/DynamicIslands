@@ -147,6 +147,11 @@ pop
 # the plane, the den and the walk line. Floor = the knoll's foot 5.28 m (hw_mount ring); the chamber under the summit, the ground
 # over it ~24 m. HEIGHTS guessed: the shelf 5.28, the natural ground round the shelf blended by the smooth at r 18..20.
 clear at 54 4 r=20 all only=(?i)boulder|tree|bush|palm|bamboo|mango
+# (11-14 w12fix: CICaveInside found 10 points of the tunnel's rim rock standing loose out of the knoll's toe beside it at
+# ~44.7 2.3 (the steep face starts at 46, the ground at its foot 6 m over the floor) - the toe raised and blended on both
+# sides of the tunnel, as at the Necropolis gallery, so the ground lies over its shell)
+brush flatten at 44.8 4 r=3 s=20 frames=80 h=14
+brush smooth at 44.8 4 r=4.5 s=4 frames=20
 call kit_dig x=35 z=4 yaw=90 len=14 flat=2 r=1.75 slope=0 room=1 roomr=3.5 roomlen=6 dirt=0 mush=4 stone=0 vines=3 titanium=0 gate=1 as=pcroots
 prop pcroots cave.rock=plain
 # 11-12 user: mixed cave monsters - rats nest in the root cellar (two, one per place, the floor + 0.3, no drop).
