@@ -1070,7 +1070,7 @@ namespace DynamicIslands
 			else Log("PASS: dig rim probe - " + n + " mouths of " + tuns.Count + " tunnels");
 		}
 
-		[ConsoleCommand(name: "CIDigMouthLook", docs: "Dev, in a world: every dug tunnel's mouths within 2000 m look as the ground round them (11-13 mouth fix) - the rim's top on a shader without shine (not Standard: a grey veil), the lining not out in the open in front of a face (a pale slab with a sawtooth edge: under 3% of its area), and each mouth's rim top, pictured, within 14 of the ground beside it in mean colour and at least 0.6 of its sharpness, on its faces no steeper than the ground beside (dig_mouthlook_<n>_<a|f|l>). 'standard': the same baked textures on Standard for the run instead, to compare; 'stdnormal': baked again on Standard with the mixed normal map; 'stdabs': baked again on Standard, the relief shaded in against flat ground")]
+		[ConsoleCommand(name: "CIDigMouthLook", docs: "Dev, in a world: every dug tunnel's mouths within 2000 m look as the ground round them (11-13 mouth fix) - the rim's top on a shader without shine (not Standard: a grey veil), the lining not out in the open in front of a face (a pale slab with a sawtooth edge: under 3% of its area), and each mouth's rim top, pictured, within 14 of the ground beside it in mean colour and at least 0.6 of its sharpness, on its faces no steeper than the ground beside and against the ground beside of its own colour (dig_mouthlook_<n>_<a|f|l>). 'standard': the same baked textures on Standard for the run instead, to compare; 'stdnormal': baked again on Standard with the mixed normal map; 'stdabs': baked again on Standard, the relief shaded in against flat ground")]
 		public static void DigMouthLookCommand(string[] args)
 		{
 			string a = args.Length > 0 ? args[0] : "";
@@ -1210,6 +1210,7 @@ namespace DynamicIslands
 					// steep face, The Frontier's quarry, came out a blurred sheet of the ground's own mean colour)
 					double sharpT = 0, sharpG = 0, upG = 0;
 					var stepT = new List<KeyValuePair<float, float>>();
+					var groundS = new List<KeyValuePair<Color32, float>>();
 					System.Func<int, float> lum = i => 0.3f * pa[i].r + 0.59f * pa[i].g + 0.11f * pa[i].b;
 					System.Func<int, float> step = i => Mathf.Abs(lum(i + 1) - lum(i)) + Mathf.Abs(lum(i + W) - lum(i));
 					for (int y = 0; y < gh; y++)
@@ -1226,7 +1227,7 @@ namespace DynamicIslands
 									if (xx < 0 || yy < 0 || xx >= gw || yy >= gh) continue;
 									if (top[yy * gw + xx]) { near = true; break; }
 								}
-							if (near && onGround(x, y)) { inG[0] += a.r; inG[1] += a.g; inG[2] += a.b; cG++; upG += up[j]; if (y < gh - 1) sharpG += step(y * S * W + x * S); }
+							if (near && onGround(x, y)) { inG[0] += a.r; inG[1] += a.g; inG[2] += a.b; cG++; upG += up[j]; if (y < gh - 1) groundS.Add(new KeyValuePair<Color32, float>(a, step(y * S * W + x * S))); }
 						}
 					// (what the picture shows, by what a look through every 8th sample meets: the top third, the middle, the bottom)
 					var seenBy = new string[3];
@@ -1255,11 +1256,24 @@ namespace DynamicIslands
 					var likeG = stepT.Where(kv => kv.Key >= slopeG - 0.05f).ToList();
 					if (likeG.Count < 50) likeG = stepT;
 					foreach (var kv in likeG) sharpT += kv.Value;
-					float sharp = likeG.Count > 0 ? (float)(sharpT / likeG.Count) : 0f, sharpBy = (float)(sharpG / cG);
+					// (11-14: and against the ground beside of the rim's own colour only - its colour scaled to the rim's brightness
+					// within ColourNear - when there are enough; else of the rim's brightness (within 15%); else all of it. Round
+					// Cinderfall's mouth the ring beside the rim ran up onto a grey sunlit slope, its sharp lit edges set against
+					// the red ash running on into the rim by eye: 'blurred' 0.6 against 1.2. The mean colour is still against all)
+					const float ColourNear = 8f;
+					float rr = (float)(inT[0] / cT), rg = (float)(inT[1] / cT), rb = (float)(inT[2] / cT), ml = 0.3f * rr + 0.59f * rg + 0.11f * rb;
+					System.Func<Color32, float> lumC = c => 0.3f * c.r + 0.59f * c.g + 0.11f * c.b;
+					var refG = groundS.Where(kv => { float l = lumC(kv.Key); if (l < 1f) return false; float k = ml / l;
+						return Mathf.Max(Mathf.Abs(kv.Key.r * k - rr), Mathf.Abs(kv.Key.g * k - rg), Mathf.Abs(kv.Key.b * k - rb)) <= ColourNear; }).ToList();
+					string refBy = "of its colour";
+					if (refG.Count < 50) { refG = groundS.Where(kv => Mathf.Abs(lumC(kv.Key) - ml) <= 0.15f * ml).ToList(); refBy = "of its brightness"; }
+					if (refG.Count < 50) { refG = groundS; refBy = "all"; }
+					foreach (var kv in refG) sharpG += kv.Value;
+					float sharp = likeG.Count > 0 ? (float)(sharpT / likeG.Count) : 0f, sharpBy = refG.Count > 0 ? (float)(sharpG / refG.Count) : 0f;
 					bool blurred = sharp < 0.6f * sharpBy;
 					if (worst > 14f || blurred) ok = false;
 					Log("  " + (worst > 14f || blurred ? "BAD" : "ok") + ": mouth " + n + " at " + at.ToString("F0") + ": rim top " + (inT[0] / cT).ToString("0") + "," + (inT[1] / cT).ToString("0") + "," + (inT[2] / cT).ToString("0")
-						+ " against the ground beside it " + (inG[0] / cG).ToString("0") + "," + (inG[1] / cG).ToString("0") + "," + (inG[2] / cG).ToString("0") + " (" + cT + "/" + cG + " samples): off by " + worst.ToString("0") + "; sharpness " + sharp.ToString("0.0") + " against " + sharpBy.ToString("0.0") + " (" + likeG.Count + "/" + stepT.Count + " top samples as level as the ground, " + slopeG.ToString("0.00") + ")" + (blurred ? " (blurred)" : ""));
+						+ " against the ground beside it " + (inG[0] / cG).ToString("0") + "," + (inG[1] / cG).ToString("0") + "," + (inG[2] / cG).ToString("0") + " (" + cT + "/" + cG + " samples): off by " + worst.ToString("0") + "; sharpness " + sharp.ToString("0.0") + " against " + sharpBy.ToString("0.0") + " (" + likeG.Count + "/" + stepT.Count + " top samples as level as the ground, " + slopeG.ToString("0.00") + "; against " + refG.Count + "/" + groundS.Count + " ground samples, " + refBy + ")" + (blurred ? " (blurred)" : ""));
 					n++;
 				}
 				if (kept != null) { Material sm = ms[2]; mr.sharedMaterials = kept; if (cmpLook > 0) DigTunnel.DropTestBake(sm); else Object.Destroy(sm); }
