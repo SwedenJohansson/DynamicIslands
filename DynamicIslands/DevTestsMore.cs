@@ -1105,8 +1105,9 @@ namespace DynamicIslands
 			// (where the frame time goes when it grows - 11-14 IX8 solo: 64 ms at 3 km, 190-526 ms after 24 km, memory flat:
 			// the same frames measured again once the sail's islands are gone, and the scene's objects counted)
 			bool grew = f1 >= Mathf.Max(f0 * 1.5f, f0 + 8f);
-			int objsEnd = grew ? UnityEngine.Object.FindObjectsOfType<Transform>().Length : 0;
-			if (grew) foreach (var kv in SailRootCounts().Select(kv => new KeyValuePair<string, int>(kv.Key, kv.Value - (roots0.TryGetValue(kv.Key, out int c0) ? c0 : 0))).Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Take(12))
+			int objsEnd = UnityEngine.Object.FindObjectsOfType<Transform>().Length;
+			Log("  objects: " + objs0 + " at the start, " + objsEnd + " at the end");
+			foreach (var kv in SailRootCounts().Select(kv => new KeyValuePair<string, int>(kv.Key, kv.Value - (roots0.TryGetValue(kv.Key, out int c0) ? c0 : 0))).Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Take(12))
 				Log("    more at the end: " + kv.Key + " +" + kv.Value + " objects");
 			if (!keep) IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(n0).Select(x => x.Id).ToList(), true);
 			if (grew && !keep)
