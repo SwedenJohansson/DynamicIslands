@@ -39,7 +39,7 @@ namespace DynamicIslands
 		// CharacterController.Move, a swept move, so a faster pace still stops at every wall; off in the air, so jumps reach
 		// no farther than a player's; 1 = off)
 		static float reachPace = 1f, reachPaceOn = 1f, reachWalk0, reachSwim0;
-		static int reachPrechecked, reachWalked, reachRewalked, reachCcNoted, reachRespawns;
+		static int reachPrechecked, reachWalked, reachRewalked, reachCcNoted, reachRespawns, reachUnparented;
 		// (spots walks got stuck at on this island (island-local) and how many targets each blocked; once one spot blocks 3
 		// targets the island's other walks are not tried - each is a FAIL with that cause. Dead Letter Office: every chest walk
 		// stuck at the same shore lip after 3 jumps, PQ11 10-28)
@@ -2246,6 +2246,8 @@ namespace DynamicIslands
 			bool wdTried = false;
 			Func<int> watchdog = () =>
 			{
+				// (w10fix3 11-14: a player made a child of Raft's FirstPersonParent did not move at all - The Listening Mirrors' walks)
+				ReachUnparent(pl);
 				float now = Time.realtimeSinceStartup;
 				if (now - wdWin >= 10f)
 				{
@@ -2498,6 +2500,14 @@ namespace DynamicIslands
 		{
 			Player p = pl.GetComponentInChildren<Player>(true);
 			return (p != null && p.IsDead) || (pl.Stats != null && pl.Stats.stat_health.Value <= 0f);
+		}
+
+		/// <summary>The player let go of Raft's "FirstPersonParent" (not the raft's pivot): as its child the walker did not move.</summary>
+		static void ReachUnparent(Network_Player pl)
+		{
+			if (pl == null || !PlayerMove.IsFirstPersonParent(pl.transform.parent)) return;
+			if (reachUnparented++ < 3) Log("(reach walker: the player was a child of FirstPersonParent" + ReachDiag(pl) + " - let go)");
+			pl.transform.SetParent(null, true);
 		}
 
 		/// <summary>True when the player was held (controller off or Raft's movement not free) and was let go.</summary>

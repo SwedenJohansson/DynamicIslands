@@ -23,7 +23,9 @@ namespace DynamicIslands.Editor
 				try { pc.DetachFromLadders(); }
 				catch (System.Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Letting go of a ladder: " + e.Message); }
 			}
-			if (pc != null && pc.HasRaftAsParent) player.transform.SetParent(null, true);
+			// (w10fix3 11-14: also off Raft's "FirstPersonParent" - on The Listening Mirrors every reach walk started at sea a child
+			// of it, grounded at -0.4 m over an 11 m deep sea and not moving; HasRaftAsParent knows only the raft's pivot)
+			if (pc != null && (pc.HasRaftAsParent || IsFirstPersonParent(player.transform.parent))) player.transform.SetParent(null, true);
 			player.transform.position = at;
 			if (pc != null)
 			{
@@ -38,6 +40,9 @@ namespace DynamicIslands.Editor
 			}
 			if (cc != null) cc.enabled = true;
 		}
+
+		/// <summary>Raft's scene object "FirstPersonParent" as the player's parent (see To).</summary>
+		public static bool IsFirstPersonParent(Transform parent) { return parent != null && parent.name == "FirstPersonParent"; }
 
 		/// <summary>How high above the ground Raft's player stands: their position over the bottom of their capsule, plus the
 		/// skin and a hair. A player put with their position on the ground starts with the lower half of the capsule in it: on
