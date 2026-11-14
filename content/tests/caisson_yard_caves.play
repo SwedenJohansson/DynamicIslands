@@ -22,11 +22,12 @@ picture cy_store -10 -1 13 -10 -2.5 5 light=20
 # Back up from the lagoon floor to the land
 walk 6 12 to -2 12 to -10 12 to -20 12 to -28 12 to -34 12 below=-5
 
-# The powder cave's rat (11-09: some caves get rats): over the yard to the cave's mouth, the rat under its rock, then dealt with
+# The powder cave's bear (11-13 cavemix, TODO 0f; a rat there 11-09): over the yard to the cave's mouth, the bear under its
+# rock, then dealt with
 walk -34 12 to -30 -20 to -24 -72 to -24 -63
-expect animals Rat 1
-expect animalsinside Rat 1
+expect animals Bear 1
+expect animalsinside Bear 1
 wait 2
-picture cy_rat -24 3.6 -63 -24 2.4 -55 aim=Rat light=20
-kill Rat
-expect animals Rat 0
+picture cy_bear -24 3.6 -63 -24 2.4 -55 aim=Bear light=20
+kill Bear
+expect animals Bear 0
