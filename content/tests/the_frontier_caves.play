@@ -6,6 +6,15 @@ island The Frontier keep
 hour 11
 weather Calm
 empty
+# (11-13 cavemix, TODO 0f) the cave's boar: alive, on the dug floor under the hill's rock, then dealt with
+at -8 -80
+wait 2
+expect animals Warthog 1
+expect animalsinside Warthog 1
+wait 2
+picture fr_boar 2 5.2 -45 2 3.2 -39.5 aim=Warthog light=25
+kill Warthog
+expect animals Warthog 0
 picture fr_cave_out 0 +4 -88 0 +3 -75.5
 walk -8 -80 to -8 -75.5 to -8 -63.5 to -14 -63.5 to -19 -62.5
 walk -19 -62.5 to -14 -63.5 to -8 -63.5 to -8 -51.5 to 2 -51.5 to 2 -42 to 2 -37

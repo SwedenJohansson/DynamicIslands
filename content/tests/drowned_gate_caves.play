@@ -3,7 +3,7 @@
 # store round 45 -66 (air zone dg_diversstore, the divers' kit at 46.2 -73.5); culvert 2 (kit 20 -5) climbing
 # yaw 200 to the pump sump round 6 -45. Walks along the floor as weatherglass_deep_caves (11-12: swims stuck on the mouth pieces).
 island The Drowned Gate keep
-offset -0.4723 -0.419
+offset 2.5038 -5.1355
 hour 11
 weather Calm
 empty
@@ -18,8 +18,9 @@ wait 2
 expect item Battery 2
 walk 45 -69 to 45 -60 to 45 -50 to 45 -40 to 45 -30 below=7.5
 
-# Culvert 2: its pieces lie 3.6 m to the side of the kit line (CC 11-12: first piece 17 -2.6, last 5 -35.6, room 0 -46.6),
-# so the walk follows that axis: from the sea floor outside the mouth (17.7 0.6), up the culvert into the pump sump room
-walk 20.1 5 to 18.2 0.6 to 16.1 -5 to 13.4 -12.5 to 9.9 -22 to 6.6 -31.3 to 4.1 -38 to 2 -42 below=-3
-picture dg_sump 1 6.6 -44.5 8.4 2.0 -24 light=20
-walk 2 -42 to 4.1 -38 to 6.6 -31.3 to 9.9 -22 to 13.4 -12.5 below=7.5
+# Culvert 2: from the sea floor outside the mouth, along the kit line up the culvert into the pump sump room
+# (11-12 fix2: the culverts' hill moves the land centre - offset 2.5038 -5.1355, not the old -0.4723 -0.419; the
+# '3.6 m to the side' seen before was that 3 m / 4.7 m shift)
+walk 23.08 0.28 to 21.18 -4.12 to 19.08 -9.72 to 16.38 -17.22 to 12.88 -26.72 to 9.58 -36.02 to 7.08 -42.72 to 4.98 -46.72 below=-3
+picture dg_sump 3.98 6.6 -49.22 11.38 2.0 -28.72 light=20
+walk 4.98 -46.72 to 7.08 -42.72 to 9.58 -36.02 to 12.88 -26.72 to 16.38 -17.22 below=7.5
