@@ -348,6 +348,8 @@ clear at 25.24 91.47 r=1.5 all only=SmallBoulder4
 # its end; the met-men sat out the worst storms down here. A zone names it ----------------------------------------------
 call kit_st x=45 z=-6 yaw=270 len=10.4 slope=0 end=room size=0.7 hill=1 dirt=2 mush=2 stone=0 vines=0 titanium=0 light=0 as=sscellar
 prop sscellar cave.rock=plain
+# (11-12 w09fix2: capped - its full dome joined Lightning Cave's hill and the skin closed round that den's mouth)
+prop sscellar cave.dome=14
 # cavecheck inside sscellarz
 place Zone_Trigger sscellarz at 24 -6 h=4.5
 prop sscellarz obj.name=sscellarz
