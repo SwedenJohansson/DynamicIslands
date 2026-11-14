@@ -1070,7 +1070,7 @@ namespace DynamicIslands
 			else Log("PASS: dig rim probe - " + n + " mouths of " + tuns.Count + " tunnels");
 		}
 
-		[ConsoleCommand(name: "CIDigMouthLook", docs: "Dev, in a world: every dug tunnel's mouths within 2000 m look as the ground round them (11-13 mouth fix) - the rim's top on a shader without shine (not Standard: a grey veil), the lining not out in the open in front of a face (a pale slab with a sawtooth edge: under 3% of its area), and each mouth's rim top, pictured, within 14 of the ground beside it in mean colour and at least 0.6 of its sharpness (dig_mouthlook_<n>_<a|f|l>). 'standard': the same baked textures on Standard for the run instead, to compare; 'stdnormal': baked again on Standard with the mixed normal map; 'stdabs': baked again on Standard, the relief shaded in against flat ground")]
+		[ConsoleCommand(name: "CIDigMouthLook", docs: "Dev, in a world: every dug tunnel's mouths within 2000 m look as the ground round them (11-13 mouth fix) - the rim's top on a shader without shine (not Standard: a grey veil), the lining not out in the open in front of a face (a pale slab with a sawtooth edge: under 3% of its area), and each mouth's rim top, pictured, within 14 of the ground beside it in mean colour and at least 0.6 of its sharpness, on its faces no steeper than the ground beside (dig_mouthlook_<n>_<a|f|l>). 'standard': the same baked textures on Standard for the run instead, to compare; 'stdnormal': baked again on Standard with the mixed normal map; 'stdabs': baked again on Standard, the relief shaded in against flat ground")]
 		public static void DigMouthLookCommand(string[] args)
 		{
 			string a = args.Length > 0 ? args[0] : "";
@@ -1179,11 +1179,15 @@ namespace DynamicIslands
 					Collider landCol = land.GetComponent<TerrainCollider>();
 					Quaternion camRot = Quaternion.LookRotation(look - eye);
 					float tanV = Mathf.Tan(30f * Mathf.Deg2Rad), tanH = tanV * W / H;
+					// (and how steep the face met is: its normal's height)
+					var up = new float[gw * gh];
 					System.Func<int, int, Collider> seen = (gx, gy) =>
 					{
 						Vector3 d = camRot * new Vector3((2f * (gx * S + 0.5f) / W - 1f) * tanH, (2f * (gy * S + 0.5f) / H - 1f) * tanV, 1f);
 						RaycastHit h;
-						return Physics.Raycast(eye, d.normalized, out h, 200f, ~0, QueryTriggerInteraction.Ignore) ? h.collider : null;
+						if (!Physics.Raycast(eye, d.normalized, out h, 200f, ~0, QueryTriggerInteraction.Ignore)) return null;
+						up[gy * gw + gx] = h.normal.y;
+						return h.collider;
 					};
 					System.Func<int, int, bool> onGround = (gx, gy) => seen(gx, gy) == landCol;
 					var top = new bool[gw * gh];
@@ -1204,14 +1208,15 @@ namespace DynamicIslands
 					double[] inT = new double[3], inG = new double[3]; int cT = 0, cG = 0;
 					// (how sharp each is: the mean step in brightness to the next pixel right and up - the baked top smeared down a
 					// steep face, The Frontier's quarry, came out a blurred sheet of the ground's own mean colour)
-					double sharpT = 0, sharpG = 0;
+					double sharpT = 0, sharpG = 0, upG = 0;
+					var stepT = new List<KeyValuePair<float, float>>();
 					System.Func<int, float> lum = i => 0.3f * pa[i].r + 0.59f * pa[i].g + 0.11f * pa[i].b;
 					System.Func<int, float> step = i => Mathf.Abs(lum(i + 1) - lum(i)) + Mathf.Abs(lum(i + W) - lum(i));
 					for (int y = 0; y < gh; y++)
 						for (int x = 0; x < gw; x++)
 						{
 							int j = y * gw + x; Color32 a = pa[y * S * W + x * S];
-							if (top[j]) { inT[0] += a.r; inT[1] += a.g; inT[2] += a.b; cT++; if (y < gh - 1) sharpT += step(y * S * W + x * S); continue; }
+							if (top[j]) { inT[0] += a.r; inT[1] += a.g; inT[2] += a.b; cT++; if (y < gh - 1) stepT.Add(new KeyValuePair<float, float>(up[j], step(y * S * W + x * S))); continue; }
 							if (lin[j]) continue;
 							bool near = false;
 							for (int dy = -R; dy <= R && !near; dy++)
@@ -1221,7 +1226,7 @@ namespace DynamicIslands
 									if (xx < 0 || yy < 0 || xx >= gw || yy >= gh) continue;
 									if (top[yy * gw + xx]) { near = true; break; }
 								}
-							if (near && onGround(x, y)) { inG[0] += a.r; inG[1] += a.g; inG[2] += a.b; cG++; if (y < gh - 1) sharpG += step(y * S * W + x * S); }
+							if (near && onGround(x, y)) { inG[0] += a.r; inG[1] += a.g; inG[2] += a.b; cG++; upG += up[j]; if (y < gh - 1) sharpG += step(y * S * W + x * S); }
 						}
 					// (what the picture shows, by what a look through every 8th sample meets: the top third, the middle, the bottom)
 					var seenBy = new string[3];
@@ -1242,11 +1247,19 @@ namespace DynamicIslands
 					if (cT < 50 || cG < 50) { Log("  mouth " + n + " at " + at.ToString("F0") + ": rim top " + cT + " samples, ground beside " + cG + " - too few to measure"); n++; continue; }
 					float dr = (float)(inT[0] / cT - inG[0] / cG), dg = (float)(inT[1] / cT - inG[1] / cG), db = (float)(inT[2] / cT - inG[2] / cG);
 					float worst = Mathf.Max(Mathf.Abs(dr), Mathf.Abs(dg), Mathf.Abs(db));
-					float sharp = (float)(sharpT / cT), sharpBy = (float)(sharpG / cG);
+					// (11-14: the sharpness only of the top's faces no steeper than the ground beside, when there are enough: the
+					// ground's paint lies on from above, so on a steeper face - the rim curling down into the mouth - it is drawn out,
+					// as on the ground's own steep slopes; Cinderfall's dark ash, its cracks running on into the rim by eye, came out
+					// 'blurred' from the steep lip alone. The Frontier's quarry face is as steep as the cliff beside it: still measured)
+					float slopeG = (float)(upG / cG);
+					var likeG = stepT.Where(kv => kv.Key >= slopeG - 0.05f).ToList();
+					if (likeG.Count < 50) likeG = stepT;
+					foreach (var kv in likeG) sharpT += kv.Value;
+					float sharp = likeG.Count > 0 ? (float)(sharpT / likeG.Count) : 0f, sharpBy = (float)(sharpG / cG);
 					bool blurred = sharp < 0.6f * sharpBy;
 					if (worst > 14f || blurred) ok = false;
 					Log("  " + (worst > 14f || blurred ? "BAD" : "ok") + ": mouth " + n + " at " + at.ToString("F0") + ": rim top " + (inT[0] / cT).ToString("0") + "," + (inT[1] / cT).ToString("0") + "," + (inT[2] / cT).ToString("0")
-						+ " against the ground beside it " + (inG[0] / cG).ToString("0") + "," + (inG[1] / cG).ToString("0") + "," + (inG[2] / cG).ToString("0") + " (" + cT + "/" + cG + " samples): off by " + worst.ToString("0") + "; sharpness " + sharp.ToString("0.0") + " against " + sharpBy.ToString("0.0") + (blurred ? " (blurred)" : ""));
+						+ " against the ground beside it " + (inG[0] / cG).ToString("0") + "," + (inG[1] / cG).ToString("0") + "," + (inG[2] / cG).ToString("0") + " (" + cT + "/" + cG + " samples): off by " + worst.ToString("0") + "; sharpness " + sharp.ToString("0.0") + " against " + sharpBy.ToString("0.0") + " (" + likeG.Count + "/" + stepT.Count + " top samples as level as the ground, " + slopeG.ToString("0.00") + ")" + (blurred ? " (blurred)" : ""));
 					n++;
 				}
 				if (kept != null) { Material sm = ms[2]; mr.sharedMaterials = kept; if (cmpLook > 0) DigTunnel.DropTestBake(sm); else Object.Destroy(sm); }
