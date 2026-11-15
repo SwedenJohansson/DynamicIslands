@@ -603,7 +603,7 @@ namespace DynamicIslands
 			yield return ReloadIslandRoutine(e);
 			yield return new WaitForSeconds(1f);
 			IslandObjectRef safe2 = ScObjOf(e, "safe");
-			Check(ref ok, CodeLock.Unlocked(e, pad.Index) && safe2 != null && safe2.gameObject.activeInHierarchy, "after a reload it stays unlocked, the safe there");
+			Check(ref ok, CodeLock.Unlocked(e, pad.Index) && safe2 != null && safe2.gameObject.activeInHierarchy, "after a reload it stays unlocked, the safe there (unlocked " + CodeLock.Unlocked(e, pad.Index) + ", safe " + (safe2 == null ? "missing" : safe2.gameObject.activeInHierarchy ? "shown" : "hidden") + ", entry loaded " + (e.Root != null) + ", state keys " + e.State.Count + ")");
 			IslandWorldState.Remove(CodeLockIsland);
 			if (ok) Log("PASS: code lock"); else Fail("code lock");
 		}
