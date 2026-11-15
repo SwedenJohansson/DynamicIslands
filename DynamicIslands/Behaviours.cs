@@ -864,6 +864,34 @@ namespace DynamicIslands.Editor
 			signalLocks.Clear();
 			sharedAt.Clear();
 			LastTaken.Clear();
+			notLoadedYet.Clear();
+		}
+
+		/// <summary>Host (questfix 11-15): players' events of an island not built here yet (its file still coming, or still
+		/// loading), done once it is - their shared part (a quest step, a door, a signal) was lost before. At most 64,
+		/// each kept 10 minutes; a player who waits for the answer still gets the "otherwise" part at once (they may try
+		/// again).</summary>
+		class NotLoaded { public int Island, Index; public string Ev; public Network_UserId? From; public int Seed; public float At; }
+		static readonly List<NotLoaded> notLoadedYet = new List<NotLoaded>();
+		internal static int NotLoadedCount { get { return notLoadedYet.Count; } }
+		internal static int NotLoadedDone;
+
+		static void DoNotLoadedYet()
+		{
+			if (notLoadedYet.Count == 0 || !Raft_Network.IsHost) return;
+			foreach (NotLoaded w in notLoadedYet.ToList())
+			{
+				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == w.Island);
+				if (e == null || Time.unscaledTime - w.At > 600f) { notLoadedYet.Remove(w); continue; }
+				if (e.Root == null) continue;
+				notLoadedYet.Remove(w);
+				NotLoadedDone++;
+				Debug.Log("[CUSTOM ISLANDS] A player's '" + w.Ev + "' on '" + e.HostName + "' is done now the island is loaded on the host");
+				int seed = GapBehaviours.Seed;
+				GapBehaviours.Seed = w.Seed;
+				try { OnEventMessage(w.Island, w.Index, w.Ev, false, w.From, false); }
+				finally { GapBehaviours.Seed = seed; }
+			}
 		}
 
 		class Awaiting { public int OnceKey; public List<KeyValuePair<string, int>> Taken; public float At; }
@@ -1022,6 +1050,11 @@ namespace DynamicIslands.Editor
 		/// <summary>The host noticed something no single player did (animals defeated): everyone near the island gets the personal part.</summary>
 		static readonly HashSet<string> toldPersonal = new HashSet<string>();
 
+		/// <summary>Shared actions that act on the island's objects (they need it loaded).</summary>
+		static readonly HashSet<string> NeedsObjects = new HashSet<string> { "show", "hide", "toggle", "open", "close", "switch", "hit", "collapse", "moveto" };
+		/// <summary>Host: events kept for an island not loaded (the CI checks read it).</summary>
+		internal static int KeptUnloaded;
+
 		public static void FireFromHost(IslandWorldState.Entry e, int index, string ev)
 		{
 			if (e == null || !Raft_Network.IsHost) return;
@@ -1040,6 +1073,17 @@ namespace DynamicIslands.Editor
 			}
 			if (checks.Count > 0 && !Passes(e, index, checks, AnyOf(e, index, ev))) ev += "!";
 			actions = ActionsOf(e, index, ev);
+			// (the island not loaded here - a player's last step far from the host: what shows, hides, opens or moves its
+			// objects had nothing to act on and was lost, a door the story needed stayed shut. Kept as after a wait: the whole
+			// event runs when the island loads here - questfix round 2)
+			if (e.Root == null && Resumable(ev) && actions.Any(a => a.Shared && NeedsObjects.Contains(a.Verb)))
+			{
+				KeepPending(e, index, ev, 0, ++pendingTokens);
+				KeptUnloaded++;
+				Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': its " + ev + " event runs when the island loads here (not loaded now)");
+				if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
+				return;
+			}
 			int seed = GapBehaviours.NewSeed();
 			if (Near(e)) Schedule(e, index, actions, false, false, ev);
 			GapBehaviours.Seed = seed;
@@ -1075,6 +1119,7 @@ namespace DynamicIslands.Editor
 				{
 					Debug.Log("[CUSTOM ISLANDS] A player's '" + ev + "' on '" + e.HostName + "' isn't done: the island isn't loaded on the host" + (answer ? " (they get its \"otherwise\")" : ""));
 					if (answer && from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev.TrimEnd('!') + "!");
+					else if (notLoadedYet.Count < 64) notLoadedYet.Add(new NotLoaded { Island = e.Id, Index = index, Ev = ev, From = from, Seed = GapBehaviours.Seed, At = Time.unscaledTime });
 					return;
 				}
 				string failed;
@@ -1492,6 +1537,7 @@ namespace DynamicIslands.Editor
 			if (Time.unscaledTime < nextTick) return;
 			nextTick = Time.unscaledTime + 0.5f;
 			if (!LoadSceneManager.IsGameSceneLoaded) { arrived.Clear(); arriveNotYet.Clear(); return; }
+			try { DoNotLoadedYet(); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] A player's event waiting for its island: " + ex.Message); }
 			Network_Player p = RAPI.GetLocalPlayer();
 			if (p == null) return;
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
