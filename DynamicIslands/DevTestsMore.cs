@@ -1026,6 +1026,19 @@ namespace DynamicIslands
 			runs.Sort(); result[0] = runs[1];
 		}
 
+		// (Raft's own floating debris - planks, barrels, under FloatingObjectParent - comes with the distance sailed: at the
+		// sail's 12 m/s some 6000 of its objects were about, none the mod's. Counted apart, and reported at each sample)
+		static int SeaDebris()
+		{
+			GameObject f = GameObject.Find("FloatingObjectParent");
+			return f != null ? f.GetComponentsInChildren<Transform>(true).Length : 0;
+		}
+
+		static int SailObjects()
+		{
+			return UnityEngine.Object.FindObjectsOfType<Transform>().Count(t => t.root.name != "FloatingObjectParent");
+		}
+
 		static Dictionary<string, int> SailRootCounts()
 		{
 			var r = new Dictionary<string, int>();
@@ -1065,7 +1078,7 @@ namespace DynamicIslands
 			};
 			Application.logMessageReceived += watch;
 			int n0 = IslandWorldState.Islands.Count, spawned = 0, unloaded = 0;
-			int objs0 = UnityEngine.Object.FindObjectsOfType<Transform>().Length, ai0 = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Length;
+			int objs0 = SailObjects(), debris0 = SeaDebris(), ai0 = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Length;
 			// (the raft standing still, nothing loading: the same is measured at the end once the sail's islands are gone)
 			var still0 = new float[1]; yield return StillFrames(still0);
 			Dictionary<string, int> roots0 = SailRootCounts();
@@ -1103,7 +1116,7 @@ namespace DynamicIslands
 					float managed = GC.GetTotalMemory(false) / 1048576f, unity = Mathf.Max(UnityEngine.Profiling.Profiler.GetTotalReservedMemoryLong(), UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong()) / 1048576f;
 					int loaded = IslandWorldState.Islands.Count(x => x.Root != null);
 					samples.Add(new[] { sailed, ms, managed, unity, loaded });
-					Log(string.Format(Inv, "  {0:F1} km: frame {1:F1} ms, managed {2:F0} MB, Unity {3:F0} MB, islands {4} ({5} loaded)", sailed / 1000f, ms, managed, unity, IslandWorldState.Islands.Count, loaded));
+					Log(string.Format(Inv, "  {0:F1} km: frame {1:F1} ms, managed {2:F0} MB, Unity {3:F0} MB, islands {4} ({5} loaded), sea debris {6}", sailed / 1000f, ms, managed, unity, IslandWorldState.Islands.Count, loaded, SeaDebris()));
 				}
 			}
 			body.velocity = Vector3.zero;
@@ -1129,18 +1142,18 @@ namespace DynamicIslands
 			// (the test world stays as it was: no automatic islands left behind, unless kept for a check after)
 			// (where the frame time goes when it grows - 11-14 IX8 solo: 64 ms at 3 km, 190-526 ms after 24 km, memory flat:
 			// the same frames measured again once the sail's islands are gone, and the scene's objects counted)
-			int objsEnd = UnityEngine.Object.FindObjectsOfType<Transform>().Length;
-			Log("  objects: " + objs0 + " at the start, " + objsEnd + " at the end, " + UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Length + " creatures (" + ai0 + ")");
+			int objsEnd = SailObjects();
+			Log("  objects (Raft's sea debris apart): " + objs0 + " at the start, " + objsEnd + " at the end; sea debris " + debris0 + " -> " + SeaDebris() + "; " + UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Length + " creatures (" + ai0 + ")");
 			foreach (var kv in SailRootGrowth(roots0)) Log("    more at the end: " + kv.Key + " +" + kv.Value + " objects");
 			if (!keep)
 			{
 				IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(n0).Select(x => x.Id).ToList(), true);
 				yield return new WaitForSeconds(5f);
 				var still1 = new float[1]; yield return StillFrames(still1);
-				int objs1 = UnityEngine.Object.FindObjectsOfType<Transform>().Length;
+				int objs1 = SailObjects();
 				foreach (var kv in SailRootGrowth(roots0)) Log("    left after removal: " + kv.Key + " +" + kv.Value + " objects");
 				Check(ref ok, still1[0] < Mathf.Max(still0[0] * 1.5f, still0[0] + 8f), "frame time stays flat (raft still, nothing loading): " + still0[0].ToString("F1") + " ms before the sail, " + still1[0].ToString("F1") + " ms after it with its islands gone");
-				Check(ref ok, objs1 < objs0 + 1500 + objs0 / 2, "objects back near the start once the islands are gone: " + objs0 + " -> " + objs1 + ", " + UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Length + " creatures (" + ai0 + ")");
+				Check(ref ok, objs1 < objs0 + 1500 + objs0 / 2, "objects (Raft's sea debris apart) back near the start once the islands are gone: " + objs0 + " -> " + objs1 + ", " + UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Length + " creatures (" + ai0 + ")");
 			}
 			else
 			{
