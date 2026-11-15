@@ -592,7 +592,7 @@ step open|Passenger's trunk|1|Open the passenger's trunk in the reeds by the pla
 step reach|stationgull|1|Find the station with the aerials and the dish on the rise
 # Chapter 2 - the stations
 step read|Orientation notes|1|Read the orientation notes in Station Gull
-step collect|story:seqcard|1|Take Station Gull's Sequence card from the comms desk
+step collect|story:seqcard|1|Take Station Gull's Sequence card from the drawer of the comms desk
 step reach|stationkelp|1|Dive to Station Kelp, sunk in the bay
 step collect|story:seqcard|2|Find Kelp's card in its flooded lab
 step read|Station Pike|1|Read the sign at Station Pike's fence before you go in

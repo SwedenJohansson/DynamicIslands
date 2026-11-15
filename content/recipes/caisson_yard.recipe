@@ -233,7 +233,7 @@ prop crane2zone zone.message=Crane 2. The trench yawns past the caisson's edge.
 prop zipcrane obj.name=zipcrane
 
 note cy_cavechest Powder store chest | The powder store: the charges are long gone; the fuses and wire are not.
-loot cy_cavechest Copper*2;Rope*3;Bolt*3;MetalIngot*1
+loot cy_cavechest CopperOre*2;Rope*3;Bolt*3;MetalIngot*1
 prop cy_cavechest loot.refill=0
 note cymo Lost property box | The yard's lost property: a knitted yellow whale, labelled.
 loot cymo story:sk_mo*1;Rope*1

@@ -277,6 +277,9 @@ namespace DynamicIslands.Editor
 			ResetStep("StoryBook.Reset", () => StoryBook.Reset());
 			ResetStep("PlayerPlaces.Reset", () => PlayerPlaces.Reset());
 			ResetStep("Claims.Reset", () => Claims.Reset());
+			ResetStep("Behaviours.ForgetWorld", () => Behaviours.ForgetWorld());
+			ResetStep("ContentState.ForgetWorld", () => ContentState.ForgetWorld());
+			ResetStep("QuestTimers.Reset", () => QuestTimers.Reset()); // (island ids repeat between worlds: the last world's clock set a step back here - questfix 11-14)
 			// (a story island brought back by hand in the world before isn't "on its way" in this one - RK12 L2)
 			ResetStep("handBrought", () => DynamicIslands.handBrought.Clear());
 			ResetStep("MechFeatures.Reset", () => MechFeatures.Reset());
@@ -290,7 +293,6 @@ namespace DynamicIslands.Editor
 			ResetStep("TriggerZone.ForgetStoryLootLine", () => TriggerZone.ForgetStoryLootLine());
 			ResetStep("MissingIslandsCheck.Forget", () => MissingIslandsCheck.Forget()); // (before the early return below: the last world's "Main menu" held the story; review 10-30 A)
 			ResetStep("BuriedTreasure.ForgetGiven", () => BuriedTreasure.ForgetGiven()); // (chest indexes come from the island ids of this world: another world's would block its loot - audit 10-30)
-			ResetStep("ContentState.Reset", () => ContentState.Reset()); // (its "someone got here first" times are kept by island id, and ids repeat between worlds - sweep 11-14)
 			ResetStep("QuestCount.Reset", () => QuestCount.Reset()); // (the last world's count isn't shown here - review 10-30)
 			ResetStep("Collectibles.Reset", () => Collectibles.Reset()); // (set counts are kept by island id, and ids repeat between worlds - review 10-30)
 			// (the Raft save the world loads from, before Choose uses up its stamp: a quest reward given after it isn't in it - review 10-30)

@@ -244,8 +244,12 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		/// <summary>The most one report from a player adds: a stack picked up, a fish, a kill (questfix 11-14).</summary>
+		const int MaxAdd = 10;
+
 		static void AddOnHost(int day, int amount)
 		{
+			if (amount <= 0) return;
 			if (!Current.Open || day != Current.Day) return;
 			Current.Have += amount;
 			if (Current.Have >= Current.Need) { Current.Have = Current.Need; Current.State = "done"; Log("Done: " + Describe(Current)); }
@@ -297,7 +301,7 @@ namespace DynamicIslands.Editor
 		{
 			if (Raft_Network.IsHost)
 			{
-				if (msg.Name == "add") AddOnHost(msg.Index, msg.Count);
+				if (msg.Name == "add") { if (PlayerTrust.InSession(from.Id)) AddOnHost(msg.Index, Math.Min(msg.Count, MaxAdd)); } // (a player in the session, its count capped - a made-up count finished the task at once - questfix 11-14)
 				else if (msg.Name == "got" && msg.Index == Current.Day && from.Id != 0UL && Current.Rewarded.Add(from.Id)) { PlayerLevels.CreditXp(from.Id, Xp); Send(Message(), null); IslandWorldState.Save(); } // (CB2: the host credits the reward's EXP)
 				else if (msg.Name == "got" && previous != null && previous.Day >= 0 && previous.Day != Current.Day && msg.Index == previous.Day && previous.State == "done" && from.Id != 0UL && previous.Rewarded.Add(from.Id)) { PlayerLevels.CreditXp(from.Id, Xp); Log("A player's reward of day " + previous.Day + " came after the next day began: its EXP credited"); }
 				return;
