@@ -30,7 +30,8 @@ namespace DynamicIslands
 			if (client)
 			{
 				// (a joiner: the host's breach, shown here from its message)
-				int startedBefore = WhaleBreach.Started;
+				// (one already under way counts: the host may have started it while this command was on its way)
+				int startedBefore = WhaleBreach.Current != null ? WhaleBreach.Started - 1 : WhaleBreach.Started;
 				float wait = Time.realtimeSinceStartup + 90f;
 				while (Time.realtimeSinceStartup < wait && WhaleBreach.Started == startedBefore) yield return null;
 				if (WhaleBreach.Started == startedBefore) { Fail("whale breach: no breach from the host came in 90 s"); yield break; }

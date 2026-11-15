@@ -30,7 +30,7 @@ namespace DynamicIslands
 		/// <summary>The first N islands of the sailing list, by name (the same on every run).</summary>
 		static List<string> FirstIslands(int n) { return WorldIslands.Candidates().OrderBy(e => e, StringComparer.OrdinalIgnoreCase).Take(n).ToList(); }
 
-		[ConsoleCommand(name: "CINewWorldPick", docs: "Dev, main menu: the next new world's settings, as the World settings window sets them: CINewWorldPick [monsters=<level>] [build=<%>] [looks=normal|more|lots] [levels=on|off] [headstart=0-10] [rnd=off|light|normal|wild] [gap=<a-b>] [off=<n> (the first n islands of the sailing list left out)]; the extra options: CIWorldSettingsBox")]
+		[ConsoleCommand(name: "CINewWorldPick", docs: "Dev, main menu: the next new world's settings, as the World settings window sets them: CINewWorldPick [monsters=<level>] [build=<%>] [looks=normal|more|lots] [levels=on|off] [headstart=0-10] [mode=<Raft's game mode, for the next CINewWorld only>] [rnd=off|light|normal|wild] [gap=<a-b>] [off=<n> (the first n islands of the sailing list left out)]; the extra options: CIWorldSettingsBox")]
 		public static void NewWorldPickCommand(string[] args)
 		{
 			if (LoadSceneManager.IsGameSceneLoaded) { Fail("new world pick: main menu only"); return; }
@@ -42,6 +42,12 @@ namespace DynamicIslands
 			if (d.TryGetValue("looks", out v)) { n = LooksOf(v); if (n < 0) { Fail("unknown looks " + v); return; } NewWorldRulesBox.LooksLevel = n; }
 			if (d.TryGetValue("levels", out v)) PlayerLevels.Chosen = v.Equals("on", StringComparison.OrdinalIgnoreCase);
 			if (d.TryGetValue("headstart", out v)) { if (!int.TryParse(v, out n)) { Fail("headstart=" + v); return; } HeadStart.Chosen = n; }
+			if (d.TryGetValue("mode", out v))
+			{
+				GameMode mode;
+				try { mode = (GameMode)Enum.Parse(typeof(GameMode), v, true); } catch { Fail("unknown game mode " + v); return; }
+				NewWorldMode = mode;
+			}
 			if (d.TryGetValue("rnd", out v)) { n = RandomizerOf(v); if (n < 0) { Fail("unknown randomizer level " + v); return; } NewWorldOptions.Randomizer.Level = n; NewWorldOptions.Randomizer.Disabled.Clear(); }
 			if (d.TryGetValue("gap", out v)) { int[] g = WorldIslands.ParseGap(v); WorldIslands.SetChosenGap(g[0], g[1]); }
 			if (d.TryGetValue("off", out v))
