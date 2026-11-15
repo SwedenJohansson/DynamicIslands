@@ -4734,7 +4734,7 @@ happened, and make it happen again on their own PC. Please include:
    - **Playing together:** the logs of every player, the host's first, and who was the host.
    - The logs may show your Windows user name (in file paths) and your Steam name and id.
 5. **The settings you used:**
-   - **the versions:** Custom Islands (the box at the top right of the main menu says, for example, 3.4), Raft (bottom
+   - **the versions:** Custom Islands (the box at the top right of the main menu says, for example, 3.5), Raft (bottom
      left of the main menu, for example 1.1.01), the mod loader (top of the main menu, for example v2.8.10), and which
      other mods you have;
    - **the world's settings:** Raft's game mode, the Custom Islands plan, and what you chose in World settings. In the
@@ -5201,7 +5201,7 @@ vans, caravans, excavators, forklifts, cranes, ore wagons, snow vehicles, planes
 
 ---
 
-*This guide describes Custom Islands 3.4, the Experimental Alpha Release. It is kept up to date with the mod: every
+*This guide describes Custom Islands 3.5, the Experimental Alpha Release. It is kept up to date with the mod: every
 change to a feature updates this guide, the README and the PDF copy of this guide (`docs/Custom-Islands-Guide.pdf`)
 together.*
 

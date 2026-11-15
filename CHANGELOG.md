@@ -9,8 +9,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
-## Next (not released yet)
+## 3.5 alpha - 2026-11-15: Quest fixes, world settings and caves
 
+- **Caves hold different animals**: the caves added in the latest worlds no longer all hold rats. A dozen now hold rats, a boar, a bear, a hyena or a bear with rats, and some stay empty, so you cannot tell what is inside from outside.
+- **Dug tunnel mouths no longer fill Raft's memory**: a world with many dug cave mouths could grow Raft to many gigabytes; the mouths' rim pictures now keep Raft's own texture limit.
 - **A library update reaches every world**: when an island was updated from the library, worlds that played a kept copy of an earlier version (a world received from a host, or saved before an earlier update) stayed on that old copy; they now move to the new version with their state, like worlds that played the island itself.
 - **`SpawnIsland` doesn't double an island the world already has**: an island already in the world (or on its way) is brought back instead of a second copy beside it; one that is already here says so.
 - **Mod keys wait while a talk, a code lock or a cutscene is open**: J, K, U, M and G (journal, stats page, upgrades, map, guide) no longer open a window over an islander's talk, a code lock, a choice, the ending credits or a camera moment (as Esc already didn't).
