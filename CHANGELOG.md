@@ -9,7 +9,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
-## 3.5 alpha - 2026-11-15: Quest fixes, world settings and caves
+## 3.5 alpha - 2026-11-15
 
 - **Caves hold different animals**: the caves added in the latest worlds no longer all hold rats. A dozen now hold rats, a boar, a bear, a hyena or a bear with rats, and some stay empty, so you cannot tell what is inside from outside.
 - **Dug tunnel mouths no longer fill Raft's memory**: a world with many dug cave mouths could grow Raft to many gigabytes; the mouths' rim pictures now keep Raft's own texture limit.
