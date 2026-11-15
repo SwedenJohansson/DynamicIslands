@@ -1326,9 +1326,25 @@ namespace DynamicIslands
 		static IEnumerator PushRaftRoutine(float seconds)
 		{
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
-			GameObject island = NearestIsland(raft.body.position);
-			if (island == null) { Fail("no custom island"); yield break; }
-			yield return PushTowards(HighestPoint(island.GetComponentInChildren<Terrain>()), seconds, island.name);
+			// (only islands with land: a ghost raft or a sea-only island has no Terrain to push towards)
+			Vector3 from = raft.body.position;
+			// (an island being respawned can hold a Terrain whose terrainData is not set yet: skip it)
+			Func<GameObject, Terrain> land = g => g.GetComponentsInChildren<Terrain>(true).FirstOrDefault(t => t != null && t.terrainData != null);
+			// (right after sailing back the island near the raft is still loading again: up to 60 s for one - 11-13 UW12's
+			// second push came straight after CISail and found none)
+			GameObject island = null;
+			float until = Time.realtimeSinceStartup + 60f;
+			while (true)
+			{
+				from = raft.body.position;
+				island = UnityEngine.Object.FindObjectsOfType<GameObject>().Where(g => g.transform.parent == null && g.name.StartsWith("CustomIsland_") && land(g) != null)
+					.OrderBy(g => (g.transform.position - from).sqrMagnitude).FirstOrDefault();
+				if (island != null || Time.realtimeSinceStartup > until) break;
+				yield return new WaitForSecondsRealtime(2f);
+			}
+			if (island == null) { Fail("no custom island with land loaded (waited 60 s)"); yield break; }
+			Log("pushing towards '" + island.name + "', " + Flat(island.transform.position - from).magnitude.ToString("F0") + " m away");
+			yield return PushTowards(HighestPoint(land(island)), seconds, island.name);
 		}
 
 		[ConsoleCommand(name: "CIPushTo", docs: "Dev, in game: pushes the raft towards world point <x> <z> for up to <seconds> and logs where it stops")]
@@ -1737,11 +1753,16 @@ namespace DynamicIslands
 			Vector3 peak = target;
 			Vector3 dir = Flat(peak - body.position).normalized;
 			Log("Pushing raft towards " + label + " at 4 m/s; layers RaftCollision/BakedBlocks vs Obstruction collide: " + !Physics.GetIgnoreLayerCollision(9, 16) + "/" + !Physics.GetIgnoreLayerCollision(18, 16));
-			Vector3 lastLogged = body.position; float stuckTime = 0; float t = 0;
+			Vector3 lastLogged = body.position; float stuckTime = 0; float t = 0; float closest = Flat(peak - body.position).magnitude;
+			// (on the raft and kept alive as CISail does: 11-13 UW12's second push came after CISail had left the player
+			// ~1 km behind in the sea, who drowned during the push - a test death, not the island's)
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player != null) player.transform.position = body.position + Vector3.up * 3f;
 			while (t < seconds)
 			{
 				yield return new WaitForFixedUpdate();
 				t += Time.fixedDeltaTime;
+				KeepAlive(player);
 				Vector3 before = body.position;
 				body.velocity = dir * 4f + Vector3.up * body.velocity.y;
 				if (Mathf.Repeat(t, 2f) < Time.fixedDeltaTime)
@@ -1750,7 +1771,11 @@ namespace DynamicIslands
 					RaycastHit hit;
 					string below = Physics.Raycast(body.position + Vector3.up * 5f, Vector3.down, out hit, 40f, 1 << IslandSpawner.TerrainLayer) ? "ground " + (body.position.y - hit.point.y).ToString("F1") + " m below" : "open water";
 					Log(string.Format("t={0:F0}s raft {1} moved {2:F1} m in 2 s, {3}, {4:F0} m from peak", t, body.position, moved, below, Flat(peak - body.position).magnitude));
-					stuckTime = moved < 0.5f ? stuckTime + 2f : 0f;
+					// (stopped = no longer getting closer: a raft held on a sloping shore jitters 0.2-2 m sideways but stays
+					// ~45 m out - 11-13 Ribcage Reef ran out the 120 s that way - so judge the gain towards the peak, not the moving)
+					float dist = Flat(peak - body.position).magnitude;
+					stuckTime = (moved < 0.5f || closest - dist < 1f) ? stuckTime + 2f : 0f;
+					closest = Mathf.Min(closest, dist);
 					lastLogged = body.position;
 					if (stuckTime >= 6f) { Log("PASS: the raft is stopped by the island (" + Flat(peak - body.position).magnitude.ToString("F0") + " m from the peak)"); body.velocity = Vector3.zero; yield break; }
 				}
