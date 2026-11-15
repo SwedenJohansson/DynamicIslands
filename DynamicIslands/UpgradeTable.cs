@@ -247,8 +247,74 @@ namespace DynamicIslands.Editor
 		internal static int LastJoinMoved = -1;
 		/// <summary>Tests: the host's numbers at the last join.</summary>
 		internal static string LastJoinData;
+		/// <summary>Tests: at the last join Raft restored the world (RGD_World.RestoreWorld, before the raft, the bags and
+		/// the chests) before the host's numbers came. The Raft messages counted above are mostly live updates (raft,
+		/// time, seagulls, sharks) that carry no items; this is the order that matters.</summary>
+		internal static bool LastJoinRestoredFirst;
+		/// <summary>Tests: Raft restored the world at the last join (the check above is only worth something then).</summary>
+		internal static bool LastJoinRestoreSeen;
 
-		internal static void OnRequestWorld() { waitingWorld = true; worldPartsBefore = 0; partTypes.Length = 0; }
+		internal static void OnRequestWorld() { waitingWorld = true; worldPartsBefore = 0; partTypes.Length = 0; LastJoinRestoredFirst = false; LastJoinRestoreSeen = false; LastJoinRestoreAt = ""; tracing = true; trace.Length = 0; lastTok = null; LastJoinContentBefore = -1; contentBefore = 0; }
+
+		// (the join's Raft messages and restores in order, NUMBERS where the host's numbers came, until the world is loaded:
+		// Raft's world comes on its own channel, so only this shows whether any of it - blocks, bags - came first)
+		static bool tracing; static readonly System.Text.StringBuilder trace = new System.Text.StringBuilder(); static string lastTok; static int lastCount, contentBefore;
+		/// <summary>Tests: the last join's trace.</summary>
+		internal static string LastJoinTrace = "";
+		/// <summary>Tests: world content (a Raft message that is not a live update, or a block/player restore) read before the host's numbers at the last join (-1: no join seen).</summary>
+		internal static int LastJoinContentBefore = -1;
+		internal static void Trace(string tok, bool content)
+		{
+			if (!tracing || Raft_Network.IsHost) return;
+			if (content && waitingWorld) contentBefore++;
+			if (tok == lastTok) { lastCount++; return; }
+			if (lastTok != null && trace.Length < 1500) trace.Append(lastTok).Append(lastCount > 1 ? "x" + lastCount : "").Append(' ');
+			lastTok = tok; lastCount = 1;
+		}
+		internal static void OnRaftMessage(Message m)
+		{
+			if (!tracing) return;
+			string type = "?"; try { type = m != null ? m.Type.ToString() : "null"; } catch { }
+			Trace(type, type.IndexOf("Update", StringComparison.Ordinal) < 0); // (live traffic: *_Update, AINetworkBehaviourUpdate_Shark)
+		}
+		static void EndTrace()
+		{
+			if (!tracing) return;
+			Trace("", false);
+			tracing = false;
+			LastJoinTrace = trace.ToString().Trim();
+			LastJoinContentBefore = ContentBeforeNumbers(LastJoinTrace);
+			Log("Join trace (" + LastJoinContentBefore + " world part(s) before the numbers, counter " + contentBefore + "): " + LastJoinTrace);
+		}
+		/// <summary>World parts (no "Update" in the kind, not NUMBERS) before NUMBERS in a join trace; -1 if NUMBERS is not in it.</summary>
+		internal static int ContentBeforeNumbers(string t)
+		{
+			int n = 0;
+			foreach (string raw in (t ?? "").Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries))
+			{
+				string tok = raw; int x = tok.LastIndexOf('x');
+				if (x > 0 && x < tok.Length - 1 && int.TryParse(tok.Substring(x + 1), out _)) tok = tok.Substring(0, x);
+				if (tok == "NUMBERS") return n;
+				if (tok.IndexOf("Update", StringComparison.Ordinal) < 0) n++;
+			}
+			return -1;
+		}
+		/// <summary>Tests: where the last join's restore was seen first (SaveAndLoad.RestoreRGDGame, before the raft, the
+		/// bags and the chests; else Raft_Network.WorldHasBeenLoaded, after them).</summary>
+		internal static string LastJoinRestoreAt = "";
+		/// <summary>Player: Raft restores the host's world now (RGD_World.RestoreWorld runs on the host only).</summary>
+		internal static void OnClientWorldRestore(string at)
+		{
+			if (Raft_Network.IsHost) return;
+			if (at == "WorldHasBeenLoaded") EndTrace(); else Trace(at, true);
+			if (LastJoinRestoreSeen) return;
+			LastJoinRestoreSeen = true;
+			LastJoinRestoreAt = at;
+			Log("The host's world is restored (" + at + "); its upgrade numbers came first: " + !waitingWorld);
+			if (!waitingWorld) return;
+			LastJoinRestoredFirst = true;
+			Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] The world is restored before the host's upgrade numbers came");
+		}
 		internal static void OnWorldPart(Message m)
 		{
 			if (!waitingWorld || Raft_Network.IsHost) return;
@@ -268,13 +334,14 @@ namespace DynamicIslands.Editor
 				if (moved > 0) Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] The host's upgrade numbers moved " + moved + " upgrade(s) after the world was read");
 				return;
 			}
+			Trace("NUMBERS", false);
 			waitingWorld = false;
 			LastJoinPartsBefore = worldPartsBefore;
 			LastJoinPartTypes = partTypes.ToString().Trim();
 			LastJoinMoved = moved;
 			LastJoinData = data ?? "";
-			Log("The host's upgrade numbers came with " + worldPartsBefore + " world part(s) read before them (" + LastJoinPartTypes + "), " + moved + " upgrade(s) moved");
-			if (worldPartsBefore > 0 && moved > 0)
+			Log("The host's upgrade numbers came before the world was restored: " + !LastJoinRestoredFirst + "; " + worldPartsBefore + " Raft message(s) read before them (" + LastJoinPartTypes + "), " + moved + " upgrade(s) moved");
+			if (LastJoinRestoredFirst && moved > 0)
 			{
 				Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] The host's upgrade numbers came after its world: moved upgrades may show as other items until a rejoin");
 				DynamicIslands.Notify("The host's upgrade numbers came late: if an upgrade looks wrong, leave and join again.", true, 10);
@@ -714,5 +781,26 @@ namespace DynamicIslands.Editor
 		[HarmonyPatch(typeof(NetworkUpdateManager), "DeserializeSingleMessage")]
 		[HarmonyPrefix]
 		static void WorldPart(Message __0) { UpgradeTable.OnWorldPart(__0); }
+
+		// (the player's restore of the host's world: RGD_World.RestoreWorld runs on the host only)
+		[HarmonyPatch(typeof(SaveAndLoad), "RestoreRGDGame")]
+		[HarmonyPrefix]
+		static void Restore() { try { UpgradeTable.OnClientWorldRestore("RestoreRGDGame"); } catch { } }
+
+		[HarmonyPatch(typeof(Raft_Network), "HandleMessage")]
+		[HarmonyPrefix]
+		static void Handle(Message __0) { try { UpgradeTable.OnRaftMessage(__0); } catch { } }
+
+		[HarmonyPatch(typeof(SaveAndLoad), "RestoreBlock")]
+		[HarmonyPrefix]
+		static void Block() { try { UpgradeTable.Trace("RestoreBlock", true); } catch { } }
+
+		[HarmonyPatch(typeof(SaveAndLoad), "RestoreUser")]
+		[HarmonyPrefix]
+		static void User() { try { UpgradeTable.Trace("RestoreUser", true); } catch { } }
+
+		[HarmonyPatch(typeof(Raft_Network), "WorldHasBeenLoaded")]
+		[HarmonyPrefix]
+		static void Loaded() { try { UpgradeTable.OnClientWorldRestore("WorldHasBeenLoaded"); } catch { } }
 	}
 }

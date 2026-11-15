@@ -277,12 +277,14 @@ namespace DynamicIslands
 			if (ok) Log("PASS: mp trust live (sweep #6)"); else Fail("mp trust live (sweep #6)");
 		}
 
-		[ConsoleCommand(name: "CIUpgradeJoin", docs: "Dev, joined player: sweep 11-15 - the host's upgrade numbers came before any part of its world, and this player's numbers are the host's")]
+		[ConsoleCommand(name: "CIUpgradeJoin", docs: "Dev, joined player: sweep 11-15 - the host's upgrade numbers came before Raft restored its world (raft, bags, chests), and this player's numbers are the host's")]
 		public static void UpgradeJoinCommand(string[] args)
 		{
 			bool ok = true;
 			Check(ref ok, !Raft_Network.IsHost, "run on a joined player");
-			Check(ref ok, UpgradeTable.LastJoinPartsBefore == 0, "world parts read before the numbers: " + UpgradeTable.LastJoinPartsBefore + " (-1: none came) " + UpgradeTable.LastJoinPartTypes);
+			Check(ref ok, UpgradeTable.LastJoinPartsBefore >= 0, "the host's numbers came at the join");
+			Check(ref ok, UpgradeTable.LastJoinContentBefore == 0, "no world part (block, bag, non-update message) before the numbers: " + UpgradeTable.LastJoinContentBefore + " | " + UpgradeTable.LastJoinTrace);
+			Check(ref ok, !UpgradeTable.LastJoinRestoredFirst, "numbers before the world was restored (Raft messages read first: " + UpgradeTable.LastJoinPartsBefore + " " + UpgradeTable.LastJoinPartTypes + ")");
 			Check(ref ok, UpgradeTable.LastJoinData != null && ExtraUpgrades.IndexMapText() == UpgradeTable.LastJoinData, "numbers here '" + ExtraUpgrades.IndexMapText() + "', host's '" + UpgradeTable.LastJoinData + "'");
 			if (ok) Log("PASS: upgrade numbers at join (sweep 11-15)"); else Fail("upgrade numbers at join (sweep 11-15)");
 		}

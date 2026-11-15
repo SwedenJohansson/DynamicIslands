@@ -119,7 +119,7 @@ namespace DynamicIslands.Editor
 			return c.Value;
 		}
 
-		static bool OnIsland(IslandWorldState.Entry e, Vector3 p)
+		internal static bool OnIsland(IslandWorldState.Entry e, Vector3 p)
 		{
 			float r = Mathf.Max(20f, CustomIslandSpawner.LandRadius(e.Name)) + 5f;
 			return new Vector2(p.x - e.Position.x, p.z - e.Position.z).magnitude < r;
