@@ -96,9 +96,13 @@ namespace DynamicIslands.Editor
 
 		static IslanderWalk WalkerOf(IslandWorldState.Entry e, string name)
 		{
-			return Behaviours.RefsOf(e).Where(r => r.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+			return Behaviours.RefsOf(e).Where(r => QuestName(r.Props).Equals(name, StringComparison.OrdinalIgnoreCase))
 				.Select(r => r.GetComponentInChildren<IslanderWalk>(true)).FirstOrDefault(w => w != null);
 		}
+
+		/// <summary>An islander's name as a quest step names it - the plan check's own (an unnamed one is "Islander"; trimmed, cleaned).
+		/// The raw name missed an unnamed or space-padded islander, so its escort never started and never finished.</summary>
+		internal static string QuestName(IDictionary<string, string> props) { return IslandQuest.AsTarget(Islanders.NameOf(props)); }
 
 		/// <summary>Quest: 1 when the escort step's islander is in its zone.</summary>
 		public static int Found(IslandWorldState.Entry e, string target)
@@ -274,10 +278,12 @@ namespace DynamicIslands.Editor
 					if (!Raft_Network.IsHost) { remoteUntil = 0f; transform.localPosition = l; }
 				}
 				string was0 = zone;
-				zone = Raft_Network.IsHost ? IslanderWalks.EscortZone(entry, Ref.Name) : null;
-				// (the step can end in the same moment she steps in, before Escort saw it: keep that place)
-				if (zone == null && was0 != null && !arrived && IslanderWalks.Inside(IslanderWalks.ZoneOf(entry, was0), transform.position)) Arrive(was0);
-				if (zone == null) arrived = false;
+				zone = Raft_Network.IsHost ? IslanderWalks.EscortZone(entry, IslanderWalks.QuestName(Ref.Props)) : null;
+				// (the step can end in the same moment she steps in, before Escort saw it: keep that place. A next escort step for
+				// her to another zone counts as a change too: "arrived" from the last zone used to stick, so she never set off again)
+				bool changed = !string.Equals(zone, was0, StringComparison.OrdinalIgnoreCase);
+				if (changed && was0 != null && !arrived && IslanderWalks.Inside(IslanderWalks.ZoneOf(entry, was0), transform.position)) Arrive(was0);
+				if (changed) arrived = false;
 				if (anim == null) anim = GetComponentInChildren<Animator>();
 			}
 			Vector3 before = transform.localPosition;

@@ -262,6 +262,8 @@ it - its quest where it was, opened chests still open - and a banner says "Back 
 
 - an island whose quest you began and didn't finish: it comes back up to **three times** (an island you left on purpose
   stops coming back by itself, but the spawn pool may still bring it at random);
+- a **main story** island not finished yet: it comes back every time, with no limit - also one you sailed past without
+  setting foot on it;
 - an island a world plan still waits for - one that leads to the next island, like The Abyss Expedition's sunken
   island: it comes back every time, until you've done there what the plan waits for;
 - an island a plan brought on a set day or distance with **again until done** ([7.4](#74-everything-a-rule-can-do)): it
@@ -2080,7 +2082,8 @@ Select any object → **Behaviour & events...**. No code needed:
   a pool that fills the thirst of whoever drinks from it, as often as they like; its own use actions run after the
   drink (give it `heal||` instead to fill everything). **unlock frequency** (shared, `frequency|Balboa|`) unlocks the
   Receiver frequency of one of Raft's story islands for every player, through Raft's own note for it (nothing when
-  it is unlocked already).
+  it is unlocked already). In a world whose plan has a story chain it unlocks that island's own step of the chain
+  (nothing when the plan leaves the island out).
 - **Trade stands** (2026-11-04): select any object → **Trade stand...** in the object panel (beside **Readable...**
   and **A chest...**). Players look at it and press E to trade: they pay what you set in **Players pay**
   (`Plank*12;Rope*2`; a story item, `story:old-coin*1`, is taken from the crew's) and get **They get** (Raft items or
@@ -3246,7 +3249,8 @@ names are the same every time, its exact places aren't.
 
 **A world keeps its own copy of its plan.** When a world starts, the plan's rules are saved with the world:
 - **you edit your plan** (in the World plan window, on the PC of the player who made the world): the next time the world loads,
-  the changed plan plays - rules that already happened stay done, new ones come - and you're told so;
+  the changed plan plays - rules that already happened stay done, new ones come - and you're told so (a story island
+  you put back in, whose place the world has passed already, comes right away);
 - deleting the plan file, an **update** of a library or pack plan, or **another player** hosting the world with a
   different plan of the same name never changes the world: it plays its own copy (to give a running world another
   plan on purpose, use the F10 command `WorldPlan <name>` in it - the last plan's islands then leave the Receiver, and come

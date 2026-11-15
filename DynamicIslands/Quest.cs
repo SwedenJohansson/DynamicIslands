@@ -866,8 +866,9 @@ namespace DynamicIslands.Editor
 			if (Time.unscaledTime < nextHud) return;
 			nextHud = Time.unscaledTime + 0.5f;
 			tickQuests.Clear();
-			QuestSkip.Tick();
-			QuestTimers.Tick();
+			// (guarded: a throw here used to stop the counted steps and the panel too)
+			try { QuestSkip.Tick(); } catch (Exception ex) { DynamicIslands.TickError("Quest skip", ex); }
+			try { QuestTimers.Tick(); } catch (Exception ex) { DynamicIslands.TickError("Quest timers", ex); }
 			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); panelIsland = -1; doneSince.Clear(); closedKey = -1; followedIsland = followedStep = -1; DoneHideSeconds = 30f; if (panel != null) panel.gameObject.SetActive(false); return; }
 			TickCount++;
 			if (Raft_Network.IsHost) CheckCounted();
