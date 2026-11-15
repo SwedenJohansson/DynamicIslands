@@ -698,7 +698,7 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] Upgrade numbers before the world: " + e.Message); }
 		}
 
-		[HarmonyPatch(typeof(Raft_Network), "RequestWorldAsClient")]
+		[HarmonyPatch(typeof(Raft_Network), "Platform_RequestWorldAsClient")] // (not RequestWorldAsClient: it only makes its coroutine and was inlined into OnSceneLoaded, so its prefix never ran)
 		[HarmonyPrefix]
 		static void RequestWorld() { try { UpgradeTable.OnRequestWorld(); } catch { } }
 

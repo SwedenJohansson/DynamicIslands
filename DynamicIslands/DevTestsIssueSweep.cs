@@ -328,7 +328,7 @@ namespace DynamicIslands
 					"a host with none moved: its declared number is Rope's here, so kept (" + test.Index + ")");
 				Check(ref ok, ExtraUpgrades.ApplyFullMap(ExtraUpgrades.ParseIndexMap(d + ":" + f1), "test", false) == 1 && test.Index == f1, "the host's list moves it");
 				Check(ref ok, ExtraUpgrades.ApplyFullMap(ExtraUpgrades.ParseIndexMap(ExtraUpgrades.IndexMapText()), "test", false) == 0, "the same list again: nothing moves");
-				foreach (string m in new[] { "SendWorld", "RequestWorldAsClient" })
+				foreach (string m in new[] { "SendWorld", "Platform_RequestWorldAsClient" })
 				{
 					var info = Harmony.GetPatchInfo(AccessTools.Method(typeof(Raft_Network), m));
 					Check(ref ok, info != null && info.Prefixes.Any(p => p.PatchMethod.DeclaringType.Name == "UpgradeNumbersJoinPatches"), "Raft_Network." + m + " is patched");
