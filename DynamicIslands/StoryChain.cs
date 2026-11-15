@@ -186,7 +186,19 @@ namespace DynamicIslands.Editor
 		{
 			int last = -1;
 			for (int k = 0; k < Steps.Count; k++) if (Done.Contains(Steps[k])) last = k;
-			if (last < 0 || last + 1 >= Steps.Count) return;
+			if (last < 0) return;
+			// (a step put in before the last one done - a story island taken off the left-out list, or a plan island placed after
+			// one already passed: the step before it was done before it was there, so nothing ever unlocked it and its island
+			// never came; in play a step whose step before is done is always unlocked, so only an edit leaves such a gap -
+			// questdeepA S3)
+			for (int k = 1; k < last; k++)
+			{
+				string s = Steps[k];
+				if (Unlocked.Contains(s) || Done.Contains(s) || !Done.Contains(Steps[k - 1])) continue;
+				Log("The chain changed: " + StepName(s) + ", put in after " + StepName(Steps[k - 1]) + " (done), unlocks");
+				Unlock(s, true);
+			}
+			if (last + 1 >= Steps.Count) return;
 			string next = Steps[last + 1];
 			if (Unlocked.Contains(next) || Done.Contains(next)) return;
 			Log("The chain changed: the step after " + StepName(Steps[last]) + " unlocks");
@@ -334,6 +346,23 @@ namespace DynamicIslands.Editor
 			// (the note naming Chain[i] lies on Chain[i-1]: that island is done; the first is the Receiver's own - the start)
 			if (i == 0) { if (Steps.Count > 0 && IsRaft(Steps[0])) Unlock(Steps[0], false); }
 			else MarkDone(RaftKey(StoryOrder.Chain[i - 1]));
+		}
+
+		/// <summary>
+		/// Host: an island's "frequency|X" action (ReceiverUnlock) with the chain on: X's own step unlocks, with a banner and a
+		/// journal page; the steps before it stay as they are. Through Raft's note the chain read it as the note found on the
+		/// island before X in Raft's order: that island counted done (its quest still open) and what came after it in the plan's
+		/// chain unlocked, not X - or nothing at all when that island was left out (questdeepA S2). False: X isn't in this chain.
+		/// </summary>
+		public static bool UnlockRaftStep(ChunkPointType t)
+		{
+			string key = RaftKey(t);
+			string step = Steps.FirstOrDefault(s => s.Equals(key, StringComparison.OrdinalIgnoreCase));
+			if (step == null) return false;
+			if (Unlocked.Contains(step) || Done.Contains(step)) return true;
+			Unlock(step, true);
+			SaveSoon.Request("story step");
+			return true;
 		}
 
 		public static void MarkDone(string step)

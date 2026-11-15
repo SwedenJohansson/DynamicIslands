@@ -1055,6 +1055,17 @@ namespace DynamicIslands.Editor
 		/// <summary>Host: events kept for an island not loaded (the CI checks read it).</summary>
 		internal static int KeptUnloaded;
 
+		/// <summary>Host: an event whose shared part acts on the island's objects, while the island isn't loaded here: kept as
+		/// after a wait, the whole event runs when it loads (ResumePending). False: run it now.</summary>
+		static bool KeptForLoad(IslandWorldState.Entry e, int index, string ev, List<ObjAction> actions)
+		{
+			if (e.Root != null || !Resumable(ev) || !actions.Any(a => a.Shared && NeedsObjects.Contains(a.Verb))) return false;
+			KeepPending(e, index, ev, 0, ++pendingTokens);
+			KeptUnloaded++;
+			Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': its " + ev + " event runs when the island loads here (not loaded now)");
+			return true;
+		}
+
 		public static void FireFromHost(IslandWorldState.Entry e, int index, string ev)
 		{
 			if (e == null || !Raft_Network.IsHost) return;
@@ -1076,11 +1087,8 @@ namespace DynamicIslands.Editor
 			// (the island not loaded here - a player's last step far from the host: what shows, hides, opens or moves its
 			// objects had nothing to act on and was lost, a door the story needed stayed shut. Kept as after a wait: the whole
 			// event runs when the island loads here - questfix round 2)
-			if (e.Root == null && Resumable(ev) && actions.Any(a => a.Shared && NeedsObjects.Contains(a.Verb)))
+			if (KeptForLoad(e, index, ev, actions))
 			{
-				KeepPending(e, index, ev, 0, ++pendingTokens);
-				KeptUnloaded++;
-				Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': its " + ev + " event runs when the island loads here (not loaded now)");
 				if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
 				return;
 			}
@@ -1131,10 +1139,14 @@ namespace DynamicIslands.Editor
 					Debug.Log("[CUSTOM ISLANDS] A player's '" + ev + "' on '" + e.HostName + "' is refused: " + failed + " no longer holds for the crew (another player used it at the same moment)");
 					// (the player who tried gets the event's "otherwise" part, as when their own check fails)
 					if (from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev.TrimEnd('!') + "!");
+					FreeRefused(e, index, ev, true);
 					return;
 				}
 				int seed = GapBehaviours.Seed; // (the player's, from the message: their random pick)
-				if (HasSharedPart(actions) && SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false, ev);
+				// (the island's own event - a player arriving where the host isn't: index IslandIndex passes the check above -
+				// with doors or shows of its objects: they had nothing to act on, and "arrive" is once, so it was lost for good.
+				// Kept for when the island loads here, as the host's own events - questdeepA)
+				if (HasSharedPart(actions) && SharedOnce(e, index, ev) && !KeptForLoad(e, index, ev, actions)) Schedule(e, index, actions, true, false, ev);
 				// (yes: the player's own part runs now)
 				GapBehaviours.Seed = seed;
 				if (answer && from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev);
@@ -1145,6 +1157,36 @@ namespace DynamicIslands.Editor
 				if (answer) HostAnswered(e, index, ev);
 				Schedule(e, index, actions, false, false, ev);
 			}
+		}
+
+		/// <summary>Host: zones and chests freed again after a refusal (the CI checks read it).</summary>
+		internal static int FreedOnRefusal;
+
+		/// <summary>
+		/// Host: a player's zone ("enter") or chest ("open") event refused (another player used the crew's story item at the
+		/// same moment): the zone or chest is ready again. The player marked it used before asking, so it stayed spent with
+		/// nothing done - a door the story needed never opened (questdeepA A1). Its used mark may come after the event: looked
+		/// at again 2 s later.
+		/// </summary>
+		internal static void FreeRefused(IslandWorldState.Entry e, int index, string ev, bool again)
+		{
+			if (e == null || e.Root == null || (ev != "enter" && ev != "open")) return;
+			IslandObjectRef r = e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(x => x.Index == index);
+			if (r == null) return;
+			int key = -1;
+			TriggerZone z = ev == "enter" ? r.GetComponent<TriggerZone>() : null;
+			if (z != null && !z.Repeats) key = z.StateKey;
+			LootCrate c = ev == "open" ? r.GetComponentInChildren<LootCrate>(true) : null;
+			if (c != null) key = c.StateKey;
+			if (key < 0) return;
+			if (ContentState.IsUsed(e, key))
+			{
+				ContentState.ApplyUsed(e.Id, key, -1); // (its look too: a chest shown full again)
+				IslandNetwork.SendUsed(e.Id, key, -1);
+				FreedOnRefusal++;
+				Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': its " + (z != null ? "zone" : "chest") + " " + index + " is ready again (the player's '" + ev + "' was refused)");
+			}
+			else if (again && DynamicIslands.instance != null) DynamicIslands.instance.StartCoroutine(Later(2f, () => FreeRefused(e, index, ev, false)));
 		}
 
 		/// <summary>

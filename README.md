@@ -22,7 +22,7 @@ This README is the full reference, in the same order: island creation first, the
 
 - **Random chests, frequency notes and timed steps** (3.4): a chest can give a random part of its list (a chance per
   item, or pick N; a new roll every fill, the same for every player); a note or the action **unlock frequency** unlocks
-  one of Raft's Receiver frequencies for every player; a quest step can have a time limit with a countdown (run out and
+  one of Raft's Receiver frequencies for every player (in a plan's story chain: that island's own step); a quest step can have a time limit with a countdown (run out and
   the step starts again); any object can be a **laser emitter** (its range set) or a **mirror** in the Behaviour &
   events window. See the guide, 5.2, 5.3, 6.1 and 6.2.
 - **Trade stands and co-op zones** (2026-11-04): make any object a **trade stand** with your own offer (players pay
