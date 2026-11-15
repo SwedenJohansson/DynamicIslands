@@ -42,6 +42,9 @@ namespace DynamicIslands.Editor
 			/// 11-09 #8): the upgrade then takes the next free index from ClashBase on, the same one each start with the
 			/// same mods, and the world file's learned list still names it by this one (UpgradeTable).</summary>
 			public int Declared;
+			/// <summary>The index it got when made (Declared, or the free one on a clash): a world saved without the
+			/// numbers' line was played with these (sweep 11-15).</summary>
+			public int Fresh;
 			public string Name, BaseName, Display, Description;
 			public Color Tint;
 			/// <summary>A pale metal look: the model's textures lightened (dark parts lifted) in its pale tint, not made Vivid.</summary>
@@ -386,7 +389,27 @@ namespace DynamicIslands.Editor
 			if (!System.IO.File.Exists(file)) return;
 			string prefix = "@" + IndexLineKey + "=";
 			string line = System.IO.File.ReadAllLines(file).FirstOrDefault(l => l.StartsWith(prefix, StringComparison.Ordinal));
-			if (line != null) ApplyIndexMap(ParseIndexMap(line.Substring(prefix.Length)), "the world's numbers");
+			// (no line: a world from before it, played with the numbers the upgrades get at the start - before, an earlier
+			// world's numbers stayed on)
+			if (line != null) ApplyFullMap(ParseIndexMap(line.Substring(prefix.Length)), "the world's numbers", false);
+			else ApplyFullMap(null, "the start's numbers: the world has no list", true);
+		}
+
+		/// <summary>Every made upgrade to the number in <paramref name="map"/>; one not named goes to its declared number (a
+		/// world's or the host's list names only the moved ones) or, with <paramref name="toFresh"/>, to the one it got at the
+		/// start (Fresh). Before (sweep 11-15), an upgrade not named stayed where an earlier world or host had put it, and a
+		/// player who joined a host with none moved kept another host's numbers.</summary>
+		internal static int ApplyFullMap(Dictionary<int, int> map, string why, bool toFresh)
+		{
+			var full = new Dictionary<int, int>();
+			foreach (Upgrade u in Made)
+			{
+				if (u.Declared == 0) continue;
+				int to;
+				if (map == null || !map.TryGetValue(u.Declared, out to)) to = toFresh && u.Fresh != 0 ? u.Fresh : u.Declared;
+				if (to != u.Index) full[u.Declared] = to;
+			}
+			return ApplyIndexMap(full, why);
 		}
 
 		/// <summary>Moves made upgrades to the numbers in <paramref name="map"/> (declared -> live) where that number is free
@@ -464,6 +487,7 @@ namespace DynamicIslands.Editor
 				Clash(u.Display);
 				u.Index = free;
 			}
+			u.Fresh = u.Index;
 
 			Item_Base item = ScriptableObject.Instantiate(baseItem);
 			item.name = u.Name;

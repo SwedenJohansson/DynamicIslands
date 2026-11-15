@@ -228,11 +228,55 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost) { Send(Message(), null); IslandWorldState.Save(); }
 		}
 
-		/// <summary>Host: the upgrades' numbers in this world, for a player who joins (sent before the table's state).</summary>
+		/// <summary>Host: the upgrades' numbers in this world, for a player who joins; also when none moved, so the player
+		/// drops another host's or world's numbers (sweep 11-15). Sent before Raft sends the world (SendIndexesFirst) and
+		/// again with the join parts.</summary>
 		internal static IslandNetMessage IndexMessage()
 		{
-			string map = ExtraUpgrades.IndexMapText();
-			return map.Length == 0 ? null : new IslandNetMessage { Kind = IslandNetMessage.UpgradeTable, Name = "indexes", Data = map };
+			return new IslandNetMessage { Kind = IslandNetMessage.UpgradeTable, Name = "indexes", Data = ExtraUpgrades.IndexMapText() };
+		}
+
+		// Player: Raft's world (blocks, chests, bags) names items by the host's numbers and is read as it comes in: the
+		// numbers have to be here before it, or a moved upgrade turns into another item or none (sweep 11-15). The host
+		// sends them just before the world (same ordered stream); a player counts the world's parts read before they came.
+		static bool waitingWorld;
+		static int worldPartsBefore;
+		/// <summary>Tests: the world's parts read before the host's numbers came at the last join (-1: no join seen).</summary>
+		internal static int LastJoinPartsBefore = -1;
+		/// <summary>Tests: how many upgrades the host's numbers moved at the last join.</summary>
+		internal static int LastJoinMoved = -1;
+		/// <summary>Tests: the host's numbers at the last join.</summary>
+		internal static string LastJoinData;
+
+		internal static void OnRequestWorld() { waitingWorld = true; worldPartsBefore = 0; }
+		internal static void OnWorldPart() { if (waitingWorld && !Raft_Network.IsHost) worldPartsBefore++; }
+
+		/// <summary>Player: the host's numbers came.</summary>
+		static void IndexesFromHost(string data)
+		{
+			int moved = ExtraUpgrades.ApplyFullMap(ExtraUpgrades.ParseIndexMap(data), "the host's numbers", false);
+			if (!waitingWorld)
+			{
+				if (moved > 0) Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] The host's upgrade numbers moved " + moved + " upgrade(s) after the world was read");
+				return;
+			}
+			waitingWorld = false;
+			LastJoinPartsBefore = worldPartsBefore;
+			LastJoinMoved = moved;
+			LastJoinData = data ?? "";
+			Log("The host's upgrade numbers came with " + worldPartsBefore + " world part(s) read before them, " + moved + " upgrade(s) moved");
+			if (worldPartsBefore > 0 && moved > 0)
+			{
+				Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] The host's upgrade numbers came after its world: moved upgrades may show as other items until a rejoin");
+				DynamicIslands.Notify("The host's upgrade numbers came late: if an upgrade looks wrong, leave and join again.", true, 10);
+			}
+		}
+
+		/// <summary>Host: a player asked for the world - its upgrade numbers go first.</summary>
+		internal static void SendIndexesFirst(Network_UserId to)
+		{
+			Send(IndexMessage(), to);
+			Log("Upgrade numbers sent to " + to.Id + " before the world (" + (ExtraUpgrades.IndexMapText().Length == 0 ? "none moved" : ExtraUpgrades.IndexMapText()) + ")");
 		}
 
 		internal static IslandNetMessage Message()
@@ -259,7 +303,7 @@ namespace DynamicIslands.Editor
 				UpgradeTableMenu.Learned(ExtraUpgrades.Find(msg.Index), by);
 				return;
 			}
-			if (msg.Name == "indexes") { ExtraUpgrades.ApplyIndexMap(ExtraUpgrades.ParseIndexMap(msg.Data), "the host's numbers"); return; }
+			if (msg.Name == "indexes") { IndexesFromHost(msg.Data); return; }
 			if (msg.Name == "done") { pendingResearch.Remove(msg.Index); return; } // (the host's yes to this player's research)
 			if (msg.Name == "refund")
 			{
@@ -640,5 +684,25 @@ namespace DynamicIslands.Editor
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] An entry's Learn button: " + e.Message); return true; }
 		}
+	}
+
+	/// <summary>The world's upgrade numbers reach a joining player before the world (sweep 11-15, UpgradeTable).</summary>
+	static class UpgradeNumbersJoinPatches
+	{
+		[HarmonyPatch(typeof(Raft_Network), "SendWorld")]
+		[HarmonyPrefix]
+		static void SendWorld(Network_UserId __0)
+		{
+			try { if (Raft_Network.IsHost) UpgradeTable.SendIndexesFirst(__0); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] Upgrade numbers before the world: " + e.Message); }
+		}
+
+		[HarmonyPatch(typeof(Raft_Network), "RequestWorldAsClient")]
+		[HarmonyPrefix]
+		static void RequestWorld() { try { UpgradeTable.OnRequestWorld(); } catch { } }
+
+		[HarmonyPatch(typeof(NetworkUpdateManager), "DeserializeSingleMessage")]
+		[HarmonyPrefix]
+		static void WorldPart() { UpgradeTable.OnWorldPart(); }
 	}
 }

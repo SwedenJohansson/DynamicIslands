@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using DynamicIslands.Editor;
+using HarmonyLib;
 using HMLLibrary;
 using RaftModLoader;
 using UnityEngine;
@@ -258,6 +259,34 @@ namespace DynamicIslands
 			if (ok) Log("PASS: mp trust (sweep #6)"); else Fail("mp trust (sweep #6)");
 		}
 
+		[ConsoleCommand(name: "CIMpTrustLive", docs: "Dev, joined player: sweep 11-14 #6 with a live host - Raft names the host; each host-only kind is taken from it and dropped from anyone else; nothing real was dropped in this session")]
+		public static void MpTrustLiveCommand(string[] args)
+		{
+			bool ok = true;
+			Check(ref ok, !Raft_Network.IsHost && RAPI.GetLocalPlayer() != null, "run on a joined player");
+			ulong host = 0UL;
+			try { Raft_Network network = ComponentManager<Raft_Network>.Value; host = network != null ? network.HostID.Id : 0UL; } catch { }
+			Check(ref ok, host != 0UL && IslandNetwork.HostIdOverride == 0UL, "Raft names the host (" + host + "), no test override");
+			foreach (int kind in IslandNetwork.HostOnlyKinds.Concat(IslandNetwork.FromHostOnPlayers).Distinct())
+			{
+				var m = new IslandNetMessage { Kind = kind };
+				Check(ref ok, !IslandNetwork.NotFromHost(m, host, false), "kind " + kind + " from the host: taken");
+				Check(ref ok, IslandNetwork.NotFromHost(m, host + 1UL, false), "kind " + kind + " from another player: dropped");
+			}
+			Check(ref ok, IslandNetwork.DroppedNotFromHost == 0, "messages dropped as not from the host this session: " + IslandNetwork.DroppedNotFromHost);
+			if (ok) Log("PASS: mp trust live (sweep #6)"); else Fail("mp trust live (sweep #6)");
+		}
+
+		[ConsoleCommand(name: "CIUpgradeJoin", docs: "Dev, joined player: sweep 11-15 - the host's upgrade numbers came before any part of its world, and this player's numbers are the host's")]
+		public static void UpgradeJoinCommand(string[] args)
+		{
+			bool ok = true;
+			Check(ref ok, !Raft_Network.IsHost, "run on a joined player");
+			Check(ref ok, UpgradeTable.LastJoinPartsBefore == 0, "world parts read before the numbers: " + UpgradeTable.LastJoinPartsBefore + " (-1: none came)");
+			Check(ref ok, UpgradeTable.LastJoinData != null && ExtraUpgrades.IndexMapText() == UpgradeTable.LastJoinData, "numbers here '" + ExtraUpgrades.IndexMapText() + "', host's '" + UpgradeTable.LastJoinData + "'");
+			if (ok) Log("PASS: upgrade numbers at join (sweep 11-15)"); else Fail("upgrade numbers at join (sweep 11-15)");
+		}
+
 		[ConsoleCommand(name: "CIUpgradeNumbers", docs: "Dev, world (host): sweep 11-14 #2 - a moved upgrade's number is kept in the world file and sent to joining players; a load or the host's numbers move it back to them where free, never onto another item")]
 		public static void UpgradeNumbersCommand(string[] args) { StartTest(UpgradeNumbersRoutine()); }
 
@@ -291,10 +320,27 @@ namespace DynamicIslands
 				// The world file's line moves it back
 				Check(ref ok, ExtraUpgrades.ReadIndexLine("upgradeindex", pair) && test.Index == f1 && ItemManager.GetItemByIndex(f1) == test.Item, "the world file's line moves it back to " + f1);
 				Check(ref ok, ExtraUpgrades.ParseIndexMap("1:2, 3:4,bad,5").Count == 2, "a hand-edited line: bad pairs left out");
+				// Sweep 11-15: numbers from an earlier world or host don't stay on
+				Check(ref ok, test.Fresh == f1, "its start number is kept (" + test.Fresh + ")");
+				Check(ref ok, ExtraUpgrades.ApplyIndexMap(ExtraUpgrades.ParseIndexMap(d + ":" + f2), "test") == 1 && ExtraUpgrades.ApplyFullMap(null, "test", true) >= 1 && test.Index == f1 && ItemManager.GetItemByIndex(f2) == null,
+					"a world without the line: back to the start number " + f1 + " (now " + test.Index + ")");
+				Check(ref ok, ExtraUpgrades.ApplyIndexMap(ExtraUpgrades.ParseIndexMap(d + ":" + f2), "test") == 1 && ExtraUpgrades.ApplyFullMap(ExtraUpgrades.ParseIndexMap(""), "test", false) == 0 && test.Index == f2 && ItemManager.GetItemByIndex(d) == rope,
+					"a host with none moved: its declared number is Rope's here, so kept (" + test.Index + ")");
+				Check(ref ok, ExtraUpgrades.ApplyFullMap(ExtraUpgrades.ParseIndexMap(d + ":" + f1), "test", false) == 1 && test.Index == f1, "the host's list moves it");
+				Check(ref ok, ExtraUpgrades.ApplyFullMap(ExtraUpgrades.ParseIndexMap(ExtraUpgrades.IndexMapText()), "test", false) == 0, "the same list again: nothing moves");
+				foreach (string m in new[] { "SendWorld", "RequestWorldAsClient" })
+				{
+					var info = Harmony.GetPatchInfo(AccessTools.Method(typeof(Raft_Network), m));
+					Check(ref ok, info != null && info.Prefixes.Any(p => p.PatchMethod.DeclaringType.Name == "UpgradeNumbersJoinPatches"), "Raft_Network." + m + " is patched");
+				}
+				var part = Harmony.GetPatchInfo(AccessTools.Method(typeof(NetworkUpdateManager), "DeserializeSingleMessage"));
+				Check(ref ok, part != null && part.Prefixes.Any(p => p.PatchMethod.DeclaringType.Name == "UpgradeNumbersJoinPatches"), "world parts are counted");
 			}
 			catch (Exception e) { Check(ref ok, false, "threw " + e); }
 			finally { ExtraUpgrades.CosmeticItems.Remove(test); ExtraUpgrades.ForgetForTest(test); }
 			Check(ref ok, ItemManager.GetItemByName("DI_TestNumbers") == null && ExtraUpgrades.IndexMapText() == before, "test item taken out again");
+			IslandNetMessage none = UpgradeTable.IndexMessage();
+			Check(ref ok, none != null && none.Name == "indexes" && none.Data == before, "the numbers are sent also with none moved ('" + before + "')");
 			yield return null;
 			if (ok) Log("PASS: upgrade numbers (sweep #2)"); else Fail("upgrade numbers (sweep #2)");
 		}
