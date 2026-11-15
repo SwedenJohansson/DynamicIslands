@@ -47,6 +47,9 @@ clear from -2 4 to -2 16 r=8
 clear from 0 -14 to 0 -50 r=4
 clear at 9 -17 r=6
 clear from 0 -50 to 0 -84 r=4
+# (w10fix3 11-13, REACH: a generated rock off the north shore at -12 87.5 roofed a pocket of water a swimmer got into but
+# not out of)
+clear at -12 88.5 r=5 body
 call ar_cave x=20 z=70 h=4 yaw=180 al=patientrock chest=patientchest
 call ar_plane x=55 z=30 h=4 yaw=200 al=supplyplane crate=supplycrate
 
@@ -57,8 +60,9 @@ place Tangaroa_BallroomKit_GrandPiano piano at 9 3.8 y=0.6 sit drop yaw=90
 place Loot_ChestSmall musicbox at 9 3.8 y=2.8 sit drop yaw=90
 place "Table Office" admitdesk at 2 4.9 y=1.2 sit drop yaw=0
 place Note_Paper admissions at 2 4.9 y=2.2 sit drop yaw=10
-place "Table Office" nursedesk at 1.5 1.2 y=1.2 sit drop yaw=180
-place Note_Paper rota at 1.5 1.2 y=2.2 sit drop yaw=-15
+# (w10fix3 11-14, REACH: in the corner by the west wall the walk out snagged on the desk now and then - by the door now)
+place "Table Office" nursedesk at 7.5 1.0 y=1.2 sit drop yaw=180
+place Note_Paper rota at 7.5 1.0 y=2.2 sit drop yaw=-15
 for cx 1.5 6 1.5
 place Placeable_Chair_Wood - at $cx 2.6 y=0.8 sit drop yaw=0
 next
@@ -153,9 +157,27 @@ scatter "Pickup_Landmark_Rock 1" 3 at -40 40 r=24 seed=30105 free=2
 place Creature_Goat hillgoats at -19.32 25.32 ground
 prop hillgoats creature.count=2
 # --- The sea-bathing house (south-east), drowned in a hole 14 m down, an air pocket: Mabel's note, the back room's chest -
-call hw_sunkhouse x=60 z=-58 h=-14 yaw=0 a=seabath chest=bathchest air=bathair bub=bathbub dal=bathdoor
+# (w10fix3 11-14, REACH: the walk still ended on the roof, 2 m over the note and the chest - rn=2: the back roof tile
+# over the chest left out, a way in from above as well as the door)
+call hw_sunkhouse x=60 z=-58 h=-14 yaw=0 a=seabath chest=bathchest air=bathair bub=bathbub dal=bathdoor rn=2
 call hw_zone x=60 z=-58 al=bathzone id=seabath r=7 h=1 msg="The sea-bathing house, 14 m down. Towels still folded on the bench. Its front room still holds air."
-place Note_Paper mabelnote at 60.6 -60.2 h=-13.7 drop yaw=20
+# (w10fix3 11-14, REACH: the grid went down through the roof (two layers of tiles 0.1 m apart did not stop it) and the
+# walk ended on the roof, 2-4 m over the chest and Mabel's note - a low inner ceiling 0.6 m under the roof, under every
+# roof tile but the open one over the chest)
+push at 60 -58 h=-14
+for k 0 3
+place Block_Floor_Tier3 bathseam at -0.75 {$k*1.5-2.25} y=2.0
+next
+for k 0 2
+place Block_Floor_Tier3 bathseam at 0.75 {$k*1.5-2.25} y=2.0
+next
+pop
+prop bathseam tint.color=#4e5a58
+prop bathseam tint.amount=0.5
+# (w10fix3 11-13, REACH: on the floor in the corner by the door the walk ended 4 m from the eye - on the bench now, in
+# the middle of the air pocket)
+place Placeable_Table_Basic bathbench at 59.2 -58.9 ground yaw=90
+place Note_Paper mabelnote at 59.2 -58.9 h=-12.6 sit drop yaw=20
 loot bathchest MetalIngot*1;Rope*2;Glass*2;HealingSalve*1
 prop bathchest loot.refill=0
 note bathchest Bathing house chest | The attendants' chest: rope, glass for the cubicle lamps, an iron ingot and a salve.
@@ -163,7 +185,8 @@ place Creature_PufferFish bathpuffers at 66 -50 h=-9
 prop bathpuffers creature.count=2
 # --- The patients' cave (north): a secret -------------------------------------------------------------------------------
 call hw_zone x=20 z=65 al=cavez id=patientcave r=4 msg="A cave in the rock. Blankets from the wards, nine of them, laid in a ring - and scratched in the wall, over and over, a lullaby's notes."
-place Note_Paper kipnote at 18.5 64.5 h=4.45 drop yaw=180
+# (w10fix3 11-13, REACH: at h+0.45 the note fell through the den floor (h+0.9) into the rock - dropped from above now)
+place Note_Paper kipnote at 19.2 65.6 h=6.2 drop yaw=180
 loot patientchest Rope*2;Scrap*2;Battery*1;MetalOre*2
 prop patientchest loot.refill=0
 note patientchest Orderly's box | Kip Rennie's box: rope, a battery for his torch, scrap and the ore the patients dug from the cave wall with spoons.
@@ -180,6 +203,9 @@ prop treasure30107 treasure.loot=MetalOre*3;CopperOre*2
 info title=Saint Agnes Sanatorium
 info author=Custom Islands
 info description=A sanatorium on a wooded headland as big as Raft's own big islands: Chapel Hill with its humming bell tower, a sea-bathing house drowned off the shore, the cave where the patients hid, a supply plane - and a day room with a grand piano, a locked ward, a veranda of empty cots and a hydrotherapy house nobody has drained. The second island of The Lullaby Frequency.
+# (w10fix3 11-13, REACH: Ward C's beds are behind its key door (quest step 5) - the fresh grid keeps a gated door shut;
+# the play unlocks it and walks in)
+island reach.byplay=Bed 4 chart;Bed 7 chart;Bed 9 chart;ward_c
 island on.arrive=message||White walls in the trees, and mist lying on the lawn. From inside, faintly, a piano.
 
 story pianoplayed|The piano played|Placeable_Lantern_Metal|You touched the day room's piano. It has not stopped playing since.
