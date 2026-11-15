@@ -193,7 +193,7 @@ plain Raft.
 | Part | What it does |
 |---|---|
 | **Custom Islands plan** | The chosen plan's name and **Choose plan...**, which opens the plan picker (below). Which custom islands the world gets: **Random islands** (they appear by chance while you sail), **No custom islands**, or a plan with a storyline (from the island library: a story from island to island; see [section 7](#7-world-plans-which-islands-a-world-gets)). A plan can mix random islands, side trips and main quest islands: [the three kinds](#the-three-kinds-of-islands-you-meet-at-sea). The box shows the chosen plan's description under it (hover it for the whole text); under that, **Get more plans...** opens the island library to download plans others made; a plan you download there is chosen here ([4.7](#47-saving-and-sharing)) **View the plan...** shows what the chosen plan does: its islands, when and where each comes, and Raft's story. |
-| **World settings...** | Opens the World settings window: the world's rules, the world randomizer, the extra options, the level up system and which islands turn up while sailing ([section 9](#9-world-settings-rules-and-extra-systems)). The button reads `Raft's own` while nothing differs from plain Raft, otherwise how many settings you changed (`3 changed`) |
+| **World settings...** | Opens the World settings window: the world's rules, the world randomizer, the extra options, the level up system and which islands turn up while sailing ([section 9](#9-world-settings-rules-and-extra-systems)). The button reads `Raft's own` while nothing differs from plain Raft, otherwise how many settings you changed (`3 changed`; islands left out and their gap don't count) |
 
 **Choose plan...** opens the **plan picker**: every plan on the left - its name, its kind (built in, library plan,
 your plan; *big plan* when it brings ten islands or more) and how many islands it brings - and the selected one on the
@@ -3451,7 +3451,7 @@ an explanation. **Raft's own** puts every setting back to plain Raft; **Defaults
 | **Islands while sailing** | Which of your islands (and which kinds of new islands) turn up by chance while you sail in this world: **CHOOSE ISLANDS...** opens the list (below) |
 
 **Raft's own** sets monsters to Normal, the build cost to Raft's own, rare animal looks to Normal, the randomizer to Off and every extra option to
-off, the level up system and the head start raft too (it leaves the islands while sailing and their gap alone). The line at the bottom of the window sums up what the world will get. Nothing is
+off, the level up system and the head start raft too (it leaves the islands while sailing and their gap as you chose them, and those two don't count as changed settings: the button can read `Raft's own` while some islands are left out). The line at the bottom of the window sums up what the world will get. Nothing is
 final until you click **Create** in the New Game box.
 
 **In a world:** press **Esc → Custom Islands** (a button in Raft's pause menu). The world's own settings window
@@ -3501,7 +3501,7 @@ already in the world is taken away. What each one does from the moment it change
 | Long voyage | Spacing at once; fewer islands after the next random island |
 | Iron raft, Shared EXP, Night danger | At once (the next shark bite, the next monster defeated) |
 | Daily quest | On: a task when it is next light; off: today's task waits, unchanged |
-| Rogue shark | On: today's chance is rolled at once; off: one already out stays until killed |
+| Rogue shark | On: today's chance is rolled at once; off: a living rogue swims off for every player (a plain shark comes if it was the last) |
 | Golden barrels | Barrels from now on; off: no extra loot and plain colours at once |
 | Storm days | At once: a storm day starts, or a storm ends within seconds |
 | Bioluminescent sea | At once: tonight's glow starts or fades within seconds |
@@ -3729,7 +3729,8 @@ About one rogue in five is a **giant**: twice Bruce's size, with three times his
 players (its bites on the raft are a normal shark's). Its banner says "A giant rogue shark".
 A banner says when it comes and when it dies. While it lives, the usual shark still comes back when killed; the rogue's
 body brings no new shark. It is saved with the world, keeps its colour after a load, and every player sees the same one.
-Switching the option off leaves a living rogue until it is killed. `RogueShark` shows where it is; the host's
+Switching the option off in a world sends a living rogue away for every player (no body, no loot; if it was the only
+shark, a plain one comes). `RogueShark` shows where it is; the host's
 `RogueShark giant` brings a giant one now.
 
 #### Silver & golden barrels

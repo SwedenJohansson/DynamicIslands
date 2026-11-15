@@ -225,7 +225,7 @@ namespace DynamicIslands
 			Check(ref ok, WorldSettingsWindow.Chosen.Count == WorldOptions.Offered.Length && UIKit.LabelOf(open).text.Contains(WorldSettingsWindow.Changed + " changed"), "all on: the box's button says '" + UIKit.LabelOf(open).text + "'");
 			Check(ref ok, ClickIn(WorldSettingsWindow.Window, "Raft's own"), "Raft's own clicked");
 			yield return null;
-			Check(ref ok, WorldSettingsWindow.Chosen.Count == 0 && !NewWorldOptions.Randomizer.On && NewWorldRulesBox.MonsterLevel == MonsterDifficulty.Normal && NewWorldRulesBox.BuildPercent == 0 && UIKit.LabelOf(open).text.Contains(WorldIslands.Chosen.Count > 0 ? "1 changed" : "Raft's own"), // (islands left out are this PC's list: kept)
+			Check(ref ok, WorldSettingsWindow.Chosen.Count == 0 && !NewWorldOptions.Randomizer.On && NewWorldRulesBox.MonsterLevel == MonsterDifficulty.Normal && NewWorldRulesBox.BuildPercent == 0 && UIKit.LabelOf(open).text.Contains("Raft's own"), // (islands left out are this PC's list: kept, and not counted as changed)
 				"Raft's own: no options, no randomizer, Normal monsters, Raft's build cost ('" + UIKit.LabelOf(open).text + "')");
 			// (the rules and the randomizer as they were: only the options are this test's choice)
 			NewWorldRulesBox.MonsterLevel = levelBefore; NewWorldRulesBox.BuildPercent = percentBefore;
@@ -253,10 +253,17 @@ namespace DynamicIslands
 		static bool ClickIn(RectTransform root, string label) { return root != null && Click(root.gameObject, label); }
 
 		[ConsoleCommand(name: "CIWorldOptionsCheck", docs: "Dev, in game (either player): the world has exactly these options (and a seed); logs OPTIONS and SERVER lines: CIWorldOptionsCheck [option ...]")]
-		public static void WorldOptionsCheckCommand(string[] args)
+		public static void WorldOptionsCheckCommand(string[] args) { StartTest(WorldOptionsCheckRoutine(WorldOptions.Parse(string.Join(",", args ?? new string[0])))); }
+
+		static IEnumerator WorldOptionsCheckRoutine(HashSet<string> want)
 		{
-			HashSet<string> want = WorldOptions.Parse(string.Join(",", args ?? new string[0]));
+			// (waits until the world is in with its player and, on a joiner, the host's options came for it - then until they
+			// match, 60 s at most: a check run right after joining or a live change on the host no longer races them)
+			System.Func<bool> ready = () => { try { return LoadSceneManager.IsGameSceneLoaded && RAPI.GetLocalPlayer() != null && (Raft_Network.IsHost || WorldOptions.FromHost); } catch { return false; } };
+			float end = Time.realtimeSinceStartup + 60f;
+			while (Time.realtimeSinceStartup < end && !(ready() && WorldOptions.Current.SetEquals(want) && (want.Count == 0 || WorldOptions.Seed != 0))) yield return null;
 			bool ok = true;
+			if (!Raft_Network.IsHost) Check(ref ok, WorldOptions.FromHost, "the host's options came");
 			Check(ref ok, LoadSceneManager.IsGameSceneLoaded, "in a world");
 			Check(ref ok, WorldOptions.Current.SetEquals(want), "the world's options: " + WorldOptions.Describe(WorldOptions.Current) + " (wanted " + WorldOptions.Describe(want) + ")");
 			Check(ref ok, want.Count == 0 || WorldOptions.Seed != 0, "its seed: " + WorldOptions.Seed);
@@ -1754,6 +1761,46 @@ namespace DynamicIslands
 
 		[ConsoleCommand(name: "CIRogueShark", docs: "Dev, world (host): the option Rogue shark - the day's roll comes from the seed and the day (the same twice, none before day 3, about 12 % of days), the quiet days 5-8, written and read back; the option off: none on a rolling day; on: a second shark comes (Raft's own spawn), rust-red, not the randomizer's, kept in the world file; Bruce killed while it lives: Raft counts him as the last shark (a new one comes); the rogue killed: none for its quiet days, its body brings no new shark; after them the next rolling day brings one; a giant (one now): about twice a plain shark's size, more health, saved as one; options and the rogue put back after")]
 		public static void RogueSharkTestCommand() { StartTest(RogueSharkRoutine()); }
+
+		[ConsoleCommand(name: "CIRogueOff", docs: "Dev, world: Rogue shark switched off live retires the living rogue on every machine. Host: 'CIRogueOff spawn' = the option on and a rogue now; 'CIRogueOff off' = the option off, the rogue gone (index 0, its shark removed, a shark still swims). Joiner: 'CIRogueOff seen' = the host's rogue is here; 'CIRogueOff gone' = it was removed here too")]
+		public static void RogueOffCommand(string[] args) { StartTest(RogueOffRoutine(args != null && args.Length > 0 ? args[0] : "")); }
+
+		static uint rogueOffSeen;
+
+		static IEnumerator RogueOffRoutine(string step)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("rogue off: in a world"); yield break; }
+			bool host = Raft_Network.IsHost;
+			if (host != (step == "spawn" || step == "off")) { Fail("rogue off: host 'spawn' / 'off', joiner 'seen' / 'gone'"); yield break; }
+			float end = Time.realtimeSinceStartup + 45f;
+			System.Func<uint, bool> swims = i => LiveSharks().Any(x => x.ObjectIndex == i);
+			if (step == "spawn")
+			{
+				if (!WorldOptions.On(WorldOptions.RogueShark)) WorldOptions.Set(new HashSet<string>(WorldOptions.Current) { WorldOptions.RogueShark });
+				if (RogueShark.Index == 0) RogueShark.Spawn(false);
+				while (Time.realtimeSinceStartup < end && !RogueShark.Alive) yield return null;
+				rogueOffSeen = RogueShark.Index;
+				if (RogueShark.Alive) Log("PASS: rogue off: a rogue #" + RogueShark.Index + " lives (" + LiveSharks().Count + " shark(s))"); else Fail("rogue off: no rogue came");
+			}
+			else if (step == "seen")
+			{
+				while (Time.realtimeSinceStartup < end && !(RogueShark.Index != 0 && RogueShark.Alive && RogueShark.LooksRogue(RogueShark.Find()))) yield return null;
+				rogueOffSeen = RogueShark.Index;
+				if (RogueShark.Alive) Log("PASS: rogue off: the host's rogue #" + rogueOffSeen + " is here, rust-red " + RogueShark.LooksRogue(RogueShark.Find())); else Fail("rogue off: the host's rogue did not come (index " + RogueShark.Index + ")");
+			}
+			else
+			{
+				uint was = rogueOffSeen != 0 ? rogueOffSeen : RogueShark.Index;
+				if (was == 0) { Fail("rogue off: no rogue to retire (run 'spawn' / 'seen' first)"); yield break; }
+				if (step == "off") WorldOptions.Set(new HashSet<string>(WorldOptions.Current.Where(o => o != WorldOptions.RogueShark)));
+				while (Time.realtimeSinceStartup < end && (RogueShark.Index != 0 || swims(was) || (host && LiveSharks().Count == 0))) yield return null;
+				bool ok = RogueShark.Index == 0 && !swims(was) && !WorldOptions.On(WorldOptions.RogueShark);
+				string what = "the rogue #" + was + ": index now " + RogueShark.Index + ", its shark " + (swims(was) ? "still swims" : "removed") + ", " + LiveSharks().Count + " shark(s) alive";
+				if (host) ok &= LiveSharks().Count > 0;
+				rogueOffSeen = 0;
+				if (ok) Log("PASS: rogue off: switched off, " + what); else Fail("rogue off: " + what);
+			}
+		}
 
 		static List<AI_NetworkBehavior_Shark> LiveSharks()
 		{

@@ -309,6 +309,7 @@ namespace DynamicIslands.Editor
 			foreach (string o in on) Current.Add(o);
 			Seed = seed;
 			if (msg.Name != null) global::DynamicIslands.Editor.PrivateStorage.Decode(msg.Name);
+			FromHost = true;
 			Log("The host's options: " + Describe());
 			Notify();
 			// (the blueprints swapped now, not at the next look 1.5 s on - AU65)
@@ -318,6 +319,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The world was left (every machine): none until the next world's are read or come.</summary>
 		internal static void Forget()
 		{
+			FromHost = false;
 			Current.Clear();
 			Seed = 0;
 			used = false;
@@ -330,9 +332,13 @@ namespace DynamicIslands.Editor
 			ResetStep("HeadStart.Reset", () => global::DynamicIslands.Editor.HeadStart.Reset(false));
 		}
 
+		/// <summary>Client: the host's options came for this world (tests wait for them).</summary>
+		internal static bool FromHost;
+
 		/// <summary>Client: a host's world arrived: none until the host's come.</summary>
 		internal static void OnWorldReceived()
 		{
+			FromHost = false;
 			Current.Clear();
 			Seed = 0;
 			ResetStep("PrivateStorage.Reset", () => global::DynamicIslands.Editor.PrivateStorage.Reset());

@@ -124,8 +124,28 @@ namespace DynamicIslands.Editor
 			{
 				if (r is ParticleSystemRenderer) continue;
 				if (on) WorldRandomizer.TintTextures(r, c);
-				else r.SetPropertyBlock(new MaterialPropertyBlock());
+				else Untint(r);
 			}
+		}
+
+		/// <summary>Only this mod's tinted copies back to the material's own textures: the rest of the renderer's property block stays
+		/// (a fresh block wiped what Raft or another part of the mod had put there).</summary>
+		static void Untint(Renderer r)
+		{
+			Material m = r.sharedMaterial;
+			if (m == null) return;
+			var block = new MaterialPropertyBlock();
+			r.GetPropertyBlock(block);
+			bool changed = false;
+			foreach (string prop in new[] { "_Diffuse", "_DiffuseDamaged", "_MainTex" })
+			{
+				if (!m.HasProperty(prop)) continue;
+				Texture t = block.GetTexture(prop), own = m.GetTexture(prop);
+				if (t == null || own == null || !t.name.StartsWith("CI_Tinted_")) continue;
+				block.SetTexture(prop, own);
+				changed = true;
+			}
+			if (changed) r.SetPropertyBlock(block);
 		}
 
 		/// <summary>Whether this barrel shows a silver or golden colour now (tests).</summary>
