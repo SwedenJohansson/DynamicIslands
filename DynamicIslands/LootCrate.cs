@@ -91,12 +91,14 @@ namespace DynamicIslands.Editor
 			CreatureSpawnPoint[] spots = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true);
 			// (a zone with story items is ready again too - its guards, message and other loot come back - but its story items
 			// don't: they are given once per world, TriggerZone.StoryLootBase / Behaviours.StoryGivenBase)
-			foreach (TriggerZone zone in e.Root.GetComponentsInChildren<TriggerZone>(true).Where(z => !z.OnceEver))
+			TriggerZone[] allZones = e.Root.GetComponentsInChildren<TriggerZone>(true);
+			foreach (TriggerZone zone in allZones.Where(z => !z.OnceEver))
 			{
 				if (!IsDue(e, zone.StateKey, days)) continue;
 				string id = zone.Id;
+				// (its own guards: two zones with one name each have theirs, the nearest's - questfix round 2)
 				List<CreatureSpawnPoint> guards = id.Length == 0 ? new List<CreatureSpawnPoint>() :
-					spots.Where(p => p.Kind != null && ObjectProps.Get(p.Props, ObjectProps.CreatureZone) == id).ToList();
+					spots.Where(p => p.Kind != null && ObjectProps.Get(p.Props, ObjectProps.CreatureZone) == id && CreatureSpawner.ZoneOf(allZones, p, id) == zone).ToList();
 				if (guards.Count > 0 && guards.All(p => GoneForGood(e, p)))
 				{
 					Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': zone '" + id + "' stays spent - its guards don't come back");

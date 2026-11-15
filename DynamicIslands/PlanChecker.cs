@@ -1319,6 +1319,15 @@ namespace DynamicIslands.Editor
 			FindMomentTraps(f, x, objects.Select(o => o.Value).ToList());
 			FindDataTraps(f, x, objects.Select(o => o.Value).ToList());
 			FindChestWording(f, x, objects);
+			// Two trigger zones with one name that animals wait for: each spot's animals wait for the nearest of them (questfix
+			// round 2: before, all waited for the first, and the other zone's guards came only when a player went there)
+			var zoneNames = objects.Where(o => o.Key.Name == ContentCatalog.TriggerZone).Select(o => IslandQuest.Clean(ObjectProps.Get(o.Value, ObjectProps.ZoneId)))
+				.Where(z => z.Length > 0).GroupBy(z => z, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+			List<string> twice = zoneNames.Where(z => objects.Any(o => string.Equals(ObjectProps.Get(o.Value, ObjectProps.CreatureZone).Trim(), z, StringComparison.OrdinalIgnoreCase))).ToList();
+			if (twice.Count > 0)
+				x.Traps.Add(new Finding(-1, Level.Warning, "more than one trigger zone is called " + string.Join(", ", twice.Select(n => "'" + n + "'").ToArray()) +
+					", and animals wait for that name: each spot's animals wait for the nearest zone of that name - a guard nearer to the other zone than to its own wakes from the wrong one.",
+					"Give each zone its own name and pick it for its guards (the animal spot's \"Appears ... when '...' fires\" button)."));
 			// A story item the island uses that isn't in its Story items list (deleted there, or a typo): another island
 			// of the world may define it (StoryItems.Find), otherwise it shows with its id for a name and no picture
 			var defined = new HashSet<string>(StoryItems.Of(f.Props).Select(d => d.Id), StringComparer.OrdinalIgnoreCase);

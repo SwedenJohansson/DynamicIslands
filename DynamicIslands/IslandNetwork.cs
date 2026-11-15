@@ -277,7 +277,9 @@ namespace DynamicIslands.Editor
 			syncTries++;
 			nextSyncTry = Time.unscaledTime + (syncTries > SyncMaxTries ? SlowSyncSeconds : SyncRetrySeconds);
 			// (with this player's version of the mod: the host says when they differ, and answers with its own)
-			if (syncTries == 1) { HostAnswersClaims = false; HostAddsCounts = false; HostAnswersEvents = false; CreatureSpawner.HostSendsSpots = false; } // (a new host: known again from its answer)
+			// (only for a new host's world - a Resync of the same host kept asking with them off until its answer, and a quest
+			// event meanwhile sent a total, which overwrote another player's count - questfix round 2)
+			if (syncTries == 1 && !hostToldVersion) { HostAnswersClaims = false; HostAddsCounts = false; HostAnswersEvents = false; CreatureSpawner.HostSendsSpots = false; } // (a new host: known again from its answer)
 			SendToHost(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion, Data = BuildTag + Build });
 		}
 
@@ -1101,6 +1103,9 @@ namespace DynamicIslands.Editor
 					// its state already and isn't set again; it takes the host's state from a Resync once it is unloaded - review 10-30)
 					if (msg.FullList && known.Root == null && !known.Loading && msg.States != null && i < msg.States.Length && msg.States[i] != null)
 						known.State = IslandObjectState.Decode(msg.States[i]);
+					// (a loaded copy: its quests' steps as the host has them - a drifted step stayed wrong - questfix round 2)
+					else if (msg.FullList && msg.States != null && i < msg.States.Length && msg.States[i] != null)
+						try { QuestTracker.FromHostList(known, IslandObjectState.Decode(msg.States[i])); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Quest steps from the host's list: " + ex.Message); }
 					if (msg.FullList && msg.Labels != null && i < msg.Labels.Length && msg.Labels[i] != null) known.Label = msg.Labels[i];
 					continue;
 				}

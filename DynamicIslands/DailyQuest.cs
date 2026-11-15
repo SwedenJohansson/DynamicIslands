@@ -247,6 +247,24 @@ namespace DynamicIslands.Editor
 		/// <summary>The most one report from a player adds: a stack picked up, a fish, a kill (questfix 11-14).</summary>
 		const int MaxAdd = 10;
 
+		/// <summary>Host: a player's reports add at most MaxAdd in RateSeconds (questfix round 2: many small reports at once
+		/// still finished the task at once). What is over is left out; the host's total goes back to that player.</summary>
+		static int Allowed(ulong from, int amount)
+		{
+			float now = Time.unscaledTime;
+			KeyValuePair<float, int> had;
+			if (!sent.TryGetValue(from, out had) || now - had.Key > RateSeconds) had = new KeyValuePair<float, int>(now, 0);
+			int take = Math.Max(0, Math.Min(amount, MaxAdd - had.Value));
+			sent[from] = new KeyValuePair<float, int>(had.Key, had.Value + take);
+			if (take < amount) { Dropped += amount - take; Log("A player's count of " + amount + " is more than " + MaxAdd + " in " + RateSeconds + " s: " + take + " taken"); if (take == 0) Changed(false); }
+			return take;
+		}
+
+		const float RateSeconds = 2f;
+		static readonly Dictionary<ulong, KeyValuePair<float, int>> sent = new Dictionary<ulong, KeyValuePair<float, int>>();
+		/// <summary>Host: counts left out by the rate limit (the CI checks read it).</summary>
+		internal static int Dropped;
+
 		static void AddOnHost(int day, int amount)
 		{
 			if (amount <= 0) return;
@@ -301,7 +319,7 @@ namespace DynamicIslands.Editor
 		{
 			if (Raft_Network.IsHost)
 			{
-				if (msg.Name == "add") { if (PlayerTrust.InSession(from.Id)) AddOnHost(msg.Index, Math.Min(msg.Count, MaxAdd)); } // (a player in the session, its count capped - a made-up count finished the task at once - questfix 11-14)
+				if (msg.Name == "add") { if (PlayerTrust.InSession(from.Id)) AddOnHost(msg.Index, Allowed(from.Id, Math.Min(msg.Count, MaxAdd))); } // (a player in the session, its count capped - a made-up count finished the task at once - questfix 11-14)
 				else if (msg.Name == "got" && msg.Index == Current.Day && Current.State == "done" && from.Id != 0UL && Current.Rewarded.Add(from.Id)) { PlayerLevels.CreditXp(from.Id, Xp); Send(Message(), null); IslandWorldState.Save(); } // (CB2: the host credits the reward's EXP; only for a finished task)
 				else if (msg.Name == "got" && previous != null && previous.Day >= 0 && previous.Day != Current.Day && msg.Index == previous.Day && previous.State == "done" && from.Id != 0UL && previous.Rewarded.Add(from.Id)) { PlayerLevels.CreditXp(from.Id, Xp); Log("A player's reward of day " + previous.Day + " came after the next day began: its EXP credited"); }
 				return;

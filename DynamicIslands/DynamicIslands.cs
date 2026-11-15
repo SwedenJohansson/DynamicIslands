@@ -433,8 +433,17 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Player features", e); }
 			try { RaftColliderGuard.Tick(); }
 			catch (Exception e) { TickError("Raft colliders", e); }
-			try { QuestTracker.Tick(); QuestCount.Tick(); DailyQuest.Tick(); RogueShark.Tick(); StormDays.Tick(); }
+			// (each on its own: one throwing used to stop the rest, so a broken daily quest froze every quest's tick)
+			try { QuestTracker.Tick(); }
 			catch (Exception e) { TickError("Quests", e); }
+			try { QuestCount.Tick(); }
+			catch (Exception e) { TickError("Quest counts", e); }
+			try { DailyQuest.Tick(); }
+			catch (Exception e) { TickError("Daily quest", e); }
+			try { RogueShark.Tick(); }
+			catch (Exception e) { TickError("Rogue shark", e); }
+			try { StormDays.Tick(); }
+			catch (Exception e) { TickError("Storm days", e); }
 			try { SaveSoon.Tick(); }
 			catch (Exception e) { TickError("World save", e); }
 			try { GlowSea.Tick(); }
@@ -1246,7 +1255,7 @@ namespace DynamicIslands
 		/// An error in one of the per-frame ticks (ROADMAP AU37: logged every frame, Player.log grew by hundreds of MB an
 		/// hour): the first in full, then once a minute how many more there were.
 		/// </summary>
-		static void TickError(string what, Exception e)
+		internal static void TickError(string what, Exception e)
 		{
 			KeyValuePair<float, int> seen;
 			if (!tickErrors.TryGetValue(what, out seen)) { tickErrors[what] = new KeyValuePair<float, int>(Time.unscaledTime, 0); Debug.LogError("[CUSTOM ISLANDS] " + what + ": " + e); return; }

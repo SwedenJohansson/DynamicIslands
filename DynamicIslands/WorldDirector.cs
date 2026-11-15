@@ -2018,6 +2018,8 @@ namespace DynamicIslands.Editor
 				mark.Yield = (int)WorldDirector.Sailed;
 				return;
 			}
+			// (the day counted back - a day reset, an older save: the wait starts again from today, not from a day far ahead)
+			if (mark.Day > WorldDirector.Today) mark.Day = WorldDirector.Today;
 			if (r == null || Due(r, mark) > 0f) return;
 			if (Bring(e, raft, "again")) { mark.Day = WorldDirector.Today; mark.Yield = (int)WorldDirector.Sailed; }
 		}
@@ -2041,6 +2043,9 @@ namespace DynamicIslands.Editor
 			if (brought != null && brought.Where == "receiver") return null;
 			if (Awaited(e)) return "awaited";
 			if (brought != null && brought.Repeats) return Finished(e) ? null : "again";
+			// (a main story island sailed past before anyone set foot on it: not begun, so it never came back and the story
+			// stopped there - questdeepA 11-14. It comes back until done, like a begun one)
+			if (brought != null && brought.MainStory && !Finished(e)) return "quest";
 			int steps = IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count, step = QuestTracker.StepOf(e);
 			bool begun = e.State.ContainsKey(WorldDirector.VisitKey) || step > 0;
 			// (a side quest begun and not done too: its rewards are only there - code audit 2026-10-30)
