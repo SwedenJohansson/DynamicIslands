@@ -310,6 +310,7 @@ namespace DynamicIslands.Editor
 			foreach (string o in on) Current.Add(o);
 			Seed = seed;
 			if (msg.Name != null) global::DynamicIslands.Editor.PrivateStorage.Decode(msg.Name);
+			FromHost = true;
 			Log("The host's options: " + Describe());
 			Notify();
 			// (the blueprints swapped now, not at the next look 1.5 s on - AU65)
@@ -319,16 +320,26 @@ namespace DynamicIslands.Editor
 		/// <summary>The world was left (every machine): none until the next world's are read or come.</summary>
 		internal static void Forget()
 		{
+			FromHost = false;
 			Current.Clear();
 			Seed = 0;
 			used = false;
 			ScrambledBlueprints.Reset();
 			global::DynamicIslands.Editor.UpgradeTable.Reset();
+			// (a player's fog notice, saucer and an unfinished head start build don't follow them into the next world: a joiner's
+			// Reset skips these, and the head start's wait would build at the menu after 120 s)
+			ResetStep("FogBanks.Reset", () => global::DynamicIslands.Editor.FogBanks.Reset());
+			ResetStep("UfoSightings.Reset", () => global::DynamicIslands.Editor.UfoSightings.Reset());
+			ResetStep("HeadStart.Reset", () => global::DynamicIslands.Editor.HeadStart.Reset(false));
 		}
+
+		/// <summary>Client: the host's options came for this world (tests wait for them).</summary>
+		internal static bool FromHost;
 
 		/// <summary>Client: a host's world arrived: none until the host's come.</summary>
 		internal static void OnWorldReceived()
 		{
+			FromHost = false;
 			Current.Clear();
 			Seed = 0;
 			ResetStep("PrivateStorage.Reset", () => global::DynamicIslands.Editor.PrivateStorage.Reset());

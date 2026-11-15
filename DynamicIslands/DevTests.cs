@@ -2579,6 +2579,9 @@ namespace DynamicIslands
 		/// A moment after the box opens (as a player's click comes): straight after leaving a world Raft's game mode tabs
 		/// aren't set up in the same frame, and Create threw inside Raft (no world, IsInNewGame never set).
 		/// </summary>
+		/// <summary>CINewWorldPick mode=...: the next CINewWorld's game mode (then back to the box's own).</summary>
+		internal static GameMode? NewWorldMode;
+
 		static IEnumerator NewWorldCreate(NewGameBox box, string name)
 		{
 			// (ready: its tab group has a tab selected - the game mode tabs set up; 2 frames at least, 1 s at most as before)
@@ -2590,6 +2593,17 @@ namespace DynamicIslands
 				yield return null;
 			}
 			yield return null;
+			// (CINewWorldPick mode=...: Raft's game mode tab for this one world - Create reads the selected tab)
+			if (NewWorldMode.HasValue)
+			{
+				GameMode want = NewWorldMode.Value;
+				NewWorldMode = null;
+				TabButtonGameMode tab = tabs != null && tabs.tabButtons != null ? tabs.tabButtons.OfType<TabButtonGameMode>().FirstOrDefault(b => b != null && b.ButtonGameMode == want) : null;
+				if (tab == null) { Fail("CINewWorld: no " + want + " tab in the New Game box"); yield break; }
+				tab.OnPointerClick();
+				yield return null;
+				Log("Game mode " + want);
+			}
 			box.inputfield_GameName.text = name;
 			box.GameNameEndEdit(name);
 			string solo = Editor.IslandTest.SoloWhenOffline(box);

@@ -550,7 +550,7 @@ It counts with plans that use random islands (Random islands, or a plan with ran
 - **Daily quest:** each morning a small task for the crew (gather some planks, plastic, palm leaves or scrap, catch a few
   fish, or defeat a few monsters); done before dark, each player gets a small reward of basic resources or food once.
   The journal shows it under its page: how far along, the reward, done or not, when the next one comes.
-- **Rogue shark:** now and then a second, rust-red shark comes beside the usual one and stays until it is killed;
+- **Rogue shark:** now and then a second, rust-red shark comes beside the usual one and stays until it is killed (or the option is switched off);
   after that none comes for 5-8 days. About one in five is a giant: twice the size, three times the health, and its
   bites on players half again as hard (on the raft, a normal shark's); its banner says "A giant rogue shark".
 - **Silver & golden barrels:** now and then a barrel in the sea is silver (1 in 40) or golden (1 in 150), with a few
