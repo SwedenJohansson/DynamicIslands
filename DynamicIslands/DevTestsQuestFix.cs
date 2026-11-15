@@ -362,7 +362,6 @@ namespace DynamicIslands
 			if (ok) Log("PASS: CIQuestFix2W - events kept for unloaded islands, daily count rate limit");
 			else Fail("CIQuestFix2W: see the FAIL lines above");
 		}
-	}
 
 		const string Qf15Island = "ciqf15";
 

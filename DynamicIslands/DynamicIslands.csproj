@@ -91,6 +91,7 @@
     <Compile Include="DevTestsGapBehaviours.cs" />
     <Compile Include="DevTestsQuestGap.cs" />
     <Compile Include="DevTestsQuestSkip.cs" />
+    <Compile Include="DevTestsQuestFix.cs" />
     <Compile Include="DevTestsQuestSteps.cs" />
     <Compile Include="DevTestsQuestWait.cs" />
     <Compile Include="DevTestsStateWatch.cs" />
