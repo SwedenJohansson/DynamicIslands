@@ -3847,8 +3847,9 @@ learned are back.
 
 Each upgrade has an item number of its own (29400 and up). If another mod already uses one of them, that upgrade
 moves to a free number (29600 and up) and the game tells you once. The world saves the number it moved to and uses it
-again on every load, and players who join get the host's numbers; still, keep the same mods for that world, so its
-saved upgrades stay what they were.
+again on every load. Players who join get the host's numbers before the world itself, so the upgrades in their bag,
+in chests and on the raft are the right ones; a world or a host without moved numbers puts them back. Still, keep the
+same mods for that world, so its saved upgrades stay what they were.
 
 ##### The upgrade research table
 
