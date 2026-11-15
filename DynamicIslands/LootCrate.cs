@@ -65,6 +65,8 @@ namespace DynamicIslands.Editor
 
 		/// <summary>When another player's "used" of each thing came (Time.time), for "someone else got here first".</summary>
 		static readonly Dictionary<long, float> usedByOthersAt = new Dictionary<long, float>();
+		/// <summary>Another world or host: its island ids repeat (questfix 11-14).</summary>
+		internal static void ForgetWorld() { usedByOthersAt.Clear(); }
 
 		/// <summary>Another player used it within the last seconds: a player arriving now lost the race to it (SC50 - the
 		/// host stepping into a once-zone a moment after player 2 set it off was told nothing).</summary>

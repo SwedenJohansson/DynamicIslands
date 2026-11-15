@@ -932,7 +932,7 @@ step reach|station|1|Back in Sundown, go to the railway station and follow the r
 # Chapter 3 - the railroad
 step reach|derailment|1|Find the derailed silver train in the canyon
 step read|Engineer's log|1|Read the engineer's log in the wrecked engine's cab
-step collect|story:dynamite|2|Find two sticks of dynamite: under the tool car's seat and at the section house
+step collect|story:dynamite|2|Find two sticks of dynamite in boxes: under the tool car's seat and at the section house
 step open|Express car safe|1|Blow the express car's safe with a stick of dynamite
 step reach|trestle|1|Reach the blown trestle over the canyon river
 step kill|Angler fish|1|Face the thing in the river pool under the trestle

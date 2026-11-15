@@ -505,5 +505,125 @@ namespace DynamicIslands
 			Log("PLANCOPY " + WorldDirector.PlanName + " fromWorld=" + WorldDirector.PlanFromWorld + " done=" + string.Join(",", WorldDirector.Done.ToArray()));
 			if (ok) Log("PASS: plan copy check"); else Fail("plan copy check");
 		}
+		// ---- E8 (LIBRARY_TASKS): a library island updated while a world plays it ----
+		const string LibE8 = "cilib-e8", LibE8Id = "ci-lib-e8";
+		static string LibE8StatePath { get { return Path.Combine(LibraryPack.LibraryFolder, "ci-lib-e8-state.txt"); } }
+
+		/// <summary>A library pack of island LibE8 made from the file given, as the version given.</summary>
+		static LibraryPackContents LibE8Pack(IslandFile f, int version)
+		{
+			string tmp = Path.Combine(LibraryPack.LibraryFolder, "ci-lib-e8.tmp");
+			f.Name = LibE8;
+			f.Save(tmp);
+			byte[] b = File.ReadAllBytes(tmp);
+			File.Delete(tmp);
+			WriteTestZip(tmp + ".zip", new[] { Entry(LibE8Id + "/info.json", new LibraryInfo { id = LibE8Id, kind = "island", title = "CI Lib E8", author = "CI Tester", version = version }.ToJson()), Entry(LibE8Id + "/" + LibE8 + ".island", b) });
+			string err;
+			LibraryPackContents pc = LibraryPack.Read(tmp + ".zip", out err);
+			File.Delete(tmp + ".zip");
+			if (pc == null) throw new Exception("pack: " + err);
+			return pc;
+		}
+
+		[ConsoleCommand(name: "CILibE8", docs: "Dev, a world (host): E8 - a library island updated during play. setup <island> (installs a copy of <island> as library entry ci-lib-e8 v1; then SpawnIsland cilib-e8 150), use (chops a tree once and picks up an item on it; then CISave), update (v2 with its objects shifted installed: the saved world keeps v1), check (after loading the world again: v1 is played, the tree and pickup still used), fresh (in a new world after SpawnIsland cilib-e8: v2), clean")]
+		public static void LibE8Command(string[] args)
+		{
+			string part = args != null && args.Length > 0 ? args[0] : "";
+			if (part == "clean") { CleanLibTests(); if (File.Exists(LibE8StatePath)) File.Delete(LibE8StatePath); Log("PASS: CILibE8 clean"); return; }
+			if (part == "setup")
+			{
+				string src = string.Join(" ", args.Skip(1).ToArray());
+				if (!File.Exists(IslandSpawner.PathFor(src))) { Fail("CILibE8 setup: no island '" + src + "'"); return; }
+				try
+				{
+					CleanLibTests();
+					Directory.CreateDirectory(LibraryPack.LibraryFolder);
+					LibraryPackContents p1 = LibE8Pack(IslandFile.Load(IslandSpawner.PathFor(src)), 1);
+					LibraryPack.Install(p1, false, false, LibraryPack.SourceLibrary);
+					bool there = File.Exists(IslandSpawner.PathFor(LibE8)) && LibraryPack.Installed().Any(x => x.id == LibE8Id);
+					File.WriteAllLines(LibE8StatePath, new[] { "sha1=" + LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(LibE8))) });
+					CustomIslandSpawner.LoadPool(true);
+					if (there) Log("PASS: CILibE8 setup: '" + src + "' installed as library entry " + LibE8Id + " v1"); else Fail("CILibE8 setup: not installed");
+				}
+				catch (Exception e) { Fail("CILibE8 setup: " + e); }
+				return;
+			}
+			StartTest(LibE8Routine(part));
+		}
+
+		static IEnumerator LibE8Routine(string part)
+		{
+			Dictionary<string, string> st = File.Exists(LibE8StatePath) ? File.ReadAllLines(LibE8StatePath).Where(l => l.Contains("=")).ToDictionary(l => l.Substring(0, l.IndexOf('=')), l => l.Substring(l.IndexOf('=') + 1)) : new Dictionary<string, string>();
+			Action save = () => File.WriteAllLines(LibE8StatePath, st.Select(kv => kv.Key + "=" + kv.Value).ToArray());
+			Func<string, IslandWorldState.Entry> loaded = n => IslandWorldState.Islands.FirstOrDefault(i => i.Root != null && string.Equals(i.Name, n, StringComparison.OrdinalIgnoreCase));
+			Func<string, string> get = k => st.ContainsKey(k) ? st[k] : "";
+			bool ok = true;
+			if (part == "use")
+			{
+				IslandWorldState.Entry e = null;
+				for (float t = 0; t < 60f && (e = loaded(LibE8)) == null; t += 1f) yield return new WaitForSeconds(1f);
+				if (e == null) { Fail("CILibE8 use: '" + LibE8 + "' not loaded (SpawnIsland " + LibE8 + " 150 first)"); yield break; }
+				HarvestableTree tree = e.Root.GetComponentsInChildren<HarvestableTree>().FirstOrDefault(x => !x.Depleted);
+				PickupItem_Networked pickup = e.Root.GetComponentsInChildren<PickupItem_Networked>().FirstOrDefault(p => p.GetComponent<HarvestableTree>() == null && p.gameObject.activeSelf);
+				if (tree == null || pickup == null) { Fail("CILibE8 use: the island needs a tree and a pickup (tree " + (tree != null) + ", pickup " + (pickup != null) + ")"); yield break; }
+				int treeOrd = (int)(tree.GetComponent<PickupItem_Networked>().ObjectIndex & 0xFFFF), pickupOrd = (int)(pickup.ObjectIndex & 0xFFFF);
+				tree.Harvest(null);
+				st["tree"] = treeOrd.ToString(); st["yield"] = tree.GetComponent<PickupItem>().yieldHandler.Yield.Count.ToString();
+				st["pickup"] = pickupOrd.ToString(); st["pickupName"] = pickup.name;
+				PickupObjectManager.RemovePickupItem(pickup);
+				yield return new WaitForSeconds(1f);
+				st["hash1"] = IslandNetwork.HashOf(LibE8) ?? "";
+				save();
+				Log("PASS: CILibE8 use: tree #" + treeOrd + " chopped once (" + st["yield"] + " left), " + st["pickupName"] + " #" + pickupOrd + " picked up (hash " + st["hash1"] + ")");
+				yield break;
+			}
+			if (part == "update")
+			{
+				LibraryPack.Report r = null;
+				string copy = IslandNetwork.DownloadName(LibE8, get("hash1"));
+				try
+				{
+					IslandFile v2 = IslandFile.Load(IslandSpawner.PathFor(LibE8));
+					v2.Objects.RemoveAt(0); // (every object after the first moves up one: the old world state no longer fits)
+					LibraryPackContents p2 = LibE8Pack(v2, 2);
+					st["sha2"] = LibraryPack.Sha256(p2.Files[LibE8 + ".island"]);
+					r = LibraryPack.Install(p2, false, true, LibraryPack.SourceLibrary);
+					save();
+				}
+				catch (Exception e) { Fail("CILibE8 update: " + e); yield break; }
+				Log("  " + r.ToString().Replace("\n", " / "));
+				Check(ref ok, LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(LibE8))) == get("sha2"), "v2 is installed as '" + LibE8 + "'");
+				Check(ref ok, r.ToString().Contains("Kept the version of '" + LibE8 + "'"), "the report says the saved world keeps the version it started with");
+				Check(ref ok, File.Exists(IslandSpawner.PathFor(copy)) && LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(copy))) == get("sha1"), "v1 kept as '" + copy + "'");
+				if (ok) Log("PASS: CILibE8 update"); else Fail("CILibE8 update");
+				yield break;
+			}
+			if (part == "check")
+			{
+				string copy = IslandNetwork.DownloadName(LibE8, get("hash1"));
+				IslandWorldState.Entry e = null;
+				for (float t = 0; t < 90f && (e = loaded(copy)) == null && loaded(LibE8) == null; t += 1f) yield return new WaitForSeconds(1f);
+				if (e == null) { Fail("CILibE8 check: the world loads " + (loaded(LibE8) != null ? "the new '" + LibE8 + "' (v2)" : "neither version") + ", not v1 '" + copy + "'"); yield break; }
+				int treeOrd = int.Parse(get("tree")), pickupOrd = int.Parse(get("pickup"));
+				PickupItem_Networked tree = e.Root.GetComponentsInChildren<PickupItem_Networked>(true).FirstOrDefault(p => (p.ObjectIndex & 0xFFFF) == treeOrd);
+				PickupItem_Networked pickup = e.Root.GetComponentsInChildren<PickupItem_Networked>(true).FirstOrDefault(p => (p.ObjectIndex & 0xFFFF) == pickupOrd);
+				string left = tree != null && tree.GetComponent<PickupItem>() != null && tree.GetComponent<PickupItem>().yieldHandler != null ? tree.GetComponent<PickupItem>().yieldHandler.Yield.Count.ToString() : "?";
+				Log("  the reloaded world plays v1 ('" + copy + "')");
+				Check(ref ok, tree != null && tree.GetComponent<HarvestableTree>() != null && left == get("yield"), "the chopped tree #" + treeOrd + " has " + left + " harvests left (want " + get("yield") + ")");
+				Check(ref ok, pickup != null && !pickup.gameObject.activeSelf && pickup.name == get("pickupName"), "the picked-up " + get("pickupName") + " #" + pickupOrd + " is still gone" + (pickup != null ? " (" + pickup.name + ", active " + pickup.gameObject.activeSelf + ")" : " (not found)"));
+				if (ok) Log("PASS: CILibE8 check"); else Fail("CILibE8 check");
+				yield break;
+			}
+			if (part == "fresh")
+			{
+				IslandWorldState.Entry e = null;
+				for (float t = 0; t < 60f && (e = loaded(LibE8)) == null; t += 1f) yield return new WaitForSeconds(1f);
+				if (e == null) { Fail("CILibE8 fresh: '" + LibE8 + "' not loaded (SpawnIsland " + LibE8 + " 150 first)"); yield break; }
+				Check(ref ok, LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(e.Name))) == get("sha2"), "a new world plays v2");
+				if (ok) Log("PASS: CILibE8 fresh"); else Fail("CILibE8 fresh");
+				yield break;
+			}
+			Fail("CILibE8 setup <island> | use | update | check | fresh | clean");
+		}
 	}
 }
