@@ -265,7 +265,9 @@ namespace DynamicIslands.Editor
 			if (e == null) return;
 			if (!ContentState.IsUsed(e, TalkedBase + index)) ContentState.MarkUsed(at, TalkedBase + index);
 			Debug.Log("[CUSTOM ISLANDS] Talked to '" + name + "' on '" + e.HostName + "'" + (choice > 0 ? ", answer " + choice : ""));
-			Behaviours.Fire(e, index, TalkEvent, true);
+			// (guarded: a broken talk action threw past the hand-in and the talk step, so that step could never be done)
+			try { Behaviours.Fire(e, index, TalkEvent, true); }
+			catch (Exception ex) { Debug.LogError("[CUSTOM ISLANDS] Talk actions of '" + name + "' on '" + e.HostName + "': " + ex); }
 			QuestSteps.HandIn(e, name); // (a "Bring items" step for them: the items are handed over - QE4)
 			QuestTracker.Event(e, QuestType, name);
 		}
