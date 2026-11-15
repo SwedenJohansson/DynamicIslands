@@ -363,4 +363,109 @@ namespace DynamicIslands
 			else Fail("CIQuestFix2W: see the FAIL lines above");
 		}
 	}
+
+		const string Qf15Island = "ciqf15";
+
+		[ConsoleCommand(name: "CIQF15", docs: "Dev, two players (QF15, questfix): the host's answer for a player's quest steps, on host + box. setup (host): spawns 'ciqf15' near the raft (quest: read CI qf15 a / b / c, reward 3 planks). wait: until it is loaded here. at <s> (host): the quest to step s (0-based). step <s>: waits up to 20 s for step s here. drift (player): this player's step ahead, then behind, of the host's; each put right by the host's full list (Resync). last (player, at the last step): the step is sent and left to the host - not done here at once - and done, with one reward, when the host answers. drop (host): removes the island")]
+		public static void Qf15Command(string[] args) { StartTest(Qf15Routine(args ?? new string[0])); }
+
+		static IEnumerator Qf15Routine(string[] args)
+		{
+			string what = args.Length > 0 ? args[0] : "";
+			string side = Raft_Network.IsHost ? "host" : "player";
+			Func<IslandWorldState.Entry> entry = () => IslandWorldState.Islands.FirstOrDefault(i => i.Root != null && i.HostName == Qf15Island);
+			if (what == "setup" || what == "drop")
+			{
+				if (!Raft_Network.IsHost) { Fail("QF15 " + what + ": as the host"); yield break; }
+				if (what == "drop") { GwDrop(new GwIsland { E = entry() }, Qf15Island); Log("PASS: QF15 drop"); yield break; }
+				Func<float, float, Vector3> at;
+				IslandFile f = Gw4File(Qf15Island, out at);
+				f.Objects.Add(new IslandObject { Name = "Log", Position = at(0f, 4f), Props = P(BehaviourProps.Name, "qf15spot") });
+				f.Props[IslandQuest.KeyTitle] = "CI qf15";
+				f.Props[IslandQuest.KeySteps] = "read|CI qf15 a|1|\nread|CI qf15 b|1|\nread|CI qf15 c|1|";
+				f.Props[IslandQuest.KeyReward] = "Plank*3";
+				var g = new GwIsland();
+				yield return GwSpawnFile(g, f, Qf15Island);
+				if (g.E != null) Log("PASS: QF15 setup - " + Qf15Island + " is island " + g.E.Id);
+				else Fail("QF15 setup: the island did not spawn");
+				yield break;
+			}
+			if (what == "wait")
+			{
+				for (float t = 0f; t < 90f && entry() == null; t += 1f) yield return new WaitForSeconds(1f);
+				if (entry() == null) Fail("QF15: '" + Qf15Island + "' did not come (" + side + ")");
+				else Log("PASS: QF15 wait - the island is here (" + side + ", quest step " + QuestTracker.StepOf(entry()) + ")");
+				yield break;
+			}
+			IslandWorldState.Entry e = entry();
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (e == null || player == null) { Fail("QF15: no '" + Qf15Island + "' loaded or no player here (" + side + ")"); yield break; }
+			IslandQuest q = QuestTracker.QuestOf(e, 0);
+			if (!q.Exists || q.Steps.Count != 3) { Fail("QF15: the island's quest isn't here (" + side + ", " + q.Steps.Count + " steps)"); yield break; }
+			int s0;
+			if (what == "at" && args.Length > 1 && int.TryParse(args[1], out s0))
+			{
+				bool moved = QuestTracker.JumpTo(e, 0, s0);
+				if (moved && QuestTracker.StepOf(e) == s0) Log("PASS: QF15 at - the host's quest at step " + s0);
+				else Fail("QF15 at " + s0 + ": the host's step is " + QuestTracker.StepOf(e));
+				yield break;
+			}
+			if (what == "step" && args.Length > 1 && int.TryParse(args[1], out s0))
+			{
+				for (float t = 0f; t < 20f && QuestTracker.StepOf(e) != s0; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				if (QuestTracker.StepOf(e) == s0) Log("PASS: QF15 step - step " + s0 + " here (" + side + ")");
+				else Fail("QF15 step " + s0 + ": step " + QuestTracker.StepOf(e) + " here (" + side + ")");
+				yield break;
+			}
+			if (Raft_Network.IsHost) { Fail("QF15 " + what + ": as a player (the box)"); yield break; }
+			bool ok = true;
+			if (what == "drift")
+			{
+				int host = QuestTracker.StepOf(e);
+				if (host < 1 || host + 1 >= q.Steps.Count) { Fail("QF15 drift: needs the host's quest at a middle step (here " + host + ")"); yield break; }
+				int[] drifts = { host + 1, host - 1 };
+				foreach (int d in drifts)
+				{
+					// (this player's own view moved off: ahead as a step done alone, behind as a stale copy)
+					e.State[QuestTracker.StepKey] = new ObjectState { Active = true, Yield = d, Day = 0 };
+					e.State[QuestTracker.ProgressKey] = new ObjectState { Active = true, Yield = 1, Day = 0 };
+					Check(ref ok, QuestTracker.StepOf(e) == d, "this player's step set to " + d + " (the host has " + host + ")");
+					IslandNetwork.Resync();
+					for (float t = 0f; t < 30f && (QuestTracker.StepOf(e) != host || QuestTracker.ProgressOf(e, 0) != 0); t += 0.5f) yield return new WaitForSeconds(0.5f);
+					Check(ref ok, e.Root != null && QuestTracker.StepOf(e) == host && QuestTracker.ProgressOf(e, 0) == 0,
+						"a loaded island's step " + d + " put right by the host's full list: step " + QuestTracker.StepOf(e) + ", " + QuestTracker.ProgressOf(e, 0) + " counted (want " + host + ", 0)");
+				}
+				if (ok) Log("PASS: QF15 drift - this player's quest step, ahead and behind, put right by the host's full list");
+				else Fail("QF15 drift: see the FAIL lines above");
+				yield break;
+			}
+			if (what == "last")
+			{
+				int last = q.Steps.Count - 1;
+				if (QuestTracker.StepOf(e) != last) { Fail("QF15 last: needs the last step here (" + QuestTracker.StepOf(e) + ")"); yield break; }
+				Check(ref ok, IslandNetwork.HostAddsCounts, "the host counts players' steps (HostAddsCounts)");
+				IslandObjectRef spot = ScObjOf(e, "qf15spot");
+				if (spot != null) PutPlayerNear(spot.transform);
+				yield return new WaitForSeconds(1.5f);
+				int planks = player.Inventory.GetItemCount("Plank"), waiting = QuestTracker.WaitingForHost, done = 0;
+				Action<int, int, int> onDone = (id, n, s) => { if (id == e.Id && n == 0 && s >= q.Steps.Count) done++; };
+				QuestTracker.AdvancedAny += onDone;
+				try
+				{
+					QuestTracker.Event(e, "read", "CI qf15 c");
+					Check(ref ok, QuestTracker.StepOf(e) == last && done == 0 && QuestTracker.WaitingForHost == waiting + 1 && player.Inventory.GetItemCount("Plank") == planks,
+						"the last step is sent to the host and not done here yet: step " + QuestTracker.StepOf(e) + ", done " + done + ", waiting " + (QuestTracker.WaitingForHost - waiting) + ", planks +" + (player.Inventory.GetItemCount("Plank") - planks));
+					for (float t = 0f; t < 20f && QuestTracker.StepOf(e) <= last; t += 0.25f) yield return new WaitForSeconds(0.25f);
+					yield return new WaitForSeconds(3f); // (a second answer or a second reward would come in this time)
+					Check(ref ok, QuestTracker.StepOf(e) == q.Steps.Count && done == 1, "the host's answer finished the quest here, once (step " + QuestTracker.StepOf(e) + " of " + q.Steps.Count + ", done " + done + ")");
+					Check(ref ok, player.Inventory.GetItemCount("Plank") == planks + 3, "the reward came once with the host's answer: planks +" + (player.Inventory.GetItemCount("Plank") - planks) + " (want +3)");
+				}
+				finally { QuestTracker.AdvancedAny -= onDone; }
+				if (ok) Log("PASS: QF15 last - the last step waited for the host, then done with one reward");
+				else Fail("QF15 last: see the FAIL lines above");
+				yield break;
+			}
+			Fail("QF15: setup | wait | at <s> | step <s> | drift | last | drop");
+		}
+	}
 }
