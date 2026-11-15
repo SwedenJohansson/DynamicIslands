@@ -687,6 +687,7 @@ namespace DynamicIslands.Editor
 	}
 
 	/// <summary>The world's upgrade numbers reach a joining player before the world (sweep 11-15, UpgradeTable).</summary>
+	[HarmonyPatch] // (PatchHealth only applies classes with this attribute; the targets are on the methods)
 	static class UpgradeNumbersJoinPatches
 	{
 		[HarmonyPatch(typeof(Raft_Network), "SendWorld")]
