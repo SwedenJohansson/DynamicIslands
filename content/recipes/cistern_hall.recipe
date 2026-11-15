@@ -400,7 +400,7 @@ step read|Clerk Fane's slip|1|Find Clerk Fane's slip by the records van
 step read|Clerk Abernethy's slip|1|Find Clerk Abernethy's slip at the mouth of the lamp men's cave in the shore rocks
 step reach|ch_trail|1|Find the foot of the trail up Overflow Tor, the tall tor with the surge tower
 step reach|ch_summit|1|Climb the trail to the top of Overflow Tor
-step collect|story:ch_top|1|Climb the surge tower and read its gauge on the deck
+step collect|story:ch_top|1|Climb the surge tower and take its gauge from the box on its deck
 step reach|ch_deep|1|Dive to the settling house, sunk off the shore below the tor
 step collect|story:ch_deep|1|Find what was left in its back room strongbox
 step collect|story:ch_gates|1|Pull the four sluices by the hub in the clerks' order

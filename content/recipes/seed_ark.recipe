@@ -453,7 +453,7 @@ step reach|room_2|1|Pull the ice gate's lever and get through to pressure room 2
 step reach|room_3|1|Swim on to pressure room 3
 step read|The Ringwave file|1|Read the Ringwave file
 step reach|room_4|1|Swim on to pressure room 4
-step collect|story:arkseal|3|Find the valve's three seals (pressure rooms 1, 2 and 3)
+step collect|story:arkseal|3|Find the valve's three seals in the seal boxes of pressure rooms 1, 2 and 3
 step read|Orrin's last letter|1|Read the letter by the body at the ark valve
 step read|Pump engineer's log|1|The valve won't turn on dead pumps. Read the pump engineer's log in room 4
 step reach|pump_islet|1|Swim up and out to the pump islet, the only dry rock over the Ark

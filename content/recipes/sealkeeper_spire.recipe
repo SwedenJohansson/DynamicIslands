@@ -389,7 +389,7 @@ prop storm atmo.particles=mist
 prop storm zone.radius=60
 
 note sk_cavechest Keepers' chest | The keepers' storm chest: dry clothes gone to rags, a lamp, rope.
-loot sk_cavechest Rope*3;Leather*2;Battery*1;Copper*2
+loot sk_cavechest Rope*3;Leather*2;Battery*1;CopperOre*2
 prop sk_cavechest loot.refill=0
 note sk_ruinnote Storm keeper's log | STORM KEEPER'S LOG\n\nThe radio on my table runs off the generator. The generator wants a part I lent to the cave crew, and the cave crew have not returned it, because they never return anything.\nWith power, the radio tells you where the last supply drop came down.\nI keep the weather for the Director. Every night he asks me the same question: "Is the beacon on the roofs still lit?" Every night I say yes. Every night he says, "Good. God forgive me. Good."
 note sk_wrecknote Supply pilot's log | SUPPLY PILOT'S LOG\n\nLast run for the Spire, and the Director met me on the dock himself. No cargo, he said. Passengers.\nTwelve kids from the shuttle came up the trench lift with the door warden. I took all twelve. The warden would not get on. He said somebody had to go down and close a door properly, and he gave his hat to the small one with no whale.\nI flew them through the storm to the high island and came back for the crew, and the storm took the plane on the way in. I kept the crate. I would have kept the plane if it had let me.\nThey will decide it soon - RESTORE or SEAL. I am not staying to see.

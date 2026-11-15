@@ -466,7 +466,7 @@ step read|Met-man's warning|1|Read the met-man's warning by the storm siren
 step talk|Ivo Brand|1|Talk to Ivo Brand at the ruined house on the cliff top
 step reach|ss_trail|1|Make for Thunder Knoll, the hill with the lightning mast, and find the foot of its trail
 step reach|ss_summit|1|Climb the trail to the top of Thunder Knoll
-step collect|story:ss_top|1|Climb the lightning mast and take the siren rotor from its deck
+step collect|story:ss_top|1|Climb the lightning mast and take the siren rotor from the box on its deck
 step reach|ss_cave|1|Find Lightning Cave, the dark cave mouth in the rocks
 step collect|story:ss_cave|1|Take the siren coil from the chest at the back of the cave
 step read|Siren log|1|Bring both to the storm siren and read what it shows

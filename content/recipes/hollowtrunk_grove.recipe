@@ -322,8 +322,8 @@ step collect|story:pumppart|3|Find the pump's three parts in trunks 3, 4 and 5
 step collect|story:water|1|Fit the parts to the water tower's pump
 step blueprint|Blueprint_Storage_Large|1|Take the large storage plans from the seed store
 step open|Seed drawers|1|Open the seed drawers
-step collect|story:seedjar|1|Dive to the sunk seed caravan in the bay and take the seed jar
-step collect|story:denkey|1|Get the key from the mother boar's den (fill her trough with five berries, or fight her)
+step collect|story:seedjar|1|Dive to the sunk seed caravan in the bay and take the seed jar from its locker
+step collect|story:denkey|1|Get the key from the chest in the mother boar's den (fill her trough with five berries, or fight her)
 step read|Ranger log 6|1|Read Ranger log 6 in the seed store
 step reach|roots|1|Go down into the root hole
 quest done=Under the grove, the roots go on. Rootweave - band 600.

@@ -611,7 +611,7 @@ step read|Fountain notice|1|Read the fountain notice by the square fountain
 step talk|Sigge|1|Talk to Sigge at the ruined house on the shore
 step reach|qg_trail|1|Find the foot of the trail up Postmaster's Hill, below the weather mast
 step reach|qg_summit|1|Climb the trail to the top of Postmaster's Hill
-step collect|story:qg_top|1|Climb the weather mast and take the fountain valve from its deck
+step collect|story:qg_top|1|Climb the weather mast and take the fountain valve from the box on its deck
 step reach|qg_cave|1|Find Crab Cave in the rocks, past Sigge's ruined house
 step collect|story:qg_cave|1|Take the fountain spout from the chest at the back of the cave
 step read|Letter in the basin|1|Bring both to the square fountain and read what it shows

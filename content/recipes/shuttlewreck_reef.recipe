@@ -105,7 +105,7 @@ place Van_1 - at -5 -41 ground sit yaw=140
 call sk_notebox x=10 z=-50 yaw=70 al=sw_wrecknote
 
 # --- Unique layer (10-24): booked seats: the tender van's luggage hold, bolted shut; its lever lets go
-call leverchest x=-2 z=-40 yaw=0 alias=holdlever sig=holdlever chest=luggagehold cx=10 cz=-50 cyaw=80 items=Leather*2;Glass*2;Battery*1;Copper*2 title="Luggage hold"
+call leverchest x=-2 z=-40 yaw=0 alias=holdlever sig=holdlever chest=luggagehold cx=10 cz=-50 cyaw=80 items=Leather*2;Glass*2;Battery*1;CopperOre*2 title="Luggage hold"
 
 # --- DEEP 1-HOUR (10-24): the depot rock breaking the surface (12.5 m from the floor) and the shuttle line's drowned depot in the south-east pit
 # the rock that breaks the surface (12.5 m up from the floor), a beacon tower on its dry top
