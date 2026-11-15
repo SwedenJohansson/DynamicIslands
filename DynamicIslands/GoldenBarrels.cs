@@ -130,7 +130,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Only this mod's tinted copies back to the material's own textures: the rest of the renderer's property block stays
 		/// (a fresh block wiped what Raft or another part of the mod had put there).</summary>
-		static void Untint(Renderer r)
+		internal static void Untint(Renderer r)
 		{
 			Material m = r.sharedMaterial;
 			if (m == null) return;

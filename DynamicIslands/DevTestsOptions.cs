@@ -2028,6 +2028,32 @@ namespace DynamicIslands
 
 		#region Storm days
 
+		[ConsoleCommand(name: "CIBarrelUntint", docs: "Dev, any time: a golden barrel's paint taken off (the option switched off) leaves the rest of the renderer's property block - a block value set by someone else stays, the texture goes back to the material's own")]
+		public static void BarrelUntintCommand()
+		{
+			GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			try
+			{
+				Renderer r = cube.GetComponent<Renderer>();
+				var tex = new Texture2D(8, 8) { name = "CI_UntintTest" };
+				r.sharedMaterial = new Material(Shader.Find("Standard")) { mainTexture = tex };
+				var block = new MaterialPropertyBlock();
+				block.SetFloat("_CI_OtherMark", 7f);
+				r.SetPropertyBlock(block);
+				int tinted = WorldRandomizer.TintTextures(r, GoldenBarrels.GoldTint);
+				r.GetPropertyBlock(block);
+				Texture painted = block.GetTexture("_MainTex");
+				GoldenBarrels.Untint(r);
+				r.GetPropertyBlock(block);
+				Texture after = block.GetTexture("_MainTex");
+				float mark = block.GetFloat("_CI_OtherMark");
+				string what = "tinted " + tinted + " (" + (painted != null ? painted.name : "none") + "), after: " + (after != null ? after.name : "none") + ", the other value " + mark;
+				if (tinted > 0 && painted != null && painted.name.StartsWith("CI_Tinted_") && (after == null || after == tex) && mark == 7f) Log("PASS: barrel untint: " + what);
+				else Fail("barrel untint: " + what);
+			}
+			finally { UnityEngine.Object.Destroy(cube); }
+		}
+
 		[ConsoleCommand(name: "CIStormDays", docs: "Dev, world (host): the option Storm days - the day's roll comes from the seed and the day (the same twice, none before day 3, about 10 % of days); off: a storm day is calm; on: the warning at nightfall the evening before, on the day Raft's storm weather held (its timer kept off), a banner, the shark's time between looks x0.6; the day after Raft chooses its weather again; options put back after")]
 		public static void StormDaysTestCommand() { StartTest(StormDaysRoutine()); }
 
