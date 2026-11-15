@@ -1725,6 +1725,9 @@ creature spot waits for it.*
 *The warthog's **Appears** is set to "when zone-158 fires": its name tag says it waits. It appears the moment a player
 walks into the zone.*
 
+Two zones with one name: each creature spot waits for the **nearest** zone of that name, so two caves can each have
+a zone "cave" for their own guards. **Check** warns about it - giving each zone its own name is clearer.
+
 **Air pockets.** A trigger zone's **Air** row makes it an **air pocket**: a player inside it breathes - their breath is
 full again - as in Raft's air pockets under Caravan Town. Raft's own air-pocket objects (the shack, the gas tank and
 the container in Caravan Town's list) come without their air, so put an air-pocket zone on each, about as big as the
@@ -1809,7 +1812,8 @@ reward is ("Reward: Plank ×4, Rope ×2"). **None** takes the reward away. **Whe
 quest** and **+ Another quest** (up to nine quests in all). Each has its own steps, reward and messages and is done on its own;
 what a player does counts for every quest waiting for it. The panel shows the first quest not done yet ("+1 more"
 when others are open), the journal lists each, and world plans and the story wait for the main quest - or for another
-one by its number (a rule's "quest 2"). **Remove this quest** takes one off; the ones after it move up. **Remove quest**
+one by its number (a rule's "quest 2"). **Remove this quest** takes one off; the ones after it move up. A quest you empty and **Save** keeps its number empty, so
+the quests after it (and a world's progress in them) keep theirs. **Remove quest**
 at the bottom takes all of the island's quests off at once (one Ctrl+Z brings them back).
 
 **What belongs to the main quest only (the quest editor says so under its tabs).** Only the **Main quest** fires the island's
@@ -3334,6 +3338,9 @@ Up to eight players (Raft's maximum). **Every player needs the mod.**
 - **What the host takes from players:** a code lock opened, a signal or rule fired, quest progress, a tree or pickup
   harvested is taken only from a player near that island (within the unload distance, where it is loaded on their
   side). A report about an island far from them is left out (the log says so) - a game out of step, or a cheat.
+- **A quest's last step in multiplayer:** a player finishing the last step sees "Quest complete" and gets the reward
+  when the host's answer comes (a moment later), not before - a step the host didn't take no longer gives a reward.
+  A player's step or a door the story opens on an island not yet loaded on the host is kept and done when it loads.
 
 ### Who needs what: every case
 
@@ -3351,7 +3358,7 @@ them host the world later.
 | **The world's maker edits the plan** while worlds use it | The next time such a world loads on their PC, it plays the changed plan (they're told) | Nothing |
 | **The plan is updated (library or pack) or deleted**, or another player hosts with a different plan of the same name | Worlds already started keep their own copy | Nothing (`WorldPlan <name>` in a world to switch it on purpose) |
 | **An older save of the world is loaded** (Raft's Load Game box keeps the last 8 saves) | The custom islands, what was chopped, looted and fired, quests, journal and settings go back to that save as well | Nothing |
-| **An installed island is updated** while a world uses it | That world gets the new one when its objects keep their order; else it keeps the version it started with (new worlds get the new one) | Nothing |
+| **An installed island is updated** while a world uses it | That world gets the new one when its objects keep their order; else it keeps the version it started with (new worlds get the new one). A quest whose steps changed goes on at the first new step not done yet (a finished quest stays finished) | Nothing |
 | **You remove a pack** that a saved world uses | What the world uses is kept (you're told which world) | Nothing |
 | **A pack's island has the name of one of yours** | Installed as `Name (Pack title)`; yours is untouched | Nothing |
 | **A pack was made with a newer mod version** | A warning; "Install anyway" may leave out what this version doesn't know | Update the mod if something's missing |

@@ -205,5 +205,162 @@ namespace DynamicIslands
 			if (ok) Log("PASS: CIQuestLeak check - nothing of the last world's quests is left");
 			else Fail("CIQuestLeak check: see the FAIL lines above");
 		}
+
+		[ConsoleCommand(name: "CIQuestFix2", docs: "Dev, anywhere (the main menu is quickest): questfix round 2 - a library update with fewer or reordered steps keeps the quest where it was; each quest step has its own 'done early' key; the editor's Save keeps each quest's number; animals wait for the nearest zone of their name; the checker warns of two zones with one name; the blueprint pickup patch is there. PASS/FAIL.")]
+		public static void QuestFix2Command(string[] args) { StartTest(QuestFix2Routine()); }
+
+		static IEnumerator QuestFix2Routine()
+		{
+			yield return null;
+			bool ok = true;
+			const System.Reflection.BindingFlags priv = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+
+			// (1) a library update: A,B,C -> A,C on C keeps C (step 1, progress kept); finished stays finished; reordered goes back
+			Func<string, Dictionary<string, string>> props = steps => new Dictionary<string, string> { { "quest.title", "Q" }, { "quest.steps", steps }, { "quest2.title", "Q2" }, { "quest2.steps", steps } };
+			var abc = props("reach|a|1|\nreach|b|1|\nkill|Boar|3|");
+			var ac = props("reach|a|1|\nkill|Boar|3|");
+			var cab = props("kill|Boar|3|\nreach|a|1|\nreach|b|1|");
+			var st = new Dictionary<int, ObjectState> { { QuestTracker.StepKey, new ObjectState { Active = true, Yield = 2 } }, { QuestTracker.ProgressKey, new ObjectState { Active = true, Yield = 2 } }, { QuestTracker.EarlyKeyBase + 2, new ObjectState { Active = true, Yield = 1 } } };
+			int changed = QuestTracker.RemapSteps(abc, ac, st);
+			Check(ref ok, changed == 1 && st[QuestTracker.StepKey].Yield == 1 && st.ContainsKey(QuestTracker.ProgressKey) && st[QuestTracker.ProgressKey].Yield == 2 && !st.ContainsKey(QuestTracker.EarlyKeyBase + 2),
+				"A,B,C -> A,C on step C: step 1 (C), its 2 of 3 kept, early credits cleared (" + changed + ", step " + st[QuestTracker.StepKey].Yield + ")");
+			st = new Dictionary<int, ObjectState> { { QuestTracker.StepKey, new ObjectState { Active = true, Yield = 3 } } };
+			QuestTracker.RemapSteps(abc, ac, st);
+			Check(ref ok, st[QuestTracker.StepKey].Yield == 2, "a finished quest stays finished with fewer steps (step " + st[QuestTracker.StepKey].Yield + " of 2)");
+			st = new Dictionary<int, ObjectState> { { QuestTracker.StepKey, new ObjectState { Active = true, Yield = 1 } }, { QuestTracker.ProgressKey, new ObjectState { Active = true, Yield = 1 } } };
+			QuestTracker.RemapSteps(abc, cab, st);
+			Check(ref ok, st[QuestTracker.StepKey].Yield == 0 && !st.ContainsKey(QuestTracker.ProgressKey), "reordered (the new first step not done): back to it, the old step's progress dropped (step " + st[QuestTracker.StepKey].Yield + ")");
+			st = new Dictionary<int, ObjectState> { { QuestTracker.StepKey, new ObjectState { Active = true, Yield = 1 } } };
+			Check(ref ok, QuestTracker.RemapSteps(abc, abc, st) == 0 && st[QuestTracker.StepKey].Yield == 1, "the same steps: nothing changes");
+			st = new Dictionary<int, ObjectState> { { 0x40202, new ObjectState { Active = true, Yield = 9 } } };
+			QuestTracker.RemapSteps(abc, ac, st);
+			Check(ref ok, st[0x40202].Yield == 2, "quest 2 past its end stays finished (step " + st[0x40202].Yield + ")");
+
+			// (8) every quest step has its own early key: none shared, none on a step or progress key, all below the visit key
+			var early = typeof(QuestTracker).GetMethod("EarlyKeyOf", priv);
+			if (early == null) Check(ref ok, false, "QuestTracker.EarlyKeyOf found");
+			else
+			{
+				var seen = new HashSet<int>();
+				for (int n = 0; n < IslandQuest.MaxQuests; n++) { seen.Add(n == 0 ? QuestTracker.StepKey : 0x40200 + n * 2); seen.Add(n == 0 ? QuestTracker.ProgressKey : 0x40201 + n * 2); }
+				int shared = 0, outside = 0;
+				for (int n = 0; n < IslandQuest.MaxQuests; n++)
+					for (int k = 0; k < IslandQuest.MaxStepCount; k++)
+					{
+						int key = (int)early.Invoke(null, new object[] { n, k });
+						if (!seen.Add(key)) shared++;
+						if (key < 0x40000 || key >= WorldDirector.VisitKey) outside++;
+					}
+				int k63 = (int)early.Invoke(null, new object[] { 2, 63 }), k64 = (int)early.Invoke(null, new object[] { 2, 64 }), k70 = (int)early.Invoke(null, new object[] { 2, 70 });
+				Check(ref ok, shared == 0 && outside == 0 && k63 != k64 && k64 != k70, "each of 9 quests x 99 steps has its own early key (shared " + shared + ", outside " + outside + "; quest 3 steps 64/65/71: " + k63.ToString("X") + "/" + k64.ToString("X") + "/" + k70.ToString("X") + ")");
+			}
+
+			// (6) the editor's Save: an emptied Quest 2 leaves its number empty, Quest 3 stays Quest 3
+			var island = new Dictionary<string, string> { { "quest2.title", "Two" }, { "quest2.steps", "reach|a|1|" }, { "quest3.title", "Three" }, { "quest3.steps", "reach|c|1|" } };
+			var working = new Dictionary<int, IslandQuest> { { 1, new IslandQuest() }, { 2, IslandQuest.From(island, 2, true) } };
+			QuestEditorWindow.WriteFurther(island, working);
+			Check(ref ok, !IslandQuest.From(island, 1, true).Exists && IslandQuest.From(island, 2, true).Exists && IslandQuest.From(island, 2, true).Steps[0].Target == "c", "Save: an emptied Quest 2 stays empty, Quest 3 keeps its number (" + string.Join(",", island.Keys.ToArray()) + ")");
+
+			// (7) animals wait for the nearest zone of their name
+			var made = new List<GameObject>();
+			try
+			{
+				Func<string, float, TriggerZone> zone = (id, x) => { var g = new GameObject("ciqf2-zone"); made.Add(g); g.transform.position = new Vector3(x, -900f, 0f); var z = g.AddComponent<TriggerZone>(); z.Id = id; return z; };
+				TriggerZone z1 = zone("cave", 0f), z2 = zone("cave", 100f), z3 = zone("other", 92f);
+				var sg = new GameObject("ciqf2-spot"); made.Add(sg); sg.transform.position = new Vector3(90f, -900f, 0f);
+				var spot = sg.AddComponent<CreatureSpawnPoint>();
+				TriggerZone got = CreatureSpawner.ZoneOf(new[] { z1, z2, z3 }, spot, "cave");
+				Check(ref ok, got == z2, "a spot waits for the nearest zone of its name (" + (got == z1 ? "the first" : got == z2 ? "the nearest" : got == null ? "none" : "another") + ")");
+			}
+			finally { foreach (GameObject g in made) UnityEngine.Object.Destroy(g); }
+
+			// (7) the checker warns of two zones with one name that animals wait for - and not of one zone each
+			IslandFile two = QcIsland("ciqf2-zones");
+			two.Objects.Add(new IslandObject { Name = ContentCatalog.TriggerZone, Position = Vector3.zero, Props = new Dictionary<string, string> { { ObjectProps.ZoneId, "cave" } } });
+			two.Objects.Add(new IslandObject { Name = ContentCatalog.TriggerZone, Position = Vector3.one * 20f, Props = new Dictionary<string, string> { { ObjectProps.ZoneId, "cave" } } });
+			two.Objects.Add(new IslandObject { Name = "Creature_Boar", Position = Vector3.one * 18f, Props = new Dictionary<string, string> { { ObjectProps.CreatureZone, "cave" } } });
+			List<PlanChecker.Finding> traps = null;
+			string thrown = null;
+			try { traps = PlanChecker.FromFile(two, "ciqf2-zones", false).Traps; } catch (Exception ex) { thrown = ex.GetType().Name + " " + ex.Message; }
+			Check(ref ok, traps != null && traps.Any(t => t.Text.Contains("more than one trigger zone is called 'cave'")), "two zones called 'cave' with a guard: a Warning" + (thrown != null ? " - " + thrown : ""));
+			two.Objects[1].Props[ObjectProps.ZoneId] = "cave2";
+			traps = null;
+			try { traps = PlanChecker.FromFile(two, "ciqf2-zones", false).Traps; } catch (Exception ex) { thrown = ex.GetType().Name + " " + ex.Message; }
+			Check(ref ok, traps != null && !traps.Any(t => t.Text.Contains("more than one trigger zone")), "zones with their own names: no Warning");
+
+			// (8) the scrambled-blueprint pickup patch finds its method (its Prepare would skip it with a warning)
+			var prepare = typeof(ScrambledBlueprintsPickup).GetMethod("Prepare", priv);
+			bool prepared = false;
+			try { prepared = prepare != null && (bool)prepare.Invoke(null, null); } catch { }
+			Check(ref ok, prepared, "the scrambled-blueprint pickup patch's target is found (Prepare true)");
+
+			if (ok) Log("PASS: CIQuestFix2 - library step remap, own early keys, editor quest numbers, nearest zone, duplicate-zone warning, pickup patch");
+			else Fail("CIQuestFix2: see the FAIL lines above");
+		}
+
+		[ConsoleCommand(name: "CIQuestFix2W", docs: "Dev, world (host): questfix round 2 - a player's event on an island not loaded on the host is kept and done when it loads; the host's quest event with shared actions on an unloaded island is kept until it loads; a player's daily-quest counts are limited per 2 seconds. PASS/FAIL.")]
+		public static void QuestFix2WorldCommand(string[] args) { StartTest(QuestFix2WorldRoutine()); }
+
+		static IEnumerator QuestFix2WorldRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !CustomIslandSpawner.RaftPosition.HasValue) { Fail("CIQuestFix2W: host, in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			const System.Reflection.BindingFlags priv = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+			string name = "ciqf2-far";
+			string path = IslandSpawner.PathFor(name);
+			IslandFile f = SampleIsland();
+			f.Name = name;
+			f.Props[BehaviourProps.EventKey("quest")] = "show|ciqf2-door";
+			f.Save(path);
+			IslandCache.ForgetFile(path);
+			IslandWorldState.Entry e = null;
+			GameObject fake = null;
+			try
+			{
+				Vector3 far = CustomIslandSpawner.RaftPosition.Value - CustomIslandSpawner.SailDirection() * (CustomIslandSpawner.UnloadDistance + 3000f);
+				far.y = 0f;
+				e = IslandWorldState.Add(name, far, null, false);
+				Check(ref ok, e != null && e.Root == null, "a far island, not loaded");
+				if (e != null)
+				{
+					// (3) a player's event while the island isn't loaded here: kept, done when it is
+					int queued = Behaviours.NotLoadedCount, done = Behaviours.NotLoadedDone;
+					Behaviours.OnEventMessage(e.Id, 9999, "use", false, null, false); // (an object number the island has not: nothing runs)
+					Check(ref ok, Behaviours.NotLoadedCount == queued + 1, "a player's event on an island not loaded here is kept (" + queued + " -> " + Behaviours.NotLoadedCount + ")");
+					fake = new GameObject("ciqf2-fake-root");
+					fake.transform.position = new Vector3(0f, -2000f, 0f);
+					e.Root = fake;
+					var tick = typeof(Behaviours).GetMethod("DoNotLoadedYet", priv);
+					try { if (tick != null) tick.Invoke(null, null); } finally { e.Root = null; }
+					Check(ref ok, tick != null && Behaviours.NotLoadedDone == done + 1 && Behaviours.NotLoadedCount == queued, "it's done once the island is there (" + done + " -> " + Behaviours.NotLoadedDone + ")");
+
+					// (3b) the host's quest event with a "show" on an island not loaded: kept as pending, not lost
+					Func<int> pending = () => e.State.Keys.Count(k => k >= Behaviours.PendingBase && k < Behaviours.PendingBase + 0x100000);
+					int had = pending(), kept = Behaviours.KeptUnloaded;
+					Behaviours.FireFromHost(e, Behaviours.IslandIndex, "quest");
+					Check(ref ok, Behaviours.KeptUnloaded == kept + 1 && pending() == had + 1, "the host's quest event that shows something on an unloaded island is kept until it loads (pending " + had + " -> " + pending() + ")");
+				}
+
+				// (8) a player's daily-quest counts: 10 in 2 seconds at most, the rest dropped
+				var allowed = typeof(DailyQuest).GetMethod("Allowed", priv);
+				if (allowed == null) Check(ref ok, false, "DailyQuest.Allowed found");
+				else
+				{
+					int dropped = DailyQuest.Dropped;
+					ulong who = 919191UL;
+					int a = (int)allowed.Invoke(null, new object[] { who, 6 }), b = (int)allowed.Invoke(null, new object[] { who, 6 }), c = (int)allowed.Invoke(null, new object[] { who + 1, 6 });
+					Check(ref ok, a == 6 && b == 4 && c == 6 && DailyQuest.Dropped == dropped + 2, "a player's counts: 6 + 6 in 2 s take 6 + 4, another player's 6 are theirs (" + a + "/" + b + "/" + c + ", dropped " + (DailyQuest.Dropped - dropped) + ")");
+				}
+			}
+			finally
+			{
+				if (e != null) { e.Root = null; IslandWorldState.RemoveIds(new List<int> { e.Id }, false); }
+				if (fake != null) UnityEngine.Object.Destroy(fake);
+				try { File.Delete(path); IslandCache.ForgetFile(path); } catch { }
+			}
+			if (ok) Log("PASS: CIQuestFix2W - events kept for unloaded islands, daily count rate limit");
+			else Fail("CIQuestFix2W: see the FAIL lines above");
+		}
 	}
 }
