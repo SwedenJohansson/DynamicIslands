@@ -248,8 +248,16 @@ namespace DynamicIslands.Editor
 		/// <summary>Tests: the host's numbers at the last join.</summary>
 		internal static string LastJoinData;
 
-		internal static void OnRequestWorld() { waitingWorld = true; worldPartsBefore = 0; }
-		internal static void OnWorldPart() { if (waitingWorld && !Raft_Network.IsHost) worldPartsBefore++; }
+		internal static void OnRequestWorld() { waitingWorld = true; worldPartsBefore = 0; partTypes.Length = 0; }
+		internal static void OnWorldPart(Message m)
+		{
+			if (!waitingWorld || Raft_Network.IsHost) return;
+			worldPartsBefore++;
+			if (partTypes.Length < 300) { try { partTypes.Append(m != null ? m.Type.ToString() : "null").Append(' '); } catch { } }
+		}
+		static readonly System.Text.StringBuilder partTypes = new System.Text.StringBuilder();
+		/// <summary>Tests: the kinds of Raft messages read before the host's numbers at the last join.</summary>
+		internal static string LastJoinPartTypes = "";
 
 		/// <summary>Player: the host's numbers came.</summary>
 		static void IndexesFromHost(string data)
@@ -262,9 +270,10 @@ namespace DynamicIslands.Editor
 			}
 			waitingWorld = false;
 			LastJoinPartsBefore = worldPartsBefore;
+			LastJoinPartTypes = partTypes.ToString().Trim();
 			LastJoinMoved = moved;
 			LastJoinData = data ?? "";
-			Log("The host's upgrade numbers came with " + worldPartsBefore + " world part(s) read before them, " + moved + " upgrade(s) moved");
+			Log("The host's upgrade numbers came with " + worldPartsBefore + " world part(s) read before them (" + LastJoinPartTypes + "), " + moved + " upgrade(s) moved");
 			if (worldPartsBefore > 0 && moved > 0)
 			{
 				Debug.LogWarning("[CUSTOM ISLANDS] [upgrade table] The host's upgrade numbers came after its world: moved upgrades may show as other items until a rejoin");
@@ -704,6 +713,6 @@ namespace DynamicIslands.Editor
 
 		[HarmonyPatch(typeof(NetworkUpdateManager), "DeserializeSingleMessage")]
 		[HarmonyPrefix]
-		static void WorldPart() { UpgradeTable.OnWorldPart(); }
+		static void WorldPart(Message __0) { UpgradeTable.OnWorldPart(__0); }
 	}
 }
