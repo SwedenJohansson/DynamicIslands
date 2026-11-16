@@ -1,0 +1,18 @@
+# Varuna Point Remade's fuel-spill gallery with a work suit (CIPlay varuna_point_remade_acidsuit, 11-12 w13; in a test world 'CI ...'; offline-written, NOT yet run).
+# The suit box (vpfuelsuits at -17.2 -68.6) gives 180 s of suit; into the gallery to the fuel-line locker and back, unhurt.
+# Run in a fresh world after the acid play. Floor 5.6 m is a GUESS (Raft surface probe).
+island Varuna Point Remade keep
+offset -0.7903 -5.1702
+hour 11
+weather Calm
+walk -25 -69.6 to -17 -69.4 below=14
+use vpfuelsuits
+walk -18 -69.4 to -20 -66 to -22.2 -62.4
+wait 6
+expect unhurt
+open Fuel-line locker
+wait 2
+expect item Bolt 3
+picture vp_acid_in -21 8 -65 -22.6 6 -61.8 light=20
+walk -22.2 -62.4 to -20 -66 to -18 -69.4 to -25 -69.6
+expect unhurt

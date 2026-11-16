@@ -18,6 +18,7 @@ include lib_features
 include lib_highwater
 include lib_areas
 include lib_raft_remade
+include lib_caves
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
 randomize VarunaPoint like Seed=7106 Radius=48 Height=18 Cliffs=0.3 BeachWidth=0.5 Hostiles=0 Friendly=0 SeaLife=0.3 Trees=0.4 Bushes=0.5 Rocks=0.75 Harvest=0.7
@@ -222,6 +223,61 @@ call rr_plants_hill x=-39 z=42 r=16 seed=26641
 call rr_plants_tropical x=-43 z=-30 r=7 seed=26651
 call rr_plants_tropical x=43 z=-34 r=8 seed=26661
 call rr_plants_tropical x=46 z=-52 r=12 seed=26671
+
+# --- 11-12 (w13): the company's fuel works under Varuna's Back - optional, no quest step (plan 13 row: DIG under the fuel
+# works; dirt 2, mushrooms 2; an ACID fuel-spill side room, safe = suit). The company dug its fuel store into the foot of
+# the hill south of the site: one level adit (the Dig brush, kit_dig) with drums in it; a side gallery off it, where a
+# line burst, is still awash with spilt fuel salts. The work suits hang in a box at the gallery's junction, the warning
+# sign beside it; the gallery is a dead end, never on the way out (the adit is level to the mouth).
+# The adit runs along a chord of the hill, 15 m+ from the crane at its top (cavecheck: 6 m from the crane's things).
+# HEIGHTS (hw_mount b=22 h=24 at -10 -54: foot ring 0.22 * 24 = 5.3 m at r 22, 10.6 at r 17, 15.8 at r 13): the shelf
+# below is cut level at 5.6 m and the adit floor is 5.6 (set by the shelf); cover over the adit 5-7 m. GUESSES needing a
+# surface probe: the real ground at the mouth (r 22 from the hill's centre), whether Varuna's Back trail (hw_trail a0=30)
+# crosses the mouth or the adit's roof, and the dug floor's height for the h= values below (floor taken as 5.6).
+brush flatten at -26.4 -69.6 r=3 s=20 frames=60 h=5.6
+brush smooth at -28 -69.6 r=5 s=6 frames=20
+clear at -26 -69.6 r=3 only=(?i)boulder|rock|tree|bush|palm|bamboo
+call kit_dig x=-25.4 z=-69.6 yaw=90 len=18 flat=0 r=1.75 slope=0 room=1 roomr=2.8 roomlen=4 dirt=2 mush=2 stone=0 vines=0 titanium=0 as=vpfuel
+prop vpfuel cave.rock=plain
+call hw_zone x=-27 z=-69.6 al=vpfuelmouth id=fuelworks r=5 msg="An adit cut into the hill's foot: the company's fuel works, drums and old pipe. Mind the side gallery - it is awash."
+place TP_Moontown_Barrel02 - at -21 -69.6 h=6.2 drop yaw=30
+place TP_Moontown_Barrel02 - at -9 -68.8 h=6.2 drop yaw=80
+# the side gallery: off the adit 7 m in, north-west, ending in a wider chamber with the fuel-line locker
+dig -18,-69.6 -22,-63 r=1.75
+dig -22,-63 -23.5,-60.5 r=2.8
+# the spill: a pool in the chamber, crusted rocks round it, a dark vapour
+place TP_SeleneReactor_Water_Radiated vpfuelpool at -22.6 -61.8 h=5.5 scale=0.3 yaw=30
+place SmallRock_02 vpfuelrock at -24.4 -62.6 h=6 drop yaw=60 scale=0.45 sy=0.5
+place SmallRock_02 vpfuelrock at -21.2 -60.4 h=6 drop yaw=170 scale=0.45 sy=0.5
+prop vpfuelrock tint.color=#a4c428
+prop vpfuelrock tint.amount=0.7
+place Zone_Atmosphere vpfuelmist at -22.6 -61.8 h=6
+prop vpfuelmist zone.radius=4
+prop vpfuelmist atmo.particles=steam
+prop vpfuelmist atmo.fog=#8cc030
+prop vpfuelmist atmo.fogAmount=0.3
+prop vpfuelmist atmo.light=#c8ff70
+prop vpfuelmist atmo.lightAmount=0.3
+# cavecheck inside vpfuelacid vpfuellocker vpfuelsuits vpfuelwarn
+place Zone_Trigger vpfuelacid at -22.6 -61.8 h=6
+prop vpfuelacid obj.name=vpfuelacid
+prop vpfuelacid zone.id=vp_fuelspill
+prop vpfuelacid zone.radius=3.2
+prop vpfuelacid zone.hazard=acid
+prop vpfuelacid zone.damage=4
+prop vpfuelacid zone.safe=suit
+prop vpfuelacid zone.hazardMsg=The gallery floor is spilt fuel salts - they burn. A work suit from the box at the junction keeps them off.
+place Loot_ChestSmall vpfuellocker at -22.8 -62 h=6.2 drop yaw=200
+prop vpfuellocker obj.name=vpfuellocker
+prop vpfuellocker loot.refill=0
+note vpfuellocker Fuel-line locker | The fitters' locker in the gallery where the line burst: their spare couplings, a gauge and a bar of ore, left when the salts came.
+loot vpfuellocker Bolt*3;CopperIngot*2;TitaniumOre*1;Battery*1
+place "Box Big" vpfuelsuits at -17.2 -68.6 h=6.4 drop yaw=0
+prop vpfuelsuits obj.name=vpfuelsuits
+prop vpfuelsuits beh.use=Put on a fitter's work suit
+prop vpfuelsuits on.use=suit||180\nmessage||A fitter's work suit, waxed cloth sealed at the wrists and boots - three minutes before the salts get through.
+place Note_Sign vpfuelwarn at -16 -68.2 h=6.4 drop yaw=0
+note vpfuelwarn FUEL WORKS - SIDE GALLERY | The side gallery off this passage is awash with spilt fuel salts. They burn skin and boots. Work suits in the box here.\n- the fitters
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, pineapples, bananas ----------

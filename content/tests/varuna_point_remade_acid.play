@@ -1,0 +1,18 @@
+# Varuna Point Remade's fuel-spill gallery without a suit (CIPlay varuna_point_remade_acid, 11-12 w13; in a test world 'CI ...'; offline-written, NOT yet run).
+# Points as in its recipe: the junction at -18 -69.6 (sign vpfuelwarn at -16 -68.2, suit box at -17.2 -68.6), the gallery to
+# -22 -63 and its chamber at -22.6 -61.8 (zone vp_fuelspill r 3.2, safe=suit). Floor taken as 5.6 m: a GUESS for a Raft surface probe.
+island Varuna Point Remade keep
+offset -0.7903 -5.1702
+hour 11
+weather Calm
+expect shown vpfuelacid
+walk -25 -69.6 to -17 -69.4 below=14
+picture vp_acid_sign -20 8 -67 -16 6.4 -68.2 light=20
+read FUEL WORKS - SIDE GALLERY
+walk -18 -69.4 to -20 -66 to -22.6 -61.8
+wait 8
+expect message spilt fuel salts
+expect hurt 10
+walk -22.6 -61.8 to -20 -66 to -18 -69.4 to -25 -69.6
+wait 2
+expect hurt 1

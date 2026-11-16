@@ -1,0 +1,14 @@
+# Varuna Point Remade's fuel works adit (CIPlay varuna_point_remade_cave, 11-12 w13; in a test world 'CI ...'; offline-written, NOT yet run).
+# Points as in its recipe: Varuna's Back at -10 -54 (b 22, h 24); the shelf at -26.4 -69.6 (5.6 m); the adit from -25.4 -69.6 east
+# to -7.4 -69.6, its end chamber to -3.4; the side gallery (acid, own plays) leaves it at -18 -69.6. Walk the adit in and out only.
+# HEIGHT GUESSES (Raft surface probe): the mouth ground/floor 5.6 m, the cover 5-7 m, whether the hill trail crosses the roof.
+island Varuna Point Remade keep
+offset -0.7903 -5.1702
+hour 11
+weather Calm
+
+zone fuelworks
+picture vp_fuel_out -40 9 -78 -26 6 -69.6
+walk -30 -69.6 to -25 -69.6 to -15 -69.6 to -7 -69.6 to -4 -69.6 below=14
+picture vp_fuel_in -14 8 -69.6 -4 6.5 -69.6 light=20
+walk -4 -69.6 to -15 -69.6 to -25 -69.6 to -30 -69.6 below=14
