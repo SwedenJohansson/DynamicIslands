@@ -248,14 +248,28 @@ brush smooth at -10.4 -48.4 r=3 s=5 frames=15
 # this side) and a dig takes what it digs into away - the den went whole, the chest and mushrooms left in the rock. Now
 # up the slope away from the den, its room 1.5 m short of the den's box)
 dig -82,-50 -76.5,-46.3 r=1.75 slope=0 as=vrservice
-dig -76.5,-46.3 -73.5,-44.3 r=2.8 as=vrservice
+# (11-16 w11D: the room's stroke logged floor 4.5 r=2.8 under ground 10.1 - its top at the ground, 24 ground cells cut
+# and the rat walked out on to the hill under open sky; CAVE_LESSONS 11-08: rock over a room by digging it deeper - a
+# smaller room sloped down, its top 1.5+ m under the ground)
+dig -76.5,-46.3 -73.5,-44.3 r=2 slope=-25 as=vrservice
 # (11-14 w11g: caveloot found no dry spot away from the sky in this short passage and stopped the recipe - left out;
 # the rats are its find)
 prop vrservice cave.rock=plain
 # cavecheck inside vrvalveair vrsumpair vrvalvechest vrrats
-place Creature_Rat vrrats at -74 -44.6 h=6.5 drop
-prop vrrats creature.count=2
+# (11-16 w11: count=2 + drop from 2 m over the room's floor (4.5) spread the pair - one on the hill top over the den,
+# one out by the mouth, both under open sky; CAVE_LESSONS 11-08: one rat a place, h= the floor + 0.3, no drop)
+# (11-16 w11C: a second rat at -75.9 -45.9 wandered to -76.4 -44.8 under open sky - the roof only covers the room's
+# east end; one rat, at the deep end)
+place Creature_Rat vrrats at -74.3 -44.6 h=4.7
+prop vrrats creature.count=1
 prop vrrats creature.respawn=0
+# (11-16 w11F: the rat roamed from its room out of the mouth to -81.4 -46.3 on the open hill before the player came
+# (run 2 of 2) - a rat roams round its spot, and the room is only 7 m in; now it waits in its room until a player is
+# in the passage, 3 m in from the mouth)
+place Zone_Trigger vrratzone at -79.8 -48.5 h=6.6
+prop vrratzone zone.id=vr_service
+prop vrratzone zone.radius=2
+prop vrrats creature.zone=vr_service
 place Zone_Trigger vrvalveair at -56.5 -54 h=3.5
 prop vrvalveair obj.name=vrvalveair
 prop vrvalveair zone.id=vr_valvechamber
