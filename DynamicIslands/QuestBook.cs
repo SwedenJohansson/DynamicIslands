@@ -335,7 +335,8 @@ namespace DynamicIslands.Editor
 			if (sig == lastSig) return;
 			lastSig = sig;
 			try { Apply(); }
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [quest book] " + e); }
+			// (tried again in a few seconds: the signature was kept before, so a book that failed once stayed wrong until the chain changed)
+			catch (Exception e) { lastSig = null; nextCheck = Time.unscaledTime + 5f; DynamicIslands.TickError("Quest book", e); }
 		}
 
 		/// <summary>Tests: lays the book out again now.</summary>

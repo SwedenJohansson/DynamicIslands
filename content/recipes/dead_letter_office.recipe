@@ -387,7 +387,7 @@ step read|Night clerk's notice|1|Read the night clerk's notice by the night lamp
 step talk|Clerk Rouhi|1|Talk to Clerk Rouhi at the ruined house on the shore
 step reach|qd_trail|1|Find the foot of the trail up Gull Knoll, below the signal mast
 step reach|qd_summit|1|Climb the trail to the top of Gull Knoll
-step collect|story:qd_top|1|Climb the old signal mast and take the night lamp lens from its deck
+step collect|story:qd_top|1|Climb the old signal mast and take the night lamp lens from the box on its deck
 step reach|qd_cave|1|Find Sack Cave in the rocks, past Rouhi's ruined house
 step collect|story:qd_cave|1|Take the lamp wick spool from the chest at the back of the cave
 step read|Night lamp log|1|Bring both to the night lamp and read what it shows

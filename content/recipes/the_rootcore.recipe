@@ -468,7 +468,7 @@ step kill|Warthog|3|Drive off the Blightmother's brood
 step kill|Mama bear|1|Defeat the Blightmother
 step reach|old_root|1|Go to the oldest root
 step read|The Ringwave root|1|Read the Ringwave root
-step collect|story:shard|3|Find the three heart shards the brood carried off
+step collect|story:shard|3|Find the three heart shards the brood hid in chests and crates
 step collect|story:rootlit|1|Set the shards into the oldest root
 step read|Teodor's last tape|1|Read what was hidden behind the coral wall
 step collect|story:core|1|Turn the core valve the way the Heart was set

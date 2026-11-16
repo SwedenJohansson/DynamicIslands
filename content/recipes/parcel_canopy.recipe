@@ -391,7 +391,7 @@ step read|Pump keeper's notice|1|Read the pump keeper's notice by the airstrip p
 step talk|Mira Dahl|1|Talk to Mira Dahl at the ruined house on the shore
 step reach|qc_trail|1|Find the foot of the trail up Parrot Peak, below the relay mast
 step reach|qc_summit|1|Climb the trail to the top of Parrot Peak
-step collect|story:qc_top|1|Climb the radio relay mast and take the pump valve from its deck
+step collect|story:qc_top|1|Climb the radio relay mast and take the pump valve from the box on its deck
 step reach|qc_cave|1|Find Root Cave in the rocks, past the crashed plane
 step collect|story:qc_cave|1|Take the pump handle from the chest at the back of the cave
 step read|Pump ticket|1|Bring both to the airstrip pump and read what it shows

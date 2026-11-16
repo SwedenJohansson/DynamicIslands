@@ -835,6 +835,16 @@ namespace DynamicIslands
 			long managed = GC.GetTotalMemory(true) / (1024 * 1024);
 			long unity = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong() / (1024 * 1024);
 			Log("MEMORY " + managed + " " + unity + " " + Resources.FindObjectsOfTypeAll<Texture>().Length + " " + Resources.FindObjectsOfTypeAll<Mesh>().Length + " " + Resources.FindObjectsOfTypeAll<GameObject>().Length);
+			// (11-13 memory hunt: the textures' own size by kind, the managed heap Mono holds, the dug rims' cached copies)
+			Texture[] all = Resources.FindObjectsOfTypeAll<Texture>();
+			long t2d = 0, rt = 0; int nRt = 0, nMade = 0;
+			foreach (Texture t in all)
+			{
+				long b = UnityEngine.Profiling.Profiler.GetRuntimeMemorySizeLong(t);
+				if (t is RenderTexture) { rt += b; nRt++; } else t2d += b;
+				if (t.name.StartsWith("DigTunnelGround", System.StringComparison.Ordinal)) nMade++;
+			}
+			Log("MEMORY2 mono heap " + (UnityEngine.Profiling.Profiler.GetMonoHeapSizeLong() >> 20) + " MB, textures " + (t2d >> 20) + " MB, render textures " + nRt + " " + (rt >> 20) + " MB, rim bakes " + nMade + ", " + DigTunnel.CacheReport());
 		}
 
 		[ConsoleCommand(name: "CIPlanEdit", docs: "Dev, anywhere: changes the test plan 'CI Copy Plan' (CIPlanCopyPrep make) as a player would in World Plans: CIPlanEdit add = a 4th rule; CIPlanEdit more = a 5th")]

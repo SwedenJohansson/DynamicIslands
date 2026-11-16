@@ -80,7 +80,19 @@ namespace DynamicIslands.Editor
 		/// Raft's pause menu is open (user 11-04: they opened their pages over it), or any other menu of Raft's is open -
 		/// inventory, crafting, trading post... (audit 11-09: J/K/U opened over the inventory, and when Tab closed it the
 		/// page stayed with the mouse locked). The mod's own freed mouse (ActiveMenu PauseMenu) doesn't count.</summary>
-		public static bool Blocked() { return SomeoneTyping() || PauseOpen() || RaftMenuOpen(); }
+		public static bool Blocked() { return SomeoneTyping() || PauseOpen() || RaftMenuOpen() || ModOverlayOpen(); }
+
+		/// <summary>A talk, a code lock, a choice, a cutscene or the credits of the mod is on screen: the keys wait, as Esc
+		/// does (EscGuard) - J/K/U/M/G opened their pages over them and the mouse stayed locked (sweep 11-14).</summary>
+		public static bool ModOverlayOpen()
+		{
+			try
+			{
+				return DialoguePanel.IsOpen || CodeLock.IsOpen || ChoiceWindow.IsOpen || StoryCredits.IsOpen || QuestSkip.ConfirmShown
+					|| CameraMoment.Active || CameraFlight.Active;
+			}
+			catch (Exception) { return false; }
+		}
 
 		/// <summary>One of Raft's own menus is open (not the mod's PauseMenu marker for a freed mouse).</summary>
 		public static bool RaftMenuOpen()

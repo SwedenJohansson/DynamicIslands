@@ -300,7 +300,7 @@ step read|Perforator notice|1|Read the perforator notice by the perforating mach
 step talk|Bertil Gran|1|Talk to Bertil Gran at the ruined house on the shore
 step reach|qf_trail|1|Find the foot of the trail up Ink Hill, below the signal mast
 step reach|qf_summit|1|Climb the trail to the top of Ink Hill
-step collect|story:qf_top|1|Climb the works signal mast and take the perforating wheel from its deck
+step collect|story:qf_top|1|Climb the works signal mast and take the perforating wheel from the box on its deck
 step reach|qf_cave|1|Find Gull Cave in the rocks, past Bertil's ruined house
 step collect|story:qf_cave|1|Take the ink roller from the chest at the back of the cave
 step read|Last stamp sheet|1|Bring both to the perforating machine and read what it shows

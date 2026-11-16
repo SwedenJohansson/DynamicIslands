@@ -395,7 +395,7 @@ step read|North line notice|1|Read the pump notice by the line pump out on the i
 step talk|Otto Rask|1|Talk to Otto Rask at the ruined house on the shore
 step reach|qh_trail|1|Find the foot of the trail up Pressure Hill, below the vent mast
 step reach|qh_summit|1|Climb the trail to the top of Pressure Hill
-step collect|story:qh_top|1|Climb the tube vent mast and take the pump gauge from its deck
+step collect|story:qh_top|1|Climb the tube vent mast and take the pump gauge from the box on its deck
 step reach|qh_cave|1|Find Vent Cave in the rocks, past Otto's ruined house
 step collect|story:qh_cave|1|Take the pump bellows from the chest at the back of the cave
 step read|Pump fitter's chit|1|Bring both to the line pump and read what it shows

@@ -11,9 +11,10 @@ namespace DynamicIslands
 	/// </summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CIWhaleBreach", docs: "Dev, in game (host): the world option Whale breach. 'CIWhaleBreach [distance m, default 200]' starts a breach now (with the option on or off), takes pictures mid-breach and of the splash (play_whale_*.jpg, from the raft and from 70 m), and checks the whale rose above the sea, splashed, and was removed afterwards")]
+		[ConsoleCommand(name: "CIWhaleBreach", docs: "Dev, in game (host): the world option Whale breach. 'CIWhaleBreach [distance m, default 200]' starts a breach now (with the option on or off) - 'CIWhaleBreach client' on a joiner waits 90 s for the host's breach instead -, takes pictures mid-breach and of the splash (play_whale_*.jpg, from the raft and from 70 m), and checks the whale rose above the sea, splashed, and was removed afterwards")]
 		public static void WhaleBreachCommand(string[] args)
 		{
+			if (args != null && args.Length > 0 && args[0] == "client") { StartTest(WhaleBreachRoutine(-1f)); return; }
 			float distance;
 			if (args == null || args.Length == 0 || !float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out distance)) distance = 200f;
 			StartTest(WhaleBreachRoutine(distance));
@@ -23,9 +24,20 @@ namespace DynamicIslands
 		{
 			Network_Player me = RAPI.GetLocalPlayer();
 			if (me == null || ComponentManager<Raft>.Value == null) { Fail("whale breach: needs a world with a raft"); yield break; }
-			if (!Raft_Network.IsHost) { Fail("whale breach: run it on the host"); yield break; }
+			bool client = distance < 0f;
+			if (client != !Raft_Network.IsHost) { Fail("whale breach: 'CIWhaleBreach' on the host, 'CIWhaleBreach client' on a joiner"); yield break; }
 			int finishedBefore = WhaleBreach.Finished;
-			if (!WhaleBreach.StartNow(distance)) { Fail("whale breach: no breach started (no open sea near the raft?)"); yield break; }
+			if (client)
+			{
+				// (a joiner: the host's breach, shown here from its message)
+				// (one already under way counts: the host may have started it while this command was on its way)
+				int startedBefore = WhaleBreach.Current != null ? WhaleBreach.Started - 1 : WhaleBreach.Started;
+				float wait = Time.realtimeSinceStartup + 90f;
+				while (Time.realtimeSinceStartup < wait && WhaleBreach.Started == startedBefore) yield return null;
+				if (WhaleBreach.Started == startedBefore) { Fail("whale breach: no breach from the host came in 90 s"); yield break; }
+				finishedBefore = WhaleBreach.Finished;
+			}
+			else if (!WhaleBreach.StartNow(distance)) { Fail("whale breach: no breach started (no open sea near the raft?)"); yield break; }
 			WhaleBreach.Show show = WhaleBreach.Current;
 			if (show == null) { Fail("whale breach: started but no whale"); yield break; }
 			Log("whale breach: whale " + show.Length.ToString("F1") + " m long, " + Vector3.Distance(Flat(me.transform.position), Flat(show.At)).ToString("F0") + " m from the player, option " + (WhaleBreach.On ? "on" : "off"));

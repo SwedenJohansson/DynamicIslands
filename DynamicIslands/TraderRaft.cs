@@ -331,7 +331,15 @@ namespace DynamicIslands.Editor
 			if (unit < 0 || Lacks().Length > 0) return new List<string>();
 			if (Unlimited) return Pay(-1);
 			int key = KeyOf(unit);
-			if (!Claims.May(Entry, key, yes => { if (this == null) return; if (yes) Trade(); else Beaten(); }))
+			// (the host's yes comes later: the unit or the goods may have gone meanwhile - the hold is let go then too;
+			// a plain Trade() again returned at its first line and kept the unit held for everyone - sweep 11-14)
+			if (!Claims.May(Entry, key, yes =>
+			{
+				if (this == null) return;
+				if (!yes) { Beaten(); return; }
+				if (NextUnit != unit || Lacks().Length > 0) { Claims.Release(Entry, key); return; }
+				Trade();
+			}))
 			{
 				if (Raft_Network.IsHost) Beaten();
 				return new List<string>();
