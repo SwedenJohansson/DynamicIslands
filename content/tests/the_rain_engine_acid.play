@@ -1,0 +1,16 @@
+# The Rain Engine's seeding vat without a suit (CIPlay the_rain_engine_acid, 11-13 w11; a fresh test world 'CI ...').
+# Points as in its recipe: a shallow basin dug into the snow plateau at 18 -60 (rim ~12.5, floor ~10.8), the acid zone
+# reseedvat (r 3.4), the warning sign at 23.6 -62.8 and the suit box at 22.6 -64.6 on the rim. In without a suit: hurt.
+island The Rain Engine keep
+hour 11
+weather Calm
+expect shown reseedvat
+picture re_vat_out 27 17 -69 18 11 -60
+at 24 -61 h=13
+wait 2
+read SEEDING VATS
+walk 24 -61 to 21.5 -60.8 to 19.6 -60.6
+wait 8
+expect message spent cloud seed
+expect hurt 10
+walk 19.6 -60.6 to 22 -61 to 25 -61

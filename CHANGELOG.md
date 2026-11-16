@@ -9,6 +9,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
+## Next (not released yet)
+
+- **`CIFloating` leaves fly-through camera points alone** (island makers' test): the points of a camera fly-through hang in the air on purpose and are unseen in play, so they no longer count as things in the air touching nothing.
+
 ## 3.5 alpha - 2026-11-15
 
 - **Caves hold different animals**: the caves added in the latest worlds no longer all hold rats. A dozen now hold rats, a boar, a bear, a hyena or a bear with rats, and some stay empty, so you cannot tell what is inside from outside.

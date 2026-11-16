@@ -582,7 +582,8 @@ namespace DynamicIslands
 			{
 				string n = e.GameObjectName ?? "";
 				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
-				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n == ContentCatalog.MarkerOnly || ground == null) continue;
+				// (a fly-through's camera points hang in the air on purpose: unseen in play, never set down - w11, The Rain Engine)
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n == ContentCatalog.MarkerOnly || CameraPath.IsPoint(n) || ground == null) continue;
 				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
 				if (parts.Length == 0) continue;
 				Bounds whole = parts[0].bounds;
