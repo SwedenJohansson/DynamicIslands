@@ -238,10 +238,30 @@ call kit_st x=-10 z=-37 yaw=250 len=41.6 slope=12 end=room size=0.7 hill=1 dirt=
 prop vrintake1 cave.rock=plain
 call kit_st x=-8 z=-46 yaw=225 len=41.6 slope=12 end=room size=0.7 hill=1 dirt=0 mush=1 stone=1 vines=0 wet=1 as=vrintake2
 prop vrintake2 cave.rock=plain
+# (11-16 w11H/J: both rooms under the embankment had the bear den's default dry dome - 18 m high, reaching 30-48 m -
+# its skin lay just over the ground on the west slope: square brown sand patches round the service mouth, cells open
+# over the dug passage. cave.foot=wet took the domes away but left the sump roof see-through and both room ends in the
+# sea (CC): capped instead)
+prop vrintake1 cave.dome=14
+prop vrintake2 cave.dome=14
 # (11-13 w11c: CC found the short intake's roof open 3.3 m in from its mouth - rays from above reached its floor;
 # ground raised over that stretch, short of the mouth itself)
 brush flatten at -10.4 -48.4 r=1.8 s=20 frames=200 h=1.9
 brush smooth at -10.4 -48.4 r=3 s=5 frames=15
+# (11-16 w11K: the long intake's hill ran out to the lake's west bank at -18.5 -33..-25 - its skin, at the bank top's
+# height (4.5-6), stood one cell out over the falling bank face: square brown-topped slabs stuck in the cliff, 1-3 m
+# over the ground under them (cavemap). The bank top raised a little lip there, so that strip of skin lies under it)
+brush flatten from -18.6 -24.5 to -18.6 -32.5 r=1.7 s=20 frames=200 h=5.6
+brush smooth from -20.2 -24.5 to -20.2 -32.5 r=2 s=4 frames=10
+# (w11L: one cell further east, -17 -30.5..-35, the strip stayed - its skin 4.5-6.5 m up while the bank top there falls south
+# from 4.7 to 2.4: the lip goes on down that way at the skin's own height, so it lies under the ground too)
+brush flatten from -17.4 -29.5 to -17.4 -33 r=1.6 s=20 frames=200 h=6.3
+brush flatten from -17.4 -33.5 to -17.4 -35.8 r=1.4 s=20 frames=120 h=4.8
+brush smooth from -19.6 -29.5 to -19.6 -35 r=2 s=4 frames=10
+# (w11P probe, CaveSkin hidden = slab gone: one more skin strip at x -15, z -32..-34, 2.5-3.2 m up the bank face under
+# the 4.8-5.2 bank top (surface probe). The bank top runs on east over it at its own height: the cliff edge moves ~1 m
+# into the lake there, the strip lies under the ground)
+brush flatten from -15.2 -31.6 to -15.2 -34.8 r=1.5 s=20 frames=200 h=4.9
 # (11-13 w11c: with the long intake shortened its hill no longer reaches the west shore - -91 -50 became sea bed
 # (dig floor -3.8, all wet); the mouth moved up the slope to -82, where the ground rises about 1.1 m a metre)
 # (11-13 w11e: east along -50 to -68 its strokes met the valve chamber's den (its box from -74 -49.4 back to -53 -42 on
