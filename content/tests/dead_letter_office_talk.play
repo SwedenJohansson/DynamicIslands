@@ -2,7 +2,8 @@
 # Clerk Rouhi sits at the ruined house on the shore (55 -24.5). Answer 1: her held letter in the journal. Answer 2: shows the
 # vault hatch (dlvaulthatch) and says where it is. Answer 3: the returned stamp. Offline-written, never run.
 island The Dead Letter Office
-offset 0 42
+# (11-16: offset 0 0 - Rouhi at 55 -24.5 is in the recipe's own metres; 0 42 put the picture 42 m out at sea)
+offset 0 0
 hour 11
 weather Calm
 expect hidden dlvaulthatch
