@@ -365,8 +365,6 @@ step read|Dagny's letter to the town|1|Read the letter on the crate in the pump 
 quest done=The water plans are yours, and Dagny's letter says where this ends: the Rain Engine. The next station answers on 1100.
 quest reward=Plank*6;Rope*2;Scrap*4
 
-save Vaporhold Reservoir
-
 # (11-14 w11g: the valve chamber den's hill buries these sea finds and rocks - the same seven since w11c)
 clear at -77.73 -98.83 r=2.5 only=Pickup_Landmark_Iron all
 clear at -89.41 -22.95 r=2.5 only=Pickup_Landmark_Iron all
@@ -375,3 +373,5 @@ clear at -64.63 -45.19 r=2.5 only=Pickup_Landmark_Rock all
 clear at -64.76 -42.59 r=2.5 only=Pickup_Landmark_GiantClam all
 clear at -39.15 -111.15 r=2.5 only=SeaVine3 all
 clear at -48.67 -102.29 r=2.5 only=SeaVine3_klump all
+
+save Vaporhold Reservoir
