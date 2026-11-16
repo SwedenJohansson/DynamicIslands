@@ -455,7 +455,7 @@ step open|Oda's pack|1|Free Oda Fenn from the cage (the keepers' hooks have the 
 step read|Oda's notes|1|Read Oda's notes
 step kill|Screecher|3|Drive off the three screechers under the ice cap
 step reach|seed_wing|1|Go into the seed wing
-step collect|story:canister|3|Collect the three seed canisters
+step collect|story:canister|3|Collect the three seed canisters from their crates
 step reach|record_wing|1|Go into the record wing
 step read|Founders' record|1|Read the founders' record
 step read|Why the comms went off|1|Read why the comms went off

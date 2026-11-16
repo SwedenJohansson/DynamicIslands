@@ -262,6 +262,8 @@ namespace DynamicIslands
 		{
 			try { WorldIdRepair.AfterWorldRead(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] World id repair: " + e.Message); }
 			try { DayRepair.AfterWorldRead(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Day repair: " + e.Message); }
+			// (the world's upgrade numbers, before the raft and the bags are read - sweep 11-14)
+			try { if (Raft_Network.IsHost) Editor.ExtraUpgrades.AfterWorldRead(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Upgrade numbers: " + e.Message); }
 		}
 	}
 }

@@ -208,6 +208,9 @@ namespace DynamicIslands.Editor
 			global::DynamicIslands.Editor.QuestCount.Reset();
 			global::DynamicIslands.Editor.Collectibles.Reset();
 			global::DynamicIslands.Editor.QuestRewards.OnWorldReceived();
+			global::DynamicIslands.Editor.Behaviours.ForgetWorld(); // (a late answer for the last host's event: questfix 11-14)
+			global::DynamicIslands.Editor.ContentState.ForgetWorld();
+			QuestTimers.Reset(); // (questfix 11-14: the last world's clocks)
 			toldRefused.Clear(); // (a new host: its left-out islands are told again - review 10-30)
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Select(e => e.Id).ToList(), false);
 			synced = false;
@@ -274,7 +277,9 @@ namespace DynamicIslands.Editor
 			syncTries++;
 			nextSyncTry = Time.unscaledTime + (syncTries > SyncMaxTries ? SlowSyncSeconds : SyncRetrySeconds);
 			// (with this player's version of the mod: the host says when they differ, and answers with its own)
-			if (syncTries == 1) { HostAnswersClaims = false; HostAddsCounts = false; HostAnswersEvents = false; CreatureSpawner.HostSendsSpots = false; } // (a new host: known again from its answer)
+			// (only for a new host's world - a Resync of the same host kept asking with them off until its answer, and a quest
+			// event meanwhile sent a total, which overwrote another player's count - questfix round 2)
+			if (syncTries == 1 && !hostToldVersion) { HostAnswersClaims = false; HostAddsCounts = false; HostAnswersEvents = false; CreatureSpawner.HostSendsSpots = false; } // (a new host: known again from its answer)
 			SendToHost(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion, Data = BuildTag + Build });
 		}
 
@@ -709,17 +714,36 @@ namespace DynamicIslands.Editor
 			IslandNetMessage.ObjectSet, IslandNetMessage.QuestItemsBack, IslandNetMessage.WorldNewId, IslandNetMessage.AlphaHealth, IslandNetMessage.WorldOptions,
 			IslandNetMessage.Randomizer, IslandNetMessage.RogueShark, IslandNetMessage.WorldCopy, IslandNetMessage.WorldSave,
 			IslandNetMessage.StormSeas, IslandNetMessage.WhaleBreach, IslandNetMessage.VendingHatch, IslandNetMessage.StoryChain,
-			IslandNetMessage.QuestCount, IslandNetMessage.CreatureSpots, IslandNetMessage.Announce };
+			IslandNetMessage.QuestCount, IslandNetMessage.CreatureSpots, IslandNetMessage.Announce,
+			// (only the host sends these too: a modified peer moved every player or ran the ending credits and cutscenes - sweep 11-14)
+			IslandNetMessage.PlayerPlace, IslandNetMessage.Moment };
+
+		/// <summary>Kinds both ways (a player asks the host, the host answers or tells everyone): the host takes them from anyone,
+		/// a player only from the host - nothing is ever sent player to player (a modified peer granted itself claims, set the
+		/// Kraken, mechanisms, story pages, levels and upgrades on the other players - sweep 11-14). (Quest steps and daily
+		/// quests: the quest code's own checks.)</summary>
+		internal static readonly HashSet<int> FromHostOnPlayers = new HashSet<int> {
+			IslandNetMessage.Claim, IslandNetMessage.Kraken, IslandNetMessage.Mech, IslandNetMessage.Story, IslandNetMessage.Levels,
+			IslandNetMessage.UpgradeTable };
 
 		/// <summary>Tests: how many host-only messages from someone else a player dropped.</summary>
 		internal static int DroppedNotFromHost;
 		/// <summary>Tests: the host's id a player checks against (0: Raft's HostID).</summary>
 		internal static ulong HostIdOverride;
 
-		/// <summary>On a player: a host-only kind (HostOnlyKinds) sent by someone other than the host (known). The host takes all.</summary>
+		/// <summary>On a player: a host-only kind (HostOnlyKinds, FromHostOnPlayers) sent by someone other than the host (known). The host takes all.</summary>
 		internal static bool NotFromHost(IslandNetMessage msg, ulong from, bool isHost)
 		{
-			if (isHost || msg == null || !HostOnlyKinds.Contains(msg.Kind)) return false;
+			if (isHost || msg == null || !(HostOnlyKinds.Contains(msg.Kind) || FromHostOnPlayers.Contains(msg.Kind))) return false;
+			ulong host = HostIdOverride;
+			if (host == 0UL)
+				try { Raft_Network network = ComponentManager<Raft_Network>.Value; host = network != null ? network.HostID.Id : 0UL; } catch { }
+			return host != 0UL && from != 0UL && from != host;
+		}
+
+		/// <summary>On a player: the sender is known and isn't the host (any kind; questfix 11-14).</summary>
+		internal static bool NotHostSender(ulong from)
+		{
 			ulong host = HostIdOverride;
 			if (host == 0UL)
 				try { Raft_Network network = ComponentManager<Raft_Network>.Value; host = network != null ? network.HostID.Id : 0UL; } catch { }
@@ -761,6 +785,7 @@ namespace DynamicIslands.Editor
 							JoinPart("story", () => StoryBook.StateMessage(), to, true);
 							JoinPart("world options", () => WorldOptions.Message(), to);
 							JoinPart("daily quest", () => global::DynamicIslands.Editor.DailyQuest.Message(), to);
+							JoinPart("upgrade numbers", () => global::DynamicIslands.Editor.UpgradeTable.IndexMessage(), to);
 							JoinPart("upgrade table", () => global::DynamicIslands.Editor.UpgradeTable.Message(), to);
 							JoinPart("rogue shark", () => global::DynamicIslands.Editor.RogueShark.Message("state"), to);
 							JoinPart("story chain", () => global::DynamicIslands.Editor.StoryChain.Message(), to);
@@ -828,6 +853,15 @@ namespace DynamicIslands.Editor
 							{
 								SendQuestCorrection(from, msg.Ids[0], questNo);
 								if (msg.Name == "add") QuestTracker.GiveBack(msg.Ids[0], questNo, msg.Index, msg.Count, from.Id, "refused"); // (a bring hand-over's items)
+								break;
+							}
+							// (questfix 11-14: a player takes quest steps from the host only - another player's "set" moved its quest back
+							// or on; the host takes a player's plain step (an older version's) one step on at most - it jumped to the end)
+							if (!Raft_Network.IsHost && NotHostSender(from.Id)) { DroppedNotFromHost++; break; }
+							if (Raft_Network.IsHost && msg.Name != "add" && from.Id != 0UL && !QuestTracker.MayTakeStep(msg.Ids[0], questNo, msg.Index))
+							{
+								Debug.Log("[CUSTOM ISLANDS] [quest] A player's step " + (msg.Index + 1) + " of quest " + (questNo + 1) + " on island " + msg.Ids[0] + " is refused: more than one step on");
+								SendQuestCorrection(from, msg.Ids[0], questNo);
 								break;
 							}
 							// (the host's answer to a refused step: the host's step, even an older one)
@@ -1080,6 +1114,9 @@ namespace DynamicIslands.Editor
 					// its state already and isn't set again; it takes the host's state from a Resync once it is unloaded - review 10-30)
 					if (msg.FullList && known.Root == null && !known.Loading && msg.States != null && i < msg.States.Length && msg.States[i] != null)
 						known.State = IslandObjectState.Decode(msg.States[i]);
+					// (a loaded copy: its quests' steps as the host has them - a drifted step stayed wrong - questfix round 2)
+					else if (msg.FullList && msg.States != null && i < msg.States.Length && msg.States[i] != null)
+						try { QuestTracker.FromHostList(known, IslandObjectState.Decode(msg.States[i])); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Quest steps from the host's list: " + ex.Message); }
 					if (msg.FullList && msg.Labels != null && i < msg.Labels.Length && msg.Labels[i] != null) known.Label = msg.Labels[i];
 					continue;
 				}

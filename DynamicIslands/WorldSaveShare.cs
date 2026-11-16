@@ -251,15 +251,16 @@ namespace DynamicIslands.Editor
 			Directory.Move(latest, plain);
 		}
 
-		/// <summary>A free folder name an earlier minute than the dated one (yyyy.MM.dd-HH.mm), or the name with " (n)".</summary>
+		/// <summary>A free folder name an earlier minute than the dated one (yyyy.MM.dd-H.mm, Raft's unpadded hour), or the name with " (n)".</summary>
 		internal static string FreeDatedName(string taken)
 		{
 			string dir = Path.GetDirectoryName(taken), name = Path.GetFileName(taken);
 			DateTime t;
-			if (DateTime.TryParseExact(name, "yyyy.MM.dd-HH.mm", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out t))
+			// (Raft writes the hour unpadded: before 10:00 the name never parsed and got " (2)" - sweep 11-14)
+			if (DateTime.TryParseExact(name, new[] { "yyyy.MM.dd-H.mm", "yyyy.MM.dd-HH.mm" }, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out t))
 				for (int i = 1; i <= 120; i++)
 				{
-					string c = Path.Combine(dir, t.AddMinutes(-i).ToString("yyyy.MM.dd-HH.mm", System.Globalization.CultureInfo.InvariantCulture));
+					string c = Path.Combine(dir, t.AddMinutes(-i).ToString("yyyy.MM.dd-H.mm", System.Globalization.CultureInfo.InvariantCulture));
 					if (!Directory.Exists(c)) return c;
 				}
 			for (int n = 2; ; n++) { string c = taken + " (" + n + ")"; if (!Directory.Exists(c)) return c; }

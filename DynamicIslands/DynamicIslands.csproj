@@ -91,6 +91,7 @@
     <Compile Include="DevTestsGapBehaviours.cs" />
     <Compile Include="DevTestsQuestGap.cs" />
     <Compile Include="DevTestsQuestSkip.cs" />
+    <Compile Include="DevTestsQuestFix.cs" />
     <Compile Include="DevTestsQuestSteps.cs" />
     <Compile Include="DevTestsQuestWait.cs" />
     <Compile Include="DevTestsStateWatch.cs" />
@@ -124,6 +125,7 @@
     <Compile Include="DevTestsRelease.cs" />
     <Compile Include="DevTestsOptions.cs" />
     <Compile Include="DevTestsHeadStart.cs" />
+    <Compile Include="DevTestsNewWorld.cs" />
     <Compile Include="DevTestsWorldIslands.cs" />
     <Compile Include="DevTestsIslandPicker.cs" />
     <Compile Include="DevTestsStoryChain.cs" />
@@ -423,8 +425,13 @@
     <Compile Include="DevTestsMpAnswer.cs" />
     <Compile Include="DevTestsMerge1031.cs" />
     <Compile Include="DevTestsQuestStory1101.cs" />
+    <Compile Include="DevTestsQuestDeep.cs" />
+    <Compile Include="DevTestsQuestDeepB.cs" />
+    <Compile Include="DevTestsKnownIssues.cs" />
+    <Compile Include="DevTestsPlayerBugs1109.cs" />
     <Compile Include="DevTestsFix3.cs" />
     <Compile Include="DevTestsNoteCarry.cs" />
+    <Compile Include="DevTestsIssueSweep.cs" />
     <Compile Include="ScatterTool.cs" />
     <Compile Include="StableIds.cs" />
     <Compile Include="ObjectThumbnails.cs" />

@@ -330,7 +330,7 @@ step open|Seaplane's crate|1|Open the crate in the Fleet's crashed seaplane on t
 step reach|bosuns_cave|1|Find the bosun's cave in the shore rocks
 step reach|fb_trail|1|Find the foot of the trail up Mastback Fell, the tall fell with the signal mast
 step reach|fb_summit|1|Climb the trail to the top of Mastback Fell
-step collect|story:fb_top|1|Climb the Fleet's signal mast and take the signal pennant from its deck
+step collect|story:fb_top|1|Climb the Fleet's signal mast and take the signal pennant from the box on its deck
 step read|A friend's signal|1|Read the note tied to the foot of the mast
 step read|Fleet contract offer|1|Read the Fleet's offer in the chart room
 quest done=The pass is forged and the Fleet trusts you. The Salvagers' Union works the cranes at Hookline Stack - band 800.

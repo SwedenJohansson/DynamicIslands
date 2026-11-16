@@ -367,8 +367,17 @@ namespace DynamicIslands.Editor
 			if (!p.gameObject.activeSelf) return true; // hidden until an action shows it (Behaviours)
 			string id = ObjectProps.Get(p.Props, ObjectProps.CreatureZone);
 			if (id.Length == 0) return false;
-			TriggerZone zone = root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == id);
+			TriggerZone zone = ZoneOf(root.GetComponentsInChildren<TriggerZone>(true), p, id);
 			return zone != null && !ContentState.IsUsed(entry, zone.StateKey);
+		}
+
+		/// <summary>The zone a spot's animals wait for: of the zones with its name, the nearest. (Two caves with a zone "cave"
+		/// each: both guards waited for the first, and the second cave's guard came only when a player went into the first -
+		/// a "defeat" step waited for it - questfix round 2.)</summary>
+		internal static TriggerZone ZoneOf(IEnumerable<TriggerZone> zones, CreatureSpawnPoint p, string id)
+		{
+			Vector3 at = p.transform.position;
+			return zones.Where(z => z.Id == id).OrderBy(z => (z.transform.position - at).sqrMagnitude).FirstOrDefault();
 		}
 
 		/// <summary>How many animals a spawn point should have now: all of them, or what is left of them unless they have grown back.</summary>

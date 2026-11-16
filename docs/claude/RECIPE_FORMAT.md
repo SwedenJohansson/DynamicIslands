@@ -89,6 +89,12 @@ plan save
   under a quest object; no mouth on the main walk line (3 m from the line through the quest steps' targets); a vine-gated
   cave off the quest path before the machete step (`-machete` or `# cavecheck machete`: an earlier island gives it).
   `# cavecheck inside <alias> ...` marks objects meant to be in a cave. Exit 1 on FAIL.
+- `python -I content\questcheck.py [--stage "dir;dir"] [--all] [--json f]` (offline, questdeepB 11-14) proves every shipped
+  quest can be finished: reads the installed mod's plans + islands, the library deploy folder (+ staged copies) and every
+  recipe's item lists; checks rule lines, story places, steps and their targets, story items/blueprints/titanium in play
+  order, Raft item names (`content\objects\items.txt`), action lines cut by a real line break, compass words and
+  chest wording. ERROR = can't finish or silently lost; exit 1 on any ERROR. Its lists mirror IntroRule/IslandQuest/
+  BehaviourProps.Verbs - keep them in step with the C#.
 - `prop <cave piece alias> cave.seacut=1` (`ObjectProps.CaveSeaCut`): the cave hill over that island leaves out its skin over
   deep sea and the shore ring (`CaveMountain.SeaCut`), so a mound raised from the sea floor closes no pool under it
   (Old Mine Islet). Off by default: on Shelter Atoll's islet the cut would take the whole sea side of the hill.
