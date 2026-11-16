@@ -16,6 +16,7 @@ include lib_gravity
 include lib_concord
 include lib_areas
 include lib_deep14
+include lib_caves
 new
 # (nature 10-24: hills and Raft-like trees over the whole island - the coordinator's check after the resize)
 gen Trees=0.4 Bushes=0.38 Rocks=0.55 Harvest=0.25 BeachThings=0.45
@@ -84,7 +85,7 @@ prop ringwave tint.amount=0.6
 # --- The lagoon floor: the sunk service boat and its chest; the rays and the puffers ------------------------------------
 place RT_PlasticBoat - at -5.69 -6.7 ground sit rot=8,35,-14
 place Loot_Chest boatchest at -3.99 -8.3 ground sit yaw=40
-place Creature_Stingray rays at 6.31 -6.7 h=-3
+place Creature_Stingray rays at -2 5 h=-3
 prop rays creature.count=2
 prop rays creature.respawn=0
 place Creature_PufferFish puffers at 6.31 5.3 h=-2
@@ -138,7 +139,7 @@ call treasure x=24.7 z=-27.8 r=5 n=1 seed=14048
 call ar_ridge x1=-24 z1=-50 x2=28 z2=-52 h=9 top=7 r=9
 call ar_plants_tropical x=2 z=-51 r=30 seed=14151
 call tzone x=2 z=-51 al=southridge id=southridge r=7 msg="The top of the ridge. The lagoon below is a perfect circle - nothing that round grows by itself."
-call treasure x=2 z=-51 r=14 n=1 seed=14161
+# (11-12 w08: the ridge treasure is placed after the intake culvert below - the culvert's hill cover lifted the ground 0.1 m over it)
 call ar_cave x=-24 z=52 h=3 yaw=0 al=reefcave chest=reefcavechest
 call tzone x=-24 z=57 al=reefcavezone id=reefcave r=4 msg="A cave in the bank. Pipe fittings in a row on the floor, each one labelled in neat paint."
 call ar_ruin x=-52 z=0 h=3 yaw=0 al=keeperhut
@@ -184,6 +185,28 @@ call tzone x=23 z=41 al=radivezone id=ra_dive r=7 msg="The bottom of the lagoon 
 call tzone x=13.7 z=24.43 al=rarim id=ra_rim r=5 msg="The pit's rim, where the supply van slid in." h=1
 call treasure x=11.75 z=20.94 r=12 n=1 seed=14912
 prop treasure14912 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+
+# --- 11-12 w08: the intake culvert - the engine's old intake pipe, flooded ------------------------------------------------
+# An underwater mouth in the lagoon's south wall between the first row's posts, an iron-lined culvert climbing
+# 12 degrees south under the sand ring to a dry room under the south ridge, the pump store - air, stone and the scrap
+# chest. The stingrays moved 12 m north in the lagoon (their spawn was on the mouth). No rats: reached only under water.
+# cavecheck: 6 m and more from the pump's air, the boat chest and the ridge treasure; far from the den at -24 52.
+call kit_st x=5.7 z=-8.5 yaw=175 len=36 slope=12 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=1 as=racave
+prop racave cave.rock=plain
+place Zone_Trigger raintakeair at 9.5 -52.6 h=4.5
+prop raintakeair obj.name=raintakeair
+prop raintakeair zone.id=ra_intake
+prop raintakeair zone.radius=8
+prop raintakeair zone.repeat=1
+prop raintakeair zone.air=1
+prop raintakeair zone.message=The top of the intake pipe - dry, and air. The pump crew's store: a chest of scrap on the floor.
+# cavecheck inside rascrapchest
+place Loot_ChestSmall rascrapchest at 7.2 -54.7 h=4 drop yaw=355
+prop rascrapchest obj.name=rascrapchest
+prop rascrapchest loot.refill=0
+note rascrapchest Pump store | Intake crew, pump store: spares for the frames. Anything that rusts through goes in here - the engine wastes nothing.
+loot rascrapchest Scrap*4;MetalIngot*1;Bolt*2;Nail*6
+call treasure x=2 z=-51 r=14 n=1 seed=14161
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=Reefmachine Atoll

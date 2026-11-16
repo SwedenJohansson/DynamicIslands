@@ -34,12 +34,16 @@ expect message The power is on
 use netradio
 expect shown netdrop
 expect step 9
-open Supply drop
+# (11-12 w08: the relay spares crate in the vine-hung shoal cave - the vines and the walk in: static_shoals_caves)
+open Relay spares crate
 wait 3
 expect step 10
+open Supply drop
+wait 3
+expect step 11
 # (story pass 10-24: the dark cable store - the locker refuses, the coil room, the small finds, the tins, the locker)
 zone ss_maze
-expect step 11
+expect step 12
 open Wiring room locker
 expect message wiring card
 read Cable store floor plan
@@ -47,7 +51,7 @@ read Keeper's log: Static
 open Coil room
 wait 3
 expect story genpart2 1
-expect step 12
+expect step 13
 open Radioman's tool tray
 wait 3
 open Cable reel
@@ -57,7 +61,7 @@ read Static cairn
 dig 1
 open Wiring room locker
 wait 3
-expect step 13
+expect step 14
 expect story chainkey 1
 open Mast workshop
 wait 3

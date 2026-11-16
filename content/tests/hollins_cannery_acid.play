@@ -1,0 +1,18 @@
+# Hollins Cannery's vats room without a suit (CIPlay hollins_cannery_acid, 11-12 w10; in a test world 'CI ...').
+# Points as in its recipe: the vats annex (shed pushed at -3 13, yaw 180, floor 3) with its door at -6.75 13, the
+# brine pool and acid zone at -6.75 9.4 (r 2.2, safe=suit), the suit box at -9.4 14.6, the sign at -4.2 14.6.
+# Into the vats room: hurt and the message; out again through the door.
+island Hollins Cannery keep
+offset 0 0
+hour 11
+weather Calm
+expect shown hcvats
+picture hc_vats_out -6.75 6.5 21 -6.75 4 13
+at -6.75 16 h=4.5
+wait 2
+read VATS ROOM - KEEP OUT
+walk -6.75 16 to -6.75 13 to -6.75 9.6
+wait 8
+expect message pickling brine
+expect hurt 10
+walk -6.75 9.6 to -6.75 13 to -6.75 16.5

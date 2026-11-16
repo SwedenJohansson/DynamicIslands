@@ -1,0 +1,22 @@
+# Reefmachine Atoll's intake culvert (CIPlay reefmachine_atoll_caves, 11-12 w08; in a test world 'CI ...'). Points as in its
+# recipe: the mouth on the lagoon floor at 5.7 -8.5 (5 m down, between the frame posts), the straight culvert climbing
+# (12 deg) under the south ridge to the dry intake room round 9.5 -52.6 (air zone ra_intake, the pump store at 7.2 -54.7).
+# Walked in along the flooded floor, air taken in the room, the store opened, walked back out to the lagoon.
+island Reefmachine Atoll keep
+offset -0.7458 -1.0974
+hour 11
+weather Calm
+where Loot_ChestSmall
+where Zone_Trigger
+
+picture ra_cave_out 5.7 -2.5 -2 5.7 -4.5 -9
+walk 5.7 -4.5 to 5.75 -9 to 6.6 -19 to 7.6 -30 to 8.8 -44 to 9.4 -51.5 below=-1.5
+air ra_intake here
+picture ra_cave_in 9.2 4.2 -48.5 7.6 3.4 -55
+picture ra_cave_back 8.8 4.2 -52 7.2 1 -36 light=20
+open Pump store
+wait 3
+expect item Scrap 4
+walk 9.4 -51.5 to 8.8 -44 to 7.6 -30 to 6.6 -19 to 5.75 -10.5 below=5
+# (11-12 w08: out of the mouth by swimming low - a walk stuck on the lip, a swim at -1.8 hit the mouth roof)
+swim 5.75 -10.5 -3.4 to 5.75 -8 -3.6 to 5.7 -5 -3.6 to 5.7 -3 -3 to 5.7 -3 0

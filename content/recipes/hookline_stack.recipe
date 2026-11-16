@@ -340,7 +340,7 @@ step read|Council requisition|1|Read the Council's requisition pinned beside it
 step blueprint|Blueprint_EngineControls|1|Take the engine controls' plans from the hall's desk
 step reach|hk_trail|1|Find the foot of the trail up Scrapjaw Heights, the big scrap mountain
 step reach|hk_summit|1|Climb the trail to the top of Scrapjaw Heights
-step collect|story:hk_top|1|Climb the dragline's boom ladder and take the strongroom key from its deck
+step collect|story:hk_top|1|Climb the dragline's boom ladder and take the strongroom key from the box on its deck
 step reach|crane_3|1|Ride the zipline from the hall's roof crane to crane three
 step blueprint|Blueprint_MetalDetector|1|Take the metal detector's plans from the foreman's box
 step blueprint|Blueprint_Firework|1|Take the firework's plans from the flare store
@@ -360,7 +360,7 @@ quest2 title=Lost Below
 quest2 intro=Five divers went down to Lowstreet and did not come up.
 step2 read|Missing expedition notice|1|Read the missing expedition notice in the hall
 step2 reach|dive_rope|1|Go to the dive rope at the end of the jetty
-step2 collect|story:salvagetag|2|Dive to the street below and bring up the two salvage tags
+step2 collect|story:salvagetag|2|Dive to the street below and bring up the two salvage tags from their caches
 step2 read|Union receipt|1|Hand in the tags at the tally and read the Union's receipt
 quest2 done=The Union owes you a diver's debt. When the city breaks, it will remember.
 quest2 reward=MetalIngot*3;Rope*2

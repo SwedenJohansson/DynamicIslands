@@ -1,0 +1,23 @@
+# The Iron Graveyard's staked wreck (CIPlay iron_graveyard_spikes, 11-12 w09; in a test world 'CI ...'). Points as in
+# the recipe: the stranded boat at 66.5 2, a ring of scrap stakes round it (zones ig_spike0-11 on a 7 x 13 m ellipse,
+# r 2.8, spikes, safe=none; ig_spike6 at 66.5 -11), the sign at 61 -16, the wreckers' chest at 66.5 10.8.
+island The Iron Graveyard keep
+offset 0.5278 -0.359
+hour 11
+weather Calm
+empty
+picture ig_stakes 58 +3 -24 66.5 +1 -4
+at 62 -17.5
+wait 2
+read STAKED - KEEP OFF
+where igspike
+walk 62 -17.5 to 66.5 -18 to 66.5 -12.4
+wait 6
+expect message Scrap stakes
+expect hurt 4
+at 66.5 -21
+wait 4
+expect unhurt
+open Wreckers' chest
+wait 2
+expect item CircuitBoard 1

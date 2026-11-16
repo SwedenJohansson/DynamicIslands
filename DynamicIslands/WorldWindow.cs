@@ -607,7 +607,8 @@ namespace DynamicIslands.Editor
 		{
 			return JournalWindow.IsOpen || NoteReader.IsOpen || CodeLock.IsOpen || ChoiceWindow.IsOpen || InfoWindow.IsOpen
 				|| LevelWindow.IsOpen || BehaviourWindow.IsOpen
-				// (audit 11-09: Esc on these closed them and opened the pause menu too)
+				// (audit 11-09: Esc on these closed them and opened the pause menu too; cutscenes skip on Esc the same way - sweep 11-14)
+				|| CameraMoment.Active || CameraFlight.Active
 				|| DialoguePanel.IsOpen || StoryCredits.IsOpen || PlayerNotebookWindow.IsOpen || QuestSkip.ConfirmShown;
 		}
 

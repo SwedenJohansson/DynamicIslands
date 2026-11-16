@@ -302,12 +302,12 @@ step read|Dobbs's complaints|1|Read the carbon copies on the foreman's desk
 step read|Councillor's memo|1|Read the Councillor's answer beside them
 step reach|pc_trail|1|Find the foot of the trail up Standpipe Hill, the hill with the old water tower
 step reach|pc_summit|1|Climb the trail to the top of Standpipe Hill
-step collect|story:pc_top|1|Climb the old water tower and get Dobbs's measuring stick back from its deck
+step collect|story:pc_top|1|Climb the old water tower and get Dobbs's measuring stick back from the box on its deck
 step collect|story:tape|3|Gather three rolls of tape: the water tower's deck box, the climber's chest, the linesman's locker
 step read|Dobbs's warning|1|Read Dobbs's warning by the shorted breaker, the power box by the shore
 step collect|story:pc_breaker|1|Tape the shorted breaker and switch the live water off
 step reach|pc_deep|1|Dive to the flooded intake chamber, sunk off the shore by the breaker
-step collect|story:pc_deep|1|Read the intake gauge in its back room and bring it up
+step collect|story:pc_deep|1|Take the intake gauge from the chest in its back room and bring it up
 step blueprint|Blueprint_WaterTank|1|Take the water tank's plans from the tank house
 step blueprint|Blueprint_Pipe_Water|1|Take the water pipe's plans from the pipe gallery
 step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier's plans from the purifier bench

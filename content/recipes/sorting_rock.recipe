@@ -351,7 +351,7 @@ step read|Crane driver's notice|1|Read the crane driver's notice by the parcel c
 step talk|Greta Moberg|1|Talk to Greta Moberg at the ruined house on the shore
 step reach|qr_trail|1|Find the foot of the trail up Quarry Crag, below the quarry mast
 step reach|qr_summit|1|Climb the trail to the top of Quarry Crag
-step collect|story:qr_top|1|Climb the quarry mast and take the crane hook from its deck
+step collect|story:qr_top|1|Climb the quarry mast and take the crane hook from the box on its deck
 step reach|qr_cave|1|Find Slate Cave in the rocks, past Greta's ruined house
 step collect|story:qr_cave|1|Take the crane chain from the chest at the back of the cave
 step read|Crane cab slip|1|Bring both to the parcel crane and read what it shows

@@ -23,6 +23,7 @@ include lib_sl1
 include lib_areas
 include lib_highwater
 include lib_lastpost
+include lib_caves
 # o4_dune: a dune or low hill along x1 z1 - x2 z2, h m over the sea at its crest: three rings of flatten (the outer one
 # no lower than the plain it stands on), lightly smoothed into one slope, painted by slope, the generator's plants cleared
 macro o4_dune x1=0 z1=0 x2=10 z2=0 h=8 r=4
@@ -240,4 +241,17 @@ step open|Choir's reliquary|1|Open the Choir's reliquary with the warden's key
 quest done=They all face you now. The Quiet Choir is on Gannet Rock - and the hymn will get you in.
 quest reward=Cooked_Mackerel*2;Rope*3;Plank*4
 
+# --- CONTENT 11-12 (w10): the Choir's undercroft - an underwater cave (kit_uw) from the sea off the Ash Dunes' shore
+# up to a dry room under the dunes, where the Choir hid what the nets brought up. A sign on the beach says where to swim.
+call kit_uw x=72 z=-54 yaw=270 len=29 slope=12 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 as=efunder
+prop efunder cave.rock=plain
+prop efunder cave.dome=12
+# cavecheck inside efunderchest
+place Loot_ChestSmall efunderchest at 30 -54 h=6.5 drop yaw=90
+prop efunderchest loot.refill=0
+loot efunderchest CopperIngot*2;Battery*1;Rope*2;Bolt*3;Scrap*4
+note efunderchest The Choir's undercroft | Under the Ash Dunes, out of the tide: a dry room the Quiet Choir dug for what their nets brought up and the village would not keep. Copper, a battery, rope - and on the lid, scratched in the salt, the first bars of the lullaby.
+place Note_Sign efundersign at 50 -42 ground sit yaw=90
+prop efundersign obj.name=efundersign
+note efundersign THE UNDERCROFT | The Choir swam to their dry room from this beach. Wade out past the ash-grey dunes until the sand drops away, dive, and follow the tunnel up under the dunes. Take a full breath.
 save Effigy Shoals

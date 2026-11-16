@@ -45,6 +45,8 @@ origin
 clear from 0 -46 to 0 46 r=13
 clear from 0 -84 to 0 -46 r=3
 call ar_cave x=-40 z=62 h=2 yaw=180 al=pilgrimrock chest=pilgrimchest
+# (11-13: the den's hill reached 44 m, over the gatehouse 48 m away, and its skin stood in the doorway: kept within 30 m)
+prop pilgrimrock cave.dome=30
 call ar_plane x=45 z=-52 h=2.5 yaw=30 al=fogplane crate=fogcrate
 call ar_ruin x=50 z=10 h=26 yaw=0 w=3 d=2 al=lamphut
 

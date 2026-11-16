@@ -49,6 +49,13 @@ namespace DynamicIslands.Editor
 		{
 			ChunkPointType t = StoryOrder.Parse(a.Target);
 			if (t == ChunkPointType.None) { Debug.LogWarning("[CUSTOM ISLANDS] frequency: '" + a.Target + "' is not a story island"); return; }
+			// (a plan's story chain: the island's own step, not Raft's note - the chain reads a note as the island before it done)
+			if (StoryChain.Active)
+			{
+				if (StoryChain.UnlockRaftStep(t)) Debug.Log("[CUSTOM ISLANDS] frequency: " + (e != null ? e.HostName : "?") + " unlocks " + StoryOrder.Name(t) + " (the story chain's step)");
+				else Debug.LogWarning("[CUSTOM ISLANDS] frequency: " + StoryOrder.Name(t) + " isn't in this world's story chain (its plan leaves it out): nothing unlocks");
+				return;
+			}
 			int note = NoteFor(t);
 			if (note < 0) { Debug.LogWarning("[CUSTOM ISLANDS] frequency: no notebook note for " + t); return; }
 			if (NoteBook.unlockedNoteBookIndexes != null && NoteBook.unlockedNoteBookIndexes.Contains(note)) return;

@@ -261,7 +261,7 @@ prop screechers creature.zone=beacon
 prop hens creature.count=3
 
 note sc_cavechest Signalman's chest | A signalman's chest: wire, a battery, rope.
-loot sc_cavechest Copper*2;Battery*1;Rope*3;CircuitBoard*1
+loot sc_cavechest CopperOre*2;Battery*1;Rope*3;CircuitBoard*1
 prop sc_cavechest loot.refill=0
 note sc_ruinnote Pump-man's slate | PUMP-MAN'S SLATE\n\nForty years I kept the roof pumps going. When the sea came over the parapets they were still running, I'll have you know.\nThen one night the board in my hut went from LOCAL to REMOTE all by itself, and every pump on every roof stopped at once. Not broken. Stopped. Somebody far away pressed a button, and the water came in like it had been invited.\nMy spares are in the strongbox by my wall. My wife always said I counted masts the way other men count sheep, so that is the lock: the poles still standing on the ridge, the cave, my house and the courier's plane, in that order.
 note sc_wrecknote Courier's logbook | COURIER'S LOGBOOK - AIR MAIL, SUCH AS IT IS\n\nLast run to the Spirecrest roofs: one sack of mail for addresses that are now under water, two oxygen tanks, a crate of fuses, and a jar of pickled herring nobody ordered.\nPut down on the rocks. Nobody came to the lamp. The caretaker came at last, with a hen under one arm, as if that were normal.\nThe tanks were for the diver, Marlowe. She had already gone down the road after the children's shuttle. He said he would carry them after her. He is seventy if he is a day.\nI asked him what the beacon was for. He said "company". Flying home over the city I saw a teal light under the water, keeping pace with my shadow. I did not log that. I am logging it now.

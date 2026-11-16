@@ -64,6 +64,17 @@ namespace DynamicIslands.Editor
 			return d.magnitude;
 		}
 
+		/// <summary>Host: whether a message's sender is a player of this session (the host itself, or one it can see). A
+		/// report with no island (the daily quest) can't be checked by distance: a stranger's isn't taken - questfix 11-14.</summary>
+		public static bool InSession(ulong player)
+		{
+			if (ForTests || !Raft_Network.IsHost || player == LocalId) return true;
+			if (player == 0UL || Players.All.Any(x => x != null && SteamOf(x) == player)) return player != 0UL;
+			Refused++;
+			LastRefused = player + " not in the session";
+			return false;
+		}
+
 		static ulong SteamOf(Network_Player p) { try { return p.steamID.Id; } catch { return 0UL; } }
 
 		/// <summary>Tests: forgets the count.</summary>

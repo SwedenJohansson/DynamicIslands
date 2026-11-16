@@ -135,7 +135,7 @@ namespace DynamicIslands.Editor
 						Fails++;
 						Debug.Log("[CUSTOM ISLANDS] Quest " + (n + 1) + " of '" + e.HostName + "': step " + (step + 1) + " ran out of time");
 						Send(t, Fail);
-						QuestTracker.JumpTo(e, n, step);
+						QuestTracker.JumpTo(e, n, step, true);
 						if (QuestTracker.Near(e, 150f)) Announce(q.Steps[step]);
 						t.Left = full; t.At = Time.time;
 						changed = true;

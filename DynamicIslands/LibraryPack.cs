@@ -958,6 +958,10 @@ namespace DynamicIslands.Editor
 			all.Add(entry);
 			SaveInstalled(all);
 			NoteUpdated(updated, info.title);
+			// (worlds on a kept copy of an updated island: the update reached them only through the editor's box - a library fix
+			// for a stuck quest never came to worlds already moved to a copy; as an editor save, those whose state can be
+			// carried get the new file now - sweep 11-14. After installed.json: the install can't be rolled back any more)
+			foreach (string t in updated) CarryOlderWorlds(t, report);
 
 			if (types || (old != null && old.files.Any(f => f.kind == KindMapType))) MapTypeFiles.LoadAll();
 
@@ -1126,6 +1130,29 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		/// <summary>
+		/// After an update: saved worlds that play an older copy of the island get the new file when what was used there can be
+		/// carried to the same objects (rules and quest steps in their places, R1b) - as after an editor save. The others keep
+		/// their copy (the editor's "Give my worlds this version" box can still move them). Returns how many worlds moved.
+		/// </summary>
+		internal static int CarryOlderWorlds(string island, Report report)
+		{
+			try
+			{
+				if (WorldsOnOlderVersion(island).Count == 0) return 0;
+				List<string> moved;
+				int carried;
+				List<string> changed = GiveWorldsThisVersion(island, out moved, true, out carried);
+				if (changed.Count > 0 && report != null)
+					report.Add(string.Join(", ", changed.Select(w => "'" + w + "'").ToArray()) + " play" + (changed.Count == 1 ? "s" : "") + " the new '" + island + "' now (what was used there stays with the same objects)");
+				List<string> left = WorldsOnOlderVersion(island);
+				if (left.Count > 0 && report != null)
+					report.Add(string.Join(", ", left.Select(w => "'" + w + "'").ToArray()) + " keep" + (left.Count == 1 ? "s" : "") + " an older '" + island + "' (its rules or quest steps changed places)");
+				return changed.Count;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Giving saved worlds the new '" + island + "': " + e.Message); return 0; }
+		}
+
 		/// <summary>Before an island file is replaced: saved worlds that use it keep playing this version (as its hash copy).</summary>
 		static void KeepForWorlds(string island, byte[] next, Report report)
 		{
@@ -1269,6 +1296,7 @@ namespace DynamicIslands.Editor
 					string[] p = lines[i].Split('|');
 					string state = CarryState(island, had, p, ref current, copies);
 					if (state == null && carriedOnly) continue;
+					if (state == null) p[4] = RemapQuestState(island, had, p[4], ref current, copies);
 					if (state != null) { p[4] = state; carried++; pagesOf.Add(new KeyValuePair<string, string>(PageIslandOfLine(lines, i), had)); }
 					p[7] = now;
 					lines[i] = string.Join("|", p);
@@ -1358,6 +1386,30 @@ namespace DynamicIslands.Editor
 				return result;
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Moving a world's journal pages of '" + island + "': " + e.Message); return lines; }
+		}
+
+		/// <summary>questfix 11-15: a world line's state kept as it was (not carried) has its quest steps put on the same steps
+		/// of the new version (QuestTracker.RemapSteps) - else a removed or moved step put the world's quest on another step,
+		/// or past the end. Unchanged when the old copy isn't here or the steps are the same.</summary>
+		static string RemapQuestState(string island, string had, string encoded, ref IslandFile current, Dictionary<string, IslandFile> copies)
+		{
+			try
+			{
+				IslandFile was;
+				if (!copies.TryGetValue(had, out was))
+				{
+					string path = IslandSpawner.PathFor(IslandNetwork.DownloadName(island, had));
+					copies[had] = was = File.Exists(path) ? IslandFile.Load(path) : null;
+				}
+				if (was == null) return encoded;
+				if (current == null) current = IslandFile.Load(IslandSpawner.PathFor(island));
+				Dictionary<int, ObjectState> state = IslandObjectState.Decode(encoded);
+				int n = QuestTracker.RemapSteps(was.Props, current.Props, state);
+				if (n == 0) return encoded;
+				Debug.Log("[CUSTOM ISLANDS] '" + island + "': " + n + " quest(s) of a world put on the same steps of the new version");
+				return IslandObjectState.Encode(state);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Moving a world's quest steps of '" + island + "': " + e.Message); return encoded; }
 		}
 
 		/// <summary>A world line's state of the island carried from its old copy (hash had) to the island's file now; null when it can't be.</summary>

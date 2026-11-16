@@ -309,7 +309,7 @@ step read|Repeater notice|1|Read the repeater notice by the line repeater
 step talk|Dagny Ek|1|Talk to Dagny Ek at the ruined house on the far headland
 step reach|qt_trail|1|Find the foot of the trail up Wire Hill, below the repeater mast
 step reach|qt_summit|1|Climb the trail to the top of Wire Hill
-step collect|story:qt_top|1|Climb the repeater mast and take the relay coil from its deck
+step collect|story:qt_top|1|Climb the repeater mast and take the relay coil from the box on its deck
 step reach|qt_cave|1|Find Seal Cave in the rocks across the strait
 step collect|story:qt_cave|1|Take the relay key from the chest at the back of the cave
 step read|Repeater tape|1|Bring both to the line repeater and read what it shows

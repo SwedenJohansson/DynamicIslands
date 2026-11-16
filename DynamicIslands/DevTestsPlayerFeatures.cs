@@ -390,6 +390,9 @@ namespace DynamicIslands
 				MovePlayerTo(before - toCamp * 25f);
 				yield return new WaitForSeconds(2f);
 				Check(ref ok, mw.State == "wait" && Vector3.Distance(before, mr.transform.position) < 0.5f, "a player 25 m off: Mia waits (" + mw.State + ", " + Vector3.Distance(before, mr.transform.position).ToString("F2") + " m)");
+				int idle = IslanderWalks.Sent;
+				yield return new WaitForSeconds(IslanderWalks.KeepAlive + 1f);
+				Check(ref ok, mw.State == "wait" && IslanderWalks.Sent > idle, "standing, her place is sent again for the players (" + (IslanderWalks.Sent - idle) + " in " + (IslanderWalks.KeepAlive + 1f).ToString("F1") + " s, " + mw.State + ")");
 				int sent = IslanderWalks.Sent;
 				// Lead her in, a few steps at a time
 				for (int i = 0; i < 12 && QuestTracker.StepOf(e) == 0; i++)

@@ -855,6 +855,45 @@ namespace DynamicIslands.Editor
 			if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
 		}
 
+		/// <summary>Leaving a world or joining another host (questfix 11-14): the events still waiting for a host's answer, the
+		/// signal locks and the last taken items belong to the last world - island ids repeat between worlds, and a late "no"
+		/// from the new host for the same id gave back the last world's items.</summary>
+		internal static void ForgetWorld()
+		{
+			awaiting.Clear();
+			signalLocks.Clear();
+			sharedAt.Clear();
+			LastTaken.Clear();
+			notLoadedYet.Clear();
+		}
+
+		/// <summary>Host (questfix 11-15): players' events of an island not built here yet (its file still coming, or still
+		/// loading), done once it is - their shared part (a quest step, a door, a signal) was lost before. At most 64,
+		/// each kept 10 minutes; a player who waits for the answer still gets the "otherwise" part at once (they may try
+		/// again).</summary>
+		class NotLoaded { public int Island, Index; public string Ev; public Network_UserId? From; public int Seed; public float At; }
+		static readonly List<NotLoaded> notLoadedYet = new List<NotLoaded>();
+		internal static int NotLoadedCount { get { return notLoadedYet.Count; } }
+		internal static int NotLoadedDone;
+
+		static void DoNotLoadedYet()
+		{
+			if (notLoadedYet.Count == 0 || !Raft_Network.IsHost) return;
+			foreach (NotLoaded w in notLoadedYet.ToList())
+			{
+				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == w.Island);
+				if (e == null || Time.unscaledTime - w.At > 600f) { notLoadedYet.Remove(w); continue; }
+				if (e.Root == null) continue;
+				notLoadedYet.Remove(w);
+				NotLoadedDone++;
+				Debug.Log("[CUSTOM ISLANDS] A player's '" + w.Ev + "' on '" + e.HostName + "' is done now the island is loaded on the host");
+				int seed = GapBehaviours.Seed;
+				GapBehaviours.Seed = w.Seed;
+				try { OnEventMessage(w.Island, w.Index, w.Ev, false, w.From, false); }
+				finally { GapBehaviours.Seed = seed; }
+			}
+		}
+
 		class Awaiting { public int OnceKey; public List<KeyValuePair<string, int>> Taken; public float At; }
 		/// <summary>Client: events waiting for the host's yes or no (RK3), by island, object and event.</summary>
 		static readonly Dictionary<string, Awaiting> awaiting = new Dictionary<string, Awaiting>();
@@ -1011,6 +1050,22 @@ namespace DynamicIslands.Editor
 		/// <summary>The host noticed something no single player did (animals defeated): everyone near the island gets the personal part.</summary>
 		static readonly HashSet<string> toldPersonal = new HashSet<string>();
 
+		/// <summary>Shared actions that act on the island's objects (they need it loaded).</summary>
+		static readonly HashSet<string> NeedsObjects = new HashSet<string> { "show", "hide", "toggle", "open", "close", "switch", "hit", "collapse", "moveto" };
+		/// <summary>Host: events kept for an island not loaded (the CI checks read it).</summary>
+		internal static int KeptUnloaded;
+
+		/// <summary>Host: an event whose shared part acts on the island's objects, while the island isn't loaded here: kept as
+		/// after a wait, the whole event runs when it loads (ResumePending). False: run it now.</summary>
+		static bool KeptForLoad(IslandWorldState.Entry e, int index, string ev, List<ObjAction> actions)
+		{
+			if (e.Root != null || !Resumable(ev) || !actions.Any(a => a.Shared && NeedsObjects.Contains(a.Verb))) return false;
+			KeepPending(e, index, ev, 0, ++pendingTokens);
+			KeptUnloaded++;
+			Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': its " + ev + " event runs when the island loads here (not loaded now)");
+			return true;
+		}
+
 		public static void FireFromHost(IslandWorldState.Entry e, int index, string ev)
 		{
 			if (e == null || !Raft_Network.IsHost) return;
@@ -1029,6 +1084,14 @@ namespace DynamicIslands.Editor
 			}
 			if (checks.Count > 0 && !Passes(e, index, checks, AnyOf(e, index, ev))) ev += "!";
 			actions = ActionsOf(e, index, ev);
+			// (the island not loaded here - a player's last step far from the host: what shows, hides, opens or moves its
+			// objects had nothing to act on and was lost, a door the story needed stayed shut. Kept as after a wait: the whole
+			// event runs when the island loads here - questfix round 2)
+			if (KeptForLoad(e, index, ev, actions))
+			{
+				if (Fired != null) try { Fired(e.Id, index, ev); } catch { }
+				return;
+			}
 			int seed = GapBehaviours.NewSeed();
 			if (Near(e)) Schedule(e, index, actions, false, false, ev);
 			GapBehaviours.Seed = seed;
@@ -1064,6 +1127,7 @@ namespace DynamicIslands.Editor
 				{
 					Debug.Log("[CUSTOM ISLANDS] A player's '" + ev + "' on '" + e.HostName + "' isn't done: the island isn't loaded on the host" + (answer ? " (they get its \"otherwise\")" : ""));
 					if (answer && from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev.TrimEnd('!') + "!");
+					else if (notLoadedYet.Count < 64) notLoadedYet.Add(new NotLoaded { Island = e.Id, Index = index, Ev = ev, From = from, Seed = GapBehaviours.Seed, At = Time.unscaledTime });
 					return;
 				}
 				string failed;
@@ -1075,10 +1139,14 @@ namespace DynamicIslands.Editor
 					Debug.Log("[CUSTOM ISLANDS] A player's '" + ev + "' on '" + e.HostName + "' is refused: " + failed + " no longer holds for the crew (another player used it at the same moment)");
 					// (the player who tried gets the event's "otherwise" part, as when their own check fails)
 					if (from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev.TrimEnd('!') + "!");
+					FreeRefused(e, index, ev, true);
 					return;
 				}
 				int seed = GapBehaviours.Seed; // (the player's, from the message: their random pick)
-				if (HasSharedPart(actions) && SharedOnce(e, index, ev)) Schedule(e, index, actions, true, false, ev);
+				// (the island's own event - a player arriving where the host isn't: index IslandIndex passes the check above -
+				// with doors or shows of its objects: they had nothing to act on, and "arrive" is once, so it was lost for good.
+				// Kept for when the island loads here, as the host's own events - questdeepA)
+				if (HasSharedPart(actions) && SharedOnce(e, index, ev) && !KeptForLoad(e, index, ev, actions)) Schedule(e, index, actions, true, false, ev);
 				// (yes: the player's own part runs now)
 				GapBehaviours.Seed = seed;
 				if (answer && from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev);
@@ -1089,6 +1157,36 @@ namespace DynamicIslands.Editor
 				if (answer) HostAnswered(e, index, ev);
 				Schedule(e, index, actions, false, false, ev);
 			}
+		}
+
+		/// <summary>Host: zones and chests freed again after a refusal (the CI checks read it).</summary>
+		internal static int FreedOnRefusal;
+
+		/// <summary>
+		/// Host: a player's zone ("enter") or chest ("open") event refused (another player used the crew's story item at the
+		/// same moment): the zone or chest is ready again. The player marked it used before asking, so it stayed spent with
+		/// nothing done - a door the story needed never opened (questdeepA A1). Its used mark may come after the event: looked
+		/// at again 2 s later.
+		/// </summary>
+		internal static void FreeRefused(IslandWorldState.Entry e, int index, string ev, bool again)
+		{
+			if (e == null || e.Root == null || (ev != "enter" && ev != "open")) return;
+			IslandObjectRef r = e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(x => x.Index == index);
+			if (r == null) return;
+			int key = -1;
+			TriggerZone z = ev == "enter" ? r.GetComponent<TriggerZone>() : null;
+			if (z != null && !z.Repeats) key = z.StateKey;
+			LootCrate c = ev == "open" ? r.GetComponentInChildren<LootCrate>(true) : null;
+			if (c != null) key = c.StateKey;
+			if (key < 0) return;
+			if (ContentState.IsUsed(e, key))
+			{
+				ContentState.ApplyUsed(e.Id, key, -1); // (its look too: a chest shown full again)
+				IslandNetwork.SendUsed(e.Id, key, -1);
+				FreedOnRefusal++;
+				Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': its " + (z != null ? "zone" : "chest") + " " + index + " is ready again (the player's '" + ev + "' was refused)");
+			}
+			else if (again && DynamicIslands.instance != null) DynamicIslands.instance.StartCoroutine(Later(2f, () => FreeRefused(e, index, ev, false)));
 		}
 
 		/// <summary>
@@ -1481,6 +1579,7 @@ namespace DynamicIslands.Editor
 			if (Time.unscaledTime < nextTick) return;
 			nextTick = Time.unscaledTime + 0.5f;
 			if (!LoadSceneManager.IsGameSceneLoaded) { arrived.Clear(); arriveNotYet.Clear(); return; }
+			try { DoNotLoadedYet(); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] A player's event waiting for its island: " + ex.Message); }
 			Network_Player p = RAPI.GetLocalPlayer();
 			if (p == null) return;
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)

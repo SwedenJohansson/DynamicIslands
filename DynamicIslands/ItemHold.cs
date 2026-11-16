@@ -209,7 +209,12 @@ namespace DynamicIslands.Editor
 		{
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
 			Transform raftT = raft != null ? raft.transform : null;
-			foreach (PickupItem p in UnityEngine.Object.FindObjectsOfType<PickupItem>())
+			// (FindObjectsOfType never finds switched-off objects: inactiveToo asks Unity for all of them, the scene's only -
+			// a dropped item switched off far away was left out of the world file - sweep 11-14)
+			IEnumerable<PickupItem> all = inactiveToo
+				? Resources.FindObjectsOfTypeAll<PickupItem>().Where(x => x != null && x.gameObject.scene.IsValid() && x.gameObject.hideFlags == HideFlags.None)
+				: (IEnumerable<PickupItem>)UnityEngine.Object.FindObjectsOfType<PickupItem>();
+			foreach (PickupItem p in all)
 			{
 				if (p == null || !p.isDropped || (!inactiveToo && !p.gameObject.activeInHierarchy)) continue;
 				if (raftT != null && p.transform.IsChildOf(raftT)) continue;

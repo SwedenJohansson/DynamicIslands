@@ -96,9 +96,13 @@ namespace DynamicIslands.Editor
 
 		static IslanderWalk WalkerOf(IslandWorldState.Entry e, string name)
 		{
-			return Behaviours.RefsOf(e).Where(r => r.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+			return Behaviours.RefsOf(e).Where(r => QuestName(r.Props).Equals(name, StringComparison.OrdinalIgnoreCase))
 				.Select(r => r.GetComponentInChildren<IslanderWalk>(true)).FirstOrDefault(w => w != null);
 		}
+
+		/// <summary>An islander's name as a quest step names it - the plan check's own (an unnamed one is "Islander"; trimmed, cleaned).
+		/// The raw name missed an unnamed or space-padded islander, so its escort never started and never finished.</summary>
+		internal static string QuestName(IDictionary<string, string> props) { return IslandQuest.AsTarget(Islanders.NameOf(props)); }
 
 		/// <summary>Quest: 1 when the escort step's islander is in its zone.</summary>
 		public static int Found(IslandWorldState.Entry e, string target)
@@ -172,6 +176,9 @@ namespace DynamicIslands.Editor
 			IslandNetwork.SendToEveryone(new IslandNetMessage { Kind = IslandNetMessage.Mech, Name = "walk", Ids = new[] { e.Id, index }, Offsets = new[] { local.x, local.y, local.z, yaw } });
 		}
 
+		/// <summary>A player keeps a place the host sent this long (s); the host sends a standing escort's place again sooner.</summary>
+		internal const float RemoteHold = 3f, KeepAlive = 1.5f;
+
 		public static void Reset() { escorts.Clear(); }
 
 		#endregion
@@ -184,7 +191,7 @@ namespace DynamicIslands.Editor
 		IslandWorldState.Entry entry;
 		readonly List<Vector3> route = new List<Vector3>();
 		readonly List<float> legStart = new List<float>();
-		float cycle, speed, pause, nextLook, nextSend, stuck, shownSpeed, remoteUntil, remoteYaw;
+		float cycle, speed, pause, nextLook, nextSend, lastSentAt = -100f, stuck, shownSpeed, remoteUntil, remoteYaw;
 		bool built, saved, arrived;
 		Vector3 home, remoteAt, lastSent;
 		string zone;
@@ -250,7 +257,7 @@ namespace DynamicIslands.Editor
 
 		internal void Remote(Vector3 local, float yaw)
 		{
-			remoteAt = local; remoteYaw = yaw; remoteUntil = Time.time + 3f;
+			remoteAt = local; remoteYaw = yaw; remoteUntil = Time.time + IslanderWalks.RemoteHold;
 		}
 
 		void Update()
@@ -271,10 +278,12 @@ namespace DynamicIslands.Editor
 					if (!Raft_Network.IsHost) { remoteUntil = 0f; transform.localPosition = l; }
 				}
 				string was0 = zone;
-				zone = Raft_Network.IsHost ? IslanderWalks.EscortZone(entry, Ref.Name) : null;
-				// (the step can end in the same moment she steps in, before Escort saw it: keep that place)
-				if (zone == null && was0 != null && !arrived && IslanderWalks.Inside(IslanderWalks.ZoneOf(entry, was0), transform.position)) Arrive(was0);
-				if (zone == null) arrived = false;
+				zone = Raft_Network.IsHost ? IslanderWalks.EscortZone(entry, IslanderWalks.QuestName(Ref.Props)) : null;
+				// (the step can end in the same moment she steps in, before Escort saw it: keep that place. A next escort step for
+				// her to another zone counts as a change too: "arrived" from the last zone used to stick, so she never set off again)
+				bool changed = !string.Equals(zone, was0, StringComparison.OrdinalIgnoreCase);
+				if (changed && was0 != null && !arrived && IslanderWalks.Inside(IslanderWalks.ZoneOf(entry, was0), transform.position)) Arrive(was0);
+				if (changed) arrived = false;
 				if (anim == null) anim = GetComponentInChildren<Animator>();
 			}
 			Vector3 before = transform.localPosition;
@@ -379,8 +388,11 @@ namespace DynamicIslands.Editor
 		{
 			if (!Raft_Network.IsHost || entry == null) return;
 			Vector3 l = transform.localPosition;
-			if (!now && (Time.time < nextSend || (l - lastSent).sqrMagnitude < 0.0025f)) return;
-			nextSend = Time.time + 0.25f; lastSent = l;
+			// (also when she stands: a player keeps a sent place KeepAlive s, then walked her home or on her path, and one who
+			// joined while she stood had her at home until she moved again)
+			bool stale = Time.time >= lastSentAt + IslanderWalks.KeepAlive;
+			if (!now && (Time.time < nextSend || ((l - lastSent).sqrMagnitude < 0.0025f && !stale))) return;
+			nextSend = Time.time + 0.25f; lastSent = l; lastSentAt = Time.time;
 			IslanderWalks.Send(entry, Ref.Index, l, transform.localEulerAngles.y);
 		}
 

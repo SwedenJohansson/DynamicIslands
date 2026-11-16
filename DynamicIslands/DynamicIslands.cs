@@ -361,6 +361,7 @@ namespace DynamicIslands
 			RaftEvent("the world loading", IslandWorldState.OnWorldLoaded);
 			RaftEvent("the world loading (creatures)", CreatureSpawner.OnWorldLoaded);
 			RaftEvent("the world loading (suit)", () => Hazards.SuitUntil = 0f); // a suit put on in another world ends with it
+			RaftEvent("the world loading (upgrades)", Editor.ExtraUpgrades.PlacementCheck);
 		}
 
 		/// <summary>The mod's part of one of Raft's events, never throwing into it (R16).</summary>
@@ -432,8 +433,17 @@ namespace DynamicIslands
 			catch (Exception e) { TickError("Player features", e); }
 			try { RaftColliderGuard.Tick(); }
 			catch (Exception e) { TickError("Raft colliders", e); }
-			try { QuestTracker.Tick(); QuestCount.Tick(); DailyQuest.Tick(); RogueShark.Tick(); StormDays.Tick(); }
+			// (each on its own: one throwing used to stop the rest, so a broken daily quest froze every quest's tick)
+			try { QuestTracker.Tick(); }
 			catch (Exception e) { TickError("Quests", e); }
+			try { QuestCount.Tick(); }
+			catch (Exception e) { TickError("Quest counts", e); }
+			try { DailyQuest.Tick(); }
+			catch (Exception e) { TickError("Daily quest", e); }
+			try { RogueShark.Tick(); }
+			catch (Exception e) { TickError("Rogue shark", e); }
+			try { StormDays.Tick(); }
+			catch (Exception e) { TickError("Storm days", e); }
 			try { SaveSoon.Tick(); }
 			catch (Exception e) { TickError("World save", e); }
 			try { GlowSea.Tick(); }
@@ -1223,6 +1233,19 @@ namespace DynamicIslands
 				Notify("'" + name + "' is this world's story island and you finished it already - it isn't spawned again", true);
 				return;
 			}
+			// An island without a story rule this world already has: it comes back as it was, like the spawn pool brings it
+			// (a second, fresh copy had its chests, pickups and quest anew - sweep 11-14)
+			IslandWorldState.Entry known = CustomIslandSpawner.InWorld(name);
+			if (known != null && string.IsNullOrEmpty(known.Rule) && !known.Excluded && !known.WaitingForFile)
+			{
+				if (known.Root != null || known.Loading) { Notify("'" + name + "' is already here (this world's copy, as you left it)", false); return; }
+				float at;
+				if (handBrought.TryGetValue(known.Id, out at) && Time.unscaledTime - at < HandBringSeconds) { Notify("'" + name + "' is on its way: it comes into sight ahead of the raft", false); return; }
+				known.Failed = false;
+				if (!ReturningIslands.BringAgain(known, origin, false)) Notify("'" + name + "' is already in this world: no free spot ahead of the raft yet - sail on a little and try again", true);
+				else handBrought[known.Id] = Time.unscaledTime;
+				return;
+			}
 			// The island's y is its elevation above sea level (0 = a normal island)
 			position.y = height ?? IslandSpawner.ElevationOf(name);
 			// On top of one of Raft's own islands, players can fall through the ground: say so (the automatic spawner avoids it)
@@ -1245,7 +1268,7 @@ namespace DynamicIslands
 		/// An error in one of the per-frame ticks (ROADMAP AU37: logged every frame, Player.log grew by hundreds of MB an
 		/// hour): the first in full, then once a minute how many more there were.
 		/// </summary>
-		static void TickError(string what, Exception e)
+		internal static void TickError(string what, Exception e)
 		{
 			KeyValuePair<float, int> seen;
 			if (!tickErrors.TryGetValue(what, out seen)) { tickErrors[what] = new KeyValuePair<float, int>(Time.unscaledTime, 0); Debug.LogError("[CUSTOM ISLANDS] " + what + ": " + e); return; }

@@ -1,0 +1,17 @@
+# Engine Court's pump room with the coolant suit (CIPlay engine_court_acidsuit, 11-12 w08; in a fresh test world 'CI ...',
+# under CIGapsWatchHealth). As engine_court_acid, but the suit from the box by the mouth: the coolant stays and costs nothing.
+island Engine Court keep
+offset 1.481 0.8839
+hour 11
+weather Calm
+at 35.5 -37.5
+use ecsuits
+expect shown ecacid
+walk 38.5 -30.5 to 40.2 -32.2 to 44 -36 to 47.9 -39.9 to 50.4 -42.4 to 47.3 -45.5
+wait 6
+expect unhurt
+open Pump room locker
+wait 2
+at 47.3 -45.5 h=10
+walk 47.3 -45.5 to 50.4 -42.4 to 47.9 -39.9 to 44 -36 to 40.2 -32.2 to 38.5 -30.5
+expect unhurt

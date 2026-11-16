@@ -52,8 +52,8 @@ namespace DynamicIslands.Editor
 		{
 			get
 			{
-				return Chosen.Count + (PlayerLevels.Chosen ? 1 : 0) + (HeadStart.Chosen > 0 ? 1 : 0) + (NewWorldOptions.Randomizer.On ? 1 : 0) + (NewWorldRulesBox.MonsterLevel != MonsterDifficulty.Normal ? 1 : 0) + (NewWorldRulesBox.BuildPercent > 0 ? 1 : 0) + (NewWorldRulesBox.LooksLevel != AnimalLooks.Normal ? 1 : 0) +
-					(WorldIslands.Chosen.Count > 0 ? 1 : 0); // (islands left out: the button said "Raft's own" while some were)
+				return Chosen.Count + (PlayerLevels.Chosen ? 1 : 0) + (HeadStart.Chosen > 0 ? 1 : 0) + (NewWorldOptions.Randomizer.On ? 1 : 0) + (NewWorldRulesBox.MonsterLevel != MonsterDifficulty.Normal ? 1 : 0) + (NewWorldRulesBox.BuildPercent > 0 ? 1 : 0) + (NewWorldRulesBox.LooksLevel != AnimalLooks.Normal ? 1 : 0);
+				// (islands left out and the gap are not counted: "Raft's own" keeps them as the player chose - they are this PC's list, not a world rule)
 			}
 		}
 

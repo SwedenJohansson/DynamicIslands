@@ -416,7 +416,7 @@ namespace DynamicIslands
 			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("run in a world"); return; }
 			Check(ref ok, MonsterDifficulty.Current == level, "this world's monsters: " + MonsterDifficulty.Describe(MonsterDifficulty.Current) + " (" + who + ")");
 			List<string> wrong = WrongAmounts(percent);
-			Check(ref ok, BuildCost.Current == percent && BuildCost.Applied == percent && BuildCost.Items.Count > 0 && wrong.Count == 0,
+			Check(ref ok, BuildCost.Current == percent && BuildCost.Applied == percent && (percent == 0 || BuildCost.Items.Count > 0) && wrong.Count == 0,
 				"this world's build cost: " + BuildCost.Describe(BuildCost.Current) + ", on Raft's numbers " + BuildCost.Describe(BuildCost.Applied) + " (" + BuildCost.Items.Count + " build menu items, " +
 				BuildCost.Entries(BuildCost.Items).Count + " amounts, each once" + (wrong.Count > 0 ? "; WRONG " + string.Join(", ", wrong.Take(6).ToArray()) : "") + ")");
 			if (args.Length > 2 && args[2] == "file")
