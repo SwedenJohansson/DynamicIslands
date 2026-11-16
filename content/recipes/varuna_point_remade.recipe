@@ -224,59 +224,56 @@ call rr_plants_tropical x=-43 z=-30 r=7 seed=26651
 call rr_plants_tropical x=43 z=-34 r=8 seed=26661
 call rr_plants_tropical x=46 z=-52 r=12 seed=26671
 
-# --- 11-12 (w13): the company's fuel works under Varuna's Back - optional, no quest step (plan 13 row: DIG under the fuel
-# works; dirt 2, mushrooms 2; an ACID fuel-spill side room, safe = suit). The company dug its fuel store into the foot of
-# the hill south of the site: one level adit (the Dig brush, kit_dig) with drums in it; a side gallery off it, where a
-# line burst, is still awash with spilt fuel salts. The work suits hang in a box at the gallery's junction, the warning
-# sign beside it; the gallery is a dead end, never on the way out (the adit is level to the mouth).
-# The adit runs along a chord of the hill, 15 m+ from the crane at its top (cavecheck: 6 m from the crane's things).
-# HEIGHTS (hw_mount b=22 h=24 at -10 -54: foot ring 0.22 * 24 = 5.3 m at r 22, 10.6 at r 17, 15.8 at r 13): the shelf
-# below is cut level at 5.6 m and the adit floor is 5.6 (set by the shelf); cover over the adit 5-7 m. GUESSES needing a
-# surface probe: the real ground at the mouth (r 22 from the hill's centre), whether Varuna's Back trail (hw_trail a0=30)
-# crosses the mouth or the adit's roof, and the dug floor's height for the h= values below (floor taken as 5.6).
-brush flatten at -26.4 -69.6 r=3 s=20 frames=60 h=5.6
-brush smooth at -28 -69.6 r=5 s=6 frames=20
-clear at -26 -69.6 r=3 only=(?i)boulder|rock|tree|bush|palm|bamboo
-call kit_dig x=-25.4 z=-69.6 yaw=90 len=18 flat=0 r=1.75 slope=0 room=1 roomr=2.8 roomlen=4 dirt=2 mush=2 stone=0 vines=0 titanium=0 as=vpfuel
+# --- 11-12 (w13): the company's fuel works - optional, no quest step (plan 13 row: DIG under the fuel works; dirt 2,
+# mushrooms 2; an ACID fuel-spill side room, safe = suit). The company dug its fuel store into the spoil knoll it heaped
+# on the flat below Varuna's Back, by the plane's field: one level adit (the Dig brush, kit_dig) with drums in it and a
+# room at its end; a side gallery off it, where a line burst, is still awash with spilt fuel salts. The work suits hang
+# in a box by the mouth, the warning sign beside it; the gallery is a dead end, never on the way out.
+# (11-16 w13 build: the first site, cut into the cliff foot of Varuna's Back over the cove, sank to -0.8 and broke out to
+# the sky - the knoll on flat ground at 3.1 is the Dark Lagoon pattern: hw_mount, the mouth b+1.5 m out, kit_dig level.)
+# The knoll stands 13 m+ from the plane's wing and 4 m+ from the trail's pads; the adit floor 2.1 (11-16 build: the level stroke sank 1 m under the flat).
+call hw_mount x=26 z=-45 b=12 h=14
+call kit_dig x=26 z=-31.5 yaw=180 len=8 flat=3 r=1.75 slope=0 room=1 roomr=3 roomlen=5 dirt=2 mush=2 stone=0 vines=0 titanium=0 light=0 as=vpfuel
 prop vpfuel cave.rock=plain
-call hw_zone x=-27 z=-69.6 al=vpfuelmouth id=fuelworks r=5 msg="An adit cut into the hill's foot: the company's fuel works, drums and old pipe. Mind the side gallery - it is awash."
-place TP_Moontown_Barrel02 - at -21 -69.6 h=6.2 drop yaw=30
-place TP_Moontown_Barrel02 - at -9 -68.8 h=6.2 drop yaw=80
-# the side gallery: off the adit 7 m in, north-west, ending in a wider chamber with the fuel-line locker
-dig -18,-69.6 -22,-63 r=1.75
-dig -22,-63 -23.5,-60.5 r=2.8
+call hw_zone x=26 z=-29 al=vpfuelmouth id=fuelworks r=5 msg="An adit cut into the spoil knoll: the company's fuel works, drums and old pipe. Mind the side gallery - it is awash."
+place TP_Moontown_Barrel02 - at 26.8 -34.2 h=3.9 drop yaw=30
+place TP_Moontown_Barrel02 - at 27.6 -45.5 h=3.9 drop yaw=80
+# the side gallery: off the room's right wall, a short bend into a chamber with the fuel-line locker. It stays within
+# 6 m of the knoll's heart (26 -45): run out to 32 -38.5 it broke the flank to the sky (11-16). CICaveInside's loose rim
+# here (first at 30.4 -37.8) is the mouth's own shoulder on the sheer knoll face, not the gallery - checked, accepted.
+dig 28,-41.5 29.5,-43.5 r=1.6
+dig 29.5,-43.5 29.8,-46 r=2.0
 # the spill: a pool in the chamber, crusted rocks round it, a dark vapour
-place TP_SeleneReactor_Water_Radiated vpfuelpool at -22.6 -61.8 h=5.5 scale=0.3 yaw=30
-place SmallRock_02 vpfuelrock at -24.4 -62.6 h=6 drop yaw=60 scale=0.45 sy=0.5
-place SmallRock_02 vpfuelrock at -21.2 -60.4 h=6 drop yaw=170 scale=0.45 sy=0.5
+place TP_SeleneReactor_Water_Radiated vpfuelpool at 29.7 -44.9 h=2.2 scale=0.3 yaw=30
+place SmallRock_02 vpfuelrock at 31.1 -44.4 h=3.5 drop yaw=60 scale=0.45 sy=0.5
 prop vpfuelrock tint.color=#a4c428
 prop vpfuelrock tint.amount=0.7
-place Zone_Atmosphere vpfuelmist at -22.6 -61.8 h=6
-prop vpfuelmist zone.radius=4
+place Zone_Atmosphere vpfuelmist at 29.7 -44.9 h=3.0
+prop vpfuelmist zone.radius=3.5
 prop vpfuelmist atmo.particles=steam
 prop vpfuelmist atmo.fog=#8cc030
 prop vpfuelmist atmo.fogAmount=0.3
 prop vpfuelmist atmo.light=#c8ff70
 prop vpfuelmist atmo.lightAmount=0.3
 # cavecheck inside vpfuelacid vpfuellocker vpfuelsuits vpfuelwarn
-place Zone_Trigger vpfuelacid at -22.6 -61.8 h=6
+place Zone_Trigger vpfuelacid at 29.7 -44.9 h=3.0
 prop vpfuelacid obj.name=vpfuelacid
 prop vpfuelacid zone.id=vp_fuelspill
-prop vpfuelacid zone.radius=3.2
+prop vpfuelacid zone.radius=2.6
 prop vpfuelacid zone.hazard=acid
 prop vpfuelacid zone.damage=4
 prop vpfuelacid zone.safe=suit
 prop vpfuelacid zone.hazardMsg=The gallery floor is spilt fuel salts - they burn. A work suit from the box at the junction keeps them off.
-place Loot_ChestSmall vpfuellocker at -22.8 -62 h=6.2 drop yaw=200
+place Loot_ChestSmall vpfuellocker at 30.2 -46.8 h=3.7 drop yaw=325
 prop vpfuellocker obj.name=vpfuellocker
 prop vpfuellocker loot.refill=0
 note vpfuellocker Fuel-line locker | The fitters' locker in the gallery where the line burst: their spare couplings, a gauge and a bar of ore, left when the salts came.
 loot vpfuellocker Bolt*3;CopperIngot*2;TitaniumOre*1;Battery*1
-place "Box Big" vpfuelsuits at -17.2 -68.6 h=6.4 drop yaw=0
+place "Box Big" vpfuelsuits at 25.0 -37.4 h=3.9 drop yaw=0
 prop vpfuelsuits obj.name=vpfuelsuits
 prop vpfuelsuits beh.use=Put on a fitter's work suit
 prop vpfuelsuits on.use=suit||180\nmessage||A fitter's work suit, waxed cloth sealed at the wrists and boots - three minutes before the salts get through.
-place Note_Sign vpfuelwarn at -16 -68.2 h=6.4 drop yaw=0
+place Note_Sign vpfuelwarn at 25.0 -35.4 h=3.9 drop yaw=0
 note vpfuelwarn FUEL WORKS - SIDE GALLERY | The side gallery off this passage is awash with spilt fuel salts. They burn skin and boots. Work suits in the box here.\n- the fitters
 
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
@@ -334,17 +331,17 @@ story fuse|Floodlight fuse|Battery|The floodlight's spare fuse, from the crane c
 note surveyreport Surveyors' report | SURVEY REPORT - VARUNA POINT\n\nThe point is too low and too narrow for the tower they want: we told the company. They built it anyway.\nThe foreman's fuse is in the crane cab - the crane is the only dry place on this island in a storm.\nOur lamps: one and three on, the middle one minds itself. The tin goes where the light falls.
 story part|Floodlight part|quest:Varuna_SpotlightPart|One of the floodlight's four parts - lens, bulb, reflector, cable - from a crate on the reef.
 
-note foremanslog Foreman's log | SITE LOG - VARUNA POINT\n\nDay 41. Storm. The floodlight went over the rail - lens, bulb, reflector and the cable drum, each in its own crate, all into the sea - the current has spread them round the point. The reef has them now.\nDay 42. Without the light we can't work the deep water at night. And something down there likes the dark: the night crew saw its lure glowing under the tower.\nDay 43. My strongbox went over with the light - the turbine plans, the batteries, all of it. It's down in the deep under the point. Nobody dives there until that light is back on.\nDay 44. The light's spare fuse is up in the tower crane's cab on Varuna's Back. The surveyors on the west point know the rest.
+note foremanslog Foreman's log | SITE LOG - VARUNA POINT\n\nDay 41. Storm. The floodlight went over the rail - lens, bulb, reflector and the cable drum, each in its own crate, all into the sea - the current has spread them round the point. The reef has them now.\nDay 42. Without the light we can't work the deep water at night. And something down there likes the dark: the night crew saw its lure glowing under the tower.\nDay 43. My strongbox went over with the light - the turbine plans, the batteries, all of it. It's down in the deep under the point. Nobody dives there until that light is back on.\nDay 44. The light's spare fuse is up in the tower crane's cab on Varuna's Back. The surveyors camped out on the point know the rest.
 note partcrate1 Lens crate | A crate on the sea floor off the reef shelf: the floodlight's lens, wrapped in sacking.
 loot partcrate1 story:part*1;Plastic*3
 prop partcrate1 loot.refill=0
 note partcrate2 Bulb crate | A crate on the sea floor below the floodlight tower: the floodlight's bulb, unbroken.
 loot partcrate2 story:part*1;Scrap*3
 prop partcrate2 loot.refill=0
-note partcrate3 Reflector crate | A crate off the point's east tip: the floodlight's reflector, barnacled but whole.
+note partcrate3 Reflector crate | A crate off the point's far tip: the floodlight's reflector, barnacled but whole.
 loot partcrate3 story:part*1;Rope*2
 prop partcrate3 loot.refill=0
-note partcrate4 Cable crate | A crate on the sand off the south shore: the floodlight's cable drum.
+note partcrate4 Cable crate | A crate on the sand off the shore: the floodlight's cable drum.
 loot partcrate4 story:part*1;Nail*6
 prop partcrate4 loot.refill=0
 note strongbox Foreman's strongbox | The foreman's strongbox, thrown into the deep by the storm: the site's plans - a wind turbine, batteries, a head lamp, a grill.
@@ -364,7 +361,7 @@ prop site zone.radius=10
 prop site zone.message=The construction site: a concrete shaft in scaffolding, machines, a red site office - nobody at work.
 prop lightdeck zone.id=lightdeck
 prop lightdeck zone.radius=3
-prop lightdeck zone.message=The floodlight's deck: the light on its mount, dark, the north water far below.
+prop lightdeck zone.message=The floodlight's deck: the light on its mount, dark, the deep water far below.
 prop deep zone.id=deep
 prop deep zone.radius=6
 prop deep zone.message=The deep under the point - and a lure glowing in the dark.

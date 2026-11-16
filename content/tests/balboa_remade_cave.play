@@ -4,7 +4,7 @@
 # with the rangers' chest. HEIGHT GUESSES (need a Raft surface probe): the foot/floor 6.2 m (flatten shelves), the ground over
 # the chamber ~11.5 m. The offset is the old one; check it after the build (the knoll can move the land centre).
 island Balboa Remade keep
-offset 0.5743 -0.6511
+offset 0.6425 -0.5063
 hour 11
 weather Calm
 

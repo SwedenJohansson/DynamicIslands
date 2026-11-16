@@ -226,9 +226,17 @@ pop
 brush flatten at 90 -8 r=6 s=20 frames=200 h=-5
 brush smooth at 90 -8 r=9 s=6 frames=20
 brush flatten at 90 -8 r=3.5 s=20 frames=200 h=-5
+# (11-16 w13 build: the islet was hill mesh only, over open sea - the room showed the sea through its wall and the
+# islet's side had a hole. A low terrain pad under the room and dome gives the mesh ground to stand on.)
+call rr_pad x=90 z=-50 h=2 r=12
 call kit_st x=90 z=-8 yaw=180 len=36 slope=18 end=room size=0.7 hill=1 dirt=0 mush=1 stone=2 vines=0 titanium=0 as=utsea
 prop utsea cave.rock=plain
 prop utsea cave.dome=16
+# (11-16 w13Q: the hill's skin past the drowned way in's cut stood up out of the sea as a thin brown plate off the
+# mouth - play_ut_ov_e/top. cave.seacut (w13T) left it and cut the whole hill to sheer faces, so it is not used. The
+# dry foot (w13U) closed the arch the cut left in the hill above the mouth; the plate past the cut's end is still
+# there - OPEN.)
+prop utsea cave.foot=dry
 place Zone_Trigger utseaair at 90 -53 h=8
 prop utseaair obj.name=utseaair
 prop utseaair zone.id=ut_seadoor

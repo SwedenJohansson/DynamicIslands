@@ -2,7 +2,7 @@
 # Points as in its recipe: Johnny leaning on a crate at -14.8 3.8 by the market; his nailed crate (tccrate) at -17.6 4.2, opened
 # only after talking to him; his three answers (rope, the quarry journal page, goodbye). The inlet is 1.6 m (ground).
 island Caravan Town Remade keep
-offset -5.2865 -0.4248
+offset -5.3098 -0.4348
 hour 11
 weather Calm
 expect shown tccrate

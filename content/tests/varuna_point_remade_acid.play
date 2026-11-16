@@ -1,18 +1,21 @@
-# Varuna Point Remade's fuel-spill gallery without a suit (CIPlay varuna_point_remade_acid, 11-12 w13; in a test world 'CI ...'; offline-written, NOT yet run).
-# Points as in its recipe: the junction at -18 -69.6 (sign vpfuelwarn at -16 -68.2, suit box at -17.2 -68.6), the gallery to
-# -22 -63 and its chamber at -22.6 -61.8 (zone vp_fuelspill r 3.2, safe=suit). Floor taken as 5.6 m: a GUESS for a Raft surface probe.
+# Varuna Point Remade's fuel-spill gallery without a suit (CIPlay varuna_point_remade_acid, 11-12 w13, re-cut 11-16 into the knoll; in a test world 'CI ...').
+# Points as in its recipe: the spoil knoll at 26 -45 (b 12, h 14) on the flat below Varuna's Back; the adit from its mouth
+# at 26 -31.5 level into the knoll to 26 -42.5, its end room to 26 -47.5; the side gallery (acid, own plays) leaves it at
+# the room's right wall at 28 -41.5 to 29.5 -43.5 and its chamber to 29.8 -46 (zone vp_fuelspill at 29.7 -44.9, r 2.6,
+# safe=suit). Floor 2.1 m. (11-16: first cut to 32 -38.5 it broke out of the knoll's flank; then 27 -39 -> 31.8 -45 left
+# loose rim rock on the steep flank; now within 6 m of the knoll's heart.) The sign vpfuelwarn at 25 -35.4, suit box 25 -37.4.
 island Varuna Point Remade keep
-offset -0.7903 -5.1702
+offset -0.7444 -5.052
 hour 11
 weather Calm
 expect shown vpfuelacid
-walk -25 -69.6 to -17 -69.4 below=14
-picture vp_acid_sign -20 8 -67 -16 6.4 -68.2 light=20
+walk 26 -28 to 26 -31.5 to 26 -34 below=14
+picture vp_acid_sign 26.6 3.9 -32.4 25 2.8 -35.4 light=20
 read FUEL WORKS - SIDE GALLERY
-walk -18 -69.4 to -20 -66 to -22.6 -61.8
+walk 26 -34 to 26 -38.5 to 26.8 -41 to 28.4 -42.4 to 29.6 -44.6
 wait 8
 expect message spilt fuel salts
 expect hurt 10
-walk -22.6 -61.8 to -20 -66 to -18 -69.4 to -25 -69.6
+walk 29.6 -44.6 to 28.4 -42.4 to 26.8 -41 to 26 -38.5 to 26 -31.5 to 26 -28
 wait 2
 expect hurt 1

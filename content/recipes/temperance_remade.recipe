@@ -216,10 +216,12 @@ place TP_Moontown_Barrel02 - at 38 -36 ground sit
 # (floor = the pad, 3 m: guess-free, set by the pad flatten). Ice look: plain mountain rock lightly tinted pale (one rock).
 # 18 m from the barrel and the old pad's things; the supply plane and the quest are far off.
 call rr_land x1=44 z1=-38 x2=54 z2=-38 h=3 r=8
-call rr_pad x=72 z=-38 h=3 r=22
+# (11-16 w13 build: with a pad of r 22 the den's hill mesh reached 4-6 m past the pad's edge, where the ground falls
+# into the sea - its pale skirt and rocks hung over open water. The pad now reaches past the mesh, the dome is held to 16.)
+call rr_pad x=74 z=-38 h=3 r=28
 call kit_st x=56 z=-38 yaw=90 len=14.5 slope=0 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=0 as=teicestore
 prop teicestore cave.rock=plain
-prop teicestore cave.dome=18
+prop teicestore cave.dome=16
 prop teicestore tint.color=#d6e4ee
 prop teicestore tint.amount=0.35
 place Note_Sign teicesign at 53 -30 ground sit yaw=200

@@ -1,9 +1,9 @@
-# Temperance Remade's ice-core store (CIPlay temperance_remade_cave, 11-12 w13; in a test world 'CI ...'; offline-written, NOT yet run).
-# Points as in its recipe: the new pad at 72 -38 (r 22, 3 m), the bridge from the old pad at 44..54 -38, the cave mouth at 56 -38
-# (kit_st yaw 90, len 14.5, size 0.7), the sign at 53 -30, the den round 80 -38 with the weather team's chest. Pad height 3 is
-# set by the flatten (floor ~3); the room's real position (end + ~10 m) is a GUESS to confirm with a surface probe.
+# Temperance Remade's ice-core store (CIPlay temperance_remade_cave, 11-12 w13; in a test world 'CI ...'; PASS 11-16 w13B).
+# Points as in its recipe: the new pad at 74 -38 (r 28, 3 m - past the den's hill mesh), the bridge from the old pad at
+# 44..54 -38, the cave mouth at 56 -38 (kit_st yaw 90, len 14.5, size 0.7, dome 16), the sign at 53 -30, the den round
+# 80 -38 with the weather team's chest. Floor ~3 (the pad).
 island Temperance Remade keep
-offset -6.2505 -9.4792
+offset 6.4887 -13.708
 hour 11
 weather Calm
 

@@ -250,7 +250,7 @@ scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=42.0 seed=4416 free=3
 call shallows r=80 deep=5 n=2
 
 # --- RAFT REMADE 10-26: the secrets - the smugglers' cave, the toll tokens, the drovers' lanterns ---------------------
-note cavebox Smugglers' cache | A box in the cave on the west flats: what the drovers kept back from the mayor's toll.
+note cavebox Smugglers' cache | A box in the cave on the flats past the slab stacks: what the drovers kept back from the mayor's toll.
 loot cavebox TitaniumIngot*1;CopperIngot*2;Bolt*3
 prop cavebox loot.refill=0
 call hw_zone x=-88 z=2 al=cavez id=smugglerscave r=4 msg="A cave in a rock out on the flats - a cold fire outside, a box within."

@@ -2,7 +2,7 @@
 # station on the east terrace (5 m), the den's mouth on the west plateau facing east (8.9 m), the summit (50 m).
 # Quest "The Rangers' Last Call", 20 steps: station (1-9), den (10-15), summit (16-19), the strongbox (20).
 island Balboa Remade
-offset 0.5743 -0.6511
+offset 0.6425 -0.5063
 expect step 0
 expect title The Rangers' Last Call
 

@@ -176,7 +176,8 @@ pop
 # 6.2); the ground over the branch chamber ~11.5 m (r 26 from the knoll's centre), the trunk's end ~28 m (the peak).
 call hw_mount x=-10 z=42 b=32 h=28
 brush flatten at -2 75.4 r=4 s=20 frames=60 h=6.2
-brush flatten at -18 75.4 r=4 s=20 frames=60 h=6.2
+# (11-16 CC: r=4 left the vine mouth's hood standing out of lower ground beside it - loose rim; widened to 6.5)
+brush flatten at -18 75.4 r=6.5 s=20 frames=60 h=6.2
 brush smooth at -10 77 r=7 s=6 frames=20
 clear at -2 76 r=3 only=(?i)boulder|rock|tree|bush
 clear at -18 76 r=3 only=(?i)boulder|rock|tree|bush
@@ -185,12 +186,12 @@ prop bagravel cave.rock=plain
 place Zone_Trigger bagravelzone at -10 80.5 h=6.4
 prop bagravelzone zone.id=ba_gravel
 prop bagravelzone zone.radius=5
-prop bagravelzone zone.message=A gravel adit in the knoll: two mouths, the west one choked with vines. The rangers' cache is in the back.
-note bagravelnote Rangers' gravel plan | GRAVEL ADIT - the knoll behind the north flats. Two ways in, one passage between. The west mouth grew over; a blade will clear it.\n- Hayes
+prop bagravelzone zone.message=A gravel adit in the knoll: two mouths, one of them choked with vines. The rangers' cache is in the back.
 place Note_Sign bagravelnote at -10 82 ground sit yaw=0
+note bagravelnote Rangers' gravel plan | GRAVEL ADIT - the knoll behind the low flats. Two ways in, one passage between. One mouth grew over; a blade will clear it.\n- Hayes
 # cavecheck inside bagravelchest
 # (the chamber at the branch's end: floor ~6.2, a drop from 6.8; guess, probe)
-place Loot_ChestSmall bagravelchest at 6 62 h=6.8 drop yaw=250
+place Loot_ChestSmall bagravelchest at 6.6 63.1 h=6.8 drop yaw=250
 prop bagravelchest obj.name=bagravelchest
 prop bagravelchest loot.refill=0
 note bagravelchest Rangers' gravel cache | The rangers' cache from the adit: spare picks, a coil of rope, the road money tin - and Hayes' note, "if the bear takes the station, we dig in here".
@@ -215,11 +216,11 @@ note poacherschest Poachers' chest | The poachers' chest: what they took off the
 loot poacherschest TitaniumIngot*1;CopperIngot*2;Leather*3;BioFuel*2
 prop poacherschest loot.refill=0
 prop poacherschest if.open=has|story:poacherkey|1
-prop poacherschest else.open=message||Padlocked. The poachers came by sea - their boat may still be on the east beach.
-note cavebox Hermit's strongbox | A box in the cave in the south lowlands: an old hermit's savings, long before the rangers came.
+prop poacherschest else.open=message||Padlocked. The poachers came by sea - their boat may still be on the beach below the station.
+note cavebox Hermit's strongbox | A box in the cave in the lowlands by the beach: an old hermit's savings, long before the rangers came.
 loot cavebox TitaniumOre*2;CopperIngot*2;Bolt*3
 prop cavebox loot.refill=0
-call hw_zone x=-40 z=-80 al=cavez id=hiddencave r=4 msg="A cave in a rock by the south beach - a strongbox at the back."
+call hw_zone x=-40 z=-80 al=cavez id=hiddencave r=4 msg="A cave in a rock by the beach - a strongbox at the back."
 # Ranger badges: five of the rangers' badges, lost round the island (a set)
 call rr_piece x=95 z=-20 al=badge1 set="Ranger badges" nm="Ranger badge 1"
 call rr_piece x=-30 z=-80 al=badge2 set="Ranger badges" nm="Ranger badge 2"
@@ -280,7 +281,7 @@ prop vinewall on.use=message||The machete bites into the vines. They fall away -
 prop vinewall else.use=message||Thick vines over the rangers' plank barricade. You'd need a blade.
 prop mastradio obj.name=mastradio
 prop mastradio beh.use=Call out on the rangers' radio
-prop mastradio on.use=message||The radio crackles to life. Far away, a voice answers: "Balboa? We hear you. Follow the traders' jingle south."\nsignal||ranger
+prop mastradio on.use=message||The radio crackles to life. Far away, a voice answers: "Balboa? We hear you. Follow the traders' jingle."\nsignal||ranger
 # (Raft's comm radio as a ready piece only works with power (a running generator or Raft's battery charger part), which this island has none of: the rangers' radio worked for anyone and the radio desk - quest step 7 - stayed shut for good. The ready piece's lock taken off)
 prop mastradio if.use=
 prop mastradio else.use=
