@@ -497,7 +497,7 @@ namespace DynamicIslands
 			{
 				string n = e.GameObjectName ?? "";
 				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
-				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") || n.StartsWith("Note_") || NotABase.IsMatch(n) || Hangs.IsMatch(n)) continue;
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") || n.StartsWith("Note_") || NotABase.IsMatch(n) || Hangs.IsMatch(n) || CameraPath.IsPoint(n)) continue; // (camera points: unseen in a world)
 				// (a zipline with a zip.to: the editor shows Raft's own far end, which ZiplineEnds moves when the island is spawned -
 				// the Lodestone Array's north line read "partly in the air" off the cliff where Raft's 27 m line ends, 2026-10-20;
 				// CIGroundIslands measures each of its ends in the world)
