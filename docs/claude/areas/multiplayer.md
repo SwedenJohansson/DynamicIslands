@@ -35,16 +35,16 @@ Fields: `Ids`, `Names`, `Hashes`, `Offsets`, `States`, `Labels`, `Rules`, `FullL
 | 3 `SyncRequest` | both | `Name` version; host's reply `Data` = capabilities |
 | 4 `FileRequest`, 5 `FileChunk`, 23 `FileWanted` | see steps 5, 6, 10 | `Name`, `Hash`; chunks `Index`/`Count`/`Data` |
 | 6 `ObjectUsed` | via host | `Ids[0]` island, `Index` state key, `Count` day (host sets its own day; below 0 = available again, host only) |
-| 7 `QuestStep`, 25 `QuestStepMore` | via host | `Ids` island (+ quest number), `Index` step, `Count`; `Name` "add" = a player's amount |
+| 7 `QuestStep`, 25 `QuestStepMore` | via host | `Ids` island (+ quest number), `Index` step, `Count`; `Name` "add" = a player's amount. A player drops one not from the host (`NotHostSender`); the host refuses a player's plain step more than one on (`QuestTracker.MayTakeStep`, sends a correction). A player's last step of a quest is not set locally: with `HostAddsCounts` only the add goes (`WaitingForHost`), the reward comes with the host's step. A `FullList` corrects a player's quest steps and progress to the host's (`QuestTracker.FromHostList`). `HostAddsCounts`/`HostAnswersClaims` go back to false when the first sync try gets no version reply (an older host) |
 | 8 `Announce`, 9 `ObjectSet` | host -> clients | banner `Ids[0]`/`Name`/`Data`/`Offsets`; object `Ids[0]`, `Index`, `Count` bits |
-| 10 `EventFired` | both | `Ids[0]`, `Index` object, `Name` event, `FullList` = from host, `Count` 1 = waits / answer |
+| 10 `EventFired` | both | `Ids[0]`, `Index` object, `Name` event, `FullList` = from host, `Count` 1 = waits / answer. Host, island not loaded: a player's event is queued (`Behaviours.notLoadedYet`, 64 at most, 10 min, run by `DoNotLoadedYet` in `Tick` once `Root` is set; cleared in `ForgetWorld`); the host's own resumable event with shared show/hide/open/move actions is kept pending (`KeptUnloaded`) and runs in `ResumePending` |
 | 11 `Story`, 14 `Levels` | both | `Name` = sub-kind (`StoryBook.OnMessage`, `PlayerLevels.OnMessage`), `Data` |
 | 12 `PlayerPlace` | host -> joiner | `Ids[0]`, `Offsets` from the island |
 | 13 `Randomizer`, 17 `WorldOptions`, 19 `StoryChain`, 20 `QuestCount` | host -> clients | `Data` (and `Name`) from that class's `Message` |
 | 15 `WorldRules` | host -> clients | `Index` monsters, `Count` build cost %, `Data` `receiver=;unload=;regrow=;rdist=`, `Name` refunds, `Names` the rescued survivors (`Survivors.FromHost`) |
 | 16 `Claim` | both | `Ids` island and question number, `Index` key, `Count` 1/0 |
 | 18 `WorldCopy`, 24 `WorldCopyNewer` | host -> clients; client -> host | `Name` world guid, `Hash` stamp, parts `Index`/`Count`/`Data`; newer: `Data` `savecount;savedat` |
-| 26 `DailyQuest` | both | `Name` "state" (host's task, `Data`), "add" (a player's part: `Index` day, `Count`), "got" (reward taken) |
+| 26 `DailyQuest` | both | `Name` "state" (host's task, `Data`), "add" (a player's part: `Index` day, `Count`; host: only from `PlayerTrust.InSession`, at most `MaxAdd` 10 a message and 10 per player per `RateSeconds` 2 s: `Allowed`, `Dropped`), "got" (reward taken) |
 | 27 `RogueShark` | host -> clients | `Name` "spawn"/"dead"/"state", `Index` the rogue's object index, `Count` no new one before this day |
 | 28 `WorldSave` | host -> clients | `Name` world guid, `Hash` save folder name, parts `Index`/`Count`/`Data` (base64 of the pack, 3000 chars) |
 | 29 `UpgradeTable` | host -> everyone; client -> host | `Name` "state"/"learned" from the host, "research"/"learn" to it |

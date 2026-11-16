@@ -207,10 +207,9 @@ namespace DynamicIslands
 					uint index = RogueShark.Index;
 					int sharks = LiveSharks().Count;
 					yield return new WaitForSeconds(3f);
-					// (the option's text: a rogue stays until it is killed; switched off only stops new ones - the state must be one or the other, not half)
-					bool stays = RogueShark.Index == index && RogueShark.Find() != null && RogueShark.Alive;
-					bool gone = RogueShark.Index == 0 && !RogueShark.Alive;
-					Check(ref ok, stays || gone, "switched off: the rogue " + (stays ? "stays (alive, #" + index + ")" : gone ? "is gone" : "is in between: index " + RogueShark.Index + ", alive " + RogueShark.Alive));
+					// (switched off live, the living rogue is retired - 11-15; before, it stayed until killed)
+					bool gone = RogueShark.Index == 0 && !RogueShark.Alive && !LiveSharks().Any(s => s.ObjectIndex == index);
+					Check(ref ok, gone, "switched off: the rogue #" + index + " " + (gone ? "is retired" : "is still there: index " + RogueShark.Index + ", alive " + RogueShark.Alive));
 					Check(ref ok, LiveSharks().Count <= sharks, "switched off, on a rolling day " + roll + ": no new shark (" + LiveSharks().Count + " alive, " + sharks + " before)");
 					AI_NetworkBehavior_Shark live = RogueShark.Find();
 					if (live != null && live.networkEntity != null && !live.networkEntity.IsDead)

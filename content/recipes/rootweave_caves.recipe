@@ -319,7 +319,7 @@ step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from 
 step reach|flooded_passage|1|Swim into the Flooded Passage
 step blueprint|Blueprint_HeadLight_Advanced|1|Take the headlight plans from the drowned crate
 step kill|Mama bear|1|Defeat the mama bear in the Den
-step collect|story:rwfuse|3|Find the three fuses: the Bee Hall, the Flooded Passage and the Den
+step collect|story:rwfuse|3|Find the three fuses in chests: the Bee Hall, the Flooded Passage and the Den
 step collect|story:camplight|1|Fit the fuses to the survey camp's fuse box
 step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the lab chest
 step read|Poison sample report|1|Read the poison sample report in the lab

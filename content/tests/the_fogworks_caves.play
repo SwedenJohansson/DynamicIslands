@@ -1,0 +1,18 @@
+# The Fogworks' fog cellars (CIPlay the_fogworks_caves, 11-13 w11; in a test world 'CI ...'). Points as in its recipe:
+# the mouth strip (3 m) from -34 -26 west into the spoil knoll; the level passage to the long cellar (-50..-57 -26), a
+# side passage from -45 -26 to the small cellar at -51 -37. A boar (Warthog) dens in the long cellar.
+island The Fogworks keep
+offset -0.2923 13.3454
+hour 11
+weather Calm
+picture fw_cave_out -26 8 -20 -38 4 -26
+expect animals Warthog 1
+expect animalsinside Warthog 1
+walk -33 -26 to -36 -26 to -40 -26 below=6
+picture fw_boar -40 4.6 -26 -53 3.6 -26 aim=Warthog light=20
+kill Warthog
+expect animals Warthog 0
+walk -40 -26 to -45 -26 to -50 -26 to -55.5 -26 below=6
+picture fw_cave_in -46 4.6 -26 -56 3.4 -26 light=20
+walk -55.5 -26 to -50 -26 to -45.5 -27 to -46.5 -32 to -49 -35.5 below=6
+walk -49 -35.5 to -46.5 -32 to -45.5 -27 to -40 -26 to -33 -26 below=6

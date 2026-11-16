@@ -312,7 +312,7 @@ step read|Water plane log|1|Read the log at the plane wreck in the dunes
 step open|Sun-locked chest|1|Turn both mirrors and open the sun-locked chest by the water plane
 step reach|court_view|1|Ride the cable down to the lookout on the shore
 step read|What Hedda saw|1|Read what Hedda painted at the lookout
-quest done=South over the sea: the ring, turning. The Engine Court is waiting.
+quest done=Out over the sea: the ring, turning. The Engine Court is waiting.
 quest reward=TitaniumOre*2;Rope*4;CaveMushroom*2
 
 call tzone x=14.43 z=-2.35 al=campzone id=hedda_camp r=5 msg="Hedda's camp. A fire, a tent, a store - and her handwriting on a sheet by the fire."

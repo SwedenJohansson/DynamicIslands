@@ -598,7 +598,7 @@ step reach|basecamp|1|Reach the explorers' base camp at the foot of the cliffs
 step read|Dr. Quintero's field notes|1|Read the field notes in the base camp
 step reach|causeway|1|Climb the old causeway up the cliffs to the plateau
 step kill|Warthog|3|Drive off the warthogs rooting in the ruined terraces
-step collect|story:jade|1|Find the lever at the cliff edge, sink the Sun shrine's stakes, take its jade tablet
+step collect|story:jade|1|Find the lever at the cliff edge, sink the Sun shrine's stakes, take its jade tablet from the chest
 step reach|cenote|1|Find the sacred well beside the pyramid
 step kill|Angler fish|1|Face the guardian of the well's deep water
 step collect|story:jade|2|Dive for the second jade tablet among the offerings

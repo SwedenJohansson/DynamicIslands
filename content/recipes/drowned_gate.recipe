@@ -16,6 +16,7 @@ include lib_features
 include lib_highwater
 include lib_areas
 include lib_raft2
+include lib_caves
 new
 # (nature: tropical, Like Raft; no cliffs - the generator's cliffs cut the land into flat sectors)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -374,6 +375,29 @@ call r2_hidden x=-52 z=33 al=dg_setchest kind=Loot_Chest
 call treasure x=7 z=-78 r=5 n=1 seed=27478 kind=0
 prop treasure27478 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
 
+# --- 11-12 (w09): the old culverts - optional, no quest step (plan 09 row: UW SYS, 2 ST under the gate + an air room;
+# chest, stone 2, titanium 1). Before the wall, the Corps' divers kept the gate's footings clear through two culverts:
+# one from the outer strait's floor under the south wall to the divers' dry store (the air room: their kit chest), one
+# from the inner basin's floor up under the south hill to the old pump sump. Both mouths on the sea floor 4 m down,
+# 12 degrees up, 4 pieces (rooms ~4.6 m over the sea). Johnny's journal page tells of them. 6 m and more from the gate,
+# the office, its vault, the turtles and the walks.
+call kit_uw x=45 z=-22 yaw=180 len=41.6 slope=12 size=0.7 dirt=0 mush=0 stone=1 vines=0 titanium=1 light=0 as=dgculvert1
+prop dgculvert1 cave.rock=plain
+call kit_uw x=20 z=-5 yaw=200 len=41.6 slope=12 size=0.7 dirt=0 mush=1 stone=1 vines=1 titanium=0 light=0 as=dgculvert2
+prop dgculvert2 cave.rock=plain
+# cavecheck inside dgdiversair dgdiverskit
+place Zone_Trigger dgdiversair at 45 -71.5 h=6
+prop dgdiversair obj.name=dgdiversair
+prop dgdiversair zone.id=dg_diversstore
+prop dgdiversair zone.radius=8
+prop dgdiversair zone.repeat=1
+prop dgdiversair zone.air=1
+prop dgdiversair zone.message=The divers' store at the top of the culvert - dry, the air stale but good.
+place Loot_ChestSmall dgdiverskit at 46.2 -73.5 h=7 drop yaw=0
+prop dgdiverskit obj.name=dgdiverskit
+prop dgdiverskit loot.refill=0
+note dgdiverskit Divers' kit | The Corps divers' kit, packed for a shift that never came: lamp cells, a coil of line, spare glass for the masks. Stencilled inside the lid: GATE FOOTINGS - CLEAR WEEKLY.
+loot dgdiverskit Battery*2;Rope*2;Glass*2;MetalIngot*2
 # --- Settings, story items, notes, behaviours, quest (16 steps) -------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): palms, flowers, pineapples ----------
 scatter "Pickup_Landmark_Tree_Palm 1" 4 at 0 0 r=63.0 seed=4122 free=5

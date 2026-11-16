@@ -85,6 +85,11 @@ namespace DynamicIslands
 				Make("2026.01.01-10.00", Guid.Empty, 6); Make("2026.01.01-10.05-Latest", Guid.Empty, 7);
 				int d5 = DayRepair.DayBeforeReset(tmp, id, out from);
 				Check(ref ok, d5 == -1, "no save with the id: " + d5 + " (want -1)");
+				// the quit across 9.59 -> 10.00 (Raft does not pad the hour: "9.59" sorts after "10.00" by name)
+				Clear();
+				Make("2026.01.01-9.50", id, 6); Make("2026.01.01-9.59", id, 7); Make("2026.01.01-10.00-Latest", Guid.Empty, 0);
+				int d6 = DayRepair.DayBeforeReset(tmp, id, out from);
+				Check(ref ok, d6 == 7 && from == "2026.01.01-9.59", "quit save across the hour 9 -> 10: day " + d6 + " from " + from + " (want 7)");
 			}
 			finally { Clear(); }
 			yield return null;

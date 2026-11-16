@@ -209,19 +209,30 @@ namespace DynamicIslands.Editor
 			KeepBring();
 			IslandQuest main;
 			if (!working.TryGetValue(0, out main)) main = new IslandQuest();
-			// (the further quests in order, the empty ones left out: "Quest 2" ... as many as have steps)
+			// (the further quests with steps, counted for the message)
 			List<IslandQuest> more = working.Where(kv => kv.Key > 0 && kv.Value.Exists).OrderBy(kv => kv.Key).Select(kv => kv.Value).ToList();
 			IslandSettingsUndo.Change(() =>
 			{
 				SetQuestBringRule(DynamicIslands.currentIslandProps, main.Exists && bring != null && bring.WhatArg.Trim().Length > 0 ? bring : null);
 				Apply(main);
-				for (int i = 1; i < IslandQuest.MaxQuests; i++)
-					(i - 1 < more.Count ? more[i - 1] : new IslandQuest()).To(DynamicIslands.currentIslandProps, i);
+				// (each quest keeps its number: an emptied Quest 2 moved Quest 3 up, and a world's saved steps of quest 3 and
+				// rules waiting for it went to the wrong quest - questfix round 2. "Remove this quest" still moves the next up)
+				WriteFurther(DynamicIslands.currentIslandProps, working);
 				EditorUI.RefreshIsland();
 			});
 			DynamicIslands.Notify(main.Exists ? "Quest \"" + main.ShownTitle + "\" with " + main.Steps.Count + " step(s)" + (more.Count > 0 ? " and " + more.Count + " more quest(s)" : "") + (bring != null && bring.WhatArg.Length > 0 ? ", bringing " + bring.DescribeWhat() + " when done," : "") +
 				" saved with the island (Ctrl+S)" : more.Count > 0 ? more.Count + " quest(s) saved with the island (Ctrl+S); no main quest" : "The island has no quest now");
 			Close();
+		}
+
+		/// <summary>Writes quests 2-9 each to its own number; an empty one leaves its number empty (CIQuestFix2).</summary>
+		internal static void WriteFurther(IDictionary<string, string> props, Dictionary<int, IslandQuest> working)
+		{
+			for (int i = 1; i < IslandQuest.MaxQuests; i++)
+			{
+				IslandQuest qi;
+				(working.TryGetValue(i, out qi) && qi.Exists ? qi : new IslandQuest()).To(props, i);
+			}
 		}
 
 		/// <summary>

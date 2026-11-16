@@ -13,6 +13,7 @@ include lib_huts
 include lib_areas
 include lib_highwater
 include lib_rain
+include lib_caves
 # RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 52 -> 85; the old island moved 33 m south (push frames), so its south shore stays on the coast and the new land is north
 # RAIN 10-26: the new land - Spillway Hill with survey mast, Seep Cave, Ove Strand at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five survey pegs
 new
@@ -223,6 +224,70 @@ call ar_plants_hill x=30 z=22 r=14 seed=26592
 call ar_plants_hill x=-30 z=4 r=14 seed=26593
 call ar_plants_hill x=40 z=-40 r=14 seed=26594
 call ar_plants_hill x=66 z=36 r=10 seed=26595
+
+# --- 11-12 (w11 prep): the reservoir intakes (plan 11 row: UW SYS - 2 ST + DIG; mushrooms 3, stone 2, titanium 1) -----
+# Two old intake tunnels leave the reservoir floor (7 m under) on the west side, away from the pump hall, and climb
+# 12 deg under the embankment: the long intake ends in the dry valve chamber (air, loot), the short one in a flooded
+# sump room with an air pocket. No quest step. 11-13 w11 probe: the service passage was moved out to the west slope
+# (5-6 m there; the old line met the hill at 15 m, over the chamber): a dug passage that once led to the valve chamber,
+# fallen in after 10 m - two rats nest at its end. The way back from the chamber is the short swim down the intake.
+# (prep, offline only: the service passage's mouth height and both rooms not yet seen in Raft - probe first)
+# (11-13 w11b: at len 52 - seven pieces, the room 15 m under the embankment - the long intake had no room at its end in
+# Raft: an open end, the chest and mushrooms buried in the hill, the player fell out of it; six pieces like the sump's)
+call kit_st x=-10 z=-37 yaw=250 len=41.6 slope=12 end=room size=0.7 hill=1 dirt=0 mush=2 stone=1 vines=1 titanium=1 as=vrintake1
+prop vrintake1 cave.rock=plain
+call kit_st x=-8 z=-46 yaw=225 len=41.6 slope=12 end=room size=0.7 hill=1 dirt=0 mush=1 stone=1 vines=0 wet=1 as=vrintake2
+prop vrintake2 cave.rock=plain
+# (11-13 w11c: CC found the short intake's roof open 3.3 m in from its mouth - rays from above reached its floor;
+# ground raised over that stretch, short of the mouth itself)
+brush flatten at -10.4 -48.4 r=1.8 s=20 frames=200 h=1.9
+brush smooth at -10.4 -48.4 r=3 s=5 frames=15
+# (11-13 w11c: with the long intake shortened its hill no longer reaches the west shore - -91 -50 became sea bed
+# (dig floor -3.8, all wet); the mouth moved up the slope to -82, where the ground rises about 1.1 m a metre)
+# (11-13 w11e: east along -50 to -68 its strokes met the valve chamber's den (its box from -74 -49.4 back to -53 -42 on
+# this side) and a dig takes what it digs into away - the den went whole, the chest and mushrooms left in the rock. Now
+# up the slope away from the den, its room 1.5 m short of the den's box)
+dig -82,-50 -76.5,-46.3 r=1.75 slope=0 as=vrservice
+# (11-16 w11D: the room's stroke logged floor 4.5 r=2.8 under ground 10.1 - its top at the ground, 24 ground cells cut
+# and the rat walked out on to the hill under open sky; CAVE_LESSONS 11-08: rock over a room by digging it deeper - a
+# smaller room sloped down, its top 1.5+ m under the ground)
+dig -76.5,-46.3 -73.5,-44.3 r=2 slope=-25 as=vrservice
+# (11-14 w11g: caveloot found no dry spot away from the sky in this short passage and stopped the recipe - left out;
+# the rats are its find)
+prop vrservice cave.rock=plain
+# cavecheck inside vrvalveair vrsumpair vrvalvechest vrrats
+# (11-16 w11: count=2 + drop from 2 m over the room's floor (4.5) spread the pair - one on the hill top over the den,
+# one out by the mouth, both under open sky; CAVE_LESSONS 11-08: one rat a place, h= the floor + 0.3, no drop)
+# (11-16 w11C: a second rat at -75.9 -45.9 wandered to -76.4 -44.8 under open sky - the roof only covers the room's
+# east end; one rat, at the deep end)
+place Creature_Rat vrrats at -74.3 -44.6 h=4.7
+prop vrrats creature.count=1
+prop vrrats creature.respawn=0
+# (11-16 w11F: the rat roamed from its room out of the mouth to -81.4 -46.3 on the open hill before the player came
+# (run 2 of 2) - a rat roams round its spot, and the room is only 7 m in; now it waits in its room until a player is
+# in the passage, 3 m in from the mouth)
+place Zone_Trigger vrratzone at -79.8 -48.5 h=6.6
+prop vrratzone zone.id=vr_service
+prop vrratzone zone.radius=2
+prop vrrats creature.zone=vr_service
+place Zone_Trigger vrvalveair at -56.5 -54 h=3.5
+prop vrvalveair obj.name=vrvalveair
+prop vrvalveair zone.id=vr_valvechamber
+prop vrvalveair zone.radius=8
+prop vrvalveair zone.repeat=1
+prop vrvalveair zone.air=1
+prop vrvalveair zone.message=The valve chamber at the top of the intake - dry, and air to breathe. The way out is back down the intake.
+place Zone_Trigger vrsumpair at -43.1 -81.1 h=2.5
+prop vrsumpair obj.name=vrsumpair
+prop vrsumpair zone.id=vr_sump
+prop vrsumpair zone.radius=7
+prop vrsumpair zone.repeat=1
+prop vrsumpair zone.air=1
+prop vrsumpair zone.message=Air under the sump room's roof - breathe.
+place Loot_ChestSmall vrvalvechest at -57.5 -55.5 h=4.5 drop yaw=70
+prop vrvalvechest loot.refill=0
+note vrvalvechest Intake valve store | The intake crew's store in the valve chamber: a spare spindle, rope, and a tin of bolts.
+loot vrvalvechest Bolt*3;Rope*2;MetalIngot*1
 call hw_machine x=0 z=18 yaw=180 al=vr_machine nm="Outflow gate" obj=TP_LaserControlPanel_lever sc=3 a=vr_top b=vr_cave done=vr_fixed rew=vr_rewchest rnote=vr_rewnote msg="It works." hint="It wants the level float from Spillway Hill and the outflow gate key from Seep Cave."
 call hw_note x=-2.6 z=19.2 yaw=200 al=vr_hint
 
@@ -313,5 +378,14 @@ step read|Outflow ledger|1|Bring both to the outflow gate and read what it shows
 step read|Dagny's letter to the town|1|Read the letter on the crate in the pump hall
 quest done=The water plans are yours, and Dagny's letter says where this ends: the Rain Engine. The next station answers on 1100.
 quest reward=Plank*6;Rope*2;Scrap*4
+
+# (11-14 w11g: the valve chamber den's hill buries these sea finds and rocks - the same seven since w11c)
+clear at -77.73 -98.83 r=2.5 only=Pickup_Landmark_Iron all
+clear at -89.41 -22.95 r=2.5 only=Pickup_Landmark_Iron all
+clear at -77.68 -74.85 r=2.5 only=Pickup_Landmark_Rock all
+clear at -64.63 -45.19 r=2.5 only=Pickup_Landmark_Rock all
+clear at -64.76 -42.59 r=2.5 only=Pickup_Landmark_GiantClam all
+clear at -39.15 -111.15 r=2.5 only=SeaVine3 all
+clear at -48.67 -102.29 r=2.5 only=SeaVine3_klump all
 
 save Vaporhold Reservoir

@@ -287,7 +287,7 @@ step read|Bell ringer's notice|1|Read the bell ringer's notice by the ferry bell
 step talk|Nils|1|Talk to Nils at the ruined house on the shore
 step reach|qp_trail|1|Find the foot of the trail up Ferry Hill, below the signal mast
 step reach|qp_summit|1|Climb the trail to the top of Ferry Hill
-step collect|story:qp_top|1|Climb the ferry signal mast and take the bell clapper from its deck
+step collect|story:qp_top|1|Climb the ferry signal mast and take the bell clapper from the box on its deck
 step reach|qp_cave|1|Find Tide Cave in the rocks, past Nils' ruined house
 step collect|story:qp_cave|1|Take the bell rope from the chest at the back of the cave
 step read|Bell ringer's card|1|Bring both to the ferry bell and read what it shows

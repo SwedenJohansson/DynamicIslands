@@ -296,7 +296,7 @@ step blueprint|Blueprint_Machete|1|Take the machete plans from the ranger's stro
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the ranger's strongbox
 step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the ranger's strongbox
 step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the ranger's strongbox
-quest done=The strongbox opens: the machete's blueprint, the biofuel refiner's, the fuel tank's and its pipe's. The voice on the radio said south - toward the traders.
+quest done=The strongbox opens: the machete's blueprint, the biofuel refiner's, the fuel tank's and its pipe's. The voice on the radio said to sail on - toward the traders.
 quest reward=Plank*8;Rope*4;BioFuel*1
 
 # --- RAFT REMADE 10-27: groundall - rocks the scatters/randomizer left off a slope or edge (CIGroundIslands): taken away by their

@@ -9,6 +9,16 @@ hour 11
 weather Calm
 
 # Outside: both mouths in the shoulder's foot
+# (11-13 cavemix, TODO 0f) the cave's rat: alive, on the dug floor under the hill's rock, then dealt with
+at 33 -47
+wait 2
+expect animals Rat 2
+expect animalsinside Rat 2
+wait 2
+picture ch_rat_room 46 6.5 -47 46.6 5.2 -50.8 light=20
+picture ch_rat_end 51 4 -46 57 4.9 -42 light=20
+kill Rat
+expect animals Rat 0
 picture ch_cave_out 28 6 -44 40 4 -44
 walk 33 -47 to 39 -47 to 46 -47 to 46.5 -49 to 47.6 -52.8
 picture ch_cave_room 46 6.5 -47 48.2 5.5 -54.3 light=20

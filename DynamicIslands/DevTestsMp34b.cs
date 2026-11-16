@@ -386,9 +386,14 @@ namespace DynamicIslands
 					IslandObjectRef gr = ScObjOf(e, "goats");
 					string food = Taming.DefaultFood(AI_NetworkBehaviourType.Goat);
 					Func<AI_NetworkBehaviour[]> goats = () => UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>()
-						.Where(a => a != null && a.behaviourType == AI_NetworkBehaviourType.Goat && Vector3.Distance(a.transform.position, gr.transform.position) < 25f).ToArray();
+						.Where(a => a != null && a.behaviourType == AI_NetworkBehaviourType.Goat && Vector3.Distance(a.transform.position, gr.transform.position) < 45f).ToArray();
+					// (45 m: Raft's goats wander their whole circle round the spot - 25-30 m off on the host and player 2 alike
+					// in the 11-15 flake; with 25 m here the test missed them, no goat was lost)
+					// (every goat here, its distance to the spot: tells a goat not sent from one that wandered off - FC6 flake 11-15)
+					Func<string> allGoats = () => string.Join(" ", UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null && a.behaviourType == AI_NetworkBehaviourType.Goat)
+						.Select(a => (a.ObjectIndex) + "@" + Vector3.Distance(Flat(a.transform.position), Flat(gr.transform.position)).ToString("F0") + "m").ToArray());
 					yield return M4Wait(() => goats().Length >= 2, 20f);
-					Check(ref ok, goats().Length >= 2, "player 2 sees the two goats (" + goats().Length + ")");
+					Check(ref ok, goats().Length >= 2, "player 2 sees the two goats (" + goats().Length + "; all goats: " + allGoats() + ")");
 					if (goats().Length == 0) yield break;
 					Check(ref ok, QuestTracker.StepOf(e) == 0 && Taming.Current(e).Contains("Goat@pen"), "the tame step is the current one on player 2");
 					Gw4Take(me, food);
@@ -425,10 +430,13 @@ namespace DynamicIslands
 						Vector3 next = dir.magnitude < 4.5f ? spot.transform.position : me.transform.position + dir.normalized * 3.5f;
 						MovePlayerTo(next);
 						yield return new WaitForSeconds(2.5f);
+						// (as a player does: a slow goat gets a moment to catch up - one left 30 m behind stops for good, by design)
+						yield return M4Wait(() => goats().Any(g => Vector3.Distance(Flat(g.transform.position), Flat(me.transform.position)) < 6f), 6f);
 					}
 					yield return M4Wait(() => goats().Any(g => Vector3.Distance(Flat(g.transform.position), Flat(me.transform.position)) < 8f), 25f);
-					goat = goats().OrderBy(a => Vector3.Distance(a.transform.position, me.transform.position)).First();
-					Check(ref ok, Vector3.Distance(Flat(goat.transform.position), Flat(me.transform.position)) < 8f, "the goat followed player 2 (" + Vector3.Distance(Flat(goat.transform.position), Flat(me.transform.position)).ToString("F1") + " m behind)");
+					goat = goats().OrderBy(a => Vector3.Distance(a.transform.position, me.transform.position)).FirstOrDefault();
+					float behind = goat != null ? Vector3.Distance(Flat(goat.transform.position), Flat(me.transform.position)) : -1f;
+					Check(ref ok, goat != null && behind < 8f, "the goat followed player 2 (" + behind.ToString("F1") + " m behind; player 2 " + Vector3.Distance(Flat(me.transform.position), Flat(gr.transform.position)).ToString("F0") + " m from the spot, on the island " + Taming.OnIsland(e, me.transform.position) + "; all goats: " + allGoats() + ")");
 					break;
 				}
 				case "tameh":
@@ -441,7 +449,9 @@ namespace DynamicIslands
 					AI_NetworkBehaviour goat = sp != null ? sp.Spawned.FirstOrDefault(Taming.IsTamed) : null;
 					Check(ref ok, Taming.Following == 1 && goat != null, "the host has one goat following (" + Taming.Following + ")");
 					if (goat != null && other != null) yield return M4Wait(() => Vector3.Distance(Flat(goat.transform.position), Flat(other.transform.position)) < 8f, 12f);
-					Check(ref ok, goat != null && other != null && Vector3.Distance(Flat(goat.transform.position), Flat(other.transform.position)) < 8f, "it follows player 2 (" + (goat != null && other != null ? Vector3.Distance(Flat(goat.transform.position), Flat(other.transform.position)).ToString("F1") : "?") + " m)");
+					Check(ref ok, goat != null && other != null && Vector3.Distance(Flat(goat.transform.position), Flat(other.transform.position)) < 8f, "it follows player 2 (" + (goat != null && other != null ? Vector3.Distance(Flat(goat.transform.position), Flat(other.transform.position)).ToString("F1") : "?") + " m"
+						+ (other != null && gr != null ? "; player 2 " + Vector3.Distance(Flat(other.transform.position), Flat(gr.transform.position)).ToString("F0") + " m from the spot, on the island " + Taming.OnIsland(e, other.transform.position) : "")
+						+ (sp != null ? "; goats " + string.Join(" ", sp.Spawned.Where(a => a != null).Select(a => a.ObjectIndex + (Taming.IsTamed(a) ? "T" : "") + "@" + Vector3.Distance(Flat(a.transform.position), Flat(gr.transform.position)).ToString("F0") + "m").ToArray()) : "") + ")");
 					Check(ref ok, Taming.Refused > m4Refused0, "the host refused player 2's other feeds (" + (Taming.Refused - m4Refused0) + ")");
 					// on to the escort step (leading the goat to its pen is the single-player test's)
 					QuestTracker.JumpTo(e, 0, 1);

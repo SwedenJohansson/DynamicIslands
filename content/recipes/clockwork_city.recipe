@@ -449,7 +449,7 @@ step collect|story:winder|1|Take the winding key from the harbourmaster's box
 step reach|plaza|1|Cross the rope bridge from the harbour's top to the plaza
 step read|The city timetable|1|Read the city timetable
 # Chapter 2 - the timed doors
-step collect|story:gear|1|Strike the gong and get the first gear out of the Hall of Hours in thirty seconds
+step collect|story:gear|1|Strike the gong and take the first gear from its case in the Hall of Hours in thirty seconds
 step kill|Rat|4|Clear the rats out of the gearworks
 step collect|story:gear|2|Drop the counterweight and reach the gearworks' vault in twenty seconds
 step reach|undercroft|1|Swim through the sea door into the flooded undercroft

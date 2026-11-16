@@ -42,6 +42,9 @@ namespace DynamicIslands.Editor
 			/// 11-09 #8): the upgrade then takes the next free index from ClashBase on, the same one each start with the
 			/// same mods, and the world file's learned list still names it by this one (UpgradeTable).</summary>
 			public int Declared;
+			/// <summary>The index it got when made (Declared, or the free one on a clash): a world saved without the
+			/// numbers' line was played with these (sweep 11-15).</summary>
+			public int Fresh;
 			public string Name, BaseName, Display, Description;
 			public Color Tint;
 			/// <summary>A pale metal look: the model's textures lightened (dark parts lifted) in its pale tint, not made Vivid.</summary>
@@ -332,6 +335,134 @@ namespace DynamicIslands.Editor
 			return byIndex.TryGetValue(live, out u) && u.Declared != 0 ? u.Declared : live;
 		}
 
+		#region The world's upgrade numbers (sweep 11-14)
+
+		/// <summary>The world file's line of the moved upgrades' numbers ("declared:live,..."). A moved upgrade's number comes
+		/// from the items other mods registered first: with mods loaded in another order, or a player with other mods, the
+		/// same upgrade had another number, and the world's saved upgrades (by number) turned into other items. The world
+		/// keeps the numbers it was played with; a load moves the upgrades back to them, and the host sends them to each
+		/// player who joins.</summary>
+		internal const string IndexLineKey = "upgradeindex";
+
+		/// <summary>The moved upgrades as "declared:live,..." in declared order ("" when none moved).</summary>
+		internal static string IndexMapText()
+		{
+			return string.Join(",", Made.Where(u => u.Index != u.Declared && u.Declared != 0).OrderBy(u => u.Declared)
+				.Select(u => u.Declared.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":" + u.Index.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToArray());
+		}
+
+		internal static bool HasIndexState { get { return IndexMapText().Length > 0; } }
+
+		internal static IEnumerable<string> IndexLines()
+		{
+			string map = IndexMapText();
+			if (map.Length > 0) yield return "@" + IndexLineKey + "=" + map;
+		}
+
+		internal static Dictionary<int, int> ParseIndexMap(string text)
+		{
+			var map = new Dictionary<int, int>();
+			foreach (string pair in (text ?? "").Split(','))
+			{
+				string[] f = pair.Split(':');
+				int d, l;
+				if (f.Length == 2 && int.TryParse(f[0].Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out d)
+					&& int.TryParse(f[1].Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out l)) map[d] = l;
+			}
+			return map;
+		}
+
+		/// <summary>The world file's line (WorldOptions.ReadLine): the upgrades go to the world's numbers.</summary>
+		internal static bool ReadIndexLine(string key, string value)
+		{
+			if (key != IndexLineKey) return false;
+			ApplyIndexMap(ParseIndexMap(value), "the world's numbers");
+			return true;
+		}
+
+		/// <summary>Raft read the world's id (RGD_World.RestoreWorld, before the raft and the bags are restored): the
+		/// upgrades go to the numbers in the world file, so the saved items are read as the same upgrades.</summary>
+		internal static void AfterWorldRead()
+		{
+			if (!Made.Any()) return;
+			string file = IslandWorldState.WorldFilePath;
+			if (!System.IO.File.Exists(file)) return;
+			string prefix = "@" + IndexLineKey + "=";
+			string line = System.IO.File.ReadAllLines(file).FirstOrDefault(l => l.StartsWith(prefix, StringComparison.Ordinal));
+			// (no line: a world from before it, played with the numbers the upgrades get at the start - before, an earlier
+			// world's numbers stayed on)
+			if (line != null) ApplyFullMap(ParseIndexMap(line.Substring(prefix.Length)), "the world's numbers", false);
+			else ApplyFullMap(null, "the start's numbers: the world has no list", true);
+		}
+
+		/// <summary>Every made upgrade to the number in <paramref name="map"/>; one not named goes to its declared number (a
+		/// world's or the host's list names only the moved ones) or, with <paramref name="toFresh"/>, to the one it got at the
+		/// start (Fresh). Before (sweep 11-15), an upgrade not named stayed where an earlier world or host had put it, and a
+		/// player who joined a host with none moved kept another host's numbers.</summary>
+		internal static int ApplyFullMap(Dictionary<int, int> map, string why, bool toFresh)
+		{
+			var full = new Dictionary<int, int>();
+			foreach (Upgrade u in Made)
+			{
+				if (u.Declared == 0) continue;
+				int to;
+				if (map == null || !map.TryGetValue(u.Declared, out to)) to = toFresh && u.Fresh != 0 ? u.Fresh : u.Declared;
+				if (to != u.Index) full[u.Declared] = to;
+			}
+			return ApplyIndexMap(full, why);
+		}
+
+		/// <summary>Moves made upgrades to the numbers in <paramref name="map"/> (declared -> live) where that number is free
+		/// (or held by another upgrade that moves too); returns how many moved. Upgrades not in the map stay.</summary>
+		internal static int ApplyIndexMap(Dictionary<int, int> map, string why)
+		{
+			if (map == null || map.Count == 0) return 0;
+			var moves = new Dictionary<Upgrade, int>();
+			foreach (KeyValuePair<int, int> kv in map)
+			{
+				Upgrade u = Made.FirstOrDefault(x => x.Declared == kv.Key);
+				if (u == null || u.Index == kv.Value) continue;
+				if (kv.Value != u.Declared && (kv.Value < ClashBase || kv.Value >= 32767)) { Warn(u.Display + ": number " + kv.Value + " (" + why + ") isn't one an upgrade moves to - kept at " + u.Index); continue; }
+				moves[u] = kv.Value;
+			}
+			// (a number held by an item that doesn't move - another mod's, or an upgrade staying - can't be taken)
+			bool dropped = true;
+			while (dropped && moves.Count > 0)
+			{
+				dropped = false;
+				foreach (KeyValuePair<Upgrade, int> m in moves.ToList())
+				{
+					Item_Base at = ItemManager.GetItemByIndex(m.Value);
+					if (at == null || moves.Keys.Any(x => x.Item == at)) continue;
+					Warn(m.Key.Display + ": number " + m.Value + " (" + why + ") is taken by '" + at.UniqueName + "' - kept at " + m.Key.Index + ". Load this world with the mods it was played with.");
+					moves.Remove(m.Key);
+					dropped = true;
+				}
+			}
+			foreach (Upgrade u in moves.Keys) { Upgrade had; if (byIndex.TryGetValue(u.Index, out had) && had == u) byIndex.Remove(u.Index); }
+			foreach (KeyValuePair<Upgrade, int> m in moves)
+			{
+				Upgrade u = m.Key;
+				int from = u.Index;
+				SetItemIndex(u.Item, m.Value);
+				u.Index = m.Value;
+				byIndex[u.Index] = u;
+				if (u.Index == u.Declared) clashed.Remove(u.Display); else Clash(u.Display);
+				Log(u.Display + " moved " + from + " -> " + u.Index + " (" + why + ")");
+			}
+			if (moves.Count > 0) UpgradeTableMenu.Refresh();
+			return moves.Count;
+		}
+
+		static void SetItemIndex(Item_Base item, int index)
+		{
+			Traverse f = Traverse.Create(item).Field("uniqueIndex");
+			if (f.FieldExists()) f.SetValue(index);
+			if (item.UniqueIndex != index) item.Initialize(index, item.UniqueName, item.MaxUses);
+		}
+
+		#endregion
+
 		/// <summary>Once a session, in a world: tells the player which upgrades had to move or are missing (AUDIT 11-09 #8).</summary>
 		static void TellClashes()
 		{
@@ -356,6 +487,7 @@ namespace DynamicIslands.Editor
 				Clash(u.Display);
 				u.Index = free;
 			}
+			u.Fresh = u.Index;
 
 			Item_Base item = ScriptableObject.Instantiate(baseItem);
 			item.name = u.Name;
@@ -445,6 +577,71 @@ namespace DynamicIslands.Editor
 			byIndex.Clear();
 			if (holder != null) UnityEngine.Object.Destroy(holder);
 			holder = null;
+		}
+
+		/// <summary>For tests: the last "placement check" result line.</summary>
+		public static string LastPlacementCheck;
+
+		/// <summary>
+		/// Each world load (and new world): every made upgrade must still be Raft's item at its index and name, the quick
+		/// lookup must know it, a buildable one must have all its block prefabs and be in BlockCreator's list. A 3.4 player
+		/// could not place the upgrade research table in an old world (no ghost at all) until a fresh world had been made;
+		/// the cause is not proven, so whatever is found broken here is mended and logged (11-12).
+		/// </summary>
+		public static void PlacementCheck()
+		{
+			if (all == null) return;
+			int ok = 0;
+			List<string> mended = new List<string>(), bad = new List<string>();
+			var buildables = Traverse.Create(typeof(BlockCreator)).Field("buildableItems").GetValue<List<Item_Base>>();
+			foreach (Upgrade u in Made.ToList())
+			{
+				try
+				{
+					List<string> fix = new List<string>();
+					Item_Base atIndex = ItemManager.GetItemByIndex(u.Index);
+					if (atIndex != u.Item)
+					{
+						if (atIndex == null) { RAPI.RegisterItem(u.Item); fix.Add("re-registered"); }
+						else { bad.Add(u.Name + " index " + u.Index + " is '" + atIndex.UniqueName + "'"); continue; }
+					}
+					if (ItemManager.GetItemByName(u.Name) != u.Item) bad.Add(u.Name + " by name is '" + (ItemManager.GetItemByName(u.Name) == null ? "none" : ItemManager.GetItemByName(u.Name).UniqueIndex.ToString()) + "'");
+					Upgrade had;
+					if (!byIndex.TryGetValue(u.Index, out had) || had != u) { byIndex[u.Index] = u; fix.Add("lookup"); }
+					Block[] basePrefabs = u.Base != null && u.Base.settings_buildable != null ? u.Base.settings_buildable.GetBlockPrefabs() : null;
+					if (basePrefabs != null && basePrefabs.Length > 0 && basePrefabs.All(p => p != null))
+					{
+						Block[] mine = u.Item.settings_buildable != null ? u.Item.settings_buildable.GetBlockPrefabs() : null;
+						if (mine == null || mine.Length != basePrefabs.Length || mine.Any(p => p == null || p.buildableItem != u.Item))
+						{
+							if (holder == null) { holder = new GameObject("DI_UpgradePrefabs"); holder.SetActive(false); UnityEngine.Object.DontDestroyOnLoad(holder); }
+							// the old clones of this item go first, so a mend doesn't leave them piling up in the holder
+							if (mine != null) foreach (Block old in mine) if (old != null && old.transform.parent == holder.transform) UnityEngine.Object.Destroy(old.gameObject);
+							ItemInstance_Buildable b = u.Base.settings_buildable.Clone();
+							Traverse.Create(b).Field("blockPrefabs").SetValue(basePrefabs.Select(p => ClonePrefab(p, u.Base, u.Item, u)).ToArray());
+							Traverse.Create(b).Field("mirroredVersion").SetValue(null);
+							u.Item.settings_buildable = b;
+							fix.Add("prefabs re-cloned");
+						}
+						if (buildables != null && buildables.Count > 0 && !buildables.Contains(u.Item)) { buildables.Add(u.Item); fix.Add("buildable list"); }
+					}
+					if (fix.Count > 0) mended.Add(u.Name + " (" + string.Join(", ", fix.ToArray()) + ")"); else ok++;
+				}
+				catch (Exception e) { bad.Add(u.Name + ": " + e.Message); }
+			}
+			LastPlacementCheck = "placement check: " + ok + " ok, " + mended.Count + " mended" + (mended.Count > 0 ? " [" + string.Join("; ", mended.ToArray()) + "]" : "") +
+				", " + bad.Count + " wrong" + (bad.Count > 0 ? " [" + string.Join("; ", bad.ToArray()) + "]" : "");
+			if (mended.Count > 0 || bad.Count > 0) Warn(LastPlacementCheck); else Log(LastPlacementCheck);
+		}
+
+		static readonly HashSet<int> unknownLogged = new HashSet<int>();
+		/// <summary>The surface check met a DI_ item that the quick lookup doesn't know: logged once per item a session.</summary>
+		internal static void NoteUnknown(Item_Base item)
+		{
+			if (item == null || item.UniqueName == null || !item.UniqueName.StartsWith("DI_", StringComparison.Ordinal) || !unknownLogged.Add(item.UniqueIndex)) return;
+			Upgrade u = Everything.FirstOrDefault(x => x.Name == item.UniqueName);
+			Warn("placement: " + item.UniqueName + " (" + item.UniqueIndex + ") is not in the lookup" + (u == null ? " (no such upgrade)" :
+				", upgrade index " + u.Index + ", made " + (u.Item != null) + ", same item " + (u.Item == item)));
 		}
 
 		public static string CostText(CostMultiple[] cost)
@@ -859,7 +1056,91 @@ namespace DynamicIslands.Editor
 				try { TintAll(o, u.Tint, u.Whiten); o.transform.localScale *= HeldGrow; Shine(o, u.Tint); u.Held(o); }
 				catch (Exception e) { Warn(u + ": " + e.Message); }
 				list.Add(new ItemConnection { name = u.Name, inventoryItem = u.Item, obj = o, objs = b.objs });
+				int n = CopyAnimationEvents(c, b.obj, o);
+				Log(u.Name + ": hand model with " + n + " animation event(s) of " + u.BaseName);
 			}
+			try { MacheteAsWeapon(list); } catch (Exception e) { Warn("titanium machete as a weapon: " + e.Message); }
+		}
+
+		/// <summary>The titanium machete's weapon stats after MacheteAsWeapon: Raft's machete's damage and attack layers, and what
+		/// the titanium one got (for CI checks and the report).</summary>
+		public static string MacheteNote = "";
+
+		/// <summary>User 11-12: the titanium machete must also hurt creatures. Raft's machete is a MeleeWeapon of its own; when
+		/// it cannot hurt one (no damage, or its attack layers miss the layers the titanium sword hits creatures on), the
+		/// titanium machete gets the sword's attack layers on top of its own (so it still cuts vines and quest plants) and a
+		/// damage between the titanium spear's and the greatsword's.</summary>
+		static void MacheteAsWeapon(List<ItemConnection> list)
+		{
+			MeleeWeapon Of(string name)
+			{
+				ItemConnection k = list.FirstOrDefault(x => x != null && x.inventoryItem != null && x.obj != null && x.inventoryItem.UniqueName == name);
+				return k != null ? k.obj.GetComponentInChildren<MeleeWeapon>(true) : null;
+			}
+			MeleeWeapon machete = Of("Machete"), mine = Of("DI_TitaniumMachete"), spear = Of("DI_TitaniumSpear"), sword = Of("DI_TitaniumGreatsword");
+			if (mine == null || sword == null) return;
+			int baseDamage = machete != null ? Traverse.Create(machete).Field("damage").GetValue<int>() : -1;
+			int baseMask = machete != null ? machete.attackMask.value : 0, swordMask = sword.attackMask.value;
+			bool hurts = baseDamage > 0 && (baseMask & swordMask) == swordMask;
+			MacheteNote = "Raft's machete: damage " + baseDamage + ", attack layers " + baseMask + " (sword " + swordMask + ")";
+			if (hurts) { MacheteNote += ": it hurts creatures, the titanium one keeps x" + WeaponDamageFactor; Log(MacheteNote); return; }
+			int lo = spear != null ? Traverse.Create(spear).Field("damage").GetValue<int>() : 0;
+			int hi = Traverse.Create(sword).Field("damage").GetValue<int>();
+			int dmg = Mathf.Max(Traverse.Create(mine).Field("damage").GetValue<int>(), Mathf.RoundToInt((lo + hi) / 2f));
+			Traverse.Create(mine).Field("damage").SetValue(dmg);
+			mine.attackMask = mine.attackMask.value | swordMask;
+			MacheteNote += ": the titanium machete gets damage " + dmg + " (spear " + lo + ", greatsword " + hi + ") and layers " + mine.attackMask.value;
+			Log(MacheteNote);
+		}
+
+		/// <summary>Raft's AnimationEventCaller sends each animation event (OnMeleeHit, Animation_HookThrow, the paddle stroke...)
+		/// to a fixed GameObject: the base item's hand model. A cloned hand model gets none of them, so a cloned weapon swung
+		/// but never hit and a cloned hook never threw (11-12 player report). Every connection whose receiver is the base
+		/// model or one of its children gets a copy aimed at the same spot in the clone; the caller only sends to active
+		/// objects, so the hidden base model and the clone never both get it.</summary>
+		static int CopyAnimationEvents(UseItemController c, GameObject from, GameObject to)
+		{
+			int n = 0;
+			Network_Player np = c.GetComponentInParent<Network_Player>();
+			Transform root = np != null ? np.transform : c.transform.root;
+			foreach (AnimationEventCaller caller in root.GetComponentsInChildren<AnimationEventCaller>(true))
+			{
+				var cons = Traverse.Create(caller).Field("connections").GetValue<List<AnimationConnection>>();
+				if (cons == null) continue;
+				foreach (AnimationConnection a in cons.ToList())
+				{
+					if (a == null || a.objectReciever == null) continue;
+					Transform t = Twin(from.transform, to.transform, a.objectReciever.transform);
+					if (t == null) continue;
+					cons.Add(new AnimationConnection
+					{
+						name = a.name, layerName = a.layerName, stateName = a.stateName, functionName = a.functionName,
+						functionParameter = a.functionParameter, objectReciever = t.gameObject, timeOfEvent = a.timeOfEvent,
+						active = a.active, calledEvent = false, lastNormalizedTime = a.lastNormalizedTime
+					});
+					n++;
+				}
+			}
+			return n;
+		}
+
+		/// <summary>The transform in clone <paramref name="to"/> at the same child path as <paramref name="t"/> has under
+		/// <paramref name="from"/>; null when t is not from or one of its children.</summary>
+		static Transform Twin(Transform from, Transform to, Transform t)
+		{
+			var path = new List<int>();
+			for (Transform x = t; x != from; x = x.parent)
+			{
+				if (x == null) return null;
+				path.Add(x.GetSiblingIndex());
+			}
+			Transform r = to;
+			for (int i = path.Count - 1; i >= 0; i--)
+			{
+				if (path[i] >= r.childCount) return null;
+				r = r.GetChild(path[i]);
+			}
+			return r;
 		}
 
 		/// <summary>In PlayerEquipment.Awake, before it gathers its Equipment: each worn upgrade gets a copy of its base item's
@@ -1219,6 +1500,7 @@ namespace DynamicIslands.Editor
 			try
 			{
 				ExtraUpgrades.Upgrade u = ExtraUpgrades.FindMade(__0);
+				if (u == null) ExtraUpgrades.NoteUnknown(__0);
 				if (u != null && u.Base != null && u.Base != __0) __result = __instance.AcceptsBlock(u.Base);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [upgrades] Surface check: " + e.Message); }
