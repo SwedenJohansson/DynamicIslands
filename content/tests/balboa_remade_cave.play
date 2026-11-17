@@ -1,0 +1,21 @@
+# Balboa Remade's gravel adit (CIPlay balboa_remade_cave, 11-12 w13; in a test world 'CI ...'; offline-written, NOT yet run).
+# Points as in its recipe (the origin frame): the knoll hw_mount at -10 42 (b 32, h 28); kit_sys mouth 1 at -2 75 (vined, yaw 180),
+# mouth 2 at -18 75 (16 m on, open), trunk down to z 51 and bending to x -12, the branch off it at z 63 to the chamber at ~(6 62)
+# with the rangers' chest. HEIGHT GUESSES (need a Raft surface probe): the foot/floor 6.2 m (flatten shelves), the ground over
+# the chamber ~11.5 m. The offset is the old one; check it after the build (the knoll can move the land centre).
+island Balboa Remade keep
+offset 0.6425 -0.5063
+hour 11
+weather Calm
+
+# The knoll and the two mouths from outside
+picture ba_gravel_out -10 14 92 -10 9 75
+picture ba_gravel_mouth -10 9 88 -18 7 75
+# In by the open east... the open mouth (mouth 2), along the passage to the trunk, then the branch to the chamber
+walk -18 79 to -18 75 to -18 66 to -13 54 to -8 51 to -2 53 to -2 63 to 2 63 to 6 62 below=14
+picture ba_gravel_in -4 8.2 63 6 7 62 light=20
+open Rangers' gravel cache
+wait 2
+expect item Rope 2
+# Out again the way in
+walk 6 62 to 2 63 to -2 63 to -2 53 to -8 51 to -13 54 to -18 66 to -18 75 to -18 79 below=14

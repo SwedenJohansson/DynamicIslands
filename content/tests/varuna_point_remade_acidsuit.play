@@ -1,0 +1,23 @@
+# Varuna Point Remade's fuel-spill gallery with a work suit (CIPlay varuna_point_remade_acidsuit, 11-12 w13, re-cut 11-16 into the knoll; in a test world 'CI ...').
+# Points as in its recipe: the spoil knoll at 26 -45 (b 12, h 14) on the flat below Varuna's Back; the adit from its mouth
+# at 26 -31.5 level into the knoll to 26 -42.5, its end room to 26 -47.5; the side gallery (acid, own plays) leaves it at
+# the room's right wall at 28 -41.5 to 29.5 -43.5 and its chamber to 29.8 -46 (zone vp_fuelspill at 29.7 -44.9, r 2.6,
+# safe=suit). Floor 2.1 m. (11-16: first cut to 32 -38.5 it broke out of the knoll's flank; then 27 -39 -> 31.8 -45 left
+# loose rim rock on the steep flank; now within 6 m of the knoll's heart.)
+# The suit box (vpfuelsuits at 25 -37.4, by the mouth) gives 180 s of suit; into the gallery to the fuel-line
+# locker (30.2 -46.8) and back, unhurt. Run in a fresh world after the acid play.
+island Varuna Point Remade keep
+offset -0.7444 -5.052
+hour 11
+weather Calm
+walk 26 -28 to 26 -31.5 to 26 -35.5 below=14
+use vpfuelsuits
+walk 26 -35.5 to 26 -38.5 to 26.8 -41 to 28.4 -42.4 to 29.8 -45.4
+wait 6
+expect unhurt
+open Fuel-line locker
+wait 2
+expect item Bolt 3
+picture vp_acid_in 28.0 3.9 -41.6 30 2.6 -46 light=20
+walk 29.8 -45.4 to 28.4 -42.4 to 26.8 -41 to 26 -38.5 to 26 -31.5 to 26 -28
+expect unhurt

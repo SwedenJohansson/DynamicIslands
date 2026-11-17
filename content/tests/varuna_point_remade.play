@@ -2,7 +2,7 @@
 # landing on the north-east sand shelf, the ramp up to the site (10 m), the floodlight tower's deck (16.3 m), the four
 # crates on the reef (2 to 7 m down), the deep under the point (11.6 m down).
 island Varuna Point Remade
-offset -0.7903 -5.1702
+offset -0.7444 -5.052
 expect step 0
 expect title Floodlight Down
 
