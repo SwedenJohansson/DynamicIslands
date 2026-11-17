@@ -5,7 +5,7 @@
 # deep pool to the van's chest.
 #
 # Built by the recipe player (CIRecipe vi_wingfall_mire) through the editor's own operations. Points: the crash scar
-# from -18 -26 to 2 -8 (1.6 m), the plane at 4 -5; the pools (0.6 m under the sea) round -18 -2, 16 -14 and 4 18; the
+# from -18 -26 to 2 -8 (1.6 m), the plane at 4 -5; the pools (1.5 m under the sea) round -18 -2, 16 -14 and 4 18; the
 # hermit's knoll (2.5 m, r 9 round -20 16); the deep pool (3.5 m under the sea, r 6 round 22 6) at the
 # track's end, the van on its floor at 22 6, its chest at 24.5 8.
 include lib_huts
@@ -26,9 +26,11 @@ generate
 brush flatten from -18 -26 to 2 -8 r=3.5 s=10 frames=80 h=1.6
 brush sand from -18 -26 to 2 -8 r=2.5 s=20 frames=20
 brush flatten at 4 -5 r=7 s=20 frames=80 h=1.6
-brush flatten at -18 -2 r=6 s=20 frames=80 h=-0.6
-brush flatten at 16 -14 r=5 s=20 frames=80 h=-0.6
-brush flatten at 4 18 r=5 s=20 frames=60 h=-0.6
+# (11-17 w16: the three boat pools were 0.6 m deep - Raft's sea showed near-white and foamy in them, a pale sheet from
+# player height. 1.5 m deep reads as water; the boats now float at the surface instead of sitting on the floor)
+brush flatten at -18 -2 r=6 s=20 frames=80 h=-1.5
+brush flatten at 16 -14 r=5 s=20 frames=80 h=-1.5
+brush flatten at 4 18 r=5 s=20 frames=60 h=-1.5
 brush seabed at -18 -2 r=5 s=20 frames=15
 brush seabed at 16 -14 r=4 s=20 frames=15
 brush seabed at 4 18 r=4 s=20 frames=15
@@ -56,9 +58,9 @@ place "Box Small" - at -1 -11 ground sit yaw=25
 place Loot_Chest planechest at 8 -9 ground sit yaw=210
 
 # ===== Boats in the pools and on the bank, the van sunk on the track ======================================================
-place RT_PlasticBoat - at -18 -1 ground sit rot=0,0,0 yaw=60 roll=5
-place RT_PlasticBoat - at 16 -14 ground sit rot=0,0,0 yaw=200
-place RT_PlasticBoat - at 3 19 ground sit rot=0,0,0 yaw=310 roll=-6
+place RT_PlasticBoat - at -18 -1 h=-0.4 rot=0,0,0 yaw=60 roll=5
+place RT_PlasticBoat - at 16 -14 h=-0.4 rot=0,0,0 yaw=200
+place RT_PlasticBoat - at 3 19 h=-0.4 rot=0,0,0 yaw=310 roll=-6
 place BoatMini - at -13 6 ground sit scale=14 yaw=100 roll=10
 place Van3 sunkvan at 22 6 ground sit yaw=30 roll=8
 place Loot_Chest vanchest at 24.5 8 ground sit yaw=210
