@@ -59,6 +59,11 @@ namespace DynamicIslands
 			if (item == null) { ScRemove(made, DropHoldIsland); Fail("drop hold: the dropped item is not there"); yield break; }
 			Vector3 rest = item.transform.position - e.Position;
 			Check(ref ok, Mathf.Abs(item.transform.position.y - ground.Value.y) < 1.5f, "the item lies on the island's ground (" + (item.transform.position.y - ground.Value.y).ToString("F2") + " m above the spot)");
+			// (switched off, as Raft does far away: still written to the world file - FindObjectsOfType missed it, sweep 11-14)
+			item.gameObject.SetActive(false);
+			bool listed = ItemHold.WriteLines().Any(l => l.Contains(plank.UniqueName));
+			item.gameObject.SetActive(true);
+			Check(ref ok, listed, "a switched-off dropped item on the island is still written to the world file");
 
 			if (mode == "save")
 			{

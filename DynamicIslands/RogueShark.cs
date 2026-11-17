@@ -41,6 +41,9 @@ namespace DynamicIslands.Editor
 		// (the last one killed: its body still decays a while after the kill is noticed)
 		static uint deadIndex;
 		static int rolledDay = -1, tintedId;
+		// (the option at the last look: switched off live while the rogue lives, it is retired - a rogue a test spawns with the
+		// option off stays)
+		static bool wasOn;
 		static float nextCheck, missingSince;
 
 		/// <summary>Tests: the day in place of Raft's.</summary>
@@ -59,7 +62,7 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		internal static void Reset() { Index = 0; deadIndex = 0; QuietUntil = 0; Giant = false; rolledDay = -1; tintedId = 0; statsId = 0; nextCheck = 0f; missingSince = 0f; TestDay = null; }
+		internal static void Reset() { Index = 0; deadIndex = 0; QuietUntil = 0; Giant = false; rolledDay = -1; tintedId = 0; statsId = 0; wasOn = false; nextCheck = 0f; missingSince = 0f; TestDay = null; }
 
 		/// <summary>Whether a rogue comes on this day (the same on every machine and every time).</summary>
 		public static bool Rolls(int seed, int day)
@@ -99,9 +102,11 @@ namespace DynamicIslands.Editor
 			// (every machine: its colour, again for a new body - a load, a player who joins)
 			if (rogue != null && !Dead(rogue) && rogue.GetInstanceID() != tintedId) Tint(rogue);
 			if (!Raft_Network.IsHost) return;
+			bool switchedOff = wasOn && !On;
+			wasOn = On;
 			if (Index != 0)
 			{
-				if (rogue != null) { missingSince = 0f; if (Dead(rogue)) Killed(); return; }
+				if (rogue != null) { missingSince = 0f; if (Dead(rogue)) Killed(); else if (switchedOff) Retire(rogue); return; }
 				// Not found: after a load Raft's sharks come a moment later; then another shark is taken for it, or a new one comes
 				if (missingSince <= 0f) { missingSince = Time.unscaledTime; return; }
 				if (Time.unscaledTime - missingSince < 15f) return;
@@ -140,6 +145,26 @@ namespace DynamicIslands.Editor
 			Log("A " + (giant ? "giant " : "") + "rogue shark #" + Index + " on day " + Today);
 			Changed("spawn");
 			return shark;
+		}
+
+		/// <summary>Host: Rogue shark was switched off while the rogue lives - it goes for every player (Raft's own removal, so
+		/// Raft's shark count follows), and a plain shark comes if it was the last one. No body, no loot, no quiet days.</summary>
+		static void Retire(AI_NetworkBehavior_Shark rogue)
+		{
+			uint was = Index;
+			bool last = !UnityEngine.Object.FindObjectsOfType<AI_NetworkBehavior_Shark>().Any(s => s != null && s != rogue && !Dead(s));
+			Index = 0;
+			deadIndex = was;
+			Giant = false;
+			tintedId = 0;
+			statsId = 0;
+			try { NetworkIDManager.SendIDBehaviourDead(was, typeof(AI_NetworkBehaviour), true); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [rogue] Removing the rogue: " + e.Message); UnityEngine.Object.Destroy(rogue.gameObject); }
+			if (last)
+				try { Network_Host_Entities host = ComponentManager<Network_Host_Entities>.Value; host.StartCoroutine(host.CreateShark(5f, Vector3.zero, AI_NetworkBehaviourType.Shark)); }
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [rogue] A plain shark for the retired rogue: " + e.Message); }
+			Log("Rogue shark switched off: the rogue #" + was + " retired" + (last ? ", a plain shark comes" : ""));
+			Changed("state");
 		}
 
 		static void Killed()

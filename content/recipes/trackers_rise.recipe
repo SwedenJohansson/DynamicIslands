@@ -337,7 +337,7 @@ step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the anchor bo
 step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the anchor box too
 step catch|Llama|1|Catch a llama
 step reach|tr_top|1|Climb Antler Peak to the trackers' notch post
-step collect|story:lamp|1|Dive to the hunters' trailer off the cove and take the lamp
+step collect|story:lamp|1|Dive to the hunters' trailer off the cove and take the lamp from its crate
 step collect|story:totem|1|Set the lamp in the tracker's carving in the clearing
 step read|Tracker's journal page|1|Read the journal page behind the carving
 step read|Ranger log 5|1|Read Ranger log 5 by the lookout stone

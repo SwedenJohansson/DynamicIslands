@@ -29,7 +29,7 @@ use qd_machine
 expect hidden qd_rewchest
 read Night clerk's notice
 expect step 7
-use Sven Holm
+use Clerk Rouhi
 wait 1
 expect step 8
 expect hidden qd_lampchest
@@ -37,7 +37,7 @@ use Carrier's lamp 1
 use Carrier's lamp 2
 wait 1
 expect shown qd_lampchest
-open Sven's satchel
+open Rouhi's satchel
 zone qd_trail
 expect step 9
 zone qd_summit

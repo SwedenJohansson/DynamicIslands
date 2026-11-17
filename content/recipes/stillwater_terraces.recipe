@@ -152,7 +152,7 @@ call hw_zone x=23.39 z=26.31 al=hillfootz id=hillfoot r=5 msg="Hermit's Peak. St
 call hw_zone x=40 z=45 al=hilltopz id=hilltop r=8 h=1 msg="The top of Hermit's Peak, and the abbot's hermitage, its roof gone. Nobody here. The humming stops as you come in."
 place Note_Paper abbotnote at 39.25 45 h=33.1 drop yaw=10
 place Loot_Chest hermitchest at 41.3 45.5 h=32.1 drop yaw=180
-loot hermitchest story:shrinekey*1;Rope*2;Candle*2;Cooked_Mackerel*1
+loot hermitchest story:shrinekey*1;Rope*2;Placeable_Candlestick*2;Cooked_Mackerel*1
 note hermitchest Hermit's chest | The abbot's chest in the ruin: rope, candles, dried fish - and a little bronze key wrapped in a leaf: OFFERING BOX.
 prop hermitchest loot.refill=0
 place Zone_Sound peakhum at 40 45 h=34
@@ -177,7 +177,7 @@ prop seedpuffers creature.count=2
 call hw_zone x=-45 z=-57 al=cavez id=ossuary r=4 msg="The monks' ossuary cave. Niches cut in the rock, and in every niche a little straw figure where the bones should be."
 # (REACH 10-30: at -43.5 -56.5 it lay in the cave wall - nowhere to read it from; moved in beside the box)
 place Note_Paper ivonote at -45.5 -57.5 h=4.45 drop yaw=0
-loot ossuarychest Candle*2;Scrap*2;MetalOre*2;Battery*1
+loot ossuarychest Placeable_Candlestick*2;Scrap*2;MetalOre*2;Battery*1
 prop ossuarychest loot.refill=0
 note ossuarychest Ossuary box | Brother Ivo's box: candles, a battery, scrap and ore from the cave's back wall.
 call treasure x=-51 z=-52 r=14 n=1 seed=30306 kind=0

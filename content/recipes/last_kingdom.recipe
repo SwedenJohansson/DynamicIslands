@@ -791,7 +791,7 @@ step reach|castlegate|1|Climb the castle road to the gate
 step read|The steward's confession|1|Wind up the portcullis and read the steward's confession in the court
 step kill|Rat|4|Clear the rats out of the castle kitchens
 step reach|vaultstair|1|Go down the stair to the crown vault
-step collect|story:crown|1|Set the three seals in the locks and take the crown
+step collect|story:crown|1|Set the three seals in the locks and take the crown from its chest
 step kill|Mama bear|1|Face the Beast of Elderhaven in the great hall
 step reach|throneroom|1|Climb the great stair to the throne room
 # Chapter 6 - the coronation

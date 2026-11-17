@@ -497,7 +497,7 @@ namespace DynamicIslands
 			{
 				string n = e.GameObjectName ?? "";
 				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
-				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") || n.StartsWith("Note_") || NotABase.IsMatch(n) || Hangs.IsMatch(n)) continue;
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") || n.StartsWith("Note_") || NotABase.IsMatch(n) || Hangs.IsMatch(n) || CameraPath.IsPoint(n)) continue; // (camera points: unseen in a world)
 				// (a zipline with a zip.to: the editor shows Raft's own far end, which ZiplineEnds moves when the island is spawned -
 				// the Lodestone Array's north line read "partly in the air" off the cliff where Raft's 27 m line ends, 2026-10-20;
 				// CIGroundIslands measures each of its ends in the world)
@@ -582,7 +582,8 @@ namespace DynamicIslands
 			{
 				string n = e.GameObjectName ?? "";
 				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
-				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n == ContentCatalog.MarkerOnly || ground == null) continue;
+				// (a fly-through's camera points hang in the air on purpose: unseen in play, never set down - w11, The Rain Engine)
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n == ContentCatalog.MarkerOnly || CameraPath.IsPoint(n) || ground == null) continue;
 				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
 				if (parts.Length == 0) continue;
 				Bounds whole = parts[0].bounds;

@@ -317,7 +317,7 @@ step read|Surveyors' dig map|1|Find the surveyors' dig map on the flat by the ca
 step collect|story:surveyfix|3|Dig up the three tins of fix-pins - not the decoy
 step open|Surveyor's case|1|Open the surveyor's case on the flat by the cairns with the three fix-pins
 step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from relay 3's locker
-quest done=Three bearings - three, five, eight - and the pulse is fixed. Something answers in the south: static, and a mast.
+quest done=Three bearings - three, five, eight - and the pulse is fixed. Something answers beyond the rocks: static, and a mast.
 quest reward=Scrap*6;Rope*4;CopperOre*2
 
 save Triangulation Rocks

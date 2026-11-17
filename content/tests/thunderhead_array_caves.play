@@ -1,0 +1,14 @@
+# Thunderhead Array's cable cave (CIPlay thunderhead_array_caves, 11-13 w11; in a test world 'CI ...'). Points as in
+# its recipe: the mouth on the beach at 35 -70 (~0.3 m), machete vines across it (tacablecave_vines), the cave north
+# (kit_st yaw 0, len 26, level, hill=0: the cliff over it) to the room about 35 -36. The vines shut it; in and out behind them.
+island Thunderhead Array keep
+hour 11
+weather Calm
+picture ta_cave_out 35 4 -84 35 3 -70
+walk 35 -78 to 35 -74 to 35 -68 blocked
+expect shown tacablecave_vines
+# (w11b: a test world has no machete, so the vines stay - cutting them is the cave check's reach part, which lends one;
+# here the way in starts behind them, as in w10's Gannet play)
+walk 35 -66 to 35 -60 to 35 -52 to 35 -46 below=4
+picture ta_cave_in 35 2.2 -60 35 1.2 -42 light=20
+walk 35 -46 to 35 -52 to 35 -60 to 35 -66 below=4

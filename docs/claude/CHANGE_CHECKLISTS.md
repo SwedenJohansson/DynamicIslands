@@ -92,6 +92,7 @@ RECIPE_FORMAT.md and PLAY_FORMAT.md describe the content test files.
 **Must change**
 - `IslandNetwork.cs`: add a `public const int` to `IslandNetMessage`, using the next free number: 1-29 and 33-40 are taken (the highest is `Ping` 40), 30-32 are unused, so the next is 41. Give it a summary: who sends it, and which fields it uses (`Ids`, `Index`, `Count`, `Name`, `Data`, `Hash`, `Offsets`).
 - Send it with `IslandNetwork.SendToEveryone`, or a helper like `SendLevels` / `SendWorldRules`. Host-only sends check `Raft_Network.IsHost`.
+- A kind only the host ever sends goes in `IslandNetwork.HostOnlyKinds`: a player drops it from anyone else (a modified peer could otherwise set it). A two-way kind checks the sender in its player branch itself. `CIHostOnlyMsgs` tests the list.
 - Add `case IslandNetMessage.X:` to `IslandNetwork.OnMessage`, calling `X.OnMessage(msg ...)`. The host applies a player's message before it passes it on with `SendToClients`.
 **Usually also**
 - Players who join: add a `JoinPart` in the `SyncRequest` case. Each part is sent on its own, and order matters: parts that name islands go after the island list.

@@ -3,7 +3,7 @@
 # the archery shed at -44.5 22; the lake x -8..32 z 29..46; the old boathouse on its east shore (30-35 37-41.5); the fire
 # lookout up the hill at 0 11 (ground 10.4 m, deck 16.9 m, its ladder on the south side).
 island Camp Blackwater
-offset -0.4374 -1.2402
+offset 4.959 4.9591
 expect step 0
 expect title The Last Week of Summer
 wait 5
@@ -57,13 +57,13 @@ use flarepost
 expect message a ship's horn answers
 expect story lockerkey 1
 expect step 10
-# SILVER 10-26: the ruined house, Walt Pruitt, the climb, Bear Hollow, the secrets
+# SILVER 10-26: the ruined house, Counsellor Shogo, the climb, Bear Hollow, the secrets
 expect hidden cb_rewchest
 use cb_machine
 expect hidden cb_rewchest
 read Caretaker's chalk board
 expect step 11
-use Walt Pruitt
+use Counsellor Shogo
 wait 1
 expect step 12
 expect hidden cb_lampchest
@@ -71,7 +71,7 @@ use Porch lamp 1
 use Porch lamp 2
 wait 1
 expect shown cb_lampchest
-open Walt's tackle box
+open Shogo's tackle box
 zone cb_trail
 expect step 13
 zone cb_summit

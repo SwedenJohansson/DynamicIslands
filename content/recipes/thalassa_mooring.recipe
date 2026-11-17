@@ -268,7 +268,7 @@ prop bellbub zone.radius=3
 prop bellcrane obj.name=bellcrane
 
 note th_cavechest Bell crew's locker | A bell crew locker: a dive knife's sheath, a rope, a tin of grease.
-loot th_cavechest Rope*3;Bolt*2;Leather*1;Copper*2
+loot th_cavechest Rope*3;Bolt*2;Leather*1;CopperOre*2
 prop th_cavechest loot.refill=0
 note th_ruinnote Dive log | DIVE LOG - DIVE MASTER R. OYELARAN\n\nDive 41: beside the station, off the rocks. Order from the Spire: cut the trench cable at marker 3. Diver did not surface. Her sample bag is still down there, buried in the sand.\nDive 44: out by the old marker. Order from the Spire: cut the dome feed. Line cut - not by us.\nDive 47: past the dinghy. Order from the Spire: cut the lab line. Bell came up empty.\nThree dives, three cables, three crews. Why is the Director cutting his own Network? He says "to keep the Commons quiet". Quiet from what?\nWhoever has a metal detector: their tags will ring under the sand. Bring them home.
 note th_wrecknote Dinghy logbook | DINGHY LOGBOOK\n\nTook the dinghy out for dive 47. Came back without the bell crew. I tied her up on the rocks, walked to the hut, and sat on the floor for a long time.\nThen a gardener rowed in from Biome Seven with a diver, an old man and a hen, and the hen walked straight into my hut as if it had paid rent.\nThe diver, Marlowe, asked about the shuttle. I told her what we heard on the station set: the shuttle hit the reef past the Caisson Yard, and the children walked. Then I told her what the dive orders were. She went very quiet. She said she used to lay those cables.

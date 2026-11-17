@@ -17,6 +17,7 @@ include lib_features
 include lib_areas
 include lib_highwater
 include lib_silver
+include lib_caves
 
 # tierwall: the face of one of the pyramid's tiers - the radio tower's stone blocks (2.4 m square, 3 m tall, their tops
 # level with the tier) all round a square of half-size a (a = 1.2 + 1.2 x n), so each tier ends in a straight wall and not
@@ -423,6 +424,75 @@ call ar_plants_tropical x=-60 z=60 r=24 seed=26498
 # buried: no trees on the pad or its rim)
 clear at 93 -7 r=7 all only=Palm|Bamboo|Banana|Bush
 
+# --- 11-12 (w14 prep): the tomb galleries (plan 14 row: SYS tomb galleries, 3 ST + DIG; dirt 3, mushrooms 2; SPIKES trap
+# corridor, safe=none, lever). DONE AS: one dug system (kit_sys: three tunnels, two mouths, plain rock), no ST pieces (their dens
+# could not be kept off the quest's chests and mirrors offline). Mouths on the mesa's foot by the flat south-east cove (the
+# 2.5 m flat at 38 -36): the tomb door (22 -46) and the robbers' way (22 -36), both way in west (yaw 270). The trunk runs 14 m
+# west to (8 -46), bends 8 m north into the burial hall (8 -38); the side gallery 7 m in turns south 6 m to the offering room
+# (13..15, -52..-58); the robbers' way runs 10 m west and joins the hall. 10 m and more from the twin chests (jcsp), 18 m and
+# more from the king's chest, the mirrors and the cenote's offering box; off every walk line.
+#  - SPIKES: the robbers' way is the trap corridor - pins in its floor (zone r 2, pulse 2 s up / 3 s down, safe=none), a
+#    carved warning at its mouth, the old priests' lever at its inner end (reached from the hall by the tomb door).
+#  - 11-12 user: mixed cave monsters - two rats in the offering room.
+# HEIGHTS guessed: both mouth shelves cut level at 2.5 m (the cove's flat), floors ~2.5 m; things dropped from 5 m, zones 2.8-4.
+# 11-17 FIX (job w14D): kit_sys from the cove sank (level strokes on flat beach go down until rock is overhead): floors -3.4
+# to 1.0, the trunk and the offering room open trenches on the beach south of the mesa (surface probe). Now hand-dug INSIDE
+# the mesa (top 23.7 over x 0..16, z -30..-41; south cliff z -42..-44, east cliff x 18..20; the sinkhole's channel at x -6):
+# the tomb door in the south cliff foot (8 -45, way in north, 8 degrees up) to the burial hall (8 -39..-35); the robbers'
+# way from the east cove (22 -36, 6 degrees up) into the hall's east side; a gallery from the hall north-east to the
+# offering room (12..13, -28.5..-26.5), 6 m and more from the plaza mirror and the king's chest overhead (2D rule). Floors from the dig log.
+brush flatten at 22 -36 r=4 s=20 frames=60 h=2.5
+brush smooth at 25 -36 r=6 s=6 frames=20
+clear at 8 -46 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+clear at 22 -36 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+dig 8,-45 8,-39 r=1.75 slope=8 as=sptomb
+dig 8,-39 8,-35 r=3 as=sptomb
+dig 22,-36 12,-36 r=1.75 slope=6 as=sptomb
+dig 9,-34 12,-28.5 r=1.75 as=sptomb
+dig 12,-28.5 13,-26.5 r=3 as=sptomb
+caveloot sptomb dirt=3 mush=2 stone=0 vines=0 titanium=0 light=0
+prop sptomb cave.rock=plain
+place Note_Sign sptombsign at 14 -51 ground yaw=315
+note sptombsign (Dr. Quintero's tag on a stake) | Tomb door, south cliff. The other passage, round the east side, is the robbers' way - the priests trapped it. Do NOT go in that way. - Q.
+# cavecheck inside spratA spratB sptombz spspike spspikes spspikewarn splever
+place Creature_Rat spratA at 12.5 -27.5 h=3.6
+prop spratA creature.count=1
+prop spratA creature.respawn=0
+place Creature_Rat spratB at 13.5 -26 h=3.6
+prop spratB creature.count=1
+prop spratB creature.respawn=0
+place Zone_Trigger sptombz at 8 -37 h=5
+prop sptombz obj.name=sptombz
+prop sptombz zone.id=sp_tomb
+prop sptombz zone.radius=5
+prop sptombz zone.message=The burial hall of the Rain Kings. Niches in every wall - all of them long since emptied.
+place "Balboa_DecorationPrefabBase_Wooden Spikes" spspike at 17 -36.8 h=4.5 drop scale=0.25 yaw=0
+place "Balboa_DecorationPrefabBase_Wooden Spikes" spspike at 15.8 -36.8 h=4.5 drop scale=0.25 yaw=20
+place "Balboa_DecorationPrefabBase_Wooden Spikes" spspike at 17 -36 h=4.5 drop scale=0.25 yaw=50
+place "Balboa_DecorationPrefabBase_Wooden Spikes" spspike at 15.8 -36 h=4.5 drop scale=0.25 yaw=70
+place "Balboa_DecorationPrefabBase_Wooden Spikes" spspike at 17 -35.2 h=4.5 drop scale=0.25 yaw=100
+place "Balboa_DecorationPrefabBase_Wooden Spikes" spspike at 15.8 -35.2 h=4.5 drop scale=0.25 yaw=120
+prop spspike obj.name=spspike
+prop spspike tint.color=#6a5e4a
+prop spspike tint.amount=0.6
+# (11-17 w14E: the robbers' way was dug to floor h=4.2 - the zone at 2.8 never reached a walker there, now 5.0)
+# (w14G: the walker stops at 18.9 (a walk ends 0.7 m short, the stakes in the way) - 2.3 m from 16.6, outside r 2: the zone 1 m east, over the near stakes too)
+place Zone_Trigger spspikes at 17.6 -36 h=5.0
+prop spspikes obj.name=spspikes
+prop spspikes zone.id=sp_spikes
+prop spspikes zone.radius=2
+prop spspikes zone.hazard=spikes
+prop spspikes zone.damage=4
+prop spspikes zone.safe=none
+prop spspikes zone.pulse=2,3
+prop spspikes zone.hazardMsg=Stone stakes stab up through the floor slabs and sink back. The priests' trap still works - time it, or find their lever.
+place Note_Sign spspikewarn at 20.5 -34.8 h=5 drop yaw=270
+note spspikewarn (a carving over the passage) | Robber, the floor bites. Only the priests' hand at the hall's end can stay it.
+place UT_JumpPuzzle_LiftMechanism_Lever splever at 11.5 -37.2 h=5 drop yaw=90
+prop splever obj.name=splever
+prop splever beh.use=Pull the priests' lever
+prop splever on.use=hide|spspikes\nhide|spspike\nmessage||The stone lever grinds over. Under the robbers' way something heavy drops into place, and the stakes stay down.
+
 # ===== Settings, story items, notes, behaviours, quest (20 steps) =========================================================
 info title=The Step Pyramid
 info author=Custom Islands
@@ -539,7 +609,7 @@ step reach|basecamp|1|Reach the explorers' base camp at the foot of the cliffs
 step read|Dr. Quintero's field notes|1|Read the field notes in the base camp
 step reach|causeway|1|Climb the old causeway up the cliffs to the plateau
 step kill|Warthog|3|Drive off the warthogs rooting in the ruined terraces
-step collect|story:jade|1|Find the lever at the cliff edge, sink the Sun shrine's stakes, take its jade tablet
+step collect|story:jade|1|Find the lever at the cliff edge, sink the Sun shrine's stakes, take its jade tablet from the chest
 step reach|cenote|1|Find the sacred well beside the pyramid
 step kill|Angler fish|1|Face the guardian of the well's deep water
 step collect|story:jade|2|Dive for the second jade tablet among the offerings

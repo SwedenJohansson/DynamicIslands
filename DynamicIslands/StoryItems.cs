@@ -503,6 +503,13 @@ namespace DynamicIslands.Editor
 				case "page":
 					if (f.Length < 5 || pages.Any(p => p.Key == f[0])) return false;
 					// (CB12: a world's journal stays readable and its state message small, whatever a player sends)
+					// (full of story popups' "msg:" pages: the oldest one makes room for a note or quest page, which a quest's
+					// pages step counts - before, a world with many popups lost its new notes for good - sweep 11-14)
+					if (pages.Count >= MaxPages && !f[0].StartsWith("msg:", StringComparison.Ordinal))
+					{
+						int oldest = pages.FindIndex(p => p.Key.StartsWith("msg:", StringComparison.Ordinal));
+						if (oldest >= 0) pages.RemoveAt(oldest);
+					}
 					if (pages.Count >= MaxPages) { Debug.LogWarning("[CUSTOM ISLANDS] Journal page '" + f[2] + "' left out: the journal holds " + MaxPages + " pages already"); return false; }
 					if (f[2].Length > MaxTitle) f[2] = f[2].Substring(0, MaxTitle);
 					if (f[4].Length > MaxPageText) f[4] = f[4].Substring(0, MaxPageText);

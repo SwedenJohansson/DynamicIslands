@@ -1,0 +1,37 @@
+# Caravan Town Remade's Trader Johnny and his crate (CIPlay caravan_town_remade_talk, 11-12 w13; in a test world 'CI ...'; offline-written, NOT yet run).
+# Points as in its recipe: Johnny leaning on a crate at -14.8 3.8 by the market; his nailed crate (tccrate) at -17.6 4.2, opened
+# only after talking to him; his three answers (rope, the quarry journal page, goodbye). The inlet is 1.6 m (ground).
+island Caravan Town Remade keep
+offset -5.3098 -0.4348
+hour 11
+weather Calm
+expect shown tccrate
+expect hidden tcchest
+
+# The crate is nailed before anyone talked to Johnny
+use tccrate
+expect message Nailed shut
+expect shown tccrate
+expect hidden tcchest
+
+snap ct_islander Trader Johnny 20 3.5 0.6
+use Trader Johnny
+expect step 0
+
+# Now the crate opens on his stock
+use tccrate
+expect message The nails give
+expect hidden tccrate
+expect shown tcchest
+open Johnny's stock
+wait 2
+expect item Nail 8
+
+# His answers: 1 trade (rope), 2 the quarry (journal), 3 later
+use Trader Johnny pick 1
+expect message two coils of rope
+expect item Rope 2
+use Trader Johnny pick 2
+expect message ridge, containers
+use Trader Johnny pick 3
+expect message Trade is patient

@@ -12,7 +12,7 @@ expect step 0
 expect title The Last Frequency
 wait 3
 expect hidden mirror1rx2
-expect hidden treasury
+expect shown treasury
 expect hidden lure
 expect hidden bosszone
 

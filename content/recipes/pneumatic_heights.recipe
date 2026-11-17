@@ -15,6 +15,7 @@ include lib_post
 include lib_areas
 include lib_highwater
 include lib_lastpost
+include lib_caves
 # RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 64 -> 88; the old island moved 24 m south (push frames), so its south shore stays on the coast and the new land is north
 # POST 10-26: the new land - Pressure Hill with tube vent mast, Vent Cave, Otto Rask at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five tube tokens
 new
@@ -40,6 +41,15 @@ call hw_mount x=42 z=50 b=24 h=22
 call hw_trail x=42 z=50 b=24 h=22 a0=-123.69 turn=300 n=40 h0=3
 brush flatten at 0 22 r=4 s=8 frames=60
 clear at 0 22 r=7
+# --- 11-12 (w12 prep): terrain of the tube knoll (the SYS cave below, "the tubes' rock"): a mountain b 19 h 26 on the east side,
+# 28 m and more from the pieces, the plane and the trail's foot. Rings at 0.22 h = 5.72 m (foot), 11.4, 17.2, 22.4, summit 26 m;
+# the two mouths' shelves are cut level at the foot (5.72 m), a rounded rise behind them. HEIGHT 5.72 is a rule of hw_mount.
+call hw_mount x=57 z=2 b=19 h=26
+brush flatten at 36 2 r=4 s=20 frames=60 h=5.72
+brush flatten at 36 -6 r=4 s=20 frames=60 h=5.72
+brush smooth at 33 -2 r=8 s=6 frames=20
+clear at 36 2 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+clear at 36 -6 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
 # (RESIZE 10-26: the old island, 24 m south)
 push at 0 -24
 clear from 0 -40 to 0 -58 r=4
@@ -60,16 +70,16 @@ call stilt_hut y=2.6 foot=1.5
 place Loot_ChestSmall letterbox at 2.25 3.6 y=2.7 sit yaw=180
 pop
 push at 8 -31 h=6
-call stilt_hut y=2.6 w1=ReefHuts_PlasticWall4
+call stilt_hut y=2.6 w1=ReefHuts_PlasticWall4 foot=2.1
 pop
 place Creature_Rat rats at -12 -34 ground
 
 # --- Terrace 2: houses 2 and 5, the three tube valves on posts along the terrace ----------------------------------------
 push at -20 -13 h=11
-call stilt_hut y=2.6 w2=ReefHuts_Wall2 foot=2.5
+call stilt_hut y=2.6 w2=ReefHuts_Wall2 foot=4
 pop
 push at 12 -13 h=11
-call stilt_hut y=2.6 w3=ReefHuts_Wall3 foot=1.5
+call stilt_hut y=2.6 w3=ReefHuts_Wall3 foot=3.6
 pop
 macro valve al=valve1 x=0 z=0 yaw=0
 place RT_Pillar - at $x $z ground sy=0.5
@@ -207,6 +217,41 @@ call ar_plants_hill x=72 z=8 r=14 seed=27492
 call ar_plants_hill x=-16 z=36 r=14 seed=27493
 call ar_plants_hill x=-48 z=16 r=14 seed=27494
 call ar_plants_hill x=8 z=48 r=12 seed=27495
+# --- 11-12 (w12 prep): the tubes' rock - optional, no quest step (plan 12 row: SYS, tube tunnels, 3 ST joined at a sorting room;
+# stone 2, mushrooms 2, titanium 1). The Post's pneumatic tubes ran through the east knoll to the exchange; the fitters dug three
+# tunnels to lay them - a trunk from the west mouth bending south, a second mouth beside it that meets the trunk's end, and a
+# branch off the trunk to the sorting room where the tubes were sorted by hand (kit_sys: dug tunnels, two mouths, joined). All
+# plain rock (cave.rock=plain). 30 m and more from every quest thing, the walk line and the pieces; the plants_hill at 72 8
+# leaves the knoll's flank: its scatter cleared there below. Floor = the foot, 5.72 m (hw_mount ring); the room 10.8 m from the knoll's
+# middle, the ground over it ~15 m. HEIGHTS guessed: the shelves keep 5.72, a rise of r 19..21 smoothed from the natural ground.
+clear at 57 2 r=21 all only=(?i)boulder|tree|bush|palm|bamboo|mango
+# 11-13: kit_sys written out - its room (47 5 -> 49 11, r 4) sat under the knoll's 11.4 m ring with its top at 13.7 m and broke
+# out of the flank (a dark gash over the mouths; the bear not under a roof). The room now turns in toward the knoll's middle
+# (47 5 -> 50 9, r 3.2: top ~12 m under the 17.2 m ring).
+# (11-14 w12fix: CICaveInside found 6 points of the south tube's rim rock standing loose out of the knoll's toe where it
+# bends in at ~49 -5 (ground 5-8 m over the floor there, the shell just under it) - the toe raised and blended, as at the
+# Necropolis gallery, so the ground lies over the tube's shell)
+brush flatten at 48.8 -5.2 r=2.6 s=20 frames=80 h=15
+brush smooth at 48.8 -5.2 r=4 s=4 frames=20
+dig 37,2 51,2 51,-4 r=1.75 as=phtubes
+dig 47,2 47,5
+dig 47,5 50,9 r=3.2
+dig 37,-6 46,-6 51,-4 r=1.75 as=phtubes
+caveloot phtubes dirt=0 mush=2 stone=2 vines=0 titanium=1 light=0
+prop phtubes cave.rock=plain
+# 11-12 user: mixed cave monsters - a bear has made the sorting room its den (this world: bear here, rats under Parcel
+# Canopy, a boar in Sorting Rock's cellar, none in the vault or the cable room). One per place, the floor + 0.3, no drop.
+# (11-14 w12fix: put in the room it spawned at the branch (the room's floor carries no NavMesh it could find within 8 m)
+#     and walked out to the west mouth's lip in 3 runs of 5; now set in the trunk's south leg, 14 m and more from both mouths)
+# cavecheck inside phbear
+place Creature_Bear phbear at 51 -1 h=3.8
+prop phbear creature.count=1
+prop phbear creature.respawn=0
+place Zone_Trigger phtubesz at 48.5 7 h=7
+prop phtubesz obj.name=phtubesz
+prop phtubesz zone.id=ph_tubes
+prop phtubesz zone.radius=5
+prop phtubesz zone.message=The sorting room. Brass tube mouths in every wall, a dead brass sorter's hand-wheel in the corner, and dust over all of it.
 call hw_machine x=0 z=22 yaw=180 al=qh_machine nm="North line pump" obj=TP_LaserControlPanel_lever sc=3 a=qh_top b=qh_cave done=qh_fixed rew=qh_rewchest rnote=qh_rewnote msg="It works." hint="It wants the pump gauge from Pressure Hill and the pump bellows from Vent Cave."
 call hw_note x=-2.6 z=23.2 yaw=200 al=qh_hint
 
@@ -350,7 +395,7 @@ step read|North line notice|1|Read the pump notice by the line pump out on the i
 step talk|Otto Rask|1|Talk to Otto Rask at the ruined house on the shore
 step reach|qh_trail|1|Find the foot of the trail up Pressure Hill, below the vent mast
 step reach|qh_summit|1|Climb the trail to the top of Pressure Hill
-step collect|story:qh_top|1|Climb the tube vent mast and take the pump gauge from its deck
+step collect|story:qh_top|1|Climb the tube vent mast and take the pump gauge from the box on its deck
 step reach|qh_cave|1|Find Vent Cave in the rocks, past Otto's ruined house
 step collect|story:qh_cave|1|Take the pump bellows from the chest at the back of the cave
 step read|Pump fitter's chit|1|Bring both to the line pump and read what it shows

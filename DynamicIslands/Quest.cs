@@ -185,7 +185,14 @@ namespace DynamicIslands.Editor
 		// State keys of quest n: the main quest's as before; the others after the main quest's early work (0x40100 + step)
 		static int StepKeyOf(int n) { return n == 0 ? StepKey : 0x40200 + n * 2; }
 		static int ProgressKeyOf(int n) { return n == 0 ? ProgressKey : 0x40201 + n * 2; }
-		static int EarlyKeyOf(int n, int step) { return n == 0 ? EarlyKeyBase + step : 0x40300 + n * 0x40 + Mathf.Min(step, 0x3F); }
+		// (a step after the 64th of quest 2 or later - the 256th of the main quest - has its own key from 0x41000 on: they all
+		// shared the last one, and work done early for one was taken by another - questfix round 2. The old keys are kept)
+		static int EarlyKeyOf(int n, int step)
+		{
+			if (n == 0 && step < 0x100) return EarlyKeyBase + step;
+			if (n > 0 && step <= 0x3F) return 0x40300 + n * 0x40 + step;
+			return 0x41000 + n * 0x1000 + Mathf.Clamp(step, 0, 0xFFF);
+		}
 
 		public static int StepOf(IslandWorldState.Entry e) { return StepOf(e, 0); }
 
@@ -221,6 +228,40 @@ namespace DynamicIslands.Editor
 		{
 			ObjectState s;
 			return e != null && e.State.TryGetValue(StepKeyOf(n), out s) ? s.Day : -1;
+		}
+
+		/// <summary>
+		/// "Give my worlds this version" with quest steps removed, added or moved (questfix 11-15): a world's saved step
+		/// numbers of the old version would point at other steps of the new one. Each quest's step goes to the new
+		/// version's first step not done in the old one (a step counts done when the old version had the same step - kind,
+		/// target, count - before the saved step); a finished quest stays finished. The progress of the step under way is
+		/// kept only when the new step is the same step, early credits only when nothing moved. Returns the quests changed.
+		/// </summary>
+		internal static int RemapSteps(IDictionary<string, string> was, IDictionary<string, string> now, Dictionary<int, ObjectState> state)
+		{
+			int changed = 0;
+			Func<IslandQuest.Step, string> sig = st => st.Type + "|" + st.Target + "|" + st.Count;
+			for (int n = 0; n < IslandQuest.MaxQuests; n++)
+			{
+				ObjectState s;
+				if (!state.TryGetValue(StepKeyOf(n), out s)) continue;
+				List<string> old = IslandQuest.From(was, n, true).Steps.Select(sig).ToList(), nw = IslandQuest.From(now, n, true).Steps.Select(sig).ToList();
+				if (old.SequenceEqual(nw)) continue;
+				int step = Mathf.Max(0, s.Yield), to;
+				if (old.Count > 0 && step >= old.Count) to = nw.Count; // (finished stays finished)
+				else
+				{
+					var done = old.Take(step).ToList();
+					to = 0;
+					while (to < nw.Count && done.Remove(nw[to])) to++;
+				}
+				bool same = step < old.Count && to < nw.Count && old[step] == nw[to];
+				state[StepKeyOf(n)] = new ObjectState { Active = s.Active, Yield = to, Day = s.Day };
+				if (!same) state.Remove(ProgressKeyOf(n));
+				for (int k = 0, last = Mathf.Max(0x3F, old.Count); k <= last; k++) state.Remove(EarlyKeyOf(n, k));
+				changed++;
+			}
+			return changed;
 		}
 
 		/// <summary>Whether quest n of the island is done (it has steps, all done).</summary>
@@ -271,10 +312,17 @@ namespace DynamicIslands.Editor
 				int later = LaterStep(e, n, q, step, type, target);
 				if (later >= 0) Remember(e, n, later, progress - s.Count);
 			}
+			// (a player's last step: the quest is done here - and its reward given - once the host has counted it; the host's
+			// step comes back to this player as to everyone. Before, the reward came at once, even for a step the host then
+			// refused - questfix round 2)
+			if (adds && progress >= s.Count && step + 1 >= q.Steps.Count) { WaitingForHost++; IslandNetwork.SendQuestAdd(e.Id, n, step, amount); return; }
 			if (progress >= s.Count) Set(e, n, step + 1, 0, !adds);
 			else Set(e, n, step, progress, !adds);
 			if (adds) IslandNetwork.SendQuestAdd(e.Id, n, step, amount);
 		}
+
+		/// <summary>A player: last steps sent to the host and left to its answer (the CI checks read it).</summary>
+		internal static int WaitingForHost;
 
 		static bool Matches(IslandQuest.Step s, string type, string target)
 		{
@@ -404,6 +452,9 @@ namespace DynamicIslands.Editor
 				int p = LaterStep(e, n, q, now, q.Steps[step].Type, q.Steps[step].Target);
 				int left = Remember(e, n, p >= 0 ? p : step, amount);
 				if (left > 0) GiveBack(e, n, step, left, from, "over");
+				// (that player's view may be ahead of the host's - it moved on alone: put right, or it showed a later step and
+				// the host's current one was never shown to it - questfix 11-14. In step with the host, nothing changes there)
+				if (from != 0UL) IslandNetwork.SendQuestCorrection(new Network_UserId(from), e.Id, n);
 				return;
 			}
 			// (an older step: another player did that step a moment before. A chest is opened once, so what this player opened
@@ -499,6 +550,14 @@ namespace DynamicIslands.Editor
 			return e != null && Set(e, n, step, progress, false);
 		}
 
+		/// <summary>Host: a player's plain step for quest n (an older version sends its step, not its amount) is taken only one
+		/// step on at most from the host's - each step sends its own message, so more is a made-up one (questfix 11-14).</summary>
+		public static bool MayTakeStep(int islandId, int n, int step)
+		{
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			return e == null || step <= StepOf(e, n) + 1;
+		}
+
 		/// <summary>A player: the host's step for quest n after it refused this player's step (IslandNetwork "set"). Forward as
 		/// Apply; back as well - this machine had moved on alone. Going back shows the step again and runs nothing else: no
 		/// rewards, events or rules (review 10-30).</summary>
@@ -518,11 +577,33 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
+		/// <summary>A player, the host's whole list (a Resync, a join) for an island loaded here: its quests' steps as the host
+		/// has them (Correct: forward as play, back without rewards). A loaded copy kept its own state, so a quest step that
+		/// drifted from the host's stayed wrong until the player joined again - questfix round 2. Returns the quests put right.</summary>
+		internal static int FromHostList(IslandWorldState.Entry e, Dictionary<int, ObjectState> host)
+		{
+			if (e == null || host == null || Raft_Network.IsHost) return 0;
+			int changed = 0;
+			for (int n = 0; n < IslandQuest.MaxQuests; n++)
+			{
+				ObjectState s, p;
+				if (!host.TryGetValue(StepKeyOf(n), out s)) continue;
+				int progress = host.TryGetValue(ProgressKeyOf(n), out p) ? p.Yield : 0;
+				if (s.Yield == StepOf(e, n) && progress == ProgressOf(e, n)) continue;
+				if (Correct(e.Id, n, s.Yield, progress)) changed++;
+			}
+			return changed;
+		}
+
 		/// <summary>Host, the QuestTest command (gap idea 9): quest n to this step (0-based; the step count = done), back too.
 		/// Forward it moves on as play does (events, rules, the reward at the end); back (or the same step) the step, its
 		/// progress and the work done early for it and later steps are set back here and on every player ("set", as a
 		/// refused step's correction). False when there is no such quest.</summary>
-		internal static bool JumpTo(IslandWorldState.Entry e, int n, int step)
+		internal static bool JumpTo(IslandWorldState.Entry e, int n, int step) { return JumpTo(e, n, step, false); }
+
+		/// <summary>keepLater: a timed step that ran out starts again - the work done early for later steps stays (a chest
+		/// opened, animals defeated meanwhile can't be done again: wiped, those steps could never be done - questfix 11-14).</summary>
+		internal static bool JumpTo(IslandWorldState.Entry e, int n, int step, bool keepLater)
 		{
 			IslandQuest q = QuestOf(e, n);
 			if (!Raft_Network.IsHost || !q.Exists) return false;
@@ -531,7 +612,7 @@ namespace DynamicIslands.Editor
 			if (step > before) return Set(e, n, step, 0, true);
 			e.State[StepKeyOf(n)] = new ObjectState { Active = true, Yield = step, Day = Today };
 			e.State.Remove(ProgressKeyOf(n));
-			for (int s = step; s <= q.Steps.Count; s++) e.State.Remove(EarlyKeyOf(n, s));
+			for (int s = step; s <= (keepLater ? step : q.Steps.Count); s++) e.State.Remove(EarlyKeyOf(n, s));
 			IslandNetwork.SendQuestSet(e.Id, n);
 			Debug.Log("[CUSTOM ISLANDS] Quest " + (n + 1) + " of '" + e.HostName + "': set back to step " + (step + 1) + " (QuestTest)");
 			if (step < q.Steps.Count) Show(q.ShownTitle, "Next: " + q.Steps[step].Describe());
@@ -785,9 +866,10 @@ namespace DynamicIslands.Editor
 			if (Time.unscaledTime < nextHud) return;
 			nextHud = Time.unscaledTime + 0.5f;
 			tickQuests.Clear();
-			QuestSkip.Tick();
-			QuestTimers.Tick();
-			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); panelIsland = -1; doneSince.Clear(); closedKey = -1; DoneHideSeconds = 30f; if (panel != null) panel.gameObject.SetActive(false); return; }
+			// (guarded: a throw here used to stop the counted steps and the panel too)
+			try { QuestSkip.Tick(); } catch (Exception ex) { DynamicIslands.TickError("Quest skip", ex); }
+			try { QuestTimers.Tick(); } catch (Exception ex) { DynamicIslands.TickError("Quest timers", ex); }
+			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); panelIsland = -1; doneSince.Clear(); closedKey = -1; followedIsland = followedStep = -1; DoneHideSeconds = 30f; if (panel != null) panel.gameObject.SetActive(false); return; }
 			TickCount++;
 			if (Raft_Network.IsHost) CheckCounted();
 			CheckBlueprints();
