@@ -16,7 +16,7 @@ at -2.25 79.5 h=2.5
 walk -2.25 79.5 to -2.25 81 h=1.6
 picture hc_maya -2.25 +1.5 78.5 -2.25 +0.8 82.6
 use Maya pick 1
-read Maya: the cove
+expect message checks the bait
 use Maya pick 2
 expect message three baits
 expect item FishingBait_Simple 3

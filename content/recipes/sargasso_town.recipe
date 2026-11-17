@@ -239,16 +239,19 @@ prop sgrouhi obj.name=Harbourmaster Rouhi
 prop sgrouhi islander.character=Rouhi
 prop sgrouhi islander.pose=stand
 prop sgrouhi talk.text=Welcome to Sargasso. Keep moving on the planks - the weed holds on to anything that stands still too long.\n> How did a town get here?\n> How do I get through the weed?\n> Fair winds, harbourmaster.
-prop sgrouhi on.choice1=journal|Harbourmaster Rouhi: the weed town|The first ships came into the crater to wait out a storm. By morning the weed had them by the rudders. They waited for a wind that never came, lashed their hulls together, laid planks from deck to deck - and that was the town. Every captain who comes in to trade stays a season, then another. The Council of Captains decides everything by vote, and nobody has ever sailed out the same year they came in. I keep the quay, the tide book and the store, and I make sure nobody forgets the way out.
+prop sgrouhi on.choice1=journal|Harbourmaster Rouhi: the weed town|The first ships came into the crater to wait out a storm. By morning the weed had them by the rudders. They waited for a wind that never came, lashed their hulls together, laid planks from deck to deck - and that was the town. Every captain who comes in to trade stays a season, then another. The Council of Captains decides everything by vote, and nobody has ever sailed out the same year they came in. I keep the quay, the tide book and the store, and I make sure nobody forgets the way out.\nmessage||Rouhi taps the tide book against the desk before answering.
 prop sgrouhi on.choice2=message||The way out is the cut through the rim, the one water the weed won't take. From the quay's head keep the two stone posts behind you and the clear channel under your keel, straight out between the black rocks to the open sea. Coming home, steer for the council's flags and the lanterns on the quay. Never cut across the weed - it wraps a rudder in a minute. And my store on the quay is open to you now.
 prop sgrouhi on.choice3=message||Rouhi touches her cap. 'Fair winds - and if they don't come, there's always a plank and a hammer here.'
 push at -1.5 -21.5 h=-3.3 yaw=270
 call boardwalk n=3 wide=3 y=4.3 rs=none rn=none
 pop
 push at -1.5 -21.5 h=1 yaw=270
-call shed w=3 d=3 door=1 floor=none y=0
-place PlantationDoor sgstoredoor at 2.25 0 y=0 sit yaw=0
-place Loot_ChestSmall sgstorechest at 3.4 3.4 y=0.05 sit yaw=180
+# (11-17 w16: the shed has its own floor on the deck, as Lodestone Quay's: the door stood on the bare deck, and
+# CIFloating's rays from it missed the deck's blocks - 'above the ground'; the door is 0.15 m in from the deck's edge
+# and the chest 0.05 m into the shed's floor, which is 0.2 m over the deck)
+call shed w=3 d=3 door=1
+place PlantationDoor sgstoredoor at 2.25 0.15 y=0.05 sit yaw=0
+place Loot_ChestSmall sgstorechest at 3.4 3.4 y=0.15 sit yaw=180
 place "Box Small" - at 1 3.6 y=0.05 sit yaw=20
 pop
 prop sgstoredoor obj.name=sgstoredoor

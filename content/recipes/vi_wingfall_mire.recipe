@@ -102,16 +102,29 @@ prop turtles creature.count=2
 # at the near end. Side only (the island has no quest).
 # HEIGHTS: guesses - the banks at ~1 m (the planks' deck 1.0; if the banks are higher the planks' ends sit in them); the
 # bog floor -0.6 (the recipe's pool depth).
-brush flatten from 8 26 to 24 18 r=3 s=20 frames=80 h=-0.6
+# (11-17 w16: the first build left a 5 m deep trench with sheer sides - no way out of the bog - and the planks at 1 m ran
+# into its far wall. Now the bog sits in steps (2.6, 1.6, 0.6, -0.6) smoothed into slopes you can walk out of, the
+# planks' deck is at 2.7 between the banks (near bank ~4.4, far ~3), and the pale planes lie square to the bog at 0.05 m
+# with their side edges in the slopes)
+brush flatten from 8 26 to 24 18 r=6.5 s=20 frames=80 h=2.6
+brush smooth from 8 26 to 24 18 r=9 s=6 frames=20
+brush flatten from 8 26 to 24 18 r=5 s=20 frames=80 h=1.6
+brush flatten from 8 26 to 24 18 r=3.5 s=20 frames=80 h=0.6
+brush flatten from 8 26 to 24 18 r=2.2 s=20 frames=80 h=-0.6
+brush smooth from 8 26 to 24 18 r=7 s=4 frames=12
+brush flatten from 8 26 to 24 18 r=1.5 s=20 frames=60 h=-0.6
 brush seabed at 10 25 r=2.5 s=20 frames=15
 brush seabed at 16 22 r=2.5 s=20 frames=15
 brush seabed at 22 19 r=2.5 s=20 frames=15
 clear from 8 26 to 24 18 r=4
 clear at 19.5 28.5 r=3 
-push at 14.66 17.65 h=-3.3 yaw=-63.4
-call boardwalk n=6 wide=1 y=4.3
+push at 13.99 16.31 h=-1.6 yaw=-63.4
+call boardwalk n=8 wide=1 y=4.3
 pop
-place TP_SeleneReactor_Water_Radiated wmpoolA at 18.86 20.57 h=-0.05 scale=0.3 yaw=193
+place TP_SeleneReactor_Water_Radiated wmpoolD at 8 26 h=0.05 scale=0.25 yaw=-63.4
+place TP_SeleneReactor_Water_Radiated wmpoolB at 13.36 23.32 h=0.05 scale=0.25 yaw=26.6
+place TP_SeleneReactor_Water_Radiated wmpoolA at 18.73 20.64 h=0.05 scale=0.25 yaw=116.6
+place TP_SeleneReactor_Water_Radiated wmpoolC at 24.09 17.95 h=0.05 scale=0.25 yaw=206.6
 place Zone_Trigger wmacidA at 18.86 20.57 h=-0.4
 prop wmacidA obj.name=wmacidA
 prop wmacidA zone.id=wm_bogA
@@ -120,7 +133,6 @@ prop wmacidA zone.hazard=acid
 prop wmacidA zone.damage=4
 prop wmacidA zone.safe=suit
 prop wmacidA zone.hazardMsg=The bog water burns - fuel and battery acid from the wreck. Keep to the planks, or wear a suit.
-place TP_SeleneReactor_Water_Radiated wmpoolB at 13.14 23.43 h=-0.05 scale=0.3 yaw=162
 place Zone_Trigger wmacidB at 13.14 23.43 h=-0.4
 prop wmacidB obj.name=wmacidB
 prop wmacidB zone.id=wm_bogB
@@ -129,7 +141,6 @@ prop wmacidB zone.hazard=acid
 prop wmacidB zone.damage=4
 prop wmacidB zone.safe=suit
 prop wmacidB zone.hazardMsg=The bog water burns - fuel and battery acid from the wreck. Keep to the planks, or wear a suit.
-place TP_SeleneReactor_Water_Radiated wmpoolC at 22.08 18.96 h=-0.05 scale=0.3 yaw=211
 place Zone_Trigger wmacidC at 22.08 18.96 h=-0.4
 prop wmacidC obj.name=wmacidC
 prop wmacidC zone.id=wm_bogC
@@ -138,7 +149,6 @@ prop wmacidC zone.hazard=acid
 prop wmacidC zone.damage=4
 prop wmacidC zone.safe=suit
 prop wmacidC zone.hazardMsg=The bog water burns - fuel and battery acid from the wreck. Keep to the planks, or wear a suit.
-place TP_SeleneReactor_Water_Radiated wmpoolD at 9.92 25.04 h=-0.05 scale=0.3 yaw=144
 place Zone_Trigger wmacidD at 9.92 25.04 h=-0.4
 prop wmacidD obj.name=wmacidD
 prop wmacidD zone.id=wm_bogD
@@ -162,16 +172,16 @@ prop wmmistB atmo.fogAmount=0.3
 prop wmmistB atmo.light=#d8f070
 prop wmmistB atmo.lightAmount=0.25
 place VP_Rubble_MetalPiece02 - at 20.8 29.2 ground sit yaw=75
-place Loot_ChestSmall wmcowlchest at 19.2 28.2 y=0.5 drop yaw=200
+place Loot_ChestSmall wmcowlchest at 19.6 29 y=0.5 drop yaw=200
 prop wmcowlchest obj.name=wmcowlchest
 prop wmcowlchest loot.refill=0
 note wmcowlchest Cargo locker | A cargo locker shaken out of the wing when the engine tore off: tools in oilcloth, wire and the spares for an engine nobody will fix.
 loot wmcowlchest MetalIngot*2;CopperIngot*2;Bolt*3;Hinge*1
-place "Box Big" wmsuits at 12.4 15.8 y=0.5 drop yaw=30
+place "Box Big" wmsuits at 11.73 14.46 y=0.5 drop yaw=30
 prop wmsuits obj.name=wmsuits
 prop wmsuits beh.use=Put on a salvage suit
 prop wmsuits on.use=suit||180\nmessage||The salvage crew's rubber suit, still folded in its box - three minutes before the bog finds the seams.
-place Note_Sign wmbogsign at 13.8 15.4 ground yaw=30
+place Note_Sign wmbogsign at 13.13 14.06 ground yaw=30
 note wmbogsign BOG - ACID | Fuel and acid from the wreck in the water. Planks across. Suits in the box. - Salvage crew
 
 info title=Wingfall Mire

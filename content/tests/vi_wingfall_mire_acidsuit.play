@@ -1,15 +1,16 @@
 # Wingfall Mire's acid bog with a suit (CIPlay vi_wingfall_mire_acidsuit, 11-12 w16 prep; in a test world 'CI ...'). The
-# suit box wmsuits (12.4 15.8) gives 180 s of suit; through zone wm_bogB (13.14 23.43) unhurt.
-# Offline-written, never run; re-read the offset after the build.
+# suit box wmsuits (11.73 14.46) gives 180 s of suit; down the near slope (beside the planks) through zone wm_bogB (13.14
+# 23.43) unhurt, and back up the near slope to the bank.
+# (11-17 w16: rewritten for the stepped bog)
 island Wingfall Mire keep
 offset 0 0
 hour 11
 weather Calm
 
 empty
-at 13 15 h=3
+at 12.6 14 h=5.5
 use wmsuits
-walk 13 15 to 12.6 20 to 13.14 23.43
+walk 12.6 14 to 10.8 18.2 to 13.14 23.43
 wait 6
 expect unhurt
-walk 13.14 23.43 to 12.6 20 to 13 16
+walk 13.14 23.43 to 14 28.5

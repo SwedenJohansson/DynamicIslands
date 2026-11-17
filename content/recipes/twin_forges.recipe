@@ -175,7 +175,7 @@ prop tftala obj.name=Smith Tala
 prop tftala islander.character=Tala
 prop tftala islander.pose=stand
 prop tftala talk.text=Two forges, two pupils, one bridge - and not a word between them in three summers.\n> Why do they feud?\n> Can you sharpen my tools?\n> I'll leave you to it.
-prop tftala on.choice1=journal|Smith Tala: the two forges|I taught them both at one anvil. Brann learned patience: he will hammer a plain blade for a week until it is perfect. Kessa learned fire: she folds the steel until it ripples like water. When I set down my hammer I said the better blade would have my forge. They each built their own instead, one on each peak, and swore to settle it on the judging stone. Neither has finished a blade since. Each one waits for the other to run out of ore or charcoal first.
+prop tftala on.choice1=journal|Smith Tala: the two forges|I taught them both at one anvil. Brann learned patience: he will hammer a plain blade for a week until it is perfect. Kessa learned fire: she folds the steel until it ripples like water. When I set down my hammer I said the better blade would have my forge. They each built their own instead, one on each peak, and swore to settle it on the judging stone. Neither has finished a blade since. Each one waits for the other to run out of ore or charcoal first.\nmessage||Tala sets the hammer down on the anvil before she answers.
 prop tftala on.choice2=give||MetalIngot*2\nmessage||Tala runs a thumb along your blade and tuts. 'Sharpening won't save poor steel. Here - two bars of good iron. Make yourself better tools.' And the annex beside the Anvil is open to you now.
 prop tftala on.choice3=message||Tala shrugs. 'Leave the bridge in one piece if you can. I built it.'
 

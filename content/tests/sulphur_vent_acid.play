@@ -2,7 +2,7 @@
 # (-17 17 to -24 8) runs through pool A (acid zone sv_poolA at -20.5 12.5, r 1.8, safe=suit); its bypass bends by -25.6
 # 16.5. The samplers' path (1 12 to 8 6) through pool B (sv_poolB at 4.5 9); its bypass by 8.7 13.9. Without a suit:
 # through each pool hurt; round each by the bypass unhurt; a chest at each end.
-# Offline-written, never run; re-read the offset after the build.
+# (11-17 w16: a tick while leaving a pool counts, so the check after walking out is `expect hurt 0`, which resets it)
 island Sulphur Vent keep
 offset 0 0
 hour 11
@@ -10,7 +10,7 @@ weather Calm
 
 empty
 at -1 20.5 h=11.5
-walk -1 20 to -2 16 h=10.3
+walk -1 20 to -3 19 to -2 16 h=10.3
 walk -2 16 to -4 19.5 to -15 19.5 to -17 17
 read DIGGINGS PATH
 picture sv_poolA -16 +2.5 18 -20.5 +0 12.5
@@ -19,8 +19,8 @@ wait 5
 expect message vent pool
 expect hurt 4
 walk -20.5 12.5 to -17 17
-wait 3
-expect unhurt
+wait 2
+expect hurt 0
 walk -17 17 to -25.6 16.5 to -24 8
 wait 3
 expect unhurt
@@ -35,8 +35,8 @@ wait 5
 expect message vent pool
 expect hurt 4
 walk 4.5 9 to 1 12
-wait 3
-expect unhurt
+wait 2
+expect hurt 0
 walk 1 12 to 8.7 13.9 to 8 6
 wait 3
 expect unhurt

@@ -11,7 +11,7 @@ weather Calm
 
 at 2.5 -8.5 h=31.5
 walk 2.5 -8.5 to 12 -3 h=30.05
-walk 12 -3 to 10.5 -7 h=30
+walk 12 -3 to 10.5 -7
 picture tf_annex 8 +2.5 -7 14.5 +1 -9
 at 12.83 -9.61 h=31
 use tfannexdoor
@@ -19,7 +19,7 @@ expect message smith's wedge
 expect hidden tfannexchest
 at 10.5 -7 h=31
 use Smith Tala pick 1
-read Smith Tala: the two forges
+expect message sets the hammer down
 use Smith Tala pick 2
 expect message good iron
 expect item MetalIngot 2

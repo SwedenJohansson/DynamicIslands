@@ -278,9 +278,12 @@ prop hcmaya obj.name=Maya
 prop hcmaya islander.character=Maya
 prop hcmaya islander.pose=fish
 prop hcmaya talk.text=Shh - you'll scare them. They only started biting after the crew went home.\n> What was this place?\n> Spare any bait?\n> Good luck with the fish.
-prop hcmaya on.choice1=journal|Maya: the cove|I was the woman who fished off the jetty. Twelve years, the same rod, the same wave at a quarter past nine when he walked by to the office. The fish on my line were rubber; the sea was real, and so was the rain when they wanted it. When he went out through the door in the sky the lights went off, the crew packed the cameras and the boats went back the way they came. I stayed. Somebody had to see whether real fish would come back on their own. They did.
+prop hcmaya on.choice1=journal|Maya: the cove|I was the woman who fished off the jetty. Twelve years, the same rod, the same wave at a quarter past nine when he walked by to the office. The fish on my line were rubber; the sea was real, and so was the rain when they wanted it. When he went out through the door in the sky the lights went off, the crew packed the cameras and the boats went back the way they came. I stayed. Somebody had to see whether real fish would come back on their own. They did.\nmessage||Maya reels in, checks the bait and casts again before she starts.
 prop hcmaya on.choice2=give||FishingBait_Simple*3\nmessage||Maya tips three baits into your hand from her tin. Real worms - the crew's were plastic. And the boathouse behind the pink house is open to you now: the crew left a chest in it.
 prop hcmaya on.choice3=message||Maya waves - the same wave, a quarter past nine sharp, out of habit. She laughs at herself and turns back to her line.
+# (11-17 w16: the ground at the doorway was ~2.6, a 0.8 m step up to the floor the play could not climb: the street
+# levelled at 3.2 under the boathouse and 2.5 m out in front of its doorway)
+brush flatten from -9.75 67 to -9.75 72.5 r=2.6 s=20 frames=60 h=3.2
 push at -7.5 70 h=3.2 yaw=180
 call shed w=3 d=3 door=1
 place Loot_ChestSmall hcboatchest at 3.4 3.4 y=0.2 sit yaw=180
