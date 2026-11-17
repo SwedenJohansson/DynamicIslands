@@ -3,7 +3,7 @@
 # the archery shed at -44.5 22; the lake x -8..32 z 29..46; the old boathouse on its east shore (30-35 37-41.5); the fire
 # lookout up the hill at 0 11 (ground 10.4 m, deck 16.9 m, its ladder on the south side).
 island Camp Blackwater
-offset -0.4374 -1.2402
+offset 4.959 4.9591
 expect step 0
 expect title The Last Week of Summer
 wait 5

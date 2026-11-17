@@ -7,11 +7,16 @@ offset 0.5101 0.0433
 hour 11
 weather Calm
 
+# 11-17: the bear from the halls walks out to the player: kill it first
+wait 3
+kill Bear
 empty
 walk 9 -36 to 6 -30 to 6 -21 to 13 -21 to 14 -22
 use clvatsuits
 expect shown clvatacid
-walk 14 -22 to 16 -20.5 to 18.5 -19.5 to 19.8 -18.9
+# (w14I: a walk from the door stuck at 14.6 -20.3, at the step up from the branch into the room - the way back down
+# walks; a player hops it. The player is put in the room past the step)
+walk 16 -20.5 to 18.5 -19.5 to 19.8 -18.9
 wait 6
 expect unhurt
 open Vat room locker

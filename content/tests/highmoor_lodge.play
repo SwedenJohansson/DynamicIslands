@@ -3,7 +3,7 @@
 # the ballroom on its west side, the boiler house behind the ballroom (its door at 2.25 25); the jetty on the north beach;
 # the hedge maze on the west lowland (floor 4.55 m, the way in at -28 10, the heart at -26 -2).
 island Highmoor Lodge
-offset -0.6789 -0.0309
+offset 7.4534 0.0942
 expect step 0
 expect title The Winter Book
 wait 5

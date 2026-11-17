@@ -89,7 +89,8 @@ place Relay_support_beam_wood - at 22.2 -0.1 h=-3 rot=0,0,-90 sx=0.81
 place Relay_support_beam_wood - at 23.35 -0.1 h=-3 rot=0,0,-90 sx=0.81
 place Relay_Floor_deck - at 24.73 11.73 h=7.6
 place Relay_support_beam_wood - at 24.4 6.8 h=-3 rot=0,0,-90 sx=1.11
-place Relay_support_beam_wood - at 24.4 11.4 h=-3 rot=0,0,-90 sx=1.11
+# (w14G: the sea cave mouth's smooth at 30 20 lowered the sea floor under this post - its foot stood 0.4 m over it: 0.6 m lower, longer)
+place Relay_support_beam_wood - at 24.4 11.4 h=-3.6 rot=0,0,-90 sx=1.17
 place Relay_support_beam_wood - at 22.2 6.8 h=-3 rot=0,0,-90 sx=1.11
 place ReefHuts_Pillar1 - at 24.6 -16.4 h=1.8
 # (REACH 11-02 RA1: no way up out of the sea - the jetty's deck stands 2.6 m over the water on all sides; a ladder from
@@ -292,19 +293,24 @@ where goats
 # 29.1 m, +7.5 m) to the den (~22 m long; the cave tool raises the dome from the sea floor). HEIGHTS guessed: the pad -5 (the
 # natural sea floor there is not known: if it is much deeper the pad stands as a plinth - lower the pad or move the mouth in),
 # the den floor -5 + 7.5 = +2.5 m over the sea; air zone h 4, the chest dropped from 5.5 m. Sea caves get no monsters (11-12).
-brush flatten at 68 46 r=6 s=20 frames=60 h=-5
-brush smooth at 68 46 r=9 s=6 frames=20
-call kit_uw x=68 z=46 yaw=270 len=29.1 slope=15 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=klseacave
+# 11-17 FIX (jobs w14E/F): the mouth at 68 / 76 46 lay past the island's ground, on Raft's own sea floor 40-60 m down that
+# flatten cannot lift (caveloot: no dry spot, 30 wet points); the cave tool also climbs 12 degrees at most. A probe grid
+# (w14F) found sea floor -4..-5 at 30 20 just east of the light stack. Now the mouth is there, the way in north-east (yaw 45):
+# 4 pieces (+6 m) as Tiki Lagoon's, den floor ~1, its middle ~58.3 48.3 on a new sea stack (sea floor -25 under it) - 35 m
+# and more from the lamp, horn, locker and diary, 48 m from the dolphins. Zone h 4, chest 4 m on and 1.5 m right of the middle.
+brush flatten at 30 20 r=6 s=20 frames=60 h=-5
+brush smooth at 30 20 r=9 s=6 frames=20
+call kit_uw x=30 z=20 yaw=45 len=29.1 slope=12 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=klseacave
 prop klseacave cave.rock=plain
 # cavecheck inside klseacaveair klseacavechest
-place Zone_Trigger klseacaveair at 29 46 h=4
+place Zone_Trigger klseacaveair at 58.3 48.3 h=4
 prop klseacaveair obj.name=klseacaveair
 prop klseacaveair zone.id=kl_seacave
 prop klseacaveair zone.radius=8
 prop klseacaveair zone.repeat=1
 prop klseacaveair zone.air=1
-prop klseacaveair zone.message=A dry cave under the lighthouse stack. The light's beam once swept the water at its mouth - now only the dark.
-place Loot_ChestSmall klseacavechest at 31 47.5 h=5.5 drop yaw=270
+prop klseacaveair zone.message=A dry cave in the sea stack off the light. The light's beam once swept the water at its mouth - now only the dark.
+place Loot_ChestSmall klseacavechest at 62.2 50.1 h=5.5 drop yaw=45
 prop klseacavechest obj.name=klseacavechest
 prop klseacavechest loot.refill=0
 note klseacavechest Keepers' cache | The keepers' cache below the light: lamp oil, a spare wick, a tin of tobacco and a bottle with no label.
@@ -315,7 +321,8 @@ loot klseacavechest Glass*2;Plastic*3;Rope*2;CopperIngot*1
 scatter "Pickup_Landmark_Flower_Blue" 2 at 0 0 r=31.5 seed=4403 free=3
 scatter "Pickup_Landmark_Flower_White" 2 at 0 0 r=31.5 seed=4404 free=3
 scatter "Pickup_Landmark_Tree_Birch" 3 at 0 0 r=31.5 seed=4413 free=5
-scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=31.5 seed=4423 free=3
+# (w14G: seed 4423 put a bush on the sea floor under the stair deck at 17.8 20.7 once the sea cave changed the ground)
+scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=31.5 seed=4424 free=3
 
 info title=Keeper's Light
 info author=Custom Islands

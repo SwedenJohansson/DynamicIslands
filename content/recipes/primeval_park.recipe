@@ -555,12 +555,13 @@ call ar_plants_tropical x=-50 z=78 r=16 seed=26501
 # turtles, far off every walk line. The burrow: kit_dig from the knoll's west foot (38 50, way in east), 3 m level, 10 m on,
 # a chamber under the summit (51..57); vines and dirt kept (vines 2, dirt 2, mushrooms 3); plain rock. 11-12 user: mixed
 # cave monsters - two hyenas in the chamber. HEIGHTS guessed: the shelf at the foot 3.52 (hw_mount rule), floor 3.52.
+# 11-17 fix: the level dig from the low foot (ground 2.7) sank to floor 0.1 (all wet, caveloot failed). Now no level start, 13 m up at 10 degrees.
 call hw_mount x=55 z=50 b=16 h=16
 brush flatten at 38 50 r=4 s=20 frames=60 h=3.52
 brush smooth at 35 50 r=7 s=6 frames=20
 clear at 38 50 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
 clear at 55 50 r=17 all only=(?i)boulder|tree|bush|palm|bamboo
-call kit_dig x=38 z=50 yaw=90 len=10 flat=3 r=1.75 slope=0 room=1 roomr=3.5 roomlen=6 dirt=2 mush=3 stone=0 vines=2 titanium=0 as=ppburrow
+call kit_dig x=38 z=50 yaw=90 len=13 flat=0 r=1.75 slope=10 room=1 roomr=3.5 roomlen=6 dirt=2 mush=3 stone=0 vines=2 titanium=0 as=ppburrow
 prop ppburrow cave.rock=plain
 place Note_Sign ppburrowsign at 30 45 ground yaw=90
 note ppburrowsign RAPTOR BURROW - NO ENTRY | Do not enter the burrow. Do not feed the raptors. Do not tell visitors they are hyenas. - Park Management
@@ -571,6 +572,14 @@ prop pphyenaA creature.respawn=0
 place Creature_Hyena pphyenaB at 56 51 h=3.8
 prop pphyenaB creature.count=1
 prop pphyenaB creature.respawn=0
+# (11-17 w14E: a hyena roamed from the room out to the burrow's mouth (41.8 49.8, open sky) before the player came -
+# CAVE_LESSONS 11-16 Vaporhold: they wait in the room until a player is in the passage, 3.5 m in from the mouth)
+# (w14G: the walker stands at 2.4 at the mouth (play log) - at h=4.5 r=2 the zone missed it; now 2.9, r 2.5)
+place Zone_Trigger pphyenazone at 41.5 50 h=2.9
+prop pphyenazone zone.id=pp_hyenas
+prop pphyenazone zone.radius=2.5
+prop pphyenaA creature.zone=pp_hyenas
+prop pphyenaB creature.zone=pp_hyenas
 place Zone_Trigger ppburrowz at 47 50 h=5
 prop ppburrowz obj.name=ppburrowz
 prop ppburrowz zone.id=pp_burrow
@@ -796,5 +805,8 @@ clear at 68.1 -50.5 r=2 all only=^SmallBoulder4
 clear at 64.5 -39.5 r=2 all only=^Bamboo_1
 # (agent Q 10-30, ground check: the house pad's sand spit left a boulder hanging 3.4 m over the new slope - gone)
 clear at -36.8 -66.3 r=2 all only=^SmallBoulder2
+# (11-17 w14: two of Raft's iron sea finds hung 1.2-1.8 m over the ground (CIFloating, also in w14B/D; it prints x z from the land centre: + offset -9.05 -0.94) - gone)
+clear at 44.25 39.8 r=2 all only=^Pickup_Landmark_Iron
+clear at 61.35 36.55 r=2 all only=^Pickup_Landmark_Iron
 
 save Primeval Park

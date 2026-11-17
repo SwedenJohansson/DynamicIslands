@@ -211,19 +211,27 @@ where hens
 # 29.1 m, +7.5 m) to the den (~22 m long; the cave tool raises the dome from the sea floor). HEIGHTS guessed: the pad -5 (the
 # natural sea floor there is not known: if it is much deeper the pad stands as a plinth - lower the pad or move the mouth in),
 # the den floor -5 + 7.5 = +2.5 m over the sea; air zone h 4, the chest dropped from 5.5 m. Sea caves get no monsters (11-12).
-brush flatten at 14 -58 r=6 s=20 frames=60 h=-5
-brush smooth at 14 -58 r=9 s=6 frames=20
-call kit_uw x=14 z=-58 yaw=335 len=29.1 slope=15 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=gsseacave
+# 11-17 FIX (jobs w14E/F): 14 -58 lies past the island's ground - flatten cannot lift Raft's own sea floor there (four passes
+# left it at -10.8), so the den lay under the sea (caveloot: no dry spot). The shelf rises fast inshore (10.2 -49.8 is -12.2,
+# 6 -40.8 is +5.6) and the line 335 inshore would put the den under the standing stones. Now the mouth is on the shelf at
+# 8.4 -46 (sea floor ~-4.5, pad -5) and the way in runs west-north-west (yaw 300) along the south shore: 4 pieces at 12
+# degrees (the tool's most; +6 m) as Tiki Lagoon's, den floor ~1, its middle ~-26.3 -25.9 - 37 m from the stones, 14 m and
+# more from the cook's camp. Zone h 4, chest 4 m on and 1.5 m right of the middle.
+brush flatten at 8.4 -46 r=6 s=20 frames=60 h=-5
+brush smooth at 8.4 -46 r=9 s=6 frames=20
+# (w14G: the smooth left a generator bush 0.6 m over the lowered shelf at 7.3 -39.7 - the generator's plants round the mouth go)
+clear at 8.4 -46 r=10
+call kit_uw x=8.4 z=-46 yaw=300 len=29.1 slope=12 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=gsseacave
 prop gsseacave cave.rock=plain
 # cavecheck inside gsseacaveair gsseacavechest
-place Zone_Trigger gsseacaveair at -3 -18.5 h=4
+place Zone_Trigger gsseacaveair at -26.3 -25.9 h=4
 prop gsseacaveair obj.name=gsseacaveair
 prop gsseacaveair zone.id=gs_seacave
 prop gsseacaveair zone.radius=8
 prop gsseacaveair zone.repeat=1
 prop gsseacaveair zone.air=1
 prop gsseacaveair zone.message=The pirates' bolt-hole: dry, a tarred rope down to the water, the crew's marks cut in the rock.
-place Loot_ChestSmall gsseacavechest at -4.5 -15.5 h=5.5 drop yaw=335
+place Loot_ChestSmall gsseacavechest at -29 -22.6 h=5.5 drop yaw=300
 prop gsseacavechest obj.name=gsseacavechest
 prop gsseacavechest loot.refill=0
 note gsseacavechest Pirates' sea chest | The crew's own chest, hidden from their captain: a bag of coins with a skull on every one, a spyglass lens and a coil of good rope.

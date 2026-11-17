@@ -3,8 +3,9 @@
 # (centre ~54 62, on the pad flattened to 3 m); the sign cbcellarsign at 36 42; the hidden strongroom hatch cbcellarhatch at
 # 55 63.5 and chest cbcellarchest at 56 64.8; two rats; zone cb_cellar at 50.5 56.5. Floor ~3 m (a guess).
 # Offline-written, never run; the offset is the old one - re-read it after the build (the cave hill may move the land centre).
+# 11-17 w14E: in-cave pictures at absolute heights - a '+h' height is taken over the hill's top, so the camera (and the player) stood on the hill.
 island Camp Blackwater keep
-offset -0.4374 -1.2402
+offset 4.959 4.9591
 hour 11
 weather Calm
 expect hidden cbcellarhatch
@@ -15,27 +16,31 @@ picture cb_cellar_out 34 +3 38 43.5 +1.5 47
 picture cb_cellar_side 52 +4 40 43.5 +1.5 47
 read BOATHOUSE CELLAR
 
-# The rats in the cellar (11-12 mixed monsters): alive, inside the cave
+# The rats by the cellar mouth (11-17: on real ground, a kit_st room has no NavMesh): alive
 wait 3
 expect animals Rat 2
-expect animalsinside Rat 2
 kill Rat
 expect animals Rat 0
 
 # In along the tunnel to the den
-walk 36 41 to 43.5 47 to 47.5 52.7 to 51 57.5 to 54 62
+walk 36 41 to 43.5 47 to 47.5 52.7 to 51 57.5 to 54 62 below=6.5
 zone cb_cellar
-picture cb_cellar_in 46 +2.5 51 54 +0.5 62 light=20
+picture cb_cellar_in 46 6 51 54 4.5 62 light=20
 
 # The hatch is hidden until Counsellor Shogo's third answer, then locked till talked: he is talked by the pick
 use Counsellor Shogo pick 3
 expect message Your funeral
 expect shown cbcellarhatch
+# 11-17: the talk leaves the player by the counsellor - walk back in to the hatch (the walk out stuck on the knoll's top)
+at 36 41
+walk 36 41 to 43.5 47 to 47.5 52.7 to 51 57.5 to 54 62 below=6.5
 use cbcellarhatch
 expect hidden cbcellarhatch
 expect shown cbcellarchest
 open Camp strongroom
-picture cb_cellar_chest 52 +2.5 60 56 +0.5 64.8 light=20
+picture cb_cellar_chest 52 6 60 56 4.5 64.8 light=20
 
 # Out again
-walk 54 62 to 51 57.5 to 47.5 52.7 to 43.5 47 to 36 41
+# (w14G: four runs stuck at y 16.5 near 43.6 49 on the way out - the walker took the knoll's top over the tunnel for its
+# ground; below=6.5 keeps it on the floor (~4.1) under the roof)
+walk 54 62 to 51 57.5 to 47.5 52.7 to 43.5 47 to 36 41 below=6.5

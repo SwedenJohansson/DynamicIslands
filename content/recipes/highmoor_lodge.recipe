@@ -342,10 +342,17 @@ prop hlcellar cave.rock=plain
 prop hlcellar cave.dome=14
 place Note_Sign hlcellarsign at 7 4 ground yaw=60
 note hlcellarsign WINE CELLAR | Staff only. Mind the step. Keep the door shut - the boar from the woods has been in once already. - the Steward
-# cavecheck inside hlboar hlcellarz
-place Creature_Boar hlboar at 30.6 1 h=5.3
+# cavecheck inside hlcellarz
+# 11-17: the boar roots by the cellar mouth on real ground - a kit_st room has no NavMesh (CAVE_LESSONS 11-09 Overpass).
+place Creature_Boar hlboar at 7 15.5 ground
 prop hlboar creature.count=1
 prop hlboar creature.respawn=0
+# (11-17 w14E: it roamed off to 12.7 16.5 and stood 0.63 m over its floor there - it waits by the mouth until a player
+# comes up to it: CAVE_LESSONS 11-16 Vaporhold)
+place Zone_Trigger hlboarwake at 6.5 12 ground y=0.8
+prop hlboarwake zone.id=hl_boar
+prop hlboarwake zone.radius=2.5
+prop hlboar creature.zone=hl_boar
 place Zone_Trigger hlcellarz at 25 4 h=6.5
 prop hlcellarz obj.name=hlcellarz
 prop hlcellarz zone.id=hl_cellar

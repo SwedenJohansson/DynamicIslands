@@ -435,24 +435,33 @@ clear at 93 -7 r=7 all only=Palm|Bamboo|Banana|Bush
 #    carved warning at its mouth, the old priests' lever at its inner end (reached from the hall by the tomb door).
 #  - 11-12 user: mixed cave monsters - two rats in the offering room.
 # HEIGHTS guessed: both mouth shelves cut level at 2.5 m (the cove's flat), floors ~2.5 m; things dropped from 5 m, zones 2.8-4.
-brush flatten at 22 -46 r=4 s=20 frames=60 h=2.5
+# 11-17 FIX (job w14D): kit_sys from the cove sank (level strokes on flat beach go down until rock is overhead): floors -3.4
+# to 1.0, the trunk and the offering room open trenches on the beach south of the mesa (surface probe). Now hand-dug INSIDE
+# the mesa (top 23.7 over x 0..16, z -30..-41; south cliff z -42..-44, east cliff x 18..20; the sinkhole's channel at x -6):
+# the tomb door in the south cliff foot (8 -45, way in north, 8 degrees up) to the burial hall (8 -39..-35); the robbers'
+# way from the east cove (22 -36, 6 degrees up) into the hall's east side; a gallery from the hall north-east to the
+# offering room (12..13, -28.5..-26.5), 6 m and more from the plaza mirror and the king's chest overhead (2D rule). Floors from the dig log.
 brush flatten at 22 -36 r=4 s=20 frames=60 h=2.5
-brush smooth at 25 -46 r=6 s=6 frames=20
 brush smooth at 25 -36 r=6 s=6 frames=20
-clear at 22 -46 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+clear at 8 -46 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
 clear at 22 -36 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
-call kit_sys x=22 z=-46 yaw=270 side=1 len=14 bend=8 branch=7 blen=6 gap=10 in2=10 r=1.75 roomr=3.5 dirt=3 mush=2 stone=0 vines=0 titanium=0 as=sptomb
+dig 8,-45 8,-39 r=1.75 slope=8 as=sptomb
+dig 8,-39 8,-35 r=3 as=sptomb
+dig 22,-36 12,-36 r=1.75 slope=6 as=sptomb
+dig 9,-34 12,-28.5 r=1.75 as=sptomb
+dig 12,-28.5 13,-26.5 r=3 as=sptomb
+caveloot sptomb dirt=3 mush=2 stone=0 vines=0 titanium=0 light=0
 prop sptomb cave.rock=plain
-place Note_Sign sptombsign at 30 -49 ground yaw=270
-note sptombsign (Dr. Quintero's tag on a stake) | Tomb door, south gallery. The second passage to the north is the robbers' way - the priests trapped it. Do NOT go in that way. - Q.
+place Note_Sign sptombsign at 14 -51 ground yaw=315
+note sptombsign (Dr. Quintero's tag on a stake) | Tomb door, south cliff. The other passage, round the east side, is the robbers' way - the priests trapped it. Do NOT go in that way. - Q.
 # cavecheck inside spratA spratB sptombz spspike spspikes spspikewarn splever
-place Creature_Rat spratA at 14 -55 h=2.8
+place Creature_Rat spratA at 12.5 -27.5 h=3.6
 prop spratA creature.count=1
 prop spratA creature.respawn=0
-place Creature_Rat spratB at 13.5 -57 h=2.8
+place Creature_Rat spratB at 13.5 -26 h=3.6
 prop spratB creature.count=1
 prop spratB creature.respawn=0
-place Zone_Trigger sptombz at 8 -41 h=4
+place Zone_Trigger sptombz at 8 -37 h=5
 prop sptombz obj.name=sptombz
 prop sptombz zone.id=sp_tomb
 prop sptombz zone.radius=5
@@ -466,7 +475,9 @@ place "Balboa_DecorationPrefabBase_Wooden Spikes" spspike at 15.8 -35.2 h=4.5 dr
 prop spspike obj.name=spspike
 prop spspike tint.color=#6a5e4a
 prop spspike tint.amount=0.6
-place Zone_Trigger spspikes at 16.4 -36 h=2.8
+# (11-17 w14E: the robbers' way was dug to floor h=4.2 - the zone at 2.8 never reached a walker there, now 5.0)
+# (w14G: the walker stops at 18.9 (a walk ends 0.7 m short, the stakes in the way) - 2.3 m from 16.6, outside r 2: the zone 1 m east, over the near stakes too)
+place Zone_Trigger spspikes at 17.6 -36 h=5.0
 prop spspikes obj.name=spspikes
 prop spspikes zone.id=sp_spikes
 prop spspikes zone.radius=2

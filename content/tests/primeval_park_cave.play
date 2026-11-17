@@ -1,9 +1,10 @@
 # Primeval Park's raptor burrow (CIPlay primeval_park_cave, 11-12 w14 prep; in a test world 'CI ...'). Points as in the
 # recipe: the new knoll hw_mount at 55 50 (b 16, h 16); kit_dig mouth at 38 50 (yaw 90: way in = +x), 3 m level, 10 m on,
 # a room at the end (~51..57); the sign ppburrowsign at 30 45; two hyenas inside; zone pp_burrow at 47 50. Floor 3.52 (a guess).
-# Offline-written, never run; the offset is the old one - re-read it after the build (a new hill may move the land centre).
+# 11-17 w14E: floor 3.3 (dig log), offset from the build; the hyenas wait for zone pp_hyenas (41.5 50).
+# 11-17 w14E: in-cave pictures at absolute heights - a '+h' height is taken over the hill's top, so the camera (and the player) stood on the hill.
 island Primeval Park keep
-offset -11.3586 -2.7132
+offset -9.0526 -0.9373
 hour 11
 weather Calm
 
@@ -11,15 +12,20 @@ weather Calm
 picture pp_burrow_out 30 +3 50 38 +1.5 50
 read RAPTOR BURROW
 
-# The "raptors" (11-12 mixed monsters): two hyenas, inside
-wait 3
+# The "raptors" (11-12 mixed monsters): two hyenas, waiting in the room until a player is in the passage (zone
+# pp_hyenas at 41.5 50 - 11-17 w14E: one roamed out of the mouth before the player came)
+# (w14I: woken, they rush the player and one stood out of the mouth at the check - so they are counted in the room first)
 expect animals Hyena 2
 expect animalsinside Hyena 2
+walk 31 47 to 34 50 to 38 50 to 41.5 50
+wait 3
+expect animals Hyena 2
 kill Hyena
 expect animals Hyena 0
 
 # In to the chamber
-walk 31 47 to 34 50 to 38 50 to 41 50 to 47 50
+walk 41.5 50 to 47 50
 zone pp_burrow
-picture pp_burrow_in 43 +2.5 50 54 +0.5 50 light=20
+# (w14I: at 5.8 the camera stood in the knoll - a white wash; now 1.5 m over the passage floor)
+picture pp_burrow_in 44 4.0 50 54 3.8 50 light=20
 walk 47 50 to 41 50 to 38 50 to 34 50

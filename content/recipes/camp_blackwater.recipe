@@ -352,7 +352,7 @@ call kit_st x=43.5 z=47 yaw=35 len=7.3 slope=0 end=room size=0.7 hill=1 dirt=2 m
 prop cbcellar cave.rock=plain
 place Note_Sign cbcellarsign at 36 42 ground yaw=55
 note cbcellarsign BOATHOUSE CELLAR - KEEP OUT | Ice store and canoe gear. Campers keep out. Counsellors only, and never after dark. Ask a counsellor for the strongroom key.
-# cavecheck inside cbcellarhatch cbcellarchest cbratA cbratB cbcellarz
+# cavecheck inside cbcellarhatch cbcellarchest cbcellarz
 place TangaroaHatchRoom_Hatch cbcellarhatch at 55 63.5 h=8 drop yaw=35
 prop cbcellarhatch obj.name=cbcellarhatch
 prop cbcellarhatch beh.hidden=1
@@ -366,10 +366,12 @@ prop cbcellarchest beh.hidden=1
 prop cbcellarchest loot.refill=0
 note cbcellarchest Camp strongroom | The camp's strongroom under the cellar: spare canoe gear, the first-aid tin and the confiscated box - fireworks, a penknife and a bag of sweets.
 loot cbcellarchest Rope*3;HealingSalve*2;Leather*2;Nail*8;Plank*3
-place Creature_Rat cbratA at 51 58.5 h=3.3
+# 11-17: the rats sit by the cellar mouth on real ground - a kit_st room has no NavMesh, so rats put in it spawned under
+# its floor (gap -1, CAVE_LESSONS 11-09 Overpass).
+place Creature_Rat cbratA at 37.5 40 ground
 prop cbratA creature.count=1
 prop cbratA creature.respawn=0
-place Creature_Rat cbratB at 57.5 60 h=3.3
+place Creature_Rat cbratB at 40 38.5 ground
 prop cbratB creature.count=1
 prop cbratB creature.respawn=0
 place Zone_Trigger cbcellarz at 50.5 56.5 h=4.5

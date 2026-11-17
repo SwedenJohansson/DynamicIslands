@@ -311,7 +311,7 @@ prop clhallz zone.id=cl_halls
 prop clhallz zone.radius=5
 prop clhallz zone.message=The lair's main hall under the crater. Pipes run up into the dark - and something big is breathing.
 # the vat room (side branch): the pool, its mist, the acid zone, the locker beyond the pool; the suits and the sign at the door
-place TP_SeleneReactor_Water_Radiated clvatpool at 18.5 -19.5 h=4.9 scale=0.3 yaw=10
+place TP_SeleneReactor_Water_Radiated clvatpool at 18.5 -19.5 h=4.2 scale=0.3 yaw=10
 place Zone_Atmosphere clvatmist at 18.5 -19.5 h=5.5
 prop clvatmist zone.radius=4
 prop clvatmist atmo.particles=steam
@@ -348,7 +348,9 @@ place "Balboa_DecorationPrefabBase_Wooden Spikes" clspike at -9.2 -20.8 h=7 drop
 prop clspike obj.name=clspike
 prop clspike tint.color=#5a5a5e
 prop clspike tint.amount=0.7
-place Zone_Trigger clspikes at -10 -21.4 h=5.3
+# (11-17 w14E: the walker stands at 6.8 in the service way (play logs) - the zone at 5.3 never reached it, now 6.6)
+# (w14G: the walker stops 2.5 m short of -21.4 (the pins block it, a walk ends 0.7 m short) - the zone 0.8 m south, over the near pins too)
+place Zone_Trigger clspikes at -10 -22.2 h=6.6
 prop clspikes obj.name=clspikes
 prop clspikes zone.id=cl_spikes
 prop clspikes zone.radius=2.2
@@ -494,4 +496,6 @@ clear at 22.41 12.16 r=1.2 all only=CaravanIsland_SmallRock_2
 clear at -39.26 -15.93 r=1.2 all only=SmallBoulder2
 # (11-03 fixC, CIFloatingSweep: a scattered grass tuft hung over the ground, cleared the stray scatter)
 clear at -33.06 -13.97 r=1.5 only=CaravanIsland_BrownGrass all
+# (11-17 w14: a generated small rock blocked the spikes play's walk from the lever back to the halls - cleared)
+clear at 1.8 -32 r=1.8 all only=CaravanIsland_SmallRock
 save Crater Lair

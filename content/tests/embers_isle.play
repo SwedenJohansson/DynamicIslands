@@ -4,7 +4,7 @@
 # headland's north side (43 9) to the shelf at the cliff's foot (x 49.5) and the sea cave's mouth (48 -10.6), its passage
 # through the cliff at 0 m with the boat and the sea chest on a rock (40.6 -12.4)
 island Embers Isle
-offset 1.8103 -0.3116
+offset 0.3501 -1.8994
 expect step 0
 expect title Before They Come Back
 wait 5
