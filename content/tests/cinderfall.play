@@ -43,8 +43,8 @@ zone hall
 expect step 8
 kill Roach
 expect step 9
-# RAFT2 10-26: Tomas Reyes, the climb, Slag Cave, the secrets
-use Tomas Reyes
+# RAFT2 10-26: Forgekeeper Johnny (11-12 w09; was Tomas Reyes), the climb, Slag Cave, the secrets
+use Forgekeeper Johnny
 wait 1
 expect step 10
 expect hidden cf_lampchest

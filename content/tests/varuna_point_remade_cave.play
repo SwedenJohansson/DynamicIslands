@@ -1,0 +1,15 @@
+# Varuna Point Remade's fuel works adit (CIPlay varuna_point_remade_cave, 11-12 w13, re-cut 11-16 into the knoll; in a test world 'CI ...').
+# Points as in its recipe: the spoil knoll at 26 -45 (b 12, h 14) on the flat below Varuna's Back; the adit from its mouth
+# at 26 -31.5 level into the knoll to 26 -42.5, its end room to 26 -47.5; the side gallery (acid, own plays) leaves it at
+# 27 -39 to 30 -42.5 and its chamber to 31.8 -45 (zone vp_fuelspill at 31.2 -44.4, r 3.2, safe=suit). Floor 2.1 m.
+# Walk the adit in and out only.
+island Varuna Point Remade keep
+offset -0.7444 -5.052
+hour 11
+weather Calm
+
+zone fuelworks
+picture vp_fuel_out 26 7.5 -20 26 4 -31.5
+walk 26 -28 to 26 -31.5 to 26 -36 to 26 -42.5 to 26 -45.5 below=14
+picture vp_fuel_in 26.4 4.0 -33.5 26 3.0 -47 light=20
+walk 26 -45.5 to 26 -42.5 to 26 -36 to 26 -31.5 to 26 -28 below=14

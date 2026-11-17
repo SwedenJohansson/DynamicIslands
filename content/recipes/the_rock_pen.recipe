@@ -300,9 +300,9 @@ quest title=Fourteen Months
 quest intro=A prison on a rock in the fog, closed after one man left it without the ferry. Start at the dock.
 step read|Warden's notice|1|Land at the dock and read the warden's notice on its gate
 step kill|Rat|3|Climb the road to the yard and clear the rats out of cell block B
-step collect|story:cellkeys|1|Find the cell block's key ring in the guard tower
+step collect|story:cellkeys|1|Find the cell block's key ring in the box in the guard tower
 step read|Inmate 1147's notes|1|Open cell 14 and read the notes hidden under the mattress
-step collect|story:spoon|1|Find the sharpened spoon he hid in the mess hall
+step collect|story:spoon|1|Find the sharpened spoon he hid in the cutlery drawer in the mess hall
 step reach|tunnel|1|Unscrew the vent in cell 14 and crawl down his drain
 step open|Escape kit|1|Swim from the drain's mouth to the outer rock and open his escape kit
 step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the escape kit

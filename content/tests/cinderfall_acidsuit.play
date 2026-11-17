@@ -1,0 +1,20 @@
+# Cinderfall's vent pool with a heat suit (CIPlay cinderfall_acidsuit, 11-12 w09; in a test world 'CI ...').
+# The suit box at the rim (cf_ventsuits, -32.4 -53.2) gives 180 s of suit; into the pool to the surveyors' locker and
+# back out, unhurt, with the pool still there.
+island Cinderfall keep
+offset 0.9743 -0.0458
+hour 11
+weather Calm
+empty
+at -31.8 -52.4
+use cf_ventsuits
+expect shown cf_ventpool
+walk -31.8 -52.4 to -34.5 -49.6 to -37 -48.8
+wait 6
+expect unhurt
+open Surveyors' locker
+wait 2
+expect item TitaniumIngot 1
+picture cf_vent_in -33.5 +2.2 -51.5 -38 +0.3 -48
+walk -37 -48.8 to -34.5 -49.6 to -31.5 -52
+expect unhurt

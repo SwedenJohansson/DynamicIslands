@@ -270,7 +270,7 @@ namespace DynamicIslands.Editor
 	/// <summary>
 	/// Raft's player picks something up (Pickup.PickupItem, on the machine of the player who picks it up): a blueprint gets
 	/// its partner first if it hasn't yet (ScrambledBlueprints.BeforePickup - AU65). Found by name: a Raft version without
-	/// it only loses this check (PatchHealth says so), the 1.5 s look still swaps.
+	/// it only loses this check (Prepare logs it and leaves the patch out - questfix round 2), the 1.5 s look still swaps.
 	/// </summary>
 	[HarmonyPatch]
 	static class ScrambledBlueprintsPickup
@@ -281,6 +281,13 @@ namespace DynamicIslands.Editor
 			Type pickup = typeof(PickupItem).Assembly.GetType("Pickup");
 			const System.Reflection.BindingFlags all = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly;
 			return pickup == null ? null : pickup.GetMethods(all).FirstOrDefault(m => m.Name == "PickupItem" && m.GetParameters().Any(x => x.ParameterType == typeof(PickupItem)));
+		}
+
+		static bool Prepare()
+		{
+			if (TargetMethod() != null) return true;
+			Debug.LogWarning("[CUSTOM ISLANDS] [blueprints] Raft's Pickup.PickupItem isn't in this Raft version: a scrambled blueprint gets its partner by the 1.5 s look only");
+			return false;
 		}
 
 		static void Prefix(object[] __args)

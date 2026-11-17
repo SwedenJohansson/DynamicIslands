@@ -170,6 +170,9 @@ namespace DynamicIslands.Editor
 			// memory - the plan, km sailed, the story book - still belongs to the world played before, and writing it
 			// here gave the new world that world's journal and km, and lost the plan chosen for it (two-player test).
 			if (loadedFor != WorldKey) return;
+			// Not while the player leaves the world, except Raft's own save (SaveGuard vets that one): a save from the mod's
+			// own code then (a reward, a tick) wrote what was half torn down already, as SaveSoon never does (sweep 11-14)
+			if (!WorldCopy.InRaftSave && (GameManager.IsLeavingGame || GameManager.IsQuittingGame)) { Debug.Log("[CUSTOM ISLANDS] Island list not saved: the world is being left"); return; }
 			// (the world's file couldn't be read: saving what little was read would write over the good file - AU12)
 			if (loadFailed)
 			{
@@ -274,6 +277,9 @@ namespace DynamicIslands.Editor
 			ResetStep("StoryBook.Reset", () => StoryBook.Reset());
 			ResetStep("PlayerPlaces.Reset", () => PlayerPlaces.Reset());
 			ResetStep("Claims.Reset", () => Claims.Reset());
+			ResetStep("Behaviours.ForgetWorld", () => Behaviours.ForgetWorld());
+			ResetStep("ContentState.ForgetWorld", () => ContentState.ForgetWorld());
+			ResetStep("QuestTimers.Reset", () => QuestTimers.Reset()); // (island ids repeat between worlds: the last world's clock set a step back here - questfix 11-14)
 			// (a story island brought back by hand in the world before isn't "on its way" in this one - RK12 L2)
 			ResetStep("handBrought", () => DynamicIslands.handBrought.Clear());
 			ResetStep("MechFeatures.Reset", () => MechFeatures.Reset());

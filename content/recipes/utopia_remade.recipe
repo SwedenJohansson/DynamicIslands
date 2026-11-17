@@ -19,6 +19,7 @@ include lib_features
 include lib_highwater
 include lib_areas
 include lib_raft_remade
+include lib_caves
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
 randomize Utopia like Seed=7108 Radius=55 Height=22 Cliffs=0.25 BeachWidth=0.5 Hostiles=0 Friendly=0 SeaLife=0.3 Trees=0.4 Bushes=0.5 Rocks=0.75 Harvest=0.7 Water=0.5
@@ -212,6 +213,45 @@ prop jyut zone.repeat=never
 prop jyut zone.message=You topped the slab stacks.
 pop
 # --- end of jump course ut ---
+# --- 11-12 (w13): the quarrymen's sea door - optional, no quest step (plan 13 row: UW, a straight cave from under the water
+# up to an air room; stone 2, a chest). The quarrymen cut a lower gallery below the quarry cave; the sea took it, and what
+# is left is a drowned passage whose far end stands dry: a culvert from the sea floor off the ridge's last rock, climbing
+# (kit_st slope 18, hill=1) to a small dry chamber under a rock islet. Swim in, breathe in the room (zone.air), take the
+# chest, swim out. No rats (reached only under water). The quarry cave (62 -36) keeps 15 m+ from the room, the cargo yard
+# and its strip 25 m+.
+# HEIGHTS (guess, need a surface probe in Raft): the sea floor round the mouth is flattened to -5 m below the sea (so the
+# mouth is 5 m down, known); the room floor then lies about -5 + 36 * sin 18 = +6.1 m; the room sits 9-10 m past the cave's
+# end (as Colossus' bolt store, size 0.7): zone at 8 m, the chest dropped from 8 m. The EAST shore depth, whether the flat
+# at -5 meets the shelf without a step, and the islet's dome (16 m) are not known offline.
+brush flatten at 90 -8 r=6 s=20 frames=200 h=-5
+brush smooth at 90 -8 r=9 s=6 frames=20
+brush flatten at 90 -8 r=3.5 s=20 frames=200 h=-5
+# (11-16 w13 build: the islet was hill mesh only, over open sea - the room showed the sea through its wall and the
+# islet's side had a hole. A low terrain pad under the room and dome gives the mesh ground to stand on.)
+call rr_pad x=90 z=-50 h=2 r=12
+call kit_st x=90 z=-8 yaw=180 len=36 slope=18 end=room size=0.7 hill=1 dirt=0 mush=1 stone=2 vines=0 titanium=0 as=utsea
+prop utsea cave.rock=plain
+prop utsea cave.dome=16
+# (11-16 w13Q: the hill's skin past the drowned way in's cut stood up out of the sea as a thin brown plate off the
+# mouth - play_ut_ov_e/top. cave.seacut (w13T) left it and cut the whole hill to sheer faces, so it is not used. The
+# dry foot (w13U) closed the arch the cut left in the hill above the mouth; the plate past the cut's end is still
+# there - OPEN (code: the hill skin past the cut's end, CaveMountain). w13V-Y: a sea stack (BigBoulder2_Low) stood on
+# the bowl floor over it never showed: scale 2.4 and 1.6 came back from the save at ~1, top under the sea - dropped.)
+prop utsea cave.foot=dry
+place Zone_Trigger utseaair at 90 -53 h=8
+prop utseaair obj.name=utseaair
+prop utseaair zone.id=ut_seadoor
+prop utseaair zone.radius=9
+prop utseaair zone.repeat=1
+prop utseaair zone.air=1
+prop utseaair zone.message=A dry chamber at the top of the drowned gallery - air. The quarrymen kept their lower store here, above the swell.
+# cavecheck inside utseachest
+place Loot_ChestSmall utseachest at 90 -54 h=8 drop yaw=0
+prop utseachest obj.name=utseachest
+prop utseachest loot.refill=0
+note utseachest Quarrymen's lower store | The store of the quarrymen's lower gallery, kept above the sea until the sea came up: spare drill steel, a rope coil, a stone mason's mark on the lid.
+loot utseachest Bolt*4;MetalIngot*2;CopperIngot*2;Rope*2
+call hw_zone x=73 z=-12 al=utseahint id=quarryseadoor r=5 msg="Off the ridge's last rock the swell runs dark: the quarrymen's sea door, a drowned passage on the sea floor."
 # The new land planted (mangoes, bananas, palms as on the island)
 call rr_plants_hill x=0 z=-74 r=26 seed=27001
 call rr_plants_tropical x=0 z=-50 r=9 seed=27011
@@ -250,7 +290,7 @@ call rr_piece x=30 z=-40 al=token5 set="Crew tokens" nm="Crew token 5"
 call rr_piece x=52 z=30 al=token6 set="Crew tokens" nm="Crew token 6"
 prop token1 on.set=give||TitaniumIngot*2;CopperIngot*2\nmessage||All six crew tokens: Olof's crew were all here, to the last one.
 # The quarry cave, the plane, the cargo yard
-note quarrybox Quarrymen's strongbox | The quarrymen's strongbox in the cave under the ridge: their pay from the warden, never spent.
+note quarrybox Quarrymen's strongbox | The quarrymen's strongbox in the cave under the ridge: their pay from the warden, never spent. Scratched on its lid: the lower gallery flooded, the sea door is off the ridge's last rock.
 loot quarrybox TitaniumOre*3;CopperIngot*2;Bolt*3
 prop quarrybox loot.refill=0
 call hw_zone x=62 z=-40 al=quarryz id=quarrycave r=4 msg="A cave cut into the quarry ridge - picks, a lamp, a strongbox."

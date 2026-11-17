@@ -350,7 +350,7 @@ step read|Pedlar's tag|1|Read the tag on what the pedlar won't sell
 step collect|story:rb_deep|1|Find the pedlars' cave and take the arcade till key from their stock
 step reach|rb_trail|1|Find the foot of the trail up Tin Peak, the tall peak on the island
 step reach|rb_summit|1|Climb the trail to the top of Tin Peak
-step collect|story:rb_top|1|Climb the pedlars' bell tower and take the bell clapper from its deck
+step collect|story:rb_top|1|Climb the pedlars' bell tower and take the bell clapper from the box on its deck
 step read|Crier's ledger|1|Bring both to the crier's box and read what it shows
 step collect|story:rb_strong|1|Find the four market row signs and open the crier's strongbox with their stall numbers
 step read|Merchant's warning|1|Read the merchant's warning

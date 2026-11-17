@@ -1,0 +1,20 @@
+# Cinderfall's vent pool without a suit (CIPlay cinderfall_acid, 11-12 w09; in a test world 'CI ...').
+# Points as in its recipe: the pool at -38 -48 on the high plateau (ground ~9, zone cf_vent r 3.4, safe=suit), the suit
+# box at -32.4 -53.2, the sign at -31.2 -51.6. Into the pool: hurt and the message; out again over its gentle rim.
+island Cinderfall keep
+offset 0.9743 -0.0458
+hour 11
+weather Calm
+expect shown cf_ventpool
+picture cf_vent_out -29.5 +3.5 -57 -38 +0.5 -48
+# up from the east valley over the graded ash slope and across the plateau to the sign (a way up for the pool)
+walk 22 -66 to 19 -64.5 to 15.5 -63.5 to 12 -62.5 to 8.5 -61.5 to 0 -59 to -12 -56.5 to -24 -53.5 to -31.8 -50.6
+wait 2
+read VENT POOL - SCALDING
+walk -31.8 -50.6 to -34.5 -49.6 to -37 -48.8
+wait 8
+expect message pool scalds
+expect hurt 10
+walk -37 -48.8 to -34.5 -49.6 to -31.5 -52
+wait 2
+expect hurt 1

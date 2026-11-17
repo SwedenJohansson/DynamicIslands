@@ -298,6 +298,18 @@ namespace DynamicIslands
 			yield return null;
 			yield return null;
 			Check(ref ok, !EscGuard.Blocks(), "two frames later: the pause menu takes Esc again");
+			// (a cutscene skips on Esc: the pause menu opened on the same press - sweep 11-14)
+			Transform cam = Camera.main != null ? Camera.main.transform : null;
+			CameraMoment.Begin(cam != null ? cam.position + cam.forward * 5f : Vector3.up * 5f, Quaternion.identity, 30f);
+			yield return null;
+			Check(ref ok, CameraMoment.Active && EscGuard.Blocks(), "camera moment: the pause menu skips Esc");
+			Check(ref ok, ModKeys.ModOverlayOpen() && ModKeys.Blocked(), "camera moment: J/K/U/M/G wait too (sweep 11-14)");
+			CameraMoment.Skip();
+			Check(ref ok, !CameraMoment.Active && EscGuard.Blocks(), "moment skipped on this press: still skipped");
+			yield return null;
+			yield return null;
+			Check(ref ok, !EscGuard.Blocks(), "two frames after the moment: the pause menu takes Esc again");
+			Check(ref ok, !ModKeys.ModOverlayOpen(), "after the moment: J/K/U/M/G work again");
 			if (ok) Log("PASS: esc guard"); else Fail("esc guard");
 		}
 
@@ -579,6 +591,7 @@ namespace DynamicIslands
 			CodeLock.Use(e, pad.Index, ObjectProps.Get(pad.Props, CodeLock.Code), pad.transform);
 			yield return new WaitForSeconds(0.4f);
 			Check(ref ok, CodeLock.IsOpen, "using it opens the keypad");
+			Check(ref ok, ModKeys.Blocked(), "keypad open: J/K/U/M/G wait (sweep 11-14)");
 			foreach (string k in new[] { "1", "2", "3", "4", "OK" }) CodeLock.Press(k);
 			yield return new WaitForSeconds(0.5f);
 			Check(ref ok, CodeLock.IsOpen && !safe.gameObject.activeInHierarchy && !CodeLock.Unlocked(e, pad.Index), "a wrong code keeps it shut");
@@ -590,7 +603,7 @@ namespace DynamicIslands
 			yield return ReloadIslandRoutine(e);
 			yield return new WaitForSeconds(1f);
 			IslandObjectRef safe2 = ScObjOf(e, "safe");
-			Check(ref ok, CodeLock.Unlocked(e, pad.Index) && safe2 != null && safe2.gameObject.activeInHierarchy, "after a reload it stays unlocked, the safe there");
+			Check(ref ok, CodeLock.Unlocked(e, pad.Index) && safe2 != null && safe2.gameObject.activeInHierarchy, "after a reload it stays unlocked, the safe there (unlocked " + CodeLock.Unlocked(e, pad.Index) + ", safe " + (safe2 == null ? "missing" : safe2.gameObject.activeInHierarchy ? "shown" : "hidden") + ", entry loaded " + (e.Root != null) + ", state keys " + e.State.Count + ")");
 			IslandWorldState.Remove(CodeLockIsland);
 			if (ok) Log("PASS: code lock"); else Fail("code lock");
 		}

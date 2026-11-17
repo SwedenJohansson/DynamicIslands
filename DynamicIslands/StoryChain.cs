@@ -186,7 +186,19 @@ namespace DynamicIslands.Editor
 		{
 			int last = -1;
 			for (int k = 0; k < Steps.Count; k++) if (Done.Contains(Steps[k])) last = k;
-			if (last < 0 || last + 1 >= Steps.Count) return;
+			if (last < 0) return;
+			// (a step put in before the last one done - a story island taken off the left-out list, or a plan island placed after
+			// one already passed: the step before it was done before it was there, so nothing ever unlocked it and its island
+			// never came; in play a step whose step before is done is always unlocked, so only an edit leaves such a gap -
+			// questdeepA S3)
+			for (int k = 1; k < last; k++)
+			{
+				string s = Steps[k];
+				if (Unlocked.Contains(s) || Done.Contains(s) || !Done.Contains(Steps[k - 1])) continue;
+				Log("The chain changed: " + StepName(s) + ", put in after " + StepName(Steps[k - 1]) + " (done), unlocks");
+				Unlock(s, true);
+			}
+			if (last + 1 >= Steps.Count) return;
 			string next = Steps[last + 1];
 			if (Unlocked.Contains(next) || Done.Contains(next)) return;
 			Log("The chain changed: the step after " + StepName(Steps[last]) + " unlocks");
@@ -334,6 +346,23 @@ namespace DynamicIslands.Editor
 			// (the note naming Chain[i] lies on Chain[i-1]: that island is done; the first is the Receiver's own - the start)
 			if (i == 0) { if (Steps.Count > 0 && IsRaft(Steps[0])) Unlock(Steps[0], false); }
 			else MarkDone(RaftKey(StoryOrder.Chain[i - 1]));
+		}
+
+		/// <summary>
+		/// Host: an island's "frequency|X" action (ReceiverUnlock) with the chain on: X's own step unlocks, with a banner and a
+		/// journal page; the steps before it stay as they are. Through Raft's note the chain read it as the note found on the
+		/// island before X in Raft's order: that island counted done (its quest still open) and what came after it in the plan's
+		/// chain unlocked, not X - or nothing at all when that island was left out (questdeepA S2). False: X isn't in this chain.
+		/// </summary>
+		public static bool UnlockRaftStep(ChunkPointType t)
+		{
+			string key = RaftKey(t);
+			string step = Steps.FirstOrDefault(s => s.Equals(key, StringComparison.OrdinalIgnoreCase));
+			if (step == null) return false;
+			if (Unlocked.Contains(step) || Done.Contains(step)) return true;
+			Unlock(step, true);
+			SaveSoon.Request("story step");
+			return true;
 		}
 
 		public static void MarkDone(string step)
@@ -627,7 +656,7 @@ namespace DynamicIslands.Editor
 			// (failed but there: an error after its land and objects were made - it plays, so it counts - review 2026-10-06)
 			if (entries.All(e => e.Failed && e.Root == null || !System.IO.File.Exists(IslandSpawner.PathFor(e.Name)))) return false;
 			string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
-			if (kind.Length == 0) kind = IslandQuest.From(IslandCache.PropsOf(entries[0])).Steps.Count > 0 ? "quest" : "visit";
+			if (kind.Length == 0) kind = IslandQuest.From(IslandCache.PropsOf(entries.FirstOrDefault(e => System.IO.File.Exists(IslandSpawner.PathFor(e.Name))) ?? entries[0])).Steps.Count > 0 ? "quest" : "visit"; // (a copy whose file is gone read as quest-less: a visit counted it done - questdeepA)
 			if (kind == "note") return entries.Any(e => StoryBook.Pages.Any(p => p.Key.Equals("note:" + StoryBook.PageIsland(e) + ":" + arg.Trim(), StringComparison.OrdinalIgnoreCase)));
 			IslandWorldState.Entry at;
 			var done = new IntroRule { When = kind, WhenRef = r.Id, WhenArg = arg };
@@ -667,10 +696,16 @@ namespace DynamicIslands.Editor
 			bool grew = false;
 			try
 			{
-				InstallFrequencies();
+				// (each part on its own: one throwing used to skip the unlock list below, so the receiver lost the chain's islands)
+				try { InstallFrequencies(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] frequencies: " + e); }
 				List<ChunkPointType> unlocked = NoteBook.unlockedChunkPointType;
 				if (unlocked == null) return;
-				if (active && Raft_Network.IsHost) { int d = Done.Count, u = Unlocked.Count; ReplayNotes(); grew = Done.Count > d || Unlocked.Count > u; }
+				if (active && Raft_Network.IsHost)
+				{
+					int d = Done.Count, u = Unlocked.Count;
+					try { ReplayNotes(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] notes: " + e); }
+					grew = Done.Count > d || Unlocked.Count > u;
+				}
 				unlocked.RemoveAll(t => (int)t >= ModTypeBase);
 				if (active)
 				{
@@ -679,7 +714,7 @@ namespace DynamicIslands.Editor
 				}
 				for (int i = 0; i < Frequencies.Count; i++)
 					if (Fired.Contains(Frequencies[i].Key)) unlocked.Add((ChunkPointType)(ModTypeBase + i));
-				StoryOrder.RelabelAll();
+				try { StoryOrder.RelabelAll(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] labels: " + e); }
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] " + e); }
 			finally { rebuilding = false; }

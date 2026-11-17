@@ -12,6 +12,7 @@ include lib_huts
 include lib_areas
 include lib_highwater
 include lib_rain
+include lib_caves
 # RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 56 -> 85; the old island moved 29 m south (push frames), so its south shore stays on the coast and the new land is north
 # RAIN 10-26: the new land - Cinder Knoll with salt-drop chimney, Ash Cave, Kalle Strom at the ruined house (a lamp puzzle), a crashed plane, a jump course, a maze, a set of five salt crystals
 new
@@ -300,6 +301,7 @@ call rn_piece x=-52 z=-17 al=sk_piece2 set="Salt crystals"
 call rn_piece x=40 z=24 al=sk_piece3 set="Salt crystals"
 call rn_piece x=-10 z=60 al=sk_piece4 set="Salt crystals"
 call rn_piece x=16 z=38 al=sk_piece5 set="Salt crystals"
+
 prop sk_piece1 on.set=show|sk_setchest\nmessage||All five salt crystals found.
 call rn_hidden x=5 z=14 al=sk_setchest kind=Loot_Chest
 call treasure x=24 z=56 r=5 n=1 seed=26778 kind=0
@@ -316,6 +318,31 @@ call hw_note x=-2.6 z=19.2 yaw=200 al=sk_hint
 clear at -7.14 51.38 r=2 only=BigSharpRock_5 all
 clear at -32.09 6.97 r=1.5 only=CaravanIsland_SmallRock_1 all
 clear at 41.65 -35.16 r=1.5 only=CaravanIsland_SmallRock_1 all
+# (11-13 w11b: the desert scatter's rocks stood in the kiln cave's way - a sharp rock at its mouth, a small one inside)
+clear at 38.6 -49.1 r=2 only=BigSharpRock_5 all
+clear at 51.7 -45.2 r=1.5 only=CaravanIsland_SmallRock_1 all
+# --- 11-12 (w11 prep): the old kiln cave (plan 11 row: kiln cave; stone 3, dirt 2) ----------------------------------
+# Before the bottle kilns the salt men fired their first batches in a cave east of the yard, dug into a knoll of kiln
+# spoil: a level passage from the lowland (3 m) runs in under the knoll to the room where the first kiln stood.
+# Its own rock (cave.rock=plain), the knoll's top 17 m. No quest step.
+# (11-13 w11: was a kit_st den with hill=1, which raised a sheer box over the flat lowland - now dug like the Fogworks
+# cellars, after the desert scatter so the knoll's clear takes its rocks and plants)
+brush flatten at 52 -45 r=20 s=20 frames=200 h=7
+brush flatten at 52 -45 r=15 s=20 frames=200 h=12
+brush flatten at 53 -46 r=10 s=20 frames=200 h=17
+brush smooth at 52 -45 r=19 s=8 frames=40
+brush flatten from 30 -45 to 34.5 -45 r=1.6 s=20 frames=60 h=3
+clear at 52 -45 r=21 only=(?i)boulder|rock|tree|bush|bamboo|cactus
+dig 33.5,-45 46,-45 r=1.75 slope=0 as=skkilncave
+dig 46,-45 53,-45 r=3.2 as=skkilncave
+caveloot skkilncave dirt=2 mush=0 stone=3 vines=1
+prop skkilncave cave.rock=plain
+# a bear sleeps where the first kiln stood (cave monsters mixed across the world: rats at Vaporhold, a boar at the
+# Fogworks, a bear here, none at Hailstone and Thunderhead)
+# cavecheck inside skbear
+place Creature_Bear skbear at 50 -45 h=4.5 drop
+prop skbear creature.count=1
+prop skbear creature.respawn=0
 # --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
 info title=The Sleet Kilns
 info author=Custom Islands

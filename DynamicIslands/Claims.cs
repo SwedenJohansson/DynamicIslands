@@ -28,8 +28,10 @@ namespace DynamicIslands.Editor
 
 		// Host: island|key -> who has it, until when
 		static readonly Dictionary<long, KeyValuePair<ulong, float>> held = new Dictionary<long, KeyValuePair<ulong, float>>();
-		// Client: granted and not used yet; waiting for the host's answer
-		static readonly HashSet<long> granted = new HashSet<long>();
+		// Client: granted and not used yet (until when it may still be used); waiting for the host's answer
+		// (a grant ran on for ever: one not used at once - its trade cancelled, the window shut - was used minutes later without
+		// asking, after the host's hold had ended and another player had it - sweep 11-14)
+		static readonly Dictionary<long, float> granted = new Dictionary<long, float>();
 		static readonly Dictionary<long, Action<bool>> waiting = new Dictionary<long, Action<bool>>();
 		// Client: each question's number (sent as Ids[1], which the host sends back) and when it went out
 		static readonly Dictionary<int, float> askedAt = new Dictionary<int, float>();
@@ -70,10 +72,26 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static void ForgetIsland(int islandId)
 		{
-			int forgotten = granted.RemoveWhere(x => (int)(x >> 32) == islandId);
+			int forgotten = 0;
+			foreach (long k in granted.Keys.Where(x => (int)(x >> 32) == islandId).ToList()) { granted.Remove(k); forgotten++; }
 			foreach (long k in waiting.Keys.Where(x => (int)(x >> 32) == islandId).ToList()) { waiting.Remove(k); forgotten++; }
 			if (forgotten > 0) Debug.Log("[CUSTOM ISLANDS] [net] Island " + islandId + " unloaded: " + forgotten + " claim(s) of it forgotten");
 		}
+
+		/// <summary>Client: uses up a grant of the host's that is still within its hold; a later one is dropped (asked again).</summary>
+		internal static bool TakeGrant(long k)
+		{
+			float until;
+			if (!granted.TryGetValue(k, out until)) return false;
+			granted.Remove(k);
+			if (Time.unscaledTime <= until) return true;
+			Debug.Log("[CUSTOM ISLANDS] [net] The host's grant of " + ((int)(uint)k).ToString("X") + " on island " + (int)(k >> 32) + " ran out unused: asking again");
+			return false;
+		}
+
+		/// <summary>Tests: a grant as the host's answer leaves it, usable for this many seconds.</summary>
+		internal static void TestGrant(int island, int key, float seconds) { granted[K(island, key)] = Time.unscaledTime + seconds; }
+		internal static long KeyOf(int island, int key) { return K(island, key); }
 
 		/// <summary>
 		/// Whether this player may use the thing now. The host: unless another player holds it. A client: when the host
@@ -85,7 +103,7 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost) return HostGrant(e, key, LocalId);
 			if (!IslandNetwork.InGame) return true;
 			long k = K(e.Id, key);
-			if (granted.Remove(k)) return true;
+			if (TakeGrant(k)) return true;
 			if (waiting.ContainsKey(k)) { Debug.Log("[CUSTOM ISLANDS] [net] Claim of " + key.ToString("X") + " on island " + e.Id + ": asked already, waiting for the host"); return false; } // (the answer is on its way)
 			waiting[k] = then;
 			Debug.Log("[CUSTOM ISLANDS] [net] Asking the host for " + key.ToString("X") + " on island " + e.Id);
@@ -156,7 +174,7 @@ namespace DynamicIslands.Editor
 			}
 			waiting.Remove(k);
 			Debug.LogWarning("[CUSTOM ISLANDS] [net] The host didn't answer a claim (an older Custom Islands?): going ahead");
-			granted.Add(k);
+			granted[k] = Time.unscaledTime + FreshAnswerSeconds;
 			try { then(true); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Claim: " + ex.Message); }
 		}
 
@@ -238,7 +256,8 @@ namespace DynamicIslands.Editor
 			waiting.Remove(k);
 			Debug.Log("[CUSTOM ISLANDS] [net] The host " + (yes ? "granted" : "refused") + " " + msg.Index.ToString("X") + " on island " + msg.Ids[0]);
 			LastAnswer = yes ? "granted" : "refused";
-			if (yes) granted.Add(k);
+			// (usable until the host's hold for it ends, less the time a "used" takes to reach it)
+			if (yes) granted[k] = (msg.Ids.Length > 1 && askedAt.TryGetValue(msg.Ids[1], out asked) ? asked : Time.unscaledTime) + Mathf.Max(fresh, 1f);
 			try { then(yes); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Claim: " + ex.Message); }
 		}
 	}
