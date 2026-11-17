@@ -1,0 +1,27 @@
+# Highmoor Lodge's wine cellar (CIPlay highmoor_lodge_cave, 11-12 w14 prep; in a test world 'CI ...'). Points as in the
+# recipe: kit_st mouth at 15 10 (yaw 120: way in = +x -z), tunnel 7.3 m, the den ~22 m on (middle ~30.6 1), its own knoll
+# (hill=1); the sign hlcellarsign at 7 4; a boar (hlboar) in the den; zone hl_cellar at 25 4. Floor ~5 m (a guess).
+# Offline-written, never run; the offset is the old one - re-read it after the build (a new hill may move the land centre).
+# 11-17 w14E: in-cave pictures at absolute heights - a '+h' height is taken over the hill's top, so the camera (and the player) stood on the hill.
+island Highmoor Lodge keep
+offset 7.4534 0.0942
+hour 11
+weather Calm
+
+# The knoll and the mouth from the kitchen yard
+picture hl_cellar_out 6 +3 12 15 +1.5 10
+read WINE CELLAR
+
+# The boar by the cellar mouth (11-17: on real ground, a kit_st room has no NavMesh): alive
+# (11-17: the boar waits by the mouth until a player is in hl_boar at 6.5 12)
+walk 7 5 to 6.5 12
+wait 3
+expect animals Warthog 1
+kill Warthog
+expect animals Warthog 0
+
+# In along the tunnel to the den
+walk 8 5 to 12 8 to 15 10 to 21.3 6.4 to 25 4
+zone hl_cellar
+picture hl_cellar_in 19 13.7 7.5 30.6 12.2 1 light=20
+walk 25 4 to 21.3 6.4 to 15 10 to 12 8
