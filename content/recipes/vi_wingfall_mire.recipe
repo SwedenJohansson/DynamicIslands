@@ -34,6 +34,10 @@ brush flatten at 4 18 r=5 s=20 frames=60 h=-1.5
 brush seabed at -18 -2 r=5 s=20 frames=15
 brush seabed at 16 -14 r=4 s=20 frames=15
 brush seabed at 4 18 r=4 s=20 frames=15
+# (w16G: the deeper pools need a way out for a swimmer - one smoothed ramp in each bank, away from the boat)
+brush smooth at -18 -8.5 r=3 s=6 frames=24
+brush smooth at 16 -19.5 r=3 s=6 frames=24
+brush smooth at -1.5 18 r=3 s=6 frames=24
 brush flatten at -20 16 r=9 s=20 frames=100 h=2.5
 brush grass at -20 16 r=8 s=20 frames=20
 brush flatten from 10 -2 to 16 1 r=3 s=10 frames=60 h=1.4

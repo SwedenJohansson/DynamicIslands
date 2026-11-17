@@ -4,6 +4,7 @@
 # ~2.7 m, centre line 1.2 m from the nearest zone's edge). The planks: unhurt; the cargo locker (19.6 29) on the far
 # side; wade into zone A from the far side: hurt; walk out up the far slope. Offset under 0.5 m: none.
 # (11-17 w16: rewritten for the stepped bog and the higher planks)
+# (11-17 w16G: run it before any suit play in a session - a suit put on in an earlier play keeps its 180 s timer)
 island Wingfall Mire keep
 offset 0 0
 hour 11
