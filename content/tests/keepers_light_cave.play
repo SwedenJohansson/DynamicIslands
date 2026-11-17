@@ -12,13 +12,15 @@ weather Calm
 empty
 picture kl_seacave_out 72 8 14 50 3 40
 at 24.3 14.3 h=-1
-swim 24.3 14.3 -1.5 to 30 20 -3.5 to 36.4 26.4 -2 to 41.3 31.3 -0.6
-walk 44.1 34.1 to 47 37 to 50.6 40.6 to 54.7 44.7 to 58.3 48.3 below=5
+# 11-17 w14L: swims along the tunnel snagged where its floor meets the water line. As effigy_shoals_caves and
+# weatherglass: swim only to the mouth, walk the tunnel floor in and out.
+swim 24.3 14.3 -1.5 to 30 20 -3.5
+walk 30 20 to 36.4 26.4 to 41.3 31.3 to 44.1 34.1 to 47 37 to 50.6 40.6 to 54.7 44.7 to 58.3 48.3 below=-3
 air kl_seacave here
 picture kl_seacave_in 50.6 4 40.6 58.3 3 48.3 light=20
 open Keepers' cache
 wait 2
 expect item CopperIngot 1
-walk 58.3 48.3 to 54.7 44.7 to 50.6 40.6 to 47 37 to 44.1 34.1 below=5
+walk 58.3 48.3 to 54.7 44.7 to 50.6 40.6 to 47 37 to 44.1 34.1 to 41.3 31.3 to 36.4 26.4 to 30 20 below=5
 # (w14I: the swim out is put on its first point - at -0.8 that was under the floor (stuck); it now runs the swim in's own line back)
-swim 41.3 31.3 -0.6 to 38.85 28.85 -1.3 to 36.4 26.4 -2 to 30 20 -3.5 to 24.3 14.3 -1.5
+swim 30 20 -3.5 to 24.3 14.3 -1.5

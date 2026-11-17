@@ -13,13 +13,15 @@ weather Calm
 empty
 picture gs_seacave_out 30 6 -58.5 -16.8 3 -31.4
 at 15.3 -50 h=-2
-swim 15.3 -50 -3 to 8.4 -46 -3.5 to 0.6 -41.5 -2 to -5.5 -38 -0.6
-walk -8.6 -36.3 to -12.8 -33.8 to -16.8 -31.4 to -21.6 -28.7 to -26.3 -25.9 below=5
+# 11-17 w14L: swims along the tunnel snagged where its floor meets the water line. As effigy_shoals_caves and
+# weatherglass: swim only to the mouth, walk the tunnel floor in and out.
+swim 15.3 -50 -3 to 8.4 -46 -3.5
+walk 8.4 -46 to 0.6 -41.5 to -5.5 -38 to -8.6 -36.3 to -12.8 -33.8 to -16.8 -31.4 to -21.6 -28.7 to -26.3 -25.9 below=-3
 air gs_seacave here
 picture gs_seacave_in -16.8 4 -31.4 -26.3 3 -25.9 light=20
 open Pirates' sea chest
 wait 2
 expect item TradeToken 3
-walk -26.3 -25.9 to -21.6 -28.7 to -16.8 -31.4 to -12.8 -33.8 to -8.6 -36.3 below=5
+walk -26.3 -25.9 to -21.6 -28.7 to -16.8 -31.4 to -12.8 -33.8 to -8.6 -36.3 to -5.5 -38 to 0.6 -41.5 to 8.4 -46 below=5
 # (w14I: the swim out is put on its first point - at -0.8 that was under the floor (stuck); it now runs the swim in's own line back)
-swim -5.5 -38 -0.6 to -2.45 -39.75 -1.3 to 0.6 -41.5 -2 to 8.4 -46 -3.5 to 15.3 -50 -2
+swim 8.4 -46 -3.5 to 15.3 -50 -2

@@ -15,10 +15,11 @@ read RAPTOR BURROW
 # The "raptors" (11-12 mixed monsters): two hyenas, waiting in the room until a player is in the passage (zone
 # pp_hyenas at 41.5 50 - 11-17 w14E: one roamed out of the mouth before the player came)
 # (w14I: woken, they rush the player and one stood out of the mouth at the check - so they are counted in the room first)
-expect animals Hyena 2
-expect animalsinside Hyena 2
+# 11-17 w14R: the recipe spawns them when zone pp_hyenas is entered (none before: 0 at the island's coming), so they
+# are counted under the roof right after the walk into the zone (2 s later one had already run out: 1 of 2)
 walk 31 47 to 34 50 to 38 50 to 41.5 50
-wait 3
+expect animalsinside Hyena 2
+wait 2
 expect animals Hyena 2
 kill Hyena
 expect animals Hyena 0

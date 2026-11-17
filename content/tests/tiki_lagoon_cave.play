@@ -15,13 +15,15 @@ at 10 -68 h=-2
 # (11-17 w14E: the tool clamps the slope to 12 degrees, so the tunnel leaves the water near 10 -37 (floor ~0) - a swimmer
 # stuck at the surface at 10 -41; swim in under water, walk the dry rest - as hailstone_weir/vaporhold do)
 # (w14G: the floor at 10 -41 is at +0.2 - -0.6 there was under it; the swim ends 3 m lower down the slope, 0.2 m over its floor)
-swim 10 -68 -3.5 to 10 -60 -3.5 to 10 -51 -1.5 to 10 -44 -0.3
-walk 10 -41 to 10 -38 to 10 -34 to 10 -31 to 10 -25 to 10 -20 below=5
+# 11-17 w14L: swims along the tunnel snagged where its floor meets the water line. As effigy_shoals_caves and
+# weatherglass: swim only to the mouth, walk the tunnel floor in and out.
+swim 10 -68 -3.5 to 10 -60 -3.5
+walk 10 -60 to 10 -51 to 10 -44 to 10 -41 to 10 -38 to 10 -34 to 10 -31 to 10 -25 to 10 -20 below=-3
 air tl_seacave here
 picture tl_seacave_in 10 4 -30 10 3 -20 light=20
 open Staff stash
 wait 2
 expect item Battery 1
 # (w14I: the swim out is put on its first point - at -0.8 that was under the floor (stuck); it now runs the swim in's own line back)
-walk 10 -20 to 10 -25 to 10 -31 to 10 -34 to 10 -38 to 10 -41 below=5
-swim 10 -44 -0.3 to 10 -47.5 -0.9 to 10 -51 -1.5 to 10 -60 -3.5 to 10 -68 -2
+walk 10 -20 to 10 -25 to 10 -31 to 10 -34 to 10 -38 to 10 -41 to 10 -44 to 10 -51 to 10 -60 below=5
+swim 10 -60 -3.5 to 10 -68 -2
