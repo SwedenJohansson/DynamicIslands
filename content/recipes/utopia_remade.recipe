@@ -235,7 +235,8 @@ prop utsea cave.dome=16
 # (11-16 w13Q: the hill's skin past the drowned way in's cut stood up out of the sea as a thin brown plate off the
 # mouth - play_ut_ov_e/top. cave.seacut (w13T) left it and cut the whole hill to sheer faces, so it is not used. The
 # dry foot (w13U) closed the arch the cut left in the hill above the mouth; the plate past the cut's end is still
-# there - OPEN.)
+# there - OPEN (code: the hill skin past the cut's end, CaveMountain). w13V-Y: a sea stack (BigBoulder2_Low) stood on
+# the bowl floor over it never showed: scale 2.4 and 1.6 came back from the save at ~1, top under the sea - dropped.)
 prop utsea cave.foot=dry
 place Zone_Trigger utseaair at 90 -53 h=8
 prop utseaair obj.name=utseaair

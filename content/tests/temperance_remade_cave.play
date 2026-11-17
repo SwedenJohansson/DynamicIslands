@@ -1,18 +1,21 @@
-# Temperance Remade's ice-core store (CIPlay temperance_remade_cave, 11-12 w13; in a test world 'CI ...'; PASS 11-16 w13B).
-# Points as in its recipe: the new pad at 74 -38 (r 28, 3 m - past the den's hill mesh), the bridge from the old pad at
-# 44..54 -38, the cave mouth at 56 -38 (kit_st yaw 90, len 14.5, size 0.7, dome 16), the sign at 53 -30, the den round
-# 80 -38 with the weather team's chest. Floor ~3 (the pad).
+# Temperance Remade's ice-core store (CIPlay temperance_remade_cave, 11-12 w13; in a test world 'CI ...'; PASS 11-16 w13B;
+# 11-17 w13: now a level adit dug into a snow knoll).
+# Points as in its recipe: the new pad at 74 -38 (r 28, 3 m), the bridge from the old pad at
+# 44..54 -38, the knoll at 76 -38 (b 12, h 14), the adit's mouth at 62.5 -38 (kit_dig yaw 90, room 73.5..78.5), the sign
+# at 53 -30, the weather team's chest at 77 -39.5 in the room. Floor ~2 (dug level under the pad).
 island Temperance Remade keep
-offset 6.4887 -13.708
+offset 1.817 -12.2534
 hour 11
 weather Calm
 
-picture te_ice_out 48 6 -26 58 3 -38
+picture te_ice_out 48 6 -26 62.5 3 -38
 read ICE-CORE STORE
-walk 46 -38 to 56 -38 to 66 -38 to 76 -38 to 80 -37 below=8
-picture te_ice_in 70 3.5 -38 82 3 -38 light=20
+walk 46 -39 to 54 -38.5 to 60 -38 to 66 -38 to 72 -38 to 75.5 -38.5 below=8
+picture te_ice_in 67 3.5 -38 77 2.5 -39 light=20
 open Ice-core chest
 wait 2
 expect item Battery 1
-walk 80 -37 to 70 -38 to 56 -38 to 46 -38 below=8
-picture te_ice_mouth 40 5 -34 56 3 -38
+walk 75.5 -38.5 to 72 -38 to 66 -38 to 60 -38 to 52 -38.5 to 46 -39 below=8
+picture te_ice_mouth 40 5 -34 62.5 3.5 -38
+picture te_ice_mouth_q 46 6 -48 62.5 3.5 -38
+picture te_ice_mouth_n 46 6 -28 62.5 3.5 -38

@@ -211,23 +211,36 @@ call rr_pad x=36 z=-38 h=3 r=10
 place TP_Moontown_Barrel02 - at 38 -36 ground sit
 # --- 11-12 (w13): the weather team's ice-core store - optional, no quest step (plan 13 row: ST ice cave; stone 2, a chest).
 # The station's weather team cut a cold store for their ice cores into a snow rise on the flats east of the barrel pad:
-# a straight cave (kit_st, size 0.7, 2 tunnels) to a den; the cores were thawed long ago, their chest was left. The land
+# a level adit dug into the rise (kit_dig, mouth west to the bridge); the cores were thawed long ago, their chest was left. The land
 # is a new wide pad (rr_pad, 3 m) joined to the old pad by a short bridge, so the whole cave stands on dry flat ground
-# (floor = the pad, 3 m: guess-free, set by the pad flatten). Ice look: plain mountain rock lightly tinted pale (one rock).
+# (the adit floor ~2, dug level under the 3 m pad). Ice look: plain mountain rock lightly tinted pale (one rock).
 # 18 m from the barrel and the old pad's things; the supply plane and the quest are far off.
 call rr_land x1=44 z1=-38 x2=54 z2=-38 h=3 r=8
 # (11-16 w13 build: with a pad of r 22 the den's hill mesh reached 4-6 m past the pad's edge, where the ground falls
-# into the sea - its pale skirt and rocks hung over open water. The pad now reaches past the mesh, the dome is held to 16.)
+# into the sea - its pale skirt and rocks hung over open water. The pad r 28 now reaches well past the knoll.)
 call rr_pad x=74 z=-38 h=3 r=28
-call kit_st x=56 z=-38 yaw=90 len=14.5 slope=0 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=0 as=teicestore
+# (11-17 w13: the straight cave (kit_st x=56 yaw=90 len=14.5 end=room hill=1) left its mouth tube in a cut through its
+# hill: sheer pale hill-skin sheets both sides of the tan mouth rock, a brown cut band; a dry foot (w13V) only added brown
+# flats. The bear den in its place (w13X/Y, dome 16) rose as a 40 m brown spire with a sky slit over the arch. Now the
+# Dark Lagoon / Varuna fuel works pattern: a snow knoll on the flat pad (hw_mount) and a level adit dug into it
+# (kit_dig), mouth b+1.5 m out at x 62.5, the room within 3 m of the knoll's heart.)
+brush flatten from 53 -38.5 to 61 -38.5 r=4.5 s=20 frames=60 h=3.2
+clear at 76 -38 r=16
+clear from 54 -39 to 48 -39 r=4
+call hw_mount x=76 z=-38 b=12 h=14
+# (11-17 w13Z: the knoll's sheer back face showed two thin pale slivers from the east (play_te_den_e); its back half
+# is smoothed to a less sheer slope, away from the mouth face and 3+ m clear of the room's end at 81.5.)
+brush smooth at 85.5 -38 r=8 s=5 frames=80
+brush auto at 85.5 -38 r=10 s=10 frames=25
+call kit_dig x=62.5 z=-38 yaw=90 len=8 flat=3 r=1.75 slope=0 room=1 roomr=3 roomlen=5 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=teicestore
 prop teicestore cave.rock=plain
-prop teicestore cave.dome=16
 prop teicestore tint.color=#d6e4ee
 prop teicestore tint.amount=0.35
+place Placeable_Lantern_Metal - at 75 -36.4 h=3 drop
 place Note_Sign teicesign at 53 -30 ground sit yaw=200
 note teicesign ICE-CORE STORE | WEATHER TEAM - ICE-CORE STORE. Cold store in the snow rise behind this sign, cut for the winter's cores. Keep the door shut. Spare gear in the back.\n- the weather team
 # cavecheck inside teicechest
-place Loot_ChestSmall teicechest at 80 -38 h=3.6 drop yaw=270
+place Loot_ChestSmall teicechest at 77 -39.5 h=3 drop yaw=270
 prop teicechest obj.name=teicechest
 prop teicechest loot.refill=0
 note teicechest Ice-core chest | The weather team's chest at the back of the cold store: the cores are long thawed; their spare cells, rope and a bar of ore remain.

@@ -244,7 +244,10 @@ place TP_Moontown_Barrel02 - at 27.6 -45.5 h=3.9 drop yaw=80
 dig 28,-41.5 29.5,-43.5 r=1.6
 dig 29.5,-43.5 29.8,-46 r=2.0
 # the spill: a pool in the chamber, crusted rocks round it, a dark vapour
-place TP_SeleneReactor_Water_Radiated vpfuelpool at 29.7 -44.9 h=2.2 scale=0.3 yaw=30
+# (11-16 w13W: the pool's glowing sheet (23.6 m square at full size: 7 m at 0.3) reached out of the chamber into the room's
+# floor and showed as a flat pale yellow wedge inside the mouth, the same by day and night - not sky (vp_fuel_day/night).
+# Now 3 m, set down on the chamber's floor.)
+place TP_SeleneReactor_Water_Radiated vpfuelpool at 30 -46 h=3.2 drop scale=0.13 yaw=30
 place SmallRock_02 vpfuelrock at 31.1 -44.4 h=3.5 drop yaw=60 scale=0.45 sy=0.5
 prop vpfuelrock tint.color=#a4c428
 prop vpfuelrock tint.amount=0.7
