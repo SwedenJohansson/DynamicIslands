@@ -141,6 +141,10 @@ brush flatten at 4.5 9 r=2.6 s=40 frames=120 h=9.4
 brush flatten at 4.5 9 r=1 s=40 frames=120 h=8.3
 brush smooth at 4.5 9 r=3 s=3 frames=8
 brush flatten at 4.5 9 r=1 s=40 frames=60 h=8.3
+# (w16D: pool B lies on the cone's upslope side and its bank toward the Samplers' trail rose 1.2 m in 1.5 m - a swimmer
+# could not climb out to 1 12. A level shelf at 9.4 m from the bank to the trail is the way out)
+brush flatten from 3.1 10.4 to 0.6 12.4 r=1.2 s=40 frames=120 h=9.4
+brush smooth from 3.1 10.4 to 0.2 12.8 r=1.8 s=4 frames=8
 place TP_SeleneReactor_Water_Radiated svpoolB at 4.5 9 h=8.85 scale=0.17 yaw=58
 place Zone_Atmosphere svmistB at 4.5 9 y=0.6
 prop svmistB zone.radius=3.5
@@ -173,7 +177,7 @@ prop svsuits beh.use=Put on a works acid suit
 prop svsuits on.use=suit||180\nmessage||A rubber works suit with a hood and gauntlets - three minutes before the fumes find the seams.
 place Note_Sign svsignA at -18.2 14.2 ground yaw=240
 note svsignA DIGGINGS PATH - VENT POOL | The pool on the path is acid since the vent woke. Take the long way round it, or a suit from the box. - Works manager
-place Note_Sign svsignB at 2.4 10 ground yaw=120
+place Note_Sign svsignB at -0.2 10.7 ground yaw=120
 note svsignB SAMPLERS' PATH - VENT POOL | Acid in the pool on the path. Round by the other trail, or suit up first. - Works manager
 
 # ===== Settings, story items, notes, behaviours, quest (5 steps) ==========================================================
