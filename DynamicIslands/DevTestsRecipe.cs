@@ -2269,6 +2269,21 @@ namespace DynamicIslands
 						case "log":
 							Log("  " + Rest(line, 1));
 							break;
+						case "ground":
+						{
+							// ground x z [x z ...]: logs the land's height above the sea at those points (where a stroke's h= did or didn't reach)
+							// (ground cut x z ...: the caves' ground cut made first, as a world spawns it)
+							int g0 = 1, gd;
+							if (t.Length > 1 && t[1] == "cut") { g0 = 2; CaveGround.EditorNow(terraineditor.terrain, out gd); }
+							var sb = new System.Text.StringBuilder(g0 == 2 ? "  ground (cut):" : "  ground:");
+							for (int gi = g0; gi + 1 < t.Length; gi += 2)
+							{
+								Vector2 gp = WorldXZ(F(t[gi]), F(t[gi + 1]));
+								sb.Append(" " + t[gi] + "," + t[gi + 1] + "=" + Num(GroundY(gp.x, gp.y) - DynamicIslands.EditorWaterLevel));
+							}
+							Log(sb.ToString());
+							break;
+						}
 						case "where":
 						{
 							// where <alias>: logs where the objects placed under it ended up (island x z, height above the sea, turn)

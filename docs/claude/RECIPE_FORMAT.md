@@ -179,6 +179,7 @@ plan save
 | `plan` | see below | World plans window. |
 | `log` | `<text>` | Writes the text to the log. |
 | `where` | `<alias>` | Logs where the alias's objects ended up (x z from the first origin, `h=` above the sea, turn). |
+| `ground` | `[cut] <x> <z> [<x> <z> ...]` | Logs the land's height above the sea at those points as the recipe has shaped it so far (whether a stroke's `h=` reached there); `cut`: the caves' ground cut made first, as a world spawns it. |
 | `wait` | `[n]` | Waits n frames (default 1). |
 
 `place` options (also passed on by `scatter`, `line`): `y=`, `h=`, `ground`, `yaw=`, `tilt=`, `roll=`, `rot=x,y,z` (own
