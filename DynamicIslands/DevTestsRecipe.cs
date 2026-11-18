@@ -2541,17 +2541,22 @@ namespace DynamicIslands
 		/// recipe's strokes lowered the ground under it) set back on the ground round their pivot, as Place sets them. The foot
 		/// stays within 1 m under the land (lower ground under it is a cave floor or a ledge: the land then), and a tree whose
 		/// foot would be inside a placed rock or building stays where it is.</summary>
+		/// <summary>Grass tufts and bushes the generator scattered: a recipe's strokes lowered the ground under some (Firedance Isle's
+		/// pits: tufts 0.5-1 m in the air, IG5 11-18) - the reseat drops the floating ones onto the ground too.</summary>
+		static readonly Regex Tuft = new Regex(@"^(CaravanIsland_\w*Grass|Bush|SmallBush_\d+|Balboa_Bush_01 Variant)$");
+
 		static int ReseatSunkTrees(float seaY)
 		{
 			EditorGameObject[] all = GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>();
 			int reseated = 0, kept = 0;
 			foreach (EditorGameObject e in all)
 			{
-				if (!Trunk.IsMatch(e.GameObjectName ?? "")) continue;
+				bool tuft = Tuft.IsMatch(e.GameObjectName ?? "");
+				if (!tuft && !Trunk.IsMatch(e.GameObjectName ?? "")) continue;
 				Vector3 p = e.transform.position;
 				float land = GroundY(p.x, p.z);
 				if (land <= seaY) continue;
-				bool sunk = land - p.y > 1f, floating = p.y - land > 0.4f && !PlacedUnder(e, p, land, all);
+				bool sunk = !tuft && land - p.y > 1f, floating = p.y - land > 0.4f && !PlacedUnder(e, p, land, all);
 				if (!sunk && !floating) continue;
 				float foot = PlacementOptions.LowestGroundUnder(new Bounds(p, new Vector3(1f, 0f, 1f)));
 				if (foot > land || foot < land - 1f) foot = land;
@@ -2560,7 +2565,7 @@ namespace DynamicIslands
 				e.transform.position = to;
 				reseated++;
 			}
-			if (reseated + kept > 0) Log("  reseat trees: " + reseated + " sunk or floating trees and palms set back on the ground" + (kept > 0 ? ", " + kept + " left (their foot would be inside a placed object)" : ""));
+			if (reseated + kept > 0) Log("  reseat trees: " + reseated + " sunk or floating trees and palms (and floating grass tufts and bushes) set back on the ground" + (kept > 0 ? ", " + kept + " left (their foot would be inside a placed object)" : ""));
 	return reseated;
 		}
 

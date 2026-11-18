@@ -67,31 +67,31 @@ brush flatten from -30 10 to -18 10 r=2 s=20 frames=30 h=24
 brush flatten from -30 11 to -18 11 r=2 s=20 frames=30 h=24
 brush flatten from -30 12 to -18 12 r=2 s=20 frames=30 h=24
 # (the town on the flat west shore: main street and the building plots, the wharf's head)
-brush flatten from -115 -44 to -115 12 r=20 s=20 frames=60 h=3
-brush flatten from -104 -17 to -90 -17 r=8 s=20 frames=60 h=3
-brush flatten at -133 -28 r=7 s=20 frames=60 h=3
-brush flatten from -100 -2 to -96 8 r=7 s=20 frames=60 h=3
-brush flatten from -93 -5 to -91 6 r=6 s=20 frames=60 h=3
-brush flatten from -106 10 to -101 21 r=8 s=20 frames=60 h=3
-brush flatten at -104 -34 r=6 s=20 frames=60 h=3
-brush flatten at -126 10 r=5 s=20 frames=40 h=3
-brush flatten from -112 -47 to -96 -47 r=8 s=20 frames=60 h=3
-brush flatten at -130 -20 r=5 s=20 frames=40 h=3
-brush flatten at -128 -11 r=10 s=20 frames=60 h=3
-brush flatten at -100 -44 r=9 s=20 frames=60 h=3
+brush flatten from -115 -44 to -115 12 r=20 s=20 frames=300 h=3
+brush flatten from -104 -17 to -90 -17 r=8 s=20 frames=300 h=3
+brush flatten at -133 -28 r=7 s=20 frames=300 h=3
+brush flatten from -100 -2 to -96 8 r=7 s=20 frames=300 h=3
+brush flatten from -93 -5 to -91 6 r=6 s=20 frames=300 h=3
+brush flatten from -106 10 to -101 21 r=8 s=20 frames=300 h=3
+brush flatten at -104 -34 r=6 s=20 frames=300 h=3
+brush flatten at -126 10 r=5 s=20 frames=300 h=3
+brush flatten from -112 -47 to -96 -47 r=8 s=20 frames=300 h=3
+brush flatten at -130 -20 r=5 s=20 frames=300 h=3
+brush flatten at -128 -11 r=10 s=20 frames=300 h=3
+brush flatten at -100 -44 r=9 s=20 frames=300 h=3
 # (the wharf's channel through the beach)
-brush flatten from -158 -20 to -137 -20 r=4 s=20 frames=60 h=-1.2
-# (the railroad's canyon from the station east along the mesa's south side, its floor at 4 m)
-brush flatten from -93 -54 to -82 -60 r=7 s=20 frames=60 h=4
-brush flatten from -82 -60 to -64 -67 r=7 s=20 frames=60 h=4
-brush flatten from -64 -67 to -46 -73 r=7 s=20 frames=60 h=4
-brush flatten from -46 -73 to -26 -77 r=7 s=20 frames=60 h=4
-brush flatten from -26 -77 to -9 -75 r=7 s=20 frames=60 h=4
-brush flatten from -9 -75 to 17 -75 r=7 s=20 frames=60 h=4
-brush flatten from 17 -75 to 32 -68 r=7 s=20 frames=60 h=4
-brush flatten at -28.5 -82.5 r=5 s=20 frames=40 h=4
+brush flatten from -158 -20 to -137 -20 r=4 s=20 frames=300 h=-1.2
+# (the railroad's canyon from the station east along the mesa's south side, its floor at 4 m) (frames=300: with 60 the floor stayed 4-7 m over the rails and the bank's back room, IG5 11-18)
+brush flatten from -93 -54 to -82 -60 r=7 s=20 frames=300 h=4
+brush flatten from -82 -60 to -64 -67 r=7 s=20 frames=300 h=4
+brush flatten from -64 -67 to -46 -73 r=7 s=20 frames=300 h=4
+brush flatten from -46 -73 to -26 -77 r=7 s=20 frames=300 h=4
+brush flatten from -26 -77 to -9 -75 r=7 s=20 frames=300 h=4
+brush flatten from -9 -75 to 17 -75 r=7 s=20 frames=300 h=4
+brush flatten from 17 -75 to 32 -68 r=7 s=20 frames=300 h=4
+brush flatten at -28.5 -82.5 r=5 s=20 frames=300 h=4
 # (the river: the sea let in from the south coast up a gorge through the terrace and across the canyon, 7 m deep)
-brush flatten from 4 -168 to 4 -66 r=9 s=20 frames=80 h=-7
+brush flatten from 4 -168 to 4 -66 r=9 s=20 frames=300 h=-7
 # (the Lucky Strike: switchbacks up the canyon's north wall to the ledge at the mine's mouth, the gallery's trench)
 call dabs 16 -68.5 4.2 38 -64.5 8.2 n=12
 brush flatten at 40 -62.5 r=3 s=20 frames=30 h=8.4

@@ -89,14 +89,19 @@ namespace DynamicIslands
 				"pop",
 				// (rocks, IG5 11-18: a boulder resting on the ground - its round underside curves up from its middle; one 3 m in
 				// the air; one set 0.3 m into the ground)
-				// on a bank raised out of the sea (on the sea floor "ground" is the water's top)
+				// on a bank raised out of the sea (on the sea floor "ground" is the water's top), wide enough that a big rock's
+				// edge isn't over its falling side (one stroke r=9: the boulder's quarter points read 95 m over the sea floor)
+				"brush flatten from -48 -58 to -12 -58 r=9 s=20 frames=400 h=1.5",
 				"brush flatten from -48 -66 to -12 -66 r=9 s=20 frames=400 h=1.5",
+				"brush flatten from -48 -74 to -12 -74 r=9 s=20 frames=400 h=1.5",
 				"place SmallBoulder2 restrock at -20 -62 ground scale=3",
 				"place SmallBoulder2 airrock at -30 -62 ground y=3 scale=1.5",
 				"place SmallBoulder2 setrock at -40 -62 ground y=-0.3 scale=1.5",
 				// (trees, IG5 11-18: a palm sunk 2 m into the ground and one 2 m over it - both go back on the ground at a save)
 				"place BigPalm1 sunkpalm at -20 -70 ground y=-2",
 				"place BigPalm1 airpalm at -32 -70 ground y=2",
+				// (a grass tuft 1 m over the ground - the generator's, over a pit a stroke dug: Firedance Isle, IG5 11-18)
+				"place CaravanIsland_YellowGrass airgrass at -42 -70 ground y=1",
 				});
 			}
 			catch (Exception e) { Fail("prefaults: writing " + pb + ": " + e.Message); yield break; }
@@ -185,13 +190,13 @@ namespace DynamicIslands
 			// (the save's reseat sets the sunk and the floating palm back on the ground)
 			ReseatSunkTrees(sea);
 			Physics.SyncTransforms();
-			foreach (string pn in new[] { "sunkpalm", "airpalm" })
+			foreach (string pn in new[] { "sunkpalm", "airpalm", "airgrass" })
 			{
 				EditorGameObject pe; RecipeObjects.TryGetValue(pn, out pe);
-				if (pe == null) { Check(ref ok, false, "palm '" + pn + "' placed"); continue; }
+				if (pe == null) { Check(ref ok, false, "'" + pn + "' placed"); continue; }
 				Vector3 pp = pe.transform.position;
 				float gy = GroundY(pp.x, pp.z), off = pp.y - PlacementOptions.PivotAboveBottom(pe.gameObject) - gy;
-				Check(ref ok, Mathf.Abs(off) < 0.5f, "reseat: the " + (pn == "sunkpalm" ? "sunk" : "floating") + " palm's foot is on the ground (" + off.ToString("0.00") + " m off)");
+				Check(ref ok, Mathf.Abs(off) < 0.5f, "reseat: the " + (pn == "sunkpalm" ? "sunk palm" : pn == "airpalm" ? "floating palm" : "floating grass tuft") + "'s foot is on the ground (" + off.ToString("0.00") + " m off)");
 			}
 			// (the door wall stands on the wall under it, though its middle is its doorway)
 			EditorGameObject dw = PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == "RT_WallDoor1");
