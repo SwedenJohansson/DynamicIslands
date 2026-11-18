@@ -1112,6 +1112,8 @@ namespace DynamicIslands
 			Func<int, float> num = i => float.Parse(args[i], System.Globalization.CultureInfo.InvariantCulture);
 			float x = num(1), z = num(2), half = args.Length > 3 ? num(3) : 0f;
 			int shown = 0;
+			foreach (CaveMountain m in e.Root.GetComponentsInChildren<CaveMountain>()) // (and its whole map, as CICaveLook writes it)
+				File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "cavemap_" + e.Name + ".txt"), m.LastMap ?? "");
 			for (float dz = -half; dz <= half + 0.01f; dz += CaveMountain.CellSize)
 				for (float dx = -half; dx <= half + 0.01f; dx += CaveMountain.CellSize)
 					foreach (CaveMountain m in e.Root.GetComponentsInChildren<CaveMountain>())

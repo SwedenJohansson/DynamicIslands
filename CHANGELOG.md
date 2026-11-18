@@ -12,6 +12,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next (not released yet)
 
 - **Hollowtrunk Grove's root den can be walked into**: the den's mouth by the first tree's pad began with a steep sand step about 2 m high that stopped you at its foot; the ground now ramps up into it
+- **The Long Voyage's caves tidied**: in Wreckers' Cove's cellar the strongbox and chest stand on the floor and the wreckers' lever hangs from the roof; the bright grass band inside Coral Observatory's diver's den is painted rock.
+- **Bear dens' mouths no longer stand in sheer rock cuts**: beside a den's way in, the cave hill kept its full height right up to the mouth, leaving flat cliffs and torn slivers of rock on each side; the hill now slopes down to the arch there. Tall cave-hill walls are also lit like rock rather than like the ground, so they no longer show as pale sheets.
+- **`CICaveGapsLook` checks the ground beside lone dens' mouths** (island makers' test): it fails when the cave hill beside a den's way in rises more than 5 m over the arch in one step, and says where.
 - **Capped cave hills no longer grow towers**: a den hill whose top is capped could raise columns of ground hundreds of metres high just inside its slope; the hill's slope now stops at its top.
 - **`CIFloating` leaves fly-through camera points alone** (island makers' test): the points of a camera fly-through hang in the air on purpose and are unseen in play, so they no longer count as things in the air touching nothing.
 

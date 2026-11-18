@@ -986,6 +986,7 @@ namespace DynamicIslands
 
 		/// <summary>How far down GapWalkOut looks for the ground beside a mouth (from 3 m over the floor).</summary>
 		const float GapWalkDown = 30f;
+		const float LoneSheerMax = 5f; // (CICaveGapsLook: m a cell beside a lone den's way in may stand over its neighbour past the arch's own height, 11-18 w15L; 5 from w15M: Wreckers' Cove 4.9, Signal Rock 3.3, Coral Observatory 3.2 after the plane cap - a regression guard, not a look pass)
 
 		/// <summary>The ground's height beside a mouth less its floor; no ground under the probe (a cliff, the sea far
 		/// below) is a drop past the probe's reach, never level ground.</summary>
@@ -1102,6 +1103,14 @@ namespace DynamicIslands
 				string at = "";
 				int shards = dt.RimTop == "" ? 0 : dt.RimShards(out at);
 				Check(ref ok, shards == 0, name + ": dug tunnel " + dt.name + "'s rim (" + dt.RimColumns + " columns, its top " + (dt.RimTop == "" ? "rock" : "the ground's") + "): " + shards + " rock shards on the ground" + (shards > 0 ? " at " + at : ""));
+			}
+			// The cave hill beside a lone den's way in: no cell standing over its neighbour or the way's floor much more than the
+			// arch's height - the dome stood full height at the den's plane, sheer cuts down the way in's sides and a flat cut face
+			// beside the arch (Signal Rock's rig den, Wreckers' Cove's den, 11-18 w15L)
+			foreach (CaveMountain cm in e.Root.GetComponentsInChildren<CaveMountain>(true))
+			{
+				Vector3 at = cm.LoneSheerAt - e.Position;
+				Check(ref ok, cm.LoneSheer <= LoneSheerMax, name + ": cave hill beside its lone dens' ways in: tallest step " + cm.LoneSheer.ToString("0.0") + " m over the arch's height (at most " + LoneSheerMax.ToString("0.0") + ")" + (cm.LoneSheer > 0f ? " at " + at.x.ToString("0.0") + " " + at.z.ToString("0.0") + ", " + cm.LoneSheerAt.y.ToString("0.0") + " m high" : ""));
 			}
 			Vector3 eyeUp = Vector3.up * 1.6f;
 			Vector3 home = me.transform.position;
