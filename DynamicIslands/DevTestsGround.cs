@@ -550,6 +550,60 @@ namespace DynamicIslands
 			if (ok) Log("PASS: one-sided self"); else Fail("one-sided self");
 		}
 
+		[ConsoleCommand(name: "CIWallTopsSelf", docs: "Dev, world (host, a test world 'CI ...'): the ground check (CIGroundWorld) on an island made for it: a stone house as the library's stonehouse macro builds it (lib_sunken.recipe: Block_Wall_Tier3 walls 2.42 m tall, a flat roof of Block_Floor_Tier3 tiles laid at 2.635 on their tops) - its roof tiles are held up by the walls, though the walls' colliders stop short of them and the rays down from the tiles' corners miss the walls at their edges (IG5: 102 such lines on 15 library islands, 11-18); a lone roof tile 4 m up, 10 m off, is still found. Taken away after.")]
+		public static void WallTopsSelfCommand(string[] args) { StartTest(WallTopsSelfRoutine()); }
+
+		static IEnumerator WallTopsSelfRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !CustomIslandSpawner.RaftPosition.HasValue) { Fail("wall tops self: host, in a world"); yield break; }
+			const string isl = "ciwalltops", wall = "Block_Wall_Tier3", tile = "Block_Floor_Tier3";
+			yield return PlaceableCatalog.EnsureLoaded(new[] { wall, tile });
+			if (PlaceableCatalog.Get(wall) == null || PlaceableCatalog.Get(tile) == null) { Fail("wall tops self: " + wall + " or " + tile + " isn't in this Raft's catalogue"); yield break; }
+			var made = new List<IslandWorldState.Entry>();
+			IslandFile f = ScIsland(isl, "Wall Tops Self");
+			f.Objects.Clear();
+			Vector3 b = ScDry(f, Vector2.zero, 1);
+			// (the house's floor at the highest ground under its four cells, as a recipe's push puts it)
+			float y0 = new[] { 0.75f, 2.25f }.SelectMany(x => new[] { 0.75f, 2.25f }.Select(z => ScGround(f, new Vector2(b.x + x, b.z + z)))).Max();
+			Func<string, float, float, float, float, IslandObject> put = (nm, x, z, y, yaw) =>
+			{
+				IslandObject o = ScObj(nm, new Vector3(b.x + x, y0 + y, b.z + z));
+				o.EulerRotation = new Vector3(0f, yaw, 0f);
+				return o;
+			};
+			// (a 2 x 2 stonehouse: floor and roof tiles, walls round it - the macro's door wall a plain wall here)
+			foreach (float x in new[] { 0.75f, 2.25f })
+				foreach (float z in new[] { 0.75f, 2.25f }) { f.Objects.Add(put(tile, x, z, 0f, 0f)); f.Objects.Add(put(tile, x, z, 2.635f, 0f)); }
+			foreach (float c in new[] { 0.75f, 2.25f })
+			{
+				f.Objects.Add(put(wall, c, 0f, 0f, 0f)); f.Objects.Add(put(wall, c, 3f, 0f, 0f));
+				f.Objects.Add(put(wall, 0f, c, 0f, 90f)); f.Objects.Add(put(wall, 3f, c, 0f, 90f));
+			}
+			// (a lone roof tile 4 m up, 10 m off: nothing under it)
+			f.Objects.Add(put(tile, 12f, 1.5f, 4f, 0f));
+			f.Save(IslandSpawner.PathFor(isl));
+			Vector3? spot = ScSpot(isl, 400f);
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("wall tops self: no open sea near the raft"); yield break; }
+			yield return ScBring(isl, spot.Value, made);
+			IslandWorldState.Entry e = made.LastOrDefault();
+			if (e == null || e.Root == null) { ScRemove(made, isl); Fail("wall tops self: the island didn't come"); yield break; }
+			int n = 0;
+			List<string> lines;
+			try
+			{
+				yield return WaitIslandSettled(e, 0.5f, 2f);
+				Physics.SyncTransforms();
+				lines = GroundProblems(e, out n);
+			}
+			finally { ScRemove(made, isl); }
+			foreach (string l in lines) Log("  " + l);
+			bool ok = true;
+			Check(ref ok, n >= 17, "the house and the lone tile measured (" + n + " objects)");
+			Check(ref ok, !lines.Any(l => l.IndexOf(wall, StringComparison.Ordinal) >= 0), "the walls stand");
+			Check(ref ok, lines.Count(l => l.IndexOf(tile, StringComparison.Ordinal) >= 0) == 1, "the roof on the walls' tops is held up; only the lone tile 4 m up is found (" + lines.Count(l => l.IndexOf(tile, StringComparison.Ordinal) >= 0) + " tile lines)");
+			if (ok) Log("PASS: wall tops self"); else Fail("wall tops self");
+		}
+
 		[ConsoleCommand(name: "CIOverlapWorld", docs: "Dev, in a world: nothing on the loaded custom islands passes through anything else - no post, pillar, wall, floor or roof piece more than 6 cm inside a piece of furniture, a prop, a chest, a machine, a tree or a plant (IG7; the user 2026-10-18: posts through a piano and a pool table). Things resting on floors, roofs on their posts, things on tables don't count. Also no themed scene's prop, chest or note more than 6 cm into another of the scenes (their collider boxes as they stand turned; lines 'scene <theme>: ...'; two metal crates, gen-large-37435). Problems per island; all in Mods\\DynamicIslands\\overlap_world.txt. CIOverlapWorld [part of the island name]")]
 		public static void OverlapWorldCommand(string[] args) { WorldCheck(args, OverlapCheck); }
 
@@ -1109,6 +1163,10 @@ namespace DynamicIslands
 				Transform r = PlacedRoot(c.transform, objects);
 				if (r == null) node.Direct = true; else node.Under.Add(r);
 			}
+			// (a floor or roof laid on the tops of walls round its edges: what shows of a wall's top within 0.35 m under its base -
+			// the walls' colliders stop 0.1-0.2 m short of a storey's roof tiles, and the rays down from its corners miss the
+			// walls at its edges: Biome Seven's lab roofs and The Stalker's Hollow's stone houses read "held up by nothing", IG5)
+			if (node.Link) foreach (Transform r in TopsUnder(o, b, objects)) node.Under.Add(r);
 			// (right under its middle and its corners: the land within 0.5 m, or the first thing there)
 			for (int i = 0; i < 5; i++)
 			{
@@ -1128,6 +1186,34 @@ namespace DynamicIslands
 				Transform r = PlacedRoot(best.collider.transform, objects);
 				if (r == null) node.Direct = true; else node.Under.Add(r);
 			}
+		}
+
+		static readonly List<KeyValuePair<Transform, Bounds>> tops = new List<KeyValuePair<Transform, Bounds>>();
+		static Transform topsOf;
+		static int topsFrame = -1;
+
+		/// <summary>The placed objects (children of <paramref name="objects"/>) that reach up under <paramref name="b"/>'s base
+		/// from below: a shown mesh whose top is from 0.35 m under its base to 0.3 m over it, over its ground plan, and whose
+		/// bottom is more than 0.3 m under its base (a wall under a roof tile - not the tile beside it).</summary>
+		static List<Transform> TopsUnder(Transform o, Bounds b, Transform objects)
+		{
+			if (topsOf != objects || topsFrame != Time.frameCount)
+			{
+				tops.Clear(); topsOf = objects; topsFrame = Time.frameCount;
+				foreach (Transform root in objects)
+					foreach (MeshRenderer r in root.GetComponentsInChildren<MeshRenderer>(false))
+						if (r.enabled) tops.Add(new KeyValuePair<Transform, Bounds>(root, r.bounds));
+			}
+			var found = new List<Transform>();
+			foreach (KeyValuePair<Transform, Bounds> t in tops)
+			{
+				Bounds r = t.Value;
+				if (t.Key == o || found.Contains(t.Key) || t.Key.IsChildOf(o)) continue;
+				if (r.max.y < b.min.y - 0.35f || r.max.y > b.min.y + 0.3f || r.min.y > b.min.y - 0.3f) continue;
+				if (r.min.x > b.max.x + 0.05f || r.max.x < b.min.x - 0.05f || r.min.z > b.max.z + 0.05f || r.max.z < b.min.z - 0.05f) continue;
+				found.Add(t.Key);
+			}
+			return found;
 		}
 
 		/// <summary>A banner's two rope ends (the ends of its top edge, along its long side) and what each is tied to: a collider
