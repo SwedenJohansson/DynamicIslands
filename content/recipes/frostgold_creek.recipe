@@ -169,6 +169,9 @@ place Creature_Turtle turtles at -6 -58 h=-1.5
 # (Balboa's bear cave set into the peak, its mouth south onto the ledge (floor 9 m), its gallery north; timber props at
 # the mouth, rails, a tub, lanterns on crates; the nugget's box at the back; the white bear; the dark inside)
 place BalboaCave_Bear minecave at 20.93 12 h=13.55 yaw=180
+# (cave.foot=wet: a dry-foot den's raised sand spread 14 m round it down the hill and buried the upper sluices' walls 1-6 m in game -
+# the saved ground there is the den-less bank (2.8 m), IG5 11-18)
+prop minecave cave.foot=wet
 place Relay_support_beam_wood - at 16.2 -4.6 h=9 rot=0,0,-90 sx=0.75
 place Relay_support_beam_wood - at 27.8 -4.6 h=9 rot=0,0,-90 sx=0.75
 place Relay_support_beam_wood - at 27.8 -4.6 h=16 rot=0,0,0 sx=1.23
