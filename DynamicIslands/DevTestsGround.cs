@@ -1087,6 +1087,7 @@ namespace DynamicIslands
 						// (a railing straddling a deck's edge, as Raft's own towers: held by the face over the deck)
 						if (b.size.x < 0.3f) g = Mathf.Min(GapUnder(o, new Vector3(b.min.x, p.y, p.z), land), GapUnder(o, new Vector3(b.max.x, p.y, p.z), land));
 						if (b.size.z < 0.3f) g = Mathf.Min(GapUnder(o, new Vector3(p.x, p.y, b.min.z), land), GapUnder(o, new Vector3(p.x, p.y, b.max.z), land));
+						g = GapToWater(g, p.y, sea);
 						if (g < lowest) lowest = g;
 						if (g > highest) { highest = g; worst = p; }
 					}
@@ -1739,6 +1740,14 @@ namespace DynamicIslands
 				if (g > 0.4f) return "trunk foot floating: " + at + ", " + (g > 999f ? "nothing under it" : Num(g) + " m over what is under it");
 			}
 			return null;
+		}
+
+		/// <summary>A base's gap <paramref name="g"/> at height <paramref name="y"/> over the sea with only the sea's bed under
+		/// it: to the water's top, which holds it there (a sluice's low end in a creek: Frostgold Creek's half walls read
+		/// 1.2-2.2 m "in the air" over the creek's bed, IG5 11-18).</summary>
+		internal static float GapToWater(float g, float y, float sea)
+		{
+			return y >= sea && y - g < sea ? y - sea : g;
 		}
 
 		static float GapUnder(Transform self, Vector3 foot, Terrain land)

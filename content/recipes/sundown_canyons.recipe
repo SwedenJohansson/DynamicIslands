@@ -377,8 +377,8 @@ prop minecave cave.foot=wet
 place Relay_support_beam_wood - at 18.2 -58.6 h=11.5 rot=0,0,-90 sx=0.75
 place Relay_support_beam_wood - at 29.8 -58.6 h=11.5 rot=0,0,-90 sx=0.75
 place Relay_support_beam_wood - at 29.8 -58.6 h=18.5 rot=0,0,0 sx=1.23
-line Beam_Long_01 from 23.5 -59 to 23.5 -31 step=3.5 ends yaw=180 rot=0,0,0
-line Beam_Long_01 from 24.5 -59 to 24.5 -31 step=3.5 ends yaw=180 rot=0,0,0
+line Beam_Long_01 from 23.5 -59 to 23.5 -31 step=3.5 ends yaw=180 rot=0,0,0 y=0.15
+line Beam_Long_01 from 24.5 -59 to 24.5 -31 step=3.5 ends yaw=180 rot=0,0,0 y=0.15
 place VP_Wagon01 - at 24 -47 sit
 place Note_Board tallyboard at 19.6 -61 ground yaw=200
 place Zone_Trigger minezone at 24 -60 h=13

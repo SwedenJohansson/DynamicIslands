@@ -271,6 +271,12 @@ namespace DynamicIslands
 				Bounds ab = arch.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).Select(r => r.bounds).Aggregate((x, y) => { x.Encapsulate(y); return x; });
 				Check(ref ok, OnAnotherObject(ab, arch), "an arch's deck with its ends in two rocks stands on them (its base h=" + (ab.min.y - sea).ToString("0.00") + ")");
 			}
+			// (a base 0.13 m over the sea with the creek's bed 2 m under it rests on the water; 0.75 m over land 0.7 m under it,
+			// or 1 m over the water, does not - Frostgold's sluices, IG5 11-18)
+			Check(ref ok, Mathf.Abs(GapToWater(2.13f, sea + 0.13f, sea) - 0.13f) < 0.001f && GapToWater(9999f, sea + 0.13f, sea) < 0.2f
+				&& Mathf.Abs(GapToWater(0.7f, sea + 0.75f, sea) - 0.7f) < 0.001f && Mathf.Abs(GapToWater(3f, sea + 1f, sea) - 1f) < 0.001f
+				&& Mathf.Abs(GapToWater(0.5f, sea - 0.2f, sea) - 0.5f) < 0.001f,
+				"a base at the water's top over the sea's bed rests on the water; over land, or 1 m up, it does not");
 			// 4. A gate on flat ground: its leaves stand on its own landing (no collider in the editor), not in the air
 			FloatingCommand(new[] { "0.3", "UT_MainEntranceDoor" });
 			Check(ref ok, floatProblems == 0, "a gate's leaves on its own landing are not floating (" + floatProblems + " found)");
