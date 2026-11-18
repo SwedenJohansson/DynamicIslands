@@ -470,6 +470,48 @@ namespace DynamicIslands
 			}
 		}
 
+		[ConsoleCommand(name: "CIReseat", docs: "Dev, editor: <names joined by |, _ for space | *> [most] [skip] [except=names|...] - the saved islands' sunk and floating trees set back on the ground, as a recipe's save does since IG5 (11-18), and saved; the old file goes to 'deleted'")]
+		public static void ReseatCommand(string[] args)
+		{
+			string which = args != null && args.Length > 0 ? args[0] : "*";
+			int most = args != null && args.Length > 1 ? int.Parse(args[1]) : 9999, skip = args != null && args.Length > 2 ? int.Parse(args[2]) : 0;
+			string except = args != null && args.Length > 3 && args[3].StartsWith("except=") ? args[3].Substring(7) : "";
+			Func<string, string[]> split = w => w.Split('|').Select(x => x.Replace('_', ' ').Trim()).Where(x => x.Length > 0).ToArray();
+			string[] parts = split(which), outs = split(except);
+			var kept = new Regex("_[0-9a-f]{12}$");
+			List<string> names = IslandSpawner.ListSavedIslands().Where(n => !n.StartsWith("ci", StringComparison.Ordinal) && !kept.IsMatch(n) &&
+				!n.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase) && (which == "*" || parts.Any(x => n.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0)) &&
+				!outs.Any(x => n.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).Skip(skip).Take(most).ToList();
+			StartTest(ReseatRoutine(names));
+		}
+
+		static IEnumerator ReseatRoutine(List<string> names)
+		{
+			yield return WaitForEditor(false);
+			string backup = Path.Combine(DynamicIslands.assetpath, "deleted");
+			Directory.CreateDirectory(backup);
+			int changed = 0, trees = 0;
+			Log("reseat of " + names.Count + " saved islands");
+			foreach (string name in names)
+			{
+				DynamicIslands.currentIslandName = "";
+				if (!DynamicIslands.LoadIsland(name)) { Fail(name + ": the editor didn't load it"); continue; }
+				for (float t = 0; t < 120f && DynamicIslands.currentIslandName != name; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+				if (DynamicIslands.currentIslandName != name) { Fail(name + ": not loaded after 2 minutes"); continue; }
+				yield return null; yield return null;
+				Physics.SyncTransforms();
+				string file = IslandSpawner.PathFor(name);
+				byte[] old = File.ReadAllBytes(file);
+				int n = ReseatSunkTrees(DynamicIslands.EditorWaterLevel);
+				if (n == 0) continue;
+				File.WriteAllBytes(Path.Combine(backup, Path.GetFileNameWithoutExtension(file) + "-reseat-" + DateTime.Now.ToString("yyyyMMddHHmmss") + IslandFile.Extension), old);
+				bool saved = DynamicIslands.SaveIsland(name);
+				Log((saved ? "  " : "FAIL: ") + name + ": " + n + " trees reseated" + (saved ? "" : ", not saved"));
+				if (saved) { changed++; trees += n; }
+			}
+			Log("PASS: reseat - " + trees + " trees on " + changed + " of " + names.Count + " islands set back on the ground");
+		}
+
 		[ConsoleCommand(name: "CIFloating", docs: "Dev, editor: legs, posts and pillars of the island's objects that don't reach down to anything - a slim upright part whose foot is more than <gap> m (default 0.3) above the ground or what is under it - and objects that stand on the ground with part of their base only (a stilt house set on a slope: the legs over its low side end in the air), floors and decks over nothing (a big deck needs every corner held, a small floor one corner or a held neighbour) and chests and crates with nothing under them (ROADMAP CA30): CIFloating [gap] [name part]")]
 		public static void FloatingConsoleCommand(string[] args) { StartTest(OnceAsTest(() => FloatingCommand(args))); }
 
@@ -2499,7 +2541,7 @@ namespace DynamicIslands
 		/// recipe's strokes lowered the ground under it) set back on the ground round their pivot, as Place sets them. The foot
 		/// stays within 1 m under the land (lower ground under it is a cave floor or a ledge: the land then), and a tree whose
 		/// foot would be inside a placed rock or building stays where it is.</summary>
-		static void ReseatSunkTrees(float seaY)
+		static int ReseatSunkTrees(float seaY)
 		{
 			EditorGameObject[] all = GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>();
 			int reseated = 0, kept = 0;
@@ -2519,6 +2561,7 @@ namespace DynamicIslands
 				reseated++;
 			}
 			if (reseated + kept > 0) Log("  reseat trees: " + reseated + " sunk or floating trees and palms set back on the ground" + (kept > 0 ? ", " + kept + " left (their foot would be inside a placed object)" : ""));
+	return reseated;
 		}
 
 		/// <summary>Something placed (a deck, a rock, a planter) under a tree's foot, above the land: it stands on that, not on the land.</summary>
