@@ -92,6 +92,9 @@ namespace DynamicIslands
 				"place SmallBoulder2 restrock at -20 -60 ground scale=3",
 				"place SmallBoulder2 airrock at -30 -60 y=3 scale=1.5",
 				"place SmallBoulder2 setrock at -40 -60 y=-0.3 scale=1.5",
+				// (trees, IG5 11-18: a palm sunk 2 m into the ground and one 2 m over it - both go back on the ground at a save)
+				"place BigPalm1 sunkpalm at -20 -72 y=-2",
+				"place BigPalm1 airpalm at -32 -72 y=2",
 				});
 			}
 			catch (Exception e) { Fail("prefaults: writing " + pb + ": " + e.Message); yield break; }
@@ -175,6 +178,18 @@ namespace DynamicIslands
 				if (rn == "airrock") Check(ref ok, floats, "a rock 3 m in the air floats (" + got + ")");
 				else Check(ref ok, !floats, "a rock " + (rn == "restrock" ? "resting on the ground" : "set into the ground") + " does not float (" + got + ")");
 				if (rn == "setrock") Check(ref ok, mid == 0f, "a rock set into the ground: its middle's gap is 0 (" + got + ")");
+			}
+			// (the save's reseat sets the sunk and the floating palm back on the ground)
+			ReseatSunkTrees(sea);
+			Physics.SyncTransforms();
+			foreach (string pn in new[] { "sunkpalm", "airpalm" })
+			{
+				float px = origin.x + (pn == "sunkpalm" ? -20f : -32f);
+				EditorGameObject pe = PlacedEditorObjects().Where(e => e.GameObjectName == "BigPalm1").OrderBy(e => Mathf.Abs(e.transform.position.x - px) + Mathf.Abs(e.transform.position.z - (origin.z - 72f))).FirstOrDefault();
+				if (pe == null) { Check(ref ok, false, "palm '" + pn + "' placed"); continue; }
+				Vector3 pp = pe.transform.position;
+				float gy = GroundY(pp.x, pp.z), off = pp.y - PlacementOptions.PivotAboveBottom(pe.gameObject) - gy;
+				Check(ref ok, Mathf.Abs(off) < 0.5f, "reseat: the " + (pn == "sunkpalm" ? "sunk" : "floating") + " palm's foot is on the ground (" + off.ToString("0.00") + " m off)");
 			}
 			// (the door wall stands on the wall under it, though its middle is its doorway)
 			EditorGameObject dw = PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == "RT_WallDoor1");

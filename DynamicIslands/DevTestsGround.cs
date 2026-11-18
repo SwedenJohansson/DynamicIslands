@@ -999,6 +999,10 @@ namespace DynamicIslands
 					}
 				}
 				bool own = lmin.x <= lmax.x && lmin.z <= lmax.z;
+				// (a wall on a floor's edge, as Raft builds: half of it over the floor, half over the drop outside - its middle
+				// line is the floor's edge, where a ray down slips past the floor. Held by the face over the floor, as a railing
+				// below: Brinelab Tower's and Sealkeeper Spire's walls read 2.4-15 m "in the air", IG5 11-18)
+				float thinX = own ? (lmax.x - lmin.x) * Mathf.Abs(o.lossyScale.x) : 9f, thinZ = own ? (lmax.z - lmin.z) * Mathf.Abs(o.lossyScale.z) : 9f;
 				for (int i = 0; i <= steps; i++)
 					for (int j = 0; j <= steps; j++)
 					{
@@ -1009,6 +1013,15 @@ namespace DynamicIslands
 							p = new Vector3(w.x, b.min.y, w.z);
 						}
 						float g = GapUnder(o, p, land);
+						if (own && (thinX < 0.5f || thinZ < 0.5f))
+						{
+							Vector3 sx = lmax - lmin, l = o.InverseTransformPoint(p);
+							Vector3 f1 = l, f2 = l;
+							if (thinX < 0.5f) { f1.x = lmin.x + sx.x * 0.1f; f2.x = lmax.x - sx.x * 0.1f; }
+							else { f1.z = lmin.z + sx.z * 0.1f; f2.z = lmax.z - sx.z * 0.1f; }
+							Vector3 w1 = o.TransformPoint(f1), w2 = o.TransformPoint(f2);
+							g = Mathf.Min(GapUnder(o, new Vector3(w1.x, b.min.y, w1.z), land), GapUnder(o, new Vector3(w2.x, b.min.y, w2.z), land));
+						}
 						// (a railing straddling a deck's edge, as Raft's own towers: held by the face over the deck)
 						if (b.size.x < 0.3f) g = Mathf.Min(GapUnder(o, new Vector3(b.min.x, p.y, p.z), land), GapUnder(o, new Vector3(b.max.x, p.y, p.z), land));
 						if (b.size.z < 0.3f) g = Mathf.Min(GapUnder(o, new Vector3(p.x, p.y, b.min.z), land), GapUnder(o, new Vector3(p.x, p.y, b.max.z), land));

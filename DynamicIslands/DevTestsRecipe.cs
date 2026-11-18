@@ -1533,7 +1533,7 @@ namespace DynamicIslands
 			recipeCaves.Clear();
 			recipePlaced.Clear();
 			recipeNoPosts = false;
-			recipeReseat = false;
+			recipeReseat = true;
 			leftOutBuried = 0;
 			pendingQuest = null;
 			pendingMore.Clear();
@@ -2085,9 +2085,12 @@ namespace DynamicIslands
 						}
 						case "reseat":
 						{
-							// reseat trees - at the save, trees and palms whose trunk foot is more than 1 m under the land set back on it
-							if (t.Length < 2 || t[1].ToLowerInvariant() != "trees") { error = "reseat trees"; break; }
-							recipeReseat = true;
+							// reseat trees | off - at the save, trees and palms whose trunk foot is more than 1 m under the land or more than
+							// 0.4 m over it set back on it. Every recipe does it since IG5 (11-18: 905 sunk trunks on 152 saved islands);
+							// "off" keeps them where the recipe put them
+							string rw = t.Length < 2 ? "" : t[1].ToLowerInvariant();
+							if (rw != "trees" && rw != "off") { error = "reseat trees | off"; break; }
+							recipeReseat = rw == "trees";
 							break;
 						}
 						case "save":
@@ -2110,7 +2113,7 @@ namespace DynamicIslands
 							// (and trees and palms whose trunk foot ended more than 1 m under the land - the generator's, set down by the
 							// lowest ground under their crown, then the recipe's strokes raised the ground round them: Old Mine Islet's pines
 							// and birches 1-3 m into the slope, the ground check 2026-10-31; up to the ground round the pivot, as Place sets them)
-							// Only with "reseat trees" in the recipe: every other island saves as before (the release 2026-10-31)
+							// (every recipe since IG5, 11-18 - before it only with "reseat trees", the release 2026-10-31; "reseat off" keeps them)
 							if (recipeReseat) ReseatSunkTrees(seaY);
 							// (and plants, rocks, corals and finds the recipe's own strokes buried whole - a footing flattened over the shelf:
 							// Signal Rock's table coral 0.3 m under its platform's sea floor; nothing showed of them, the review 2026-10-03)
@@ -2491,10 +2494,11 @@ namespace DynamicIslands
 		static int leftOutBuried;
 		static bool recipeNoPosts, recipeReseat;
 
-		/// <summary>"reseat trees" at the save: trees and palms whose trunk foot is more than 1 m under the land (the ground
-		/// check's "sunk trunk") set back on the ground round their pivot, as Place sets them. The foot stays within 1 m under
-		/// the land (lower ground under it is a cave floor or a ledge: the land then), and a tree whose foot would be inside a
-		/// placed rock or building stays where it is.</summary>
+		/// <summary>At a recipe's save (unless "reseat off"): trees and palms whose trunk foot is more than 1 m under the land (the
+		/// ground check's "sunk trunk") or more than 0.4 m over it with nothing placed under it ("trunk foot floating": the
+		/// recipe's strokes lowered the ground under it) set back on the ground round their pivot, as Place sets them. The foot
+		/// stays within 1 m under the land (lower ground under it is a cave floor or a ledge: the land then), and a tree whose
+		/// foot would be inside a placed rock or building stays where it is.</summary>
 		static void ReseatSunkTrees(float seaY)
 		{
 			EditorGameObject[] all = GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>();
@@ -2504,7 +2508,9 @@ namespace DynamicIslands
 				if (!Trunk.IsMatch(e.GameObjectName ?? "")) continue;
 				Vector3 p = e.transform.position;
 				float land = GroundY(p.x, p.z);
-				if (land <= seaY || land - p.y <= 1f) continue;
+				if (land <= seaY) continue;
+				bool sunk = land - p.y > 1f, floating = p.y - land > 0.4f && !PlacedUnder(e, p, land, all);
+				if (!sunk && !floating) continue;
 				float foot = PlacementOptions.LowestGroundUnder(new Bounds(p, new Vector3(1f, 0f, 1f)));
 				if (foot > land || foot < land - 1f) foot = land;
 				Vector3 to = new Vector3(p.x, foot + PlacementOptions.PivotAboveBottom(e.gameObject), p.z);
@@ -2512,7 +2518,25 @@ namespace DynamicIslands
 				e.transform.position = to;
 				reseated++;
 			}
-			if (reseated + kept > 0) Log("  reseat trees: " + reseated + " sunk trees and palms set back on the ground" + (kept > 0 ? ", " + kept + " left (their foot would be inside a placed object)" : ""));
+			if (reseated + kept > 0) Log("  reseat trees: " + reseated + " sunk or floating trees and palms set back on the ground" + (kept > 0 ? ", " + kept + " left (their foot would be inside a placed object)" : ""));
+		}
+
+		/// <summary>Something placed (a deck, a rock, a planter) under a tree's foot, above the land: it stands on that, not on the land.</summary>
+		static bool PlacedUnder(EditorGameObject self, Vector3 foot, float land, EditorGameObject[] all)
+		{
+			foreach (RaycastHit h in Physics.RaycastAll(foot + Vector3.up * 0.3f, Vector3.down, foot.y - land + 0.3f, ~0, QueryTriggerInteraction.Ignore))
+				if (!h.collider.transform.IsChildOf(self.transform) && h.collider.GetComponent<Terrain>() == null) return true;
+			// (and by what shows, its colliders maybe switched off in the editor: a deck, a roof garden's planter)
+			foreach (EditorGameObject o in all)
+			{
+				if (o == self || !o.gameObject.activeInHierarchy || Trunk.IsMatch(o.GameObjectName ?? "")) continue;
+				foreach (Renderer c in o.GetComponentsInChildren<Renderer>())
+				{
+					Bounds b = c.bounds;
+					if (foot.x >= b.min.x && foot.x <= b.max.x && foot.z >= b.min.z && foot.z <= b.max.z && b.max.y > land + 0.1f && b.max.y <= foot.y + 0.3f) return true;
+				}
+			}
+			return false;
 		}
 
 		/// <summary>A point inside the bounds of a placed object's solid colliders (not a tree's or a palm's).</summary>

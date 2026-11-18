@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next (not released yet)
 
 - **Hollowtrunk Grove's root den can be walked into**: the den's mouth by the first tree's pad began with a steep sand step about 2 m high that stopped you at its foot; the ground now ramps up into it
+- **Recipes set trees back on the ground at every save** (island makers): a tree or palm whose trunk foot ended more than 1 m under the land, or more than 0.4 m over it with nothing under it, is set back on the ground when a recipe saves. Before, only recipes with `reseat trees` did this; `reseat off` now keeps them where they are
+- **The ground check (`CIGroundWorld`, `CIGroundIslands`) cries wolf less** (island makers' test): a rock set into the ground no longer reads as floating on one measured point, a round boulder is floating only when most of its underside is high, a lantern or beam in a dug cave is no longer "buried" under the hill over it, a wall on a floor's edge is held by its face over the floor, and a turned room's roof is measured at its own corners
 - **`CIFloating` leaves fly-through camera points alone** (island makers' test): the points of a camera fly-through hang in the air on purpose and are unseen in play, so they no longer count as things in the air touching nothing.
 
 ## 3.5 alpha - 2026-11-15
