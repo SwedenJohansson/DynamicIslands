@@ -1537,7 +1537,9 @@ namespace DynamicIslands
 			{
 				foreach (string play in Directory.Exists(RecipeFolder) ? Directory.GetFiles(RecipeFolder, "*.play") : new string[0])
 				{
-					if (File.ReadAllText(play).IndexOf(island, StringComparison.OrdinalIgnoreCase) < 0) continue;
+					string playText;
+					try { playText = File.ReadAllText(play); } catch (IOException) { continue; } // (a play deleted while the folder is read)
+					if (playText.IndexOf(island, StringComparison.OrdinalIgnoreCase) < 0) continue;
 					List<RLine> lines;
 					try { lines = ExpandRecipe(play); } catch (Exception) { continue; }
 					string at = null;
