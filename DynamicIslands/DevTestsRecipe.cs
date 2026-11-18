@@ -2571,8 +2571,8 @@ namespace DynamicIslands
 		static bool recipeNoPosts, recipeReseat;
 
 		/// <summary>Grass tufts and bushes the generator scattered: a recipe's strokes lowered the ground under some (Firedance Isle's
-		/// pits: tufts 0.5-1 m in the air, IG5 11-18) - the reseat drops the floating ones onto the ground too.</summary>
-		static readonly Regex Tuft = new Regex(@"^(CaravanIsland_\w*Grass|Bush|SmallBush_\d+|Balboa_Bush_01 Variant)$");
+		/// pits: tufts 0.5-1 m in the air; Ironreef's peak: Monstera 6-9 m up, IG5 11-18) - the reseat drops the floating ones onto the ground too.</summary>
+		static readonly Regex Tuft = new Regex(@"^(CaravanIsland_\w*Grass|Bush2?|SmallBush_\d+|Balboa_Bush_01 Variant|Monstera_\d+|Banana_Bush_\d+)$");
 
 		/// <summary>At a recipe's save (unless "reseat off"): trees and palms whose trunk foot is more than 1 m under the land (the
 		/// ground check's "sunk trunk") or more than 0.4 m over it with nothing placed under it ("trunk foot floating": the
