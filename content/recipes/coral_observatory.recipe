@@ -154,10 +154,15 @@ brush flatten at 66.5 28.5 r=6 s=20 frames=300 h=6
 call ar_cave x=64 z=34 h=6 yaw=180 al=diverock chest=divebox
 # (11-18 w15N) a bright band of grass round the den's back wall (co_dive_inside): the island's ground standing a little
 # over the den's own brown floor there. Painted rock it reads as a ledge of the wall (sand and seabed stayed pale);
-# the ground itself still shows - OPEN, it wants lowering under the den (likely the cave hill, CAVE_LESSONS 11-18)
+# the ground itself still shows (lowered under the den: w15U below)
 brush rock at 62 37 r=8 s=10 frames=40
-# (11-18 w15P) the ground under the den's back half let down 0.7 m under its floor (6.2-6.7): the band stood at the back wall
-brush flatten at 64 33 r=6 s=20 frames=300 h=5.3
+# (11-18 w15U) the island's ground stood up inside the den: a pale shard from its ceiling, a green panel through its left
+# wall and a pale strip on its floor were all the ring's own ground (still there with the den and its hill hidden). The
+# pads above stop at z 44-48 and ar_cave's own r 14 pad (h 6) undid w15P's lower one laid before it: the den's whole
+# body let down under its floor here, after ar_cave; r 8 keeps it under the hill (it reaches 6 m past the den's back)
+# (w15V: a small pale piece of it still came through the floor at its left and a green sliver through the left wall: 0.5 m
+# lower and 1 m wider)
+brush flatten from 64 30 to 64 46 r=9 s=20 frames=300 h=4.8
 # (11-17 w15F) the diver's den dome capped (CAVE_LESSONS 11-10 cave.dome): uncapped it reached 41 m to the sides and
 # 20 m in front and its skin stood across the shore walk to the platform (quest walk stuck, w15D/E)
 # (11-17 w15G) 18 still buried the shore start of the quest walk (stuck on CaveSkin at 59.8 -3.8)

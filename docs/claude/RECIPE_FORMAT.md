@@ -119,8 +119,11 @@ plan save
   behind the opening's plane rising `BackSlope` 1.5 a m there (no seam where it stopped), and the capped cells get
   `RoundPasses` 3 lower-only passes toward their neighbours' mean (no crisp crest). Cells over a roof (`cover`) stay as they are.
   11-18 (w15): beside a lone den's arch (a dry den with no `cave.plug`), cells on its plane and up to a cell behind it, past
-  `ArchHalf` + `LoneSlot` off its line and over no roof or rim, are capped at floor + `ArchUp` + `LoneSide` x d (curved) +
-  `BackSlope` behind the plane (map char `P`); they had kept the hill's full height, a sheer cut each side of the mouth. The
+  `ArchHalf` + `LoneSlot` off its line and over no roof or rim, are capped at floor + `ArchUp` + `LoneCheek`(d) +
+  `BackSlope` behind the plane (map char `P`); they had kept the hill's full height, a sheer cut each side of the mouth.   `LoneCheek`(d) is `LoneSide` x d (curved) until its slope reaches `LoneSteep` 1.5, then straight on at that slope (it
+  had grown to sheer walls far out); the lone ramp in front and the den-dome cap use it too. 11-18 w15X: the `P` cap also
+  takes cells over the den's own roof, no lower than that roof + Over + `LoneRoofOver` 0.5 m (they stood at the dome's
+  full height and their cut face showed over the mouth as torn strips). The
   build keeps the tallest step left there (`LoneSheer`, `LoneSheerAt`); `CICaveGapsLook` fails it over `LoneSheerMax` 5 m.
   `Band` lights a skin band taller than `BandTallFrom` 1.5 m more and more by its own face (full at +`BandTallOver` 3 m), not
   the ground's up normal: tall walls had shown as pale sheets.

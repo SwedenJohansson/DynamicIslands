@@ -11,6 +11,9 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (not released yet)
 
+- **Lone bear dens' cheeks slope instead of standing as walls**: beside a den's way in, the hill rose ever steeper the further out it went and, over the den's own roof, kept the roof's full height right at the mouth; it now rises no steeper than 1.5 to 1 and comes down to just over the roof there. Caisson Yard's 5-6 m step beside its den's arch is gone (0.6 m now).
+- **Coral Observatory's diver's den is clean inside**: the island's own ground no longer stands up through the den's ceiling, wall and floor.
+- **`CICaveGapsLook` writes the cave map** (island makers' test): `cavemap_<island>.txt` in the mod's folder, as `CICaveLook` does, showing what shaped each cell of the hill.
 - **Hollowtrunk Grove's root den can be walked into**: the den's mouth by the first tree's pad began with a steep sand step about 2 m high that stopped you at its foot; the ground now ramps up into it
 - **The Long Voyage's islands tidied again**: the notes in Coral Observatory and Signal Rock lie flat, the ground over the back of Coral's diver's den is lowered, and Signal Rock's store mouth is framed by two boulders instead of a loose rock flap; Signal Rock's relay deck stands on one more leg.
 - **`CIFloating` reads turned floors right** (island makers' test): a floor or roof turned at an angle was checked at its outer box's corners, which lay outside it, and could fail with walls all round it; it is now checked at its own corners.

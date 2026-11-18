@@ -1110,7 +1110,8 @@ namespace DynamicIslands
 			foreach (CaveMountain cm in e.Root.GetComponentsInChildren<CaveMountain>(true))
 			{
 				Vector3 at = cm.LoneSheerAt - e.Position;
-				Check(ref ok, cm.LoneSheer <= LoneSheerMax, name + ": cave hill beside its lone dens' ways in: tallest step " + cm.LoneSheer.ToString("0.0") + " m over the arch's height (at most " + LoneSheerMax.ToString("0.0") + ")" + (cm.LoneSheer > 0f ? " at " + at.x.ToString("0.0") + " " + at.z.ToString("0.0") + ", " + cm.LoneSheerAt.y.ToString("0.0") + " m high" : ""));
+				Check(ref ok, cm.LoneSheer <= LoneSheerMax, name + ": cave hill beside its lone dens' ways in: tallest step " + cm.LoneSheer.ToString("0.0") + " m over the arch's height (at most " + LoneSheerMax.ToString("0.0") + ")" + (cm.LoneSheer > 0f ? " at " + at.x.ToString("0.0") + " " + at.z.ToString("0.0") + ", " + cm.LoneSheerAt.y.ToString("0.0") + " m high (" + cm.LoneSheerNote + ")" : ""));
+				if (cm.LastMap != null) File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "cavemap_" + name + ".txt"), cm.LastMap); // (its map, as CICaveLook writes it: what set each cell)
 			}
 			Vector3 eyeUp = Vector3.up * 1.6f;
 			Vector3 home = me.transform.position;
