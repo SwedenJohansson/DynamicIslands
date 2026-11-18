@@ -137,7 +137,8 @@ call shallows r=108 deep=5 n=2
 call hw_zone x=-49.01 z=23.5 al=surveyfootz id=surveyfoot r=5 msg="Steps cut into the hill, and a rope rail - the observatory's path up Survey Hill. A mast stands on the top."
 call hw_zone x=-62 z=16 al=surveytopz id=surveytop r=7 h=1 msg="Survey Hill. The whole ring lies below you, the platform in its lagoon - and beyond the ring the sea has a different colour, a cold grey-green band."
 call hw_mast x=-62 z=16 h0=22 lv=2 a=surveymast chest=surveychest top=Placeable_Lantern_Metal
-place Note_Paper inesnote at -58.5 14 h=22.1 drop yaw=200
+# (11-18 w15P) the dropped notes stood on edge (spawn turn straightened up its long side): own flat turn
+place Note_Paper inesnote at -58.5 14 h=22.1 drop rot=0,0,0 yaw=200
 loot surveychest Rope*2;Glass*3;Plastic*2;Battery*1
 note surveychest Survey box | The survey box on the mast: a thermometer on a long line, glass sample jars, rope - and a battery for the beacon.
 scatter Bush 3 at -62 16 r=14 seed=32034 free=1
@@ -155,12 +156,14 @@ call ar_cave x=64 z=34 h=6 yaw=180 al=diverock chest=divebox
 # over the den's own brown floor there. Painted rock it reads as a ledge of the wall (sand and seabed stayed pale);
 # the ground itself still shows - OPEN, it wants lowering under the den (likely the cave hill, CAVE_LESSONS 11-18)
 brush rock at 62 37 r=8 s=10 frames=40
+# (11-18 w15P) the ground under the den's back half let down 0.7 m under its floor (6.2-6.7): the band stood at the back wall
+brush flatten at 64 33 r=6 s=20 frames=300 h=5.3
 # (11-17 w15F) the diver's den dome capped (CAVE_LESSONS 11-10 cave.dome): uncapped it reached 41 m to the sides and
 # 20 m in front and its skin stood across the shore walk to the platform (quest walk stuck, w15D/E)
 # (11-17 w15G) 18 still buried the shore start of the quest walk (stuck on CaveSkin at 59.8 -3.8)
 prop diverock cave.dome=6
 call hw_zone x=64 z=29 al=divecavez id=divecave r=4 msg="A cave in the ring, a wetsuit hung up to dry in its mouth years ago and never taken down."
-place Note_Paper tomasnote at 65.5 28.5 h=6.45 drop yaw=0
+place Note_Paper tomasnote at 65.5 28.5 h=6.45 drop rot=0,0,0 yaw=0
 loot divebox Rope*2;Scrap*3;Bolt*2;OxygenBottle*1
 prop divebox loot.refill=0
 note divebox Diver's box | Tomas's box at the back of the cave: rope, scrap, a few bolts - and a full oxygen bottle, his spare.

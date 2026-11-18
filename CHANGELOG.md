@@ -12,6 +12,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 ## Next (not released yet)
 
 - **Hollowtrunk Grove's root den can be walked into**: the den's mouth by the first tree's pad began with a steep sand step about 2 m high that stopped you at its foot; the ground now ramps up into it
+- **The Long Voyage's islands tidied again**: the notes in Coral Observatory and Signal Rock lie flat, the ground over the back of Coral's diver's den is lowered, and Signal Rock's store mouth is framed by two boulders instead of a loose rock flap; Signal Rock's relay deck stands on one more leg.
+- **`CIFloating` reads turned floors right** (island makers' test): a floor or roof turned at an angle was checked at its outer box's corners, which lay outside it, and could fail with walls all round it; it is now checked at its own corners.
 - **The Long Voyage's caves tidied**: in Wreckers' Cove's cellar the strongbox and chest stand on the floor and the wreckers' lever hangs from the roof; the bright grass band inside Coral Observatory's diver's den is painted rock.
 - **Bear dens' mouths no longer stand in sheer rock cuts**: beside a den's way in, the cave hill kept its full height right up to the mouth, leaving flat cliffs and torn slivers of rock on each side; the hill now slopes down to the arch there. Tall cave-hill walls are also lit like rock rather than like the ground, so they no longer show as pale sheets.
 - **`CICaveGapsLook` checks the ground beside lone dens' mouths** (island makers' test): it fails when the cave hill beside a den's way in rises more than 5 m over the arch in one step, and says where.

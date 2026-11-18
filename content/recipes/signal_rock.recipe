@@ -69,6 +69,10 @@ place RT_PillarThick - at 0 -4.4 y=-6
 place RT_PillarThick - at 0 4.4 y=-6
 place RT_PillarThick - at 0 -4.4 y=-12
 place RT_PillarThick - at 0 4.4 y=-12
+# (11-18 w15P) one more leg under deck A, 3 m from its middle: CIFloating read the turned deck's underside there
+# held by nothing (floors over nothing; the crane arm and boxes on the cove floor kept the save's own posts out)
+place RT_PillarThick - at -3 -3 y=-6
+place RT_PillarThick - at -3 -3 y=-12
 
 # A ladder up from the water at the front of deck B, a small boat moored at it
 place LandmarkLadder_6m ladder at 3 -4.62 y=-6.3
@@ -245,6 +249,11 @@ brush flatten from 57 6.5 to 57 9.5 r=4 s=20 frames=150 h=3.5
 dig 57,-0.15,9.5 57,-7.1,21.5 r=2 shaft as=srstore
 caveloot srstore dirt=2 mush=2 stone=0 vines=0 titanium=0 light=0
 prop srstore cave.rock=plain
+# (11-18 w15R) the dig's rim faces stood out of the knoll's foot beside the mouth: a tan sand-look flap on the left and
+# dark slivers on the right (sr_store_out; CAVE_LESSONS 121/122, the rim wears the sand painted there). Framed with a
+# boulder each side, sat on the shelf, as Ironreef's mouths C and B (RF4); the way in along x 57 stays clear
+place SmallBoulder3 - at 54.4 9.9 ground sit yaw=30
+place SmallBoulder3 - at 59.6 9.9 ground sit yaw=200
 place Note_Sign srstoresign at 50 3 ground yaw=40
 note srstoresign RELAY STORE | Spare dishes, cable and the old valve set. Lock the door after you - the damp gets in. - Relay crew
 # cavecheck inside srstorez
@@ -286,7 +295,8 @@ brush smooth from 31 35 to 31 40 r=6 s=4 frames=8
 brush sand from 32 18 to 31 40 r=5 s=10 frames=30
 clear from 31 27.5 to 31 40 r=7 body
 call hw_zone x=32 z=17 al=rigcavez id=rigcave r=4 msg="A cave in the headland, a bedroll and a coil of cable inside. Someone lived out here, away from the station."
-place Note_Paper rignote at 30.5 17.5 h=3.95 drop yaw=180
+# (11-18 w15P) it stood on edge: own flat turn
+place Note_Paper rignote at 30.5 17.5 h=3.95 drop rot=0,0,0 yaw=180
 loot rigbox Rope*2;CircuitBoard*1;Bolt*3;Battery*1
 prop rigbox loot.refill=0
 scatter Bush2 4 at 40 4 r=14 seed=32043

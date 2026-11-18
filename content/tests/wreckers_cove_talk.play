@@ -9,6 +9,9 @@ weather Calm
 
 expect hidden wcvinesign
 picture wc_islander -7.5 +2.4 -8 -6.5 +0.9 -3.5
+# (11-18 w15P) the pale slab in its bottom-right corner, by the camera: the ground there and its paint, and from higher up
+surface -9 -9 -3 -4 1 paint
+picture wc_islander_up -10 +5 -12 -6 +0 -6
 use Wrecker Elaine pick 1
 expect message Two lights on the point
 use Wrecker Elaine pick 2

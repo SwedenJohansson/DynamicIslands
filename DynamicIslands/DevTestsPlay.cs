@@ -99,6 +99,23 @@ namespace DynamicIslands
 		static bool planMode;
 
 		/// <summary>A point of the played island (metres from its land middle) in the world.</summary>
+		/// <summary>The strongest terrain ground texture under a world point (its name), or "-" off every terrain.</summary>
+		static string GroundPaintAt(Vector3 p)
+		{
+			foreach (Terrain t in Terrain.activeTerrains)
+			{
+				TerrainData td = t.terrainData;
+				if (td == null || td.terrainLayers == null || td.alphamapLayers == 0) continue;
+				float u = (p.x - t.transform.position.x) / td.size.x, v = (p.z - t.transform.position.z) / td.size.z;
+				if (u < 0f || u > 1f || v < 0f || v > 1f) continue;
+				int ar = td.alphamapResolution, ax = Mathf.Clamp((int)(u * ar), 0, ar - 1), az = Mathf.Clamp((int)(v * ar), 0, ar - 1), best = 0;
+				float[,,] a = td.GetAlphamaps(ax, az, 1, 1);
+				for (int l = 1; l < td.alphamapLayers; l++) if (a[0, 0, l] > a[0, 0, best]) best = l;
+				TerrainLayer tl = best < td.terrainLayers.Length ? td.terrainLayers[best] : null;
+				return (tl != null && tl.diffuseTexture != null ? tl.diffuseTexture.name : "layer" + best) + ":" + a[0, 0, best].ToString("F2", CultureInfo.InvariantCulture);
+			}
+			return "-";
+		}
 		static Vector3 PlayPoint(float x, float z) { return playEntry.Position + new Vector3(x - playOffset.x, 0f, z - playOffset.y); }
 
 		/// <summary>How far the island's land centre lies from its recipe's origin ("offset" step; the recipe logs it when it
@@ -732,12 +749,16 @@ namespace DynamicIslands
 					{
 						// surface <x0> <z0> <x1> <z1> [step]: logs the top surface's height (island frame, as stand) on a grid - where
 						// a cave hill's dome really lies before a pit or a dig goes near it (w03 11-09: the bone pit was buried)
-						float sx0 = F(t[1]), sz0 = F(t[2]), sx1 = F(t[3]), sz1 = F(t[4]), sst = t.Length > 5 ? F(t[5]) : 4f;
+						// (a last word paint: each height also names the terrain's strongest ground texture there - a pale patch in a
+						// picture: seabed paint or only bright sand, 11-18 w15P)
+						bool paint = t[t.Length - 1] == "paint";
+						int tn = paint ? t.Length - 1 : t.Length;
+						float sx0 = F(t[1]), sz0 = F(t[2]), sx1 = F(t[3]), sz1 = F(t[4]), sst = tn > 5 ? F(t[5]) : 4f;
 						for (float sz = sz1; sz >= sz0 - 0.01f; sz -= sst)
 						{
 							var row = new System.Text.StringBuilder("  surface z=" + sz.ToString("F1", CultureInfo.InvariantCulture) + ":");
 							for (float sx = sx0; sx <= sx1 + 0.01f; sx += sst)
-								row.Append(" " + (PlaySurface(PlayPoint(sx, sz), 400f) - playEntry.Position.y).ToString("F1", CultureInfo.InvariantCulture));
+								row.Append(" " + (PlaySurface(PlayPoint(sx, sz), 400f) - playEntry.Position.y).ToString("F1", CultureInfo.InvariantCulture) + (paint ? "/" + GroundPaintAt(PlayPoint(sx, sz)) : ""));
 							Log(row.ToString());
 						}
 						break;
