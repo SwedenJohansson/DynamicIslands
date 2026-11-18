@@ -1106,10 +1106,6 @@ namespace DynamicIslands
 						(s.Link && nodes.Values.Any(t => t != s && t.Link && t.Grounded && t.Box.min.y <= s.Box.min.y + 0.3f && Grow(t.Box, 0.1f).Intersects(s.Box)))))
 					{ s.Grounded = true; changed = true; }
 			}
-			// (IG5 probe: what is round the first held-up pieces, within 0.5 m - their colliders' heights)
-			foreach (SupportNode s in nodes.Values.Where(x => !x.Grounded && !x.Reported && x.Link).Take(2))
-				Log("    probe " + s.Name + " at " + s.Where + " box y " + Num(s.Box.min.y - sea) + ".." + Num(s.Box.max.y - sea) + ": " + string.Join("; ", Physics.OverlapBox(s.Box.center, s.Box.extents + Vector3.one * 0.5f, Quaternion.identity, ~0, QueryTriggerInteraction.Collide)
-					.Select(c => c.name + "<" + (PlacedRoot(c.transform, objects) != null ? PlacedRoot(c.transform, objects).name : "-") + "> y " + Num(c.bounds.min.y - sea) + ".." + Num(c.bounds.max.y - sea) + (c.isTrigger ? " trig" : "") + (c.enabled ? "" : " off")).Distinct().Take(12).ToArray()));
 			foreach (SupportNode s in nodes.Values.Where(x => !x.Grounded && !x.Reported))
 				lines.Add("held up by nothing that reaches the ground: " + s.Name + " at " + s.Where +
 					(s.Under.Count > 0 ? " (rests on " + string.Join(", ", s.Under.Select(u => u.name.Replace("(Clone)", "").Trim()).Distinct().Take(3).ToArray()) + ", not grounded either)" : ""));
