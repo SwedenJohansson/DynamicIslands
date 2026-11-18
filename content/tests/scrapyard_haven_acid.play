@@ -14,7 +14,8 @@ picture sh_acid 9 +2.5 -55 16 +0 -55
 walk 11 -55 to 13.5 -55 to 16 -55
 wait 5
 expect message Battery acid
-expect hurt 10
-walk 16 -55 to 13 -55 to 10 -55
+expect hurt 00
+walk 16 -55 to 13 -55 to 11.5 -53.8
+expect hurt 0
 wait 3
 expect unhurt

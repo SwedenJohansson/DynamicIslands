@@ -452,9 +452,11 @@ namespace DynamicIslands.Editor
 							// came down at the full slope and met the sand at a hard, steep line, Shelter Atoll from the east, 11-08)
 							// (11-08 b: a straight flare left flat, angular sand wedges - now a curve that leaves the hill at its own
 							// slope and runs out ever flatter, dipping under the sand FlareSink m down)
+							// (11-17: never more than FlareHigh up - closer in than the flare's start the curve grew without bound, a capped
+							// den's roof cells raised towers hundreds of metres high, Wreckers' Cove/Coral Observatory/Signal Rock w15F)
 							if (dryFootOn && ground[a, c] > SeaLevel + DryBy && peak > ground[a, c] + FlareHigh)
 								h = Mathf.Max(h, ground[a, c] - FlareSink + (FlareHigh + FlareSink)
-									* Mathf.Exp(-Slope * (dist - (peak - ground[a, c] - FlareHigh) / Slope) / (FlareHigh + FlareSink)));
+									* Mathf.Exp(-Slope * Mathf.Max(0f, dist - (peak - ground[a, c] - FlareHigh) / Slope) / (FlareHigh + FlareSink)));
 							if (past != null && past[a, c] > 0.5f && (di != 0 || dk != 0))
 							{
 								// (cave.foot=dry, that piece's own: beside its opening the hill goes on out past the mouth's plane as a

@@ -5,7 +5,7 @@
 # at -16 14; zone fh_hollows at -36 14. Floors 3.52 (the shelves; a guess).
 # Offline-written, never run; re-read the offset after the build (a new hill may move the land centre).
 island Frost Hollow keep
-offset 0.34 -6.17
+offset -6.8885 -2.9
 hour 11
 weather Calm
 
@@ -14,13 +14,18 @@ read ICE HOLLOWS
 
 # The rats in the cold room (11-12 mixed monsters)
 wait 3
+# (11-17 w15) they wait in the cold room (creature.zone fh_wake at the branch) until the player gets there
+# (11-17 w15G) counted from INSIDE the cold room: from the door (open sky) the rats ran out to the player and the
+# under-a-roof count came out 1 or 2 by chance
+walk -18 10 to -23 10 to -30 10 to -31 10 to -31 7
+wait 4
 expect animals Rat 2
 expect animalsinside Rat 2
 kill Rat
 expect animals Rat 0
 
-# In by the hollows' door, a look into the cold room, on to the main hollow, out by the ice chimney
-walk -18 10 to -23 10 to -31 10 to -31 7 to -32 4
+# A look into the cold room, on to the main hollow, out by the ice chimney
+walk -31 7 to -32 4
 picture fh_cold_in -31 +2 8 -33 +0.5 1 light=20
 walk -32 4 to -31 7 to -31 10 to -37 10 to -36 14
 zone fh_hollows

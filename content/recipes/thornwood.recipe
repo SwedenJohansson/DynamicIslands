@@ -180,13 +180,20 @@ prop twthorn cave.rock=plain
 scatter Bamboo_3 6 at 84 -15 r=7 seed=6151
 place Note_Sign twthornsign at 61 -19 ground yaw=90
 note twthornsign (the explorer's tag on a stake) | A burrow under the thorn knoll. Something with teeth lives in it, and something with more teeth comes to visit. Not worth it for the mushrooms. - the Expedition
-# cavecheck inside twrat twhyena twthornz
+# cavecheck inside twrat twhyena twthornz twwake
 place Creature_Rat twrat at 82 -13.5 h=3.8
 prop twrat creature.count=1
 prop twrat creature.respawn=0
 place Creature_Hyena twhyena at 85 -16 h=3.8
 prop twhyena creature.count=1
 prop twhyena creature.respawn=0
+# (11-17 w15: the rat and the hyena wait in the room until a player is in the passage - CAVE_LESSONS 11-16/11-17 creature.zone)
+place Zone_Trigger twwake at 72 -15 h=4.3
+prop twwake obj.name=twwake
+prop twwake zone.id=tw_wake
+prop twwake zone.radius=2.5
+prop twrat creature.zone=tw_wake
+prop twhyena creature.zone=tw_wake
 place Zone_Trigger twthornz at 77 -15 h=5
 prop twthornz obj.name=twthornz
 prop twthornz zone.id=tw_thorn

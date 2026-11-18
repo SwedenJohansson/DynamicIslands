@@ -107,6 +107,9 @@ brush flatten at 18 18 r=6 s=20 frames=60 h=-5
 brush smooth at 18 18 r=9 s=6 frames=20
 call kit_uw x=18 z=18 yaw=45 len=29.1 slope=15 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=coviewroom
 prop coviewroom cave.rock=plain
+# (11-17 w15E) the sea room's dry dome capped (CAVE_LESSONS 11-10 cave.dome): uncapped it reached 66-82 m back over the island,
+# walled the den mouth and buried the boardwalk / shore walk
+prop coviewroom cave.dome=18
 # cavecheck inside coviewroomair coviewroomchest
 place Zone_Trigger coviewroomair at 48.4 48.4 h=4
 prop coviewroomair obj.name=coviewroomair
@@ -139,9 +142,21 @@ loot surveychest Rope*2;Glass*3;Plastic*2;Battery*1
 note surveychest Survey box | The survey box on the mast: a thermometer on a long line, glass sample jars, rope - and a battery for the beacon.
 scatter Bush 3 at -62 16 r=14 seed=32034 free=1
 # --- DEEP 10-25: the divers' cave on the east ring, Tomas Reyes's letter and box ---------------------------------------
-call ar_cave x=66 z=18 h=6 yaw=180 al=diverock chest=divebox
-call hw_zone x=66 z=13 al=divecavez id=divecave r=4 msg="A cave in the ring, a wetsuit hung up to dry in its mouth years ago and never taken down."
-place Note_Paper tomasnote at 67.5 12.5 h=6.45 drop yaw=0
+# (11-18 w15I) the den moved 16 m north along the ring (66 18 -> 64 34; its mouth z 2 -> 18): capped at 18 and at 6 alike
+# its hill stood over the footbridge's east end (quest walk stuck on CaveSkin at 47.4 1.2 on the bridge, w15H) - the
+# mouth now 18 m from the bridge; its clear r 19 stops short of the viewroom's chest and zone (21 m)
+# (11-18 w15J) ar_cave's pad (r 14 round 64 34) left the ring's slope under the den's front half: its sand stood up as a
+# pale strip beside the mouth (w15I picture) - the whole body's ground first
+brush flatten from 64 34 to 64 18 r=10 s=20 frames=300 h=6
+# (11-18 w15K) a thin strip of it still stood beside the mouth's east side (co_dive_cave, w15J): a round flatten there
+brush flatten at 66.5 28.5 r=6 s=20 frames=300 h=6
+call ar_cave x=64 z=34 h=6 yaw=180 al=diverock chest=divebox
+# (11-17 w15F) the diver's den dome capped (CAVE_LESSONS 11-10 cave.dome): uncapped it reached 41 m to the sides and
+# 20 m in front and its skin stood across the shore walk to the platform (quest walk stuck, w15D/E)
+# (11-17 w15G) 18 still buried the shore start of the quest walk (stuck on CaveSkin at 59.8 -3.8)
+prop diverock cave.dome=6
+call hw_zone x=64 z=29 al=divecavez id=divecave r=4 msg="A cave in the ring, a wetsuit hung up to dry in its mouth years ago and never taken down."
+place Note_Paper tomasnote at 65.5 28.5 h=6.45 drop yaw=0
 loot divebox Rope*2;Scrap*3;Bolt*2;OxygenBottle*1
 prop divebox loot.refill=0
 note divebox Diver's box | Tomas's box at the back of the cave: rope, scrap, a few bolts - and a full oxygen bottle, his spare.

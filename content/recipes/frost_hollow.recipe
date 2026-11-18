@@ -117,13 +117,20 @@ call kit_sys x=-23 z=10 yaw=270 side=1 len=14 bend=6 branch=8 blen=3 gap=9 in2=1
 prop fhhollow cave.rock=plain
 place Note_Sign fhhollowsign at -16 14 ground yaw=270
 note fhhollowsign ICE HOLLOWS - KEEP OUT | The hollows go deeper than the survey thought. Two doors, one cold room, rats in the stores. Rope up. - the lab
-# cavecheck inside fhratA fhratB fhhollowz
+# cavecheck inside fhratA fhratB fhhollowz fhwake
 place Creature_Rat fhratA at -32 2.5 h=3.8
 prop fhratA creature.count=1
 prop fhratA creature.respawn=0
 place Creature_Rat fhratB at -33.5 1.5 h=3.8
 prop fhratB creature.count=1
 prop fhratB creature.respawn=0
+# (11-17 w15: the rats wait in the cold room until a player reaches the branch - CAVE_LESSONS 11-16/11-17 creature.zone)
+place Zone_Trigger fhwake at -30 10 h=4.3
+prop fhwake obj.name=fhwake
+prop fhwake zone.id=fh_wake
+prop fhwake zone.radius=2.5
+prop fhratA creature.zone=fh_wake
+prop fhratB creature.zone=fh_wake
 place Zone_Trigger fhhollowz at -36 14 h=5
 prop fhhollowz obj.name=fhhollowz
 prop fhhollowz zone.id=fh_hollows

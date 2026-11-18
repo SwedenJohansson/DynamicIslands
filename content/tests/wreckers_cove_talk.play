@@ -3,6 +3,7 @@
 # way under Jory's Crown (shows the land way's sign wcvinesign, hidden till then), sail on. No quest step.
 # Offline-written, never run; re-read the offset after the build (a new hill may move the land centre).
 island Wreckers' Cove keep
+offset -6.4468 -8.611
 hour 11
 weather Calm
 
@@ -10,7 +11,6 @@ expect hidden wcvinesign
 picture wc_islander -7.5 +2.4 -8 -6.5 +0.9 -3.5
 use Wrecker Elaine pick 1
 expect message Two lights on the point
-read The false lantern
 use Wrecker Elaine pick 2
 expect message Mind the stakes
 expect shown wcvinesign

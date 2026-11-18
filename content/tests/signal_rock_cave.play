@@ -1,15 +1,17 @@
-# Signal Rock's relay store (CIPlay signal_rock_cave, 11-12 w15 prep; in a test world 'CI ...'). Points as in the recipe:
-# kit_st mouth on the east headland's flat at 30 20 (3.5 m; yaw 0: way in = +z), tunnel 7.3 m, the den ~22 m on (middle
-# ~30 38.3) under its own knoll (hill=1); the sign srstoresign at 23 14; zone sr_store at 30 33. No monsters.
-# Offline-written, never run; re-read the offset after the build (a new hill may move the land centre).
+# Signal Rock's relay store (CIPlay signal_rock_cave; in a test world 'CI ...'). Points as in the recipe (11-17 w15): an
+# hw_mount knoll on the headland's east end (heart 57 20, b 10), a level adit dug in from the headland's flat at 57 8.5
+# (yaw 0: way in = +z; w15G: one level 4 m wide passage from z 10 to the knoll's heart at 22); the sign srstoresign at 50 3; zone
+# sr_store at 57 17. No monsters. Floor ~2.5 (dig log): in-cave pictures at absolute heights.
 island Signal Rock keep
-offset 16.8261 3.288
+offset 19.9544 4.2646
 hour 11
 weather Calm
 
-picture sr_store_out 30 +3 12 30 +1.5 20
+picture sr_store_out 57 +2 3 57 +1.5 9.5
 read RELAY STORE
-walk 26 15 to 30 20 to 30 27.3 to 30 33
+walk 57 1 to 57 6 to 57 8.5 to 57 12 to 57 17
 zone sr_store
-picture sr_store_in 30 +2.5 28 30 +0.5 38 light=20
-walk 30 33 to 30 27.3 to 30 20 to 26 15
+picture sr_store_in 57 5.2 13.5 57 4.2 21 light=20
+walk 57 17 to 57 20
+picture sr_store_end 57 5 16 57 4.6 22.5 light=20
+walk 57 20 to 57 12 to 57 8.5 to 57 6 to 57 1

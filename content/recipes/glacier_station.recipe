@@ -149,27 +149,41 @@ place Zone_Trigger chimneys at 10 57 y=2
 # mixed cave monsters - a brown bear has holed up in it (the island's polar bear queen stays the quest's).
 # HEIGHTS guessed: the shelf cut level at 2.5 m (the shore there not known: if the natural ground is much higher the shelf is
 # a notch - move the mouth further out), the den floor ~2.5; the bear at 2.8, the chest dropped from 5, the zone 4.
+# 11-17 w15 (CAVE_LESSONS 11-09 Overpass, 11-17 Temperance): a bear in a kit_st room spawns under its floor (cave pieces
+# carry no NavMesh) and kit_st hill=1 leaves pale skin sheets by the mouth; the store is now a knoll (hw_mount, heart
+# -73.7 84.75, b 12) on the shore with a level adit dug in from the shelf (kit_dig from -62 78, way in yaw 300, 3 m flat,
+# 8 m on, the room 11-16 m in at the knoll's heart). The bear waits in the room (creature.zone gs_wake 5 m in).
 brush flatten at -62 78 r=4 s=20 frames=60 h=2.5
 brush smooth at -59 76 r=6 s=6 frames=20
 clear at -62 78 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
-clear at -77.8 87.2 r=13 all only=(?i)boulder|tree|bush|palm|bamboo
-call kit_st x=-62 z=78 yaw=300 len=7.3 slope=0 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=0 as=gsice
+clear at -73.7 84.75 r=15 all only=(?i)boulder|tree|bush|palm|bamboo
+call hw_mount x=-73.7 z=84.75 b=12 h=14
+brush smooth at -79.8 88.25 r=8 s=5 frames=80
+brush auto at -79.8 88.25 r=10 s=10 frames=25
+call kit_dig x=-62 z=78 yaw=300 len=8 flat=3 r=1.75 slope=0 room=1 roomr=3.5 roomlen=5 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=gsice
 prop gsice cave.rock=plain
+prop gsice tint.color=#d6e4ee
+prop gsice tint.amount=0.35
 place Note_Sign gsicesign at -55 72 ground yaw=300
 note gsicesign (a station marker, half buried) | SUPPLY CACHE 3 - ICE CAVE. Bear seen at the cache 12th. Do not go in alone. - Station
-# cavecheck inside gsbear gsicechest gsicez
-place Creature_Bear gsbear at -76.5 86.5 h=2.8
+# cavecheck inside gsbear gsicechest gsicez gswake
+place Creature_Bear gsbear at -74.1 85 h=2.3
 prop gsbear creature.count=1
 prop gsbear creature.respawn=0
-place Loot_ChestSmall gsicechest at -79.5 88.2 h=5 drop yaw=300
+place Zone_Trigger gswake at -66.3 80.5 h=2.2
+prop gswake obj.name=gswake
+prop gswake zone.id=gs_wake
+prop gswake zone.radius=2.5
+prop gsbear creature.zone=gs_wake
+place Loot_ChestSmall gsicechest at -74.7 87 h=4 drop yaw=300
 prop gsicechest obj.name=gsicechest
 prop gsicechest loot.refill=0
 note gsicechest Supply cache 3 | The station's lost supply cache: a battery, tins, a coil of cable and spare filters for the purifier.
 loot gsicechest Battery*1;CopperIngot*2;Plastic*3;Rope*2
-place Zone_Trigger gsicez at -72 84 h=4
+place Zone_Trigger gsicez at -69.8 82.5 h=2.3
 prop gsicez obj.name=gsicez
 prop gsicez zone.id=gs_icecave
-prop gsicez zone.radius=5
+prop gsicez zone.radius=4
 prop gsicez zone.message=An ice cave under the shore knoll. Frost on every wall, a torn tarp over the old supply crates - and claw marks in the ice.
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
