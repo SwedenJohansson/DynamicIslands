@@ -119,6 +119,19 @@ namespace DynamicIslands.Editor
 			return editorCut.Count;
 		}
 
+		/// <summary>The editor's cut made now if the caves or the ground in their reach changed since the last one (a recipe's
+		/// place on the ground: a cave piece placed a moment before is not cut for a second or two, and what was put on the
+		/// ground beside it then floated in the world once its cut let the ground down - Geiger Isle's pillars, IG5 11-18).</summary>
+		public static void EditorCatchUp(Terrain land)
+		{
+			if (land == null) return;
+			List<Transform> caves = EditorCaves();
+			if (caves.Count == 0 && editorCut.Count == 0 && editorDug.Count == 0) return;
+			if (land == lastLand && !changed && Look(land, caves) == lastLook) return; // (changed: the tick saw a change and waits to cut)
+			int dug;
+			EditorNow(land, out dug);
+		}
+
 		/// <summary>The editor's island was just replaced (a new one, one loaded): its heights are its own, the ones let down are forgotten; cut again soon.</summary>
 		public static void EditorForget()
 		{

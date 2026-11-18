@@ -1487,6 +1487,7 @@ namespace DynamicIslands
 			if (opt.ContainsKey("h")) return DynamicIslands.EditorWaterLevel + F(opt["h"]);
 			float y = opt.ContainsKey("y") ? F(opt["y"]) : 0f;
 			if (TopFrame.HasFloor && !opt.ContainsKey("ground")) return TopFrame.FloorY + y;
+			CaveGround.EditorCatchUp(terraineditor.terrain); // (the ground as the world will have it: the caves' cut made)
 			return GroundY(w.x, w.y) + y;
 		}
 
