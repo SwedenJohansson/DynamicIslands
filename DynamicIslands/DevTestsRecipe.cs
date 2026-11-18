@@ -111,9 +111,14 @@ namespace DynamicIslands
 				float turn = e.transform.eulerAngles.y % 90f;
 				bool square = turn < 3f || turn > 87f;
 				float inX = square ? 0.1f : whole.size.x * 0.3f, inZ = square ? 0.1f : whole.size.z * 0.3f;
+				// (turned, a long floor's corners are its own: the box's 30 %-in corners of a 6 x 9 m roof turned 59 degrees lie
+				// outside it, over nothing - Twin Forges' rotated radio tower rooms, their roofs on their walls read "over nothing"
+				// x3, w16 11-04; IG5 11-18)
+				Vector3[] turnedAt = square ? null : TurnedCorners(e, parts, 0.15f);
 				for (int c = 0; c < 4; c++)
 				{
-					var p = new Vector3(c % 2 == 0 ? whole.min.x + inX : whole.max.x - inX, whole.min.y, c < 2 ? whole.min.z + inZ : whole.max.z - inZ);
+					var p = turnedAt != null ? new Vector3(turnedAt[c].x, whole.min.y, turnedAt[c].z) :
+						new Vector3(c % 2 == 0 ? whole.min.x + inX : whole.max.x - inX, whole.min.y, c < 2 ? whole.min.z + inZ : whole.max.z - inZ);
 					float land = ground.SampleHeight(p) + ground.transform.position.y;
 					bool ok = p.y - land <= gap + 0.2f;
 					if (!ok)
@@ -167,6 +172,34 @@ namespace DynamicIslands
 			}
 			return over;
 		}
+		/// <summary>A turned piece's four corners in its own frame (its meshes' bounds, <paramref name="inset"/> m in from its
+		/// edges), in the world; null when a part has no mesh to read.</summary>
+		static Vector3[] TurnedCorners(EditorGameObject e, Renderer[] parts, float inset)
+		{
+			Transform f = e.transform;
+			bool any = false;
+			Vector3 lo = Vector3.zero, hi = Vector3.zero;
+			foreach (Renderer r in parts)
+			{
+				MeshFilter mf = r.GetComponent<MeshFilter>();
+				if (mf == null || mf.sharedMesh == null) return null;
+				Bounds mb = mf.sharedMesh.bounds;
+				for (int k = 0; k < 8; k++)
+				{
+					Vector3 c = new Vector3((k & 1) == 0 ? mb.min.x : mb.max.x, (k & 2) == 0 ? mb.min.y : mb.max.y, (k & 4) == 0 ? mb.min.z : mb.max.z);
+					Vector3 l = f.InverseTransformPoint(r.transform.TransformPoint(c));
+					if (!any) { lo = hi = l; any = true; } else { lo = Vector3.Min(lo, l); hi = Vector3.Max(hi, l); }
+				}
+			}
+			if (!any) return null;
+			Vector3 s = f.lossyScale;
+			float ix = Mathf.Min(inset / Mathf.Max(1e-3f, Mathf.Abs(s.x)), (hi.x - lo.x) / 2f), iz = Mathf.Min(inset / Mathf.Max(1e-3f, Mathf.Abs(s.z)), (hi.z - lo.z) / 2f);
+			var corners = new Vector3[4];
+			for (int c = 0; c < 4; c++)
+				corners[c] = f.TransformPoint(new Vector3(c % 2 == 0 ? lo.x + ix : hi.x - ix, lo.y, c < 2 ? lo.z + iz : hi.z - iz));
+			return corners;
+		}
+
 		static readonly Regex Hangs = new Regex("Buoy|Water|Pipe|Chain|Rope|Cable|Lamp|Light|Flag|Banner|Floor|Deck|Plank|Bridge|Ramp|Stair|Crane|Roof|Scaffold", RegexOptions.IgnoreCase);
 
 		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it)")]

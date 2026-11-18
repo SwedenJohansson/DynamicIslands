@@ -80,6 +80,18 @@ namespace DynamicIslands
 				"place SmallRock_02 - at -100 -60 h=10 scale=2",
 				"place SmallRock_02 - at -95 -60 h=10 scale=2",
 				"place Block_Foundation archdeck at -97.5 -60 h=11.6 sx=3.2 sz=1.6",
+				// (a radio tower room turned 59 degrees, its roof on its walls - Twin Forges' Anvil, IG5 11-18: the roof's box
+				// corners 30 % in lay inside the room, over nothing)
+				"include lib_rt",
+				"push at -75 -75 h=10 yaw=59",
+				"call rt_storey f1=none f2=none",
+				"place RT_Floor - at 0 4.5 y=3",
+				"pop",
+				// (rocks, IG5 11-18: a boulder resting on the ground - its round underside curves up from its middle; one 3 m in
+				// the air; one set 0.3 m into the ground)
+				"place SmallBoulder2 restrock at -20 -60 ground scale=3",
+				"place SmallBoulder2 airrock at -30 -60 y=3 scale=1.5",
+				"place SmallBoulder2 setrock at -40 -60 y=-0.3 scale=1.5",
 				});
 			}
 			catch (Exception e) { Fail("prefaults: writing " + pb + ": " + e.Message); yield break; }
@@ -140,6 +152,30 @@ namespace DynamicIslands
 			Check(ref ok, !planterOver, "a foundation set on a storey's thin floor tiles is held by them (a planter, Brinelab)");
 			bool railOver = FloorsOverNothing(PlacedEditorObjects(), 0.3f, t, sea, out nFloors).Any(g => g.Floor.GameObjectName == "Block_Floor_Tier3" && g.Box.center.x < origin.x - 70f);
 			Check(ref ok, PlacedEditorObjects().Count(e => e.GameObjectName == "Antenna_pole") == 2 && !railOver, "a deck on two poles laid under it (no collider) is held by them (Caisson Yard's mast bridges)");
+			// (the turned room's roof is held by its walls; its own floor, 10 m up on nothing, is not)
+			var turned = FloorsOverNothing(PlacedEditorObjects(), 0.3f, t, sea, out nFloors).Where(g => g.Floor.GameObjectName == "RT_Floor").ToList();
+			Check(ref ok, turned.Count == 1 && turned[0].Box.min.y < sea + 11f, "a room turned 59 degrees: its roof on its walls is held, its floor in the air is not (" +
+				string.Join(", ", turned.Select(g => "h=" + (g.Box.min.y - sea).ToString("0.0")).ToArray()) + ")");
+			// (the rocks: the resting boulder and the set-in one are not in the air, the one 3 m up is; set in, its middle's
+			// gap is 0 - the ray up from the ground starts inside it - not "not measured", which let one corner over a dip
+			// make a sunk rock "floating, 1 of 1 points")
+			Physics.SyncTransforms();
+			foreach (string rn in new[] { "restrock", "airrock", "setrock" })
+			{
+				EditorGameObject r = PlacedEditorObjects().FirstOrDefault(e => e.Props != null && e.Props.Values.Contains(rn)) ??
+					PlacedEditorObjects().Where(e => e.GameObjectName == "SmallBoulder2").OrderBy(e => Mathf.Abs(e.transform.position.x - (origin.x + (rn == "restrock" ? -20f : rn == "airrock" ? -30f : -40f)))).FirstOrDefault();
+				if (r == null) { Check(ref ok, false, "rock '" + rn + "' placed"); continue; }
+				Renderer[] rrs = r.GetComponentsInChildren<Renderer>(false).Where(x => x is MeshRenderer && x.enabled).ToArray();
+				Bounds rb = rrs[0].bounds;
+				foreach (Renderer x in rrs) rb.Encapsulate(x.bounds);
+				int seen, high; float most, least;
+				bool floats = RockFloats(r.transform, rb, t, out seen, out high, out most, out least);
+				float mid = RockGap(r.transform, rb.center.x, rb.center.z, rb, t);
+				string got = rn + ": " + high + " of " + seen + " points high (up to " + most.ToString("0.00") + " m), the least gap " + least.ToString("0.00") + ", its middle's " + mid.ToString("0.00");
+				if (rn == "airrock") Check(ref ok, floats, "a rock 3 m in the air floats (" + got + ")");
+				else Check(ref ok, !floats, "a rock " + (rn == "restrock" ? "resting on the ground" : "set into the ground") + " does not float (" + got + ")");
+				if (rn == "setrock") Check(ref ok, mid == 0f, "a rock set into the ground: its middle's gap is 0 (" + got + ")");
+			}
 			// (the door wall stands on the wall under it, though its middle is its doorway)
 			EditorGameObject dw = PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == "RT_WallDoor1");
 			Check(ref ok, dw != null, "a door wall placed");

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -933,17 +933,8 @@ namespace DynamicIslands
 				// apart from them (Coldhold Vault, 2026-10-23)
 				if (LooseRock.IsMatch(n) && b.min.y > sea + 0.3f)
 				{
-					int seen = 0, high = 0; float most = 0f;
-					float allow = 0.3f + 0.15f * Mathf.Max(b.extents.x, b.extents.z);
-					for (int k = 0; k < 9; k++)
-					{
-						float px = Mathf.Lerp(b.min.x, b.max.x, 0.25f + 0.25f * (k % 3)), pz = Mathf.Lerp(b.min.z, b.max.z, 0.25f + 0.25f * (k / 3));
-						float g = RockGap(o, px, pz, b, land);
-						if (float.IsNaN(g)) continue;
-						seen++;
-						if (g > allow) { high++; most = Mathf.Max(most, g); }
-					}
-					if (seen > 0 && (high >= 3 || high * 2 > seen))
+					int seen, high; float most, least;
+					if (RockFloats(o, b, land, out seen, out high, out most, out least))
 					{ node.Reported = true; lines.Add("floating rock: " + n + " at " + where + ", its underside up to " + Num(most) + " m over what is under it (" + high + " of " + seen + " points)"); continue; }
 				}
 				// A trunk over a drop: its foot on a pit's or a cliff's rim, the trunk hanging out over the slope - a stroke lowered
@@ -1567,8 +1558,28 @@ namespace DynamicIslands
 			return bad;
 		}
 
-		/// <summary>A rock's underside over what is under it at x z: NaN where the rock isn't over that point or is set into
-		/// the ground there; else the gap in metres (the land or the first other thing under it).</summary>
+		/// <summary>A loose rock in the air: its underside over what is under it at nine points (25/50/75 % of its base),
+		/// more than 0.3 m + 0.15 m per metre of its half width over it at most of the points where it is over something.
+		/// (Not "3 points high": a round boulder resting on flat ground curves up 0.29 r at its box's quarter points, and every
+		/// big one read floating - IG5 11-18.) least: the smallest gap measured (0 where it is set in).</summary>
+		static bool RockFloats(Transform o, Bounds b, Terrain land, out int seen, out int high, out float most, out float least)
+		{
+			seen = 0; high = 0; most = 0f; least = float.MaxValue;
+			float allow = 0.3f + 0.15f * Mathf.Max(b.extents.x, b.extents.z);
+			for (int k = 0; k < 9; k++)
+			{
+				float px = Mathf.Lerp(b.min.x, b.max.x, 0.25f + 0.25f * (k % 3)), pz = Mathf.Lerp(b.min.z, b.max.z, 0.25f + 0.25f * (k / 3));
+				float g = RockGap(o, px, pz, b, land);
+				if (float.IsNaN(g)) continue;
+				seen++;
+				least = Mathf.Min(least, g);
+				if (g > allow) { high++; most = Mathf.Max(most, g); }
+			}
+			return seen > 0 && high * 2 > seen;
+		}
+
+		/// <summary>A rock's underside over what is under it at x z: NaN where the rock isn't over that point; 0 where it is set
+		/// into the ground there; else the gap in metres (the land or the first other thing under it).</summary>
 		static float RockGap(Transform self, float x, float z, Bounds b, Terrain land)
 		{
 			float under = float.MinValue;
@@ -1579,7 +1590,15 @@ namespace DynamicIslands
 			float underside = float.MaxValue;
 			foreach (RaycastHit h in Physics.RaycastAll(new Vector3(x, under + 0.01f, z), Vector3.up, b.max.y - under + 0.1f, ~0, QueryTriggerInteraction.Ignore))
 				if (h.collider.transform.IsChildOf(self) && h.point.y < underside) underside = h.point.y;
-			if (underside == float.MaxValue) return float.NaN; // (not over this point, or into the ground here: the ray starts inside it)
+			if (underside == float.MaxValue)
+			{
+				// (not over this point, or set into the ground here: the ray up starts inside it. Set in, it rests there - a gap of
+				// 0, not a point left out: a boulder sunk into a slope with one corner over the dip read "1 of 1 points" floating,
+				// 241 of the 504 floating rocks of the ground check 11-14, IG5)
+				foreach (RaycastHit h in Physics.RaycastAll(new Vector3(x, b.max.y + 0.1f, z), Vector3.down, b.size.y + 0.2f, ~0, QueryTriggerInteraction.Ignore))
+					if (h.collider.transform.IsChildOf(self)) return 0f;
+				return float.NaN;
+			}
 			return Mathf.Max(0f, underside - under);
 		}
 
