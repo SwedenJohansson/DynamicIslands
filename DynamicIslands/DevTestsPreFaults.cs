@@ -94,9 +94,11 @@ namespace DynamicIslands
 				"brush flatten from -48 -58 to -12 -58 r=9 s=20 frames=400 h=1.5",
 				"brush flatten from -48 -66 to -12 -66 r=9 s=20 frames=400 h=1.5",
 				"brush flatten from -48 -74 to -12 -74 r=9 s=20 frames=400 h=1.5",
-				"place SmallBoulder2 restrock at -20 -62 ground scale=3",
-				"place SmallBoulder2 airrock at -30 -62 ground y=3 scale=1.5",
-				"place SmallBoulder2 setrock at -40 -62 ground y=-0.3 scale=1.5",
+				// (sit: by its bottom - a SmallBoulder2's pivot is 4.2 m x scale over its bottom, so y=3 by the pivot left it 3 m
+				// in the ground, and with no y a scale 3 boulder went down to the lowest ground under it, the sea floor 160 m down)
+				"place SmallBoulder2 restrock at -20 -62 ground y=0 sit scale=1.5",
+				"place SmallBoulder2 airrock at -30 -62 ground y=3 sit scale=1.5",
+				"place SmallBoulder2 setrock at -40 -62 ground y=-0.3 sit scale=1.5",
 				// (trees, IG5 11-18: a palm sunk 2 m into the ground and one 2 m over it - both go back on the ground at a save)
 				"place BigPalm1 sunkpalm at -20 -70 ground y=-2",
 				"place BigPalm1 airpalm at -32 -70 ground y=2",
@@ -193,7 +195,7 @@ namespace DynamicIslands
 						.Where(hh => !hh.collider.transform.IsChildOf(r.transform)).OrderBy(hh => hh.distance).Take(2)
 						.Select(hh => hh.collider.name + "@" + (hh.point.y - sea).ToString("0.00")).ToArray()) + " (rock h " + (rb.min.y - sea).ToString("0.00") + ", pivot h " + (r.transform.position.y - sea).ToString("0.00") + ", parts " + string.Join(" ", rrs.Select(x => x.name + "@" + (x.bounds.min.y - sea).ToString("0.0") + ".." + (x.bounds.max.y - sea).ToString("0.0")).ToArray()) + ")";
 				if (rn == "airrock") Check(ref ok, floats, "a rock 3 m in the air floats (" + got + ")");
-				else Check(ref ok, !floats, "a rock " + (rn == "restrock" ? "resting on the ground" : "set into the ground") + " does not float (" + got + ")");
+				else Check(ref ok, !floats && seen > 0, "a rock " + (rn == "restrock" ? "resting on the ground" : "set into the ground") + " does not float (" + got + ")");
 				if (rn == "setrock") Check(ref ok, mid == 0f, "a rock set into the ground: its middle's gap is 0 (" + got + ")");
 			}
 			// (the rim palm onto the first spot south of it on the bank's rim)
