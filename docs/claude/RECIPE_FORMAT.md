@@ -118,6 +118,12 @@ plan save
   kept the shoulders' inner faces sheer. 11-08 c: that cap curves (x (1 + d / `ShoulderCurve` 4)), reaches `BackBand` 6 m
   behind the opening's plane rising `BackSlope` 1.5 a m there (no seam where it stopped), and the capped cells get
   `RoundPasses` 3 lower-only passes toward their neighbours' mean (no crisp crest). Cells over a roof (`cover`) stay as they are.
+  11-18 (w15): beside a lone den's arch (a dry den with no `cave.plug`), cells on its plane and up to a cell behind it, past
+  `ArchHalf` + `LoneSlot` off its line and over no roof or rim, are capped at floor + `ArchUp` + `LoneSide` x d (curved) +
+  `BackSlope` behind the plane (map char `P`); they had kept the hill's full height, a sheer cut each side of the mouth. The
+  build keeps the tallest step left there (`LoneSheer`, `LoneSheerAt`); `CICaveGapsLook` fails it over `LoneSheerMax` 5 m.
+  `Band` lights a skin band taller than `BandTallFrom` 1.5 m more and more by its own face (full at +`BandTallOver` 3 m), not
+  the ground's up normal: tall walls had shown as pale sheets.
   Without the prop all of it is skipped: other islands build byte for byte as before (Old Mine Islet checked).
 - In Raft, `tools\cavecheckrun.ps1 <island> [...] [-player 2|3]` checks a built island's caves in one world load:
   CICaveGapsLook (pictures out/in by day and night, walked in and out, flooded parts), CICaveInside shots (X7) and

@@ -265,17 +265,24 @@ prop wcspikes zone.damage=4
 prop wcspikes zone.safe=none
 prop wcspikes zone.pulse=2,3
 prop wcspikes zone.hazardMsg=Sharpened stakes punch up through the floor and drop back. The wreckers' trap - time it, or find their lever.
-place UT_JumpPuzzle_LiftMechanism_Lever wclever at -52.8 27 h=9.5 drop yaw=180
+# (11-18 w15L) the lever and the strongbox stood at the passage's rounded end (z 27), dropped from 9.5: the box hung in
+# the air over the floor (drop found no dug floor under it) and the lever's bar touched no roof (wc_cellar_in). Now both
+# on the level floor short of the end: the box sat on the floor (7.04), the lever hung from the roof - its bar's top
+# (0.95 m over its pivot) 0.15 m into the passage's roof 0.8 m off its middle (8.24 + sqrt(4 - 0.64) = 10.07)
+# (11-18 w15N) down rays: the dug floor here is 7.1 (box top 8.1), but the box still read as hanging (wc_cellar_in) and the
+# lever's bar still short of the roof: box and chest sunk 0.15 m into the floor, the lever 1 m higher (bar into the roof,
+# its pull handle at chest height)
+place UT_JumpPuzzle_LiftMechanism_Lever wclever at -52.8 24.5 h=10.27 yaw=180
 prop wclever obj.name=wclever
 prop wclever beh.use=Throw the wreckers' lever
 prop wclever on.use=hide|wcspikes\nhide|wcspike\nmessage||The lever thumps over. Under the passage a beam drops into its socket, and the stakes stay down.
-place "Box Big" wcbox at -51.3 27 h=9.5 drop yaw=270
+place "Box Big" wcbox at -51.2 24.8 h=6.95 sit yaw=270
 prop wcbox obj.name=wcbox
 prop wcbox beh.use=Open the wreckers' strongbox
 prop wcbox if.use=talked|Wrecker Elaine
 prop wcbox on.use=hide|wcbox\nshow|wcvinechest\nmessage||A letter lock, six rings. You try the name of the woman at the jetty - E, L, A, I, N, E - and the hasp springs open.
 prop wcbox else.use=message||The wreckers' strongbox: a letter lock of six rings. Somebody on this island knows the word.
-place Loot_ChestSmall wcvinechest at -51.3 27 h=9.5 drop yaw=270
+place Loot_ChestSmall wcvinechest at -51.2 24.8 h=6.95 sit yaw=270
 prop wcvinechest obj.name=wcvinechest
 prop wcvinechest beh.hidden=1
 prop wcvinechest loot.refill=0
