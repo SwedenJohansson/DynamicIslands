@@ -191,7 +191,7 @@ namespace DynamicIslands
 				string got = rn + ": " + high + " of " + seen + " points high (up to " + most.ToString("0.00") + " m), the least gap " + least.ToString("0.00") + ", its middle's " + mid.ToString("0.00")
 					+ ", under its middle: " + string.Join(", ", Physics.RaycastAll(rb.center, Vector3.down, 50f, ~0, QueryTriggerInteraction.Ignore)
 						.Where(hh => !hh.collider.transform.IsChildOf(r.transform)).OrderBy(hh => hh.distance).Take(2)
-						.Select(hh => hh.collider.name + "@" + (hh.point.y - sea).ToString("0.00")).ToArray()) + " (rock h " + (rb.min.y - sea).ToString("0.00") + ")";
+						.Select(hh => hh.collider.name + "@" + (hh.point.y - sea).ToString("0.00")).ToArray()) + " (rock h " + (rb.min.y - sea).ToString("0.00") + ", pivot h " + (r.transform.position.y - sea).ToString("0.00") + ", parts " + string.Join(" ", rrs.Select(x => x.name + "@" + (x.bounds.min.y - sea).ToString("0.0") + ".." + (x.bounds.max.y - sea).ToString("0.0")).ToArray()) + ")";
 				if (rn == "airrock") Check(ref ok, floats, "a rock 3 m in the air floats (" + got + ")");
 				else Check(ref ok, !floats, "a rock " + (rn == "restrock" ? "resting on the ground" : "set into the ground") + " does not float (" + got + ")");
 				if (rn == "setrock") Check(ref ok, mid == 0f, "a rock set into the ground: its middle's gap is 0 (" + got + ")");
