@@ -151,6 +151,11 @@ namespace DynamicIslands
 					Check(ref ok, UnderCaveHill(new Vector3(db.center.x, db.max.y - 1f, db.center.z), dc, 0.3f), "a foot 1 m under a cave's top stands on its hill");
 					Check(ref ok, !UnderCaveHill(new Vector3(db.center.x, db.max.y + 2f, db.center.z), dc, 0.3f), "a foot 2 m over its top does not");
 					Check(ref ok, !UnderCaveHill(new Vector3(db.max.x + 2f, db.max.y - 1f, db.center.z), dc, 0.3f), "nor one beside it");
+					// (the editor's cut eases the ground at the den's mouth as the world's does: it made none, so a recipe's "ground"
+					// beside a den was the den-less ground and the pieces there floated or were buried in the world - Geiger Isle, IG5 11-18)
+					int dugNow;
+					CaveGround.EditorNow(t, out dugNow);
+					Check(ref ok, CaveGround.LastApron > 0, "the editor's cut eases the ground at a den's mouth (" + CaveGround.LastApron + " points moved)");
 				}
 			}
 			// 3. A deck 10 m over the editor's water line, on nothing: over nothing on an island at the sea, under the real sea

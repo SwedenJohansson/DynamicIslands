@@ -25,6 +25,8 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Tests: how many ground cells the last cut took out, and how many points of the ground it let down.</summary>
 		public int LastCut, LastDug;
+		/// <summary>Tests: how many points the last cut's mouth aprons moved (the editor's too).</summary>
+		internal static int LastApron;
 
 		/// <summary>A cave piece spawned in a world under this island's objects.</summary>
 		public static void Add(Transform objects, GameObject piece, string name, IDictionary<string, string> props = null)
@@ -44,7 +46,7 @@ namespace DynamicIslands.Editor
 		{
 			EditorGameObject e = t.GetComponent<EditorGameObject>();
 			string name;
-			return e != null ? CaveMountain.DryFootFor(e.Props, names.TryGetValue(t.GetInstanceID(), out name) ? name : null) : dryFoot.Contains(t.GetInstanceID());
+			return e != null ? CaveMountain.DryFootFor(e.Props, e.GameObjectName ?? (names.TryGetValue(t.GetInstanceID(), out name) ? name : null)) : dryFoot.Contains(t.GetInstanceID());
 		}
 
 		// (a world's cave pieces' names, for their measures: the editor's are on their EditorGameObject)
@@ -316,7 +318,10 @@ namespace DynamicIslands.Editor
 					}
 				}
 			}
-			foreach (KeyValuePair<Transform, List<int>> a in aprons) dug += Apron(land, a.Key, a.Value, inside, floor, dugTo, apronBoth.Contains(a.Key));
+			int aproned = 0;
+			foreach (KeyValuePair<Transform, List<int>> a in aprons) aproned += Apron(land, a.Key, a.Value, inside, floor, dugTo, apronBoth.Contains(a.Key));
+			dug += aproned;
+			LastApron = aproned;
 			// (and the cells whose ground still runs steeply through a room between their corners)
 			var across = new List<Vector2Int>();
 			var roomAt = new Dictionary<int, Vector2>();
@@ -391,8 +396,9 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		static int Apron(Terrain land, Transform cave, List<int> pts, bool[,] inside, Dictionary<int, float> floor, Dictionary<int, Vector2> dugTo, bool raise = true)
 		{
-			string name;
-			PropInfo info = cave != null && names.TryGetValue(cave.GetInstanceID(), out name) ? RaftProps.Get(name) : null;
+			// (InfoOf: the editor's pieces are named on their EditorGameObject, not in names - the editor made no apron, so a recipe's
+			// "ground" there was the den-less ground and its pieces floated or were buried in the world: Geiger Isle, IG5 11-18)
+			PropInfo info = cave != null ? InfoOf(cave) : null;
 			if (info == null || !info.IsCave || pts.Count == 0 || !(info.OpenPlus || info.OpenMinus)) return 0;
 			Vector3 along = cave.rotation * (info.Axis == 0 ? Vector3.right : Vector3.forward);
 			along.y = 0f;
