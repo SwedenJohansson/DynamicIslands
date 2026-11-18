@@ -23,8 +23,9 @@ picture cy_store -10 -1 13 -10 -2.5 5 light=20
 walk 6 12 to -2 12 to -10 12 to -20 12 to -28 12 to -34 12 below=-5
 
 # The powder cave's bear (11-13 cavemix, TODO 0f; a rat there 11-09): over the yard to the cave's mouth, the bear under its
-# rock, then dealt with
-walk -34 12 to -30 -20 to -24 -72 to -24 -63
+# rock, then dealt with. (11-18 TODO 0g: the straight line from -30 -20 ran up over the den's hill - 24 m high, its mouth
+# faces south - and fell off its front at -72, 19 m up. Now round the hill's west foot, dry, to the mouth's ramp at -78)
+walk -34 12 to -30 -20 to -56 -40 to -54 -62 to -47 -72 to -36 -78 to -24 -78 to -24 -72 to -24 -63
 expect animals Bear 1
 expect animalsinside Bear 1
 wait 2
