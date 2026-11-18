@@ -121,6 +121,8 @@ namespace DynamicIslands
 				IslandWorldState.Entry e = made.LastOrDefault();
 				if (e == null || e.Root == null) { Log("  " + name + ": didn't come"); missed++; continue; }
 				yield return WaitIslandSettled(e, 0.5f, 2f); // (the cave mountains and Raft's physics settle: until they have, 2 s at most)
+				// (a night ghost ship brought by day sinks away at once - IG5 run 11-18 threw on it, ending the check)
+				if (e.Root == null) { Log("  " + name + ": went away again (a ghost ship by day)"); missed++; continue; }
 				int n;
 				List<string> lines = c.Measure(e, out n);
 				done++;
