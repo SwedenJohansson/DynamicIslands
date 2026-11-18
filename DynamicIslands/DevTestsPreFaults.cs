@@ -89,12 +89,14 @@ namespace DynamicIslands
 				"pop",
 				// (rocks, IG5 11-18: a boulder resting on the ground - its round underside curves up from its middle; one 3 m in
 				// the air; one set 0.3 m into the ground)
-				"place SmallBoulder2 restrock at -20 -60 ground scale=3",
-				"place SmallBoulder2 airrock at -30 -60 y=3 scale=1.5",
-				"place SmallBoulder2 setrock at -40 -60 y=-0.3 scale=1.5",
+				// on a bank raised out of the sea (on the sea floor "ground" is the water's top)
+				"brush flatten from -48 -66 to -12 -66 r=9 s=20 frames=400 h=1.5",
+				"place SmallBoulder2 restrock at -20 -62 ground scale=3",
+				"place SmallBoulder2 airrock at -30 -62 ground y=3 scale=1.5",
+				"place SmallBoulder2 setrock at -40 -62 ground y=-0.3 scale=1.5",
 				// (trees, IG5 11-18: a palm sunk 2 m into the ground and one 2 m over it - both go back on the ground at a save)
-				"place BigPalm1 sunkpalm at -20 -72 y=-2",
-				"place BigPalm1 airpalm at -32 -72 y=2",
+				"place BigPalm1 sunkpalm at -20 -70 ground y=-2",
+				"place BigPalm1 airpalm at -32 -70 ground y=2",
 				});
 			}
 			catch (Exception e) { Fail("prefaults: writing " + pb + ": " + e.Message); yield break; }
@@ -163,10 +165,11 @@ namespace DynamicIslands
 			// gap is 0 - the ray up from the ground starts inside it - not "not measured", which let one corner over a dip
 			// make a sunk rock "floating, 1 of 1 points")
 			Physics.SyncTransforms();
+			float bank = GroundY(origin.x - 30f, origin.z - 66f) - sea;
+			Check(ref ok, bank > 0.5f, "the bank for the rocks and palms is out of the sea (h=" + bank.ToString("0.00") + ")");
 			foreach (string rn in new[] { "restrock", "airrock", "setrock" })
 			{
-				EditorGameObject r = PlacedEditorObjects().FirstOrDefault(e => e.Props != null && e.Props.Values.Contains(rn)) ??
-					PlacedEditorObjects().Where(e => e.GameObjectName == "SmallBoulder2").OrderBy(e => Mathf.Abs(e.transform.position.x - (origin.x + (rn == "restrock" ? -20f : rn == "airrock" ? -30f : -40f)))).FirstOrDefault();
+				EditorGameObject r; RecipeObjects.TryGetValue(rn, out r);
 				if (r == null) { Check(ref ok, false, "rock '" + rn + "' placed"); continue; }
 				Renderer[] rrs = r.GetComponentsInChildren<Renderer>(false).Where(x => x is MeshRenderer && x.enabled).ToArray();
 				Bounds rb = rrs[0].bounds;
@@ -184,8 +187,7 @@ namespace DynamicIslands
 			Physics.SyncTransforms();
 			foreach (string pn in new[] { "sunkpalm", "airpalm" })
 			{
-				float px = origin.x + (pn == "sunkpalm" ? -20f : -32f);
-				EditorGameObject pe = PlacedEditorObjects().Where(e => e.GameObjectName == "BigPalm1").OrderBy(e => Mathf.Abs(e.transform.position.x - px) + Mathf.Abs(e.transform.position.z - (origin.z - 72f))).FirstOrDefault();
+				EditorGameObject pe; RecipeObjects.TryGetValue(pn, out pe);
 				if (pe == null) { Check(ref ok, false, "palm '" + pn + "' placed"); continue; }
 				Vector3 pp = pe.transform.position;
 				float gy = GroundY(pp.x, pp.z), off = pp.y - PlacementOptions.PivotAboveBottom(pe.gameObject) - gy;
