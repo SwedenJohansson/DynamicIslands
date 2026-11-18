@@ -581,6 +581,8 @@ namespace DynamicIslands
 			}
 			// (a lone roof tile 4 m up, 10 m off: nothing under it)
 			f.Objects.Add(put(tile, 12f, 1.5f, 4f, 0f));
+			// (a lift 4 m up, clear of everything: a lift rides, it is never "floating")
+			f.Objects.Add(put("VP_Skylift", 12f, 10f, 4f, 0f));
 			f.Save(IslandSpawner.PathFor(isl));
 			Vector3? spot = ScSpot(isl, 400f);
 			if (!spot.HasValue) { ScRemove(made, isl); Fail("wall tops self: no open sea near the raft"); yield break; }
@@ -588,16 +590,19 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = made.LastOrDefault();
 			if (e == null || e.Root == null) { ScRemove(made, isl); Fail("wall tops self: the island didn't come"); yield break; }
 			int n = 0;
+			bool lift = false;
 			List<string> lines;
 			try
 			{
 				yield return WaitIslandSettled(e, 0.5f, 2f);
 				Physics.SyncTransforms();
 				lines = GroundProblems(e, out n);
+				lift = e.Root.GetComponentsInChildren<Transform>(true).Any(x => x.name.StartsWith("VP_Skylift", StringComparison.Ordinal));
 			}
 			finally { ScRemove(made, isl); }
 			foreach (string l in lines) Log("  " + l);
 			bool ok = true;
+			Check(ref ok, lift && !lines.Any(l => l.IndexOf("VP_Skylift", StringComparison.Ordinal) >= 0), "the lift 4 m up is not floating (" + (lift ? "there" : "not there") + ")");
 			Check(ref ok, n >= 17, "the house and the lone tile measured (" + n + " objects)");
 			Check(ref ok, !lines.Any(l => l.IndexOf(wall, StringComparison.Ordinal) >= 0), "the walls stand");
 			Check(ref ok, lines.Count(l => l.IndexOf(tile, StringComparison.Ordinal) >= 0) == 1, "the roof on the walls' tops is held up; only the lone tile 4 m up is found (" + lines.Count(l => l.IndexOf(tile, StringComparison.Ordinal) >= 0) + " tile lines)");
@@ -927,6 +932,9 @@ namespace DynamicIslands
 				bool structural = ChainLink.IsMatch(n), banner = n.IndexOf("Banner", StringComparison.OrdinalIgnoreCase) >= 0;
 				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Note_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") ||
 					n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || (Hangs.IsMatch(n) && !structural && !banner)) continue;
+				// (a lift rides: its platform hangs in a deck's hole clear of the deck round it, held by its own works - Thalassa
+				// Mooring's diving bell over its shaft read "floating, 24 m over what is under it", IG5 11-18)
+				if (n.StartsWith("VP_Skylift", StringComparison.Ordinal) || n == "Elevator") continue;
 				// (cave pieces: their rim, as CICaveRims - AU83)
 				if (RaftProps.Get(n) != null && RaftProps.Get(n).IsCave)
 				{
