@@ -12,6 +12,7 @@ picture signal_rock_ridge 4 30 10 -11 4 -11
 picture sr_headland 10 18 30 40 3 8
 picture sr_rig_cave 26 7.5 38 32 6.5 18
 picture sr_rig_inside 33 5.3 20.5 31 4.3 16
+where rignote
 picture sr_headland_south 48 8 -26 40 3 8
 hour 21.5
 wait 2
