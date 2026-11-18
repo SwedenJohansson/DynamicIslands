@@ -3,6 +3,7 @@
 # floor at the sea (0.1-0.9 m), the boardwalk along the east arm (0.4 m), the false lantern's roof (11.2 m). DEEP 10-25:
 # Jory's Crown at -38 24 (32 m, foot zone at -38.0 45.0), the pilot house at 28 80 (-16 m), the ruin at -66 -20.
 island Wreckers' Cove
+offset -6.4468 -8.611
 expect step 0
 expect title The False Lantern
 
@@ -25,14 +26,14 @@ expect story denkey 1
 expect step 6
 
 # Along the shore to the smugglers' den in the hills' north-east corner: the rats, the strongbox and the lantern key
-walk -6 -4.5 to 2 -6 to 8 -5 to 15 2 h=0.5
+walk -6 -4.5 to 2 -6 to 8 -5 to 16.5 3.5 to 23.5 10.5
 zone den
 expect step 7
 expect message something squeaking
 kill Rat
 expect step 8
 expect animals Rat 0
-walk 15 2 to 23 10 h=0.7
+walk 23.5 10.5 to 31.5 18.5
 open Smugglers' strongbox
 expect story lanternkey 0
 expect step 9
@@ -56,7 +57,7 @@ expect step 15
 
 # Out of the den, along the boardwalk to the south point: the keeper's log in his room; up the false lantern's ladder
 # onto its roof
-walk 23 10 to 15 2 to 8 -5 to 10.9 -7.4 to 16.2 -19 to 16.6 -32 to 25 -42.6 to 30 -44.5 to 36 -47.3 h=4.5
+walk 31.5 18.5 to 23.5 10.5 to 16.5 3.5 to 8 -5 to 10.9 -7.4 to 16.2 -19 to 16.6 -32 to 25 -42.6 to 30 -44.5 to 36 -47.3 h=4.5
 read Keeper's log
 expect step 16
 at 36 -47.3 h=4.5

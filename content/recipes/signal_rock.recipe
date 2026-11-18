@@ -15,6 +15,7 @@ include lib_sea
 include lib_features
 include lib_areas
 include lib_highwater
+include lib_caves
 new
 # (nature: a rocky island: half again Raft's rocks - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.25 Bushes=0.28 Rocks=0.55 Harvest=0.24 BeachThings=0.3
@@ -208,30 +209,81 @@ prop sharkcage on.use=
 place Creature_PufferFish puffers at -13.5 -13.5 h=-1.5
 place Note_Bottle bottle at -14 -23 h=0
 
+# --- 11-12 (w15 prep): the signal store (plan 15 row: ST under the signal mast; dirt 2, mushrooms 2). DONE AS: a straight cave
+# on the east headland, not under the mast - the mast stands on the relay deck over the cove (no ground under it to run a
+# cave in) and the cave tool cannot cut into the ridge (pieces set into rock stay buried). The relay crew's store: kit_st
+# (size 0.7, hill=1 raises its own knoll over the den, plain rock) from a mouth on the headland's flat (30 20, 3.5 m), way
+# in yaw 0, one tunnel 7.3 m, the den ~22 m on (middle ~30 38.3) under a new knoll off the headland. 10 m and more from the
+# rigger's cave and note, 30 m and more from the mast, the ladder and the quest's objects. No monsters (keeps the CI plan
+# test's Signal Rock run as it was; re-run plan_citest). HEIGHTS: the floor 3.5 (the headland's flatten: known); zone 4.8.
+# 11-17 w15 (CAVE_LESSONS 11-17 Temperance, 11-09 Overpass): the kit_st hill=1 knoll off the headland grew the island into
+# the sea (land centre 16.8 3.3 -> 21.8 19.1) and raised the cove's floor round the relay's legs (CIFloating: 6 under the
+# deck). Now a knoll ON the headland's east end (hw_mount, heart 57 20, b 10 - clear of the rigger's cave, his beach and
+# his zone) and a level adit dug into it from the headland's flat (kit_dig from 57 8.5, way in yaw 0), the room at the
+# knoll's heart. Floors from the "dig: stroke" lines.
+clear at 57 8.5 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+clear at 57 20 r=13 all only=(?i)boulder|tree|bush|palm|bamboo
+call hw_mount x=57 z=20 b=10 h=12
+brush smooth at 57 27 r=7 s=5 frames=60
+brush auto at 57 27 r=9 s=10 frames=25
+# (11-17 w15E) the mouth shelf AFTER the knoll: hw_mount's r 10 flatten (2.64) and smooth r 11 had pulled the shelf in front
+# of the mouth down to 2.0 against the adit floor 3.5 (CICaveGapsLook: a step too high); now a strip from the headland
+# (11-17 w15G) the strip ran to 8.5 and cut the knoll's foot back to z ~12: the mouth stood in open air and the
+# passage stroke pressed at the hill (ground 12, a step too high). Now the strip stops at 6.5 so the mouth (z 10) is under
+# the knoll's shoulder, and ONE level stroke (flat=0, room=0, r 2) runs to the knoll's heart at z 22 (as Wreckers' cellar)
+brush flatten from 57 2.5 to 57 6.5 r=3.5 s=20 frames=80 h=3.5
+# (11-18 w15K) the walk in still stuck 1.7 m beside the mouth and dropped into a cut cell there (w15I 58.4 9.9, w15J 58.7
+# 9.8): the knoll's smoothed foot rose across the mouth's sides between the strip's end and the face, so the ground cells
+# beside the first 2 m of passage were cut (CAVE_LESSONS 136/149). Now the shelf runs on, wider, to 1.5 m short of the
+# face, level with the floor, and the stroke starts on its end (shaft: no pressing)
+brush flatten from 57 6.5 to 57 9.5 r=4 s=20 frames=150 h=3.5
+# (11-18 w15I) the level stroke pressed at z 10 (the knoll's foot) went down until it had rock over it: floor 1.2 against
+# the shelf's 3.5, a 2.3 m step at the mouth (w15H). Now laid straight (shaft: the points as given, no let-down) from the
+# shelf at z 8.5 (ground 3.5) to the knoll's heart at z 21.5 (ground 10.3-10.9 in w15G/H: -7.1 there = floor ~3.5)
+# (11-18 w15J) floor 3.5 all along (w15I) but the mouth's own rim stood a lip over the shelf (walk in stuck at 58.4 9.9,
+# out fine): pressed 0.3 m under the shelf so the way in steps down onto the floor
+dig 57,-0.15,9.5 57,-7.1,21.5 r=2 shaft as=srstore
+caveloot srstore dirt=2 mush=2 stone=0 vines=0 titanium=0 light=0
+prop srstore cave.rock=plain
+place Note_Sign srstoresign at 50 3 ground yaw=40
+note srstoresign RELAY STORE | Spare dishes, cable and the old valve set. Lock the door after you - the damp gets in. - Relay crew
+# cavecheck inside srstorez
+place Zone_Trigger srstorez at 57 17 h=4
+prop srstorez obj.name=srstorez
+prop srstorez zone.id=sr_store
+prop srstorez zone.radius=4
+prop srstorez zone.message=The relay crew's store under the headland. Empty cable drums, a rusted dish - and mushrooms on the old crates.
+
 # --- Settings, story item, notes, behaviours, quest -----------------------------------------------------------
 # --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
 call shallows r=50 deep=5 n=1
 
 # --- DEEP 10-25: the rigger's cave on the east headland - Dmitri Vos's note, his box, his savings -------------------
-call ar_cave x=42 z=12 h=3.5 yaw=0 al=rigrock chest=rigbox
+# (11-18 w15I) the den moved 10 m west (42 -> 32), its beach, zone and note with it: capped or not its hill's side stood
+# over the relay store's mouth 15 m east (walk in stuck on CaveSkin at 57.8 7.1, w15E/G/H) - now 25 m off
+call ar_cave x=32 z=12 h=3.5 yaw=0 al=rigrock chest=rigbox
+# (11-17 w15F) the rigger's den dome capped (CAVE_LESSONS 11-10 cave.dome): uncapped it was a sand hill 41 m to each
+# side over the whole east headland, its skin across the relay store's adit mouth (stuck 1.8 m in, w15E)
+# (11-17 w15G) 18 still raised a sand hill over the store mouth and the headland
+prop rigrock cave.dome=6
 # (REACH 10-30: the cave floor ended 3.5 m over the sea in a cliff and the rock's overhang shuts the way round from
 # the neck - no way in (reach: the cave, the note and the box "can't get there"): a beach slope from the mouth to the sea)
 # (widening out to the sea as it goes down, then smoothed, so it reads as a sand fan off the headland, not a causeway)
 # (10-31: the wide top cut into the cave's mouth path and left a step the walker could not climb: narrow at the top as
 # on 10-30 19:04 (reach PASS), widening only further down)
-brush flatten at 41 27.5 r=2 s=20 frames=200 h=3.5
-brush flatten at 41 29.5 r=2.4 s=20 frames=200 h=3.1
-brush flatten at 41 31 r=2.4 s=20 frames=200 h=2.4
-brush flatten at 41 32.5 r=3 s=20 frames=200 h=1.7
-brush flatten at 41 34 r=3.5 s=20 frames=200 h=1.0
-brush flatten at 41 35.5 r=4 s=20 frames=200 h=0.3
-brush flatten at 41 37 r=4.5 s=20 frames=200 h=-0.4
-brush flatten at 41 38.5 r=5 s=20 frames=200 h=-1.1
-brush flatten at 41 40 r=5 s=20 frames=200 h=-1.8
-brush smooth from 41 35 to 41 40 r=6 s=4 frames=8
-clear from 41 27.5 to 41 40 r=7 body
-call hw_zone x=42 z=17 al=rigcavez id=rigcave r=4 msg="A cave in the headland, a bedroll and a coil of cable inside. Someone lived out here, away from the station."
-place Note_Paper rignote at 40.5 17.5 h=3.95 drop yaw=180
+brush flatten at 31 27.5 r=2 s=20 frames=200 h=3.5
+brush flatten at 31 29.5 r=2.4 s=20 frames=200 h=3.1
+brush flatten at 31 31 r=2.4 s=20 frames=200 h=2.4
+brush flatten at 31 32.5 r=3 s=20 frames=200 h=1.7
+brush flatten at 31 34 r=3.5 s=20 frames=200 h=1.0
+brush flatten at 31 35.5 r=4 s=20 frames=200 h=0.3
+brush flatten at 31 37 r=4.5 s=20 frames=200 h=-0.4
+brush flatten at 31 38.5 r=5 s=20 frames=200 h=-1.1
+brush flatten at 31 40 r=5 s=20 frames=200 h=-1.8
+brush smooth from 31 35 to 31 40 r=6 s=4 frames=8
+clear from 31 27.5 to 31 40 r=7 body
+call hw_zone x=32 z=17 al=rigcavez id=rigcave r=4 msg="A cave in the headland, a bedroll and a coil of cable inside. Someone lived out here, away from the station."
+place Note_Paper rignote at 30.5 17.5 h=3.95 drop yaw=180
 loot rigbox Rope*2;CircuitBoard*1;Bolt*3;Battery*1
 prop rigbox loot.refill=0
 scatter Bush2 4 at 40 4 r=14 seed=32043

@@ -18,6 +18,7 @@ include lib_sea
 include lib_features
 include lib_areas
 include lib_highwater
+include lib_caves
 new
 # (nature: desert, Like Raft but built up: a third of the grass tufts of Raft's wild desert islets - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
 gen Trees=0.19 Bushes=0.35 Rocks=0.42 Harvest=0.2 BeachThings=0.3
@@ -160,6 +161,39 @@ prop scrapgen else.use=message||The market generator is missing a part. The town
 prop scrapradio else.use=message||The radio is dead. No power - the market generator first.
 call leverchest x=-11.5 z=-13.5 yaw=90 alias=stiltlever sig=shlever chest=guardchest cx=-11.5 cz=-6.5 cyaw=90 items=Nail*10;Scrap*4;MetalIngot*1 title="Guards' chest"
 prop stiltlever on.use=message||Clunk. Under the stilts a bolt slides back - the guards' chest is open.\nsignal||shlever
+
+# --- 11-12 (w15 prep): the battery dump (plan 15 row: no new cave; ACID battery-acid pool (side), safe=suit). Where the town
+# drained its dead batteries: a pool on the open ground past the scrap pit (16 -55), 18 m and more from the pit's hyenas and
+# sign and every walk line; acid round it (zone r 2.5, safe=suit), a mist over it, the scrappers' box of spares at its edge
+# (inside the acid: wade in, or suit up). The suit box and a warning sign on the pit's side. Side only: no quest needs it.
+# HEIGHTS: all on the ground (y= over it); the pool's water 0.1 under the ground.
+place TP_SeleneReactor_Water_Radiated shacidpool at 16 -55 y=-0.1 scale=0.3 yaw=10
+place Zone_Atmosphere shacidmist at 16 -55 y=0.6
+prop shacidmist zone.radius=4
+prop shacidmist atmo.particles=steam
+prop shacidmist atmo.fog=#a0b040
+prop shacidmist atmo.fogAmount=0.3
+prop shacidmist atmo.light=#d8f070
+prop shacidmist atmo.lightAmount=0.25
+place Zone_Trigger shacid at 16 -55 y=0.4
+prop shacid obj.name=shacid
+prop shacid zone.id=sh_acid
+prop shacid zone.radius=2.5
+prop shacid zone.hazard=acid
+prop shacid zone.damage=4
+prop shacid zone.safe=suit
+prop shacid zone.hazardMsg=Battery acid - it eats through boots and skin. The suit box by the pit keeps it off for a while.
+place Loot_ChestSmall shacidbox at 17.8 -56 y=0.6 drop yaw=190
+prop shacidbox obj.name=shacidbox
+prop shacidbox loot.refill=0
+note shacidbox Scrappers' spares | The scrappers' box of good spares, dropped in the dump when the acid got too deep: batteries that still hold a charge, copper and bolts.
+loot shacidbox Battery*2;CopperIngot*2;Bolt*4
+place "Box Big" shsuits at 10.5 -52 y=0.5 drop yaw=60
+prop shsuits obj.name=shsuits
+prop shsuits beh.use=Put on a scrapper's acid suit
+prop shsuits on.use=suit||180\nmessage||A patched rubber suit, gloves taped to the sleeves - three minutes before the acid finds the holes.
+place Note_Sign shacidsign at 10 -55.5 ground yaw=90
+note shacidsign BATTERY DUMP - ACID | Do not wade in without a suit. Suits in the box. The good spares box went in last storm - leave it. - the Yard
 
 # --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): date palms, flowers, pineapples ----------

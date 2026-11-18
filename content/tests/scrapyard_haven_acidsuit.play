@@ -1,0 +1,20 @@
+# Scrapyard Haven's battery dump with a suit (CIPlay scrapyard_haven_acidsuit, 11-12 w15 prep; in a test world 'CI ...').
+# The suit box shsuits (10.5 -52) gives 180 s of suit; into the acid zone sh_acid (16 -55) to the spares box (17.8 -56) and
+# back, unhurt, the acid still there.
+# Offline-written, never run; re-read the offset after the build (a new hill may move the land centre).
+island Scrapyard Haven keep
+hour 11
+weather Calm
+
+empty
+walk 6 -52 to 9.5 -52.5
+use shsuits
+expect shown shacid
+walk 9.5 -52.5 to 13 -54 to 16 -55 to 17.2 -55.6
+wait 6
+expect unhurt
+open Scrappers' spares
+wait 2
+expect item Battery 2
+walk 17.2 -55.6 to 16 -55 to 13 -54 to 10 -54
+expect unhurt
