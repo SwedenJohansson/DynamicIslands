@@ -911,7 +911,8 @@ namespace DynamicIslands
 				if (structural) continue;
 				float groundMid = land != null ? land.SampleHeight(b.center) + land.transform.position.y : float.MinValue;
 				// Buried whole: its top under the land (not Raft's rocks and corals, which are set into it; not what is under the sea)
-				if (!NotABase.IsMatch(n) && land != null && whole.max.y < groundMid - 0.05f && whole.max.y > sea - 1f)
+				// (nor what stands in a dug passage, under the land but in its air: Stalker's Hollow's cave lanterns, IG5 11-18)
+				if (!NotABase.IsMatch(n) && land != null && whole.max.y < groundMid - 0.05f && whole.max.y > sea - 1f && !InDugPassage(whole))
 				{ node.Reported = node.Direct = true; lines.Add("buried: " + n + " at " + where + ", its top " + Num(groundMid - whole.max.y) + " m under the ground"); continue; }
 				// A zipline: each end on its own (its base reaches from one end's floor to the other's, over the dip between them -
 				// the Lodestone Array's lines read "partly in the air" 3.7 m over their moat, 2026-10-20): every piece no wider than
@@ -1562,6 +1563,16 @@ namespace DynamicIslands
 		/// more than 0.3 m + 0.15 m per metre of its half width over it at most of the points where it is over something.
 		/// (Not "3 points high": a round boulder resting on flat ground curves up 0.29 r at its box's quarter points, and every
 		/// big one read floating - IG5 11-18.) least: the smallest gap measured (0 where it is set in).</summary>
+		/// <summary>An object in a dug passage's air: its middle, its top or its foot within half a metre of the passage (a lantern
+		/// hung on its wall, a beam holding its roof). The land's height there is the hill over the cave, so "buried" asked
+		/// the wrong question (IG5 11-18: Stalker's Hollow's lanterns read 10-11 m under the ground).</summary>
+		static bool InDugPassage(Bounds whole)
+		{
+			Vector3 c = whole.center;
+			return DigTunnel.InPassage(c, -0.5f) || DigTunnel.InPassage(new Vector3(c.x, whole.max.y - 0.05f, c.z), -0.5f) ||
+				DigTunnel.InPassage(new Vector3(c.x, whole.min.y + 0.05f, c.z), -0.5f);
+		}
+
 		static bool RockFloats(Transform o, Bounds b, Terrain land, out int seen, out int high, out float most, out float least)
 		{
 			seen = 0; high = 0; most = 0f; least = float.MaxValue;
