@@ -216,6 +216,7 @@ place Loot_ChestSmall sclocker at -64.75 28.75 h=36.73 sit yaw=180
 place Note_Paper scsumnote at -64.75 27.25 h=36.84 drop yaw=20
 place Zone_Trigger scsummit at -64 28 h=37.73
 place ZiplinePath_Landmark sczip at -63.25 27.25 h=36.73 yaw=0
+zipfrom sczip -63.25 27.25 h=36.73
 zipto sczip -32 14
 place Loot_ChestSmall scledge at -73.33 37.33 ground sit yaw=40
 place SmallRock_02 - at -39.34 34.51 ground sit scale=0.5

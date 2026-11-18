@@ -2013,6 +2013,23 @@ namespace DynamicIslands
 							}
 							break;
 						}
+						case "zipfrom":
+						{
+							// zipfrom <alias> <x> <z> [h=|y=|ground] - moves a zipline line placed by this recipe so its near end's floor (where
+							// players step onto it) stands at x z, as the editor's "Near end: where I look": the line's pivot is not that floor -
+							// placed by its pivot on a tower's deck, the floor hung 3-7 m off the deck in the air (IG5, 11-18)
+							List<EditorGameObject> zg = Group(t[1]);
+							if (zg.Count == 0 || t.Length < 4) { error = "zipfrom <alias> <x> <z> [h=|y=|ground] (a zipline placed by this recipe)"; break; }
+							Vector2 zw = WorldXZ(F(t[2]), F(t[3]));
+							Vector3 zat = new Vector3(zw.x, HeightAt(zw, Options(t.Skip(4))), zw.y);
+							foreach (EditorGameObject e in zg)
+							{
+								Vector3? nf = ZiplineEnds.NearFloor(e.gameObject);
+								if (!nf.HasValue) { error = "zipfrom: " + t[1] + " is not a zipline line"; break; }
+								e.transform.position += zat - nf.Value;
+							}
+							break;
+						}
 						case "zipto":
 						{
 							// zipto <alias> <x> <z> - a zipline line's far end (its lower floor) on the ground at x z (ZiplineEnds)
@@ -2536,19 +2553,21 @@ namespace DynamicIslands
 		static int leftOutBuried;
 		static bool recipeNoPosts, recipeReseat;
 
-		/// <summary>At a recipe's save (unless "reseat off"): trees and palms whose trunk foot is more than 1 m under the land (the
-		/// ground check's "sunk trunk") or more than 0.4 m over it with nothing placed under it ("trunk foot floating": the
-		/// recipe's strokes lowered the ground under it) set back on the ground round their pivot, as Place sets them. The foot
-		/// stays within 1 m under the land (lower ground under it is a cave floor or a ledge: the land then), and a tree whose
-		/// foot would be inside a placed rock or building stays where it is.</summary>
 		/// <summary>Grass tufts and bushes the generator scattered: a recipe's strokes lowered the ground under some (Firedance Isle's
 		/// pits: tufts 0.5-1 m in the air, IG5 11-18) - the reseat drops the floating ones onto the ground too.</summary>
 		static readonly Regex Tuft = new Regex(@"^(CaravanIsland_\w*Grass|Bush|SmallBush_\d+|Balboa_Bush_01 Variant)$");
 
+		/// <summary>At a recipe's save (unless "reseat off"): trees and palms whose trunk foot is more than 1 m under the land (the
+		/// ground check's "sunk trunk") or more than 0.4 m over it with nothing placed under it ("trunk foot floating": the
+		/// recipe's strokes lowered the ground under it) set back on the ground round their pivot, as Place sets them. The foot
+		/// stays within 1 m under the land (lower ground under it is a cave floor or a ledge: the land then), and a tree whose
+		/// foot would be inside a placed rock or building stays where it is. A tree whose foot is on a steep drop's rim
+		/// (the ground check's "trunk over a drop": 3 of 8 points a trunk's width round it 0.8 m or more lower) moves up to 3 m
+		/// onto the nearest spot that is not (27 such trees on 20 islands, IG5 11-18).</summary>
 		static int ReseatSunkTrees(float seaY)
 		{
 			EditorGameObject[] all = GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>();
-			int reseated = 0, kept = 0;
+			int reseated = 0, kept = 0, moved = 0;
 			foreach (EditorGameObject e in all)
 			{
 				bool tuft = Tuft.IsMatch(e.GameObjectName ?? "");
@@ -2557,6 +2576,13 @@ namespace DynamicIslands
 				float land = GroundY(p.x, p.z);
 				if (land <= seaY) continue;
 				bool sunk = !tuft && land - p.y > 1f, floating = p.y - land > 0.4f && !PlacedUnder(e, p, land, all);
+				float rt = 0.6f * Mathf.Max(0.5f, e.transform.lossyScale.x);
+				bool rim = !tuft && !floating && OnDropRim(p.x, p.z, rt);
+				if (rim)
+				{
+					Vector2? off = OffDropRim(p.x, p.z, rt, seaY);
+					if (off.HasValue) { p = new Vector3(off.Value.x, p.y, off.Value.y); land = GroundY(p.x, p.z); sunk = true; }
+				}
 				if (!sunk && !floating) continue;
 				float foot = PlacementOptions.LowestGroundUnder(new Bounds(p, new Vector3(1f, 0f, 1f)));
 				if (foot > land || foot < land - 1f) foot = land;
@@ -2564,9 +2590,36 @@ namespace DynamicIslands
 				if (InsidePlaced(to, e, all)) { kept++; continue; }
 				e.transform.position = to;
 				reseated++;
+				if (rim) moved++;
 			}
-			if (reseated + kept > 0) Log("  reseat trees: " + reseated + " sunk or floating trees and palms (and floating grass tufts and bushes) set back on the ground" + (kept > 0 ? ", " + kept + " left (their foot would be inside a placed object)" : ""));
-	return reseated;
+			if (reseated + kept > 0) Log("  reseat trees: " + reseated + " sunk or floating trees and palms (and floating grass tufts and bushes) set back on the ground" + (moved > 0 ? ", " + moved + " of them moved off a drop's rim" : "") + (kept > 0 ? ", " + kept + " left (their foot would be inside a placed object)" : ""));
+			return reseated;
+		}
+
+		/// <summary>3 or more of 8 points round x z, <paramref name="rt"/> out, 0.8 m or more under the land at x z (the ground
+		/// check's "trunk over a drop", by the land alone).</summary>
+		static bool OnDropRim(float x, float z, float rt)
+		{
+			float y = GroundY(x, z);
+			int over = 0;
+			for (int k = 0; k < 8; k++)
+			{
+				float a = k * Mathf.PI / 4f;
+				if (y - GroundY(x + rt * Mathf.Cos(a), z + rt * Mathf.Sin(a)) > 0.8f) over++;
+			}
+			return over >= 3;
+		}
+
+		/// <summary>The nearest spot within 3 m of x z (rings 0.5 m apart, 16 ways) over the sea and off a drop's rim; null = none.</summary>
+		static Vector2? OffDropRim(float x, float z, float rt, float seaY)
+		{
+			for (float d = 0.5f; d <= 3.01f; d += 0.5f)
+				for (int k = 0; k < 16; k++)
+				{
+					float a = k * Mathf.PI / 8f, nx = x + d * Mathf.Cos(a), nz = z + d * Mathf.Sin(a);
+					if (GroundY(nx, nz) > seaY + 0.3f && !OnDropRim(nx, nz, rt)) return new Vector2(nx, nz);
+				}
+			return null;
 		}
 
 		/// <summary>Something placed (a deck, a rock, a planter) under a tree's foot, above the land: it stands on that, not on the land.</summary>

@@ -102,6 +102,12 @@ namespace DynamicIslands
 				"place BigPalm1 airpalm at -32 -70 ground y=2",
 				// (a grass tuft 1 m over the ground - the generator's, over a pit a stroke dug: Firedance Isle, IG5 11-18)
 				"place CaravanIsland_YellowGrass airgrass at -42 -70 ground y=1",
+				// (a palm the test moves onto the bank's steep south rim - the reseat moves it off: "trunk over a drop", IG5 11-18)
+				"place BigPalm1 rimpalm at -36 -70 ground",
+				// (a zipline moved by its near end's floor onto a spot - its pivot is elsewhere: summit ziplines hung off their towers, IG5 11-18)
+				"place ZiplinePath_Landmark pfzip at -14 -62 ground",
+				"place SmallRock_02 pfzipmark at -16 -68 ground scale=0.3",
+				"zipfrom pfzip -16 -68 ground",
 				});
 			}
 			catch (Exception e) { Fail("prefaults: writing " + pb + ": " + e.Message); yield break; }
@@ -182,14 +188,36 @@ namespace DynamicIslands
 				int seen, high; float most, least;
 				bool floats = RockFloats(r.transform, rb, t, out seen, out high, out most, out least);
 				float mid = RockGap(r.transform, rb.center.x, rb.center.z, rb, t);
-				string got = rn + ": " + high + " of " + seen + " points high (up to " + most.ToString("0.00") + " m), the least gap " + least.ToString("0.00") + ", its middle's " + mid.ToString("0.00");
+				string got = rn + ": " + high + " of " + seen + " points high (up to " + most.ToString("0.00") + " m), the least gap " + least.ToString("0.00") + ", its middle's " + mid.ToString("0.00")
+					+ ", under its middle: " + string.Join(", ", Physics.RaycastAll(rb.center, Vector3.down, 50f, ~0, QueryTriggerInteraction.Ignore)
+						.Where(hh => !hh.collider.transform.IsChildOf(r.transform)).OrderBy(hh => hh.distance).Take(2)
+						.Select(hh => hh.collider.name + "@" + (hh.point.y - sea).ToString("0.00")).ToArray()) + " (rock h " + (rb.min.y - sea).ToString("0.00") + ")";
 				if (rn == "airrock") Check(ref ok, floats, "a rock 3 m in the air floats (" + got + ")");
 				else Check(ref ok, !floats, "a rock " + (rn == "restrock" ? "resting on the ground" : "set into the ground") + " does not float (" + got + ")");
 				if (rn == "setrock") Check(ref ok, mid == 0f, "a rock set into the ground: its middle's gap is 0 (" + got + ")");
 			}
-			// (the save's reseat sets the sunk and the floating palm back on the ground)
+			// (the rim palm onto the first spot south of it on the bank's rim)
+			EditorGameObject rp; RecipeObjects.TryGetValue("rimpalm", out rp);
+			Vector3? rimAt = null;
+			if (rp != null)
+			{
+				Vector3 r0 = rp.transform.position;
+				float rrt = 0.6f * Mathf.Max(0.5f, rp.transform.lossyScale.x);
+				for (float dz = 0f; dz < 40f && !rimAt.HasValue; dz += 0.1f)
+					if (GroundY(r0.x, r0.z - dz) > sea + 0.3f && OnDropRim(r0.x, r0.z - dz, rrt)) rimAt = new Vector3(r0.x, GroundY(r0.x, r0.z - dz) + PlacementOptions.PivotAboveBottom(rp.gameObject), r0.z - dz);
+				if (rimAt.HasValue) rp.transform.position = rimAt.Value;
+			}
+			Check(ref ok, rimAt.HasValue, "the rim palm put on the bank's rim");
+			// (the save's reseat sets the sunk and the floating palm back on the ground, and the rim palm off the rim)
 			ReseatSunkTrees(sea);
 			Physics.SyncTransforms();
+			if (rimAt.HasValue)
+			{
+				Vector3 rq = rp.transform.position;
+				float moved = new Vector2(rq.x - rimAt.Value.x, rq.z - rimAt.Value.z).magnitude, roff = rq.y - PlacementOptions.PivotAboveBottom(rp.gameObject) - GroundY(rq.x, rq.z);
+				Check(ref ok, moved > 0.1f && moved < 3.1f && !OnDropRim(rq.x, rq.z, 0.6f * Mathf.Max(0.5f, rp.transform.lossyScale.x)) && Mathf.Abs(roff) < 0.5f,
+					"reseat: the palm on the rim moved off it (" + moved.ToString("0.00") + " m, its foot " + roff.ToString("0.00") + " m off the ground)");
+			}
 			foreach (string pn in new[] { "sunkpalm", "airpalm", "airgrass" })
 			{
 				EditorGameObject pe; RecipeObjects.TryGetValue(pn, out pe);
@@ -197,6 +225,18 @@ namespace DynamicIslands
 				Vector3 pp = pe.transform.position;
 				float gy = GroundY(pp.x, pp.z), off = pp.y - PlacementOptions.PivotAboveBottom(pe.gameObject) - gy;
 				Check(ref ok, Mathf.Abs(off) < 0.5f, "reseat: the " + (pn == "sunkpalm" ? "sunk palm" : pn == "airpalm" ? "floating palm" : "floating grass tuft") + "'s foot is on the ground (" + off.ToString("0.00") + " m off)");
+			}
+			// (zipfrom put the zipline's near end's floor on the marked spot)
+			{
+				EditorGameObject ze, zm; RecipeObjects.TryGetValue("pfzip", out ze); RecipeObjects.TryGetValue("pfzipmark", out zm);
+				Vector3? nf = ze != null ? ZiplineEnds.NearFloor(ze.gameObject) : null;
+				if (!nf.HasValue || zm == null) Check(ref ok, false, "zipfrom: the zipline and its marker placed");
+				else
+				{
+					Vector3 m = zm.transform.position;
+					float dxz = new Vector2(nf.Value.x - m.x, nf.Value.z - m.z).magnitude, dy = nf.Value.y - GroundY(m.x, m.z);
+					Check(ref ok, dxz < 0.1f && Mathf.Abs(dy) < 0.1f, "zipfrom: the zipline's near floor is on the spot (" + dxz.ToString("0.00") + " m off it, " + dy.ToString("0.00") + " m over the ground)");
+				}
 			}
 			// (the door wall stands on the wall under it, though its middle is its doorway)
 			EditorGameObject dw = PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == "RT_WallDoor1");

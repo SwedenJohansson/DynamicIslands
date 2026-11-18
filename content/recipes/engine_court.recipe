@@ -236,6 +236,7 @@ call ar_plants_tropical x=-40 z=56 r=14 seed=14531
 # machete from Triangulation Rocks cuts the vines over a hidden chest, and a zipline from the ridge top is the quick way back down
 clear from 0.0 -55.0 to 0 -28 r=2.5
 place ZiplinePath_Landmark ridgezip at 0 -59 ground
+zipfrom ridgezip 0 -59 ground
 zipto ridgezip 0 -28
 
 # --- Unique layer (10-24): engine_court device - see SL14_progress.md UNIQUE ISLANDS
@@ -269,6 +270,7 @@ call notebox x=-25.41 z=91.84 yaw=-13.36 al=eccairn
 call treasure x=-20.05 z=93.11 r=1.5 n=1 seed=14981
 prop treasure14981 treasure.loot=TitaniumOre*2;Battery*1
 place ZiplinePath_Landmark eczip at -20.81 81.11 h=37.6
+zipfrom eczip -20.81 81.11 h=37.6
 zipto eczip -35 45
 place Creature_Goat ecgoats at -22.76 69.86 ground
 prop ecgoats creature.count=2
