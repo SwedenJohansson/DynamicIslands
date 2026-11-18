@@ -64,7 +64,6 @@ place BalboaCave_DeadEnd bunker at -1 24 h=9.1 yaw=180 scale=0.8
 place RT_PillarThick - at -5.6 9.4 ground sy=0.6
 place RT_PillarThick - at 3.6 9.4 ground sy=0.6
 place Sign_02 - at 5.5 8.5 ground sit yaw=200
-ground cut -5.6 9.4 3.6 9.4 5.5 8.5 -1 12 -1 9
 place Balboa_DecorationPrefabBase_ToxicBarrel - at -3.2 23.6 h=3.1 sit
 place Balboa_DecorationPrefabBase_ToxicBarrel - at -3.6 22 h=3.1 sit yaw=40
 place Balboa_DecorationPrefabBase_ToxicBarrel - at 1.5 23 h=3.1 sit roll=90 yaw=70
@@ -116,5 +115,4 @@ note jettycrate Crate on the jetty | The last delivery nobody came down to colle
 loot jettycrate Plank*6;Rope*2;Glass*2
 prop jettycrate loot.refill=0
 
-ground cut -5.6 9.4 3.6 9.4 5.5 8.5 -1 12 -1 9
 save Geiger Isle
