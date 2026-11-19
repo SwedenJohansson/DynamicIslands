@@ -888,7 +888,8 @@ namespace DynamicIslands
 		/// <summary>The clear-way cast between two floor points of a cave way: a walker's body 0.35 m round, knee to head
 		/// (0.35-1.95 m over the floor); where both points are 1 m or more under the sea, a swimmer's (0.2-1.3 m: it swims low
 		/// under a roof a walker hits - RM4's Vaporhold intake, CaveMouth 1.6 m over the floor, which swimmers pass both ways;
-		/// fix-open 11-19). Players, animals and faces under 50 degrees (floor) don't count.</summary>
+		/// fix-open 11-19). Players, animals, faces under 50 degrees (floor) and cave loot a player picks up by hand
+		/// (CaveLootByHand: Vaporhold's intake way stopped at a titanium lump in the valve chamber, fix-open 11-19) don't count.</summary>
 		internal static bool WayBlocked(Vector3 p, Vector3 q, float sea, out RaycastHit h)
 		{
 			h = default(RaycastHit);
@@ -898,8 +899,13 @@ namespace DynamicIslands
 			Vector3 a = p + Vector3.up * (swim ? 0.55f : 0.7f);
 			return Physics.CapsuleCast(a, a + Vector3.up * (swim ? 0.4f : 0.9f), 0.35f, d.normalized, out h, d.magnitude, ~0, QueryTriggerInteraction.Ignore)
 				&& h.collider.GetComponentInParent<Network_Player>() == null && h.collider.GetComponentInParent<AI_NetworkBehaviour>() == null
-				&& Vector3.Angle(h.normal, Vector3.up) > 50f;
+				&& Vector3.Angle(h.normal, Vector3.up) > 50f
+				&& !CaveLootByHand.Contains(h.collider.GetComponentInParent<IslandObjectRef>()?.ObjectName ?? "") && !CaveLootByHand.Contains(h.collider.name);
 		}
+
+		/// <summary>The cave kits' loot (caveloot) a player takes with a press: not a block on a cave's way.</summary>
+		static readonly HashSet<string> CaveLootByHand = new HashSet<string> { "Pickup_Landmark_DirtPickup", "Pickup_Landmark_Mushroom 1",
+			"Pickup_Landmark_Mushroom 2", "Pickup_Landmark_Mushroom 3", "Pickup_Landmark_Rock_2_Land", "Pickup_Landmark_Titanium_Land" };
 
 		[ConsoleCommand(name: "CIClearWayUnit", docs: "Dev, anywhere: the cave look's clear-way cast (WayBlocked) - a roof 1.5 m over the floor stops a walker on dry ground but not a swimmer 5 m under the sea; a roof 1 m over the floor stops both")]
 		public static void CIClearWayUnit()
@@ -923,6 +929,11 @@ namespace DynamicIslands
 				chk(blocked(1f, o.y + 5f), "a roof 1 m over the floor stops a swimmer too");
 				chk(blocked(1.5f, o.y + 0.5f), "only 0.5 m under the sea it is a walker's way: stopped");
 				chk(!blocked(2.2f, o.y - 5f), "a roof 2.2 m up lets a walker by");
+				IslandObjectRef r = roof.AddComponent<IslandObjectRef>();
+				r.ObjectName = "Pickup_Landmark_Titanium_Land";
+				chk(!blocked(0f, o.y - 5f), "a titanium lump of the cave loot across the way lets a walker by (taken by hand; Vaporhold intake)");
+				r.ObjectName = "Placeable_Lantern_Metal";
+				chk(blocked(0f, o.y - 5f), "any other object across the way stops a walker");
 			}
 			finally { UnityEngine.Object.DestroyImmediate(roof); }
 			Log((ok ? "PASS" : "FAIL") + ": clear way unit");
