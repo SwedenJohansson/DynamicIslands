@@ -33,6 +33,14 @@ brush flatten at -4 4 r=12 s=20 frames=300 h=2
 brush grass at -4 4 r=14 s=3 frames=30
 # (a sandbar under the causeway's far end, whose foundations stood up to 0.9 m over a hollow)
 brush flatten at 0 43 r=3.5 s=20 frames=200 h=-0.5
+# (11-19 cn4: the sand stood over the market - 58 of its foundations and the causeway's first three were left out
+# buried, the speaker's note under the sand; the west roof's slab 0.8 m under the bank: the market's water dug out
+# again, the bank by the roof cut down under its slab)
+brush flatten at 0 51 r=11 s=20 frames=300 h=-0.8
+brush flatten at 0 37 r=4 s=20 frames=200 h=-0.5
+brush flatten at -13.5 47 r=6 s=20 frames=200 h=0.4
+# (11-19 cat2: the bank still stood over two of the west roof's fences at that stroke's rim)
+brush flatten at -10 42.3 r=3 s=20 frames=200 h=0.4
 pop
 # --- DEEP 10-24 terrain: Tin Peak (north-west, summit 30 m, base r 25), its trail, the drowned sunk arcade (-12 m) ------------
 call hw_mount x=-44 z=54 b=25 h=30
@@ -60,7 +68,7 @@ place Zone_Trigger marketzone at 0 50 h=1.2
 push at -9 47 h=1
 call hw_roof d=12 a=concrete rm=none
 # (11-03 fixC: the sand rose 0.8 m over this roof since - at y=0.05 the crate lay buried, nothing to open: set on the sand)
-place Loot_Chest enginecrate at -3 0 ground sit yaw=90
+place Loot_Chest enginecrate at -3 0 y=0.05 sit yaw=90
 place "VG_DecorationPrefabBase_Engine Variant" - at -4.5 -2.5 y=0.05 sit
 pop
 push at -9 57 h=1
@@ -107,14 +115,17 @@ push at 4.5 53.5 h=1.05
 call hw_stall w=2 d=2
 place Note_Sign shortage at 1.5 0.4 y=0.1 sit
 pop
-place Note_Sign pricesign at 0 46.2 h=1.05 sit yaw=180
+# (11-19 cat2: on the market's planks - their top is the foundations' h=0.35; at 1.05 it hung 0.7 m over them, unseen
+# while the sand stood up to the deck)
+place Note_Sign pricesign at 0 46.2 h=0.38 sit yaw=180
 push at -6 52 h=1.05
 # (11-03 fixC: its east post stood over the sand off the market floor, 0.41 m up: both posts down to the sand as the
-# line beside it - the west one through the floor)
-call hw_laundry n=4 y=-0.42
+# line beside it - the west one through the floor). 11-19 cat2: the sand is dug out under the market now - the posts
+# stand on its planks (h=0.35), not 0.15 m over them
+call hw_laundry n=4 y=-0.57
 pop
 push at 2 52 h=1.05
-call hw_laundry n=3 y=-0.42
+call hw_laundry n=3 y=-0.57
 pop
 
 # --- The key: the market's garden ---------------------------------------------------------------------------------------

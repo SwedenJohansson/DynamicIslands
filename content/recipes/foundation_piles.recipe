@@ -364,8 +364,9 @@ call ar_plants_hill x=-72 z=-24 r=12 seed=5620
 # (a generator boulder left 1.4 m over a brushed slope, CIGroundIslands 10-25)
 clear at 26.1 21 r=1.5 only=SmallBoulder2
 # (G2 10-30: two bamboos on the rim of a drop, their trunks over it - CIGroundIslands 10-30)
-clear at -37.74 -62.31 r=1 only=Bamboo
-clear at 72.92 -46.36 r=1 only=Bamboo
+# (11-19 cn4: the bamboo is the hill-plants macro's, so the clear needs "all"; it still stood 1.2 m sunk)
+clear at -37.74 -62.31 r=1 only=Bamboo all
+clear at 72.92 -46.36 r=1 only=Bamboo all
 
 # --- 11-11 (w04): the old pile-drivers' drift (plan 04 row: DIG between the piles, UW mouth at the low end; stone 3,
 # dirt 2). No quest step. When the piles were driven the gangs cut a drift from the west bank down to the basin floor
