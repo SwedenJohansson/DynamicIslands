@@ -80,7 +80,7 @@ namespace DynamicIslands
 			SlShownQuest().Reward = reward;
 		}
 
-		[ConsoleCommand(name: "CIQuestEditSteps", docs: "Dev, editor: SL1 + SL2 - the quest editor's buttons: + Add a step up to 10 (the 11th refused); up on the first and down on the last do nothing; up/down swap two; x removes one; Save keeps the order and drops an empty 'go to' step; Esc without Save changes nothing; + Another quest up to 9; Remove this quest on Quest 2 of 3 makes Quest 3 into Quest 2 (title, steps, reward); Save is one undo step (Ctrl+Z old quests, Ctrl+Y new); Remove quest takes all quests and the bring rule, one undo restores both; the island's settings and the undo list put back after")]
+		[ConsoleCommand(name: "CIQuestEditSteps", docs: "Dev, editor: SL1 + SL2 - the quest editor's buttons: + Add a step up to 99 (IslandQuest.MaxStepCount; the 100th refused); up on the first and down on the last do nothing; up/down swap two; x removes one; Save keeps the order and drops an empty 'go to' step; Esc without Save changes nothing; + Another quest up to 9; Remove this quest on Quest 2 of 3 makes Quest 3 into Quest 2 (title, steps, reward); Save is one undo step (Ctrl+Z old quests, Ctrl+Y new); Remove quest takes all quests and the bring rule, one undo restores both; the island's settings and the undo list put back after")]
 		public static void QuestEditStepsCommand() { StartTest(QuestEditStepsRoutine()); }
 
 		static IEnumerator QuestEditStepsRoutine()
@@ -101,9 +101,14 @@ namespace DynamicIslands
 				Check(ref ok, QuestEditorWindow.IsOpen && SlRows().Count == 1, "an island without a quest: the window opens with one empty step (" + SlRows().Count + ")");
 				for (int i = 0; i < 9; i++) { Check(ref ok, SlPress("+ Add a step"), "+ Add a step " + (i + 2)); yield return null; }
 				Check(ref ok, SlRows().Count == 10, "10 steps after nine adds (" + SlRows().Count + ")");
+				// (the limit is IslandQuest.MaxStepCount, 99 since 988437a4: add up to it, one more is refused, then back to 10)
+				for (int i = 10; i < IslandQuest.MaxStepCount; i++) { SlPress("+ Add a step"); yield return null; }
+				Check(ref ok, SlRows().Count == IslandQuest.MaxStepCount, IslandQuest.MaxStepCount + " steps after adding up to the limit (" + SlRows().Count + ")");
 				SlPress("+ Add a step");
 				yield return null;
-				Check(ref ok, SlRows().Count == 10, "the 11th step is refused (" + SlRows().Count + ")");
+				Check(ref ok, SlRows().Count == IslandQuest.MaxStepCount, "step " + (IslandQuest.MaxStepCount + 1) + " is refused (" + SlRows().Count + ")");
+				while (SlRows().Count > 10) { int was = SlRows().Count; SlPress("×", false, SlRows()[was - 1]); yield return null; if (SlRows().Count >= was) break; }
+				Check(ref ok, SlRows().Count == 10, "back to 10 steps with x on the last ones (" + SlRows().Count + ")");
 				var order = new List<string>();
 				List<Transform> rows = SlRows();
 				for (int i = 0; i < 10; i++) { SlSetTarget(rows[i], "a" + (i + 1)); order.Add("a" + (i + 1)); }

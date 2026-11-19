@@ -96,7 +96,8 @@ line Block_Foundation from -12 -17.75 to -12 -24.75 step=1.5 h=0.35
 place RT_Pillar - at -13.4 -21 h=0.35 sy=0.7
 place RT_Pillar - at -10.6 -21 h=0.35 sy=0.7
 place VP_SpikeTrap_01 - at -14.5 -20 ground sit
-place VP_SpikeTrap_03 - at -9.5 -22 ground sit
+# (11-19 cn4: its south edge hung 1.5 m over the causeway's bank - 1.5 m north, onto the flat)
+place VP_SpikeTrap_03 - at -9.5 -20.5 ground sit
 place Note_Sign tollsign at -13.4 -19.8 h=1.05 sit yaw=180
 place Zone_Trigger tollzone at -12 -21 h=1.5
 

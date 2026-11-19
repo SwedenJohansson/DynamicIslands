@@ -255,7 +255,7 @@ prop gwboreair zone.repeat=1
 prop gwboreair zone.message=The trial bore's chamber - a pocket of old air under the rock. The way back is the drift, then the stair.
 place Note_Sign gwpitwarn at -9.2 11.2 h=2 sit drop yaw=210
 note gwpitwarn STAKES - KEEP OUT | The side pit is staked against the anglers. Do not swim down into it. The way out is back along the drift to the stair.\n- Trial bore crew
-place "Balboa_DecorationPrefabBase_Wooden Spikes" - at -15.2 8 h=-1 sit scale=0.25 yaw=20
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at -14.7 8.3 h=-0.6 sit scale=0.25 yaw=20
 place "Balboa_DecorationPrefabBase_Wooden Spikes" - at -14.2 8.9 h=-0.6 sit scale=0.25 yaw=200
 place Zone_Trigger gwspikes at -14.8 8.4 h=-0.6
 prop gwspikes obj.name=gwspikes

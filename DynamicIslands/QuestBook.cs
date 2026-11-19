@@ -420,6 +420,7 @@ namespace DynamicIslands.Editor
 
 		static void Apply()
 		{
+			QuestTracker.TestThrowIf("book");
 			if (!captured) Capture();
 			if (!captured) return;
 			Traverse tr = Traverse.Create(ui);

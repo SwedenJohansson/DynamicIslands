@@ -1169,10 +1169,14 @@ namespace DynamicIslands
 		static Vector3 scDeathSpot;
 		static int scDeathStep = -1;
 
-		[ConsoleCommand(name: "CIScDeath", docs: "Dev, world (host, 'CI ...'): SC20/SC21 - the player dies on an island mid-quest and respawns on the raft: not pulled back, the quest step kept; a note's 'wait then teleport' after death doesn't take the respawned player (AU59). CIScDeath check = after a save and load: the player is where they respawned")]
-		public static void ScDeathCommand(string[] args) { StartTest(args != null && args.Length > 0 && args[0] == "check" ? ScDeathCheckRoutine() : ScDeathRoutine()); }
+		[ConsoleCommand(name: "CIScDeath", docs: "Dev, world (host, 'CI ...'): SC20/SC21 - the player dies on an island mid-quest and respawns on the raft: not pulled back, the quest step kept; a note's 'wait then teleport' after death doesn't take the respawned player (AU59). CIScDeath check = after a save and load: the player is where they respawned. UW11: CIScDeath flying / sunken = the same on a flying island (40 m up) / a sunken one (30 m under water)")]
+		public static void ScDeathCommand(string[] args)
+		{
+			string how = args != null && args.Length > 0 ? args[0].ToLowerInvariant() : "";
+			StartTest(how == "check" ? ScDeathCheckRoutine() : ScDeathRoutine(how == "flying" ? 40f : how == "sunken" ? -30f : 0f));
+		}
 
-		static IEnumerator ScDeathRoutine()
+		static IEnumerator ScDeathRoutine(float elevation)
 		{
 			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario death: run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
@@ -1180,7 +1184,7 @@ namespace DynamicIslands
 			var made = new List<IslandWorldState.Entry>();
 			const string isl = "ciscdeath";
 			IslandFile f;
-			try { f = ScIsland(isl, "Grave Isle"); } catch (Exception ex) { Fail("scenario death: " + ex.Message); yield break; }
+			try { f = ScIsland(isl, "Grave Isle", elevation); } catch (Exception ex) { Fail("scenario death: " + ex.Message); yield break; }
 			Vector3 camp = ScDry(f, new Vector2(0, 0), 1), ledge = ScDry(f, new Vector2(25, 25), 2);
 			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, camp, ObjectProps.ZoneId, "camp", ObjectProps.ZoneRadius, "4"));
 			f.Objects.Add(ScObj("Note_Paper", ScDry(f, new Vector2(-12, 0), 3), ObjectProps.NoteTitle, "Trap note", ObjectProps.NoteText, "Wait for it.",
@@ -1205,7 +1209,7 @@ namespace DynamicIslands
 			scDeathSpot = player.transform.position;
 			if (body != null) body.Kill(false);
 			for (float t = 0; t < 6f && (body == null || !body.IsDead); t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
-			Check(ref ok, body != null && body.IsDead, "the player dies on the island");
+			Check(ref ok, body != null && body.IsDead, "the player dies on the island" + (elevation > 0f ? " (flying, " + scDeathSpot.y.ToString("F0") + " m up)" : elevation < 0f ? " (sunken, " + scDeathSpot.y.ToString("F0") + " m)" : ""));
 			yield return new WaitForSecondsRealtime(2f);
 			// (as the death menu's Respawn button does: Raft puts the player at a bed or on the raft)
 			BedManager beds = ComponentManager<BedManager>.Value ?? UnityEngine.Object.FindObjectOfType<BedManager>() ?? Resources.FindObjectsOfTypeAll<BedManager>().FirstOrDefault(b => b.gameObject.scene.IsValid());

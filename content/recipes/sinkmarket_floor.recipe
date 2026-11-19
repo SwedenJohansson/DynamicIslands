@@ -107,8 +107,8 @@ scatter VP_CoralFoliose03 5 at -12 -2 r=3 seed=9583 free=1
 scatter TinyCoral 6 at -12 -2 r=3 seed=9584 free=1
 scatter VP_CoralDigitate03 5 at 2 13 r=3 seed=9585 free=1
 scatter VP_CoralBulb03 4 at 2 13 r=3 seed=9586 free=1
-scatter SeaVine3 30 at 0 0 r=26 seed=9587 free=2
-scatter SeaVine3_klump 10 at 0 0 r=26 seed=9588 free=2
+scatter SeaVine3 30 at -14 10 r=22 seed=9587 free=2
+scatter SeaVine3_klump 10 at -14 10 r=22 seed=9588 free=2
 call shallows x=0 z=0 r=90 deep=8 n=2 seed=9589
 scatter SeaVine3 40 at 0 0 r=70 seed=9590 free=2
 call hw_reef x=-30 z=-40 r=5 seed=9591

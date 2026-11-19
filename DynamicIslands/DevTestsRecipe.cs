@@ -33,11 +33,13 @@ namespace DynamicIslands
 	/// </summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CIRecipe", docs: "Dev, the editor (opened when needed): builds an island (or a world plan, in World plans) from Mods\\DynamicIslands\\recipes\\<name>.recipe through the editor's operations (generator, terrain strokes, placer, properties, notes, quests, story items, rules, Save) - the library content's builder. CIRecipe <name>")]
+		[ConsoleCommand(name: "CIRecipe", docs: "Dev, the editor (opened when needed): builds an island (or a world plan, in World plans) from Mods\\DynamicIslands\\recipes\\<name>.recipe through the editor's operations (generator, terrain strokes, placer, properties, notes, quests, story items, rules, Save) - the library content's builder. Loads the saved island instead when the recipe, its includes and the mod build are what the last build saved (CIRecipeCache; 'fresh' builds anyway). CIRecipe <name> [fresh]")]
 		public static void RecipeCommand(string[] args)
 		{
 			if (args == null || args.Length == 0) { Fail("recipe: name a recipe (Mods\\DynamicIslands\\recipes\\<name>.recipe)"); return; }
-			StartTest(RecipeRoutine(string.Join(" ", args)));
+			// (the last word 'fresh': built even when the cache holds it - speedups 11-19)
+			bool fresh = args.Length > 1 && args[args.Length - 1].Equals("fresh", StringComparison.OrdinalIgnoreCase);
+			StartTest(CachedRecipeRoutine(string.Join(" ", fresh ? args.Take(args.Length - 1).ToArray() : args), fresh));
 		}
 
 		public static string RecipeFolder { get { return Path.Combine(DynamicIslands.assetpath, "recipes"); } }
@@ -667,7 +669,9 @@ namespace DynamicIslands
 				float land = ground.SampleHeight(whole.center) + ground.transform.position.y;
 				// (things on the water - a buoy, a raft's foundation - float; the sea holds them)
 				bool onWater = whole.min.y < sea && whole.max.y > sea - 0.3f;
-				bool ladder = n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0;
+				// (a string of lights hangs the same way: each light's collider is a trigger, so the middle of a laundry line touched
+				// nothing - held when it meets a held light or a post, cn4 11-19, Raft Row Bazaar and Rookery Stacks)
+				bool ladder = n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("StringLight", StringComparison.OrdinalIgnoreCase) >= 0;
 				bool inAir = false;
 				if (!onWater && whole.min.y - land > 0.5f)
 				{
@@ -1239,6 +1243,7 @@ namespace DynamicIslands
 		static List<RLine> ReadRecipe(string path)
 		{
 			string[] lines = File.ReadAllLines(path);
+			recipeFilesRead.Add(path);
 			string file = Path.GetFileName(path);
 			return lines.Select((l, i) => new RLine { Text = l, Where = file + ":" + (i + 1) }).ToList();
 		}
@@ -1246,6 +1251,7 @@ namespace DynamicIslands
 		static List<RLine> ExpandRecipe(string path)
 		{
 			recipeRandom = new System.Random(Path.GetFileNameWithoutExtension(path).Aggregate(17, (h, c) => h * 31 + c));
+			recipeFilesRead.Clear();
 			var output = new List<RLine>();
 			ExpandLines(ReadRecipe(path), new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase), new Dictionary<string, Macro>(StringComparer.OrdinalIgnoreCase), output, 0);
 			return output;
@@ -1626,6 +1632,9 @@ namespace DynamicIslands
 			try { lines = ExpandRecipe(path); }
 			catch (Exception e) { Fail("recipe " + name + ": " + e.Message); yield break; }
 			RecipeSaved = null;
+			recipePassed = false;
+			recipeOutputs.Clear();
+			recipeLandLine = null;
 			RecipeObjects.Clear();
 			recipeGroups.Clear();
 			recipeCaves.Clear();
@@ -2257,13 +2266,15 @@ namespace DynamicIslands
 							if (unplaced != null) { error = unplaced; break; }
 							if (!DynamicIslands.SaveIsland(island)) { error = "the island didn't save as '" + island + "'"; break; }
 							RecipeSaved = island;
+							recipeOutputs.Add(IslandSpawner.PathFor(island));
 							Log("  saved '" + island + "'");
 							// (a world puts an island's land centre - the land above the sea, as saved - where it spawns; the recipe's
 							// points are from its origin, the land centre when it was generated: land changed since moves them)
 							Vector2 moved = EditorLandCentre() - frames[0].Origin;
 							// (logged however small: land added under 0.5 m from the origin made it say nothing, and the island's plays
 							// kept an old 'offset' 1 m out - The Abyss's vent pool, 11-05)
-							Log("  the land centre is " + Num(moved.x) + " " + Num(moved.y) + " from the recipe's origin: play tests of '" + island + "' need 'offset " + Num(moved.x) + " " + Num(moved.y) + "'" + (moved.magnitude > 0.5f ? "" : " (or none: under 0.5 m)"));
+							recipeLandLine = "  the land centre is " + Num(moved.x) + " " + Num(moved.y) + " from the recipe's origin: play tests of '" + island + "' need 'offset " + Num(moved.x) + " " + Num(moved.y) + "'" + (moved.magnitude > 0.5f ? "" : " (or none: under 0.5 m)");
+							Log(recipeLandLine);
 							// (and names the plays that still have another: they walk and aim that far off - fix-open 11-19)
 							var playTexts = new List<KeyValuePair<string, string>>();
 							foreach (string pf in Directory.Exists(RecipeFolder) ? Directory.GetFiles(RecipeFolder, "*.play") : new string[0])
@@ -2325,6 +2336,7 @@ namespace DynamicIslands
 									if (!File.Exists(WorldPlan.PathFor(planName))) { error = "the plan didn't save as '" + planName + "'"; break; }
 									WorldPlanWindow.Close();
 									RecipeSaved = planName;
+									recipeOutputs.Add(WorldPlan.PathFor(planName));
 									Log("  saved plan '" + planName + "' (" + WorldPlan.Load(planName).Rules.Count + " rules)");
 									break;
 								}
@@ -2371,6 +2383,7 @@ namespace DynamicIslands
 				if (steps % 40 == 0) yield return null;
 			}
 			EditorUI.RefreshIsland();
+			recipePassed = true;
 			Log("PASS: recipe " + name + " (" + steps + " steps, " + placed + " objects placed, " + (leftOutBuried > 0 ? leftOutBuried + " left out under the ground, " : "") + (Time.realtimeSinceStartup - started).ToString("F0") + " s" + (RecipeSaved != null ? ", saved '" + RecipeSaved + "'" : "") + ")");
 		}
 
