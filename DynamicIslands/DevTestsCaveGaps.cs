@@ -885,6 +885,49 @@ namespace DynamicIslands
 			if (ok) Log("PASS: gap ways"); else Fail("gap ways");
 		}
 
+		/// <summary>The clear-way cast between two floor points of a cave way: a walker's body 0.35 m round, knee to head
+		/// (0.35-1.95 m over the floor); where both points are 1 m or more under the sea, a swimmer's (0.2-1.3 m: it swims low
+		/// under a roof a walker hits - RM4's Vaporhold intake, CaveMouth 1.6 m over the floor, which swimmers pass both ways;
+		/// fix-open 11-19). Players, animals and faces under 50 degrees (floor) don't count.</summary>
+		internal static bool WayBlocked(Vector3 p, Vector3 q, float sea, out RaycastHit h)
+		{
+			h = default(RaycastHit);
+			Vector3 d = q - p;
+			if (d.magnitude < 0.2f) return false;
+			bool swim = Mathf.Max(p.y, q.y) < sea - 1f;
+			Vector3 a = p + Vector3.up * (swim ? 0.55f : 0.7f);
+			return Physics.CapsuleCast(a, a + Vector3.up * (swim ? 0.4f : 0.9f), 0.35f, d.normalized, out h, d.magnitude, ~0, QueryTriggerInteraction.Ignore)
+				&& h.collider.GetComponentInParent<Network_Player>() == null && h.collider.GetComponentInParent<AI_NetworkBehaviour>() == null
+				&& Vector3.Angle(h.normal, Vector3.up) > 50f;
+		}
+
+		[ConsoleCommand(name: "CIClearWayUnit", docs: "Dev, anywhere: the cave look's clear-way cast (WayBlocked) - a roof 1.5 m over the floor stops a walker on dry ground but not a swimmer 5 m under the sea; a roof 1 m over the floor stops both")]
+		public static void CIClearWayUnit()
+		{
+			bool ok = true;
+			Action<bool, string> chk = (c, w) => { Log((c ? "PASS: " : "FAIL: ") + w); ok &= c; };
+			Vector3 o = new Vector3(0f, 900f, 0f), p = o + Vector3.left * 3f, q = o + Vector3.right * 3f;
+			GameObject roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			try
+			{
+				RaycastHit h;
+				Func<float, float, bool> blocked = (bottom, sea) =>
+				{
+					roof.transform.position = o + Vector3.up * (bottom + 1f);
+					roof.transform.localScale = new Vector3(1f, 2f, 3f);
+					Physics.SyncTransforms();
+					return WayBlocked(p, q, sea, out h);
+				};
+				chk(blocked(1.5f, o.y - 5f), "a roof 1.5 m over dry ground stops a walker");
+				chk(!blocked(1.5f, o.y + 5f), "a roof 1.5 m over the floor 5 m under the sea lets a swimmer by (RM4)");
+				chk(blocked(1f, o.y + 5f), "a roof 1 m over the floor stops a swimmer too");
+				chk(blocked(1.5f, o.y + 0.5f), "only 0.5 m under the sea it is a walker's way: stopped");
+				chk(!blocked(2.2f, o.y - 5f), "a roof 2.2 m up lets a walker by");
+			}
+			finally { UnityEngine.Object.DestroyImmediate(roof); }
+			Log((ok ? "PASS" : "FAIL") + ": clear way unit");
+		}
+
 		[ConsoleCommand(name: "CICaveGapsLook", docs: "Dev, a world (host): one cave gaps test island or any saved island with caves (CICaveGapsLook <cgaps-dig|cgaps-st|cgaps-uw|island name, spaces allowed> [noshots]), the kept one or brought next to the raft: each cave's way in (cave tool tunnels to the room or the far end, each dug stroke) - pictures from outside at the mouth and over the hill, from inside looking in, looking out, at the walls and roof at its end, by day and by night (shot_cg_<island>_<n>_<view>.png); a clear way along it (no rock across it); walked in with Raft's controller and back out past the mouth where it is dry; where it is under the sea: water there (Raft's swimming, the breath going down) and, in a room above the sea, dry ground with the breath coming back")]
 		public static void CaveGapsLookCommand(string[] args)
 		{
@@ -1127,18 +1170,14 @@ namespace DynamicIslands
 					Vector3 mouth = f[0], end = f.Last();
 					int c = f.Count;
 					bool wet = mouth.y < sea - 0.5f;
-					// A clear way: nothing solid across the passage between its points (a body 0.35 m round, knee to head)
+					// A clear way: nothing solid across the passage between its points (WayBlocked: a walker's body, a swimmer's deep under the sea)
 					int blocked = 0;
 					string where = "";
 					for (int i = 1; i < c; i++)
 					{
-						Vector3 a = f[i - 1] + Vector3.up * 0.7f, b = f[i] + Vector3.up * 0.7f;
-						Vector3 d = b - a;
-						if (d.magnitude < 0.2f) continue;
+						Vector3 d = f[i] - f[i - 1];
 						RaycastHit h;
-						if (Physics.CapsuleCast(a, a + Vector3.up * 0.9f, 0.35f, d.normalized, out h, d.magnitude, ~0, QueryTriggerInteraction.Ignore)
-							&& h.collider.GetComponentInParent<Network_Player>() == null && h.collider.GetComponentInParent<AI_NetworkBehaviour>() == null
-							&& Vector3.Angle(h.normal, Vector3.up) > 50f)
+						if (WayBlocked(f[i - 1], f[i], sea, out h))
 						{
 							blocked++;
 							// (where it hit, over the floor between the two points and across: RM4's Vaporhold intake stopped at CaveMouth
