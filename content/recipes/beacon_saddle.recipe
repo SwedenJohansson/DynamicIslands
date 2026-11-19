@@ -122,6 +122,12 @@ loot planecrate story:letter*1;Rope*2;Nail*6
 prop planecrate loot.refill=0
 call ar_plants_tropical x=40 z=-60 r=16 seed=14121
 call ar_plants_tropical x=-60 z=-20 r=16 seed=14131
+# (11-19 cat2: CIGroundIslands - five of the plants' boulders stood 3.5-4 m over the slope in the world)
+clear at -4.18 76.99 r=1.2 only=SmallBoulder2 all
+clear at 29.43 -50.1 r=1.2 only=SmallBoulder2 all
+clear at 28.65 -69.98 r=2.5 only=SmallBoulder2 all
+clear at 26.82 -59.58 r=1.2 only=SmallBoulder2 all
+clear at -48.9 -14.44 r=2.5 only=SmallBoulder2 all
 
 # --- Unique layer (10-24): beacon_saddle device - see SL14_progress.md UNIQUE ISLANDS
 place RT_Pillar - at 13.5 -72 ground sy=0.4
