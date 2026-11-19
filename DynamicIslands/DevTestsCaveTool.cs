@@ -1110,8 +1110,16 @@ namespace DynamicIslands
 				float f = RayMeshDistance(r, mid), bk = RayMeshDistance(r, mid, true);
 				if (f < 40f) through.Add(new KeyValuePair<float, string>(f, f.ToString("0.0") + " m its front " + path));
 				if (bk < 40f) through.Add(new KeyValuePair<float, string>(bk, bk.ToString("0.0") + " m its back " + path));
+					if (f >= 40f && bk >= 40f)
+					{
+						// (its box crossed, no face met: a den's shell round the eye never showed in the fan, w15AA - its points as
+						// read against the mesh's own box tell a misread buffer from a real miss)
+						Bounds pb = new Bounds(mp.Length > 0 ? mp[0] : Vector3.zero, Vector3.zero);
+						foreach (Vector3 q in mp) pb.Encapsulate(q);
+						through.Add(new KeyValuePair<float, string>(bdist + 0.001f, "its bounds " + bdist.ToString("0.0") + " m, no face met (" + mf.sharedMesh.name + (mf.sharedMesh.isReadable ? "" : ", from the GPU") + ": " + mp.Length + " points " + mt.Length / 3 + " faces, read box " + pb.min.ToString("F1") + ".." + pb.max.ToString("F1") + ", mesh box " + mf.sharedMesh.bounds.min.ToString("F1") + ".." + mf.sharedMesh.bounds.max.ToString("F1") + ") " + path));
+					}
 			}
-			foreach (var kv in through.OrderBy(x => x.Key).Take(16)) Log("  middle ray: " + kv.Value);
+			foreach (var kv in through.OrderBy(x => x.Key).Take(24)) Log("  middle ray: " + kv.Value);
 			Log("PASS: ray look " + seen.Count + " things");
 		}
 
@@ -1183,6 +1191,99 @@ namespace DynamicIslands
 				if (d > 0f && d < best) best = d;
 			}
 			return best == float.PositiveInfinity ? best : Vector3.Distance(ray.origin, t.TransformPoint(o + dir * best));
+		}
+
+		[ConsoleCommand(name: "CIMeshRead", docs: "Dev, in a world: how an unreadable mesh's points read back from the GPU (CaveBacks' source, w15AA): for the first n unreadable cave meshes (or with back, their backs), the read box by GetData, by AsyncGPUReadback and by a copy into a raw buffer, against the mesh's own box; with info, the camera's path and the first den pieces' shader, passes and colliders. CIMeshRead [n] [back] [info]")]
+		public static void MeshReadCommand(string[] args)
+		{
+			int n = args != null && args.Length > 0 ? int.Parse(args[0], CultureInfo.InvariantCulture) : 4;
+			bool backs = args != null && args.Contains("back");
+			if (args != null && args.Contains("info"))
+			{
+				// (what else a den piece offers for its backs: its colliders' meshes, its shader's cull switch, the camera's path)
+				Camera cam = Camera.main;
+				Log("  camera " + (cam == null ? "none" : cam.name + " " + cam.actualRenderingPath));
+				int k = 0;
+				foreach (MeshFilter mf in Object.FindObjectsOfType<MeshFilter>())
+				{
+					if (mf.sharedMesh == null || !mf.sharedMesh.name.StartsWith("BalboaCave") || mf.name == CaveBacks.Name || k++ >= 6) continue;
+					Transform piece = mf.transform;
+					while (piece.parent != null && !piece.parent.name.StartsWith("Objects")) piece = piece.parent;
+					var cols = piece.GetComponentsInChildren<Collider>(true).Select(c =>
+					{
+						MeshCollider mc = c as MeshCollider;
+						Mesh cm = mc != null ? mc.sharedMesh : null;
+						return c.GetType().Name + (cm == null ? "" : " " + cm.name + " readable " + cm.isReadable + " " + cm.vertexCount + " pts uv " + cm.HasVertexAttribute(UnityEngine.Rendering.VertexAttribute.TexCoord0) + " same " + (cm == mf.sharedMesh));
+					}).ToArray();
+					MeshRenderer r = mf.GetComponent<MeshRenderer>();
+					Material mat = r != null ? r.sharedMaterial : null;
+					string cull = "";
+					if (mat != null && mat.shader != null)
+						for (int i = 0; i < mat.shader.GetPropertyCount(); i++)
+						{
+							string pn = mat.shader.GetPropertyName(i);
+							if (pn.IndexOf("Cull", System.StringComparison.OrdinalIgnoreCase) >= 0 || pn.IndexOf("Side", System.StringComparison.OrdinalIgnoreCase) >= 0) cull += " " + pn + "=" + mat.GetFloat(pn);
+						}
+					Log("  " + mf.name + " in " + piece.name + ": mesh " + mf.sharedMesh.name + ", shader " + (mat == null ? "none" : mat.shader.name + " passes " + mat.passCount + " cull:" + cull) + "; colliders " + string.Join("; ", cols));
+				}
+				Log("PASS: mesh info " + k);
+				return;
+			}
+			var seen = new HashSet<Mesh>();
+			int shown = 0, good = 0;
+			// (every mesh loaded, not just those in the scene: after a play the island has gone, the backs stay made)
+			foreach (Mesh m in Resources.FindObjectsOfTypeAll<Mesh>().Where(q => q.name.EndsWith("(back)") == backs))
+			{
+				if (m == null || m.isReadable || !seen.Add(m) || !m.name.StartsWith("BalboaCave")) continue;
+				if (shown++ >= n) break;
+				var ways = new List<string>();
+				int st = m.GetVertexAttributeStream(UnityEngine.Rendering.VertexAttribute.Position), off = m.GetVertexAttributeOffset(UnityEngine.Rendering.VertexAttribute.Position), stride = m.GetVertexBufferStride(st);
+				bool f16 = m.GetVertexAttributeFormat(UnityEngine.Rendering.VertexAttribute.Position) == UnityEngine.Rendering.VertexAttributeFormat.Float16;
+				System.Func<byte[], string> box = vb =>
+				{
+					if (vb == null) return "none";
+					Bounds bb = new Bounds();
+					for (int v = 0; v < m.vertexCount && v * stride + off + 12 <= vb.Length; v++)
+					{
+						int a = v * stride + off;
+						Vector3 q = f16 ? new Vector3(Mathf.HalfToFloat(System.BitConverter.ToUInt16(vb, a)), Mathf.HalfToFloat(System.BitConverter.ToUInt16(vb, a + 2)), Mathf.HalfToFloat(System.BitConverter.ToUInt16(vb, a + 4)))
+							: new Vector3(System.BitConverter.ToSingle(vb, a), System.BitConverter.ToSingle(vb, a + 4), System.BitConverter.ToSingle(vb, a + 8));
+						if (v == 0) bb = new Bounds(q, Vector3.zero); else bb.Encapsulate(q);
+					}
+					return bb.min.ToString("F1") + ".." + bb.max.ToString("F1");
+				};
+				try
+				{
+					using (GraphicsBuffer g = m.GetVertexBuffer(st))
+					{
+						ways.Add("target " + m.vertexBufferTarget + ", buffer " + g.count + "x" + g.stride);
+						var a = new byte[g.count * g.stride];
+						try { g.GetData(a); ways.Add("GetData " + box(a)); } catch (System.Exception e) { ways.Add("GetData failed: " + e.Message); }
+						try
+						{
+							var req = UnityEngine.Rendering.AsyncGPUReadback.Request(g);
+							req.WaitForCompletion();
+							ways.Add("async " + (req.hasError ? "error" : box(req.GetData<byte>().ToArray())));
+						}
+						catch (System.Exception e) { ways.Add("async failed: " + e.Message); }
+						try
+						{
+							using (var raw = new GraphicsBuffer(GraphicsBuffer.Target.Raw | GraphicsBuffer.Target.CopyDestination, g.count * g.stride / 4, 4))
+							{
+								Graphics.CopyBuffer(g, raw);
+								var c = new byte[g.count * g.stride];
+								raw.GetData(c);
+								ways.Add("copied " + box(c));
+							}
+						}
+						catch (System.Exception e) { ways.Add("copy failed: " + e.Message); }
+					}
+				}
+				catch (System.Exception e) { ways.Add("buffer failed: " + e.Message); }
+				if (ways.Any(w => (w.StartsWith("GetData") || w.StartsWith("async") || w.StartsWith("copied")) && !w.Contains("(0.0, 0.0, 0.0)..(0.0, 0.0, 0.0)") && !w.Contains("failed") && !w.Contains("error"))) good++;
+				Log("  " + m.name + " (" + m.vertexCount + " points, " + (f16 ? "half" : "float") + ", mesh box " + m.bounds.min.ToString("F1") + ".." + m.bounds.max.ToString("F1") + "): " + string.Join("; ", ways));
+			}
+			Log((good > 0 ? "PASS" : "FAIL") + ": mesh read " + good + "/" + System.Math.Min(shown, n) + " read by some way");
 		}
 
 		[ConsoleCommand(name: "CIBackLook", docs: "Dev, in a world: the cave pieces' backs (CaveBacks: their shells seen from outside) for finding the blue rock (11-06). off / on: every back hidden or shown; full / plain / normals: every back made again with normals and tangents' handedness flipped (as made), faces turned only, or normals only. CIBackLook <off|on|full|plain|normals>")]
