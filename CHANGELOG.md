@@ -11,6 +11,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (not released yet)
 
+- **Flying islands with caves have no slit between their ground and underside**: where a cave let the coast's ground down or raised it, the rocky underside's rim and the coast stayed at the old height, so from the side you saw the sky through a gap under the ground (Upfall Orchard, Altitude Market). Both now go back onto the ground after the caves are cut.
 - **A player not at full health isn't dropped into the sea when their world loads**: a player held in place while the island or raft under them loads was let go at once - the mod read Raft's starting health of 100 before the player's saved health came in and took the drop for a hit. Health is now watched only once the world is in.
 - **`CIRecipe` skips builds it has already done** (island makers' test): when the recipe, the files it includes and the mod are unchanged since its last build and the saved island wasn't changed since, it opens the saved island instead of building it again (`[CITEST] recipe cache hit/miss`); `CIRecipe <name> fresh` builds anyway, and `CIRecipeCache off` (or `CI_NOCACHE=1`) turns the cache off.
 - **`CIFreeMem`** (dev, main menu only): frees unused assets and runs the garbage collector, and logs the memory before and after (`[CITEST] freemem before=<MB> after=<MB>`). An experiment to see whether a long test run can go on without restarting Raft.
