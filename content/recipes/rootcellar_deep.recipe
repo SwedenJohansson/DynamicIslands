@@ -63,9 +63,9 @@ place Zone_Trigger wellzone at 2 -1.5 ground y=1
 call airpocket x=0 z=-4 id=well_air al=wellair bub=wellbub r=2.5
 
 # --- The orchard's roots: dead trees and driftwood twisting over the seabed to the root cave ------------------------
-place DeadTree1 roots at 5 -4 ground rot=0,30,82 scale=0.9
-place DeadTree2 roots at 7 3 ground rot=0,-50,80 scale=1.0
-place DeadTree3 roots at 9 -1 ground rot=0,110,84 scale=0.9
+place DeadTree1 roots at 5 -4 h=2.9 rot=0,30,82 scale=0.9
+place DeadTree2 roots at 7 3 h=2.9 rot=0,-50,80 scale=1.0
+place DeadTree3 roots at 9 -1 h=2.9 rot=0,110,84 scale=0.9
 place DeadTree1 roots at 14 1 ground rot=0,200,80 scale=1.1
 place DeadTree2 roots at 15 10 ground rot=0,260,82 scale=1.0
 place DeadTree3 roots at 9 11 ground rot=0,10,80 scale=1.0
