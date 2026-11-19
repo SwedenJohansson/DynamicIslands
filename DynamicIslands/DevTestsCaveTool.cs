@@ -1002,10 +1002,11 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIRayLook", docs: "Dev, in a world: what is seen from a point toward another on a loaded island (points from the island's land centre: a play's picture point minus the play's offset; or 'picture' in their place: the last play picture's own camera - w15Z: points given with the offset added looked out to sea) - a fan of 9x9 rays over 30 degrees, each ray's first renderer it sees the face of (its mesh's triangles, colliders or not; a face seen from behind is culled, as drawn - w15Z: an inside-out CaveBack round the eye was reported for the wall in front); fan=<degrees> narrows or widens the fan (30); at=<u>,<v> points the fan at that spot of a play picture taken from the first point at the second (0..1 across and down, the camera's own field of view, 16:9) - for asking what one odd bit in a picture is; logs a 9x9 map of what each ray met (top row up, left column left) and each thing seen with its share of the rays, path, material, shader and textures. For finding what draws an odd look (the blue rock, 11-06). CIRayLook [fan=<degrees>] [at=<u>,<v>] <island> <x> <y> <z> <tx> <ty> <tz> | picture")]
 		public static void RayLookCommand(string[] args)
 		{
-			float fan = 30f; Vector2? at = null;
-			while (args != null && args.Length > 0 && (args[0].StartsWith("fan=") || args[0].StartsWith("at=")))
+			float fan = 30f; Vector2? at = null; bool who = false;
+			while (args != null && args.Length > 0 && (args[0].StartsWith("fan=") || args[0].StartsWith("at=") || args[0] == "who"))
 			{
-				if (args[0].StartsWith("fan=")) fan = float.Parse(args[0].Substring(4), CultureInfo.InvariantCulture);
+				if (args[0] == "who") who = true;
+				else if (args[0].StartsWith("fan=")) fan = float.Parse(args[0].Substring(4), CultureInfo.InvariantCulture);
 				else { string[] uv = args[0].Substring(3).Split(','); at = new Vector2(float.Parse(uv[0], CultureInfo.InvariantCulture), float.Parse(uv[1], CultureInfo.InvariantCulture)); }
 				args = args.Skip(1).ToArray();
 			}
@@ -1014,18 +1015,18 @@ namespace DynamicIslands
 				if (!LastPictureFrom.HasValue) { Fail("ray look: no play picture taken yet"); return; }
 				Vector3 pf = LastPictureFrom.Value, pl = LastPictureLook.Value;
 				Log("  the last play picture's camera, on " + LastPictureIsland + ": " + pf.ToString("F2") + " toward " + pl.ToString("F2"));
-				StartTest(RayLookRoutine(LastPictureIsland, new[] { pf.x, pf.y, pf.z, pl.x, pl.y, pl.z }, fan, at));
+				StartTest(RayLookRoutine(LastPictureIsland, new[] { pf.x, pf.y, pf.z, pl.x, pl.y, pl.z }, fan, at, who));
 				return;
 			}
 			if (args == null || args.Length < 7) { Fail("CIRayLook [fan=<degrees>] [at=<u>,<v>] <island> <x> <y> <z> <tx> <ty> <tz>, or CIRayLook [fan=..] [at=..] picture"); return; }
 			float[] v = args.Skip(args.Length - 6).Select(a => float.Parse(a, CultureInfo.InvariantCulture)).ToArray();
-			StartTest(RayLookRoutine(string.Join(" ", args.Take(args.Length - 6).ToArray()).Trim().Trim('"', '\'').Trim(), v, fan, at));
+			StartTest(RayLookRoutine(string.Join(" ", args.Take(args.Length - 6).ToArray()).Trim().Trim('"', '\'').Trim(), v, fan, at, who));
 		}
 
 		/// <summary>CIRayLook's work: the island loaded here, or (host) brought next to the raft as CICaveGapsLook brings one.
 		/// A test, so a run sees IDLE after it: run after a CIPlay, whose island is gone by then, the command only logged FAIL
 		/// and a job waited out its hour for IDLE (w15Y, 11-18).</summary>
-		static IEnumerator RayLookRoutine(string name, float[] v, float fan, Vector2? at)
+		static IEnumerator RayLookRoutine(string name, float[] v, float fan, Vector2? at, bool who = false)
 		{
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Root != null && ((x.Name ?? "").IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0
 				|| (x.HostName ?? "").IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0));
@@ -1120,7 +1121,70 @@ namespace DynamicIslands
 					}
 			}
 			foreach (var kv in through.OrderBy(x => x.Key).Take(24)) Log("  middle ray: " + kv.Value);
+			if (who) yield return WhoDraws(e, from, to, at ?? new Vector2(0.5f, 0.5f), mid);
 			Log("PASS: ray look " + seen.Count + " things");
+		}
+
+		/// <summary>CIRayLook who (w15AB): who draws the aimed spot of the picture, by the picture itself - the view drawn again
+		/// with each renderer the spot's ray crosses (by its box, so unreadable meshes count) hidden in turn, and the spot's colour
+		/// compared. A ray tool needs the mesh; this needs only the renderer (Raft's den shells read back as zeros).</summary>
+		static int whoN;
+		static IEnumerator WhoDraws(IslandWorldState.Entry e, Vector3 from, Vector3 to, Vector2 at, Ray mid)
+		{
+			Camera cam = Camera.main;
+			if (cam == null) { Log("  who: no camera"); yield break; }
+			yield return new WaitForEndOfFrame();
+			whoN++;
+			const int W = 1280, H = 720, P = 4;
+			int px = Mathf.Clamp(Mathf.RoundToInt(at.x * W), P, W - P - 1), py = Mathf.Clamp(Mathf.RoundToInt((1f - at.y) * H), P, H - P - 1);
+			var cands = Object.FindObjectsOfType<Renderer>().Where(r => r.enabled && r.gameObject.activeInHierarchy && !r.forceRenderingOff && !(r is ParticleSystemRenderer)
+				&& r.GetComponentInParent<Network_Player>() == null && r.bounds.IntersectRay(mid)).ToList();
+			Vector3 oldPos = cam.transform.position; Quaternion oldRot = cam.transform.rotation; RenderTexture oldRt = cam.targetTexture;
+			var rt = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32);
+			var tex = new Texture2D(2 * P + 1, 2 * P + 1, TextureFormat.RGB24, false);
+			var results = new List<KeyValuePair<float, string>>();
+			Renderer top = null; float topD = 0f;
+			try
+			{
+				cam.transform.position = from; cam.transform.rotation = Quaternion.LookRotation(to - from);
+				cam.targetTexture = rt;
+				System.Func<Color> spot = () =>
+				{
+					cam.Render();
+					RenderTexture was = RenderTexture.active; RenderTexture.active = rt;
+					tex.ReadPixels(new Rect(px - P, py - P, 2 * P + 1, 2 * P + 1), 0, 0); tex.Apply();
+					RenderTexture.active = was;
+					Color sum = Color.clear; foreach (Color c in tex.GetPixels()) sum += c;
+					return sum / ((2 * P + 1) * (2 * P + 1));
+				};
+				Color base0 = spot();
+				SaveRt(rt, System.IO.Path.Combine(DynamicIslands.assetpath, "shot_who_" + whoN + "_base.png"));
+				Log("  who: the spot (" + px + "," + (H - py) + " from the top) is " + ColorUtility.ToHtmlStringRGB(base0) + "; " + cands.Count + " renderer(s) on its ray");
+				foreach (Renderer r in cands)
+				{
+					r.forceRenderingOff = true;
+					Color c;
+					try { c = spot(); } finally { r.forceRenderingOff = false; }
+					float d = Mathf.Abs(c.r - base0.r) + Mathf.Abs(c.g - base0.g) + Mathf.Abs(c.b - base0.b);
+					string path = r.name; for (Transform t = r.transform.parent; t != null && e != null && e.Root != null && t != e.Root.transform.parent; t = t.parent) path = t.name + "/" + path;
+					MeshFilter mf = r.GetComponent<MeshFilter>();
+					results.Add(new KeyValuePair<float, string>(d, "hidden, the spot " + ColorUtility.ToHtmlStringRGB(c) + " (change " + d.ToString("0.00", CultureInfo.InvariantCulture) + "): " + path
+						+ (mf != null && mf.sharedMesh != null ? " mesh " + mf.sharedMesh.name + (mf.sharedMesh.isReadable ? "" : " (unreadable)") : "") + " material " + (r.sharedMaterial != null ? r.sharedMaterial.name : "none")));
+					if (d > topD) { topD = d; top = r; }
+				}
+				if (top != null && topD > 0.05f)
+				{
+					top.forceRenderingOff = true;
+					try { spot(); SaveRt(rt, System.IO.Path.Combine(DynamicIslands.assetpath, "shot_who_" + whoN + "_hidden.png")); } finally { top.forceRenderingOff = false; }
+				}
+			}
+			finally
+			{
+				cam.targetTexture = oldRt; cam.transform.position = oldPos; cam.transform.rotation = oldRot;
+				rt.Release(); Object.Destroy(tex);
+			}
+			foreach (var kv in results.OrderByDescending(x => x.Key).Take(12)) Log("  who: " + kv.Value);
+			Log("  who: " + (top != null && topD > 0.05f ? "the spot is drawn by " + top.name + " (shot_who_" + whoN + "_hidden.png without it)" : "no single renderer on the ray changes the spot - something without a box on it (terrain, sky, an effect)"));
 		}
 
 		static readonly Dictionary<Mesh, KeyValuePair<Vector3[], int[]>> rayMeshes = new Dictionary<Mesh, KeyValuePair<Vector3[], int[]>>();
