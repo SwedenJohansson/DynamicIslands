@@ -180,8 +180,9 @@ prop minecave cave.foot=wet
 place Relay_support_beam_wood - at 16.2 -4.6 h=9 rot=0,0,-90 sx=0.75
 place Relay_support_beam_wood - at 27.8 -4.6 h=9 rot=0,0,-90 sx=0.75
 place Relay_support_beam_wood - at 27.8 -4.6 h=16 rot=0,0,0 sx=1.23
-line Beam_Long_01 from 21.5 -5 to 21.5 24 step=3.6 ends yaw=180 rot=0,0,0 y=0.15
-line Beam_Long_01 from 22.5 -5 to 22.5 24 step=3.6 ends yaw=180 rot=0,0,0 y=0.15
+# (y 0.25: at 0.15 a rail by the den's mouth had its top 7 cm in the bank, IG5 11-19)
+line Beam_Long_01 from 21.5 -5 to 21.5 24 step=3.6 ends yaw=180 rot=0,0,0 y=0.25
+line Beam_Long_01 from 22.5 -5 to 22.5 24 step=3.6 ends yaw=180 rot=0,0,0 y=0.25
 place VP_Wagon01 - at 22 5 sit
 place Crate_Big_01 - at 18.5 2 h=9 sit yaw=10
 place Placeable_Lantern_Metal - at 18.5 2 h=9.45 sit
