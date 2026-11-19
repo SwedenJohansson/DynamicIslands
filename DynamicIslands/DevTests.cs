@@ -32,6 +32,8 @@ namespace DynamicIslands
 		// (ci.ps1 -done used to stop at CIA's IDLE while CIB ran on, and the next run's test overlapped it)
 		static int pendingCommands;
 		static bool idleOwed;
+		// (IDLEs logged after a file of plain commands: CIPlainIdle counts them)
+		static int plainIdles;
 		static Coroutine StartTest(IEnumerator e)
 		{
 			if (exclusiveTest != null && exclusiveTest != e) StopExclusive();
@@ -2277,6 +2279,10 @@ namespace DynamicIslands
 				}
 				pendingCommands = 0;
 				if (idleOwed && runningTests == 0) Log("IDLE (all tests done)");
+				// (a file of plain commands only - CICaveCell, CIDownRays: no test started, so nothing logged IDLE and ci.ps1
+				// -done waited out its timeout, a job phase an hour - rows_w13/w15; fix-open 11-19. Not while an older test
+				// runs: its own end logs IDLE, and one written by a running test, CIPollerWait, must not end its run early)
+				else if (testSerial < firstTest && runningTests == 0) { plainIdles++; Log("IDLE (plain commands, no test)"); }
 				idleOwed = false;
 			}
 		}
@@ -2287,6 +2293,24 @@ namespace DynamicIslands
 		static int pollerMarks;
 		[ConsoleCommand(name: "CIPollerMark", docs: "Dev, helper of CIPollerWait: counts one mark")]
 		public static void PollerMarkCommand() { pollerMarks++; Log("poller mark " + pollerMarks); }
+
+		[ConsoleCommand(name: "CIPlainIdle", docs: "Dev: a command file of plain commands only (no test) ends with IDLE too - CICaveCell and CIDownRays left ci.ps1 -done waiting its whole timeout. Not a test itself (it waits for no test to run): run it without -done, it ends at PASS or FAIL")]
+		public static void PlainIdleCommand() { DynamicIslands.instance.StartCoroutine(PlainIdleRoutine()); }
+
+		static IEnumerator PlainIdleRoutine()
+		{
+			float end = Time.realtimeSinceStartup + 30f;
+			while ((runningTests > 0 || File.Exists(CommandFile)) && Time.realtimeSinceStartup < end) yield return null;
+			// (the file that ran this command has had its IDLE by now)
+			yield return new WaitForSecondsRealtime(0.5f);
+			if (runningTests > 0) { Fail("plain idle: a test still runs after 30 s"); yield break; }
+			int idles = plainIdles, marks = pollerMarks;
+			File.WriteAllLines(CommandFile, new[] { "CIPollerMark" });
+			end = Time.realtimeSinceStartup + 5f;
+			while (plainIdles == idles && Time.realtimeSinceStartup < end) yield return null;
+			if (pollerMarks == marks + 1 && plainIdles == idles + 1) Log("PASS: plain idle (a file of one plain command ran and logged IDLE)");
+			else Fail("plain idle: the plain command ran " + (pollerMarks - marks) + " time(s), IDLE after it " + (plainIdles - idles) + " time(s) in 5 s");
+		}
 
 		static IEnumerator PollerWaitRoutine()
 		{

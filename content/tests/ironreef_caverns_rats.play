@@ -10,13 +10,23 @@ hour 11
 weather Calm
 at -44.6 -22.4
 wait 5
-expect animals Rat 2
-expect animalsinside Rat 2
-picture rat_ironreef_b_out -37.6 +1.7 -46.4 -34.6 17 -42.6
-picture rat_ironreef_b_in -28.8 18.6 -38 -25.8 19.3 -33.4
+# (FZ7, fix-open 11-19: the B rat waits in the hall end until a player is in tunnel B - zone ir_tunnelb, 2.5 m past
+# the open stretch; it roamed out of the open mouth in 1 of 2 runs. So: only the C rat at first, then walk into tunnel B)
+expect animals Rat 1
+expect animalsinside Rat 1
 picture rat_ironreef_c_out -14 17.2 -45.4 -19 16.2 -43.6
 picture rat_ironreef_c_in -26 21 -30 -21.5 19.6 -30.2
 wait 30
 expect animalsmoved Rat 1
+expect animals Rat 1
+expect animalsinside Rat 1
+picture rat_ironreef_b_out -37.6 +1.7 -46.4 -34.6 17 -42.6
+at -37 -44.5
+walk -37 -44.5 to -35 -43 to -31.6 -40.9 to -30.4 -40.2 below=22
+wait 3
 expect animals Rat 2
 expect animalsinside Rat 2
+picture rat_ironreef_b_in -30.4 20.2 -40.2 -25.8 19.3 -33.4 aim=Rat light=20
+kill Rat
+expect animals Rat 0
+walk -30.4 -40.2 to -31.6 -40.9 to -35 -43 to -37 -44.5 below=22

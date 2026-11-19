@@ -2023,7 +2023,7 @@ namespace DynamicIslands
 		public static void Hierarchy(string[] args)
 		{
 			string name = args != null ? string.Join(" ", args) : "";
-			DynamicIslands.instance.StartCoroutine(HierarchyRoutine(name));
+			StartTest(HierarchyRoutine(name)); // (a test: a file of plain commands now ends with IDLE at once)
 		}
 
 		static IEnumerator HierarchyRoutine(string name)

@@ -541,7 +541,7 @@ place Loot_ChestSmall irdrift at -24.88 -20.05 h=20.5 drop yaw=174
 note irdrift Drift 4 tin | The last shift's tin, left when the floor went - and the foreman's machete, for the vines in the side gallery. Whoever reads this: you walked the planks. Good.
 loot irdrift Machete*1;MetalIngot*2;Rope*2;Bolt*1
 prop irdrift loot.refill=0
-# cavecheck inside irti irwarn irdrift irspike1 irspike2 irreef_vines bratsB bratsC
+# cavecheck inside irti irwarn irdrift irspike1 irspike2 irreef_vines bratsB bratsC bratzone
 # (11-05) Rats in the Reef Workings (the user: "in some caves there can be a monster, like a rat"): one in tunnel B (a pair's ring put one out at the mouth) and
 # one in tunnel C (a pair's ring, 3 m out, put one on the hill over the narrow tunnel), on the dug floor, 13 m and more from the drift's sign, tin and spikes, the vines and the titanium.
 # The hall has three ways in (A, B, C), so neither pair is the only way to anything. No respawn.
@@ -556,6 +556,12 @@ prop irdrift loot.refill=0
 place Creature_Rat bratsB at -25.8 -33.4 h=19.3
 prop bratsB creature.count=1
 prop bratsB creature.respawn=0
+# (FZ7, fix-open 11-19: in 1 of 2 runs the B rat still roamed out of the open mouth within 20 s - a rat roams round its
+# spot. It now waits in the hall end until a player is in tunnel B, 2.5 m past the open stretch (as Vaporhold's vr_service))
+place Zone_Trigger bratzone at -30.4 -40.2 h=19.4
+prop bratzone zone.id=ir_tunnelb
+prop bratzone zone.radius=2
+prop bratsB creature.zone=ir_tunnelb
 place Creature_Rat bratsC at -21.5 -30.2 h=19.6
 prop bratsC creature.count=1
 prop bratsC creature.respawn=0
