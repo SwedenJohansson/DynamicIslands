@@ -205,8 +205,9 @@ place BalboaCave_DeadEnd mine at 0 -18 h=11.7 yaw=90
 # (its hill is cut where it would stand over deep sea: the mound closed pools of sea under it at the south shore)
 prop mine cave.seacut=1
 # (fo2 11-19: the sand in front of the mouth lay 2-3 m under its floor (4.25 m): a step no player could climb.
-# cave.foot=dry rounded it up but spread the hill over the minehead yard, so the sand is raised here instead)
-brush flatten from 23.5 -19.4 to 17.5 -19.4 r=6 s=20 frames=60 h=4.3
+# cave.foot=dry rounds it up to the floor; dome=6 keeps the hill off the minehead yard (uncapped it spread 50+ m))
+prop mine cave.foot=dry
+prop mine cave.dome=6
 
 # --- The portal: timber posts and a lintel at the mouth, and timbering further in ------------------------------
 for tx -5 6 11
