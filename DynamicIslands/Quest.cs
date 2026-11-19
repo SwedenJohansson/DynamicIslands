@@ -861,6 +861,11 @@ namespace DynamicIslands.Editor
 		/// <summary>How many times the quests were checked (for the tests).</summary>
 		public static int TickCount;
 
+		/// <summary>Tests (QD7): the named quest part - "timers", "daily", "book" or "talk" - throws when it next runs, to show
+		/// that the other quest ticks go on. Null in play.</summary>
+		public static string TestThrow;
+		internal static void TestThrowIf(string part) { if (TestThrow != null && TestThrow == part) throw new InvalidOperationException("CI test throw (" + part + ")"); }
+
 		public static void Tick()
 		{
 			if (Time.unscaledTime < nextHud) return;
