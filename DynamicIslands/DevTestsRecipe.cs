@@ -667,7 +667,9 @@ namespace DynamicIslands
 				float land = ground.SampleHeight(whole.center) + ground.transform.position.y;
 				// (things on the water - a buoy, a raft's foundation - float; the sea holds them)
 				bool onWater = whole.min.y < sea && whole.max.y > sea - 0.3f;
-				bool ladder = n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0;
+				// (a string of lights hangs the same way: each light's collider is a trigger, so the middle of a laundry line touched
+				// nothing - held when it meets a held light or a post, cn4 11-19, Raft Row Bazaar and Rookery Stacks)
+				bool ladder = n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("StringLight", StringComparison.OrdinalIgnoreCase) >= 0;
 				bool inAir = false;
 				if (!onWater && whole.min.y - land > 0.5f)
 				{
