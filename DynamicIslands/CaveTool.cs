@@ -845,9 +845,35 @@ namespace DynamicIslands.Editor
 				r.gameObject.AddComponent<HillWall>();
 				done++;
 			}
-			if (done > 0) CaveLit.Mark(piece);
+			// (and the tunnel itself, inside and its back, in the hill's rock: its pale blue ice-ravine rock seen through the mouth
+			// in the hill's grey face filled the lower half of the opening as a pale bluish shape - Old Mine Islet 11-19 cave1119 r2.
+			// Its mesh can't be read, so the rock is laid by the tunnel's own texture coordinates)
+			if (done > 0)
+			{
+				var body = new List<MeshRenderer>();
+				MeshRenderer own = piece.GetComponent<MeshRenderer>();
+				if (own != null) body.Add(own);
+				foreach (Transform c in piece.transform)
+					if (c.name == CaveBacks.Name) { MeshRenderer br = c.GetComponent<MeshRenderer>(); if (br != null) body.Add(br); }
+				foreach (MeshRenderer r in body)
+				{
+					if (r.GetComponent<HillWall>() != null || r.sharedMaterial == skin.sharedMaterial) continue;
+					r.sharedMaterials = Enumerable.Repeat(skin.sharedMaterial, Mathf.Max(1, r.sharedMaterials.Length)).ToArray();
+					r.receiveShadows = skin.receiveShadows;
+					r.reflectionProbeUsage = skin.reflectionProbeUsage;
+					var block = new MaterialPropertyBlock();
+					skin.GetPropertyBlock(block);
+					for (int i = 0; i < r.sharedMaterials.Length; i++) r.SetPropertyBlock(block, i);
+					r.SetPropertyBlock(block);
+					r.gameObject.AddComponent<HillWall>();
+					TunnelsLikeHill++;
+				}
+				CaveLit.Mark(piece);
+			}
 			return done;
 		}
+		/// <summary>How many tunnel bodies (and backs) FramesLikeHill drew in the hill's rock, all islands since Raft started.</summary>
+		public static int TunnelsLikeHill;
 
 		/// <summary>
 		/// Takes away a join's floor plate (Join) that lies on a floor all over: at a tunnel's end into a den the den's floor
