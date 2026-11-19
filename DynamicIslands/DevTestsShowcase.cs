@@ -119,7 +119,7 @@ namespace DynamicIslands
 				if (recPaused) continue;
 				try { RecCapture(recScreen); }
 				catch (Exception e) { Fail("recording frame " + recFrame + ": " + e.Message); RecStopNow(); yield break; }
-				recFrame++;
+				recFrame++; if (recFrame % 30 == 0) hbProg++;
 			}
 		}
 
@@ -322,7 +322,136 @@ namespace DynamicIslands
 				StartTest(ShowcaseIsland(args[1], Mathf.Clamp(secs, 2f, 60f), args[3].ToLowerInvariant(), string.Join(" ", args.Skip(4).ToArray())));
 			}
 			else if (a == "hour" && args.Length > 1) { float h; float.TryParse(args[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out h); AzureSkyHour(h); Log("PASS: hour " + h); }
-			else Fail("CIShowcase editor <dir> [seed] | menu <dir> [plan] | island <dir> <seconds> <style> <island> | hour <h>");
+			else if (a == "library" && args.Length > 1) StartTest(ShowcaseLibrary(args[1]));
+			else if (a == "giants" && args.Length > 3)
+			{
+				int n; int.TryParse(args[2], out n);
+				float secs; float.TryParse(args[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out secs);
+				StartTest(ShowcaseGiants(args[1], Mathf.Clamp(n, 1, 8), Mathf.Clamp(secs, 2f, 60f), args.Length > 4 ? string.Join(" ", args.Skip(4).ToArray()) : ""));
+			}
+			else Fail("CIShowcase editor <dir> [seed] | menu <dir> [plan] | island <dir> <seconds> <style> <island> | library <dir> | giants <dir> <n> <seconds> [skip,islands] | hour <h>");
+		}
+
+		/// <summary>Main menu: the island library opened, its Islands tab, then World plans (the storylines), then Islands again,
+		/// a row picked on each - about 10.5 s. The pictures are fetched first (unrecorded) so none pops in on the video.</summary>
+		static IEnumerator ShowcaseLibrary(string dir)
+		{
+			if (LoadSceneManager.IsGameSceneLoaded) { Fail("showcase library: from the main menu only"); yield break; }
+			hbWhat = "showcase library";
+			// (the list is read online: a failed TLS handshake (vid6 11-19, "Unable to complete SSL connection") is tried again)
+			for (int attempt = 1; attempt <= 5; attempt++)
+			{
+				LibraryWindow.Open(1);
+				float end = Time.realtimeSinceStartup + 30f;
+				while ((LibraryClient.Entries == null || LibraryWindow.Shown().Count == 0) && Time.realtimeSinceStartup < end && LibraryClient.LastError == null) yield return new WaitForSecondsRealtime(0.25f);
+				while ((LibraryClient.Entries == null || LibraryWindow.Shown().Count == 0) && Time.realtimeSinceStartup < end) yield return new WaitForSecondsRealtime(0.25f);
+				if (LibraryWindow.Shown().Count > 0) break;
+				Log("Library: attempt " + attempt + " did not load (" + LibraryWindow.Status + ")");
+				hbProg++;
+				LibraryWindow.Close();
+				yield return new WaitForSecondsRealtime(5f);
+			}
+			if (LibraryWindow.Shown().Count == 0) { Fail("showcase library: the library's list did not load (" + LibraryWindow.Status + ")"); LibraryWindow.Close(); hbWhat = "idle"; yield break; }
+			// the rows to pick: the 3rd island and the 2nd plan (a storyline), when there are that many
+			List<string> islands = LibraryWindow.Shown();
+			string islandPick = islands[Mathf.Min(2, islands.Count - 1)];
+			LibraryWindow.ShowTab(0);
+			yield return new WaitForSecondsRealtime(0.5f);
+			List<string> plans = LibraryWindow.Shown();
+			string planPick = plans.Count > 0 ? plans[Mathf.Min(1, plans.Count - 1)] : null;
+			// warm the picture cache (vid7 11-19: the icons and pictures still loaded, white, while it was filmed): the icons of the
+			// first rows of both tabs and every picture of both picks, each tried up to 3 times; then they come from memory
+			var want = new List<KeyValuePair<LibraryEntry, string>>();
+			foreach (string id in islands.Take(11).Concat(plans.Take(11)))
+			{
+				LibraryEntry e = LibraryClient.Entries.FirstOrDefault(x => x.Info.id == id);
+				if (e == null) continue;
+				if (!string.IsNullOrEmpty(e.Info.icon)) want.Add(new KeyValuePair<LibraryEntry, string>(e, e.Info.icon));
+				if (id == islandPick || id == planPick)
+					foreach (string pic in e.Info.pictures) want.Add(new KeyValuePair<LibraryEntry, string>(e, pic));
+			}
+			int got = 0, missing = 0;
+			float warmEnd = Time.realtimeSinceStartup + 300f;
+			foreach (var w in want)
+			{
+				Texture2D tex = null;
+				for (int t = 0; t < 3 && tex == null && Time.realtimeSinceStartup < warmEnd; t++)
+				{
+					bool done = false;
+					DynamicIslands.instance.StartCoroutine(LibraryClient.Picture(w.Key, w.Value, x => { tex = x; done = true; }));
+					float pe = Time.realtimeSinceStartup + 40f;
+					while (!done && Time.realtimeSinceStartup < pe) yield return null;
+					hbProg++;
+				}
+				if (tex != null) got++; else { missing++; Log("Library: picture '" + w.Value + "' of " + w.Key.Info.id + " did not load"); }
+			}
+			Log("Library: " + got + " pictures ready, " + missing + " missing");
+			// start on the first island row, so picking islandPick on the video changes the detail
+			LibraryWindow.ShowTab(1);
+			yield return new WaitForSecondsRealtime(0.5f);
+			{ Button r = LibraryWindow.Row(islands[0]); if (r != null) r.onClick.Invoke(); }
+			yield return new WaitForSecondsRealtime(2f);
+			Log("Library: " + islands.Count + " islands, " + plans.Count + " plans; picks '" + islandPick + "', '" + planPick + "'");
+
+			RecStart(dir, 30, "camui");
+			yield return RecHold(2.0f);
+			{ Button r = LibraryWindow.Row(islandPick); if (r != null) r.onClick.Invoke(); }
+			yield return RecHold(2.0f);
+			LibraryWindow.ShowTab(0);
+			yield return RecHold(1.3f);
+			if (planPick != null) { Button r = LibraryWindow.Row(planPick); if (r != null) r.onClick.Invoke(); }
+			yield return RecHold(2.7f);
+			LibraryWindow.ShowTab(1);
+			yield return RecHold(2.5f);
+			yield return RecStopRoutine();
+			LibraryWindow.Close();
+			hbWhat = "idle";
+			Log("PASS: showcase library");
+		}
+
+		/// <summary>World: the biggest island of each storyline (world plan) by land radius, the n biggest of different plans
+		/// filmed one by one (a sweeping orbit that shows the whole island) into dir_1, dir_2... skip: islands (comma list) left out.</summary>
+		static IEnumerator ShowcaseGiants(string dir, int n, float seconds, string skip)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("showcase giants: not in a world"); yield break; }
+			// (the scan reads every storyline island's file: progress for the heartbeat, or ci.ps1 ends the step as idle - vid6 11-19)
+			hbWhat = "showcase giants";
+			var skipSet = new HashSet<string>(skip.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0), StringComparer.OrdinalIgnoreCase);
+			var best = new Dictionary<string, KeyValuePair<string, float>>(StringComparer.OrdinalIgnoreCase);
+			foreach (string p in WorldPlan.All())
+			{
+				if (WorldPlan.IsBuiltIn(p) || p.StartsWith("CI ", StringComparison.OrdinalIgnoreCase)) continue;
+				string story = p.Replace(" (Custom Islands)", "").Trim();
+				WorldPlan plan;
+				try { plan = WorldPlan.Load(p); } catch { continue; }
+				if (plan == null) continue;
+				foreach (IntroRule r in plan.Rules)
+				{
+					var names = new List<string>();
+					if (r.What == "island") names.Add(r.WhatArg.Trim());
+					else if (r.What == "oneof") names.AddRange(r.WhatArg.Split(',').Select(x => x.Trim()));
+					foreach (string isl in names)
+					{
+						if (isl.Length == 0 || skipSet.Contains(isl) || !File.Exists(IslandSpawner.PathFor(isl))) continue;
+						float land = CustomIslandSpawner.LandRadius(isl);
+						hbProg++;
+						KeyValuePair<string, float> had;
+						if (!best.TryGetValue(story, out had) || land > had.Value) best[story] = new KeyValuePair<string, float>(isl, land);
+					}
+				}
+				Log("Giants: read plan '" + p + "'");
+				yield return null;
+			}
+			var ranked = best.OrderByDescending(kv => kv.Value.Value).ToList();
+			foreach (var kv in ranked.Take(12)) Log("Giant: '" + kv.Value.Key + "' of " + kv.Key + ", land radius " + kv.Value.Value.ToString("F0") + " m");
+			int i = 0;
+			foreach (var kv in ranked.Take(n))
+			{
+				i++;
+				yield return ShowcaseIsland(dir + "_" + i, seconds, "sweep", kv.Value.Key);
+			}
+			hbWhat = "idle";
+			Log("PASS: showcase giants (" + i + ")");
 		}
 
 		static IEnumerator ShowcaseEditor(string dir, int seed)
@@ -497,6 +626,8 @@ namespace DynamicIslands
 					looks = new[] { look - toRaft * R * 0.2f, look, look + toRaft * R * 0.1f };
 					break;
 				case "rise": pos = Arc(c, side + 20f, side - 10f, d * 0.85f, d * 1.25f, 5f, h * 1.6f); break;
+				// (a giant island: a long high sweep round it, coming down as it goes - the whole island, then its shore)
+				case "sweep": pos = Arc(c, side - 70f, side + 35f, d * 1.25f, d * 0.95f, h * 1.7f, h * 0.75f, 7); break;
 				default: pos = Arc(c, side - 40f, side + 40f, d, d, h, h); break;
 			}
 			AzureSkyHour(10.5f);
