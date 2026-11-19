@@ -1758,7 +1758,9 @@ namespace DynamicIslands
 		/// 1.2-2.2 m "in the air" over the creek's bed, IG5 11-18).</summary>
 		internal static float GapToWater(float g, float y, float sea)
 		{
-			return y >= sea && y - g < sea ? y - sea : g;
+			// (a base a little under the water's top: afloat in it - Fleetbreak's filter-crate rafts, foundations 0.3 m down over
+			// a sea cave 2-6 m under, read "partly in the air", IG5 11-19)
+			return y - g < sea ? Mathf.Max(0f, y - sea) : g;
 		}
 
 		static float GapUnder(Transform self, Vector3 foot, Terrain land)
