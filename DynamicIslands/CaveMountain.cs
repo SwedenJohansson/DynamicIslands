@@ -920,6 +920,10 @@ namespace DynamicIslands.Editor
 							Vector3 cp = new Vector3(x0 + i * Cell, 0f, z0 + k * Cell);
 							float sl = Mathf.Abs(Vector3.Dot(cp - m.Pos, m.Side) - m.InsideSide) - (m.ArchHalf + LoneSlot);
 							if (sl < 0f) { Why[i, k] = 'w'; continue; }
+							// (fix-open 11-19: no new skin further to the side than the den's half width plus LoneRun: a lone den's cheeks went on
+							// along its front plane over the whole grid, 75 m out to the Arena's control room door, where a ramp of skin off
+							// the room's roof slab down to the floor closed the doorway's lower half - plan_silver_screen's walk stuck in it)
+							if (!on[i, k] && sl + m.ArchHalf + LoneSlot > m.HalfWidth + LoneRun) { Why[i, k] = 'n'; continue; }
 							// (not out over the sea: there it stood as a flat square panel at the sea's foot, Caisson Yard and Shelter Atoll r48)
 							if (!on[i, k] && !(ground[i, k] > SeaLevel + DryBy)) { Why[i, k] = 'o'; continue; }
 							float lf = Mathf.Max(ground[i, k], SeaLevel - SeaFootBy);

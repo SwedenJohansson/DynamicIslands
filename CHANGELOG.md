@@ -13,6 +13,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 - **Ironreef Caverns' second rat waits in tunnel B**: it used to wander out of the tunnel's open mouth before you came; it now stays in until you walk in. The mine's lanterns stand on their crates, and rocks and bushes that hung in the air by the Drowned Shaft and on the mountain's east side are gone.
 - **Stilt Hollow's notice board stands on the deck** instead of a metre over it; **Tide Farm's jam crate** sits on a post from the sea floor instead of on nothing.
+- **The Arena's control room door is open all the way down**: the rock skin round a lone bear den ran on sideways along the den's front for as far as the island went, and 75 m away it lay as a ramp across the lower half of the wardens' door in the peak. A den's skin now reaches no further to the side than its own half width plus 14 m.
 - **Old Mine Islet tidied**: the mine portal's south post reaches the ground, and a rock and three bushes that stood over the ground at the mine hill's north end are gone.
 - **Play tests start without a hazmat suit** (island makers' test): a suit put on in one `CIPlay` (and its timer) no longer protects the next play in the same world.
 - **Console test lines that start no test end their run** (island makers' test): `ci.ps1 -done` waited forever after commands such as `CICaveCell`; it now ends on `IDLE (plain commands, no test)`.
