@@ -2138,6 +2138,34 @@ namespace DynamicIslands
 			if (GameManager.IsLeavingGame || LoadSceneManager.IsLoadingScene) Log("  (Raft still leaving the last world: IsLeavingGame=" + GameManager.IsLeavingGame + ", IsLoadingScene=" + LoadSceneManager.IsLoadingScene + ")");
 		}
 
+		[ConsoleCommand(name: "CIFreeMem", docs: "Dev, main menu only: Resources.UnloadUnusedAssets, then GC.Collect, and logs the memory before and after - freemem before=<MB> after=<MB> (the working set; the Mono heap in brackets). An experiment (speedups 11-19): a long-running Raft may give little back")]
+		public static void FreeMemCommand() { StartTest(FreeMemRoutine()); }
+
+		static IEnumerator FreeMemRoutine()
+		{
+			// (the menu only: a world or the editor holds what it uses, and an unload mid-load spoils it)
+			if (DynamicIslands.InEditor() || (LoadSceneManager.IsGameSceneLoaded && ComponentManager<Raft_Network>.Value != null) || LoadSceneManager.IsLoadingScene || MenuNewGameBox() == null)
+			{ Fail("freemem: only at the main menu (CIMainMenu first)"); yield break; }
+			float start = Time.realtimeSinceStartup;
+			long monoBefore = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong(), wsBefore = WorkingSet();
+			AsyncOperation unload = Resources.UnloadUnusedAssets();
+			System.GC.Collect();
+			System.GC.WaitForPendingFinalizers();
+			System.GC.Collect();
+			yield return unload;
+			yield return null;
+			long monoAfter = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong(), wsAfter = WorkingSet();
+			Log("freemem before=" + Mb(wsBefore) + " after=" + Mb(wsAfter) + " (working set MB; Mono used heap " + Mb(monoBefore) + " -> " + Mb(monoAfter) + " MB, took " + Took(start) + ")");
+		}
+
+		static long WorkingSet()
+		{
+			try { using (var p = System.Diagnostics.Process.GetCurrentProcess()) { p.Refresh(); return p.WorkingSet64; } }
+			catch (System.Exception) { return -1; }
+		}
+
+		static string Mb(long bytes) { return bytes < 0 ? "?" : (bytes / (1024 * 1024)).ToString(); }
+
 		[ConsoleCommand(name: "CIModelCheck", docs: "Dev, editor (after a world): creatures show Raft's real models instead of markers; places a few and takes a screenshot")]
 		public static void ModelCheck()
 		{
