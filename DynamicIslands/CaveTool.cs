@@ -1241,11 +1241,14 @@ namespace DynamicIslands.Editor
 					{
 						if (state[i, k] != 1) { hollow[i, k] = state[i, k] == 2; continue; }
 						float cx = x0 + (i + 0.5f) * cell, cy = y0 + (k + 0.5f) * cell;
-						Vector3 w = go.transform.TransformPoint(new Vector3(cx, cy, z + depth(cx, cy)));
-						int u = firstMet(w, up), r = firstMet(w, right), l = firstMet(w, -right);
+						// (the hill asked where the cell is drawn, PlugForward out: asked 1.8 m further in, the cells by a thin bit of
+						// the hill - Signal Rock's cleft - passed as in it and stood out of it as rust shards and a flat slab, w15Z;
+						// the den's hollow still where its cells are found)
+						Vector3 w = go.transform.TransformPoint(new Vector3(cx, cy, z + depth(cx, cy))), wd = go.transform.TransformPoint(pos3(cx, cy));
+						int u = firstMet(wd, up), r = firstMet(wd, right), l = firstMet(wd, -right);
 						hollow[i, k] = denMet(w, up) == -1 && denMet(w, right) == -1 && denMet(w, -right) == -1 && denMet(w, -up) == -1;
-						open[i, k] = !hollow[i, k] && !(u == 1 && r == 1 && l == 1 && firstMet(w, outward) == 1);
-						free[i, k] = u == 0 && r == 0 && l == 0 && firstMet(w, outward) == 0 && firstMet(w, -up) == 0;
+						open[i, k] = !hollow[i, k] && !(u == 1 && r == 1 && l == 1 && firstMet(wd, outward) == 1);
+						free[i, k] = u == 0 && r == 0 && l == 0 && firstMet(wd, outward) == 0 && firstMet(wd, -up) == 0;
 						sky[i, k] = u == 0;
 					}
 			}

@@ -1425,8 +1425,18 @@ namespace DynamicIslands
 			foreach (string r in rows) Log(r);
 		}
 
+		/// <summary>The last play picture's camera, from its island's land centre in the island's turn, and the island's name
+		/// (CIRayLook picture: what one odd bit of it is - the play's island is gone by then, so it is brought again).</summary>
+		internal static Vector3? LastPictureFrom, LastPictureLook;
+		internal static string LastPictureIsland;
+
 		static IEnumerator PlayPicture(string file, Vector3 from, Vector3 look, float lightM = 0f)
 		{
+			if (playEntry != null && playEntry.Root != null)
+			{
+				Quaternion back = Quaternion.Inverse(playEntry.Root.transform.rotation);
+				LastPictureFrom = back * (from - playEntry.Position); LastPictureLook = back * (look - playEntry.Position); LastPictureIsland = playEntry.Name;
+			}
 			Camera cam = Camera.main;
 			if (cam == null) yield break;
 			// (CIGfx low: the user's quality for the picture, two frames for the water to follow)
