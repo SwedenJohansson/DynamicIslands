@@ -5,7 +5,7 @@
 # and killed him; the checks don't need him near. fix1107i: rats moved under the hall's roof, 10.5 m and more from
 # the open mouths - see the recipe; the wait is 30 s: in 15 s neither rat once got 1 m from its start)
 island Ironreef Caverns keep
-offset 1.3339 0.1645
+offset 1.9123 0.2444
 hour 11
 weather Calm
 at -44.6 -22.4

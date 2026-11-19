@@ -1,7 +1,7 @@
 # Play test of Stilt Hollow (CIPlay stilt_hollow, in a test world 'CI ...'). Points as in its recipe.
 island Stilt Hollow
 # DEEP 10-25: the tank stack moved the land's centre (the recipe's save prints the exact offset)
-offset -15.38 1.82
+offset -15.2991 1.5469
 expect step 0
 expect title Water for Stilt Hollow
 

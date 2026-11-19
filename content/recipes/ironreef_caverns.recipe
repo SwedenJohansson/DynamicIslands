@@ -579,13 +579,15 @@ clear at 27.53 -30.38 r=1 only=SmallBoulder4
 clear at -20.88 5.62 r=1 only=SmallBoulder3
 clear at 83.05 -57.57 r=1.5 only=BigBoulder2_Low
 # (more left in the air, CIFloating fix-open 11-19: by the Drowned Shaft, where its channel was lowered past the cleared
-# strip - plants and stones 12-17 m over the new ground - and two stones on the mountain's east side)
-clear at -64.25 -19.51 r=1 only=SmallBoulder1
-clear at -59.36 -20.38 r=1.5 only=BigBoulder1_Low
-clear at -59.8 -27.8 r=1.5 only=Bush
-clear at -56.53 -26.41 r=1 only=Bush
-clear at -60.31 -17.82 r=1 only=Bush2
-clear at -62.39 -16.7 r=1 only=Banana_Bush_2
-clear at 21.42 5.88 r=1 only=SmallBoulder4
-clear at 25.53 14.83 r=1.5 only=BigBoulder1_Low
+# strip - plants and stones 12-17 m over the new ground - and two stones on the mountain's east side; CIFloating
+# prints points from the land centre: recipe point = printed + the centre's offset 1.91 0.24 that CIRecipe prints, fo3)
+clear at -62.92 -19.35 r=1.5 only=SmallBoulder1
+clear at -58.03 -20.22 r=1.5 only=BigBoulder1_Low
+clear at -58.47 -27.64 r=1.5 only=Bush
+clear at -55.20 -26.25 r=1.5 only=Bush
+clear at -58.98 -17.66 r=1.5 only=Bush2
+clear at -61.06 -16.54 r=1.5 only=Banana_Bush_2
+clear at 22.75 6.04 r=1.5 only=SmallBoulder4
+clear at 26.86 14.99 r=1.5 only=BigBoulder1_Low
+clear at 27.77 -4.05 r=1.5 only=Bush
 save Ironreef Caverns
