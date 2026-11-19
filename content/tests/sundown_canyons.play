@@ -12,7 +12,7 @@
 # -29.5, its deck 48.5 m); the ladder trail down the north face at x -24 (ladders up the cribbing at z -4.25, 1.75 and
 # 7.75, ledges at 36 and 30 m), its foot at 24 m
 island Sundown Canyons
-offset 0.1194 1.6867
+offset 0.1516 2.0257
 expect step 0
 expect title The New Sheriff
 expect animals Llama 3
