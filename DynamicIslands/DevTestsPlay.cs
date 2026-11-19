@@ -235,7 +235,7 @@ namespace DynamicIslands
 					settleAllFalse = settleGroup.Count > 0 && settleGroup.All(g => !PlayQuiet(g));
 				}
 				// (sail only counts distance: a plan whose first rule wants km sails before any island - Relic of the Seventh Tide)
-				bool storyStep = verb == "plan" || verb == "note" || verb == "tune" || verb == "arrive" || verb == "sail" || (verb == "expect" && t.Length > 1 && t[1] == "chain");
+				bool storyStep = verb == "plan" || verb == "note" || verb == "tune" || verb == "arrive" || verb == "sail" || (verb == "expect" && t.Length > 1 && (t[1] == "chain" || t[1] == "quests"));
 				if (verb != "island" && verb != "log" && verb != "wait" && verb != "hour" && !storyStep && playEntry == null) { Fail("play " + name + ", " + rl.Where + ": no island yet"); yield break; }
 				// (the island step goes to a plan's island that isn't loaded yet - one a tuned frequency brought beyond the load distance)
 				if (playEntry != null && playEntry.Root == null && verb != "log" && verb != "island" && !storyStep) { Fail("play " + name + ", " + rl.Where + ": the island isn't loaded"); yield break; }
@@ -681,6 +681,25 @@ namespace DynamicIslands
 							Func<bool> holds = () => state == "done" ? StoryChain.Done.Contains(key) : state == "locked" ? !StoryChain.Unlocked.Contains(key) && !StoryChain.Done.Contains(key) : StoryChain.Unlocked.Contains(key);
 							for (float w = 0f; w < 15f && !holds(); w += 0.5f) { StoryChain.Tick(); yield return new WaitForSeconds(0.5f); }
 							Check(ref ok, holds(), "the story: " + StoryChain.StepName(key) + " " + state + " (" + string.Join(" > ", StoryChain.Steps.Select(x => StoryChain.StepName(x) + (StoryChain.Done.Contains(x) ? " (done)" : StoryChain.Unlocked.Contains(x) ? " (unlocked)" : "")).ToArray()) + ")");
+							break;
+						}
+						if (t.Length > 2 && t[1] == "quests")
+						{
+							// expect quests <story steps done> [sidetrips]: the journal's count (QC5) - the plan's story group with that many
+							// done; sidetrips: the plan's other islands counted already, before they come
+							int want = (int)F(t[2]), sd = -1, sn = 0, on = 0;
+							for (float w = 0f; w < 15f; w += 0.5f)
+							{
+								List<QuestCount.Quest> qs = QuestCount.All();
+								sd = qs.Count(x => x.Group == QuestCount.PlanStory && x.Done); sn = qs.Count(x => x.Group == QuestCount.PlanStory);
+								on = qs.Count(x => x.Group == QuestCount.PlanIslands);
+								if (sd == want) break;
+								StoryChain.Tick(); yield return new WaitForSeconds(0.5f);
+							}
+							int qd, qt;
+							QuestCount.Count(QuestCount.All(), out qd, out qt);
+							Check(ref ok, sd == want, "the journal's count: the plan's story " + sd + " of " + sn + " done (expected " + want + "), all " + qd + "/" + qt);
+							if (t.Length > 3 && t[3] == "sidetrips") Check(ref ok, on > 0, "the journal counts the plan's side trips from the start (" + on + ")");
 							break;
 						}
 						if (t.Length > 2 && t[1] == "spinsown")

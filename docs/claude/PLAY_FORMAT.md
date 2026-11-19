@@ -107,6 +107,7 @@ expect message isn't whole
 | `expect stand <x> <z> h=<h> [below=<m>]` | What is at the point is within 0.6 m of h above `Position.y`. |
 | `expect spinsown <name>` | The object turns about its own up axis. |
 | `expect chain <rule\|Raft story island> [done\|unlocked\|locked]` | Its place in the story chain (default `done`), allowing up to 15 s. |
+| `expect quests <n> [sidetrips]` | The journal's quest count: the plan's story islands with `n` done, allowing up to 15 s; `sidetrips` also checks the plan's other islands are counted before they come. |
 
 ## Pass and fail in the log
 
@@ -122,7 +123,7 @@ expect message isn't whole
 
 ## Traps
 
-- Before an island, only `island`, `log`, `wait`, `hour`, `plan`, `note`, `tune`, `arrive`, `sail` and `expect chain` may run.
+- Before an island, only `island`, `log`, `wait`, `hour`, `plan`, `note`, `tune`, `arrive`, `sail`, `expect chain` and `expect quests` may run.
 - `island`, `tune` and `arrive` reset the offset to 0. Put `offset` after them.
 - `wait` is seconds here; in a recipe it is frames.
 - `read` matches part of a note title. `open` and `reach` match a chest's `note.title` setting whole (any case).
