@@ -48,7 +48,8 @@ end
 macro hw_laundry n=4 y=0.1
 place Block_Pillar_Wood - at 0 0 y=$y
 place Block_Pillar_Wood - at $n 0 y=$y
-line Placeable_StringLight_Horizontal from 0 0 to $n 0 step=2 y={$y+2.2}
+# (11-19 cn4: one light every 2 m left 1.3 m of bare air between the short lights - one every metre, end to end)
+line Placeable_StringLight_Horizontal from 1 0 to $n 0 step=1 y={$y+2.2}
 end
 #
 # hw_airpocket: lib_gravity's air pocket (Raft's own air pocket on the ground at x z, its zone with air and bubbles);

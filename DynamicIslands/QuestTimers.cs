@@ -90,6 +90,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Every half second (QuestTracker.Tick): the host's clocks, then the countdown on the screen.</summary>
 		public static void Tick()
 		{
+			QuestTracker.TestThrowIf("timers");
 			if (!LoadSceneManager.IsGameSceneLoaded) { timers.Clear(); lastSent.Clear(); lastTick = -1f; Hide(); return; }
 			float dt = lastTick < 0f ? 0f : Mathf.Clamp(Time.time - lastTick, 0f, 2f);
 			lastTick = Time.time;

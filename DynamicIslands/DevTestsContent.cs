@@ -930,7 +930,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: islands the players still need come back"); else Fail("islands the players still need come back");
 		}
 
-		[ConsoleCommand(name: "CIAgainUntilDone", docs: "Dev, in game (host, a test world 'CI ...'): SR1 - a 'day:N:again' rule's island comes back every N days until the players are done with it. A plan 'CI again' (day rules with again: an island with a two-step quest and one without; and one without again) brings three islands on day D; left behind unvisited, none is back the day before D+N; the world saved and read back (the plan's again, each island's clock, no second copies); on day D+N the two again islands come back ahead of the raft, the other stays; the plain one reached and the quest one begun, then left again: only the quest one comes back; its quest done, nothing comes back")]
+		[ConsoleCommand(name: "CIAgainUntilDone", docs: "Dev, in game (host, a test world 'CI ...'): SR1 - a 'day:N:again' rule's island comes back every N days until the players are done with it. A plan 'CI again' (day rules with again: an island with a two-step quest and one without; and one without again) brings three islands on day D; left behind unvisited, none is back the day before D+N; the world saved and read back (the plan's again, each island's clock, no second copies); on day D+N the two again islands come back ahead of the raft, the other stays; the plain one reached and the quest one begun, then left again: only the quest one comes back; QD8: the day counted back (a day reset) while it was away, it comes back N days after that day; its quest done, nothing comes back")]
 		public static void AgainUntilDoneTest() { StartTest(AgainUntilDoneRoutine()); }
 
 		[ConsoleCommand(name: "CISetDay", docs: "Dev, in game (host, a test world 'CI ...'): CISetDay <n> sets Raft's day counter to n, for plan tests with 'day:N' rules (run it before CIPlay)")]
@@ -1062,6 +1062,20 @@ namespace DynamicIslands
 				Check(ref ok, returned == 1 && from(entry("qa")) < behindBy - 300f && from(entry("pl")) > behindBy - 300f,
 					"day " + (d + 2 * n) + ": only the unfinished quest island came back (" + returned + "; quest " + from(entry("qa")).ToString("F0") + " m, plain " + from(entry("pl")).ToString("F0") + " m)");
 				Check(ref ok, QuestTracker.StepOf(entry("qa")) == 1, "its quest where it was (step " + QuestTracker.StepOf(entry("qa")) + ")");
+				// QD8 (11-19): the day counted back (a day reset) while it was away - its wait starts again from that day,
+				// not from the later day it last came: back on day d + n, not only on day d + 3n
+				yield return new WaitForSeconds(2.5f);
+				leave(new[] { "qa" });
+				returned = 0;
+				SetDay(d);
+				for (int i = 0; i < 6; i++) yield return new WaitForSeconds(1f);
+				ObjectState resetMark = null;
+				bool hasReset = entry("qa") != null && entry("qa").State.TryGetValue(ReturningIslands.AgainKey, out resetMark);
+				Check(ref ok, returned == 0 && hasReset && resetMark.Day == d, "day reset to " + d + ": not back, its clock counts from day " + (hasReset ? resetMark.Day.ToString() : "none") + " (" + returned + " came back)");
+				SetDay(d + n);
+				for (float t = 0f; t < 20f && returned < 1; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				yield return new WaitForSeconds(2f);
+				Check(ref ok, returned == 1 && from(entry("qa")) < behindBy - 300f, "after the reset, day " + (d + n) + ": the unfinished quest island came back (" + returned + "; " + from(entry("qa")).ToString("F0") + " m)");
 				// Its quest done: nothing comes back any more
 				QuestTracker.Set(entry("qa"), 2, 0, false);
 				Check(ref ok, why("qa") == "no", "its quest done: not needed (" + why("qa") + ")");

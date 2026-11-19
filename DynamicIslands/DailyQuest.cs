@@ -190,6 +190,7 @@ namespace DynamicIslands.Editor
 		{
 			if (Time.unscaledTime < nextCheck) return;
 			nextCheck = Time.unscaledTime + 1f;
+			QuestTracker.TestThrowIf("daily");
 			if (!LoadSceneManager.IsGameSceneLoaded || !On) return;
 			if (Raft_Network.IsHost)
 			{
