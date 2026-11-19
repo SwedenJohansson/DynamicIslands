@@ -2158,9 +2158,26 @@ namespace DynamicIslands
 			Log("freemem before=" + Mb(wsBefore) + " after=" + Mb(wsAfter) + " (working set MB; Mono used heap " + Mb(monoBefore) + " -> " + Mb(monoAfter) + " MB, took " + Took(start) + ")");
 		}
 
+		// (Mono's Process.WorkingSet64 gave 0 in Raft (box3, 11-19): ask Windows itself)
+		[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+		struct ProcessMemoryCounters
+		{
+			public uint cb, PageFaultCount;
+			public System.UIntPtr PeakWorkingSetSize, WorkingSetSize, QuotaPeakPagedPoolUsage, QuotaPagedPoolUsage,
+				QuotaPeakNonPagedPoolUsage, QuotaNonPagedPoolUsage, PagefileUsage, PeakPagefileUsage;
+		}
+		[System.Runtime.InteropServices.DllImport("kernel32.dll")] static extern System.IntPtr GetCurrentProcess();
+		[System.Runtime.InteropServices.DllImport("kernel32.dll")] static extern bool K32GetProcessMemoryInfo(System.IntPtr process, ref ProcessMemoryCounters counters, uint cb);
+
 		static long WorkingSet()
 		{
-			try { using (var p = System.Diagnostics.Process.GetCurrentProcess()) { p.Refresh(); return p.WorkingSet64; } }
+			try
+			{
+				var c = new ProcessMemoryCounters { cb = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(ProcessMemoryCounters)) };
+				if (K32GetProcessMemoryInfo(GetCurrentProcess(), ref c, c.cb) && c.WorkingSetSize.ToUInt64() > 0) return (long)c.WorkingSetSize.ToUInt64();
+			}
+			catch (System.Exception) { }
+			try { using (var p = System.Diagnostics.Process.GetCurrentProcess()) { p.Refresh(); return p.WorkingSet64 > 0 ? p.WorkingSet64 : -1; } }
 			catch (System.Exception) { return -1; }
 		}
 
