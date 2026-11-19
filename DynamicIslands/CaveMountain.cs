@@ -62,8 +62,12 @@ namespace DynamicIslands.Editor
 		/// neighbour (or the way in's floor) more than the arch's own height, and where (world). CICaveGapsLook checks it (11-18 w15L:
 		/// sheer cuts down the sides of Signal Rock's rig den's way in, a flat cut face beside Wreckers' Cove's den).</summary>
 		public float LoneSheer; public Vector3 LoneSheerAt; public string LoneSheerNote = "";
+		/// <summary>The last build's tallest cell over a lone den's arch span or roof just behind its plane, over the plane cap there (m),
+		/// and where (11-19 cave1119 FO-S1; CICaveGapsLook checks it).</summary>
+		public float LoneHead; public Vector3 LoneHeadAt;
 		static char[,] Why;
 		public int OverDug; // (cells over an open dug passage left without hill - tests)
+		[System.ThreadStatic] static int SkirtsCut; // (Edge: skirts under a way in let down to the skin's own edge, SkirtOverEdge, FO-U1 - log)
 		public int SeaCutCells; // (last build: cells cut for the sea - cave.seacut - tests)
 
 		/// <summary>Tests: builds it again now.</summary>
@@ -550,7 +554,7 @@ namespace DynamicIslands.Editor
 			var cut = new bool[nx, nz];
 			Why = new char[nx, nz]; // (tests: what last set each cell, in LastMap)
 			var cutAhead = new bool[nx, nz]; // (cut only for lying out past a mouth over lower hill: a lone den's funnel may still ramp there)
-			OverDug = 0;
+			OverDug = 0; SkirtsCut = 0;
 			var sea = new bool[nx, nz];
 			string seaOpt;
 			bool seaCutOn = props.Any(p => p != null && p.TryGetValue(ObjectProps.CaveSeaCut, out seaOpt) && seaOpt == "1");
@@ -747,6 +751,27 @@ namespace DynamicIslands.Editor
 						}
 				}
 
+			// (11-19 cave1119: and over the arch's span and the den's roof just behind its plane: how far the hill stands over the
+			// plane cap there - the dome's full height left a sheer wall over the arch, the way in a slot cut in it, Vaporhold FO-S1)
+			LoneHead = 0f; LoneHeadAt = Vector3.zero;
+			if (dryFootOn)
+				for (int j = 0; j < mouths.Count; j++)
+				{
+					Mouth m = mouths[j];
+					if (!m.Dry || float.IsNaN(m.Front)) continue;
+					for (int i = 0; i < nx; i++)
+						for (int k = 0; k < nz; k++)
+						{
+							float past = ahead[j][i, k];
+							if (!on[i, k] || cut[i, k] || !float.IsNaN(corridor[i, k]) || !(past > -2f * Cell) || past > 0f) continue;
+							Vector3 cp = new Vector3(x0 + i * Cell, 0f, z0 + k * Cell);
+							if (Mathf.Abs(Vector3.Dot(cp - m.Pos, m.Side) - m.InsideSide) > m.ArchHalf + LoneSlot) continue;
+							float bb = -past, cap = m.FloorY + m.ArchUp + BackSlope * bb * (1f + bb / ShoulderCurve);
+							if (!float.IsNaN(cover[i, k])) cap = Mathf.Max(cap, cover[i, k] + Over + LoneRoofOver);
+							if (height[i, k] - cap > LoneHead) { LoneHead = height[i, k] - cap; LoneHeadAt = new Vector3(cp.x, height[i, k], cp.z); }
+						}
+				}
+
 			var map = new System.Text.StringBuilder();
 			for (int k = nz - 1; k >= 0; k--)
 			{
@@ -888,10 +913,20 @@ namespace DynamicIslands.Editor
 				if (asDen >= 0 && caves[asDen] != null) RockAsDen(mr, caves[asDen].gameObject);
 			}
 			DressTunnels();
-			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : ""));
+			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : "") + (SkirtsCut > 0 ? ", " + SkirtsCut + " skirt strip(s) let down to the edge" : ""));
 			// (lone dens walled before the hill was built: their walls' outsides drawn as the hill now)
 			foreach (Transform t in caves)
 				if (t != null) CaveTool.WallLikeHill(t.gameObject, mr);
+			// (and tunnels' mouth frames as the hill too: pale ravine rock slabs in its face, 11-19 cave1119)
+			int frames = 0, bodies0 = CaveTool.TunnelsLikeHill;
+			foreach (Transform t in caves)
+				if (t != null) frames += CaveTool.FramesLikeHill(t.gameObject, mr);
+			if (frames > 0) Debug.Log("[CUSTOM ISLANDS] Cave mountain: " + frames + " tunnel mouth frame(s) drawn as the hill, " + (CaveTool.TunnelsLikeHill - bodies0) + " tunnel body/back renderer(s) in the hill's rock");
+			// (and join plates lying on a den's floor taken away: a pale flat sheet over the floor at a tunnel's end, 11-19 cave1119 uf)
+			int joins = 0;
+			foreach (Transform t in caves)
+				if (t != null) joins += CaveTool.JoinsOnFloor(t.gameObject);
+			if (joins > 0) Debug.Log("[CUSTOM ISLANDS] Cave mountain: " + joins + " join plate(s) lying on a floor taken away");
 		}
 
 		/// <summary>
@@ -963,10 +998,15 @@ namespace DynamicIslands.Editor
 						// cheeks' height at the arch's rim, as the lone ramp out in front does, and BackSlope more per m back - it stood at the
 						// dome's full height right at the plane over the den's whole width, 10-13 m over the cheeks out in front: sheer cuts
 						// down both sides of the way in and a flat cut face beside the arch, Signal Rock's rig den and Wreckers' Cove's den w15)
-						if (!float.IsNaN(m.Front) && float.IsNaN(top[i, k]) && on[i, k] && !cut[i, k])
+						// (11-19 cave1119: and over the den's own roof and the arch's span behind the plane too, as just off the arch's top: the
+						// dome stood at its full height there, 10 m and more over the arch, and the way in showed as a deep slot cut in a sheer
+						// wall with the den's face at its back - Vaporhold's Seep Cave FO-S1)
+						bool backOfPlane = !(past > 0f);
+						if (!float.IsNaN(m.Front) && (float.IsNaN(top[i, k]) || backOfPlane) && on[i, k] && !cut[i, k])
 						{
 							float sl = Mathf.Abs(Vector3.Dot(new Vector3(x0 + i * Cell, 0f, z0 + k * Cell) - m.Pos, m.Side) - m.InsideSide) - (m.ArchHalf + LoneSlot);
-							if (sl > 0f)
+							if (backOfPlane) sl = Mathf.Max(sl, 0f);
+							if (sl > 0f || backOfPlane)
 							{
 								float bb = Mathf.Max(-past, 0f);
 								float plane = m.FloorY + m.ArchUp + LoneCheek(sl) + BackSlope * bb * (1f + bb / ShoulderCurve);
@@ -1646,7 +1686,10 @@ namespace DynamicIslands.Editor
 					// (at the way in itself no higher than its floor, and nothing over it - its own arch is the face there: the floor
 					// and roof found in a bear cave's mouth stood 0.5-1.2 m into the way in, a step and a lintel across it on 15
 					// islands' dens; only a mouth that dips under the way in's floor takes the skirt down with it)
-					if (atWay) l = Mathf.Min(l, way);
+					// (nor more than SkirtOverEdge m over the skin's own edge: where the hill has dived under the sea beside an underwater
+					// tunnel's way in, the skirt rose from the sea floor to the way's floor, a lone plate of rock standing out of the
+					// water with nothing round it, Utopia FO-U1 11-19)
+					if (atWay) { l = Mathf.Min(l, way); if (Mathf.Max(e0.y, e.y) < way - SkirtOverEdge && l > Mathf.Max(e0.y, e.y)) { l = Mathf.Max(e0.y, e.y); SkirtsCut++; } }
 					// (beside a way in out in front of its arch, no higher than the skin's own edge: the skirt rose to the passage's floor
 					// over the sand there, a dark straight wall beside the raised sand, Caisson Yard and Shelter Atoll 11-09 r53-r55)
 					else if (!float.IsNaN(way)) l = Mathf.Min(l, Mathf.Max(e0.y, e.y));
@@ -1663,6 +1706,8 @@ namespace DynamicIslands.Editor
 					float wy = way;
 					bool lone = Why != null && (Why[i1, k1] == 'L' || Why[i2, k2] == 'L');
 					if (lone) wy = Mathf.Min(way, Mathf.Max(e0.y, e.y));
+					// (any way in: not more than SkirtOverEdge m over the skin's own edge - the plate out of the sea, Utopia FO-U1)
+					else if (Mathf.Max(e0.y, e.y) < way - SkirtOverEdge) { wy = Mathf.Max(e0.y, e.y); SkirtsCut++; }
 					if (Mathf.Min(ga, gb) <= wy - 0.15f) Band(e0, e, Mathf.Min(ga, wy), Mathf.Min(gb, wy), wy, wy, n, verts, norms, uvs, tris, origin);
 					// (cave.foot=dry: beside the opening, rock from head height over the way in up to the dome; out in front of a lone
 					// den's arch from the way's floor up, with no gap: no den rock stands in front of its arch to close the 2.6 m under
@@ -1702,6 +1747,8 @@ namespace DynamicIslands.Editor
 			Quad(verts, norms, uvs, tris, origin, p3, p2, p1, p0, -n, false, new[] { bk, bk, bk, bk });
 		}
 		const float UvKeep = 0.35f; // (Quad: how much a triangle must face the side its corners' normals pick to be mapped from it)
+		// (Edge: a skirt under a way in stops at the skin's own edge when that is more than this many m under the way's floor)
+		const float SkirtOverEdge = 2.5f;
 		[System.ThreadStatic] static Vector3 BandLit; // (Edge: the hill's surface normal at the edge its Bands are under)
 		const float WallLift = 0.3f; // (more turns it to sand: the rock shader blends by the normal)
 		internal const float SheerSide = 6f; // (LoneSheer: how far beside a lone den's arch its cells are looked at)

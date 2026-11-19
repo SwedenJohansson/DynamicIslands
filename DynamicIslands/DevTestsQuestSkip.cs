@@ -118,19 +118,26 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = null;
 			try
 			{
-				// the quest timers (inside the quest tick) and the daily quest (beside it) throw for 2.5 s: the quest checks go on
+				// the quest timers (inside the quest tick) and the daily quest (beside it) throw until the quest checks have run 3
+				// more times: they go on. (Counted in ticks, not seconds: a minimised Raft runs a frame or two a second and stalls
+				// now and then, so "3 in 2.5 s" failed with the guards working - 11-19. Unguarded, the count would stop: 20 s cap.)
 				foreach (string[] part in new[] { new[] { "timers", "Quest timers:" }, new[] { "daily", "Daily quest:" } })
 				{
 					int before = QuestTracker.TickCount;
+					float t0 = Time.unscaledTime;
 					QuestTracker.TestThrow = part[0];
-					yield return new WaitForSecondsRealtime(2.5f);
+					while (QuestTracker.TickCount - before < 3 && Time.unscaledTime - t0 < 20f) yield return null;
+					// (one more second of throwing, so the daily part - every 1 s - has surely thrown too)
+					for (float t1 = Time.unscaledTime; Time.unscaledTime - t1 < 1.2f;) yield return null;
 					QuestTracker.TestThrow = null;
 					int ticks = QuestTracker.TickCount - before;
-					Check(ref ok, ticks >= 3 && errors.Any(x => x.Contains(part[1]) && x.Contains("CI test throw")),
-						part[0] + " throwing: the quest checks went on (" + ticks + " in 2.5 s), the error logged as '" + part[1] + "'");
+					bool logged = errors.Any(x => x.Contains(part[1]) && x.Contains("CI test throw"));
+					Check(ref ok, ticks >= 3 && logged, part[0] + " throwing: the quest checks went on (" + ticks + " in " + (Time.unscaledTime - t0).ToString("F1") + " s), the error " + (logged ? "" : "NOT ") + "logged as '" + part[1] + "'");
 				}
 
-				// the quest book: its layout throws once, the book tries again 5 s later (not every half second, not never)
+				// the quest book: its layout throws once, the book tries again 5 s later (not every half second, not never).
+				// (Watched every frame by the book's own clock: Time.unscaledTime is the same all through a frame, so the frame the
+				// layout comes back in is the frame of the retry - 11-19; slow frames made fixed waits miss it)
 				object ui = HarmonyLib.Traverse.Create(typeof(QuestBook)).Field("ui").GetValue();
 				if (ui == null) Log("  (no notebook for the local player yet: the book part skipped)");
 				else
@@ -139,12 +146,13 @@ namespace DynamicIslands
 					QuestTracker.TestThrow = "book";
 					QuestBook.Refresh();
 					QuestTracker.TestThrow = null;
+					float threwAt = Time.unscaledTime;
 					System.Func<string> sig = () => HarmonyLib.Traverse.Create(typeof(QuestBook)).Field("lastSig").GetValue<string>();
 					Check(ref ok, sig() == null && errors.Count(x => x.Contains("Quest book:")) > errs, "the book's layout threw: logged, to be tried again");
-					yield return new WaitForSecondsRealtime(2.5f);
-					bool waited = sig() == null;
-					yield return new WaitForSecondsRealtime(4f);
-					Check(ref ok, waited && sig() != null, "the book waited (2.5 s: " + (waited ? "not yet" : "already") + ") and laid out again by 6.5 s (" + (sig() != null ? "done" : "not done") + ")");
+					float retryIn = HarmonyLib.Traverse.Create(typeof(QuestBook)).Field("nextCheck").GetValue<float>() - threwAt;
+					while (sig() == null && Time.unscaledTime - threwAt < 20f) yield return null;
+					float after = Time.unscaledTime - threwAt;
+					Check(ref ok, retryIn > 4f && after >= retryIn - 0.05f && sig() != null, "the book waited (retry set for " + retryIn.ToString("F1") + " s) and laid out again " + (sig() != null ? "after " + after.ToString("F1") + " s" : "never (20 s)"));
 				}
 
 				// a talk action that throws: the talk step still counts

@@ -1,0 +1,20 @@
+# Test of the journal's quest count for a plan's story islands (CIPlay qc5_quest_count, in a test world 'CI ...';
+# TEST_CATALOGUE QC5): The Long Voyage from its start - its story islands and its side trips are counted before they
+# come; the story count goes up when Wreckers' Cove's quest is done; a side trip sailed to and played.
+plan The Long Voyage
+note RadioTower
+expect chain RadioTower unlocked
+expect quests 0 sidetrips
+
+note Vasagatan
+expect chain cove unlocked
+tune cove
+include wreckers_cove.play
+expect chain cove done
+expect quests 1 sidetrips
+
+sail 2
+arrive gull
+include stranded_gull.play
+expect quests 1 sidetrips
+plan end

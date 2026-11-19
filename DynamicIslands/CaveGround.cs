@@ -699,7 +699,15 @@ namespace DynamicIslands.Editor
 		// (r82: the strip on out to SkirtWide past the edge, the sand under it held SkirtUnder below it - the sand's own grid
 		// points just past the edge, raised or let down every way, poked up through the narrow strip in teeth, gen-large r81)
 		const float SkirtWide = 2.6f, SkirtUnder = 0.08f;
+		// (a strip whose middle is this far under the sea wears Raft's rock, which the water fogs)
+		const float SkirtSea = -0.5f;
 		static readonly float[] SkirtRows = { 0.9f, 1.5f, 2.1f };
+		/// <summary>How far a skirt's row across the edge may climb over the floor's edge (m): where the sand beside a floor's end
+		/// rises as a wall, the row hugging it stood up as a tall strip of baked sand on the rock - Sinkmarket Floor's yellow column,
+		/// sm_cave_out 11-19. Such rows are left out (the sand there is a wall, no seam to hide).</summary>
+		public const float SkirtClimb = 2f;
+		/// <summary>Rows left out by SkirtClimb at the last skirts built (tests and the log).</summary>
+		public static int SkirtClimbed;
 
 		/// <summary>
 		/// A strip of sand laid over an open cave's floor's front edge (11-11 user, gen-large r68): the sand's grid triangles cut the
@@ -719,6 +727,7 @@ namespace DynamicIslands.Editor
 				if (oldLook != null && oldLook.name == "DigTunnelGroundBaked") { if (oldLook.mainTexture != null) UnityEngine.Object.DestroyImmediate(oldLook.mainTexture); UnityEngine.Object.DestroyImmediate(oldLook); }
 				UnityEngine.Object.DestroyImmediate(old.gameObject);
 			}
+			int climbed0 = SkirtClimbed;
 			GameObject rock = PlaceableCatalog.Get(CaveTool.WallRock);
 			MeshRenderer rockLook = rock != null ? rock.GetComponentInChildren<MeshRenderer>(true) : null;
 			if (rockLook == null || rockLook.sharedMaterial == null) return;
@@ -812,6 +821,8 @@ namespace DynamicIslands.Editor
 						// (between the edge and the sand out there: the straight line, or the sand evened out where that is higher)
 						yv[r] = Mathf.Max(Mathf.Lerp(yv[1], yOut, f), even(pt(sv[r], l)) + 0.04f);
 					}
+					// (a row that climbs a wall of sand beside the floor's end: left out, 11-19 cave1119)
+					if (yv.Max() - Mathf.Min(yv[0], yv[1]) > SkirtClimb) { SkirtClimbed++; continue; }
 					rowS[j] = sv; rowY[j] = yv;
 				}
 				int prev = -1;
@@ -908,6 +919,10 @@ namespace DynamicIslands.Editor
 			var uv = verts.Select(v => new Vector2((v.x - lo.x) / size.x, (v.z - lo.z) / size.z)).ToList();
 			float u0 = uv.Min(q => q.x), u1 = uv.Max(q => q.x), v0 = uv.Min(q => q.y), v1 = uv.Max(q => q.y);
 			Material look = null;
+			// (under the sea, Raft's rock: the baked look is a plain Unity shader the water's fog never reaches - a bright yellow
+			// strip and sheet down an underwater tunnel's floor, Sinkmarket Floor sm_cave_out 11-19)
+			bool underSea = verts.Average(v => v.y) < SkirtSea;
+			if (!underSea)
 			try { look = DigTunnel.BakedGround(land, Rect.MinMaxRect(u0, v0, Mathf.Max(u1, u0 + 1e-4f), Mathf.Max(v1, v0 + 1e-4f)), ref look); }
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Skirt " + cave.name + ": the ground's look - " + ex.Message); look = null; }
 			if (look != null) mesh.SetUVs(0, uv);
@@ -917,7 +932,24 @@ namespace DynamicIslands.Editor
 			var mr = go.AddComponent<MeshRenderer>();
 			mr.sharedMaterial = look ?? rockLook.sharedMaterial;
 			mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-			Debug.Log("[CUSTOM ISLANDS] Skirt " + cave.name + ": " + strips + " pieces over its open floor's edge");
+			Debug.Log("[CUSTOM ISLANDS] Skirt " + cave.name + ": " + strips + " pieces over its open floor's edge" + (SkirtClimbed > climbed0 ? ", " + (SkirtClimbed - climbed0) + " row(s) up a wall of sand left out" : ""));
+		}
+
+		/// <summary>A built skirt's tallest row across the edge: how far its points climb over the floor's edge, world metres (rows of SkirtRows + 4 points,
+		/// the last the dive under the sand, not counted). 0 for no mesh.</summary>
+		public static float SkirtTallestRow(MeshFilter mf)
+		{
+			if (mf == null || mf.sharedMesh == null) return 0f;
+			Vector3[] v = mf.sharedMesh.vertices;
+			int per = SkirtRows.Length + 4, nr = per - 1;
+			float tallest = 0f;
+			for (int s = 0; s + per <= v.Length; s += per)
+			{
+				float lo = Mathf.Min(mf.transform.TransformPoint(v[s]).y, mf.transform.TransformPoint(v[s + 1]).y), hi = float.MinValue;
+				for (int r = 0; r < nr; r++) hi = Mathf.Max(hi, mf.transform.TransformPoint(v[s + r]).y);
+				tallest = Mathf.Max(tallest, hi - lo);
+			}
+			return tallest;
 		}
 
 		/// <summary>

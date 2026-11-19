@@ -41,6 +41,11 @@ clear at -34.1 18.9 r=6
 push at 0 -24.8
 clear at 12 -6 r=9
 clear from 0 -30 to 0 -62 r=6
+# (11-19 cn4: the sand stood 1.5 m over the first slab and 0.6 m over the second - a ramp down from the beach,
+#  then flat sand just under the slabs; the watch tower's floor a hair under the ground)
+brush flatten at 0 -29 r=4 s=20 frames=60 h=1.8
+brush flatten from 0 -34 to 0 -50 r=4 s=20 frames=200 h=0.6
+brush flatten at 15 -6 r=4 s=20 frames=60 h=1.95
 
 # --- The breakwater: two concrete slabs on drowned-tower legs from the shore out to the customs house -----------------
 push at 3 -37 h=1
@@ -50,7 +55,7 @@ push at 3 -46 h=1
 call hw_roof d=12 a=concrete bm=none fm=none
 place "Table Office" - at -4.6 0 y=0.05 sit yaw=90
 place RT_Clipboard permitstamp at -4.6 0 y=0.85 drop yaw=90
-place UT_HookRoom_Weight02 weighscale at -1.6 1.5 y=0.35 sit
+place UT_HookRoom_Weight02 weighscale at -1.6 1.5 y=0.05 sit
 place Note_Sign weighsign at -5.4 2.4 y=0.05 sit yaw=180
 pop
 

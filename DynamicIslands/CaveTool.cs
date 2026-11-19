@@ -789,6 +789,136 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
+		/// <summary>
+		/// A tunnel's mouth frames (MouthName) drawn as the hill over it (CaveMountain's skin): its rock, tint and light, the
+		/// texture laid as the skin's (world metres / 14, along the axis each triangle faces most). In the tunnel's own pale ravine
+		/// rock the frame's doorstep and top stood out of the hill's grey face as a white slab and steps, and as a pale panel
+		/// beside the tunnel - Old Mine Islet and Gilded Skull Cove (11-19 cave1119 FO-G4). The collider keeps its mesh.
+		/// Returns how many frames were redrawn.
+		/// </summary>
+		public static int FramesLikeHill(GameObject piece, MeshRenderer skin)
+		{
+			if (piece == null || skin == null || skin.sharedMaterial == null) return 0;
+			int done = 0;
+			foreach (Transform c in piece.transform)
+			{
+				if (c.name != MouthName) continue;
+				MeshRenderer r = c.GetComponent<MeshRenderer>();
+				MeshFilter mf = c.GetComponent<MeshFilter>();
+				if (r == null || mf == null || mf.sharedMesh == null || r.GetComponent<HillWall>() != null) continue;
+				Mesh src = mf.sharedMesh;
+				Vector3[] mv = src.vertices, mn = src.normals;
+				int[] st = src.triangles;
+				var nv = new List<Vector3>(st.Length); var nn = new List<Vector3>(st.Length); var nu = new List<Vector2>(st.Length); var tri = new List<int>(st.Length);
+				for (int t = 0; t + 2 < st.Length; t += 3)
+				{
+					Vector3 a = c.TransformPoint(mv[st[t]]), b = c.TransformPoint(mv[st[t + 1]]), d = c.TransformPoint(mv[st[t + 2]]);
+					Vector3 fn = Vector3.Cross(b - a, d - a);
+					float fx = Mathf.Abs(fn.x), fy = Mathf.Abs(fn.y), fz = Mathf.Abs(fn.z);
+					int ax = fy >= fx && fy >= fz ? 1 : fx >= fz ? 0 : 2;
+					for (int k = 0; k < 3; k++)
+					{
+						int vi = st[t + k];
+						Vector3 w = k == 0 ? a : k == 1 ? b : d;
+						tri.Add(nv.Count);
+						nv.Add(mv[vi]);
+						nn.Add(mn != null && mn.Length == mv.Length ? mn[vi] : fn.normalized);
+						nu.Add((ax == 0 ? new Vector2(w.z, w.y) : ax == 1 ? new Vector2(w.x, w.z) : new Vector2(w.x, w.y)) / 14f);
+					}
+				}
+				var m = new Mesh { name = MouthName + " (as the hill)" };
+				if (nv.Count > 65000) m.indexFormat = IndexFormat.UInt32;
+				m.SetVertices(nv);
+				m.SetNormals(nn);
+				m.SetUVs(0, nu);
+				m.SetTriangles(tri, 0);
+				m.RecalculateBounds();
+				try { m.RecalculateTangents(); } catch { }
+				mf.sharedMesh = m;
+				r.sharedMaterials = new[] { skin.sharedMaterial };
+				r.receiveShadows = skin.receiveShadows;
+				r.lightProbeUsage = skin.lightProbeUsage;
+				r.reflectionProbeUsage = skin.reflectionProbeUsage;
+				var block = new MaterialPropertyBlock();
+				skin.GetPropertyBlock(block);
+				r.SetPropertyBlock(block);
+				r.gameObject.AddComponent<HillWall>();
+				done++;
+			}
+			// (and the tunnel itself, inside and its back, in the hill's rock: its pale blue ice-ravine rock seen through the mouth
+			// in the hill's grey face filled the lower half of the opening as a pale bluish shape - Old Mine Islet 11-19 cave1119 r2.
+			// Its mesh can't be read, so the rock is laid by the tunnel's own texture coordinates)
+			if (done > 0)
+			{
+				var body = new List<MeshRenderer>();
+				MeshRenderer own = piece.GetComponent<MeshRenderer>();
+				if (own != null) body.Add(own);
+				foreach (Transform c in piece.transform)
+					if (c.name == CaveBacks.Name) { MeshRenderer br = c.GetComponent<MeshRenderer>(); if (br != null) body.Add(br); }
+				foreach (MeshRenderer r in body)
+				{
+					if (r.GetComponent<HillWall>() != null || r.sharedMaterial == skin.sharedMaterial) continue;
+					r.sharedMaterials = Enumerable.Repeat(skin.sharedMaterial, Mathf.Max(1, r.sharedMaterials.Length)).ToArray();
+					r.receiveShadows = skin.receiveShadows;
+					r.reflectionProbeUsage = skin.reflectionProbeUsage;
+					var block = new MaterialPropertyBlock();
+					skin.GetPropertyBlock(block);
+					for (int i = 0; i < r.sharedMaterials.Length; i++) r.SetPropertyBlock(block, i);
+					r.SetPropertyBlock(block);
+					r.gameObject.AddComponent<HillWall>();
+					TunnelsLikeHill++;
+				}
+				CaveLit.Mark(piece);
+			}
+			return done;
+		}
+		/// <summary>How many tunnel bodies (and backs) FramesLikeHill drew in the hill's rock, all islands since Raft started.</summary>
+		public static int TunnelsLikeHill;
+
+		/// <summary>
+		/// Takes away a join's floor plate (Join) that lies on a floor all over: at a tunnel's end into a den the den's floor
+		/// fills the groove the plate is for, and the plate stood over it as a pale flat sheet in the tunnel's ravine rock -
+		/// Upfall Orchard's root cave (11-19 cave1119 uf_cave_in). Kept wherever a ray down it finds no floor JoinOnFloor or
+		/// less under it (the groove between two tunnels). Turned off, not destroyed. Returns how many were taken away.
+		/// </summary>
+		public static int JoinsOnFloor(GameObject piece)
+		{
+			if (piece == null) return 0;
+			int done = 0;
+			Physics.SyncTransforms();
+			foreach (Transform c in piece.transform)
+			{
+				if (c.name != JoinName || !c.gameObject.activeSelf || !JoinLiesOnFloor(c)) continue;
+				c.gameObject.SetActive(false);
+				done++;
+			}
+			return done;
+		}
+
+		/// <summary>True when every ray down a join plate's middle part (3 across, 5 along) meets an upward face of something
+		/// else from JoinRayUp over the plate to JoinOnFloor under it (JoinsOnFloor; CICaveGapsLook checks it).</summary>
+		public static bool JoinLiesOnFloor(Transform join)
+		{
+			MeshFilter mf = join == null ? null : join.GetComponent<MeshFilter>();
+			if (mf == null || mf.sharedMesh == null) return false;
+			Collider own = join.GetComponent<Collider>();
+			Bounds b = mf.sharedMesh.bounds;
+			for (int ix = -1; ix <= 1; ix++)
+				for (int iz = -2; iz <= 2; iz++)
+				{
+					// (its scale is undone: metres; a third of the way across, not out at its ends inside the walls)
+					Vector3 top = join.TransformPoint(new Vector3(b.center.x + ix * b.extents.x * 0.35f, b.max.y, b.center.z + iz * b.extents.z * 0.4f));
+					bool hit = false;
+					foreach (RaycastHit h in Physics.RaycastAll(top + Vector3.up * JoinRayUp, Vector3.down, JoinRayUp + JoinOnFloor, ~0, QueryTriggerInteraction.Ignore))
+						if (h.collider != own && h.normal.y > 0.5f && h.collider.name != MouthName && h.collider.name != JoinName) { hit = true; break; }
+					if (!hit) return false;
+				}
+			return true;
+		}
+
+		// (a join plate with a floor this far under it all over is not needed - the step left is one to walk; the rays start this high)
+		const float JoinOnFloor = 0.4f, JoinRayUp = 1f;
+
 		/// <summary>The renderer's own block (copied) with every colour texture of the material - the block's own, else the
 		/// material's - darker by a factor.</summary>
 		static MaterialPropertyBlock Darker(Renderer r, Material m, float by)

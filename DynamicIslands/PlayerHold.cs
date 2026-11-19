@@ -149,7 +149,10 @@ namespace DynamicIslands.Editor
 			if (holding && Flat(player.transform.position - at) > Misplaced) { Release(null, "was moved " + Flat(player.transform.position - at).ToString("F0") + " m away while held: let go"); return; }
 			// (hurt while held - a shark biting a player frozen over the water: let go at once - AU82)
 			float health = Health();
-			if (heldHealth > 0f && health > 0f && health < heldHealth - 0.5f) { Release(null, "was hurt while held: let go"); return; }
+			// (not before the world is in: a player held at loading read a full 100 before Raft gave them their saved
+			//  health, 25, which looked like a bite - let go at once, they dropped into the sea - UW11. Healing moves it up)
+			if (!LoadSceneManager.IsGameSceneLoaded || health > heldHealth) heldHealth = health;
+			else if (heldHealth > 0f && health > 0f && health < heldHealth - 0.5f) { Release(null, "was hurt while held (" + heldHealth.ToString("F0") + " -> " + health.ToString("F0") + "): let go"); return; }
 			// The island under them is there (its own ground, loaded): set them down where they were, and watch a moment
 			IslandWorldState.Entry under = IslandUnder(at);
 			if (under != null)
