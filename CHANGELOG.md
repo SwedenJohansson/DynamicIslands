@@ -11,6 +11,11 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (not released yet)
 
+- **Ironreef Caverns' second rat waits in tunnel B**: it used to wander out of the tunnel's open mouth before you came; it now stays in until you walk in. The mine's lanterns stand on their crates, and rocks and bushes that hung in the air by the Drowned Shaft and on the mountain's east side are gone.
+- **Stilt Hollow's notice board stands on the deck** instead of a metre over it; **Tide Farm's jam crate** sits on a post from the sea floor instead of on nothing.
+- **Old Mine Islet tidied**: the mine portal's south post reaches the ground, and a rock and three bushes that stood over the ground at the mine hill's north end are gone.
+- **Play tests start without a hazmat suit** (island makers' test): a suit put on in one `CIPlay` (and its timer) no longer protects the next play in the same world.
+- **Console test lines that start no test end their run** (island makers' test): `ci.ps1 -done` waited forever after commands such as `CICaveCell`; it now ends on `IDLE (plain commands, no test)`.
 - **No more rock shards round lone bear dens' walls**: the rock wall across a lone den's mouth checked whether each part of it lay inside the hill 1.8 m further in than where it is drawn, so beside a thin bit of hill (Signal Rock's cleft) parts of it stood out as floating rust shards, and over the arch as a saw-tooth edge; it now checks where it is drawn.
 - **`CIRayLook` finds what draws an odd spot of a play picture** (island makers' test): `CIRayLook at=<u>,<v> picture` looks from the last play picture's camera; it now reads Raft's own rock meshes, skips faces seen from behind, maps what each ray met and lists everything the middle ray crosses.
 - **Lone bear dens' cheeks slope instead of standing as walls**: beside a den's way in, the hill rose ever steeper the further out it went and, over the den's own roof, kept the roof's full height right at the mouth; it now rises no steeper than 1.5 to 1 and comes down to just over the roof there. Caisson Yard's 5-6 m step beside its den's arch is gone (0.6 m now).
