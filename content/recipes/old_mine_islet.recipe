@@ -212,7 +212,8 @@ place Relay_support_beam_wood - at $tx -14.6 h=1 rot=0,0,-90
 place Relay_support_beam_wood - at $tx -24.6 h=10 rot=0,0,0 yaw=90
 next
 # (the mouth frame at x 17: its south post stood 1.7 m short of the lintel - round 5, CIFloating; raised to meet it)
-place Relay_support_beam_wood - at 17 -24.3 h=2.7 rot=0,0,-90
+# (11-19: on the IG5 ground its foot stood 0.8 m over the ground - CIFloating fix-open; down to the ground, a little longer so its top stays)
+place Relay_support_beam_wood - at 17 -24.3 h=1.85 rot=0,0,-90 sx=1.09
 place Relay_support_beam_wood - at 17 -14.6 h=1 rot=0,0,-90
 place Relay_support_beam_wood - at 17 -24.6 h=10 rot=0,0,0 yaw=90
 
@@ -468,5 +469,10 @@ quest reward=MetalIngot*3;Nail*10
 call treasure x=0 z=0 r=29 n=1 seed=8951
 prop treasure8951 treasure.loot=TitaniumOre*2
 
+# (generator rock and bushes left standing 1.4-7.4 m over the ground the mine's hill and cuts lowered at its north end - CIFloating fix-open 11-19)
+clear at -7.89 15.77 r=1 only=SmallRock_01
+clear at -6.93 17.71 r=1 only=Balboa_Bush_02
+clear at -6.73 20.76 r=1 only=Balboa_Bush_01
+clear at -5.08 15.18 r=1 only=Balboa_BigBush_01
 reseat trees
 save Old Mine Islet
