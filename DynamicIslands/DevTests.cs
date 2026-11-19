@@ -32,6 +32,10 @@ namespace DynamicIslands
 		// (ci.ps1 -done used to stop at CIA's IDLE while CIB ran on, and the next run's test overlapped it)
 		static int pendingCommands;
 		static bool idleOwed;
+		// (speedups 11-19: counts IDLE lines, so a command file that started no test - a setter, a fail-fast, a typo - still
+		//  ends with one IDLE and ci.ps1 -done stops at once instead of waiting out its timeout: 8.4 h in 5 days)
+		static int idleSerial;
+		static void LogIdle() { idleSerial++; Log("IDLE (all tests done)"); }
 		static Coroutine StartTest(IEnumerator e)
 		{
 			if (exclusiveTest != null && exclusiveTest != e) StopExclusive();
@@ -69,7 +73,7 @@ namespace DynamicIslands
 				if (--runningTests < 0) runningTests = 0;
 			}
 			Log("Stopped " + names.Count + " running test(s)" + (names.Count > 0 ? ": " + string.Join(", ", names.ToArray()) : ""));
-			if (runningTests == 0) { if (pendingCommands > 0) idleOwed = true; else Log("IDLE (all tests done)"); }
+			if (runningTests == 0) { if (pendingCommands > 0) idleOwed = true; else LogIdle(); }
 		}
 
 		/// <summary>A test routine's name from its iterator class ("&lt;RoundTripRoutine&gt;d__12" -> RoundTripRoutine).</summary>
@@ -150,7 +154,7 @@ namespace DynamicIslands
 			if (exclusiveTest == e) { exclusiveTest = null; exclusiveRun = null; }
 			runningIds.Remove(id);
 			runningRuns.Remove(id);
-			if (--runningTests <= 0) { runningTests = 0; if (pendingCommands > 0) idleOwed = true; else Log("IDLE (all tests done)"); }
+			if (--runningTests <= 0) { runningTests = 0; if (pendingCommands > 0) idleOwed = true; else LogIdle(); }
 		}
 
 		[ConsoleCommand(name: "CITest", docs: "Dev: automated editor test (sculpt, place, save, load, verify)")]
@@ -2250,7 +2254,7 @@ namespace DynamicIslands
 				Application.runInBackground = true; // commands arrive while Raft is in the background
 				// One line after another: a line waits until the tests the earlier lines started have ended (two tests
 				// that both generate or load islands at once spoil each other - CIGenRaftFeatures next to CIGenParity, 10-16)
-				List<string> todo = lines.Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith("#")).ToList();
+				List<string> todo = lines.Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith("#")).ToList(); int idles0 = idleSerial;
 				// (only the tests this file's lines start: a test left running from before - one that never ended - held
 				// every later file's second line for good, RUN1 10-20; CIPollerWait)
 				int firstTest = testSerial + 1;
@@ -2276,7 +2280,7 @@ namespace DynamicIslands
 					catch (Exception e) { Fail("command '" + line + "': " + (e.InnerException ?? e)); }
 				}
 				pendingCommands = 0;
-				if (idleOwed && runningTests == 0) Log("IDLE (all tests done)");
+				if (runningTests == 0 && (idleOwed || idleSerial == idles0)) LogIdle();
 				idleOwed = false;
 			}
 		}
