@@ -427,6 +427,8 @@ clear at 58 14 r=4 only=(?i)palm|bamboo|tree|bush|plant|boulder|rock all
 # (11-19 cn4: CIGroundIslands - a palm 0.46 m and a hill rock 0.85 m over the slope north of the cut)
 clear at 50.75 27.89 r=1 only=(?i)palm all
 clear at 52.53 32.57 r=1 only=SmallBoulder4 all
+# (11-19 cat2: CIGroundIslands - a bamboo 0.46 m over the slope there too)
+clear at 62.14 28.84 r=1 only=(?i)bamboo all
 # cavecheck inside hkcutbox
 place Loot_ChestSmall hkcutbox at 51.1 11.5 h=3.4 drop yaw=300
 prop hkcutbox obj.name=hkcutbox

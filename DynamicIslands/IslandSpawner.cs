@@ -86,6 +86,62 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>
+		/// A flying island after its caves' cut (CaveGround, DigTunnel): the ground they let down or raised on the coast left
+		/// the underside's rim and the coast sheet at the old height - a slit to the sky between them and the ground, seen
+		/// from the side (Upfall Orchard, Altitude Market 11-19: the rim 1.0 m under the ground). Both go back onto the ground.
+		/// </summary>
+		static void RefitFlying(GameObject root)
+		{
+			if (root == null) return;
+			foreach (Terrain terrain in root.GetComponentsInChildren<Terrain>())
+			{
+				TerrainData data = terrain.terrainData;
+				int res = data.heightmapResolution, cells = res - 1;
+				float spacing = data.size.x / cells;
+				foreach (string part in new[] { "Underside", "Coast" })
+				{
+					Transform t = terrain.transform.Find(part);
+					MeshFilter mf = t != null ? t.GetComponent<MeshFilter>() : null;
+					Mesh mesh = mf != null ? mf.sharedMesh : null;
+					if (mesh == null) continue;
+					Vector3[] v = mesh.vertices;
+					// (the underside: only its rim - a sample not inside four covered cells; its other points hang below)
+					HashSet<int> covered = null;
+					if (part == "Underside")
+					{
+						covered = new HashSet<int>();
+						int[] tr = mesh.triangles;
+						for (int i = 0; i + 2 < tr.Length; i += 3)
+						{
+							float mx = Mathf.Min(v[tr[i]].x, Mathf.Min(v[tr[i + 1]].x, v[tr[i + 2]].x)), mz = Mathf.Min(v[tr[i]].z, Mathf.Min(v[tr[i + 1]].z, v[tr[i + 2]].z));
+							covered.Add(Mathf.RoundToInt(mz / spacing) * cells + Mathf.RoundToInt(mx / spacing));
+						}
+					}
+					int moved = 0;
+					for (int i = 0; i < v.Length; i++)
+					{
+						float fx = v[i].x / spacing, fz = v[i].z / spacing;
+						int x = Mathf.RoundToInt(fx), z = Mathf.RoundToInt(fz);
+						if (Mathf.Abs(fx - x) > 1e-3f || Mathf.Abs(fz - z) > 1e-3f || x < 0 || z < 0 || x >= res || z >= res) continue; // (a coast point at the sea's edge)
+						if (covered != null && x > 0 && z > 0 && x < cells && z < cells &&
+							covered.Contains((z - 1) * cells + x - 1) && covered.Contains((z - 1) * cells + x) && covered.Contains(z * cells + x - 1) && covered.Contains(z * cells + x)) continue;
+						float ground = data.GetHeight(x, z);
+						if (Mathf.Abs(v[i].y - ground) < 0.01f) continue;
+						v[i].y = ground;
+						moved++;
+					}
+					if (moved == 0) continue;
+					mesh.vertices = v;
+					if (part == "Underside") mesh.RecalculateNormals();
+					mesh.RecalculateBounds();
+					MeshCollider mc = t.GetComponent<MeshCollider>();
+					if (mc != null) { mc.sharedMesh = null; mc.sharedMesh = mesh; }
+					Debug.Log("[CUSTOM ISLANDS] '" + root.name + "': " + moved + " point(s) of the flying " + part.ToLowerInvariant() + " put back on the ground after the caves' cut");
+				}
+			}
+		}
+
+		/// <summary>
 		/// Flying island: cuts holes in the terrain wherever it lies below the editor's sea level (so no flat square of
 		/// seabed floats in the sky) and hangs a rocky underside below the remaining land, from the coastline down to a
 		/// point, with a collider so a low island still stops a raft.
@@ -771,6 +827,7 @@ namespace DynamicIslands.Editor
 			int missing = SpawnObjects(island, objects.transform, false, flying);
 			CaveGround.Cut(objects.transform); // (X7)
 			DigTunnel.Cut(objects.transform); // (and over the dug tunnels)
+			if (flying) RefitFlying(root);
 			Spawned(island, worldPosition, flying, missing);
 			return root;
 		}
@@ -828,6 +885,7 @@ namespace DynamicIslands.Editor
 			LastSpawnTiming = "land " + land + " ms, objects over " + LastSpawnFrames + " frames, switching them on " + clock.ElapsedMilliseconds + " ms";
 			CaveGround.Cut(objects.transform); // (the ground out of the caves' rooms: their rock can be hit now - X7)
 			DigTunnel.Cut(objects.transform); // (and over the dug tunnels)
+			if (flying) RefitFlying(root);
 			Spawned(island, worldPosition, flying, missing);
 			result(root);
 		}

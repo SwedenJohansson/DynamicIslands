@@ -673,12 +673,14 @@ namespace DynamicIslands
 			if (ok) Log("PASS: table seen (" + (Raft_Network.IsHost ? "host" : "client") + ")"); else Fail("table seen");
 		}
 
-		[ConsoleCommand(name: "CILookAt", docs: "Dev, editor: pictures of the first placed object whose name contains <text>, from four sides a little above (shot_lookat_<n>_<side>.png): CILookAt <text> [distance]")]
+		[ConsoleCommand(name: "CILookAt", docs: "Dev, editor: pictures of the object the last recipe labelled <text> (place <obj> <label>), else the first placed object whose name contains <text>, from four sides a little above (shot_lookat_<n>_<side>.png): CILookAt <text> [distance]")]
 		public static void LookAtCommand(string[] args)
 		{
 			string text = args != null && args.Length > 0 ? args[0] : "";
 			float dist = args != null && args.Length > 1 ? F(args[1]) : 0f;
-			EditorGameObject e = PlacedEditorObjects().FirstOrDefault(o => (o.GameObjectName ?? "").IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0);
+			// a label the last recipe gave an object (place <obj> <label>) first, then the first object whose name contains the text
+			EditorGameObject e;
+			if (!RecipeObjects.TryGetValue(text, out e) || e == null) e = PlacedEditorObjects().FirstOrDefault(o => (o.GameObjectName ?? "").IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0);
 			if (e == null || text.Length == 0) { Fail("look at: no placed object with '" + text + "'"); return; }
 			StartTest(LookAtRoutine(e, dist));
 		}
