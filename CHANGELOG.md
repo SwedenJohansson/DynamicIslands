@@ -11,6 +11,8 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (not released yet)
 
+- **No tall yellow sand column at the back of an underwater tunnel**: the sand skirt laid along an open floor's end no longer climbs a wall of sand: rows of it that rise more than 2 m are left out (the column at the back of Sinkmarket's sea cave). `CICaveGapsLook` fails when a skirt row still climbs more than 2 m.
+- **A tunnel's own body and back inside a cave hill wear the hill's rock**: besides its mouth frame, the tunnel piece's walls and back were still drawn in the tunnel's pale ice-cave rock, a pale bluish shape in the lower opening (Old Mine Islet).
 - **No more rock plate standing out of the sea by underwater tunnels**: where a cave hill had dived under the sea beside an underwater tunnel's way in, the strip of rock under the way's floor still rose from the sea floor up to that floor, a lone flat plate out in the water (Utopia Remade). It now stops at the hill's own edge.
 - **Tunnel mouth frames wear the cave hill's rock**: the frame round a tunnel's mouth in a cave hill was drawn in the tunnel's pale ice-cave rock, a pale panel or slab beside the hill (Gilded Skull Cove, Old Mine Islet, Sinkmarket Floor); it now has the hill's own look.
 - **The sand strip at an underwater tunnel's floor is no longer bright yellow**: under the sea it is drawn in Raft's rock, which the water's haze reaches, instead of a baked sand look that shone through it (Sinkmarket Floor).

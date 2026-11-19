@@ -903,10 +903,10 @@ namespace DynamicIslands.Editor
 			foreach (Transform t in caves)
 				if (t != null) CaveTool.WallLikeHill(t.gameObject, mr);
 			// (and tunnels' mouth frames as the hill too: pale ravine rock slabs in its face, 11-19 cave1119)
-			int frames = 0;
+			int frames = 0, bodies0 = CaveTool.TunnelsLikeHill;
 			foreach (Transform t in caves)
 				if (t != null) frames += CaveTool.FramesLikeHill(t.gameObject, mr);
-			if (frames > 0) Debug.Log("[CUSTOM ISLANDS] Cave mountain: " + frames + " tunnel mouth frame(s) drawn as the hill");
+			if (frames > 0) Debug.Log("[CUSTOM ISLANDS] Cave mountain: " + frames + " tunnel mouth frame(s) drawn as the hill, " + (CaveTool.TunnelsLikeHill - bodies0) + " tunnel body/back renderer(s) in the hill's rock");
 			// (and join plates lying on a den's floor taken away: a pale flat sheet over the floor at a tunnel's end, 11-19 cave1119 uf)
 			int joins = 0;
 			foreach (Transform t in caves)

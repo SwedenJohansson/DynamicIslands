@@ -1108,6 +1108,11 @@ namespace DynamicIslands
 			// The cave hill beside a lone den's way in: no cell standing over its neighbour or the way's floor much more than the
 			// arch's height - the dome stood full height at the den's plane, sheer cuts down the way in's sides and a flat cut face
 			// beside the arch (Signal Rock's rig den, Wreckers' Cove's den, 11-18 w15L)
+			// (no sand skirt's row standing up a wall of sand beside a floor's end: a tall strip of baked sand on the rock, Sinkmarket
+			// Floor's yellow column sm_cave_out 11-19 cave1119)
+			var skirts = e.Root.GetComponentsInChildren<MeshFilter>(false).Where(f => f.name == CaveGround.SkirtName).Select(f => new { f, h = CaveGround.SkirtTallestRow(f) }).OrderByDescending(x => x.h).ToList();
+			if (skirts.Count > 0)
+				Check(ref ok, skirts[0].h <= CaveGround.SkirtClimb + 0.05f, name + ": sand skirts at open floors' ends: tallest row climbs " + skirts[0].h.ToString("0.0") + " m (at most " + CaveGround.SkirtClimb.ToString("0.0") + ", " + skirts.Count + " skirts, " + skirts[0].f.transform.parent.name + ")");
 			foreach (CaveMountain cm in e.Root.GetComponentsInChildren<CaveMountain>(true))
 			{
 				Vector3 at = cm.LoneSheerAt - e.Position;
