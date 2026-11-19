@@ -204,6 +204,8 @@ call ab_plants_forest x=-80 z=0 r=12 seed=26211
 place BalboaCave_DeadEnd mine at 0 -18 h=11.7 yaw=90
 # (its hill is cut where it would stand over deep sea: the mound closed pools of sea under it at the south shore)
 prop mine cave.seacut=1
+# (fo2 11-19: its floor stands 4.2 m up over the beach - on the IG5 ground the sand in front of the mouth lay 2-3 m under it, a step no player could climb; dry foot rounds the sand up to the floor)
+prop mine cave.foot=dry
 
 # --- The portal: timber posts and a lintel at the mouth, and timbering further in ------------------------------
 for tx -5 6 11

@@ -349,4 +349,10 @@ clear at -13.08 -30.58 r=1.2 all only=SmallBoulder1
 clear at 16.1 9.44 r=1.2 all only=BigBoulder4_Low
 clear at 24.03 -7.27 r=1.2 all only=SmallBoulder3
 
+# (fo2 11-19: a bush clump and a boulder left standing where the cave ground came down - CIFloating fo11; printed points + offset -4.93 -4.44)
+clear at 11.97 -33.55 r=1.2 all only=SmallBoulder2
+clear at 4.63 -36.49 r=1.2 all only=Bush
+clear at 8.79 -35.72 r=1.2 all only=Bush2
+clear at 5.53 -34.60 r=1.2 all only=Bush
+
 save Gilded Skull Cove

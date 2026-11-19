@@ -295,6 +295,7 @@ namespace DynamicIslands.Editor
 			var mouthAt = new float[nx, nz];   // in front of an open end, as wide as the passage: its floor height (NaN: not)
 			var own = new int[nx, nz];         // whose roof or low edge it is (-1: none)
 			int groundMask = (int)LayerMasks.MASK_GroundMask_NonRaft | (1 << IslandSpawner.TerrainLayer);
+			var raised = new List<RaycastHit>();
 			bool backfaces = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true; // (the shells face inwards: from above, a roof is its back)
 			try
@@ -303,8 +304,9 @@ namespace DynamicIslands.Editor
 					for (int k = 0; k < nz; k++)
 					{
 						Vector3 at = new Vector3(x0 + i * Cell, rayTop, z0 + k * Cell);
-						float roof = float.NaN, low = float.NaN, gr = float.NegativeInfinity;
+						float roof = float.NaN, low = float.NaN, gr = float.NegativeInfinity, terr = float.NegativeInfinity;
 						int roofBy = -1, lowBy = -1;
+						raised.Clear();
 						foreach (RaycastHit h in Physics.RaycastAll(at, Vector3.down, rayLen, ~0, QueryTriggerInteraction.Ignore))
 						{
 							float f;
@@ -314,7 +316,20 @@ namespace DynamicIslands.Editor
 								if (h.point.y > f + 1.5f && !(h.point.y <= roof)) { roof = h.point.y; roofBy = ownerOf[h.collider]; }
 								else if (!(h.point.y <= low)) { low = h.point.y; lowBy = ownerOf[h.collider]; } // (the shell below its floor too: Balboa's den goes on 11 m under it)
 							}
-							else if ((groundMask & (1 << h.collider.gameObject.layer)) != 0 && h.point.y > gr) { gr = h.point.y; groundBy[i, k] = h.collider.name; }
+							else if ((groundMask & (1 << h.collider.gameObject.layer)) != 0)
+							{
+								if (h.collider is TerrainCollider) terr = Mathf.Max(terr, h.point.y);
+								else raised.Add(h);
+								if (h.collider is TerrainCollider && h.point.y > gr) { gr = h.point.y; groundBy[i, k] = h.collider.name; }
+							}
+						}
+						// (a thin thing held up off the terrain - a deck, a roof, a beam - is not ground: the den's dry foot flared up to
+						// Ranger's Rest's watchtower deck 6.5 m over the hill and stood as a sand pillar between its legs, fo2 11-19)
+						foreach (RaycastHit h in raised)
+						{
+							Bounds cb = h.collider.bounds;
+							if (!float.IsInfinity(terr) && cb.min.y > terr + StandOff && cb.size.y < ThinUp && h.collider.GetComponentInParent<DigTunnel>() == null) continue;
+							if (h.point.y > gr) { gr = h.point.y; groundBy[i, k] = h.collider.name; }
 						}
 						top[i, k] = roof;
 						floorAt[i, k] = low;
@@ -1094,6 +1109,8 @@ namespace DynamicIslands.Editor
 		internal const int LooseCells = 40;
 		/// <summary>How far over the sea the ground of a cut cell must be for the hill's sunk rim to go on it (m).</summary>
 		internal const float DryBy = 0.3f;
+		/// <summary>A non-terrain thing whose bottom is over this far above the terrain under it, and less than ThinUp m tall, is not ground (m).</summary>
+		internal const float StandOff = 0.75f, ThinUp = 3f;
 		// (cave.foot=dry: over the sea the shoulder ramps start this far under the water, m)
 		const float SeaFootBy = 0.6f;
 		// (cave.foot=dry: how far a way in runs past its roof's end, m)

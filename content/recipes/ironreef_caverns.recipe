@@ -135,6 +135,8 @@ clear from 0 10 to 0 -40 r=10
 brush sand from 0 0 to 0 -40 r=9 s=10 frames=40
 brush rock from 0 -8 to 0 -38 r=6 s=10 frames=30
 place BalboaCave_DeadEnd bearhallcave at -1.7 -20.5 y=9.4 scale=1.25
+# (fo2 11-19: the sand at its mouth lay a step under its floor - the walk into the hall stuck at the lip; dry foot rounds it up to the floor)
+prop bearhallcave cave.foot=dry
 place BigBoulder2_Low rockfall at -3.8 -1.5 sit scale=0.6 yaw=10
 place BigBoulder2_Low rockfall at 3.8 -1.2 sit scale=0.6 yaw=-15
 # (10-25: the two small rockfall stones sunk by what they hung over the dug floor - drop alone left them up to 3.9 m up)
