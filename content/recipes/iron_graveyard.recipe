@@ -85,9 +85,9 @@ place VP_Scaffolding_M_Open - at 1.5 -74 ground yaw=90
 place VP_Scaffolding_S_Open - at -21 -74 ground yaw=90
 place UT_ElectricityIsland_Crane02 crane at -2 -66 ground yaw=180
 # (the crane's own ladder up its north end to the cab's platform, 6.6 m, lost its climbing with Raft's scripts: two of Raft's
-# ladders beside it, the climber facing the crane)
+# ladders beside it, the climber facing the crane; the upper one stretched sy=1.42 so the two reach 5.86 m and lift the climber to the 6.4 m platform)
 place Block_Ladder - at 0.35 -63.56 y=0 ground yaw=180
-place Block_Ladder - at 0.35 -63.56 y=2.42 ground yaw=180
+place Block_Ladder - at 0.35 -63.56 y=2.42 sy=1.42 ground yaw=180
 place Note_Paper operatorsnote at -1.6 -64.6 h=8 sit drop yaw=20
 
 # --- The yard office (a radio tower room, its door to the west), the foreman's board by it; the store between two
