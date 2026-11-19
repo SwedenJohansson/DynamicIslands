@@ -999,22 +999,74 @@ namespace DynamicIslands
 			else Log("PASS: den walls " + walls.Count + ", each face lit both ways");
 		}
 
-		[ConsoleCommand(name: "CIRayLook", docs: "Dev, in a world: what is seen from a point toward another on a loaded island (points in the island's frame, as a play's picture) - a fan of 9x9 rays over 30 degrees, each ray's first renderer (its mesh's triangles, colliders or not); logs each thing seen with its share of the rays, path, material, shader and textures. For finding what draws an odd look (the blue rock, 11-06). CIRayLook <island> <x> <y> <z> <tx> <ty> <tz>")]
+		[ConsoleCommand(name: "CIRayLook", docs: "Dev, in a world: what is seen from a point toward another on a loaded island (points from the island's land centre: a play's picture point minus the play's offset; or 'picture' in their place: the last play picture's own camera - w15Z: points given with the offset added looked out to sea) - a fan of 9x9 rays over 30 degrees, each ray's first renderer it sees the face of (its mesh's triangles, colliders or not; a face seen from behind is culled, as drawn - w15Z: an inside-out CaveBack round the eye was reported for the wall in front); fan=<degrees> narrows or widens the fan (30); at=<u>,<v> points the fan at that spot of a play picture taken from the first point at the second (0..1 across and down, the camera's own field of view, 16:9) - for asking what one odd bit in a picture is; logs a 9x9 map of what each ray met (top row up, left column left) and each thing seen with its share of the rays, path, material, shader and textures. For finding what draws an odd look (the blue rock, 11-06). CIRayLook [fan=<degrees>] [at=<u>,<v>] <island> <x> <y> <z> <tx> <ty> <tz> | picture")]
 		public static void RayLookCommand(string[] args)
 		{
-			if (args == null || args.Length < 7) { Fail("CIRayLook <island> <x> <y> <z> <tx> <ty> <tz>"); return; }
+			float fan = 30f; Vector2? at = null;
+			while (args != null && args.Length > 0 && (args[0].StartsWith("fan=") || args[0].StartsWith("at=")))
+			{
+				if (args[0].StartsWith("fan=")) fan = float.Parse(args[0].Substring(4), CultureInfo.InvariantCulture);
+				else { string[] uv = args[0].Substring(3).Split(','); at = new Vector2(float.Parse(uv[0], CultureInfo.InvariantCulture), float.Parse(uv[1], CultureInfo.InvariantCulture)); }
+				args = args.Skip(1).ToArray();
+			}
+			if (args != null && args.Length == 1 && args[0] == "picture")
+			{
+				if (!LastPictureFrom.HasValue) { Fail("ray look: no play picture taken yet"); return; }
+				Vector3 pf = LastPictureFrom.Value, pl = LastPictureLook.Value;
+				Log("  the last play picture's camera, on " + LastPictureIsland + ": " + pf.ToString("F2") + " toward " + pl.ToString("F2"));
+				StartTest(RayLookRoutine(LastPictureIsland, new[] { pf.x, pf.y, pf.z, pl.x, pl.y, pl.z }, fan, at));
+				return;
+			}
+			if (args == null || args.Length < 7) { Fail("CIRayLook [fan=<degrees>] [at=<u>,<v>] <island> <x> <y> <z> <tx> <ty> <tz>, or CIRayLook [fan=..] [at=..] picture"); return; }
 			float[] v = args.Skip(args.Length - 6).Select(a => float.Parse(a, CultureInfo.InvariantCulture)).ToArray();
-			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args.Take(args.Length - 6).ToArray()) });
-			if (e == null) return;
-			Vector3 from = e.Position + e.Root.transform.rotation * new Vector3(v[0], v[1], v[2]), to = e.Position + e.Root.transform.rotation * new Vector3(v[3], v[4], v[5]);
+			StartTest(RayLookRoutine(string.Join(" ", args.Take(args.Length - 6).ToArray()).Trim().Trim('"', '\'').Trim(), v, fan, at));
+		}
+
+		/// <summary>CIRayLook's work: the island loaded here, or (host) brought next to the raft as CICaveGapsLook brings one.
+		/// A test, so a run sees IDLE after it: run after a CIPlay, whose island is gone by then, the command only logged FAIL
+		/// and a job waited out its hour for IDLE (w15Y, 11-18).</summary>
+		static IEnumerator RayLookRoutine(string name, float[] v, float fan, Vector2? at)
+		{
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Root != null && ((x.Name ?? "").IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0
+				|| (x.HostName ?? "").IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0));
+			if (e == null)
+			{
+				if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || CaveGapsLookIslandMissing(name)) { Fail("ray look: no loaded island called '" + name + "' here, and none to bring"); yield break; }
+				float elev = 0f;
+				try { elev = IslandFile.Load(IslandSpawner.PathFor(name)).Elevation; } catch { }
+				Vector3? spot = ScSpot(name, 400f, elev);
+				if (!spot.HasValue) { Fail("ray look: no open sea near the raft"); yield break; }
+				var made = new List<IslandWorldState.Entry>();
+				yield return ScBring(name, spot.Value, made);
+				e = made.LastOrDefault();
+				if (e == null || e.Root == null) { Fail("ray look: " + name + " didn't come"); yield break; }
+				for (float w = 0f; w < 20f; w += 0.5f)
+				{
+					CaveMountain cm = e.Root.GetComponentInChildren<CaveMountain>();
+					if (cm == null || !cm.Pending) break;
+					yield return new WaitForSeconds(0.5f);
+				}
+				yield return new WaitForSeconds(2f);
+			}
+			Vector3 from = e.Position + e.Root.transform.rotation * new Vector3(v[0], v[1], v[2]),
+				to = e.Position + e.Root.transform.rotation * new Vector3(v[3], v[4], v[5]);
 			Quaternion look = Quaternion.LookRotation(to - from);
+			if (at.HasValue)
+			{
+				float half = Mathf.Tan((Camera.main != null ? Camera.main.fieldOfView : 60f) * 0.5f * Mathf.Deg2Rad);
+				look = Quaternion.LookRotation(look * new Vector3((2f * at.Value.x - 1f) * half * 16f / 9f, (1f - 2f * at.Value.y) * half, 1f));
+				Log("  aimed at " + at.Value.x.ToString("0.00", CultureInfo.InvariantCulture) + "," + at.Value.y.ToString("0.00", CultureInfo.InvariantCulture) + " of the picture (field of view " + (Camera.main != null ? Camera.main.fieldOfView : 60f).ToString("0") + ")");
+			}
 			var rends = Object.FindObjectsOfType<Renderer>().Where(r => r.enabled && r.gameObject.activeInHierarchy && !(r is ParticleSystemRenderer) && r.GetComponentInParent<Network_Player>() == null && r.bounds.SqrDistance(from) < 80f * 80f).ToList();
+			Log("  from " + from.ToString("F1") + " (island at " + e.Position.ToString("F1") + ")" + ": " + rends.Count + " renderers within 80 m");
 			var seen = new Dictionary<Renderer, int>();
+			var nearHit = new Dictionary<Renderer, float>(); // (w15Z: how far each was met, the nearest ray's)
 			int rays = 0;
+			var grid = new Renderer[9, 9]; // [row (k, up first), column (i, left first)]
 			for (int i = -4; i <= 4; i++)
 				for (int k = -4; k <= 4; k++)
 				{
-					Ray ray = new Ray(from, look * Quaternion.Euler(k * 3.75f, i * 3.75f, 0f) * Vector3.forward);
+					Ray ray = new Ray(from, look * Quaternion.Euler(k * fan / 8f, i * fan / 8f, 0f) * Vector3.forward);
 					rays++;
 					Renderer best = null; float bd = 80f;
 					foreach (Renderer r in rends)
@@ -1024,35 +1076,105 @@ namespace DynamicIslands
 						float d = RayMeshDistance(r, ray);
 						if (d < bd) { bd = d; best = r; }
 					}
-					if (best != null) seen[best] = (seen.ContainsKey(best) ? seen[best] : 0) + 1;
+					grid[k + 4, i + 4] = best;
+					if (best != null) { seen[best] = (seen.ContainsKey(best) ? seen[best] : 0) + 1; if (!nearHit.ContainsKey(best) || bd < nearHit[best]) nearHit[best] = bd; }
 				}
+			var order = seen.OrderByDescending(p => p.Value).Select(p => p.Key).ToList();
+			for (int k = 0; k < 9; k++)
+			{
+				var row = new System.Text.StringBuilder("  map ");
+				for (int i = 0; i < 9; i++) { int idx = grid[k, i] == null ? -1 : order.IndexOf(grid[k, i]); row.Append(idx < 0 ? '.' : (char)(idx < 26 ? 'A' + idx : 'a' + idx - 26)); }
+				Log(row.ToString());
+			}
 			foreach (var kv in seen.OrderByDescending(p => p.Value))
 			{
 				Renderer r = kv.Key;
 				string path = r.name; for (Transform t = r.transform.parent; t != null && t != e.Root.transform.parent; t = t.parent) path = t.name + "/" + path;
 				string mats = string.Join("; ", r.sharedMaterials.Where(m => m != null).Select(m => m.name + " (" + m.shader.name + ": " + string.Join(" ", m.GetTexturePropertyNames().Where(t => m.GetTexture(t) != null).Select(t => t + "=" + m.GetTexture(t).name).ToArray()) + ")").ToArray());
 				var b = new MaterialPropertyBlock(); r.GetPropertyBlock(b);
-				Log("  " + kv.Value + "/" + rays + " " + path + " at " + (r.transform.position - e.Position).ToString("F1") + " [" + r.GetType().Name + (b.isEmpty ? "" : ", property block") + ", probes " + r.lightProbeUsage + "]: " + mats);
+				int at2 = order.IndexOf(r);
+				Log("  " + (at2 < 26 ? (char)('A' + at2) : (char)('a' + at2 - 26)) + " " + kv.Value + "/" + rays + " " + path + " met " + nearHit[r].ToString("0.0") + " m off (bounds " + (r.bounds.min - e.Position).ToString("F1") + ".." + (r.bounds.max - e.Position).ToString("F1") + ") at " + (r.transform.position - e.Position).ToString("F1") + " [" + r.GetType().Name + (b.isEmpty ? "" : ", property block") + ", probes " + r.lightProbeUsage + "]: " + mats);
 			}
+			// (the middle ray: every renderer it crosses, faces from behind too, and those whose mesh couldn't be read - a flap
+			// the fan never met (w15Z's Coral den) is drawn from both sides, or not readable)
+			Ray mid = new Ray(from, look * Vector3.forward);
+			var through = new List<KeyValuePair<float, string>>();
+			foreach (Renderer r in rends)
+			{
+				float bdist;
+				if (!r.bounds.IntersectRay(mid, out bdist) || bdist > 40f) continue;
+				string path = r.name; for (Transform t = r.transform.parent; t != null && t != e.Root.transform.parent; t = t.parent) path = t.name + "/" + path;
+				MeshFilter mf = r.GetComponent<MeshFilter>();
+				Vector3[] mp; int[] mt;
+				if (mf == null || mf.sharedMesh == null || !ReadMesh(mf.sharedMesh, out mp, out mt)) { through.Add(new KeyValuePair<float, string>(bdist, "its bounds " + bdist.ToString("0.0") + " m (" + (mf == null || mf.sharedMesh == null ? r.GetType().Name + ", no mesh" : "mesh " + mf.sharedMesh.name + " unread") + ") " + path)); continue; }
+				float f = RayMeshDistance(r, mid), bk = RayMeshDistance(r, mid, true);
+				if (f < 40f) through.Add(new KeyValuePair<float, string>(f, f.ToString("0.0") + " m its front " + path));
+				if (bk < 40f) through.Add(new KeyValuePair<float, string>(bk, bk.ToString("0.0") + " m its back " + path));
+			}
+			foreach (var kv in through.OrderBy(x => x.Key).Take(16)) Log("  middle ray: " + kv.Value);
 			Log("PASS: ray look " + seen.Count + " things");
 		}
 
-		// The distance along the ray to the renderer's mesh, or infinity (a skinned or unreadable mesh: its bounds).
-		static float RayMeshDistance(Renderer r, Ray ray)
+		static readonly Dictionary<Mesh, KeyValuePair<Vector3[], int[]>> rayMeshes = new Dictionary<Mesh, KeyValuePair<Vector3[], int[]>>();
+
+		// A mesh's points and triangles, readable or not (an unreadable one from its GPU buffers: Float32 or Float16 positions).
+		static bool ReadMesh(Mesh m, out Vector3[] p, out int[] tri)
+		{
+			KeyValuePair<Vector3[], int[]> got;
+			if (!rayMeshes.TryGetValue(m, out got))
+			{
+				got = new KeyValuePair<Vector3[], int[]>(null, null);
+				try
+				{
+					if (m.isReadable) got = new KeyValuePair<Vector3[], int[]>(m.vertices, m.triangles);
+					else if (m.GetVertexAttributeFormat(UnityEngine.Rendering.VertexAttribute.Position) == UnityEngine.Rendering.VertexAttributeFormat.Float32
+						|| m.GetVertexAttributeFormat(UnityEngine.Rendering.VertexAttribute.Position) == UnityEngine.Rendering.VertexAttributeFormat.Float16)
+					{
+						bool f16 = m.GetVertexAttributeFormat(UnityEngine.Rendering.VertexAttribute.Position) == UnityEngine.Rendering.VertexAttributeFormat.Float16;
+						int st = m.GetVertexAttributeStream(UnityEngine.Rendering.VertexAttribute.Position), off = m.GetVertexAttributeOffset(UnityEngine.Rendering.VertexAttribute.Position), stride = m.GetVertexBufferStride(st);
+						byte[] vb, ib;
+						using (GraphicsBuffer g = m.GetVertexBuffer(st)) { vb = new byte[g.count * g.stride]; g.GetData(vb); }
+						using (GraphicsBuffer g = m.GetIndexBuffer()) { ib = new byte[g.count * g.stride]; g.GetData(ib); }
+						var pts = new Vector3[m.vertexCount];
+						for (int v = 0; v < pts.Length; v++) { int a = v * stride + off; pts[v] = f16 ? new Vector3(Mathf.HalfToFloat(System.BitConverter.ToUInt16(vb, a)), Mathf.HalfToFloat(System.BitConverter.ToUInt16(vb, a + 2)), Mathf.HalfToFloat(System.BitConverter.ToUInt16(vb, a + 4)))
+							: new Vector3(System.BitConverter.ToSingle(vb, a), System.BitConverter.ToSingle(vb, a + 4), System.BitConverter.ToSingle(vb, a + 8)); }
+						bool wide = m.indexFormat == UnityEngine.Rendering.IndexFormat.UInt32;
+						var ts = new List<int>();
+						for (int sm = 0; sm < m.subMeshCount; sm++)
+						{
+							UnityEngine.Rendering.SubMeshDescriptor d = m.GetSubMesh(sm);
+							if (d.topology != MeshTopology.Triangles) continue;
+							for (int i = d.indexStart; i < d.indexStart + d.indexCount; i++) ts.Add(d.baseVertex + (wide ? System.BitConverter.ToInt32(ib, i * 4) : System.BitConverter.ToUInt16(ib, i * 2)));
+						}
+						got = new KeyValuePair<Vector3[], int[]>(pts, ts.ToArray());
+					}
+				}
+				catch (System.Exception) { }
+				rayMeshes[m] = got;
+			}
+			p = got.Key; tri = got.Value;
+			return p != null && tri != null;
+		}
+
+		// The distance along the ray to the renderer's mesh's nearest face the ray meets from the front (as drawn: back faces culled), or infinity (a skinned or unreadable mesh: its bounds).
+		static float RayMeshDistance(Renderer r, Ray ray, bool backs = false)
 		{
 			MeshFilter f = r.GetComponent<MeshFilter>();
 			Mesh m = f != null ? f.sharedMesh : null;
 			float bd;
-			if (m == null || !m.isReadable) return !r.bounds.Contains(ray.origin) && r.bounds.IntersectRay(ray, out bd) ? bd : float.PositiveInfinity; // (around the eye: can't tell)
+			Vector3[] p; int[] tri;
+			// (Raft's own rock and the cave backs (uploaded) can't be read on the CPU: read from the GPU as CaveBacks does - without
+			// it the ray met their bounds' box, and a den's deco rock's box in front of the eye was reported as the odd look, w15Z)
+			if (m == null || !ReadMesh(m, out p, out tri)) return !r.bounds.Contains(ray.origin) && r.bounds.IntersectRay(ray, out bd) ? bd : float.PositiveInfinity; // (around the eye: can't tell)
 			Transform t = r.transform;
 			Vector3 o = t.InverseTransformPoint(ray.origin), dir = t.InverseTransformDirection(ray.direction);
-			Vector3[] p = m.vertices; int[] tri = m.triangles;
+			Vector3 ls = t.lossyScale; bool flip = ls.x * ls.y * ls.z < 0f; // (a mirrored transform turns the winding)
 			float best = float.PositiveInfinity;
 			for (int i = 0; i < tri.Length; i += 3)
 			{
 				Vector3 a = p[tri[i]], e1 = p[tri[i + 1]] - a, e2 = p[tri[i + 2]] - a;
 				Vector3 h = Vector3.Cross(dir, e2); float det = Vector3.Dot(e1, h);
-				if (Mathf.Abs(det) < 1e-7f) continue;
+				if (Mathf.Abs(det) < 1e-7f || ((det < 0f) != flip) != backs) continue; // (seen from behind: culled; backs: only those)
 				float inv = 1f / det; Vector3 s = o - a; float u = Vector3.Dot(s, h) * inv;
 				if (u < 0f || u > 1f) continue;
 				Vector3 q = Vector3.Cross(s, e1); float w = Vector3.Dot(dir, q) * inv;
