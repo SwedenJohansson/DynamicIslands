@@ -1139,7 +1139,18 @@ namespace DynamicIslands
 						if (Physics.CapsuleCast(a, a + Vector3.up * 0.9f, 0.35f, d.normalized, out h, d.magnitude, ~0, QueryTriggerInteraction.Ignore)
 							&& h.collider.GetComponentInParent<Network_Player>() == null && h.collider.GetComponentInParent<AI_NetworkBehaviour>() == null
 							&& Vector3.Angle(h.normal, Vector3.up) > 50f)
-						{ blocked++; if (where.Length == 0) where = " - first at point " + i + " (" + h.collider.name + ", " + (f[i].y - sea).ToString("0.0") + " m)"; }
+						{
+							blocked++;
+							// (where it hit, over the floor between the two points and across: RM4's Vaporhold intake stopped at CaveMouth
+							// with no more said - fix-open 11-19)
+							if (where.Length == 0)
+							{
+								Vector3 hp = h.point - e.Position;
+								where = " - first at point " + i + " (" + h.collider.name + ", " + (f[i].y - sea).ToString("0.0") + " m; hit at " + hp.x.ToString("0.0") + " " + (h.point.y - sea).ToString("0.0") + " " + hp.z.ToString("0.0")
+									+ ", " + (h.point.y - Mathf.Lerp(f[i - 1].y, f[i].y, Mathf.Clamp01(Vector3.Dot(h.point - f[i - 1], d) / d.sqrMagnitude))).ToString("0.0") + " m over the floor, "
+									+ h.distance.ToString("0.0") + " of " + d.magnitude.ToString("0.0") + " m, normal " + Vector3.Angle(h.normal, Vector3.up).ToString("0") + " deg)";
+							}
+						}
 					}
 					Check(ref ok, blocked == 0, label + ": a clear way along it, " + c + " points" + (blocked > 0 ? ": " + blocked + " blocked" + where : ""));
 					// A ladder shaft (11-08): its middle line clear (the ladders aside) and ladders up it from its foot to near its top
