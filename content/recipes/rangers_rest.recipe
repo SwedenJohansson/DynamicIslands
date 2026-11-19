@@ -43,6 +43,8 @@ clear at -45 -2 r=16
 brush lower from -20 -27 to 6 -27 r=6 s=4 frames=12
 clear at 22 -2 r=11
 clear at 19 -12 r=6
+# (fix-open 11-19: a white flower stood 1 m over the hillside south-west of the tower - CIFloating fo1)
+clear at 8.2 -19.4 r=2.5
 clear at -8 -27 r=17
 # (the trails: from the south beach up to the station, on up to the tower, and along the shore to the den)
 clear from 10 26 to 12 14 r=2.5
@@ -117,7 +119,7 @@ place Creature_Bear scar at -11 -27 h=3.4
 place BearBait - at -13.5 -25.5 h=3.0 sit
 place BearBait_Berries - at -9 -28.5 h=3.0 sit
 place Loot_ChestLarge stash at -19 -27 h=3.0 sit yaw=90
-place "Balboa_DecorationPrefabBase_Trash Bag 1" - at -17.5 -25 h=3.0 sit
+place "Balboa_DecorationPrefabBase_Trash Bag 1" - at -17.5 -25 h=2.45 sit
 place "Balboa_DecorationPrefabBase_Trash Bag 3" - at -18 -29 h=3.0 sit
 place Obstacle_PoisonLake_WoodBox - at -16 -29.3 h=2.6 sit tilt=12 yaw=30
 place Zone_Trigger den at 5 -27 h=4.5
