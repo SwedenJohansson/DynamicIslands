@@ -55,6 +55,9 @@ brush flatten from 0 0 to 0 10 r=9 s=20 frames=30
 clear from 0 6 to 0 -34 r=8
 brush sand from 0 2 to 0 -34 r=7 s=10 frames=40
 place BalboaCave_Bear irongatecave at 1.2 -18.4 y=5.2 scale=1.15
+# its hill keeps the old (wet) foot: the dry den foot (11-08) and the wider hill grid spread the
+# skin over the shoulder road, the gully and tunnel mouth A (fo11/fx1b: walks stuck on CaveSkin) - fo2 11-19
+prop irongatecave cave.foot=wet
 # the timbered portal at the mouth, rails along the floor, ore carts, lanterns on crates, veins of iron and copper
 place Relay_support_beam_wood - at -4.2 -1 rot=0,0,-90 sx=0.75
 place Relay_support_beam_wood - at 6.6 -1 rot=0,0,-90 sx=0.75

@@ -13,6 +13,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 - **Ranger's Rest's watchtower stands on open ground again**: the bear den's hill flared out to the height of whatever lay over the ground, so under the tower's deck (and by the cabin) it rose as a sand pillar between the legs that blocked the way to the ladder. A den's hill now flares out over the terrain and its rocks only, not over decks, roofs or beams held up off the ground.
 - **Old Mine Islet's mine and Ironreef's Bear Hall can be walked into**: the sand in front of their mouths lay a step of up to 3 m under the cave floor; it now rounds up to the floor.
+- **Ironreef Caverns' mountain road is open again**: the hill over the Iron Gate had spread over the plank road along the shoulder, the gully by mouth C and the front of tunnel mouth A, so you climbed onto rock where the road and the mouths should be. The hill keeps its old foot now.
 - **Gilded Skull Cove tidied**: a bush clump and a boulder left standing over the ground where the cave's ground came down are gone.
 - **Ironreef Caverns' second rat waits in tunnel B**: it used to wander out of the tunnel's open mouth before you came; it now stays in until you walk in. The mine's lanterns stand on their crates, and rocks and bushes that hung in the air by the Drowned Shaft and on the mountain's east side are gone.
 - **Stilt Hollow's notice board stands on the deck** instead of a metre over it; **Tide Farm's jam crate** sits on a post from the sea floor instead of on nothing.
