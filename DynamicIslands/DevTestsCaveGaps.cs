@@ -986,6 +986,7 @@ namespace DynamicIslands
 
 		/// <summary>How far down GapWalkOut looks for the ground beside a mouth (from 3 m over the floor).</summary>
 		const float GapWalkDown = 30f;
+		const float LoneHeadMax = 1.5f; // (CICaveGapsLook: m the hill over a lone den's arch may stand over the plane cap just behind it, 11-19 cave1119)
 		const float LoneSheerMax = 5f; // (CICaveGapsLook: m a cell beside a lone den's way in may stand over its neighbour past the arch's own height, 11-18 w15L; 5 from w15M: Wreckers' Cove 4.9, Signal Rock 3.3, Coral Observatory 3.2 after the plane cap - a regression guard, not a look pass)
 
 		/// <summary>The ground's height beside a mouth less its floor; no ground under the probe (a cliff, the sea far
@@ -1111,6 +1112,21 @@ namespace DynamicIslands
 			{
 				Vector3 at = cm.LoneSheerAt - e.Position;
 				Check(ref ok, cm.LoneSheer <= LoneSheerMax, name + ": cave hill beside its lone dens' ways in: tallest step " + cm.LoneSheer.ToString("0.0") + " m over the arch's height (at most " + LoneSheerMax.ToString("0.0") + ")" + (cm.LoneSheer > 0f ? " at " + at.x.ToString("0.0") + " " + at.z.ToString("0.0") + ", " + cm.LoneSheerAt.y.ToString("0.0") + " m high (" + cm.LoneSheerNote + ")" : ""));
+				// (and over the arch and the den's roof just behind its plane, no higher than the plane cap: the dome's full height
+				// stood there as a sheer wall with the way in a slot cut into it, Vaporhold's Seep Cave 11-19 cave1119 FO-S1)
+				Vector3 hat = cm.LoneHeadAt - e.Position;
+				Check(ref ok, cm.LoneHead <= LoneHeadMax, name + ": cave hill over its lone dens' arches: " + cm.LoneHead.ToString("0.0") + " m over the plane cap (at most " + LoneHeadMax.ToString("0.0") + ")" + (cm.LoneHead > 0f ? " at " + hat.x.ToString("0.0") + " " + hat.z.ToString("0.0") : ""));
+				// (tunnels' mouth frames drawn as the hill, not in the tunnel's pale ravine rock: a white slab and steps in the hill's
+				// face, Old Mine Islet and Gilded Skull Cove 11-19 cave1119)
+				if (cm.Skin != null)
+				{
+					var pale = e.Root.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.name == CaveTool.MouthName && r.sharedMaterial != cm.Skin.sharedMaterial && cm.Skin.bounds.Contains(r.bounds.center)).ToList();
+					Check(ref ok, pale.Count == 0, name + ": tunnel mouth frames drawn as the cave hill: " + pale.Count + " not" + (pale.Count > 0 ? " (" + pale[0].transform.parent.name + ", " + (pale[0].sharedMaterial != null ? pale[0].sharedMaterial.name : "none") + ")" : ""));
+					// (no join plate left lying on a floor: a pale flat sheet at a tunnel's end into a den, Upfall Orchard 11-19 cave1119)
+					Physics.SyncTransforms();
+					var lying = e.Root.GetComponentsInChildren<MeshFilter>(false).Where(f => f.name == CaveTool.JoinName && cm.Skin.bounds.Contains(f.transform.position) && CaveTool.JoinLiesOnFloor(f.transform)).ToList();
+					Check(ref ok, lying.Count == 0, name + ": join plates lying on a floor: " + lying.Count + (lying.Count > 0 ? " (" + lying[0].transform.parent.name + ")" : ""));
+				}
 				if (cm.LastMap != null) File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "cavemap_" + name + ".txt"), cm.LastMap); // (its map, as CICaveLook writes it: what set each cell)
 			}
 			Vector3 eyeUp = Vector3.up * 1.6f;
