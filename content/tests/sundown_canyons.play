@@ -204,8 +204,8 @@ expect shown sc_setchest
 open Deputies' chest
 
 # Chapter 6 - the bank: in at its door; the teller takes the silver; the letter; the vault door with the gang's key
-# (through the middle of the bank's door: at -18.5 the walker brushed the door frame, RT_WallDoor1's middle is 0.5 m north - fix-open 11-19)
-walk -112 -18 to -106 -18 to -101 -18 h=3.05 below=6
+# (through the middle of the bank's door, RT_WallDoor1's middle at -17.7 with this offset: at -18.5 and, after the offset's update, at -18 the walker brushed the door frame - fix-open 11-19)
+walk -112 -17.7 to -106 -17.7 to -101 -17.7 h=3.05 below=6
 zone bank
 expect step 40
 use teller
