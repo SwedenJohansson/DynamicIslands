@@ -699,6 +699,8 @@ namespace DynamicIslands.Editor
 		// (r82: the strip on out to SkirtWide past the edge, the sand under it held SkirtUnder below it - the sand's own grid
 		// points just past the edge, raised or let down every way, poked up through the narrow strip in teeth, gen-large r81)
 		const float SkirtWide = 2.6f, SkirtUnder = 0.08f;
+		// (a strip whose middle is this far under the sea wears Raft's rock, which the water fogs)
+		const float SkirtSea = -0.5f;
 		static readonly float[] SkirtRows = { 0.9f, 1.5f, 2.1f };
 
 		/// <summary>
@@ -908,6 +910,10 @@ namespace DynamicIslands.Editor
 			var uv = verts.Select(v => new Vector2((v.x - lo.x) / size.x, (v.z - lo.z) / size.z)).ToList();
 			float u0 = uv.Min(q => q.x), u1 = uv.Max(q => q.x), v0 = uv.Min(q => q.y), v1 = uv.Max(q => q.y);
 			Material look = null;
+			// (under the sea, Raft's rock: the baked look is a plain Unity shader the water's fog never reaches - a bright yellow
+			// strip and sheet down an underwater tunnel's floor, Sinkmarket Floor sm_cave_out 11-19)
+			bool underSea = verts.Average(v => v.y) < SkirtSea;
+			if (!underSea)
 			try { look = DigTunnel.BakedGround(land, Rect.MinMaxRect(u0, v0, Mathf.Max(u1, u0 + 1e-4f), Mathf.Max(v1, v0 + 1e-4f)), ref look); }
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Skirt " + cave.name + ": the ground's look - " + ex.Message); look = null; }
 			if (look != null) mesh.SetUVs(0, uv);
