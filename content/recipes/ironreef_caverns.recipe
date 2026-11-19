@@ -68,12 +68,14 @@ place VP_Wagon02 - at 1 -19 sit
 place VP_Wagon02 - at 5.6 -14 sit tilt=75 yaw=20
 # (the crates on the mine's floor, along the passage: at x -3.2 / 5.4 they stood on its steep banks and were set down
 # into them, buried, CIGroundIslands)
+# (the lanterns sat 0.45 m over the ground at their own spot - on the slope a crate goes down to the lowest ground under
+# it, and the first lantern hung 0.9 m over its crate, CIFloating fix-open 11-19: dropped onto the crates)
 place Crate_Big_01 - at -1.8 -6 sit yaw=95
-place Placeable_Lantern_Metal - at -1.8 -6 y=0.45 sit
+place Placeable_Lantern_Metal - at -1.8 -6 y=1 sit drop
 place Crate_Big_01 - at -1.8 -16 sit yaw=90
-place Placeable_Lantern_Metal - at -1.8 -16 y=0.45 sit
+place Placeable_Lantern_Metal - at -1.8 -16 y=1 sit drop
 place Crate_Big_01 - at -1.8 -25 sit yaw=80
-place Placeable_Lantern_Metal - at -1.8 -25 y=0.45 sit
+place Placeable_Lantern_Metal - at -1.8 -25 y=1 sit drop
 place "Pickup_Landmark_Iron 1" - at -5 -11 sit
 place "Pickup_Landmark_Iron 2" - at 7.6 -22 sit
 place "Pickup_Landmark_Copper 1" - at -5.2 -18 sit
@@ -576,4 +578,14 @@ clear at 8.76 12.65 r=1 only=SmallBoulder4
 clear at 27.53 -30.38 r=1 only=SmallBoulder4
 clear at -20.88 5.62 r=1 only=SmallBoulder3
 clear at 83.05 -57.57 r=1.5 only=BigBoulder2_Low
+# (more left in the air, CIFloating fix-open 11-19: by the Drowned Shaft, where its channel was lowered past the cleared
+# strip - plants and stones 12-17 m over the new ground - and two stones on the mountain's east side)
+clear at -64.25 -19.51 r=1 only=SmallBoulder1
+clear at -59.36 -20.38 r=1.5 only=BigBoulder1_Low
+clear at -59.8 -27.8 r=1.5 only=Bush
+clear at -56.53 -26.41 r=1 only=Bush
+clear at -60.31 -17.82 r=1 only=Bush2
+clear at -62.39 -16.7 r=1 only=Banana_Bush_2
+clear at 21.42 5.88 r=1 only=SmallBoulder4
+clear at 25.53 14.83 r=1.5 only=BigBoulder1_Low
 save Ironreef Caverns
