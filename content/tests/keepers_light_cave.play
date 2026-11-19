@@ -1,0 +1,26 @@
+# Keeper's Light's sea cave (CIPlay keepers_light_cave, 11-12 w14 prep; in a test world 'CI ...'). Points as in the
+# recipe: kit_uw mouth on the sea floor at 76 46 (pad -4; yaw 270: way in = -x), tunnel 36.4 m up 12 degrees (the cave tool's
+# most; +7.6 m), the den beyond (middle ~29 46) under a new stack off the light's shore; air zone kl_seacave there, the chest
+# klseacavechest. 11-17 (w14E): 4 pieces left the den under the sea - now 5 from a pad at -4, den floor ~3.6.
+# 11-17 w14F: the cave moved (see the recipe's 11-17 FIX) - swim in under water to where the tunnel leaves the sea,
+# walk the dry rest (as tiki_lagoon_cave); in-cave pictures at absolute heights.
+island Keeper's Light keep
+offset 35.0665 26.946
+hour 11
+weather Calm
+
+empty
+picture kl_seacave_out 72 8 14 50 3 40
+at 24.3 14.3 h=-1
+# 11-17 w14L: swims along the tunnel snagged where its floor meets the water line. As effigy_shoals_caves and
+# weatherglass: swim only to the mouth, walk the tunnel floor in and out.
+swim 24.3 14.3 -1.5 to 30 20 -3.5
+walk 30 20 to 36.4 26.4 to 41.3 31.3 to 44.1 34.1 to 47 37 to 50.6 40.6 to 54.7 44.7 to 58.3 48.3 below=-3
+air kl_seacave here
+picture kl_seacave_in 50.6 4 40.6 58.3 3 48.3 light=20
+open Keepers' cache
+wait 2
+expect item CopperIngot 1
+walk 58.3 48.3 to 54.7 44.7 to 50.6 40.6 to 47 37 to 44.1 34.1 to 41.3 31.3 to 36.4 26.4 to 30 20 below=5
+# (w14I: the swim out is put on its first point - at -0.8 that was under the floor (stuck); it now runs the swim in's own line back)
+swim 30 20 -3.5 to 24.3 14.3 -1.5

@@ -1,0 +1,18 @@
+# Sulphur Vent's vent pool A with a suit (CIPlay sulphur_vent_acidsuit; in a test world 'CI ...'). The suit box svsuits
+# (18.5 0, between the two pool paths on the east flats, since 11-18 w16I) gives 180 s of suit; straight through pool A
+# (sv_poolA, 26 10) unhurt.
+island Sulphur Vent keep
+offset 0 0
+hour 11
+weather Calm
+
+empty
+at 20 2 h=7
+use svsuits
+walk 20 2 to 16.5 10 to 26 10
+wait 6
+expect unhurt
+walk 26 10 to 35.5 10
+open Diggers' crate
+wait 2
+expect item Scrap 3

@@ -1,0 +1,32 @@
+# Wingfall Mire's acid bog (CIPlay vi_wingfall_mire_acid, 11-12 w16 prep; in a test world 'CI ...'; vehicle island, no
+# quest). The bog runs from 8 26 to 24 18 (floor -0.6 m, stepped slopes up to the banks); acid zones wm_bogA-D (r 2 at
+# -0.4: 18.86 20.57, 13.14 23.43, 22.08 18.96, 9.92 25.04, safe=suit); planks across from 13.3 16.65 to 18.7 27.4 (deck
+# ~2.7 m, centre line 1.2 m from the nearest zone's edge). The planks: unhurt; the cargo locker (19.6 29) on the far
+# side; wade into zone A from the far side: hurt; walk out up the far slope. Offset under 0.5 m: none.
+# (11-17 w16: rewritten for the stepped bog and the higher planks)
+# (11-17 w16G: run it before any suit play in a session - a suit put on in an earlier play keeps its 180 s timer)
+island Wingfall Mire keep
+offset 0 0
+hour 11
+weather Calm
+
+empty
+at 12.6 14 h=5.5
+read BOG - ACID
+picture wm_bog 11 +3 14 18 +0 23
+walk 12.6 14 to 13.32 16.65 to 16 22 to 18.68 27.38
+wait 3
+expect unhurt
+walk 18.68 27.38 to 19.3 28.4
+open Cargo locker
+wait 2
+expect item MetalIngot 2
+walk 19.3 28.4 to 20.5 26 to 18.86 20.57
+wait 5
+expect message bog water burns
+expect hurt 4
+walk 18.86 20.57 to 20.5 26 to 21 28.5
+wait 2
+expect hurt 0
+wait 3
+expect unhurt

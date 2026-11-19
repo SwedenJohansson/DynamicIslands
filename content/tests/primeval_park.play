@@ -7,7 +7,7 @@
 # platform 18 m); the show lagoon at the bay's head (24 22, 12 m deep) with its feeding platform (6.5..17 21..24, 1.5 m);
 # the great gate across the north horn (-12 56), the Queen's valley behind it, the keeper lodge at 2 84.
 island Primeval Park
-offset -11.3586 -2.7132
+offset -9.0526 -0.9373
 expect step 0
 expect title Welcome to Primeval Park
 wait 5

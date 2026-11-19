@@ -177,6 +177,7 @@ call sk_notebox x=-44 z=-56 yaw=70 al=th_wrecknote
 # --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
 clear from -69 3 to -46 0 r=3
 place ZiplinePath_Landmark thridgezip at -69 3 ground
+zipfrom thridgezip -69 3 ground
 zipto thridgezip -46 0
 call vinecache x=-30 z=-70 r=8 seed=10571 chest=thvinechest vines=thvines items=Rope*3;Nail*8;Glass*2
 
@@ -200,6 +201,7 @@ place Loot_ChestSmall thlocker at 53.25 -35.25 h=39.2 drop yaw=180
 place Note_Paper thsumnote at 53.25 -36.75 h=38.84 drop yaw=20
 place Zone_Trigger thsummit at 54 -36 h=39.73
 place ZiplinePath_Landmark thzip at 54.75 -36.75 h=38.73 yaw=0
+zipfrom thzip 54.75 -36.75 h=38.73
 zipto thzip 27 -18
 place Loot_ChestSmall thledge at 43.82 -25.82 ground sit yaw=40
 place SmallRock_02 - at 31.45 -38.77 ground sit scale=0.5

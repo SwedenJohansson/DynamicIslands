@@ -80,6 +80,38 @@ namespace DynamicIslands
 				"place SmallRock_02 - at -100 -60 h=10 scale=2",
 				"place SmallRock_02 - at -95 -60 h=10 scale=2",
 				"place Block_Foundation archdeck at -97.5 -60 h=11.6 sx=3.2 sz=1.6",
+				// (a radio tower room turned 59 degrees, its roof on its walls - Twin Forges' Anvil, IG5 11-18: the roof's box
+				// corners 30 % in lay inside the room, over nothing)
+				"include lib_rt",
+				"push at -75 -75 h=10 yaw=59",
+				"call rt_storey f1=none f2=none",
+				"place RT_Floor - at 0 4.5 y=3",
+				"pop",
+				// (rocks, IG5 11-18: a boulder resting on the ground - its round underside curves up from its middle; one 3 m in
+				// the air; one set 0.3 m into the ground)
+				// on a bank raised out of the sea (on the sea floor "ground" is the water's top), wide enough that a big rock's
+				// edge isn't over its falling side (one stroke r=9: the boulder's quarter points read 95 m over the sea floor)
+				"brush flatten from -48 -58 to -12 -58 r=9 s=20 frames=400 h=1.5",
+				"brush flatten from -48 -66 to -12 -66 r=9 s=20 frames=400 h=1.5",
+				"brush flatten from -48 -74 to -12 -74 r=9 s=20 frames=400 h=1.5",
+				// (sit: by its bottom - a SmallBoulder2's pivot is 4.2 m x scale over its bottom, so y=3 by the pivot left it 3 m
+				// in the ground, and with no y a scale 3 boulder went down to the lowest ground under it, the sea floor 160 m down)
+				// (a SmallBoulder2 at 1.5 leans: its lowest point is at an edge and its middle's underside 3.35 m over it, so by its
+				// bottom it stood on that edge with its middle in the air - bedded in by 4.5 m it rests, by 6 m it is set in, 11-18 jd)
+				"place SmallBoulder2 restrock at -20 -62 ground y=-4.5 sit scale=1.5",
+				"place SmallBoulder2 airrock at -30 -62 ground y=3 sit scale=1.5",
+				"place SmallBoulder2 setrock at -40 -62 ground y=-6 sit scale=1.5",
+				// (trees, IG5 11-18: a palm sunk 2 m into the ground and one 2 m over it - both go back on the ground at a save)
+				"place BigPalm1 sunkpalm at -20 -70 ground y=-2",
+				"place BigPalm1 airpalm at -32 -70 ground y=2",
+				// (a grass tuft 1 m over the ground - the generator's, over a pit a stroke dug: Firedance Isle, IG5 11-18)
+				"place CaravanIsland_YellowGrass airgrass at -42 -70 ground y=1",
+				// (a palm the test moves onto the bank's steep south rim - the reseat moves it off: "trunk over a drop", IG5 11-18)
+				"place BigPalm1 rimpalm at -36 -70 ground",
+				// (a zipline moved by its near end's floor onto a spot - its pivot is elsewhere: summit ziplines hung off their towers, IG5 11-18)
+				"place ZiplinePath_Landmark pfzip at -14 -62 ground",
+				"place SmallRock_02 pfzipmark at -16 -68 ground scale=0.3",
+				"zipfrom pfzip -16 -68 ground",
 				});
 			}
 			catch (Exception e) { Fail("prefaults: writing " + pb + ": " + e.Message); yield break; }
@@ -121,6 +153,12 @@ namespace DynamicIslands
 					Check(ref ok, UnderCaveHill(new Vector3(db.center.x, db.max.y - 1f, db.center.z), dc, 0.3f), "a foot 1 m under a cave's top stands on its hill");
 					Check(ref ok, !UnderCaveHill(new Vector3(db.center.x, db.max.y + 2f, db.center.z), dc, 0.3f), "a foot 2 m over its top does not");
 					Check(ref ok, !UnderCaveHill(new Vector3(db.max.x + 2f, db.max.y - 1f, db.center.z), dc, 0.3f), "nor one beside it");
+					// (the editor's cut eases the ground at the den's mouth as the world's does: it made none, so a recipe's "ground"
+					// beside a den was the den-less ground and the pieces there floated or were buried in the world - Geiger Isle, IG5 11-18)
+					int dugNow;
+					CaveGround.EditorNow(t, out dugNow);
+					// (a note, not a check: this den, set 2 m down, made no apron here in jd 11-18 though the recipes' dens do - not found why)
+					Debug.Log("[CITEST] note: the editor's cut at the den's mouth: " + CaveGround.LastApron + " points moved");
 				}
 			}
 			// 3. A deck 10 m over the editor's water line, on nothing: over nothing on an island at the sea, under the real sea
@@ -140,6 +178,76 @@ namespace DynamicIslands
 			Check(ref ok, !planterOver, "a foundation set on a storey's thin floor tiles is held by them (a planter, Brinelab)");
 			bool railOver = FloorsOverNothing(PlacedEditorObjects(), 0.3f, t, sea, out nFloors).Any(g => g.Floor.GameObjectName == "Block_Floor_Tier3" && g.Box.center.x < origin.x - 70f);
 			Check(ref ok, PlacedEditorObjects().Count(e => e.GameObjectName == "Antenna_pole") == 2 && !railOver, "a deck on two poles laid under it (no collider) is held by them (Caisson Yard's mast bridges)");
+			// (the turned room's roof is held by its walls; its own floor, 10 m up on nothing, is not)
+			var turned = FloorsOverNothing(PlacedEditorObjects(), 0.3f, t, sea, out nFloors).Where(g => g.Floor.GameObjectName == "RT_Floor").ToList();
+			Check(ref ok, turned.Count == 1 && turned[0].Box.min.y < sea + 11f, "a room turned 59 degrees: its roof on its walls is held, its floor in the air is not (" +
+				string.Join(", ", turned.Select(g => "h=" + (g.Box.min.y - sea).ToString("0.0")).ToArray()) + ")");
+			// (the rocks: the resting boulder and the set-in one are not in the air, the one 3 m up is; set in, its middle's
+			// gap is 0 - the ray up from the ground starts inside it - not "not measured", which let one corner over a dip
+			// make a sunk rock "floating, 1 of 1 points")
+			Physics.SyncTransforms();
+			float bank = GroundY(origin.x - 30f, origin.z - 66f) - sea;
+			Check(ref ok, bank > 0.5f, "the bank for the rocks and palms is out of the sea (h=" + bank.ToString("0.00") + ")");
+			foreach (string rn in new[] { "restrock", "airrock", "setrock" })
+			{
+				EditorGameObject r; RecipeObjects.TryGetValue(rn, out r);
+				if (r == null) { Check(ref ok, false, "rock '" + rn + "' placed"); continue; }
+				Renderer[] rrs = r.GetComponentsInChildren<Renderer>(false).Where(x => x is MeshRenderer && x.enabled).ToArray();
+				Bounds rb = rrs[0].bounds;
+				foreach (Renderer x in rrs) rb.Encapsulate(x.bounds);
+				int seen, high; float most, least;
+				bool floats = RockFloats(r.transform, rb, t, out seen, out high, out most, out least);
+				float mid = RockGap(r.transform, rb.center.x, rb.center.z, rb, t);
+				string got = rn + ": " + high + " of " + seen + " points high (up to " + most.ToString("0.00") + " m), the least gap " + least.ToString("0.00") + ", its middle's " + mid.ToString("0.00")
+					+ ", under its middle: " + string.Join(", ", Physics.RaycastAll(rb.center, Vector3.down, 50f, ~0, QueryTriggerInteraction.Ignore)
+						.Where(hh => !hh.collider.transform.IsChildOf(r.transform)).OrderBy(hh => hh.distance).Take(2)
+						.Select(hh => hh.collider.name + "@" + (hh.point.y - sea).ToString("0.00")).ToArray()) + " (rock h " + (rb.min.y - sea).ToString("0.00") + ", pivot h " + (r.transform.position.y - sea).ToString("0.00") + ", parts " + string.Join(" ", rrs.Select(x => x.name + "@" + (x.bounds.min.y - sea).ToString("0.0") + ".." + (x.bounds.max.y - sea).ToString("0.0")).ToArray()) + ")";
+				if (rn == "airrock") Check(ref ok, floats, "a rock 3 m in the air floats (" + got + ")");
+				else Check(ref ok, !floats && seen > 0, "a rock " + (rn == "restrock" ? "resting on the ground" : "set into the ground") + " does not float (" + got + ")");
+				if (rn == "setrock") Check(ref ok, mid == 0f, "a rock set into the ground: its middle's gap is 0 (" + got + ")");
+			}
+			// (the rim palm onto the first spot south of it on the bank's rim)
+			EditorGameObject rp; RecipeObjects.TryGetValue("rimpalm", out rp);
+			Vector3? rimAt = null;
+			if (rp != null)
+			{
+				Vector3 r0 = rp.transform.position;
+				float rrt = 0.6f * Mathf.Max(0.5f, rp.transform.lossyScale.x);
+				for (float dz = 0f; dz < 40f && !rimAt.HasValue; dz += 0.1f)
+					if (GroundY(r0.x, r0.z - dz) > sea + 0.3f && OnDropRim(r0.x, r0.z - dz, rrt)) rimAt = new Vector3(r0.x, GroundY(r0.x, r0.z - dz) + PlacementOptions.PivotAboveBottom(rp.gameObject), r0.z - dz);
+				if (rimAt.HasValue) rp.transform.position = rimAt.Value;
+			}
+			Check(ref ok, rimAt.HasValue, "the rim palm put on the bank's rim");
+			// (the save's reseat sets the sunk and the floating palm back on the ground, and the rim palm off the rim)
+			ReseatSunkTrees(sea);
+			Physics.SyncTransforms();
+			if (rimAt.HasValue)
+			{
+				Vector3 rq = rp.transform.position;
+				float moved = new Vector2(rq.x - rimAt.Value.x, rq.z - rimAt.Value.z).magnitude, roff = rq.y - PlacementOptions.PivotAboveBottom(rp.gameObject) - GroundY(rq.x, rq.z);
+				Check(ref ok, moved > 0.1f && moved < 3.1f && !OnDropRim(rq.x, rq.z, 0.6f * Mathf.Max(0.5f, rp.transform.lossyScale.x)) && Mathf.Abs(roff) < 0.5f,
+					"reseat: the palm on the rim moved off it (" + moved.ToString("0.00") + " m, its foot " + roff.ToString("0.00") + " m off the ground)");
+			}
+			foreach (string pn in new[] { "sunkpalm", "airpalm", "airgrass" })
+			{
+				EditorGameObject pe; RecipeObjects.TryGetValue(pn, out pe);
+				if (pe == null) { Check(ref ok, false, "'" + pn + "' placed"); continue; }
+				Vector3 pp = pe.transform.position;
+				float gy = GroundY(pp.x, pp.z), off = pp.y - PlacementOptions.PivotAboveBottom(pe.gameObject) - gy;
+				Check(ref ok, Mathf.Abs(off) < 0.5f, "reseat: the " + (pn == "sunkpalm" ? "sunk palm" : pn == "airpalm" ? "floating palm" : "floating grass tuft") + "'s foot is on the ground (" + off.ToString("0.00") + " m off)");
+			}
+			// (zipfrom put the zipline's near end's floor on the marked spot)
+			{
+				EditorGameObject ze, zm; RecipeObjects.TryGetValue("pfzip", out ze); RecipeObjects.TryGetValue("pfzipmark", out zm);
+				Vector3? nf = ze != null ? ZiplineEnds.NearFloor(ze.gameObject) : null;
+				if (!nf.HasValue || zm == null) Check(ref ok, false, "zipfrom: the zipline and its marker placed");
+				else
+				{
+					Vector3 m = zm.transform.position;
+					float dxz = new Vector2(nf.Value.x - m.x, nf.Value.z - m.z).magnitude, dy = nf.Value.y - GroundY(m.x, m.z);
+					Check(ref ok, dxz < 0.1f && Mathf.Abs(dy) < 0.1f, "zipfrom: the zipline's near floor is on the spot (" + dxz.ToString("0.00") + " m off it, " + dy.ToString("0.00") + " m over the ground)");
+				}
+			}
 			// (the door wall stands on the wall under it, though its middle is its doorway)
 			EditorGameObject dw = PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == "RT_WallDoor1");
 			Check(ref ok, dw != null, "a door wall placed");
@@ -163,6 +271,12 @@ namespace DynamicIslands
 				Bounds ab = arch.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).Select(r => r.bounds).Aggregate((x, y) => { x.Encapsulate(y); return x; });
 				Check(ref ok, OnAnotherObject(ab, arch), "an arch's deck with its ends in two rocks stands on them (its base h=" + (ab.min.y - sea).ToString("0.00") + ")");
 			}
+			// (a base 0.13 m over the sea with the creek's bed 2 m under it rests on the water; 0.75 m over land 0.7 m under it,
+			// or 1 m over the water, does not - Frostgold's sluices, IG5 11-18)
+			Check(ref ok, Mathf.Abs(GapToWater(2.13f, sea + 0.13f, sea) - 0.13f) < 0.001f && GapToWater(9999f, sea + 0.13f, sea) < 0.2f
+				&& Mathf.Abs(GapToWater(0.7f, sea + 0.75f, sea) - 0.7f) < 0.001f && Mathf.Abs(GapToWater(3f, sea + 1f, sea) - 1f) < 0.001f
+				&& GapToWater(5.6f, sea - 0.3f, sea) == 0f && Mathf.Abs(GapToWater(0.4f, sea + 0.9f, sea) - 0.4f) < 0.001f,
+				"a base at the water's top over the sea's bed rests on the water, as does one 0.3 m down in it over a sea cave; over land, or 1 m up, it does not");
 			// 4. A gate on flat ground: its leaves stand on its own landing (no collider in the editor), not in the air
 			FloatingCommand(new[] { "0.3", "UT_MainEntranceDoor" });
 			Check(ref ok, floatProblems == 0, "a gate's leaves on its own landing are not floating (" + floatProblems + " found)");

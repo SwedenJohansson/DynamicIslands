@@ -164,6 +164,7 @@ place Loot_ChestSmall oplocker at 59.25 -41.25 h=37.2 drop yaw=180
 place Note_Paper opsumnote at 59.25 -42.75 h=36.84 drop yaw=20
 place Zone_Trigger opsummit at 60 -42 h=37.73
 place ZiplinePath_Landmark opzip at 60.75 -42.75 h=36.73 yaw=0
+zipfrom opzip 60.75 -42.75 h=36.73
 # STORY 10-24s: the Stalker's lure seen once, far off, sweeping the drowned road (from the summit lantern)
 place Placeable_Lantern_Metal opcam at 60.4 -43.4 h=36.73 sit
 place Placeable_Lantern_Metal oplure at 104 -24 h=-5 drop scale=1.6

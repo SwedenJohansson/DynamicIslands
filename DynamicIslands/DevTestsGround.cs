@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -121,6 +121,8 @@ namespace DynamicIslands
 				IslandWorldState.Entry e = made.LastOrDefault();
 				if (e == null || e.Root == null) { Log("  " + name + ": didn't come"); missed++; continue; }
 				yield return WaitIslandSettled(e, 0.5f, 2f); // (the cave mountains and Raft's physics settle: until they have, 2 s at most)
+				// (a night ghost ship brought by day sinks away at once - IG5 run 11-18 threw on it, ending the check)
+				if (e.Root == null) { Log("  " + name + ": went away again (a ghost ship by day)"); missed++; continue; }
 				int n;
 				List<string> lines = c.Measure(e, out n);
 				done++;
@@ -550,6 +552,69 @@ namespace DynamicIslands
 			if (ok) Log("PASS: one-sided self"); else Fail("one-sided self");
 		}
 
+		[ConsoleCommand(name: "CIWallTopsSelf", docs: "Dev, world (host, a test world 'CI ...'): the ground check (CIGroundWorld) on an island made for it: a stone house as the library's stonehouse macro builds it (lib_sunken.recipe: Block_Wall_Tier3 walls 2.42 m tall, a flat roof of Block_Floor_Tier3 tiles laid at 2.635 on their tops) - its roof tiles are held up by the walls, though the walls' colliders stop short of them and the rays down from the tiles' corners miss the walls at their edges (IG5: 102 such lines on 15 library islands, 11-18); a lone roof tile 4 m up, 10 m off, is still found. Taken away after.")]
+		public static void WallTopsSelfCommand(string[] args) { StartTest(WallTopsSelfRoutine()); }
+
+		static IEnumerator WallTopsSelfRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !CustomIslandSpawner.RaftPosition.HasValue) { Fail("wall tops self: host, in a world"); yield break; }
+			const string isl = "ciwalltops", wall = "Block_Wall_Tier3", tile = "Block_Floor_Tier3", door = "Block_Wall_Door_Tier3";
+			yield return PlaceableCatalog.EnsureLoaded(new[] { wall, tile, door });
+			if (PlaceableCatalog.Get(wall) == null || PlaceableCatalog.Get(tile) == null || PlaceableCatalog.Get(door) == null) { Fail("wall tops self: " + wall + ", " + tile + " or " + door + " isn't in this Raft's catalogue"); yield break; }
+			var made = new List<IslandWorldState.Entry>();
+			IslandFile f = ScIsland(isl, "Wall Tops Self");
+			f.Objects.Clear();
+			Vector3 b = ScDry(f, Vector2.zero, 1);
+			// (the house's floor at the highest ground under its four cells, as a recipe's push puts it)
+			float y0 = new[] { 0.75f, 2.25f }.SelectMany(x => new[] { 0.75f, 2.25f }.Select(z => ScGround(f, new Vector2(b.x + x, b.z + z)))).Max();
+			Func<string, float, float, float, float, IslandObject> put = (nm, x, z, y, yaw) =>
+			{
+				IslandObject o = ScObj(nm, new Vector3(b.x + x, y0 + y, b.z + z));
+				o.EulerRotation = new Vector3(0f, yaw, 0f);
+				return o;
+			};
+			// (a 2 x 2 stonehouse: floor and roof tiles, walls round it - the macro's door wall a plain wall here)
+			foreach (float x in new[] { 0.75f, 2.25f })
+				foreach (float z in new[] { 0.75f, 2.25f }) { f.Objects.Add(put(tile, x, z, 0f, 0f)); f.Objects.Add(put(tile, x, z, 2.635f, 0f)); }
+			foreach (float c in new[] { 0.75f, 2.25f })
+			{
+				f.Objects.Add(put(wall, c, 0f, 0f, 0f)); f.Objects.Add(put(wall, c, 3f, 0f, 0f));
+				f.Objects.Add(put(wall, 0f, c, 0f, 90f)); f.Objects.Add(put(wall, 3f, c, 0f, 90f));
+			}
+			// (a tower's side as Sealkeeper Spire's: a door wall across the house's floor, two plain walls stacked on it up through
+			// the roof - the rays down from the upper ones slip through to the floor, IG5 11-19)
+			f.Objects.Add(put(door, 0.75f, 1.5f, 0f, 0f));
+			f.Objects.Add(put(wall, 0.75f, 1.5f, 2.42f, 0f)); f.Objects.Add(put(wall, 0.75f, 1.5f, 4.84f, 0f));
+			// (a lone roof tile 4 m up, 10 m off: nothing under it)
+			f.Objects.Add(put(tile, 12f, 1.5f, 4f, 0f));
+			// (a lift 4 m up, clear of everything: a lift rides, it is never "floating")
+			f.Objects.Add(put("VP_Skylift", 12f, 10f, 4f, 0f));
+			f.Save(IslandSpawner.PathFor(isl));
+			Vector3? spot = ScSpot(isl, 400f);
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("wall tops self: no open sea near the raft"); yield break; }
+			yield return ScBring(isl, spot.Value, made);
+			IslandWorldState.Entry e = made.LastOrDefault();
+			if (e == null || e.Root == null) { ScRemove(made, isl); Fail("wall tops self: the island didn't come"); yield break; }
+			int n = 0;
+			bool lift = false;
+			List<string> lines;
+			try
+			{
+				yield return WaitIslandSettled(e, 0.5f, 2f);
+				Physics.SyncTransforms();
+				lines = GroundProblems(e, out n);
+				lift = e.Root.GetComponentsInChildren<Transform>(true).Any(x => x.name.StartsWith("VP_Skylift", StringComparison.Ordinal));
+			}
+			finally { ScRemove(made, isl); }
+			foreach (string l in lines) Log("  " + l);
+			bool ok = true;
+			Check(ref ok, lift && !lines.Any(l => l.IndexOf("VP_Skylift", StringComparison.Ordinal) >= 0), "the lift 4 m up is not floating (" + (lift ? "there" : "not there") + ")");
+			Check(ref ok, n >= 20, "the house, the tower and the lone tile measured (" + n + " objects)");
+			Check(ref ok, !lines.Any(l => l.IndexOf(wall, StringComparison.Ordinal) >= 0 || l.IndexOf(door, StringComparison.Ordinal) >= 0), "the walls stand, the ones stacked on the door wall too");
+			Check(ref ok, lines.Count(l => l.IndexOf(tile, StringComparison.Ordinal) >= 0) == 1, "the roof on the walls' tops is held up; only the lone tile 4 m up is found (" + lines.Count(l => l.IndexOf(tile, StringComparison.Ordinal) >= 0) + " tile lines)");
+			if (ok) Log("PASS: wall tops self"); else Fail("wall tops self");
+		}
+
 		[ConsoleCommand(name: "CIOverlapWorld", docs: "Dev, in a world: nothing on the loaded custom islands passes through anything else - no post, pillar, wall, floor or roof piece more than 6 cm inside a piece of furniture, a prop, a chest, a machine, a tree or a plant (IG7; the user 2026-10-18: posts through a piano and a pool table). Things resting on floors, roofs on their posts, things on tables don't count. Also no themed scene's prop, chest or note more than 6 cm into another of the scenes (their collider boxes as they stand turned; lines 'scene <theme>: ...'; two metal crates, gen-large-37435). Problems per island; all in Mods\\DynamicIslands\\overlap_world.txt. CIOverlapWorld [part of the island name]")]
 		public static void OverlapWorldCommand(string[] args) { WorldCheck(args, OverlapCheck); }
 
@@ -873,6 +938,9 @@ namespace DynamicIslands
 				bool structural = ChainLink.IsMatch(n), banner = n.IndexOf("Banner", StringComparison.OrdinalIgnoreCase) >= 0;
 				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Note_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") ||
 					n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || (Hangs.IsMatch(n) && !structural && !banner)) continue;
+				// (a lift rides: its platform hangs in a deck's hole clear of the deck round it, held by its own works - Thalassa
+				// Mooring's diving bell over its shaft read "floating, 24 m over what is under it", IG5 11-18)
+				if (n.StartsWith("VP_Skylift", StringComparison.Ordinal) || n == "Elevator") continue;
 				// (cave pieces: their rim, as CICaveRims - AU83)
 				if (RaftProps.Get(n) != null && RaftProps.Get(n).IsCave)
 				{
@@ -911,7 +979,8 @@ namespace DynamicIslands
 				if (structural) continue;
 				float groundMid = land != null ? land.SampleHeight(b.center) + land.transform.position.y : float.MinValue;
 				// Buried whole: its top under the land (not Raft's rocks and corals, which are set into it; not what is under the sea)
-				if (!NotABase.IsMatch(n) && land != null && whole.max.y < groundMid - 0.05f && whole.max.y > sea - 1f)
+				// (nor what stands in a dug passage, under the land but in its air: Stalker's Hollow's cave lanterns, IG5 11-18)
+				if (!NotABase.IsMatch(n) && land != null && whole.max.y < groundMid - 0.05f && whole.max.y > sea - 1f && !InDugPassage(whole))
 				{ node.Reported = node.Direct = true; lines.Add("buried: " + n + " at " + where + ", its top " + Num(groundMid - whole.max.y) + " m under the ground"); continue; }
 				// A zipline: each end on its own (its base reaches from one end's floor to the other's, over the dip between them -
 				// the Lodestone Array's lines read "partly in the air" 3.7 m over their moat, 2026-10-20): every piece no wider than
@@ -933,17 +1002,8 @@ namespace DynamicIslands
 				// apart from them (Coldhold Vault, 2026-10-23)
 				if (LooseRock.IsMatch(n) && b.min.y > sea + 0.3f)
 				{
-					int seen = 0, high = 0; float most = 0f;
-					float allow = 0.3f + 0.15f * Mathf.Max(b.extents.x, b.extents.z);
-					for (int k = 0; k < 9; k++)
-					{
-						float px = Mathf.Lerp(b.min.x, b.max.x, 0.25f + 0.25f * (k % 3)), pz = Mathf.Lerp(b.min.z, b.max.z, 0.25f + 0.25f * (k / 3));
-						float g = RockGap(o, px, pz, b, land);
-						if (float.IsNaN(g)) continue;
-						seen++;
-						if (g > allow) { high++; most = Mathf.Max(most, g); }
-					}
-					if (seen > 0 && (high >= 3 || high * 2 > seen))
+					int seen, high; float most, least;
+					if (RockFloats(o, b, land, out seen, out high, out most, out least))
 					{ node.Reported = true; lines.Add("floating rock: " + n + " at " + where + ", its underside up to " + Num(most) + " m over what is under it (" + high + " of " + seen + " points)"); continue; }
 				}
 				// A trunk over a drop: its foot on a pit's or a cliff's rim, the trunk hanging out over the slope - a stroke lowered
@@ -1007,6 +1067,10 @@ namespace DynamicIslands
 					}
 				}
 				bool own = lmin.x <= lmax.x && lmin.z <= lmax.z;
+				// (a wall on a floor's edge, as Raft builds: half of it over the floor, half over the drop outside - its middle
+				// line is the floor's edge, where a ray down slips past the floor. Held by the face over the floor, as a railing
+				// below: Brinelab Tower's and Sealkeeper Spire's walls read 2.4-15 m "in the air", IG5 11-18)
+				float thinX = own ? (lmax.x - lmin.x) * Mathf.Abs(o.lossyScale.x) : 9f, thinZ = own ? (lmax.z - lmin.z) * Mathf.Abs(o.lossyScale.z) : 9f;
 				for (int i = 0; i <= steps; i++)
 					for (int j = 0; j <= steps; j++)
 					{
@@ -1017,14 +1081,29 @@ namespace DynamicIslands
 							p = new Vector3(w.x, b.min.y, w.z);
 						}
 						float g = GapUnder(o, p, land);
+						if (own && (thinX < 0.5f || thinZ < 0.5f))
+						{
+							Vector3 sx = lmax - lmin, l = o.InverseTransformPoint(p);
+							Vector3 f1 = l, f2 = l;
+							if (thinX < 0.5f) { f1.x = lmin.x + sx.x * 0.1f; f2.x = lmax.x - sx.x * 0.1f; }
+							else { f1.z = lmin.z + sx.z * 0.1f; f2.z = lmax.z - sx.z * 0.1f; }
+							Vector3 w1 = o.TransformPoint(f1), w2 = o.TransformPoint(f2);
+							g = Mathf.Min(GapUnder(o, new Vector3(w1.x, b.min.y, w1.z), land), GapUnder(o, new Vector3(w2.x, b.min.y, w2.z), land));
+						}
 						// (a railing straddling a deck's edge, as Raft's own towers: held by the face over the deck)
 						if (b.size.x < 0.3f) g = Mathf.Min(GapUnder(o, new Vector3(b.min.x, p.y, p.z), land), GapUnder(o, new Vector3(b.max.x, p.y, p.z), land));
 						if (b.size.z < 0.3f) g = Mathf.Min(GapUnder(o, new Vector3(p.x, p.y, b.min.z), land), GapUnder(o, new Vector3(p.x, p.y, b.max.z), land));
+						g = GapToWater(g, p.y, sea);
 						if (g < lowest) lowest = g;
 						if (g > highest) { highest = g; worst = p; }
 					}
+				// (a wall stacked on a wall, as Raft builds a tower: held by the one under it all along its foot, though the rays down
+				// slip through that one's collider - over a door wall's opening, or past the plain wall's open-topped mesh to the floor
+				// 2.4-9.7 m down: Sealkeeper Spire's walls over its door, Highmoor Lodge's, IG5 11-19)
+				if (lowest <= 0.4f && highest > 0.6f && own && (thinX < 0.5f || thinZ < 0.5f) && Structural.IsMatch(n) && OnABuiltPiece(o, lmin, lmax)) continue;
 				if (lowest <= 0.4f && highest > 0.6f)
-					lines.Add("partly in the air: " + n + " at " + where + ", its base up to " + (highest > 999f ? "over nothing" : Num(highest) + " m over the ground") + " (at " + Num(worst.x - mid.x) + " " + Num(worst.z - mid.z) + ")");
+					lines.Add("partly in the air: " + n + " at " + where + ", its base up to " + (highest > 999f ? "over nothing" : Num(highest) + " m over the ground") + " (at " + Num(worst.x - mid.x) + " " + Num(worst.z - mid.z) + ")"
+						+ " [base " + (own ? Num(thinX) + " x " + Num(thinZ) + " own" : Num(b.size.x) + " x " + Num(b.size.z)) + "; under it: " + WhatIsUnder(o, worst) + "; under its middle: " + WhatIsUnder(o, new Vector3(b.center.x, b.min.y, b.center.z)) + "]");
 			}
 			// The chain of supports: grounded = on the land, the sea or the island's rock, or on something grounded (what isn't
 			// measured - a ladder, a lamp, a cave piece - counts as grounded)
@@ -1100,6 +1179,10 @@ namespace DynamicIslands
 				Transform r = PlacedRoot(c.transform, objects);
 				if (r == null) node.Direct = true; else node.Under.Add(r);
 			}
+			// (a floor or roof laid on the tops of walls round its edges: what shows of a wall's top within 0.35 m under its base -
+			// the walls' colliders stop 0.1-0.2 m short of a storey's roof tiles, and the rays down from its corners miss the
+			// walls at its edges: Biome Seven's lab roofs and The Stalker's Hollow's stone houses read "held up by nothing", IG5)
+			if (node.Link) foreach (Transform r in TopsUnder(o, b, objects)) node.Under.Add(r);
 			// (right under its middle and its corners: the land within 0.5 m, or the first thing there)
 			for (int i = 0; i < 5; i++)
 			{
@@ -1119,6 +1202,34 @@ namespace DynamicIslands
 				Transform r = PlacedRoot(best.collider.transform, objects);
 				if (r == null) node.Direct = true; else node.Under.Add(r);
 			}
+		}
+
+		static readonly List<KeyValuePair<Transform, Bounds>> tops = new List<KeyValuePair<Transform, Bounds>>();
+		static Transform topsOf;
+		static int topsFrame = -1;
+
+		/// <summary>The placed objects (children of <paramref name="objects"/>) that reach up under <paramref name="b"/>'s base
+		/// from below: a shown mesh whose top is from 0.35 m under its base to 0.3 m over it, over its ground plan, and whose
+		/// bottom is more than 0.3 m under its base (a wall under a roof tile - not the tile beside it).</summary>
+		static List<Transform> TopsUnder(Transform o, Bounds b, Transform objects)
+		{
+			if (topsOf != objects || topsFrame != Time.frameCount)
+			{
+				tops.Clear(); topsOf = objects; topsFrame = Time.frameCount;
+				foreach (Transform root in objects)
+					foreach (MeshRenderer r in root.GetComponentsInChildren<MeshRenderer>(false))
+						if (r.enabled) tops.Add(new KeyValuePair<Transform, Bounds>(root, r.bounds));
+			}
+			var found = new List<Transform>();
+			foreach (KeyValuePair<Transform, Bounds> t in tops)
+			{
+				Bounds r = t.Value;
+				if (t.Key == o || found.Contains(t.Key) || t.Key.IsChildOf(o)) continue;
+				if (r.max.y < b.min.y - 0.35f || r.max.y > b.min.y + 0.3f || r.min.y > b.min.y - 0.3f) continue;
+				if (r.min.x > b.max.x + 0.05f || r.max.x < b.min.x - 0.05f || r.min.z > b.max.z + 0.05f || r.max.z < b.min.z - 0.05f) continue;
+				found.Add(t.Key);
+			}
+			return found;
 		}
 
 		/// <summary>A banner's two rope ends (the ends of its top edge, along its long side) and what each is tied to: a collider
@@ -1567,8 +1678,38 @@ namespace DynamicIslands
 			return bad;
 		}
 
-		/// <summary>A rock's underside over what is under it at x z: NaN where the rock isn't over that point or is set into
-		/// the ground there; else the gap in metres (the land or the first other thing under it).</summary>
+		/// <summary>A loose rock in the air: its underside over what is under it at nine points (25/50/75 % of its base),
+		/// more than 0.3 m + 0.15 m per metre of its half width over it at most of the points where it is over something.
+		/// (Not "3 points high": a round boulder resting on flat ground curves up 0.29 r at its box's quarter points, and every
+		/// big one read floating - IG5 11-18.) least: the smallest gap measured (0 where it is set in).</summary>
+		/// <summary>An object in a dug passage's air: its middle, its top or its foot within half a metre of the passage (a lantern
+		/// hung on its wall, a beam holding its roof). The land's height there is the hill over the cave, so "buried" asked
+		/// the wrong question (IG5 11-18: Stalker's Hollow's lanterns read 10-11 m under the ground).</summary>
+		static bool InDugPassage(Bounds whole)
+		{
+			Vector3 c = whole.center;
+			return DigTunnel.InPassage(c, -0.5f) || DigTunnel.InPassage(new Vector3(c.x, whole.max.y - 0.05f, c.z), -0.5f) ||
+				DigTunnel.InPassage(new Vector3(c.x, whole.min.y + 0.05f, c.z), -0.5f);
+		}
+
+		static bool RockFloats(Transform o, Bounds b, Terrain land, out int seen, out int high, out float most, out float least)
+		{
+			seen = 0; high = 0; most = 0f; least = float.MaxValue;
+			float allow = 0.3f + 0.15f * Mathf.Max(b.extents.x, b.extents.z);
+			for (int k = 0; k < 9; k++)
+			{
+				float px = Mathf.Lerp(b.min.x, b.max.x, 0.25f + 0.25f * (k % 3)), pz = Mathf.Lerp(b.min.z, b.max.z, 0.25f + 0.25f * (k / 3));
+				float g = RockGap(o, px, pz, b, land);
+				if (float.IsNaN(g)) continue;
+				seen++;
+				least = Mathf.Min(least, g);
+				if (g > allow) { high++; most = Mathf.Max(most, g); }
+			}
+			return seen > 0 && high * 2 > seen;
+		}
+
+		/// <summary>A rock's underside over what is under it at x z: NaN where the rock isn't over that point; 0 where it is set
+		/// into the ground there; else the gap in metres (the land or the first other thing under it).</summary>
 		static float RockGap(Transform self, float x, float z, Bounds b, Terrain land)
 		{
 			float under = float.MinValue;
@@ -1579,7 +1720,15 @@ namespace DynamicIslands
 			float underside = float.MaxValue;
 			foreach (RaycastHit h in Physics.RaycastAll(new Vector3(x, under + 0.01f, z), Vector3.up, b.max.y - under + 0.1f, ~0, QueryTriggerInteraction.Ignore))
 				if (h.collider.transform.IsChildOf(self) && h.point.y < underside) underside = h.point.y;
-			if (underside == float.MaxValue) return float.NaN; // (not over this point, or into the ground here: the ray starts inside it)
+			if (underside == float.MaxValue)
+			{
+				// (not over this point, or set into the ground here: the ray up starts inside it. Set in, it rests there - a gap of
+				// 0, not a point left out: a boulder sunk into a slope with one corner over the dip read "1 of 1 points" floating,
+				// 241 of the 504 floating rocks of the ground check 11-14, IG5)
+				foreach (RaycastHit h in Physics.RaycastAll(new Vector3(x, b.max.y + 0.1f, z), Vector3.down, b.size.y + 0.2f, ~0, QueryTriggerInteraction.Ignore))
+					if (h.collider.transform.IsChildOf(self)) return 0f;
+				return float.NaN;
+			}
 			return Mathf.Max(0f, underside - under);
 		}
 
@@ -1604,6 +1753,16 @@ namespace DynamicIslands
 			return null;
 		}
 
+		/// <summary>A base's gap <paramref name="g"/> at height <paramref name="y"/> over the sea with only the sea's bed under
+		/// it: to the water's top, which holds it there (a sluice's low end in a creek: Frostgold Creek's half walls read
+		/// 1.2-2.2 m "in the air" over the creek's bed, IG5 11-18).</summary>
+		internal static float GapToWater(float g, float y, float sea)
+		{
+			// (a base a little under the water's top: afloat in it - Fleetbreak's filter-crate rafts, foundations 0.3 m down over
+			// a sea cave 2-6 m under, read "partly in the air", IG5 11-19)
+			return y - g < sea ? Mathf.Max(0f, y - sea) : g;
+		}
+
 		static float GapUnder(Transform self, Vector3 foot, Terrain land)
 		{
 			float best = float.MaxValue;
@@ -1619,6 +1778,33 @@ namespace DynamicIslands
 				if (g <= -0.3f && foot.x >= lp.x && foot.x <= lp.x + ls.x && foot.z >= lp.z && foot.z <= lp.z + ls.z) best = 0f;
 			}
 			return best == float.MaxValue ? 9999f : best;
+		}
+
+		/// <summary>Whether a building piece (not <paramref name="self"/>) fills the space just under <paramref name="self"/>'s base
+		/// (its own-frame box <paramref name="lmin"/>..<paramref name="lmax"/>): a box 0.3 m tall under the middle 80 % of its foot.</summary>
+		static bool OnABuiltPiece(Transform self, Vector3 lmin, Vector3 lmax)
+		{
+			Vector3 c = self.TransformPoint(new Vector3((lmin.x + lmax.x) * 0.5f, lmin.y, (lmin.z + lmax.z) * 0.5f)) + Vector3.down * 0.2f;
+			Vector3 s = Vector3.Scale(lmax - lmin, new Vector3(Mathf.Abs(self.lossyScale.x), 0f, Mathf.Abs(self.lossyScale.z))) * 0.4f;
+			s.y = 0.15f;
+			foreach (Collider k in Physics.OverlapBox(c, s, self.rotation, ~0, QueryTriggerInteraction.Ignore))
+			{
+				if (k.transform.IsChildOf(self)) continue;
+				// (the piece itself or up to two parents up: not the island's root, whose name may hold "wall")
+				Transform t = k.transform;
+				for (int up = 0; up < 3 && t != null && t != self.parent; up++, t = t.parent)
+					if (Structural.IsMatch(t.name) && !LooseRock.IsMatch(t.name)) return true;
+			}
+			return false;
+		}
+
+		/// <summary>The nearest thing under a point (not <paramref name="self"/>) and how far down it is - a ground line's detail.</summary>
+		static string WhatIsUnder(Transform self, Vector3 foot)
+		{
+			RaycastHit best = default(RaycastHit); bool any = false;
+			foreach (RaycastHit h in Physics.RaycastAll(foot + Vector3.up * 0.3f, Vector3.down, 400f, ~0, QueryTriggerInteraction.Ignore))
+				if (!h.collider.transform.IsChildOf(self) && (!any || h.point.y > best.point.y)) { best = h; any = true; }
+			return any ? best.collider.name + " " + Num(foot.y - best.point.y) + " m" : "nothing";
 		}
 
 		/// <summary>Whether <paramref name="self"/>'s base touches a collider of something else (stands on it, or hangs on a wall).</summary>

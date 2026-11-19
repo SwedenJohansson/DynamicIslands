@@ -4,7 +4,7 @@
 # and the walkway out to the three bungalows (decks 1.1 m) over the lagoon (1.5 m deep); the deep pool (4.2 m) at the
 # lagoon's east end; the north key across the lagoon, where the petting zoo's goats ran.
 island Tiki Lagoon
-offset 0.7206 -4.2301
+offset 1.3959 -6.753
 expect step 0
 expect title End of the Season
 wait 3

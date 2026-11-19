@@ -1,0 +1,31 @@
+# Crater Lair's coolant vat (CIPlay crater_lair_acid, 11-12 w14 prep; in a test world 'CI ...'). Points as in the recipe:
+# the side branch from 6 -21 east to 14 -21, the vat room toward 20 -19; the pool clvatpool and the acid zone cl_vat at
+# 18.5 -19.5 (r 2.5, safe=suit); the locker clvatlocker at 20.5 -18.6 behind it; the suit box clvatsuits at 14.6 -22.6 and
+# the sign clvatwarn at 14.4 -19.6 by the door. Into the vat without a suit: hurt; out again. Floors ~5 m (a guess).
+# Offline-written, never run; the offset is the old one - re-read it after the build (a new hill may move the land centre).
+# 11-17 w14E: in-cave pictures at absolute heights - a '+h' height is taken over the hill's top, so the camera (and the player) stood on the hill.
+island Crater Lair keep
+offset 0.5101 0.0433
+hour 11
+weather Calm
+
+# (a CI world's bag emptied first: a full bag drops the loot)
+# 11-17: the bear from the halls walks out to the player: kill it first
+wait 3
+kill Bear
+empty
+walk 9 -36 to 6 -30 to 6 -21 to 13 -21 to 14 -22
+read VAT ROOM
+picture cl_vat_in 13 7.5 -21 18.5 3.5 -19.5 light=20
+# (w14I: a walk from the door stuck at 14.6 -20.3, at the step up from the branch into the room - the way back down
+# walks; a player hops it. The player is put in the room past the step)
+walk 16 -20.5 to 18.5 -19.5
+wait 5
+expect message coolant burns
+expect hurt 10
+walk 18.5 -19.5 to 16 -20.5 to 14 -22 to 13 -21
+# (w14G: the coolant still bites on the way out of the zone - that counts here; then, out, no more harm)
+expect hurt 0
+wait 3
+expect unhurt
+walk 13 -21 to 6 -21 to 6 -30 to 9 -36

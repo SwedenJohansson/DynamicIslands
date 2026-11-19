@@ -67,31 +67,31 @@ brush flatten from -30 10 to -18 10 r=2 s=20 frames=30 h=24
 brush flatten from -30 11 to -18 11 r=2 s=20 frames=30 h=24
 brush flatten from -30 12 to -18 12 r=2 s=20 frames=30 h=24
 # (the town on the flat west shore: main street and the building plots, the wharf's head)
-brush flatten from -115 -44 to -115 12 r=20 s=20 frames=60 h=3
-brush flatten from -104 -17 to -90 -17 r=8 s=20 frames=60 h=3
-brush flatten at -133 -28 r=7 s=20 frames=60 h=3
-brush flatten from -100 -2 to -96 8 r=7 s=20 frames=60 h=3
-brush flatten from -93 -5 to -91 6 r=6 s=20 frames=60 h=3
-brush flatten from -106 10 to -101 21 r=8 s=20 frames=60 h=3
-brush flatten at -104 -34 r=6 s=20 frames=60 h=3
-brush flatten at -126 10 r=5 s=20 frames=40 h=3
-brush flatten from -112 -47 to -96 -47 r=8 s=20 frames=60 h=3
-brush flatten at -130 -20 r=5 s=20 frames=40 h=3
-brush flatten at -128 -11 r=10 s=20 frames=60 h=3
-brush flatten at -100 -44 r=9 s=20 frames=60 h=3
+brush flatten from -115 -44 to -115 12 r=20 s=20 frames=300 h=3
+brush flatten from -104 -17 to -90 -17 r=8 s=20 frames=300 h=3
+brush flatten at -133 -28 r=7 s=20 frames=300 h=3
+brush flatten from -100 -2 to -96 8 r=7 s=20 frames=300 h=3
+brush flatten from -93 -5 to -91 6 r=6 s=20 frames=300 h=3
+brush flatten from -106 10 to -101 21 r=8 s=20 frames=300 h=3
+brush flatten at -104 -34 r=6 s=20 frames=300 h=3
+brush flatten at -126 10 r=5 s=20 frames=300 h=3
+brush flatten from -112 -47 to -96 -47 r=8 s=20 frames=300 h=3
+brush flatten at -130 -20 r=5 s=20 frames=300 h=3
+brush flatten at -128 -11 r=10 s=20 frames=300 h=3
+brush flatten at -100 -44 r=9 s=20 frames=300 h=3
 # (the wharf's channel through the beach)
-brush flatten from -158 -20 to -137 -20 r=4 s=20 frames=60 h=-1.2
-# (the railroad's canyon from the station east along the mesa's south side, its floor at 4 m)
-brush flatten from -93 -54 to -82 -60 r=7 s=20 frames=60 h=4
-brush flatten from -82 -60 to -64 -67 r=7 s=20 frames=60 h=4
-brush flatten from -64 -67 to -46 -73 r=7 s=20 frames=60 h=4
-brush flatten from -46 -73 to -26 -77 r=7 s=20 frames=60 h=4
-brush flatten from -26 -77 to -9 -75 r=7 s=20 frames=60 h=4
-brush flatten from -9 -75 to 17 -75 r=7 s=20 frames=60 h=4
-brush flatten from 17 -75 to 32 -68 r=7 s=20 frames=60 h=4
-brush flatten at -28.5 -82.5 r=5 s=20 frames=40 h=4
+brush flatten from -158 -20 to -137 -20 r=4 s=20 frames=300 h=-1.2
+# (the railroad's canyon from the station east along the mesa's south side, its floor at 4 m) (frames=300: with 60 the floor stayed 4-7 m over the rails and the bank's back room, IG5 11-18)
+brush flatten from -93 -54 to -82 -60 r=7 s=20 frames=300 h=4
+brush flatten from -82 -60 to -64 -67 r=7 s=20 frames=300 h=4
+brush flatten from -64 -67 to -46 -73 r=7 s=20 frames=300 h=4
+brush flatten from -46 -73 to -26 -77 r=7 s=20 frames=300 h=4
+brush flatten from -26 -77 to -9 -75 r=7 s=20 frames=300 h=4
+brush flatten from -9 -75 to 17 -75 r=7 s=20 frames=300 h=4
+brush flatten from 17 -75 to 32 -68 r=7 s=20 frames=300 h=4
+brush flatten at -28.5 -82.5 r=5 s=20 frames=300 h=4
 # (the river: the sea let in from the south coast up a gorge through the terrace and across the canyon, 7 m deep)
-brush flatten from 4 -168 to 4 -66 r=9 s=20 frames=80 h=-7
+brush flatten from 4 -168 to 4 -66 r=9 s=20 frames=300 h=-7
 # (the Lucky Strike: switchbacks up the canyon's north wall to the ledge at the mine's mouth, the gallery's trench)
 call dabs 16 -68.5 4.2 38 -64.5 8.2 n=12
 brush flatten at 40 -62.5 r=3 s=20 frames=30 h=8.4
@@ -371,11 +371,14 @@ line Beam_Long_01 from 16.79 -74.55 to 26.55 -69.995 step=3.59 ends yaw=180 rot=
 # its gallery north; the timbered portal, rails, a tub; the tally board; the foreman's shack on the ledge; the lift at the
 # gallery's back)
 place BalboaCave_Bear minecave at 22.93 -42 h=16.05 yaw=180
+# (cave.foot=wet: a dry-foot den's raised sand spread 14 m round it down the hill and buried the beams below the ledge 1-4 m in game -
+# the saved ground there is the den-less canyon floor, IG5 11-18)
+prop minecave cave.foot=wet
 place Relay_support_beam_wood - at 18.2 -58.6 h=11.5 rot=0,0,-90 sx=0.75
 place Relay_support_beam_wood - at 29.8 -58.6 h=11.5 rot=0,0,-90 sx=0.75
 place Relay_support_beam_wood - at 29.8 -58.6 h=18.5 rot=0,0,0 sx=1.23
-line Beam_Long_01 from 23.5 -59 to 23.5 -31 step=3.5 ends yaw=180 rot=0,0,0
-line Beam_Long_01 from 24.5 -59 to 24.5 -31 step=3.5 ends yaw=180 rot=0,0,0
+line Beam_Long_01 from 23.5 -59 to 23.5 -31 step=3.5 ends yaw=180 rot=0,0,0 y=0.15
+line Beam_Long_01 from 24.5 -59 to 24.5 -31 step=3.5 ends yaw=180 rot=0,0,0 y=0.15
 place VP_Wagon01 - at 24 -47 sit
 place Note_Board tallyboard at 19.6 -61 ground yaw=200
 place Zone_Trigger minezone at 24 -60 h=13
@@ -536,6 +539,9 @@ call hw_zone x=43 z=27 al=sc_hillz id=sc_hill r=8 h=1 msg="Buzzard Butte. The wh
 brush flatten at 39.5 26 r=5 s=20 frames=300 h=27.3
 call hw_mast x=39 z=27 h0=27.3 lv=6 a=sc_mast chest=sc_topchest top=Placeable_Flag_01
 call ar_cave x=-63 z=-33 h=16.4 yaw=0 al=sc_caverock chest=sc_cavechest
+# (cave.foot=wet: a dry-foot den's raised sand spread 14 m round it down the hill and buried the town's bank vault walls and fences 1-7 m in game -
+# the saved ground there is the den-less town flat (3 m), IG5 11-18)
+prop sc_caverock cave.foot=wet
 call hw_zone x=-64 z=-24 al=sc_cavez id=sc_cave r=4 h=1 msg="Rattler Cave. Water drips somewhere in the dark."
 call ar_ruin x=-40 z=54 h=13.4 yaw=0 w=3 d=2 al=sc_ruin
 call ss_islander x=-41 z=49.5 yaw=200 al=sc_isl nm="Hattie Cole" pose=sit

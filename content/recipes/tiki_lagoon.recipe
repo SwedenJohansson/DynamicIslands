@@ -12,6 +12,7 @@
 # Built by the recipe player (CIRecipe tiki_lagoon) through the editor's own operations.
 include lib_huts
 include lib_sea
+include lib_caves
 new
 # (nature: tropical, Like Raft - the generator's marsh grows bamboo only and few bushes: more bushes and rocks here, palms
 # planted on the keys below - CIIslandDensity against Raft's small tropical islands)
@@ -224,6 +225,32 @@ scatter "Pickup_Landmark_WatermelonLandmark" 3 at 0 0 r=31.5 seed=4539 free=3
 
 # --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
 call shallows r=60 deep=5
+
+# --- 11-12 (w14 prep): the lagoon cave (plan 14 row: UW lagoon cave; chest, stone 2). The bar staff's secret: an underwater
+# straight cave (kit_uw, the cave tool, plain rock) from the sea floor off the south keys (10 -60), way in north (yaw 0), to a
+# dry den under a new dune ridge (middle ~10 -20); the staff's stash in a chest. 15 m and more from the hens, the bees, the
+# cable box and the bar; off every walk line (all on the north keys).
+# The mouth on the sea floor, its pad flattened to 5 m down (smoothed out); the tunnel climbs 15 degrees for 4 pieces (size 0.7,
+# 29.1 m, +7.5 m) to the den (~22 m long; the cave tool raises the dome from the sea floor). HEIGHTS guessed: the pad -5 (the
+# natural sea floor there is not known: if it is much deeper the pad stands as a plinth - lower the pad or move the mouth in),
+# the den floor -5 + 7.5 = +2.5 m over the sea; air zone h 4, the chest dropped from 5.5 m. Sea caves get no monsters (11-12).
+brush flatten at 10 -60 r=6 s=20 frames=60 h=-5
+brush smooth at 10 -60 r=9 s=6 frames=20
+call kit_uw x=10 z=-60 yaw=0 len=29.1 slope=15 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=tlseacave
+prop tlseacave cave.rock=plain
+# cavecheck inside tlseacaveair tlseacavechest
+place Zone_Trigger tlseacaveair at 10 -20 h=4
+prop tlseacaveair obj.name=tlseacaveair
+prop tlseacaveair zone.id=tl_seacave
+prop tlseacaveair zone.radius=8
+prop tlseacaveair zone.repeat=1
+prop tlseacaveair zone.air=1
+prop tlseacaveair zone.message=A dry cave under the dunes. Fairy lights strung on the rock, a cooler, empty bottles: the staff's own bar.
+place Loot_ChestSmall tlseacavechest at 11.5 -16 h=5.5 drop yaw=0
+prop tlseacavechest obj.name=tlseacavechest
+prop tlseacavechest loot.refill=0
+note tlseacavechest Staff stash | The bar staff's stash: the good rum, a box of paper umbrellas, a speaker with a flat battery and a bag of ice long since melted.
+loot tlseacavechest Battery*1;Plastic*3;Glass*2;Rope*1
 
 # ===== Settings, story items, notes, behaviours, quest (5 steps) ==========================================================
 info title=Tiki Lagoon
