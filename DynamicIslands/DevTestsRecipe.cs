@@ -2273,7 +2273,7 @@ namespace DynamicIslands
 								if (pt.IndexOf(island, StringComparison.OrdinalIgnoreCase) >= 0) playTexts.Add(new KeyValuePair<string, string>(Path.GetFileName(pf), pt));
 							}
 							var stalePlays = StaleOffsetPlays(island, moved, playTexts);
-							if (stalePlays.Count > 0) Log("  WARNING: plays with an old offset (set 'offset " + Num(moved.x) + " " + Num(moved.y) + "'): " + string.Join("; ", stalePlays.ToArray()));
+							if (stalePlays.Count > 0) Log("  WARNING: plays whose offset is not the land centre (if their points are the recipe's, set 'offset " + Num(moved.x) + " " + Num(moved.y) + "'; a play passing with it wrote its points in an older frame): " + string.Join("; ", stalePlays.ToArray()));
 							break;
 						}
 						case "plan":
