@@ -194,7 +194,7 @@ scatter "Pickup_Landmark_Tree_Palm 4" 2 at 38 -40 r=14 seed=9652 free=4
 # --- The survey pilot's five lost photographs (a set): all five show his film case by the plane -----------------------
 call lp_piece x=24 z=46 al=pi_photo1 set="Survey photographs"
 call lp_piece x=-26 z=-38 al=pi_photo2 set="Survey photographs"
-call lp_piece x=54 z=-14 al=pi_photo3 set="Survey photographs"
+call lp_piece x=57 z=-14 al=pi_photo3 set="Survey photographs"
 call lp_piece x=-42 z=14 al=pi_photo4 set="Survey photographs"
 call lp_piece x=8 z=30 al=pi_photo5 set="Survey photographs"
 prop pi_photo1 on.set=show|pi_setchest\nmessage||Five photographs of the Gravity Sea from 300 m - laid side by side, every island points at one spot. By the survey plane, the pilot's film case has turned up.

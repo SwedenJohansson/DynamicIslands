@@ -176,6 +176,7 @@ call notebox x=-26.07 z=-83.42 yaw=199.65 al=swcairn
 call treasure x=-31.25 z=-81.57 r=1.5 n=1 seed=14961
 prop treasure14961 treasure.loot=TitaniumOre*2;Battery*1
 place ZiplinePath_Landmark swzip at -24.09 -71.92 h=40.6
+zipfrom swzip -24.09 -71.92 h=40.6
 zipto swzip -9.86 -27.62
 place Creature_Goat swgoats at -16.32 -63.54 ground
 prop swgoats creature.count=2

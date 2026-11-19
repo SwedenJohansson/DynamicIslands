@@ -111,13 +111,14 @@ namespace DynamicIslands
 				float turn = e.transform.eulerAngles.y % 90f;
 				bool square = turn < 3f || turn > 87f;
 				float inX = square ? 0.1f : whole.size.x * 0.3f, inZ = square ? 0.1f : whole.size.z * 0.3f;
-				// (11-18 w15R: turned, its own corners 0.1 m in, as a square one's - the box's corners 30 % in lay inside the
-				// floor at no corner: Signal Rock's relay roof, turned 45, read held nowhere 3 m either side of its middle, under
-				// the room's open ceiling, though walls stood all round its edge)
-				Vector3[] oc = square ? null : TurnedCorners(parts, whole.min.y);
+				// (turned, a long floor's corners are its own: the box's 30 %-in corners of a 6 x 9 m roof turned 59 degrees lie
+				// outside it, over nothing - Twin Forges' rotated radio tower rooms, their roofs on their walls read "over nothing"
+				// x3, w16 11-04; IG5 11-18)
+				Vector3[] turnedAt = square ? null : TurnedCorners(e, parts, 0.15f);
 				for (int c = 0; c < 4; c++)
 				{
-					var p = oc != null ? oc[c] : new Vector3(c % 2 == 0 ? whole.min.x + inX : whole.max.x - inX, whole.min.y, c < 2 ? whole.min.z + inZ : whole.max.z - inZ);
+					var p = turnedAt != null ? new Vector3(turnedAt[c].x, whole.min.y, turnedAt[c].z) :
+						new Vector3(c % 2 == 0 ? whole.min.x + inX : whole.max.x - inX, whole.min.y, c < 2 ? whole.min.z + inZ : whole.max.z - inZ);
 					float land = ground.SampleHeight(p) + ground.transform.position.y;
 					bool ok = p.y - land <= gap + 0.2f;
 					if (!ok)
@@ -171,43 +172,31 @@ namespace DynamicIslands
 			}
 			return over;
 		}
-		/// <summary>A turned floor's own four corners 0.1 m in (its largest part's mesh box, in the world) at height y; null
-		/// when its parts have no mesh to read.</summary>
-		static Vector3[] TurnedCorners(Renderer[] parts, float y)
+		/// <summary>A turned piece's four corners in its own frame (its meshes' bounds, <paramref name="inset"/> m in from its
+		/// edges), in the world; null when a part has no mesh to read.</summary>
+		static Vector3[] TurnedCorners(EditorGameObject e, Renderer[] parts, float inset)
 		{
-			MeshFilter best = null;
-			float area = 0f;
+			Transform f = e.transform;
+			bool any = false;
+			Vector3 lo = Vector3.zero, hi = Vector3.zero;
 			foreach (Renderer r in parts)
 			{
 				MeshFilter mf = r.GetComponent<MeshFilter>();
-				if (mf == null || mf.sharedMesh == null) continue;
-				Vector3 s = Vector3.Scale(mf.sharedMesh.bounds.size, mf.transform.lossyScale);
-				float a = Mathf.Abs(s.x * s.z) + Mathf.Abs(s.x * s.y) + Mathf.Abs(s.y * s.z);
-				if (a > area) { area = a; best = mf; }
+				if (mf == null || mf.sharedMesh == null) return null;
+				Bounds mb = mf.sharedMesh.bounds;
+				for (int k = 0; k < 8; k++)
+				{
+					Vector3 c = new Vector3((k & 1) == 0 ? mb.min.x : mb.max.x, (k & 2) == 0 ? mb.min.y : mb.max.y, (k & 4) == 0 ? mb.min.z : mb.max.z);
+					Vector3 l = f.InverseTransformPoint(r.transform.TransformPoint(c));
+					if (!any) { lo = hi = l; any = true; } else { lo = Vector3.Min(lo, l); hi = Vector3.Max(hi, l); }
+				}
 			}
-			if (best == null) return null;
-			Bounds lb = best.sharedMesh.bounds;
-			Transform t = best.transform;
-			// (the mesh's flat axes: the two whose world direction lies most level)
-			int up = 1;
-			float most = 0f;
-			for (int a = 0; a < 3; a++)
-			{
-				Vector3 ax = a == 0 ? t.right : a == 1 ? t.up : t.forward;
-				if (Mathf.Abs(ax.y) > most) { most = Mathf.Abs(ax.y); up = a; }
-			}
-			int u = up == 0 ? 1 : 0, v = up == 2 ? 1 : 2;
-			Vector3 sc = t.lossyScale;
-			float inU = 0.1f / Mathf.Max(Mathf.Abs(sc[u]), 1e-3f), inV = 0.1f / Mathf.Max(Mathf.Abs(sc[v]), 1e-3f);
+			if (!any) return null;
+			Vector3 s = f.lossyScale;
+			float ix = Mathf.Min(inset / Mathf.Max(1e-3f, Mathf.Abs(s.x)), (hi.x - lo.x) / 2f), iz = Mathf.Min(inset / Mathf.Max(1e-3f, Mathf.Abs(s.z)), (hi.z - lo.z) / 2f);
 			var corners = new Vector3[4];
 			for (int c = 0; c < 4; c++)
-			{
-				Vector3 l = lb.center;
-				l[u] = c % 2 == 0 ? lb.min[u] + Mathf.Min(inU, lb.extents[u]) : lb.max[u] - Mathf.Min(inU, lb.extents[u]);
-				l[v] = c < 2 ? lb.min[v] + Mathf.Min(inV, lb.extents[v]) : lb.max[v] - Mathf.Min(inV, lb.extents[v]);
-				Vector3 w = t.TransformPoint(l);
-				corners[c] = new Vector3(w.x, y, w.z);
-			}
+				corners[c] = f.TransformPoint(new Vector3(c % 2 == 0 ? lo.x + ix : hi.x - ix, lo.y, c < 2 ? lo.z + iz : hi.z - iz));
 			return corners;
 		}
 
@@ -479,6 +468,48 @@ namespace DynamicIslands
 				bool saved = DynamicIslands.SaveIsland(name);
 				Log((saved ? "PASS: " : "FAIL: ") + name + ": " + moves.Count + " lowered (" + string.Join(", ", moves.Select(m => m.Key.GameObjectName + " " + Num(m.Value) + " m").ToArray()) + ")");
 			}
+		}
+
+		[ConsoleCommand(name: "CIReseat", docs: "Dev, editor: <names joined by |, _ for space | *> [most] [skip] [except=names|...] - the saved islands' sunk and floating trees set back on the ground, as a recipe's save does since IG5 (11-18), and saved; the old file goes to 'deleted'")]
+		public static void ReseatCommand(string[] args)
+		{
+			string which = args != null && args.Length > 0 ? args[0] : "*";
+			int most = args != null && args.Length > 1 ? int.Parse(args[1]) : 9999, skip = args != null && args.Length > 2 ? int.Parse(args[2]) : 0;
+			string except = args != null && args.Length > 3 && args[3].StartsWith("except=") ? args[3].Substring(7) : "";
+			Func<string, string[]> split = w => w.Split('|').Select(x => x.Replace('_', ' ').Trim()).Where(x => x.Length > 0).ToArray();
+			string[] parts = split(which), outs = split(except);
+			var kept = new Regex("_[0-9a-f]{12}$");
+			List<string> names = IslandSpawner.ListSavedIslands().Where(n => !n.StartsWith("ci", StringComparison.Ordinal) && !kept.IsMatch(n) &&
+				!n.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase) && (which == "*" || parts.Any(x => n.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0)) &&
+				!outs.Any(x => n.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).Skip(skip).Take(most).ToList();
+			StartTest(ReseatRoutine(names));
+		}
+
+		static IEnumerator ReseatRoutine(List<string> names)
+		{
+			yield return WaitForEditor(false);
+			string backup = Path.Combine(DynamicIslands.assetpath, "deleted");
+			Directory.CreateDirectory(backup);
+			int changed = 0, trees = 0;
+			Log("reseat of " + names.Count + " saved islands");
+			foreach (string name in names)
+			{
+				DynamicIslands.currentIslandName = "";
+				if (!DynamicIslands.LoadIsland(name)) { Fail(name + ": the editor didn't load it"); continue; }
+				for (float t = 0; t < 120f && DynamicIslands.currentIslandName != name; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+				if (DynamicIslands.currentIslandName != name) { Fail(name + ": not loaded after 2 minutes"); continue; }
+				yield return null; yield return null;
+				Physics.SyncTransforms();
+				string file = IslandSpawner.PathFor(name);
+				byte[] old = File.ReadAllBytes(file);
+				int n = ReseatSunkTrees(DynamicIslands.EditorWaterLevel);
+				if (n == 0) continue;
+				File.WriteAllBytes(Path.Combine(backup, Path.GetFileNameWithoutExtension(file) + "-reseat-" + DateTime.Now.ToString("yyyyMMddHHmmss") + IslandFile.Extension), old);
+				bool saved = DynamicIslands.SaveIsland(name);
+				Log((saved ? "  " : "FAIL: ") + name + ": " + n + " trees reseated" + (saved ? "" : ", not saved"));
+				if (saved) { changed++; trees += n; }
+			}
+			Log("PASS: reseat - " + trees + " trees on " + changed + " of " + names.Count + " islands set back on the ground");
 		}
 
 		[ConsoleCommand(name: "CIFloating", docs: "Dev, editor: legs, posts and pillars of the island's objects that don't reach down to anything - a slim upright part whose foot is more than <gap> m (default 0.3) above the ground or what is under it - and objects that stand on the ground with part of their base only (a stilt house set on a slope: the legs over its low side end in the air), floors and decks over nothing (a big deck needs every corner held, a small floor one corner or a held neighbour) and chests and crates with nothing under them (ROADMAP CA30): CIFloating [gap] [name part]")]
@@ -1456,6 +1487,7 @@ namespace DynamicIslands
 			if (opt.ContainsKey("h")) return DynamicIslands.EditorWaterLevel + F(opt["h"]);
 			float y = opt.ContainsKey("y") ? F(opt["y"]) : 0f;
 			if (TopFrame.HasFloor && !opt.ContainsKey("ground")) return TopFrame.FloorY + y;
+			CaveGround.EditorCatchUp(terraineditor.terrain); // (the ground as the world will have it: the caves' cut made)
 			return GroundY(w.x, w.y) + y;
 		}
 
@@ -1506,7 +1538,9 @@ namespace DynamicIslands
 			{
 				foreach (string play in Directory.Exists(RecipeFolder) ? Directory.GetFiles(RecipeFolder, "*.play") : new string[0])
 				{
-					if (File.ReadAllText(play).IndexOf(island, StringComparison.OrdinalIgnoreCase) < 0) continue;
+					string playText;
+					try { playText = File.ReadAllText(play); } catch (IOException) { continue; } // (a play deleted while the folder is read)
+					if (playText.IndexOf(island, StringComparison.OrdinalIgnoreCase) < 0) continue;
 					List<RLine> lines;
 					try { lines = ExpandRecipe(play); } catch (Exception) { continue; }
 					string at = null;
@@ -1544,7 +1578,7 @@ namespace DynamicIslands
 			recipeCaves.Clear();
 			recipePlaced.Clear();
 			recipeNoPosts = false;
-			recipeReseat = false;
+			recipeReseat = true;
 			leftOutBuried = 0;
 			pendingQuest = null;
 			pendingMore.Clear();
@@ -1982,6 +2016,23 @@ namespace DynamicIslands
 							}
 							break;
 						}
+						case "zipfrom":
+						{
+							// zipfrom <alias> <x> <z> [h=|y=|ground] - moves a zipline line placed by this recipe so its near end's floor (where
+							// players step onto it) stands at x z, as the editor's "Near end: where I look": the line's pivot is not that floor -
+							// placed by its pivot on a tower's deck, the floor hung 3-7 m off the deck in the air (IG5, 11-18)
+							List<EditorGameObject> zg = Group(t[1]);
+							if (zg.Count == 0 || t.Length < 4) { error = "zipfrom <alias> <x> <z> [h=|y=|ground] (a zipline placed by this recipe)"; break; }
+							Vector2 zw = WorldXZ(F(t[2]), F(t[3]));
+							Vector3 zat = new Vector3(zw.x, HeightAt(zw, Options(t.Skip(4))), zw.y);
+							foreach (EditorGameObject e in zg)
+							{
+								Vector3? nf = ZiplineEnds.NearFloor(e.gameObject);
+								if (!nf.HasValue) { error = "zipfrom: " + t[1] + " is not a zipline line"; break; }
+								e.transform.position += zat - nf.Value;
+							}
+							break;
+						}
 						case "zipto":
 						{
 							// zipto <alias> <x> <z> - a zipline line's far end (its lower floor) on the ground at x z (ZiplineEnds)
@@ -2096,9 +2147,12 @@ namespace DynamicIslands
 						}
 						case "reseat":
 						{
-							// reseat trees - at the save, trees and palms whose trunk foot is more than 1 m under the land set back on it
-							if (t.Length < 2 || t[1].ToLowerInvariant() != "trees") { error = "reseat trees"; break; }
-							recipeReseat = true;
+							// reseat trees | off - at the save, trees and palms whose trunk foot is more than 1 m under the land or more than
+							// 0.4 m over it set back on it. Every recipe does it since IG5 (11-18: 905 sunk trunks on 152 saved islands);
+							// "off" keeps them where the recipe put them
+							string rw = t.Length < 2 ? "" : t[1].ToLowerInvariant();
+							if (rw != "trees" && rw != "off") { error = "reseat trees | off"; break; }
+							recipeReseat = rw == "trees";
 							break;
 						}
 						case "save":
@@ -2121,7 +2175,7 @@ namespace DynamicIslands
 							// (and trees and palms whose trunk foot ended more than 1 m under the land - the generator's, set down by the
 							// lowest ground under their crown, then the recipe's strokes raised the ground round them: Old Mine Islet's pines
 							// and birches 1-3 m into the slope, the ground check 2026-10-31; up to the ground round the pivot, as Place sets them)
-							// Only with "reseat trees" in the recipe: every other island saves as before (the release 2026-10-31)
+							// (every recipe since IG5, 11-18 - before it only with "reseat trees", the release 2026-10-31; "reseat off" keeps them)
 							if (recipeReseat) ReseatSunkTrees(seaY);
 							// (and plants, rocks, corals and finds the recipe's own strokes buried whole - a footing flattened over the shelf:
 							// Signal Rock's table coral 0.3 m under its platform's sea floor; nothing showed of them, the review 2026-10-03)
@@ -2218,6 +2272,21 @@ namespace DynamicIslands
 						case "log":
 							Log("  " + Rest(line, 1));
 							break;
+						case "ground":
+						{
+							// ground x z [x z ...]: logs the land's height above the sea at those points (where a stroke's h= did or didn't reach)
+							// (ground cut x z ...: the caves' ground cut made first, as a world spawns it)
+							int g0 = 1, gd;
+							if (t.Length > 1 && t[1] == "cut") { g0 = 2; CaveGround.EditorNow(terraineditor.terrain, out gd); }
+							var sb = new System.Text.StringBuilder(g0 == 2 ? "  ground (cut):" : "  ground:");
+							for (int gi = g0; gi + 1 < t.Length; gi += 2)
+							{
+								Vector2 gp = WorldXZ(F(t[gi]), F(t[gi + 1]));
+								sb.Append(" " + t[gi] + "," + t[gi + 1] + "=" + Num(GroundY(gp.x, gp.y) - DynamicIslands.EditorWaterLevel));
+							}
+							Log(sb.ToString());
+							break;
+						}
 						case "where":
 						{
 							// where <alias>: logs where the objects placed under it ended up (island x z, height above the sea, turn)
@@ -2502,28 +2571,91 @@ namespace DynamicIslands
 		static int leftOutBuried;
 		static bool recipeNoPosts, recipeReseat;
 
-		/// <summary>"reseat trees" at the save: trees and palms whose trunk foot is more than 1 m under the land (the ground
-		/// check's "sunk trunk") set back on the ground round their pivot, as Place sets them. The foot stays within 1 m under
-		/// the land (lower ground under it is a cave floor or a ledge: the land then), and a tree whose foot would be inside a
-		/// placed rock or building stays where it is.</summary>
-		static void ReseatSunkTrees(float seaY)
+		/// <summary>Grass tufts and bushes the generator scattered: a recipe's strokes lowered the ground under some (Firedance Isle's
+		/// pits: tufts 0.5-1 m in the air; Ironreef's peak: Monstera 6-9 m up, IG5 11-18) - the reseat drops the floating ones onto the ground too.</summary>
+		static readonly Regex Tuft = new Regex(@"^(CaravanIsland_\w*Grass|Bush2?|SmallBush_\d+|Balboa_Bush_01 Variant|Monstera_\d+|Banana_Bush_\d+)$");
+
+		/// <summary>At a recipe's save (unless "reseat off"): trees and palms whose trunk foot is more than 1 m under the land (the
+		/// ground check's "sunk trunk") or more than 0.4 m over it with nothing placed under it ("trunk foot floating": the
+		/// recipe's strokes lowered the ground under it) set back on the ground round their pivot, as Place sets them. The foot
+		/// stays within 1 m under the land (lower ground under it is a cave floor or a ledge: the land then), and a tree whose
+		/// foot would be inside a placed rock or building stays where it is. A tree whose foot is on a steep drop's rim
+		/// (the ground check's "trunk over a drop": 3 of 8 points a trunk's width round it 0.8 m or more lower) moves up to 3 m
+		/// onto the nearest spot that is not (27 such trees on 20 islands, IG5 11-18).</summary>
+		static int ReseatSunkTrees(float seaY)
 		{
 			EditorGameObject[] all = GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>();
-			int reseated = 0, kept = 0;
+			int reseated = 0, kept = 0, moved = 0;
 			foreach (EditorGameObject e in all)
 			{
-				if (!Trunk.IsMatch(e.GameObjectName ?? "")) continue;
+				bool tuft = Tuft.IsMatch(e.GameObjectName ?? "");
+				if (!tuft && !Trunk.IsMatch(e.GameObjectName ?? "")) continue;
 				Vector3 p = e.transform.position;
 				float land = GroundY(p.x, p.z);
-				if (land <= seaY || land - p.y <= 1f) continue;
+				if (land <= seaY) continue;
+				bool sunk = !tuft && land - p.y > 1f, floating = p.y - land > 0.4f && !PlacedUnder(e, p, land, all);
+				float rt = 0.6f * Mathf.Max(0.5f, e.transform.lossyScale.x);
+				bool rim = !tuft && !floating && OnDropRim(p.x, p.z, rt);
+				if (rim)
+				{
+					Vector2? off = OffDropRim(p.x, p.z, rt, seaY);
+					if (off.HasValue) { p = new Vector3(off.Value.x, p.y, off.Value.y); land = GroundY(p.x, p.z); sunk = true; }
+				}
+				if (!sunk && !floating) continue;
 				float foot = PlacementOptions.LowestGroundUnder(new Bounds(p, new Vector3(1f, 0f, 1f)));
 				if (foot > land || foot < land - 1f) foot = land;
 				Vector3 to = new Vector3(p.x, foot + PlacementOptions.PivotAboveBottom(e.gameObject), p.z);
 				if (InsidePlaced(to, e, all)) { kept++; continue; }
 				e.transform.position = to;
 				reseated++;
+				if (rim) moved++;
 			}
-			if (reseated + kept > 0) Log("  reseat trees: " + reseated + " sunk trees and palms set back on the ground" + (kept > 0 ? ", " + kept + " left (their foot would be inside a placed object)" : ""));
+			if (reseated + kept > 0) Log("  reseat trees: " + reseated + " sunk or floating trees and palms (and floating grass tufts and bushes) set back on the ground" + (moved > 0 ? ", " + moved + " of them moved off a drop's rim" : "") + (kept > 0 ? ", " + kept + " left (their foot would be inside a placed object)" : ""));
+			return reseated;
+		}
+
+		/// <summary>3 or more of 8 points round x z, <paramref name="rt"/> out, 0.8 m or more under the land at x z (the ground
+		/// check's "trunk over a drop", by the land alone).</summary>
+		static bool OnDropRim(float x, float z, float rt)
+		{
+			float y = GroundY(x, z);
+			int over = 0;
+			for (int k = 0; k < 8; k++)
+			{
+				float a = k * Mathf.PI / 4f;
+				if (y - GroundY(x + rt * Mathf.Cos(a), z + rt * Mathf.Sin(a)) > 0.8f) over++;
+			}
+			return over >= 3;
+		}
+
+		/// <summary>The nearest spot within 3 m of x z (rings 0.5 m apart, 16 ways) over the sea and off a drop's rim; null = none.</summary>
+		static Vector2? OffDropRim(float x, float z, float rt, float seaY)
+		{
+			for (float d = 0.5f; d <= 3.01f; d += 0.5f)
+				for (int k = 0; k < 16; k++)
+				{
+					float a = k * Mathf.PI / 8f, nx = x + d * Mathf.Cos(a), nz = z + d * Mathf.Sin(a);
+					if (GroundY(nx, nz) > seaY + 0.3f && !OnDropRim(nx, nz, rt)) return new Vector2(nx, nz);
+				}
+			return null;
+		}
+
+		/// <summary>Something placed (a deck, a rock, a planter) under a tree's foot, above the land: it stands on that, not on the land.</summary>
+		static bool PlacedUnder(EditorGameObject self, Vector3 foot, float land, EditorGameObject[] all)
+		{
+			foreach (RaycastHit h in Physics.RaycastAll(foot + Vector3.up * 0.3f, Vector3.down, foot.y - land + 0.3f, ~0, QueryTriggerInteraction.Ignore))
+				if (!h.collider.transform.IsChildOf(self.transform) && h.collider.GetComponent<Terrain>() == null) return true;
+			// (and by what shows, its colliders maybe switched off in the editor: a deck, a roof garden's planter)
+			foreach (EditorGameObject o in all)
+			{
+				if (o == self || !o.gameObject.activeInHierarchy || Trunk.IsMatch(o.GameObjectName ?? "")) continue;
+				foreach (Renderer c in o.GetComponentsInChildren<Renderer>())
+				{
+					Bounds b = c.bounds;
+					if (foot.x >= b.min.x && foot.x <= b.max.x && foot.z >= b.min.z && foot.z <= b.max.z && b.max.y > land + 0.1f && b.max.y <= foot.y + 0.3f) return true;
+				}
+			}
+			return false;
 		}
 
 		/// <summary>A point inside the bounds of a placed object's solid colliders (not a tree's or a palm's).</summary>

@@ -286,7 +286,8 @@ call hw_wreck x=-50 z=50 h=2 yaw=40 obj=BoatStranded al=ferry crate=ferrycrate r
 call rr_plants_hill x=-62 z=4 r=22 seed=26901
 call rr_plants_tropical x=-44 z=4 r=8 seed=26911
 call rr_plants_tropical x=8 z=-44 r=8 seed=26921
-call rr_plants_tropical x=-34 z=-36 r=8 seed=26931
+# (moved off the den's hill: in game the cut over the cave left its palms and mangoes 1.5-3.5 m over the cave, IG5 11-18)
+call rr_plants_tropical x=-27 z=-31 r=6 seed=26931
 call rr_plants_tropical x=-40 z=40 r=9 seed=26941
 call rr_plants_tropical x=-10 z=46 r=7 seed=26951
 # --- JUMP COURSE tg (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---

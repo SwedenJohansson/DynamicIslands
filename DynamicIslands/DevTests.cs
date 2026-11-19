@@ -2368,6 +2368,16 @@ namespace DynamicIslands
 
 		static IEnumerator WaitForEditor(bool report)
 		{
+			// (in a world, leave it for the main menu first, as CIMainMenu does: the editor opens only from the menu, and a reseat
+			// run after a play waited 120 s, then failed every island "the editor didn't load it" - 38 of them, IG5 11-18)
+			if (!DynamicIslands.InEditor() && LoadSceneManager.IsGameSceneLoaded && ComponentManager<Raft_Network>.Value != null)
+			{
+				Log("In a world: leaving it for the main menu before the editor");
+				StopExclusive();
+				Claims.TestAnswerDelay = 0f; CustomIslandSpawner.TestGenerateDelay = 0f;
+				ComponentManager<Raft_Network>.Value.LeaveGame((DisconnectReason)2, (SceneName)1, true, false);
+				yield return WaitForMainMenu();
+			}
 			if (!DynamicIslands.InEditor()) DynamicIslands.LoadEditor(new string[0]);
 			float timeout = Time.realtimeSinceStartup + 120f;
 			while (!(DynamicIslands.InEditor() && PlaceableCatalog.IsBuilt && DynamicIslands.EditorGizmoHandler != null && EditorUI.Canvas != null))

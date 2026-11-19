@@ -39,8 +39,9 @@ clear from 36 7 to 46 7 r=4
 clear at 10 -4.5 r=2.5
 
 # ===== The palisade: four sets of sharpened stakes in an arc north of the camp ============================================
+# (from -65: at 55 the last set straddled the den's rock, half of it 1.25 m up, IG5 11-19)
 for k 0 3 1
-set a {-50+35*$k}
+set a {-65+35*$k}
 place "Balboa_DecorationPrefabBase_Wooden Spikes" - at {-4+13.5*sin($a)} {4+13.5*cos($a)} ground scale=0.45 yaw=$a
 next
 
