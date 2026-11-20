@@ -1103,6 +1103,14 @@ namespace DynamicIslands
 			Log("PASS: ray line");
 		}
 
+		[ConsoleCommand(name: "CICaveTry", docs: "Dev, anywhere: a number the cave tools read by name, to try a change before and after in one run (CICaveTry <name> <value> | clear | nothing: the list). The islands built after it use it; unset, what ships")]
+		public static void CaveTryCommand(string[] args)
+		{
+			if (args.Length == 1 && args[0] == "clear") CaveTry.Clear();
+			else if (args.Length >= 2) CaveTry.Set(args[0], float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture));
+			Log("PASS: cave try: " + CaveTry.All());
+		}
+
 		[ConsoleCommand(name: "CICaveCell", docs: "Dev, in game: what the cave hill skin's last build made of the cells round a point on a custom island (shell roof, rim, ground and what it was, cover, raw and softened height, cut/sea/on) - why the skin is or isn't somewhere: CICaveCell <island> <x> <z> [half m, 0] [brief] (m from its middle; brief: no piece list)")]
 		public static void CaveCellCommand(string[] args)
 		{

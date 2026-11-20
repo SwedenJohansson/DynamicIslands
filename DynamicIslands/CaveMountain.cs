@@ -65,6 +65,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The last build's tallest cell over a lone den's arch span or roof just behind its plane, over the plane cap there (m),
 		/// and where (11-19 cave1119 FO-S1; CICaveGapsLook checks it).</summary>
 		public float LoneHead; public Vector3 LoneHeadAt;
+		[System.ThreadStatic] static float LoneRoofGap; // (ShoulderRamps: how far a lone den's roof's cap stands over the cap off its arch, at most - log)
 		static char[,] Why;
 		public int OverDug; // (cells over an open dug passage left without hill - tests)
 		[System.ThreadStatic] static int SkirtsCut; // (Edge: skirts under a way in let down to the skin's own edge, SkirtOverEdge, FO-U1 - log)
@@ -554,7 +555,7 @@ namespace DynamicIslands.Editor
 			var cut = new bool[nx, nz];
 			Why = new char[nx, nz]; // (tests: what last set each cell, in LastMap)
 			var cutAhead = new bool[nx, nz]; // (cut only for lying out past a mouth over lower hill: a lone den's funnel may still ramp there)
-			OverDug = 0; SkirtsCut = 0; WaysBeside = 0;
+			OverDug = 0; SkirtsCut = 0; WaysBeside = 0; LoneRoofGap = 0f;
 			var sea = new bool[nx, nz];
 			string seaOpt;
 			bool seaCutOn = props.Any(p => p != null && p.TryGetValue(ObjectProps.CaveSeaCut, out seaOpt) && seaOpt == "1");
@@ -913,7 +914,8 @@ namespace DynamicIslands.Editor
 				if (asDen >= 0 && caves[asDen] != null) RockAsDen(mr, caves[asDen].gameObject);
 			}
 			DressTunnels();
-			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : "") + (SkirtsCut > 0 ? ", " + SkirtsCut + " skirt strip(s) let down to the edge" : "") + (WaysBeside > 0 ? ", " + WaysBeside + " edge(s) faced over a way in beside a higher one" : ""));
+			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : "") + (SkirtsCut > 0 ? ", " + SkirtsCut + " skirt strip(s) let down to the edge" : "") + (WaysBeside > 0 ? ", " + WaysBeside + " edge(s) faced over a way in beside a higher one" : "")
+				+ (LoneRoofGap > 0f ? ", lone den roof " + LoneRoofGap.ToString("0.0") + " m over its arch's cap" : "") + (CaveTry.All() != "none" ? ", try " + CaveTry.All() : ""));
 			// (lone dens walled before the hill was built: their walls' outsides drawn as the hill now)
 			foreach (Transform t in caves)
 				if (t != null) CaveTool.WallLikeHill(t.gameObject, mr);
@@ -1013,7 +1015,16 @@ namespace DynamicIslands.Editor
 								// (11-18 w15V: over a den's roof too, down to just over it: there the hill kept the dome's full height right at the
 								// plane, and the face it cut from head height up stood over the mouth as torn strips, Wreckers' Cove; and a 5.3 m
 								// step over the cheek in front of it at Caisson Yard)
-								if (!float.IsNaN(cover[i, k])) plane = Mathf.Max(plane, cover[i, k] + Over + LoneRoofOver);
+								if (!float.IsNaN(cover[i, k]))
+								{
+									float roof = cover[i, k] + Over + LoneRoofOver;
+									if (roof - plane > LoneRoofGap) LoneRoofGap = roof - plane;
+									// (TRIAL lonegap/loneblend, CICaveTry: a tall den - its roof LoneGap m and more over the cap off its arch: beside its
+									// roof, over none of it, the hill comes up to the roof's cap over LoneBlend m behind the plane, not at once)
+									float gapMin = CaveTry.F("lonegap", float.MaxValue), blend = CaveTry.F("loneblend", 2.5f);
+									if (roof - plane > gapMin && float.IsNaN(top[i, k])) plane += (roof - plane) * Mathf.SmoothStep(0f, 1f, bb / blend);
+									else plane = Mathf.Max(plane, roof);
+								}
 								if (height[i, k] > plane) { height[i, k] = SoftMin(height[i, k], plane); near[i, k] = true; Why[i, k] = 'P'; }
 							}
 						}

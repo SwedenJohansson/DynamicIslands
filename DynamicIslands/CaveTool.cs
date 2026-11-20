@@ -857,7 +857,9 @@ namespace DynamicIslands.Editor
 				MeshRenderer own = piece.GetComponent<MeshRenderer>();
 				if (own != null) body.Add(own);
 				foreach (Transform c in piece.transform)
-					if (c.name == CaveBacks.Name) { MeshRenderer br = c.GetComponent<MeshRenderer>(); if (br != null) body.Add(br); }
+					// (and its join plates, the floor strips where it meets the next piece: left in the ice-ravine rock, pale strips
+					// across the floor of a tunnel in the hill's rock - Sinkmarket Floor, round 3)
+					if (c.name == CaveBacks.Name || c.name == JoinName) { MeshRenderer br = c.GetComponent<MeshRenderer>(); if (br != null) body.Add(br); }
 				foreach (MeshRenderer r in body)
 				{
 					if (r.GetComponent<HillWall>() != null || r.sharedMaterial == skin.sharedMaterial) continue;
@@ -2384,5 +2386,17 @@ namespace DynamicIslands.Editor
 			}
 			return sh;
 		}
+	}
+
+	/// <summary>Dev (CICaveTry): numbers a test sets by name to try a change in the cave tools in one run, before and after,
+	/// without a new build. Unset, each is its default - what ships.</summary>
+	internal static class CaveTry
+	{
+		static readonly Dictionary<string, float> set = new Dictionary<string, float>();
+		public static float F(string name, float normal) { float v; return set.TryGetValue(name, out v) ? v : normal; }
+		public static bool On(string name) { return F(name, 0f) > 0f; }
+		public static void Set(string name, float v) { set[name] = v; }
+		public static void Clear() { set.Clear(); }
+		public static string All() { return set.Count == 0 ? "none" : string.Join(", ", set.Select(kv => kv.Key + "=" + kv.Value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)).ToArray()); }
 	}
 }

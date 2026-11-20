@@ -1183,7 +1183,7 @@ namespace DynamicIslands
 					Check(ref ok, pale.Count == 0, name + ": tunnel mouth frames drawn as the cave hill: " + pale.Count + " not" + (pale.Count > 0 ? " (" + pale[0].transform.parent.name + ", " + (pale[0].sharedMaterial != null ? pale[0].sharedMaterial.name : "none") + ")" : ""));
 					// (and no tunnel piece left in its pale ice-ravine rock: a pale blue ring round the far opening, Sinkmarket Floor round 3)
 					var ice = e.Root.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.sharedMaterials.Any(x => x != null && x.name.Contains(CaveTool.IceRock))
-						&& (r.name.StartsWith("TP_UnderwaterCaveTunnel") || r.name == CaveBacks.Name && r.transform.parent != null && r.transform.parent.name.StartsWith("TP_UnderwaterCaveTunnel"))).ToList();
+						&& (r.name.StartsWith("TP_UnderwaterCaveTunnel") || (r.name == CaveBacks.Name || r.name == CaveTool.JoinName) && r.transform.parent != null && r.transform.parent.name.StartsWith("TP_UnderwaterCaveTunnel"))).ToList();
 					Check(ref ok, ice.Count == 0, name + ": tunnel pieces in the hill's rock, not the pale ice-ravine rock: " + ice.Count + " not" + (ice.Count > 0 ? " (" + ice[0].name + " " + (ice[0].transform.position - e.Position).ToString("0") + ")" : ""));
 					// (no join plate left lying on a floor: a pale flat sheet at a tunnel's end into a den, Upfall Orchard 11-19 cave1119)
 					Physics.SyncTransforms();
@@ -1273,7 +1273,25 @@ namespace DynamicIslands
 							RaycastHit top;
 							if (!Physics.Raycast(p + across * x + Vector3.up * 40f, Vector3.down, out top, 41f, ~0, QueryTriggerInteraction.Ignore)
 								|| top.point.y < p.y + 1.3f)
-							{ sky++; if (skyAt.Length == 0) skyAt = " - first " + s.ToString("0.0") + " m in, " + x.ToString("0.0") + " across"; }
+							{
+								sky++;
+								if (skyAt.Length == 0)
+								{
+									// (and where on the island, and what the ray met: the hole's own place, to look at with CIDownRays)
+									Vector3 at = p + across * x, isl = at - e.Position;
+									bool met = Physics.Raycast(at + Vector3.up * 40f, Vector3.down, out top, 41f, ~0, QueryTriggerInteraction.Ignore);
+									skyAt = " - first " + s.ToString("0.0") + " m in, " + x.ToString("0.0") + " across (island " + isl.x.ToString("0.00") + " " + isl.z.ToString("0.00") + ", the way's floor " + (p.y - e.Position.y).ToString("0.00")
+										+ ": " + (met ? "met " + top.collider.name + " at " + (top.point.y - e.Position.y).ToString("0.00") : "met nothing");
+									// (every collider on that ray, and on the one 0.4 m nearer the way's middle: what roofs the way beside the hole)
+									for (int rr = 0; rr < 2; rr++)
+									{
+										Vector3 ra = at + across * (rr * (x < 0f ? 0.4f : -0.4f));
+										skyAt += (rr == 0 ? "; on it: " : "; 0.4 m in from it: ") + string.Join(", ", Physics.RaycastAll(ra + Vector3.up * 40f, Vector3.down, 60f, ~0, QueryTriggerInteraction.Ignore)
+											.OrderByDescending(h => h.point.y).Take(7).Select(h => h.collider.name + " " + (h.point.y - e.Position.y).ToString("0.00")).ToArray());
+									}
+									skyAt += ")";
+								}
+							}
 						}
 					}
 					if (rays > 0) Check(ref ok, sky == 0, label + ": a whole roof over the way in, " + rays + " rays down" + (sky > 0 ? ": " + sky + " reach the floor" + skyAt : ""));
