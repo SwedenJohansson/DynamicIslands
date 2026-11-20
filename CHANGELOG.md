@@ -11,6 +11,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (not released yet)
 
+- **Trees laid down by a recipe stay lying where they were put** (island makers): saving an island stood every tree back on the ground by its pivot, and a trunk laid on its side has its cut end there, so the save lifted lying trunks into the air. A tree tilted more than 60 degrees is now left as placed; lay one with a height (`h=`, or `ground y=-0.3` for its cut end in the ground) - plain `ground` rests it on its lowest branch tip (Rootcellar Deep's root trees hung 2-4 m up in the water).
 - **No tall yellow sand column at the back of an underwater tunnel**: the sand skirt laid along an open floor's end no longer climbs a wall of sand: rows of it that rise more than 2 m are left out (the column at the back of Sinkmarket's sea cave). `CICaveGapsLook` fails when a skirt row still climbs more than 2 m.
 - **A tunnel's own body and back inside a cave hill wear the hill's rock**: besides its mouth frame, the tunnel piece's walls and back were still drawn in the tunnel's pale ice-cave rock, a pale bluish shape in the lower opening (Old Mine Islet).
 - **No more rock plate standing out of the sea by underwater tunnels**: where a cave hill had dived under the sea beside an underwater tunnel's way in, the strip of rock under the way's floor still rose from the sea floor up to that floor, a lone flat plate out in the water (Utopia Remade). It now stops at the hill's own edge.
