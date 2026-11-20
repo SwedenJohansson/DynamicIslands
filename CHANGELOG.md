@@ -11,6 +11,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (not released yet)
 
+- **Mod's own in Defaults... switches the Minimap box back on**: the button puts every setting of the window back to what a new install has, but a Minimap box switched off stayed off.
 - **Raft's build costs come back when the mod is unloaded**: the mod loader's Unload (F9) put Raft's own build costs back, but a helper the mod left behind put the world's build cost on again a quarter of a second later, and kept it on in every world after; with the mod loaded again, the raised costs were taken as Raft's own and raised once more. The helper now goes with the mod.
 - **Rare animal looks and the world options' seed survive a crash**: the world's settings changed in play come back after Raft crashes before its next save (the islands come back as at that save), but the rare animal looks and the seed the world options use were left out - a change to the looks was lost, and options switched on in play could come back without their seed.
 - **No tall yellow sand column at the back of an underwater tunnel**: the sand skirt laid along an open floor's end no longer climbs a wall of sand: rows of it that rise more than 2 m are left out (the column at the back of Sinkmarket's sea cave). `CICaveGapsLook` fails when a skirt row still climbs more than 2 m.

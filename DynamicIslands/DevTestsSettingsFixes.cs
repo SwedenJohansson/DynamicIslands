@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using DynamicIslands.Editor;
 using RaftModLoader;
@@ -10,7 +11,7 @@ namespace DynamicIslands
 	/// <summary>Tests for the settings fixes of 11-20: the settings a crash keeps (AU3 merge) and the build cost after the mod is unloaded.</summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CISettingsMerge", docs: "Dev, anywhere: after a crash the world's settings come from the newer copy (AU3) - rare animal looks and the options' seed too, also when the newer copy has none (back to Normal)")]
+		[ConsoleCommand(name: "CISettingsMerge", docs: "Dev, anywhere: after a crash the world's settings come from the newer copy (AU3) - rare animal looks and the options' seed too, also when the newer copy has none (back to Normal); and the Defaults window's Mod's own switches its Minimap box back on")]
 		public static void SettingsMerge()
 		{
 			bool ok = true;
@@ -23,7 +24,39 @@ namespace DynamicIslands
 			Check(ref ok, m.Contains("@lookscaught=5") && m.Contains("@place=a") && !m.Contains("@place=b"), "progress (looks caught, places) from Raft's save's copy: " + all);
 			string[] back = WorldCopy.Merge(state, new[] { "#head2", "@options=fogbanks", "@optionseed=111" });
 			Check(ref ok, !back.Any(l => l.StartsWith("@rarelooks=")), "rare looks set back to Normal in the newer copy (no line) stay Normal: " + string.Join(" ", back));
+			ModsOwnMinimap(ref ok);
 			if (ok) Log("PASS: settings merge"); else Fail("settings merge");
+		}
+
+		/// <summary>Defaults' Mod's own puts the window's Minimap box back on too (spawnpool.txt, world_rules.txt and the keys are put back as they were).</summary>
+		static void ModsOwnMinimap(ref bool ok)
+		{
+			string pool = Path.Combine(DynamicIslands.assetpath, CustomIslandSpawner.PoolFileName), rules = Path.Combine(DynamicIslands.assetpath, WorldRules.DefaultFileName);
+			CustomIslandSpawner.LoadPool(false); // (makes the file if it isn't there)
+			CameraSettings.Save();
+			string poolBefore = File.Exists(pool) ? File.ReadAllText(pool) : null, rulesBefore = File.Exists(rules) ? File.ReadAllText(rules) : null;
+			bool mapBefore = Minimap.Enabled;
+			KeyCode j = ModKeys.Journal, s = ModKeys.Stats;
+			try
+			{
+				Minimap.Enabled = false;
+				Check(ref ok, !Minimap.Enabled && WorldRules.ReadDefault(Minimap.SettingName) == "off", "the Minimap box switched off (" + WorldRules.DefaultFileName + ": minimap=" + WorldRules.ReadDefault(Minimap.SettingName) + ")");
+				DefaultsWindow.ModsOwn();
+				Check(ref ok, !Minimap.Enabled, "Mod's own clicked once only asks: the box is still off");
+				DefaultsWindow.ModsOwn();
+				Check(ref ok, Minimap.Enabled && WorldRules.ReadDefault(Minimap.SettingName) == "on", "Mod's own clicked twice: the Minimap box is on again, as a new install has it (minimap=" + WorldRules.ReadDefault(Minimap.SettingName) + ")");
+			}
+			finally
+			{
+				if (poolBefore != null) File.WriteAllText(pool, poolBefore);
+				if (rulesBefore != null) File.WriteAllText(rules, rulesBefore); else if (File.Exists(rules)) File.WriteAllText(rules, "");
+				CustomIslandSpawner.LoadPool(true);
+				CameraSettings.Reload();
+				QuestTracker.ForgetPlace();
+				ModKeys.SetFromControls(true, j);
+				ModKeys.SetFromControls(false, s);
+				if (Minimap.Enabled != mapBefore) Minimap.Enabled = mapBefore;
+			}
 		}
 
 		[ConsoleCommand(name: "CIBuildCostUnload", docs: "Dev, in game (host): the mod's unload step for the build cost - Raft's own amounts come back and stay (the keeper put the world's percent back on 4 times a second), the keeper object is gone; then the build cost works again")]
