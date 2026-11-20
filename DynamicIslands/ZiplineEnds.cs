@@ -32,6 +32,16 @@ namespace DynamicIslands.Editor
 		/// counts a rider stopped there as carried).</summary>
 		public const float LineClear = 1f, MaxRaise = 8f, RiderFarSkip = 5f;
 
+		/// <summary>The room a rider wants d m before the far end (RopeLowest's want), on a line falling drop m over len m:
+		/// RiderClear, less where the rope's own fall to its far floor gives less - but full again RiderFarSkip m past the
+		/// left-out last stretch, whatever the fall (11-21: Thalassa Mooring's ridge line fell 1.6 m over 23 m, so the fall
+		/// alone asked 1.2 m of room 2 m from its start, and the rider let go there 0.2 m over the ground).</summary>
+		public static System.Func<float, float> RiderWant(float drop, float len)
+		{
+			float slope = 0.8f * Mathf.Max(0f, drop) / Mathf.Max(1f, len);
+			return d => Mathf.Min(RiderClear, Mathf.Max(slope * d, RiderClear * (d - RiderFarSkip) / RiderFarSkip));
+		}
+
 		static readonly FieldInfo pointA = typeof(MeshPath_Zipline_Landmark).GetField("pointA", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 		static readonly FieldInfo pointB = typeof(MeshPath_Zipline_Landmark).GetField("pointB", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 

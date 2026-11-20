@@ -444,7 +444,9 @@ namespace DynamicIslands
 							zLast = p;
 							float left = new Vector2(zFar.x - p.x, zFar.z - p.z).magnitude;
 							if (left < ZiplineEnds.FarSkip + 2f) break;
-							float g = zGround(p);
+							// (not the first NearSkip m, as the save's zipto: the rider sets off hanging under the rope's start, under his own deck's
+							// floor and posts - 11-21, Engine Court's tower lines read -3 m there, their riders carried on)
+							float g = new Vector2(p.x - zNear.x, p.z - zNear.z).magnitude < ZiplineEnds.NearSkip ? float.MinValue : zGround(p);
 							if (g > float.MinValue && p.y - g < zLow) { zLow = p.y - g; zLowAt = p; }
 							if (zRope.Count > 1)
 							{

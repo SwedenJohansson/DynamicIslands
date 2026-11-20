@@ -125,7 +125,8 @@ prop screechers creature.zone=outer_ring
 # (11-20: the cable crosses the middle ring's 3 m wall, top 7 m; its rider hangs 1.2 m and more under the rope, so the rope
 # wants 9.5 m over the court there: a 9.5 m deck 3 m outside the wall, off the gate and its strongbox, a tight rope, and
 # the far end 6 m inside the wall. On the old 4.7 m deck 6 m out the rider met the wall at 0.4 m over the court)
-push at -4.25 23.05 h=3.9
+# (11-21: the deck turned 180 so its ladder is on the north side, away from the line - it went up the side the rider leaves by)
+push at -2.75 24.55 h=3.9 yaw=180
 call zipdeck y=9.5
 pop
 place ZiplinePath_Landmark zipmiddle at -3.5 23.8 h=13.4
@@ -140,7 +141,8 @@ call wheel x=2 z=19 yaw=180 al=middlecrank
 
 # --- Area B, the Inner Ring: the second cable, Ines's watch, the drone bay, the drone, its log, the keypad, the inner crank --
 # (11-20: as the first cable, over the inner ring's wall: an 8.8 m deck 1.2 m outside it, the far end 4.5 m inside it)
-push at -8.95 10.95 h=3.9
+# (11-21: turned 90 so its ladder is on the west side, away from the line)
+push at -8.95 12.45 h=3.9 yaw=90
 call zipdeck y=8.8
 pop
 place ZiplinePath_Landmark zipinner at -8.2 11.7 h=12.7

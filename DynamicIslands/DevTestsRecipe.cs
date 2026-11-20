@@ -1225,6 +1225,9 @@ namespace DynamicIslands
 		/// <summary>The ziplines zipto aimed, cleared of the ground at the island's save, once every stroke and kit has shaped the land
 		/// (11-20: Thalassa Mooring's ridge line was clear at its zipto, then kit_st's hill came up 6 m round its middle).</summary>
 		static readonly List<EditorGameObject> zipPending = new List<EditorGameObject>();
+		/// <summary>The ladders zipto's raise stood up its decks: not a building that holds the deck (PostBuilding) - a Block_'s
+		/// box is the whole block, and 11-21 Engine Court's 6.6 m ridge deck stood on its ladders alone, its posts left out.</summary>
+		static readonly HashSet<GameObject> zipDeckLadders = new HashSet<GameObject>();
 		static readonly Dictionary<int, IslandQuest> pendingMore = new Dictionary<int, IslandQuest>();
 
 		/// <summary>The recipe's quest n (0 = the main one), kept until it has steps.</summary>
@@ -1648,6 +1651,7 @@ namespace DynamicIslands
 			pendingQuest = null;
 			pendingMore.Clear();
 			zipPending.Clear();
+			zipDeckLadders.Clear();
 			yield return WaitForEditor(false);
 			if (!DynamicIslands.InEditor()) { Fail("recipe " + name + ": the editor didn't open"); yield break; }
 			SetOrigin(new Vector2(500f, 500f));
@@ -2546,13 +2550,17 @@ namespace DynamicIslands
 			// it: 11-20, Caisson Yard's line ran into a rock pillar the land's own height left out)
 			Func<float, float, float> ground = ZipGround(e);
 			float len = Mathf.Max(1f, new Vector2(far.x - near.x, far.z - near.z).magnitude), atT, lt;
-			List<Vector3> rope0 = ZiplineEnds.RopeBetween(line, far, near);
+			// (the recipe's own slack, when it set one (prop zip.slack, which Apply sets in a world): the rope starts from it and is never
+			// made looser - 11-21, Engine Court's tower lines set -0.692 and the save loosened them to -3.46 from Raft's -6.92)
+			float setSlack;
+			if (!float.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipSlack) ?? "", NumberStyles.Float, CultureInfo.InvariantCulture, out setSlack) || float.IsNaN(setSlack) || float.IsInfinity(setSlack) || setSlack == 0f) setSlack = float.NaN;
+			List<Vector3> rope0 = ZiplineEnds.RopeBetween(line, far, near, setSlack);
 			if (rope0.Count < 2) return 0f;
 			ZipClearStrays(e, rope0, near, far);
 			float lineLow =ZiplineEnds.RopeLowest(rope0, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out lineAt, out lt);
 			Func<Vector3, string> xyz = v => Num(v.x - TopFrame.Origin.x) + " " + Num(v.z - TopFrame.Origin.y) + " h=" + Num(v.y);
 			Log("  zipto rope: " + rope0.Count + " points, " + xyz(rope0[0]) + " .. " + xyz(rope0[rope0.Count / 2]) + " .. " + xyz(rope0[rope0.Count - 1]) + "; near " + xyz(near) + ", far " + xyz(far) +
-				", slack " + Num(ZiplineEnds.Slack(line)) + "; lowest " + Num(lineLow) + " m over the ground (" + Num(ground(lineAt.x, lineAt.z)) + "" + ZipGroundWhat(e, lineAt.x, lineAt.z) + ") at " + xyz(lineAt));
+				", slack " + Num(float.IsNaN(setSlack) ? ZiplineEnds.Slack(line) : setSlack) + "; lowest " + Num(lineLow) + " m over the ground (" + Num(ground(lineAt.x, lineAt.z)) + "" + ZipGroundWhat(e, lineAt.x, lineAt.z) + ") at " + xyz(lineAt));
 			Vector3 corner = new Vector3(TopFrame.Origin.x, 0f, TopFrame.Origin.y);
 			Vector3 floor = ZiplineEnds.NearFloor(e.gameObject) ?? near;
 			if (floor.y - GroundY(floor.x, floor.z) > 0.6f)
@@ -2563,12 +2571,12 @@ namespace DynamicIslands
 				{
 					// (the rope clear, a rider under it maybe not: logged - 11-20 review, the tower lines' riders were only checked once tightened)
 					Vector3 oa; float ot;
-					float ol = ZiplineEnds.RopeLowest(rope0, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.RiderFarSkip, d => Mathf.Min(ZiplineEnds.RiderClear, 0.8f * Mathf.Max(0f, near.y - far.y) / len * d), out oa, out ot);
+					float ol = ZiplineEnds.RopeLowest(rope0, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.RiderFarSkip, ZiplineEnds.RiderWant(near.y - far.y, len), out oa, out ot);
 					if (ol < 0f)
 						Log("  WARNING: zipto: a rider on that rope comes " + Num(-ol) + " m short of a rider's room at " + Num(oa.x - corner.x) + " " + Num(oa.z - corner.z) + " (ground " + Num(ground(oa.x, oa.z)) + ZipGroundWhat(e, oa.x, oa.z) + "): move what is under it or an end");
 					return 0f;
 				}
-				float own0 = ZiplineEnds.Slack(line);
+				float own0 = float.IsNaN(setSlack) ? ZiplineEnds.Slack(line) : setSlack;
 				if (!float.IsNaN(own0) && own0 != 0f)
 					foreach (float sl in new[] { own0 * 0.5f, own0 * 0.25f, own0 * 0.1f })
 					{
@@ -2580,7 +2588,7 @@ namespace DynamicIslands
 						// under it - 11-20, Engine Court's middle tower line, tightened, stopped its rider at a loot chest under it)
 						float tlen = Mathf.Max(1f, new Vector2(far.x - near.x, far.z - near.z).magnitude);
 						Vector3 ra; float rt;
-						float rl = ZiplineEnds.RopeLowest(ZiplineEnds.RopeBetween(line, far, near, sl), near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.RiderFarSkip, d => Mathf.Min(ZiplineEnds.RiderClear, 0.8f * Mathf.Max(0f, near.y - far.y) / tlen * d), out ra, out rt);
+						float rl = ZiplineEnds.RopeLowest(ZiplineEnds.RopeBetween(line, far, near, sl), near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.RiderFarSkip, ZiplineEnds.RiderWant(near.y - far.y, tlen), out ra, out rt);
 						Log("  zipto: the rope came " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " (its near end on a deck) - its rope tightened to slack " +
 							sl.ToString("0.###", CultureInfo.InvariantCulture) + " (Raft's " + own0.ToString("0.###", CultureInfo.InvariantCulture) + "), the least now " + Num(tl + ZiplineEnds.LineClear) + " m over the ground");
 						if (rl < 0f)
@@ -2592,11 +2600,11 @@ namespace DynamicIslands
 			}
 			// (the room a rider wants d m before the far end: RiderClear, less where the rope's own fall to its floor gives less;
 			// the last RiderFarSkip m left out - zipride counts a rider stopped there as carried)
-			Func<float, Func<float, float>> riderWant = rr => d => Mathf.Min(ZiplineEnds.RiderClear, 0.8f * Mathf.Max(0f, near.y + rr - far.y) / len * d);
+			Func<float, Func<float, float>> riderWant = rr => ZiplineEnds.RiderWant(near.y + rr - far.y, len);
 			Func<float, Func<float, float>> ropeWant = rr => d => ZiplineEnds.LineClear;
 			// (Raft's own rope first; a tighter one - zip.slack, which Apply sets in a world - when the own one would want a
 			// tower: its rope sags about 3.4 m on a 20 m line, so a raise lifts it little where the ground bulges midway)
-			float own = ZiplineEnds.Slack(line), r = 0f, low = 0f, slack = own, best = 999f;
+			float own = float.IsNaN(setSlack) ? ZiplineEnds.Slack(line) : setSlack, r = 0f, low = 0f, slack = own, best = 999f;
 			string why = null, tried = "";
 			float[] slacks = !float.IsNaN(own) && own != 0f ? new[] { own, own * 0.5f, own * 0.25f, own * 0.1f } : new[] { own };
 			for (int pass = 0; pass < 2 && why == null; pass++)
@@ -2779,6 +2787,7 @@ namespace DynamicIslands
 				foreach (Collider c in l.GetComponentsInChildren<Collider>(true)) if (!c.isTrigger) c.enabled = true;
 				EditorGameObject.Attach(l, "Block_Ladder");
 				recipePlaced.Add(l);
+				zipDeckLadders.Add(l);
 				CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { l }, true));
 				climbed += h;
 				n++;
@@ -3144,7 +3153,7 @@ namespace DynamicIslands
 			foreach (EditorGameObject e in placed)
 			{
 				string n = e.GameObjectName ?? "";
-				if (!e.gameObject.activeInHierarchy || n.StartsWith("Zone_") || OverlapIgnore.IsMatch(n) || n.IndexOf("Pillar", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				if (!e.gameObject.activeInHierarchy || zipDeckLadders.Contains(e.gameObject) || n.StartsWith("Zone_") || OverlapIgnore.IsMatch(n) || n.IndexOf("Pillar", StringComparison.OrdinalIgnoreCase) >= 0 ||
 					!(Structural.IsMatch(n) || FloorLike.IsMatch(n) || n.IndexOf("Ceiling", StringComparison.OrdinalIgnoreCase) >= 0)) continue;
 				foreach (Renderer r in e.GetComponentsInChildren<Renderer>(false))
 					if (r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly) boxes.Add(r.bounds);
