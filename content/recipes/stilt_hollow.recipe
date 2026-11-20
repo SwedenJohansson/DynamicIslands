@@ -65,7 +65,8 @@ ramp Scaffolding_6x4m from 10 -11.8 4.45 to 15 -1.3 6.2
 place Pump pump at 16.6 0.6 h=6.2 sit yaw=90
 # (the handle's mesh is 1.05 m above its pivot: it stands on the pump's top, not 0.65 m over it)
 place Pump_Handle - at 16.6 0.46 h=6.15 yaw=90
-place Note_Board notice at 18.8 -1.6 h=7.2 yaw=200
+# (it stood a metre over the stack top - CIFloating w15E: a free-standing board, set on the top like the pump; fix-open 11-19)
+place Note_Board notice at 18.8 -1.6 h=6.2 sit yaw=200
 place Well - at 18.2 2.6 sit
 place Zone_Sound pumpsound at 16.6 0.6 h=7
 # (the banner's rope was tied to nothing and the chair stood half over the stack's south-east drop: the banner across the

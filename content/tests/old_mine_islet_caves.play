@@ -31,4 +31,4 @@ picture om_t1_manway_out 69 8 -22 64.7 6.5 -19.4
 picture om_back_out -12 7 30 -12 3.5 22
 walk -12 26 to -12 22 to -12 14 to -12 5
 picture om_back_cavern -12 4 12 -12 3 0
-walk -12 5 to -12 14 to -12 22 to -12 27
+walk -12 5 to -12 14 to -12 22 to -12 27 below=6

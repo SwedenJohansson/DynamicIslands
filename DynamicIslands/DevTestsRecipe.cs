@@ -1519,6 +1519,59 @@ namespace DynamicIslands
 			return missing.Count == 0 ? null : "no object is named " + string.Join(", ", missing.Distinct().Take(6).ToArray()) + (missing.Distinct().Count() > 6 ? " and more" : "") + ": give it obj.name";
 		}
 
+		/// <summary>The plays (name, text) whose 'offset' under 'island &lt;this island&gt;' is more than 0.5 m from the land
+		/// centre's (none written counts as 0 0), each as "name (offset x z, d m out)", or empty. (fix-open 11-19: the land of
+		/// Old Mine, Ranger's Rest and Ironreef moved after their plays' offsets were set; their walks ran 0.6-3.7 m off and
+		/// stuck on posts and a den wall - the recipe printed the new offset each time but nothing compared it.)</summary>
+		internal static List<string> StaleOffsetPlays(string island, Vector2 moved, IEnumerable<KeyValuePair<string, string>> plays)
+		{
+			var stale = new List<string>();
+			foreach (var play in plays)
+			{
+				bool ours = false, seen = false; Vector2 off = Vector2.zero;
+				foreach (string raw in play.Value.Split('\n'))
+				{
+					string line = raw.Trim();
+					if (line.StartsWith("island ", StringComparison.OrdinalIgnoreCase))
+					{
+						if (ours) break; // (a second island: its offset is that island's)
+						ours = string.Equals(line.Substring(7).Replace(" keep", "").Trim(), island, StringComparison.OrdinalIgnoreCase);
+						continue;
+					}
+					string[] t = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+					float x, z;
+					if (ours && t.Length >= 3 && t[0] == "offset" && float.TryParse(t[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x)
+						&& float.TryParse(t[2], NumberStyles.Float, CultureInfo.InvariantCulture, out z)) { off = new Vector2(x, z); seen = true; break; }
+				}
+				if (!ours) continue;
+				float d = (off - moved).magnitude;
+				if (d > 0.5f) stale.Add(play.Key + " (offset " + (seen ? Num(off.x) + " " + Num(off.y) : "none") + ", " + d.ToString("0.0", CultureInfo.InvariantCulture) + " m out)");
+			}
+			return stale;
+		}
+
+		[ConsoleCommand(name: "CIStaleOffsetUnit", docs: "Dev, anywhere: CIRecipe's stale-offset check - a play of the island whose 'offset' is over 0.5 m from the land centre's is named, a close one, another island's and an island's second play section are not")]
+		public static void CIStaleOffsetUnit()
+		{
+			bool ok = true;
+			Action<bool, string> chk = (c, w) => { Log((c ? "PASS: " : "FAIL: ") + w); ok &= c; };
+			var plays = new[]
+			{
+				new KeyValuePair<string, string>("om_caves.play", "# test\r\nisland Old Mine Islet keep\r\noffset 2.7895 -1.945\r\nwalk 1 2 to 3 4\r\n"),
+				new KeyValuePair<string, string>("om_pics.play", "island Old Mine Islet\noffset -0.1 0.6\n"),
+				new KeyValuePair<string, string>("om_none.play", "island Old Mine Islet\nwalk 1 2 to 3 4\n"),
+				new KeyValuePair<string, string>("other.play", "island Tide Farm\noffset 5 5\n"),
+				new KeyValuePair<string, string>("two.play", "island Tide Farm\nwalk 0 0 to 1 1\nisland Old Mine Islet\noffset -0.0075 0.5381\n"),
+			};
+			var stale = StaleOffsetPlays("Old Mine Islet", new Vector2(-0.0075f, 0.5381f), plays);
+			chk(stale.Count == 2, "two stale plays: " + string.Join("; ", stale.ToArray()));
+			chk(stale.Any(s => s.StartsWith("om_caves.play (offset 2.7895 -1.945, 3.7 m out")), "the old Old Mine offset, 3.7 m out");
+			chk(stale.Any(s => s.StartsWith("om_none.play (offset none")), "no offset line while the centre moved 0.5 m+");
+			chk(!stale.Any(s => s.StartsWith("om_pics") || s.StartsWith("other") || s.StartsWith("two")), "a close offset, another island's, a second section's right one: not named");
+			chk(StaleOffsetPlays("Tide Farm", Vector2.zero, plays).Count == 1, "Tide Farm: only its 5 5 play (the two-island play's Tide part has none, 0 0 is right)");
+			Log(ok ? "PASS: stale offset unit" : "FAIL: stale offset unit");
+		}
+
 		/// <summary>The island's quest steps "kill|kind" and "catch|kind", and the 'kill kind' lines of the plays (in the recipe
 		/// folder) under 'island &lt;this island&gt;', that name a creature label the island doesn't place, or null. A step
 		/// counts only the kind its spot spawns (Quest.Matches, CreatureSpawner) and a play kills only that kind's animals.</summary>
@@ -2222,6 +2275,16 @@ namespace DynamicIslands
 							// kept an old 'offset' 1 m out - The Abyss's vent pool, 11-05)
 							recipeLandLine = "  the land centre is " + Num(moved.x) + " " + Num(moved.y) + " from the recipe's origin: play tests of '" + island + "' need 'offset " + Num(moved.x) + " " + Num(moved.y) + "'" + (moved.magnitude > 0.5f ? "" : " (or none: under 0.5 m)");
 							Log(recipeLandLine);
+							// (and names the plays that still have another: they walk and aim that far off - fix-open 11-19)
+							var playTexts = new List<KeyValuePair<string, string>>();
+							foreach (string pf in Directory.Exists(RecipeFolder) ? Directory.GetFiles(RecipeFolder, "*.play") : new string[0])
+							{
+								string pt;
+								try { pt = File.ReadAllText(pf); } catch (IOException) { continue; }
+								if (pt.IndexOf(island, StringComparison.OrdinalIgnoreCase) >= 0) playTexts.Add(new KeyValuePair<string, string>(Path.GetFileName(pf), pt));
+							}
+							var stalePlays = StaleOffsetPlays(island, moved, playTexts);
+							if (stalePlays.Count > 0) Log("  WARNING: plays whose offset is not the land centre (if their points are the recipe's, set 'offset " + Num(moved.x) + " " + Num(moved.y) + "'; a play passing with it wrote its points in an older frame): " + string.Join("; ", stalePlays.ToArray()));
 							break;
 						}
 						case "plan":

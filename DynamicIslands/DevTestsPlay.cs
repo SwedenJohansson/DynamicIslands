@@ -189,6 +189,30 @@ namespace DynamicIslands
 			return false;
 		}
 
+		/// <summary>Ends the mod's timed suit and takes off Raft's hazmat suit (a play starts without one).</summary>
+		static void TakeOffSuit(Network_Player p)
+		{
+			Hazards.SuitUntil = 0f;
+			try { if (p != null && p.HazmatSuit != null && p.HazmatSuit.Equipped) p.HazmatSuit.UnEquip(); } catch (Exception ex) { Log("  (hazmat suit off: " + ex.Message + ")"); }
+		}
+
+		[ConsoleCommand(name: "CIPlaySuitReset", docs: "Dev, in a world: a suit put on before a play is off when the next play starts (w16F: a 180 s suit carried from one play into the next)")]
+		public static void PlaySuitResetCommand() { StartTest(PlaySuitResetRoutine()); }
+
+		static IEnumerator PlaySuitResetRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("play suit reset: in a world"); yield break; }
+			Network_Player p = RAPI.GetLocalPlayer();
+			Hazards.PutOnSuit("180");
+			yield return null;
+			bool before = Hazards.SuitOn(p);
+			TakeOffSuit(p);
+			yield return null;
+			bool after = Hazards.SuitOn(p);
+			if (before && !after && Hazards.SuitUntil == 0f) Log("PASS: play suit reset (a 180 s suit was on, and off after a play's start)");
+			else Fail("play suit reset: on before " + before + ", on after " + after);
+		}
+
 		static IEnumerator PlayRoutine(string name)
 		{
 			string path = Path.Combine(RecipeFolder, name.EndsWith(".play") ? name : name + ".play");
@@ -199,6 +223,9 @@ namespace DynamicIslands
 			catch (Exception e) { Fail("play " + name + ": " + e.Message); yield break; }
 			yield return EnsureAlive();
 			Network_Player me = RAPI.GetLocalPlayer();
+			// (each play starts without a suit: sulphur_vent_acidsuit's 180 s suit carried into the next play in the world,
+			// vi_wingfall_mire_acid's bog pools hurt nobody - w16F; fix-open 11-19)
+			TakeOffSuit(me);
 			bool ok = true, keep = false;
 			var made = new List<IslandWorldState.Entry>();
 			playEntry = null;
