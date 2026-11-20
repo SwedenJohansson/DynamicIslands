@@ -7,6 +7,8 @@ offset 0 0
 hour 11
 weather Calm
 expect shown gwspikes
+where Zone_Trigger
+where Balboa_Decoration
 
 at -9.9 9.9 h=2.5
 wait 2

@@ -33,6 +33,8 @@ origin
 clear at 0 2 r=6
 clear at -25 20 r=10
 call ar_cave x=30 z=-25 h=3 yaw=0 al=reefrock chest=reefchest cy=1 cm=drop
+where reefrock
+where reefchest
 
 # --- The drowned station: the fallen screen, the broken barometer, the log, the chest ------------------------------
 place RT_Pillar - at 2.4 3.4 ground sy=0.35
@@ -127,7 +129,9 @@ quest reward=TitaniumIngot*1;MetalIngot*2;Cooked_Mackerel*2
 # flat, the bore climbs at 12 degrees under its own mound, and the room at the top holds a pocket of air and the
 # keeper's spare case. 20 m down: the room stays under the sea, so the air zone keeps a diver breathing there.
 call kit_uw x=19 z=0 yaw=70 len=8 slope=12 size=1 dirt=0 mush=2 stone=0 vines=0 titanium=0 light=0 wet=1 as=wgglass
+where reefchest
 prop wgglass cave.rock=plain
+where reefchest
 # cavecheck inside wgglassair wgglasscase
 place Zone_Trigger wgglassair at 38.3 7 h=5.5
 prop wgglassair obj.name=wgglassair
@@ -142,4 +146,5 @@ prop wgglasscase loot.refill=0
 note wgglasscase Keeper's spare case | Two spare glasses wrapped in oilcloth, a coil of line and the station compass. A tag: FOR WHEN THE BIG GLASS BREAKS.
 loot wgglasscase Glass*2;Rope*1;Compass*1
 
+where reefchest
 save Weatherglass Deep
