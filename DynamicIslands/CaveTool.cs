@@ -848,7 +848,10 @@ namespace DynamicIslands.Editor
 			// (and the tunnel itself, inside and its back, in the hill's rock: its pale blue ice-ravine rock seen through the mouth
 			// in the hill's grey face filled the lower half of the opening as a pale bluish shape - Old Mine Islet 11-19 cave1119 r2.
 			// Its mesh can't be read, so the rock is laid by the tunnel's own texture coordinates)
-			if (done > 0)
+			// (a tunnel piece with no frame - the middle of a passage, a swim-through placed on its own - in the hill's rock too where
+			// it is in the pale ice-ravine rock: through the mouth its pale blue ring framed the opening, Sinkmarket Floor, round 3)
+			bool ice = done == 0 && piece.name.StartsWith("TP_UnderwaterCaveTunnel");
+			if (done > 0 || ice)
 			{
 				var body = new List<MeshRenderer>();
 				MeshRenderer own = piece.GetComponent<MeshRenderer>();
@@ -858,6 +861,7 @@ namespace DynamicIslands.Editor
 				foreach (MeshRenderer r in body)
 				{
 					if (r.GetComponent<HillWall>() != null || r.sharedMaterial == skin.sharedMaterial) continue;
+					if (ice && !r.sharedMaterials.Any(x => x != null && x.name.Contains(IceRock))) continue;
 					r.sharedMaterials = Enumerable.Repeat(skin.sharedMaterial, Mathf.Max(1, r.sharedMaterials.Length)).ToArray();
 					r.receiveShadows = skin.receiveShadows;
 					r.reflectionProbeUsage = skin.reflectionProbeUsage;
@@ -872,6 +876,8 @@ namespace DynamicIslands.Editor
 			}
 			return done;
 		}
+		/// <summary>The tunnel pieces' own pale blue rock (TP_IceRavine).</summary>
+		public const string IceRock = "IceRavine";
 		/// <summary>How many tunnel bodies (and backs) FramesLikeHill drew in the hill's rock, all islands since Raft started.</summary>
 		public static int TunnelsLikeHill;
 

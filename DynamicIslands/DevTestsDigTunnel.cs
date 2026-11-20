@@ -1070,6 +1070,65 @@ namespace DynamicIslands
 			else Log("PASS: dig rim probe - " + n + " mouths of " + tuns.Count + " tunnels");
 		}
 
+		[ConsoleCommand(name: "CIDigOpenEdges", docs: "Dev, in a world: every dug tunnel's rock (DigTunnelRock) on a loaded island - its open edges (a face's edge with no face beside it) out in the open: over the ground and under the open sky, a slit or a flap's rim a player sees (cave1119 r3: gw_bore_in, pi_cut_out, rc_store_in). Listed in 2 m clusters, island frame. CIDigOpenEdges <island>")]
+		public static void DigOpenEdgesCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
+			if (e == null) return;
+			var tuns = e.Root.GetComponentsInChildren<DigTunnel>(true).Where(x => x.transform.Find(DigTunnel.RockName) != null).ToList();
+			if (tuns.Count == 0) { Fail("dig open edges: no dug tunnel on " + e.HostName); return; }
+			Quaternion inv = Quaternion.Inverse(e.Root.transform.rotation);
+			int all = 0, open = 0;
+			var clusters = new Dictionary<Vector3Int, List<float>>();
+			foreach (DigTunnel t in tuns)
+			{
+				Transform rt = t.transform.Find(DigTunnel.RockName);
+				MeshFilter mf = rt.GetComponent<MeshFilter>();
+				Mesh m = mf != null ? mf.sharedMesh : null;
+				if (m == null || !m.isReadable) { Log("  tunnel at " + (inv * (t.transform.position - e.Position)).ToString("F1") + ": rock mesh unreadable"); continue; }
+				Vector3[] v = m.vertices;
+				int[] tri = m.triangles;
+				// (edges by their points' places, not indices: the submeshes and seams split the points)
+				var key = new Vector3Int[v.Length];
+				for (int i = 0; i < v.Length; i++) key[i] = new Vector3Int(Mathf.RoundToInt(v[i].x * 1000f), Mathf.RoundToInt(v[i].y * 1000f), Mathf.RoundToInt(v[i].z * 1000f));
+				var edges = new Dictionary<string, int>();
+				var mid = new Dictionary<string, Vector3>();
+				for (int i = 0; i + 2 < tri.Length; i += 3)
+					for (int k = 0; k < 3; k++)
+					{
+						int a = tri[i + k], b = tri[i + (k + 1) % 3];
+						string ka = key[a].ToString(), kb = key[b].ToString();
+						string kk = string.CompareOrdinal(ka, kb) < 0 ? ka + kb : kb + ka;
+						int c;
+						edges.TryGetValue(kk, out c);
+						edges[kk] = c + 1;
+						if (c == 0) mid[kk] = (v[a] + v[b]) * 0.5f;
+					}
+				int tOpen = 0, tAll = 0;
+				foreach (var kv in edges)
+				{
+					if (kv.Value != 1) continue;
+					tAll++;
+					Vector3 w = rt.TransformPoint(mid[kv.Key]);
+					Terrain land = t.SkinLand;
+					float g = land != null ? land.SampleHeight(w) + land.transform.position.y : float.MinValue;
+					if (w.y < g + 0.1f) continue;
+					if (Physics.Raycast(w + Vector3.up * 0.05f, Vector3.up, 200f, ~0, QueryTriggerInteraction.Ignore)) continue;
+					tOpen++;
+					Vector3 l = inv * (w - e.Position);
+					var cell = new Vector3Int(Mathf.RoundToInt(l.x / 2f), Mathf.RoundToInt(l.y / 2f), Mathf.RoundToInt(l.z / 2f));
+					List<float> lst;
+					if (!clusters.TryGetValue(cell, out lst)) clusters[cell] = lst = new List<float>();
+					lst.Add(w.y - g);
+				}
+				Log("  tunnel at " + (inv * (t.transform.position - e.Position)).ToString("F1") + ": " + tAll + " open edge(s), " + tOpen + " out in the open");
+				all += tAll; open += tOpen;
+			}
+			foreach (var kv in clusters.OrderByDescending(x => x.Value.Count).Take(14))
+				Log("    near (" + kv.Key.x * 2 + ", " + kv.Key.y * 2 + ", " + kv.Key.z * 2 + "): " + kv.Value.Count + " edge(s), " + kv.Value.Min().ToString("0.0") + "-" + kv.Value.Max().ToString("0.0") + " m over the ground");
+			Log("PASS: dig open edges " + e.HostName + ": " + open + " out in the open of " + all + " open edge(s), " + clusters.Count + " cluster(s)");
+		}
+
 		[ConsoleCommand(name: "CIDigMouthLook", docs: "Dev, in a world: every dug tunnel's mouths within 2000 m look as the ground round them (11-13 mouth fix) - the rim's top on a shader without shine (not Standard: a grey veil), the lining not out in the open in front of a face (a pale slab with a sawtooth edge: under 3% of its area), and each mouth's rim top, pictured, within 14 of the ground beside it in mean colour and at least 0.6 of its sharpness, on its faces no steeper than the ground beside and against the ground beside of its own colour (dig_mouthlook_<n>_<a|f|l>). 'standard': the same baked textures on Standard for the run instead, to compare; 'stdnormal': baked again on Standard with the mixed normal map; 'stdabs': baked again on Standard, the relief shaded in against flat ground")]
 		public static void DigMouthLookCommand(string[] args)
 		{

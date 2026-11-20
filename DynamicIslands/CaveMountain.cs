@@ -539,7 +539,7 @@ namespace DynamicIslands.Editor
 			var cut = new bool[nx, nz];
 			Why = new char[nx, nz]; // (tests: what last set each cell, in LastMap)
 			var cutAhead = new bool[nx, nz]; // (cut only for lying out past a mouth over lower hill: a lone den's funnel may still ramp there)
-			OverDug = 0; SkirtsCut = 0;
+			OverDug = 0; SkirtsCut = 0; WaysBeside = 0;
 			var sea = new bool[nx, nz];
 			string seaOpt;
 			bool seaCutOn = props.Any(p => p != null && p.TryGetValue(ObjectProps.CaveSeaCut, out seaOpt) && seaOpt == "1");
@@ -898,7 +898,7 @@ namespace DynamicIslands.Editor
 				if (asDen >= 0 && caves[asDen] != null) RockAsDen(mr, caves[asDen].gameObject);
 			}
 			DressTunnels();
-			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : "") + (SkirtsCut > 0 ? ", " + SkirtsCut + " skirt strip(s) let down to the edge" : ""));
+			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : "") + (SkirtsCut > 0 ? ", " + SkirtsCut + " skirt strip(s) let down to the edge" : "") + (WaysBeside > 0 ? ", " + WaysBeside + " edge(s) faced over a way in beside a higher one" : ""));
 			// (lone dens walled before the hill was built: their walls' outsides drawn as the hill now)
 			foreach (Transform t in caves)
 				if (t != null) CaveTool.WallLikeHill(t.gameObject, mr);
@@ -1609,6 +1609,19 @@ namespace DynamicIslands.Editor
 			return last;
 		}
 
+		/// <summary>Edges at a way in whose hill face Edge drew on over the way's own arch, a higher way in beside it (FO-U2).</summary>
+		public static int WaysBeside;
+		/// <summary>Edge: the next point (q) along the edge's line from the point (i,k) at a way in - is the skin there walled down to
+		/// the ground (on, no cave roof or mouth under it) with a way in across from it more than WayStep m over this one's floor?</summary>
+		static bool WallBeside(int i, int k, int qi, int qk, int di, int dk, int nx, int nz, bool[,] on, float[,] top, float[,] mouthAt, float[,] corridor, float way)
+		{
+			int ai = qi + di, ak = qk + dk;
+			if (qi < 0 || qk < 0 || qi >= nx || qk >= nz || ai < 0 || ak < 0 || ai >= nx || ak >= nz) return false;
+			if (!on[qi, qk] || !float.IsNaN(top[qi, qk]) || !float.IsNaN(mouthAt[qi, qk])) return false;
+			return !float.IsNaN(corridor[ai, ak]) && corridor[ai, ak] > way + WayStep;
+		}
+		const float WayStep = 3f;
+
 		/// <summary>The edge (i1,k1)-(i2,k2) of a surface square; (di,dk) points to the square beside it.</summary>
 		static void Edge(int i1, int k1, int i2, int k2, int di, int dk, int nx, int nz, bool[,] on, float[,] top, float[,] height,
 			float[,] ground, float[,] corridor, float[,] mouthAt, float[,] floorAt, System.Func<int, int, Vector3> P, List<Vector3> verts,
@@ -1637,6 +1650,13 @@ namespace DynamicIslands.Editor
 			// (beside the way in, over the cave's own roof, its arch goes on: the face there is the cave's too - a wall down to the
 			// ground stood just inside a mouth wider than the way in, Deepwatch Station's tunnel)
 			bool dry = atWay && (arch.DryAt(i1, k1) || arch.DryAt(i2, k2));
+			// (two ways in side by side at one mouth, their floors far apart - Utopia's underwater tunnel at -3.1 beside a way at 2.6:
+			// beside the higher one the wall came down from the skin's edge to the ground, over the lower one's roof nothing, and the
+			// wall's free end stood out of the hill as a thin dark fin, 11-19 cave1119 FO-U2. Over the lower way's own arch the hill's
+			// face is drawn on up to the edge, as at a dry foot, so the wall beside it runs on into it)
+			bool beside = atWay && !dry && (WallBeside(i1, k1, i1 - (i2 - i1), k1 - (k2 - k1), di, dk, nx, nz, on, top, mouthAt, corridor, way)
+				|| WallBeside(i2, k2, i2 + (i2 - i1), k2 + (k2 - k1), di, dk, nx, nz, on, top, mouthAt, corridor, way));
+			if (beside) WaysBeside++;
 			float floorY = atWay ? way : arch.FaceOut(i1, k1, i2, k2, a1, c1, a2, c2, inside1, inside2, n);
 			if (float.IsNaN(floorY))
 			{
@@ -1675,7 +1695,7 @@ namespace DynamicIslands.Editor
 					Band(e0, e, ga, gb, l, l, n, verts, norms, uvs, tris, origin);
 					// (cave.foot=dry: over its own arch too, up to the dome - the skin's edge stood over the arch with nothing under it,
 					// a pale see-through sheet over the ammo den's mouth, Shelter Atoll 11-08)
-					if (!atWay || dry) Band(e0, e, h, h, e0.y, e.y, n, verts, norms, uvs, tris, origin);
+					if (!atWay || dry || beside) Band(e0, e, h, h, e0.y, e.y, n, verts, norms, uvs, tris, origin);
 				}
 				else if (atWay)
 				{
@@ -1692,7 +1712,7 @@ namespace DynamicIslands.Editor
 					// den's arch from the way's floor up, with no gap: no den rock stands in front of its arch to close the 2.6 m under
 					// head height, so the hill's edge hung over open air there - torn strips over the mouth, Wreckers' Cove w15U)
 					float from = lone ? wy : way + DryHead;
-					if (dry && Mathf.Min(e0.y, e.y) > from + 0.05f) Band(e0, e, from, from, e0.y, e.y, n, verts, norms, uvs, tris, origin);
+					if ((dry || beside) && Mathf.Min(e0.y, e.y) > from + 0.05f) Band(e0, e, from, from, e0.y, e.y, n, verts, norms, uvs, tris, origin);
 				}
 				else Band(e0, e, Mathf.Min(ga, e0.y), Mathf.Min(gb, e.y), e0.y, e.y, n, verts, norms, uvs, tris, origin);
 				open0 = open; lo0 = lo; hi0 = hi;

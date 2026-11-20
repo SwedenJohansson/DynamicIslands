@@ -1127,6 +1127,10 @@ namespace DynamicIslands
 				{
 					var pale = e.Root.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.name == CaveTool.MouthName && r.sharedMaterial != cm.Skin.sharedMaterial && cm.Skin.bounds.Contains(r.bounds.center)).ToList();
 					Check(ref ok, pale.Count == 0, name + ": tunnel mouth frames drawn as the cave hill: " + pale.Count + " not" + (pale.Count > 0 ? " (" + pale[0].transform.parent.name + ", " + (pale[0].sharedMaterial != null ? pale[0].sharedMaterial.name : "none") + ")" : ""));
+					// (and no tunnel piece left in its pale ice-ravine rock: a pale blue ring round the far opening, Sinkmarket Floor round 3)
+					var ice = e.Root.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.sharedMaterials.Any(x => x != null && x.name.Contains(CaveTool.IceRock))
+						&& (r.name.StartsWith("TP_UnderwaterCaveTunnel") || r.name == CaveBacks.Name && r.transform.parent != null && r.transform.parent.name.StartsWith("TP_UnderwaterCaveTunnel"))).ToList();
+					Check(ref ok, ice.Count == 0, name + ": tunnel pieces in the hill's rock, not the pale ice-ravine rock: " + ice.Count + " not" + (ice.Count > 0 ? " (" + ice[0].name + " " + (ice[0].transform.position - e.Position).ToString("0") + ")" : ""));
 					// (no join plate left lying on a floor: a pale flat sheet at a tunnel's end into a den, Upfall Orchard 11-19 cave1119)
 					Physics.SyncTransforms();
 					var lying = e.Root.GetComponentsInChildren<MeshFilter>(false).Where(f => f.name == CaveTool.JoinName && cm.Skin.bounds.Contains(f.transform.position) && CaveTool.JoinLiesOnFloor(f.transform)).ToList();
