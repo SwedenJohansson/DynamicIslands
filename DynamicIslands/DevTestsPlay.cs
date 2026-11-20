@@ -388,6 +388,83 @@ namespace DynamicIslands
 						checks++;
 						break;
 					}
+					case "zipride":
+					{
+						// zipride <x> <z> [seconds]: the zipline line whose near end is nearest x z, ridden with Raft's zipline tool from
+						// that end: it must carry the player to within FarSkip+2 m of its far end, and the player must stay over the
+						// ground on the way (but the far end's own stretch) - a line inside a ridge's shoulder (Outer Breakwater, 11-20)
+						Vector3 zAt = PlayPoint(F(t[1]), F(t[2]));
+						float zSecs = t.Length > 3 ? F(t[3]) : 15f;
+						MeshPath_Zipline_Landmark zl = null;
+						Vector3 zNear = Vector3.zero, zFar = Vector3.zero, zn, zf;
+						foreach (MeshPath_Zipline_Landmark c in playEntry.Root.GetComponentsInChildren<MeshPath_Zipline_Landmark>(true))
+							if (ZiplineEnds.Ends(c.gameObject, null, Vector3.zero, out zn, out zf) && (zl == null || (new Vector2(zn.x - zAt.x, zn.z - zAt.z)).sqrMagnitude < (new Vector2(zNear.x - zAt.x, zNear.z - zAt.z)).sqrMagnitude))
+							{ zl = c; zNear = zn; zFar = zf; }
+						if (zl == null) { Check(ref ok, false, "zipride: no zipline line on the island"); checks++; break; }
+						ZiplinePlayer zp = me.GetComponentInChildren<ZiplinePlayer>(true);
+						if (zp == null) { Check(ref ok, false, "zipride: the player has no ZiplinePlayer"); checks++; break; }
+						me.Inventory.AddItem(ContentCatalog.ZiplineItem, 1);
+						Vector3 zFloor = ZiplineEnds.NearFloor(zl.gameObject) ?? zNear;
+						PlayerMove.To(me, zFloor + Vector3.up * 1.2f, ControllerType.Ground);
+						yield return new WaitForSeconds(1f);
+						Vector3 z0 = me.transform.position;
+						Func<Vector3, float> zGround = p => { RaycastHit h; return Physics.Raycast(new Vector3(p.x, p.y + 40f, p.z), Vector3.down, out h, 120f, 1 << IslandSpawner.TerrainLayer) ? h.point.y : float.MinValue; };
+						try { zp.DetachFromCurrentZipline(); } catch { }
+						zp.AttachToZipline(zl, 0);
+						float zLen = new Vector2(zFar.x - zNear.x, zFar.z - zNear.z).magnitude, zLow = 999f, zHang = -999f, zSag = 0f;
+						Vector3 zLowAt = z0, zLast = z0, zOffAt = Vector3.zero;
+						// (the rope as Raft made it: the rider hangs under it, and it sags under the straight line between the ends)
+						List<Vector3> zRope = ZiplineEnds.Rope(zl);
+						if (zRope.Count > 1)
+						{
+							Vector3 zi = playEntry.Position - new Vector3(playOffset.x, 0f, playOffset.y), zra; float zrt;
+							Func<Vector3, string> zx = v => (v.x - zi.x).ToString("F2", CultureInfo.InvariantCulture) + " " + (v.z - zi.z).ToString("F2", CultureInfo.InvariantCulture) + " h=" + (v.y - zi.y).ToString("F2", CultureInfo.InvariantCulture);
+							float zrl = ZiplineEnds.RopeLowest(zRope, zNear, zFar, (x, z) => { float g = zGround(new Vector3(x, 0f, z)); return g > float.MinValue ? g : -999f; }, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out zra, out zrt);
+							RaycastHit zwh; string zWhat = Physics.Raycast(new Vector3(zra.x, zra.y + 40f, zra.z), Vector3.down, out zwh, 120f, 1 << IslandSpawner.TerrainLayer) && !(zwh.collider is TerrainCollider) ? " (on " + zwh.collider.transform.root.name + "'s " + zwh.collider.name + ")" : "";
+							Log("  zipride rope: " + zRope.Count + " points, " + zx(zRope[0]) + " .. " + zx(zRope[zRope.Count / 2]) + " .. " + zx(zRope[zRope.Count - 1]) + "; near " + zx(zNear) + ", far " + zx(zFar) +
+								", slack " + ZiplineEnds.Slack(zl).ToString("F3", CultureInfo.InvariantCulture) + "; lowest " + zrl.ToString("F2", CultureInfo.InvariantCulture) + " m over the ground at " + zx(zra) + zWhat);
+						}
+						foreach (Vector3 rp in zRope)
+						{
+							float rt = Mathf.Clamp01(new Vector2(rp.x - zNear.x, rp.z - zNear.z).magnitude / Mathf.Max(0.1f, zLen));
+							zSag = Mathf.Max(zSag, Mathf.Lerp(zNear.y, zFar.y, rt) - rp.y);
+						}
+						System.Reflection.PropertyInfo zAttached = typeof(ZiplinePlayer).GetProperty("IsAttachedToZipline", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+						Func<bool> zOn = () => { try { return zAttached == null || (bool)zAttached.GetValue(zp, null); } catch { return true; } };
+						string zParams = "";
+						foreach (string fn in new[] { "zipplineYOffset", "minDistanceFromGround", "AbortGroundOffset", "AbortCollision" })
+						{
+							System.Reflection.FieldInfo fi = typeof(ZiplinePlayer).GetField(fn, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+							if (fi != null) try { zParams += " " + fn + "=" + Convert.ToString(fi.GetValue(fi.IsStatic ? null : zp), CultureInfo.InvariantCulture); } catch { }
+						}
+						for (float s = 0f; s < zSecs; s += 0.25f)
+						{
+							yield return new WaitForSeconds(0.25f);
+							Vector3 p = me.transform.position;
+							zLast = p;
+							float left = new Vector2(zFar.x - p.x, zFar.z - p.z).magnitude;
+							if (left < ZiplineEnds.FarSkip + 2f) break;
+							float g = zGround(p);
+							if (g > float.MinValue && p.y - g < zLow) { zLow = p.y - g; zLowAt = p; }
+							if (zRope.Count > 1)
+							{
+								Vector3 rq = zRope.OrderBy(rp => new Vector2(rp.x - p.x, rp.z - p.z).sqrMagnitude).First();
+								zHang = Mathf.Max(zHang, rq.y - p.y);
+							}
+							if (s > 0.5f && !zOn()) { zOffAt = p; break; }
+						}
+						try { zp.DetachFromCurrentZipline(); } catch { }
+						float zLeft = new Vector2(zFar.x - zLast.x, zFar.z - zLast.z).magnitude;
+						Vector3 zIsl = playEntry.Position - new Vector3(playOffset.x, 0f, playOffset.y);
+						Log("  zipride: line " + zLen.ToString("F1", CultureInfo.InvariantCulture) + " m, its rope " + zRope.Count + " points sagging " + zSag.ToString("F2", CultureInfo.InvariantCulture) + " m, the player hangs " + zHang.ToString("F2", CultureInfo.InvariantCulture) + " m under the rope at the most; lowest over the ground " +
+							zLow.ToString("F2", CultureInfo.InvariantCulture) + " m at " + (zLowAt.x - zIsl.x).ToString("F1", CultureInfo.InvariantCulture) + " " + (zLowAt.z - zIsl.z).ToString("F1", CultureInfo.InvariantCulture) +
+							(zOffAt != Vector3.zero ? "; let go of the line at " + (zOffAt.x - zIsl.x).ToString("F1", CultureInfo.InvariantCulture) + " " + (zOffAt.z - zIsl.z).ToString("F1", CultureInfo.InvariantCulture) + " " + (zOffAt.y - zGround(zOffAt)).ToString("F2", CultureInfo.InvariantCulture) + " m over the ground" : "") + ";" + zParams);
+						Check(ref ok, zLeft < ZiplineEnds.FarSkip + 2.5f, "zipride " + t[1] + " " + t[2] + ": carried " + Vector3.Distance(z0, zLast).ToString("F1", CultureInfo.InvariantCulture) + " m, " + zLeft.ToString("F1", CultureInfo.InvariantCulture) + " m short of the far end");
+						Check(ref ok, zLow > -0.2f, "zipride " + t[1] + " " + t[2] + ": the rider stays over the ground (lowest " + zLow.ToString("F2", CultureInfo.InvariantCulture) + " m)");
+						checks += 2;
+						yield return new WaitForSeconds(1f);
+						break;
+					}
 					case "climb":
 					{
 						// the ladder nearest the point (its own climb collider): the player in it, a metre above its foot - Raft's

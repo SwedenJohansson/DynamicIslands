@@ -69,3 +69,7 @@ expect step 14
 expect story chainkey 1
 zone inner_stair
 expect done
+
+# Ridge zipline (11-20): its top on a deck with a ladder up its back, ridden from the ridge top down to the shore - the line clear of the ridge's shoulder, the rider over the ground
+climb 56.5 2.4
+zipride 57.5 2.4

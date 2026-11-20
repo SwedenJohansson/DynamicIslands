@@ -1222,6 +1222,9 @@ namespace DynamicIslands
 		static readonly HashSet<GameObject> recipePlaced = new HashSet<GameObject>();
 		/// <summary>The quest the recipe is writing (the quest window's fields before Save).</summary>
 		static IslandQuest pendingQuest;
+		/// <summary>The ziplines zipto aimed, cleared of the ground at the island's save, once every stroke and kit has shaped the land
+		/// (11-20: Thalassa Mooring's ridge line was clear at its zipto, then kit_st's hill came up 6 m round its middle).</summary>
+		static readonly List<EditorGameObject> zipPending = new List<EditorGameObject>();
 		static readonly Dictionary<int, IslandQuest> pendingMore = new Dictionary<int, IslandQuest>();
 
 		/// <summary>The recipe's quest n (0 = the main one), kept until it has steps.</summary>
@@ -1644,6 +1647,7 @@ namespace DynamicIslands
 			leftOutBuried = 0;
 			pendingQuest = null;
 			pendingMore.Clear();
+			zipPending.Clear();
 			yield return WaitForEditor(false);
 			if (!DynamicIslands.InEditor()) { Fail("recipe " + name + ": the editor didn't open"); yield break; }
 			SetOrigin(new Vector2(500f, 500f));
@@ -1734,6 +1738,7 @@ namespace DynamicIslands
 						case "new":
 							pendingQuest = null;
 							pendingMore.Clear();
+							zipPending.Clear();
 							DynamicIslands.NewIsland();
 							SetOrigin(new Vector2(500f, 500f));
 							break;
@@ -2102,7 +2107,11 @@ namespace DynamicIslands
 							if (group.Count == 0 || t.Length < 4) { error = "zipto <alias> <x> <z> (a zipline placed by this recipe)"; break; }
 							Vector2 w = WorldXZ(F(t[2]), F(t[3]));
 							Vector3 end = new Vector3(w.x, GroundY(w.x, w.y), w.y) - terraineditor.terrain.transform.position;
-							foreach (EditorGameObject e in group) PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(end)));
+							foreach (EditorGameObject e in group)
+							{
+								PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(end)));
+								if (!zipPending.Contains(e)) zipPending.Add(e);
+							}
 							break;
 						}
 						case "loot":
@@ -2223,6 +2232,9 @@ namespace DynamicIslands
 							string island = Rest(line, 1).Trim();
 							string why = FileNames.IslandProblem(island);
 							if (why != null) { error = why; break; }
+							// (the ziplines zipto aimed: their ropes over the land as it ends up - ZipClearGround)
+							foreach (EditorGameObject ze in zipPending) if (ze != null) ZipClearGround(ze);
+							zipPending.Clear();
 							// (Raft's sea finds the recipe's own terrain strokes carried out of the water - a mountain raised over the shelf
 							// the generator had dressed: Ironreef's ore lay 30-57 m up its slope - are the sea's: removed, the review 2026-10-03)
 							float seaY = DynamicIslands.EditorWaterLevel;
@@ -2513,6 +2525,206 @@ namespace DynamicIslands
 		{
 			List<EditorGameObject> group;
 			return recipeGroups.TryGetValue(alias, out group) ? group.Where(e => e != null).ToList() : new List<EditorGameObject>();
+		}
+
+		/// <summary>
+		/// zipto's ground check of the line (11-20): a line whose near end stands on the ground and whose rope (as Raft makes it
+		/// in a world, sagging between its ends) runs too near the ground (a ridge's shoulder bulging over it: Outer Breakwater's
+		/// ridge line ran 1.1 m inside the ridge, its floors both on the ground) has its near end raised, its floor on a wooden
+		/// deck with ladders up to it (the save stands the deck's posts on the ground): first for a rider's room
+		/// (ZiplineEnds.RiderClear, less near the far end, where the rope comes down to its floor), and when that would take
+		/// more than ZiplineEnds.MaxRaise, for the rope alone (ZiplineEnds.LineClear). A near end that is not on the ground (a
+		/// tower's deck) is only logged. Returns the metres raised.
+		/// </summary>
+		static float ZipClearGround(EditorGameObject e)
+		{
+			Terrain land = terraineditor.terrain;
+			Vector3 near, far, at = Vector3.zero, lineAt;
+			MeshPath_Zipline_Landmark line = e.GetComponentInChildren<MeshPath_Zipline_Landmark>(true);
+			if (land == null || line == null || !ZiplineEnds.Ends(e.gameObject, e.Props, land.transform.position, out near, out far)) return 0f;
+			// (the ground under the rope: the land, or what stands solid on it - a rock, a cliff, a block - as a world's rider meets
+			// it: 11-20, Caisson Yard's line ran into a rock pillar the land's own height left out)
+			Func<float, float, float> ground = ZipGround(e);
+			float len = Mathf.Max(1f, new Vector2(far.x - near.x, far.z - near.z).magnitude), atT, lt;
+			List<Vector3> rope0 = ZiplineEnds.RopeBetween(line, far, near);
+			if (rope0.Count < 2) return 0f;
+			float lineLow = ZiplineEnds.RopeLowest(rope0, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out lineAt, out lt);
+			Func<Vector3, string> xyz = v => Num(v.x - TopFrame.Origin.x) + " " + Num(v.z - TopFrame.Origin.y) + " h=" + Num(v.y);
+			Log("  zipto rope: " + rope0.Count + " points, " + xyz(rope0[0]) + " .. " + xyz(rope0[rope0.Count / 2]) + " .. " + xyz(rope0[rope0.Count - 1]) + "; near " + xyz(near) + ", far " + xyz(far) +
+				", slack " + Num(ZiplineEnds.Slack(line)) + "; lowest " + Num(lineLow) + " m over the ground (" + Num(ground(lineAt.x, lineAt.z)) + "" + ZipGroundWhat(e, lineAt.x, lineAt.z) + ") at " + xyz(lineAt));
+			Vector3 corner = new Vector3(TopFrame.Origin.x, 0f, TopFrame.Origin.y);
+			Vector3 floor = ZiplineEnds.NearFloor(e.gameObject) ?? near;
+			if (floor.y - GroundY(floor.x, floor.z) > 0.6f)
+			{
+				// (a tower's line, whose rope sags under its far floor where the tower is low: a tighter rope - 11-20, Engine Court's
+				// tower lines dipped 1.4 m into the court's flat ground before their far ends)
+				if (lineLow >= ZiplineEnds.LineClear) return 0f;
+				float own0 = ZiplineEnds.Slack(line);
+				if (!float.IsNaN(own0) && own0 != 0f)
+					foreach (float sl in new[] { own0 * 0.5f, own0 * 0.25f, own0 * 0.1f })
+					{
+						Vector3 ta; float tt;
+						float tl = ZiplineEnds.RopeLowest(ZiplineEnds.RopeBetween(line, far, near, sl), near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, d => ZiplineEnds.LineClear, out ta, out tt);
+						if (tl < 0f) continue;
+						PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipSlack, sl.ToString("0.###", CultureInfo.InvariantCulture)));
+						// (a rider hangs about 1.2-2.3 m under the rope: the rope's 1 m can still leave a rider walking into what is
+						// under it - 11-20, Engine Court's middle tower line, tightened, stopped its rider at a loot chest under it)
+						float tlen = Mathf.Max(1f, new Vector2(far.x - near.x, far.z - near.z).magnitude);
+						Vector3 ra; float rt;
+						float rl = ZiplineEnds.RopeLowest(ZiplineEnds.RopeBetween(line, far, near, sl), near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.RiderFarSkip, d => Mathf.Min(ZiplineEnds.RiderClear, 0.8f * Mathf.Max(0f, near.y - far.y) / tlen * d), out ra, out rt);
+						Log("  zipto: the rope came " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " (its near end on a deck) - its rope tightened to slack " +
+							sl.ToString("0.###", CultureInfo.InvariantCulture) + " (Raft's " + own0.ToString("0.###", CultureInfo.InvariantCulture) + "), the least now " + Num(tl + ZiplineEnds.LineClear) + " m over the ground");
+						if (rl < 0f)
+							Log("  WARNING: zipto: a rider on that rope comes " + Num(-rl) + " m short of a rider's room at " + Num(ra.x - corner.x) + " " + Num(ra.z - corner.z) + " (ground " + Num(ground(ra.x, ra.z)) + ZipGroundWhat(e, ra.x, ra.z) + "): move what is under it or an end");
+						return 0f;
+					}
+				Log("  WARNING: zipto: the rope comes " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " and its near end is not on the ground (so not raised), nor does a tighter rope keep it " + Num(ZiplineEnds.LineClear) + " m over it: move an end. Left as it is");
+				return 0f;
+			}
+			// (the room a rider wants d m before the far end: RiderClear, less where the rope's own fall to its floor gives less;
+			// the last RiderFarSkip m left out - zipride counts a rider stopped there as carried)
+			Func<float, Func<float, float>> riderWant = rr => d => Mathf.Min(ZiplineEnds.RiderClear, 0.8f * Mathf.Max(0f, near.y + rr - far.y) / len * d);
+			Func<float, Func<float, float>> ropeWant = rr => d => ZiplineEnds.LineClear;
+			// (Raft's own rope first; a tighter one - zip.slack, which Apply sets in a world - when the own one would want a
+			// tower: its rope sags about 3.4 m on a 20 m line, so a raise lifts it little where the ground bulges midway)
+			float own = ZiplineEnds.Slack(line), r = 0f, low = 0f, slack = own, best = 999f;
+			string why = null, tried = "";
+			float[] slacks = !float.IsNaN(own) && own != 0f ? new[] { own, own * 0.5f, own * 0.25f, own * 0.1f } : new[] { own };
+			for (int pass = 0; pass < 2 && why == null; pass++)
+				foreach (float sl in slacks)
+				{
+					float rr, rl, rt; Vector3 ra;
+					bool ok = ZipRaise(line, near, far, ground, pass == 0 ? riderWant : ropeWant, pass == 0 ? ZiplineEnds.RiderFarSkip : ZiplineEnds.FarSkip, sl, out rr, out rl, out ra, out rt);
+					if (!ok) tried += (tried.Length > 0 ? "; " : "") + (pass == 0 ? "rider" : "rope") + " slack " + Num(sl) + ": " + Num(rl) + " m short at " + Num(ra.x - corner.x) + " " + Num(ra.z - corner.z) + " h=" + Num(ra.y) + " (ground " + Num(ground(ra.x, ra.z)) + ZipGroundWhat(e, ra.x, ra.z) + ")";
+					if (!ok || rr >= best) continue;
+					best = rr; r = rr; low = rl; at = ra; slack = sl;
+					why = pass == 0 ? "a rider's room (" + Num(ZiplineEnds.RiderClear) + " m)" : "the rope's " + Num(ZiplineEnds.LineClear) + " m (a rider's room would take over " + Num(ZiplineEnds.MaxRaise) + " m)";
+					if (rr <= ZiplineEnds.MaxRaise / 2f) break;
+				}
+			if (why == null)
+			{
+				Log("  WARNING: zipto: the rope comes " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " and no raise of its near end up to " + Num(ZiplineEnds.MaxRaise) +
+					" m, nor a tighter rope, keeps it " + Num(ZiplineEnds.LineClear) + " m over it - a line through a hill: move an end. Left as it is (raised " + Num(ZiplineEnds.MaxRaise) + " m: " + tried + ")");
+				return 0f;
+			}
+			if (slack != own)
+			{
+				PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipSlack, slack.ToString("0.###", CultureInfo.InvariantCulture)));
+				ZiplineEnds.RopeBetween(line, far, near, slack);
+				why += ", its rope tightened to slack " + slack.ToString("0.###", CultureInfo.InvariantCulture) + " (Raft's " + own.ToString("0.###", CultureInfo.InvariantCulture) + ")";
+			}
+			if (r <= 0f) return 0f;
+			// (the floor's underside, where the deck's top goes: the line's own small pieces around the near floor)
+			float bottom = floor.y - 0.05f;
+			foreach (Renderer rd in e.gameObject.GetComponentsInChildren<Renderer>(true))
+				if (rd.bounds.size.x < 2f && rd.bounds.size.z < 2f && new Vector2(rd.bounds.center.x - floor.x, rd.bounds.center.z - floor.z).magnitude < 0.8f && rd.bounds.max.y < floor.y + 0.6f)
+					bottom = Mathf.Min(bottom, rd.bounds.min.y);
+			e.transform.position += Vector3.up * r;
+			bottom += r;
+			string deck = "";
+			Transform placedRoot = GameObject.Find("PlacedObjects").transform;
+			GameObject go = ObjectLimit.Allow(1) ? PlaceableCatalog.Spawn("Block_Floor_Wood", placedRoot) : null;
+			if (go != null)
+			{
+				go.transform.rotation = PlacementOptions.Straight(go.transform.rotation, true);
+				Renderer[] rs = PlacementOptions.ShapeRenderers(go);
+				if (rs.Length > 0)
+				{
+					Bounds b = rs[0].bounds;
+					foreach (Renderer rr in rs) b.Encapsulate(rr.bounds);
+					go.transform.position += new Vector3(floor.x - b.center.x, bottom - b.max.y, floor.z - b.center.z);
+					Collider deckCol = go.GetComponent<Collider>();
+					if (deckCol != null) deckCol.enabled = true;
+					EditorGameObject.Attach(go, "Block_Floor_Wood");
+					recipePlaced.Add(go);
+					CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { go }, true));
+					deck = ", its floor on a deck " + Num(bottom - GroundY(floor.x, floor.z)) + " m over the ground";
+					// (a way up: ladders at the deck's back edge, away from the line, from the deck's top down into the ground)
+					Bounds db = rs[0].bounds;
+					foreach (Renderer rr in rs) db.Encapsulate(rr.bounds);
+					deck += ZipDeckLadders(db, new Vector3(near.x - far.x, 0f, near.z - far.z), placedRoot);
+				}
+				else UnityEngine.Object.Destroy(go);
+			}
+			Log("  zipto: the rope came " + Num(lineLow) + " m over the ground - its near end raised " + Num(r) + " m for " + why + ", the least now " + Num(low) + " m over that at " + Num(at.x - corner.x) + " " + Num(at.z - corner.z) + deck);
+			return r;
+		}
+
+		/// <summary>zipto's raise: how far the near end goes up (0.1 m steps of at most 1 m, to ZiplineEnds.MaxRaise) for the
+		/// rope Raft makes to leave want(raise)(metres to the far end) over the ground, leaving out the first NearSkip m and the
+		/// last farSkip m. False when MaxRaise isn't enough (r is then MaxRaise). low, at, atT: the least room left, where.</summary>
+		static bool ZipRaise(MeshPath_Zipline_Landmark line, Vector3 near, Vector3 far, Func<float, float, float> ground, Func<float, Func<float, float>> want, float farSkip, float slack, out float r, out float low, out Vector3 at, out float atT)
+		{
+			r = 0f; low = 0f; at = near; atT = 0f;
+			for (int i = 0; i < 80; i++)
+			{
+				List<Vector3> rope = ZiplineEnds.RopeBetween(line, far, near + Vector3.up * r, slack);
+				if (rope.Count < 2) return false;
+				low = ZiplineEnds.RopeLowest(rope, near, far, ground, ZiplineEnds.NearSkip, farSkip, want(r), out at, out atT);
+				if (low >= 0f) { r = Mathf.Ceil(r * 10f) / 10f; return true; }
+				if (r >= ZiplineEnds.MaxRaise) return false;
+				r = Mathf.Min(ZiplineEnds.MaxRaise, r + Mathf.Clamp(-low / Mathf.Max(0.05f, 1f - atT), 0.1f, 1f));
+			}
+			return false;
+		}
+
+		/// <summary>The ground under a zipline's rope at x z (world): the land's height, or the top of what stands solid on it on the
+		/// land's layer higher up (a rock, a cliff, a block: what a world's rider meets), the line's own object left out.</summary>
+		static Func<float, float, float> ZipGround(EditorGameObject e)
+		{
+			Physics.SyncTransforms();
+			return (x, z) => { Collider c; return ZipGroundAt(e, x, z, out c); };
+		}
+
+		static float ZipGroundAt(EditorGameObject e, float x, float z, out Collider what)
+		{
+			float g = GroundY(x, z);
+			what = null;
+			foreach (RaycastHit h in Physics.RaycastAll(new Vector3(x, g + 60f, z), Vector3.down, 60.5f, 1 << IslandSpawner.TerrainLayer, QueryTriggerInteraction.Ignore))
+				if (h.point.y > g + 0.05f && (e == null || !h.transform.IsChildOf(e.transform)) && !(h.collider is TerrainCollider)) { g = h.point.y; what = h.collider; }
+			return g;
+		}
+
+		/// <summary>For the log: ", on <object>" when the ground at x z is something standing on the land.</summary>
+		static string ZipGroundWhat(EditorGameObject e, float x, float z)
+		{
+			Collider c;
+			ZipGroundAt(e, x, z, out c);
+			if (c == null) return "";
+			EditorGameObject owner = c.GetComponentInParent<EditorGameObject>();
+			return ", on " + (owner != null ? owner.GameObjectName : c.transform.root.name) + "'s " + c.name;
+		}
+
+		/// <summary>Ladders (Block_Ladder) up a raised zipline deck's side that faces away (back: the axis nearest it) from the
+		/// line, stacked from the deck's top down until the lowest reaches the ground; their climb side (the climb trigger,
+		/// Block_Ladder's local -z, CILadderSide) out from the deck. Returns the log's words.</summary>
+		static string ZipDeckLadders(Bounds deck, Vector3 back, Transform placedRoot)
+		{
+			Vector3 d = Mathf.Abs(back.x) >= Mathf.Abs(back.z) ? new Vector3(Mathf.Sign(back.x), 0f, 0f) : new Vector3(0f, 0f, Mathf.Sign(back.z));
+			Vector3 edge = deck.center + Vector3.Scale(d, deck.extents);
+			float top = deck.max.y, foot = GroundY(edge.x, edge.z), climbed = 0f;
+			int n = 0;
+			while (top - climbed > foot + 0.3f && n < 6 && ObjectLimit.Allow(1))
+			{
+				GameObject l = PlaceableCatalog.Spawn("Block_Ladder", placedRoot);
+				if (l == null) break;
+				// (its local -z, the climb side, out from the deck)
+				l.transform.rotation = Quaternion.LookRotation(-d, Vector3.up);
+				Renderer[] lr = PlacementOptions.ShapeRenderers(l);
+				if (lr.Length == 0) { UnityEngine.Object.Destroy(l); break; }
+				Bounds b = lr[0].bounds;
+				foreach (Renderer rr in lr) b.Encapsulate(rr.bounds);
+				float h = Mathf.Max(0.5f, b.size.y), out_ = Mathf.Abs(Vector3.Dot(b.extents, d));
+				Vector3 want = edge + d * out_;
+				l.transform.position += new Vector3(want.x - b.center.x, top - climbed - b.max.y, want.z - b.center.z);
+				foreach (Collider c in l.GetComponentsInChildren<Collider>(true)) if (!c.isTrigger) c.enabled = true;
+				EditorGameObject.Attach(l, "Block_Ladder");
+				recipePlaced.Add(l);
+				CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { l }, true));
+				climbed += h;
+				n++;
+			}
+			return n > 0 ? ", " + n + " ladder" + (n > 1 ? "s" : "") + " up its " + (d.x > 0 ? "east" : d.x < 0 ? "west" : d.z > 0 ? "north" : "south") + " side" : ", no ladder (" + Num(top - foot) + " m up)";
 		}
 
 		static float GroundY(float x, float z)

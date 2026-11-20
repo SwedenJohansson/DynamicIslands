@@ -130,6 +130,16 @@ namespace DynamicIslands
 						else if (p.y - top > 3f)
 							lines.Add("zipline end over its floor: " + n + " " + (f == ZipPointA ? "far" : "near") + " end at " + at(p) + ", " + Num(p.y - top) + " m over it");
 					}
+					// The rope between them as Raft made it (sagging): over the ground all along but the ends' own stretches (11-20:
+					// Outer Breakwater's ridge line ran 1.1 m inside the ridge's shoulder with both ends on their floors)
+					Vector3 zn, zf, low; float lt;
+					MeshPath rope = o.GetComponentInChildren<MeshPath>(true);
+					if (land != null && rope != null && ZiplineEnds.Ends(o.gameObject, null, Vector3.zero, out zn, out zf))
+					{
+						float over = ZiplineEnds.RopeLowest(ZiplineEnds.Rope(rope), zn, zf, (x, z) => land.SampleHeight(new Vector3(x, 0f, z)) + land.transform.position.y, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out low, out lt);
+						if (over < ZiplineEnds.LineLow)
+							lines.Add("zipline line in the ground: " + n + " " + (over < 0f ? Num(-over) + " m under" : Num(over) + " m over") + " the ground at " + at(low) + " (its rope; " + Num(ZiplineEnds.LineLow) + " m wanted)");
+					}
 					continue;
 				}
 				// A wire or rope strung along: both ends of its long side held (within 0.3 m of something that shows, or the land)

@@ -16,6 +16,21 @@ namespace DynamicIslands.Editor
 	public static class ZiplineEnds
 	{
 		public const string ZipTo = "zip.to";
+		/// <summary>The rope's slack (Raft's own: the line's slack field; its rope sags about 3.4 m on a 20 m line). The recipe's
+		/// zipto sets a tighter one where raising the near end alone would take a tower (11-20).</summary>
+		public const string ZipSlack = "zip.slack";
+		/// <summary>The ground check fails a zipline whose rope comes under LineLow m over the ground, leaving out the ends'
+		/// stretches (NearSkip, FarSkip) where it comes down to its floors (11-20: Outer Breakwater's ridge line ran up to
+		/// 1.1 m inside the ridge's shoulder, both its floors on the ground).</summary>
+		public const float LineLow = 0.5f, NearSkip = 1.5f, FarSkip = 3f;
+		/// <summary>The rope's room over the ground a rider needs (zipride 11-20: Raft's rider hangs about 2 m under the rope,
+		/// and lets go - or is stopped - where the ground comes up to him: Engine Court's and Caisson Yard's riders stopped halfway,
+		/// Outer Breakwater's went 3 m through the ridge's shoulder with the rope 1 m over it).</summary>
+		public const float RiderClear = 2.6f;
+		/// <summary>zipto's raise (the recipe's ZipClearGround): the rope's own room when a rider's would take more than
+		/// MaxRaise m of deck (a 20 m deck on Engine Court's ridge); the last RiderFarSkip m left out of a rider's room (zipride
+		/// counts a rider stopped there as carried).</summary>
+		public const float LineClear = 1f, MaxRaise = 8f, RiderFarSkip = 5f;
 
 		static readonly FieldInfo pointA = typeof(MeshPath_Zipline_Landmark).GetField("pointA", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 		static readonly FieldInfo pointB = typeof(MeshPath_Zipline_Landmark).GetField("pointB", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -44,16 +59,15 @@ namespace DynamicIslands.Editor
 			// (everything of the far end goes with it: each ZiplineBase piece nearer the far connect point than the near one -
 			// the floor and its stand. Before 2026-10-20 only the nearest piece moved, and not even
 			// that when it held the connect point: the Lodestone Array's far-end floor stayed on the slope where Raft's own 31 m line ends, 1.7 m in the air)
-			Transform bEnd = pointB != null ? pointB.GetValue(line) as Transform : null;
-			Vector3 near = bEnd != null ? bEnd.position : line.transform.position;
-			List<Transform> pieces = go.GetComponentsInChildren<Transform>(true).Where(t => t != a && t != go.transform && (bEnd == null || !bEnd.IsChildOf(t)) && !line.transform.IsChildOf(t) &&
-				t.name.IndexOf("ZiplineBase", System.StringComparison.OrdinalIgnoreCase) >= 0).ToList();
-			pieces = pieces.Where(t => !pieces.Any(o => o != t && t.IsChildOf(o)) && (t.position - a.position).sqrMagnitude < (t.position - near).sqrMagnitude).ToList();
+			List<Transform> pieces = FarPieces(go, line, a);
 			Transform floor = pieces.OrderBy(t => (t.position - a.position).sqrMagnitude).FirstOrDefault();
 			Vector3 target = islandOrigin + to;
 			Vector3 delta = target - (floor != null ? floor.position : a.position);
 			foreach (Transform t in pieces) t.position += delta;
 			if (!pieces.Any(t => a.IsChildOf(t))) a.position += delta;
+			float slack;
+			if (slackF != null && float.TryParse(ObjectProps.Get(props, ZipSlack) ?? "", NumberStyles.Float, CultureInfo.InvariantCulture, out slack) && !float.IsNaN(slack) && !float.IsInfinity(slack))
+				slackF.SetValue(line, slack);
 			try { line.ForceCreatePath(); }
 			catch (System.Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Zipline end: " + e.Message); return false; }
 			// (Raft's own collider follows the made path: re-enable so it is rebuilt where the line now runs)
@@ -64,6 +78,97 @@ namespace DynamicIslands.Editor
 				mc.enabled = false; mc.enabled = true;
 			}
 			return true;
+		}
+
+		/// <summary>The far end's pieces (Apply moves them): each top ZiplineBase piece nearer the far connect point than the near one.</summary>
+		static List<Transform> FarPieces(GameObject go, MeshPath_Zipline_Landmark line, Transform a)
+		{
+			Transform bEnd = pointB != null ? pointB.GetValue(line) as Transform : null;
+			Vector3 near = bEnd != null ? bEnd.position : line.transform.position;
+			List<Transform> pieces = go.GetComponentsInChildren<Transform>(true).Where(t => t != a && t != go.transform && (bEnd == null || !bEnd.IsChildOf(t)) && !line.transform.IsChildOf(t) &&
+				t.name.IndexOf("ZiplineBase", System.StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+			return pieces.Where(t => !pieces.Any(o => o != t && t.IsChildOf(o)) && (t.position - a.position).sqrMagnitude < (t.position - near).sqrMagnitude).ToList();
+		}
+
+		/// <summary>The line's two connect points (world) as a world makes them: near (with the object) and far (where zip.to
+		/// moves it, when set - as Apply does). False when the object has no zipline line.</summary>
+		public static bool Ends(GameObject go, IDictionary<string, string> props, Vector3 islandOrigin, out Vector3 near, out Vector3 far)
+		{
+			near = far = Vector3.zero;
+			MeshPath_Zipline_Landmark line = go != null ? go.GetComponentInChildren<MeshPath_Zipline_Landmark>(true) : null;
+			Transform a = line != null && pointA != null ? pointA.GetValue(line) as Transform : null;
+			if (a == null) return false;
+			Transform bEnd = pointB != null ? pointB.GetValue(line) as Transform : null;
+			near = bEnd != null ? bEnd.position : line.transform.position;
+			far = a.position;
+			Vector3 to;
+			if (props != null && TryParse(ObjectProps.Get(props, ZipTo), out to))
+			{
+				Transform floor = FarPieces(go, line, a).OrderBy(t => (t.position - a.position).sqrMagnitude).FirstOrDefault();
+				far += islandOrigin + to - (floor != null ? floor.position : a.position);
+			}
+			return true;
+		}
+
+		static readonly FieldInfo pathPoints = typeof(MeshPath).GetField("points", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+		static readonly FieldInfo slackF = typeof(MeshPath_Zipline_Landmark).GetField("slack", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+		static readonly FieldInfo minPointsF = typeof(MeshPath_Zipline_Landmark).GetField("minPoints", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+		static readonly FieldInfo maxPointsF = typeof(MeshPath_Zipline_Landmark).GetField("maxPoints", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+		/// <summary>The rope as Raft made it (world points, its far end first: Raft's rope sags between its ends - the
+		/// line's slack - so it runs lower than the straight line). Empty when it has none.</summary>
+		public static List<Vector3> Rope(MeshPath line)
+		{
+			var list = new List<Vector3>();
+			int n = line != null && pathPoints != null ? ((pathPoints.GetValue(line) as List<Vector3>)?.Count ?? 0) : 0;
+			for (int i = 0; i < n; i++) list.Add(line.GetWorldPointPositionFromIndex(i));
+			return list;
+		}
+
+		/// <summary>The line's own slack (Raft's, or zip.slack's once Apply has set it; Raft's is negative - the rope's sag - and a tighter rope's nearer 0); NaN when it can't be read.</summary>
+		public static float Slack(MeshPath_Zipline_Landmark line)
+		{
+			try { return line != null && slackF != null ? (float)slackF.GetValue(line) : float.NaN; } catch { return float.NaN; }
+		}
+
+		/// <summary>The rope Raft makes between far and near (world), as a world makes it once zip.to has moved the far end
+		/// (CreatePath with the line's own slack, or the given one, and its point counts), then the line's own rope made again. Empty when it can't.</summary>
+		public static List<Vector3> RopeBetween(MeshPath_Zipline_Landmark line, Vector3 far, Vector3 near, float slack = float.NaN)
+		{
+			var list = new List<Vector3>();
+			if (line == null || slackF == null) return list;
+			try
+			{
+				line.CreatePath(far, near, !float.IsNaN(slack) ? slack : (float)slackF.GetValue(line), false, minPointsF != null ? (int)minPointsF.GetValue(line) : 10, maxPointsF != null ? (int)maxPointsF.GetValue(line) : 60);
+				list = Rope(line);
+			}
+			catch (System.Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Zipline rope: " + e.Message); }
+			try { line.ForceCreatePath(); } catch { }
+			return list;
+		}
+
+		/// <summary>Where a rope (points, either end first) comes nearest the ground: how far over it (negative: under), every
+		/// 0.25 m, leaving out the first nearSkip m (along the ground) from near and the last farSkip m to far, less want(metres
+		/// to the far end): the room asked there (null: none). at, atT: that point and how far along (0 near, 1 far). 999 when nothing is left.</summary>
+		public static float RopeLowest(List<Vector3> rope, Vector3 near, Vector3 far, System.Func<float, float, float> ground, float nearSkip, float farSkip, System.Func<float, float> want, out Vector3 at, out float atT)
+		{
+			at = near; atT = 0f;
+			float len = new Vector2(far.x - near.x, far.z - near.z).magnitude, low = 999f;
+			if (rope == null || rope.Count < 2 || len < 0.5f) return low;
+			for (int i = 0; i + 1 < rope.Count; i++)
+			{
+				Vector3 a = rope[i], b = rope[i + 1];
+				int steps = Mathf.Max(1, Mathf.CeilToInt(new Vector2(b.x - a.x, b.z - a.z).magnitude / 0.25f));
+				for (int k = 0; k <= steps; k++)
+				{
+					Vector3 p = Vector3.Lerp(a, b, k / (float)steps);
+					float fromNear = new Vector2(p.x - near.x, p.z - near.z).magnitude, toFar = new Vector2(far.x - p.x, far.z - p.z).magnitude;
+					if (fromNear < nearSkip || toFar < farSkip) continue;
+					float t = Mathf.Clamp01(fromNear / len), over = p.y - ground(p.x, p.z) - (want != null ? want(toFar) : 0f);
+					if (over < low) { low = over; at = p; atT = t; }
+				}
+			}
+			return low;
 		}
 
 		/// <summary>The far end's position in the island's coordinates (for the generator and recipes): zip.to as text.</summary>
