@@ -976,7 +976,13 @@ namespace DynamicIslands.Editor
 							if (!on[i, k] && sl + m.ArchHalf + LoneSlot > m.HalfWidth + LoneRun) { Why[i, k] = 'n'; continue; }
 							// (not out over the sea: there it stood as a flat square panel at the sea's foot, Caisson Yard and Shelter Atoll r48)
 							if (!on[i, k] && !(ground[i, k] > SeaLevel + DryBy)) { Why[i, k] = 'o'; continue; }
-							float lf = Mathf.Max(ground[i, k], SeaLevel - SeaFootBy);
+							// (a den whose arch is under the sea: its cheeks fall to the seabed, not the sea's top - measured from the
+							// sea's foot they were always "within LoneSink of the ground" and dived to just under the seabed, leaving
+							// a sheer 9.8 m step off the dome over the den's roof right beside the arch, Gravewell Shaft's diver den
+							// at -71.4 25.7, cavelay 11-20. Only the foot: letting its ramp out over the seabed too, past the cells the
+							// dome already had, raised Weatherglass Deep's bank beside its way from 0.8 to 4.8 m.)
+							bool seabed = m.FloorY + m.ArchUp < SeaLevel - SeaFloorBy && !float.IsInfinity(ground[i, k]) && ground[i, k] < SeaLevel - SeaFloorBy;
+							float lf = seabed ? ground[i, k] : Mathf.Max(ground[i, k], SeaLevel - SeaFootBy);
 							Vector3 bp = cp - m.Along * ((m.Plus ? 1f : -1f) * (past + Cell));
 							int bi = Mathf.RoundToInt((bp.x - x0) / Cell), bk = Mathf.RoundToInt((bp.z - z0) / Cell);
 							bool behind = bi >= 0 && bk >= 0 && bi < nx && bk < nz && on[bi, bk];
