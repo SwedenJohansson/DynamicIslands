@@ -67,14 +67,12 @@ place Block_Floor_Wood $al at {5.25+1.5*$i} 2.25 y=21.6
 place Block_Wall_Fence_Rope $al at {5.25+1.5*$i} 1.55 y=21.6
 place Block_Wall_Fence_Rope $al at {5.25+1.5*$i} 2.95 y=21.6
 next
-# (11-20 IG5: the bridge's posts stand in the summit's flank - their lower lengths are placed unnamed, so one under the
-# ground whole is left out: Outer Breakwater's read "buried, its top 2.6 m under the ground")
 for i 0 2
-place RT_PillarThick - at {5.25+1.5*$i} 1.75 y=-0.8 sy=1.1333
-place RT_PillarThick - at {5.25+1.5*$i} 2.75 y=-0.8 sy=1.1333
+place RT_PillarThick $al at {5.25+1.5*$i} 1.75 y=-0.8 sy=1.1333
+place RT_PillarThick $al at {5.25+1.5*$i} 2.75 y=-0.8 sy=1.1333
 for k 1 2
-place RT_PillarThick - at {5.25+1.5*$i} 1.75 y={6*$k}
-place RT_PillarThick - at {5.25+1.5*$i} 2.75 y={6*$k}
+place RT_PillarThick $al at {5.25+1.5*$i} 1.75 y={6*$k}
+place RT_PillarThick $al at {5.25+1.5*$i} 2.75 y={6*$k}
 next
 place RT_PillarThick $al at {5.25+1.5*$i} 1.75 y=18 sy=0.6
 place RT_PillarThick $al at {5.25+1.5*$i} 2.75 y=18 sy=0.6

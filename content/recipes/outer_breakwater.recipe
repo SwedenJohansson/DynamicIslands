@@ -143,6 +143,8 @@ call ar_plants_tropical x=-24 z=64 r=14 seed=14331
 # "floating rock", pictures): taken out
 clear at 57.44 7.6 r=3 all only=^SmallBoulder2$
 clear at -36.86 59.36 r=3 all only=^SmallBoulder2$
+# (11-20 second build) with that one gone, the next boulder along the same bank stood out the same way: 2.6 m over the sea
+clear at -29.82 58.33 r=3 all only=^SmallBoulder2$
 
 # --- Tools in use (10-24: a tool given earlier in the storyline is used again here, for optional finds): the
 # machete from Triangulation Rocks cuts the vines over a hidden chest, and a zipline from the ridge top is the quick way back down
@@ -176,6 +178,9 @@ loot wallcavechest Scrap*4;Nail*10;Rope*2;CopperOre*1;TitaniumOre*2
 # dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
 call dp_ground tx=45 tz=60 hb=4.1 sx=52.8 sz=70.4 hs=25.7
 call dp_tower ox=45.45 oz=56.85 hb=4.1 yaw=-53.13 al=obtower top=obtop stash=obstash zal=obtopzone zid=ob_top msg="The top of the watch tower, high over the wall. On one side the storm, on the other the garden, and a cable down to the gate house."
+# (11-20 IG5) the bridge's lowest post on the summit side stands inside the peak, its top 2.6 m under the ground (ground
+# check "buried"): taken out (its pivot 3.3 m up; the posts over it stand from 10 m)
+clear at 49 64.5 r=0.6 all only=^RT_PillarThick$ below=6
 call tzone x=50.7 z=67.6 al=obsummit id=ob_summit r=4 msg="The garden peak beside the watch tower." h=1
 call notebox x=50 z=72.5 yaw=36.87 al=obcairn
 call treasure x=54.4 z=69.2 r=1.5 n=1 seed=14941
