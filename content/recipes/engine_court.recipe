@@ -11,7 +11,7 @@
 # Built by the recipe player (CIRecipe engine_court) through the editor's own operations. Points (metres over the sea):
 # the court at 4 m round 0 0 (r 36), the outer ring wall r 30, the middle r 21, the inner r 12 (each with a gate on its
 # north side, +z), the housing x -6..6, z -4.5..4.5 (roof at 6 m), the outer ring's entrance round 0 33, the cable towers
-# at 6 26 and -6 16, the drone bay round 16 0, Teo's store at -16 0, the sand garden and treasure round -6 -14, the well
+# at -3.5 23.8 and -8.2 11.7, the drone bay round 16 0, Teo's store at -16 0, the sand garden and treasure round -6 -14, the well
 # stair at 0 41 (1 m).
 include lib_sea
 include lib_features
@@ -122,11 +122,16 @@ place Creature_StoneBird screechers at 0 26 ground y=4
 prop screechers creature.count=4
 prop screechers creature.respawn=0
 prop screechers creature.zone=outer_ring
-push at -0.47 26.22 h=3.9
-call zipdeck y=4.7
+# (11-20: the cable crosses the middle ring's 3 m wall, top 7 m; its rider hangs 1.2 m and more under the rope, so the rope
+# wants 9.5 m over the court there: a 9.5 m deck 3 m outside the wall, off the gate and its strongbox, a tight rope, and
+# the far end 6 m inside the wall. On the old 4.7 m deck 6 m out the rider met the wall at 0.4 m over the court)
+push at -4.25 23.05 h=3.9
+call zipdeck y=9.5
 pop
-place ZiplinePath_Landmark zipmiddle at 6 26 h=10.07
-zipto zipmiddle 0 17
+place ZiplinePath_Landmark zipmiddle at -3.5 23.8 h=13.4
+zipfrom zipmiddle -3.5 23.8 h=13.4
+prop zipmiddle zip.slack=-0.692
+zipto zipmiddle -1 15.3
 call tzone x=0 z=17 al=middlezone id=middle_ring r=3 msg="The middle ring. A tent against the wall - Hedda's - and a crew locker."
 call camp x=-6 z=16 yaw=200 fire=campfire_1
 call notebox x=3 z=17.5 yaw=200 al=heddawatch
@@ -134,11 +139,14 @@ place Loot_Chest crewlocker at -2.5 18.5 ground sit yaw=180
 call wheel x=2 z=19 yaw=180 al=middlecrank
 
 # --- Area B, the Inner Ring: the second cable, Ines's watch, the drone bay, the drone, its log, the keypad, the inner crank --
-push at -12.47 14.22 h=3.9
-call zipdeck y=4.7
+# (11-20: as the first cable, over the inner ring's wall: an 8.8 m deck 1.2 m outside it, the far end 4.5 m inside it)
+push at -8.95 10.95 h=3.9
+call zipdeck y=8.8
 pop
-place ZiplinePath_Landmark zipinner at -6 14 h=10.07
-zipto zipinner 0 8.5
+place ZiplinePath_Landmark zipinner at -8.2 11.7 h=12.7
+zipfrom zipinner -8.2 11.7 h=12.7
+prop zipinner zip.slack=-0.692
+zipto zipinner -1.5 7.5
 call tzone x=0 z=8.5 al=innerzone id=inner_ring r=2.5 msg="The inner ring. Ines's lamp is lit by the wall - and ahead, something hums in a bay."
 call notebox x=3 z=9 yaw=200 al=ineswatch
 place Placeable_Lantern_Metal - at 3 9 ground y=1.2 drop
@@ -234,10 +242,13 @@ call ar_plants_tropical x=-40 z=56 r=14 seed=14531
 
 # --- Tools in use (10-24: a tool given earlier in the storyline is used again here, for optional finds): the
 # machete from Triangulation Rocks cuts the vines over a hidden chest, and a zipline from the ridge top is the quick way back down
-clear from 0.0 -55.0 to 0 -28 r=2.5
-place ZiplinePath_Landmark ridgezip at 0 -59 ground
-zipfrom ridgezip 0 -59 ground
-zipto ridgezip 0 -28
+# (11-20: from the ridge's foot, where the court's flat ends, between two court posts to the court outside the outer wall.
+# From the ridge top at 0 -59 to the outer ring at 0 -28 it ran 6 m into the ridge's foot, then through a court post and
+# the outer wall: no deck under its near end lifts that much. zipto raises this near end on a deck as the foot wants)
+clear from -5.74 -43.6 to -4.24 -32.2 r=2.5
+place ZiplinePath_Landmark ridgezip at -5.74 -43.6 ground
+zipfrom ridgezip -5.74 -43.6 ground
+zipto ridgezip -4.24 -32.2
 
 # --- Unique layer (10-24): engine_court device - see SL14_progress.md UNIQUE ISLANDS
 place RT_Pillar - at 19.5 56 ground sy=0.4

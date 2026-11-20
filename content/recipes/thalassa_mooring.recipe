@@ -195,13 +195,16 @@ call sk_cave x=-18 z=-42 h=3 yaw=0 al=thcave2 chest=thcave2chest
 call sk_plants x=54 z=-36 r=26.4 seed=24410
 call sk_reef x=-38 z=60 r=5 seed=24430
 
-# the summit: Mooring Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
+# the summit: Mooring Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down from its foot
 call ladtower x=54 z=-36 h0=24 lv=6 a=thtower
 place Loot_ChestSmall thlocker at 53.25 -35.25 h=39.2 drop yaw=180
 place Note_Paper thsumnote at 53.25 -36.75 h=38.84 drop yaw=20
 place Zone_Trigger thsummit at 54 -36 h=39.73
-place ZiplinePath_Landmark thzip at 54.75 -36.75 h=38.73 yaw=0
-zipfrom thzip 54.75 -36.75 h=38.73
+# (11-20: the zipline starts at the tower's foot, on its side towards the far end. From the tower's top its rope fell 45
+# degrees through the top's rope fence and wall 2.7 m out, and a rider hanging under it started inside the tower: it
+# stopped 6 m down. zipto raises this near end on a deck if the hill wants it)
+place ZiplinePath_Landmark thzip at 51.2 -33.8 ground
+zipfrom thzip 51.2 -33.8 ground
 zipto thzip 27 -18
 place Loot_ChestSmall thledge at 43.82 -25.82 ground sit yaw=40
 place SmallRock_02 - at 31.45 -38.77 ground sit scale=0.5
