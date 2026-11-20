@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -505,39 +505,34 @@ namespace DynamicIslands.Editor
 			int kept = 0;
 			for (int k = 0; k < ny; k++)
 			{
-				float ya = y0 + k * cell, yb = Mathf.Min(y1, ya + cell);
-				int run = -1;
-				for (int i = 0; i <= nx; i++)
+				// (each cell its own quad on the shared grid, not a run of cells: a run's long edge met the shorter runs over and
+				// under it at points along it, and the wall drew thin sky-blue cracks along those rows - Weatherglass Deep's right
+				// cliff face from outside, cave round 4 11-20)
+				float ya = y0 + k * cell, yb = Mathf.Min(y1, y0 + (k + 1) * cell);
+				for (int i = 0; i < nx; i++)
 				{
 					bool on = false;
-					if (i < nx)
-					{
-						// (the den's own opening - its mouth's outline, where the wall closes it - and the rock round the tunnel's end
-						// under cover; each with one cell more round it, its edge in the rock)
-						for (int di = -1; di <= 1 && !on; di++)
-							for (int dk = -1; dk <= 1 && !on; dk++)
-							{
-								int a = i + di, b = k + dk;
-								if (a >= 0 && b >= 0 && a < nx && b < ny && (opening[a, b] || roofed[i, k] && inside[a, b])) on = true;
-							}
-						float xa = x0 + i * cell, xb = xa + cell;
-						if (on && xb > hx0 && xa < hx1 && yb > hy0 && ya < hy1) on = false; // (the passage's hole)
-					}
-					if (on) kept++;
-					if (on && run < 0) run = i;
-					if (!on && run >= 0)
-					{
-						float ax = x0 + run * cell, bx = Mathf.Min(x1, x0 + i * cell);
-						int n = verts.Count;
-						// (each side its own corners, as Plug's: shared ones drew the wall black - 11-03)
-						verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
-						verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
-						tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2, n + 4, n + 5, n + 6, n + 4, n + 6, n + 7 });
-						run = -1;
-					}
+					// (the den's own opening - its mouth's outline, where the wall closes it - and the rock round the tunnel's end
+					// under cover; each with one cell more round it, its edge in the rock)
+					for (int di = -1; di <= 1 && !on; di++)
+						for (int dk = -1; dk <= 1 && !on; dk++)
+						{
+							int a = i + di, b = k + dk;
+							if (a >= 0 && b >= 0 && a < nx && b < ny && (opening[a, b] || roofed[i, k] && inside[a, b])) on = true;
+						}
+					float ax = x0 + i * cell, bx = Mathf.Min(x1, x0 + (i + 1) * cell);
+					if (on && bx > hx0 && ax < hx1 && yb > hy0 && ya < hy1) on = false; // (the passage's hole)
+					if (!on) continue;
+					kept++;
+					int n = verts.Count;
+					// (each side its own corners, as Plug's: shared ones drew the wall black - 11-03)
+					verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
+					verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
+					tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2, n + 4, n + 5, n + 6, n + 4, n + 6, n + 7 });
 				}
 			}
 			var mesh = new Mesh { name = ClippedMesh };
+			if (verts.Count > 65000) mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32; // (a large den's cells, one quad each)
 			mesh.SetVertices(verts);
 			mesh.SetTriangles(tris, 0);
 			mesh.SetUVs(0, verts.Select(v => new Vector2(v.x / PlugTile, v.y / PlugTile)).ToList());
@@ -800,6 +795,7 @@ namespace DynamicIslands.Editor
 		{
 			if (piece == null || skin == null || skin.sharedMaterial == null) return 0;
 			int done = 0;
+			liftLand = null; liftSolid = null; // (the ground's holes read fresh: a dig may have cut it since)
 			foreach (Transform c in piece.transform)
 			{
 				if (c.name != MouthName) continue;
@@ -809,10 +805,17 @@ namespace DynamicIslands.Editor
 				Mesh src = mf.sharedMesh;
 				Vector3[] mv = src.vertices, mn = src.normals;
 				int[] st = src.triangles;
+				// (round 4: a frame sunk 0-0.5 m under the ground at the mouth is lifted onto it: the cut ground over it showed through in
+				// patches, and where the ground was cut away it stood as a sheet a hand under the cutting's floor - Old Mine Islet,
+				// Sinkmarket Floor)
+				Vector3[] wv = new Vector3[mv.Length], gn = new Vector3[mv.Length];
+				bool hasN = mn != null && mn.Length == mv.Length;
+				for (int i = 0; i < mv.Length; i++) wv[i] = c.TransformPoint(mv[i]);
+				for (int i = 0; i < mv.Length; i++) wv[i] = OnGround(wv[i], out gn[i]);
 				var nv = new List<Vector3>(st.Length); var nn = new List<Vector3>(st.Length); var nu = new List<Vector2>(st.Length); var tri = new List<int>(st.Length);
 				for (int t = 0; t + 2 < st.Length; t += 3)
 				{
-					Vector3 a = c.TransformPoint(mv[st[t]]), b = c.TransformPoint(mv[st[t + 1]]), d = c.TransformPoint(mv[st[t + 2]]);
+					Vector3 a = wv[st[t]], b = wv[st[t + 1]], d = wv[st[t + 2]];
 					Vector3 fn = Vector3.Cross(b - a, d - a);
 					float fx = Mathf.Abs(fn.x), fy = Mathf.Abs(fn.y), fz = Mathf.Abs(fn.z);
 					int ax = fy >= fx && fy >= fz ? 1 : fx >= fz ? 0 : 2;
@@ -821,8 +824,8 @@ namespace DynamicIslands.Editor
 						int vi = st[t + k];
 						Vector3 w = k == 0 ? a : k == 1 ? b : d;
 						tri.Add(nv.Count);
-						nv.Add(mv[vi]);
-						nn.Add(mn != null && mn.Length == mv.Length ? mn[vi] : fn.normalized);
+						nv.Add(c.InverseTransformPoint(w));
+						nn.Add(gn[vi] != Vector3.zero ? c.InverseTransformDirection(gn[vi]) : hasN ? mn[vi] : fn.normalized);
 						nu.Add((ax == 0 ? new Vector2(w.z, w.y) : ax == 1 ? new Vector2(w.x, w.z) : new Vector2(w.x, w.y)) / 14f);
 					}
 				}
@@ -842,6 +845,10 @@ namespace DynamicIslands.Editor
 				var block = new MaterialPropertyBlock();
 				skin.GetPropertyBlock(block);
 				r.SetPropertyBlock(block);
+				r.SetPropertyBlock(block, 0);
+				// (round 4: and its rock layer on every face: Balboa's sand layer, drawn on faces turned up, laid the frame's steep
+				// cutting walls pale - Old Mine Islet, Sinkmarket Floor; the hill's own steep faces are its rock layer - one rock)
+				DigTunnel.SideRockOnly(r, 0);
 				r.gameObject.AddComponent<HillWall>();
 				done++;
 			}
@@ -878,6 +885,53 @@ namespace DynamicIslands.Editor
 			}
 			return done;
 		}
+		/// <summary>How far under the ground (m) a mouth frame's point is lifted onto it (FramesLikeHill); deeper is under the hill on purpose.</summary>
+		public const float FrameSunk = 0.5f;
+		/// <summary>How far over the ground (m) a lifted frame point is laid, so the ground doesn't flicker through it.</summary>
+		public const float FrameOver = 0.03f;
+		/// <summary>Mouth frame points lifted onto the ground, all islands since Raft started.</summary>
+		public static int FramePointsLifted;
+		static Terrain liftLand; static bool[,] liftSolid;
+
+		/// <summary>
+		/// A world point 0-FrameSunk under the island ground (not over a hole cut in it) laid FrameOver over it, its normal then the
+		/// ground's (gn; zero when not lifted).
+		/// </summary>
+		static Vector3 OnGround(Vector3 w, out Vector3 gn)
+		{
+			gn = Vector3.zero;
+			Terrain t = liftLand;
+			if (t == null || !Over(t, w))
+			{
+				t = null; liftSolid = null;
+				foreach (Terrain x in Terrain.activeTerrains) if (x != null && x.terrainData != null && Over(x, w)) { t = x; break; }
+				liftLand = t;
+				if (t == null) return w;
+				int hr = t.terrainData.holesResolution;
+				liftSolid = t.terrainData.GetHoles(0, 0, hr, hr);
+			}
+			float g = t.SampleHeight(w) + t.transform.position.y;
+			if (w.y >= g || w.y < g - FrameSunk) return w;
+			TerrainData d = t.terrainData;
+			Vector3 o = t.transform.position;
+			Vector3 n = d.GetInterpolatedNormal((w.x - o.x) / d.size.x, (w.z - o.z) / d.size.z);
+			// (round 4: lifting the frame's outer top onto steep cutting walls from up to 3-8 m under them, where the ground is drawn
+			// pale, tore its rim into shards against the sky and stood a pale slab in Sinkmarket's mouth: only 0-FrameSunk is lifted)
+			int res = liftSolid.GetLength(0);
+			int cx = Mathf.Clamp((int)((w.x - o.x) / d.size.x * res), 0, res - 1), cz = Mathf.Clamp((int)((w.z - o.z) / d.size.z * res), 0, res - 1);
+			if (!liftSolid[cz, cx]) return w; // (a hole: no ground here to lie on)
+			FramePointsLifted++;
+			gn = n;
+			// (FrameOver measured across the slope, not straight up: on a steep wall 3 cm up is a hair off the ground and flickers)
+			return new Vector3(w.x, g + FrameOver / Mathf.Max(n.y, 0.2f), w.z);
+		}
+
+		static bool Over(Terrain t, Vector3 w)
+		{
+			Vector3 o = t.transform.position, s = t.terrainData.size;
+			return w.x >= o.x && w.x <= o.x + s.x && w.z >= o.z && w.z <= o.z + s.z;
+		}
+
 		/// <summary>The tunnel pieces' own pale blue rock (TP_IceRavine).</summary>
 		public const string IceRock = "IceRavine";
 		/// <summary>How many tunnel bodies (and backs) FramesLikeHill drew in the hill's rock, all islands since Raft started.</summary>
@@ -1370,6 +1424,7 @@ namespace DynamicIslands.Editor
 			var open = new bool[nx, ny];
 			var sky = new bool[nx, ny];
 			var free = new bool[nx, ny];
+			int outNotByHollow = 0, outSky = 0, outFree = 0;
 			bool backsOpen = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true;
 			try
@@ -1408,7 +1463,11 @@ namespace DynamicIslands.Editor
 							if (hollow[a, b]) byHollow = true;
 							if (state[a, b] == 2) byWayIn = true;
 						}
-					if (!byHollow || (sky[i, k] && !byWayIn) || free[i, k]) { state[i, k] = 0; leftOut++; }
+					if (!byHollow || (sky[i, k] && !byWayIn) || free[i, k])
+					{
+						state[i, k] = 0; leftOut++;
+						if (!byHollow) outNotByHollow++; else if (free[i, k]) outFree++; else outSky++;
+					}
 				}
 			int cells = 0;
 			var trisOut = new List<int>();
@@ -1538,7 +1597,7 @@ namespace DynamicIslands.Editor
 			CaveVeil.Build(go, hcx, hcy, ha, hb, hp, archNoise, zf - PlugFunnel, my, wr.sharedMaterial);
 			// (lit as the den, its own parts looked up again, the outside too)
 			CaveLit.Mark(den);
-			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells (" + leftOut + " out in the open left out), rock relief, smooth, arched way in, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
+			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells (" + leftOut + " out in the open left out: " + outNotByHollow + " by no hollow, " + outSky + " sky, " + outFree + " free), rock relief, smooth, arched way in, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
 		}
 
 		/// <summary>The UV of the den mesh's corner nearest a point by its mouth (its rock colour), when the mesh is readable.</summary>

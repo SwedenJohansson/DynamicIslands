@@ -754,7 +754,8 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
   level, a stroke on flat ground or a gentle slope (the mouse not pointing up into a hill) goes down into the ground by
   itself: a walkable 25° ramp until there is a metre of rock over the passage, then on level. The passage is lined
   with Raft's brown island rock, closed all round under the ground; only its mouth, where it comes out of the hill, is
-  open to the sky. The mouth gets a low, uneven rim of rock round it that blends into the slope: its top is drawn
+  open to the sky. Where a passage runs over the ground instead (along a cliff's foot, beside it rather than into it), it
+  is walled as a full tube of rock down to the ground, on its downhill side too, with no roof built over open water. The mouth gets a low, uneven rim of rock round it that blends into the slope: its top is drawn
   with the ground's own textures in the editor (grass on a grassy hill, rock on a cliff; the same in a world), with bare rock on its sides and at the opening; before a
   cliff the floor runs straight out onto the ground, in the ground's own look where it is out in the open, not the lining's rock (the cliff above the mouth stays whole, no sky through it). The
   lining inside is smooth rock, and it grows darker the farther in you are, in the editor and in a world (the floor just inside the mouth is dark rock too, not lit pale by the sun). Placed objects the passage goes through, that reach into it (a boulder on the rim of a room that breaks out of the ground) or that its rim would bury (a boulder, a bush, a buried rock) are taken away

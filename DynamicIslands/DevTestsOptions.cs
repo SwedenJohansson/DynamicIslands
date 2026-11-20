@@ -1114,12 +1114,18 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CICaveCell", docs: "Dev, in game: what the cave hill skin's last build made of the cells round a point on a custom island (shell roof, rim, ground and what it was, cover, raw and softened height, cut/sea/on) - why the skin is or isn't somewhere: CICaveCell <island> <x> <z> [half m, 0] [brief] (m from its middle; brief: no piece list)")]
 		public static void CaveCellCommand(string[] args)
 		{
-			IslandWorldState.Entry e = LoadedIsland(args);
+			// (round 4: the island's name may be several words - "Old Mine Islet" - as CIDownRays takes it: the name is all before
+			// the numbers at the end; "CICaveCell Old Mine -14.8 27 6 brief" read "Mine" as x and failed)
+			args = args ?? new string[0];
+			bool brief = args.Length > 0 && args[args.Length - 1] == "brief"; // (11-19: just the cell, not the pieces round it - a wide window)
+			int end = brief ? args.Length - 1 : args.Length, nums = 0;
+			float f0;
+			while (nums < 3 && end - 1 - nums >= 1 && float.TryParse(args[end - 1 - nums], NumberStyles.Float, CultureInfo.InvariantCulture, out f0)) nums++;
+			if (nums < 2) { Fail("CICaveCell <island> <x> <z> [half] [brief]"); return; }
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args.Take(end - nums).ToArray()) });
 			if (e == null) return;
-			if (args.Length < 3) { Fail("CICaveCell <island> <x> <z> [half]"); return; }
-			Func<int, float> num = i => float.Parse(args[i], System.Globalization.CultureInfo.InvariantCulture);
-			float x = num(1), z = num(2), half = args.Length > 3 ? num(3) : 0f;
-			bool brief = args.Length > 4 && args[4] == "brief"; // (11-19: just the cell, not the pieces round it - a wide window)
+			Func<int, float> num = i => float.Parse(args[end - nums + i], CultureInfo.InvariantCulture);
+			float x = num(0), z = num(1), half = nums > 2 ? num(2) : 0f;
 			int shown = 0;
 			foreach (CaveMountain m in e.Root.GetComponentsInChildren<CaveMountain>()) // (and its whole map, as CICaveLook writes it)
 				File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "cavemap_" + e.Name + ".txt"), m.LastMap ?? "");

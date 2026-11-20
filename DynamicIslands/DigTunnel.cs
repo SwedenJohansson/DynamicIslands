@@ -65,6 +65,10 @@ namespace DynamicIslands.Editor
 		/// <summary>The mouth's rim: how many of the lining's columns are raised over the ground (0: no mouth), the ground
 		/// texture laid on its top, and where the ground is cut (the middle of the cut cells, world space).</summary>
 		[NonSerialized] public int RimColumns;
+		/// <summary>Columns where the passage runs over the ground, walled and roofed all round by TubeWall of rock (round 4, last build).</summary>
+		[NonSerialized] public int TubeColumns;
+		/// <summary>Tests: the tube pass's columns by what it did with them (last build).</summary>
+		[NonSerialized] public string TubeSkips = "";
 		[NonSerialized] public string RimTop = "";
 
 		/// <summary>Where the passage opens to the sky: the cut ground cells' centres (world x, z), from the last build.</summary>
@@ -264,6 +268,15 @@ namespace DynamicIslands.Editor
 		/// <summary>How far past the cut ground the rim's rocks stand (none further: loose shards in the grass, 11-06), and
 		/// their highest (0.8 m read as a pipe's end sticking out of the hill, 11-06).</summary>
 		const float RimLip = 0.5f, RimRocksTop = 0.45f;
+		/// <summary>The rim's rocks on steep ground: full up to RimSteepFrom (rise per m), none from RimSteepTo - on a steep cutting
+		/// wall they stood 1.0-1.2 m out of it, Pendulum Isle round 3; still 0.4-0.5 m out of its gentler sides with full rocks
+		/// from 0.6 (round 4), so they fade out from a rise of 0.25 per m.</summary>
+		const float RimSteepFrom = 0.25f, RimSteepTo = 0.7f;
+		/// <summary>How far past the cut ground the rim's skin goes on a cutting wall (RimOut on level ground).</summary>
+		const float RimSteepOut = 0.35f;
+		/// <summary>A passage over the ground (not at its open ends): rock TubeWall m thick all round it, down to the ground; none over
+		/// ground under IslandSea + TubeDry (open water) nor within TubeEndKeep m past its passage's radius from an open end (its mouth).</summary>
+		const float TubeWall = 1.1f, TubeDry = 0.3f, TubeEndKeep = 2.5f;
 
 		#region Path text
 
@@ -1642,6 +1655,48 @@ namespace DynamicIslands.Editor
 			return new RectInt(x0, z0, x1 - x0 + 1, z1 - z0 + 1);
 		}
 
+		/// <summary>The island's own sea (world y): its water level where it was built - a sunken or flying island's too, not the
+		/// world's sea (Gravewell Shaft lies 45 m down, so every bit of its ground was under the world's sea and none of its drift was
+		/// walled as a tube).</summary>
+		float IslandSea(Terrain land)
+		{
+			IslandSettings s = GetComponentInParent<IslandSettings>();
+			if (s != null) return s.transform.position.y + s.WaterLevel;
+			if (DynamicIslands.InEditor() && land != null) return land.transform.position.y + DynamicIslands.EditorWaterLevel;
+			return 0f;
+		}
+
+		/// <summary>The passage's open ends (object space x, y, z of the centre, w its radius): a stroke's first or last point no other
+		/// stroke of this tunnel passes through.</summary>
+		List<Vector4> OpenEnds()
+		{
+			var ends = new List<Vector4>();
+			for (int si = 0; si < Strokes.Count; si++)
+			{
+				List<Point> st = Strokes[si];
+				if (st.Count == 0) continue;
+				foreach (Point p in new[] { st[0], st[st.Count - 1] })
+				{
+					bool joinedEnd = false;
+					for (int sj = 0; sj < Strokes.Count && !joinedEnd; sj++)
+					{
+						if (sj == si) continue;
+						List<Point> o = Strokes[sj];
+						for (int k = 0; k < o.Count && !joinedEnd; k++)
+						{
+							Point a = o[k], b = k + 1 < o.Count ? o[k + 1] : o[k];
+							var g = new Seg { A = a.Centre, D = b.Centre - a.Centre, Ra = a.R, Rb = b.R, Fa = a.At.y - 100f, Fb = b.At.y - 100f };
+							g.InvLen2 = g.D.sqrMagnitude > 1e-6f ? 1f / g.D.sqrMagnitude : 0f;
+							float f, r;
+							if (SegDistance(ref g, p.Centre, out f, out r) < 0f) joinedEnd = true;
+						}
+					}
+					if (!joinedEnd) { Vector3 c = p.Centre; ends.Add(new Vector4(c.x, c.y, c.z, p.R)); }
+				}
+			}
+			return ends;
+		}
+
 		static float GroundY(Terrain land, Vector3 world)
 		{
 			return land != null ? land.SampleHeight(world) + land.transform.position.y : float.MaxValue / 4f;
@@ -1787,32 +1842,76 @@ namespace DynamicIslands.Editor
 							best = Mathf.Sqrt(best);
 							if (best <= h) fillUp[x + z * nx] = true;
 							float rag = (Mathf.PerlinNoise(nxL * 0.55f + 7.7f, nzL * 0.55f + 3.1f) - 0.5f) * 0.6f * Mathf.Clamp01(best / 0.4f);
-							float f = 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((best + rag) / wOut));
+							// (round 4: less on steep ground, none on a cutting wall - the rocks stood 1.0-1.2 m out of the steep walls
+							// of Pendulum Isle's cutting, the rock's top over a slope standing off it as the grid's step rises up it; and
+							// the skin there only just past the cut's edge (RimSteepOut), not a plate of rock laid on the sand wall)
+							float gx = GroundY(land, w + Vector3.right * 0.5f * h) - GroundY(land, w - Vector3.right * 0.5f * h);
+							float gz = GroundY(land, w + Vector3.forward * 0.5f * h) - GroundY(land, w - Vector3.forward * 0.5f * h);
+							float steep = Mathf.Sqrt(gx * gx + gz * gz) / h;
+							float flat = 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((steep - RimSteepFrom) / (RimSteepTo - RimSteepFrom)));
+							float f = 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((best + rag * flat) / Mathf.Lerp(Mathf.Min(RimSteepOut, wOut), wOut, flat)));
 							if (f <= 0f) continue;
 							rimFade[x + z * nx] = f;
 							// (the rocks round the opening: in patches, none between - and only at its lip: further out, where the rim
 							// is all but under the ground, a patch's top stood out of the grass as a loose flat shard - 11-06)
 							float patch = Mathf.PerlinNoise(nxL * 0.45f + 19.1f, nzL * 0.45f + 2.3f) * 0.7f + Mathf.PerlinNoise(nxL * 1.1f + 5.3f, nzL * 1.1f + 13.7f) * 0.3f;
 							float lip = 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(best / RimLip));
-							rimH[x + z * nx] = hTop * lip * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((patch - 0.42f) * 3.5f));
+							rimH[x + z * nx] = hTop * lip * flat * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((patch - 0.42f) * 3.5f));
 							RimColumns++;
 						}
 				}
 			}
 
-			// (over the cut cells the rock's top is the ground's highest within half a step: on a rounded hilltop the ground
-			// between the samples stood over the flat top's skin, a cut square showing it 6 cm down - 11-02)
+			// (over the cut cells the rock's top is lifted by as much as the ground half a step away stands over the straight line
+			// to the next column: on a rounded hilltop the ground between the samples stood over the flat top's skin, a cut square
+			// showing it 6 cm down - 11-02. Round 4: not the ground's highest within half a step - on a steep cutting wall that is
+			// the ground uphill, and the rock stood 1.0-1.2 m out of the wall beside the mouth, Pendulum Isle's dark ears)
 			if (fillUp != null)
 				for (int z = 0; z < nz; z++)
 					for (int x = 0; x < nx; x++)
 					{
 						if (!fillUp[x + z * nx]) continue;
-						float g = float.MinValue;
+						float g0 = GroundY(land, transform.TransformPoint(new Vector3(o.x + x * h, 0f, o.z + z * h))), g = g0;
 						for (int dz = -1; dz <= 1; dz++)
 							for (int dx = -1; dx <= 1; dx++)
-								g = Mathf.Max(g, GroundY(land, transform.TransformPoint(new Vector3(o.x + (x + dx * 0.5f) * h, 0f, o.z + (z + dz * 0.5f) * h))));
+							{
+								if (dx == 0 && dz == 0) continue;
+								float half = GroundY(land, transform.TransformPoint(new Vector3(o.x + (x + dx * 0.5f) * h, 0f, o.z + (z + dz * 0.5f) * h)));
+								float full = GroundY(land, transform.TransformPoint(new Vector3(o.x + (x + dx) * h, 0f, o.z + (z + dz) * h)));
+								g = Mathf.Max(g, g0 + half - (g0 + full) * 0.5f);
+							}
 						top[x + z * nx] = Mathf.Max(top[x + z * nx], (g - Under - transform.position.y) / sY);
 					}
+			// (round 4: a passage over the ground - along a cliff's foot, beside it, not into it - a full tube: rock TubeWall m all round
+			// it down to the ground, on its downhill side and over it too. Its lining stopped at the ground's height, so it was a
+			// trench with one wall, the uphill one, and open to the sky - Gravewell Shaft's drift. Not at its mouths, nor over the sea)
+			TubeColumns = 0; TubeSkips = "";
+			if (upright && land != null)
+			{
+				int skUnder = 0, skEnd = 0, skWet = 0;
+				List<Vector4> ends = OpenEnds();
+				float wall = TubeWall / sY, sea = IslandSea(land);
+				for (int z = 0; z < nz; z++)
+					for (int x = 0; x < nx; x++)
+					{
+						int c = x + z * nx;
+						if (fillUp != null && fillUp[c]) continue;
+						float tubeTop = float.NaN;
+						for (int y = ny - 1; y >= 0; y--)
+							if (dist[x + y * sy + z * sz] < wall) { tubeTop = o.y + y * h; break; }
+						if (float.IsNaN(tubeTop)) continue;
+						if (tubeTop <= top[c]) { skUnder++; continue; }
+						Vector3 lp = new Vector3(o.x + x * h, 0f, o.z + z * h);
+						bool atEnd = false;
+						foreach (Vector4 e in ends)
+							if (new Vector2(lp.x - e.x, lp.z - e.z).magnitude < e.w + TubeWall + TubeEndKeep) { atEnd = true; break; }
+						if (atEnd) { skEnd++; continue; }
+						if (GroundY(land, transform.TransformPoint(lp)) < sea + TubeDry) { skWet++; continue; } // (open water: no roof over it)
+						top[c] = tubeTop;
+						TubeColumns++;
+					}
+				TubeSkips = name + " " + TubeColumns + " tube, " + skUnder + " under the ground, " + skEnd + " at its " + ends.Count + " open end(s), " + skWet + " over water (sea " + sea.ToString("0.0") + ")";
+			}
 			var field = new float[N];
 			var outer = new bool[N];
 			var passage = new bool[N];
@@ -1996,7 +2095,10 @@ namespace DynamicIslands.Editor
 					if (n > 0) data.SetHoles(0, 0, solid);
 				}
 				LastWorldCut = n;
-				if (tunnels > 0) Debug.Log("[CUSTOM ISLANDS] Dug tunnels: " + tunnels + ", " + n + " ground cells cut over them");
+				int tubes = 0;
+				var why = new List<string>();
+				foreach (DigTunnel t in objects.GetComponentsInChildren<DigTunnel>(true)) { tubes += t.TubeColumns; if (!string.IsNullOrEmpty(t.TubeSkips)) why.Add(t.TubeSkips); }
+				if (tunnels > 0) Debug.Log("[CUSTOM ISLANDS] Dug tunnels: " + tunnels + ", " + n + " ground cells cut over them" + (tubes > 0 ? ", " + tubes + " column(s) of passage over the ground walled as a tube" : "") + (why.Count > 0 ? " (tube pass: " + string.Join("; ", why.ToArray()) + ")" : ""));
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnels' ground cut: " + e.Message); }
 		}

@@ -1108,9 +1108,11 @@ namespace DynamicIslands
 				MeshFilter mf = r.GetComponent<MeshFilter>();
 				Vector3[] mp; int[] mt;
 				if (mf == null || mf.sharedMesh == null || !ReadMesh(mf.sharedMesh, out mp, out mt)) { through.Add(new KeyValuePair<float, string>(bdist, "its bounds " + bdist.ToString("0.0") + " m (" + (mf == null || mf.sharedMesh == null ? r.GetType().Name + ", no mesh" : "mesh " + mf.sharedMesh.name + " unread") + ") " + path)); continue; }
-				float f = RayMeshDistance(r, mid), bk = RayMeshDistance(r, mid, true);
-				if (f < 40f) through.Add(new KeyValuePair<float, string>(f, f.ToString("0.0") + " m its front " + path));
-				if (bk < 40f) through.Add(new KeyValuePair<float, string>(bk, bk.ToString("0.0") + " m its back " + path));
+				float f = RayMeshDistance(r, mid);
+				int fTri = RayHitTri; Vector3 fAt = RayHitPoint;
+				float bk = RayMeshDistance(r, mid, true);
+				if (f < 40f) through.Add(new KeyValuePair<float, string>(f, f.ToString("0.0") + " m its front " + path + HitFace(r, mp, mt, fTri, fAt, e.Position)));
+				if (bk < 40f) through.Add(new KeyValuePair<float, string>(bk, bk.ToString("0.0") + " m its back " + path + HitFace(r, mp, mt, RayHitTri, RayHitPoint, e.Position)));
 					if (f >= 40f && bk >= 40f)
 					{
 						// (its box crossed, no face met: a den's shell round the eye never showed in the fan, w15AA - its points as
@@ -1119,6 +1121,20 @@ namespace DynamicIslands
 						foreach (Vector3 q in mp) pb.Encapsulate(q);
 						through.Add(new KeyValuePair<float, string>(bdist + 0.001f, "its bounds " + bdist.ToString("0.0") + " m, no face met (" + mf.sharedMesh.name + (mf.sharedMesh.isReadable ? "" : ", from the GPU") + ": " + mp.Length + " points " + mt.Length / 3 + " faces, read box " + pb.min.ToString("F1") + ".." + pb.max.ToString("F1") + ", mesh box " + mf.sharedMesh.bounds.min.ToString("F1") + ".." + mf.sharedMesh.bounds.max.ToString("F1") + ") " + path));
 					}
+			}
+			// (and the terrain it meets: its paint there - a pale mound before Gravewell's diver den, 11-20, drew no renderer)
+			foreach (Terrain land in Terrain.activeTerrains)
+			{
+				TerrainCollider tc = land == null ? null : land.GetComponent<TerrainCollider>();
+				RaycastHit th;
+				if (tc == null || !tc.Raycast(mid, out th, 40f)) continue;
+				TerrainData td = land.terrainData;
+				float nx = (th.point.x - land.transform.position.x) / td.size.x, nz = (th.point.z - land.transform.position.z) / td.size.z;
+				int ar = td.alphamapWidth, ax = Mathf.Clamp((int)(nx * ar), 0, ar - 1), az = Mathf.Clamp((int)(nz * ar), 0, ar - 1);
+				float[,,] am = td.GetAlphamaps(ax, az, 1, 1);
+				var lw = new System.Text.StringBuilder();
+				for (int l = 0; l < td.alphamapLayers; l++) lw.Append((l > 0 ? " " : "") + (td.terrainLayers != null && l < td.terrainLayers.Length && td.terrainLayers[l] != null ? td.terrainLayers[l].name : "layer" + l) + "=" + am[0, 0, l].ToString("0.00"));
+				through.Add(new KeyValuePair<float, string>(th.distance, th.distance.ToString("0.0") + " m terrain " + land.name + " at " + (th.point - e.Position).ToString("F2") + " steep " + td.GetSteepness(nx, nz).ToString("0") + " deg, normal " + th.normal.ToString("F2") + ", paint " + lw));
 			}
 			foreach (var kv in through.OrderBy(x => x.Key).Take(24)) Log("  middle ray: " + kv.Value);
 			if (who) yield return WhoDraws(e, from, to, at ?? new Vector2(0.5f, 0.5f), mid);
@@ -1229,8 +1245,27 @@ namespace DynamicIslands
 		}
 
 		// The distance along the ray to the renderer's mesh's nearest face the ray meets from the front (as drawn: back faces culled), or infinity (a skinned or unreadable mesh: its bounds).
+		/// <summary>CIRayLook's middle ray: the face it met - where (from the island), its corners, its facing and its corners' normals
+		/// (round 4: the Utopia fin, a face of the hill's skin, both sides, that no trial moved).</summary>
+		static string HitFace(Renderer r, Vector3[] p, int[] tri, int i, Vector3 at, Vector3 isle)
+		{
+			if (i < 0 || i + 2 >= tri.Length) return "";
+			Transform t = r.transform;
+			Vector3 a = t.TransformPoint(p[tri[i]]), b = t.TransformPoint(p[tri[i + 1]]), c = t.TransformPoint(p[tri[i + 2]]);
+			Vector3 n = Vector3.Cross(b - a, c - a).normalized;
+			MeshFilter mf = r.GetComponent<MeshFilter>();
+			string vn = "";
+			if (mf != null && mf.sharedMesh != null && mf.sharedMesh.isReadable)
+			{
+				Vector3[] ns = mf.sharedMesh.normals;
+				if (ns != null && ns.Length > tri[i + 2]) vn = ", corner normals " + t.TransformDirection(ns[tri[i]]).ToString("F2") + " " + t.TransformDirection(ns[tri[i + 1]]).ToString("F2") + " " + t.TransformDirection(ns[tri[i + 2]]).ToString("F2");
+			}
+			return " (face " + i / 3 + " at " + (at - isle).ToString("F2") + ", corners " + (a - isle).ToString("F2") + " " + (b - isle).ToString("F2") + " " + (c - isle).ToString("F2") + ", facing " + n.ToString("F2") + vn + ")";
+		}
+		static int RayHitTri; static Vector3 RayHitPoint; // (RayMeshDistance: the face its nearest hit was on, and where)
 		static float RayMeshDistance(Renderer r, Ray ray, bool backs = false)
 		{
+			RayHitTri = -1;
 			MeshFilter f = r.GetComponent<MeshFilter>();
 			Mesh m = f != null ? f.sharedMesh : null;
 			float bd;
@@ -1252,8 +1287,9 @@ namespace DynamicIslands
 				Vector3 q = Vector3.Cross(s, e1); float w = Vector3.Dot(dir, q) * inv;
 				if (w < 0f || u + w > 1f) continue;
 				float d = Vector3.Dot(e2, q) * inv;
-				if (d > 0f && d < best) best = d;
+				if (d > 0f && d < best) { best = d; RayHitTri = i; }
 			}
+			if (best != float.PositiveInfinity) RayHitPoint = t.TransformPoint(o + dir * best);
 			return best == float.PositiveInfinity ? best : Vector3.Distance(ray.origin, t.TransformPoint(o + dir * best));
 		}
 

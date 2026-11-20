@@ -434,7 +434,7 @@ namespace DynamicIslands.Editor
 					z0 = Mathf.Max(0, Mathf.Min(z0, gz - rz)); z1 = Mathf.Min(res - 1, Mathf.Max(z1, gz + rz));
 				}
 			}
-			float[,] h = data.GetHeights(x0, z0, x1 - x0 + 1, z1 - z0 + 1);
+			float[,] h = data.GetHeights(x0, z0, x1 - x0 + 1, z1 - z0 + 1), h0 = (float[,])h.Clone();
 			// (ahead of an open end, the distance from the room's end - a straight end with rounded corners - not from the nearest
 			// room point: those stand on the ground's grid, and the sand met the floor along their staircase, a notched lip,
 			// gen-large and Caisson Yard's raised tongue with hard sides, 11-08 r26/r31 user; the floor it eases to from the room
@@ -676,6 +676,8 @@ namespace DynamicIslands.Editor
 				return 0;
 			}
 			data.SetHeights(x0, z0, h);
+			int eased = EaseRock(land, x0, z0, h0, dugTo != null);
+			if (eased > 0) Debug.Log("[CUSTOM ISLANDS] Apron " + cave.name + ": rock paint eased off " + eased + " ground pixels it reshaped");
 			if (!raise && dugTo == null) Skirt(land, cave, cols, mid, along, sideDir, open, endAt, endFloor, latLo, latHi);
 			if (dugTo != null)
 			{
@@ -689,6 +691,57 @@ namespace DynamicIslands.Editor
 					}
 			}
 			return moved;
+		}
+
+		/// <summary>
+		/// The ground an apron reshaped keeps the paint it had: the rock its steep sides wore before they were eased (a recipe's
+		/// flattened tongue before a den) stood as a pale blue-white mound right in front of Gravewell Shaft's diver den, cave round 4
+		/// 11-20. On each paint pixel over a moved point the rock is cut back to what the slope there now wears by the automatic paint,
+		/// the rest going to its sea floor, sand and grass as that paint shares them out. Only less rock: hand-painted sand or grass
+		/// stays as it is. before: the heights from (x0, z0) as they were. How many pixels it changed.
+		/// </summary>
+		static int EaseRock(Terrain land, int x0, int z0, float[,] before, bool editor)
+		{
+			TerrainData data = land.terrainData;
+			if (data.alphamapLayers < TerrainPainter.LayerCount) return 0;
+			int cells = data.heightmapResolution - 1, ar = data.alphamapWidth, d = before.GetLength(0), w = before.GetLength(1);
+			float[,] now = data.GetHeights(x0, z0, w, d);
+			var moved = new bool[d, w];
+			int any = 0;
+			for (int z = 0; z < d; z++)
+				for (int x = 0; x < w; x++)
+					if (Mathf.Abs(now[z, x] - before[z, x]) > 1e-5f) { moved[z, x] = true; any++; }
+			if (any == 0) return 0;
+			// (the sea: the world's at 0, the editor's at its own level over the island's terrain)
+			float water = editor ? land.transform.position.y + DynamicIslands.EditorWaterLevel : 0f;
+			float per = (float)ar / cells; // (paint pixels per height cell)
+			int ax0 = Mathf.Clamp(Mathf.FloorToInt((x0 - 1) * per), 0, ar - 1), ax1 = Mathf.Clamp(Mathf.CeilToInt((x0 + w) * per), 0, ar - 1);
+			int az0 = Mathf.Clamp(Mathf.FloorToInt((z0 - 1) * per), 0, ar - 1), az1 = Mathf.Clamp(Mathf.CeilToInt((z0 + d) * per), 0, ar - 1);
+			int aw = ax1 - ax0 + 1, ad = az1 - az0 + 1;
+			float[,,] maps = data.GetAlphamaps(ax0, az0, aw, ad);
+			var auto = new float[TerrainPainter.LayerCount];
+			int eased = 0;
+			for (int z = 0; z < ad; z++)
+				for (int x = 0; x < aw; x++)
+				{
+					int cx = Mathf.FloorToInt((ax0 + x + 0.5f) / per) - x0, cz = Mathf.FloorToInt((az0 + z + 0.5f) / per) - z0;
+					bool hit = false;
+					for (int a = cz; a <= cz + 1 && !hit; a++)
+						for (int c = cx; c <= cx + 1 && !hit; c++)
+							hit = a >= 0 && c >= 0 && a < d && c < w && moved[a, c];
+					if (!hit) continue;
+					float rock = maps[z, x, TerrainPainter.Rock];
+					TerrainPainter.AutoWeights(land, water, ax0 + x, az0 + z, auto);
+					if (rock <= auto[TerrainPainter.Rock] + 0.02f) continue;
+					float free = rock - auto[TerrainPainter.Rock], rest = auto[TerrainPainter.Seabed] + auto[TerrainPainter.Sand] + auto[TerrainPainter.Grass];
+					maps[z, x, TerrainPainter.Rock] = auto[TerrainPainter.Rock];
+					if (rest < 1e-4f) maps[z, x, TerrainPainter.Sand] += free;
+					else
+						for (int l = TerrainPainter.Seabed; l <= TerrainPainter.Grass; l++) maps[z, x, l] += free * auto[l] / rest;
+					eased++;
+				}
+			if (eased > 0) data.SetAlphamaps(ax0, az0, maps);
+			return eased;
 		}
 
 		/// <summary>An open cave's sand skirt (a child of the cave piece).</summary>
