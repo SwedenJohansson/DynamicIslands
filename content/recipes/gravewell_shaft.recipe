@@ -273,8 +273,5 @@ prop gwspikes zone.hazard=spikes
 prop gwspikes zone.damage=4
 prop gwspikes zone.safe=none
 prop gwspikes zone.hazardMsg=Stakes! The drillers staked this pit against the anglers. Back up to the chamber.
-where gwboreair
-where gwpitwarn
-where gwspikes
 
 save Gravewell Shaft

@@ -815,12 +815,13 @@ namespace DynamicIslands
 			List<Transform> rooms = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name == CaveTool.Room).ToList();
 			// (a lone straight piece placed as it is, not by the cave tool - no mouth, join or end marks and no other cave piece
 			// at either end: Raft's swim-through rock tunnel, open at both ends. Deepwatch Station's, 11-20: "0 ways in", as
-			// only the tool's mouths and dug strokes were ways)
+			// only the tool's mouths and dug strokes were ways; a piece with no settings has no IslandObjectRef - Attach skips it -
+			// so not "has a ref": it left Deepwatch's tunnel out still)
 			Func<Transform, bool> marked = x => { IslandObjectRef r = refOf(x); return r != null && (r.Props.ContainsKey(ObjectProps.CaveMouth) || r.Props.ContainsKey(ObjectProps.CaveJoin) || r.Props.ContainsKey(ObjectProps.CaveEnd)); };
 			List<Transform> pieces = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name.StartsWith("TP_UnderwaterCaveTunnel", StringComparison.Ordinal) || x.name.StartsWith("BalboaCave", StringComparison.Ordinal)).ToList();
 			Func<Transform, bool> lone = x => !marked(x) && !pieces.Any(o => o != x && !o.IsChildOf(x) && !x.IsChildOf(o)
 				&& Mathf.Min((o.position - pass(x, CaveTool.FaceMin)).magnitude, (o.position - pass(x, CaveTool.FaceMin + CaveTool.Step)).magnitude) < CaveTool.Step * sizeOf(x));
-			var swimThrough = new HashSet<Transform>(tunnels.Where(x => refOf(x) != null && !tunnels.Any(o => o != x && x.IsChildOf(o)) && lone(x)));
+			var swimThrough = new HashSet<Transform>(tunnels.Where(x => !tunnels.Any(o => o != x && x.IsChildOf(o)) && lone(x)));
 			foreach (Transform first in tunnels.Where(x => { IslandObjectRef r = refOf(x); return r != null && r.Props.ContainsKey(ObjectProps.CaveMouth); }).Concat(swimThrough))
 			{
 				var w = new GapWay { Kind = swimThrough.Contains(first) ? "cave, swim-through" : "cave" };
@@ -878,6 +879,12 @@ namespace DynamicIslands
 					ways.Add(w);
 				}
 			}
+			// (none: what the cave pieces were taken for - Deepwatch Station's lone tunnel still read "0 ways in", 11-20)
+			if (ways.Count == 0)
+				foreach (Transform x in pieces)
+					Log("  cave piece " + x.name + " (parent " + (x.parent != null ? x.parent.name : "-") + "): ref " + (refOf(x) != null) + ", tunnel " + tunnels.Contains(x)
+						+ ", marked " + marked(x) + ", near " + string.Join("/", pieces.Where(o => o != x && !o.IsChildOf(x) && !x.IsChildOf(o)
+						&& Mathf.Min((o.position - pass(x, CaveTool.FaceMin)).magnitude, (o.position - pass(x, CaveTool.FaceMin + CaveTool.Step)).magnitude) < CaveTool.Step * sizeOf(x)).Select(o => o.name).ToArray()));
 			return ways;
 		}
 

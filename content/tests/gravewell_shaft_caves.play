@@ -3,7 +3,7 @@
 # gap at 330 degrees), level out by -3 5.2 and -6.2 7.2 to the bore's chamber -8.5 8.5 .. -11.3 11.3 (air zone
 # gw_trialbore at -9.9 9.9), back out along the drift. below= keeps the walker under the drift's roof.
 island Gravewell Shaft keep
-offset 0 0
+offset 2.7339 -0.7277
 hour 11
 weather Calm
 

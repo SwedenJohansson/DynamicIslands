@@ -11,6 +11,10 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (not released yet)
 
+- **Gravewell Shaft's trial bore and staked side pit open again**: the bore's drift started 2.3 m up the pit's wall with a shut mouth, and the side pit's stakes and its hazard lay in rock. The drift now leaves the pit floor at its foot, you can swim in to the bore's air and back, and the stakes stand on the side pit's floor, where they hurt.
+- **Weatherglass Deep's strongbox lies on the reef cave's floor**: it hung 7 m up in the cave. The cave tool lifted it with the ground of the glass room's hill, which rises through the reef cave; the tool now leaves alone what lies under another cave's den when it moves objects with the ground.
+- **Play tests line up with dug islands** (island makers' tests): the `offset` a recipe logs for its play tests is measured on the island's heights as saved, not the editor's dug ones. On Gravewell Shaft the old one stood 2.8 m off, so the walks missed the bore and the spike pit.
+- **`CICaveGapsLook` counts a lone tunnel with no settings as a way in** (island makers' test): Deepwatch Station's swim-through cave counted 0 ways in, because a tunnel piece with no settings was left out.
 - **No tall yellow sand column at the back of an underwater tunnel**: the sand skirt laid along an open floor's end no longer climbs a wall of sand: rows of it that rise more than 2 m are left out (the column at the back of Sinkmarket's sea cave). `CICaveGapsLook` fails when a skirt row still climbs more than 2 m.
 - **A tunnel's own body and back inside a cave hill wear the hill's rock**: besides its mouth frame, the tunnel piece's walls and back were still drawn in the tunnel's pale ice-cave rock, a pale bluish shape in the lower opening (Old Mine Islet).
 - **No more rock plate standing out of the sea by underwater tunnels**: where a cave hill had dived under the sea beside an underwater tunnel's way in, the strip of rock under the way's floor still rose from the sea floor up to that floor, a lone flat plate out in the water (Utopia Remade). It now stops at the hill's own edge.
