@@ -2548,7 +2548,8 @@ namespace DynamicIslands
 			float len = Mathf.Max(1f, new Vector2(far.x - near.x, far.z - near.z).magnitude), atT, lt;
 			List<Vector3> rope0 = ZiplineEnds.RopeBetween(line, far, near);
 			if (rope0.Count < 2) return 0f;
-			float lineLow = ZiplineEnds.RopeLowest(rope0, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out lineAt, out lt);
+			ZipClearStrays(e, rope0, near, far);
+			float lineLow =ZiplineEnds.RopeLowest(rope0, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out lineAt, out lt);
 			Func<Vector3, string> xyz = v => Num(v.x - TopFrame.Origin.x) + " " + Num(v.z - TopFrame.Origin.y) + " h=" + Num(v.y);
 			Log("  zipto rope: " + rope0.Count + " points, " + xyz(rope0[0]) + " .. " + xyz(rope0[rope0.Count / 2]) + " .. " + xyz(rope0[rope0.Count - 1]) + "; near " + xyz(near) + ", far " + xyz(far) +
 				", slack " + Num(ZiplineEnds.Slack(line)) + "; lowest " + Num(lineLow) + " m over the ground (" + Num(ground(lineAt.x, lineAt.z)) + "" + ZipGroundWhat(e, lineAt.x, lineAt.z) + ") at " + xyz(lineAt));
@@ -2558,7 +2559,15 @@ namespace DynamicIslands
 			{
 				// (a tower's line, whose rope sags under its far floor where the tower is low: a tighter rope - 11-20, Engine Court's
 				// tower lines dipped 1.4 m into the court's flat ground before their far ends)
-				if (lineLow >= ZiplineEnds.LineClear) return 0f;
+				if (lineLow >= ZiplineEnds.LineClear)
+				{
+					// (the rope clear, a rider under it maybe not: logged - 11-20 review, the tower lines' riders were only checked once tightened)
+					Vector3 oa; float ot;
+					float ol = ZiplineEnds.RopeLowest(rope0, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.RiderFarSkip, d => Mathf.Min(ZiplineEnds.RiderClear, 0.8f * Mathf.Max(0f, near.y - far.y) / len * d), out oa, out ot);
+					if (ol < 0f)
+						Log("  WARNING: zipto: a rider on that rope comes " + Num(-ol) + " m short of a rider's room at " + Num(oa.x - corner.x) + " " + Num(oa.z - corner.z) + " (ground " + Num(ground(oa.x, oa.z)) + ZipGroundWhat(e, oa.x, oa.z) + "): move what is under it or an end");
+					return 0f;
+				}
 				float own0 = ZiplineEnds.Slack(line);
 				if (!float.IsNaN(own0) && own0 != 0f)
 					foreach (float sl in new[] { own0 * 0.5f, own0 * 0.25f, own0 * 0.1f })
@@ -2666,6 +2675,56 @@ namespace DynamicIslands
 				r = Mathf.Min(ZiplineEnds.MaxRaise, r + Mathf.Clamp(-low / Mathf.Max(0.05f, 1f - atT), 0.1f, 1f));
 			}
 			return false;
+		}
+
+		/// <summary>
+		/// zipto's clearing (11-20): the generator's objects (not this recipe's) that stand in a rider's way under the rope Raft
+		/// makes - their top within a rider's room (ZiplineEnds.RiderClear; the rope's own 1 m near the far end, where a rider
+		/// comes down to its floor) - are removed as the recipe's clear removes them. A clear along the line takes them by their
+		/// pivots, and a big boulder's pivot can stand metres off its body: Caisson Yard's ridge line ran into a 5 m
+		/// SmallBoulder2 the clear r=3 left. Bodies over 10 m across stay (the island's own cliffs). Returns the count removed.
+		/// </summary>
+		static int ZipClearStrays(EditorGameObject e, List<Vector3> rope, Vector3 near, Vector3 far)
+		{
+			Transform root = GameObject.Find("PlacedObjects")?.transform;
+			if (root == null) return 0;
+			var gone = new List<GameObject>();
+			var names = new List<string>();
+			Vector2 n2 = new Vector2(near.x, near.z), f2 = new Vector2(far.x, far.z);
+			for (int round = 0; round < 4; round++)
+			{
+				Physics.SyncTransforms();
+				var now = new List<GameObject>();
+				for (int i = 0; i + 1 < rope.Count; i++)
+				{
+					Vector3 a = rope[i], b = rope[i + 1];
+					int steps = Mathf.Max(1, Mathf.CeilToInt(new Vector2(b.x - a.x, b.z - a.z).magnitude / 0.5f));
+					for (int s = 0; s <= steps; s++)
+					{
+						Vector3 p = Vector3.Lerp(a, b, s / (float)steps);
+						Vector2 p2 = new Vector2(p.x, p.z);
+						float toNear = Vector2.Distance(p2, n2), toFar = Vector2.Distance(p2, f2);
+						if (toNear < ZiplineEnds.NearSkip || toFar < ZiplineEnds.FarSkip) continue;
+						Collider c;
+						float g = ZipGroundAt(e, p.x, p.z, out c);
+						if (c == null || p.y - g >= (toFar < ZiplineEnds.RiderFarSkip ? ZiplineEnds.LineClear : ZiplineEnds.RiderClear)) continue;
+						EditorGameObject owner = c.GetComponentInParent<EditorGameObject>();
+						if (owner == null || owner == e || recipePlaced.Contains(owner.gameObject) || !owner.transform.IsChildOf(root) || now.Contains(owner.gameObject)) continue;
+						Bounds bb = c.bounds;
+						foreach (Renderer rd in owner.GetComponentsInChildren<Renderer>()) bb.Encapsulate(rd.bounds);
+						if (Mathf.Max(bb.size.x, bb.size.z) > 10f) continue;
+						now.Add(owner.gameObject);
+						Vector3 op = owner.transform.position;
+						names.Add(owner.GameObjectName + " at " + Num(op.x - TopFrame.Origin.x) + " " + Num(op.z - TopFrame.Origin.y) + " (the rope " + Num(p.y - g) + " m over its top)");
+					}
+				}
+				if (now.Count == 0) break;
+				CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(now, false));
+				gone.AddRange(now);
+			}
+			if (gone.Count > 0)
+				Log("  zipto: " + gone.Count + " of the generator's objects in a rider's way under the rope removed: " + string.Join("; ", names.ToArray()));
+			return gone.Count;
 		}
 
 		/// <summary>The ground under a zipline's rope at x z (world): the land's height, or the top of what stands solid on it on the
