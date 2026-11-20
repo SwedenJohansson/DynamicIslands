@@ -448,6 +448,7 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static void Refresh()
 		{
+			if (unloaded) return;
 			EnsureKeeper();
 			bool inGame = false;
 			try { inGame = LoadSceneManager.IsGameSceneLoaded; } catch { }
@@ -486,9 +487,22 @@ namespace DynamicIslands.Editor
 				.Select(c => OriginalOf(c) + "->" + c.amount + " " + c.items[0].UniqueName).ToArray());
 		}
 
+		/// <summary>The mod was unloaded: the keeper is gone and Raft's own costs stay (it put the world's percent back on
+		/// 4 times a second, so they stayed raised after the unload, and a mod loaded again took them as Raft's own).</summary>
+		internal static bool unloaded;
+
+		/// <summary>OnModUnload: the keeper goes, then Raft's own costs back.</summary>
+		public static void Unload()
+		{
+			unloaded = true;
+			if (keeper != null) UnityEngine.Object.Destroy(keeper);
+			keeper = null;
+			RestoreAll();
+		}
+
 		static void EnsureKeeper()
 		{
-			if (keeper != null) return;
+			if (keeper != null || unloaded) return;
 			keeper = new GameObject("CustomIslands_BuildCost");
 			UnityEngine.Object.DontDestroyOnLoad(keeper);
 			keeper.AddComponent<BuildCostKeeper>();

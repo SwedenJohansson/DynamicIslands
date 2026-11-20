@@ -526,7 +526,7 @@ namespace DynamicIslands
 		/// </summary>
 		public void OnModUnload()
 		{
-			UnloadStep("Raft's build costs", () => Editor.BuildCost.RestoreAll());
+			UnloadStep("Raft's build costs", Editor.BuildCost.Unload);
 			UnloadStep("the extra upgrades", () => Editor.ExtraUpgrades.Unregister());
 			UnloadStep("the patches", () =>
 			{

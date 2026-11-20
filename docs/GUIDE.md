@@ -4504,7 +4504,8 @@ planned to change.
 - **Raft's Load Game box** (the last 8 saves) takes the custom islands back to each save only for saves made with this
   version of the mod - not the very first save of a new world, and not saves from before this feature.
 - **The mod loader's Unload / Load** (F9) can't take Custom Islands out cleanly: Unload removes the mod's patches and
-  hooks, but its windows and the islands already in the world stay until Raft restarts. Restart Raft instead.
+  hooks and puts Raft's own build costs back, but its windows and the islands already in the world stay until Raft
+  restarts. Restart Raft instead.
 
 **Sharing**
 - **Text inside islands** (notes, quests) is shown as its builder wrote it: a pack from someone you don't know can hold

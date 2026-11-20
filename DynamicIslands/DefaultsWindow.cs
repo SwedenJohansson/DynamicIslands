@@ -315,6 +315,8 @@ namespace DynamicIslands.Editor
 			ModKeys.Reset();
 			CameraSettings.Reset();
 			QuestTracker.ResetPlace();
+			// (the Minimap box is one of the window's settings too: it stayed off)
+			if (!Minimap.Enabled) Minimap.Enabled = true;
 			Write(values, null);
 		}
 

@@ -2150,6 +2150,12 @@ namespace DynamicIslands
 		// a watcher reads the log's tail - no HB for 30 s = Raft hung or crashed, HB without prog for 90 s = a test stuck.
 		internal static string hbWhat = "idle";
 		internal static int hbStep, hbProg;
+		/// <summary>The newest running test's routine name (for the heartbeat), "running" when none is listed.</summary>
+		static string RunningTestName()
+		{
+			if (runningRuns.Count == 0) return "running";
+			return TestName(runningRuns[runningRuns.Keys.Max()].Key);
+		}
 		static IEnumerator HeartbeatLoop()
 		{
 			while (true)
@@ -2169,7 +2175,11 @@ namespace DynamicIslands
 					}
 				}
 				catch { }
-				Log("HB " + (runningTests > 0 ? hbWhat.Replace(' ', '_') : "idle") + " step=" + hbStep + " prog=" + hbProg + " pos=" + pos + " hp=" + hp + " dead=" + (dead ? 1 : 0));
+				// (IG8 11-20: a running test that never set hbWhat said "HB idle", so ci.ps1 -done took four of them for "the
+				//  command started no test" and the runner's next CIMainMenu left the world under CIOneSidedIslands - its last
+				//  77 islands found "no open sea". Running: never "idle" - the test's own name when it set none)
+				string what = runningTests > 0 ? (hbWhat != "idle" ? hbWhat : "test " + RunningTestName()) : "idle";
+				Log("HB " + what.Replace(' ', '_') + " step=" + hbStep + " prog=" + hbProg + " pos=" + pos + " hp=" + hp + " dead=" + (dead ? 1 : 0));
 				// (PQ11 10-28: the box's player starved on its drifting raft while it stood idle for half an hour, and the next
 				// play's results came from a dead player. Idle in a world: kept fed and well. Dead: a FAIL line, then up again)
 				if (pl != null && dead)

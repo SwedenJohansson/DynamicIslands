@@ -813,9 +813,18 @@ namespace DynamicIslands
 			Func<Transform, float, Vector3> pass = (tr, z) => tr.position + tr.rotation * (new Vector3(CaveTool.PassX, CaveTool.Floor, z) * sizeOf(tr));
 			List<Transform> tunnels = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name == CaveTool.Tunnel).ToList();
 			List<Transform> rooms = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name == CaveTool.Room).ToList();
-			foreach (Transform first in tunnels.Where(x => { IslandObjectRef r = refOf(x); return r != null && r.Props.ContainsKey(ObjectProps.CaveMouth); }))
+			// (a lone straight piece placed as it is, not by the cave tool - no mouth, join or end marks and no other cave piece
+			// at either end: Raft's swim-through rock tunnel, open at both ends. Deepwatch Station's, 11-20: "0 ways in", as
+			// only the tool's mouths and dug strokes were ways; a piece with no settings has no IslandObjectRef - Attach skips it -
+			// so not "has a ref": it left Deepwatch's tunnel out still)
+			Func<Transform, bool> marked = x => { IslandObjectRef r = refOf(x); return r != null && (r.Props.ContainsKey(ObjectProps.CaveMouth) || r.Props.ContainsKey(ObjectProps.CaveJoin) || r.Props.ContainsKey(ObjectProps.CaveEnd)); };
+			List<Transform> pieces = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name.StartsWith("TP_UnderwaterCaveTunnel", StringComparison.Ordinal) || x.name.StartsWith("BalboaCave", StringComparison.Ordinal)).ToList();
+			Func<Transform, bool> lone = x => !marked(x) && !pieces.Any(o => o != x && !o.IsChildOf(x) && !x.IsChildOf(o)
+				&& Mathf.Min((o.position - pass(x, CaveTool.FaceMin)).magnitude, (o.position - pass(x, CaveTool.FaceMin + CaveTool.Step)).magnitude) < CaveTool.Step * sizeOf(x));
+			var swimThrough = new HashSet<Transform>(tunnels.Where(x => !tunnels.Any(o => o != x && x.IsChildOf(o)) && lone(x)));
+			foreach (Transform first in tunnels.Where(x => { IslandObjectRef r = refOf(x); return r != null && r.Props.ContainsKey(ObjectProps.CaveMouth); }).Concat(swimThrough))
 			{
-				var w = new GapWay { Kind = "cave" };
+				var w = new GapWay { Kind = swimThrough.Contains(first) ? "cave, swim-through" : "cave" };
 				Transform cur = first;
 				var used = new HashSet<Transform>();
 				Vector3 exit = Vector3.zero;
@@ -830,7 +839,8 @@ namespace DynamicIslands
 				}
 				w.In = exit - pass(first, CaveTool.FaceMin); w.In.y = 0f; w.In.Normalize();
 				Transform room = rooms.Where(x => (x.position - exit).magnitude < 25f).OrderBy(x => (x.position - exit).magnitude).FirstOrDefault();
-				if (room != null) { w.Kind = "cave+room"; w.Floor.Add(GapFloor(exit + w.In * 4f)); w.Floor.Add(GapFloor(exit + w.In * 8f)); }
+				if (swimThrough.Contains(first)) w.Floor.Add(GapFloor(exit + w.In * 4f, 2f, 8f));
+				else if (room != null) { w.Kind = "cave+room"; w.Floor.Add(GapFloor(exit + w.In * 4f)); w.Floor.Add(GapFloor(exit + w.In * 8f)); }
 				else { w.Kind = "cave, open end"; w.Floor.Add(GapFloor(exit + w.In * 4f, 2f, 8f)); }
 				w.Floor.Insert(0, GapFloor(pass(first, CaveTool.FaceMin) - w.In * 0.5f));
 				ways.Add(w);
@@ -869,6 +879,12 @@ namespace DynamicIslands
 					ways.Add(w);
 				}
 			}
+			// (none: what the cave pieces were taken for - Deepwatch Station's lone tunnel still read "0 ways in", 11-20)
+			if (ways.Count == 0)
+				foreach (Transform x in pieces)
+					Log("  cave piece " + x.name + " (parent " + (x.parent != null ? x.parent.name : "-") + "): ref " + (refOf(x) != null) + ", tunnel " + tunnels.Contains(x)
+						+ ", marked " + marked(x) + ", near " + string.Join("/", pieces.Where(o => o != x && !o.IsChildOf(x) && !x.IsChildOf(o)
+						&& Mathf.Min((o.position - pass(x, CaveTool.FaceMin)).magnitude, (o.position - pass(x, CaveTool.FaceMin + CaveTool.Step)).magnitude) < CaveTool.Step * sizeOf(x)).Select(o => o.name).ToArray()));
 			return ways;
 		}
 
@@ -901,6 +917,45 @@ namespace DynamicIslands
 				&& h.collider.GetComponentInParent<Network_Player>() == null && h.collider.GetComponentInParent<AI_NetworkBehaviour>() == null
 				&& Vector3.Angle(h.normal, Vector3.up) > 50f
 				&& !CaveLootByHand.Contains(h.collider.GetComponentInParent<IslandObjectRef>()?.ObjectName ?? "") && !CaveLootByHand.Contains(h.collider.name);
+		}
+
+		/// <summary>The hazard zone whose dressing <paramref name="hit"/> is: a placed object (not the cave's own rock - a tunnel,
+		/// a den or a wall rock) standing inside a hazard zone (zone.hazard; its radius + 0.5 m), like Gravewell's stakes in the
+		/// staked side pit. Such a thing bars its branch on purpose; null for anything else. (cavelay 11-20)</summary>
+		internal static TriggerZone HazardDressing(Collider hit, Vector3 point, List<TriggerZone> hazards)
+		{
+			if (hit == null || hazards == null || hazards.Count == 0) return null;
+			// (a placed object without settings has no IslandObjectRef - Attach adds one only to objects with props, and the
+			// stakes have none: then its own and its parents' names tell it from the cave's rock, and the hit point is measured)
+			IslandObjectRef r = hit.GetComponentInParent<IslandObjectRef>();
+			string on = r != null ? r.ObjectName ?? "" : "";
+			if (on == CaveTool.Tunnel || on == CaveTool.Room || on == CaveTool.WallRock) return null;
+			if (r == null || on.Length == 0)
+				for (Transform t = hit.transform; t != null; t = t.parent)
+					if (CaveRockName(t.name)) return null;
+			Vector3 at = r != null && on.Length > 0 ? r.transform.position : point;
+			foreach (TriggerZone z in hazards)
+				if (z != null && (at - z.transform.position).sqrMagnitude <= (z.Radius + 0.5f) * (z.Radius + 0.5f)) return z;
+			return null;
+		}
+
+		static bool CaveRockName(string n)
+		{
+			n = n ?? "";
+			return n.StartsWith(CaveTool.Tunnel) || n.StartsWith(CaveTool.Room) || n.StartsWith(CaveTool.WallRock) || n.StartsWith("Cave")
+				|| n.IndexOf("Dig", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Terrain", StringComparison.OrdinalIgnoreCase) >= 0;
+		}
+
+		/// <summary>For a block's message: the hit's ancestors (up to 4) and the nearest hazard zone, to tell why it was not taken
+		/// as a hazard's dressing.</summary>
+		static string HazardWhyNot(Collider hit, Vector3 point, List<TriggerZone> hazards)
+		{
+			string path = "";
+			int n = 0;
+			for (Transform t = hit != null ? hit.transform : null; t != null && n < 4; t = t.parent, n++) path += (n > 0 ? "<" : "") + t.name;
+			float best = float.MaxValue; TriggerZone bz = null;
+			if (hazards != null) foreach (TriggerZone z in hazards) if (z != null) { float d = Vector3.Distance(point, z.transform.position); if (d < best) { best = d; bz = z; } }
+			return "; " + path + (bz != null ? ", nearest hazard zone " + bz.Id + " " + best.ToString("0.0") + " m (radius " + bz.Radius.ToString("0.0") + ")" : ", no hazard zones");
 		}
 
 		/// <summary>The cave kits' loot (caveloot) a player takes with a press: not a block on a cave's way.</summary>
@@ -1194,6 +1249,7 @@ namespace DynamicIslands
 			}
 			Vector3 eyeUp = Vector3.up * 1.6f;
 			Vector3 home = me.transform.position;
+			List<TriggerZone> hazards = e.Root.GetComponentsInChildren<TriggerZone>(true).Where(z => !string.IsNullOrEmpty(z.Hazard)).ToList();
 			int n = 0;
 			try
 			{
@@ -1207,14 +1263,22 @@ namespace DynamicIslands
 					int c = f.Count;
 					bool wet = mouth.y < sea - 0.5f;
 					// A clear way: nothing solid across the passage between its points (WayBlocked: a walker's body, a swimmer's deep under the sea)
-					int blocked = 0;
-					string where = "";
+					int blocked = 0, staked = 0;
+					string where = "", stakedAt = "";
 					for (int i = 1; i < c; i++)
 					{
 						Vector3 d = f[i] - f[i - 1];
 						RaycastHit h;
 						if (WayBlocked(f[i - 1], f[i], sea, out h))
 						{
+							// (an object set inside a hazard zone - the stakes of Gravewell's staked side pit - bars that branch on
+							// purpose: told, not counted; cave rock across a hazard is still a block. cavelay 11-20)
+							TriggerZone hz = HazardDressing(h.collider, h.point, hazards);
+							if (hz != null)
+							{
+								if (staked++ == 0) stakedAt = " (from point " + i + ": " + Hazards.Label(hz.Hazard).ToLowerInvariant() + " zone " + hz.Id + ", " + (h.collider.GetComponentInParent<IslandObjectRef>()?.ObjectName ?? h.collider.name) + " - meant to bar it)";
+								continue;
+							}
 							blocked++;
 							// (where it hit, over the floor between the two points and across: RM4's Vaporhold intake stopped at CaveMouth
 							// with no more said - fix-open 11-19)
@@ -1223,11 +1287,11 @@ namespace DynamicIslands
 								Vector3 hp = h.point - e.Position;
 								where = " - first at point " + i + " (" + h.collider.name + ", " + (f[i].y - sea).ToString("0.0") + " m; hit at " + hp.x.ToString("0.0") + " " + (h.point.y - sea).ToString("0.0") + " " + hp.z.ToString("0.0")
 									+ ", " + (h.point.y - Mathf.Lerp(f[i - 1].y, f[i].y, Mathf.Clamp01(Vector3.Dot(h.point - f[i - 1], d) / d.sqrMagnitude))).ToString("0.0") + " m over the floor, "
-									+ h.distance.ToString("0.0") + " of " + d.magnitude.ToString("0.0") + " m, normal " + Vector3.Angle(h.normal, Vector3.up).ToString("0") + " deg)";
+									+ h.distance.ToString("0.0") + " of " + d.magnitude.ToString("0.0") + " m, normal " + Vector3.Angle(h.normal, Vector3.up).ToString("0") + " deg" + HazardWhyNot(h.collider, h.point, hazards) + ")";
 							}
 						}
 					}
-					Check(ref ok, blocked == 0, label + ": a clear way along it, " + c + " points" + (blocked > 0 ? ": " + blocked + " blocked" + where : ""));
+					Check(ref ok, blocked == 0, label + ": a clear way along it, " + c + " points" + (blocked > 0 ? ": " + blocked + " blocked" + where : "") + (staked > 0 ? "; " + staked + " barred by a hazard's dressing" + stakedAt : ""));
 					// A ladder shaft (11-08): its middle line clear (the ladders aside) and ladders up it from its foot to near its top
 					if (w.Shaft != null && w.Shaft.Count > 1)
 					{

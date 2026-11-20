@@ -125,6 +125,10 @@ plan save
   takes cells over the den's own roof, no lower than that roof + Over + `LoneRoofOver` 0.5 m (they stood at the dome's
   full height and their cut face showed over the mouth as torn strips). The
   build keeps the tallest step left there (`LoneSheer`, `LoneSheerAt`); `CICaveGapsLook` fails it over `LoneSheerMax` 5 m.
+  11-20 (cavelay): a den whose arch top is under the sea (more than `SeaFloorBy` 1 m) takes the lone ramp's foot from
+  the seabed under the sea, not `SeaLevel` - `SeaFootBy`: from the sea's top every cell was "within `LoneSink`" and dived
+  to just under the seabed, a 9.8 m step beside Gravewell Shaft's diver den. Only the foot changes: the `o` rule still
+  holds (letting the ramp out over the seabed raised Weatherglass Deep's bank beside its way from 0.8 to 4.8 m).
   `Band` lights a skin band taller than `BandTallFrom` 1.5 m more and more by its own face (full at +`BandTallOver` 3 m), not
   the ground's up normal: tall walls had shown as pale sheets.
   Without the prop all of it is skipped: other islands build byte for byte as before (Old Mine Islet checked).
@@ -183,7 +187,7 @@ plan save
 | `questbring` | `<rule line>` | `QuestEditorWindow.SetQuestBringRule`. |
 | `rule` | `id \| what \| when \| where \| message \| label` | An island rule (`IntroRule.Parse`); the same id replaces. |
 | `posts` | `[off]` | Posts (`RT_Pillar`, stretched) under each floor or deck corner nothing holds, down into the ground or sea floor (`StandPosts`, the check `FloorsOverNothing`, ROADMAP_DONE CA30). `save` does it too; `posts off` leaves them out at the save (a deck meant to hang). |
-| `reseat` | `trees` or `off` | At every save since IG5 (11-18; before it opt-in with `reseat trees`, 2026-10-31): trees and palms whose trunk foot is more than 1 m under the land (the ground check's "sunk trunk": a generator tree the recipe's strokes raised the ground round) or more than 0.4 m over it with nothing placed under it ("trunk foot floating") set back on the ground round their pivot, the foot kept within 1 m under the land; one whose foot would be inside a placed object's collider bounds stays (`ReseatSunkTrees`). Grass tufts and bushes (`CaravanIsland_*Grass`, `Bush`, `Bush2`, `SmallBush_N`, `Monstera_N`, `Banana_Bush_N`) more than 0.4 m over the land are dropped onto it too (IG5: Firedance Isle's pits, Ironreef's peak). `reseat off` keeps them where the recipe put them; `reseat trees` is still read (the default). A tree whose foot is on a steep drop's rim (3 of 8 points round it 0.8 m lower) moves up to 3 m off it (`OffDropRim`). |
+| `reseat` | `trees` or `off` | At every save since IG5 (11-18; before it opt-in with `reseat trees`, 2026-10-31): trees and palms whose trunk foot is more than 1 m under the land (the ground check's "sunk trunk": a generator tree the recipe's strokes raised the ground round) or more than 0.4 m over it with nothing placed under it ("trunk foot floating") set back on the ground round their pivot, the foot kept within 1 m under the land; one whose foot would be inside a placed object's collider bounds stays (`ReseatSunkTrees`). Grass tufts and bushes (`CaravanIsland_*Grass`, `Bush`, `Bush2`, `SmallBush_N`, `Monstera_N`, `Banana_Bush_N`) more than 0.4 m over the land are dropped onto it too (IG5: Firedance Isle's pits, Ironreef's peak). A trunk the recipe laid down (tilted more than 60 degrees: `rot=`/`tilt=`) is left where it lies - its pivot is its cut end, not a foot; lay one with a height (`h=`, or `ground y=-0.3` for the cut end in the ground), since plain `ground` rests it on its lowest branch tip with the trunk in the air (Rootcellar Deep, CP4 11-20). `reseat off` keeps them where the recipe put them; `reseat trees` is still read (the default). A tree whose foot is on a steep drop's rim (3 of 8 points round it 0.8 m lower) moves up to 3 m off it (`OffDropRim`). |
 | `save` | `<island name>` | Stands posts under floors over nothing (unless `posts off`), then saves the island (`DynamicIslands.SaveIsland`); the name must pass `FileNames.IslandProblem`. Fails first when an action or `state` check names an object no object is named, or an `obj.name` holds a second key=value from a joined `prop` line (`UnnamedTargets`), or when a `step kill\|<kind>` / `step catch\|<kind>`, or a `kill <kind>` under `island <this island>` in any `.play` of the folder, names a creature label the island doesn't place (`UnplacedCreatures`). |
 | `plan` | see below | World plans window. |
 | `log` | `<text>` | Writes the text to the log. |
@@ -225,7 +229,9 @@ plan already open.
 - A strokes line after a `place` can leave that object floating or buried: shape the land first, then place. Check
   each island with `CIFloating` (editor) and `CIGroundIslands <name>` (world) - CHANGE_CHECKLISTS "Everything stands on
   the ground".
-- `save` logs `play tests of '<island>' need 'offset X Z'` when the land centre moved from the origin. Put that
+- `save` logs `play tests of '<island>' need 'offset X Z'` when the land centre moved from the origin (measured on the
+  heights as saved, `EditorLandCentre(true)`: dug caves' cut ground counts at its own height, as the world's
+  `IslandSpawner.LandCentre` reads the file; Gravewell Shaft's plays stood 2.8 m off before, 11-20). Put that
   `offset` line in the island's `.play` tests (see `PLAY_FORMAT.md`) whenever the recipe's land changes.
 
 ## Helpers for writing recipes

@@ -1968,6 +1968,9 @@ namespace DynamicIslands.Editor
 				if (!setUp && (InRock(l, p) || OnWayIn(l, p))) { cleared.Add(e.gameObject); continue; }
 				float was = oldGround(p), now = terrain.SampleHeight(p) + o.y;
 				if (Mathf.Abs(p.y - was) > 1.5f || Mathf.Abs(now - was) < 0.05f) continue;
+				// (not what lies under another cave's den: the hill rises through the den, its apron takes the ground in it back
+				// down to the den's floor after - Weatherglass Deep's reef chest rode 7.4 m up with the glass room's hill, 11-20)
+				if (UnderDen(p)) continue;
 				Vector3 to = p + Vector3.up * (now - was);
 				if (!setUp && InRock(l, to)) { cleared.Add(e.gameObject); continue; }
 				moved.Add(new Move { T = e.transform, From = p, To = to });
@@ -1981,6 +1984,18 @@ namespace DynamicIslands.Editor
 					cleared.Add(e.gameObject);
 					e.gameObject.SetActive(false);
 				}
+		}
+
+		/// <summary>Whether a point is under a cave den's (BalboaCave_Bear's) roof: a ray up from it meets the den's rock.</summary>
+		static bool UnderDen(Vector3 p)
+		{
+			foreach (RaycastHit h in Physics.RaycastAll(p + Vector3.up * 0.2f, Vector3.up, 12f, ~0, QueryTriggerInteraction.Ignore))
+			{
+				if (h.collider is TerrainCollider) continue;
+				EditorGameObject e = h.collider.GetComponentInParent<EditorGameObject>();
+				if (e != null && e.GameObjectName == Room) return true;
+			}
+			return false;
 		}
 
 		/// <summary>Whether a point is on a mouth's way in (its doorstep and a little before it, the frame's width; an open far

@@ -1,9 +1,10 @@
 # Gravewell Shaft's staked side pit (CIPlay gravewell_shaft_spikes, 11-11 w06; in a test world 'CI ...'). Points as in
-# the recipe (island frame): the side pit off the bore's chamber from -10.8 11.6 down to -15.6 7.6, stakes at -15.2 8
+# the recipe (island frame): the side pit off the bore's chamber from -10.8 11.6 down to -15.6 7.6, stakes at -14.7 8.3
 # and -14.2 8.9, the hazard zone gw_spikepit at -14.8 8.4 (r 1.6, safe=none), the warning sign by the chamber at
 # -11.4 10.4. Into the pit: hurt and the message; back up to the chamber: no more harm. Chamber floor ~1, pit ~-1.5.
+# offset: the land centre as saved (EditorLandCentre(true)) - at 0 0 the points stood 2.8 m off the pit (11-20, CP11).
 island Gravewell Shaft keep
-offset 0 0
+offset 2.7339 -0.7277
 hour 11
 weather Calm
 expect shown gwspikes

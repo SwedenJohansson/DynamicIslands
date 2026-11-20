@@ -2270,7 +2270,7 @@ namespace DynamicIslands
 							Log("  saved '" + island + "'");
 							// (a world puts an island's land centre - the land above the sea, as saved - where it spawns; the recipe's
 							// points are from its origin, the land centre when it was generated: land changed since moves them)
-							Vector2 moved = EditorLandCentre() - frames[0].Origin;
+							Vector2 moved = EditorLandCentre(true) - frames[0].Origin;
 							// (logged however small: land added under 0.5 m from the origin made it say nothing, and the island's plays
 							// kept an old 'offset' 1 m out - The Abyss's vent pool, 11-05)
 							recipeLandLine = "  the land centre is " + Num(moved.x) + " " + Num(moved.y) + " from the recipe's origin: play tests of '" + island + "' need 'offset " + Num(moved.x) + " " + Num(moved.y) + "'" + (moved.magnitude > 0.5f ? "" : " (or none: under 0.5 m)");
@@ -2468,11 +2468,15 @@ namespace DynamicIslands
 		}
 
 		/// <summary>The middle of the editor's land (above the sea), as the spawner centres a saved island.</summary>
-		static Vector2 EditorLandCentre()
+		static Vector2 EditorLandCentre(bool asSaved = false)
 		{
 			TerrainData data = terraineditor.terrain.terrainData;
 			int res = data.heightmapResolution;
 			float[,] h = data.GetHeights(0, 0, res, res);
+			// (asSaved: the ground's own heights, not as cut in its dug caves - the world finds the land centre from the file's;
+			// Gravewell Shaft said 'offset 0 0' while its plays stood 2.8 m off, the walk into the bore met the pit wall and the
+			// stakes' zone was never reached, CP10/CP11 11-20. Not for 'origin' and the rest: their points stay where they were)
+			if (asSaved) CaveGround.EditorOwnHeights(terraineditor.terrain, h);
 			float water = (DynamicIslands.EditorWaterLevel - terraineditor.terrain.transform.position.y) / data.size.y;
 			double sx = 0, sz = 0; long count = 0;
 			for (int y = 0; y < res; y++)
@@ -2666,6 +2670,10 @@ namespace DynamicIslands
 			{
 				bool tuft = Tuft.IsMatch(e.GameObjectName ?? "");
 				if (!tuft && !Trunk.IsMatch(e.GameObjectName ?? "")) continue;
+				// (a trunk laid down by the recipe - tilted more than 60 degrees - is no standing tree: its pivot is its cut end, not a
+				// foot, and "on its bottom" stands it on its branch tips. Rootcellar Deep's root trees, laid with their cut end in
+				// the seabed, went back up 2-4 m into the water at the save - CP4 11-20)
+				if (!tuft && e.transform.up.y < 0.5f) continue;
 				Vector3 p = e.transform.position;
 				float land = GroundY(p.x, p.z);
 				if (land <= seaY) continue;
