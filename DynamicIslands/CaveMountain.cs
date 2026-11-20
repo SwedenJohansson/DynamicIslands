@@ -1083,6 +1083,9 @@ namespace DynamicIslands.Editor
 				Mouth m = mouths[j];
 				if (float.IsNaN(m.Front)) continue;
 				float capY = m.FloorY + m.ArchUp, sign = m.Plus ? 1f : -1f;
+				// (only a den whose arch is under the sea, as Gravewell's diver den: over the sea the den's walled mouth already
+				// closes the way in, and the brow laid a dark ledge over Wreckers' Cove's sea cave arch - cv26b 11-21)
+				if (!(capY < SeaLevel - SeaFloorBy)) continue;
 				for (int i = 0; i < nx; i++)
 					for (int k = 0; k < nz; k++)
 					{
