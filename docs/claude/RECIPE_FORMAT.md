@@ -125,6 +125,10 @@ plan save
   takes cells over the den's own roof, no lower than that roof + Over + `LoneRoofOver` 0.5 m (they stood at the dome's
   full height and their cut face showed over the mouth as torn strips). The
   build keeps the tallest step left there (`LoneSheer`, `LoneSheerAt`); `CICaveGapsLook` fails it over `LoneSheerMax` 5 m.
+  11-20 (cavelay): a den whose arch top is under the sea (more than `SeaFloorBy` 1 m) takes the lone ramp's foot from
+  the seabed under the sea, not `SeaLevel` - `SeaFootBy`: from the sea's top every cell was "within `LoneSink`" and dived
+  to just under the seabed, a 9.8 m step beside Gravewell Shaft's diver den. Only the foot changes: the `o` rule still
+  holds (letting the ramp out over the seabed raised Weatherglass Deep's bank beside its way from 0.8 to 4.8 m).
   `Band` lights a skin band taller than `BandTallFrom` 1.5 m more and more by its own face (full at +`BandTallOver` 3 m), not
   the ground's up normal: tall walls had shown as pale sheets.
   Without the prop all of it is skipped: other islands build byte for byte as before (Old Mine Islet checked).
