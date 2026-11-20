@@ -109,20 +109,29 @@ namespace DynamicIslands
 			List<string> names = pick.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).Skip(skip).Take(most).ToList();
 			Log(c.Label + " check of " + names.Count + " saved islands (" + which + ", from " + skip + ")");
 			var report = new StringBuilder();
-			int done = 0, bad = 0, problems = 0, missed = 0;
+			int done = 0, bad = 0, problems = 0, missed = 0, at = 0;
 			foreach (string name in names)
 			{
-				var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, name, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
+				// (IG8 11-20: progress for the heartbeat - a sweep of 200 islands runs half an hour, and ci.ps1 ends a wait
+				//  whose HB step/prog stands still for 20 min)
+				hbWhat = c.Label + " islands"; hbStep = at++; hbProg++;
+				// (the world left under the sweep - the runner moved on: every later island said "no open sea", 77 of them)
+				if (!LoadSceneManager.IsGameSceneLoaded || !CustomIslandSpawner.RaftPosition.HasValue)
+				{
+					Fail(c.Label + " islands: the world was left after " + (at - 1) + " of " + names.Count + " islands (" + done + " measured) - next was '" + name + "'");
+					yield break;
+				}
+				var left =IslandWorldState.Islands.Where(x => string.Equals(x.HostName, name, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
 				if (left.Count > 0) yield return RemoveIslandsAndWait(left);
 				Vector3? spot = ScSpot(name, 400f);
-				if (!spot.HasValue) { Log("  " + name + ": no open sea near the raft"); missed++; continue; }
+				if (!spot.HasValue) { Log("  " + name + ": no open sea near the raft"); report.AppendLine(name + ": NOT MEASURED - no open sea near the raft"); missed++; continue; }
 				var made = new List<IslandWorldState.Entry>();
 				yield return ScBring(name, spot.Value, made);
 				IslandWorldState.Entry e = made.LastOrDefault();
-				if (e == null || e.Root == null) { Log("  " + name + ": didn't come"); missed++; continue; }
+				if (e == null || e.Root == null) { Log("  " + name + ": didn't come"); report.AppendLine(name + ": NOT MEASURED - didn't come" + (e != null && e.Failed ? " (its spawn failed)" : "")); missed++; if (made.Count > 0) yield return RemoveIslandsAndWait(made.Select(x => x.Id).ToList()); continue; }
 				yield return WaitIslandSettled(e, 0.5f, 2f); // (the cave mountains and Raft's physics settle: until they have, 2 s at most)
 				// (a night ghost ship brought by day sinks away at once - IG5 run 11-18 threw on it, ending the check)
-				if (e.Root == null) { Log("  " + name + ": went away again (a ghost ship by day)"); missed++; continue; }
+				if (e.Root == null) { Log("  " + name + ": went away again (a ghost ship by day)"); report.AppendLine(name + ": NOT MEASURED - went away again"); missed++; continue; }
 				int n;
 				List<string> lines = c.Measure(e, out n);
 				done++;
@@ -138,6 +147,7 @@ namespace DynamicIslands
 				if (keep) { Log("  kept '" + name + "' at " + e.Root.transform.position.ToString("F1") + ", turned " + e.Root.transform.eulerAngles.y.ToString("F0") + "°"); continue; }
 				yield return RemoveIslandsAndWait(made.Select(x => x.Id).ToList());
 			}
+			hbWhat = "idle";
 			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, c.File + "_islands.txt"), report.ToString());
 			string sum = done + " of " + names.Count + " islands measured" + (missed > 0 ? " (" + missed + " didn't come)" : "");
 			if (names.Count == 0) Fail(c.Label + " islands: none matched '" + which + "'");
@@ -166,6 +176,7 @@ namespace DynamicIslands
 			foreach (string type in types)
 				for (int i = 0; i < each; i++)
 				{
+					hbWhat = c.Label + " types"; hbStep = done + missed; hbProg++; // (progress for the heartbeat, as in GroundIslandsRoutine)
 					Network_Player player = RAPI.GetLocalPlayer();
 					Vector3 raft = CustomIslandSpawner.RaftPosition ?? (player != null ? player.transform.position : Vector3.zero);
 					IslandWorldState.Entry e = SpawnTypeNear(type, raft);
@@ -192,6 +203,7 @@ namespace DynamicIslands
 					}
 					yield return RemoveIslandsAndWait(new[] { e.Id });
 				}
+			hbWhat = "idle";
 			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, c.File + "_types.txt"), report.ToString());
 			string sum = done + " of " + types.Count * each + " new islands measured" + (missed > 0 ? " (" + missed + " didn't come)" : "");
 			if (bad > 0 || missed > 0) Fail(c.Label + " types: " + bad + " with " + problems + " problems; " + sum + " (" + c.File + "_types.txt)");
