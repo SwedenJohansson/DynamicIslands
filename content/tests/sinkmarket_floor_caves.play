@@ -8,7 +8,7 @@ weather Calm
 # (a CI world's bag emptied first: a full bag drops the loot)
 empty
 
-picture sm_cave_out 3.5 +2 -3.5 9 1.2 -9
+picture sm_cave_out 3.5 +2 -3.5 9 5.2 -9
 walk 6.2 -6.2 to 9 -9 to 13 -13 to 18.9 -18.9 to 23 -23 to 26.7 -26.7 below=-2
 air sm_bondedcellar here
 picture sm_cave_in 10.6 4.5 -10.6 20 4.2 -20 light=20
