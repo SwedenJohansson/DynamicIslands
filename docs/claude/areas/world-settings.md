@@ -83,5 +83,7 @@ The optional systems of a world: world rules (monster difficulty, build cost), t
 - A joiner's `WorldOptions.Reset` returns early; its option resets run in `WorldOptions.OnWorldReceived` (not `UfoSightings`/`FogBanks`: a late call would undo what the host just sent).
 - World-load resets go through `IslandWorldState.ResetStep`: one failing reset is logged, the rest and the island list still load.
 - `WorldOptions.WriteLines` always writes the feature lines; only `@options`/`@optionseed`/`@optionsused` need options or a seed.
+- `WorldCopy.SettingKeys` holds every setting line the host can change in play (also `rarelooks`, `optionseed`): one missing comes back from the older copy after a crash (AU3).
+- `BuildCost` has a `DontDestroyOnLoad` keeper calling `Refresh` 4x a second: `OnModUnload` calls `BuildCost.Unload` (keeper destroyed, `unloaded` set, then `RestoreAll`), never `RestoreAll` alone.
 - C# 7.3 only: RML compiles the mod in game.
 - Docs: README "World settings: more ways to play Raft again", "World rules: monster difficulty and build cost", "World randomizer", "The level up system", "Console commands (F10)", "Source overview"; `docs/GUIDE.md` chapters 9, 10 (settings files) and 11 (console commands).

@@ -90,7 +90,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The world's settings (the rules, options, levels on/off, randomizer, islands left out...): a crash doesn't
 		/// take them back to Raft's save - they aren't loot or progress (AU3).</summary>
-		static readonly string[] SettingKeys = { "auto", "monsters", "buildcost", "regrow", "options", "optionsused", "levels", "randomizer", "islandsoff", "raftgap" };
+		static readonly string[] SettingKeys = { "auto", "monsters", "buildcost", "regrow", "options", "optionsused", "optionseed", "levels", "randomizer", "islandsoff", "raftgap", "rarelooks" };
 
 		static bool IsSetting(string line)
 		{
@@ -99,7 +99,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The state of one copy with the settings of another (AU3).</summary>
-		static string[] Merge(string[] state, string[] settings)
+		internal static string[] Merge(string[] state, string[] settings)
 		{
 			return state.TakeWhile(l => l.StartsWith("#")).Concat(settings.Where(IsSetting)).Concat(state.SkipWhile(l => l.StartsWith("#")).Where(l => !IsSetting(l))).ToArray();
 		}

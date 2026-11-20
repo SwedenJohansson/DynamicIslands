@@ -367,6 +367,7 @@
     <Compile Include="WorldRules.cs" />
     <Compile Include="DevTestsDifficulty.cs" />
     <Compile Include="DevTestsHostSettings.cs" />
+    <Compile Include="DevTestsSettingsFixes.cs" />
     <Compile Include="DefaultsWindow.cs" />
     <Compile Include="DevTestsSettingsWindow.cs" />
     <Compile Include="PlaceableCatalog.cs" />
