@@ -225,7 +225,9 @@ plan already open.
 - A strokes line after a `place` can leave that object floating or buried: shape the land first, then place. Check
   each island with `CIFloating` (editor) and `CIGroundIslands <name>` (world) - CHANGE_CHECKLISTS "Everything stands on
   the ground".
-- `save` logs `play tests of '<island>' need 'offset X Z'` when the land centre moved from the origin. Put that
+- `save` logs `play tests of '<island>' need 'offset X Z'` when the land centre moved from the origin (measured on the
+  heights as saved, `EditorLandCentre(true)`: dug caves' cut ground counts at its own height, as the world's
+  `IslandSpawner.LandCentre` reads the file; Gravewell Shaft's plays stood 2.8 m off before, 11-20). Put that
   `offset` line in the island's `.play` tests (see `PLAY_FORMAT.md`) whenever the recipe's land changes.
 
 ## Helpers for writing recipes

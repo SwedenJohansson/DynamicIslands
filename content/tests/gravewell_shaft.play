@@ -2,7 +2,7 @@
 # and chest (the cage's fuse; 10-25 deep pass), the cage elevator to the pit floor, gallery 1 (anglers, the logbook),
 # gallery 2 (the pump key), the pump hall, the smelter store's three plans, Halvard's log 7.
 island Gravewell Shaft
-offset 0 0
+offset 2.7339 -0.7277
 expect step 0
 expect title The Gravewell
 zone rim

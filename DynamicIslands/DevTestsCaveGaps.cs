@@ -813,9 +813,18 @@ namespace DynamicIslands
 			Func<Transform, float, Vector3> pass = (tr, z) => tr.position + tr.rotation * (new Vector3(CaveTool.PassX, CaveTool.Floor, z) * sizeOf(tr));
 			List<Transform> tunnels = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name == CaveTool.Tunnel).ToList();
 			List<Transform> rooms = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name == CaveTool.Room).ToList();
-			foreach (Transform first in tunnels.Where(x => { IslandObjectRef r = refOf(x); return r != null && r.Props.ContainsKey(ObjectProps.CaveMouth); }))
+			// (a lone straight piece placed as it is, not by the cave tool - no mouth, join or end marks and no other cave piece
+			// at either end: Raft's swim-through rock tunnel, open at both ends. Deepwatch Station's, 11-20: "0 ways in", as
+			// only the tool's mouths and dug strokes were ways; a piece with no settings has no IslandObjectRef - Attach skips it -
+			// so not "has a ref": it left Deepwatch's tunnel out still)
+			Func<Transform, bool> marked = x => { IslandObjectRef r = refOf(x); return r != null && (r.Props.ContainsKey(ObjectProps.CaveMouth) || r.Props.ContainsKey(ObjectProps.CaveJoin) || r.Props.ContainsKey(ObjectProps.CaveEnd)); };
+			List<Transform> pieces = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name.StartsWith("TP_UnderwaterCaveTunnel", StringComparison.Ordinal) || x.name.StartsWith("BalboaCave", StringComparison.Ordinal)).ToList();
+			Func<Transform, bool> lone = x => !marked(x) && !pieces.Any(o => o != x && !o.IsChildOf(x) && !x.IsChildOf(o)
+				&& Mathf.Min((o.position - pass(x, CaveTool.FaceMin)).magnitude, (o.position - pass(x, CaveTool.FaceMin + CaveTool.Step)).magnitude) < CaveTool.Step * sizeOf(x));
+			var swimThrough = new HashSet<Transform>(tunnels.Where(x => !tunnels.Any(o => o != x && x.IsChildOf(o)) && lone(x)));
+			foreach (Transform first in tunnels.Where(x => { IslandObjectRef r = refOf(x); return r != null && r.Props.ContainsKey(ObjectProps.CaveMouth); }).Concat(swimThrough))
 			{
-				var w = new GapWay { Kind = "cave" };
+				var w = new GapWay { Kind = swimThrough.Contains(first) ? "cave, swim-through" : "cave" };
 				Transform cur = first;
 				var used = new HashSet<Transform>();
 				Vector3 exit = Vector3.zero;
@@ -830,7 +839,8 @@ namespace DynamicIslands
 				}
 				w.In = exit - pass(first, CaveTool.FaceMin); w.In.y = 0f; w.In.Normalize();
 				Transform room = rooms.Where(x => (x.position - exit).magnitude < 25f).OrderBy(x => (x.position - exit).magnitude).FirstOrDefault();
-				if (room != null) { w.Kind = "cave+room"; w.Floor.Add(GapFloor(exit + w.In * 4f)); w.Floor.Add(GapFloor(exit + w.In * 8f)); }
+				if (swimThrough.Contains(first)) w.Floor.Add(GapFloor(exit + w.In * 4f, 2f, 8f));
+				else if (room != null) { w.Kind = "cave+room"; w.Floor.Add(GapFloor(exit + w.In * 4f)); w.Floor.Add(GapFloor(exit + w.In * 8f)); }
 				else { w.Kind = "cave, open end"; w.Floor.Add(GapFloor(exit + w.In * 4f, 2f, 8f)); }
 				w.Floor.Insert(0, GapFloor(pass(first, CaveTool.FaceMin) - w.In * 0.5f));
 				ways.Add(w);
@@ -869,6 +879,12 @@ namespace DynamicIslands
 					ways.Add(w);
 				}
 			}
+			// (none: what the cave pieces were taken for - Deepwatch Station's lone tunnel still read "0 ways in", 11-20)
+			if (ways.Count == 0)
+				foreach (Transform x in pieces)
+					Log("  cave piece " + x.name + " (parent " + (x.parent != null ? x.parent.name : "-") + "): ref " + (refOf(x) != null) + ", tunnel " + tunnels.Contains(x)
+						+ ", marked " + marked(x) + ", near " + string.Join("/", pieces.Where(o => o != x && !o.IsChildOf(x) && !x.IsChildOf(o)
+						&& Mathf.Min((o.position - pass(x, CaveTool.FaceMin)).magnitude, (o.position - pass(x, CaveTool.FaceMin + CaveTool.Step)).magnitude) < CaveTool.Step * sizeOf(x)).Select(o => o.name).ToArray()));
 			return ways;
 		}
 
