@@ -35,6 +35,19 @@ namespace DynamicIslands
 		static float recPoseStart;
 		static readonly FieldInfo recWaterFx = typeof(UltimateWater.WaterCamera).GetField("_ImageEffects", BindingFlags.Instance | BindingFlags.NonPublic);
 		static readonly List<RecCanvas> recCanvases = new List<RecCanvas>();
+		// (v3 11-19: less shimmer on leaves) recSs: the camera drawn at 2x (3840x2160) and halved - a bilinear blit at exactly
+		// half size is a 2x2 box filter; recSub: sub-frames per video frame (the clock at fps x recSub), averaged - a light motion
+		// blur that evens out what still flickers. Either on: anti-aliasing (FXAA, extreme), lodBias x3 and anisotropic textures
+		// forced for the recording, then the user's values back.
+		static int recSs = 1, recSub = 1, recSubIdx;
+		static RenderTexture recBig;
+		static int[] recAcc;
+		static bool recHq;
+		static float recHqLod;
+		static AnisotropicFiltering recHqAniso;
+		static readonly List<KeyValuePair<UnityEngine.PostProcessing.AntialiasingModel, KeyValuePair<bool, UnityEngine.PostProcessing.AntialiasingModel.Settings>>> recHqAa = new List<KeyValuePair<UnityEngine.PostProcessing.AntialiasingModel, KeyValuePair<bool, UnityEngine.PostProcessing.AntialiasingModel.Settings>>>();
+		/// <summary>The showcase island shots' quality (CIShowcase quality ss sub): 2x supersampled, 4 sub-frames.</summary>
+		static int scSs = 2, scSub = 4;
 
 		struct Pose { public Vector3 Pos, Look; public Pose(Vector3 p, Vector3 l) { Pos = p; Look = l; } }
 
@@ -47,7 +60,7 @@ namespace DynamicIslands
 		/// <summary>Seconds of video recorded so far.</summary>
 		static float RecSeconds { get { return recFrame / (float)recFps; } }
 
-		[ConsoleCommand(name: "CIRecord", docs: "Dev, anywhere: records the game as numbered 1920x1080 JPGs (video frames) with the game clock fixed at 1/fps per frame. CIRecord start <dir> [fps=30] [cam|camui|screen] (camui: the camera into a texture plus every overlay canvas; screen: Raft's screen) | stop | pause | resume | status | test <dir> (one frame of each kind)")]
+		[ConsoleCommand(name: "CIRecord", docs: "Dev, anywhere: records the game as numbered 1920x1080 JPGs (video frames) with the game clock fixed at 1/fps per frame. CIRecord start <dir> [fps=30] [cam|camui|screen] [ss 1|2] [sub 1-8] (ss 2: drawn at 3840x2160 and halved; sub: frames averaged per video frame; camui: the camera into a texture plus every overlay canvas; screen: Raft's screen) | stop | pause | resume | status | test <dir> (one frame of each kind)")]
 		public static void RecordCommand(string[] args)
 		{
 			string a = args != null && args.Length > 0 ? args[0].ToLowerInvariant() : "status";
@@ -56,7 +69,10 @@ namespace DynamicIslands
 				if (args.Length < 2) { Fail("CIRecord start <dir> [fps] [cam|camui|screen]"); return; }
 				int fps = 30;
 				if (args.Length > 2) int.TryParse(args[2], out fps);
-				RecStart(args[1], fps, args.Length > 3 ? args[3].ToLowerInvariant() : "camui");
+				int ss = 1, sub = 1;
+				if (args.Length > 4) int.TryParse(args[4], out ss);
+				if (args.Length > 5) int.TryParse(args[5], out sub);
+				RecStart(args[1], fps, args.Length > 3 ? args[3].ToLowerInvariant() : "camui", ss, sub);
 				Log("PASS: recording to " + recDir);
 			}
 			else if (a == "stop") StartTest(RecStopRoutine());
@@ -66,7 +82,7 @@ namespace DynamicIslands
 			else Log("RECORD " + (recOn ? "on" : "off") + (recPaused ? " (paused)" : "") + ": frame " + recFrame + ", " + recDir + ", screen " + Screen.width + "x" + Screen.height + ", minimised-safe camera texture " + RecW + "x" + RecH);
 		}
 
-		static void RecStart(string dir, int fps, string mode)
+		static void RecStart(string dir, int fps, string mode, int ss = 1, int sub = 1)
 		{
 			if (recOn) RecStopNow();
 			recDir = Path.GetFullPath(dir);
@@ -79,11 +95,21 @@ namespace DynamicIslands
 			recPose = null;
 			recOn = true;
 			recGfx = GfxShotBegin(); // (CIGfx low: the user's quality for the video; the window stays as it is)
-			Time.captureFramerate = recFps;
+			recSs = recScreen ? 1 : Mathf.Clamp(ss, 1, 2);
+			recSub = Mathf.Clamp(sub, 1, 8);
+			recSubIdx = 0;
+			RecHqBegin(recSs > 1 || recSub > 1);
+			Time.captureFramerate = recFps * recSub;
 			if (recRt == null) { recRt = new RenderTexture(RecW, RecH, 24); recRt.Create(); }
+			if (recSs > 1 && (recBig == null || recBig.width != RecW * recSs))
+			{
+				if (recBig != null) { recBig.Release(); UnityEngine.Object.Destroy(recBig); }
+				recBig = new RenderTexture(RecW * recSs, RecH * recSs, 24) { filterMode = FilterMode.Bilinear };
+				recBig.Create();
+			}
 			if (recTex == null) recTex = new Texture2D(RecW, RecH, TextureFormat.RGB24, false);
 			DynamicIslands.instance.StartCoroutine(RecLoop());
-			Log("Recording " + recDir + " at " + recFps + " fps, " + mode + " (screen " + Screen.width + "x" + Screen.height + ")");
+			Log("Recording " + recDir + " at " + recFps + " fps, " + mode + (recHq ? ", supersampled x" + recSs + ", " + recSub + " sub-frames, lodBias " + QualitySettings.lodBias.ToString("F1") + ", AA forced" : "") + " (screen " + Screen.width + "x" + Screen.height + ")");
 		}
 
 		static IEnumerator RecStopRoutine()
@@ -102,6 +128,9 @@ namespace DynamicIslands
 			recPose = null;
 			Time.captureFramerate = 0;
 			RecUiRestore();
+			RecHqEnd();
+			if (recBig != null) { recBig.Release(); UnityEngine.Object.Destroy(recBig); recBig = null; }
+			recAcc = null;
 			GfxShotEnd(recGfx);
 			recGfx = false;
 		}
@@ -117,14 +146,18 @@ namespace DynamicIslands
 				// (an outside "CIGfx low" mid-recording - the keep-alive scripts - drops the quality again: back up for the video)
 				if (gfxLow && gfxHigh != null && gfxShotDepth == 0) recGfx = GfxShotBegin();
 				if (recPaused) continue;
-				try { RecCapture(recScreen); }
+				RecHqApply();
+				bool done;
+				try { done = RecCapture(recScreen); }
 				catch (Exception e) { Fail("recording frame " + recFrame + ": " + e.Message); RecStopNow(); yield break; }
+				if (!done) continue;
 				recFrame++; if (recFrame % 30 == 0) hbProg++;
 			}
 		}
 
-		/// <summary>One frame into recTex and onto disk (encoded here, written on a pool thread).</summary>
-		static void RecCapture(bool screen)
+		/// <summary>One frame into recTex and onto disk (encoded here, written on a pool thread). With sub-frames: false
+		/// until the last of the video frame's sub-frames, which writes their average.</summary>
+		static bool RecCapture(bool screen)
 		{
 			RenderTexture active = RenderTexture.active;
 			if (screen)
@@ -136,12 +169,78 @@ namespace DynamicIslands
 			else RecRenderCamera();
 			RenderTexture.active = recRt;
 			recTex.ReadPixels(new Rect(0, 0, RecW, RecH), 0, 0);
-			recTex.Apply();
 			RenderTexture.active = active;
-			byte[] jpg = recTex.EncodeToJPG(93);
+			if (recSub > 1)
+			{
+				byte[] raw = recTex.GetRawTextureData();
+				if (recAcc == null || recAcc.Length != raw.Length) recAcc = new int[raw.Length];
+				int[] acc = recAcc;
+				if (recSubIdx == 0) for (int i = 0; i < raw.Length; i++) acc[i] = raw[i];
+				else for (int i = 0; i < raw.Length; i++) acc[i] += raw[i];
+				if (++recSubIdx < recSub) return false;
+				recSubIdx = 0;
+				int n = recSub, half = recSub / 2;
+				for (int i = 0; i < raw.Length; i++) raw[i] = (byte)((acc[i] + half) / n);
+				recTex.LoadRawTextureData(raw);
+			}
+			recTex.Apply();
+			byte[] jpg = recTex.EncodeToJPG(recHq ? 97 : 93);
 			string file = Path.Combine(recDir, "f" + recFrame.ToString("D5") + ".jpg");
 			Interlocked.Increment(ref recPending);
 			ThreadPool.QueueUserWorkItem(_ => { try { File.WriteAllBytes(file, jpg); } catch { } finally { Interlocked.Decrement(ref recPending); } });
+			return true;
+		}
+
+		/// <summary>The recording's quality on (on = supersampled or sub-frames): the values to give back are taken here.</summary>
+		static void RecHqBegin(bool on)
+		{
+			RecHqEnd();
+			if (!on) return;
+			recHq = true;
+			recHqLod = QualitySettings.lodBias;
+			recHqAniso = QualitySettings.anisotropicFiltering;
+			recHqAa.Clear();
+			try
+			{
+				GraphicsSettingsBox box = GfxBox();
+				if (box != null)
+					foreach (var prof in new[] { box.postEffects, box.postEffectsMenu })
+						if (prof != null && prof.antialiasing != null && !recHqAa.Any(kv => kv.Key == prof.antialiasing))
+							recHqAa.Add(new KeyValuePair<UnityEngine.PostProcessing.AntialiasingModel, KeyValuePair<bool, UnityEngine.PostProcessing.AntialiasingModel.Settings>>(prof.antialiasing, new KeyValuePair<bool, UnityEngine.PostProcessing.AntialiasingModel.Settings>(prof.antialiasing.enabled, prof.antialiasing.settings)));
+			}
+			catch (Exception e) { Log("(recording: anti-aliasing not read: " + e.Message + ")"); }
+			RecHqApply();
+		}
+
+		/// <summary>Every frame (a "CIGfx low" or Raft's settings may put theirs back): lodBias x3, anisotropic on, FXAA on.
+		/// (FXAA, not TAA: the posed render and the game's own render alternate on one camera - TAA would mix them.)</summary>
+		static void RecHqApply()
+		{
+			if (!recHq) return;
+			QualitySettings.lodBias = recHqLod * 3f;
+			QualitySettings.anisotropicFiltering = AnisotropicFiltering.ForceEnable;
+			foreach (var kv in recHqAa)
+			{
+				var aa = kv.Key;
+				if (!aa.enabled) aa.enabled = true;
+				var st = aa.settings;
+				if (st.method != UnityEngine.PostProcessing.AntialiasingModel.Method.Fxaa || st.fxaaSettings.preset != UnityEngine.PostProcessing.AntialiasingModel.FxaaPreset.ExtremeQuality)
+				{
+					st.method = UnityEngine.PostProcessing.AntialiasingModel.Method.Fxaa;
+					st.fxaaSettings.preset = UnityEngine.PostProcessing.AntialiasingModel.FxaaPreset.ExtremeQuality;
+					aa.settings = st;
+				}
+			}
+		}
+
+		static void RecHqEnd()
+		{
+			if (!recHq) return;
+			recHq = false;
+			QualitySettings.lodBias = recHqLod;
+			QualitySettings.anisotropicFiltering = recHqAniso;
+			foreach (var kv in recHqAa) { kv.Key.settings = kv.Value.Value; kv.Key.enabled = kv.Value.Key; }
+			recHqAa.Clear();
 		}
 
 		/// <summary>The main camera (at the shot's pose, without the hands and screen drops) into the texture, then the canvases.</summary>
@@ -150,7 +249,8 @@ namespace DynamicIslands
 			Camera cam = Camera.main;
 			if (cam == null) cam = UnityEngine.Object.FindObjectsOfType<Camera>().Where(c => c.enabled && c.targetTexture == null).OrderByDescending(c => c.depth).FirstOrDefault();
 			if (cam == null) { Graphics.Blit(Texture2D.blackTexture, recRt); return; }
-			Pose? pose = recPose != null ? recPose(RecSeconds - recPoseStart) : null;
+			// (a sub-frame: its own moment between this video frame and the next)
+			Pose? pose = recPose != null ? recPose((recFrame + recSubIdx / (float)recSub) / recFps - recPoseStart) : null;
 			Vector3 lp = cam.transform.localPosition; Quaternion lr = cam.transform.localRotation;
 			int mask = cam.cullingMask;
 			RenderTexture before = cam.targetTexture;
@@ -176,9 +276,10 @@ namespace DynamicIslands
 					cam.transform.position = pose.Value.Pos;
 					cam.transform.LookAt(pose.Value.Look);
 				}
-				cam.targetTexture = recRt;
+				cam.targetTexture = recSs > 1 && recBig != null ? recBig : recRt;
 				cam.aspect = RecW / (float)RecH;
 				cam.Render();
+				if (cam.targetTexture == recBig) Graphics.Blit(recBig, recRt);
 			}
 			finally
 			{
@@ -323,13 +424,20 @@ namespace DynamicIslands
 			}
 			else if (a == "hour" && args.Length > 1) { float h; float.TryParse(args[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out h); AzureSkyHour(h); Log("PASS: hour " + h); }
 			else if (a == "library" && args.Length > 1) StartTest(ShowcaseLibrary(args[1]));
+			else if (a == "quality")
+			{
+				if (args.Length > 1) int.TryParse(args[1], out scSs);
+				if (args.Length > 2) int.TryParse(args[2], out scSub);
+				scSs = Mathf.Clamp(scSs, 1, 2); scSub = Mathf.Clamp(scSub, 1, 8);
+				Log("PASS: showcase island shots supersampled x" + scSs + ", " + scSub + " sub-frames");
+			}
 			else if (a == "giants" && args.Length > 3)
 			{
 				int n; int.TryParse(args[2], out n);
 				float secs; float.TryParse(args[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out secs);
 				StartTest(ShowcaseGiants(args[1], Mathf.Clamp(n, 1, 8), Mathf.Clamp(secs, 2f, 60f), args.Length > 4 ? string.Join(" ", args.Skip(4).ToArray()) : ""));
 			}
-			else Fail("CIShowcase editor <dir> [seed] | menu <dir> [plan] | island <dir> <seconds> <style> <island> | library <dir> | giants <dir> <n> <seconds> [skip,islands] | hour <h>");
+			else Fail("CIShowcase editor <dir> [seed] | menu <dir> [plan] | island <dir> <seconds> <style> <island> | library <dir> | giants <dir> <n> <seconds> [skip,islands] | quality <ss 1|2> <sub 1-8> | hour <h>");
 		}
 
 		/// <summary>Main menu: the island library opened, its Islands tab, then World plans (the storylines), then Islands again,
@@ -529,10 +637,12 @@ namespace DynamicIslands
 
 		static IEnumerator ShowcaseMenu(string dir, string plan)
 		{
+			// (the world load says idle on the heartbeat: ci.ps1 ended this step at 46 s, before the world - vid9 11-19)
+			hbWhat = "showcase menu";
 			float end = Time.realtimeSinceStartup + 30f;
 			NewGameBox box;
 			while ((box = MenuNewGameBox()) == null && Time.realtimeSinceStartup < end) yield return new WaitForSecondsRealtime(0.1f);
-			if (box == null) { Fail("showcase menu: no New Game box (main menu?)"); yield break; }
+			if (box == null) { hbWhat = "idle"; Fail("showcase menu: no New Game box (main menu?)"); yield break; }
 			if (!string.IsNullOrEmpty(plan)) WorldDirector.PendingPlan = plan;
 			box.gameObject.SetActive(true);
 			try { box.Close(); } catch { } box.Open();
@@ -580,12 +690,18 @@ namespace DynamicIslands
 			// the world itself (loading is not recorded)
 			yield return NewWorldCreate(box, name);
 			AzureSkyHour(10.5f);
+			hbWhat = "idle";
 			Log("PASS: showcase menu (world '" + name + "')");
 		}
 
 		static IEnumerator ShowcaseIsland(string dir, float seconds, string style, string island)
 		{
+			// (a world still loading from the step before: waited for, up to 3 min)
+			for (float wEnd = Time.realtimeSinceStartup + 180f; !LoadSceneManager.IsGameSceneLoaded && Time.realtimeSinceStartup < wEnd; ) { hbProg++; yield return new WaitForSecondsRealtime(1f); }
 			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("showcase island: not in a world"); yield break; }
+			// (a supersampled shot with sub-frames takes minutes: not idle on the heartbeat)
+			string hbWas = hbWhat;
+			hbWhat = "showcase island";
 			if (!File.Exists(IslandSpawner.PathFor(island))) { Fail("showcase island: no island file '" + island + "'"); yield break; }
 			var made = new List<IslandWorldState.Entry>();
 			Vector3? spot = ScSpot(island, 420f);
@@ -632,12 +748,13 @@ namespace DynamicIslands
 			}
 			AzureSkyHour(10.5f);
 			yield return null;
-			RecStart(dir, 30, "cam");
+			RecStart(dir, 30, "cam", scSs, scSub);
 			RecPath(Path3(seconds, pos, looks));
 			yield return RecHold(seconds);
 			yield return RecStopRoutine();
 			yield return RemoveIslandsAndWait(made.Where(x => x != null).Select(x => x.Id).ToList(), 3f);
 			made.Clear();
+			hbWhat = hbWas;
 			Log("PASS: showcase island " + island);
 		}
 
