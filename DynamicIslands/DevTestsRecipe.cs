@@ -2670,6 +2670,10 @@ namespace DynamicIslands
 			{
 				bool tuft = Tuft.IsMatch(e.GameObjectName ?? "");
 				if (!tuft && !Trunk.IsMatch(e.GameObjectName ?? "")) continue;
+				// (a trunk laid down by the recipe - tilted more than 60 degrees - is no standing tree: its pivot is its cut end, not a
+				// foot, and "on its bottom" stands it on its branch tips. Rootcellar Deep's root trees, laid with their cut end in
+				// the seabed, went back up 2-4 m into the water at the save - CP4 11-20)
+				if (!tuft && e.transform.up.y < 0.5f) continue;
 				Vector3 p = e.transform.position;
 				float land = GroundY(p.x, p.z);
 				if (land <= seaY) continue;

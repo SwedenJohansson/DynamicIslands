@@ -130,8 +130,10 @@ place Placeable_Lantern_Metal - at 4.4 -12 y=1.5 drop
 place Reef_Barrel1 - at 4 -16 sit
 place Reef_Barrel1 - at 4.6 -17 sit
 place Reef_Barrel1 - at -3.6 -19 sit
-place Crate_Big_01 - at -3.4 -21.5 sit yaw=-10
-place Placeable_Lantern_Metal - at -3.4 -21.5 y=1.5 drop
+# (11-20) this crate stood in the den's flank where the hill rises: its top 0.17 m under the ground (CIGroundIslands);
+# moved 1 m in toward the den's middle
+place Crate_Big_01 - at -2.5 -21 sit yaw=-10
+place Placeable_Lantern_Metal - at -2.5 -21 y=1.5 drop
 place Loot_ChestLarge strongbox at 0 -24 sit yaw=0
 place Creature_Rat rats at 0 -18 sit
 place Zone_Trigger den at 0 -10 y=1.5
