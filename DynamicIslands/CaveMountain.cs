@@ -556,7 +556,7 @@ namespace DynamicIslands.Editor
 			var cut = new bool[nx, nz];
 			Why = new char[nx, nz]; // (tests: what last set each cell, in LastMap)
 			var cutAhead = new bool[nx, nz]; // (cut only for lying out past a mouth over lower hill: a lone den's funnel may still ramp there)
-			OverDug = 0; SkirtsCut = 0; TunnelCaps = 0; LoneRoofGap = 0f; LoneSteps = ""; LoneBrows = 0;
+			OverDug = 0; SkirtsCut = 0; TunnelCaps = 0; SlitsShut = 0; SlitsShut = 0; LoneRoofGap = 0f; LoneSteps = ""; LoneBrows = 0;
 			var sea = new bool[nx, nz];
 			string seaOpt;
 			bool seaCutOn = props.Any(p => p != null && p.TryGetValue(ObjectProps.CaveSeaCut, out seaOpt) && seaOpt == "1");
@@ -835,7 +835,7 @@ namespace DynamicIslands.Editor
 					float sz = ku > kd ? (height[i, ku] - height[i, kd]) / ((ku - kd) * Cell) : 0f;
 					gn[i, k] = new Vector3(-sx, 1f, -sz).normalized;
 				}
-			DiagFlips = 0;
+			DiagFlips = 0; DiagKept = 0;
 			for (int i = 0; i + 1 < nx; i++)
 				for (int k = 0; k + 1 < nz; k++)
 				{
@@ -844,7 +844,7 @@ namespace DynamicIslands.Editor
 					Vector3 n = Vector3.Cross(e - a, c - a).normalized;
 					Quad(verts, norms, uvs, tris, origin, a, e, d, c, n, true, new[] { gn[i, k], gn[i, k + 1], gn[i + 1, k + 1], gn[i + 1, k] }, true);
 				}
-			if (DiagFlips > 0) Debug.Log("[CUSTOM ISLANDS] Cave skin squares split along their level diagonal: " + DiagFlips);
+			if (DiagFlips + DiagKept > 0) Debug.Log("[CUSTOM ISLANDS] Cave skin squares split along their level diagonal: " + DiagFlips + " (" + DiagKept + " kept on the other: it folds them less)");
 			// Walls where the surface is cut off: down to the ground; at a way in, only a skirt under its floor
 			var arch = new Arch { Shells = cols, Box = b, Own = own, Ahead = ahead, Mouths = mouths, Top = top };
 			bool backs = Physics.queriesHitBackfaces;
@@ -917,7 +917,7 @@ namespace DynamicIslands.Editor
 				if (asDen >= 0 && caves[asDen] != null) RockAsDen(mr, caves[asDen].gameObject);
 			}
 			DressTunnels();
-			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : "") + (SkirtsCut > 0 ? ", " + SkirtsCut + " skirt strip(s) let down to the edge" : "") + (TunnelCaps > 0 ? ", " + TunnelCaps + " edge strip(s) closed beside a tunnel's way in" : "")
+			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : "") + (SkirtsCut > 0 ? ", " + SkirtsCut + " skirt strip(s) let down to the edge" : "") + (TunnelCaps > 0 ? ", " + TunnelCaps + " edge strip(s) closed beside a tunnel's way in" : "") + (SlitsShut > 0 ? ", " + SlitsShut + " edge strip(s) over a passage sliver drawn whole" : "") + (SlitsShut > 0 ? ", " + SlitsShut + " edge strip(s) over a passage sliver drawn whole" : "")
 				+ (LoneRoofGap > 0f ? ", lone den roof " + LoneRoofGap.ToString("0.0") + " m over its arch's cap" : "") + (LoneSteps != "" ? ", lone den step" + LoneSteps : "") + (LoneBrows > 0 ? ", lone den brow " + LoneBrows + " cell(s)" : "") + (CaveTry.All() != "none" ? ", try " + CaveTry.All() : ""));
 			// (lone dens walled before the hill was built: their walls' outsides drawn as the hill now)
 			foreach (Transform t in caves)
@@ -1768,13 +1768,24 @@ namespace DynamicIslands.Editor
 					// (beside a way in out in front of its arch, no higher than the skin's own edge: the skirt rose to the passage's floor
 					// over the sand there, a dark straight wall beside the raised sand, Caisson Yard and Shelter Atoll 11-09 r53-r55)
 					else if (!float.IsNaN(way)) l = Mathf.Min(l, Mathf.Max(e0.y, e.y));
+					bool roofBand = !atWay || dry || (way < SeaLevel - SwimWayUnder && CaveTry.On("wayroof")) || CaveTry.On("wayroofall");
+					// (round 4: a passage met only as a sliver - under SlitShut m from its floor to its roof - is no opening: the face goes
+					// on whole. The two bands over and under it left a hair's slit, a dashed sky-blue seam across Weatherglass Deep's
+					// right cliff, cv28 11-20)
+					if (roofBand && h - l < SlitShut && h > l)
+					{
+						Band(e0, e, Mathf.Min(ga, e0.y), Mathf.Min(gb, e.y), e0.y, e.y, n, verts, norms, uvs, tris, origin);
+						SlitsShut++;
+						open0 = open; lo0 = lo; hi0 = hi;
+						continue;
+					}
 					Band(e0, e, ga, gb, l, l, n, verts, norms, uvs, tris, origin);
 					// (cave.foot=dry: over its own arch too, up to the dome - the skin's edge stood over the arch with nothing under it,
 					// a pale see-through sheet over the ammo den's mouth, Shelter Atoll 11-08)
 					// (round 4, TRIAL wayroof, CICaveTry: an underwater tunnel's way in - its floor under the sea - the wall carried on over
 					// its roof up to the skin's edge: the wall beside it ended there, its dark inside seen edge-on from the sea as a fin
 					// over the tunnel's mouth, Utopia Remade)
-					if (!atWay || dry || (way < SeaLevel - SwimWayUnder && CaveTry.On("wayroof")) || CaveTry.On("wayroofall")) Band(e0, e, h, h, e0.y, e.y, n, verts, norms, uvs, tris, origin);
+					if (roofBand) Band(e0, e, h, h, e0.y, e.y, n, verts, norms, uvs, tris, origin);
 				}
 				else if (atWay)
 				{
@@ -1834,7 +1845,10 @@ namespace DynamicIslands.Editor
 		const float SkirtOverEdge = 2.5f;
 		// (Edge: how far past a tunnel's way in, to the side, the hill's edge is closed down to the way's floor)
 		const float TunnelCapReach = 3f;
-		[System.ThreadStatic] static int TunnelCaps; // (Edge: strips closed down to a tunnel's way floor beside it, TunnelBeside - log)
+		[System.ThreadStatic] static int SlitsShut; // (Edge: strips whose passage was only a sliver, drawn whole - log)
+		/// <summary>A passage met in an edge strip with less than this (m) from its floor to its roof is no opening (Edge).</summary>
+		const float SlitShut = 0.6f;
+		[System.ThreadStatic] static int TunnelCaps;// (Edge: strips closed down to a tunnel's way floor beside it, TunnelBeside - log)
 		[System.ThreadStatic] static Vector3 BandLit; // (Edge: the hill's surface normal at the edge its Bands are under)
 		const float WallLift = 0.3f; // (more turns it to sand: the rock shader blends by the normal)
 		internal const float SheerSide = 6f; // (LoneSheer: how far beside a lone den's arch its cells are looked at)
@@ -1914,6 +1928,18 @@ namespace DynamicIslands.Editor
 		const float DiagLevelBy = 0.3f;
 		/// <summary>(log) Skin squares split along their level diagonal in the last build.</summary>
 		public static int DiagFlips;
+		/// <summary>(log) Skin squares the level split would fold harder than the other, kept on it, in the last build.</summary>
+		public static int DiagKept;
+		/// <summary>How much harder (in the cosine between its halves) the level split may fold a square than the other.</summary>
+		const float DiagFoldBy = 0.05f;
+
+		/// <summary>How flat two triangles meet: the cosine between their faces (1 flat, 0 at a right angle).</summary>
+		static float Fold(Vector3 a0, Vector3 a1, Vector3 a2, Vector3 b0, Vector3 b1, Vector3 b2)
+		{
+			Vector3 na = Vector3.Cross(a1 - a0, a2 - a0), nb = Vector3.Cross(b1 - b0, b2 - b0);
+			if (na.sqrMagnitude < 1e-10f || nb.sqrMagnitude < 1e-10f) return 1f;
+			return Vector3.Dot(na.normalized, nb.normalized);
+		}
 
 		static void Quad(List<Vector3> verts, List<Vector3> norms, List<Vector2> uvs, List<int> tris, Vector3 origin,
 			Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 n, bool both, Vector3[] smooth = null, bool level = false)
@@ -1927,7 +1953,11 @@ namespace DynamicIslands.Editor
 			// (round 4: a skin square split along the diagonal that falls least, the one along the slope's level - split along its fall
 			// line, a steep cheek slantwise to the grid stood as a row of thin pale teeth at its foot, each square's halves facing
 			// apart, Gravewell Shaft's diver den cavelay 11-20)
-			if (level && Mathf.Abs(a.y - c.y) > Mathf.Abs(b.y - d.y) + DiagLevelBy) { halves = new[] { new[] { 0, 1, 3 }, new[] { 1, 2, 3 } }; DiagFlips++; }
+			// (and only where that folds the square no harder than the other split: round a lone high corner the level split stood
+			// it up as one pale tooth, the square's other half flat at its foot - Gravewell's diver den, cv25 face 6012)
+			if (level && Mathf.Abs(a.y - c.y) > Mathf.Abs(b.y - d.y) + DiagLevelBy && Fold(a, b, d, b, c, d) >= Fold(a, b, c, a, c, d) - DiagFoldBy)
+			{ halves = new[] { new[] { 0, 1, 3 }, new[] { 1, 2, 3 } }; DiagFlips++; }
+			else if (level && Mathf.Abs(a.y - c.y) > Mathf.Abs(b.y - d.y) + DiagLevelBy) DiagKept++;
 			for (int side = 0; side < (both ? 2 : 1); side++)
 			{
 				Vector3 nn = side == 0 ? n : -n;
