@@ -556,7 +556,7 @@ namespace DynamicIslands.Editor
 			var cut = new bool[nx, nz];
 			Why = new char[nx, nz]; // (tests: what last set each cell, in LastMap)
 			var cutAhead = new bool[nx, nz]; // (cut only for lying out past a mouth over lower hill: a lone den's funnel may still ramp there)
-			OverDug = 0; SkirtsCut = 0; TunnelCaps = 0; SlitsShut = 0; SlitsShut = 0; LoneRoofGap = 0f; LoneSteps = ""; LoneBrows = 0;
+			OverDug = 0; SkirtsCut = 0; TunnelCaps = 0; SlitsShut = 0; LoneRoofGap = 0f; LoneSteps = ""; LoneBrows = 0;
 			var sea = new bool[nx, nz];
 			string seaOpt;
 			bool seaCutOn = props.Any(p => p != null && p.TryGetValue(ObjectProps.CaveSeaCut, out seaOpt) && seaOpt == "1");
