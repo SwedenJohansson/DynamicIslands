@@ -2292,6 +2292,24 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPollerMark", docs: "Dev, helper of CIPollerWait: counts one mark")]
 		public static void PollerMarkCommand() { pollerMarks++; Log("poller mark " + pollerMarks); }
 
+		[ConsoleCommand(name: "CIPlainIdle", docs: "Dev: a command file of plain commands only (no test) ends with IDLE too - CICaveCell and CIDownRays left ci.ps1 -done waiting its whole timeout. Not a test itself (it waits for no test to run): run it without -done, it ends at PASS or FAIL")]
+		public static void PlainIdleCommand() { DynamicIslands.instance.StartCoroutine(PlainIdleRoutine()); }
+
+		static IEnumerator PlainIdleRoutine()
+		{
+			float end = Time.realtimeSinceStartup + 30f;
+			while ((runningTests > 0 || File.Exists(CommandFile)) && Time.realtimeSinceStartup < end) yield return null;
+			// (the file that ran this command has had its IDLE by now)
+			yield return new WaitForSecondsRealtime(0.5f);
+			if (runningTests > 0) { Fail("plain idle: a test still runs after 30 s"); yield break; }
+			int idles = idleSerial, marks = pollerMarks;
+			File.WriteAllLines(CommandFile, new[] { "CIPollerMark" });
+			end = Time.realtimeSinceStartup + 5f;
+			while (idleSerial == idles && Time.realtimeSinceStartup < end) yield return null;
+			if (pollerMarks == marks + 1 && idleSerial == idles + 1) Log("PASS: plain idle (a file of one plain command ran and logged IDLE)");
+			else Fail("plain idle: the plain command ran " + (pollerMarks - marks) + " time(s), IDLE after it " + (idleSerial - idles) + " time(s) in 5 s");
+		}
+
 		static IEnumerator PollerWaitRoutine()
 		{
 			pollerMarks = 0;

@@ -12,7 +12,7 @@
 # -29.5, its deck 48.5 m); the ladder trail down the north face at x -24 (ladders up the cribbing at z -4.25, 1.75 and
 # 7.75, ledges at 36 and 30 m), its foot at 24 m
 island Sundown Canyons
-offset 0.1194 1.6867
+offset 0.1516 2.0257
 expect step 0
 expect title The New Sheriff
 expect animals Llama 3
@@ -204,7 +204,9 @@ expect shown sc_setchest
 open Deputies' chest
 
 # Chapter 6 - the bank: in at its door; the teller takes the silver; the letter; the vault door with the gang's key
-walk -112 -18.5 to -106 -18.5 to -101 -18.5 h=3.05 below=6
+# (through the middle of the bank's door, RT_WallDoor1's middle at -17.7 with this offset: at -18.5 and, after the offset's update, at -18 the walker brushed the door frame - fix-open 11-19)
+# (fo2 11-19: a lane probe at 0.5 m steps through the door: -18.2 and -17.7 hit the door frame, -19.7 the open door leaf, -18.7 and -19.2 walked through - the opening's middle is -18.95)
+walk -112 -18.95 to -106 -18.95 to -101 -18.95 h=3.05 below=6
 zone bank
 expect step 40
 use teller

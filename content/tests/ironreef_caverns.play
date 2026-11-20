@@ -6,7 +6,7 @@
 # Ironhide, strongbox.
 # DEEP 10-25: the land's centre moved with the bigger island (the recipe's save prints the exact offset)
 island Ironreef Caverns
-offset 1.3339 0.1645
+offset 1.9123 0.2444
 expect step 0
 expect title The Heart of Ironreef
 
@@ -20,7 +20,7 @@ open Supply barrel
 expect step 3
 
 # Up the plank road onto the mountain's shoulder, along it to the Iron Gate's terrace
-walk 74 1 to 71.1 -0.9 to 53.6 -28.6 to 50 -31 to 46 -35 h=20.5
+walk 74 1 to 71.1 -0.9 to 53.6 -28.6 to 50 -31 to 46 -35 h=22.4
 zone shoulder
 expect step 4
 walk 46 -35 to 40 -44 to 32 -52 to 22 -55.5 to 12 -55.5 to 9 -55 h=23.4

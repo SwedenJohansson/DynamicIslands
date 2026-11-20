@@ -4,7 +4,7 @@
 # -50 -30; the control room in the south-west peak's east flank (floor 7 m, x -10..-4 z -27..-15, its door at -4 -24
 # opening on a cutting down to the meadow); the champion in the valley at 15 -17.
 island The Arena
-offset 2.6119 -4.723
+offset 1.4201 -5.0954
 expect step 0
 expect title The Games Run On
 wait 5
@@ -58,7 +58,9 @@ expect step 9
 
 # Up the cutting to the door in the peak; the control room
 walk 13 -24 to 6 -24 to 0 -24 to -3 -24 h=7
-walk -3 -24 to -5 -23 to -6 -21 h=7
+# (straight in on the doorway's middle till past the entrance frame, then to the room's middle: turning at -5 -23 the
+# walker caught TP_Selene_Int_Room_Entrance's inner side - fix-open 11-19)
+walk -3 -24 to -6.5 -24 to -6 -21 h=7
 zone controlroom
 expect step 10
 read Gamewarden's log

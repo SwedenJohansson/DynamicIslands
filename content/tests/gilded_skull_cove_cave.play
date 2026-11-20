@@ -6,7 +6,7 @@
 # 11-17 w14F: the cave moved (see the recipe's 11-17 FIX) - swim in under water to where the tunnel leaves the sea,
 # walk the dry rest (as tiki_lagoon_cave); in-cave pictures at absolute heights.
 island Gilded Skull Cove keep
-offset -4.8207 -5.0962
+offset -4.9326 -4.437
 hour 11
 weather Calm
 
