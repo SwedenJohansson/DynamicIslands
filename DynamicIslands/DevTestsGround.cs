@@ -124,14 +124,14 @@ namespace DynamicIslands
 				var left =IslandWorldState.Islands.Where(x => string.Equals(x.HostName, name, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
 				if (left.Count > 0) yield return RemoveIslandsAndWait(left);
 				Vector3? spot = ScSpot(name, 400f);
-				if (!spot.HasValue) { Log("  " + name + ": no open sea near the raft"); missed++; continue; }
+				if (!spot.HasValue) { Log("  " + name + ": no open sea near the raft"); report.AppendLine(name + ": NOT MEASURED - no open sea near the raft"); missed++; continue; }
 				var made = new List<IslandWorldState.Entry>();
 				yield return ScBring(name, spot.Value, made);
 				IslandWorldState.Entry e = made.LastOrDefault();
-				if (e == null || e.Root == null) { Log("  " + name + ": didn't come"); missed++; continue; }
+				if (e == null || e.Root == null) { Log("  " + name + ": didn't come"); report.AppendLine(name + ": NOT MEASURED - didn't come" + (e != null && e.Failed ? " (its spawn failed)" : "")); missed++; if (made.Count > 0) yield return RemoveIslandsAndWait(made.Select(x => x.Id).ToList()); continue; }
 				yield return WaitIslandSettled(e, 0.5f, 2f); // (the cave mountains and Raft's physics settle: until they have, 2 s at most)
 				// (a night ghost ship brought by day sinks away at once - IG5 run 11-18 threw on it, ending the check)
-				if (e.Root == null) { Log("  " + name + ": went away again (a ghost ship by day)"); missed++; continue; }
+				if (e.Root == null) { Log("  " + name + ": went away again (a ghost ship by day)"); report.AppendLine(name + ": NOT MEASURED - went away again"); missed++; continue; }
 				int n;
 				List<string> lines = c.Measure(e, out n);
 				done++;
