@@ -138,6 +138,11 @@ beside ChoppableVines vinewall14341 vinechest14341 d=1.6
 prop vinewall14341 on.use=hide|\nshow|vinechest14341\nmessage||The machete bites through the vines. Something was hidden behind them.
 call ar_plants_tropical x=-56 z=44 r=14 seed=14321
 call ar_plants_tropical x=-24 z=64 r=14 seed=14331
+# (11-20 IG5) two of the scattered big boulders (10 m slabs) stood on an edge with their underside 3 m in the air: one
+# tipped over the ridge's crest beside the zipline's start, one over the bank by the masons' notice (ground check
+# "floating rock", pictures): taken out
+clear at 57.44 7.6 r=3 all only=^SmallBoulder2$
+clear at -36.86 59.36 r=3 all only=^SmallBoulder2$
 
 # --- Tools in use (10-24: a tool given earlier in the storyline is used again here, for optional finds): the
 # machete from Triangulation Rocks cuts the vines over a hidden chest, and a zipline from the ridge top is the quick way back down
@@ -198,6 +203,11 @@ place TangaroaBucket ob_weight2 at 21.9 -55.4 ground sit
 prop ob_weight2 obj.name=Counterweight
 prop ob_weight2 beh.use=Pick up the counterweight
 prop ob_weight2 on.use=carry|
+# (11-20 IG5) on the hill's slope the scales were set down to the lowest ground under them, their top under the ground at
+# their middle (ground check "buried"): a small level pad for the scales, the pan and the crate
+brush flatten at 24.5 -2.5 r=3 s=20 frames=120
+clear at 24.5 -2.5 r=4
+clear at 24.5 -2.5 r=4 all only=(?i)boulder|bush|bamboo|palm|mango
 place TangaroaScaleModel ob_scales at 24 -3 ground sit yaw=90
 prop ob_scales obj.name=ob_scales
 prop ob_scales on.use=message||The wall crew's counterweight scales. A brass plate: BOTH WEIGHTS ON THE PAN - CW 1 IN THE WALL CAVE, CW 2 WITH THE SMUGGLERS.
