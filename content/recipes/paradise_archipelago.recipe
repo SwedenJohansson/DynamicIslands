@@ -363,6 +363,8 @@ pop
 place UT_Hut_LockedDoor_DoorL - at -9.5 -105 h=3.6 yaw=0
 place UT_Hut_LockedDoor_DoorR - at -9.5 -105 h=3.6 yaw=0
 place TangaroaStoreSign_VRArcade - at -9.5 -104.6 h=6.62 sit yaw=180
+# (the sign is drawn from its front only and stands on the open roof: a second one back to back faces the roof, IG8)
+place TangaroaStoreSign_VRArcade - at -9.5 -104.52 h=6.62 sit yaw=0
 place RT_Wall1 exitdoor at -2 -102 h=3.6 yaw=90
 # --- The gaming floor: carpet, pool tables, the claw machine, the slot machine, the stage, the bar, chandeliers, the
 # cameras and their red lights (dark after the blackout); the cashier's cage with the pit boss's ledger ---------------

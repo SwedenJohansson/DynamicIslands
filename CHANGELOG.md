@@ -11,6 +11,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (not released yet)
 
+- **Paradise Archipelago's casino sign reads from the roof too**: the sign over the Golden Gull's front doors stands on the open roof and is drawn from its front only, so from the roof you looked through it; a second sign now stands back to back with it.
 - **No tall yellow sand column at the back of an underwater tunnel**: the sand skirt laid along an open floor's end no longer climbs a wall of sand: rows of it that rise more than 2 m are left out (the column at the back of Sinkmarket's sea cave). `CICaveGapsLook` fails when a skirt row still climbs more than 2 m.
 - **A tunnel's own body and back inside a cave hill wear the hill's rock**: besides its mouth frame, the tunnel piece's walls and back were still drawn in the tunnel's pale ice-cave rock, a pale bluish shape in the lower opening (Old Mine Islet).
 - **No more rock plate standing out of the sea by underwater tunnels**: where a cave hill had dived under the sea beside an underwater tunnel's way in, the strip of rock under the way's floor still rose from the sea floor up to that floor, a lone flat plate out in the water (Utopia Remade). It now stops at the hill's own edge.
