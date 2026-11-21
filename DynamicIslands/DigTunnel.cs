@@ -262,6 +262,8 @@ namespace DynamicIslands.Editor
 		/// under rock but its top is the slope's own shape - it stood up to 1.3 m over the slope, a raised blob with a sharp
 		/// outline that read as a sticker (11-02); and how high its rocks stand round the opening (RimHeight, in patches).</summary>
 		const float RimSkin = 0.12f;
+		/// <summary>How far a cut cell's rock top on a steep cutting wall may be let down under the ground by the ground's bend (cv38).</summary>
+		const float FootDrop = 0.5f;
 		static float RimHeight(float r) { return 0.3f + 0.25f * r; }
 		/// <summary>How far past the cut ground the rim goes down into it (gently, so it meets the ground in a soft line).</summary>
 		static float RimOut(float r) { return 0.8f + 0.1f * r; }
@@ -1892,7 +1894,10 @@ namespace DynamicIslands.Editor
 								up = Mathf.Max(up, bend);
 								down = Mathf.Min(down, bend);
 							}
-						float g = g0 + (fu ? up * (1f - steepBy) : 0f) + 2f * down * steepBy;
+						// (11-21 cv38: over the cut cells by the bend at most FootDrop - let down by twice the bend there too, the top lay up to
+						// 2.8 m under the cut ground beside Pendulum's mouth, dark slabs of lining in the holes where the ears had been. Past
+						// the cut the ground covers it, so twice the bend)
+						float g = g0 + (fu ? up * (1f - steepBy) + Mathf.Max(down, -FootDrop) * steepBy : 2f * down * steepBy);
 						float t = (g - Under - transform.position.y) / sY;
 						top[x + z * nx] = fu && steepBy <= 0f ? Mathf.Max(top[x + z * nx], t) : t;
 					}

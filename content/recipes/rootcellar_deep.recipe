@@ -202,8 +202,8 @@ brush sand at -1.4 35 r=4.5 s=20 frames=30
 dig -7.15,22.15 -13.4,28.8 -17.2,34.3 r=1.75 slope=0 as=rcgal
 dig -1.44,34.96 -10.6,35.2 -17.2,34.3 r=1.75 slope=0 as=rcgal
 dig -17.2,34.3 -20.9,35.9 r=3.2 slope=0 as=rcgal
-# the upper level: a ramp up from the hall's far side, bending back east into the upper store (11 m and more from the
-# crown's tower straight over it, 10 m from the hall)
+# the upper level: a ramp up from the hall's far side, bending back west into the upper store (about 10 m from the
+# stack's middle, under the crown's flank)
 # (11-21 cv35: the store moved 4-7 m in toward the stack's middle, 10 m from it: at -16.5 45 to -14.5 46, 14-16 m out, the
 # stack's flank had fallen to under the store's roof - the ground was 21.9 at 12.6 m out but cut at 14.4 m - and the
 # store broke out of its side, a big round hole to open water in its east wall)
