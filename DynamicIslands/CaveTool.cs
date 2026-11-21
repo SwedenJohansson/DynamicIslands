@@ -1949,22 +1949,27 @@ namespace DynamicIslands.Editor
 				return o.y + h * size.y;
 			};
 			// (a boulder's middle can be off the doorstep while its rock lies on it - 11-02: what any collider puts there counts too)
+			// (building pieces - decks, floors, rails, pillars, walls - are never cleared: a recipe or a builder put them there
+			// before the cave, on purpose. Overpass Shoal's culvert hid 21 deck floors, 7 rails and 2 pillars, c3z29 11-21. They
+			// stay where they are, named in a warning and counted in KeptBuilding, so the island's next check shows them)
+			var kept = new List<EditorGameObject>();
 			HashSet<EditorGameObject> onStep = OnDoorsteps(l);
 			foreach (EditorGameObject e in placedRoot.GetComponentsInChildren<EditorGameObject>(false))
 			{
 				Vector3 p = e.transform.position;
 				if (e.GameObjectName == Tunnel || e.GameObjectName == Room) continue;
 				bool setUp = e.Props != null && e.Props.Count > 0;
-				if (!setUp && onStep.Contains(e)) { cleared.Add(e.gameObject); continue; }
+				bool building = IsBuildingPiece(e.GameObjectName);
+				if (!setUp && onStep.Contains(e)) { if (building) kept.Add(e); else cleared.Add(e.gameObject); continue; }
 				if (p.x < min.x || p.x > max.x || p.z < min.z || p.z > max.z) continue;
-				if (!setUp && (InRock(l, p) || OnWayIn(l, p))) { cleared.Add(e.gameObject); continue; }
+				if (!setUp && (InRock(l, p) || OnWayIn(l, p))) { if (building) kept.Add(e); else cleared.Add(e.gameObject); continue; }
 				float was = oldGround(p), now = terrain.SampleHeight(p) + o.y;
 				if (Mathf.Abs(p.y - was) > 1.5f || Mathf.Abs(now - was) < 0.05f) continue;
 				// (not what lies under another cave's den: the hill rises through the den, its apron takes the ground in it back
 				// down to the den's floor after - Weatherglass Deep's reef chest rode 7.4 m up with the glass room's hill, 11-20)
 				if (UnderDen(p)) continue;
 				Vector3 to = p + Vector3.up * (now - was);
-				if (!setUp && InRock(l, to)) { cleared.Add(e.gameObject); continue; }
+				if (!setUp && InRock(l, to)) { if (building) kept.Add(e); else cleared.Add(e.gameObject); continue; }
 				moved.Add(new Move { T = e.transform, From = p, To = to });
 			}
 			foreach (GameObject go in cleared) go.SetActive(false);
@@ -1973,10 +1978,35 @@ namespace DynamicIslands.Editor
 			foreach (EditorGameObject e in OnDoorsteps(l))
 				if (e.GameObjectName != Tunnel && e.GameObjectName != Room && (e.Props == null || e.Props.Count == 0) && !cleared.Contains(e.gameObject) && e.transform.IsChildOf(placedRoot.transform))
 				{
+					if (IsBuildingPiece(e.GameObjectName)) { if (!kept.Contains(e)) kept.Add(e); continue; }
 					cleared.Add(e.gameObject);
 					e.gameObject.SetActive(false);
 				}
+			if (kept.Count > 0)
+			{
+				KeptBuilding += kept.Count;
+				string named = string.Join("; ", kept.Take(12).Select(e => e.GameObjectName + " at " + e.transform.position.x.ToString("0.0") + " " + e.transform.position.z.ToString("0.0")).ToArray()) + (kept.Count > 12 ? "; ..." : "");
+				KeptBuildingNames.Add(named);
+				Debug.LogWarning("[CUSTOM ISLANDS] WARNING: cave: " + kept.Count + " building piece(s) in its way kept, not cleared (placed before the cave - lay the cave first, or move them): " + named);
+			}
 		}
+
+		/// <summary>Building pieces kept in a cave's way since the counter was last reset (the recipe run resets it per island,
+		/// its save logs it), and what they were.</summary>
+		public static int KeptBuilding;
+		public static readonly List<string> KeptBuildingNames = new List<string>();
+
+		/// <summary>Raft's building blocks and the mod's building pieces (decks, floors, rails, walls, pillars, stairs, roofs):
+		/// never cleared as clutter by a cave.</summary>
+		public static bool IsBuildingPiece(string name)
+		{
+			if (string.IsNullOrEmpty(name)) return false;
+			return BuildingPiece.IsMatch(name);
+		}
+		// (Raft's Block_ pieces all; of the radio tower's RT_ set the walls, floors, fences, pillars, beams and stairs - not its
+		// boat, lamps, radio or clipboard; the reef huts' and ruins' pillars, not the ice pillars or ore)
+		static readonly System.Text.RegularExpressions.Regex BuildingPiece = new System.Text.RegularExpressions.Regex(
+			@"^(Block_|RT_(Wall|Floor|Fence|Pillar|GroundPillar|Beam|Crossbeam|Stair)|ReefHuts_Pillar|FL_(Pillar|Foundation)|Pillar_\d)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
 		/// <summary>Whether a point is under a cave den's (BalboaCave_Bear's) roof: a ray up from it meets the den's rock.</summary>
 		static bool UnderDen(Vector3 p)

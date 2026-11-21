@@ -740,7 +740,9 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
   walk) to **1.5x** (a big cavern); pick it before you drag - an outline of the mouth at that size follows the mouse;
   **Cave room at the end** ends it in Balboa's bear den (off: an open far end, a tunnel through the hill); **Hill over
   it** off leaves the ground as it is (for a cave inside a hill you made yourself). Esc cancels the drag; one **Ctrl+Z**
-  takes the pieces and the ground back together. Nothing is selected after laying, so no gizmo stands on the cave. The pieces are ordinary objects: move, delete or tint them like any
+  takes the pieces and the ground back together. Plants and loose rocks in the cave's rock or on its doorstep are
+  hidden (Ctrl+Z brings them back); building pieces there - floors, walls, rails, pillars, stairs - are kept where they
+  stand and named in a warning in the console (F10), so lay a cave before the deck that goes over it. Nothing is selected after laying, so no gizmo stands on the cave. The pieces are ordinary objects: move, delete or tint them like any
   other; they save with the island and come along into Test and multiplayer. In a world the rock over them is solid
   and no daylight shows through.
 - **Caves: Dig brush:** the other tunnel tool (the one above is now called **Straight tunnel**). Paint your own

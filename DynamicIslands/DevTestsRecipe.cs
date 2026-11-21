@@ -1970,6 +1970,8 @@ namespace DynamicIslands
 			recipeNoPosts = false;
 			recipeReseat = true;
 			leftOutBuried = 0;
+			CaveTool.KeptBuilding = 0;
+			CaveTool.KeptBuildingNames.Clear();
 			pendingQuest = null;
 			pendingMore.Clear();
 			zipPending.Clear();
@@ -2596,6 +2598,9 @@ namespace DynamicIslands
 								CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(covered, false));
 								Log("  " + covered.Count + " plants, rocks, corals or finds under the ground (buried by the recipe's strokes) left out");
 							}
+							// (building pieces a cave laid after them would have cleared - the cave tool keeps them now and counts them; a
+							// deck or rail in a cave's way usually means the cave line belongs before the deck, as Overpass Shoal, c3z29 11-21)
+							if (CaveTool.KeptBuilding > 0) Log("  WARNING: " + CaveTool.KeptBuilding + " building pieces in a cave's way kept (placed before the cave): " + string.Join(" | ", CaveTool.KeptBuildingNames.ToArray()));
 							if (KeptByMiddle.Count > 0) Log("  " + KeptByMiddle.Count + " kept though under the ground, their middle in a dug passage: " + string.Join("; ", KeptByMiddle.Take(12).ToArray()));
 							// (and posts under the floors and decks over nothing - CA30: the corners nothing holds, down to the ground or
 							// the sea floor; "posts off" in the recipe leaves them out)

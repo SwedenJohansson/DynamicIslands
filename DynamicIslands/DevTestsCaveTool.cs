@@ -163,6 +163,7 @@ namespace DynamicIslands
 		public static void CaveToolEditorCommand(string[] args) { StartTest(CaveToolEditorRoutine(args.Length > 0 ? float.Parse(args[0], CultureInfo.InvariantCulture) : 1f)); }
 
 		const string RockName = "SmallBoulder2";
+		const string DeckName = "Block_Floor_Tier3";
 
 		static IEnumerator CaveToolEditorRoutine(float size)
 		{
@@ -187,8 +188,8 @@ namespace DynamicIslands
 			int objects = root.GetComponentsInChildren<EditorGameObject>(false).Length;
 
 			// (a rock where the tunnel will run, and one well beside it)
-			GameObject rockIn = null, rockOut = null;
-			yield return PlaceableCatalog.EnsureLoaded(new[] { RockName });
+			GameObject rockIn = null, rockOut = null, deckIn = null;
+			yield return PlaceableCatalog.EnsureLoaded(new[] { RockName, DeckName });
 			{
 				CaveTool.Layout pl = CaveTool.Plan(mouth, mouth + Vector3.right * 42f * size, -6f, true, size);
 				Vector3 inP = mouth + pl.Flat * 15f; inP.y = pl.FloorAt(15f) + 1f;
@@ -201,10 +202,21 @@ namespace DynamicIslands
 					EditorGameObject.Attach(g, RockName);
 					if (rockIn == null) rockIn = g; else rockOut = g;
 				}
+				// (and a deck floor in its way: a building piece placed before the cave is kept, warned about and counted - Overpass
+				// Shoal's culvert hid 21 deck floors, c3z29 11-21)
+				deckIn = PlaceableCatalog.Spawn(DeckName, root.transform);
+				if (deckIn != null)
+				{
+					Vector3 dp = mouth + pl.Flat * 18f; dp.y = pl.FloorAt(18f) + 1f;
+					deckIn.transform.position = dp;
+					EditorGameObject.Attach(deckIn, DeckName);
+				}
 				objects = root.GetComponentsInChildren<EditorGameObject>(false).Length;
 			}
 			List<GameObject> laid = null;
 			var shownBefore = root.GetComponentsInChildren<EditorGameObject>(false).Select(x => x.gameObject).ToList();
+			CaveTool.KeptBuilding = 0;
+			CaveTool.KeptBuildingNames.Clear();
 			yield return CaveTool.Lay(mouth, mouth + Vector3.right * 42f * size, -6f, true, true, size, m => laid = m);
 			CaveTool.Layout l = CaveTool.LastLayout;
 			if (laid == null || laid.Count == 0 || l == null) { Fail("cave tool: nothing was laid"); yield break; }
@@ -222,6 +234,15 @@ namespace DynamicIslands
 					"size " + size + "x: the pieces and the den's wall laid at it (wall " + (plug != null ? plug.lossyScale.x.ToString("0.00") : "none") + ")");
 			}
 			Check(ref ok, rockIn != null && !rockIn.activeSelf && rockOut != null && rockOut.activeSelf, "a rock in the tunnel's way cleared, one beside it kept");
+			Check(ref ok, deckIn != null && deckIn.activeSelf && CaveTool.KeptBuilding == 1 && CaveTool.KeptBuildingNames.Count == 1 && CaveTool.KeptBuildingNames[0].StartsWith(DeckName),
+				"a deck floor in the tunnel's way kept, named and counted (" + CaveTool.KeptBuilding + ": " + string.Join(" | ", CaveTool.KeptBuildingNames.ToArray()) + ")");
+			Check(ref ok, CaveTool.IsBuildingPiece("Block_Wall_Fence_Tier3") && CaveTool.IsBuildingPiece("RT_PillarThick") && CaveTool.IsBuildingPiece("Block_Foundation") &&
+				!CaveTool.IsBuildingPiece(RockName) && !CaveTool.IsBuildingPiece("TP_IcePillar01") && !CaveTool.IsBuildingPiece("RT_Clipboard") && !CaveTool.IsBuildingPiece("VP_MotherlodePillar1_Stage1"),
+				"building pieces told from clutter (Block_*, RT_ walls/pillars; not rocks, ice pillars, ore or the radio tower's props)");
+			// (the deck out again, so it stands in no later check's way)
+			if (deckIn != null) { UnityEngine.Object.DestroyImmediate(deckIn); deckIn = null; }
+			CaveTool.KeptBuilding = 0;
+			CaveTool.KeptBuildingNames.Clear();
 			var selected = DynamicIslands.EditorGizmoHandler != null ? DynamicIslands.EditorGizmoHandler.SelectedRoots : null;
 			Check(ref ok, selected == null || !laid.Any(g => selected.Contains(g.transform)), "nothing of the cave is selected after (its gizmo stood on it)");
 			Transform frame = laid[0].transform.Find(CaveTool.MouthName);
