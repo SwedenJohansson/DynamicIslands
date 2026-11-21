@@ -275,12 +275,18 @@ namespace DynamicIslands
 			if (n > 0) Log("PASS: pictures of " + n + " cave pieces"); else Fail("no cave pieces on the loaded islands");
 		}
 
-		[ConsoleCommand(name: "CICaveIslands", docs: "Dev, world (host, a test world 'CI ...'): every saved island with cave pieces or dug tunnels brought next to the raft in turn - its rock mountain over the caves (AU83) is there, mapped (cavemap_<island>.txt) and pictured from four sides and above (shot_caveisl_<n>_<side>.png; each side picture must have the island in view: half its framed box on the screen, a fifth of the rays through that box on its land - CIIslandFramed), nothing seen through from inside (CICaveInside's look round, a picture of the worst look: shot_caveisl_<n>_inside_<k>.png, a dug tunnel's shot_caveisl_<n>_dug_<k>.png), then the island is taken away again: CICaveIslands [part of the name] [most]")]
+		static string CaveShotPre = "caveisl_";
+		[ConsoleCommand(name: "CICaveIslands", docs: "Dev, world (host, a test world 'CI ...'; as=<tag> names its pictures caveisl_<tag>_...): every saved island with cave pieces or dug tunnels brought next to the raft in turn - its rock mountain over the caves (AU83) is there, mapped (cavemap_<island>.txt) and pictured from four sides and above (shot_caveisl_<n>_<side>.png; each side picture must have the island in view: half its framed box on the screen, a fifth of the rays through that box on its land - CIIslandFramed), nothing seen through from inside (CICaveInside's look round, a picture of the worst look: shot_caveisl_<n>_inside_<k>.png, a dug tunnel's shot_caveisl_<n>_dug_<k>.png), then the island is taken away again: CICaveIslands [part of the name] [most]")]
 		public static void CaveIslandsCommand(string[] args)
 		{
 			// (the name may have spaces - "CICaveIslands Old Mine Islet" read "Mine" as the count and threw (11-05): the count
 			// and "keep" are taken off the end, the rest is the name)
 			var rest = new List<string>(args ?? new string[0]);
+			// (as=<tag>: the pictures named caveisl_<tag>_<n>_... - two phases in one job each numbered their islands from 1 and
+			// the second's pictures overwrote the first's, c3z51)
+			string tag = rest.Where(a => a.StartsWith("as=", StringComparison.Ordinal)).Select(a => a.Substring(3)).LastOrDefault();
+			rest.RemoveAll(a => a.StartsWith("as=", StringComparison.Ordinal));
+			CaveShotPre = string.IsNullOrEmpty(tag) ? "caveisl_" : "caveisl_" + tag + "_";
 			bool keep = rest.Count > 0 && rest[rest.Count - 1] == "keep"; // (the islands stay, for player 2 to see: CICaveIslands <name> 1 keep)
 			if (keep) rest.RemoveAt(rest.Count - 1);
 			int most = 99, n;
@@ -529,11 +535,11 @@ namespace DynamicIslands
 						else { fill = 1f; fills.Add((i * 90 + 30) + ": over land or shallows " + g.ToString("F1") + " m, not measured"); measured--; }
 						measured++;
 						if (fill < 0.15f) empty = true;
-						yield return CameraShot(from, b.center, "caveisl_" + n + "_" + (i * 90 + 30));
+						yield return CameraShot(from, b.center, CaveShotPre + n + "_" + (i * 90 + 30));
 					}
 					Log("    the island in the side pictures: " + string.Join(", ", fills.ToArray()) + (empty ? " - a side without the island in view" : measured == 0 ? " - flooded, no side over open water to picture it from (not measured)" : ""));
 					if (empty) { bad++; framedIslands++; }
-					yield return CameraShot(b.center + new Vector3(0.01f, b.size.y + d, -d * 0.6f), b.center, "caveisl_" + n + "_above");
+					yield return CameraShot(b.center + new Vector3(0.01f, b.size.y + d, -d * 0.6f), b.center, CaveShotPre + n + "_above");
 					// (every way in from outside: a close look into the mouth and a three-quarter view of it, its arch and the ground in
 					// front - user 11-08: one rock, no black stair-stepped frame, nothing seen through, no square slab before it)
 					var views = m != null ? m.MouthViews() : new List<KeyValuePair<Vector3, Vector3>>();
@@ -555,11 +561,11 @@ namespace DynamicIslands
 							RaycastHit gh;
 							if (Physics.Raycast(new Vector3(eye.x, eye.y + 40f, eye.z), Vector3.down, out gh, 80f, ~0, QueryTriggerInteraction.Ignore)) eye.y = Mathf.Max(eye.y, gh.point.y + 1.7f);
 							eye.y = Mathf.Max(eye.y, 1.5f);
-							yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
-							PickGrid(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
+							yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), CaveShotPre + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
+							PickGrid(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), CaveShotPre + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
 							// (r84 test: the same with the sun's shadows off - is a jagged line a shadow?)
 							Light sunL = UnityEngine.Object.FindObjectsOfType<Light>().FirstOrDefault(x => x.type == LightType.Directional && x.isActiveAndEnabled);
-							if (sunL != null) { LightShadows was = sunL.shadows; sunL.shadows = LightShadows.None; yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_closens" : "_qns")); sunL.shadows = was; }
+							if (sunL != null) { LightShadows was = sunL.shadows; sunL.shadows = LightShadows.None; yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), CaveShotPre + n + "_mouth" + mv + (q == 0 ? "_closens" : "_qns")); sunL.shadows = was; }
 						}
 						Log("    mouth " + mv + " at " + (at - e.Root.transform.position).ToString("F1") + " facing " + outDir.ToString("F1"));
 						mv++;
@@ -575,7 +581,7 @@ namespace DynamicIslands
 						if (seen > 0 || t == caves[0]) Log("    inside " + t.name + " at " + t.position.ToString("F0") + ": " + detail);
 						if (seen == 0) continue;
 						seenThrough = true;
-						yield return CameraShot(eye, eye + look * 5f, "caveisl_" + n + "_inside_" + caves.IndexOf(t));
+						yield return CameraShot(eye, eye + look * 5f, CaveShotPre + n + "_inside_" + caves.IndexOf(t));
 					}
 					foreach (DigTunnel dt in digs)
 					{
@@ -585,7 +591,7 @@ namespace DynamicIslands
 						Log("    inside the dug tunnel at " + dt.transform.position.ToString("F0") + ": " + detail);
 						if (seen == 0) continue;
 						seenThrough = true;
-						yield return CameraShot(eye, eye + look * 5f, "caveisl_" + n + "_dug_" + digs.IndexOf(dt));
+						yield return CameraShot(eye, eye + look * 5f, CaveShotPre + n + "_dug_" + digs.IndexOf(dt));
 					}
 					if (seenThrough) { bad++; insideIslands++; }
 				}
