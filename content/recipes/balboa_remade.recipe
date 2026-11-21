@@ -77,10 +77,6 @@ place Zone_Trigger den at 1 -12 y=1.5
 place Creature_Bear mamabear at 1 -22 y=0.5
 place "Box Small" pack at -3 -27 ground yaw=30
 place Note_Paper scrawl at 4.5 -7 ground yaw=200
-# (c3z52 11-21: "cave rim off the ground 1.0 m" on the den rock's side (its piece -4.9 0.4 -1.2): the rock's outer slab 9.7 m
-#     over the sea there, the hill 7.3 m. A small rock mound up under the slab, just outside it (not into the den)
-brush flatten at -5.21 -19.99 r=1.2 s=20 frames=150 h=9.5
-brush rock at -5.21 -19.99 r=2 s=10 frames=30
 pop
 
 # --- The summit (50 m): the rangers' radio mast - two of the radio tower's thick pillars, its dish and lamp - and the
@@ -122,6 +118,10 @@ brush smooth at -54.7 -90.9 r=10 s=4 frames=20
 brush flatten at -54.7 -90.9 r=4.5 s=20 frames=300 h=9.7
 brush rock at -54.7 -90.9 r=9 s=20 frames=30
 clear at -54.7 -90.9 r=9
+# (c3z59 11-21: the rim gap 1.0 m was here, not at the Mama bear den: the cave rock's outer slab on its west side (world
+#     -55 9 164) 1.0 m over the hill. A small rock mound up under the slab there, just outside the mouth)
+brush flatten at -55.2 -87.8 r=2.5 s=20 frames=300 h=10.9
+brush rock at -55.2 -87.8 r=3.5 s=20 frames=30
 # --- JUMP COURSE bb (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
 # JUMP bb pad=2.5 at=46 -86
 push at 46 -86
