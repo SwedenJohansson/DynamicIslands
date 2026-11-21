@@ -29,9 +29,10 @@ namespace DynamicIslands.Editor
 		/// FarEndLow is a little under 0: a rope meeting its own far floor touches it by a few mm (11-21 c3z17/18: Thalassa
 		/// Mooring 0.0096 m, Engine Court 0.0038 m at the floor itself), not a cut like Caisson Yard's 0.24 m.
 		public const float FarEndLow = -0.05f;
-		/// <summary>zipto keeps the rope's last FarSkip m at least FarEndClear m over the ground (a world's cave hill comes out a
-		/// little off the editor's measuring one), raising the far end on a deck up to FarMaxRaise m (11-21 c3z15: Caisson Yard's
-		/// summit rope, its far end on the hill's skin, ran 0.24 m into the dune's slope just before it).</summary>
+		/// <summary>zipto keeps the rope's last FarSkip m at least FarEndClear m over the cave hill's skin (a world's hill comes out a
+		/// little off the editor's measuring one: 11-21 c3z21, 0.2 m at Caisson Yard's summit floor) and out of the land and what
+		/// stands on it (FarEndLow), raising the far end on a deck up to FarMaxRaise m (11-21 c3z15: Caisson Yard's summit rope,
+		/// its far end on the hill's skin, ran 0.24 m into the dune's slope just before it).</summary>
 		public const float FarEndClear = 0.3f, FarMaxRaise = 3f;
 
 		/// <summary>The rope's lowest over the ground in its last FarSkip m, its far end included (FarEndLow).</summary>

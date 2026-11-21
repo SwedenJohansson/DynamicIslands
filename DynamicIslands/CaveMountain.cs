@@ -24,6 +24,11 @@ namespace DynamicIslands.Editor
 		const int RidgePasses = 4; const float RidgeClear = 1.3f;
 
 		readonly List<Transform> caves = new List<Transform>();
+		/// <summary>The island's origin (a world's island root; the editor's land for Preview): the hill's grid and its rough bumps
+		/// are laid from it, not from the world's 0, so the island comes out with the same hill wherever a world puts it and the
+		/// editor measures the hill a world builds (11-21 c3z21: they were laid from the world's 0 - Caisson Yard's summit zipline
+		/// floor, set on the editor's measuring skin, stood 0.2 m in the world's sand, its rope ending in it).</summary>
+		Vector3 anchor;
 		readonly List<PropInfo> infos = new List<PropInfo>();
 		readonly List<IDictionary<string, string>> props = new List<IDictionary<string, string>>();
 		float due = -1f;
@@ -41,6 +46,7 @@ namespace DynamicIslands.Editor
 			if (!Wants(name)) return;
 			PropInfo p = RaftProps.Get(name);
 			CaveMountain m = island.GetComponent<CaveMountain>() ?? island.gameObject.AddComponent<CaveMountain>();
+			m.anchor = island.position;
 			// (lit as the cave tool's dens are: warm and dim, not by the blue sky probe outside - a blue den under a brown hill, 11-03)
 			CaveLit.Mark(piece);
 			m.caves.Add(piece.transform);
@@ -56,10 +62,11 @@ namespace DynamicIslands.Editor
 		/// object to measure against, its skin on the land's layer: zipto's rope over the ground at save (11-21 c3z9: Caisson Yard's
 		/// summit rope ran 0.32 m into the world's hill and stopped riders 6.5 m short; the editor didn't see the hill). Null when no
 		/// piece wants one or none came out. The caller destroys it (DestroyImmediate) before the island is saved.</summary>
-		public static GameObject Preview(IEnumerable<EditorGameObject> placed)
+		public static GameObject Preview(IEnumerable<EditorGameObject> placed, Vector3 islandOrigin)
 		{
 			var go = new GameObject(PreviewName);
 			CaveMountain m = go.AddComponent<CaveMountain>();
+			m.anchor = islandOrigin;
 			foreach (EditorGameObject e in placed)
 			{
 				if (e == null || !e.gameObject.activeInHierarchy || !Wants(e.GameObjectName)) continue;
@@ -319,8 +326,9 @@ namespace DynamicIslands.Editor
 			if (!any || look == null || cols.Count == 0) return;
 
 			Physics.SyncTransforms();
-			int nx = Mathf.CeilToInt((b.size.x + 2f * pad) / Cell) + 1, nz = Mathf.CeilToInt((b.size.z + 2f * pad) / Cell) + 1;
-			float x0 = b.min.x - pad, z0 = b.min.z - pad, rayTop = b.max.y + 5f, rayLen = b.size.y + 60f;
+			// (the grid on the island's own cells - see anchor)
+			float x0 = anchor.x + Mathf.Floor((b.min.x - pad - anchor.x) / Cell) * Cell, z0 = anchor.z + Mathf.Floor((b.min.z - pad - anchor.z) / Cell) * Cell, rayTop = b.max.y + 5f, rayLen = b.size.y + 60f;
+			int nx = Mathf.CeilToInt((b.max.x + pad - x0) / Cell) + 1, nz = Mathf.CeilToInt((b.max.z + pad - z0) / Cell) + 1;
 			var top = new float[nx, nz];       // the shells' roofs (NaN: none)
 			var ground = new float[nx, nz];    // what is under them otherwise
 			var groundBy = new string[nx, nz]; // (tests: what that is)
@@ -639,7 +647,8 @@ namespace DynamicIslands.Editor
 					if (cut[i, k]) { height[i, k] = ground[i, k] - 3.5f; on[i, k] = false; continue; }
 					float x = x0 + i * Cell, z = z0 + k * Cell;
 					float rough = Mathf.Clamp01((height[i, k] - ground[i, k]) / 3f); // (none at its foot: no bumps through the ground around)
-					height[i, k] += rough * ((Mathf.PerlinNoise(x * 0.13f, z * 0.13f) - 0.5f) * 2.2f + (Mathf.PerlinNoise(x * 0.4f + 7f, z * 0.4f) - 0.5f) * 0.6f);
+					float ux = x - anchor.x + 500f, uz = z - anchor.z + 500f; // (the island's own bumps - see anchor)
+					height[i, k] += rough * ((Mathf.PerlinNoise(ux * 0.13f, uz * 0.13f) - 0.5f) * 2.2f + (Mathf.PerlinNoise(ux * 0.4f + 7f, uz * 0.4f) - 0.5f) * 0.6f);
 					if (!float.IsNaN(cover[i, k]) && float.IsNaN(corridor[i, k]) && height[i, k] < cover[i, k] + Over) height[i, k] = cover[i, k] + Over;
 					// (its foot goes on a little under the ground: no edge to see where it meets it; and only where the hill itself
 					// comes near the ground - the rounding alone lifted rock out of a pit or a dug stair far from the cave, Ashfall's crypt)

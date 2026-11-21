@@ -399,7 +399,7 @@ namespace DynamicIslands
 			den.transform.position = new Vector3(dp.x, GroundY(dp.x, dp.z), dp.z);
 			Physics.SyncTransforms();
 			Bounds denBox = MeshBox(den);
-			GameObject hill = CaveMountain.Preview(new[] { den.GetComponent<EditorGameObject>() });
+			GameObject hill = CaveMountain.Preview(new[] { den.GetComponent<EditorGameObject>() }, terraineditor.terrain.transform.position);
 			Check(ref ok, hill != null && hill.transform.Find(CaveMountain.SkinName) != null, "the editor builds the cave hill a world builds over a bear den, to measure ropes against");
 			if (hill != null)
 			{
@@ -451,7 +451,7 @@ namespace DynamicIslands
 			zl7.transform.position = new Vector3(flat.x + 30f, GroundY(flat.x + 30f, flat.z), flat.z);
 			Physics.SyncTransforms();
 			Bounds d7 = MeshBox(den7);
-			GameObject hill7 = CaveMountain.Preview(new[] { den7.GetComponent<EditorGameObject>() });
+			GameObject hill7 = CaveMountain.Preview(new[] { den7.GetComponent<EditorGameObject>() }, terraineditor.terrain.transform.position);
 			if (hill7 != null && ze7 != null)
 			{
 				Physics.SyncTransforms();
@@ -470,7 +470,7 @@ namespace DynamicIslands
 				Physics.SyncTransforms();
 				Func<float, float, float> g9 = ZiplineEnds.OverSkins((x, z) => GroundY(x, z), ZiplineEnds.CaveSkins(hill7.transform));
 				MeshPath_Zipline_Landmark line9 = zl7.GetComponentInChildren<MeshPath_Zipline_Landmark>(true);
-				Func<float> end9 = () => { Vector3 n9, f9, a9; Physics.SyncTransforms(); return line9 != null && ZiplineEnds.Ends(zl7, ze7.Props, org, out n9, out f9) ? ZiplineEnds.FarStretchLowest(ZiplineEnds.RopeBetween(line9, f9, n9), n9, f9, g9, out a9) : float.NaN; };
+				Func<float> end9 = () => { Vector3 n9, f9, a9; Physics.SyncTransforms(); return line9 != null && ZiplineEnds.Ends(zl7, ze7.Props, org, out n9, out f9) ? ZiplineEnds.FarStretchLowest(ZiplineEnds.RopeBetween(line9, f9, n9, Slack9(ze7)), n9, f9, g9, out a9) : float.NaN; };
 				float before9 = end9();
 				GameObject deck9, again9;
 				var lad9 = new HashSet<GameObject>(zipDeckLadders);
@@ -2502,7 +2502,7 @@ namespace DynamicIslands
 							if (why != null) { error = why; break; }
 							// (the ziplines zipto aimed: their ropes over the land as it ends up - ZipClearGround)
 							// (over the cave hill a world builds over the island's cave pieces, made now to measure against - 11-21 c3z9)
-							GameObject zipHill = zipPending.Any(ze => ze != null) ? CaveMountain.Preview(PlacedEditorObjects()) : null;
+							GameObject zipHill = zipPending.Any(ze => ze != null) ? CaveMountain.Preview(PlacedEditorObjects(), terraineditor.terrain != null ? terraineditor.terrain.transform.position : Vector3.zero) : null;
 							if (zipHill != null) Log("  zipto: ropes measured over the cave hill a world builds over the island's caves too");
 							try { foreach (EditorGameObject ze in zipPending) if (ze != null) { ZipClearGround(ze); GameObject fd; ZipFarClear(ze, out fd); } }
 							finally { if (zipHill != null) UnityEngine.Object.DestroyImmediate(zipHill); Physics.SyncTransforms(); }
@@ -2974,9 +2974,20 @@ namespace DynamicIslands
 
 		/// <summary>zipto's far end clear for its whole last stretch (11-21 c3z15: Caisson Yard's summit line, its far end set on the
 		/// cave hill's skin, still ran 0.24 m into the dune's slope just before it and ended in the sand): when the rope's last
-		/// FarSkip m come under FarEndClear m over the ground (the land, the hill's skin, what stands solid), zip.to goes up until
-		/// they don't (FarMaxRaise at most), its floor on a deck on posts to the ground, ladders down its far side when it stands
-		/// over 1 m up. Null when it was clear; else the log's words. deck: the deck made (null when none).</summary>
+		/// FarSkip m cut the ground (the land, what stands solid on it: under FarEndLow m over it) or come under FarEndClear m over
+		/// the cave hill's skin, zip.to goes up until they don't (FarMaxRaise at most; the rope tightened when no raise does), its
+		/// floor on a deck on posts to the ground - the rope not through that deck either - ladders down its far side when it
+		/// stands over 1 m up. Null when it was clear; else the log's words. deck: the deck made (null when none).</summary>
+		/// <summary>The grounding test: a zipline's zip.slack (NaN: none set - the line's own).</summary>
+		static float Slack9(EditorGameObject e)
+		{
+			float s;
+			return float.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipSlack) ?? "", NumberStyles.Float, CultureInfo.InvariantCulture, out s) && s != 0f ? s : float.NaN;
+		}
+
+		/// <summary>Half the width of the deck ZipFarClear stands a raised far floor on (Raft's floor block, 1.5 m), a little over.</summary>
+		const float FarDeckHalf = 0.8f;
+
 		static string ZipFarClear(EditorGameObject e, out GameObject deck)
 		{
 			deck = null;
@@ -2991,26 +3002,62 @@ namespace DynamicIslands
 			float slack;
 			if (!float.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipSlack) ?? "", NumberStyles.Float, CultureInfo.InvariantCulture, out slack) || float.IsNaN(slack) || float.IsInfinity(slack) || slack == 0f) slack = float.NaN;
 			float low0 = ZiplineEnds.FarStretchLowest(ZiplineEnds.RopeBetween(line, far, near, slack), near, far, ground, out at), low = low0, r = 0f;
-			// (only where the ground before the end comes up over the room the end has at its own floor - an end on flat ground or
-			// a roof has its rope's last point a few cm over it, as Raft makes it, or touching its floor by a few mm (11-21 c3z17/18:
-			// Thalassa Mooring, Engine Court), and is left as it is: the ground check's own FarEndLow margin under the room it has)
+			// The room the rope's last FarSkip m want (11-21 c3z21): over the cave hill's skin FarEndClear m (a world's hill comes out
+			// a little off the measuring one: Caisson Yard's summit floor, set on the measuring skin, stood 0.2 m in the world's
+			// sand, its rope ending in it), so an end on the skin always stands on a deck; over the land and what stands on it only
+			// no cut (FarEndLow, the ground check's own: a rope meeting its floor on flat ground or a roof touches it by a few mm -
+			// 11-21 c3z17/18 Thalassa Mooring, Engine Court - and is left as it is); over the deck a raise stands the floor on, no
+			// cut either (c3z21: a rope rising into its far end ran 0.4 m through the deck made under it - a tighter rope then).
 			Vector3 fw = origin + to;
-			float own = far.y - ground(fw.x, fw.z);
-			if (low0 >= ZiplineEnds.FarEndLow && low0 >= Mathf.Min(ZiplineEnds.FarEndClear, own) + ZiplineEnds.FarEndLow) return null;
+			Func<List<Vector3>, Vector3, float, float> worst = (rope, f, deckTop) =>
+			{
+				float w = float.PositiveInfinity, len = new Vector2(f.x - near.x, f.z - near.z).magnitude;
+				for (int i = 0; i + 1 < rope.Count; i++)
+				{
+					int steps = Mathf.Max(1, Mathf.CeilToInt(new Vector2(rope[i + 1].x - rope[i].x, rope[i + 1].z - rope[i].z).magnitude / 0.25f));
+					for (int k = 0; k <= steps; k++)
+					{
+						Vector3 p = Vector3.Lerp(rope[i], rope[i + 1], k / (float)steps);
+						if (new Vector2(p.x - near.x, p.z - near.z).magnitude < len - ZiplineEnds.FarSkip) continue;
+						Collider c;
+						float g = ZipGroundAt(e, p.x, p.z, out c);
+						w = Mathf.Min(w, p.y - g - (c != null && c.name == CaveMountain.SkinName ? ZiplineEnds.FarEndClear : ZiplineEnds.FarEndLow));
+						if (!float.IsNaN(deckTop) && Mathf.Abs(p.x - fw.x) <= FarDeckHalf && Mathf.Abs(p.z - fw.z) <= FarDeckHalf) w = Mathf.Min(w, p.y - deckTop - ZiplineEnds.FarEndLow);
+					}
+				}
+				return w;
+			};
+			float w0 = worst(ZiplineEnds.RopeBetween(line, far, near, slack), far, float.NaN);
+			if (w0 >= 0f) return null;
 			Vector3 corner = new Vector3(TopFrame.Origin.x, 0f, TopFrame.Origin.y), at0 = at;
 			string where0 = Num(at0.x - corner.x) + " " + Num(at0.z - corner.z) + " (ground " + Num(ground(at0.x, at0.z)) + ZipGroundWhat(e, at0.x, at0.z) + ")";
-			while (low < ZiplineEnds.FarEndClear && r < ZiplineEnds.FarMaxRaise)
+			// (the least raise that gives the room, the deck it then stands on counted; the rope tightened step by step when none
+			// does - a rope sagging into its far end rises into it from under, and a raise lifts the deck with it)
+			float slack0 = !float.IsNaN(slack) ? slack : ZiplineEnds.Slack(line), bestW = float.NegativeInfinity, bestR = 0f, bestS = slack0, under0 = ground(fw.x, fw.z);
+			float[] tighter = float.IsNaN(slack0) ? new[] { float.NaN } : new[] { slack0, slack0 * 0.5f, slack0 * 0.25f, slack0 * 0.1f };
+			bool found = false;
+			foreach (float sl in tighter)
 			{
-				r = Mathf.Min(ZiplineEnds.FarMaxRaise, Mathf.Ceil((r + Mathf.Max(0.05f, ZiplineEnds.FarEndClear - low)) * 20f) / 20f);
-				Vector3 f2 = far + Vector3.up * r;
-				low = ZiplineEnds.FarStretchLowest(ZiplineEnds.RopeBetween(line, f2, near, slack), near, f2, ground, out at);
+				for (float rr = 0.05f; rr <= ZiplineEnds.FarMaxRaise + 0.001f; rr += 0.05f)
+				{
+					Vector3 f2 = far + Vector3.up * rr;
+					float wr = worst(ZiplineEnds.RopeBetween(line, f2, near, sl), f2, fw.y + rr - under0 > 0.15f ? fw.y + rr - 0.05f : float.NaN);
+					if (wr > bestW + 0.005f) { bestW = wr; bestR = rr; bestS = sl; }
+					if (wr >= 0f) { found = true; break; }
+				}
+				if (found) break;
 			}
+			r = Mathf.Round(bestR * 20f) / 20f;
+			low = ZiplineEnds.FarStretchLowest(ZiplineEnds.RopeBetween(line, far + Vector3.up * r, near, bestS), near, far + Vector3.up * r, ground, out at);
 			Vector3 floorW = origin + to + Vector3.up * r;
 			float under = ground(floorW.x, floorW.z);
 			PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(to + Vector3.up * r)));
-			string words = "  zipto: its rope came " + Num(low0) + " m over the ground in its last " + Num(ZiplineEnds.FarSkip) + " m at " + where0 + " - its far end raised " + Num(r) + " m, the least there now " + Num(low) + " m";
-			if (low < ZiplineEnds.FarEndClear)
-				words = "  WARNING:" + words.Substring(1) + ", short of " + Num(ZiplineEnds.FarEndClear) + " m with the most raise (" + Num(ZiplineEnds.FarMaxRaise) + " m): move the far end onto the top or the flat";
+			bool tightened = !float.IsNaN(bestS) && !Mathf.Approximately(bestS, slack0);
+			if (tightened) PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipSlack, bestS.ToString("0.###", CultureInfo.InvariantCulture)));
+			string words = "  zipto: its rope came " + Num(low0) + " m over the ground in its last " + Num(ZiplineEnds.FarSkip) + " m at " + where0 + " (" + Num(-w0) + " m short of its room there) - its far end raised " + Num(r) + " m" +
+				(tightened ? ", its rope tightened to slack " + Num(bestS) + " (was " + Num(slack0) + ")" : "") + ", the least there now " + Num(low) + " m";
+			if (!found)
+				words = "  WARNING:" + words.Substring(1) + ", still " + Num(-bestW) + " m short of its room (" + Num(ZiplineEnds.FarEndClear) + " m over the cave hill, no cut elsewhere) with the most raise (" + Num(ZiplineEnds.FarMaxRaise) + " m) and the tightest rope: move the far end onto the top or the flat";
 			// (its floor on a deck where it stands off the ground: nothing floating - the far pieces stand on its top)
 			GameObject placedGo = GameObject.Find("PlacedObjects");
 			if (floorW.y - under > 0.15f && placedGo != null && ObjectLimit.Allow(1))
