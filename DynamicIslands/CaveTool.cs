@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -348,6 +348,14 @@ namespace DynamicIslands.Editor
 		public const float PlugForward = 1.8f;
 		/// <summary>How far behind the hill's skin a lone den's wall's outside is set where the skin is just in front of it (m).</summary>
 		public const float SkinCover = 0.35f;
+		/// <summary>How far a lone den's wall may stand out of the hill's skin and still be set back under it (WallLikeHill).</summary>
+		const float WallProud = 1.2f;
+		/// <summary>How far a corner of a lone den's wall that stands out of the hill may still be set back under its skin when the
+		/// rest of its triangle already is (WallLikeHill: the torn spikes over Gravewell Shaft's den, 11-21 cv38).</summary>
+		const float SpikeProud = 4f;
+		/// <summary>How far a lone den's wall's outside faces are turned from straight out toward the hill's own slope at most,
+		/// in degrees (WallLikeHill): a wall facing level out drew the hill's dark rock layer and the light of a cliff (cv38).</summary>
+		public const float WallTilt = 65f;
 		const float FlakeArea = 6f; // (r84: a loose bit of the wall's outside smaller than this, m2, is dropped - WallLikeHill)
 		/// <summary>A lone den's way in in shade: its wall's outside round the arch drawn darker, in bands out to the arch's size times
 		/// these (the first band darkest, by PlugShade), the rest as the hill. Each band's edge is a smooth, uneven line (the
@@ -355,6 +363,7 @@ namespace DynamicIslands.Editor
 		public static readonly float[] PlugShadeOut = { 1.45f };
 		// (11-08 user: the first band at 0.28 read as a black, notched frame round every den's arch - then a soft fall-off in three
 		// bands; 11-09 user: those read as 2-3 stepped rings on the arch's rim, a stair - now one band)
+		// (11-21 cv40: not drawn on a hill any more - WallLikeHill draws every band as the hill, a dark panel otherwise)
 		public static readonly float[] PlugShade = { 0.86f };
 		/// <summary>The name of a lone den's way-in sleeve's holder (CaveVeil): a short rock tunnel, seen from outside only.</summary>
 		public const string PlugVeilName = "CavePlugVeil";
@@ -505,39 +514,34 @@ namespace DynamicIslands.Editor
 			int kept = 0;
 			for (int k = 0; k < ny; k++)
 			{
-				float ya = y0 + k * cell, yb = Mathf.Min(y1, ya + cell);
-				int run = -1;
-				for (int i = 0; i <= nx; i++)
+				// (each cell its own quad on the shared grid, not a run of cells: a run's long edge met the shorter runs over and
+				// under it at points along it, and the wall drew thin sky-blue cracks along those rows - Weatherglass Deep's right
+				// cliff face from outside, cave round 4 11-20)
+				float ya = y0 + k * cell, yb = Mathf.Min(y1, y0 + (k + 1) * cell);
+				for (int i = 0; i < nx; i++)
 				{
 					bool on = false;
-					if (i < nx)
-					{
-						// (the den's own opening - its mouth's outline, where the wall closes it - and the rock round the tunnel's end
-						// under cover; each with one cell more round it, its edge in the rock)
-						for (int di = -1; di <= 1 && !on; di++)
-							for (int dk = -1; dk <= 1 && !on; dk++)
-							{
-								int a = i + di, b = k + dk;
-								if (a >= 0 && b >= 0 && a < nx && b < ny && (opening[a, b] || roofed[i, k] && inside[a, b])) on = true;
-							}
-						float xa = x0 + i * cell, xb = xa + cell;
-						if (on && xb > hx0 && xa < hx1 && yb > hy0 && ya < hy1) on = false; // (the passage's hole)
-					}
-					if (on) kept++;
-					if (on && run < 0) run = i;
-					if (!on && run >= 0)
-					{
-						float ax = x0 + run * cell, bx = Mathf.Min(x1, x0 + i * cell);
-						int n = verts.Count;
-						// (each side its own corners, as Plug's: shared ones drew the wall black - 11-03)
-						verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
-						verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
-						tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2, n + 4, n + 5, n + 6, n + 4, n + 6, n + 7 });
-						run = -1;
-					}
+					// (the den's own opening - its mouth's outline, where the wall closes it - and the rock round the tunnel's end
+					// under cover; each with one cell more round it, its edge in the rock)
+					for (int di = -1; di <= 1 && !on; di++)
+						for (int dk = -1; dk <= 1 && !on; dk++)
+						{
+							int a = i + di, b = k + dk;
+							if (a >= 0 && b >= 0 && a < nx && b < ny && (opening[a, b] || roofed[i, k] && inside[a, b])) on = true;
+						}
+					float ax = x0 + i * cell, bx = Mathf.Min(x1, x0 + (i + 1) * cell);
+					if (on && bx > hx0 && ax < hx1 && yb > hy0 && ya < hy1) on = false; // (the passage's hole)
+					if (!on) continue;
+					kept++;
+					int n = verts.Count;
+					// (each side its own corners, as Plug's: shared ones drew the wall black - 11-03)
+					verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
+					verts.Add(new Vector3(ax, ya, z)); verts.Add(new Vector3(bx, ya, z)); verts.Add(new Vector3(bx, yb, z)); verts.Add(new Vector3(ax, yb, z));
+					tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2, n + 4, n + 5, n + 6, n + 4, n + 6, n + 7 });
 				}
 			}
 			var mesh = new Mesh { name = ClippedMesh };
+			if (verts.Count > 65000) mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32; // (a large den's cells, one quad each)
 			mesh.SetVertices(verts);
 			mesh.SetTriangles(tris, 0);
 			mesh.SetUVs(0, verts.Select(v => new Vector2(v.x / PlugTile, v.y / PlugTile)).ToList());
@@ -658,6 +662,50 @@ namespace DynamicIslands.Editor
 			return factor;
 		}
 
+		/// <summary>How far the last WallLikeHill turned its wall's outside faces toward the hill's slope, degrees (log, tests).</summary>
+		public static float WallTiltSeen;
+		/// <summary>How many of the last WallLikeHill's outside points in the hill's opening were brought flush with the skin (log, tests).</summary>
+		public static int WallFlushed;
+		/// <summary>How many of the last WallLikeHill's outside faces took the texture mapping of the skin behind them, and how many of its corners the skin's own normal (log, tests).</summary>
+		public static int WallSkinMapped, WallSkinLit;
+		/// <summary>Of WallSkinMapped, the last WallLikeHill's faces in the hill's opening (no skin behind them) mapped as the skin at
+		/// the nearest outside point that has it; and its corners there lit by the skin's normals round them (log, tests).</summary>
+		public static int WallSkinBorrowed, WallSkinLitRound;
+		/// <summary>How many of the last WallLikeHill's outside corners took their texture from the skin's surface straight out from them.</summary>
+		public static int WallUvOnSkin;
+		/// <summary>The farthest (m, along outward) a den wall's corner's texture is looked up on the skin's surface from it (WallLikeHill).</summary>
+		const float WallUvReach = 6f;
+		/// <summary>Den wall outside faces left mapped by the world axis they face (no skin anywhere near), all islands since Raft started.</summary>
+		public static int WallFacesPlain;
+		/// <summary>How far behind a den wall's outside face (m) the hill's skin is looked for to map and light it as the skin (WallLikeHill).</summary>
+		const float WallSkinBehind = 2.5f;
+		/// <summary>How near the skin (m, either side) a den wall's outside corner takes the skin's own normal (WallLikeHill).</summary>
+		const float WallSkinLitNear = 0.75f;
+
+		/// <summary>The skin's texture side for a triangle of it (CaveMountain.Quad: 0 maps (z, y), 1 (x, z), 2 (x, y), in its build
+		/// space, over 14 m) found from its corners and their UVs, and the UV offset of that build space; -1 when none fits.</summary>
+		static int SkinSide(Vector3 v0, Vector3 v1, Vector3 v2, Vector2 u0, Vector2 u1, Vector2 u2, out Vector2 off)
+		{
+			int best = -1; float bestErr = float.MaxValue;
+			for (int k = 0; k < 3; k++)
+			{
+				float err = ((SkinSideUv(k, v1 - v0) - (u1 - u0)).magnitude + (SkinSideUv(k, v2 - v0) - (u2 - u0)).magnitude);
+				if (err < bestErr) { bestErr = err; best = k; }
+			}
+			off = best >= 0 ? u0 - SkinSideUv(best, v0) : Vector2.zero;
+			return bestErr < 0.02f ? best : -1;
+		}
+
+		static Vector2 SkinSideUv(int k, Vector3 p) => (k == 1 ? new Vector2(p.x, p.z) : k == 0 ? new Vector2(p.z, p.y) : new Vector2(p.x, p.y)) / 14f;
+		/// <summary>Over how far from the arch's rim (m, across the wall) the wall's points come onto the skin's surface (WallLikeHill).</summary>
+		const float WallFlushFade = 1.2f;
+		/// <summary>How far from the arch's rim (m) the wall's outside stays exactly where it was, to meet the way in's sleeve (WallLikeHill).</summary>
+		const float WallRimKeep = 0.3f;
+		/// <summary>How widely (m, a Gaussian's spread) the skin's points round a wall point count in the plane fitted to find the skin's depth there (WallLikeHill).</summary>
+		const float WallFitSpread = 2.5f;
+		/// <summary>At most this far (m) a wall point is moved onto the skin's fitted surface (WallLikeHill).</summary>
+		const float WallFlushMax = 2f;
+
 		/// <summary>
 		/// A lone den's wall's outside drawn as the hill over the den (CaveMountain's skin): the same rock, tint and light, its
 		/// texture mapped as the skin's (world metres / 14, from the side it faces). Raft's big rock tinted as the den's shell
@@ -679,28 +727,76 @@ namespace DynamicIslands.Editor
 			var block = new MaterialPropertyBlock();
 			skin.GetPropertyBlock(block);
 			r.SetPropertyBlock(block);
-			for (int i = 0; i < r.sharedMaterials.Length; i++)
-				r.SetPropertyBlock(i == 0 || i > PlugShade.Length ? block : Darker(r, skin.sharedMaterial, PlugShade[i - 1]), i);
+			// (11-21 cv40: every band as the hill - the darker band round the arch, with the faces' light, drew the whole wall seen
+			// through the hill's opening as a dark panel with two spikes over Gravewell Shaft's den; the way in's shade is its sleeve's)
+			for (int i = 0; i < r.sharedMaterials.Length; i++) r.SetPropertyBlock(block, i);
 			// (where the hill's skin is just in front of the wall or the wall's relief pokes through it, the wall is set back
 			// SkinCover m behind the skin: the wall's darker bands showed through the hill's rock in square patches on the arch's
 			// pillars, Shelter Atoll and Balboa Remade, 11-08 r26 user)
 			MeshCollider skinCol = skin.GetComponent<MeshCollider>();
 			Vector3 outward = plug.forward;
 			bool nearSkin = false;
-			Func<Vector3, Vector3> UnderSkin = w =>
+			// (11-21 cv36: the ray now reaches as far behind the wall as the wall may stand proud - it stopped SkinCover + 0.2 m
+			// behind it, so a wall standing out of the hill by more than 0.55 m was never set back and kept its darker shade
+			// band: a dark panel with torn shards over Gravewell Shaft's den mouth)
+			// (11-21 cv38: a corner standing out more than WallProud whose triangle's other corners went under the skin is set back
+			// too, up to SpikeProud: those triangles stood up out of the hill as torn spikes over Gravewell Shaft's den panel)
+			bool moved = false;
+			Func<Vector3, float, Vector3> UnderSkin = (w, proud) =>
 			{
 				RaycastHit hit;
-				if (skinCol == null || !skinCol.Raycast(new Ray(w + outward * 3f, -outward), out hit, 3f + SkinCover + 0.2f)) return w;
+				moved = false;
+				if (skinCol == null || !skinCol.Raycast(new Ray(w + outward * 3f, -outward), out hit, 3f + proud + 0.05f)) return w;
 				float d = Vector3.Dot(hit.point - w, outward);
-				if (!(d > -1.2f && d < SkinCover)) return w;
-				nearSkin = true;
+				if (!(d > -proud && d < SkinCover)) return w;
+				nearSkin = true; moved = true;
 				return w + outward * (d - SkinCover);
 			};
 			Mesh m = mf.sharedMesh;
+			// (11-21 cv38: the outside's faces turned from straight out toward the hill's slope round the wall - the mean of the
+			// skin's normals behind it, at most WallTilt degrees: the Mountains shader lays its rock layer on steep faces and its
+			// sand on flat ones, so a wall facing level out drew as a dark rock panel in the hill's sand round Gravewell Shaft's
+			// den, and was lit as a cliff)
+			Vector3 skinUp = Vector3.zero;
+			if (skinCol != null)
+				foreach (Vector3 p in m.vertices)
+				{
+					RaycastHit sh; Vector3 w = outT.TransformPoint(p);
+					if (skinCol.Raycast(new Ray(w + outward * 6f, -outward), out sh, 12f) && sh.normal.y > 0f) skinUp += sh.normal;
+				}
+			Vector3 faceTo = skinUp.sqrMagnitude > 1e-6f ? Vector3.RotateTowards(outward, skinUp.normalized, WallTilt * Mathf.Deg2Rad, 0f) : outward;
+			// (11-21 cv40: every corner lit as that slope, not the wall's own normals turned by it: the funnel round the arch leans
+			// in, so its upper faces still faced 26 deg down after the turn and drew darker than the hill round them)
+			Vector3 faceLocal = outT.InverseTransformDirection(faceTo).normalized;
+			WallTiltSeen = Vector3.Angle(outward, faceTo);
 			// (each triangle its own corners, its texture laid along the world axis it faces most: one flat projection for the
 			// whole wall stretched the funnel's sides into stripes - the den's "zebra" frame, 11-08 user)
 			Vector3[] mv = m.vertices, mn = m.normals;
 			var nv = new List<Vector3>(); var nn = new List<Vector3>(); var nu = new List<Vector2>();
+			// (11-21 cv44: each face mapped as the skin's triangle behind it maps, in the skin's own space, and each corner at the
+			// skin lit by the skin's own normal there: mapped by the side the wall's face looked at most, in world metres, and lit as
+			// one slope, it still drew as a panel of smaller, skewed texture with hard edges round Gravewell Shaft's den opening)
+			Mesh skm = skinCol != null ? skinCol.sharedMesh : null;
+			Vector3[] skv = null, skn = null; Vector2[] sku = null; int[] skt = null;
+			if (skm != null && skm.isReadable) { skv = skm.vertices; skn = skm.normals; sku = skm.uv; skt = skm.triangles; }
+			bool skinMap = skv != null && sku != null && skn != null && sku.Length == skv.Length && skn.Length == skv.Length && skt != null;
+			Transform skT = skinCol != null ? skinCol.transform : null;
+			WallSkinMapped = 0; WallSkinLit = 0; WallSkinBorrowed = 0; WallSkinLitRound = 0; WallUvOnSkin = 0;
+			// (the skin's normal at a point near it, in the outside's space; null when the skin is not within WallSkinLitNear)
+			Func<Vector3, Vector3?> SkinNormal = w =>
+			{
+				RaycastHit sh;
+				if (!skinMap || !skinCol.Raycast(new Ray(w + outward * 3f, -outward), out sh, 3f + WallSkinBehind)) return null;
+				if (Mathf.Abs(Vector3.Dot(sh.point - w, outward)) > WallSkinLitNear) return null;
+				int ti = sh.triangleIndex * 3;
+				if (ti < 0 || ti + 2 >= skt.Length) return null;
+				Vector3 bc = sh.barycentricCoordinate;
+				Vector3 ln = skn[skt[ti]] * bc.x + skn[skt[ti + 1]] * bc.y + skn[skt[ti + 2]] * bc.z;
+				if (ln.sqrMagnitude < 1e-8f) return null;
+				Vector3 wn = skT.TransformDirection(ln).normalized;
+				if (Vector3.Dot(wn, outward) < 0f) wn = -wn;
+				return outT.InverseTransformDirection(wn).normalized;
+			};
 			// (r84: bits of the outside not joined to the rest - its corners welded by place - and under FlakeArea m2 dropped:
 			// they hung in the air off the hill's side as rock flakes, Balboa Remade mouth 1, 11-11 user)
 			var weld = new Dictionary<Vector3Int, int>();
@@ -734,6 +830,157 @@ namespace DynamicIslands.Editor
 			float biggest = area.Count > 0 ? area.Values.Max() : 0f;
 			var flake = new HashSet<int>(area.Where(kv => kv.Value < FlakeArea && kv.Value < biggest).Select(kv => kv.Key));
 			Debug.Log("[CUSTOM ISLANDS] Plug " + den.name + ": outside in " + area.Count + " piece(s), " + flake.Count + " flake(s) dropped (" + string.Join(" ", area.Values.OrderByDescending(x => x).Take(8).Select(x => x.ToString("F1")).ToArray()) + " m2)");
+			// (11-21 cv42: the wall's points in the hill's opening, where no skin is in front or behind, brought flush with the skin
+			// round them - by the skin's offset at the nearest points that have it, fading out over WallFlushFade into the opening:
+			// those round it went SkinCover behind the skin and these stayed, so the opening's edge stood as a rectangular step
+			// round Gravewell Shaft's den arch, its sides' texture laid sideways)
+			var wv0 = new Vector3[mv.Length]; var skinD = new float[mv.Length];
+			var hitIdx = new List<int>();
+			// (11-21 cv45: and the skin's texture side and normal where each of those points meets it - for the faces in the
+			// opening, which have no skin behind them: mapped by the world axis they faced and lit as one slope, they drew as a
+			// lighter panel of stretched ripples with straight seams and faceted shards round Gravewell Shaft's den arch)
+			var hitSide = new int[mv.Length]; var hitOff = new Vector2[mv.Length]; var hitN = new Vector3[mv.Length];
+			for (int v = 0; v < mv.Length; v++)
+			{
+				wv0[v] = outT.TransformPoint(mv[v]); skinD[v] = float.NaN;
+				RaycastHit sh;
+				if (skinCol != null && skinCol.Raycast(new Ray(wv0[v] + outward * 3f, -outward), out sh, 3f + SpikeProud + 0.05f))
+				{
+					float d = Vector3.Dot(sh.point - wv0[v], outward);
+					if (d > -SpikeProud && d < SkinCover + WallProud)
+					{
+						skinD[v] = d; hitIdx.Add(v); hitSide[v] = -1;
+						int ti = sh.triangleIndex * 3;
+						if (skinMap && ti >= 0 && ti + 2 < skt.Length)
+						{
+							hitSide[v] = SkinSide(skv[skt[ti]], skv[skt[ti + 1]], skv[skt[ti + 2]], sku[skt[ti]], sku[skt[ti + 1]], sku[skt[ti + 2]], out hitOff[v]);
+							Vector3 bc = sh.barycentricCoordinate;
+							Vector3 ln = skn[skt[ti]] * bc.x + skn[skt[ti + 1]] * bc.y + skn[skt[ti + 2]] * bc.z;
+							if (ln.sqrMagnitude > 1e-8f)
+							{
+								Vector3 wn = skT.TransformDirection(ln).normalized;
+								if (Vector3.Dot(wn, outward) < 0f) wn = -wn;
+								hitN[v] = outT.InverseTransformDirection(wn).normalized;
+							}
+						}
+					}
+				}
+			}
+			// (11-21 cv43: onto the skin's surface itself, not moved by its offset: shifted as a whole the wall kept its own relief, and
+			// the pillars either side of Gravewell Shaft's arch still stood as a 0.5-0.9 m step - CavePlugOut faces turned sideways.
+			// The skin's depth at each point from a plane fitted to the skin points round it (WallFitSpread); only the arch's own
+			// rim - the outside's open edge in the opening - stays where it meets the way in's sleeve, blending over WallFlushFade)
+			var flush = new float[mv.Length];
+			// (11-21 cv47: how far along outward each point in the opening is from the fitted skin, before the rim keeps it and the
+			// clamp - its texture is laid as at that place on the skin, below)
+			var fitD = new float[mv.Length];
+			for (int v = 0; v < mv.Length; v++) fitD[v] = float.NaN;
+			int flushed = 0; float flushMax = 0f;
+			Vector3 right = Vector3.Cross(Vector3.up, outward);
+			if (right.sqrMagnitude < 1e-4f) right = Vector3.Cross(Vector3.forward, outward);
+			right.Normalize();
+			Vector3 upIn = Vector3.Cross(outward, right).normalized;
+			var edgeUse = new Dictionary<long, int>();
+			for (int s = 0; s < m.subMeshCount; s++)
+			{
+				int[] st = m.GetTriangles(s);
+				for (int t = 0; t + 2 < st.Length; t += 3)
+				{
+					if (flake.Contains(find(vid[st[t]]))) continue;
+					for (int k = 0; k < 3; k++)
+					{
+						int p0 = vid[st[t + k]], p1 = vid[st[t + (k + 1) % 3]];
+						if (p0 == p1) continue;
+						long key = p0 < p1 ? ((long)p0 << 32) | (uint)p1 : ((long)p1 << 32) | (uint)p0;
+						int had; edgeUse.TryGetValue(key, out had); edgeUse[key] = had + 1;
+					}
+				}
+			}
+			var openEdge = new HashSet<int>();
+			foreach (var kv in edgeUse) if (kv.Value == 1) { openEdge.Add((int)(kv.Key >> 32)); openEdge.Add((int)(kv.Key & 0xffffffffL)); }
+			var rimIdx = new List<int>();
+			for (int v = 0; v < mv.Length; v++) if (float.IsNaN(skinD[v]) && openEdge.Contains(vid[v])) rimIdx.Add(v);
+			if (hitIdx.Count >= 3)
+				for (int v = 0; v < mv.Length; v++)
+				{
+					if (!float.IsNaN(skinD[v])) continue;
+					float pu = Vector3.Dot(wv0[v], right), pw = Vector3.Dot(wv0[v], upIn);
+					double s0 = 0, su = 0, sw = 0, suu = 0, suw = 0, sww = 0, sd = 0, sud = 0, swd = 0;
+					foreach (int hv in hitIdx)
+					{
+						float du = Vector3.Dot(wv0[hv], right) - pu, dw = Vector3.Dot(wv0[hv], upIn) - pw;
+						double wt = System.Math.Exp(-(du * du + dw * dw) / (2.0 * WallFitSpread * WallFitSpread));
+						if (wt < 1e-6) continue;
+						double dep = Vector3.Dot(wv0[hv], outward) + skinD[hv];
+						s0 += wt; su += wt * du; sw += wt * dw; suu += wt * du * du; suw += wt * du * dw; sww += wt * dw * dw;
+						sd += wt * dep; sud += wt * du * dep; swd += wt * dw * dep;
+					}
+					if (s0 < 1e-4) continue;
+					// (a + b du + c dw through the weighted points: the plane's height at this point is a)
+					double det = s0 * (suu * sww - suw * suw) - su * (su * sww - suw * sw) + sw * (su * suw - suu * sw);
+					double at = sd / s0;
+					if (System.Math.Abs(det) > 1e-6 * s0 * s0 * s0)
+						at = (sd * (suu * sww - suw * suw) - su * (sud * sww - suw * swd) + sw * (sud * suw - suu * swd)) / det;
+					float rim = float.MaxValue;
+					foreach (int rv in rimIdx) rim = Mathf.Min(rim, (Vector3.ProjectOnPlane(wv0[rv] - wv0[v], outward)).magnitude);
+					float keep = rimIdx.Count == 0 ? 1f : Mathf.Clamp01((rim - WallRimKeep) / WallFlushFade);
+					fitD[v] = (float)at - Vector3.Dot(wv0[v], outward);
+					flush[v] = Mathf.Clamp(fitD[v], -WallFlushMax, WallFlushMax) * keep;
+					if (Mathf.Abs(flush[v]) > 0.02f) { flushed++; flushMax = Mathf.Max(flushMax, Mathf.Abs(flush[v])); }
+				}
+			WallFlushed = flushed;
+			Debug.Log("[CUSTOM ISLANDS] Plug " + den.name + ": " + hitIdx.Count + " of " + mv.Length + " outside point(s) with the hill's skin in line, skin offset "
+				+ (hitIdx.Count > 0 ? hitIdx.Min(v => skinD[v]).ToString("0.00") + ".." + hitIdx.Max(v => skinD[v]).ToString("0.00") : "-") + " m; " + flushed + " in its opening brought onto the skin's surface (up to " + flushMax.ToString("0.00") + " m), arch rim " + rimIdx.Count + " point(s)");
+			// (the outside point nearest a world point, across the wall, that met the skin with a texture side; -1 when none)
+			var sideIdx = hitIdx.Where(v => hitSide[v] >= 0).ToList();
+			Func<Vector3, int> NearestSide = w =>
+			{
+				int best = -1; float bd = float.MaxValue;
+				foreach (int hv in sideIdx)
+				{
+					float dd = Vector3.ProjectOnPlane(wv0[hv] - w, outward).sqrMagnitude;
+					if (dd < bd) { bd = dd; best = hv; }
+				}
+				return best;
+			};
+			// (the skin's normals at the outside points round a world point, weighted by WallFitSpread across the wall; null when none)
+			var normIdx = hitIdx.Where(v => hitN[v] != Vector3.zero).ToList();
+			Func<Vector3, Vector3?> NormalRound = w =>
+			{
+				Vector3 sum = Vector3.zero; double wsum = 0;
+				foreach (int hv in normIdx)
+				{
+					float dd = Vector3.ProjectOnPlane(wv0[hv] - w, outward).sqrMagnitude;
+					double wt = System.Math.Exp(-dd / (2.0 * WallFitSpread * WallFitSpread));
+					if (wt < 1e-6) continue;
+					sum += hitN[hv] * (float)wt; wsum += wt;
+				}
+				if (wsum < 1e-4 || sum.sqrMagnitude < 1e-8f) return null;
+				return sum.normalized;
+			};
+			// (11-21 cv55: each point set back once, the same in every triangle it is in: decided per triangle, a point set back
+			// SpikeProud in one triangle stayed proud in the next, the wall torn along it into loose brown shards hanging in the den's
+			// way in - Sealkeeper Spire, c3z53)
+			var flat0 = new Vector3[mv.Length]; var wpos = new Vector3[mv.Length]; var wmoved = new bool[mv.Length];
+			for (int v = 0; v < mv.Length; v++)
+			{
+				flat0[v] = wv0[v] + outward * flush[v];
+				wpos[v] = UnderSkin(flat0[v], WallProud); wmoved[v] = moved;
+			}
+			var spike = new HashSet<int>();
+			for (int s = 0; s < m.subMeshCount; s++)
+			{
+				int[] st = m.GetTriangles(s);
+				for (int t = 0; t + 2 < st.Length; t += 3)
+				{
+					if (flake.Contains(find(vid[st[t]]))) continue;
+					bool am = wmoved[st[t]], bm = wmoved[st[t + 1]], cm = wmoved[st[t + 2]];
+					if ((am || bm || cm) && !(am && bm && cm))
+						for (int k = 0; k < 3; k++) if (!wmoved[st[t + k]]) spike.Add(vid[st[t + k]]);
+				}
+			}
+			for (int v = 0; v < mv.Length; v++)
+				if (!wmoved[v] && spike.Contains(vid[v])) { wpos[v] = UnderSkin(flat0[v], SpikeProud); wmoved[v] = moved; }
 			var subs = new List<int>[m.subMeshCount];
 			for (int s = 0; s < subs.Length; s++)
 			{
@@ -742,22 +989,50 @@ namespace DynamicIslands.Editor
 				for (int t = 0; t + 2 < st.Length; t += 3)
 				{
 					if (flake.Contains(find(vid[st[t]]))) continue;
-					nearSkin = false;
-					Vector3 a = UnderSkin(outT.TransformPoint(mv[st[t]])), b = UnderSkin(outT.TransformPoint(mv[st[t + 1]])), c = UnderSkin(outT.TransformPoint(mv[st[t + 2]]));
+					nearSkin = wmoved[st[t]] || wmoved[st[t + 1]] || wmoved[st[t + 2]];
+					Vector3 a = wpos[st[t]], b = wpos[st[t + 1]], c = wpos[st[t + 2]];
 					Vector3 fn = Vector3.Cross(b - a, c - a);
 					float fx = Mathf.Abs(fn.x), fy = Mathf.Abs(fn.y), fz = Mathf.Abs(fn.z);
 					int ax = fy >= fx && fy >= fz ? 1 : fx >= fz ? 0 : 2;
 					// (a triangle at the skin drawn plain, as the hill: where it still pokes through between its corners its
 					// shade band showed as a square patch, r30)
 					int into = nearSkin ? 0 : s;
+					int side = -1; Vector2 sideOff = Vector2.zero;
+					if (skinMap)
+					{
+						RaycastHit gh; Vector3 g = (a + b + c) / 3f;
+						if (skinCol.Raycast(new Ray(g + outward * 3f, -outward), out gh, 3f + WallSkinBehind) && gh.triangleIndex >= 0 && gh.triangleIndex * 3 + 2 < skt.Length)
+						{
+							int ti = gh.triangleIndex * 3;
+							side = SkinSide(skv[skt[ti]], skv[skt[ti + 1]], skv[skt[ti + 2]], sku[skt[ti]], sku[skt[ti + 1]], sku[skt[ti + 2]], out sideOff);
+						}
+					}
+					if (side < 0 && skinMap)
+					{
+						int hv = NearestSide((a + b + c) / 3f);
+						if (hv >= 0) { side = hitSide[hv]; sideOff = hitOff[hv]; WallSkinBorrowed++; }
+					}
+					if (side >= 0) WallSkinMapped++;
+					else WallFacesPlain++;
 					foreach (int k in new[] { 0, 1, 2 })
 					{
 						int vi = st[t + k];
 						Vector3 w = k == 0 ? a : k == 1 ? b : c;
 						subs[into].Add(nv.Count);
 						nv.Add(outT.InverseTransformPoint(w));
-						nn.Add(mn != null && mn.Length == mv.Length ? mn[vi] : fn.normalized);
-						nu.Add((ax == 0 ? new Vector2(w.z, w.y) : ax == 1 ? new Vector2(w.x, w.z) : new Vector2(w.x, w.y)) / 14f);
+						Vector3? sn = SkinNormal(w);
+						if (sn.HasValue) WallSkinLit++;
+						else { sn = NormalRound(w); if (sn.HasValue) WallSkinLitRound++; }
+						nn.Add(sn ?? faceLocal);
+						// (11-21 cv47: the texture laid as at the skin's surface straight out from the corner, not at the corner
+						// itself: the funnel round the arch, kept where it meets the way in's sleeve, leans in, and the skin's flat
+						// projection laid on it drew a lighter panel of stretched ripples with straight seams either side of Gravewell
+						// Shaft's den arch - CIDenWallLook seams 42/48 px, cv46)
+						Vector3 uw = !float.IsNaN(fitD[vi]) ? wv0[vi] + outward * Mathf.Clamp(fitD[vi], -WallUvReach, WallUvReach)
+							: !float.IsNaN(skinD[vi]) ? wv0[vi] + outward * skinD[vi] : w;
+						if (uw != w) WallUvOnSkin++;
+						nu.Add(side >= 0 ? SkinSideUv(side, skT.InverseTransformPoint(uw)) + sideOff
+							: (ax == 0 ? new Vector2(w.z, w.y) : ax == 1 ? new Vector2(w.x, w.z) : new Vector2(w.x, w.y)) / 14f);
 					}
 				}
 			}
@@ -766,6 +1041,7 @@ namespace DynamicIslands.Editor
 			m.SetVertices(nv);
 			m.SetNormals(nn);
 			m.SetUVs(0, nu);
+			Debug.Log("[CUSTOM ISLANDS] Plug " + den.name + ": " + WallSkinMapped + " outside face(s) mapped as the skin behind them (" + WallSkinBorrowed + " in the opening as the skin nearest them), " + WallSkinLit + " corner(s) lit by the skin's normal, " + WallSkinLitRound + " by the skin's normals round them; " + WallUvOnSkin + " corner(s) textured as the skin straight out from them");
 			m.subMeshCount = subs.Length;
 			for (int s = 0; s < subs.Length; s++) m.SetTriangles(subs[s], s);
 			m.RecalculateBounds();
@@ -785,9 +1061,12 @@ namespace DynamicIslands.Editor
 					sr.SetPropertyBlock(i < CaveVeil.Dark.Length ? Darker(sr, skin.sharedMaterial, CaveVeil.Dark[i]) : block, i);
 			}
 			CaveLit.Mark(den);
-			Debug.Log("[CUSTOM ISLANDS] Den's wall outside drawn as the hill: " + skin.sharedMaterial.name);
+			Debug.Log("[CUSTOM ISLANDS] Den's wall outside drawn as the hill: " + skin.sharedMaterial.name + ", its faces turned " + WallTiltSeen.ToString("0") + " deg up the hill's slope");
 			return true;
 		}
+
+		/// <summary>Open floors' sand skirts let go under a frame drawn as the hill (FramesLikeHill), all islands since Raft started.</summary>
+		public static int SkirtsHidden;
 
 		/// <summary>
 		/// A tunnel's mouth frames (MouthName) drawn as the hill over it (CaveMountain's skin): its rock, tint and light, the
@@ -800,6 +1079,7 @@ namespace DynamicIslands.Editor
 		{
 			if (piece == null || skin == null || skin.sharedMaterial == null) return 0;
 			int done = 0;
+			liftLand = null; liftSolid = null; // (the ground's holes read fresh: a dig may have cut it since)
 			foreach (Transform c in piece.transform)
 			{
 				if (c.name != MouthName) continue;
@@ -809,10 +1089,89 @@ namespace DynamicIslands.Editor
 				Mesh src = mf.sharedMesh;
 				Vector3[] mv = src.vertices, mn = src.normals;
 				int[] st = src.triangles;
-				var nv = new List<Vector3>(st.Length); var nn = new List<Vector3>(st.Length); var nu = new List<Vector2>(st.Length); var tri = new List<int>(st.Length);
+				// (round 4: a frame sunk 0-0.5 m under the ground at the mouth is lifted onto it: the cut ground over it showed through in
+				// patches, and where the ground was cut away it stood as a sheet a hand under the cutting's floor - Old Mine Islet,
+				// Sinkmarket Floor)
+				Vector3[] wv = new Vector3[mv.Length], gn = new Vector3[mv.Length];
+				bool hasN = mn != null && mn.Length == mv.Length;
+				for (int i = 0; i < mv.Length; i++) wv[i] = c.TransformPoint(mv[i]);
+				// (11-21 cv42: each point's faces' own normals, by their winding as drawn, beside the mesh's normals - FrameCovered
+				// looks along both; and the points next to one laid out, looked for further, so the faces between don't dive
+				// under the cutting wall just inside the ring - Sinkmarket Floor)
+				var wn = new Vector3[mv.Length];
 				for (int t = 0; t + 2 < st.Length; t += 3)
 				{
-					Vector3 a = c.TransformPoint(mv[st[t]]), b = c.TransformPoint(mv[st[t + 1]]), d = c.TransformPoint(mv[st[t + 2]]);
+					Vector3 fw = Vector3.Cross(wv[st[t + 1]] - wv[st[t]], wv[st[t + 2]] - wv[st[t]]);
+					for (int k = 0; k < 3; k++) wn[st[t + k]] += fw;
+				}
+				// (11-21 cv49: the points of the faces turned up - the faces that lie along the ground and can show through it. A
+				// point only on faces turned down or aside - the sill's underside, 0.6 m under its top - never shows: putting the
+				// ground back over those, then lifting them onto it, laid the ground flat in Sinkmarket Floor's frame faces, 590
+				// rays, CIFrameRing, and squares of it stood up through the mouth's floor)
+				bool[] up = FrameUpPoints(wv, st);
+				var laid = new bool[mv.Length];
+				for (int i = 0; i < mv.Length; i++)
+				{
+					Vector3 was = wv[i];
+					wv[i] = OnGround(was, hasN ? c.TransformDirection(mn[i]) : Vector3.zero, wn[i], FrameCover, out gn[i]);
+					laid[i] = gn[i] != Vector3.zero;
+				}
+				for (int pass = 0; pass < 3; pass++)
+				{
+					var next = new bool[mv.Length];
+					for (int t = 0; t + 2 < st.Length; t += 3)
+						if (laid[st[t]] || laid[st[t + 1]] || laid[st[t + 2]])
+							for (int k = 0; k < 3; k++) if (!laid[st[t + k]]) next[st[t + k]] = true;
+					int more = 0;
+					for (int i = 0; i < mv.Length; i++)
+					{
+						if (!next[i]) continue;
+						Vector3 back = c.TransformPoint(mv[i]);
+						Vector3 moved = OnGround(back, hasN ? c.TransformDirection(mn[i]) : Vector3.zero, wn[i], FrameCoverNext, out gn[i]);
+						if (gn[i] == Vector3.zero) continue;
+						wv[i] = moved; laid[i] = true; more++;
+					}
+					if (more == 0) break;
+				}
+				// (11-21 cv45: and the ground under its faces let down off them - Sinkmarket's cutting walls 1 cm behind its mouth's
+				// side walls showed through as a dark sawtooth)
+				GroundSunkUnderFrames += SinkGroundUnder(wv, st, up);
+				// (11-21 cv47: and any point still just under the ground after that lifted onto it - 12 of Sinkmarket Floor's showed
+				// through its frame, CIFrameSunk)
+				for (int i = 0; i < mv.Length; i++)
+				{
+					float g; Vector3 n;
+					if (!up[i] || !FrameLiftable(wv[i], out g, out n)) continue;
+					wv[i] = OnGround(wv[i], Vector3.zero, Vector3.zero, 0f, out gn[i]);
+					FrameRelifted++;
+				}
+				// (11-21 cv52: and the frame's rim tucked under the ground - where a face turned aside goes on down into the ground
+				// from points laid just over it, it stood 3-10 cm out of Overpass Shoal's channel floor all along its mouth's apron,
+				// black dashes where it faced away from the light)
+				// (11-21 cv54: which points were tucked kept on the frame - CIFrameSunk and CIFrameRim read them, not guessed again from
+				// the finished mesh: the tuck lowers the rim, and the guess lost 897 of Overpass Shoal's, 1104 of Sinkmarket Floor's)
+				bool[] tucked = TuckRim(wv, st, new bool[mv.Length]);
+				// (11-21 cv56: and a point the tuck left just under the ground on a face it turned up lifted onto it, then tucked
+				// again where that makes a rim - 1 of Overpass Shoal's and Sinkmarket Floor's each showed through, CIFrameSunk)
+				for (int round = 0; round < 3; round++)
+				{
+					bool[] up2 = FrameUpPoints(wv, st);
+					int lifted = 0;
+					for (int i = 0; i < mv.Length; i++)
+					{
+						float g; Vector3 n;
+						if (tucked[i] || !up2[i] || !FrameLiftable(wv[i], out g, out n)) continue;
+						wv[i] = OnGround(wv[i], Vector3.zero, Vector3.zero, 0f, out gn[i]);
+						FrameRelifted++; lifted++;
+					}
+					if (lifted == 0) break;
+					TuckRim(wv, st, tucked);
+				}
+				var rimOut = new List<bool>(st.Length);
+				var nv =new List<Vector3>(st.Length); var nn = new List<Vector3>(st.Length); var nu = new List<Vector2>(st.Length); var tri = new List<int>(st.Length);
+				for (int t = 0; t + 2 < st.Length; t += 3)
+				{
+					Vector3 a = wv[st[t]], b = wv[st[t + 1]], d = wv[st[t + 2]];
 					Vector3 fn = Vector3.Cross(b - a, d - a);
 					float fx = Mathf.Abs(fn.x), fy = Mathf.Abs(fn.y), fz = Mathf.Abs(fn.z);
 					int ax = fy >= fx && fy >= fz ? 1 : fx >= fz ? 0 : 2;
@@ -821,8 +1180,14 @@ namespace DynamicIslands.Editor
 						int vi = st[t + k];
 						Vector3 w = k == 0 ? a : k == 1 ? b : d;
 						tri.Add(nv.Count);
-						nv.Add(mv[vi]);
-						nn.Add(mn != null && mn.Length == mv.Length ? mn[vi] : fn.normalized);
+						nv.Add(c.InverseTransformPoint(w));
+						rimOut.Add(tucked[vi]);
+						// (11-21 cv47: never a normal turned against its face as now drawn - a point moved onto the ground keeps its
+						// mesh normal, which could face away from the light: black triangles in Sinkmarket Floor's frame)
+						Vector3 vn = gn[vi] != Vector3.zero ? c.InverseTransformDirection(gn[vi]) : hasN ? mn[vi] : Vector3.zero;
+						Vector3 fl = c.InverseTransformDirection(fn).normalized;
+						if (vn.sqrMagnitude < 1e-6f || Vector3.Dot(vn, fl) < 0.2f) { vn = fl; FrameNormalsFlipped++; }
+						nn.Add(vn);
 						nu.Add((ax == 0 ? new Vector2(w.z, w.y) : ax == 1 ? new Vector2(w.x, w.z) : new Vector2(w.x, w.y)) / 14f);
 					}
 				}
@@ -841,30 +1206,55 @@ namespace DynamicIslands.Editor
 				r.reflectionProbeUsage = skin.reflectionProbeUsage;
 				var block = new MaterialPropertyBlock();
 				skin.GetPropertyBlock(block);
+				// (11-21 cv47: and its main normal map flat: Balboa's baked one belongs to its own rocks' uvs - laid on ours, each
+				// triangle along its own axis, it tipped patches away from the light, black triangles all over Sinkmarket Floor's
+				// frame; the hill's skin turned up hides it, a frame's faces turned to the side don't)
+				FlatMainNormal(block, skin.sharedMaterial);
 				r.SetPropertyBlock(block);
-				r.gameObject.AddComponent<HillWall>();
+				r.SetPropertyBlock(block, 0);
+				// (round 4: and its rock layer on every face: Balboa's sand layer, drawn on faces turned up, laid the frame's steep
+				// cutting walls pale - Old Mine Islet, Sinkmarket Floor; the hill's own steep faces are its rock layer - one rock)
+				DigTunnel.SideRockOnly(r, 0);
+				r.gameObject.AddComponent<HillWall>().Rim = rimOut.ToArray();
 				done++;
+			}
+			// (11-21 cv54: and the open floor's sand skirt let go - the frame drawn as the hill lies over the floor's edge it hid, and
+			// the strip, baked in the ground's look, lay on the frame's rock apron as a flat golden plate, Sinkmarket Floor play_cvp_smo)
+			if (done > 0)
+			{
+				Transform skirt = piece.transform.Find(CaveGround.SkirtName);
+				if (skirt != null && skirt.gameObject.activeSelf) { skirt.gameObject.SetActive(false); SkirtsHidden++; }
 			}
 			// (and the tunnel itself, inside and its back, in the hill's rock: its pale blue ice-ravine rock seen through the mouth
 			// in the hill's grey face filled the lower half of the opening as a pale bluish shape - Old Mine Islet 11-19 cave1119 r2.
 			// Its mesh can't be read, so the rock is laid by the tunnel's own texture coordinates)
-			if (done > 0)
+			// (a tunnel piece with no frame - the middle of a passage, a swim-through placed on its own - in the hill's rock too where
+			// it is in the pale ice-ravine rock: through the mouth its pale blue ring framed the opening, Sinkmarket Floor, round 3)
+			bool ice = done == 0 && piece.name.StartsWith("TP_UnderwaterCaveTunnel");
+			if (done > 0 || ice)
 			{
 				var body = new List<MeshRenderer>();
 				MeshRenderer own = piece.GetComponent<MeshRenderer>();
 				if (own != null) body.Add(own);
 				foreach (Transform c in piece.transform)
-					if (c.name == CaveBacks.Name) { MeshRenderer br = c.GetComponent<MeshRenderer>(); if (br != null) body.Add(br); }
+					// (and its join plates, the floor strips where it meets the next piece: left in the ice-ravine rock, pale strips
+					// across the floor of a tunnel in the hill's rock - Sinkmarket Floor, round 3)
+					if (c.name == CaveBacks.Name || c.name == JoinName) { MeshRenderer br = c.GetComponent<MeshRenderer>(); if (br != null) body.Add(br); }
 				foreach (MeshRenderer r in body)
 				{
 					if (r.GetComponent<HillWall>() != null || r.sharedMaterial == skin.sharedMaterial) continue;
+					if (ice && !r.sharedMaterials.Any(x => x != null && x.name.Contains(IceRock))) continue;
 					r.sharedMaterials = Enumerable.Repeat(skin.sharedMaterial, Mathf.Max(1, r.sharedMaterials.Length)).ToArray();
 					r.receiveShadows = skin.receiveShadows;
 					r.reflectionProbeUsage = skin.reflectionProbeUsage;
 					var block = new MaterialPropertyBlock();
 					skin.GetPropertyBlock(block);
+					FlatMainNormal(block, skin.sharedMaterial);
 					for (int i = 0; i < r.sharedMaterials.Length; i++) r.SetPropertyBlock(block, i);
 					r.SetPropertyBlock(block);
+					// (11-21 cv47: and the rock layer on its faces turned up too, as the frame's: the join plates and the tunnel's floor
+					// wore Balboa's sand layer, a golden band in Sinkmarket Floor's mouth and a golden plate)
+					for (int i = 0; i < r.sharedMaterials.Length; i++) DigTunnel.SideRockOnly(r, i);
 					r.gameObject.AddComponent<HillWall>();
 					TunnelsLikeHill++;
 				}
@@ -872,6 +1262,457 @@ namespace DynamicIslands.Editor
 			}
 			return done;
 		}
+		/// <summary>Mouth frame points lifted onto the ground after SinkGroundUnder (FramesLikeHill), all islands since Raft started.</summary>
+		public static int FrameRelifted;
+		/// <summary>Mouth frame corners whose normal was turned against their face as drawn, given the face's (FramesLikeHill).</summary>
+		public static int FrameNormalsFlipped;
+
+		/// <summary>A block's main normal map (Balboa's Mountains, _MainNormal) set flat, when the material has one.</summary>
+		public static void FlatMainNormal(MaterialPropertyBlock b, Material m)
+		{
+			if (b != null && m != null && m.HasProperty(MainNormal)) b.SetTexture(MainNormal, Texture2D.normalTexture);
+		}
+
+		/// <summary>Balboa's Mountains shader's baked main normal map (FlatMainNormal; CIFrameRing checks the frames have it flat).</summary>
+		public const string MainNormal = "_MainNormal";
+
+		/// <summary>How far under a mouth frame's face turned up (m, across it) FramesLikeHill keeps the island ground standing within
+		/// FrameSinkBand of it: the heightmap's triangles bulged between the frame's laid points and stood 1 cm off its faces on
+		/// Sinkmarket Floor's 54 degree cutting walls, a dark sawtooth on both side walls of its mouth (CIFrameRing, 11-21 cv45).</summary>
+		public const float FrameGroundUnder = 0.1f;
+		/// <summary>A frame face turned up at least this much (its normal's y) lies along the ground: SinkGroundUnder lets the ground
+		/// down under it, and its points are the ones that can show through the ground (FrameUpPoints).</summary>
+		public const float FrameUpFace = 0.2f;
+
+		/// <summary>Which of a mouth frame's points (world points w, triangles st as drawn) are on a face turned up (FrameUpFace):
+		/// the ones the ground can show through. FramesLikeHill and CIFrameSunk.</summary>
+		public static bool[] FrameUpPoints(Vector3[] w, int[] st)
+		{
+			var up = new bool[w.Length];
+			for (int t = 0; t + 2 < st.Length; t += 3)
+			{
+				Vector3 n = Vector3.Cross(w[st[t + 1]] - w[st[t]], w[st[t + 2]] - w[st[t]]);
+				if (n.sqrMagnitude < 1e-10f || n.normalized.y < FrameUpFace) continue;
+				up[st[t]] = up[st[t + 1]] = up[st[t + 2]] = true;
+			}
+			return up;
+		}
+
+		/// <summary>A frame point standing up to this (m, straight up) over the ground, on a face turned aside that goes on down into
+		/// the ground, is the frame's rim: TuckRim lays it under the ground. CIFrameRim fails on rim faces still standing out this
+		/// little.</summary>
+		public const float FrameRimShow = 0.15f;
+		/// <summary>How far under the ground (m, straight down) TuckRim lays a rim point.</summary>
+		public const float FrameRimUnder = 0.05f;
+		/// <summary>Mouth frame rim points laid under the ground (TuckRim), all islands since Raft started.</summary>
+		public static int FrameRimTucked;
+
+		/// <summary>A frame face crossing the ground at a steeper angle than this (the dot of its normal and the ground's; 0.5 = 60
+		/// degrees) is a side wall for the rim (FrameAside): Overpass Shoal's apron's side wall faces stood at 0.13-0.20 on its flat
+		/// channel floor. (11-21 cv54: by the ground's own slope, not straight up - by the face's steepness alone the faces lying
+		/// along the steep cutting walls counted as side walls, 1121 of Overpass Shoal's points and 1312 of Sinkmarket Floor's
+		/// were tucked under the ground, and CIFrameRim failed on their 3-5 cm.)</summary>
+		public const float FrameRimCross = 0.5f;
+
+		/// <summary>Whether a face (world points a b c) is turned aside: crossing the ground (FrameRimCross) where the ground lies
+		/// no steeper than FrameCoverSteep, not turned down into it. False where there is no island ground under it.</summary>
+		public static bool FrameAside(Vector3 a, Vector3 b, Vector3 c)
+		{
+			Vector3 n = Vector3.Cross(b - a, c - a);
+			if (n.sqrMagnitude < 1e-10f) return false;
+			Vector3 gn;
+			if (!GroundNormalAt((a + b + c) / 3f, out gn) || gn.y < FrameCoverSteep) return false;
+			float d = Vector3.Dot(n.normalized, gn);
+			return d < FrameRimCross && d >= -0.3f;
+		}
+
+		/// <summary>The island ground's normal under a world point, where there is island ground.</summary>
+		public static bool GroundNormalAt(Vector3 w, out Vector3 gn)
+		{
+			gn = Vector3.up;
+			Terrain t = LiftTerrain(w);
+			if (t == null) return false;
+			TerrainData d = t.terrainData;
+			Vector3 o = t.transform.position;
+			gn = d.GetInterpolatedNormal((w.x - o.x) / d.size.x, (w.z - o.z) / d.size.z);
+			return true;
+		}
+
+		/// <summary>
+		/// A mouth frame's rim (world points wv, triangles st as drawn) laid FrameRimUnder under the ground: each point standing
+		/// 0-FrameRimShow over solid ground on a face turned aside (FrameAside) whose lowest point lies under solid ground. The
+		/// frame's points are laid FrameOver over the ground and the ground under its faces let down; where a side wall goes on
+		/// down into the ground from there, that strip of it stood out of the ground along the frame's edge. Returns which points
+		/// were laid under (and counts them in FrameRimTucked).
+		/// </summary>
+		static bool[] TuckRim(Vector3[] wv, int[] st, bool[] tuck)
+		{
+			// (11-21 cv56: again until no more - a point laid under turns the faces round it: a side face that lay all over the
+			// ground, or a face turned up beside the rim, then goes on down into it with its other points still 3-6 cm out, and
+			// CIFrameRim found 8.00 m of Overpass Shoal's and 13.85 m of Sinkmarket Floor's rim so in cv54 and cv56 alike)
+			var to = new float[wv.Length];
+			var now = new bool[wv.Length];
+			var h = new float[3];
+			for (int pass = 0; pass < FrameRimPasses; pass++)
+			{
+				Array.Clear(now, 0, now.Length);
+				for (int t = 0; t + 2 < st.Length; t += 3)
+				{
+					if (!FrameAside(wv[st[t]], wv[st[t + 1]], wv[st[t + 2]])) continue;
+					bool solid = true; float low = float.MaxValue;
+					for (int k = 0; k < 3; k++)
+					{
+						float g;
+						if (!SolidGroundAt(wv[st[t + k]], out g)) { solid = false; break; }
+						h[k] = wv[st[t + k]].y - g;
+						low = Mathf.Min(low, h[k]);
+					}
+					if (!solid || low > -FrameRimIn) continue;
+					for (int k = 0; k < 3; k++)
+					{
+						int v = st[t + k];
+						if (tuck[v] || h[k] < -0.01f || h[k] > FrameRimShow) continue;
+						now[v] = true; to[v] = wv[v].y - h[k] - FrameRimUnder;
+					}
+				}
+				int more = 0;
+				for (int v = 0; v < wv.Length; v++) if (now[v]) { wv[v].y = to[v]; tuck[v] = true; FrameRimTucked++; more++; }
+				if (more == 0) break;
+			}
+			return tuck;
+		}
+
+		/// <summary>The most passes TuckRim makes (each pass the faces turned by the last one's points).</summary>
+		public const int FrameRimPasses = 6;
+
+		/// <summary>A rim face's lowest point lies at least this far (m, straight down) under the ground: it goes on down into it.</summary>
+		public const float FrameRimIn = 0.02f;
+
+		/// <summary>The island ground's height under a world point, where the ground is there (not a hole cut in it).</summary>
+		public static bool SolidGroundAt(Vector3 w, out float g)
+		{
+			g = 0f;
+			Terrain t = LiftTerrain(w);
+			if (t == null) return false;
+			g = t.SampleHeight(w) + t.transform.position.y;
+			return SolidAt(t, w);
+		}
+
+		/// <summary>The terrain under a world point (liftLand), its holes read into liftSolid.</summary>
+		static Terrain LiftTerrain(Vector3 w)
+		{
+			Terrain t = liftLand;
+			if (t != null && Over(t, w)) return t;
+			t = null; liftSolid = null;
+			foreach (Terrain x in Terrain.activeTerrains) if (x != null && x.terrainData != null && Over(x, w)) { t = x; break; }
+			liftLand = t;
+			if (t == null) return null;
+			int hr = t.terrainData.holesResolution;
+			liftSolid = t.terrainData.GetHoles(0, 0, hr, hr);
+			return t;
+		}
+
+		/// <summary>Whether the LiftTerrain t has ground at w (no hole cut there).</summary>
+		static bool SolidAt(Terrain t, Vector3 w)
+		{
+			TerrainData d = t.terrainData;
+			Vector3 o = t.transform.position;
+			int res = liftSolid.GetLength(0);
+			int cx = Mathf.Clamp((int)((w.x - o.x) / d.size.x * res), 0, res - 1), cz = Mathf.Clamp((int)((w.z - o.z) / d.size.z * res), 0, res - 1);
+			return liftSolid[cz, cx];
+		}
+
+		/// <summary>Which of a finished mouth frame's points (its mesh's points, n of them) TuckRim laid under the ground as its rim,
+		/// as FramesLikeHill kept them on the frame (HillWall.Rim). CIFrameSunk leaves these; CIFrameRim counts them.</summary>
+		public static bool[] FrameRimPoints(HillWall h, int n)
+		{
+			return h != null && h.Rim != null && h.Rim.Length == n ? h.Rim : new bool[n];
+		}
+
+		/// <summary>Ground over a frame face by more than this (m, across it) is the frame under the hill on purpose: left.</summary>
+		public const float FrameSinkBand = 0.25f;
+		/// <summary>The most a heightmap point is let down under a frame face (m, straight down).</summary>
+		public const float FrameSinkMost = 1f;
+		/// <summary>Heightmap points let down under mouth frames (SinkGroundUnder), all islands since Raft started.</summary>
+		public static int GroundSunkUnderFrames;
+		/// <summary>Heightmap points SinkGroundUnder put back because letting them down laid bare a frame point buried on purpose.</summary>
+		public static int FrameSinkKeptBack;
+
+		/// <summary>
+		/// The island ground under a mouth frame's faces turned up (world triangles wv/st, as drawn) let down to FrameGroundUnder
+		/// under each face, measured across it, where it stands within FrameSinkBand over it or less than FrameGroundUnder under
+		/// it - the frame's laid points sit on the ground, but between them the ground's own triangles bulged into its faces. By
+		/// the frame's mesh and the terrain only (not the hill's grid). Returns how many heightmap points were let down.
+		/// </summary>
+		static int SinkGroundUnder(Vector3[] wv, int[] st, bool[] up)
+		{
+			int sunk = 0;
+			foreach (Terrain t in Terrain.activeTerrains)
+			{
+				if (t == null || t.terrainData == null) continue;
+				TerrainData d = t.terrainData;
+				Vector3 o = t.transform.position, size = d.size;
+				int res = d.heightmapResolution;
+				float sx = size.x / (res - 1), sz = size.z / (res - 1);
+				// (the faces turned up over this terrain, and the heightmap block under them all)
+				var faces = new List<int>();
+				float minX = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxZ = float.MinValue;
+				for (int k = 0; k + 2 < st.Length; k += 3)
+				{
+					Vector3 a = wv[st[k]], b = wv[st[k + 1]], c = wv[st[k + 2]];
+					Vector3 n = Vector3.Cross(b - a, c - a);
+					if (n.sqrMagnitude < 1e-10f || n.normalized.y < FrameUpFace) continue;
+					float lx = Mathf.Min(a.x, Mathf.Min(b.x, c.x)), hx = Mathf.Max(a.x, Mathf.Max(b.x, c.x));
+					float lz = Mathf.Min(a.z, Mathf.Min(b.z, c.z)), hz = Mathf.Max(a.z, Mathf.Max(b.z, c.z));
+					if (hx < o.x || lx > o.x + size.x || hz < o.z || lz > o.z + size.z) continue;
+					faces.Add(k);
+					minX = Mathf.Min(minX, lx); maxX = Mathf.Max(maxX, hx); minZ = Mathf.Min(minZ, lz); maxZ = Mathf.Max(maxZ, hz);
+				}
+				if (faces.Count == 0) continue;
+				int x0 = Mathf.Clamp(Mathf.FloorToInt((minX - o.x) / sx) - 1, 0, res - 1), x1 = Mathf.Clamp(Mathf.CeilToInt((maxX - o.x) / sx) + 1, 0, res - 1);
+				int z0 = Mathf.Clamp(Mathf.FloorToInt((minZ - o.z) / sz) - 1, 0, res - 1), z1 = Mathf.Clamp(Mathf.CeilToInt((maxZ - o.z) / sz) + 1, 0, res - 1);
+				int w = x1 - x0 + 1, h = z1 - z0 + 1;
+				if (w <= 0 || h <= 0) continue;
+				float[,] heights = d.GetHeights(x0, z0, w, h);
+				var target = new float[h, w];
+				for (int j = 0; j < h; j++) for (int i = 0; i < w; i++) target[j, i] = float.MaxValue;
+				foreach (int k in faces)
+				{
+					Vector3 a = wv[st[k]], b = wv[st[k + 1]], c = wv[st[k + 2]];
+					Vector3 n = Vector3.Cross(b - a, c - a).normalized;
+					// (the face's plane over the ground's points under it, and half a step past its edges: the ground's triangles
+					// between a point under the face and one just outside it bulge into the face too)
+					float e1x = b.x - a.x, e1z = b.z - a.z, e2x = c.x - a.x, e2z = c.z - a.z;
+					float det = e1x * e2z - e2x * e1z;
+					if (Mathf.Abs(det) < 1e-6f) continue;
+					float lx = Mathf.Min(a.x, Mathf.Min(b.x, c.x)) - sx * 0.5f, hx = Mathf.Max(a.x, Mathf.Max(b.x, c.x)) + sx * 0.5f;
+					float lz = Mathf.Min(a.z, Mathf.Min(b.z, c.z)) - sz * 0.5f, hz = Mathf.Max(a.z, Mathf.Max(b.z, c.z)) + sz * 0.5f;
+					int i0 = Mathf.Max(x0, Mathf.CeilToInt((lx - o.x) / sx)), i1 = Mathf.Min(x1, Mathf.FloorToInt((hx - o.x) / sx));
+					int j0 = Mathf.Max(z0, Mathf.CeilToInt((lz - o.z) / sz)), j1 = Mathf.Min(z1, Mathf.FloorToInt((hz - o.z) / sz));
+					float edge = 0.5f * Mathf.Max(sx, sz) / Mathf.Max(0.01f, Mathf.Sqrt(Mathf.Abs(det)));
+					for (int jj = j0; jj <= j1; jj++)
+						for (int ii = i0; ii <= i1; ii++)
+						{
+							float px = o.x + ii * sx - a.x, pz = o.z + jj * sz - a.z;
+							float bu = (px * e2z - e2x * pz) / det, bv = (e1x * pz - px * e1z) / det;
+							if (bu < -edge || bv < -edge || bu + bv > 1f + edge) continue;
+							float fy = a.y + bu * (b.y - a.y) + bv * (c.y - a.y);
+							float gy = heights[jj - z0, ii - x0] * size.y + o.y;
+							float gap = (fy - gy) * n.y; // (across the face: frame over the ground)
+							if (gap >= FrameGroundUnder || gap < -FrameSinkBand) continue;
+							float want = fy - FrameGroundUnder / n.y;
+							if (want < target[jj - z0, ii - x0]) target[jj - z0, ii - x0] = want;
+						}
+				}
+				bool any = false;
+				float[,] was = (float[,])heights.Clone();
+				// (11-21 cv46: the frame's points already just under the ground, before any is let down - a point that comes into
+				// that band only because the ground under it went down is the frame under the hill on purpose laid bare: 3563 of
+				// Sinkmarket Floor's frame points showed through it, CIFrameSunk)
+				// (11-21 cv49: only points of faces turned up - a point on the sill's underside never shows)
+				var near = new List<int>();
+				for (int v = 0; v < wv.Length; v++)
+				{
+					if (!up[v]) continue;
+					Vector3 p = wv[v];
+					if (p.x < o.x + x0 * sx - sx || p.x > o.x + x1 * sx + sx || p.z < o.z + z0 * sz - sz || p.z > o.z + z1 * sz + sz) continue;
+					float g; Vector3 gn;
+					if (!FrameLiftable(p, out g, out gn) && p.y < g) near.Add(v);
+				}
+				for (int j = 0; j < h; j++)
+					for (int i = 0; i < w; i++)
+					{
+						if (target[j, i] == float.MaxValue) continue;
+						float gy = heights[j, i] * size.y + o.y;
+						float to = Mathf.Max(target[j, i], gy - FrameSinkMost);
+						if (to >= gy - 1e-4f) continue;
+						heights[j, i] = Mathf.Clamp01((to - o.y) / size.y);
+						sunk++; any = true;
+					}
+				if (!any) continue;
+				d.SetHeights(x0, z0, heights);
+				// (any buried point now in the lift band: the heightmap points of its cell raised back only as far as keeps it just
+				// under the band - FrameSunk and a little across the slope - never over where they were. 11-21 cv47: putting them
+				// all the way back undid 47 of 49: the sill's underside 0.6 m under its top came into the band wherever the ground
+				// under the top went down 0.1 m, and 573 rays met the ground lying in Sinkmarket Floor's frame faces again)
+				for (int round = 0; round < 4; round++)
+				{
+					bool back = false;
+					foreach (int v in near)
+					{
+						float g; Vector3 gn;
+						if (!FrameLiftable(wv[v], out g, out gn)) continue;
+						float need = wv[v].y + (FrameSunk + 0.02f) / Mathf.Max(gn.y, 0.2f);
+						float needH = Mathf.Clamp01((need - o.y) / size.y);
+						int ci = Mathf.FloorToInt((wv[v].x - o.x) / sx) - x0, cj = Mathf.FloorToInt((wv[v].z - o.z) / sz) - z0;
+						for (int dj = 0; dj <= 1; dj++)
+							for (int di = 0; di <= 1; di++)
+							{
+								int ii = ci + di, jj = cj + dj;
+								if (ii < 0 || jj < 0 || ii >= w || jj >= h || heights[jj, ii] >= was[jj, ii]) continue;
+								float to = Mathf.Min(was[jj, ii], Mathf.Max(heights[jj, ii], needH));
+								if (to <= heights[jj, ii]) continue;
+								heights[jj, ii] = to; back = true; FrameSinkKeptBack++;
+								if (to >= was[jj, ii]) sunk--;
+							}
+					}
+					if (!back) break;
+					d.SetHeights(x0, z0, heights);
+				}
+			}
+			return sunk;
+		}
+
+		/// <summary>How far under the ground (m) a mouth frame's point is lifted onto it (FramesLikeHill), measured across the ground's
+		/// slope; deeper is under the hill on purpose.</summary>
+		public const float FrameSunk = 0.5f;
+		/// <summary>How far straight under a steep ground a mouth frame's point may lie and still be lifted onto it (m).</summary>
+		public const float FrameSunkDown = 1.5f;
+		/// <summary>How far over the ground (m) a lifted frame point is laid, so the ground doesn't flicker through it.</summary>
+		public const float FrameOver = 0.03f;
+		/// <summary>How far over a steep ground (m, across it) a frame point lifted or laid out onto it is laid: the ground's own
+		/// triangles bulge between the frame's points, and at FrameOver they stood 2-4 cm in front of Sinkmarket Floor's frame
+		/// faces as pale sheets at the picture's edge (CIFrameRing 5 rays, 11-21 cv44).</summary>
+		public const float FrameOverSteep = 0.12f;
+		/// <summary>Mouth frame points lifted onto the ground, all islands since Raft started.</summary>
+		public static int FramePointsLifted;
+		/// <summary>How far in front of a mouth frame's face, along its own normal, the island ground may stand and the face is still
+		/// laid out onto it (FrameCovered, m); further is the frame under the hill on purpose.</summary>
+		public const float FrameCover = 1f;
+		/// <summary>FrameCovered only lays a frame onto ground steeper than this: its normal's height under it (0.5 = 60 degrees).</summary>
+		public const float FrameCoverSteep = 0.5f;
+		/// <summary>Of FramePointsLifted, those laid out along their face onto the ground in front of it (FrameCovered).</summary>
+		public static int FramePointsCovered;
+		static Terrain liftLand; static bool[,] liftSolid;
+
+		/// <summary>
+		/// Whether a mouth frame's world point w, its face's world normal n, has the island ground in front of its face within
+		/// FrameCover along n - the ground's own surface, steeper than FrameCoverSteep, turned the same way, not a hole cut in it
+		/// (the collider has none). hit is
+		/// where n meets the ground. For tests too (CIFrameRing).
+		/// </summary>
+		public static bool FrameCovered(Vector3 w, Vector3 n, out RaycastHit hit) { return FrameCovered(w, n, FrameCover, out hit); }
+
+		/// <summary>FrameCovered with the ground looked for up to reach in front of the face.</summary>
+		public static bool FrameCovered(Vector3 w, Vector3 n, float reach, out RaycastHit hit)
+		{
+			hit = default(RaycastHit);
+			if (n.sqrMagnitude < 1e-6f) { FrameCoverMiss[0]++; return false; }
+			n = n.normalized;
+			if (n.y < -0.3f) { FrameCoverMiss[0]++; return false; } // (a face turned down: the ground over it is its roof's, not in front of it)
+			foreach (Terrain t in Terrain.activeTerrains)
+			{
+				if (t == null || t.terrainData == null || !Over(t, w)) continue;
+				TerrainCollider tc = t.GetComponent<TerrainCollider>();
+				if (tc == null || !tc.enabled) return false;
+				// (11-21 cv42: no longer only for a point under the ground's height where it stands - Sinkmarket's frame still
+				// showed the cutting walls inside its ring, 14 rays of CIFrameRing; a ray from in front of the face back to it
+				// meets the ground's face only where the ground stands in front of it)
+				// (11-21 cv43: and by the heightmap itself where the collider's ray met nothing - 32025 tries met no ground in front
+				// while CIFrameRing's rays saw it 0.56-0.92 m in front of Sinkmarket's frame faces)
+				if (!tc.Raycast(new Ray(w + n * reach, -n), out hit, reach) && !HeightRay(t, w + n * reach, -n, reach, out hit)) { FrameCoverMiss[1]++; return false; }
+				// (only a steep cutting wall: under a gentle hillside the frame's outside is under the hill on purpose)
+				if (hit.normal.y >= FrameCoverSteep) { FrameCoverMiss[2]++; return false; }
+				if (Vector3.Dot(hit.normal, n) <= 0.3f) { FrameCoverMiss[3]++; return false; }
+				return true;
+			}
+			return false;
+		}
+
+		/// <summary>A ray against a terrain's heights (not its collider): the first point along it under the ground, found in
+		/// 5 cm steps and halved down to 5 mm, with the ground's normal from its heights a heightmap step either side.</summary>
+		static bool HeightRay(Terrain t, Vector3 from, Vector3 dir, float len, out RaycastHit hit)
+		{
+			hit = default(RaycastHit);
+			float ty = t.transform.position.y;
+			System.Func<Vector3, float> under = q => t.SampleHeight(q) + ty - q.y;
+			if (under(from) > 0f) return false; // (starts under the ground: nothing in front)
+			float step = 0.05f, prev = 0f;
+			for (float d = step; d <= len + 1e-4f; d += step)
+			{
+				if (under(from + dir * d) <= 0f) { prev = d; continue; }
+				float lo = prev, hi = d;
+				while (hi - lo > 0.005f) { float mid = 0.5f * (lo + hi); if (under(from + dir * mid) > 0f) hi = mid; else lo = mid; }
+				Vector3 p = from + dir * hi;
+				float e = Mathf.Max(t.terrainData.heightmapScale.x, 0.05f), f = Mathf.Max(t.terrainData.heightmapScale.z, 0.05f);
+				float hx = t.SampleHeight(p + Vector3.right * e) - t.SampleHeight(p - Vector3.right * e);
+				float hz = t.SampleHeight(p + Vector3.forward * f) - t.SampleHeight(p - Vector3.forward * f);
+				hit.point = new Vector3(p.x, t.SampleHeight(p) + ty, p.z);
+				hit.normal = new Vector3(-hx / (2f * e), 1f, -hz / (2f * f)).normalized;
+				hit.distance = hi;
+				FrameCoverByHeights++;
+				return true;
+			}
+			return false;
+		}
+
+		/// <summary>FrameCovered's ground found by the heightmap where the terrain's collider met nothing (log, tests).</summary>
+		public static int FrameCoverByHeights;
+
+		/// <summary>Why FrameCovered left frame points, all islands since Raft started: no normal or turned down, no ground in
+		/// front within reach, the ground there not steep, the ground turned away from the face (log, tests).</summary>
+		public static readonly int[] FrameCoverMiss = new int[4];
+		/// <summary>How far in front of a frame point next to one laid out (FrameCovered) the ground is looked for (m): the faces
+		/// between a point laid out and one left under it dived under the cutting wall within FrameCover.</summary>
+		public const float FrameCoverNext = 2.5f;
+
+		/// <summary>
+		/// A world point 0-FrameSunk under the island ground (not over a hole cut in it) laid FrameOver over it, its normal then the
+		/// ground's (gn; zero when not lifted).
+		/// </summary>
+		static Vector3 OnGround(Vector3 w, Vector3 fn, Vector3 wn, float reach, out Vector3 gn)
+		{
+			float g;
+			if (!FrameLiftable(w, out g, out gn))
+			{
+				// (11-21 cv40: and a point whose own face has the ground just in front of it, laid out onto the ground along it -
+				// Sinkmarket Floor's cutting walls ran 0.4-0.65 m in front of its frame's inner faces, 1.3 m and more straight
+				// down on a 74 degree wall, where the heightmap's smoothed normal said 44: pale walls stood inside the frame ring)
+				RaycastHit hit;
+				if (!FrameCovered(w, fn, reach, out hit) && !FrameCovered(w, wn, reach, out hit)) { gn = Vector3.zero; return w; }
+				FramePointsLifted++; FramePointsCovered++;
+				gn = hit.normal;
+				return hit.point + hit.normal * FrameOverSteep;
+			}
+			FramePointsLifted++;
+			// (FrameOver measured across the slope, not straight up: on a steep wall 3 cm up is a hair off the ground and flickers)
+			return new Vector3(w.x, g + (gn.y < FrameCoverSteep ? FrameOverSteep : FrameOver) / Mathf.Max(gn.y, 0.2f), w.z);
+		}
+
+		/// <summary>
+		/// Whether a world point is a mouth frame's point FramesLikeHill lifts onto the island ground: under it by 0-FrameSunk
+		/// across its slope (at most FrameSunkDown straight down), not over a hole cut in it. g the ground's height there, n its
+		/// normal (zero when not). For tests too (CIFrameSunk).
+		/// </summary>
+		public static bool FrameLiftable(Vector3 w, out float g, out Vector3 n)
+		{
+			g = 0f; n = Vector3.zero;
+			Terrain t = LiftTerrain(w);
+			if (t == null) return false;
+			g = t.SampleHeight(w) + t.transform.position.y;
+			if (w.y >= g || w.y < g - FrameSunkDown) return false;
+			TerrainData d = t.terrainData;
+			Vector3 o = t.transform.position;
+			Vector3 gn = d.GetInterpolatedNormal((w.x - o.x) / d.size.x, (w.z - o.z) / d.size.z);
+			// (11-21 cv29: how deep measured across the ground's slope, not straight down - on Sinkmarket Floor's 52-54 degree cutting
+			// walls a frame 0.3 m under the ground lay 0.85 m straight under it, was left, and the cut ground poked through the
+			// frame's sides as walls in its mouth)
+			if ((g - w.y) * Mathf.Max(gn.y, 0.2f) > FrameSunk) return false;
+			// (round 4: lifting the frame's outer top onto steep cutting walls from up to 3-8 m under them, where the ground is drawn
+			// pale, tore its rim into shards against the sky and stood a pale slab in Sinkmarket's mouth: only 0-FrameSunk is lifted)
+			if (!SolidAt(t, w)) return false; // (a hole: no ground here to lie on)
+			n = gn;
+			return true;
+		}
+
+		static bool Over(Terrain t, Vector3 w)
+		{
+			Vector3 o = t.transform.position, s = t.terrainData.size;
+			return w.x >= o.x && w.x <= o.x + s.x && w.z >= o.z && w.z <= o.z + s.z;
+		}
+
+		/// <summary>The tunnel pieces' own pale blue rock (TP_IceRavine).</summary>
+		public const string IceRock = "IceRavine";
 		/// <summary>How many tunnel bodies (and backs) FramesLikeHill drew in the hill's rock, all islands since Raft started.</summary>
 		public static int TunnelsLikeHill;
 
@@ -941,7 +1782,11 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Marks a lone den's wall's outside drawn as the hill: TintWall leaves it as the hill. CaveLit lights it as it lights
 		/// the hill (CaveMountain marks its skin), so the two stay one rock.</summary>
-		public class HillWall : MonoBehaviour { }
+		public class HillWall : MonoBehaviour
+		{
+			/// <summary>A mouth frame's points (by its mesh's points) TuckRim laid under the ground as its rim; null on other walls.</summary>
+			[NonSerialized] public bool[] Rim;
+		}
 
 		/// <summary>A den's way-in sleeve's parts' shade, from its mouth in (CaveLit lights each part with the den's light times it).</summary>
 		public class SleeveShade : MonoBehaviour { [NonSerialized] public float[] Shade; }
@@ -1362,6 +2207,7 @@ namespace DynamicIslands.Editor
 			var open = new bool[nx, ny];
 			var sky = new bool[nx, ny];
 			var free = new bool[nx, ny];
+			int outNotByHollow = 0, outSky = 0, outFree = 0;
 			bool backsOpen = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true;
 			try
@@ -1400,7 +2246,11 @@ namespace DynamicIslands.Editor
 							if (hollow[a, b]) byHollow = true;
 							if (state[a, b] == 2) byWayIn = true;
 						}
-					if (!byHollow || (sky[i, k] && !byWayIn) || free[i, k]) { state[i, k] = 0; leftOut++; }
+					if (!byHollow || (sky[i, k] && !byWayIn) || free[i, k])
+					{
+						state[i, k] = 0; leftOut++;
+						if (!byHollow) outNotByHollow++; else if (free[i, k]) outFree++; else outSky++;
+					}
 				}
 			int cells = 0;
 			var trisOut = new List<int>();
@@ -1530,7 +2380,7 @@ namespace DynamicIslands.Editor
 			CaveVeil.Build(go, hcx, hcy, ha, hb, hp, archNoise, zf - PlugFunnel, my, wr.sharedMaterial);
 			// (lit as the den, its own parts looked up again, the outside too)
 			CaveLit.Mark(den);
-			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells (" + leftOut + " out in the open left out), rock relief, smooth, arched way in, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
+			Debug.Log("[CUSTOM ISLANDS] Den's mouth walled: " + cells + " cells (" + leftOut + " out in the open left out: " + outNotByHollow + " by no hollow, " + outSky + " sky, " + outFree + " free), rock relief, smooth, arched way in, " + wr.sharedMaterial.name + (atlas ? " at uv " + swatch.ToString("0.000") : ""));
 		}
 
 		/// <summary>The UV of the den mesh's corner nearest a point by its mouth (its rock colour), when the mesh is readable.</summary>
@@ -2423,5 +3273,17 @@ namespace DynamicIslands.Editor
 			}
 			return sh;
 		}
+	}
+
+	/// <summary>Dev (CICaveTry): numbers a test sets by name to try a change in the cave tools in one run, before and after,
+	/// without a new build. Unset, each is its default - what ships.</summary>
+	internal static class CaveTry
+	{
+		static readonly Dictionary<string, float> set = new Dictionary<string, float>();
+		public static float F(string name, float normal) { float v; return set.TryGetValue(name, out v) ? v : normal; }
+		public static bool On(string name) { return F(name, 0f) > 0f; }
+		public static void Set(string name, float v) { set[name] = v; }
+		public static void Clear() { set.Clear(); }
+		public static string All() { return set.Count == 0 ? "none" : string.Join(", ", set.Select(kv => kv.Key + "=" + kv.Value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)).ToArray()); }
 	}
 }

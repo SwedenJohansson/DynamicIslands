@@ -4345,7 +4345,35 @@ namespace DynamicIslands
 				if (!ShowsAboveGround(b, ground)) KeptByMiddle.Add(go.name + " at " + Num(b.center.x) + " " + Num(b.center.y) + " " + Num(b.center.z));
 				return false;
 			}
+			// (or in a placed cave's room: a cave piece's roof over its middle and its floor under it - Sinkmarket's bonded cellar,
+			// kit_st under the raised mound, lost both its caveloot stones at the save as buried, cv43 11-21)
+			if (!ShowsAboveGround(b, ground) && InPlacedCave(b.center))
+			{
+				KeptByMiddle.Add(go.name + " at " + Num(b.center.x) + " " + Num(b.center.y) + " " + Num(b.center.z) + " (in a placed cave)");
+				return false;
+			}
 			return !ShowsAboveGround(b, ground);
+		}
+
+		/// <summary>Whether a point is in a placed cave piece's passage: the nearest cave piece met going up is a roof (facing down,
+		/// within 12 m) and the nearest going down a floor (facing up, within 3 m).</summary>
+		static bool InPlacedCave(Vector3 p)
+		{
+			System.Func<Collider, bool> cave = c =>
+			{
+				EditorGameObject eg = c.GetComponentInParent<EditorGameObject>();
+				string n = eg != null ? eg.GameObjectName ?? "" : "";
+				return n.IndexOf("Cave", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Tunnel", StringComparison.OrdinalIgnoreCase) >= 0;
+			};
+			System.Func<Vector3, float, RaycastHit?> first = (d, len) =>
+			{
+				RaycastHit? best = null;
+				foreach (RaycastHit h in Physics.RaycastAll(p, d, len, ~0, QueryTriggerInteraction.Ignore))
+					if (cave(h.collider) && (!best.HasValue || h.distance < best.Value.distance)) best = h;
+				return best;
+			};
+			RaycastHit? up = first(Vector3.up, 12f), down = first(Vector3.down, 3f);
+			return up.HasValue && up.Value.normal.y < -0.3f && down.HasValue && down.Value.normal.y > 0.3f;
 		}
 
 		/// <summary>

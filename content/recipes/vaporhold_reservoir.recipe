@@ -267,11 +267,15 @@ brush flatten from -15.2 -31.6 to -15.2 -34.8 r=1.5 s=20 frames=200 h=4.9
 # (11-13 w11e: east along -50 to -68 its strokes met the valve chamber's den (its box from -74 -49.4 back to -53 -42 on
 # this side) and a dig takes what it digs into away - the den went whole, the chest and mushrooms left in the rock. Now
 # up the slope away from the den, its room 1.5 m short of the den's box)
-dig -82,-50 -76.5,-46.3 r=1.75 slope=0 as=vrservice
+# (11-21 cave1119 r4: the room's stroke began at the passage's floor 6.1 with r=2 - its top 10.1 at the join, over the
+# ground there (9.9): the ground was cut over the join, a window to the sky in the roof 6 m in, behind the mouth's rim,
+# with pale shards round it (the rat's "open sky" at -76.4 -44.8, 11-16). The passage now dips 15 degrees from its mouth,
+# the join's floor 4.3, the room level from there - its top 1.6 m under the ground, its floor where it was)
+dig -82,-50 -76.5,-46.3 r=1.75 slope=-15 as=vrservice
 # (11-16 w11D: the room's stroke logged floor 4.5 r=2.8 under ground 10.1 - its top at the ground, 24 ground cells cut
 # and the rat walked out on to the hill under open sky; CAVE_LESSONS 11-08: rock over a room by digging it deeper - a
 # smaller room sloped down, its top 1.5+ m under the ground)
-dig -76.5,-46.3 -73.5,-44.3 r=2 slope=-25 as=vrservice
+dig -76.5,-46.3 -73.5,-44.3 r=2 slope=0 as=vrservice
 # (11-14 w11g: caveloot found no dry spot away from the sky in this short passage and stopped the recipe - left out;
 # the rats are its find)
 prop vrservice cave.rock=plain

@@ -1020,6 +1020,533 @@ namespace DynamicIslands
 			else Log("PASS: den walls " + walls.Count + ", each face lit both ways");
 		}
 
+		[ConsoleCommand(name: "CIDenWallSlope", docs: "Dev, in a world: each lone den wall's outside drawn as the hill (CaveTool.WallLikeHill) on a loaded island faces the hill's slope round it, not straight out - the mean of its faces' normals within 25 degrees of the skin's mean normal behind it (turned at most CaveTool.WallTilt from straight out): a wall facing level out drew as a dark rock panel in the hill's sand, Gravewell Shaft 11-21 cv38. CIDenWallSlope <island>")]
+		public static void DenWallSlopeCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
+			if (e == null) return;
+			var skins = e.Root.GetComponentsInChildren<MeshCollider>(true).Where(c => c.name == CaveMountain.SkinName).ToList();
+			var outs = e.Root.GetComponentsInChildren<CaveTool.HillWall>(true).Where(h => h.name == CaveTool.PlugOutName).ToList();
+			if (outs.Count == 0) { Fail("no den wall outside drawn as the hill (" + CaveTool.PlugOutName + ") on " + e.HostName); return; }
+			int bad = 0;
+			foreach (CaveTool.HillWall h in outs)
+			{
+				string den = h.transform.parent != null && h.transform.parent.parent != null ? h.transform.parent.parent.name : h.name;
+				MeshFilter mf = h.GetComponent<MeshFilter>();
+				Mesh m = mf != null ? mf.sharedMesh : null;
+				if (m == null || m.vertexCount == 0) { bad++; Log("  " + den + ": no mesh - BAD"); continue; }
+				Vector3 outward = h.transform.parent.forward, wallN = Vector3.zero, skinN = Vector3.zero;
+				Vector3[] v = m.vertices, n = m.normals;
+				int level = 0;
+				for (int i = 0; i < v.Length; i++)
+				{
+					Vector3 wn = h.transform.TransformDirection(n[i]).normalized;
+					wallN += wn;
+					if (wn.y < 0.2f) level++;
+					Vector3 w = h.transform.TransformPoint(v[i]);
+					RaycastHit hit; float best = float.MaxValue; Vector3 hn = Vector3.zero;
+					foreach (MeshCollider c in skins)
+						if (c.Raycast(new Ray(w + outward * 6f, -outward), out hit, 12f) && hit.distance < best && hit.normal.y > 0f) { best = hit.distance; hn = hit.normal; }
+					skinN += hn;
+				}
+				if (skinN.sqrMagnitude < 1e-6f) { Log("  " + den + ": no skin behind it - skipped"); continue; }
+				Vector3 want = Vector3.RotateTowards(outward, skinN.normalized, CaveTool.WallTilt * Mathf.Deg2Rad, 0f);
+				float off = Vector3.Angle(wallN, want);
+				bool ok = off < 25f;
+				if (!ok) bad++;
+				Log("  " + den + ": " + v.Length + " points, faces " + Vector3.Angle(wallN, outward).ToString("0") + " deg up from straight out, the skin's slope "
+					+ Vector3.Angle(skinN, outward).ToString("0") + " deg, off it by " + off.ToString("0") + ", facing level " + (100f * level / v.Length).ToString("0") + "%" + (ok ? "" : " - BAD"));
+			}
+			if (bad > 0) Fail(bad + " of " + outs.Count + " den walls facing away from the hill's slope");
+			else Log("PASS: den walls " + outs.Count + " facing the hill's slope");
+		}
+
+		[ConsoleCommand(name: "CIFrameSunk", docs: "Dev, in a world: tunnel mouth frames drawn as the hill (CaveTool.FramesLikeHill) on a loaded island - no frame point left under the ground within the lift band (CaveTool.FrameLiftable: 0-FrameSunk across the ground's slope): the cut ground poked through Sinkmarket Floor's mouth frame as walls, 11-21 cv29. Logs how many points lie deeper on purpose. CIFrameSunk <island>")]
+		public static void FrameSunkCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
+			if (e == null) return;
+			var frames = e.Root.GetComponentsInChildren<CaveTool.HillWall>(true).Where(h => h.name == CaveTool.MouthName).ToList();
+			if (frames.Count == 0) { Fail("no mouth frame drawn as the hill (" + CaveTool.MouthName + ") on " + e.HostName); return; }
+			int left = 0, deeper = 0, all = 0, tucked = 0;
+			foreach (CaveTool.HillWall h in frames)
+			{
+				MeshFilter mf = h.GetComponent<MeshFilter>();
+				if (mf == null || mf.sharedMesh == null) continue;
+				int mine = 0;
+				// (11-21 cv49: the points of faces turned up only, as FramesLikeHill - a point on the sill's underside never shows)
+				Vector3[] ws = mf.sharedMesh.vertices.Select(p => h.transform.TransformPoint(p)).ToArray();
+				bool[] up = CaveTool.FrameUpPoints(ws, mf.sharedMesh.triangles);
+				// (11-21 cv52: and the rim laid under the ground on purpose, CaveTool.TuckRim)
+				bool[] rim = CaveTool.FrameRimPoints(h, ws.Length);
+				for (int v = 0; v < ws.Length; v++)
+				{
+					if (!up[v]) continue;
+					Vector3 w = ws[v]; float g; Vector3 gn;
+					all++;
+					if (rim[v]) { tucked++; continue; }
+					if (CaveTool.FrameLiftable(w, out g, out gn)) { left++; mine++; }
+					else if (w.y < g - 0.01f) deeper++;
+				}
+				if (mine > 0) Log("  " + (h.transform.parent != null ? h.transform.parent.name : h.name) + " at " + (h.transform.position - e.Position).ToString("F1") + ": " + mine + " point(s) still just under the ground - BAD");
+			}
+			Log("  " + frames.Count + " frame(s), " + all + " points on faces turned up, " + left + " just under the ground, " + deeper + " deeper (under the hill on purpose), " + tucked + " rim point(s) laid under it (TuckRim)");
+			if (left > 0) Fail(left + " frame point(s) left just under the ground: it shows through the frame");
+			else Log("PASS: mouth frames " + frames.Count + ", none just under the ground");
+		}
+
+		[ConsoleCommand(name: "CIFrameRim", docs: "Dev, in a world: tunnel mouth frames drawn as the hill (CaveTool.FramesLikeHill) on a loaded island - no long stretch of a frame face turned aside standing a strip of at most CaveTool.FrameRimShow out of the ground while it goes on down into it (CaveTool.TuckRim lays the rim under the ground): Overpass Shoal's mouth apron stood 3 cm over the channel floor, its side wall a row of black dashes, 11-21 cv50. FAIL at 0.5 m of such strips on one frame. Logs the rim points laid under the ground and the faces turned up lying within 5 cm over it. CIFrameRim <island>")]
+		public static void FrameRimCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
+			if (e == null) return;
+			var frames = e.Root.GetComponentsInChildren<CaveTool.HillWall>(true).Where(h => h.name == CaveTool.MouthName).ToList();
+			if (frames.Count == 0) { Fail("no mouth frame drawn as the hill (" + CaveTool.MouthName + ") on " + e.HostName); return; }
+			int badFrames = 0, tuckedAll = 0, flatAll = 0; float worstLen = 0f;
+			foreach (CaveTool.HillWall h in frames)
+			{
+				MeshFilter mf = h.GetComponent<MeshFilter>();
+				if (mf == null || mf.sharedMesh == null || !mf.sharedMesh.isReadable) continue;
+				Vector3[] w = mf.sharedMesh.vertices.Select(p => h.transform.TransformPoint(p)).ToArray();
+				int[] st = mf.sharedMesh.triangles;
+				bool[] rimPts = CaveTool.FrameRimPoints(h, w.Length);
+				int tucked = rimPts.Count(x => x);
+				float len = 0f; int strips = 0, flat = 0;
+				var worst = new List<KeyValuePair<float, string>>();
+				for (int t = 0; t + 2 < st.Length; t += 3)
+				{
+					Vector3 a = w[st[t]], b = w[st[t + 1]], c = w[st[t + 2]];
+					float ga, gb, gc;
+					if (!CaveTool.SolidGroundAt(a, out ga) || !CaveTool.SolidGroundAt(b, out gb) || !CaveTool.SolidGroundAt(c, out gc)) continue;
+					float ha = a.y - ga, hb = b.y - gb, hc = c.y - gc;
+					float top = Mathf.Max(ha, Mathf.Max(hb, hc)), low = Mathf.Min(ha, Mathf.Min(hb, hc));
+					if (!CaveTool.FrameAside(a, b, c))
+					{
+						// (a face turned up lying within 5 cm over the ground all over: the ground may fight through it - for the log)
+						Vector3 n = Vector3.Cross(b - a, c - a);
+						if (n.sqrMagnitude > 1e-10f && n.normalized.y >= CaveTool.FrameRimCross && low >= 0f && top < 0.05f) flat++;
+						continue;
+					}
+					// (a strip out of the ground at most FrameRimShow high, the face going on down into the ground)
+					if (top <= 0.005f || top > CaveTool.FrameRimShow || low > -CaveTool.FrameRimIn) continue;
+					// (how long it runs: across the face's points standing out of the ground, or half the face's width where one does)
+					var outs = new List<Vector3>();
+					if (ha > -CaveTool.FrameRimIn) outs.Add(a);
+					if (hb > -CaveTool.FrameRimIn) outs.Add(b);
+					if (hc > -CaveTool.FrameRimIn) outs.Add(c);
+					float l = 0f;
+					for (int i = 0; i < outs.Count; i++) for (int j = i + 1; j < outs.Count; j++) l = Mathf.Max(l, Vector2.Distance(new Vector2(outs[i].x, outs[i].z), new Vector2(outs[j].x, outs[j].z)));
+					if (l < 0.01f) l = Mathf.Max(Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z)), Mathf.Max(Vector2.Distance(new Vector2(b.x, b.z), new Vector2(c.x, c.z)), Vector2.Distance(new Vector2(a.x, a.z), new Vector2(c.x, c.z)))) * 0.5f;
+					len += l; strips++;
+					Vector3 m = (a + b + c) / 3f;
+					worst.Add(new KeyValuePair<float, string>(l, "strip " + (top * 100f).ToString("0.0", CultureInfo.InvariantCulture) + " cm out of the ground, " + l.ToString("0.00", CultureInfo.InvariantCulture) + " m long, at " + (m - e.Position).ToString("F2") + " (heights " + (ha * 100f).ToString("0", CultureInfo.InvariantCulture) + "/" + (hb * 100f).ToString("0", CultureInfo.InvariantCulture) + "/" + (hc * 100f).ToString("0", CultureInfo.InvariantCulture) + " cm, " + ((rimPts[st[t]] ? 1 : 0) + (rimPts[st[t + 1]] ? 1 : 0) + (rimPts[st[t + 2]] ? 1 : 0)) + "/3 tucked)"));
+				}
+				string where = (h.transform.parent != null ? h.transform.parent.name : h.name) + " at " + (h.transform.position - e.Position).ToString("F1");
+				Log("  " + where + ": " + strips + " face(s) turned aside standing a strip out of the ground, " + len.ToString("0.00", CultureInfo.InvariantCulture) + " m in all; " + tucked + " rim point(s) laid under the ground; " + flat + " face(s) turned up lying within 5 cm over it");
+				bool bad = len >= FrameRimLong;
+				foreach (var kv in worst.OrderByDescending(k => k.Key).Take(bad ? 8 : 3)) Log("    " + kv.Value + (bad ? " - BAD" : ""));
+				if (bad) badFrames++;
+				worstLen = Mathf.Max(worstLen, len); tuckedAll += tucked; flatAll += flat;
+			}
+			Log("  " + frames.Count + " frame(s), most strip out of the ground on one " + worstLen.ToString("0.00", CultureInfo.InvariantCulture) + " m, " + tuckedAll + " rim point(s) laid under the ground, " + flatAll + " face(s) turned up within 5 cm over it");
+			if (badFrames > 0) Fail(badFrames + " mouth frame(s) with " + FrameRimLong.ToString("0.0", CultureInfo.InvariantCulture) + " m or more of side faces standing a strip of at most " + (CaveTool.FrameRimShow * 100f).ToString("0", CultureInfo.InvariantCulture) + " cm out of the ground (dashes along the frame's edge)");
+			else Log("PASS: mouth frames " + frames.Count + ", no long strip of a side face standing just out of the ground");
+		}
+
+		/// <summary>CIFrameRim: this much (m) of side-face strips just out of the ground on one frame fails.</summary>
+		const float FrameRimLong = 0.5f;
+
+		[ConsoleCommand(name: "CIFrameRing", docs: "Dev, in a world, after a CIPlay on the island: rays over the last play picture (64x36) at the tunnel mouth frames drawn as the hill (CaveTool.FramesLikeHill) - none may meet steep island ground (CaveTool.FrameCoverSteep) standing within CaveTool.FrameCover in front of a frame face, along that face's normal: Sinkmarket Floor's cutting walls stood 0.4-0.65 m in front of its frame's inner faces as pale walls inside the ring while CIFrameSunk passed, 11-21 cv40 - and none may meet island ground lying along a frame face (normals within 45 degrees) within 0.05 m of it, in front or behind: the heightmap's triangles 1 cm behind Sinkmarket's mouth side walls poked through as a dark sawtooth, 11-21 cv45. FAIL at 3 rays of either. CIFrameRing <island>")]
+		public static void FrameRingCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
+			if (e == null) return;
+			StartTest(FrameRingRoutine(e));
+		}
+
+		/// <summary>CIFrameRing: ground lying along a frame face within this (m, across it) fights through it.</summary>
+		const float FightNear = 0.05f;
+
+		static IEnumerator FrameRingRoutine(IslandWorldState.Entry e)
+		{
+			var frames = e.Root.GetComponentsInChildren<CaveTool.HillWall>(true).Where(h => h.name == CaveTool.MouthName).ToList();
+			if (frames.Count == 0) { Fail("no mouth frame drawn as the hill (" + CaveTool.MouthName + ") on " + e.HostName); yield break; }
+			string pi = LastPictureIsland ?? "";
+			bool ours = pi.Length > 0 && ((e.Name ?? "").IndexOf(pi, System.StringComparison.OrdinalIgnoreCase) >= 0 || (e.HostName ?? "").IndexOf(pi, System.StringComparison.OrdinalIgnoreCase) >= 0);
+			if (!LastPictureFrom.HasValue || !ours) { Fail("frame ring: no play picture of " + e.HostName + " (run CIPlay on it first)"); yield break; }
+			Vector3 from = e.Position + e.Root.transform.rotation * LastPictureFrom.Value, to = e.Position + e.Root.transform.rotation * LastPictureLook.Value;
+			Quaternion look = Quaternion.LookRotation(to - from);
+			float half = Mathf.Tan((Camera.main != null ? Camera.main.fieldOfView : 65f) * 0.5f * Mathf.Deg2Rad);
+			// (the frames' drawn faces, as world triangles: the collider keeps the frame's mesh before it was laid on the ground)
+			var ta = new List<Vector3>(); var te1 = new List<Vector3>(); var te2 = new List<Vector3>(); var tn = new List<Vector3>();
+			var trim = new List<bool>(); // (11-21 cv52: a face with a rim point laid under the ground - it goes into the ground there on purpose)
+			var pieces = new List<Transform>();
+			foreach (CaveTool.HillWall h in frames)
+			{
+				MeshFilter mf = h.GetComponent<MeshFilter>();
+				if (mf == null || mf.sharedMesh == null || !mf.sharedMesh.isReadable) continue;
+				if (h.transform.parent != null) pieces.Add(h.transform.parent);
+				Vector3[] v = mf.sharedMesh.vertices; int[] t = mf.sharedMesh.triangles;
+				bool[] rim = CaveTool.FrameRimPoints(h, v.Length);
+				for (int i = 0; i + 2 < t.Length; i += 3)
+				{
+					Vector3 a = h.transform.TransformPoint(v[t[i]]), b = h.transform.TransformPoint(v[t[i + 1]]), c = h.transform.TransformPoint(v[t[i + 2]]);
+					Vector3 n = Vector3.Cross(b - a, c - a);
+					if (n.sqrMagnitude < 1e-12f) continue;
+					ta.Add(a); te1.Add(b - a); te2.Add(c - a); tn.Add(n.normalized);
+					trim.Add(rim[t[i]] || rim[t[i + 1]] || rim[t[i + 2]]);
+				}
+			}
+			const int GX = 64, GY = 36;
+			int metFrame = 0, bad = 0, deeper = 0, fight = 0, rimFight = 0;
+			var worst = new List<KeyValuePair<float, string>>(); var fights = new List<KeyValuePair<float, string>>();
+			for (int y = 0; y < GY; y++)
+			{
+				for (int x = 0; x < GX; x++)
+				{
+					float u = (x + 0.5f) / GX, vv = (y + 0.5f) / GY;
+					Vector3 dir = (look * new Vector3((2f * u - 1f) * half * 16f / 9f, (1f - 2f * vv) * half, 1f)).normalized;
+					float tF = 60f; int fi = -1;
+					for (int i = 0; i < ta.Count; i++)
+					{
+						if (Vector3.Dot(tn[i], dir) >= 0f) continue; // (seen from behind: culled, as drawn)
+						Vector3 p = Vector3.Cross(dir, te2[i]);
+						float det = Vector3.Dot(te1[i], p);
+						if (Mathf.Abs(det) < 1e-9f) continue;
+						float inv = 1f / det; Vector3 s = from - ta[i];
+						float bu = Vector3.Dot(s, p) * inv;
+						if (bu < 0f || bu > 1f) continue;
+						Vector3 q = Vector3.Cross(s, te1[i]);
+						float bv = Vector3.Dot(dir, q) * inv;
+						if (bv < 0f || bu + bv > 1f) continue;
+						float d = Vector3.Dot(te2[i], q) * inv;
+						if (d > 0.05f && d < tF) { tF = d; fi = i; }
+					}
+					if (fi < 0) continue;
+					metFrame++;
+					float cosF = Mathf.Abs(Vector3.Dot(dir, tn[fi]));
+					float past = Mathf.Min(FightNear / Mathf.Max(cosF, 0.2f) + 0.01f, 0.5f);
+					RaycastHit[] hits = Physics.RaycastAll(new Ray(from, dir), tF + past, ~0, QueryTriggerInteraction.Ignore).OrderBy(hh => hh.distance).ToArray();
+					RaycastHit? land = null;
+					foreach (RaycastHit hh in hits)
+					{
+						if (hh.collider is TerrainCollider) { land = hh; break; }
+						if (hh.collider.GetComponentInParent<Network_Player>() != null || pieces.Any(pc => hh.collider.transform.IsChildOf(pc))) continue;
+						break; // (something else in front: the ground there isn't what is seen)
+					}
+					// (11-21 cv45: and the ground lying along the face within FightNear of it, in front or just behind - Sinkmarket's
+					// cutting walls 1 cm behind its mouth's side walls, the heightmap's triangles poking through them as a dark sawtooth;
+					// not ground crossing the face at a slant, where a frame goes into the hill)
+					if (land.HasValue && Mathf.Abs(land.Value.distance - tF) * cosF < FightNear && Vector3.Dot(land.Value.normal, tn[fi]) > 0.7f)
+					{
+						if (trim[fi]) { rimFight++; continue; }
+						fight++;
+						fights.Add(new KeyValuePair<float, string>(-Mathf.Abs(land.Value.distance - tF) * cosF, "at " + u.ToString("0.00", CultureInfo.InvariantCulture) + "," + vv.ToString("0.00", CultureInfo.InvariantCulture) + " of the picture: ground at "
+							+ (land.Value.point - e.Position).ToString("F2") + " (normal " + land.Value.normal.ToString("F2") + ") " + ((land.Value.distance - tF) * cosF).ToString("0.000", CultureInfo.InvariantCulture) + " m behind the frame's face (normal " + tn[fi].ToString("F2") + ")"));
+						continue;
+					}
+					if (!land.HasValue || land.Value.distance > tF - 0.02f || land.Value.normal.y >= CaveTool.FrameCoverSteep) continue;
+					float across = (tF - land.Value.distance) * cosF;
+					if (across > CaveTool.FrameCover) { deeper++; continue; }
+					bad++;
+					worst.Add(new KeyValuePair<float, string>(across, "at " + u.ToString("0.00", CultureInfo.InvariantCulture) + "," + vv.ToString("0.00", CultureInfo.InvariantCulture) + " of the picture: ground at "
+						+ (land.Value.point - e.Position).ToString("F2") + " (normal " + land.Value.normal.ToString("F2") + ") " + across.ToString("0.00", CultureInfo.InvariantCulture) + " m in front of the frame's face"));
+				}
+				yield return null;
+			}
+			foreach (var kv in worst.OrderByDescending(k => k.Key).Take(10)) Log("  " + kv.Value + " - BAD");
+			foreach (var kv in fights.OrderByDescending(k => k.Key).Take(10)) Log("  " + kv.Value + " - FIGHT");
+			Log("  " + frames.Count + " frame(s), " + ta.Count + " faces, " + metFrame + " of " + (GX * GY) + " rays meet a frame face, " + bad + " see steep ground just in front of it, " + fight + " ground within " + FightNear.ToString("0.00", CultureInfo.InvariantCulture) + " m of it along it (and " + rimFight + " where its rim goes into the ground, TuckRim), " + deeper + " ground further in front (frame under the hill); " + CaveTool.GroundSunkUnderFrames + " ground point(s) let down under frame faces since start");
+			// (11-21 cv47: and every renderer of the frames' pieces in the hill's rock with its main normal map flat and its rock layer
+			// on faces turned up: Balboa's baked normal on our uvs drew black triangles all over Sinkmarket Floor's frame, and its
+			// sand layer a golden band in its mouth)
+			int looks = 0, lookBad = 0;
+			foreach (Transform pc in pieces.Distinct())
+				foreach (MeshRenderer r in pc.GetComponentsInChildren<MeshRenderer>(false))
+				{
+					if (r.GetComponent<CaveTool.HillWall>() == null) continue;
+					Material[] mats = r.sharedMaterials;
+					for (int i = 0; i < mats.Length; i++)
+					{
+						Material m = mats[i];
+						if (m == null || !m.HasProperty(CaveTool.MainNormal)) continue;
+						looks++;
+						var b = new MaterialPropertyBlock();
+						r.GetPropertyBlock(b, i);
+						Texture n = b.isEmpty ? null : b.GetTexture(CaveTool.MainNormal);
+						if (n == null) { r.GetPropertyBlock(b); n = b.isEmpty ? null : b.GetTexture(CaveTool.MainNormal); r.GetPropertyBlock(b, i); }
+						Texture top = b.isEmpty || !m.HasProperty("_GrassDiffuse") ? null : b.GetTexture("_GrassDiffuse");
+						Texture side = b.isEmpty || !m.HasProperty("_RockDiffuse") ? null : b.GetTexture("_RockDiffuse");
+						if (side == null && m.HasProperty("_RockDiffuse")) side = m.GetTexture("_RockDiffuse");
+						bool flat = n == Texture2D.normalTexture, rock = !m.HasProperty("_GrassDiffuse") || top != null && top == side;
+						if (flat && rock) continue;
+						lookBad++;
+						Log("  " + (r.transform.parent != null ? r.transform.parent.name + "/" : "") + r.name + " part " + i + ": " + (flat ? "" : "main normal map not flat (" + (n != null ? n.name : m.GetTexture(CaveTool.MainNormal) != null ? m.GetTexture(CaveTool.MainNormal).name : "none") + ") ") + (rock ? "" : "sand layer on faces turned up") + " - BAD");
+					}
+				}
+			Log("  " + looks + " part(s) of the frames' pieces in the hill's rock, " + lookBad + " not flat or not rock all over");
+			if (lookBad > 0) Fail(lookBad + " part(s) of a mouth frame's piece in the hill's rock with Balboa's baked normal map or its sand layer (black or golden patches)");
+			if (bad >= 3 || fight >= 3) Fail((bad >= 3 ? bad + " rays see steep ground standing just in front of a mouth frame's face (inside the ring)" : "") + (bad >= 3 && fight >= 3 ? "; " : "") + (fight >= 3 ? fight + " rays meet the ground within " + FightNear.ToString("0.00", CultureInfo.InvariantCulture) + " m of a mouth frame's face, lying along it (it fights through the frame)" : ""));
+			else if (lookBad == 0) Log("PASS: mouth frames " + frames.Count + ", no ground standing inside the ring (" + bad + " ray(s)), their pieces' rock flat and rock all over");
+		}
+
+		[ConsoleCommand(name: "CIDenWallLook", docs: "Dev, in a world: each lone den wall's outside drawn as the hill (CaveTool.WallLikeHill) on a loaded island, pictured from 8 m or more out in front of the den (shot_denlook_<n>.png): the pixels it draws (seen changing when it is hidden) against the hill's skin round them (rays meet the skin first, within 8 px) - mean brightness within 14 (of 255) and at most 30% of its pixels darker than the skin's darkest tenth: a dark panel with two spikes round Gravewell Shaft's den mouth while CIDenWalls and CIDenWallSlope passed, 11-21 cv40. CIDenWallLook <island>")]
+		public static void DenWallLookCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
+			if (e == null) return;
+			StartTest(DenWallLookRoutine(e));
+		}
+
+		static int denLookN;
+		/// <summary>CIDenWallLook: a den wall's grain (its brightness slopes' direction-and-strength, 0..2) may differ from the hill's round it by this much.</summary>
+		const float DenGrainOff = 0.25f;
+		/// <summary>CIDenWallLook: a brightness step (of 255) across a column or row that counts toward a straight seam.</summary>
+		const float DenSeamStep = 12f;
+		/// <summary>CIDenWallLook: a straight seam this long (px of 360) or a fifth of the wall's box on the picture is BAD.</summary>
+		const int DenSeamRun = 20;
+
+		static IEnumerator DenWallLookRoutine(IslandWorldState.Entry e)
+		{
+			var outs = e.Root.GetComponentsInChildren<CaveTool.HillWall>(true).Where(h => h.name == CaveTool.PlugOutName).ToList();
+			if (outs.Count == 0) { Fail("no den wall outside drawn as the hill (" + CaveTool.PlugOutName + ") on " + e.HostName); yield break; }
+			Camera cam = Camera.main;
+			if (cam == null) { Fail("den wall look: no camera"); yield break; }
+			const int W = 640, H = 360, R = 8;
+			int bad = 0, looked = 0;
+			foreach (CaveTool.HillWall h in outs)
+			{
+				MeshRenderer pr = h.GetComponent<MeshRenderer>();
+				Transform plug = h.transform.parent;
+				if (pr == null || plug == null) continue;
+				string den = plug.parent != null ? plug.parent.name : plug.name;
+				Bounds b = pr.bounds;
+				Vector3 from = b.center + plug.forward * Mathf.Max(b.extents.magnitude * 2.2f, 8f) + Vector3.up * 1.5f;
+				Quaternion rot = Quaternion.LookRotation(b.center - from);
+				float half = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+				yield return new WaitForEndOfFrame();
+				denLookN++;
+				Vector3 oldPos = cam.transform.position; Quaternion oldRot = cam.transform.rotation; RenderTexture oldRt = cam.targetTexture;
+				var rt = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32);
+				var tex = new Texture2D(W, H, TextureFormat.RGB24, false);
+				Color32[] with, with2, without;
+				try
+				{
+					cam.transform.position = from; cam.transform.rotation = rot; cam.targetTexture = rt;
+					System.Func<Color32[]> grab = () =>
+					{
+						cam.Render();
+						RenderTexture was = RenderTexture.active; RenderTexture.active = rt;
+						tex.ReadPixels(new Rect(0, 0, W, H), 0, 0); tex.Apply();
+						RenderTexture.active = was;
+						return tex.GetPixels32();
+					};
+					// (11-21 cv44: a first picture to settle the camera's effects, then two to know what changes on its own: the mask
+					// took nearly the whole picture, so only 3 rays round it were left to find the skin and the look was BAD unchecked)
+					grab();
+					with = grab();
+					with2 = grab();
+					SaveRt(rt, Path.Combine(DynamicIslands.assetpath, "shot_denlook_" + denLookN + ".png"));
+					pr.forceRenderingOff = true;
+					try { without = grab(); } finally { pr.forceRenderingOff = false; }
+				}
+				finally
+				{
+					cam.transform.position = oldPos; cam.transform.rotation = oldRot; cam.targetTexture = oldRt;
+					rt.Release(); Object.Destroy(rt); Object.Destroy(tex);
+				}
+				System.Func<Color32, float> luma = c => 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
+				// (only within the wall's own box on the picture, and not where the picture changes by itself)
+				int bx0 = W, by0 = H, bx1 = -1, by1 = -1;
+				Matrix4x4 toCam = Matrix4x4.TRS(from, rot, Vector3.one).inverse;
+				for (int ci = 0; ci < 8; ci++)
+				{
+					Vector3 cw = new Vector3((ci & 1) == 0 ? b.min.x : b.max.x, (ci & 2) == 0 ? b.min.y : b.max.y, (ci & 4) == 0 ? b.min.z : b.max.z);
+					Vector3 cc = toCam.MultiplyPoint3x4(cw);
+					if (cc.z < 0.1f) { bx0 = 0; by0 = 0; bx1 = W - 1; by1 = H - 1; break; }
+					int px = Mathf.RoundToInt((cc.x / cc.z / (half * W / H) + 1f) * 0.5f * W), py = Mathf.RoundToInt((cc.y / cc.z / half + 1f) * 0.5f * H);
+					bx0 = Mathf.Min(bx0, px); bx1 = Mathf.Max(bx1, px); by0 = Mathf.Min(by0, py); by1 = Mathf.Max(by1, py);
+				}
+				var mask = new bool[W * H];
+				int noisy = 0;
+				for (int i = 0; i < mask.Length; i++)
+				{
+					int x = i % W, y = i / W;
+					if (x < bx0 || x > bx1 || y < by0 || y > by1) continue;
+					if (Mathf.Abs(with[i].r - with2[i].r) + Mathf.Abs(with[i].g - with2[i].g) + Mathf.Abs(with[i].b - with2[i].b) > 12) { noisy++; continue; }
+					mask[i] = Mathf.Abs(with[i].r - without[i].r) + Mathf.Abs(with[i].g - without[i].g) + Mathf.Abs(with[i].b - without[i].b) > 24;
+				}
+				// (within R px of the wall's pixels: a box dilation, rows then columns)
+				var rowNear = new bool[W * H]; var near = new bool[W * H];
+				for (int y = 0; y < H; y++)
+				{
+					int last = -100000;
+					for (int x = 0; x < W; x++) { if (mask[y * W + x]) last = x; if (x - last <= R) rowNear[y * W + x] = true; }
+					last = 100000;
+					for (int x = W - 1; x >= 0; x--) { if (mask[y * W + x]) last = x; if (last - x <= R) rowNear[y * W + x] = true; }
+				}
+				for (int x = 0; x < W; x++)
+				{
+					int last = -100000;
+					for (int y = 0; y < H; y++) { if (rowNear[y * W + x]) last = y; if (y - last <= R) near[y * W + x] = true; }
+					last = 100000;
+					for (int y = H - 1; y >= 0; y--) { if (rowNear[y * W + x]) last = y; if (last - y <= R) near[y * W + x] = true; }
+				}
+				var wall = new List<float>(); var skin = new List<float>(); var metFirst = new Dictionary<string, int>();
+				var cls = new byte[W * H]; // (1 the wall, 2 the skin, 0 anything else)
+				// (nor the den's own rock: cv43 still found 4 px of skin round Gravewell's bear den, the picture all skin there -
+				// the den's colliders lie just over the skin the hill drapes on them)
+				Transform denT = plug.parent != null ? plug.parent : plug;
+				for (int y = 0; y < H; y++)
+					for (int x = 0; x < W; x++)
+					{
+						int i = y * W + x;
+						if (mask[i]) { wall.Add(luma(with[i])); cls[i] = 1; continue; }
+						if (!near[i] || ((x + y) & 1) != 0) continue;
+						Vector3 dir = rot * new Vector3((2f * (x + 0.5f) / W - 1f) * half * W / H, (2f * (y + 0.5f) / H - 1f) * half, 1f);
+						// (the first thing met that is not the den's own plug: cv42 met the plug's colliders, still where the wall stood
+						// before WallLikeHill set it back under the skin, so 8 px of skin were found and the look was skipped as a PASS)
+						RaycastHit[] hits = Physics.RaycastAll(from, dir, 80f, ~0, QueryTriggerInteraction.Ignore);
+						float nearest = float.MaxValue; Collider first = null;
+						foreach (RaycastHit hh in hits)
+							if (hh.distance < nearest && !hh.collider.transform.IsChildOf(denT)) { nearest = hh.distance; first = hh.collider; }
+						if (first != null && first.name == CaveMountain.SkinName) { skin.Add(luma(with[i])); cls[i] = 2; }
+						string fk = first == null ? "(sky)" : first.name;
+						metFirst[fk] = metFirst.TryGetValue(fk, out int fc) ? fc + 1 : 1;
+					}
+				looked++;
+				Log("  " + den + ": its box on the picture " + bx0 + ".." + bx1 + " x " + by0 + ".." + by1 + ", " + noisy + " px changing by themselves left out");
+				if (wall.Count < 30) { Log("  " + den + ": its outside not seen past the hill (" + wall.Count + " px)"); continue; }
+				if (skin.Count < 30) { bad++; Log("  " + den + ": too little of the hill's skin round it seen (" + skin.Count + " px) - not checked, BAD; met first: " + string.Join(", ", metFirst.OrderByDescending(kv => kv.Value).Take(4).Select(kv => kv.Key + " " + kv.Value).ToArray())); continue; }
+				skin.Sort();
+				float p10 = skin[skin.Count / 10], mw = wall.Average(), ms = skin.Average();
+				float dark = (float)wall.Count(l => l < p10) / wall.Count;
+				// (11-21 cv45: and its texture's grain and straight seams - Gravewell Shaft's panel passed on brightness, 26 against 22,
+				// but still read as a lighter rectangle of stretched ripples running another way, straight seams left and right of
+				// its arch. The skipped pixels of the skin's checkerboard take their left neighbour's kind)
+				for (int y = 0; y < H; y++)
+					for (int x = 1; x < W; x++) { int i = y * W + x; if (cls[i] == 0 && near[i] && !mask[i] && ((x + y) & 1) != 0) cls[i] = cls[i - 1]; }
+				System.Func<int, int, float> L = (x, y) => luma(with[y * W + x]);
+				// (the grain: each side's structure tensor of the brightness slopes, as a direction-and-strength vector at twice the angle)
+				double wxx = 0, wyy = 0, wxy = 0, sxx = 0, syy = 0, sxy = 0, wg = 0, sg = 0; int wn = 0, sn = 0;
+				for (int y = 1; y < H - 1; y++)
+					for (int x = 1; x < W - 1; x++)
+					{
+						int i = y * W + x;
+						byte k = cls[i];
+						if (k == 0 || cls[i - 1] != k || cls[i + 1] != k || cls[i - W] != k || cls[i + W] != k) continue;
+						double gx = L(x + 1, y) - L(x - 1, y), gy = L(x, y + 1) - L(x, y - 1);
+						if (k == 1) { wxx += gx * gx; wyy += gy * gy; wxy += gx * gy; wg += System.Math.Sqrt(gx * gx + gy * gy); wn++; }
+						else { sxx += gx * gx; syy += gy * gy; sxy += gx * gy; sg += System.Math.Sqrt(gx * gx + gy * gy); sn++; }
+					}
+				float grainOff = 0f, wAng = 0f, sAng = 0f, wCoh = 0f, sCoh = 0f, slope = 1f;
+				bool grainSeen = wn >= 30 && sn >= 30 && wxx + wyy > 1e-3 && sxx + syy > 1e-3;
+				if (grainSeen)
+				{
+					double wtr = wxx + wyy, str = sxx + syy;
+					Vector2 wv = new Vector2((float)((wxx - wyy) / wtr), (float)(2 * wxy / wtr)), sv = new Vector2((float)((sxx - syy) / str), (float)(2 * sxy / str));
+					grainOff = (wv - sv).magnitude;
+					wCoh = wv.magnitude; sCoh = sv.magnitude;
+					wAng = 0.5f * Mathf.Atan2(wv.y, wv.x) * Mathf.Rad2Deg; sAng = 0.5f * Mathf.Atan2(sv.y, sv.x) * Mathf.Rad2Deg;
+					slope = (float)((wg / wn) / System.Math.Max(sg / sn, 1e-3));
+				}
+				// (straight seams: the longest run, down a column or along a row (a pixel either way), of the same brightness step
+				// across it over DenSeamStep, where the pixels across are the wall's or the skin's, at least one the wall's)
+				System.Func<bool, int> seamRun = vertical =>
+				{
+					int longest = 0;
+					int outerN = vertical ? W : H, innerN = vertical ? H : W;
+					var prev = new int[outerN]; var cur = new int[outerN];
+					for (int a = 0; a < innerN; a++)
+					{
+						for (int o = 2; o < outerN - 2; o++)
+						{
+							cur[o] = 0;
+							int x = vertical ? o : a, y = vertical ? a : o;
+							bool anyWall = false, okc = true;
+							for (int d = -2; d <= 2 && okc; d++)
+							{
+								byte k = cls[vertical ? y * W + x + d : (y + d) * W + x];
+								if (k == 0) okc = false; else if (k == 1) anyWall = true;
+							}
+							if (!okc || !anyWall) continue;
+							float step = vertical ? (L(x + 1, y) + L(x + 2, y) - L(x - 1, y) - L(x - 2, y)) * 0.5f : (L(x, y + 1) + L(x, y + 2) - L(x, y - 1) - L(x, y - 2)) * 0.5f;
+							if (Mathf.Abs(step) < DenSeamStep) continue;
+							int sgn = step > 0 ? 1 : -1, run = 0;
+							for (int q = o - 1; q <= o + 1; q++) if (prev[q] * sgn > run) run = prev[q] * sgn;
+							cur[o] = sgn * (run + 1);
+							if (run + 1 > longest) longest = run + 1;
+						}
+						var sw = prev; prev = cur; cur = sw;
+					}
+					return longest;
+				};
+				int vSeam = seamRun(true), hSeam = seamRun(false);
+				int seamMost = Mathf.Max(DenSeamRun, Mathf.RoundToInt(0.2f * Mathf.Min(by1 - by0, bx1 - bx0)));
+				bool grainOk = !grainSeen || (grainOff <= DenGrainOff && slope >= 0.65f && slope <= 1.5f);
+				bool seamOk = vSeam < seamMost && hSeam < seamMost;
+				bool ok = Mathf.Abs(mw - ms) <= 14f && dark <= 0.3f && grainOk && seamOk;
+				if (!ok) bad++;
+				Log("  " + den + " (shot_denlook_" + denLookN + "): its outside " + wall.Count + " px, brightness " + mw.ToString("0") + " against the hill's " + ms.ToString("0") + " (" + skin.Count + " px round it), "
+					+ (100f * dark).ToString("0") + "% darker than the hill's darkest tenth; grain "
+					+ (grainSeen ? wAng.ToString("0") + " deg x" + wCoh.ToString("0.00") + " against the hill's " + sAng.ToString("0") + " deg x" + sCoh.ToString("0.00") + ", off " + grainOff.ToString("0.00") + " (most " + DenGrainOff.ToString("0.00") + "), slopes " + slope.ToString("0.00") + " of the hill's" + (grainOk ? "" : " - BAD") : "not seen (" + wn + "/" + sn + " px)")
+					+ "; straight seams " + vSeam + " px down, " + hSeam + " px across (most " + seamMost + ")" + (seamOk ? "" : " - BAD")
+					+ "; outside faces mapped by world axis since start: " + CaveTool.WallFacesPlain + (ok ? "" : " - BAD"));
+			}
+			if (looked == 0) Fail("den wall look: no den wall pictured");
+			else if (bad > 0) Fail(bad + " of " + looked + " den walls drawn darker than the hill round them");
+			else Log("PASS: den walls " + looked + " drawn as the hill round them");
+		}
+
+		[ConsoleCommand(name: "CILootGround", docs: "Dev, in a world: the loot pieces (Pickup_Landmark_*, as caveloot lays them) on a loaded island's cave floors (not Raft's own sea-floor pickups) stand on the floor - the floor under each one's corners no more than <gap> m (0.12) under its bottom: on a sloping floor the low side of a piece set by its middle stood in the air, Rootcellar Deep's ramp stone 11-21 cv38. CILootGround [gap=<m>] <island>")]
+		public static void LootGroundCommand(string[] args)
+		{
+			float gap = 0.12f;
+			var rest = new List<string>();
+			foreach (string a in args ?? new string[0])
+				if (a.StartsWith("gap=")) float.TryParse(a.Substring(4), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out gap); else rest.Add(a);
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", rest.ToArray()) });
+			if (e == null) return;
+			// (only the pieces caveloot lays: cv42 counted Raft's own sea vines, Pickup_Landmark_SeavineKlump, under the hill's skin)
+			var kit = CaveKitObjects.Where(k => k.StartsWith("Pickup_Landmark_")).ToList();
+			var loot = e.Root.GetComponentsInChildren<Transform>(true).Where(t => kit.Any(k => t.name.StartsWith(k, System.StringComparison.Ordinal)) && t.parent != null && !t.parent.name.StartsWith("Pickup_Landmark_")).ToList();
+			if (loot.Count == 0) { Fail("no loot piece (Pickup_Landmark_*) on " + e.HostName); return; }
+			int bad = 0, seen = 0;
+			foreach (Transform t in loot)
+			{
+				Renderer[] rs = t.GetComponentsInChildren<Renderer>(true).Where(r => r.enabled && !(r is ParticleSystemRenderer)).ToArray();
+				if (rs.Length == 0) continue;
+				Bounds b = rs[0].bounds;
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				float worst = 0f; bool any = false;
+				foreach (Vector2 c in new[] { Vector2.zero, new Vector2(-1f, -1f), new Vector2(1f, -1f), new Vector2(-1f, 1f), new Vector2(1f, 1f) })
+				{
+					Vector3 from = new Vector3(b.center.x + c.x * b.extents.x * 0.8f, b.max.y + 0.3f, b.center.z + c.y * b.extents.z * 0.8f);
+					RaycastHit[] under = Physics.RaycastAll(from, Vector3.down, b.size.y + 2.3f, ~0, QueryTriggerInteraction.Ignore)
+						.Where(h => !h.collider.transform.IsChildOf(t) && h.collider.GetComponentInParent<Network_Player>() == null).OrderBy(h => h.distance).ToArray();
+					if (under.Length == 0) continue;
+					// (only the caves' loot: on a cave's floor under its middle - cv40 counted Raft's own pickups on the sea floor, 165 pieces)
+					if (c == Vector2.zero && !CaveFloor(under[0].collider.transform)) { any = false; break; }
+					any = true;
+					worst = Mathf.Max(worst, b.min.y - under[0].point.y);
+				}
+				if (!any) continue;
+				seen++;
+				if (worst > gap) { bad++; Log("  " + t.name + " at " + (t.position - e.Position).ToString("F1") + ": its low side " + worst.ToString("0.00") + " m over the floor - BAD"); }
+			}
+			if (bad > 0) Fail(bad + " of " + seen + " loot pieces standing in the air");
+			else Log("PASS: loot pieces " + seen + " on the floor (within " + gap.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " m)");
+		}
+
+		/// <summary>Whether a collider is a cave's floor: a dug tunnel's rock, or a cave piece's (BalboaCave*, Cave*).</summary>
+		static bool CaveFloor(Transform t)
+		{
+			if (t.GetComponentInParent<DigTunnel>() != null) return true;
+			if (t.name == CaveMountain.SkinName) return false; // (the hill's outside, not a cave's floor)
+			for (; t != null; t = t.parent) if (t.name.StartsWith("BalboaCave", System.StringComparison.Ordinal) || t.name.StartsWith("Cave", System.StringComparison.Ordinal)) return true;
+			return false;
+		}
+
 		[ConsoleCommand(name: "CIRayLook", docs: "Dev, in a world: what is seen from a point toward another on a loaded island (points from the island's land centre: a play's picture point minus the play's offset; or 'picture' in their place: the last play picture's own camera - w15Z: points given with the offset added looked out to sea) - a fan of 9x9 rays over 30 degrees, each ray's first renderer it sees the face of (its mesh's triangles, colliders or not; a face seen from behind is culled, as drawn - w15Z: an inside-out CaveBack round the eye was reported for the wall in front); fan=<degrees> narrows or widens the fan (30); at=<u>,<v> points the fan at that spot of a play picture taken from the first point at the second (0..1 across and down, the camera's own field of view, 16:9) - for asking what one odd bit in a picture is; logs a 9x9 map of what each ray met (top row up, left column left) and each thing seen with its share of the rays, path, material, shader and textures. For finding what draws an odd look (the blue rock, 11-06). CIRayLook [fan=<degrees>] [at=<u>,<v>] <island> <x> <y> <z> <tx> <ty> <tz> | picture")]
 		public static void RayLookCommand(string[] args)
 		{
@@ -1044,24 +1571,24 @@ namespace DynamicIslands
 			StartTest(RayLookRoutine(string.Join(" ", args.Take(args.Length - 6).ToArray()).Trim().Trim('"', '\'').Trim(), v, fan, at, who));
 		}
 
-		/// <summary>CIRayLook's work: the island loaded here, or (host) brought next to the raft as CICaveGapsLook brings one.
-		/// A test, so a run sees IDLE after it: run after a CIPlay, whose island is gone by then, the command only logged FAIL
-		/// and a job waited out its hour for IDLE (w15Y, 11-18).</summary>
-		static IEnumerator RayLookRoutine(string name, float[] v, float fan, Vector2? at, bool who = false)
+		/// <summary>CIRayLook's and CIPictureSeeThrough's island: the one loaded here, or (host) brought next to the raft as
+		/// CICaveGapsLook brings one, its hill built; got[0] null (and FAIL logged) when there is none.</summary>
+		static IEnumerator LookIsland(string name, string what, IslandWorldState.Entry[] got)
 		{
+			got[0] = null;
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Root != null && ((x.Name ?? "").IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0
 				|| (x.HostName ?? "").IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0));
 			if (e == null)
 			{
-				if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || CaveGapsLookIslandMissing(name)) { Fail("ray look: no loaded island called '" + name + "' here, and none to bring"); yield break; }
+				if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || CaveGapsLookIslandMissing(name)) { Fail(what + ": no loaded island called '" + name + "' here, and none to bring"); yield break; }
 				float elev = 0f;
 				try { elev = IslandFile.Load(IslandSpawner.PathFor(name)).Elevation; } catch { }
 				Vector3? spot = ScSpot(name, 400f, elev);
-				if (!spot.HasValue) { Fail("ray look: no open sea near the raft"); yield break; }
+				if (!spot.HasValue) { Fail(what + ": no open sea near the raft"); yield break; }
 				var made = new List<IslandWorldState.Entry>();
 				yield return ScBring(name, spot.Value, made);
 				e = made.LastOrDefault();
-				if (e == null || e.Root == null) { Fail("ray look: " + name + " didn't come"); yield break; }
+				if (e == null || e.Root == null) { Fail(what + ": " + name + " didn't come"); yield break; }
 				for (float w = 0f; w < 20f; w += 0.5f)
 				{
 					CaveMountain cm = e.Root.GetComponentInChildren<CaveMountain>();
@@ -1070,6 +1597,18 @@ namespace DynamicIslands
 				}
 				yield return new WaitForSeconds(2f);
 			}
+			got[0] = e;
+		}
+
+		/// <summary>CIRayLook's work: the island loaded here, or (host) brought next to the raft as CICaveGapsLook brings one.
+		/// A test, so a run sees IDLE after it: run after a CIPlay, whose island is gone by then, the command only logged FAIL
+		/// and a job waited out its hour for IDLE (w15Y, 11-18).</summary>
+		static IEnumerator RayLookRoutine(string name, float[] v, float fan, Vector2? at, bool who = false)
+		{
+			var got = new IslandWorldState.Entry[1];
+			yield return LookIsland(name, "ray look", got);
+			IslandWorldState.Entry e = got[0];
+			if (e == null) yield break;
 			Vector3 from = e.Position + e.Root.transform.rotation * new Vector3(v[0], v[1], v[2]),
 				to = e.Position + e.Root.transform.rotation * new Vector3(v[3], v[4], v[5]);
 			Quaternion look = Quaternion.LookRotation(to - from);
@@ -1114,6 +1653,19 @@ namespace DynamicIslands
 				string path = r.name; for (Transform t = r.transform.parent; t != null && t != e.Root.transform.parent; t = t.parent) path = t.name + "/" + path;
 				string mats = string.Join("; ", r.sharedMaterials.Where(m => m != null).Select(m => m.name + " (" + m.shader.name + ": " + string.Join(" ", m.GetTexturePropertyNames().Where(t => m.GetTexture(t) != null).Select(t => t + "=" + m.GetTexture(t).name).ToArray()) + ")").ToArray());
 				var b = new MaterialPropertyBlock(); r.GetPropertyBlock(b);
+				// (11-21 cv46: and each part's own block's textures - a dug tunnel's lining wears Raft's rock and darker copies by
+				// them, which the material's names don't show: Pendulum Isle's pale walls)
+				Material[] sm = r.sharedMaterials;
+				var partTex = new List<string>();
+				for (int pi = 0; pi < sm.Length && sm.Length > 1; pi++)
+				{
+					if (sm[pi] == null) continue;
+					var pb = new MaterialPropertyBlock(); r.GetPropertyBlock(pb, pi);
+					if (pb.isEmpty) continue;
+					string[] over = sm[pi].GetTexturePropertyNames().Where(t => pb.GetTexture(t) != null).Select(t => t + "=" + pb.GetTexture(t).name).ToArray();
+					if (over.Length > 0) partTex.Add("part " + pi + ": " + string.Join(" ", over));
+				}
+				if (partTex.Count > 0) mats += " {blocks " + string.Join("; ", partTex.ToArray()) + "}";
 				int at2 = order.IndexOf(r);
 				Log("  " + (at2 < 26 ? (char)('A' + at2) : (char)('a' + at2 - 26)) + " " + kv.Value + "/" + rays + " " + path + " met " + nearHit[r].ToString("0.0") + " m off (bounds " + (r.bounds.min - e.Position).ToString("F1") + ".." + (r.bounds.max - e.Position).ToString("F1") + ") at " + (r.transform.position - e.Position).ToString("F1") + " [" + r.GetType().Name + (b.isEmpty ? "" : ", property block") + ", probes " + r.lightProbeUsage + "]: " + mats);
 			}
@@ -1128,10 +1680,12 @@ namespace DynamicIslands
 				string path = r.name; for (Transform t = r.transform.parent; t != null && t != e.Root.transform.parent; t = t.parent) path = t.name + "/" + path;
 				MeshFilter mf = r.GetComponent<MeshFilter>();
 				Vector3[] mp; int[] mt;
-				if (mf == null || mf.sharedMesh == null || !ReadMesh(mf.sharedMesh, out mp, out mt)) { through.Add(new KeyValuePair<float, string>(bdist, "its bounds " + bdist.ToString("0.0") + " m (" + (mf == null || mf.sharedMesh == null ? r.GetType().Name + ", no mesh" : "mesh " + mf.sharedMesh.name + " unread") + ") " + path)); float byc = RayColliders(r, mid, false); if (!float.IsNaN(byc) && byc < 40f) through.Add(new KeyValuePair<float, string>(byc, byc.ToString("0.0") + " m its colliders " + path)); continue; }
-				float f = RayMeshDistance(r, mid), bk = RayMeshDistance(r, mid, true);
-				if (f < 40f) through.Add(new KeyValuePair<float, string>(f, f.ToString("0.0") + " m its front " + path));
-				if (bk < 40f) through.Add(new KeyValuePair<float, string>(bk, bk.ToString("0.0") + " m its back " + path));
+				if (mf == null || mf.sharedMesh == null || !ReadMesh(mf.sharedMesh, out mp, out mt)) { through.Add(new KeyValuePair<float, string>(bdist, "its bounds " + bdist.ToString("0.0") + " m (" + (mf == null || mf.sharedMesh == null ? r.GetType().Name + ", no mesh" : "mesh " + mf.sharedMesh.name + " unread") + ") " + path)); continue; }
+				float f = RayMeshDistance(r, mid);
+				int fTri = RayHitTri; Vector3 fAt = RayHitPoint;
+				float bk = RayMeshDistance(r, mid, true);
+				if (f < 40f) through.Add(new KeyValuePair<float, string>(f, f.ToString("0.0") + " m its front " + path + HitFace(r, mp, mt, fTri, fAt, e.Position)));
+				if (bk < 40f) through.Add(new KeyValuePair<float, string>(bk, bk.ToString("0.0") + " m its back " + path + HitFace(r, mp, mt, RayHitTri, RayHitPoint, e.Position)));
 					if (f >= 40f && bk >= 40f)
 					{
 						// (its box crossed, no face met: a den's shell round the eye never showed in the fan, w15AA - its points as
@@ -1140,6 +1694,20 @@ namespace DynamicIslands
 						foreach (Vector3 q in mp) pb.Encapsulate(q);
 						through.Add(new KeyValuePair<float, string>(bdist + 0.001f, "its bounds " + bdist.ToString("0.0") + " m, no face met (" + mf.sharedMesh.name + (mf.sharedMesh.isReadable ? "" : ", from the GPU") + ": " + mp.Length + " points " + mt.Length / 3 + " faces, read box " + pb.min.ToString("F1") + ".." + pb.max.ToString("F1") + ", mesh box " + mf.sharedMesh.bounds.min.ToString("F1") + ".." + mf.sharedMesh.bounds.max.ToString("F1") + ") " + path));
 					}
+			}
+			// (and the terrain it meets: its paint there - a pale mound before Gravewell's diver den, 11-20, drew no renderer)
+			foreach (Terrain land in Terrain.activeTerrains)
+			{
+				TerrainCollider tc = land == null ? null : land.GetComponent<TerrainCollider>();
+				RaycastHit th;
+				if (tc == null || !tc.Raycast(mid, out th, 40f)) continue;
+				TerrainData td = land.terrainData;
+				float nx = (th.point.x - land.transform.position.x) / td.size.x, nz = (th.point.z - land.transform.position.z) / td.size.z;
+				int ar = td.alphamapWidth, ax = Mathf.Clamp((int)(nx * ar), 0, ar - 1), az = Mathf.Clamp((int)(nz * ar), 0, ar - 1);
+				float[,,] am = td.GetAlphamaps(ax, az, 1, 1);
+				var lw = new System.Text.StringBuilder();
+				for (int l = 0; l < td.alphamapLayers; l++) lw.Append((l > 0 ? " " : "") + (td.terrainLayers != null && l < td.terrainLayers.Length && td.terrainLayers[l] != null ? td.terrainLayers[l].name : "layer" + l) + "=" + am[0, 0, l].ToString("0.00"));
+				through.Add(new KeyValuePair<float, string>(th.distance, th.distance.ToString("0.0") + " m terrain " + land.name + " at " + (th.point - e.Position).ToString("F2") + " steep " + td.GetSteepness(nx, nz).ToString("0") + " deg, normal " + th.normal.ToString("F2") + ", paint " + lw));
 			}
 			foreach (var kv in through.OrderBy(x => x.Key).Take(24)) Log("  middle ray: " + kv.Value);
 			if (who) yield return WhoDraws(e, from, to, at ?? new Vector2(0.5f, 0.5f), mid);
@@ -1252,8 +1820,35 @@ namespace DynamicIslands
 		}
 
 		// The distance along the ray to the renderer's mesh's nearest face the ray meets from the front (as drawn: back faces culled), or infinity (a skinned or unreadable mesh: its bounds).
+		/// <summary>CIRayLook's middle ray: the face it met - where (from the island), its corners, its facing and its corners' normals
+		/// (round 4: the Utopia fin, a face of the hill's skin, both sides, that no trial moved).</summary>
+		static string HitFace(Renderer r, Vector3[] p, int[] tri, int i, Vector3 at, Vector3 isle)
+		{
+			if (i < 0 || i + 2 >= tri.Length) return "";
+			Transform t = r.transform;
+			Vector3 a = t.TransformPoint(p[tri[i]]), b = t.TransformPoint(p[tri[i + 1]]), c = t.TransformPoint(p[tri[i + 2]]);
+			Vector3 n = Vector3.Cross(b - a, c - a).normalized;
+			MeshFilter mf = r.GetComponent<MeshFilter>();
+			string vn = "";
+			if (mf != null && mf.sharedMesh != null && mf.sharedMesh.isReadable)
+			{
+				Vector3[] ns = mf.sharedMesh.normals;
+				if (ns != null && ns.Length > tri[i + 2]) vn = ", corner normals " + t.TransformDirection(ns[tri[i]]).ToString("F2") + " " + t.TransformDirection(ns[tri[i + 1]]).ToString("F2") + " " + t.TransformDirection(ns[tri[i + 2]]).ToString("F2");
+				// (11-21 cv46: and which part - material - the face is drawn in)
+				Mesh sm = mf.sharedMesh;
+				if (sm.subMeshCount > 1 && tri.Length == sm.triangles.Length)
+					for (int s = 0; s < sm.subMeshCount; s++)
+					{
+						var d = sm.GetSubMesh(s);
+						if (i >= d.indexStart && i < d.indexStart + d.indexCount) { vn += ", part " + s; break; }
+					}
+			}
+			return " (face " + i / 3 + " at " + (at - isle).ToString("F2") + ", corners " + (a - isle).ToString("F2") + " " + (b - isle).ToString("F2") + " " + (c - isle).ToString("F2") + ", facing " + n.ToString("F2") + vn + ")";
+		}
+		static int RayHitTri; static Vector3 RayHitPoint; // (RayMeshDistance: the face its nearest hit was on, and where)
 		static float RayMeshDistance(Renderer r, Ray ray, bool backs = false)
 		{
+			RayHitTri = -1;
 			MeshFilter f = r.GetComponent<MeshFilter>();
 			Mesh m = f != null ? f.sharedMesh : null;
 			float bd;
@@ -1281,8 +1876,9 @@ namespace DynamicIslands
 				Vector3 q = Vector3.Cross(s, e1); float w = Vector3.Dot(dir, q) * inv;
 				if (w < 0f || u + w > 1f) continue;
 				float d = Vector3.Dot(e2, q) * inv;
-				if (d > 0f && d < best) best = d;
+				if (d > 0f && d < best) { best = d; RayHitTri = i; }
 			}
+			if (best != float.PositiveInfinity) RayHitPoint = t.TransformPoint(o + dir * best);
 			return best == float.PositiveInfinity ? best : Vector3.Distance(ray.origin, t.TransformPoint(o + dir * best));
 		}
 
@@ -1349,6 +1945,229 @@ namespace DynamicIslands
 			Check(ref ok, !(inside < 0.05f), "from its middle a ray isn't taken to meet its box at once (" + (float.IsInfinity(inside) ? "nothing" : Num(inside) + " m") + ")");
 			Object.Destroy(tp);
 			Log((ok ? "PASS" : "FAIL") + ": ray collide");
+		}
+
+		/// <summary>How many of a picture's 64 x 36 rays may see through the island (PictureSeeThrough) - about 1 %: a seam's
+		/// pinhole; CIPlay's picture step fails over it.</summary>
+		const int PictureSeeThroughAllowed = 23;
+		/// <summary>PictureSeeThrough: how far under the ground (m) a ray must be to count as in it, and how far over it to count
+		/// as out again.</summary>
+		const float PictureGroundDip = 0.3f;
+		/// <summary>PictureSeeThrough: a camera under the ground whose ray leaves it this near (m) is in the ground's skin - a
+		/// steep bank's edge, seen out of as if from its face (cv48: Overpass Shoal's op_cave_out, 1.1 m under the bank's
+		/// height at the water, every ray out of it 0.9 m on) - not inside the hill.</summary>
+		const float PictureEyeSkin = 1.5f;
+
+		[ConsoleCommand(name: "CIPictureSeeThrough", docs: "Dev, in a world: a picture's rays (64 x 36, as CIPlay's picture step checks every picture) that see through the island - past the back of its rock (cave pieces, the hill's skin, a dug tunnel's rock) or up through its ground from below - with a map of where. Points from the island's land centre as CIRayLook's (a play's picture point minus the play's offset), or 'picture': the last play picture's camera. With bad: PASS only when it does see through (the check is not blind: a camera inside the hill). CIPictureSeeThrough [bad] <island> <x> <y> <z> <tx> <ty> <tz> | [bad] picture")]
+		public static void PictureSeeThroughCommand(string[] args)
+		{
+			var rest = (args ?? new string[0]).ToList();
+			bool bad = rest.Remove("bad");
+			if (rest.Count == 1 && rest[0] == "picture")
+			{
+				if (!LastPictureFrom.HasValue) { Fail("picture see-through: no play picture taken yet"); return; }
+				Vector3 pf = LastPictureFrom.Value, pl = LastPictureLook.Value;
+				StartTest(PictureSeeThroughRoutine(LastPictureIsland, new[] { pf.x, pf.y, pf.z, pl.x, pl.y, pl.z }, bad));
+				return;
+			}
+			float[] v = new float[6];
+			bool ok = rest.Count >= 7;
+			for (int i = 0; ok && i < 6; i++) ok = float.TryParse(rest[rest.Count - 6 + i], NumberStyles.Float, CultureInfo.InvariantCulture, out v[i]);
+			if (!ok) { Fail("CIPictureSeeThrough [bad] <island> <x> <y> <z> <tx> <ty> <tz>, or CIPictureSeeThrough [bad] picture"); return; }
+			StartTest(PictureSeeThroughRoutine(string.Join(" ", rest.Take(rest.Count - 6).ToArray()).Trim().Trim('"', '\'').Trim(), v, bad));
+		}
+
+		static IEnumerator PictureSeeThroughRoutine(string name, float[] v, bool bad)
+		{
+			var got = new IslandWorldState.Entry[1];
+			yield return LookIsland(name, "picture see-through", got);
+			IslandWorldState.Entry e = got[0];
+			if (e == null) yield break;
+			Vector3 from = e.Position + e.Root.transform.rotation * new Vector3(v[0], v[1], v[2]),
+				to = e.Position + e.Root.transform.rotation * new Vector3(v[3], v[4], v[5]);
+			var lines = new List<string>();
+			int n = PictureSeeThrough(e, from, to, lines);
+			foreach (string l in lines) Log("  " + l);
+			if (bad)
+			{
+				if (n > PictureSeeThroughAllowed) Log("PASS: picture see-through bad (self-check: the check is not blind) - " + n + " of 64x36 rays see through from a camera that should see through");
+				else Fail("picture see-through bad (self-check): blind - only " + n + " of 64x36 rays see through from a camera that should see through");
+			}
+			else if (n > PictureSeeThroughAllowed) Fail("picture see-through: " + n + " of 64x36 rays see through the island (" + PictureSeeThroughAllowed + " allowed)");
+			else Log("PASS: picture see-through - " + n + " of 64x36 rays (" + PictureSeeThroughAllowed + " allowed)");
+		}
+
+		/// <summary>A picture's rays (64 x 36 over the frame, the main camera's field of view at 16:9) that see through the island
+		/// as drawn: past the back of its rock (cave pieces, the hill's skin, a dug tunnel's rock and other cave or rock meshes,
+		/// drawn one-sided) before any face drawn toward the eye, or up through its ground from below (the terrain is drawn from
+		/// above only; its holes are open), or into the ground and on to nothing. Colliders can't stand in: they are not what
+		/// is drawn - except for a mesh it can't read (11-21 cv48: Raft's den meshes read from the GPU as zeros, so a den's walls
+		/// were missing and every picture inside one failed): its piece's own solid colliders round it stand in, met from the
+		/// front. A camera in the ground's skin (PictureEyeSkin) is not under it. cv48: Overpass Shoal's op_bank picture stood 5 m inside the hill beside the culvert's room - the room seen
+		/// through its outside, the sky through the ground - and its play passed (4 checks). lines: the count by kind, the
+		/// camera's ground, the first bad rays and a 16 x 9 map. Returns the bad rays.</summary>
+		static int PictureSeeThrough(IslandWorldState.Entry e, Vector3 from, Vector3 to, List<string> lines)
+		{
+			const int GX = 64, GY = 36; const float Far = 80f;
+			var made = new List<Object>();
+			bool backWas = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = false;
+			int bad = 0, backs = 0, upGround = 0, lost = 0, sky = 0;
+			try
+			{
+				// (the island's drawn faces near the eye, in world space: fronts (both ways where the material draws both), and the
+				// backs of its rock - what a camera behind it sees through)
+				var fr = new List<Vector3>(); var bk = new List<Vector3>();
+				var bkWho = new List<KeyValuePair<int, string>>();
+				// (meshes that can't be read - none, or every point the same: the GPU read of Raft's den meshes - and the colliders
+				// of their pieces that stand in for them)
+				var blind = new List<string>(); var stand = new List<Collider>(); var standSeen = new HashSet<Collider>();
+				foreach (Renderer r in e.Root.GetComponentsInChildren<Renderer>(false))
+				{
+					if (!r.enabled || !(r is MeshRenderer) || r.bounds.SqrDistance(from) > Far * Far) continue;
+					Material[] ms = r.sharedMaterials;
+					if (ms.Length == 0 || ms.All(m => m == null || m.renderQueue >= 2450)) continue; // (water, glass, leaves: see-through anyway)
+					if (r.GetComponentInParent<Network_Player>() != null || r.GetComponentInParent<AI_NetworkBehaviour>() != null) continue;
+					MeshFilter mf = r.GetComponent<MeshFilter>();
+					Vector3[] p; int[] tri;
+					if (mf == null || mf.sharedMesh == null) continue;
+					if (!ReadMesh(mf.sharedMesh, out p, out tri) || PictureBlank(p, mf.sharedMesh))
+					{
+						if (!blind.Contains(r.name)) blind.Add(r.name);
+						// (the piece it belongs to: the island's object it is part of)
+						Transform top = r.transform;
+						while (top.parent != null && top.parent != e.Root.transform && top.parent.parent != e.Root.transform) top = top.parent;
+						foreach (Collider c in top.GetComponentsInChildren<Collider>(false))
+							if (c.enabled && !c.isTrigger && !(c is TerrainCollider) && c.bounds.Intersects(r.bounds) && standSeen.Add(c)) stand.Add(c);
+						continue;
+					}
+					bool both = ms.Any(m => m != null && m.HasProperty("_Cull") && m.GetFloat("_Cull") < 0.5f);
+					bool rock = !both && PictureRock(r);
+					Transform t = r.transform;
+					Vector3 ls = t.lossyScale; bool flip = ls.x * ls.y * ls.z < 0f;
+					var w = new Vector3[p.Length];
+					for (int i = 0; i < p.Length; i++) w[i] = t.TransformPoint(p[i]);
+					if (rock) bkWho.Add(new KeyValuePair<int, string>(bk.Count / 3, r.name + (mf.sharedMesh.name.Length > 0 && mf.sharedMesh.name != r.name ? " (" + mf.sharedMesh.name + ")" : "")));
+					for (int i = 0; i + 2 < tri.Length; i += 3)
+					{
+						if (tri[i] >= w.Length || tri[i + 1] >= w.Length || tri[i + 2] >= w.Length) continue;
+						Vector3 a = w[tri[i]], b = flip ? w[tri[i + 2]] : w[tri[i + 1]], c = flip ? w[tri[i + 1]] : w[tri[i + 2]];
+						if (Vector3.Cross(b - a, c - a).sqrMagnitude < 1e-10f) continue;
+						fr.Add(a); fr.Add(b); fr.Add(c);
+						if (both) { fr.Add(a); fr.Add(c); fr.Add(b); }
+						else if (rock) { bk.Add(a); bk.Add(c); bk.Add(b); }
+					}
+				}
+				MeshCollider colF = SeeThroughFaces(fr, made), colB = SeeThroughFaces(bk, made);
+				// (the ground: its height and its holes, read once)
+				var lands = e.Root.GetComponentsInChildren<Terrain>(false).Where(l => l.terrainData != null).ToList();
+				var solid = lands.Select(l => l.terrainData.GetHoles(0, 0, l.terrainData.holesResolution, l.terrainData.holesResolution)).ToList();
+				// (the ground's height at a point, NaN off it; open[0]: a hole there)
+				System.Func<Vector3, bool[], float> ground = (q, open) =>
+				{
+					open[0] = false;
+					for (int k = 0; k < lands.Count; k++)
+					{
+						TerrainData td = lands[k].terrainData; Vector3 lo = lands[k].transform.position;
+						float nx = (q.x - lo.x) / td.size.x, nz = (q.z - lo.z) / td.size.z;
+						if (nx < 0f || nx >= 1f || nz < 0f || nz >= 1f) continue;
+						int hr = td.holesResolution;
+						open[0] = !solid[k][Mathf.Clamp((int)(nz * hr), 0, hr - 1), Mathf.Clamp((int)(nx * hr), 0, hr - 1)];
+						return lands[k].SampleHeight(q) + lo.y;
+					}
+					return float.NaN;
+				};
+				var hole = new bool[1];
+				float g0 = ground(from, hole);
+				bool eyeUnder = !float.IsNaN(g0) && !hole[0] && from.y < g0 - PictureGroundDip;
+				lines.Add("camera at " + (from - e.Position).ToString("F1") + " from the island's middle: " + (float.IsNaN(g0) ? "off its ground" : eyeUnder ? (g0 - from.y).ToString("0.0") + " m under its ground (a cave, or inside the hill)" : hole[0] ? "over a hole in its ground" : (from.y - g0).ToString("0.0") + " m over its ground")
+					+ "; " + fr.Count / 3 + " drawn faces, " + bk.Count / 3 + " rock backs within " + Far.ToString("0") + " m"
+					+ (blind.Count > 0 ? "; " + blind.Count + " meshes not readable (" + string.Join(", ", blind.Take(4).ToArray()) + (blind.Count > 4 ? ", ..." : "") + "), " + stand.Count + " of their pieces' colliders stand in" : ""));
+				Quaternion look = Quaternion.LookRotation(to - from);
+				float half = Mathf.Tan((Camera.main != null ? Camera.main.fieldOfView : 65f) * 0.5f * Mathf.Deg2Rad);
+				var map = new int[9, 16];
+				var shown = new List<string>();
+				int skin = 0;
+				for (int y = 0; y < GY; y++)
+					for (int x = 0; x < GX; x++)
+					{
+						Ray ray = new Ray(from, (look * new Vector3((2f * (x + 0.5f) / GX - 1f) * half * 16f / 9f, (1f - 2f * (y + 0.5f) / GY) * half, 1f)).normalized);
+						RaycastHit h;
+						float fD = Far, bD = float.PositiveInfinity; int bTri = -1;
+						if (colF != null && colF.Raycast(ray, out h, Far)) fD = h.distance;
+						if (colB != null && colB.Raycast(ray, out h, Far)) { bD = h.distance; bTri = h.triangleIndex; }
+						foreach (Collider c in stand) if (c != null && c.Raycast(ray, out h, fD)) fD = h.distance;
+						// (the ground along it up to the first face met: met from above, it stops the ray; crossed from below, or
+						// gone into and never left, it is seen through)
+						bool under = eyeUnder, metGround = false;
+						float upAt = float.NaN, stop = Mathf.Min(fD, bD);
+						for (float s = 0.2f; s < stop; s += 0.35f)
+						{
+							Vector3 q = ray.GetPoint(s);
+							float g = ground(q, hole);
+							if (float.IsNaN(g)) continue;
+							if (hole[0]) { under = false; continue; }
+							if (!under && q.y < g) { metGround = true; break; }
+							if (under && q.y > g + PictureGroundDip)
+							{
+								// (out of the ground this near the eye: the camera is in the ground's skin, not inside the hill)
+								if (s < PictureEyeSkin) { under = false; skin++; continue; }
+								upAt = s; break;
+							}
+						}
+						string why = null;
+						if (!metGround && bD < fD - 0.05f && (float.IsNaN(upAt) || bD < upAt))
+						{
+							backs++;
+							string who = "?";
+							foreach (var kv in bkWho) { if (kv.Key > bTri) break; who = kv.Value; }
+							why = "past the back of " + who + " " + bD.ToString("0.0") + " m out, then " + (fD < Far ? "a face at " + fD.ToString("0.0") + " m" : "the sky");
+						}
+						else if (!float.IsNaN(upAt)) { upGround++; why = "up through the ground from below " + upAt.ToString("0.0") + " m out"; }
+						else if (!metGround && under && fD >= Far) { lost++; why = "into the ground and on to nothing"; }
+						else if (!metGround && fD >= Far && ray.direction.y > 0f) sky++;
+						if (why == null) continue;
+						bad++;
+						map[y * 9 / GY, x * 16 / GX]++;
+						if (shown.Count < 8) shown.Add("BAD ray at " + ((x + 0.5f) / GX).ToString("0.00", CultureInfo.InvariantCulture) + "," + ((y + 0.5f) / GY).ToString("0.00", CultureInfo.InvariantCulture) + " of the picture: " + why);
+					}
+				lines.Add(bad + " of " + (GX * GY) + " rays see through: " + backs + " past a rock's back, " + upGround + " up through the ground, " + lost + " into the ground; " + sky + " to the open sky (fine)"
+					+ (skin > 0 ? "; " + skin + " out of the ground within " + PictureEyeSkin.ToString("0.0") + " m of the eye (the camera in the ground's skin, fine)" : ""));
+				lines.AddRange(shown);
+				if (bad > 0)
+					for (int k = 0; k < 9; k++)
+					{
+						var row = new System.Text.StringBuilder("map ");
+						for (int i = 0; i < 16; i++) row.Append(map[k, i] == 0 ? '.' : map[k, i] < 10 ? (char)('0' + map[k, i]) : '#');
+						lines.Add(row.ToString());
+					}
+			}
+			finally
+			{
+				Physics.queriesHitBackfaces = backWas;
+				foreach (Object o in made) if (o != null) Object.Destroy(o);
+			}
+			return bad;
+		}
+
+		/// <summary>PictureSeeThrough: a mesh read as nothing - no points, or all at one point while the mesh's bounds are not (the
+		/// GPU read of Raft's den meshes, cv48).</summary>
+		static bool PictureBlank(Vector3[] p, Mesh m)
+		{
+			if (p == null || p.Length == 0) return true;
+			if (m.bounds.size.sqrMagnitude < 1e-4f) return false;
+			for (int i = 1; i < p.Length; i++) if ((p[i] - p[0]).sqrMagnitude > 1e-8f) return false;
+			return true;
+		}
+
+		/// <summary>PictureSeeThrough: rock drawn one-sided, its back never meant to be seen - the hill's skin, a cave piece and its
+		/// backs, a dug tunnel's rock, a den's wall, any cave, rock, cliff or mountain mesh.</summary>
+		static bool PictureRock(Renderer r)
+		{
+			if (r.GetComponentInParent<CaveMountain>() != null || r.GetComponentInParent<DigTunnel>() != null) return true;
+			MeshFilter mf = r.GetComponent<MeshFilter>();
+			string n = (r.name + " " + (mf != null && mf.sharedMesh != null ? mf.sharedMesh.name : "")).ToLowerInvariant();
+			return n.Contains("cave") || n.Contains("rock") || n.Contains("cliff") || n.Contains("mountain");
 		}
 
 		[ConsoleCommand(name: "CIMeshRead", docs: "Dev, in a world: how an unreadable mesh's points read back from the GPU (CaveBacks' source, w15AA): for the first n unreadable cave meshes (or with back, their backs), the read box by GetData, by AsyncGPUReadback and by a copy into a raw buffer, against the mesh's own box; with info, the camera's path and the first den pieces' shader, passes and colliders. CIMeshRead [n] [back] [info]")]

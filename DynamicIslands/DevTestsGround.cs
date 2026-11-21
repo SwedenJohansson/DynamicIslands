@@ -2119,6 +2119,7 @@ namespace DynamicIslands
 		/// <summary>The land's hole cell at p is cut (no ground there: a cave piece's room or a dug passage).</summary>
 		internal static bool GroundCutAt(Terrain land, Vector3 p)
 		{
+			if (land == null) return false;
 			TerrainData td = land.terrainData;
 			int res = td.holesResolution;
 			Vector3 l = p - land.transform.position;

@@ -942,6 +942,16 @@ namespace DynamicIslands
 						}
 						float lightM = opt.ContainsKey("light") ? (opt["light"] == "" ? 25f : F(opt["light"])) : 0f;
 						yield return PlayPicture(file, from, look, lightM);
+						// (cv48: and nothing in it seen through the island - Overpass Shoal's op_bank stood inside the hill, the
+						// room seen through its outside and the sky through the ground, and the play passed)
+						if (playEntry != null && playEntry.Root != null)
+						{
+							var seeLines = new List<string>();
+							int seeBad = PictureSeeThrough(playEntry, from, look, seeLines);
+							if (seeBad > 0) foreach (string sl in seeLines) Log("  picture " + file + ": " + sl);
+							Check(ref ok, seeBad <= PictureSeeThroughAllowed, "picture " + file + ": " + seeBad + " of 64x36 rays see through the island (" + PictureSeeThroughAllowed + " allowed; CIPictureSeeThrough)");
+							checks++;
+						}
 						break;
 					}
 					case "beam":
