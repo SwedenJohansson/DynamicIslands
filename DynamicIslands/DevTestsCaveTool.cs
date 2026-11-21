@@ -1234,12 +1234,17 @@ namespace DynamicIslands
 						if (mask[i]) { wall.Add(luma(with[i])); continue; }
 						if (!near[i] || ((x + y) & 1) != 0) continue;
 						Vector3 dir = rot * new Vector3((2f * (x + 0.5f) / W - 1f) * half * W / H, (2f * (y + 0.5f) / H - 1f) * half, 1f);
-						RaycastHit hit;
-						if (Physics.Raycast(from, dir, out hit, 80f, ~0, QueryTriggerInteraction.Ignore) && hit.collider.name == CaveMountain.SkinName) skin.Add(luma(with[i]));
+						// (the first thing met that is not the den's own plug: cv42 met the plug's colliders, still where the wall stood
+						// before WallLikeHill set it back under the skin, so 8 px of skin were found and the look was skipped as a PASS)
+						RaycastHit[] hits = Physics.RaycastAll(from, dir, 80f, ~0, QueryTriggerInteraction.Ignore);
+						float nearest = float.MaxValue; Collider first = null;
+						foreach (RaycastHit hh in hits)
+							if (hh.distance < nearest && !hh.collider.transform.IsChildOf(plug)) { nearest = hh.distance; first = hh.collider; }
+						if (first != null && first.name == CaveMountain.SkinName) skin.Add(luma(with[i]));
 					}
 				looked++;
 				if (wall.Count < 30) { Log("  " + den + ": its outside not seen past the hill (" + wall.Count + " px)"); continue; }
-				if (skin.Count < 30) { Log("  " + den + ": too little of the hill's skin round it seen (" + skin.Count + " px) - skipped"); continue; }
+				if (skin.Count < 30) { bad++; Log("  " + den + ": too little of the hill's skin round it seen (" + skin.Count + " px) - not checked, BAD"); continue; }
 				skin.Sort();
 				float p10 = skin[skin.Count / 10], mw = wall.Average(), ms = skin.Average();
 				float dark = (float)wall.Count(l => l < p10) / wall.Count;

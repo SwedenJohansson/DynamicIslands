@@ -664,6 +664,10 @@ namespace DynamicIslands.Editor
 
 		/// <summary>How far the last WallLikeHill turned its wall's outside faces toward the hill's slope, degrees (log, tests).</summary>
 		public static float WallTiltSeen;
+		/// <summary>How many of the last WallLikeHill's outside points in the hill's opening were brought flush with the skin (log, tests).</summary>
+		public static int WallFlushed;
+		/// <summary>Over how far into the hill's opening (m, across the wall) its points' flush with the skin fades out (WallLikeHill).</summary>
+		const float WallFlushFade = 1.5f;
 
 		/// <summary>
 		/// A lone den's wall's outside drawn as the hill over the den (CaveMountain's skin): the same rock, tint and light, its
@@ -765,6 +769,46 @@ namespace DynamicIslands.Editor
 			float biggest = area.Count > 0 ? area.Values.Max() : 0f;
 			var flake = new HashSet<int>(area.Where(kv => kv.Value < FlakeArea && kv.Value < biggest).Select(kv => kv.Key));
 			Debug.Log("[CUSTOM ISLANDS] Plug " + den.name + ": outside in " + area.Count + " piece(s), " + flake.Count + " flake(s) dropped (" + string.Join(" ", area.Values.OrderByDescending(x => x).Take(8).Select(x => x.ToString("F1")).ToArray()) + " m2)");
+			// (11-21 cv42: the wall's points in the hill's opening, where no skin is in front or behind, brought flush with the skin
+			// round them - by the skin's offset at the nearest points that have it, fading out over WallFlushFade into the opening:
+			// those round it went SkinCover behind the skin and these stayed, so the opening's edge stood as a rectangular step
+			// round Gravewell Shaft's den arch, its sides' texture laid sideways)
+			var wv0 = new Vector3[mv.Length]; var skinD = new float[mv.Length];
+			var hitIdx = new List<int>();
+			for (int v = 0; v < mv.Length; v++)
+			{
+				wv0[v] = outT.TransformPoint(mv[v]); skinD[v] = float.NaN;
+				RaycastHit sh;
+				if (skinCol != null && skinCol.Raycast(new Ray(wv0[v] + outward * 3f, -outward), out sh, 3f + SpikeProud + 0.05f))
+				{
+					float d = Vector3.Dot(sh.point - wv0[v], outward);
+					if (d > -SpikeProud && d < SkinCover + WallProud) { skinD[v] = d; hitIdx.Add(v); }
+				}
+			}
+			var flush = new float[mv.Length];
+			int flushed = 0; float flushMax = 0f;
+			if (hitIdx.Count > 0)
+				for (int v = 0; v < mv.Length; v++)
+				{
+					if (!float.IsNaN(skinD[v])) continue;
+					Vector3 pv = Vector3.ProjectOnPlane(wv0[v], outward);
+					float best = float.MaxValue;
+					foreach (int hv in hitIdx) { float dd = (Vector3.ProjectOnPlane(wv0[hv], outward) - pv).sqrMagnitude; if (dd < best) best = dd; }
+					best = Mathf.Sqrt(best);
+					float wsum = 0f, dsum = 0f;
+					foreach (int hv in hitIdx)
+					{
+						float dd = (Vector3.ProjectOnPlane(wv0[hv], outward) - pv).magnitude;
+						if (dd > best + 0.5f) continue;
+						float wt = 1f / (0.05f + dd); wsum += wt; dsum += wt * skinD[hv];
+					}
+					float fade = Mathf.Clamp01(1f - best / WallFlushFade);
+					flush[v] = Mathf.Clamp(dsum / wsum, -WallProud, WallProud) * fade;
+					if (Mathf.Abs(flush[v]) > 0.02f) { flushed++; flushMax = Mathf.Max(flushMax, Mathf.Abs(flush[v])); }
+				}
+			WallFlushed = flushed;
+			Debug.Log("[CUSTOM ISLANDS] Plug " + den.name + ": " + hitIdx.Count + " of " + mv.Length + " outside point(s) with the hill's skin in line, skin offset "
+				+ (hitIdx.Count > 0 ? hitIdx.Min(v => skinD[v]).ToString("0.00") + ".." + hitIdx.Max(v => skinD[v]).ToString("0.00") : "-") + " m; " + flushed + " in its opening brought flush (up to " + flushMax.ToString("0.00") + " m)");
 			var subs = new List<int>[m.subMeshCount];
 			for (int s = 0; s < subs.Length; s++)
 			{
@@ -774,7 +818,7 @@ namespace DynamicIslands.Editor
 				{
 					if (flake.Contains(find(vid[st[t]]))) continue;
 					nearSkin = false;
-					Vector3 a0 = outT.TransformPoint(mv[st[t]]), b0 = outT.TransformPoint(mv[st[t + 1]]), c0 = outT.TransformPoint(mv[st[t + 2]]);
+					Vector3 a0 = wv0[st[t]] + outward * flush[st[t]], b0 = wv0[st[t + 1]] + outward * flush[st[t + 1]], c0 = wv0[st[t + 2]] + outward * flush[st[t + 2]];
 					Vector3 a = UnderSkin(a0, WallProud); bool am = moved;
 					Vector3 b = UnderSkin(b0, WallProud); bool bm = moved;
 					Vector3 c = UnderSkin(c0, WallProud); bool cm = moved;
