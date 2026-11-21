@@ -101,6 +101,7 @@ plan save
 - `prop <cave piece alias> cave.rock=den` (`ObjectProps.CaveRock`): the cave hill's rock texture is multiplied by that piece's
   lit shell colour over the hill rock's (`CaveMountain.RockAsDen`); sand on gentle slopes stays. Ignored when a cave of the hill is tinted.
   `cave.rock=plain`: Raft's plain big rock, one rock for hill and den wall (the standard since 11-08; Shelter Atoll uses it).
+- Cave hill foot band (`CaveMountain.PaintFoot`, 11-21): in a world the island's ground paint round the hill is blended to sand (0.8) and rock (0.2), 0.9 at the skin's edge fading over `FootBand` 2.5 m with a ragged edge; not under the sea, not on the editor's measuring hill. The hill's grid and noise are laid from the island's origin (`anchor`), so the world's hill equals `CaveMountain.Preview`'s.
 - `prop <cave piece alias> cave.foot=dry` (`ObjectProps.CaveFoot`): the default for a bear den (`CaveTool.Room`) with no
   `cave.foot` of its own (`CaveMountain.DryFootFor`, 11-08); `cave.foot=wet` keeps the old foot. `cave.dome=<m>` (`ObjectProps.CaveDome`, 11-10) caps a dry
   den's dome reach (side/back/front) at that many m, height kept, its roof cells keeping the hill's own slopes; unset = unchanged. Dry walled mouths also get

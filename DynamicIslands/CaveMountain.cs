@@ -108,6 +108,67 @@ namespace DynamicIslands.Editor
 		[System.ThreadStatic] static int SkirtsCut; // (Edge: skirts under a way in let down to the skin's own edge, SkirtOverEdge, FO-U1 - log)
 		public int SeaCutCells; // (last build: cells cut for the sea - cave.seacut - tests)
 
+		/// <summary>The hill's foot band: how far out past the skin's edge the ground is painted sand and rock (m), and how much at
+		/// the edge (the rest of the ground's own paint shows through).</summary>
+		const float FootBand = 2.5f, FootPaint = 0.9f, FootSand = 0.8f;
+		/// <summary>Last build: terrain paint texels the foot band painted (0: a measuring hill, no land under it, or none).</summary>
+		public int FootPainted;
+
+		/// <summary>A world's hill: the island's ground under and round its foot painted to sand with a little rock, fading out over
+		/// FootBand m with a ragged edge. The skin's foot follows its 1.25 m cells, so its sand ended on the grass and grey rock as
+		/// a hard stair-stepped cut (11-21 c3z21, Caisson Yard's summit dune); now the ground goes sandy before the hill begins.
+		/// Not on Preview's measuring hill (the editor's land keeps its paint) nor under the sea (the seabed keeps its own).</summary>
+		int PaintFoot(bool[,] on, float x0, float z0, int nx, int nz)
+		{
+			if (gameObject.name == PreviewName) return 0;
+			Terrain land = GetComponentInChildren<Terrain>();
+			if (land == null || land.terrainData == null) return 0;
+			TerrainData data = land.terrainData;
+			int layers = data.alphamapLayers, res = data.alphamapWidth, reach = Mathf.CeilToInt(FootBand / Cell) + 1;
+			if (layers < TerrainPainter.LayerCount || res <= 0) return 0;
+			int i0 = nx, i1 = -1, k0 = nz, k1 = -1;
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < nz; k++)
+					if (on[i, k]) { i0 = Mathf.Min(i0, i); i1 = Mathf.Max(i1, i); k0 = Mathf.Min(k0, k); k1 = Mathf.Max(k1, k); }
+			if (i1 < 0) return 0;
+			Vector3 lo = new Vector3(x0 + i0 * Cell - FootBand - 1f, 0f, z0 + k0 * Cell - FootBand - 1f);
+			Vector3 hi = new Vector3(x0 + i1 * Cell + FootBand + 1f, 0f, z0 + k1 * Cell + FootBand + 1f);
+			RectInt area;
+			if (!TerrainPainter.WorldToAlphamapRect(land, lo, hi, out area)) return 0;
+			float[,,] maps = data.GetAlphamaps(area.x, area.y, area.width, area.height);
+			Vector3 o = land.transform.position;
+			int painted = 0;
+			for (int z = 0; z < area.height; z++)
+				for (int x = 0; x < area.width; x++)
+				{
+					Vector3 p = new Vector3(o.x + (area.x + x + 0.5f) / res * data.size.x, 0f, o.z + (area.y + z + 0.5f) / res * data.size.z);
+					if (land.SampleHeight(p) + o.y < 0.2f) continue; // (the seabed)
+					// (the nearest point of the skin's grid, within the band)
+					int ci = Mathf.RoundToInt((p.x - x0) / Cell), ck = Mathf.RoundToInt((p.z - z0) / Cell);
+					float best = float.MaxValue;
+					for (int i = Mathf.Max(0, ci - reach); i <= Mathf.Min(nx - 1, ci + reach); i++)
+						for (int k = Mathf.Max(0, ck - reach); k <= Mathf.Min(nz - 1, ck + reach); k++)
+						{
+							if (!on[i, k]) continue;
+							float dx = x0 + i * Cell - p.x, dz = z0 + k * Cell - p.z, d2 = dx * dx + dz * dz;
+							if (d2 < best) best = d2;
+						}
+					if (best == float.MaxValue) continue;
+					// (out past the skin's edge, the outline wandering - the island's own bumps, as the hill's: see anchor)
+					float ux = p.x - anchor.x + 500f, uz = p.z - anchor.z + 500f;
+					float n = Mathf.PerlinNoise(ux * 0.35f + 3.7f, uz * 0.35f + 11.3f), n2 = Mathf.PerlinNoise(ux * 1.1f + 29f, uz * 1.1f + 5f);
+					float outside = Mathf.Sqrt(best) - Cell * 0.5f - 1.2f * (n - 0.5f), t = Mathf.Clamp01(outside / FootBand);
+					float w = FootPaint * (1f - t * t * (3f - 2f * t)) * (0.75f + 0.25f * n2);
+					if (w < 0.02f) continue;
+					for (int l = 0; l < layers; l++) maps[z, x, l] *= 1f - w;
+					maps[z, x, TerrainPainter.Sand] += w * FootSand;
+					maps[z, x, TerrainPainter.Rock] += w * (1f - FootSand);
+					painted++;
+				}
+			if (painted > 0) data.SetAlphamaps(area.x, area.y, maps);
+			return painted;
+		}
+
 		/// <summary>Tests: builds it again now.</summary>
 		public void Rebuild() { due = -1f; Build(); }
 
@@ -953,7 +1014,8 @@ namespace DynamicIslands.Editor
 				if (asDen >= 0 && caves[asDen] != null) RockAsDen(mr, caves[asDen].gameObject);
 			}
 			DressTunnels();
-			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : "") + (SkirtsCut > 0 ? ", " + SkirtsCut + " skirt strip(s) let down to the edge" : ""));
+			FootPainted = PaintFoot(on, x0, z0, nx, nz);
+			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + ", foot band " + FootPainted + " texel(s)" + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : "") + (SkirtsCut > 0 ? ", " + SkirtsCut + " skirt strip(s) let down to the edge" : ""));
 			// (lone dens walled before the hill was built: their walls' outsides drawn as the hill now)
 			foreach (Transform t in caves)
 				if (t != null) CaveTool.WallLikeHill(t.gameObject, mr);

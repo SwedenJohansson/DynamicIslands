@@ -411,6 +411,8 @@ namespace DynamicIslands
 				string map = m != null ? m.LastMap ?? "" : "";
 				Log("  " + n + " " + name + ": " + caves.Count + " cave piece(s), mountain " + (skin != null ? "there" : caves.Count == 0 ? "none (no cave pieces)" : map.Count(c => c == 'R') == 0 ? "none needed (the ground covers the caves)" : "MISSING") + " - roof " + map.Count(c => c == 'R') + ", sides " + map.Count(c => c == 's') + ", ways in " + map.Count(c => c == 'c') + "; " + (map.Split('\n').FirstOrDefault() ?? ""));
 				if (skin == null && caves.Count > 0 && map.Count(c => c == 'R') > 0) bad++; // (no roof cell: the ground is over every cave piece, nothing to cover - a cave tool hill, 11-04)
+				// (the ground round its foot gone sandy, no hard cut where the skin meets it - 11-21 c3z21; none over the sea)
+				if (skin != null) Log("    foot band: " + m.FootPainted + " ground paint texel(s) sanded round the hill's foot");
 				// (its ways in clear: a play walking into a den stuck on the hill across its mouth - AU83)
 				List<string> blocked = m != null ? m.BlockedWays() : new List<string>();
 				foreach (string w in blocked.Take(6)) Log("    way in blocked: " + w);
