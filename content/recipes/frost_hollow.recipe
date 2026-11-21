@@ -113,6 +113,10 @@ clear at -23 10 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
 brush flatten at -23 19 r=4 s=20 frames=60 h=3.52
 brush smooth at -20 19 r=6 s=6 frames=20
 clear at -23 19 r=3.5 only=(?i)boulder|rock|tree|bush|palm|bamboo
+# (c3z34 11-21: the cold room's far end ran out under the knoll's low south-west slope, 5-7 m of ground over a
+# 9.5 m room top - seen through from inside. The ground over it raised first)
+brush flatten at -32 2 r=5 s=20 frames=300 h=12
+brush smooth at -32 2 r=7 s=5 frames=40
 call kit_sys x=-23 z=10 yaw=270 side=1 len=14 bend=6 branch=8 blen=3 gap=9 in2=10 r=1.75 roomr=3 dirt=0 mush=2 stone=3 vines=0 titanium=1 as=fhhollow
 prop fhhollow cave.rock=plain
 place Note_Sign fhhollowsign at -16 14 ground yaw=270

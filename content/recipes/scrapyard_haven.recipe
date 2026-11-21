@@ -349,4 +349,10 @@ quest reward=MetalIngot*4;Nail*20;Plastic*10
 # the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
 clear at 0 52.44 r=1.5 only=BigSharpRock
 
+# (c3z40: two generator bushes sunk 1.2-2.2 m in the ground round them, and a scattered pineapple 0.56 m over the
+# ground on a slope - taken off, CIGroundIslands 11-21)
+clear at 13.79 -92.55 r=1.5 only=^SmallBushyTree
+clear at 10.38 -96.34 r=1.5 only=^SmallBushyTree
+clear at -10.04 -70.02 r=1.5 all only=^Pickup_Landmark_PineappleLandmark
+
 save Scrapyard Haven

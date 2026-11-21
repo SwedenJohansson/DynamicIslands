@@ -490,10 +490,13 @@ namespace DynamicIslands
 							// (the island in view: its framed box on the screen and the rays through that box ending on the island above
 							// the sea - not a share of the whole picture: Weatherglass Deep, whole in all four pictures, scored 10-22 % on
 							// three sides, small and far on one, and was failed, c3z32 11-21. Its share of the picture is still logged)
-							float onScreen, whole = IslandInView(from, b.center, e.Root.transform, null);
-							float inBox = IslandFramed(from, b.center, e.Root.transform, b, out onScreen);
-							fill = onScreen >= FramedOnScreen && inBox >= FramedLand ? 1f : 0f;
-							fills.Add((i * 90 + 30) + ": " + Mathf.RoundToInt(inBox * 100f) + " % of its box land, " + Mathf.RoundToInt(onScreen * 100f) + " % of the box on screen (" + Mathf.RoundToInt(whole * 100f) + " % of the picture)");
+							// (and against what else is solid there, not the whole box: a ring island's lagoon and the sea round a low,
+							// wide island are in its box - Varuna Point, the whole island plain in its side picture, scored 13-24 % of
+							// its box land, c3z34 11-21. A hill or wall of something else in front is what hides it)
+							float onScreen, other, whole = IslandInView(from, b.center, e.Root.transform, null);
+							float inBox = IslandFramed(from, b.center, e.Root.transform, b, out onScreen, out other);
+							fill = FramedInView(inBox, onScreen, other) ? 1f : 0f;
+							fills.Add((i * 90 + 30) + ": " + Mathf.RoundToInt(inBox * 100f) + " % of its box land, " + Mathf.RoundToInt(other * 100f) + " % something else, " + Mathf.RoundToInt(onScreen * 100f) + " % of the box on screen (" + Mathf.RoundToInt(whole * 100f) + " % of the picture)");
 						}
 						else if (g < -4f)
 						{
@@ -607,22 +610,35 @@ namespace DynamicIslands
 				Physics.SyncTransforms();
 				Bounds box = new Bounds(land.transform.position, Vector3.one * 20f);
 				Vector3 from = box.center + new Vector3(0f, 0f, -400f);
-				float onScreen, whole = IslandInView(from, box.center, root.transform, null), framed = IslandFramed(from, box.center, root.transform, box, out onScreen);
-				Check(ref ok, whole < 0.15f && framed >= FramedLand && onScreen >= FramedOnScreen,
+				float onScreen, other, whole = IslandInView(from, box.center, root.transform, null), framed = IslandFramed(from, box.center, root.transform, box, out onScreen, out other);
+				Check(ref ok, whole < 0.15f && FramedInView(framed, onScreen, other),
 					"small and far: " + Mathf.RoundToInt(whole * 100f) + " % of the picture, but " + Mathf.RoundToInt(framed * 100f) + " % of its box land and " + Mathf.RoundToInt(onScreen * 100f) + " % of the box on screen - in view");
 				wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
 				wall.transform.position = box.center + new Vector3(0f, 0f, -200f);
 				wall.transform.localScale = new Vector3(60f, 60f, 1f);
 				yield return null;
 				Physics.SyncTransforms();
-				float hidden = IslandFramed(from, box.center, root.transform, box, out onScreen);
-				Check(ref ok, hidden < FramedLand, "a wall between: " + Mathf.RoundToInt(hidden * 100f) + " % of its box land - not in view");
+				float hidden = IslandFramed(from, box.center, root.transform, box, out onScreen, out other);
+				Check(ref ok, !FramedInView(hidden, onScreen, other), "a wall between: " + Mathf.RoundToInt(hidden * 100f) + " % of its box land, " + Mathf.RoundToInt(other * 100f) + " % the wall - not in view");
 				UnityEngine.Object.Destroy(wall); wall = null;
+				yield return null;
+				Physics.SyncTransforms();
+				// (one side of a ring of land round open water, its box mostly the lagoon: a 1 m wall along the far side of a 60 m
+				// box, seen from 100 m off and 30 m up - a small share of the box, nothing else in it: in view)
+				Bounds ringBox = new Bounds(box.center, new Vector3(60f, 4f, 60f));
+				land.transform.localScale = new Vector3(60f, 4f, 1f);
+				land.transform.localPosition = new Vector3(0f, 0f, 29.5f);
+				yield return null;
+				Physics.SyncTransforms();
+				float ring = IslandFramed(box.center + new Vector3(0f, 30f, -100f), box.center, root.transform, ringBox, out onScreen, out other);
+				Check(ref ok, ring < 0.2f && FramedInView(ring, onScreen, other), "a thin ring round open water: " + Mathf.RoundToInt(ring * 100f) + " % of its box land, " + Mathf.RoundToInt(other * 100f) + " % something else - in view");
+				land.transform.localScale = new Vector3(20f, 20f, 20f);
+				land.transform.localPosition = Vector3.zero;
 				yield return null;
 				Physics.SyncTransforms();
 				// (the camera inside the box's corner, looking at its middle: most of the box off the screen)
 				Bounds big = new Bounds(box.center, new Vector3(400f, 400f, 400f));
-				IslandFramed(box.center + new Vector3(-150f, 0f, -150f), box.center, root.transform, big, out onScreen);
+				IslandFramed(box.center + new Vector3(-150f, 0f, -150f), box.center, root.transform, big, out onScreen, out other);
 				Check(ref ok, onScreen < FramedOnScreen, "from inside a big box: " + Mathf.RoundToInt(onScreen * 100f) + " % of it on screen - not framed");
 			}
 			finally
@@ -633,17 +649,26 @@ namespace DynamicIslands
 			Log((ok ? "PASS" : "FAIL") + ": island framed");
 		}
 
-		/// <summary>The island is in a side picture when this much of its framed box is on the screen and this much of the rays
-		/// through the box's part on the screen end on it above the sea.</summary>
-		const float FramedOnScreen = 0.5f, FramedLand = 0.2f;
+		/// <summary>The island is in a side picture when this much of its framed box is on the screen, at least this much of the rays
+		/// through the box's part on the screen end on it above the sea, and at least <see cref="FramedOwn"/> of those that end on
+		/// anything above the sea end on it (the rest: sea or sky - a lagoon, the water round a low island). Until c3z34 (11-21)
+		/// 20 % of the box had to be land, which failed low, wide islands and ring islands plainly in view.</summary>
+		const float FramedOnScreen = 0.5f, FramedLand = 0.06f, FramedOwn = 0.6f;
+
+		static bool FramedInView(float land, float onScreen, float other)
+		{
+			return onScreen >= FramedOnScreen && land >= FramedLand && land >= FramedOwn * (land + other);
+		}
 
 		/// <summary>Is the island under <root> in a picture from <from> towards <at> (60 degrees high, 16:9): the box <box> (what the
 		/// picture is framed on) put on the screen as the rectangle round its 8 corners; <onScreen> the share of that rectangle inside
 		/// the picture, the result the share of a 16 x 12 grid of rays through the rectangle's part on the screen that end on the island
-		/// above the sea (-1.5 m). Unlike <see cref="IslandInView"/> a small, far island counts in full.</summary>
-		static float IslandFramed(Vector3 from, Vector3 at, Transform root, Bounds box, out float onScreen)
+		/// above the sea (-1.5 m); <other> the share that end above the sea on something else. Unlike <see cref="IslandInView"/>
+		/// a small, far island counts in full.</summary>
+		static float IslandFramed(Vector3 from, Vector3 at, Transform root, Bounds box, out float onScreen, out float other)
 		{
 			onScreen = 0f;
+			other = 0f;
 			Quaternion rot = Quaternion.LookRotation(at - from), inv = Quaternion.Inverse(rot);
 			float tanV = Mathf.Tan(30f * Mathf.Deg2Rad), tanH = tanV * 16f / 9f;
 			float x0 = float.MaxValue, x1 = float.MinValue, y0 = float.MaxValue, y1 = float.MinValue;
@@ -659,7 +684,7 @@ namespace DynamicIslands
 			float cx0 = Mathf.Max(x0, -1f), cx1 = Mathf.Min(x1, 1f), cy0 = Mathf.Max(y0, -1f), cy1 = Mathf.Min(y1, 1f);
 			if (area <= 0f || cx1 <= cx0 || cy1 <= cy0) return 0f;
 			onScreen = (cx1 - cx0) * (cy1 - cy0) / area;
-			int on = 0, all = 0;
+			int on = 0, off = 0, all = 0;
 			for (int x = 0; x < 16; x++)
 				for (int y = 0; y < 12; y++)
 				{
@@ -667,8 +692,10 @@ namespace DynamicIslands
 					Vector3 ray = rot * new Vector3(tanH * sx, tanV * sy, 1f);
 					RaycastHit hit;
 					all++;
-					if (Physics.Raycast(from, ray.normalized, out hit, 2500f, ~0, QueryTriggerInteraction.Ignore) && hit.collider.transform.IsChildOf(root) && hit.point.y > -1.5f) on++;
+					if (!Physics.Raycast(from, ray.normalized, out hit, 2500f, ~0, QueryTriggerInteraction.Ignore) || hit.point.y <= -1.5f) continue;
+					if (hit.collider.transform.IsChildOf(root)) on++; else off++;
 				}
+			other = (float)off / all;
 			return (float)on / all;
 		}
 

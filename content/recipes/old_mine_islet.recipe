@@ -157,6 +157,11 @@ call ar_plane x=42 z=34 h=3 yaw=200 al=assayplane crate=assaycrate
 call hw_wreck x=50 z=-34 h=2 yaw=30 obj=BoatStranded al=orebarge crate=bargecrate r=9
 # G Grey's second claim (north-west): a rock with a hole in it, its mouth to the sea, boulders across it
 call ar_cave x=-48 z=34 h=3 yaw=0 al=greyrock chest=greyclaim
+# (c3z40: the rock's back corner (west, 16 m out) hung 11.3 m over the wet beach past the pad - the ground brought up
+# dry under it so the hill closes round it, CIGroundIslands 11-21)
+brush flatten at -62.5 27.5 r=5 s=20 frames=60 h=3
+brush smooth at -62.5 27.5 r=8 s=5 frames=20
+clear at -62.5 27.5 r=7
 place SmallBoulder4 - at -49 47 ground yaw=40 scale=0.9
 place SmallBoulder4 - at -45.5 51 ground yaw=110 scale=0.8
 # H Powder Hill (north-east, by the plane): the company's powder store on its top, away from the men
@@ -249,6 +254,8 @@ place "Balboa_DecorationPrefabBase_SmallLocker" locker at 22.4 -13.2 sit yaw=270
 place Note_Sign notice at 22.5 -24.5 yaw=60
 place Balboa_DecorationPrefabBase_SimpleTent - at 25 -7.5 sit yaw=200
 place campfire_1 - at 22 -8.2 sit
+# (c3z40: its 11 m base stood 0.78 m over the ground falling away at its south-west end - set 0.5 m into the yard)
+place VP_RubblePile_Medium02 - at 27 -17 sit y=-0.5 yaw=40
 place VP_RubblePile_Medium02 - at 27 -17 sit yaw=40
 place Cableroll_01 - at 24.5 -26 sit
 place VP_Wagon02 - at 25.5 -12.5 sit yaw=30 tilt=8
@@ -482,4 +489,8 @@ clear at -5.08 15.18 r=1 only=Balboa_BigBush_01
 #     sloped as rock talus down to 10 m under the sea - a pit or a dive shaft keeps its depth, a narrow one is left open)
 cliffs
 reseat trees
+# (c3z40: eight generator trees north of the mine (12 -1..21 17) stood 1.8-6.2 m deep in the ground round them, past what
+# the save's reseat sets back - taken off, CIGroundIslands 11-21)
+clear at 13 9 r=13 only=(?i)Tree
+
 save Old Mine Islet

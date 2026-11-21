@@ -106,6 +106,9 @@ place Antenna_pole - at 7 -5 ground rot=0,0,-80 sy=0.5
 place SmallRock_02 - at 10 7.9 ground sit scale=2.9
 place SmallRock_02 - at 13.2 8.2 ground sit scale=2.6 yaw=120
 place Block_Foundation archtop at 11.5 8 h=2.15 sx=2.8 sz=1.25 yaw=5
+# (c3z31/z40: the deck's west end still 1.9 m over the ground falling away under it (the rocks aren't ground to the
+# check) - the ground under the deck's west half levelled to its middle's round the rocks, CIGroundIslands 11-21)
+brush flatten from 11.5 8 to 9.2 7.8 r=1.5 s=20 frames=60
 prop archtop tint.color=#56514a
 prop archtop tint.amount=0.75
 call airpocket x=11.5 z=8 id=edge al=edgeair bub=edgebub r=2.5 msg="Under the arch, at the very edge: air. Below, nothing but dark."

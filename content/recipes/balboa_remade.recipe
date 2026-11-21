@@ -109,6 +109,11 @@ brush flatten from 99.6 -35.3 to 100.8 -35.5 r=1.6 s=20 frames=60 h=0.4
 call hw_wreck x=104 z=-30 h=1.5 yaw=70 obj=BoatStranded al=poacherboat crate=boatcrate r=8
 # (its mouth turned inland: facing the sea it opened over 6 m of water with no way up, PQ11 10-27)
 call ar_cave x=-40 z=-84 h=2.5 yaw=0 al=caverock chest=cavebox
+# (c3z40: the rock's back corner (west, 16 m out) 3.3 m over ground left just wet (0.27 m) past the pad - brought up
+# dry to under its rim so the hill closes round it, CIGroundIslands 11-21)
+brush flatten at -54.5 -90.5 r=4 s=20 frames=60 h=3.2
+brush smooth at -54.5 -90.5 r=7 s=5 frames=20
+clear at -54.5 -90.5 r=6
 # --- JUMP COURSE bb (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
 # JUMP bb pad=2.5 at=46 -86
 push at 46 -86

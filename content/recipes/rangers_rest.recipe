@@ -46,6 +46,9 @@ clear at 19 -12 r=6
 # (fix-open 11-19: a white flower stood 1 m over the hillside south-west of the tower - CIFloating fo1)
 clear at 8.2 -19.4 r=2.5
 clear at -8 -27 r=17
+# (c3z34 11-21: generated big rocks just past that circle, beside the den mouth's north cheek, lifted the cave's
+# lone ramp 2 m over the Terrain there - CICaveIslands 'hill in front, 3.0 m out, -7.9 m aside')
+clear at 10.5 -18 r=6 body only=(?i)Rock|Boulder
 # (the trails: from the south beach up to the station, on up to the tower, and along the shore to the den)
 clear from 10 26 to 12 14 r=2.5
 clear from 12 14 to 14 8 r=2.5

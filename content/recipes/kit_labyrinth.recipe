@@ -12,4 +12,6 @@ place TP_UnderwaterCaveTunnel_Corner corner at 50 0 h=12
 place TP_UnderwaterCaveTunnel_CornerLong cornerlong at 0 40 h=12
 place TP_UnderwaterCaveTunnel_CrossT crosst at 45 40 h=12
 place BalboaCave_DeadEnd hall at 100 20 h=12
+# (c3z40: the hall's rim stood 1.2 m over the ground on its west-north-west side - the ground brought up under it)
+brush flatten from 84 29 to 88 29 r=3 s=20 frames=60 h=2.2
 save CI Kit Labyrinth

@@ -43,6 +43,12 @@ place RT_PillarThick shaft at 2.5 11.5 ground y={$k*6}
 place RT_PillarThick shaft at -2.5 16.5 ground y={$k*6}
 place RT_PillarThick shaft at 2.5 16.5 ground y={$k*6}
 next
+# (c3z34 11-21: the deck and both landings, 6 x 9 m at 9 18.5, stand clear of the shaft's columns - 'held up by nothing
+# that reaches the ground'. Two more columns up their outer corners)
+for k 0 4
+place RT_PillarThick shaft at 11.6 14.4 ground y={$k*6}
+place RT_PillarThick shaft at 11.6 22.6 ground y={$k*6}
+next
 prop shaft tint.color=#4e5358
 prop shaft tint.amount=0.6
 

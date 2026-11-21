@@ -1248,6 +1248,11 @@ namespace DynamicIslands
 		static readonly Regex OnAMount =new Regex("Sattelite|Satellite|Dish|Antenna|Tower_EndRoom", RegexOptions.IgnoreCase);
 		/// <summary>What stands on one trunk: its pivot is its foot (the generator's trees and palms).</summary>
 		static readonly Regex Trunk = new Regex("^(?!Placeable_)(?!.*(Ladder|Zipline|Spine|Street)).*(Tree|Palm|Bamboo|Pine|Birch)", RegexOptions.IgnoreCase);
+		/// <summary>Named like a tree but not standing on a trunk foot at its pivot: a lying log (its pivot mid-log, half its
+		/// thickness up) and a stump (its pivot 0.6 m over its bottom). Measured by their base as any object instead - Timberline
+		/// Haul's log piles and Twin Forges' vice stump read "trunk foot floating" 0.45-1.3 m, resting where they were put, c3z34.</summary>
+		static readonly Regex NotATrunk = new Regex(@"^(TreeLog_\d+|Log|Tree_Stump)$");
+		static bool OnATrunk(string n) { return Trunk.IsMatch(n) && !NotATrunk.IsMatch(n); }
 
 		/// <summary>What on a spawned island doesn't stand on anything: one line per problem; <paramref name="count"/> = the objects measured.</summary>
 		static List<string> GroundProblems(IslandWorldState.Entry e, out int count)
@@ -1362,7 +1367,7 @@ namespace DynamicIslands
 				// A trunk over a drop: its foot on a pit's or a cliff's rim, the trunk hanging out over the slope - a stroke lowered
 				// the ground beside it (the user, 2026-10-30: Reefmachine Atoll's palm over its valve-bank pit; the foot itself was
 				// on the ground). Eight points round the foot, a trunk's width out: three or more 0.8 m over what is under them
-				if (Trunk.IsMatch(n) && land != null && o.position.y > sea + 0.3f)
+				if (OnATrunk(n) && land != null && o.position.y > sea + 0.3f)
 				{
 					Vector3 foot = o.position;
 					float tg = TrunkGround(foot, land);
@@ -2128,7 +2133,7 @@ namespace DynamicIslands
 		/// floating"); null when it is fine, or its foot is over the sea.</summary>
 		static string TrunkFootProblem(Transform o, string n, Terrain land, float sea, Vector3 mid)
 		{
-			if (land == null || !Trunk.IsMatch(n)) return null;
+			if (land == null || !OnATrunk(n)) return null;
 			Vector3 foot = o.position;
 			float ground = TrunkGround(foot, land);
 			if (float.IsNaN(ground)) return null;

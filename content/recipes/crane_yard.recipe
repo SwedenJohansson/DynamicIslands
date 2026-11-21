@@ -197,4 +197,7 @@ quest reward=Bolt*6;Hinge*4
 call treasure x=0 z=0 r=18 n=1 seed=8840
 prop treasure8840 treasure.loot=TitaniumOre*2
 
+# (c3z40: a generator bamboo at -12 -5.4 stood 2.3 m deep in the ground round it - taken off, CIGroundIslands 11-21)
+clear at -12.09 -5.4 r=3 only=^Bamboo
+
 save Crane Yard
