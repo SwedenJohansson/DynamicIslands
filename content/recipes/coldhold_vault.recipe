@@ -186,7 +186,9 @@ place Zone_Trigger floodzone at 0 33 ground y=1
 for ca 0 345 15
 place SmallRock_02 ice at {25*sin($ca)} {10+25*cos($ca)} ground y=-2 scale=3 yaw=$ca
 next
-for pa 0 300 60
+# (c3 round 8, 11-21 c3z44: the pa=180 pillar stood at 0 -33, under vaultzip's line 8.8 m into its far stretch, and held the
+# shave off the ground under it: the ring turned 30 degrees, no pillar on the line or the flood door's path at 0 31)
+for pa 30 330 60
 place RT_PillarThick icepillar at {21*sin($pa)} {10+21*cos($pa)} ground
 next
 call icetint al=ice
@@ -209,14 +211,7 @@ call shallows x=0 z=22 r=100 deep=6 n=1 seed=12930
 pop
 
 # --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; BoatStranded + chest; hatch with a chest; buried treasure; viewpoint ---
-# (c3z29 11-21: the tent's base stood 0.6 m over the slope - a level pad for the camp first)
-# (c3 round 4, 11-21 c3z38: still 0.66 m over at its east side, -34.55 22.54 - the pad wider, under the whole tent)
-brush flatten at -36.2 23.2 r=5 s=20 frames=150
-place campfire_1 - at -39.4 21.8 ground sit
-place Balboa_DecorationPrefabBase_SimpleTent - at -36.4 23.8 ground sit yaw=337
-place "Box Small" - at -41.4 24.3 ground sit
-place Note_Paper dnote at -41.4 24.3 ground y=1.6 drop yaw=20
-note dnote Survey note | ICE SURVEY, SHEET 4 (and on the back, a sealer's scrawl)\n\nPressure ridge moving 2 m a day. Crack under the tent this morning. Moved camp.\n\nHalvorsen here, borrowing the surveyors' paper because ours went in the sea. We came up the ice to trade seal oil for seed and found the vault's door shut and nobody answering. Ivo from the relay is with us, listening to his little set every night with his eyes closed, like a man in church. He says the stack never fell on its own. He heard sledge bells the night the mast bent, and there was no wind.\nWe are going back to the steam harbour. The sea under the ice is warmer than it should be.
+# (the camp - tent, fire, box, note - stands after the ice cap below: c3 round 8)
 place BoatStranded dvan at 39.4 -21.8 ground yaw=97
 prop dvan tint.color=#5a6670
 prop dvan tint.amount=0.5
@@ -239,6 +234,16 @@ prop dview zone.message=The Coldhold's entrance hall looks out over the landing,
 include lib_areas
 call fz_mount x=-42 z=55 h=34 r=8
 call ar_plants_snowy x=-42 z=55 r=30 seed=12961
+# (c3 round 8, 11-21 c3z44: the tent stood 0.74 m in the air at -34.9 23.3: fz_mount's flatten r=32 and smooth r=36.8 round
+# -42 55 reach the camp 31.7 m off and reshaped its pad after the tent sat. The camp now comes after the cap)
+# (c3z29 11-21: the tent's base stood 0.6 m over the slope - a level pad for the camp first)
+# (c3 round 4, 11-21 c3z38: still 0.66 m over at its east side, -34.55 22.54 - the pad wider, under the whole tent)
+brush flatten at -36.2 23.2 r=5 s=20 frames=150
+place campfire_1 - at -39.4 21.8 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at -36.4 23.8 ground sit yaw=337
+place "Box Small" - at -41.4 24.3 ground sit
+place Note_Paper dnote at -41.4 24.3 ground y=1.6 drop yaw=20
+note dnote Survey note | ICE SURVEY, SHEET 4 (and on the back, a sealer's scrawl)\n\nPressure ridge moving 2 m a day. Crack under the tent this morning. Moved camp.\n\nHalvorsen here, borrowing the surveyors' paper because ours went in the sea. We came up the ice to trade seal oil for seed and found the vault's door shut and nobody answering. Ivo from the relay is with us, listening to his little set every night with his eyes closed, like a man in church. He says the stack never fell on its own. He heard sledge bells the night the mast bent, and there was no wind.\nWe are going back to the steam harbour. The sea under the ice is warmer than it should be.
 # (REACH 11-02 RA1: the cap's top is a 6.4 m pillar of ground standing 8 m over the slope round it - walks stopped at its
 # foot at 25.6 on every side. A ledge path winds up round it from its west foot, five-sixths of a turn; the 11-02 walk
 # still stops at h 26 - vent_top and the vent chest stay open)

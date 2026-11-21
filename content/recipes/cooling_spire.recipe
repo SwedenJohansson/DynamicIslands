@@ -146,6 +146,9 @@ prop roofbear creature.zone=spire_top
 # --- The cable down to the lookout on the south shore; what Hedda saw -------------------------------------------------
 place ZiplinePath_Landmark zipdown at 11.15 -3.32 h=13.45
 zipto zipdown -0.41 -55.78
+# (c3 round 8, 11-21 c3z44: 0.76 m under at 3.1 -16.8; no recipe object stands there, so the island's own
+# rocks and plants held the land off the shave: cleared along the line)
+clear from 5.43 -2.34 to -0.41 -55.78 r=3 body
 call tzone x=-0.41 z=-57.78 al=lookzone id=court_view r=4 msg="The lookout. Over the sea to the south: a ring of iron, wider than any island, and three waves cut across it."
 place Note_Sign hedda2 at 1.09 -59.28 ground sit yaw=0
 place Note_Paper keepercs at -2.6 -56.2 ground drop yaw=80

@@ -35,6 +35,18 @@ namespace DynamicIslands.Editor
 		/// its far end on the hill's skin, ran 0.24 m into the dune's slope just before it).</summary>
 		public const float FarEndClear = 0.3f, FarMaxRaise = 3f;
 
+		/// <summary>The room the ground check wants under the rope, by how far it is (along the ground) to the far end: LineLow
+		/// from 2*FarSkip m out, coming down in a straight line to FarEndLow at FarSkip m, where the far stretch's own check takes
+		/// over (c3 round 8, 11-21 c3z44: ropes 0.18-0.41 m over the ground 3.1-5 m from their far ends failed the 0.5 m rule the
+		/// metre past the left-out stretch, while the stretch itself only had to stay out of the ground: the rope coming down to
+		/// its floor is low there by design).</summary>
+		public static float LineWant(float toFar)
+		{
+			return toFar >= 2f * FarSkip ? LineLow : Mathf.Lerp(FarEndLow, LineLow, (toFar - FarSkip) / FarSkip);
+		}
+		/// <summary>RopeLowest's want for the ground check's rule (LineWant less LineLow): its result is then measured against LineLow.</summary>
+		public static readonly System.Func<float, float> CheckWant = toFar => LineWant(toFar) - LineLow;
+
 		/// <summary>The rope's lowest over the ground in its last FarSkip m, its far end included (FarEndLow).</summary>
 		public static float FarStretchLowest(List<Vector3> rope, Vector3 near, Vector3 far, System.Func<float, float, float> ground, out Vector3 at)
 		{

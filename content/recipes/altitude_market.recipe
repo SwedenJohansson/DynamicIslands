@@ -117,7 +117,11 @@ place QuestItemPickup_Tangaroa_Token - at 16 -15 ground
 
 # --- Things to gather ------------------------------------------------------------------------------------------------
 scatter "Pickup_Landmark_PineappleLandmark" 2 at -8 10 r=4 seed=9561 free=2
-call dirt x=10 z=-6 r=5 n=2 seed=9562
+# (c3 round 8, 11-21 c3z44: 0.49 m under at 42.3 -41.3: this dirt scatter's centre stood 3.3 m off
+# zipdown's line, under its low point, and the dirt held the land there. Moved west off the line; generator objects
+# along the line cleared too)
+call dirt x=4 z=-9 r=4 n=2 seed=9562
+clear from 5.78 8.98 to 16.93 -12.05 r=3 body
 pop
 
 # --- DEEP 10-25: Pylon Hill and the cable car's top pylon; the trail's foot and the summit as zones; the key ---------

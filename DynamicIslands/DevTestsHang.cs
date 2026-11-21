@@ -141,9 +141,13 @@ namespace DynamicIslands
 						if (skins == null) skins = ZiplineEnds.CaveSkins(objects.parent != null ? objects.parent : objects);
 						Func<float, float, float> zg = ZiplineEnds.OverSkins((x, z) => land.SampleHeight(new Vector3(x, 0f, z)) + land.transform.position.y, skins);
 						List<Vector3> zr = ZiplineEnds.Rope(rope);
-						float over = ZiplineEnds.RopeLowest(zr, zn, zf, zg, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out low, out lt);
+						// (the room wanted comes down from LineLow to FarEndLow over the metres before the far stretch: ZiplineEnds.LineWant, c3 round 8)
+						float over = ZiplineEnds.RopeLowest(zr, zn, zf, zg, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, ZiplineEnds.CheckWant, out low, out lt);
 						if (over < ZiplineEnds.LineLow)
-							lines.Add("zipline line in the ground: " + n + " " + (over < 0f ? Num(-over) + " m under" : Num(over) + " m over") + " the ground at " + at(low) + " (its rope; " + Num(ZiplineEnds.LineLow) + " m wanted)");
+						{
+							float real = low.y - zg(low.x, low.z), wanted = ZiplineEnds.LineWant(new Vector2(zf.x - low.x, zf.z - low.z).magnitude);
+							lines.Add("zipline line in the ground: " + n + " " + (real < 0f ? Num(-real) + " m under" : Num(real) + " m over") + " the ground at " + at(low) + " (its rope; " + Num(wanted) + " m wanted)");
+						}
 						// (its last metres down to the far end too - 11-21 c3z13: Caisson Yard's summit rope ended in the cave hill's sand)
 						float endOver = ZiplineEnds.FarStretchLowest(zr, zn, zf, zg, out low);
 						if (endOver < ZiplineEnds.FarEndLow)

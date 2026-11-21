@@ -147,8 +147,10 @@ place Creature_StoneBird screechers at 0 30 h=12
 
 # --- The key: the trader, the pile stair and the pile engineer's map ----------------------------------------------
 store crownshop at 8 -14 ground
-place Note_Sign pilemap at -18 8 ground sit yaw=240
-place Note_Sign dobbs400 at -15 11 ground sit yaw=200
+# (c3 round 8, 11-21 c3z44: the two signs stood 1-2 m off crownzip's line near its far end and
+# held the land under the rope 0.41 m over at -26.1 40.9: both 4 m south-east of the line, still by the pile stair)
+place Note_Sign pilemap at -16.5 3.5 ground sit yaw=240
+place Note_Sign dobbs400 at -13.5 6.5 ground sit yaw=200
 ramp Block_Floor_Wood from -21 9 1.5 to -25.5 12.5 -1.5 len=1.5 top=0
 place Zone_Trigger pilestair at -20 8 ground y=1.5
 place RT_Pillar pile at -27 14 ground sy=1.2
@@ -220,6 +222,10 @@ call hw_zone x=-46.88 z=17.74 al=bc_trailz id=bc_trail r=5 msg="The trail up Cro
 call hw_zone x=-74 z=28 al=bc_summitz id=bc_summit r=8 h=1 msg="The top of Crown Fell. The whole island below, the city beyond it, and the storm beacon mast still higher."
 call hw_mast x=-75.93 z=31.5 h0=50 lv=12 a=bc_mast chest=bc_topchest top=RT_Spotlight
 place ZiplinePath_Landmark bc_zip at -69.69 24.88 h=51.35
+# (c3 round 8, 11-21 c3z44: 1.08 m into the ground at -71.9 20.2, h=48: the line left the summit 2.5 m from
+# hw_mount's centre and crossed its plateau's edge 7-10 m out. Its floor now stands 7 m out toward the far end, past
+# which the slope falls away faster than the line)
+zipfrom bc_zip -70.64 21.86 ground
 zipto bc_zip -53.93 -8.5
 place Loot_ChestSmall bc_ledge at -87.92 25.73 ground sit yaw=80.73
 call treasure x=-77.5 z=26.07 r=5 n=1 seed=13978 kind=0

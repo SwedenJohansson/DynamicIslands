@@ -66,6 +66,8 @@ place UT_ElectricityIsland_Crane02 crane1 at -3.5 3 y=3.05 sit scale=0.25 yaw=22
 place ZiplinePath_Landmark crane1zip at 3.72 -0.53 y=4.4
 pop
 zipto crane1zip 22 12
+# (c3 round 8, 11-21 c3z44: 0.18 m over at -22.9 -16.3, 3 m from the far end: cleared along the line)
+clear from 1.04 -18.83 to 22 12 r=3 body
 ramp Block_Floor_Wood from 4.5 -26 2 to 4.5 -18 5 len=1.5 top=0
 ramp Block_Wall_Fence_Rope from 5.25 -26 2 to 5.25 -18 5 len=1.5 top=-0.1
 

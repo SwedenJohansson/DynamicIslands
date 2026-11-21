@@ -179,6 +179,9 @@ call hw_zone x=5.5 z=25.69 al=fp_trailz id=fp_trail r=5 msg="The trail up Pile-d
 call hw_zone x=12 z=56 al=fp_summitz id=fp_summit r=8 h=1 msg="The top of Pile-driver's Hump. The whole island below, the city beyond it, and the pile-driver's derrick still higher."
 call hw_mast x=8.62 z=58.14 h0=42 lv=11 a=fp_mast chest=fp_topchest top=Placeable_Lantern_Metal
 place ZiplinePath_Landmark fp_zip at 17.4 53.91 h=43.35
+# (c3 round 8, 11-21 c3z44: 3.97 m into the ground at 20.4 50.2, h=38: the line crossed hw_mount's plateau
+# edge 7-10 m from its floor. The floor now stands 7 m from the mount's centre toward the far end)
+zipfrom fp_zip 17.95 52.31 ground
 zipto fp_zip 46.62 34.14
 place Loot_ChestSmall fp_ledge at 7.36 70.37 ground sit yaw=162.09
 call treasure x=9.86 z=52.62 r=5 n=1 seed=14028 kind=0

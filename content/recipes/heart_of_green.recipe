@@ -79,6 +79,8 @@ call zipdeck y=2.6
 pop
 place ZiplinePath_Landmark zip23 at -2.03 12.78 h=8.07
 zipto zip23 8 12
+# (c3 round 8, 11-21 c3z44: 0.36 m over at 4.9 12.2, 3 m from the far end: cleared along the line)
+clear from -7.75 13.76 to 8 12 r=3 body
 push at 8 14 h=4
 call stilt_hut y=2.6
 place Note_Sign purpose at 2.25 3.9 y=2.7 sit

@@ -83,6 +83,9 @@ call zipdeck y=2.6
 pop
 place ZiplinePath_Landmark grovezip at -23.03 -9.22 h=6.07
 zipto grovezip -20 28
+# (c3 round 8, 11-21 c3z44: 0.43 m over at -21.7 8.6, mid-line; no recipe object there - the island's
+# rocks and harvest held the land: cleared along the line)
+clear from -28.75 -8.25 to -20 28 r=3 body
 place Zone_Trigger trunk4zone at -20 28 ground
 push at -22 30 h=2
 call stilt_hut y=2.6

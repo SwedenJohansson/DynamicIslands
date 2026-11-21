@@ -3784,16 +3784,21 @@ namespace DynamicIslands
 			Func<float, float, float> landY = (x, z) => land.SampleHeight(new Vector3(x, 0f, z)) + land.transform.position.y;
 			Func<float, float, float> ground = ZiplineEnds.OverSkins(landY, skins);
 			Vector3 at; float atT;
-			float low0 = ZiplineEnds.RopeLowest(rope, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out at, out atT);
+			// (measured by the ground check's rule: LineLow, coming down to FarEndLow over the metres before the far stretch - c3 round 8)
+			float low0 = ZiplineEnds.RopeLowest(rope, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, ZiplineEnds.CheckWant, out at, out atT);
 			if (low0 >= ZiplineEnds.LineLow + 0.1f) return null;
+			float real0 = at.y - ground(at.x, at.z);
 			TerrainData td = land.terrainData;
 			int res = td.heightmapResolution, ares = td.alphamapResolution;
 			Vector3 tp = land.transform.position, size = td.size;
 			float sea = tp.y + DynamicIslands.EditorWaterLevel, sx = size.x / (res - 1), sz = size.z / (res - 1), core = Mathf.Max(ShaveCore, 1.5f * Mathf.Max(sx, sz));
 			int reachX = Mathf.CeilToInt((core + ShaveMost / ShaveSide) / sx) + 1, reachZ = Mathf.CeilToInt((core + ShaveMost / ShaveSide) / sz) + 1;
-			// (what stands on the land holds it: every shown object whose foot is at or in the land, its bounds widened 1 m - the
-			// line's own rope left out, its small pieces (floors, posts) not; trees and bushes left out when the reseat follows)
-			var keep = new List<Bounds>();
+			// (what stands on the land holds it: every shown object whose foot is at or in the land, its bounds widened 1 m (a
+			// heightmap step and a half when that is more; 2 m till c3 round 8, which held a cut 1.5 m off a sign) - the line's own
+			// rope left out, its small pieces (floors, posts) not; trees and bushes left out when the reseat follows. Each kept
+			// box knows its object, so a cut held off the rope can say by what - c3 round 8)
+			float margin = Mathf.Max(1f, 1.5f * Mathf.Max(sx, sz));
+			var keep = new List<KeyValuePair<Bounds, EditorGameObject>>();
 			foreach (EditorGameObject o in UnityEngine.Object.FindObjectsOfType<EditorGameObject>())
 			{
 				if (o == null || !o.gameObject.activeInHierarchy) continue;
@@ -3805,8 +3810,8 @@ namespace DynamicIslands
 				{
 					Bounds b = b0;
 					if (b.min.y > landY(b.center.x, b.center.z) + 0.5f) continue;
-					b.Expand(new Vector3(2f, 0f, 2f));
-					keep.Add(b);
+					b.Expand(new Vector3(2f * margin, 0f, 2f * margin));
+					keep.Add(new KeyValuePair<Bounds, EditorGameObject>(b, o));
 				}
 			}
 			float[,] before = td.GetHeights(0, 0, res, res), after = (float[,])before.Clone();
@@ -3816,6 +3821,7 @@ namespace DynamicIslands
 			var cut = new HashSet<int>();
 			var held = new HashSet<int>();
 			var free = new HashSet<int>();
+			var holders = new Dictionary<EditorGameObject, int>();
 			for (int i = 0; i + 1 < rope.Count; i++)
 			{
 				Vector3 a = rope[i], b = rope[i + 1];
@@ -3826,7 +3832,7 @@ namespace DynamicIslands
 					float fromNear = new Vector2(p.x - near.x, p.z - near.z).magnitude;
 					if (fromNear < ZiplineEnds.NearSkip || fromNear > len - ZiplineEnds.FarSkip) continue;
 					float top = p.y - ZiplineEnds.LineClear;
-					if (ground(p.x, p.z) <= p.y - ZiplineEnds.LineLow - 0.1f) continue;
+					if (ground(p.x, p.z) <= p.y - ZiplineEnds.LineWant(new Vector2(far.x - p.x, far.z - p.z).magnitude) - 0.1f) continue;
 					if (ground(p.x, p.z) > landY(p.x, p.z) + 0.01f) { onHill++; continue; }
 					int cx = Mathf.RoundToInt((p.x - tp.x) / sx), cz = Mathf.RoundToInt((p.z - tp.z) / sz);
 					for (int dz = -reachZ; dz <= reachZ; dz++)
@@ -3841,7 +3847,10 @@ namespace DynamicIslands
 							if (target >= now - 0.005f) continue;
 							if (!free.Contains(id))
 							{
-								if (keep.Any(kb => wx >= kb.min.x && wx <= kb.max.x && wz >= kb.min.z && wz <= kb.max.z)) { held.Add(id); continue; }
+								EditorGameObject by = null;
+								foreach (KeyValuePair<Bounds, EditorGameObject> kb in keep)
+									if (wx >= kb.Key.min.x && wx <= kb.Key.max.x && wz >= kb.Key.min.z && wz <= kb.Key.max.z) { by = kb.Value; break; }
+								if (by != null) { held.Add(id); int hn; holders.TryGetValue(by, out hn); holders[by] = hn + 1; continue; }
 								free.Add(id);
 							}
 							after[z, x] = (target - tp.y) / size.y;
@@ -3851,9 +3860,14 @@ namespace DynamicIslands
 			}
 			Vector3 corner = new Vector3(TopFrame.Origin.x, 0f, TopFrame.Origin.y);
 			string where0 = Num(at.x - corner.x) + " " + Num(at.z - corner.z);
+			// (which objects held the land, the most first: the recipe's own, its scattered ones, or the island's - c3 round 8)
+			string heldBy = holders.Count == 0 ? "" : " - held by " + string.Join("; ", holders.OrderByDescending(kv => kv.Value).Take(4).Select(kv => kv.Key.GameObjectName + " at " +
+				Num(kv.Key.transform.position.x - corner.x) + " " + Num(kv.Key.transform.position.z - corner.z) + " (" + kv.Value + " points, " +
+				(recipePlaced.Contains(kv.Key.gameObject) ? "the recipe's" : recipeScattered.Contains(kv.Key.gameObject) ? "the recipe's scattered" : kv.Key == e ? "the line's own" : "the island's") + ")").ToArray()) +
+				(holders.Count > 4 ? " and " + (holders.Count - 4) + " more" : "");
 			if (cut.Count == 0)
-				return LogWords("  WARNING: zipto: its rope comes " + Num(low0) + " m over the ground at " + where0 + " and the land under it can't be cut (" + held.Count + " points under objects, " + onHill +
-					" rope points over the cave hill's skin): move an end");
+				return LogWords("  WARNING: zipto: its rope comes " + Num(real0) + " m over the ground at " + where0 + " and the land under it can't be cut (" + held.Count + " points under objects, " + onHill +
+					" rope points over the cave hill's skin)" + heldBy + ": move an end");
 			float[,,] alphaBefore = td.GetAlphamaps(0, 0, ares, ares);
 			float[,] maskBefore = terraineditor.paintMask != null ? (float[,])terraineditor.paintMask.Clone() : null;
 			td.SetHeights(0, 0, after);
@@ -3875,11 +3889,12 @@ namespace DynamicIslands
 			CommandUndoRedo.UndoRedoManager.Insert(new TerrainStrokeCommand(td, new RectInt(0, 0, res, res), before, new RectInt(0, 0, ares, ares), alphaBefore, maskBefore, terraineditor.paintMask));
 			Physics.SyncTransforms();
 			Vector3 at1; float t1;
-			float low1 = ZiplineEnds.RopeLowest(rope, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out at1, out t1);
-			string words = "zipto: its rope came " + Num(low0) + " m over the ground at " + where0 + " - the land under it cut down up to " + Num(most) + " m (" + cut.Count + " points, " +
-				Num(min.x - corner.x) + " " + Num(min.z - corner.z) + " .. " + Num(max.x - corner.x) + " " + Num(max.z - corner.z) + ")" + (held.Count > 0 ? ", " + held.Count + " points held by objects on them" : "") +
-				(onHill > 0 ? ", " + onHill + " rope points over the cave hill's skin" : "") + (deep.Count > 0 ? ", " + deep.Count + " points held at " + Num(ShaveMost) + " m deep" : "") + "; the least now " + Num(low1) + " m at " + Num(at1.x - corner.x) + " " + Num(at1.z - corner.z);
-			return LogWords(low1 < ZiplineEnds.LineLow ? "  WARNING: " + words + ": still under the ground check's " + Num(ZiplineEnds.LineLow) + " m - move an end" : "  " + words);
+			float low1 = ZiplineEnds.RopeLowest(rope, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, ZiplineEnds.CheckWant, out at1, out t1);
+			float real1 = at1.y - ground(at1.x, at1.z);
+			string words = "zipto: its rope came " + Num(real0) + " m over the ground at " + where0 + " - the land under it cut down up to " + Num(most) + " m (" + cut.Count + " points, " +
+				Num(min.x - corner.x) + " " + Num(min.z - corner.z) + " .. " + Num(max.x - corner.x) + " " + Num(max.z - corner.z) + ")" + (held.Count > 0 ? ", " + held.Count + " points held by objects on them" + heldBy : "") +
+				(onHill > 0 ? ", " + onHill + " rope points over the cave hill's skin" : "") + (deep.Count > 0 ? ", " + deep.Count + " points held at " + Num(ShaveMost) + " m deep" : "") + "; the least now " + Num(real1) + " m at " + Num(at1.x - corner.x) + " " + Num(at1.z - corner.z);
+			return LogWords(low1 < ZiplineEnds.LineLow ? "  WARNING: " + words + ": still under the ground check's " + Num(ZiplineEnds.LineWant(new Vector2(far.x - at1.x, far.z - at1.z).magnitude)) + " m there - move an end" : "  " + words);
 		}
 
 		static string LogWords(string words) { Log(words); return words; }
