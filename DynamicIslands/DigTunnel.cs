@@ -1796,7 +1796,7 @@ namespace DynamicIslands.Editor
 			// (the mouth's rim: over the cut ground the rock's top is a skin just over the ground, so the cut's square cells are
 			// under rock; past the cut it sinks gently back under the ground by RimOut, along a ragged line; round the opening,
 			// patches of rock stand up out of it)
-			float[] rimFade = null, rimH = null;
+			float[] rimFade = null, rimH = null, rimFlat = null; // (rimFlat: 1 on level ground, 0 on a cutting wall)
 			bool[] fillUp = null; // (columns over the cut cells, and h round them: rock up to the ground's top, past Shell)
 			RimColumns = 0;
 			mouthMin = mouthMax = Vector3.zero;
@@ -1818,6 +1818,7 @@ namespace DynamicIslands.Editor
 					int reachX = Mathf.CeilToInt((wOut + 0.5f) / cw) + 1, reachZ = Mathf.CeilToInt((wOut + 0.5f) / ch) + 1;
 					rimFade = new float[nx * nz];
 					rimH = new float[nx * nz];
+					rimFlat = new float[nx * nz];
 					fillUp = new bool[nx * nz];
 					for (int z = 0; z < nz; z++)
 						for (int x = 0; x < nx; x++)
@@ -1852,6 +1853,7 @@ namespace DynamicIslands.Editor
 							float f = 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((best + rag * flat) / Mathf.Lerp(Mathf.Min(RimSteepOut, wOut), wOut, flat)));
 							if (f <= 0f) continue;
 							rimFade[x + z * nx] = f;
+							rimFlat[x + z * nx] = flat;
 							// (the rocks round the opening: in patches, none between - and only at its lip: further out, where the rim
 							// is all but under the ground, a patch's top stood out of the grass as a loose flat shard - 11-06)
 							float patch = Mathf.PerlinNoise(nxL * 0.45f + 19.1f, nzL * 0.45f + 2.3f) * 0.7f + Mathf.PerlinNoise(nxL * 1.1f + 5.3f, nzL * 1.1f + 13.7f) * 0.3f;
@@ -1866,21 +1868,33 @@ namespace DynamicIslands.Editor
 			// to the next column: on a rounded hilltop the ground between the samples stood over the flat top's skin, a cut square
 			// showing it 6 cm down - 11-02. Round 4: not the ground's highest within half a step - on a steep cutting wall that is
 			// the ground uphill, and the rock stood 1.0-1.2 m out of the wall beside the mouth, Pendulum Isle's dark ears)
+			// (11-21 cv35: and on steep ground the other way - where the ground half a step away is under the straight line, at the
+			// foot of a near-sheer step, the rock's top is let down by twice that, so the straight top between two columns stays
+			// under the ground: the top laid straight from a column up the step to one on the shelf under it stood 0.1-0.7 m out of
+			// the step's foot either side of the mouth, still Pendulum Isle's dark ears after the change above. On level ground
+			// as before; past the cut cells only on steep ground)
 			if (fillUp != null)
 				for (int z = 0; z < nz; z++)
 					for (int x = 0; x < nx; x++)
 					{
-						if (!fillUp[x + z * nx]) continue;
-						float g0 = GroundY(land, transform.TransformPoint(new Vector3(o.x + x * h, 0f, o.z + z * h))), g = g0;
+						bool fu = fillUp[x + z * nx];
+						float steepBy = 1f - rimFlat[x + z * nx];
+						if (!fu && (rimFade[x + z * nx] <= 0f || steepBy <= 0f)) continue;
+						float g0 = GroundY(land, transform.TransformPoint(new Vector3(o.x + x * h, 0f, o.z + z * h)));
+						float up = 0f, down = 0f;
 						for (int dz = -1; dz <= 1; dz++)
 							for (int dx = -1; dx <= 1; dx++)
 							{
 								if (dx == 0 && dz == 0) continue;
 								float half = GroundY(land, transform.TransformPoint(new Vector3(o.x + (x + dx * 0.5f) * h, 0f, o.z + (z + dz * 0.5f) * h)));
 								float full = GroundY(land, transform.TransformPoint(new Vector3(o.x + (x + dx) * h, 0f, o.z + (z + dz) * h)));
-								g = Mathf.Max(g, g0 + half - (g0 + full) * 0.5f);
+								float bend = half - (g0 + full) * 0.5f;
+								up = Mathf.Max(up, bend);
+								down = Mathf.Min(down, bend);
 							}
-						top[x + z * nx] = Mathf.Max(top[x + z * nx], (g - Under - transform.position.y) / sY);
+						float g = g0 + (fu ? up * (1f - steepBy) : 0f) + 2f * down * steepBy;
+						float t = (g - Under - transform.position.y) / sY;
+						top[x + z * nx] = fu && steepBy <= 0f ? Mathf.Max(top[x + z * nx], t) : t;
 					}
 			// (round 4: a passage over the ground - along a cliff's foot, beside it, not into it - a full tube: rock TubeWall m all round
 			// it down to the ground, on its downhill side and over it too. Its lining stopped at the ground's height, so it was a
@@ -1937,8 +1951,10 @@ namespace DynamicIslands.Editor
 								// height itself, so the top is one surface)
 								float near = Mathf.Clamp01((1.8f - s) / 1.8f);
 								float shellIn = Mathf.Clamp01((Shell - 0.4f - s) / 1.2f);
-								float lift = fu ? rf * (Under + RimSkin) + rf * rimH[x + z * nx] * near * near * shellIn
-									: rf * (Under + RimSkin + rimH[x + z * nx] * near * near) * shellIn;
+								// (11-21: the skin over the ground only on level ground - on a cutting wall the top is the ground's, cv35)
+								float skin = RimSkin * rimFlat[x + z * nx];
+								float lift = fu ? rf * (Under + skin) + rf * rimH[x + z * nx] * near * near * shellIn
+									: rf * (Under + skin + rimH[x + z * nx] * near * near) * shellIn;
 								t += lift / sY;
 							}
 						}

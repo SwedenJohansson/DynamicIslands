@@ -11,6 +11,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (not released yet)
 
+- **Pendulum's mouth, Rootcellar's upper store and Gravewell's den wall tidied**: no rock ears stand out of the steep step beside Pendulum's dug mouth (the rim's skin now lies only on level ground), Rootcellar Deep's upper store moved in toward the Root Stack's middle so it no longer breaks out of the stack's flank to open water, and a lone den's wall standing up to 1.2 m out of its hill is set back under the hill's skin (Gravewell's pale shards).
 - **Cave hills look like one rock**: the steep cut faces of a cave mouth's hill (Old Mine Islet, Sinkmarket) wear the mountain's rock instead of pale sand rock, and a hill that sat up to half a metre under the ground is lifted onto it.
 - **Utopia's fin is closed**: the rock skin's wall next to the underwater tunnel ends in a rock cap facing out, so no dark face shows from outside.
 - **Dug passages above the ground are full tubes**: walls on the downhill side too (no roof over open water), so Gravewell, Pendulum and Rootcellar's digs no longer show open sides.

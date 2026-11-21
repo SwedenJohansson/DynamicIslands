@@ -348,6 +348,8 @@ namespace DynamicIslands.Editor
 		public const float PlugForward = 1.8f;
 		/// <summary>How far behind the hill's skin a lone den's wall's outside is set where the skin is just in front of it (m).</summary>
 		public const float SkinCover = 0.35f;
+		/// <summary>How far a lone den's wall may stand out of the hill's skin and still be set back under it (WallLikeHill).</summary>
+		const float WallProud = 1.2f;
 		const float FlakeArea = 6f; // (r84: a loose bit of the wall's outside smaller than this, m2, is dropped - WallLikeHill)
 		/// <summary>A lone den's way in in shade: its wall's outside round the arch drawn darker, in bands out to the arch's size times
 		/// these (the first band darkest, by PlugShade), the rest as the hill. Each band's edge is a smooth, uneven line (the
@@ -682,12 +684,15 @@ namespace DynamicIslands.Editor
 			MeshCollider skinCol = skin.GetComponent<MeshCollider>();
 			Vector3 outward = plug.forward;
 			bool nearSkin = false;
+			// (11-21 cv36: the ray now reaches as far behind the wall as the wall may stand proud - it stopped SkinCover + 0.2 m
+			// behind it, so a wall standing out of the hill by more than 0.55 m was never set back and kept its darker shade
+			// band: a dark panel with torn shards over Gravewell Shaft's den mouth)
 			Func<Vector3, Vector3> UnderSkin = w =>
 			{
 				RaycastHit hit;
-				if (skinCol == null || !skinCol.Raycast(new Ray(w + outward * 3f, -outward), out hit, 3f + SkinCover + 0.2f)) return w;
+				if (skinCol == null || !skinCol.Raycast(new Ray(w + outward * 3f, -outward), out hit, 3f + WallProud + 0.05f)) return w;
 				float d = Vector3.Dot(hit.point - w, outward);
-				if (!(d > -1.2f && d < SkinCover)) return w;
+				if (!(d > -WallProud && d < SkinCover)) return w;
 				nearSkin = true;
 				return w + outward * (d - SkinCover);
 			};
