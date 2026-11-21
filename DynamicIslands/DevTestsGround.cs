@@ -61,6 +61,7 @@ namespace DynamicIslands
 			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
 			var report = new StringBuilder();
 			int islands = 0, bad = 0, problems = 0, objects = 0;
+			checkShots = false; // (no pictures here: this check runs in one frame)
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList())
 			{
 				if (only.Length > 0 && (e.HostName ?? e.Name ?? "").IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
@@ -82,11 +83,14 @@ namespace DynamicIslands
 			else Log("PASS: " + c.Label + " - " + islands + " islands, " + objects + " objects, " + c.Pass);
 		}
 
-		[ConsoleCommand(name: "CIGroundIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIGroundWorld does, then taken away (IG2/IG3). <which>: part of the name (several joined by | - Geiger|Gannet_Rock, _ for a space), 'plans' (every island of every plan - the story lines), 'gen' (the saved generated ones) or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\ground_islands.txt. CIGroundIslands <which> [most] [skip the first n] [keep: left there, where each is logged - to look at it]")]
+		[ConsoleCommand(name: "CIGroundIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIGroundWorld does, then taken away (IG2/IG3). <which>: part of the name (several joined by | - Geiger|Gannet_Rock, _ for a space), 'plans' (every island of every plan - the story lines), 'gen' (the saved generated ones) or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\ground_islands.txt. CIGroundIslands <which> [most] [skip the first n] [keep: left there, where each is logged - to look at it] [shots: a picture of each cave rim gap (from outside and from the rim) and each see-through look, shot_cave_*.png, with what the look ray meets]")]
 		public static void GroundIslandsCommand(string[] args) { IslandsCheck(args, GroundCheck); }
 
 		static void IslandsCheck(string[] args, IslandCheck c)
 		{
+			// (the word 'shots' anywhere: the pictures the check asks for - its worst sheets, cave looks - taken while each island is there)
+			checkShots = args != null && args.Contains("shots");
+			if (checkShots) args = args.Where(a => a != "shots").ToArray();
 			string which = args != null && args.Length > 0 ? args[0] : "*";
 			int most = args != null && args.Length > 1 ? int.Parse(args[1]) : 9999;
 			int skip = args != null && args.Length > 2 ? int.Parse(args[2]) : 0;
@@ -133,9 +137,17 @@ namespace DynamicIslands
 				// (a night ghost ship brought by day sinks away at once - IG5 run 11-18 threw on it, ending the check)
 				if (e.Root == null) { Log("  " + name + ": went away again (a ghost ship by day)"); report.AppendLine(name + ": NOT MEASURED - went away again"); missed++; continue; }
 				int n;
+				checkShotQueue.Clear();
 				List<string> lines = c.Measure(e, out n);
 				done++;
 				report.AppendLine(name + ": " + n + " objects, " + lines.Count + " problems");
+				// (the pictures the measure asked for, before the island goes)
+				foreach (var s in checkShotQueue.ToList())
+				{
+					report.AppendLine("  (picture shot_" + s.Key + ".png from " + s.Value[0].ToString("F1") + " towards " + s.Value[1].ToString("F1") + ")");
+					yield return CameraShot(s.Value[0], s.Value[1], s.Key);
+				}
+				checkShotQueue.Clear();
 				foreach (string l in lines) report.AppendLine("  " + l);
 				if (lines.Count > 0)
 				{
@@ -160,6 +172,7 @@ namespace DynamicIslands
 
 		static void TypesCheck(string[] args, IslandCheck c)
 		{
+			checkShots = false;
 			string which = args != null && args.Length > 0 ? args[0] : "*";
 			int each = args != null && args.Length > 1 ? int.Parse(args[1]) : 2;
 			StartTest(GroundTypesRoutine(c, which, each));
@@ -404,7 +417,7 @@ namespace DynamicIslands
 
 		static readonly IslandCheck SheetCheck = new IslandCheck { Label = "sheet", File = "sheet", Pass = "no bare cliff sheet at the waterline", Measure = SheetProblems };
 
-		[ConsoleCommand(name: "CISheetIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one; no bare land cliff at the waterline - the land's own face rising 7 m or more in one heightmap step from under the sea to over it, nothing standing in front of it, along 3 or more 8 m cells: Raft draws it as one pale stretched sheet (Caisson Yard's yard rock, c3z37 11-21). Same arguments as CIOverlapIslands. Results in Mods\\DynamicIslands\\sheet_islands.txt.")]
+		[ConsoleCommand(name: "CISheetIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one; no bare land cliff at the waterline - the land's own face rising 7 m or more in one heightmap step from under the sea to over it, nothing standing in front of it, along 3 or more 8 m cells: Raft draws it as one pale stretched sheet (Caisson Yard's yard rock, c3z37 11-21). Each line says whether the face is a pit's wall (seen from its rim) or the open coast (seen from the sea) and how it is painted. Fix: the recipe step cliffs. Same arguments as CIOverlapIslands, plus 'shots' (a picture of the 2 largest sheets per island from the low side, shot_sheet_*.png). Results in Mods\\DynamicIslands\\sheet_islands.txt.")]
 		public static void SheetIslandsCommand(string[] args) { IslandsCheck(args, SheetCheck); }
 
 		[ConsoleCommand(name: "CISheetWorld", docs: "Dev, in a world: CISheetIslands on the loaded custom islands. CISheetWorld [part of the island name]. Results in Mods\\DynamicIslands\\sheet_world.txt.")]
@@ -413,12 +426,69 @@ namespace DynamicIslands
 		const float SheetRise = 7f;   // (one heightmap step this tall: the land's skin stretched up a wall)
 		const float SheetCellM = 8f;  // (faces are gathered in cells this wide; neighbouring cells make one sheet)
 		const int SheetCells = 3;     // (a sheet this many cells or more is a problem - a single steep notch is not)
+		const int SheetEncWays = 6;   // (land round the face's foot in this many of 8 ways or more: a pit's wall, not the open coast)
 
-		/// <summary>The land's bare cliff faces at the waterline, gathered into sheets: a face is one heightmap step that rises
-		/// SheetRise or more from under the sea (2 m down) to over it, seen from its low side (a ray at the waterline hits the
-		/// land first, not a rock or a wall set in front of it). Raft paints the land from above, so such a face is drawn as the
-		/// ground's texture smeared down a wall - Caisson Yard's crane-end picture showed a pale sheet half the frame wide that
-		/// no check caught (c3z37 11-21). count = the faces measured.</summary>
+		/// <summary>One bare cliff face: a heightmap step from Hx,Hz (high) to Lx,Lz (low); Top and Bot above the sea (m).</summary>
+		struct SheetFace { public int Hx, Hz, Lx, Lz; public float Top, Bot, Rise; public Vector3 Hi, Lo; }
+
+		/// <summary>The land's bare cliff faces at the waterline (SheetProblems, the recipe's cliffs step): one heightmap step
+		/// that rises minRise or more from under the sea (2 m down) to over it (0.5 m up), seen from its low side - a ray at
+		/// the waterline hits the land first, not a rock or a wall set in front of it. sea: the sea's world height.</summary>
+		static List<SheetFace> BareFaces(Terrain land, float sea, float minRise, float[,] hm)
+		{
+			var list = new List<SheetFace>();
+			TerrainData td = land.terrainData;
+			int res = td.heightmapResolution;
+			Vector3 tp = land.transform.position, size = td.size;
+			float sx = size.x / (res - 1), sz = size.z / (res - 1);
+			Physics.SyncTransforms();
+			for (int z = 0; z < res - 1; z++)
+				for (int x = 0; x < res - 1; x++)
+					for (int k = 0; k < 2; k++)
+					{
+						int nx = k == 0 ? x + 1 : x, nz = k == 0 ? z : z + 1;
+						float a = hm[z, x] * size.y + tp.y, b = hm[nz, nx] * size.y + tp.y;
+						float rise = Mathf.Abs(a - b), top = Mathf.Max(a, b) - sea, bot = Mathf.Min(a, b) - sea;
+						if (rise < minRise || top < 0.5f || bot > -2f) continue;
+						var f = new SheetFace { Hx = a >= b ? x : nx, Hz = a >= b ? z : nz, Lx = a >= b ? nx : x, Lz = a >= b ? nz : z, Top = top, Bot = bot, Rise = rise };
+						f.Hi = new Vector3(tp.x + f.Hx * sx, sea, tp.z + f.Hz * sz);
+						f.Lo = new Vector3(tp.x + f.Lx * sx, sea, tp.z + f.Lz * sz);
+						Vector3 outward = (f.Lo - f.Hi).normalized;
+						float y = sea + Mathf.Clamp(top * 0.5f, 0.25f, 3f);
+						Vector3 from = f.Lo + outward * 0.5f; from.y = y;
+						// (the low side's ground over the ray's start: a trench, not a face seen from the sea)
+						if (land.SampleHeight(from) + tp.y > y) continue;
+						RaycastHit hit;
+						bool bare = !Physics.Raycast(from, -outward, out hit, sx + 1f, ~0, QueryTriggerInteraction.Ignore) || hit.collider is TerrainCollider;
+						if (bare) list.Add(f);
+					}
+			return list;
+		}
+
+		/// <summary>In how many of 8 ways the land rises over the sea within 80 m of a face's foot: 6 or more is a pit's wall
+		/// (a blue hole, a dive shaft - seen from its rim), fewer the open coast (seen from the sea as the raft comes in).</summary>
+		static int SheetEnclosed(float[,] hm, int res, float sizeY, float tpY, float sea, int lx, int lz)
+		{
+			int ways = 0;
+			for (int w = 0; w < 8; w++)
+			{
+				float ang = w * Mathf.PI / 4f;
+				float dx = Mathf.Cos(ang), dz = Mathf.Sin(ang);
+				for (int s = 2; s <= 40; s++)
+				{
+					int x = lx + Mathf.RoundToInt(dx * s), z = lz + Mathf.RoundToInt(dz * s);
+					if (x < 0 || z < 0 || x >= res || z >= res) break;
+					if (hm[z, x] * sizeY + tpY > sea) { ways++; break; }
+				}
+			}
+			return ways;
+		}
+
+		/// <summary>The land's bare cliff faces at the waterline (BareFaces), gathered into sheets: Raft paints the land from
+		/// above, so such a face is drawn as the ground's texture smeared down a wall - Caisson Yard's crane-end picture showed a
+		/// pale sheet half the frame wide that no check caught (c3z37 11-21). Each sheet says whether it is the open coast or a
+		/// pit's wall (SheetEnclosed), how high it stands over the sea, and what the ground there is painted; with the check's
+		/// 'shots' word the two largest are pictured from their low side (shot_sheet_...). count = the faces measured.</summary>
 		static List<string> SheetProblems(IslandWorldState.Entry e, out int count)
 		{
 			var lines = new List<string>();
@@ -429,47 +499,51 @@ namespace DynamicIslands
 			int res = td.heightmapResolution;
 			float[,] hm = td.GetHeights(0, 0, res, res);
 			Vector3 tp = land.transform.position, size = td.size, mid = e.Position;
-			float sea = 0f, sx = size.x / (res - 1), sz = size.z / (res - 1);
+			float sea = 0f, sx = size.x / (res - 1);
 			int cell = Mathf.Max(1, Mathf.RoundToInt(SheetCellM / sx));
-			// (cell -> bare faces, the tallest, the highest top, the sum of their points)
-			var cells = new Dictionary<long, float[]>();
-			Physics.SyncTransforms();
-			for (int z = 0; z < res - 1; z++)
-				for (int x = 0; x < res - 1; x++)
-					for (int k = 0; k < 2; k++)
-					{
-						int nx = k == 0 ? x + 1 : x, nz = k == 0 ? z : z + 1;
-						float a = hm[z, x] * size.y + tp.y, b = hm[nz, nx] * size.y + tp.y;
-						float rise = Mathf.Abs(a - b), top = Mathf.Max(a, b) - sea, bot = Mathf.Min(a, b) - sea;
-						if (rise < SheetRise || top < 0.5f || bot > -2f) continue;
-						count++;
-						Vector3 hi = new Vector3(tp.x + (a >= b ? x : nx) * sx, 0f, tp.z + (a >= b ? z : nz) * sz);
-						Vector3 lo = new Vector3(tp.x + (a >= b ? nx : x) * sx, 0f, tp.z + (a >= b ? nz : z) * sz);
-						Vector3 outward = (lo - hi).normalized;
-						float y = sea + Mathf.Clamp(top * 0.5f, 0.25f, 3f);
-						Vector3 from = lo + outward * 0.5f; from.y = y;
-						// (the low side's ground over the ray's start: a trench, not a face seen from the sea)
-						if (land.SampleHeight(from) + tp.y > y) continue;
-						RaycastHit hit;
-						bool bare = !Physics.Raycast(from, -outward, out hit, sx + 1f, ~0, QueryTriggerInteraction.Ignore) || hit.collider is TerrainCollider;
-						if (!bare) continue;
-						long key = (long)(x / cell) * 100000L + (z / cell);
-						float[] c;
-						if (!cells.TryGetValue(key, out c)) cells[key] = c = new float[5];
-						c[0]++; c[1] = Mathf.Max(c[1], rise); c[2] = Mathf.Max(c[2], top); c[3] += (hi.x + lo.x) * 0.5f; c[4] += (hi.z + lo.z) * 0.5f;
-					}
+			// (cell -> the faces in it)
+			var cells = new Dictionary<long, List<SheetFace>>();
+			foreach (SheetFace f in BareFaces(land, sea, SheetRise, hm))
+			{
+				count++;
+				long key = (long)(f.Lx / cell) * 100000L + (f.Lz / cell);
+				List<SheetFace> c;
+				if (!cells.TryGetValue(key, out c)) cells[key] = c = new List<SheetFace>();
+				c.Add(f);
+			}
+			// (the paint at a face: the alphamap halfway down it - what Raft stretches over the wall)
+			int ares = td.alphamapResolution, layers = td.alphamapLayers;
+			float[,,] alpha = layers > 0 ? td.GetAlphamaps(0, 0, ares, ares) : null;
+			string[] layerName = { "seabed", "sand", "grass", "rock" };
 			// (neighbouring cells, the corners too, make one sheet)
 			var seen = new HashSet<long>();
 			var sheets = new List<KeyValuePair<int, string>>();
+			var shots = new List<KeyValuePair<int, Vector3[]>>();
 			foreach (long start in cells.Keys)
 			{
 				if (seen.Contains(start)) continue;
 				var stack = new Stack<long>(); stack.Push(start); seen.Add(start);
-				int n = 0; float faces = 0f, tallest = 0f, highest = 0f, px = 0f, pz = 0f;
+				int n = 0, faces = 0, encSum = 0;
+				float tallest = 0f, highest = 0f, deepest = 0f;
+				Vector3 sum = Vector3.zero, outSum = Vector3.zero;
+				var paint = new float[TerrainPainter.LayerCount];
 				while (stack.Count > 0)
 				{
-					long q = stack.Pop(); float[] c = cells[q];
-					n++; faces += c[0]; tallest = Mathf.Max(tallest, c[1]); highest = Mathf.Max(highest, c[2]); px += c[3]; pz += c[4];
+					long q = stack.Pop(); List<SheetFace> c = cells[q];
+					n++;
+					foreach (SheetFace f in c)
+					{
+						faces++; tallest = Mathf.Max(tallest, f.Rise); highest = Mathf.Max(highest, f.Top); deepest = Mathf.Min(deepest, f.Bot);
+						sum += (f.Hi + f.Lo) * 0.5f; outSum += (f.Lo - f.Hi).normalized;
+						if (alpha != null)
+						{
+							Vector3 m = (f.Hi + f.Lo) * 0.5f;
+							int ax = Mathf.Clamp(Mathf.FloorToInt((m.x - tp.x) / size.x * ares), 0, ares - 1), az = Mathf.Clamp(Mathf.FloorToInt((m.z - tp.z) / size.z * ares), 0, ares - 1);
+							for (int l = 0; l < layers; l++) paint[l % TerrainPainter.LayerCount] += alpha[az, ax, l];
+						}
+					}
+					SheetFace one = c[0];
+					encSum += SheetEnclosed(hm, res, size.y, tp.y, sea, one.Lx, one.Lz);
 					long cx = q / 100000L, cz = q % 100000L;
 					for (long dx = -1; dx <= 1; dx++)
 						for (long dz = -1; dz <= 1; dz++)
@@ -479,12 +553,179 @@ namespace DynamicIslands
 						}
 				}
 				if (n < SheetCells) continue;
-				sheets.Add(new KeyValuePair<int, string>(n, "bare cliff sheet: the land's own face at the waterline round " + Num(px / faces - mid.x) + " " + Num(pz / faces - mid.z) +
-					", " + n + " cells of " + Num(SheetCellM) + " m (" + (int)faces + " faces), up to " + Num(tallest) + " m in one step, its top h=" + Num(highest) +
-					" - drawn as the ground's texture stretched down a wall; slope it, or stand rock or a wall in front of it"));
+				Vector3 centre = sum / faces;
+				float enc = encSum / (float)n;
+				int best = 0;
+				for (int l = 1; l < paint.Length; l++) if (paint[l] > paint[best]) best = l;
+				float share = paint.Sum() > 0f ? paint[best] / paint.Sum() : 0f;
+				bool pit = enc >= SheetEncWays;
+				sheets.Add(new KeyValuePair<int, string>(n, "bare cliff sheet: the land's own face at the waterline round " + Num(centre.x - mid.x) + " " + Num(centre.z - mid.z) +
+					", " + n + " cells of " + Num(SheetCellM) + " m (" + faces + " faces), up to " + Num(tallest) + " m in one step, its top h=" + Num(highest) + ", its foot h=" + Num(deepest) +
+					"; " + (pit ? "a pit's wall (land round it in " + enc.ToString("F1") + " of 8 ways: a blue hole or a dive shaft, seen from its rim)" : "the open coast (land round it in " + enc.ToString("F1") + " of 8 ways: seen from the sea)") +
+					", painted " + layerName[best] + " " + Mathf.RoundToInt(share * 100f) + "%" +
+					" - drawn as the ground's texture stretched down a wall; slope it (the recipe step cliffs), or stand rock or a wall in front of it"));
+				// (a picture from its low side, 3.5 m over the sea, as far out as the land lets - 22 m, less in a pit)
+				Vector3 outward = new Vector3(outSum.x, 0f, outSum.z).normalized;
+				if (outward == Vector3.zero) outward = Vector3.forward;
+				Vector3 at = new Vector3(centre.x, sea + Mathf.Clamp(highest * 0.4f, 0.5f, 4f), centre.z), eye = at;
+				foreach (float d in new[] { 22f, 16f, 11f, 7f })
+				{
+					eye = centre + outward * d; eye.y = sea + 3.5f;
+					if (land.SampleHeight(eye) + tp.y < eye.y - 1f) break;
+				}
+				shots.Add(new KeyValuePair<int, Vector3[]>(n, new[] { eye, at }));
 			}
 			foreach (var s in sheets.OrderByDescending(s => s.Key)) lines.Add(s.Value);
+			int shot = 0;
+			foreach (var s in shots.OrderByDescending(s => s.Key).Take(2)) QueueCheckShot("sheet_" + e.Name + "_" + ++shot, s.Value[0], s.Value[1]);
 			return lines;
+		}
+
+		/// <summary>The recipe's cliffs step: every bare cliff face at the waterline (BareFaces, rise or more in one step)
+		/// sloped from its low side - the sea floor in front of it raised into a talus no steeper than `step` m per heightmap
+		/// point (1.95 m; 3 m = 57 degrees, which Raft paints rock and draws without the stretched sheet), from the face's top
+		/// down to `depth` m under the sea. Deeper the wall stays a wall: a blue hole or a dive shaft keeps its depth, only its
+		/// rim is sloped. Only ground at most 1 m over the sea is raised, nothing within 3 points of the terrain's edge, and
+		/// nothing under an editor object (its bounds), so no object is buried, and nothing between two opposite walls (a
+		/// narrow shaft or channel stays open: it stays as it was and is still reported). at x z r=: only faces in that circle. The
+		/// ground's hand paint is dropped on the raised points and the area painted again (the steep talus goes rock); one undo
+		/// step.</summary>
+		static string CliffsStep(float rise, float step, float depth, int reach, Vector2? at, float atR)
+		{
+			Terrain land = terraineditor.terrain;
+			if (land == null || land.terrainData == null) return "cliffs: no terrain";
+			TerrainData td = land.terrainData;
+			int res = td.heightmapResolution, ares = td.alphamapResolution;
+			Vector3 tp = land.transform.position, size = td.size;
+			float sea = tp.y + DynamicIslands.EditorWaterLevel, sx = size.x / (res - 1), sz = size.z / (res - 1);
+			float[,] before = td.GetHeights(0, 0, res, res);
+			List<SheetFace> faces = BareFaces(land, sea, rise, before);
+			if (at.HasValue) faces = faces.Where(f => (new Vector2(f.Hi.x, f.Hi.z) - at.Value).magnitude <= atR).ToList();
+			if (faces.Count == 0) return "cliffs: no bare cliff face" + (at.HasValue ? " in the circle" : "");
+			// (what stands there: an editor object's bounds keep the ground under it as it is)
+			var keep = new List<Bounds>();
+			foreach (EditorGameObject o in UnityEngine.Object.FindObjectsOfType<EditorGameObject>())
+			{
+				if (o == null || !o.gameObject.activeInHierarchy) continue;
+				Renderer[] rs = o.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled).ToArray();
+				Collider[] cs = o.GetComponentsInChildren<Collider>(false).Where(c => c.enabled && !c.isTrigger).ToArray();
+				if (rs.Length == 0 && cs.Length == 0) continue;
+				Bounds b = rs.Length > 0 ? rs[0].bounds : cs[0].bounds;
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				foreach (Collider c in cs) b.Encapsulate(c.bounds);
+				b.Expand(new Vector3(1f, 0f, 1f));
+				keep.Add(b);
+			}
+			float[,] after = (float[,])before.Clone();
+			float floor = sea - depth;
+			int blocked = 0;
+			var raised = new HashSet<int>();
+			// (the way out of the wall each raised point was raised from; raised from two opposite walls it lies between them - a
+			// shaft or a channel - and stays as it was, with a point round it, so a narrow dive shaft is never plugged)
+			var from = new Dictionary<int, Vector2>();
+			var between = new HashSet<int>();
+			foreach (SheetFace f in faces)
+			{
+				float apex = sea + f.Top;
+				Vector2 way = new Vector2(f.Lo.x - f.Hi.x, f.Lo.z - f.Hi.z).normalized;
+				for (int dz = -reach; dz <= reach; dz++)
+					for (int dx = -reach; dx <= reach; dx++)
+					{
+						int x = f.Hx + dx, z = f.Hz + dz;
+						if (x < 3 || z < 3 || x > res - 4 || z > res - 4) continue;
+						float d = Mathf.Sqrt(dx * dx + dz * dz);
+						if (d < 0.5f || d > reach) continue;
+						float target = apex - step * d;
+						if (target < floor) continue;
+						float h0 = before[z, x] * size.y + tp.y;
+						if (h0 > sea + 1f || target <= h0) continue;
+						Vector2 had;
+						if (from.TryGetValue(z * res + x, out had)) { if (Vector2.Dot(had, way) < -0.3f) between.Add(z * res + x); }
+						else from[z * res + x] = way;
+						if (target <= after[z, x] * size.y + tp.y) continue;
+						float wx = tp.x + x * sx, wz = tp.z + z * sz;
+						if (keep.Any(b => wx >= b.min.x && wx <= b.max.x && wz >= b.min.z && wz <= b.max.z && b.min.y < target + 0.2f)) { blocked++; continue; }
+						after[z, x] = (target - tp.y) / size.y;
+						raised.Add(z * res + x);
+					}
+			}
+			int kept = 0;
+			foreach (int i in raised.ToList())
+			{
+				int x = i % res, z = i / res;
+				bool near = false;
+				for (int dz = -1; dz <= 1 && !near; dz++)
+					for (int dx = -1; dx <= 1 && !near; dx++) near = between.Contains((z + dz) * res + x + dx);
+				if (!near) continue;
+				after[z, x] = before[z, x];
+				raised.Remove(i);
+				kept++;
+			}
+			if (raised.Count == 0) return "cliffs: " + faces.Count + " bare faces, nothing raised (" + blocked + " points under objects)";
+			float[,,] alphaBefore = td.GetAlphamaps(0, 0, ares, ares);
+			float[,] maskBefore = terraineditor.paintMask != null ? (float[,])terraineditor.paintMask.Clone() : null;
+			td.SetHeights(0, 0, after);
+			Vector3 min = new Vector3(float.MaxValue, 0f, float.MaxValue), max = new Vector3(float.MinValue, 0f, float.MinValue);
+			float most = 0f;
+			foreach (int i in raised)
+			{
+				int x = i % res, z = i / res;
+				float wx = tp.x + x * sx, wz = tp.z + z * sz;
+				most = Mathf.Max(most, (after[z, x] - before[z, x]) * size.y);
+				min = Vector3.Min(min, new Vector3(wx, 0f, wz)); max = Vector3.Max(max, new Vector3(wx, 0f, wz));
+				if (terraineditor.paintMask == null) continue;
+				int ax = Mathf.FloorToInt((wx - tp.x) / size.x * ares), az = Mathf.FloorToInt((wz - tp.z) / size.z * ares);
+				for (int az2 = az - 1; az2 <= az + 1; az2++)
+					for (int ax2 = ax - 1; ax2 <= ax + 1; ax2++)
+						if (ax2 >= 0 && az2 >= 0 && ax2 < terraineditor.paintMask.GetLength(1) && az2 < terraineditor.paintMask.GetLength(0)) terraineditor.paintMask[az2, ax2] = 0f;
+			}
+			min -= new Vector3(3f, 0f, 3f); max += new Vector3(3f, 0f, 3f);
+			TerrainPainter.PaintWorldArea(land, sea, min, max, terraineditor.paintMask);
+			CommandUndoRedo.UndoRedoManager.Insert(new TerrainStrokeCommand(td, new RectInt(0, 0, res, res), before, new RectInt(0, 0, ares, ares), alphaBefore, maskBefore, terraineditor.paintMask));
+			int left = BareFaces(land, sea, rise, after).Count(f => !at.HasValue || (new Vector2(f.Hi.x, f.Hi.z) - at.Value).magnitude <= atR);
+			return "cliffs: " + faces.Count + " bare faces, " + raised.Count + " points raised (up to " + Num(most) + " m), " + blocked + " left under objects, " + kept + " left open between two walls; " + left + " bare faces left";
+		}
+
+		/// <summary>Everything a look meets, back faces too, nearest first: "name d m (back)" - what the see-through ray went
+		/// through and what it saw (c3 round 3, for the cave fixes).</summary>
+		static string LookHits(Vector3 eye, Vector3 look)
+		{
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				RaycastHit[] hs = Physics.RaycastAll(eye, look.normalized, 60f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).Take(8).ToArray();
+				return "the worst look from " + eye.ToString("F1") + " meets " + (hs.Length == 0 ? "nothing (the sky)" : string.Join(", ", hs.Select(h => h.collider.name + " " + h.distance.ToString("F1") + " m" +
+					(Vector3.Dot(h.normal, look) > 0f ? " (back)" : "") + (h.collider is TerrainCollider ? "" : " [" + h.collider.GetType().Name.Replace("Collider", "") + "]")).ToArray()));
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+		}
+
+		/// <summary>At DenRimGap's worst gap: the hits straight down through it from 4 m over the rim, and the land's height
+		/// there - whether the ground under the rim is the island's terrain, a hill's rock or nothing (c3 round 3).</summary>
+		static string RimDiagnosis(Transform den)
+		{
+			if (rimWorstUp <= 0f) return "no gap point";
+			Vector3 top = rimWorstAt + Vector3.up * (rimWorstUp + 4f);
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				RaycastHit[] hs = Physics.RaycastAll(top, Vector3.down, rimWorstUp + 12f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).Take(8).ToArray();
+				return "the gap at " + rimWorstAt.ToString("F1") + " (in the piece " + den.InverseTransformPoint(rimWorstAt).ToString("F1") + "), the way out " + rimWorstOut.ToString("F2") +
+					", straight down from " + Num(top.y) + ": " + (hs.Length == 0 ? "nothing" : string.Join(", ", hs.Select(h => h.collider.name + " at " + Num(h.point.y) + (h.normal.y < 0f ? " (underside)" : "")).ToArray()));
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+		}
+
+		/// <summary>Pictures a check asks for (SheetProblems' sheets, GroundProblems' cave looks), taken by GroundIslandsRoutine
+		/// while the island is still there; only with the check's 'shots' word, at most 8 an island.</summary>
+		static bool checkShots;
+		static readonly List<KeyValuePair<string, Vector3[]>> checkShotQueue = new List<KeyValuePair<string, Vector3[]>>();
+		static void QueueCheckShot(string name, Vector3 from, Vector3 at)
+		{
+			if (!checkShots || checkShotQueue.Count >= 8) return;
+			checkShotQueue.Add(new KeyValuePair<string, Vector3[]>(Regex.Replace(name, "[^A-Za-z0-9_]+", "_"), new[] { from, at }));
 		}
 
 		/// <summary>A piece's look across its thinnest side, per mesh + materials: +1 drawn only towards +axis, -1 only towards -axis, 0 both (or too little drawn).</summary>
@@ -1044,10 +1285,21 @@ namespace DynamicIslands
 					count++;
 					string at;
 					float gap = DenRimGap(o, out at);
-					if (gap >= 0.6f) lines.Add("cave rim off the ground: " + n + " - " + at);
+					if (gap >= 0.6f)
+					{
+						// (c3 round 3: what is at the gap - the hits down through it - and pictures from outside and from the den)
+						lines.Add("cave rim off the ground: " + n + " - " + at + "; " + RimDiagnosis(o));
+						Vector3 gapAt = rimWorstAt + Vector3.up * (rimWorstUp * 0.5f);
+						QueueCheckShot("cave_" + e.Name + "_" + n + "_rim_out", rimWorstAt + rimWorstOut * 6f + Vector3.up * 1.6f, gapAt);
+						QueueCheckShot("cave_" + e.Name + "_" + n + "_rim_in", new Vector3(rimMid.x, gapAt.y + 0.3f, rimMid.z), gapAt);
+					}
 					// (and from inside: nothing seen through its walls or roof - X7)
 					Vector3 eye, look;
-					if (CaveSeeThrough(o, RaftProps.Get(n), out at, out eye, out look) > 0) lines.Add("cave seen through from inside: " + n + " - " + at);
+					if (CaveSeeThrough(o, RaftProps.Get(n), out at, out eye, out look) > 0)
+					{
+						lines.Add("cave seen through from inside: " + n + " - " + at + "; " + LookHits(eye, look));
+						QueueCheckShot("cave_" + e.Name + "_" + n + "_look", eye, eye + look * 5f);
+					}
 					continue;
 				}
 				Renderer[] rs = o.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();

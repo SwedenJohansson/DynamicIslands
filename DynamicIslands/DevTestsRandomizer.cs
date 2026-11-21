@@ -1551,8 +1551,14 @@ namespace DynamicIslands
 		/// there: a wall that meets the ground (a ray along the ground hits it: no gap), or rock overhead (the gap up to
 		/// it - its rim floating over the ground, where you saw into the shell). The largest gap (m).
 		/// </summary>
+		/// <summary>DenRimGap's worst gap: the ground point under it, the way out from the den there, the den's middle and
+		/// how high the rim stands over that ground - for the ground check's picture and its ray log (c3 round 3).</summary>
+		static Vector3 rimWorstAt, rimWorstOut, rimMid;
+		static float rimWorstUp;
+
 		static float DenRimGap(Transform den, out string detail)
 		{
+			rimWorstAt = rimWorstOut = rimMid = Vector3.zero; rimWorstUp = 0f;
 			PropInfo p = RaftProps.Get(den.name);
 			List<Collider> cols = den.GetComponentsInChildren<Collider>(true).Where(c => c.enabled && !c.isTrigger).ToList();
 			if (p == null || !p.IsCave || cols.Count == 0) { detail = "not measured or no colliders"; return 99f; }
@@ -1604,7 +1610,7 @@ namespace DynamicIslands
 						if (up < float.MaxValue)
 						{
 							sides++;
-							if (up > worst) { worst = up; at = " (worst " + up.ToString("F1") + " m, " + (a * Mathf.Rad2Deg).ToString("F0") + "° round, at " + here.ToString("F0") + ")"; }
+							if (up > worst) { worst = up; rimWorstAt = here; rimWorstOut = new Vector3(dir.x, 0f, dir.y); rimWorstUp = up; rimMid = b.center; at = " (worst " + up.ToString("F1") + " m, " + (a * Mathf.Rad2Deg).ToString("F0") + "° round, at " + here.ToString("F0") + ")"; }
 							break;
 						}
 						// (the shell under the ground here: the hill covers that side - no rim to see, no gap)

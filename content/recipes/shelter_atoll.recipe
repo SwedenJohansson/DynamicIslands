@@ -786,4 +786,7 @@ clear at 62 80 r=11 all only=Palm|Tree|Bamboo|Banana|Mango below=9
 place Creature_Rat_Tangaroa ammorats at 63 79 h=4.5
 prop ammorats creature.count=2
 prop ammorats creature.respawn=0
+# (c3 round 3 11-21: CISheetIslands found bare cliff walls at the waterline here, drawn as stretched sheets. Their feet
+#     sloped as rock talus down to 10 m under the sea - a pit or a dive shaft keeps its depth, a narrow one is left open)
+cliffs
 save Shelter Atoll

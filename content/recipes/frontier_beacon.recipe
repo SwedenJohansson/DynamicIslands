@@ -335,5 +335,8 @@ quest done=The beacon blinks over the sea again - and inside the locker door, th
 quest reward=Plank*6;Rope*3;Scrap*4
 
 # (G2 10-31: the ground check found 2 sunk trunks - a mango and a pineapple tree on the spike the strokes raised the ground round; set back on the land at the save)
+# (c3 round 3 11-21: CISheetIslands found bare cliff walls at the waterline here, drawn as stretched sheets. Their feet
+#     sloped as rock talus down to 10 m under the sea - a pit or a dive shaft keeps its depth, a narrow one is left open)
+cliffs
 reseat trees
 save Frontier Beacon

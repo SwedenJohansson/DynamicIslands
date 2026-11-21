@@ -496,4 +496,7 @@ clear at -12.42 -74.67 r=4 all only=CaravanIsland_SmallRock
 clear at -15.32 -85.67 r=4 all only=CaravanIsland_SmallRock
 clear at 40.78 -18.27 r=1.5 only=BigSharpRock
 
+# (c3 round 3 11-21: CISheetIslands found bare cliff walls at the waterline here, drawn as stretched sheets. Their feet
+#     sloped as rock talus down to 10 m under the sea - a pit or a dive shaft keeps its depth, a narrow one is left open)
+cliffs
 save The Abyss

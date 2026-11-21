@@ -407,4 +407,8 @@ step read|Yard pump log|1|Read the night shift's pump log in the drowned store
 quest done=The Spire flooded the Yard with its own men below. Hadal Commons is the last lit room - the Receiver finds its doors on band 800.
 quest reward=MetalIngot*2;Bolt*4
 
+# (c3 round 3 11-21: the yard rock's sea side was one bare 28 m wall from 4.6 m over the sea down - Raft drew it as a pale
+#     stretched sheet in the crane-end picture (c3z37). Its foot sloped as a rock talus down to 10 m under the sea; the yard
+#     itself and everything standing in the water keep their ground)
+cliffs
 save Caisson Yard

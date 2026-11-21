@@ -478,5 +478,8 @@ clear at -7.89 15.77 r=1 only=SmallRock_01
 clear at -6.93 17.71 r=1 only=Balboa_Bush_02
 clear at -6.73 20.76 r=1 only=Balboa_Bush_01
 clear at -5.08 15.18 r=1 only=Balboa_BigBush_01
+# (c3 round 3 11-21: CISheetIslands found bare cliff walls at the waterline here, drawn as stretched sheets. Their feet
+#     sloped as rock talus down to 10 m under the sea - a pit or a dive shaft keeps its depth, a narrow one is left open)
+cliffs
 reseat trees
 save Old Mine Islet

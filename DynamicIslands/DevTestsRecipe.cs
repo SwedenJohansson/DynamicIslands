@@ -2715,6 +2715,21 @@ namespace DynamicIslands
 							Log(sb.ToString());
 							break;
 						}
+						case "cliffs":
+						{
+							// cliffs [rise=7] [step=3] [depth=10] [reach=12] [at x z r=20]: bare cliff faces at the waterline sloped from
+							// their low side (CliffsStep, c3 round 3 - Raft draws them as one stretched sheet; CISheetIslands finds them)
+							var co = Options(t.Skip(1).Where(w => w.Contains("=")));
+							float crise = co.ContainsKey("rise") ? F(co["rise"]) : SheetRise, cstep = co.ContainsKey("step") ? F(co["step"]) : 3f;
+							float cdepth = co.ContainsKey("depth") ? F(co["depth"]) : 10f, cr = co.ContainsKey("r") ? F(co["r"]) : 20f;
+							int creach = co.ContainsKey("reach") ? Mathf.Clamp(int.Parse(co["reach"]), 1, 40) : 12;
+							int cat = Array.IndexOf(t, "at");
+							Vector2? cwhere = null;
+							if (cat > 0 && cat + 2 < t.Length) cwhere = WorldXZ(F(t[cat + 1]), F(t[cat + 2]));
+							if (cstep < 0.5f || crise < 2f) { error = "cliffs: step= 0.5 or more, rise= 2 or more"; break; }
+							Log("  " + CliffsStep(crise, cstep, cdepth, creach, cwhere, cr));
+							break;
+						}
 						case "where":
 						{
 							// where <alias>: logs where the objects placed under it ended up (island x z, height above the sea, turn)
