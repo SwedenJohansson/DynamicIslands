@@ -89,6 +89,10 @@ place ZiplinePath_Landmark vaultzip at 5.72 -20.27 h=5.35
 # (RESIZE 10-24 retest: the start's floor at the hall's door, level with the hall, on a post down into the crevasse's lip)
 place ReefHuts_Pillar3 - at 0 -19.3 h=-0.9
 zipto vaultzip 0 -6
+# (c3z57: the rope 0.03 m in the ground at 0 -10, 4 m before its far end (0.14 m wanted there), the zipto cut held by
+# the ice ring's rock at 150 degrees and the flood lever's box: the land under that stretch brought down to 3.3 m over
+# the sea - the rope is about 3.8 m there - short of the far end's floor at z -6)
+brush flatten from 0 -11 to 0 -9 r=1.5 s=20 frames=150 h=3.3
 call treasure x=14 z=-36 r=15 n=1 seed=12053
 
 # --- The far side: Oda's cage behind the collapsed door, her pack and notes; screechers under the cap --------------------
@@ -184,8 +188,8 @@ place Zone_Trigger floodzone at 0 33 ground y=1
 
 # --- The ice cap: ice rock round the vault floor on ice-tinted pillars, frost inside, snow on the slope ------------------
 # (c3z54: the ring's rocks at 165-210 degrees stand under vaultzip's line or its cut's sides and held the land there,
-# the rope 0.03 m in the ground at 1.2 -31.8: the ring left open where the line comes in)
-for ca 0 150 15
+# the rope 0.03 m in the ground at 1.2 -31.8: the ring left open where the line comes in; c3z57: the rock at 150 too)
+for ca 0 135 15
 place SmallRock_02 ice at {25*sin($ca)} {10+25*cos($ca)} ground y=-2 scale=3 yaw=$ca
 next
 for ca 225 345 15

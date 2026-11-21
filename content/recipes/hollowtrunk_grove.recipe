@@ -89,6 +89,10 @@ prop grovezip zip.slack=-0.692
 # (c3 round 8, 11-21 c3z44: 0.43 m over at -21.7 8.6, mid-line; no recipe object there - the island's
 # rocks and harvest held the land: cleared along the line)
 clear from -28.75 -8.25 to -20 28 r=3 body
+# (c3z57: tight, the rope still came 0.03 m in the ground at -22 19.9, 8 m before its far end, where the land rises
+# between the trunks: the zipto cut took 1.27 m and could take no more. The rise under the line's last stretch
+# brought down to 2.4 m over the sea - the rope is about 3.3 m there - short of the far end's deck at z 28)
+brush flatten from -23.17 15 to -21.38 22.5 r=2.5 s=20 frames=150 h=2.4
 place Zone_Trigger trunk4zone at -20 28 ground
 push at -22 30 h=2
 call stilt_hut y=2.6
