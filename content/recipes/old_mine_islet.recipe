@@ -231,27 +231,30 @@ place Relay_support_beam_wood - at 17 -14.6 h=1 rot=0,0,-90
 place Relay_support_beam_wood - at 17 -24.6 h=10 rot=0,0,0 yaw=90
 
 # --- Inside: rails of beams on the floor, ore carts, lanterns on crates --------------------------------------------
-for rx 14 -10 -3.4
-place Beam_Long_01 - at $rx -19.9 h=4.25 rot=0,0,0
-place Beam_Long_01 - at $rx -18.9 h=4.25 rot=0,0,0
-next
-# (c3z46: two rail beams where the den's room ground is not cut level with its floor - the one at 7.2 -18.9 was set up
-# 1.6 m over the floor by the save's settle, the one at 3.8 -19.9 lay 0.3 m under the ground there (CIGroundIslands
-# 11-21): taken out, a gap in the old rails)
-clear at 7.2 -18.9 r=0.4 all only=^Beam_Long_01
-clear at 3.8 -19.9 r=0.4 all only=^Beam_Long_01
-# (c3z47: and both at -3, set up 1.1-1.3 m over the floor by the save's settle where the room's ground falls away)
-clear at -3 -18.9 r=0.4 all only=^Beam_Long_01
-clear at -3 -19.9 r=0.4 all only=^Beam_Long_01
+# (rails of beams every 3.4 m from 14 to -9.8, a gap where the den's room ground is not cut level with its floor: c3z46
+# 7.2 -18.9 set up 1.6 m over the floor by the save's settle and 3.8 -19.9 0.3 m under the ground; c3z47 both at -3, set
+# up 1.1-1.3 m where the room's ground falls away. They were cleared after the loop placed them, but a beam's pivot lies
+# 0.59 m off where it is put, out of the clears' 0.4 m: all four were back in c3z54. Not placed at all now)
+place Beam_Long_01 - at 14 -19.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at 14 -18.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at 10.6 -19.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at 10.6 -18.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at 7.2 -19.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at 3.8 -18.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at 0.4 -19.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at 0.4 -18.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at -6.4 -19.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at -6.4 -18.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at -9.8 -19.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at -9.8 -18.9 h=4.25 rot=0,0,0
 place VP_Wagon02 - at 9 -19.4 h=4.25 sit yaw=90
 place VP_Wagon02 - at -1 -19.4 h=4.25 sit yaw=90
 place VP_Wagon02 orecart at -11 -19.4 h=4.25 sit yaw=90
 # (the near crate 4 m further in and off the south wall: at 12 -23.6 the den's floor doesn't reach under it by the mouth - it stood 1.24 m over the ground let down under the rock, 2026-10-21; its lantern on its top, 0.433 m up)
 place Crate_Big_01 - at 8 -23.2 h=4.2 sit yaw=10
 place Placeable_Lantern_Metal - at 8 -23.2 h=4.65 sit
-# (c3z47: at 2.5 -23.4 it stood in the den's south wall, its top 0.74 m under the ground - 1.2 m further in)
-place Crate_Big_01 - at 2.5 -22.2 h=4.2 sit yaw=80
-place Placeable_Lantern_Metal - at 2.5 -22.2 h=4.65 sit
+# (c3z47: at 2.5 -23.4 it stood in the den's south wall, its top 0.74 m under the ground; c3z54: 1.2 m further in it was
+# still 0.46 m under - the room's ground rises there to the wall: that crate and its lantern taken out, two crates left)
 place Crate_Big_01 - at -6 -23.6 h=4.2 sit yaw=20
 place Placeable_Lantern_Metal - at -6 -23.6 h=4.65 sit
 place VP_Cable_Roll01 - at 8 -15.2 h=4.2 sit

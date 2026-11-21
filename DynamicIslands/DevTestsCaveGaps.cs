@@ -652,7 +652,9 @@ namespace DynamicIslands
 		/// <summary>One cave's way: mouth first, floor points, the room's or the far end's last; In: the way in, level.
 		/// Open: the first point is a mouth to the outside (a closed start - a dug room's far end - is walked from and back to
 		/// itself, 11-08). Shaft: a dug ladder shaft's middle line (foot first) past the walked floor's last point, or null.</summary>
-		class GapWay { public string Kind; public List<Vector3> Floor = new List<Vector3>(); public Vector3 In; public bool Open = true; public List<Vector3> Shaft; public float ShaftR; }
+		class GapWay { public string Kind; public List<Vector3> Floor = new List<Vector3>(); public Vector3 In; public bool Open = true; public List<Vector3> Shaft; public float ShaftR;
+			// (m of floor line before the mouth: a lone den's way starts 3 m out in front of it - its roof is looked for from the mouth, c3z54)
+			public float Lead; }
 		/// <summary>The point s m along a floor line (by its length); false past its end.</summary>
 		static bool PointAlong(List<Vector3> f, float s, out Vector3 p)
 		{
@@ -886,7 +888,7 @@ namespace DynamicIslands
 				if (marked(x) || rooms.Any(o => o != x && x.IsChildOf(o))) continue;
 				Vector3 m = x.position + x.rotation * Vector3.forward * (CaveTool.RoomMouthZ * CaveMountain.OverMeasured(x, CaveTool.Room).x);
 				if (tunnels.Any(t => (t.position - m).magnitude < 25f) || ways.Any(w => w.Floor.Count > 0 && (w.Floor.Last() - x.position).magnitude < 25f)) continue;
-				var w2 = new GapWay { Kind = "den" };
+				var w2 = new GapWay { Kind = "den", Lead = 3f };
 				w2.In = x.position - m; w2.In.y = 0f;
 				if (w2.In.sqrMagnitude < 0.01f) w2.In = x.rotation * Vector3.back;
 				w2.In.Normalize();
@@ -1292,7 +1294,7 @@ namespace DynamicIslands
 					for (float s = 1f; s <= 6f && !w.Kind.StartsWith("dug"); s += 0.25f)
 					{
 						Vector3 p;
-						if (!PointAlong(f, s, out p)) break;
+						if (!PointAlong(f, s + w.Lead, out p)) break;
 						for (float x = -0.6f; x <= 0.61f; x += 0.2f)
 						{
 							rays++;

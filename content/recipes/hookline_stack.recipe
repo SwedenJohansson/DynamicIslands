@@ -63,7 +63,9 @@ place Zone_Trigger hallzone at -3 0 y=0.1
 place Placeable_Lantern_Metal - at -3 -2.5 y=0.9 drop
 place UT_ElectricityIsland_Crane02 crane1 at -3.5 3 y=3.05 sit scale=0.25 yaw=225
 # (Raft's zipline brings its floor 5.72 m west, 0.97 m north and 1.35 m under the landmark: that floor on the roof at -2 -1.5)
-place ZiplinePath_Landmark crane1zip at 3.72 -0.53 y=4.4
+# (c3z54: the rope sagged into the roof's floor 2.3 m out from its floor, past the check's end stretch: the floor 1.3 m
+# east, near the roof's edge, so the rope is off the roof within its first 1.5 m)
+place ZiplinePath_Landmark crane1zip at 5.02 -0.53 y=4.4
 pop
 zipto crane1zip 22 12
 # (c3 round 8, 11-21 c3z44: 0.18 m over at -22.9 -16.3, 3 m from the far end: cleared along the line)

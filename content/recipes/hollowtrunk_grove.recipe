@@ -83,6 +83,9 @@ call zipdeck y=2.6
 pop
 place ZiplinePath_Landmark grovezip at -23.03 -9.22 h=6.07
 zipto grovezip -20 28
+# (c3z54: with Raft's slack the rope sagged 3.5 m under the island's rise between the trunks and the cut under it,
+# up to 1.5 m, left it 0.2 m in the ground at -22.1 6.9: a tight rope, as on Engine Court's and Caisson Yard's lines)
+prop grovezip zip.slack=-0.692
 # (c3 round 8, 11-21 c3z44: 0.43 m over at -21.7 8.6, mid-line; no recipe object there - the island's
 # rocks and harvest held the land: cleared along the line)
 clear from -28.75 -8.25 to -20 28 r=3 body

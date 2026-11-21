@@ -232,7 +232,9 @@ prop treasure14971 treasure.loot=TitaniumOre*2;Battery*1
 # (G2 10-30: pivot moved so the near end's floor sits on the tower's deck, between the lantern and the ladder hole)
 place ZiplinePath_Landmark cszip at 37.93 -63.01 h=41.55
 # (c3 round 4, 11-21: the far end where the save moved it back in c3z38 - its rope was in the ground between the ends)
-zipto cszip 12.83 -25.7
+# (c3z54: that far end was set on the ground as the recipe ran, and zipdown's cut (its sides reach 10 m from its rope)
+# then took 1.5 m of ground from under it: 3.3 m back along the line, 11.7 m from zipdown's rope, out of that cut's reach)
+zipto cszip 14.3 -28.6
 prop cszip zip.slack=-3.46
 place Creature_Goat csgoats at 33.34 -53.27 ground
 prop csgoats creature.count=2

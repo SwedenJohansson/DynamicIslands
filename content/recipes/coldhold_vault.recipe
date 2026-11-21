@@ -183,7 +183,12 @@ place UT_JumpPuzzle_LiftMechanism_Lever floodlever at 2.6 34.4 ground sit yaw=18
 place Zone_Trigger floodzone at 0 33 ground y=1
 
 # --- The ice cap: ice rock round the vault floor on ice-tinted pillars, frost inside, snow on the slope ------------------
-for ca 0 345 15
+# (c3z54: the ring's rocks at 165-210 degrees stand under vaultzip's line or its cut's sides and held the land there,
+# the rope 0.03 m in the ground at 1.2 -31.8: the ring left open where the line comes in)
+for ca 0 150 15
+place SmallRock_02 ice at {25*sin($ca)} {10+25*cos($ca)} ground y=-2 scale=3 yaw=$ca
+next
+for ca 225 345 15
 place SmallRock_02 ice at {25*sin($ca)} {10+25*cos($ca)} ground y=-2 scale=3 yaw=$ca
 next
 # (c3 round 8, 11-21 c3z44: the pa=180 pillar stood at 0 -33, under vaultzip's line 8.8 m into its far stretch, and held the
