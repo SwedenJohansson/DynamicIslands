@@ -351,7 +351,7 @@ namespace DynamicIslands.Editor
 				}
 			}
 			int aproned = 0;
-			foreach (KeyValuePair<Transform, List<int>> a in aprons) aproned += Apron(land, a.Key, a.Value, inside, floor, dugTo, apronBoth.Contains(a.Key));
+			foreach (KeyValuePair<Transform, List<int>> a in aprons) aproned += Apron(land, a.Key, a.Value, inside, floor, dugTo, apronBoth.Contains(a.Key), caves);
 			dug += aproned;
 			LastApron = aproned;
 			// (and the cells whose ground still runs steeply through a room between their corners)
@@ -426,7 +426,7 @@ namespace DynamicIslands.Editor
 		/// that point's floor less 5 cm, all the way at the room and none at ApronReach, on a smooth curve - a rounded slope in.
 		/// How many points it moved.
 		/// </summary>
-		static int Apron(Terrain land, Transform cave, List<int> pts, bool[,] inside, Dictionary<int, float> floor, Dictionary<int, Vector2> dugTo, bool raise = true)
+		static int Apron(Terrain land, Transform cave, List<int> pts, bool[,] inside, Dictionary<int, float> floor, Dictionary<int, Vector2> dugTo, bool raise = true, List<Transform> caves = null)
 		{
 			// (InfoOf: the editor's pieces are named on their EditorGameObject, not in names - the editor made no apron, so a recipe's
 			// "ground" there was the den-less ground and its pieces floated or were buried in the world: Geiger Isle, IG5 11-18)
@@ -454,10 +454,20 @@ namespace DynamicIslands.Editor
 			Vector3 boxMid = cave.position + cave.rotation * Vector3.Scale(info.Centre, sc);
 			float boxS = Vector3.Dot(new Vector3(boxMid.x, 0f, boxMid.z) - mid, along), boxL = Vector3.Dot(new Vector3(boxMid.x, 0f, boxMid.z) - mid, sideDir);
 			float halfLen = Mathf.Abs(info.Size[ax] * sc[ax]) * 0.5f, halfW = Mathf.Abs(info.Size[sideAx] * sc[sideAx]) * 0.5f;
+			// (an open end joined to another cave piece is no way in, and gets no apron: The Drowned Labyrinth's first fork, joined
+			// at both ends to tunnels 18 m under the reef, dug the smallest islet over its end down to the tunnel's floor - the box
+			// under its bush stood 14 m down, c3z53)
+			bool[] open = { info.OpenPlus && !JoinedEnd(cave, caves, boxMid, along, sideDir, halfLen, halfW, 1f),
+				info.OpenMinus && !JoinedEnd(cave, caves, boxMid, along, sideDir, halfLen, halfW, -1f) };
+			if (!open[0] && !open[1])
+			{
+				Debug.Log("[CUSTOM ISLANDS] Apron " + cave.name + ": its open ends joined to other cave pieces, none");
+				return 0;
+			}
 			// (and over the box's open ends with their reach round them)
 			for (int e = 0; e < 2; e++)
 			{
-				if (!(e == 0 ? info.OpenPlus : info.OpenMinus)) continue;
+				if (!open[e]) continue;
 				for (int c = -1; c <= 1; c += 2)
 				{
 					Vector3 w = boxMid + along * ((e == 0 ? 1f : -1f) * halfLen) + sideDir * (c * halfW);
@@ -473,7 +483,6 @@ namespace DynamicIslands.Editor
 			// points at the room's end)
 			float[] endAt = { float.NegativeInfinity, float.NegativeInfinity }, latLo = { float.PositiveInfinity, float.PositiveInfinity },
 				latHi = { float.NegativeInfinity, float.NegativeInfinity }, endFloor = { float.PositiveInfinity, float.PositiveInfinity };
-			bool[] open = { info.OpenPlus, info.OpenMinus };
 			float[] endSum = { 0f, 0f }; int[] endN = { 0, 0 };
 			foreach (int k in pts)
 			{
@@ -593,7 +602,7 @@ namespace DynamicIslands.Editor
 					float ahead = Vector3.Dot(away / best, along);
 					// (eased in round the sides too, less the further to the side: a cone cut off at 60 degrees left the eased sand a raised
 					// tongue with hard sides, Caisson Yard, and the sand beside it a notched lip over the den's floor, gen-large, 11-08 r26 user)
-					float side = Mathf.Max(info.OpenPlus ? ahead : -1f, info.OpenMinus ? -ahead : -1f);
+					float side = Mathf.Max(open[0] ? ahead : -1f, open[1] ? -ahead : -1f);
 					float turn = byBox ? 1f : Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(ApronSide, 0.6f, side));
 					if (turn <= 0f) { offSide++; continue; }
 					float own = h[z - z0, x - x0], target = Mathf.Clamp01((to - (slab ? (under ? sinkBy : SlabSink) : raise ? 0.05f : OpenSink) - o.y) / sy);
@@ -1089,6 +1098,26 @@ namespace DynamicIslands.Editor
 			if (name == null) names.TryGetValue(t.GetInstanceID(), out name);
 			PropInfo p = RaftProps.Get(name ?? "");
 			return p != null && p.IsCave ? p : null;
+		}
+
+		/// <summary>Whether a cave piece's open end (sign: +1 its +axis end, -1 its -axis) runs into another cave piece of caves:
+		/// a point just past it, across its middle or a quarter of its width either side, in the other's measured box.</summary>
+		static bool JoinedEnd(Transform cave, List<Transform> caves, Vector3 boxMid, Vector3 along, Vector3 sideDir, float halfLen, float halfW, float sign)
+		{
+			if (caves == null) return false;
+			foreach (Transform other in caves)
+			{
+				if (other == null || other == cave) continue;
+				PropInfo p = InfoOf(other);
+				if (p == null) continue;
+				for (int k = -1; k <= 1; k++)
+				{
+					Vector3 w = boxMid + along * (sign * (halfLen + 0.6f)) + sideDir * (k * halfW * 0.5f);
+					Vector3 m = InMeasures(other, p, w) - p.Centre;
+					if (Mathf.Abs(m.x) <= p.Size.x * 0.5f + 0.3f && Mathf.Abs(m.y) <= p.Size.y * 0.5f + 0.3f && Mathf.Abs(m.z) <= p.Size.z * 0.5f + 0.3f) return true;
+				}
+			}
+			return false;
 		}
 
 		/// <summary>A point (world) in a cave piece's own measures (raft_props', at the size it was measured at).</summary>
