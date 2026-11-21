@@ -132,6 +132,9 @@ namespace DynamicIslands
 							// into it, read "held nowhere", w03 11-09; a wall standing on it starts above its underside)
 							Bounds hb = h.collider.bounds;
 							if (o == e || (hb.min.y > p.y - 0.1f && !(hb.max.y <= p.y + 0.06f && hb.min.y < p.y - 0.02f))) continue;
+							// (nor the ladders zipto stood up a raised deck's side: 11-21 c3y9, Engine Court's 6.6 m ridge deck read as held
+							// by them - a small floor needs one held corner - and stood on its ladders alone)
+							if (o != null && zipDeckLadders.Contains(o.gameObject)) continue;
 							if (o != null && FloorLike.IsMatch(o.GameObjectName ?? "") && Mathf.Abs(h.collider.bounds.max.y - whole.max.y) < 0.3f) continue;
 							ok = true;
 							break;
