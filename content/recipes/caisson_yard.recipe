@@ -96,11 +96,17 @@ prop treasure10052 treasure.loot=TitaniumOre*3
 
 # --- The cranes and the zipline (S to N) -------------------------------------------------------------------------------
 place UT_ElectricityIsland_Crane02 crane1 at -7 -7 h=1.9 sit scale=0.25 yaw=45
-place ZiplinePath_Landmark zipcrane at -0.6 -7.2 h=3.25 yaw=0
-# (11-21: its near floor set where it stands - with no zipfrom the line's own floor stood 26 m off its pivot, at 17.3 8.2,
-# and its rope ran from there to the seabed at 32.5 30.3, through a caisson's floor: a rider stopped 5 m out)
-zipfrom zipcrane -0.6 -7.2 h=3.25
-zipto zipcrane 9 16
+# crane 1's stair tower: a one-cell concrete tower two storeys up on the south caisson's cap, ladders up its south face;
+# the zipline from its top down to the yard's rock by the barrels
+# (11-21: its near floor stood in the air over the sea at -0.6 -7.2 h=3.25, off every caisson, and its far end at 9 16 went
+# to the seabed under crane 2's caisson: the rope ran 4.6 m inside the caisson and a rider stopped 18 m short (c3z7). A line
+# from crane 1 to crane 2 crosses the west footbridge's rope fence midway, so it ends on the yard instead)
+call caisson x=-4.75 z=-4.75 w=1 h0=1.9 lv=2 a=caissons
+place Block_Ladder_Tier3 - at -4.75 -5.8 h=1.9 yaw=0
+place Block_Ladder_Tier3 - at -4.75 -5.8 h=4.34 yaw=0
+place ZiplinePath_Landmark zipcrane at -4.75 -4.75 h=6.96 yaw=0
+zipfrom zipcrane -4.75 -4.75 h=6.96
+zipto zipcrane 8.5 1
 place UT_ElectricityIsland_Crane02 crane2 at 11 17 h=1.9 sit scale=0.25 yaw=225
 place Zone_Trigger crane2zone at 9.5 15.5 h=3
 

@@ -207,7 +207,7 @@ namespace DynamicIslands
 
 		static readonly Regex Hangs = new Regex("Buoy|Water|Pipe|Chain|Rope|Cable|Lamp|Light|Flag|Banner|Floor|Deck|Plank|Bridge|Ramp|Stair|Crane|Roof|Scaffold", RegexOptions.IgnoreCase);
 
-		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it)")]
+		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it); the save sets a rock in the air down and a buried barrel up")]
 		public static void GroundingTestCommand()
 		{
 			StartTest(GroundingTestRoutine());
@@ -304,6 +304,39 @@ namespace DynamicIslands
 			Check(ref ok, lowered < before - 1f && Mathf.Abs(van.transform.position.y - before) < 0.01f, "lowering the ground under it took the van down " + (before - lowered).ToString("F2") + " m with it; Ctrl+Z put the ground and the van back (" + (van.transform.position.y - before).ToString("F3") + ")");
 			terraineditor.modificationAction = terraineditor.TerrainModificationAction.Raise;
 			UnityEngine.Object.Destroy(van);
+
+			// 4. The save's settle step (11-21): a boulder 0.7 m in the air over flat ground goes down onto it; a barrel buried
+			// 0.4 m under the ground goes up onto it
+			Vector3 flat = Vector3.zero;
+			for (float x = -30f; x <= 30f && flat == Vector3.zero; x += 3f)
+				for (float z = -30f; z <= 30f; z += 3f)
+				{
+					Vector3 point, normal;
+					if (PlacementOptions.GroundAt(new Vector3(mid.x + x, 0f, mid.y + z), out point, out normal) && point.y > sea + 3f && Vector3.Angle(normal, Vector3.up) < 6f) { flat = point; break; }
+				}
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "SmallBoulder2", "TP_Moontown_Barrel01" });
+			GameObject boulder = PlaceableCatalog.Spawn("SmallBoulder2", GameObject.Find("PlacedObjects").transform);
+			GameObject barrel = PlaceableCatalog.Spawn("TP_Moontown_Barrel01", GameObject.Find("PlacedObjects").transform);
+			if (flat == Vector3.zero || boulder == null || barrel == null) { Fail("grounding test: no flat ground, SmallBoulder2 or TP_Moontown_Barrel01"); yield break; }
+			EditorGameObject.Attach(boulder, "SmallBoulder2");
+			EditorGameObject.Attach(barrel, "TP_Moontown_Barrel01");
+			boulder.transform.position = flat;
+			barrel.transform.position = flat + new Vector3(6f, 0f, 0f);
+			Physics.SyncTransforms();
+			Bounds rb = MeshBox(boulder), bb = MeshBox(barrel);
+			boulder.transform.position += Vector3.up * (GroundY(rb.center.x, rb.center.z) + 0.7f - rb.min.y);
+			barrel.transform.position += Vector3.up * (GroundY(bb.center.x, bb.center.z) - 0.4f - bb.max.y);
+			Physics.SyncTransforms();
+			int seen, high; float most, least;
+			bool floatedBefore = RockFloats(boulder.transform, MeshBox(boulder), ground, out seen, out high, out most, out least);
+			SettleAtSave(sea);
+			Physics.SyncTransforms();
+			rb = MeshBox(boulder); bb = MeshBox(barrel);
+			bool floatsAfter = RockFloats(boulder.transform, rb, ground, out seen, out high, out most, out least);
+			Check(ref ok, floatedBefore && !floatsAfter && boulder.activeSelf, "the save sets a boulder in the air down: it floated " + floatedBefore + ", after the settle it floats " + floatsAfter + " (shown " + boulder.activeSelf + ", its underside " + (rb.min.y - GroundY(rb.center.x, rb.center.z)).ToString("F2") + " m over the ground)");
+			Check(ref ok, bb.max.y > GroundY(bb.center.x, bb.center.z) + 0.05f, "the save sets a buried barrel up on the ground: its top " + (bb.max.y - GroundY(bb.center.x, bb.center.z)).ToString("F2") + " m over it");
+			UnityEngine.Object.Destroy(boulder);
+			UnityEngine.Object.Destroy(barrel);
 			if (ok) Log("PASS: grounding test"); else Fail("grounding test");
 		}
 
@@ -1223,6 +1256,7 @@ namespace DynamicIslands
 		/// <summary>The cave tool's caves laid by this recipe, by their as= group (caveloot, cavegate).</summary>
 		static readonly Dictionary<string, CaveTool.Layout> recipeCaves = new Dictionary<string, CaveTool.Layout>(StringComparer.OrdinalIgnoreCase);
 		static readonly HashSet<GameObject> recipePlaced = new HashSet<GameObject>();
+		static readonly HashSet<GameObject> recipeScattered = new HashSet<GameObject>();
 		/// <summary>The quest the recipe is writing (the quest window's fields before Save).</summary>
 		static IslandQuest pendingQuest;
 		/// <summary>The ziplines zipto aimed, cleared of the ground at the island's save, once every stroke and kit has shaped the land
@@ -1648,6 +1682,7 @@ namespace DynamicIslands
 			recipeGroups.Clear();
 			recipeCaves.Clear();
 			recipePlaced.Clear();
+			recipeScattered.Clear();
 			recipeNoPosts = false;
 			recipeReseat = true;
 			leftOutBuried = 0;
@@ -1976,6 +2011,9 @@ namespace DynamicIslands
 								error = Place(t[1], px, pz, o, out e);
 								if (error != null) break;
 								made++; placed++;
+								// (a scattered one with no alias is the recipe's dressing: zipto clears it from a rider's way like the
+								// generator's - 11-21, Caisson Yard's ridge line ran 7.4 m under an sk_plants boulder)
+								if (e != null && !opt.ContainsKey("as")) recipeScattered.Add(e.gameObject);
 								// (as=<alias>: the scattered objects can be given settings, loot and behaviours like placed ones)
 								if (e != null && opt.ContainsKey("as"))
 								{
@@ -2273,6 +2311,9 @@ namespace DynamicIslands
 							if (KeptByMiddle.Count > 0) Log("  " + KeptByMiddle.Count + " kept though under the ground, their middle in a dug passage: " + string.Join("; ", KeptByMiddle.Take(12).ToArray()));
 							// (and posts under the floors and decks over nothing - CA30: the corners nothing holds, down to the ground or
 							// the sea floor; "posts off" in the recipe leaves them out)
+							// (and loose rocks in the air set down, things buried in the ground set up on it - what the ground check would
+							// call floating rocks and buried things: SettleAtSave, 11-21)
+							SettleAtSave(seaY);
 							if (!recipeNoPosts) StandPosts();
 							// (actions and checks that name an object nothing is called: Rig Seventeen's lever looked at three valves
 							// with no obj.name and could never pass, the review 2026-10-10)
@@ -2722,7 +2763,7 @@ namespace DynamicIslands
 						float g = ZipGroundAt(e, p.x, p.z, out c);
 						if (c == null || p.y - g >= (toFar < ZiplineEnds.RiderFarSkip ? ZiplineEnds.LineClear : ZiplineEnds.RiderClear)) continue;
 						EditorGameObject owner = c.GetComponentInParent<EditorGameObject>();
-						if (owner == null || owner == e || recipePlaced.Contains(owner.gameObject) || !owner.transform.IsChildOf(root) || now.Contains(owner.gameObject)) continue;
+						if (owner == null || owner == e || (recipePlaced.Contains(owner.gameObject) && !recipeScattered.Contains(owner.gameObject)) || !owner.transform.IsChildOf(root) || now.Contains(owner.gameObject)) continue;
 						Bounds bb = c.bounds;
 						foreach (Renderer rd in owner.GetComponentsInChildren<Renderer>()) bb.Encapsulate(rd.bounds);
 						// (a boulder goes whatever its size: 11-21 c3z5, Caisson Yard's ridge line still ran 7.4 m under a scaled-up
@@ -2743,7 +2784,7 @@ namespace DynamicIslands
 				gone.AddRange(now);
 			}
 			if (gone.Count > 0)
-				Log("  zipto: " + gone.Count + " of the generator's objects in a rider's way under the rope removed: " + string.Join("; ", names.ToArray()));
+				Log("  zipto: " + gone.Count + " of the generator's (or the recipe's scattered) objects in a rider's way under the rope removed: " + string.Join("; ", names.ToArray()));
 			if (keptNames.Count > 0)
 				Log("  zipto: kept in a rider's way under the rope (over 10 m across, taken for the island's own cliffs): " + string.Join("; ", keptNames.ToArray()));
 			return gone.Count;
@@ -3186,6 +3227,87 @@ namespace DynamicIslands
 				if (top.x + r > b.min.x + OverlapMargin && top.x - r < b.max.x - OverlapMargin && top.z + r > b.min.z + OverlapMargin && top.z - r < b.max.z - OverlapMargin) return true;
 			}
 			return false;
+		}
+
+		/// <summary>The box round an object's shown meshes, as the ground check measures it.</summary>
+		static Bounds MeshBox(GameObject go)
+		{
+			Renderer[] rs = go.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
+			if (rs.Length == 0) return new Bounds(go.transform.position, Vector3.zero);
+			Bounds b = rs[0].bounds;
+			foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+			return b;
+		}
+
+		/// <summary>
+		/// The save's last grounding step (11-21): what the ground check would call a floating rock or a buried thing, set right
+		/// in the editor. A loose rock or boulder whose underside is over what is under it (RockFloats) goes down till most of
+		/// its nine points rest - or is left out when that would sink it more than half its height; a prop whose whole top is
+		/// under the ground (the check's "buried" rule) goes up onto the ground at its middle, when it is no more than 2.5 m
+		/// down (deeper is a thing set in a cave or a tunnel on purpose: left, the check reports it). Strokes after the scatter
+		/// or the place moved the ground under them: Engine Court's, Thalassa Mooring's and Caisson Yard's boulders hung 0.5-2 m
+		/// in the air, Caisson Yard's barrels and forklift 0.2-1.4 m in the yard (the ground check 11-21).
+		/// </summary>
+		static void SettleAtSave(float sea)
+		{
+			Terrain land = terraineditor.terrain;
+			GameObject placed = GameObject.Find("PlacedObjects");
+			if (land == null || placed == null) return;
+			Physics.SyncTransforms();
+			var lowered = new List<string>(); var lifted = new List<string>(); var hide = new List<GameObject>();
+			foreach (EditorGameObject e in placed.transform.GetComponentsInChildren<EditorGameObject>())
+			{
+				if (e == null || !e.gameObject.activeInHierarchy) continue;
+				Transform o = e.transform;
+				string n = (e.GameObjectName ?? o.name).Replace("(Clone)", "").Trim();
+				bool rock = LooseRock.IsMatch(n);
+				if (!rock && NotABase.IsMatch(n)) continue;
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Note_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") ||
+					n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || Hangs.IsMatch(n) || ChainLink.IsMatch(n) || n.StartsWith("ZiplinePath", StringComparison.Ordinal) ||
+					n.StartsWith("VP_Skylift", StringComparison.Ordinal) || n == "Elevator" || CaveBacks.Wants(n) || Trunk.IsMatch(n)) continue;
+				Renderer[] rs = o.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
+				if (rs.Length == 0) continue;
+				float bottom = rs.Min(r => r.bounds.min.y);
+				Bounds whole = rs[0].bounds;
+				foreach (Renderer r in rs) whole.Encapsulate(r.bounds);
+				Renderer[] baseParts = rs.Where(r => r.bounds.min.y < bottom + 0.6f).ToArray();
+				Bounds b = baseParts[0].bounds;
+				foreach (Renderer r in baseParts) b.Encapsulate(r.bounds);
+				string at = n + " at " + Num(b.center.x) + " " + Num(b.center.z);
+				if (rock)
+				{
+					int seen, high; float most, least;
+					if (b.min.y <= sea + 0.3f || !RockFloats(o, b, land, out seen, out high, out most, out least)) continue;
+					var gaps = new List<float>();
+					for (int k = 0; k < 9; k++)
+					{
+						float g = RockGap(o, Mathf.Lerp(b.min.x, b.max.x, 0.25f + 0.25f * (k % 3)), Mathf.Lerp(b.min.z, b.max.z, 0.25f + 0.25f * (k / 3)), b, land);
+						if (!float.IsNaN(g)) gaps.Add(g);
+					}
+					gaps.Sort();
+					float allow = 0.3f + 0.15f * Mathf.Max(b.extents.x, b.extents.z);
+					float d = gaps.Count == 0 ? 0f : Mathf.Max(0f, gaps[gaps.Count / 2] - allow * 0.5f);
+					if (d > 0f && d <= 0.5f * whole.size.y)
+					{
+						o.position += Vector3.down * d;
+						Physics.SyncTransforms();
+						if (!RockFloats(o, new Bounds(b.center + Vector3.down * d, b.size), land, out seen, out high, out most, out least)) { lowered.Add(at + " (" + Num(d) + " m)"); continue; }
+						o.position += Vector3.up * d;
+						Physics.SyncTransforms();
+					}
+					hide.Add(e.gameObject);
+					continue;
+				}
+				float ground = GroundY(b.center.x, b.center.z);
+				float under = ground - whole.max.y;
+				if (under <= 0.05f || whole.max.y <= sea - 1f || under > 2.5f || InDugPassage(whole)) continue;
+				o.position += Vector3.up * (ground - b.min.y);
+				lifted.Add(at + " (" + Num(ground - b.min.y) + " m)");
+			}
+			if (hide.Count > 0) CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(hide, false));
+			if (lowered.Count + hide.Count > 0) Log("  " + lowered.Count + " rocks in the air set down on what is under them" + (lowered.Count > 0 ? ": " + string.Join("; ", lowered.Take(12).ToArray()) : "") + (hide.Count > 0 ? "; " + hide.Count + " left out (too far up to set down)" : ""));
+			if (lifted.Count > 0) Log("  " + lifted.Count + " things under the ground set up on it: " + string.Join("; ", lifted.Take(12).ToArray()));
+			Physics.SyncTransforms();
 		}
 
 		/// <summary>What BuriedWhole kept only because its middle is in a dug passage (its top in the rock): the save logs them.</summary>

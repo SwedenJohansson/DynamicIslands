@@ -992,7 +992,9 @@ namespace DynamicIslands
 				float groundMid = land != null ? land.SampleHeight(b.center) + land.transform.position.y : float.MinValue;
 				// Buried whole: its top under the land (not Raft's rocks and corals, which are set into it; not what is under the sea)
 				// (nor what stands in a dug passage, under the land but in its air: Stalker's Hollow's cave lanterns, IG5 11-18)
-				if (!NotABase.IsMatch(n) && land != null && whole.max.y < groundMid - 0.05f && whole.max.y > sea - 1f && !InDugPassage(whole))
+				// (nor Selene's interior pieces, built into a cave kit's tunnel under its hill like the cave pieces: Thalassa Mooring's
+				// sea-gate bars read "buried" 11-21)
+				if (!NotABase.IsMatch(n) && !CaveBacks.Wants(n) && land != null && whole.max.y < groundMid - 0.05f && whole.max.y > sea - 1f && !InDugPassage(whole))
 				{ node.Reported = node.Direct = true; lines.Add("buried: " + n + " at " + where + ", its top " + Num(groundMid - whole.max.y) + " m under the ground"); continue; }
 				// A zipline: each end on its own (its base reaches from one end's floor to the other's, over the dip between them -
 				// the Lodestone Array's lines read "partly in the air" 3.7 m over their moat, 2026-10-20): every piece no wider than
