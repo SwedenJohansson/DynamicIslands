@@ -780,6 +780,8 @@ namespace DynamicIslands.Editor
 				if (oldLook != null && oldLook.name == "DigTunnelGroundBaked") { if (oldLook.mainTexture != null) UnityEngine.Object.DestroyImmediate(oldLook.mainTexture); UnityEngine.Object.DestroyImmediate(oldLook); }
 				UnityEngine.Object.DestroyImmediate(old.gameObject);
 			}
+			// (11-21 cv54: none under a mouth frame drawn as the hill - it lies over the floor's edge, FramesLikeHill)
+			foreach (Transform ch in cave) if (ch.name == CaveTool.MouthName && ch.GetComponent<CaveTool.HillWall>() != null) return;
 			int climbed0 = SkirtClimbed;
 			GameObject rock = PlaceableCatalog.Get(CaveTool.WallRock);
 			MeshRenderer rockLook = rock != null ? rock.GetComponentInChildren<MeshRenderer>(true) : null;

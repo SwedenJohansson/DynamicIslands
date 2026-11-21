@@ -1065,6 +1065,9 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
+		/// <summary>Open floors' sand skirts let go under a frame drawn as the hill (FramesLikeHill), all islands since Raft started.</summary>
+		public static int SkirtsHidden;
+
 		/// <summary>
 		/// A tunnel's mouth frames (MouthName) drawn as the hill over it (CaveMountain's skin): its rock, tint and light, the
 		/// texture laid as the skin's (world metres / 14, along the axis each triangle faces most). In the tunnel's own pale ravine
@@ -1153,10 +1156,6 @@ namespace DynamicIslands.Editor
 				for (int t = 0; t + 2 < st.Length; t += 3)
 				{
 					Vector3 a = wv[st[t]], b = wv[st[t + 1]], d = wv[st[t + 2]];
-					// (11-21 cv54: and a face lying flat a hand or less over flat ground left out - the ground drawn there is the floor:
-					// Sinkmarket Floor's mouth floor plate 4 cm over its sand stood as a flat golden plate in front of the camera, and
-					// 584 rays of the ground fighting through faces lying along it, CIFrameRing)
-					if (FlatOnGround(a, b, d)) { FrameFlatLeft++; continue; }
 					Vector3 fn = Vector3.Cross(b - a, d - a);
 					float fx = Mathf.Abs(fn.x), fy = Mathf.Abs(fn.y), fz = Mathf.Abs(fn.z);
 					int ax = fy >= fx && fy >= fz ? 1 : fx >= fz ? 0 : 2;
@@ -1202,6 +1201,13 @@ namespace DynamicIslands.Editor
 				DigTunnel.SideRockOnly(r, 0);
 				r.gameObject.AddComponent<HillWall>().Rim = rimOut.ToArray();
 				done++;
+			}
+			// (11-21 cv54: and the open floor's sand skirt let go - the frame drawn as the hill lies over the floor's edge it hid, and
+			// the strip, baked in the ground's look, lay on the frame's rock apron as a flat golden plate, Sinkmarket Floor play_cvp_smo)
+			if (done > 0)
+			{
+				Transform skirt = piece.transform.Find(CaveGround.SkirtName);
+				if (skirt != null && skirt.gameObject.activeSelf) { skirt.gameObject.SetActive(false); SkirtsHidden++; }
 			}
 			// (and the tunnel itself, inside and its back, in the hill's rock: its pale blue ice-ravine rock seen through the mouth
 			// in the hill's grey face filled the lower half of the opening as a pale bluish shape - Old Mine Islet 11-19 cave1119 r2.
@@ -1395,32 +1401,6 @@ namespace DynamicIslands.Editor
 			return h != null && h.Rim != null && h.Rim.Length == n ? h.Rim : new bool[n];
 		}
 
-		/// <summary>A frame face lying along flat ground no more than this (m, straight up) over it all over is left out of the
-		/// frame (FlatOnGround): the ground there is the floor.</summary>
-		public const float FrameFlatOn = 0.06f;
-		/// <summary>The ground under a face FlatOnGround leaves out lies at least this flat (its normal's y; 0.85 = 32 degrees).</summary>
-		public const float FrameFlatGround = 0.85f;
-		/// <summary>Mouth frame faces left out as lying flat on the ground (FlatOnGround), all islands since Raft started.</summary>
-		public static int FrameFlatLeft;
-
-		/// <summary>Whether a frame face (world points a b c) lies along flat solid ground (FrameFlatGround), its normal within 25
-		/// degrees of the ground's, its corners and middle 1 cm under to FrameFlatOn over it: the ground drawn there already is the
-		/// floor, and the face only fights it or stands on it as a plate of the frame's own texture.</summary>
-		public static bool FlatOnGround(Vector3 a, Vector3 b, Vector3 c)
-		{
-			Vector3 n = Vector3.Cross(b - a, c - a);
-			if (n.sqrMagnitude < 1e-10f) return false;
-			n.Normalize();
-			if (n.y < FrameFlatGround) return false;
-			Vector3 m = (a + b + c) / 3f, gn;
-			if (!GroundNormalAt(m, out gn) || gn.y < FrameFlatGround || Vector3.Dot(n, gn) < 0.9f) return false;
-			foreach (Vector3 p in new[] { a, b, c, m })
-			{
-				float g;
-				if (!SolidGroundAt(p, out g) || p.y < g - 0.01f || p.y > g + FrameFlatOn) return false;
-			}
-			return true;
-		}
 		/// <summary>Ground over a frame face by more than this (m, across it) is the frame under the hill on purpose: left.</summary>
 		public const float FrameSinkBand = 0.25f;
 		/// <summary>The most a heightmap point is let down under a frame face (m, straight down).</summary>
