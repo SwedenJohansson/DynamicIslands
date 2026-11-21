@@ -1014,8 +1014,7 @@ namespace DynamicIslands.Editor
 				if (asDen >= 0 && caves[asDen] != null) RockAsDen(mr, caves[asDen].gameObject);
 			}
 			DressTunnels();
-			FootPainted = PaintFoot(on, x0, z0, nx, nz);
-			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + ", foot band " + FootPainted + " texel(s)" + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : "") + (SkirtsCut > 0 ? ", " + SkirtsCut + " skirt strip(s) let down to the edge" : ""));
+			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : "") + (SkirtsCut > 0 ? ", " + SkirtsCut + " skirt strip(s) let down to the edge" : ""));
 			// (lone dens walled before the hill was built: their walls' outsides drawn as the hill now)
 			foreach (Transform t in caves)
 				if (t != null) CaveTool.WallLikeHill(t.gameObject, mr);
@@ -1029,6 +1028,9 @@ namespace DynamicIslands.Editor
 			foreach (Transform t in caves)
 				if (t != null) joins += CaveTool.JoinsOnFloor(t.gameObject);
 			if (joins > 0) Debug.Log("[CUSTOM ISLANDS] Cave mountain: " + joins + " join plate(s) lying on a floor taken away");
+			// (the ground round its foot sanded - see PaintFoot)
+			FootPainted = PaintFoot(on, x0, z0, nx, nz);
+			Debug.Log("[CUSTOM ISLANDS] Cave mountain foot band: " + FootPainted + " ground paint texel(s)");
 		}
 
 		/// <summary>
