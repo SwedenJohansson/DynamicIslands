@@ -207,7 +207,7 @@ namespace DynamicIslands
 
 		static readonly Regex Hangs = new Regex("Buoy|Water|Pipe|Chain|Rope|Cable|Lamp|Light|Flag|Banner|Floor|Deck|Plank|Bridge|Ramp|Stair|Crane|Roof|Scaffold", RegexOptions.IgnoreCase);
 
-		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it); the save sets a rock in the air down and a buried barrel up; a zipline rope is measured over the cave hill a world builds")]
+		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it); the save sets a rock in the air down and a buried barrel up; a zipline rope is measured over the cave hill a world builds; a rope no raise clears gets the most room zipto can give it")]
 		public static void GroundingTestCommand()
 		{
 			StartTest(GroundingTestRoutine());
@@ -420,6 +420,25 @@ namespace DynamicIslands
 				Check(ref ok, GameObject.Find(CaveMountain.PreviewName) == null && skins.All(c => c == null), "the measuring hill is gone after (zipto's ground there now " + Num(ZipGround(null)(cx, cz) - landY) + " m over the land)");
 			}
 			UnityEngine.Object.Destroy(den);
+			// 6. zipto when no raise nor tighter rope clears (11-21 c3z11: Caisson Yard's ridge line was left at Raft's slack, 3.2 m
+			// into the hill, where a partial raise had nearly cleared it): the best partial raise and rope, more room than as it is
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "ZiplinePath_Landmark" });
+			GameObject zl = PlaceableCatalog.Spawn("ZiplinePath_Landmark", root);
+			MeshPath_Zipline_Landmark zline = zl != null ? zl.GetComponentInChildren<MeshPath_Zipline_Landmark>(true) : null;
+			if (zline == null) { Fail("grounding test: no ZiplinePath_Landmark line"); yield break; }
+			Vector3 zn = new Vector3(flat.x, GroundY(flat.x, flat.z) + 3f, flat.z), zf = new Vector3(flat.x + 24f, GroundY(flat.x + 24f, flat.z), flat.z);
+			Vector2 zm = new Vector2(flat.x + 12f, flat.z);
+			// (a wall 5 m thick midway, 3 m over the highest the near end can go: nothing clears it)
+			float wallTop = Mathf.Max(zn.y + ZiplineEnds.MaxRaise, zf.y) + 3f;
+			Func<float, float, float> wall = (x, z) => Vector2.Distance(new Vector2(x, z), zm) < 2.5f ? wallTop : GroundY(x, z);
+			float zown = ZiplineEnds.Slack(zline);
+			float[] zsl = !float.IsNaN(zown) && zown != 0f ? new[] { zown, zown * 0.5f, zown * 0.25f, zown * 0.1f } : new[] { zown };
+			Vector3 za; float zt;
+			float asIs = ZiplineEnds.RopeLowest(ZiplineEnds.RopeBetween(zline, zf, zn, zown), zn, zf, wall, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out za, out zt);
+			float pr, ps, pl; Vector3 pa;
+			ZipBestPartial(zline, zn, zf, wall, zsl, ZiplineEnds.MaxRaise, out pr, out ps, out pl, out pa);
+			Check(ref ok, pl < ZiplineEnds.LineClear && pl > asIs + 1f && (pr > 0f || ps != zown), "a rope through a wall no raise clears gets the most room it can: raised " + Num(pr) + " m, slack " + Num(ps) + " (own " + Num(zown) + "), the least " + Num(pl) + " m over the wall's top (" + Num(asIs) + " as it was)");
+			UnityEngine.Object.Destroy(zl);
 			if (ok) Log("PASS: grounding test"); else Fail("grounding test");
 		}
 
@@ -2726,7 +2745,25 @@ namespace DynamicIslands
 							Log("  WARNING: zipto: a rider on that rope comes " + Num(-rl) + " m short of a rider's room at " + Num(ra.x - corner.x) + " " + Num(ra.z - corner.z) + " (ground " + Num(ground(ra.x, ra.z)) + ZipGroundWhat(e, ra.x, ra.z) + "): move what is under it or an end");
 						return 0f;
 					}
-				Log("  WARNING: zipto: the rope comes " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " and its near end is not on the ground (so not raised), nor does a tighter rope keep it " + Num(ZiplineEnds.LineClear) + " m over it: move an end. Left as it is");
+				// (none clears: the tightest rope that leaves it more room than its own, still warned - 11-21 c3z11, Caisson Yard's
+				// lines left as they were came out worse than a partial fix)
+				float bestL = lineLow, bestS = float.NaN; Vector3 bestA = lineAt;
+				if (!float.IsNaN(own0) && own0 != 0f)
+					foreach (float sl in new[] { own0 * 0.5f, own0 * 0.25f, own0 * 0.1f })
+					{
+						Vector3 ta; float tt;
+						float tl = ZiplineEnds.RopeLowest(ZiplineEnds.RopeBetween(line, far, near, sl), near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out ta, out tt);
+						if (tl > bestL + 0.05f) { bestL = tl; bestS = sl; bestA = ta; }
+					}
+				if (!float.IsNaN(bestS))
+				{
+					PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipSlack, bestS.ToString("0.###", CultureInfo.InvariantCulture)));
+					ZiplineEnds.RopeBetween(line, far, near, bestS);
+					Log("  WARNING: zipto: the rope comes " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " and its near end is not on the ground (so not raised), nor does a tighter rope keep it " + Num(ZiplineEnds.LineClear) + " m over it: move an end. The tightest that helps set: slack " +
+						bestS.ToString("0.###", CultureInfo.InvariantCulture) + " (Raft's " + own0.ToString("0.###", CultureInfo.InvariantCulture) + "), the least now " + Num(bestL) + " m over the ground at " + Num(bestA.x - corner.x) + " " + Num(bestA.z - corner.z));
+				}
+				else
+					Log("  WARNING: zipto: the rope comes " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " and its near end is not on the ground (so not raised), nor does a tighter rope keep it " + Num(ZiplineEnds.LineClear) + " m over it, nor give it more room: move an end. Left as it is");
 				return 0f;
 			}
 			// (the room a rider wants d m before the far end: RiderClear, less where the rope's own fall to its floor gives less;
@@ -2751,11 +2788,23 @@ namespace DynamicIslands
 				}
 			if (why == null)
 			{
+				// (none clears: the raise and rope that leave it the most room, still warned - 11-21 c3z11, Caisson Yard's ridge
+				// line left as it was rode 3.2 m into the hill where c3z9's partial raise had cleared it)
+				float pr, ps, pl; Vector3 pa;
+				ZipBestPartial(line, near, far, ground, slacks, ZiplineEnds.MaxRaise, out pr, out ps, out pl, out pa);
+				if (pl <= lineLow + 0.05f)
+				{
+					Log("  WARNING: zipto: the rope comes " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " and no raise of its near end up to " + Num(ZiplineEnds.MaxRaise) +
+						" m, nor a tighter rope, keeps it " + Num(ZiplineEnds.LineClear) + " m over it or gives it more room - a line through a hill: move an end. Left as it is (raised " + Num(ZiplineEnds.MaxRaise) + " m: " + tried + ")");
+					return 0f;
+				}
 				Log("  WARNING: zipto: the rope comes " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " and no raise of its near end up to " + Num(ZiplineEnds.MaxRaise) +
-					" m, nor a tighter rope, keeps it " + Num(ZiplineEnds.LineClear) + " m over it - a line through a hill: move an end. Left as it is (raised " + Num(ZiplineEnds.MaxRaise) + " m: " + tried + ")");
-				return 0f;
+					" m, nor a tighter rope, keeps it " + Num(ZiplineEnds.LineClear) + " m over it - a line through a hill: move an end. The most room it can get set: raised " + Num(pr) + " m, slack " + Num(ps) +
+					", the least " + Num(pl) + " m over the ground at " + Num(pa.x - corner.x) + " " + Num(pa.z - corner.z) + " (" + tried + ")");
+				r = pr; slack = ps; low = pl; at = pa;
+				why = "the most room it can get (short of the rope's " + Num(ZiplineEnds.LineClear) + " m)";
 			}
-			if (slack != own)
+			if (!float.IsNaN(slack) && slack != own)
 			{
 				PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipSlack, slack.ToString("0.###", CultureInfo.InvariantCulture)));
 				ZiplineEnds.RopeBetween(line, far, near, slack);
@@ -2797,6 +2846,24 @@ namespace DynamicIslands
 			}
 			Log("  zipto: the rope came " + Num(lineLow) + " m over the ground - its near end raised " + Num(r) + " m for " + why + ", the least now " + Num(low) + " m over that at " + Num(at.x - corner.x) + " " + Num(at.z - corner.z) + deck);
 			return r;
+		}
+
+		/// <summary>zipto when no raise up to maxRaise nor a tighter rope clears (11-21): the raise (0.5 m steps) and slack of
+		/// <paramref name="slacks"/> that leave the rope the most room over the ground (the first NearSkip m and last FarSkip m
+		/// left out), the smaller raise and the earlier slack when within 5 cm. low: that room (under 0 when in the ground), at: where.</summary>
+		static void ZipBestPartial(MeshPath_Zipline_Landmark line, Vector3 near, Vector3 far, Func<float, float, float> ground, float[] slacks, float maxRaise, out float r, out float slack, out float low, out Vector3 at)
+		{
+			r = 0f; slack = slacks.Length > 0 ? slacks[0] : float.NaN; low = float.NegativeInfinity; at = near;
+			foreach (float sl in slacks)
+				for (int i = 0; i * 0.5f <= maxRaise + 0.01f; i++)
+				{
+					float rr = i * 0.5f;
+					List<Vector3> rope = ZiplineEnds.RopeBetween(line, far, near + Vector3.up * rr, sl);
+					if (rope.Count < 2) continue;
+					Vector3 a; float t;
+					float l = ZiplineEnds.RopeLowest(rope, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out a, out t);
+					if (l > low + 0.05f) { low = l; r = rr; slack = sl; at = a; }
+				}
 		}
 
 		/// <summary>zipto's raise: how far the near end goes up (0.1 m steps of at most 1 m, to ZiplineEnds.MaxRaise) for the

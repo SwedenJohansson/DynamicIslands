@@ -104,8 +104,10 @@ place UT_ElectricityIsland_Crane02 crane1 at -7 -7 h=1.9 sit scale=0.25 yaw=45
 call caisson x=-4.75 z=-4.75 w=1 h0=1.9 lv=2 a=caissons
 place Block_Ladder_Tier3 - at -4.75 -5.8 h=1.9 yaw=0
 place Block_Ladder_Tier3 - at -4.75 -5.8 h=4.34 yaw=0
-place ZiplinePath_Landmark zipcrane at -4.75 -4.75 h=6.96 yaw=0
-zipfrom zipcrane -4.75 -4.75 h=6.96
+# (11-21 c3z11: from the roof's middle its rope ran out through the roof's edge and the wall's top - it stands at the roof's
+# edge towards the far end, so the rope leaves over open air)
+place ZiplinePath_Landmark zipcrane at -4.2 -4.51 h=6.96 yaw=0
+zipfrom zipcrane -4.2 -4.51 h=6.96
 zipto zipcrane 8.5 1
 place UT_ElectricityIsland_Crane02 crane2 at 11 17 h=1.9 sit scale=0.25 yaw=225
 place Zone_Trigger crane2zone at 9.5 15.5 h=3
@@ -157,7 +159,7 @@ prop dview zone.message=From here the caissons stand in a row like stepping ston
 # the yard office in the north (its vending machine), the fallen mobile crane in the south-east
 call sk_ridge x1=-68 z1=-24 x2=-62 z2=12 h=3 top=5 r=8
 call sk_plants x=-65 z=-6 r=16 seed=10761
-call sk_zone x=-65 z=-6 al=cy_ridge id=cy_ridge r=7 msg="The spoil ridge - all the rock the yard dug out of the trench. The zipline from the top runs down to the yard."
+call sk_zone x=-65 z=-6 al=cy_ridge id=cy_ridge r=7 msg="The spoil ridge - all the rock the yard dug out of the trench. The zipline from the top runs down off its north end."
 call sk_cave x=-24 z=-56 h=2 yaw=180 al=cy_caverock chest=cy_cavechest
 call sk_zone x=-24 z=-61 al=cy_cave id=cy_cave r=4 msg="The powder cave: the yard kept its blasting charges in here, far from everything."
 call sk_ruin x=8 z=62 h=2 al=cy_ruin
@@ -169,10 +171,12 @@ place VP_Wagon01 - at 44 -40 ground sit yaw=30
 call sk_notebox x=60 z=-50 yaw=70 al=cy_wrecknote
 
 # --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
-clear from -65 -6 to -42 -8 r=3
+# (11-21 c3z11: east to -42 -8 its rope ran 6 m into the cave hill a world builds behind the powder cave - that hill reaches
+# from the cave up to about z 8 and x -65; it runs north off the ridge instead, along the hill's west edge and past its back)
+clear from -65 -6 to -57 18 r=3
 place ZiplinePath_Landmark cyridgezip at -65 -6 ground
 zipfrom cyridgezip -65 -6 ground
-zipto cyridgezip -42 -8
+zipto cyridgezip -57 18
 call vinecache x=-46 z=36 r=8 seed=10771 chest=cyvinechest vines=cyvines items=Rope*3;Nail*8;Bolt*2
 
 # --- Unique layer (10-24): the yard office's vending machine: it takes the Tangaroa tokens of the Overpass toll run
@@ -199,8 +203,9 @@ place ZiplinePath_Landmark cyzip at 11.35 -62.45 ground
 zipfrom cyzip 11.35 -62.45 ground
 prop cyzip zip.slack=-0.692
 # (11-21 c3z9: its last 6 m came down over the world's cave hill skin by the hill's foot - the rope 0.3 m into it, a rider
-# stopped 6.5 m short; the editor doesn't see that skin. The far end 4 m further out along the line, onto the flat yard, and a tight rope)
-zipto cyzip 5.3 -29.1
+# stopped 6.5 m short; the editor doesn't see that skin. The far end 4 m further out along the line, onto the flat yard, and a tight rope.
+# 11-21 c3z11, measured over the hill: still 0.1 m into it 3 m before that end - 4.5 m further out again)
+zipto cyzip 4.5 -24.7
 place Loot_ChestSmall cyledge at 1.82 -55.82 ground sit yaw=40
 place SmallRock_02 - at -4.89 -49.9 ground sit scale=0.5
 place SmallRock_02 - at -4.89 -49.9 ground y=0.6 sit scale=0.32 yaw=40
