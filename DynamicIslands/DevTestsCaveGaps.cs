@@ -1701,6 +1701,34 @@ namespace DynamicIslands
 			return lines;
 		}
 
+		/// <summary>
+		/// A cave loot piece set down on the lowest floor under its corners and middle, at most half its height: "sit" puts its
+		/// bottom on the floor under its middle, and on a sloping floor its low side stood in the air - Rootcellar Deep's stone on
+		/// its gallery's 22 degree ramp (11-21 cv38). True when it was moved down.
+		/// </summary>
+		static bool LootDown(GameObject go)
+		{
+			Renderer[] rs = PlacementOptions.ShapeRenderers(go);
+			if (rs.Length == 0) return false;
+			Bounds b = rs[0].bounds;
+			foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+			Physics.SyncTransforms();
+			float low = float.MaxValue;
+			foreach (Vector2 c in new[] { Vector2.zero, new Vector2(-1f, -1f), new Vector2(1f, -1f), new Vector2(-1f, 1f), new Vector2(1f, 1f) })
+			{
+				Vector3 from = new Vector3(b.center.x + c.x * b.extents.x * 0.8f, b.max.y + 0.3f, b.center.z + c.y * b.extents.z * 0.8f);
+				RaycastHit[] under = Physics.RaycastAll(from, Vector3.down, b.size.y + 2.3f, ~0, QueryTriggerInteraction.Ignore)
+					.Where(h => !h.collider.transform.IsChildOf(go.transform) && h.collider.GetComponentInParent<Network_Player>() == null)
+					.OrderBy(h => h.distance).ToArray();
+				if (under.Length > 0) low = Mathf.Min(low, under[0].point.y);
+			}
+			if (low == float.MaxValue) return false;
+			float down = Mathf.Min(b.min.y - low, b.size.y * 0.5f);
+			if (down < 0.02f) return false;
+			go.transform.position += Vector3.down * down;
+			return true;
+		}
+
 		static RaycastHit? FirstSolid(Vector3 from, Vector3 dir, float range)
 		{
 			RaycastHit[] hits = Physics.RaycastAll(from, dir, range, ~0, QueryTriggerInteraction.Ignore).Where(h => h.collider.GetComponentInParent<Network_Player>() == null).OrderBy(h => h.distance).ToArray();
@@ -1780,7 +1808,7 @@ namespace DynamicIslands
 			var kinds = new List<string>();
 			while (left.Any(x => x > 0))
 				for (int k = 0; k < left.Length; k++) if (left[k] > 0) { kinds.Add(kind[k]); left[k]--; }
-			int made = 0, mushN = 0, vineN = 0, skipped = 0;
+			int made = 0, mushN = 0, vineN = 0, skipped = 0, grounded = 0;
 			for (int k = 0; k < kinds.Count; k++)
 			{
 				var s = spots[Mathf.Min(spots.Count - 1, (int)((k + 0.5f) / kinds.Count * spots.Count))];
@@ -1798,6 +1826,7 @@ namespace DynamicIslands
 				string err = Place(obj, f.x, f.y, o, out e);
 				if (err != null) return "caveloot: " + err;
 				if (e == null) { skipped++; continue; }
+				if (LootDown(e.gameObject)) grounded++;
 				AddToGroup(group + "_loot", e);
 				made++;
 			}
@@ -1859,7 +1888,7 @@ namespace DynamicIslands
 				made++;
 			}
 			placed += made;
-			Log("  caveloot " + group + ": " + made + " placed on " + spots.Count + " dry spots inside" + (skipped > 0 ? ", " + skipped + " left out (no floor or roof)" : ""));
+			Log("  caveloot " + group + ": " + made + " placed on " + spots.Count + " dry spots inside" + (grounded > 0 ? ", " + grounded + " set down onto a sloping floor" : "") + (skipped > 0 ? ", " + skipped + " left out (no floor or roof)" : ""));
 			return null;
 		}
 

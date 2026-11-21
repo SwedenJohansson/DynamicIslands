@@ -999,6 +999,110 @@ namespace DynamicIslands
 			else Log("PASS: den walls " + walls.Count + ", each face lit both ways");
 		}
 
+		[ConsoleCommand(name: "CIDenWallSlope", docs: "Dev, in a world: each lone den wall's outside drawn as the hill (CaveTool.WallLikeHill) on a loaded island faces the hill's slope round it, not straight out - the mean of its faces' normals within 25 degrees of the skin's mean normal behind it (turned at most CaveTool.WallTilt from straight out): a wall facing level out drew as a dark rock panel in the hill's sand, Gravewell Shaft 11-21 cv38. CIDenWallSlope <island>")]
+		public static void DenWallSlopeCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
+			if (e == null) return;
+			var skins = e.Root.GetComponentsInChildren<MeshCollider>(true).Where(c => c.name == CaveMountain.SkinName).ToList();
+			var outs = e.Root.GetComponentsInChildren<CaveTool.HillWall>(true).Where(h => h.name == CaveTool.PlugOutName).ToList();
+			if (outs.Count == 0) { Fail("no den wall outside drawn as the hill (" + CaveTool.PlugOutName + ") on " + e.HostName); return; }
+			int bad = 0;
+			foreach (CaveTool.HillWall h in outs)
+			{
+				string den = h.transform.parent != null && h.transform.parent.parent != null ? h.transform.parent.parent.name : h.name;
+				MeshFilter mf = h.GetComponent<MeshFilter>();
+				Mesh m = mf != null ? mf.sharedMesh : null;
+				if (m == null || m.vertexCount == 0) { bad++; Log("  " + den + ": no mesh - BAD"); continue; }
+				Vector3 outward = h.transform.parent.forward, wallN = Vector3.zero, skinN = Vector3.zero;
+				Vector3[] v = m.vertices, n = m.normals;
+				int level = 0;
+				for (int i = 0; i < v.Length; i++)
+				{
+					Vector3 wn = h.transform.TransformDirection(n[i]).normalized;
+					wallN += wn;
+					if (wn.y < 0.2f) level++;
+					Vector3 w = h.transform.TransformPoint(v[i]);
+					RaycastHit hit; float best = float.MaxValue; Vector3 hn = Vector3.zero;
+					foreach (MeshCollider c in skins)
+						if (c.Raycast(new Ray(w + outward * 6f, -outward), out hit, 12f) && hit.distance < best && hit.normal.y > 0f) { best = hit.distance; hn = hit.normal; }
+					skinN += hn;
+				}
+				if (skinN.sqrMagnitude < 1e-6f) { Log("  " + den + ": no skin behind it - skipped"); continue; }
+				Vector3 want = Vector3.RotateTowards(outward, skinN.normalized, CaveTool.WallTilt * Mathf.Deg2Rad, 0f);
+				float off = Vector3.Angle(wallN, want);
+				bool ok = off < 25f;
+				if (!ok) bad++;
+				Log("  " + den + ": " + v.Length + " points, faces " + Vector3.Angle(wallN, outward).ToString("0") + " deg up from straight out, the skin's slope "
+					+ Vector3.Angle(skinN, outward).ToString("0") + " deg, off it by " + off.ToString("0") + ", facing level " + (100f * level / v.Length).ToString("0") + "%" + (ok ? "" : " - BAD"));
+			}
+			if (bad > 0) Fail(bad + " of " + outs.Count + " den walls facing away from the hill's slope");
+			else Log("PASS: den walls " + outs.Count + " facing the hill's slope");
+		}
+
+		[ConsoleCommand(name: "CIFrameSunk", docs: "Dev, in a world: tunnel mouth frames drawn as the hill (CaveTool.FramesLikeHill) on a loaded island - no frame point left under the ground within the lift band (CaveTool.FrameLiftable: 0-FrameSunk across the ground's slope): the cut ground poked through Sinkmarket Floor's mouth frame as walls, 11-21 cv29. Logs how many points lie deeper on purpose. CIFrameSunk <island>")]
+		public static void FrameSunkCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
+			if (e == null) return;
+			var frames = e.Root.GetComponentsInChildren<CaveTool.HillWall>(true).Where(h => h.name == CaveTool.MouthName).ToList();
+			if (frames.Count == 0) { Fail("no mouth frame drawn as the hill (" + CaveTool.MouthName + ") on " + e.HostName); return; }
+			int left = 0, deeper = 0, all = 0;
+			foreach (CaveTool.HillWall h in frames)
+			{
+				MeshFilter mf = h.GetComponent<MeshFilter>();
+				if (mf == null || mf.sharedMesh == null) continue;
+				int mine = 0;
+				foreach (Vector3 p in mf.sharedMesh.vertices)
+				{
+					Vector3 w = h.transform.TransformPoint(p); float g; Vector3 gn;
+					all++;
+					if (CaveTool.FrameLiftable(w, out g, out gn)) { left++; mine++; }
+					else if (w.y < g - 0.01f) deeper++;
+				}
+				if (mine > 0) Log("  " + (h.transform.parent != null ? h.transform.parent.name : h.name) + " at " + (h.transform.position - e.Position).ToString("F1") + ": " + mine + " point(s) still just under the ground - BAD");
+			}
+			Log("  " + frames.Count + " frame(s), " + all + " points, " + left + " just under the ground, " + deeper + " deeper (under the hill on purpose)");
+			if (left > 0) Fail(left + " frame point(s) left just under the ground: it shows through the frame");
+			else Log("PASS: mouth frames " + frames.Count + ", none just under the ground");
+		}
+
+		[ConsoleCommand(name: "CILootGround", docs: "Dev, in a world: the loot pieces (Pickup_Landmark_*, as caveloot lays them) on a loaded island stand on the floor - the floor under each one's corners no more than <gap> m (0.12) under its bottom: on a sloping floor the low side of a piece set by its middle stood in the air, Rootcellar Deep's ramp stone 11-21 cv38. CILootGround [gap=<m>] <island>")]
+		public static void LootGroundCommand(string[] args)
+		{
+			float gap = 0.12f;
+			var rest = new List<string>();
+			foreach (string a in args ?? new string[0])
+				if (a.StartsWith("gap=")) float.TryParse(a.Substring(4), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out gap); else rest.Add(a);
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", rest.ToArray()) });
+			if (e == null) return;
+			var loot = e.Root.GetComponentsInChildren<Transform>(true).Where(t => t.name.StartsWith("Pickup_Landmark_") && t.parent != null && !t.parent.name.StartsWith("Pickup_Landmark_")).ToList();
+			if (loot.Count == 0) { Fail("no loot piece (Pickup_Landmark_*) on " + e.HostName); return; }
+			int bad = 0, seen = 0;
+			foreach (Transform t in loot)
+			{
+				Renderer[] rs = t.GetComponentsInChildren<Renderer>(true).Where(r => r.enabled && !(r is ParticleSystemRenderer)).ToArray();
+				if (rs.Length == 0) continue;
+				Bounds b = rs[0].bounds;
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				float worst = 0f; bool any = false;
+				foreach (Vector2 c in new[] { Vector2.zero, new Vector2(-1f, -1f), new Vector2(1f, -1f), new Vector2(-1f, 1f), new Vector2(1f, 1f) })
+				{
+					Vector3 from = new Vector3(b.center.x + c.x * b.extents.x * 0.8f, b.max.y + 0.3f, b.center.z + c.y * b.extents.z * 0.8f);
+					RaycastHit[] under = Physics.RaycastAll(from, Vector3.down, b.size.y + 2.3f, ~0, QueryTriggerInteraction.Ignore)
+						.Where(h => !h.collider.transform.IsChildOf(t) && h.collider.GetComponentInParent<Network_Player>() == null).OrderBy(h => h.distance).ToArray();
+					if (under.Length == 0) continue;
+					any = true;
+					worst = Mathf.Max(worst, b.min.y - under[0].point.y);
+				}
+				if (!any) continue;
+				seen++;
+				if (worst > gap) { bad++; Log("  " + t.name + " at " + (t.position - e.Position).ToString("F1") + ": its low side " + worst.ToString("0.00") + " m over the floor - BAD"); }
+			}
+			if (bad > 0) Fail(bad + " of " + seen + " loot pieces standing in the air");
+			else Log("PASS: loot pieces " + seen + " on the floor (within " + gap.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " m)");
+		}
+
 		[ConsoleCommand(name: "CIRayLook", docs: "Dev, in a world: what is seen from a point toward another on a loaded island (points from the island's land centre: a play's picture point minus the play's offset; or 'picture' in their place: the last play picture's own camera - w15Z: points given with the offset added looked out to sea) - a fan of 9x9 rays over 30 degrees, each ray's first renderer it sees the face of (its mesh's triangles, colliders or not; a face seen from behind is culled, as drawn - w15Z: an inside-out CaveBack round the eye was reported for the wall in front); fan=<degrees> narrows or widens the fan (30); at=<u>,<v> points the fan at that spot of a play picture taken from the first point at the second (0..1 across and down, the camera's own field of view, 16:9) - for asking what one odd bit in a picture is; logs a 9x9 map of what each ray met (top row up, left column left) and each thing seen with its share of the rays, path, material, shader and textures. For finding what draws an odd look (the blue rock, 11-06). CIRayLook [fan=<degrees>] [at=<u>,<v>] <island> <x> <y> <z> <tx> <ty> <tz> | picture")]
 		public static void RayLookCommand(string[] args)
 		{
