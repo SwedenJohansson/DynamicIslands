@@ -1087,6 +1087,11 @@ namespace DynamicIslands.Editor
 					Vector3 fw = Vector3.Cross(wv[st[t + 1]] - wv[st[t]], wv[st[t + 2]] - wv[st[t]]);
 					for (int k = 0; k < 3; k++) wn[st[t + k]] += fw;
 				}
+				// (11-21 cv49: the points of the faces turned up - the faces that lie along the ground and can show through it. A
+				// point only on faces turned down or aside - the sill's underside, 0.6 m under its top - never shows: putting the
+				// ground back over those, then lifting them onto it, laid the ground flat in Sinkmarket Floor's frame faces, 590
+				// rays, CIFrameRing, and squares of it stood up through the mouth's floor)
+				bool[] up = FrameUpPoints(wv, st);
 				var laid = new bool[mv.Length];
 				for (int i = 0; i < mv.Length; i++)
 				{
@@ -1113,13 +1118,13 @@ namespace DynamicIslands.Editor
 				}
 				// (11-21 cv45: and the ground under its faces let down off them - Sinkmarket's cutting walls 1 cm behind its mouth's
 				// side walls showed through as a dark sawtooth)
-				GroundSunkUnderFrames += SinkGroundUnder(wv, st);
+				GroundSunkUnderFrames += SinkGroundUnder(wv, st, up);
 				// (11-21 cv47: and any point still just under the ground after that lifted onto it - 12 of Sinkmarket Floor's showed
 				// through its frame, CIFrameSunk)
 				for (int i = 0; i < mv.Length; i++)
 				{
 					float g; Vector3 n;
-					if (!FrameLiftable(wv[i], out g, out n)) continue;
+					if (!up[i] || !FrameLiftable(wv[i], out g, out n)) continue;
 					wv[i] = OnGround(wv[i], Vector3.zero, Vector3.zero, 0f, out gn[i]);
 					FrameRelifted++;
 				}
@@ -1227,6 +1232,24 @@ namespace DynamicIslands.Editor
 		/// FrameSinkBand of it: the heightmap's triangles bulged between the frame's laid points and stood 1 cm off its faces on
 		/// Sinkmarket Floor's 54 degree cutting walls, a dark sawtooth on both side walls of its mouth (CIFrameRing, 11-21 cv45).</summary>
 		public const float FrameGroundUnder = 0.1f;
+		/// <summary>A frame face turned up at least this much (its normal's y) lies along the ground: SinkGroundUnder lets the ground
+		/// down under it, and its points are the ones that can show through the ground (FrameUpPoints).</summary>
+		public const float FrameUpFace = 0.2f;
+
+		/// <summary>Which of a mouth frame's points (world points w, triangles st as drawn) are on a face turned up (FrameUpFace):
+		/// the ones the ground can show through. FramesLikeHill and CIFrameSunk.</summary>
+		public static bool[] FrameUpPoints(Vector3[] w, int[] st)
+		{
+			var up = new bool[w.Length];
+			for (int t = 0; t + 2 < st.Length; t += 3)
+			{
+				Vector3 n = Vector3.Cross(w[st[t + 1]] - w[st[t]], w[st[t + 2]] - w[st[t]]);
+				if (n.sqrMagnitude < 1e-10f || n.normalized.y < FrameUpFace) continue;
+				up[st[t]] = up[st[t + 1]] = up[st[t + 2]] = true;
+			}
+			return up;
+		}
+
 		/// <summary>Ground over a frame face by more than this (m, across it) is the frame under the hill on purpose: left.</summary>
 		public const float FrameSinkBand = 0.25f;
 		/// <summary>The most a heightmap point is let down under a frame face (m, straight down).</summary>
@@ -1242,7 +1265,7 @@ namespace DynamicIslands.Editor
 		/// it - the frame's laid points sit on the ground, but between them the ground's own triangles bulged into its faces. By
 		/// the frame's mesh and the terrain only (not the hill's grid). Returns how many heightmap points were let down.
 		/// </summary>
-		static int SinkGroundUnder(Vector3[] wv, int[] st)
+		static int SinkGroundUnder(Vector3[] wv, int[] st, bool[] up)
 		{
 			int sunk = 0;
 			foreach (Terrain t in Terrain.activeTerrains)
@@ -1259,7 +1282,7 @@ namespace DynamicIslands.Editor
 				{
 					Vector3 a = wv[st[k]], b = wv[st[k + 1]], c = wv[st[k + 2]];
 					Vector3 n = Vector3.Cross(b - a, c - a);
-					if (n.sqrMagnitude < 1e-10f || n.normalized.y < 0.2f) continue;
+					if (n.sqrMagnitude < 1e-10f || n.normalized.y < FrameUpFace) continue;
 					float lx = Mathf.Min(a.x, Mathf.Min(b.x, c.x)), hx = Mathf.Max(a.x, Mathf.Max(b.x, c.x));
 					float lz = Mathf.Min(a.z, Mathf.Min(b.z, c.z)), hz = Mathf.Max(a.z, Mathf.Max(b.z, c.z));
 					if (hx < o.x || lx > o.x + size.x || hz < o.z || lz > o.z + size.z) continue;
@@ -1307,9 +1330,11 @@ namespace DynamicIslands.Editor
 				// (11-21 cv46: the frame's points already just under the ground, before any is let down - a point that comes into
 				// that band only because the ground under it went down is the frame under the hill on purpose laid bare: 3563 of
 				// Sinkmarket Floor's frame points showed through it, CIFrameSunk)
+				// (11-21 cv49: only points of faces turned up - a point on the sill's underside never shows)
 				var near = new List<int>();
 				for (int v = 0; v < wv.Length; v++)
 				{
+					if (!up[v]) continue;
 					Vector3 p = wv[v];
 					if (p.x < o.x + x0 * sx - sx || p.x > o.x + x1 * sx + sx || p.z < o.z + z0 * sz - sz || p.z > o.z + z1 * sz + sz) continue;
 					float g; Vector3 gn;

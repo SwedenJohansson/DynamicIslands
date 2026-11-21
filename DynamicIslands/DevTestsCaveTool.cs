@@ -1053,16 +1053,20 @@ namespace DynamicIslands
 				MeshFilter mf = h.GetComponent<MeshFilter>();
 				if (mf == null || mf.sharedMesh == null) continue;
 				int mine = 0;
-				foreach (Vector3 p in mf.sharedMesh.vertices)
+				// (11-21 cv49: the points of faces turned up only, as FramesLikeHill - a point on the sill's underside never shows)
+				Vector3[] ws = mf.sharedMesh.vertices.Select(p => h.transform.TransformPoint(p)).ToArray();
+				bool[] up = CaveTool.FrameUpPoints(ws, mf.sharedMesh.triangles);
+				for (int v = 0; v < ws.Length; v++)
 				{
-					Vector3 w = h.transform.TransformPoint(p); float g; Vector3 gn;
+					if (!up[v]) continue;
+					Vector3 w = ws[v]; float g; Vector3 gn;
 					all++;
 					if (CaveTool.FrameLiftable(w, out g, out gn)) { left++; mine++; }
 					else if (w.y < g - 0.01f) deeper++;
 				}
 				if (mine > 0) Log("  " + (h.transform.parent != null ? h.transform.parent.name : h.name) + " at " + (h.transform.position - e.Position).ToString("F1") + ": " + mine + " point(s) still just under the ground - BAD");
 			}
-			Log("  " + frames.Count + " frame(s), " + all + " points, " + left + " just under the ground, " + deeper + " deeper (under the hill on purpose)");
+			Log("  " + frames.Count + " frame(s), " + all + " points on faces turned up, " + left + " just under the ground, " + deeper + " deeper (under the hill on purpose)");
 			if (left > 0) Fail(left + " frame point(s) left just under the ground: it shows through the frame");
 			else Log("PASS: mouth frames " + frames.Count + ", none just under the ground");
 		}
