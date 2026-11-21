@@ -1164,8 +1164,37 @@ namespace DynamicIslands
 			foreach (var kv in worst.OrderByDescending(k => k.Key).Take(10)) Log("  " + kv.Value + " - BAD");
 			foreach (var kv in fights.OrderByDescending(k => k.Key).Take(10)) Log("  " + kv.Value + " - FIGHT");
 			Log("  " + frames.Count + " frame(s), " + ta.Count + " faces, " + metFrame + " of " + (GX * GY) + " rays meet a frame face, " + bad + " see steep ground just in front of it, " + fight + " ground within " + FightNear.ToString("0.00", CultureInfo.InvariantCulture) + " m of it along it, " + deeper + " ground further in front (frame under the hill); " + CaveTool.GroundSunkUnderFrames + " ground point(s) let down under frame faces since start");
+			// (11-21 cv47: and every renderer of the frames' pieces in the hill's rock with its main normal map flat and its rock layer
+			// on faces turned up: Balboa's baked normal on our uvs drew black triangles all over Sinkmarket Floor's frame, and its
+			// sand layer a golden band in its mouth)
+			int looks = 0, lookBad = 0;
+			foreach (Transform pc in pieces.Distinct())
+				foreach (MeshRenderer r in pc.GetComponentsInChildren<MeshRenderer>(false))
+				{
+					if (r.GetComponent<CaveTool.HillWall>() == null) continue;
+					Material[] mats = r.sharedMaterials;
+					for (int i = 0; i < mats.Length; i++)
+					{
+						Material m = mats[i];
+						if (m == null || !m.HasProperty(CaveTool.MainNormal)) continue;
+						looks++;
+						var b = new MaterialPropertyBlock();
+						r.GetPropertyBlock(b, i);
+						Texture n = b.isEmpty ? null : b.GetTexture(CaveTool.MainNormal);
+						if (n == null) { r.GetPropertyBlock(b); n = b.isEmpty ? null : b.GetTexture(CaveTool.MainNormal); r.GetPropertyBlock(b, i); }
+						Texture top = b.isEmpty || !m.HasProperty("_GrassDiffuse") ? null : b.GetTexture("_GrassDiffuse");
+						Texture side = b.isEmpty || !m.HasProperty("_RockDiffuse") ? null : b.GetTexture("_RockDiffuse");
+						if (side == null && m.HasProperty("_RockDiffuse")) side = m.GetTexture("_RockDiffuse");
+						bool flat = n == Texture2D.normalTexture, rock = !m.HasProperty("_GrassDiffuse") || top != null && top == side;
+						if (flat && rock) continue;
+						lookBad++;
+						Log("  " + (r.transform.parent != null ? r.transform.parent.name + "/" : "") + r.name + " part " + i + ": " + (flat ? "" : "main normal map not flat (" + (n != null ? n.name : m.GetTexture(CaveTool.MainNormal) != null ? m.GetTexture(CaveTool.MainNormal).name : "none") + ") ") + (rock ? "" : "sand layer on faces turned up") + " - BAD");
+					}
+				}
+			Log("  " + looks + " part(s) of the frames' pieces in the hill's rock, " + lookBad + " not flat or not rock all over");
+			if (lookBad > 0) Fail(lookBad + " part(s) of a mouth frame's piece in the hill's rock with Balboa's baked normal map or its sand layer (black or golden patches)");
 			if (bad >= 3 || fight >= 3) Fail((bad >= 3 ? bad + " rays see steep ground standing just in front of a mouth frame's face (inside the ring)" : "") + (bad >= 3 && fight >= 3 ? "; " : "") + (fight >= 3 ? fight + " rays meet the ground within " + FightNear.ToString("0.00", CultureInfo.InvariantCulture) + " m of a mouth frame's face, lying along it (it fights through the frame)" : ""));
-			else Log("PASS: mouth frames " + frames.Count + ", no ground standing inside the ring (" + bad + " ray(s))");
+			else if (lookBad == 0) Log("PASS: mouth frames " + frames.Count + ", no ground standing inside the ring (" + bad + " ray(s)), their pieces' rock flat and rock all over");
 		}
 
 		[ConsoleCommand(name: "CIDenWallLook", docs: "Dev, in a world: each lone den wall's outside drawn as the hill (CaveTool.WallLikeHill) on a loaded island, pictured from 8 m or more out in front of the den (shot_denlook_<n>.png): the pixels it draws (seen changing when it is hidden) against the hill's skin round them (rays meet the skin first, within 8 px) - mean brightness within 14 (of 255) and at most 30% of its pixels darker than the skin's darkest tenth: a dark panel with two spikes round Gravewell Shaft's den mouth while CIDenWalls and CIDenWallSlope passed, 11-21 cv40. CIDenWallLook <island>")]

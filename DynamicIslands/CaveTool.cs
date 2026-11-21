@@ -1114,6 +1114,15 @@ namespace DynamicIslands.Editor
 				// (11-21 cv45: and the ground under its faces let down off them - Sinkmarket's cutting walls 1 cm behind its mouth's
 				// side walls showed through as a dark sawtooth)
 				GroundSunkUnderFrames += SinkGroundUnder(wv, st);
+				// (11-21 cv47: and any point still just under the ground after that lifted onto it - 12 of Sinkmarket Floor's showed
+				// through its frame, CIFrameSunk)
+				for (int i = 0; i < mv.Length; i++)
+				{
+					float g; Vector3 n;
+					if (!FrameLiftable(wv[i], out g, out n)) continue;
+					wv[i] = OnGround(wv[i], Vector3.zero, Vector3.zero, 0f, out gn[i]);
+					FrameRelifted++;
+				}
 				var nv = new List<Vector3>(st.Length); var nn = new List<Vector3>(st.Length); var nu = new List<Vector2>(st.Length); var tri = new List<int>(st.Length);
 				for (int t = 0; t + 2 < st.Length; t += 3)
 				{
@@ -1127,7 +1136,12 @@ namespace DynamicIslands.Editor
 						Vector3 w = k == 0 ? a : k == 1 ? b : d;
 						tri.Add(nv.Count);
 						nv.Add(c.InverseTransformPoint(w));
-						nn.Add(gn[vi] != Vector3.zero ? c.InverseTransformDirection(gn[vi]) : hasN ? mn[vi] : fn.normalized);
+						// (11-21 cv47: never a normal turned against its face as now drawn - a point moved onto the ground keeps its
+						// mesh normal, which could face away from the light: black triangles in Sinkmarket Floor's frame)
+						Vector3 vn = gn[vi] != Vector3.zero ? c.InverseTransformDirection(gn[vi]) : hasN ? mn[vi] : Vector3.zero;
+						Vector3 fl = c.InverseTransformDirection(fn).normalized;
+						if (vn.sqrMagnitude < 1e-6f || Vector3.Dot(vn, fl) < 0.2f) { vn = fl; FrameNormalsFlipped++; }
+						nn.Add(vn);
 						nu.Add((ax == 0 ? new Vector2(w.z, w.y) : ax == 1 ? new Vector2(w.x, w.z) : new Vector2(w.x, w.y)) / 14f);
 					}
 				}
@@ -1146,6 +1160,10 @@ namespace DynamicIslands.Editor
 				r.reflectionProbeUsage = skin.reflectionProbeUsage;
 				var block = new MaterialPropertyBlock();
 				skin.GetPropertyBlock(block);
+				// (11-21 cv47: and its main normal map flat: Balboa's baked one belongs to its own rocks' uvs - laid on ours, each
+				// triangle along its own axis, it tipped patches away from the light, black triangles all over Sinkmarket Floor's
+				// frame; the hill's skin turned up hides it, a frame's faces turned to the side don't)
+				FlatMainNormal(block, skin.sharedMaterial);
 				r.SetPropertyBlock(block);
 				r.SetPropertyBlock(block, 0);
 				// (round 4: and its rock layer on every face: Balboa's sand layer, drawn on faces turned up, laid the frame's steep
@@ -1178,8 +1196,12 @@ namespace DynamicIslands.Editor
 					r.reflectionProbeUsage = skin.reflectionProbeUsage;
 					var block = new MaterialPropertyBlock();
 					skin.GetPropertyBlock(block);
+					FlatMainNormal(block, skin.sharedMaterial);
 					for (int i = 0; i < r.sharedMaterials.Length; i++) r.SetPropertyBlock(block, i);
 					r.SetPropertyBlock(block);
+					// (11-21 cv47: and the rock layer on its faces turned up too, as the frame's: the join plates and the tunnel's floor
+					// wore Balboa's sand layer, a golden band in Sinkmarket Floor's mouth and a golden plate)
+					for (int i = 0; i < r.sharedMaterials.Length; i++) DigTunnel.SideRockOnly(r, i);
 					r.gameObject.AddComponent<HillWall>();
 					TunnelsLikeHill++;
 				}
@@ -1187,6 +1209,20 @@ namespace DynamicIslands.Editor
 			}
 			return done;
 		}
+		/// <summary>Mouth frame points lifted onto the ground after SinkGroundUnder (FramesLikeHill), all islands since Raft started.</summary>
+		public static int FrameRelifted;
+		/// <summary>Mouth frame corners whose normal was turned against their face as drawn, given the face's (FramesLikeHill).</summary>
+		public static int FrameNormalsFlipped;
+
+		/// <summary>A block's main normal map (Balboa's Mountains, _MainNormal) set flat, when the material has one.</summary>
+		public static void FlatMainNormal(MaterialPropertyBlock b, Material m)
+		{
+			if (b != null && m != null && m.HasProperty(MainNormal)) b.SetTexture(MainNormal, Texture2D.normalTexture);
+		}
+
+		/// <summary>Balboa's Mountains shader's baked main normal map (FlatMainNormal; CIFrameRing checks the frames have it flat).</summary>
+		public const string MainNormal = "_MainNormal";
+
 		/// <summary>How far under a mouth frame's face turned up (m, across it) FramesLikeHill keeps the island ground standing within
 		/// FrameSinkBand of it: the heightmap's triangles bulged between the frame's laid points and stood 1 cm off its faces on
 		/// Sinkmarket Floor's 54 degree cutting walls, a dark sawtooth on both side walls of its mouth (CIFrameRing, 11-21 cv45).</summary>
@@ -1291,7 +1327,10 @@ namespace DynamicIslands.Editor
 					}
 				if (!any) continue;
 				d.SetHeights(x0, z0, heights);
-				// (any buried point now in the lift band: the heightmap points of its cell back as they were, until none is)
+				// (any buried point now in the lift band: the heightmap points of its cell raised back only as far as keeps it just
+				// under the band - FrameSunk and a little across the slope - never over where they were. 11-21 cv47: putting them
+				// all the way back undid 47 of 49: the sill's underside 0.6 m under its top came into the band wherever the ground
+				// under the top went down 0.1 m, and 573 rays met the ground lying in Sinkmarket Floor's frame faces again)
 				for (int round = 0; round < 4; round++)
 				{
 					bool back = false;
@@ -1299,13 +1338,18 @@ namespace DynamicIslands.Editor
 					{
 						float g; Vector3 gn;
 						if (!FrameLiftable(wv[v], out g, out gn)) continue;
+						float need = wv[v].y + (FrameSunk + 0.02f) / Mathf.Max(gn.y, 0.2f);
+						float needH = Mathf.Clamp01((need - o.y) / size.y);
 						int ci = Mathf.FloorToInt((wv[v].x - o.x) / sx) - x0, cj = Mathf.FloorToInt((wv[v].z - o.z) / sz) - z0;
 						for (int dj = 0; dj <= 1; dj++)
 							for (int di = 0; di <= 1; di++)
 							{
 								int ii = ci + di, jj = cj + dj;
-								if (ii < 0 || jj < 0 || ii >= w || jj >= h || heights[jj, ii] == was[jj, ii]) continue;
-								heights[jj, ii] = was[jj, ii]; back = true; sunk--; FrameSinkKeptBack++;
+								if (ii < 0 || jj < 0 || ii >= w || jj >= h || heights[jj, ii] >= was[jj, ii]) continue;
+								float to = Mathf.Min(was[jj, ii], Mathf.Max(heights[jj, ii], needH));
+								if (to <= heights[jj, ii]) continue;
+								heights[jj, ii] = to; back = true; FrameSinkKeptBack++;
+								if (to >= was[jj, ii]) sunk--;
 							}
 					}
 					if (!back) break;
