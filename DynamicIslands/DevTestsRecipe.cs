@@ -2567,7 +2567,7 @@ namespace DynamicIslands
 							// (over the cave hill a world builds over the island's cave pieces, made now to measure against - 11-21 c3z9)
 							GameObject zipHill = zipPending.Any(ze => ze != null) ? CaveMountain.Preview(PlacedEditorObjects(), terraineditor.terrain != null ? terraineditor.terrain.transform.position : Vector3.zero) : null;
 							if (zipHill != null) Log("  zipto: ropes measured over the cave hill a world builds over the island's caves too");
-							try { foreach (EditorGameObject ze in zipPending) if (ze != null) { ZipClearGround(ze); GameObject fd; ZipFarClear(ze, out fd); } }
+							try { foreach (EditorGameObject ze in zipPending) if (ze != null) { ZipClearGround(ze); GameObject fd; ZipFarClear(ze, out fd); ZipShaveGround(ze, zipHill); } }
 							finally { if (zipHill != null) UnityEngine.Object.DestroyImmediate(zipHill); Physics.SyncTransforms(); }
 							zipPending.Clear();
 							// (Raft's sea finds the recipe's own terrain strokes carried out of the water - a mountain raised over the shelf
@@ -3124,6 +3124,9 @@ namespace DynamicIslands
 		/// <summary>Half the width of the deck ZipFarClear stands a raised far floor on (Raft's floor block, 1.5 m), a little over.</summary>
 		const float FarDeckHalf = 0.8f;
 
+		/// <summary>How far before its last FarSkip m ZipFarClear also wants the ground check's LineLow over the cave hill's skin.</summary>
+		const float FarSkinBefore = 3f;
+
 		static string ZipFarClear(EditorGameObject e, out GameObject deck)
 		{
 			deck = null;
@@ -3154,10 +3157,15 @@ namespace DynamicIslands
 					for (int k = 0; k <= steps; k++)
 					{
 						Vector3 p = Vector3.Lerp(rope[i], rope[i + 1], k / (float)steps);
-						if (new Vector2(p.x - near.x, p.z - near.z).magnitude < len - ZiplineEnds.FarSkip) continue;
+						float dn = new Vector2(p.x - near.x, p.z - near.z).magnitude;
+						if (dn < len - ZiplineEnds.FarSkip - FarSkinBefore) continue;
 						Collider c;
 						float g = ZipGroundAt(e, p.x, p.z, out c);
-						w = Mathf.Min(w, p.y - g - (c != null && c.name == CaveMountain.SkinName ? ZiplineEnds.FarEndClear : ZiplineEnds.FarEndLow));
+						bool skin = c != null && c.name == CaveMountain.SkinName;
+						// (the FarSkinBefore m before them, over the cave hill's skin: the ground check's LineLow - ZipShaveGround cuts
+						// the land under a rope, never the hill; 11-21 c3z38 Highpine's rope 0.36 m over the skin 3 m from its end)
+						if (dn < len - ZiplineEnds.FarSkip) { if (skin) w = Mathf.Min(w, p.y - g - ZiplineEnds.LineLow - 0.05f); continue; }
+						w = Mathf.Min(w, p.y - g - (skin ? ZiplineEnds.FarEndClear : ZiplineEnds.FarEndLow));
 						if (!float.IsNaN(deckTop) && Mathf.Abs(p.x - fw.x) <= FarDeckHalf && Mathf.Abs(p.z - fw.z) <= FarDeckHalf) w = Mathf.Min(w, p.y - deckTop - ZiplineEnds.FarEndLow);
 					}
 				}
@@ -3690,6 +3698,137 @@ namespace DynamicIslands
 
 		/// <summary>Place's option (set by the place step for an unnamed object, and by line): leave it out if it is under the ground whole.</summary>
 		const string SkipBuried = "\u0001skipburied";
+
+		/// <summary>The cut ZipShaveGround makes under a rope: the land LineClear m under the rope within ShaveCore m of it, its
+		/// sides rising ShaveSide m a metre out from there, never more than ShaveMost m deep (c3 round 4, 11-21).</summary>
+		const float ShaveCore = 1.5f, ShaveSide = 0.7f, ShaveMost = 6f;
+
+		/// <summary>
+		/// zipto's last step (c3 round 4, 11-21 c3z38: ropes on 10 islands 0.03-3.97 m into a hump between their ends, or 0.1-0.4 m
+		/// short of the ground check's LineLow, after ZipClearGround had raised their near ends the most it does or found them on a
+		/// tower, and pulled their far ends in as far as they go): the land under the rope, measured as the ground check measures it
+		/// (the land and the cave hill a world builds - not what stands on them - its first NearSkip and last FarSkip m left out),
+		/// is cut down to LineClear m under the rope where it comes nearer than LineLow: a pass through the hump, its sides sloping
+		/// out, painted as the painter paints a slope. The land under what stands on it (the line's own floors, decks, posts, a cave,
+		/// a building) and under the cave hill's skin stays as it is - trees and bushes don't hold it when the recipe reseats them
+		/// (their reseat after this sets them on the cut); nothing goes under the sea. Null when the rope was clear; else the log's
+		/// words (a WARNING when the rope still comes under LineLow).
+		/// </summary>
+		static string ZipShaveGround(EditorGameObject e, GameObject hill)
+		{
+			Terrain land = terraineditor.terrain;
+			MeshPath_Zipline_Landmark line = e != null ? e.GetComponentInChildren<MeshPath_Zipline_Landmark>(true) : null;
+			Vector3 near, far;
+			if (land == null || land.terrainData == null || line == null) return null;
+			Physics.SyncTransforms();
+			if (!ZiplineEnds.Ends(e.gameObject, e.Props, land.transform.position, out near, out far)) return null;
+			float slack;
+			if (!float.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipSlack) ?? "", NumberStyles.Float, CultureInfo.InvariantCulture, out slack) || float.IsNaN(slack) || float.IsInfinity(slack) || slack == 0f) slack = float.NaN;
+			List<Vector3> rope = ZiplineEnds.RopeBetween(line, far, near, slack);
+			if (rope.Count < 2) return null;
+			List<Collider> skins = hill != null ? ZiplineEnds.CaveSkins(hill.transform) : new List<Collider>();
+			Func<float, float, float> landY = (x, z) => land.SampleHeight(new Vector3(x, 0f, z)) + land.transform.position.y;
+			Func<float, float, float> ground = ZiplineEnds.OverSkins(landY, skins);
+			Vector3 at; float atT;
+			float low0 = ZiplineEnds.RopeLowest(rope, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out at, out atT);
+			if (low0 >= ZiplineEnds.LineLow + 0.1f) return null;
+			TerrainData td = land.terrainData;
+			int res = td.heightmapResolution, ares = td.alphamapResolution;
+			Vector3 tp = land.transform.position, size = td.size;
+			float sea = tp.y + DynamicIslands.EditorWaterLevel, sx = size.x / (res - 1), sz = size.z / (res - 1), core = Mathf.Max(ShaveCore, 1.5f * Mathf.Max(sx, sz));
+			int reachX = Mathf.CeilToInt((core + ShaveMost / ShaveSide) / sx) + 1, reachZ = Mathf.CeilToInt((core + ShaveMost / ShaveSide) / sz) + 1;
+			// (what stands on the land holds it: every shown object whose foot is at or in the land, its bounds widened 1 m - the
+			// line's own rope left out, its small pieces (floors, posts) not; trees and bushes left out when the reseat follows)
+			var keep = new List<Bounds>();
+			foreach (EditorGameObject o in UnityEngine.Object.FindObjectsOfType<EditorGameObject>())
+			{
+				if (o == null || !o.gameObject.activeInHierarchy) continue;
+				if (recipeReseat && o != e && (Tuft.IsMatch(o.GameObjectName ?? "") || (Trunk.IsMatch(o.GameObjectName ?? "") && o.transform.up.y >= 0.5f))) continue;
+				IEnumerable<Renderer> rs = o.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled);
+				if (o == e) rs = rs.Where(r => Mathf.Max(r.bounds.size.x, r.bounds.size.z) < 4f);
+				IEnumerable<Collider> cs = o == e ? Enumerable.Empty<Collider>() : o.GetComponentsInChildren<Collider>(false).Where(c => c.enabled && !c.isTrigger);
+				foreach (Bounds b0 in rs.Select(r => r.bounds).Concat(cs.Select(c => c.bounds)))
+				{
+					Bounds b = b0;
+					if (b.min.y > landY(b.center.x, b.center.z) + 0.5f) continue;
+					b.Expand(new Vector3(2f, 0f, 2f));
+					keep.Add(b);
+				}
+			}
+			float[,] before = td.GetHeights(0, 0, res, res), after = (float[,])before.Clone();
+			float len = new Vector2(far.x - near.x, far.z - near.z).magnitude;
+			int onHill = 0;
+			var deep = new HashSet<int>();
+			var cut = new HashSet<int>();
+			var held = new HashSet<int>();
+			var free = new HashSet<int>();
+			for (int i = 0; i + 1 < rope.Count; i++)
+			{
+				Vector3 a = rope[i], b = rope[i + 1];
+				int steps = Mathf.Max(1, Mathf.CeilToInt(new Vector2(b.x - a.x, b.z - a.z).magnitude / 0.5f));
+				for (int k = 0; k <= steps; k++)
+				{
+					Vector3 p = Vector3.Lerp(a, b, k / (float)steps);
+					float fromNear = new Vector2(p.x - near.x, p.z - near.z).magnitude;
+					if (fromNear < ZiplineEnds.NearSkip || fromNear > len - ZiplineEnds.FarSkip) continue;
+					float top = p.y - ZiplineEnds.LineClear;
+					if (ground(p.x, p.z) <= p.y - ZiplineEnds.LineLow - 0.1f) continue;
+					if (ground(p.x, p.z) > landY(p.x, p.z) + 0.01f) { onHill++; continue; }
+					int cx = Mathf.RoundToInt((p.x - tp.x) / sx), cz = Mathf.RoundToInt((p.z - tp.z) / sz);
+					for (int dz = -reachZ; dz <= reachZ; dz++)
+						for (int dx = -reachX; dx <= reachX; dx++)
+						{
+							int x = cx + dx, z = cz + dz, id = z * res + x;
+							if (x < 1 || z < 1 || x > res - 2 || z > res - 2 || held.Contains(id)) continue;
+							float wx = tp.x + x * sx, wz = tp.z + z * sz, d = new Vector2(wx - p.x, wz - p.z).magnitude;
+							float h0 = before[z, x] * size.y + tp.y, now = after[z, x] * size.y + tp.y;
+							float target = Mathf.Max(top + Mathf.Max(0f, d - core) * ShaveSide, sea + 0.3f);
+							if (h0 - target > ShaveMost) { target = h0 - ShaveMost; deep.Add(id); }
+							if (target >= now - 0.005f) continue;
+							if (!free.Contains(id))
+							{
+								if (keep.Any(kb => wx >= kb.min.x && wx <= kb.max.x && wz >= kb.min.z && wz <= kb.max.z)) { held.Add(id); continue; }
+								free.Add(id);
+							}
+							after[z, x] = (target - tp.y) / size.y;
+							cut.Add(id);
+						}
+				}
+			}
+			Vector3 corner = new Vector3(TopFrame.Origin.x, 0f, TopFrame.Origin.y);
+			string where0 = Num(at.x - corner.x) + " " + Num(at.z - corner.z);
+			if (cut.Count == 0)
+				return LogWords("  WARNING: zipto: its rope comes " + Num(low0) + " m over the ground at " + where0 + " and the land under it can't be cut (" + held.Count + " points under objects, " + onHill +
+					" rope points over the cave hill's skin): move an end");
+			float[,,] alphaBefore = td.GetAlphamaps(0, 0, ares, ares);
+			float[,] maskBefore = terraineditor.paintMask != null ? (float[,])terraineditor.paintMask.Clone() : null;
+			td.SetHeights(0, 0, after);
+			Vector3 min = new Vector3(float.MaxValue, 0f, float.MaxValue), max = new Vector3(float.MinValue, 0f, float.MinValue);
+			float most = 0f;
+			foreach (int i in cut)
+			{
+				int x = i % res, z = i / res;
+				float wx = tp.x + x * sx, wz = tp.z + z * sz;
+				most = Mathf.Max(most, (before[z, x] - after[z, x]) * size.y);
+				min = Vector3.Min(min, new Vector3(wx, 0f, wz)); max = Vector3.Max(max, new Vector3(wx, 0f, wz));
+				if (terraineditor.paintMask == null) continue;
+				int ax = Mathf.FloorToInt((wx - tp.x) / size.x * ares), az = Mathf.FloorToInt((wz - tp.z) / size.z * ares);
+				for (int az2 = az - 1; az2 <= az + 1; az2++)
+					for (int ax2 = ax - 1; ax2 <= ax + 1; ax2++)
+						if (ax2 >= 0 && az2 >= 0 && ax2 < terraineditor.paintMask.GetLength(1) && az2 < terraineditor.paintMask.GetLength(0)) terraineditor.paintMask[az2, ax2] = 0f;
+			}
+			TerrainPainter.PaintWorldArea(land, sea, min - new Vector3(3f, 0f, 3f), max + new Vector3(3f, 0f, 3f), terraineditor.paintMask);
+			CommandUndoRedo.UndoRedoManager.Insert(new TerrainStrokeCommand(td, new RectInt(0, 0, res, res), before, new RectInt(0, 0, ares, ares), alphaBefore, maskBefore, terraineditor.paintMask));
+			Physics.SyncTransforms();
+			Vector3 at1; float t1;
+			float low1 = ZiplineEnds.RopeLowest(rope, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out at1, out t1);
+			string words = "zipto: its rope came " + Num(low0) + " m over the ground at " + where0 + " - the land under it cut down up to " + Num(most) + " m (" + cut.Count + " points, " +
+				Num(min.x - corner.x) + " " + Num(min.z - corner.z) + " .. " + Num(max.x - corner.x) + " " + Num(max.z - corner.z) + ")" + (held.Count > 0 ? ", " + held.Count + " points held by objects on them" : "") +
+				(onHill > 0 ? ", " + onHill + " rope points over the cave hill's skin" : "") + (deep.Count > 0 ? ", " + deep.Count + " points held at " + Num(ShaveMost) + " m deep" : "") + "; the least now " + Num(low1) + " m at " + Num(at1.x - corner.x) + " " + Num(at1.z - corner.z);
+			return LogWords(low1 < ZiplineEnds.LineLow ? "  WARNING: " + words + ": still under the ground check's " + Num(ZiplineEnds.LineLow) + " m - move an end" : "  " + words);
+		}
+
+		static string LogWords(string words) { Log(words); return words; }
 
 		/// <summary>Pieces the recipe left out because they were under the ground whole (this run).</summary>
 		static int leftOutBuried;

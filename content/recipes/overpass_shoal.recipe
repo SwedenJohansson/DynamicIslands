@@ -180,7 +180,8 @@ zipfrom opzip 60.75 -42.75 h=36.73
 place Placeable_Lantern_Metal opcam at 60.4 -43.4 h=36.73 sit
 place Placeable_Lantern_Metal oplure at 104 -24 h=-5 drop scale=1.6
 place TP_Moontown_Barrel04 opscorch at 84 -4 ground scale=0.8
-place TP_Moontown_Barrel04 opscorch at 79 5 ground yaw=60 scale=0.7
+# (c3 round 4, 11-21 c3z38: at 79 5 it stood on a steep wall, 2 of its corners over a 1.15 m drop - beside the other one now)
+place TP_Moontown_Barrel04 opscorch at 85.4 -2.8 ground yaw=60 scale=0.7
 zipto opzip 30 -21
 # (REACH 10-30 G1: the cache stood 3 m up a sheer bit of Toll Hill's side over the last ledge anyone stands on - it is
 # now on that ledge, against the rock)

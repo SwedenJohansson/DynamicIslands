@@ -145,7 +145,8 @@ call hw_zone x=-7.74 z=54.34 al=fb_trailz id=fb_trail r=5 msg="The trail up Cind
 call hw_zone x=0 z=76 al=fb_summitz id=fb_summit r=8 h=1 msg="The top of Cinder Knoll. The whole island below you."
 call hw_mast x=-3 z=78 h0=20 lv=5 a=fb_mast chest=fb_topchest top=Placeable_Flag_03
 place ZiplinePath_Landmark fb_zip at 3.2 73.4 h=21.35
-zipto fb_zip -26 -4
+# (c3 round 4, 11-21: the far end where the save moved it back in c3z38 - its rope was in the ground between the ends)
+zipto fb_zip -20.18 15.56
 place Creature_Goat fb_goats at -3.74 57.34 ground
 prop fb_goats creature.count=2
 call ar_cave x=56 z=-64 h=3 yaw=0 al=fb_caverock chest=fb_cavechest

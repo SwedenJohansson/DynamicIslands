@@ -135,7 +135,9 @@ call hw_zone x=-15.15 z=-31.47 al=fh_trailz id=fh_trail r=5 msg="The trail up Lo
 call hw_zone x=-26 z=-54 al=fh_summitz id=fh_summit r=8 h=1 msg="The top of Lookout Hill. The whole island below, the city beyond it, and the Freehold lookout still higher."
 call hw_mast x=-23.17 z=-56.83 h0=26 lv=7 a=fh_mast chest=fh_topchest top=Placeable_Flag_05
 place ZiplinePath_Landmark fh_zip at -25.26 -52.37 h=27.35
-zipto fh_zip -55.17 -24.83
+# (c3 round 4, 11-21: the far end where the save moved it back in c3z38 - its rope was in the ground between the ends)
+zipto fh_zip -54.09 -27.29
+prop fh_zip zip.slack=-1.73
 place Loot_ChestSmall fh_ledge at -25.09 -66.07 ground sit yaw=355.71
 call treasure x=-23.17 z=-51.17 r=5 n=1 seed=14038 kind=0
 prop treasure14038 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1

@@ -173,7 +173,9 @@ call ar_plants_tropical x=40 z=-56 r=14 seed=14381
 # machete from Triangulation Rocks cuts the vines over a hidden chest, and a zipline from the ridge top is the quick way back down
 clear from -37.0 7.7 to -16 6 r=2.5
 place ZiplinePath_Landmark ridgezip at -41 8 ground
-zipto ridgezip -16 6
+# (c3 round 4, 11-21: the far end where the save moved it back in c3z38 - its rope was in the ground between the ends)
+zipto ridgezip -25.27 6.87
+prop ridgezip zip.slack=-1.73
 
 # --- Unique layer (10-24): current_locks device - see SL14_progress.md UNIQUE ISLANDS
 call enginecache x=-21 z=-69 yaw=0 alias=dredgeengine locker=dredgelocker items=TitaniumOre*2;MetalIngot*3;Bolt*4 kx=-36 kz=60 kr=12 seed=14671 crate=dredgefuel
