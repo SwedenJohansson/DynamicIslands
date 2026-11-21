@@ -666,6 +666,28 @@ namespace DynamicIslands.Editor
 		public static float WallTiltSeen;
 		/// <summary>How many of the last WallLikeHill's outside points in the hill's opening were brought flush with the skin (log, tests).</summary>
 		public static int WallFlushed;
+		/// <summary>How many of the last WallLikeHill's outside faces took the texture mapping of the skin behind them, and how many of its corners the skin's own normal (log, tests).</summary>
+		public static int WallSkinMapped, WallSkinLit;
+		/// <summary>How far behind a den wall's outside face (m) the hill's skin is looked for to map and light it as the skin (WallLikeHill).</summary>
+		const float WallSkinBehind = 2.5f;
+		/// <summary>How near the skin (m, either side) a den wall's outside corner takes the skin's own normal (WallLikeHill).</summary>
+		const float WallSkinLitNear = 0.75f;
+
+		/// <summary>The skin's texture side for a triangle of it (CaveMountain.Quad: 0 maps (z, y), 1 (x, z), 2 (x, y), in its build
+		/// space, over 14 m) found from its corners and their UVs, and the UV offset of that build space; -1 when none fits.</summary>
+		static int SkinSide(Vector3 v0, Vector3 v1, Vector3 v2, Vector2 u0, Vector2 u1, Vector2 u2, out Vector2 off)
+		{
+			int best = -1; float bestErr = float.MaxValue;
+			for (int k = 0; k < 3; k++)
+			{
+				float err = ((SkinSideUv(k, v1 - v0) - (u1 - u0)).magnitude + (SkinSideUv(k, v2 - v0) - (u2 - u0)).magnitude);
+				if (err < bestErr) { bestErr = err; best = k; }
+			}
+			off = best >= 0 ? u0 - SkinSideUv(best, v0) : Vector2.zero;
+			return bestErr < 0.02f ? best : -1;
+		}
+
+		static Vector2 SkinSideUv(int k, Vector3 p) => (k == 1 ? new Vector2(p.x, p.z) : k == 0 ? new Vector2(p.z, p.y) : new Vector2(p.x, p.y)) / 14f;
 		/// <summary>Over how far from the arch's rim (m, across the wall) the wall's points come onto the skin's surface (WallLikeHill).</summary>
 		const float WallFlushFade = 1.2f;
 		/// <summary>How far from the arch's rim (m) the wall's outside stays exactly where it was, to meet the way in's sleeve (WallLikeHill).</summary>
@@ -742,6 +764,30 @@ namespace DynamicIslands.Editor
 			// whole wall stretched the funnel's sides into stripes - the den's "zebra" frame, 11-08 user)
 			Vector3[] mv = m.vertices, mn = m.normals;
 			var nv = new List<Vector3>(); var nn = new List<Vector3>(); var nu = new List<Vector2>();
+			// (11-21 cv44: each face mapped as the skin's triangle behind it maps, in the skin's own space, and each corner at the
+			// skin lit by the skin's own normal there: mapped by the side the wall's face looked at most, in world metres, and lit as
+			// one slope, it still drew as a panel of smaller, skewed texture with hard edges round Gravewell Shaft's den opening)
+			Mesh skm = skinCol != null ? skinCol.sharedMesh : null;
+			Vector3[] skv = null, skn = null; Vector2[] sku = null; int[] skt = null;
+			if (skm != null && skm.isReadable) { skv = skm.vertices; skn = skm.normals; sku = skm.uv; skt = skm.triangles; }
+			bool skinMap = skv != null && sku != null && skn != null && sku.Length == skv.Length && skn.Length == skv.Length && skt != null;
+			Transform skT = skinCol != null ? skinCol.transform : null;
+			WallSkinMapped = 0; WallSkinLit = 0;
+			// (the skin's normal at a point near it, in the outside's space; null when the skin is not within WallSkinLitNear)
+			Func<Vector3, Vector3?> SkinNormal = w =>
+			{
+				RaycastHit sh;
+				if (!skinMap || !skinCol.Raycast(new Ray(w + outward * 3f, -outward), out sh, 3f + WallSkinBehind)) return null;
+				if (Mathf.Abs(Vector3.Dot(sh.point - w, outward)) > WallSkinLitNear) return null;
+				int ti = sh.triangleIndex * 3;
+				if (ti < 0 || ti + 2 >= skt.Length) return null;
+				Vector3 bc = sh.barycentricCoordinate;
+				Vector3 ln = skn[skt[ti]] * bc.x + skn[skt[ti + 1]] * bc.y + skn[skt[ti + 2]] * bc.z;
+				if (ln.sqrMagnitude < 1e-8f) return null;
+				Vector3 wn = skT.TransformDirection(ln).normalized;
+				if (Vector3.Dot(wn, outward) < 0f) wn = -wn;
+				return outT.InverseTransformDirection(wn).normalized;
+			};
 			// (r84: bits of the outside not joined to the rest - its corners welded by place - and under FlakeArea m2 dropped:
 			// they hung in the air off the hill's side as rock flakes, Balboa Remade mouth 1, 11-11 user)
 			var weld = new Dictionary<Vector3Int, int>();
@@ -876,14 +922,28 @@ namespace DynamicIslands.Editor
 					// (a triangle at the skin drawn plain, as the hill: where it still pokes through between its corners its
 					// shade band showed as a square patch, r30)
 					int into = nearSkin ? 0 : s;
+					int side = -1; Vector2 sideOff = Vector2.zero;
+					if (skinMap)
+					{
+						RaycastHit gh; Vector3 g = (a + b + c) / 3f;
+						if (skinCol.Raycast(new Ray(g + outward * 3f, -outward), out gh, 3f + WallSkinBehind) && gh.triangleIndex >= 0 && gh.triangleIndex * 3 + 2 < skt.Length)
+						{
+							int ti = gh.triangleIndex * 3;
+							side = SkinSide(skv[skt[ti]], skv[skt[ti + 1]], skv[skt[ti + 2]], sku[skt[ti]], sku[skt[ti + 1]], sku[skt[ti + 2]], out sideOff);
+						}
+					}
+					if (side >= 0) WallSkinMapped++;
 					foreach (int k in new[] { 0, 1, 2 })
 					{
 						int vi = st[t + k];
 						Vector3 w = k == 0 ? a : k == 1 ? b : c;
 						subs[into].Add(nv.Count);
 						nv.Add(outT.InverseTransformPoint(w));
-						nn.Add(faceLocal);
-						nu.Add((ax == 0 ? new Vector2(w.z, w.y) : ax == 1 ? new Vector2(w.x, w.z) : new Vector2(w.x, w.y)) / 14f);
+						Vector3? sn = SkinNormal(w);
+						if (sn.HasValue) WallSkinLit++;
+						nn.Add(sn ?? faceLocal);
+						nu.Add(side >= 0 ? SkinSideUv(side, skT.InverseTransformPoint(w)) + sideOff
+							: (ax == 0 ? new Vector2(w.z, w.y) : ax == 1 ? new Vector2(w.x, w.z) : new Vector2(w.x, w.y)) / 14f);
 					}
 				}
 			}
@@ -892,6 +952,7 @@ namespace DynamicIslands.Editor
 			m.SetVertices(nv);
 			m.SetNormals(nn);
 			m.SetUVs(0, nu);
+			Debug.Log("[CUSTOM ISLANDS] Plug " + den.name + ": " + WallSkinMapped + " outside face(s) mapped as the skin behind them, " + WallSkinLit + " corner(s) lit by the skin's normal");
 			m.subMeshCount = subs.Length;
 			for (int s = 0; s < subs.Length; s++) m.SetTriangles(subs[s], s);
 			m.RecalculateBounds();
@@ -1055,6 +1116,10 @@ namespace DynamicIslands.Editor
 		public const float FrameSunkDown = 1.5f;
 		/// <summary>How far over the ground (m) a lifted frame point is laid, so the ground doesn't flicker through it.</summary>
 		public const float FrameOver = 0.03f;
+		/// <summary>How far over a steep ground (m, across it) a frame point lifted or laid out onto it is laid: the ground's own
+		/// triangles bulge between the frame's points, and at FrameOver they stood 2-4 cm in front of Sinkmarket Floor's frame
+		/// faces as pale sheets at the picture's edge (CIFrameRing 5 rays, 11-21 cv44).</summary>
+		public const float FrameOverSteep = 0.12f;
 		/// <summary>Mouth frame points lifted onto the ground, all islands since Raft started.</summary>
 		public static int FramePointsLifted;
 		/// <summary>How far in front of a mouth frame's face, along its own normal, the island ground may stand and the face is still
@@ -1153,11 +1218,11 @@ namespace DynamicIslands.Editor
 				if (!FrameCovered(w, fn, reach, out hit) && !FrameCovered(w, wn, reach, out hit)) { gn = Vector3.zero; return w; }
 				FramePointsLifted++; FramePointsCovered++;
 				gn = hit.normal;
-				return hit.point + hit.normal * FrameOver;
+				return hit.point + hit.normal * FrameOverSteep;
 			}
 			FramePointsLifted++;
 			// (FrameOver measured across the slope, not straight up: on a steep wall 3 cm up is a hair off the ground and flickers)
-			return new Vector3(w.x, g + FrameOver / Mathf.Max(gn.y, 0.2f), w.z);
+			return new Vector3(w.x, g + (gn.y < FrameCoverSteep ? FrameOverSteep : FrameOver) / Mathf.Max(gn.y, 0.2f), w.z);
 		}
 
 		/// <summary>

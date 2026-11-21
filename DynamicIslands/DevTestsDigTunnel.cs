@@ -1145,7 +1145,10 @@ namespace DynamicIslands
 			return !td.GetHoles(x, z, 1, 1)[0, 0];
 		}
 
-		[ConsoleCommand(name: "CIDigEars", docs: "Dev, in a world, after a CIPlay on the island: rays over the last play picture (64x36) - the dug tunnel's rock (DigRock's drawn faces, met before anything else) seen more than 0.5 m outside its passage (not the lining) may not stand off the ground: more than <off> m (0.4) over or under the ground's height there. CIDigHoleRock looks only straight down the cut cells and passed while flat dark flaps stood out of the cliff each side of Pendulum Isle's mouth (cv43, 11-21); fails at 6 rays or more, logging each part (submesh) met, how far out and how far off the ground. CIDigEars [off=<m>] <island>")]
+		/// <summary>How far round a lining point CIDigEars looks for the lowest ground (m).</summary>
+		const float EarReach = 1.2f;
+
+		[ConsoleCommand(name: "CIDigEars", docs: "Dev, in a world, after a CIPlay on the island: rays over the last play picture (64x36) - the dug tunnel's rock (DigRock's drawn faces, met before anything else): its lining (part 0) may not stand more than <off> m (0.4) over the lowest ground within 1.2 m of it (out in the open), and its rim walls (part 1) seen more than 0.5 m outside its passage not more than <off> m over or under the ground's height there; the rim's top (part 2, the ground's look) is not counted. CIDigHoleRock looks only straight down the cut cells and passed while flat dark flaps stood out of the cliff each side of Pendulum Isle's mouth (cv43, 11-21); fails at 6 rays or more, logging each part (submesh) met, how far out and how far off the ground. CIDigEars [off=<m>] <island>")]
 		public static void DigEarsCommand(string[] args)
 		{
 			float off = 0.4f;
@@ -1220,7 +1223,24 @@ namespace DynamicIslands
 					float sY = Mathf.Abs(tun.transform.lossyScale.y) > 1e-4f ? Mathf.Abs(tun.transform.lossyScale.y) : 1f;
 					float sOut = tun.Distance(tun.transform.InverseTransformPoint(p)) * sY;
 					float ground = land.SampleHeight(p) + land.transform.position.y, standOff = p.y - ground;
-					if (sOut <= 0.5f || Mathf.Abs(standOff) <= off) continue;
+					// (11-21 cv44: the rim's top - the ground's look, lying in the ground's hole - is not an ear: it counted 493 rays
+					// a little under the ground at the picture's top while the flaps were the passage's lining. The lining is an ear
+					// where it stands over the lowest ground within EarReach of it - out in the open, not inside the hill; the rim's
+					// walls where they stand off the ground outside the passage)
+					if (tsub[ri] >= 2) continue;
+					if (tsub[ri] == 0)
+					{
+						float low = ground;
+						for (int k = 0; k < 8; k++)
+						{
+							float an = k * Mathf.PI / 4f;
+							Vector3 q = p + new Vector3(Mathf.Cos(an), 0f, Mathf.Sin(an)) * EarReach;
+							low = Mathf.Min(low, land.SampleHeight(q) + land.transform.position.y);
+						}
+						standOff = p.y - low;
+						if (standOff <= off) continue;
+					}
+					else if (sOut <= 0.5f || Mathf.Abs(standOff) <= off) continue;
 					ears++;
 					string key = tun.name + " submesh " + tsub[ri];
 					bySub[key] = bySub.TryGetValue(key, out int bc) ? bc + 1 : 1;

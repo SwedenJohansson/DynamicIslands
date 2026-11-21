@@ -1184,7 +1184,7 @@ namespace DynamicIslands
 				Vector3 oldPos = cam.transform.position; Quaternion oldRot = cam.transform.rotation; RenderTexture oldRt = cam.targetTexture;
 				var rt = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32);
 				var tex = new Texture2D(W, H, TextureFormat.RGB24, false);
-				Color32[] with, without;
+				Color32[] with, with2, without;
 				try
 				{
 					cam.transform.position = from; cam.transform.rotation = rot; cam.targetTexture = rt;
@@ -1196,7 +1196,11 @@ namespace DynamicIslands
 						RenderTexture.active = was;
 						return tex.GetPixels32();
 					};
+					// (11-21 cv44: a first picture to settle the camera's effects, then two to know what changes on its own: the mask
+					// took nearly the whole picture, so only 3 rays round it were left to find the skin and the look was BAD unchecked)
+					grab();
 					with = grab();
+					with2 = grab();
 					SaveRt(rt, Path.Combine(DynamicIslands.assetpath, "shot_denlook_" + denLookN + ".png"));
 					pr.forceRenderingOff = true;
 					try { without = grab(); } finally { pr.forceRenderingOff = false; }
@@ -1207,9 +1211,26 @@ namespace DynamicIslands
 					rt.Release(); Object.Destroy(rt); Object.Destroy(tex);
 				}
 				System.Func<Color32, float> luma = c => 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
+				// (only within the wall's own box on the picture, and not where the picture changes by itself)
+				int bx0 = W, by0 = H, bx1 = -1, by1 = -1;
+				Matrix4x4 toCam = Matrix4x4.TRS(from, rot, Vector3.one).inverse;
+				for (int ci = 0; ci < 8; ci++)
+				{
+					Vector3 cw = new Vector3((ci & 1) == 0 ? b.min.x : b.max.x, (ci & 2) == 0 ? b.min.y : b.max.y, (ci & 4) == 0 ? b.min.z : b.max.z);
+					Vector3 cc = toCam.MultiplyPoint3x4(cw);
+					if (cc.z < 0.1f) { bx0 = 0; by0 = 0; bx1 = W - 1; by1 = H - 1; break; }
+					int px = Mathf.RoundToInt((cc.x / cc.z / (half * W / H) + 1f) * 0.5f * W), py = Mathf.RoundToInt((cc.y / cc.z / half + 1f) * 0.5f * H);
+					bx0 = Mathf.Min(bx0, px); bx1 = Mathf.Max(bx1, px); by0 = Mathf.Min(by0, py); by1 = Mathf.Max(by1, py);
+				}
 				var mask = new bool[W * H];
+				int noisy = 0;
 				for (int i = 0; i < mask.Length; i++)
+				{
+					int x = i % W, y = i / W;
+					if (x < bx0 || x > bx1 || y < by0 || y > by1) continue;
+					if (Mathf.Abs(with[i].r - with2[i].r) + Mathf.Abs(with[i].g - with2[i].g) + Mathf.Abs(with[i].b - with2[i].b) > 12) { noisy++; continue; }
 					mask[i] = Mathf.Abs(with[i].r - without[i].r) + Mathf.Abs(with[i].g - without[i].g) + Mathf.Abs(with[i].b - without[i].b) > 24;
+				}
 				// (within R px of the wall's pixels: a box dilation, rows then columns)
 				var rowNear = new bool[W * H]; var near = new bool[W * H];
 				for (int y = 0; y < H; y++)
@@ -1248,6 +1269,7 @@ namespace DynamicIslands
 						metFirst[fk] = metFirst.TryGetValue(fk, out int fc) ? fc + 1 : 1;
 					}
 				looked++;
+				Log("  " + den + ": its box on the picture " + bx0 + ".." + bx1 + " x " + by0 + ".." + by1 + ", " + noisy + " px changing by themselves left out");
 				if (wall.Count < 30) { Log("  " + den + ": its outside not seen past the hill (" + wall.Count + " px)"); continue; }
 				if (skin.Count < 30) { bad++; Log("  " + den + ": too little of the hill's skin round it seen (" + skin.Count + " px) - not checked, BAD; met first: " + string.Join(", ", metFirst.OrderByDescending(kv => kv.Value).Take(4).Select(kv => kv.Key + " " + kv.Value).ToArray())); continue; }
 				skin.Sort();

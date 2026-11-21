@@ -18,7 +18,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Grid step, how steep the sides fall (m down per m out), how far they reach, and how far above the roofs.</summary>
 		public const float CellSize = Cell;
 		const float Cell = 1.25f, Slope = 1.5f, Reach = 16f, Over = 0.3f;
-		/// <summary>A skin corner more than this (m) over every corner round it is a lone peak, let down to LoneCornerOver over the highest of them.</summary>
+		/// <summary>A skin corner more than this (m) over all but one corner round it (a corner off the hill at its ground) is a lone peak, let down to LoneCornerOver over the second highest of them (not under the cave's cover).</summary>
 		const float LoneCorner = 1.2f, LoneCornerOver = 0.4f;
 		/// <summary>Lone peaks let down in the last skin built (log, tests).</summary>
 		[System.ThreadStatic] public static int LonePeaks;
@@ -835,11 +835,23 @@ namespace DynamicIslands.Editor
 				for (int k = 0; k < nz; k++)
 				{
 					if (!on[i, k]) continue;
-					float mx = float.NegativeInfinity; int round = 0;
+					// (11-21 cv44: a corner off the hill counts at its ground - the skin's edge falls to it there - and the second
+					// highest corner round it is the one to stand over: Gravewell Shaft's sand spike at the hill's foot right of the den
+					// stood on a corner with most of its neighbours off the hill, or with one other high corner beside it, so no
+					// corner was let down)
+					float mx = float.NegativeInfinity, mx2 = float.NegativeInfinity; int round = 0;
 					for (int a = Mathf.Max(i - 1, 0); a <= Mathf.Min(i + 1, nx - 1); a++)
 						for (int c = Mathf.Max(k - 1, 0); c <= Mathf.Min(k + 1, nz - 1); c++)
-							if ((a != i || c != k) && on[a, c]) { mx = Mathf.Max(mx, height[a, c]); round++; }
-					if (round >= 3 && height[i, k] > mx + LoneCorner) { height[i, k] = mx + LoneCornerOver; LonePeaks++; }
+						{
+							if (a == i && c == k) continue;
+							float nh = on[a, c] ? height[a, c] : ground[a, c];
+							if (nh > mx) { mx2 = mx; mx = nh; } else if (nh > mx2) mx2 = nh;
+							round++;
+						}
+					if (round < 3 || !(height[i, k] > mx2 + LoneCorner)) continue;
+					float down = mx2 + LoneCornerOver;
+					if (!float.IsNaN(cover[i, k])) down = Mathf.Max(down, cover[i, k] + Over);
+					if (down < height[i, k] - 0.05f) { height[i, k] = down; LonePeaks++; }
 				}
 			var gn = new Vector3[nx, nz];
 			for (int i = 0; i < nx; i++)

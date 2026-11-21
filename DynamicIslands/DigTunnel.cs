@@ -2023,6 +2023,34 @@ namespace DynamicIslands.Editor
 			// outside it: the rock there is the rim's, the ground's look, not the lining's. 11-13: the lining's floor came out of
 			// every mouth in a steep face as a pale slab on the sand or ash with a sawtooth edge - the cut cells' squares -
 			// Cinderfall's lava tubes, The Frontier's quarry, Listening Mirrors)
+			// (11-21 cv44: by the lowest ground within the passage's width round each column, not the column's own: on a column
+			// by column switch the passage's sides at the mouth kept the lining's dark look in columns under the hill's face while
+			// those in front took the ground's - two dark flaps standing out beside Pendulum Isle's mouth, rays met DigRock faces
+			// 28 and 254, the passage's side walls)
+			if (groundAt != null)
+			{
+				int rc = Mathf.Clamp(Mathf.CeilToInt(rMax / h), 1, 6);
+				var groundLow = new float[nx * nz];
+				for (int z = 0; z < nz; z++)
+					for (int x = 0; x < nx; x++)
+					{
+						float lo = groundAt[x + z * nx];
+						for (int dz = -rc; dz <= rc; dz++)
+						{
+							int zz = z + dz;
+							if (zz < 0 || zz >= nz) continue;
+							for (int dx = -rc; dx <= rc; dx++)
+							{
+								int xx = x + dx;
+								if (xx < 0 || xx >= nx || dx * dx + dz * dz > rc * rc) continue;
+								float g = groundAt[xx + zz * nx];
+								if (!float.IsNaN(g) && (float.IsNaN(lo) || g < lo)) lo = g;
+							}
+						}
+						groundLow[x + z * nx] = lo;
+					}
+				groundAt = groundLow;
+			}
 			if (groundAt != null)
 				for (int z = 0; z < nz; z++)
 					for (int x = 0; x < nx; x++)
