@@ -153,6 +153,38 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		/// <summary>
+		/// The editor's cave pieces' rooms, measured once: whether a point is in one of them (Inside: the piece's own floor
+		/// under it and its own roof over it, both seen from the room's side). The save's settle step asks it - the land under a
+		/// den's floor is not the ground there (the world cuts it out of the room): Old Mine Islet's rails, carts and crates on
+		/// its dead-end den's 4.25 m floor were set up onto the uncut land at 6-6.8 m and floated in the world (c3z40 11-21).
+		/// </summary>
+		internal static Func<Vector3, bool> EditorRoomTest()
+		{
+			var rooms = new List<KeyValuePair<HashSet<Collider>, Bounds>>();
+			foreach (Transform cave in EditorCaves())
+			{
+				var own = new HashSet<Collider>(cave.GetComponentsInChildren<Collider>().Where(c => c.enabled && !c.isTrigger && c.name != CaveTool.MouthName && c.name != CaveTool.JoinName));
+				if (own.Count == 0) continue;
+				Bounds b = own.First().bounds;
+				foreach (Collider c in own) b.Encapsulate(c.bounds);
+				rooms.Add(new KeyValuePair<HashSet<Collider>, Bounds>(own, b));
+			}
+			return p =>
+			{
+				if (rooms.Count == 0) return false;
+				bool backs = Physics.queriesHitBackfaces;
+				try
+				{
+					float under, over;
+					foreach (KeyValuePair<HashSet<Collider>, Bounds> r in rooms)
+						if (r.Value.Contains(p) && Inside(p, r.Key, r.Value, out under, out over)) return true;
+					return false;
+				}
+				finally { Physics.queriesHitBackfaces = backs; }
+			};
+		}
+
 		static List<Transform> EditorCaves()
 		{
 			var caves = new List<Transform>();

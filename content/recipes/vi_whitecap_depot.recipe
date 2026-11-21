@@ -28,6 +28,9 @@ brush flatten at 23 -21 r=6 s=20 frames=80 h=4
 brush smooth from 10 -10 to 20 -18 r=3 s=10 frames=60
 brush flatten at -18.5 -16.5 r=4.5 s=20 frames=80 h=5
 call ni8cave x=8 z=26 h=2 yaw=0 al=snowcave
+# (the rock's mouth is wider than ni8cave's dug way in: its east lip stood on the snow past the way's edge, and from the
+# lip the ground was seen from below - c3z31/z40, at 12 42. The way widened east at its own height)
+brush flatten from 11 32 to 11 47 r=3.5 s=20 frames=60 h=2.4
 clear at 0 -4 r=19
 clear at 23 -21 r=7
 clear at -18.5 -16.5 r=5

@@ -227,7 +227,9 @@ plan already open.
 - `save` then settles what the ground check would fail (`SettleAtSave`, 11-21): a loose rock or boulder in the air
   (`RockFloats`) goes down onto what is under it, or is hidden when that would sink it more than half its height; a prop
   buried whole (the check's `buried` rule) up to 2.5 m down goes up onto the ground. Deeper ones are left for the check. Buried treasure
-  (`Treasure_Buried`) is left where it is.
+  (`Treasure_Buried`) is left where it is. The caves' cut is caught up first (`CaveGround.EditorCatchUp`), and a prop in a cave
+  piece's room (`CaveGround.EditorRoomTest`: the piece's own floor under it and roof over it) is left on that floor - the land
+  under a den is cut in the world (Old Mine Islet's carts were lifted 2 m onto it and floated, c3z40).
 - A strokes line after a `place` can leave that object floating or buried: shape the land first, then place. Check
   each island with `CIFloating` (editor) and `CIGroundIslands <name>` (world) - CHANGE_CHECKLISTS "Everything stands on
   the ground".

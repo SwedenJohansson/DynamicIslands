@@ -340,6 +340,60 @@ namespace DynamicIslands
 			Check(ref ok, floatedBefore && !floatsAfter && boulder.activeSelf, "the save sets a boulder in the air down: it floated " + floatedBefore + ", after the settle it floats " + floatsAfter + " (shown " + boulder.activeSelf + ", its underside " + (rb.min.y - GroundY(rb.center.x, rb.center.z)).ToString("F2") + " m over the ground)");
 			Check(ref ok, bb.max.y > GroundY(bb.center.x, bb.center.z) + 0.05f, "the save sets a buried barrel up on the ground: its top " + (bb.max.y - GroundY(bb.center.x, bb.center.z)).ToString("F2") + " m over it");
 			Check(ref ok, (treasure.transform.position - treasureAt).magnitude < 0.01f, "the save leaves buried treasure under the ground: moved " + (treasure.transform.position - treasureAt).magnitude.ToString("F2") + " m");
+			// (a barrel on a den's floor 1 m under the land round it stays on the floor: the land there is the room's, cut in the
+			// world - Old Mine Islet's carts and crates were set up onto it and floated, c3z40 11-21)
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "BalboaCave_DeadEnd" });
+			GameObject mineDen = PlaceableCatalog.Spawn("BalboaCave_DeadEnd", GameObject.Find("PlacedObjects").transform);
+			GameObject denBarrel = PlaceableCatalog.Spawn("TP_Moontown_Barrel01", GameObject.Find("PlacedObjects").transform);
+			if (mineDen == null || denBarrel == null) { Fail("grounding test: no BalboaCave_DeadEnd"); yield break; }
+			EditorGameObject.Attach(mineDen, "BalboaCave_DeadEnd");
+			EditorGameObject.Attach(denBarrel, "TP_Moontown_Barrel01");
+			foreach (Collider c in mineDen.GetComponentsInChildren<Collider>(true)) if (!c.isTrigger) c.enabled = true;
+			mineDen.transform.position = flat + new Vector3(-14f, 0f, 14f);
+			Physics.SyncTransforms();
+			var denOwn = new HashSet<Collider>(mineDen.GetComponentsInChildren<Collider>().Where(c => c.enabled && !c.isTrigger && c.name != CaveTool.MouthName && c.name != CaveTool.JoinName));
+			Bounds mineBox = denOwn.Count > 0 ? denOwn.First().bounds : new Bounds(mineDen.transform.position, Vector3.zero);
+			foreach (Collider c in denOwn) mineBox.Encapsulate(c.bounds);
+			// (the mineDen's floor: the room point with the most room over a floor near the middle of the piece)
+			Vector3 denFloor = Vector3.zero; float bestRoom = 0f;
+			for (float fx = 0.2f; fx <= 0.8f; fx += 0.1f)
+				for (float fz = 0.2f; fz <= 0.8f; fz += 0.1f)
+					for (float fy = 0.15f; fy <= 0.6f; fy += 0.15f)
+					{
+						Vector3 p = new Vector3(Mathf.Lerp(mineBox.min.x, mineBox.max.x, fx), Mathf.Lerp(mineBox.min.y, mineBox.max.y, fy), Mathf.Lerp(mineBox.min.z, mineBox.max.z, fz));
+						float fUnder, fOver;
+						bool backs = Physics.queriesHitBackfaces;
+						bool inside = CaveGround.Inside(p, denOwn, mineBox, out fUnder, out fOver);
+						Physics.queriesHitBackfaces = backs;
+						if (inside && fUnder < 1.5f && fOver > 2.5f && fOver > bestRoom) { bestRoom = fOver; denFloor = p - Vector3.up * fUnder; }
+					}
+			Check(ref ok, denFloor != Vector3.zero, "the test den has a floor to stand a barrel on (" + denOwn.Count + " colliders, room over it " + bestRoom.ToString("F2") + " m)");
+			if (denFloor != Vector3.zero)
+			{
+				denBarrel.transform.position = denFloor;
+				Physics.SyncTransforms();
+				Bounds db = MeshBox(denBarrel);
+				denBarrel.transform.position += Vector3.up * (denFloor.y - db.min.y);
+				// (the den and its barrel moved up or down together till the barrel's top is 1 m under the land there)
+				Physics.SyncTransforms();
+				db = MeshBox(denBarrel);
+				Vector3 shift = Vector3.up * (GroundY(db.center.x, db.center.z) - 1f - db.max.y);
+				mineDen.transform.position += shift;
+				denBarrel.transform.position += shift;
+				Physics.SyncTransforms();
+				Vector3 denBarrelAt = denBarrel.transform.position;
+				db = MeshBox(denBarrel);
+				float buried = GroundY(db.center.x, db.center.z) - db.max.y;
+				SettleAtSave(sea);
+				Physics.SyncTransforms();
+				float moved = (denBarrel.transform.position - denBarrelAt).magnitude;
+				Check(ref ok, moved < 0.01f && denBarrel.activeSelf, "the save leaves a barrel on a den's floor under the land round it (its top " + buried.ToString("F2") + " m under the land before the den's cut): moved " + moved.ToString("F2") + " m, shown " + denBarrel.activeSelf);
+			}
+			mineDen.SetActive(false);
+			int denDug;
+			CaveGround.EditorNow(ground, out denDug);
+			UnityEngine.Object.Destroy(denBarrel);
+			UnityEngine.Object.Destroy(mineDen);
 			// (a deck 6 m up over a lower floor 1 m up: its posts stand on that floor's top, not left out - 11-21 c3y11, Engine Court's
 			// ridge deck over the court's posts stood on its ladders alone)
 			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Block_Floor_Wood", "RT_Pillar" });
@@ -4112,8 +4166,14 @@ namespace DynamicIslands
 			Terrain land = terraineditor.terrain;
 			GameObject placed = GameObject.Find("PlacedObjects");
 			if (land == null || placed == null) return;
+			// (the ground as the world will have it - the caves' rooms cut - and a thing in a cave piece's room left alone: the
+			// land under a den's floor is not its ground. Old Mine Islet's rails, carts and crates on its den's 4.25 m floor were
+			// set up 1.8-2.6 m onto the land the editor had not cut yet, and floated in the world, c3z40 11-21)
+			CaveGround.EditorCatchUp(land);
 			Physics.SyncTransforms();
+			Func<Vector3, bool> inRoom = CaveGround.EditorRoomTest();
 			var lowered = new List<string>(); var lifted = new List<string>(); var hide = new List<GameObject>();
+			int inRooms = 0;
 			foreach (EditorGameObject e in placed.transform.GetComponentsInChildren<EditorGameObject>())
 			{
 				if (e == null || !e.gameObject.activeInHierarchy) continue;
@@ -4161,12 +4221,14 @@ namespace DynamicIslands
 				float ground = GroundY(b.center.x, b.center.z);
 				float under = ground - whole.max.y;
 				if (under <= 0.05f || whole.max.y <= sea - 1f || under > 2.5f || InDugPassage(whole)) continue;
+				if (inRoom(whole.center) || inRoom(new Vector3(b.center.x, b.min.y + 0.1f, b.center.z)) || inRoom(new Vector3(b.center.x, whole.max.y - 0.05f, b.center.z))) { inRooms++; continue; }
 				o.position += Vector3.up * (ground - b.min.y);
 				lifted.Add(at + " (" + Num(ground - b.min.y) + " m)");
 			}
 			if (hide.Count > 0) CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(hide, false));
 			if (lowered.Count + hide.Count > 0) Log("  " + lowered.Count + " rocks in the air set down on what is under them" + (lowered.Count > 0 ? ": " + string.Join("; ", lowered.Take(12).ToArray()) : "") + (hide.Count > 0 ? "; " + hide.Count + " left out (too far up to set down)" : ""));
 			if (lifted.Count > 0) Log("  " + lifted.Count + " things under the ground set up on it: " + string.Join("; ", lifted.Take(12).ToArray()));
+			if (inRooms > 0) Log("  " + inRooms + " things under the land but in a cave piece's room left on its floor");
 			Physics.SyncTransforms();
 		}
 
