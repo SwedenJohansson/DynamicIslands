@@ -207,7 +207,7 @@ namespace DynamicIslands
 
 		static readonly Regex Hangs = new Regex("Buoy|Water|Pipe|Chain|Rope|Cable|Lamp|Light|Flag|Banner|Floor|Deck|Plank|Bridge|Ramp|Stair|Crane|Roof|Scaffold", RegexOptions.IgnoreCase);
 
-		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it); the save sets a rock in the air down and a buried barrel up; a zipline rope is measured over the cave hill a world builds; a rope no raise clears gets the most room zipto can give it")]
+		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it); the save sets a rock in the air down and a buried barrel up; a zipline rope is measured over the cave hill a world builds; a rope no raise clears gets the most room zipto can give it; a zipto far end under the cave hill goes onto its skin and the ground check sees a rope's last metres; a deck ladder's climbing side is cleared of the generator's boulders")]
 		public static void GroundingTestCommand()
 		{
 			StartTest(GroundingTestRoutine());
@@ -439,6 +439,71 @@ namespace DynamicIslands
 			ZipBestPartial(zline, zn, zf, wall, zsl, ZiplineEnds.MaxRaise, out pr, out ps, out pl, out pa);
 			Check(ref ok, pl < ZiplineEnds.LineClear && pl > asIs + 1f && (pr > 0f || ps != zown), "a rope through a wall no raise clears gets the most room it can: raised " + Num(pr) + " m, slack " + Num(ps) + " (own " + Num(zown) + "), the least " + Num(pl) + " m over the wall's top (" + Num(asIs) + " as it was)");
 			UnityEngine.Object.Destroy(zl);
+			// 7. A zipto far end over the cave hill goes onto the hill's skin, and the ground check sees a rope's last metres in the
+			// ground (11-21 c3z13: Caisson Yard's summit line ended in the hill's sand, its far floor on the land under the skin)
+			yield return null;
+			GameObject den7 = PlaceableCatalog.Spawn(CaveTool.Room, root);
+			GameObject zl7 = PlaceableCatalog.Spawn("ZiplinePath_Landmark", root);
+			if (den7 == null || zl7 == null) { Fail("grounding test: no " + CaveTool.Room + " or ZiplinePath_Landmark"); yield break; }
+			EditorGameObject.Attach(den7, CaveTool.Room);
+			EditorGameObject ze7 = EditorGameObject.Attach(zl7, "ZiplinePath_Landmark");
+			den7.transform.position = new Vector3(flat.x, GroundY(flat.x, flat.z), flat.z);
+			zl7.transform.position = new Vector3(flat.x + 30f, GroundY(flat.x + 30f, flat.z), flat.z);
+			Physics.SyncTransforms();
+			Bounds d7 = MeshBox(den7);
+			GameObject hill7 = CaveMountain.Preview(new[] { den7.GetComponent<EditorGameObject>() });
+			if (hill7 != null && ze7 != null)
+			{
+				Physics.SyncTransforms();
+				Vector3 org = terraineditor.terrain.transform.position;
+				float fx = d7.center.x, fz = d7.center.z, land7 = GroundY(fx, fz), skin7 = ZiplineEnds.OverSkins((x, z) => GroundY(x, z), ZiplineEnds.CaveSkins(hill7.transform))(fx, fz);
+				PropsCommand.Change(ze7, ObjectProps.With(ze7.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(new Vector3(fx, land7, fz) - org)));
+				bool moved = ZipFarOnSkin(ze7, org);
+				Vector3 to7;
+				float now7 = ZiplineEnds.TryParse(ObjectProps.Get(ze7.Props, ZiplineEnds.ZipTo), out to7) ? to7.y + org.y : float.NaN;
+				Check(ref ok, moved && skin7 > land7 + 1f && Mathf.Abs(now7 - skin7) < 0.1f, "a zipto far end under the cave hill's skin goes onto it: " + Num(now7 - land7) + " m over the land (the skin " + Num(skin7 - land7) + ")");
+				Check(ref ok, !ZipFarOnSkin(ze7, org), "a zipto far end on the skin stays there");
+				UnityEngine.Object.DestroyImmediate(hill7);
+				Physics.SyncTransforms();
+			}
+			else Check(ref ok, false, "the editor builds the cave hill over a bear den for a zipto far end");
+			UnityEngine.Object.Destroy(zl7);
+			UnityEngine.Object.Destroy(den7);
+			{
+				Func<float, float, float> g7 = (x, z) => GroundY(x, z);
+				Vector3 n7 = new Vector3(flat.x, GroundY(flat.x, flat.z) + 6f, flat.z), fIn = new Vector3(flat.x + 12f, GroundY(flat.x + 12f, flat.z) - 0.6f, flat.z), fOn = new Vector3(fIn.x, fIn.y + 1.6f, fIn.z);
+				Vector3 a7;
+				float inEnd = ZiplineEnds.FarStretchLowest(new List<Vector3> { fIn, n7 }, n7, fIn, g7, out a7), onEnd = ZiplineEnds.FarStretchLowest(new List<Vector3> { fOn, n7 }, n7, fOn, g7, out a7);
+				Check(ref ok, inEnd < ZiplineEnds.FarEndLow && onEnd >= ZiplineEnds.FarEndLow, "the ground check sees a rope's last " + Num(ZiplineEnds.FarSkip) + " m: ending 0.6 m in the ground " + Num(inEnd) + ", ending 1 m over it " + Num(onEnd));
+			}
+			// 8. zipto's deck ladders: a boulder of the generator's on a ladder's climbing side is removed (11-21 c3z13: Caisson Yard's
+			// ridge deck ladder shut by a SmallBoulder2, CILadderSide FAIL), the recipe's own kept
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Block_Floor_Wood", "Block_Ladder", "SmallBoulder2" });
+			GameObject deck8 = PlaceableCatalog.Spawn("Block_Floor_Wood", root);
+			GameObject rock8 = PlaceableCatalog.Spawn("SmallBoulder2", root);
+			if (deck8 == null || rock8 == null) { Fail("grounding test: no Block_Floor_Wood or SmallBoulder2"); yield break; }
+			EditorGameObject.Attach(deck8, "Block_Floor_Wood");
+			EditorGameObject.Attach(rock8, "SmallBoulder2");
+			foreach (Collider c in rock8.GetComponentsInChildren<Collider>(true)) if (!c.isTrigger) c.enabled = true;
+			Vector3 p8 = flat + new Vector3(8f, 0f, -8f);
+			deck8.transform.position = p8;
+			Physics.SyncTransforms();
+			Bounds b8 = MeshBox(deck8);
+			deck8.transform.position += Vector3.up * (GroundY(b8.center.x, b8.center.z) + 3f - b8.min.y);
+			Physics.SyncTransforms();
+			b8 = MeshBox(deck8);
+			// (the ladders go up its +x side: a boulder 1 m out from that edge, at the ground)
+			Bounds r8 = MeshBox(rock8);
+			Vector3 at8 = new Vector3(b8.max.x + 1f, 0f, b8.center.z);
+			rock8.transform.position += new Vector3(at8.x - r8.center.x, GroundY(at8.x, at8.z) + 0.3f - r8.min.y, at8.z - r8.center.z);
+			Physics.SyncTransforms();
+			var ladBefore = new HashSet<GameObject>(zipDeckLadders);
+			string lad8 = ZipDeckLadders(b8, Vector3.right, root);
+			List<GameObject> made8 = zipDeckLadders.Where(x => x != null && !ladBefore.Contains(x)).ToList();
+			Check(ref ok, made8.Count > 0 && !rock8.activeInHierarchy, "a deck ladder's climbing side is cleared of the generator's boulder: " + (rock8.activeInHierarchy ? "still there" : "removed") + " (" + lad8.TrimStart(',', ' ') + ")");
+			foreach (GameObject x in made8) { zipDeckLadders.Remove(x); UnityEngine.Object.Destroy(x); }
+			UnityEngine.Object.Destroy(rock8);
+			UnityEngine.Object.Destroy(deck8);
 			if (ok) Log("PASS: grounding test"); else Fail("grounding test");
 		}
 
@@ -2696,6 +2761,9 @@ namespace DynamicIslands
 			Vector3 near, far, at = Vector3.zero, lineAt;
 			MeshPath_Zipline_Landmark line = e.GetComponentInChildren<MeshPath_Zipline_Landmark>(true);
 			if (land == null || line == null || !ZiplineEnds.Ends(e.gameObject, e.Props, land.transform.position, out near, out far)) return 0f;
+			// (the far end's floor on the cave hill's skin where a world builds the hill over it - 11-21 c3z13: Caisson Yard's summit
+			// line's far end stood on the land 0.7 m under the skin, its rope ending in the sand)
+			if (ZipFarOnSkin(e, land.transform.position)) ZiplineEnds.Ends(e.gameObject, e.Props, land.transform.position, out near, out far);
 			// (the ground under the rope: the land, or what stands solid on it - a rock, a cliff, a block - as a world's rider meets
 			// it: 11-20, Caisson Yard's line ran into a rock pillar the land's own height left out)
 			Func<float, float, float> ground = ZipGround(e);
@@ -2846,6 +2914,23 @@ namespace DynamicIslands
 			}
 			Log("  zipto: the rope came " + Num(lineLow) + " m over the ground - its near end raised " + Num(r) + " m for " + why + ", the least now " + Num(low) + " m over that at " + Num(at.x - corner.x) + " " + Num(at.z - corner.z) + deck);
 			return r;
+		}
+
+		/// <summary>zipto's far end on the cave hill (11-21 c3z13): when the ground at its floor (zip.to) is the skin of the cave
+		/// hill a world builds over the island's cave pieces (CaveMountain.Preview, made by the save to measure against), zip.to
+		/// goes up onto the skin's top. True when it moved.</summary>
+		static bool ZipFarOnSkin(EditorGameObject e, Vector3 origin)
+		{
+			Vector3 to;
+			if (e == null || !ZiplineEnds.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipTo), out to)) return false;
+			Physics.SyncTransforms();
+			Vector3 w = origin + to;
+			Collider c;
+			float g = ZipGroundAt(e, w.x, w.z, out c);
+			if (c == null || c.name != CaveMountain.SkinName || g <= w.y + 0.05f) return false;
+			PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(new Vector3(to.x, g - origin.y, to.z))));
+			Log("  zipto: its far end's floor stood " + Num(g - w.y) + " m under the skin of the cave hill a world builds over it: set on the skin's top");
+			return true;
 		}
 
 		/// <summary>zipto when no raise up to maxRaise nor a tighter rope clears (11-21): the raise (0.5 m steps) and slack of
@@ -3025,6 +3110,7 @@ namespace DynamicIslands
 			Vector3 edge = deck.center + Vector3.Scale(d, deck.extents);
 			float top = deck.max.y, foot = GroundY(edge.x, edge.z), climbed = 0f;
 			int n = 0;
+			var made = new List<GameObject>();
 			while (top - climbed > foot + 0.3f && n < 6 && ObjectLimit.Allow(1))
 			{
 				GameObject l = PlaceableCatalog.Spawn("Block_Ladder", placedRoot);
@@ -3042,11 +3128,58 @@ namespace DynamicIslands
 				EditorGameObject.Attach(l, "Block_Ladder");
 				recipePlaced.Add(l);
 				zipDeckLadders.Add(l);
+				made.Add(l);
 				CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { l }, true));
 				climbed += h;
 				n++;
 			}
-			return n > 0 ? ", " + n + " ladder" + (n > 1 ? "s" : "") + " up its " + (d.x > 0 ? "east" : d.x < 0 ? "west" : d.z > 0 ? "north" : "south") + " side" : ", no ladder (" + Num(top - foot) + " m up)";
+			return n > 0 ? ", " + n + " ladder" + (n > 1 ? "s" : "") + " up its " + (d.x > 0 ? "east" : d.x < 0 ? "west" : d.z > 0 ? "north" : "south") + " side" + ZipClearLadderSides(made, d) : ", no ladder (" + Num(top - foot) + " m up)";
+		}
+
+		/// <summary>
+		/// zipto's deck ladders (11-21 c3z13: a ladder up Caisson Yard's ridge deck had its climbing side shut by a SmallBoulder2,
+		/// CILadderSide): the generator's objects (not the recipe's, except what a scatter placed) in the way of a player on each
+		/// ladder's climbing side (<paramref name="side"/>: balls 0.3 m and 0.8 m out from its face, up its height, as CILadderSide
+		/// looks) are removed, as ZipClearStrays removes them under the rope: bodies over 10 m across stay (the island's own cliffs)
+		/// but boulders go whatever their size. The recipe's own rocks there are kept and warned. Returns the log's words.
+		/// </summary>
+		static string ZipClearLadderSides(List<GameObject> ladders, Vector3 side)
+		{
+			Transform root = GameObject.Find("PlacedObjects")?.transform;
+			if (root == null || ladders.Count == 0) return "";
+			Physics.SyncTransforms();
+			var gone = new List<GameObject>();
+			var names = new List<string>();
+			var kept = new List<string>();
+			foreach (GameObject l in ladders)
+			{
+				if (l == null) continue;
+				Bounds b = MeshBox(l);
+				float face = Mathf.Abs(Vector3.Dot(b.extents, side));
+				for (float y = b.min.y + 0.4f; y <= b.max.y - 0.2f; y += 0.4f)
+					foreach (float o in new[] { 0.3f, 0.8f })
+						foreach (Collider c in Physics.OverlapSphere(new Vector3(b.center.x, y, b.center.z) + side * (face + o), 0.3f, ~0, QueryTriggerInteraction.Ignore))
+						{
+							EditorGameObject owner = c.GetComponentInParent<EditorGameObject>();
+							if (owner == null || !owner.transform.IsChildOf(root) || gone.Contains(owner.gameObject) || ladders.Contains(owner.gameObject)) continue;
+							string nm = owner.GameObjectName ?? "";
+							bool rock = Regex.IsMatch(nm, "Boulder|Rock|Stone", RegexOptions.IgnoreCase);
+							if (recipePlaced.Contains(owner.gameObject) && !recipeScattered.Contains(owner.gameObject))
+							{
+								if (rock && !kept.Contains(nm)) kept.Add(nm);
+								continue;
+							}
+							Bounds bb = c.bounds;
+							foreach (Renderer rd in owner.GetComponentsInChildren<Renderer>()) bb.Encapsulate(rd.bounds);
+							if (nm.IndexOf("Boulder", StringComparison.OrdinalIgnoreCase) < 0 && Mathf.Max(bb.size.x, bb.size.z) > 10f) continue;
+							gone.Add(owner.gameObject);
+							Vector3 op = owner.transform.position;
+							names.Add(nm + " at " + Num(op.x - TopFrame.Origin.x) + " " + Num(op.z - TopFrame.Origin.y));
+						}
+			}
+			if (gone.Count > 0) CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(gone, false));
+			if (kept.Count > 0) Log("  WARNING: zipto: the recipe's own " + string.Join(", ", kept.ToArray()) + " on a deck ladder's climbing side - kept: move it");
+			return gone.Count > 0 ? " (" + gone.Count + " of the generator's objects off their climbing side removed: " + string.Join("; ", names.ToArray()) + ")" : "";
 		}
 
 		static float GroundY(float x, float z)

@@ -23,6 +23,17 @@ namespace DynamicIslands.Editor
 		/// stretches (NearSkip, FarSkip) where it comes down to its floors (11-20: Outer Breakwater's ridge line ran up to
 		/// 1.1 m inside the ridge's shoulder, both its floors on the ground).</summary>
 		public const float LineLow = 0.5f, NearSkip = 1.5f, FarSkip = 3f;
+		/// <summary>The ground check also fails a zipline whose rope, in the last FarSkip m down to its far end, comes under
+		/// FarEndLow m over the ground (11-21 c3z13: Caisson Yard's summit line ended in the cave hill's sand, its far floor on
+		/// the land under the hill's skin; the left-out stretch hid it).</summary>
+		public const float FarEndLow = 0f;
+
+		/// <summary>The rope's lowest over the ground in its last FarSkip m, its far end included (FarEndLow).</summary>
+		public static float FarStretchLowest(List<Vector3> rope, Vector3 near, Vector3 far, System.Func<float, float, float> ground, out Vector3 at)
+		{
+			float t, len = new Vector2(far.x - near.x, far.z - near.z).magnitude;
+			return RopeLowest(rope, near, far, ground, Mathf.Max(0f, len - FarSkip), 0f, null, out at, out t);
+		}
 		/// <summary>The rope's room over the ground a rider needs (zipride 11-20: Raft's rider hangs about 2 m under the rope,
 		/// and lets go - or is stopped - where the ground comes up to him: Engine Court's and Caisson Yard's riders stopped halfway,
 		/// Outer Breakwater's went 3 m through the ridge's shoulder with the rope 1 m over it).</summary>

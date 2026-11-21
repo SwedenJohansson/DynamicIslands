@@ -159,7 +159,7 @@ prop dview zone.message=From here the caissons stand in a row like stepping ston
 # the yard office in the north (its vending machine), the fallen mobile crane in the south-east
 call sk_ridge x1=-68 z1=-24 x2=-62 z2=12 h=3 top=5 r=8
 call sk_plants x=-65 z=-6 r=16 seed=10761
-call sk_zone x=-65 z=-6 al=cy_ridge id=cy_ridge r=7 msg="The spoil ridge - all the rock the yard dug out of the trench. The zipline from the top runs down off its north end."
+call sk_zone x=-65 z=-6 al=cy_ridge id=cy_ridge r=7 msg="The spoil ridge - all the rock the yard dug out of the trench. The zipline at its north end runs down off it."
 call sk_cave x=-24 z=-56 h=2 yaw=180 al=cy_caverock chest=cy_cavechest
 call sk_zone x=-24 z=-61 al=cy_cave id=cy_cave r=4 msg="The powder cave: the yard kept its blasting charges in here, far from everything."
 call sk_ruin x=8 z=62 h=2 al=cy_ruin
@@ -172,11 +172,13 @@ call sk_notebox x=60 z=-50 yaw=70 al=cy_wrecknote
 
 # --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
 # (11-21 c3z11: east to -42 -8 its rope ran 6 m into the cave hill a world builds behind the powder cave - that hill reaches
-# from the cave up to about z 8 and x -65; it runs north off the ridge instead, along the hill's west edge and past its back)
-clear from -65 -6 to -57 18 r=3
-place ZiplinePath_Landmark cyridgezip at -65 -6 ground
-zipfrom cyridgezip -65 -6 ground
-zipto cyridgezip -57 18
+# from the cave up to about z 8 and x -65. c3z13: north to -57 18 from the peak it ran 2.8 m into the ridge's own 3 m spine
+# (x -68..-62, z -24..12) and took the tool's full 8 m. It starts at the spine's north end and runs down off it, north
+# past the hill's back and the ridge's foot)
+clear from -63.5 9 to -60 32 r=3
+place ZiplinePath_Landmark cyridgezip at -63.5 9 ground
+zipfrom cyridgezip -63.5 9 ground
+zipto cyridgezip -60 32
 call vinecache x=-46 z=36 r=8 seed=10771 chest=cyvinechest vines=cyvines items=Rope*3;Nail*8;Bolt*2
 
 # --- Unique layer (10-24): the yard office's vending machine: it takes the Tangaroa tokens of the Overpass toll run

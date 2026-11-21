@@ -139,9 +139,15 @@ namespace DynamicIslands
 					{
 						// (over the cave hill's skin too where it covers the land - 11-21 c3z9: Caisson Yard's summit rope ran 0.32 m into it, ground PASS)
 						if (skins == null) skins = ZiplineEnds.CaveSkins(objects.parent != null ? objects.parent : objects);
-						float over = ZiplineEnds.RopeLowest(ZiplineEnds.Rope(rope), zn, zf, ZiplineEnds.OverSkins((x, z) => land.SampleHeight(new Vector3(x, 0f, z)) + land.transform.position.y, skins), ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out low, out lt);
+						Func<float, float, float> zg = ZiplineEnds.OverSkins((x, z) => land.SampleHeight(new Vector3(x, 0f, z)) + land.transform.position.y, skins);
+						List<Vector3> zr = ZiplineEnds.Rope(rope);
+						float over = ZiplineEnds.RopeLowest(zr, zn, zf, zg, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out low, out lt);
 						if (over < ZiplineEnds.LineLow)
 							lines.Add("zipline line in the ground: " + n + " " + (over < 0f ? Num(-over) + " m under" : Num(over) + " m over") + " the ground at " + at(low) + " (its rope; " + Num(ZiplineEnds.LineLow) + " m wanted)");
+						// (its last metres down to the far end too - 11-21 c3z13: Caisson Yard's summit rope ended in the cave hill's sand)
+						float endOver = ZiplineEnds.FarStretchLowest(zr, zn, zf, zg, out low);
+						if (endOver < ZiplineEnds.FarEndLow)
+							lines.Add("zipline far end in the ground: " + n + " its rope " + Num(-endOver) + " m under the ground at " + at(low) + " in its last " + Num(ZiplineEnds.FarSkip) + " m");
 					}
 					continue;
 				}
