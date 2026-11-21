@@ -54,10 +54,14 @@ place RT_GroundPillarCap - at $p -32 h=-1.6 sit
 # the gate hoists: thick posts on the riverbed against each pier's upstream face
 place RT_PillarThick - at $p -33.55 h=-1.5 sy=0.9
 next
-for d -11.2 11.2 1.6
+# (c3 round 5, 11-21 c3z39: the east end, 3.2-11.2, is laid after the culvert cave - six plates here stood in its way, kept
+# by the cave and laid again over them; the two on the upstream row at 3.2 and 4.8 the cave misses stay here)
+for d -11.2 1.6 1.6
 place Block_Floor_Tier3 - at $d -31.6 h=1.62
 place Block_Floor_Tier3 - at $d -32.4 h=1.62
 next
+place Block_Floor_Tier3 - at 3.2 -32.4 h=1.62
+place Block_Floor_Tier3 - at 4.8 -32.4 h=1.62
 # the sluice gates: Utopia's drawbridges set upright in the gaps on the upstream side, standing on the riverbed in the
 # piers' grooves, their tops over the deck (sluice one, west, opens)
 place UT_Drawbridge sluice1 at -5 -33.55 h=-1.5 rot=0,0,0

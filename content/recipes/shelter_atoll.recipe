@@ -324,9 +324,12 @@ place RT_Floor - at 3 -10 y=-0.07 sx=0.993 sz=0.778
 place RT_Floor - at -3 -10 y=-0.07 sx=0.993 sz=0.778
 # (11-04: the lagoon cave's approach is cut down to its mouth's floor, about 7 m, under the landing's middle: its
 # pillars go 3 m deeper now, so they stand in the cut and not over it - CIFloating)
-for lx -8.7 8.7 5.8
-place RT_PillarThick - at $lx -16.7 y=-9 sy=1.5
-next
+# (c3 round 5, 11-21 c3z39: the one at -2.9 stood in the lagoon cave's way in, its axis crossing this row about -1.5 -
+# the cave kept it; it stands 3.1 m west, off the way in)
+place RT_PillarThick - at -8.7 -16.7 y=-9 sy=1.5
+place RT_PillarThick - at -6 -16.7 y=-9 sy=1.5
+place RT_PillarThick - at 2.9 -16.7 y=-9 sy=1.5
+place RT_PillarThick - at 8.7 -16.7 y=-9 sy=1.5
 place "Box Small" - at -7.6 -11.3 sit yaw=15
 place "Box Small" - at -6.4 -11.1 sit yaw=-10
 place Zone_Trigger outside at 0 -13 y=1.5
