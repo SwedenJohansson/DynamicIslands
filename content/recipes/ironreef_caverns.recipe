@@ -120,6 +120,11 @@ brush flatten at 31 17.5 r=5 s=20 frames=40 h=29
 # 90 degrees - X7, 2026-10-13)
 brush flatten from 30 17.5 to 26.4 13 r=3.5 s=20 frames=40 h=31
 brush flatten from 27.2 8.6 to 26.4 11 r=3.5 s=20 frames=40 h=31
+# (c3z52 11-21: still "cave rim off the ground 1.9 m" - at the rock's piece point -1.9 -1.8 0.9, here 24.6 7.7 (the
+#     strokes above were placed from a misread spot, 2-4 m east): the rock's underside 30.5 m, the hill 28.2. A small mound
+#     just outside the rim, out along its way out (north), not under the shell)
+brush flatten at 24.88 8.83 r=1 s=20 frames=150 h=30.2
+brush rock at 24.88 8.83 r=1.8 s=10 frames=30
 # (and on round the NE side to the rim at 23.4 5.1 and south to 22 -1, still 2.5 m off the slope - X7, 2026-10-17)
 brush flatten from 27.2 8.6 to 22.2 5 r=3.5 s=20 frames=40 h=34.5
 brush flatten from 22.2 5 to 22 -1 r=3.5 s=20 frames=40 h=34.5

@@ -574,11 +574,28 @@ namespace DynamicIslands
 				Vector3 outward = new Vector3(outSum.x, 0f, outSum.z).normalized;
 				if (outward == Vector3.zero) outward = Vector3.forward;
 				Vector3 at = new Vector3(centre.x, sea + Mathf.Clamp(highest * 0.4f, 0.5f, 4f), centre.z), eye = at;
-				foreach (float d in new[] { 22f, 16f, 11f, 7f })
+				// (the eye over open water with nothing built between it and the face - Shelter Atoll's second picture stood behind a
+				// metal wall (c3z52): straight out first, then turned up to 60 degrees either way; none clear, the first over water)
+				Vector3 firstWet = Vector3.zero;
+				bool found = false;
+				foreach (float turn in new[] { 0f, 30f, -30f, 60f, -60f })
 				{
-					eye = centre + outward * d; eye.y = sea + 3.5f;
-					if (land.SampleHeight(eye) + tp.y < eye.y - 1f) break;
+					Vector3 way = Quaternion.Euler(0f, turn, 0f) * outward;
+					foreach (float d in new[] { 22f, 16f, 11f, 7f })
+					{
+						Vector3 p = centre + way * d; p.y = sea + 3.5f;
+						if (land.SampleHeight(p) + tp.y >= p.y - 1f) continue;
+						if (firstWet == Vector3.zero) firstWet = p;
+						Vector3 look = at - p;
+						bool built = Physics.CheckSphere(p, 0.6f, ~0, QueryTriggerInteraction.Ignore);
+						foreach (RaycastHit h in Physics.RaycastAll(p, look.normalized, look.magnitude - 1.5f, ~0, QueryTriggerInteraction.Ignore))
+							if (!(h.collider is TerrainCollider)) { built = true; break; }
+						if (built) continue;
+						eye = p; found = true; break;
+					}
+					if (found) break;
 				}
+				if (!found) { eye = firstWet != Vector3.zero ? firstWet : centre + outward * 7f; eye.y = sea + 3.5f; }
 				shots.Add(new KeyValuePair<int, Vector3[]>(n, new[] { eye, at }));
 			}
 			foreach (var s in sheets.OrderByDescending(s => s.Key)) lines.Add(s.Value);
@@ -630,6 +647,10 @@ namespace DynamicIslands
 				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
 				foreach (Collider c in cs) b.Encapsulate(c.bounds);
 				string n = (o.GameObjectName ?? o.name).Replace("(Clone)", "").Trim();
+				// (zones, creatures, notes, loot, pickups and markers are no ground anyone stands on: a zone's editor box held 343 of
+				// Old Mine Islet's 486 kept points and left its sheets bare - c3z52/z57)
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_", StringComparison.Ordinal) || n.StartsWith("Note_", StringComparison.Ordinal) || n.StartsWith("Loot_", StringComparison.Ordinal) ||
+					n.StartsWith("Pickup_", StringComparison.Ordinal) || n == ContentCatalog.MarkerOnly || CameraPath.IsPoint(n)) continue;
 				bool fixedPiece = n.StartsWith("ZiplinePath", StringComparison.Ordinal) || n.StartsWith("VP_Skylift", StringComparison.Ordinal) || n == "Elevator" ||
 					n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || CaveBacks.Wants(n);
 				if (!fixedPiece && b.max.y < sea - 0.3f && b.size.x <= 4f && b.size.z <= 4f && b.size.y <= 8f) { carry.Add(new KeyValuePair<Transform, Bounds>(o.transform, b)); continue; }
