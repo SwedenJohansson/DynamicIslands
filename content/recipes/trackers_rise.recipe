@@ -45,7 +45,8 @@ push at -14 -12 h=7.1
 call stilt_hut y=2.6 foot=1.1
 place Loot_Chest towerchest at 3.6 3.6 y=2.7 sit yaw=180
 # REDO 10-24: the tower's map table (the island's machine) and Oda's map case it opens
-place MapTable maptable at 1.4 3.4 y=2.66 sit yaw=0
+# (c3z37 11-21: "floating 0.92 m" - its feet 4 cm inside the deck's top (2.7, where the chests stand): on the deck's top)
+place MapTable maptable at 1.4 3.4 y=2.7 sit yaw=0
 place Loot_ChestSmall mapcase at 3.6 1.0 y=2.7 sit yaw=270
 pop
 # (zip deck beside the tower)

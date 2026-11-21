@@ -402,4 +402,16 @@ prop rwratB creature.respawn=0
 clear at -13.55 -40.62 r=1.5 only=Banana_Bush
 # (11-11 w02fix: a generated white flower 1.4 m over the slope at -12.86 -36.6 - CIFloating)
 clear at -12.3 -36.5 r=1.8 only=Pickup_Landmark_Flower_White
+# (11-21 c3z37 ground check, the same in c3z30: plants the generator and the fills set down where the game's ground
+# lies otherwise than the editor's (the hill and the dens' sand) - a big palm 11.8 m deep, three pineapples 2-6 m deep, a
+# palm's foot 5 m up, bushes 2.4-5.6 m up; the save's reseat kept them. Points: the report's plus the land centre)
+clear at -46.3 14.6 r=2 only=BigPalm
+clear at -55.09 8.97 r=2 only=Pineapple
+clear at -48.49 16.99 r=2 only=Pineapple
+clear at -52.37 -17.25 r=2 only=Pineapple
+clear at -35.26 51.5 r=2 only=Palm
+clear at -14.31 -16.57 r=2 only=Bush
+clear at 11.75 -33.28 r=2 only=Bush
+clear at -16.25 47.34 r=2 only=Balboa_Bush
+clear at -23.4 55 r=2 only=Balboa_Bush
 save Rootweave Caves

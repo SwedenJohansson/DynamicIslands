@@ -402,6 +402,91 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIOneSidedIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIOneSidedWorld does, then taken away (IG8). Same arguments as CIOverlapIslands. Results in Mods\\DynamicIslands\\onesided_islands.txt.")]
 		public static void OneSidedIslandsCommand(string[] args) { IslandsCheck(args, OneSidedCheck); }
 
+		static readonly IslandCheck SheetCheck = new IslandCheck { Label = "sheet", File = "sheet", Pass = "no bare cliff sheet at the waterline", Measure = SheetProblems };
+
+		[ConsoleCommand(name: "CISheetIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one; no bare land cliff at the waterline - the land's own face rising 7 m or more in one heightmap step from under the sea to over it, nothing standing in front of it, along 3 or more 8 m cells: Raft draws it as one pale stretched sheet (Caisson Yard's yard rock, c3z37 11-21). Same arguments as CIOverlapIslands. Results in Mods\\DynamicIslands\\sheet_islands.txt.")]
+		public static void SheetIslandsCommand(string[] args) { IslandsCheck(args, SheetCheck); }
+
+		[ConsoleCommand(name: "CISheetWorld", docs: "Dev, in a world: CISheetIslands on the loaded custom islands. CISheetWorld [part of the island name]. Results in Mods\\DynamicIslands\\sheet_world.txt.")]
+		public static void SheetWorldCommand(string[] args) { WorldCheck(args, SheetCheck); }
+
+		const float SheetRise = 7f;   // (one heightmap step this tall: the land's skin stretched up a wall)
+		const float SheetCellM = 8f;  // (faces are gathered in cells this wide; neighbouring cells make one sheet)
+		const int SheetCells = 3;     // (a sheet this many cells or more is a problem - a single steep notch is not)
+
+		/// <summary>The land's bare cliff faces at the waterline, gathered into sheets: a face is one heightmap step that rises
+		/// SheetRise or more from under the sea (2 m down) to over it, seen from its low side (a ray at the waterline hits the
+		/// land first, not a rock or a wall set in front of it). Raft paints the land from above, so such a face is drawn as the
+		/// ground's texture smeared down a wall - Caisson Yard's crane-end picture showed a pale sheet half the frame wide that
+		/// no check caught (c3z37 11-21). count = the faces measured.</summary>
+		static List<string> SheetProblems(IslandWorldState.Entry e, out int count)
+		{
+			var lines = new List<string>();
+			count = 0;
+			Terrain land = e.Root != null ? e.Root.GetComponentInChildren<Terrain>() : null;
+			if (land == null || land.terrainData == null) return lines;
+			TerrainData td = land.terrainData;
+			int res = td.heightmapResolution;
+			float[,] hm = td.GetHeights(0, 0, res, res);
+			Vector3 tp = land.transform.position, size = td.size, mid = e.Position;
+			float sea = 0f, sx = size.x / (res - 1), sz = size.z / (res - 1);
+			int cell = Mathf.Max(1, Mathf.RoundToInt(SheetCellM / sx));
+			// (cell -> bare faces, the tallest, the highest top, the sum of their points)
+			var cells = new Dictionary<long, float[]>();
+			Physics.SyncTransforms();
+			for (int z = 0; z < res - 1; z++)
+				for (int x = 0; x < res - 1; x++)
+					for (int k = 0; k < 2; k++)
+					{
+						int nx = k == 0 ? x + 1 : x, nz = k == 0 ? z : z + 1;
+						float a = hm[z, x] * size.y + tp.y, b = hm[nz, nx] * size.y + tp.y;
+						float rise = Mathf.Abs(a - b), top = Mathf.Max(a, b) - sea, bot = Mathf.Min(a, b) - sea;
+						if (rise < SheetRise || top < 0.5f || bot > -2f) continue;
+						count++;
+						Vector3 hi = new Vector3(tp.x + (a >= b ? x : nx) * sx, 0f, tp.z + (a >= b ? z : nz) * sz);
+						Vector3 lo = new Vector3(tp.x + (a >= b ? nx : x) * sx, 0f, tp.z + (a >= b ? nz : z) * sz);
+						Vector3 outward = (lo - hi).normalized;
+						float y = sea + Mathf.Clamp(top * 0.5f, 0.25f, 3f);
+						Vector3 from = lo + outward * 0.5f; from.y = y;
+						// (the low side's ground over the ray's start: a trench, not a face seen from the sea)
+						if (land.SampleHeight(from) + tp.y > y) continue;
+						RaycastHit hit;
+						bool bare = !Physics.Raycast(from, -outward, out hit, sx + 1f, ~0, QueryTriggerInteraction.Ignore) || hit.collider is TerrainCollider;
+						if (!bare) continue;
+						long key = (long)(x / cell) * 100000L + (z / cell);
+						float[] c;
+						if (!cells.TryGetValue(key, out c)) cells[key] = c = new float[5];
+						c[0]++; c[1] = Mathf.Max(c[1], rise); c[2] = Mathf.Max(c[2], top); c[3] += (hi.x + lo.x) * 0.5f; c[4] += (hi.z + lo.z) * 0.5f;
+					}
+			// (neighbouring cells, the corners too, make one sheet)
+			var seen = new HashSet<long>();
+			var sheets = new List<KeyValuePair<int, string>>();
+			foreach (long start in cells.Keys)
+			{
+				if (seen.Contains(start)) continue;
+				var stack = new Stack<long>(); stack.Push(start); seen.Add(start);
+				int n = 0; float faces = 0f, tallest = 0f, highest = 0f, px = 0f, pz = 0f;
+				while (stack.Count > 0)
+				{
+					long q = stack.Pop(); float[] c = cells[q];
+					n++; faces += c[0]; tallest = Mathf.Max(tallest, c[1]); highest = Mathf.Max(highest, c[2]); px += c[3]; pz += c[4];
+					long cx = q / 100000L, cz = q % 100000L;
+					for (long dx = -1; dx <= 1; dx++)
+						for (long dz = -1; dz <= 1; dz++)
+						{
+							long r = (cx + dx) * 100000L + cz + dz;
+							if (cells.ContainsKey(r) && seen.Add(r)) stack.Push(r);
+						}
+				}
+				if (n < SheetCells) continue;
+				sheets.Add(new KeyValuePair<int, string>(n, "bare cliff sheet: the land's own face at the waterline round " + Num(px / faces - mid.x) + " " + Num(pz / faces - mid.z) +
+					", " + n + " cells of " + Num(SheetCellM) + " m (" + (int)faces + " faces), up to " + Num(tallest) + " m in one step, its top h=" + Num(highest) +
+					" - drawn as the ground's texture stretched down a wall; slope it, or stand rock or a wall in front of it"));
+			}
+			foreach (var s in sheets.OrderByDescending(s => s.Key)) lines.Add(s.Value);
+			return lines;
+		}
+
 		/// <summary>A piece's look across its thinnest side, per mesh + materials: +1 drawn only towards +axis, -1 only towards -axis, 0 both (or too little drawn).</summary>
 		static readonly Dictionary<string, int> OneSidedLook = new Dictionary<string, int>();
 		static Camera sideCam;
@@ -996,7 +1081,7 @@ namespace DynamicIslands
 				// sea-gate bars read "buried" 11-21)
 				// (nor what stands where the ground is cut away for a cave piece's room: SampleHeight reads the cut cell's old height,
 				// the hill over the den - Marrow Key Museum's vault hatch read "buried 12.2 m" in its den, z32 11-21)
-				if (!NotABase.IsMatch(n) && !CaveBacks.Wants(n) && land != null && whole.max.y < groundMid - 0.05f && whole.max.y > sea - 1f && !InDugPassage(whole) && !GroundCutAt(land, b.center))
+				if (!NotABase.IsMatch(n) && !CaveBacks.Wants(n) && land != null && whole.max.y < groundMid - 0.05f && whole.max.y > sea - 1f && !InDugPassage(whole) && !GroundCutAt(land, b.center) && !UnderCaveRoof(whole, groundMid))
 				{ node.Reported = node.Direct = true; lines.Add("buried: " + n + " at " + where + ", its top " + Num(groundMid - whole.max.y) + " m under the ground"); continue; }
 				// A zipline: each end on its own (its base reaches from one end's floor to the other's, over the dip between them -
 				// the Lodestone Array's lines read "partly in the air" 3.7 m over their moat, 2026-10-20): every piece no wider than
@@ -1533,6 +1618,20 @@ namespace DynamicIslands
 			finally { Physics.queriesHitBackfaces = backs0; }
 			yield return CameraShot(at, at + Quaternion.Euler(-pitch, yaw, 0f) * Vector3.forward * 5f, "from_" + name);
 			Log("PASS: shot from " + at.ToString("F1"));
+		}
+
+		/// <summary>A cave piece's rock straight over the top of this box, under the land's height there: it stands in the cave's
+		/// room, not in the ground (Rootweave Caves' hollow ladder pillar read "buried 10.4 m" under the Fungus Hall's roof, the
+		/// land cell there whole, c3z37 11-21).</summary>
+		static bool UnderCaveRoof(Bounds whole, float groundY)
+		{
+			Vector3 from = new Vector3(whole.center.x, whole.max.y + 0.05f, whole.center.z);
+			float len = groundY - from.y - 0.3f; // (short of the land's top: not the mountain skin laid on it)
+			if (len <= 0f) return false;
+			bool backs0 = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try { return Physics.RaycastAll(from, Vector3.up, len, ~0, QueryTriggerInteraction.Ignore).Any(h => CaveRock(h.collider)); }
+			finally { Physics.queriesHitBackfaces = backs0; }
 		}
 
 		/// <summary>A collider of a cave piece's rock (any piece's).</summary>

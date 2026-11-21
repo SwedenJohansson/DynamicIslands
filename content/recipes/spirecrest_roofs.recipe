@@ -217,7 +217,8 @@ place Note_Paper scsumnote at -64.75 27.25 h=36.84 drop yaw=20
 place Zone_Trigger scsummit at -64 28 h=37.73
 place ZiplinePath_Landmark sczip at -63.25 27.25 h=36.73 yaw=0
 zipfrom sczip -63.25 27.25 h=36.73
-zipto sczip -32 14
+# (c3z37 11-21: the far end at -32 14 lay at the waterline, its rope 0.57 m in the shore in its last 3 m - on the dry shore 10 m back)
+zipto sczip -42 16
 place Loot_ChestSmall scledge at -73.33 37.33 ground sit yaw=40
 place SmallRock_02 - at -39.34 34.51 ground sit scale=0.5
 place SmallRock_02 - at -39.34 34.51 ground y=0.6 sit scale=0.32 yaw=40

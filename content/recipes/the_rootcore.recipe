@@ -316,7 +316,8 @@ place Zone_Atmosphere domeair at 1.2 -18 y=4
 # (box agent 10-25: three baskets and two corals sat on the dome's curved wall 1-4 m up - moved in to the flat floor; Oda's locker 2 m in from the camp's sloped edge, where it was buried)
 place Placeable_Lantern_FireBasket - at -2.5 -11 ground sit
 place Placeable_Lantern_FireBasket firebasket1 at 3.5 -13 ground sit
-place Placeable_Lantern_FireBasket firebasket2 at -5.5 -23 ground sit
+# (c3z37 11-21: firebasket2 stood on the dome's curved wall, 2 of its 4 corners over the drop - 1.4 m in towards the dome's middle)
+place Placeable_Lantern_FireBasket firebasket2 at -4.4 -22.2 ground sit
 place Placeable_Lantern_FireBasket - at -3.5 -24 ground sit
 # STORY 10-24 (finale set-piece): a camera marker by the dome's way in; a purple coral wall behind the oldest root that
 #     shakes and falls when the root wakes - behind it Teodor's tape recorder on a box (the chain's twist)
@@ -497,6 +498,9 @@ clear at -13.33 34.59 r=1.5 only=SmallBoulder
 clear at -11 80 r=2.5 only=Palm
 # (w02 11-08 ground check: a generated palm over the deep cave's room end stood 1.35 m sunk at -21.9 14)
 clear at -21.9 14 r=1.5 only=Palm
+# (c3z37 11-21 ground check: a generated Palm 2 and a Mango sunk 1.4 and 1.0 m at their feet on the slope - points: the report's plus the land centre)
+clear at -27.94 46.04 r=2 only=Palm
+clear at -17.71 49.27 r=2 only=Mango
 
 # (box agent 10-25: names for the guide pictures' snap points)
 prop rcmast obj.name=rcmast

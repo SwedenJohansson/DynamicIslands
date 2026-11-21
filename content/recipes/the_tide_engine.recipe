@@ -142,7 +142,9 @@ place LandmarkLadder_6m cabladder at 0 35.85 h=5 sit yaw=0
 place Zone_Trigger armtop at -0.8 37.6 h=11.2
 # (its near floor - 5.72 m west, 0.97 m north of where it is put, 1.35 m under its h - on the cab plate, clear of the locker)
 place ZiplinePath_Landmark zipacross at 7.12 35.83 h=12.3
-zipto zipacross 6 -18
+# (c3z37 11-21: over the flat south rim the line ran 0.28 m over the ground 3 m short of its end at 6 -18 (0.5 wanted) - the end on the
+# rim's edge, the line steeper over it)
+zipto zipacross 6 -15
 prop armlow tint.color=#a8743c
 prop armhigh tint.color=#a8743c
 prop cablegs tint.color=#7a6a50

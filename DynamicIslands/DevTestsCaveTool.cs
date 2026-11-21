@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -1321,6 +1321,8 @@ namespace DynamicIslands
 		static IEnumerator RayCollideRoutine()
 		{
 			bool ok = true;
+			// (taken from its landmark scene first: in a world only the objects the islands use are loaded - c3z37 found none)
+			yield return PlaceableCatalog.EnsureLoaded(new[] { RaftStore.ObjectName });
 			GameObject tp = PlaceableCatalog.Spawn(RaftStore.ObjectName, null);
 			if (tp == null) { Fail("ray collide: no " + RaftStore.ObjectName + " in the catalog"); yield break; }
 			tp.transform.position = (Camera.main != null ? Camera.main.transform.position : Vector3.zero) + Vector3.up * 60f;
