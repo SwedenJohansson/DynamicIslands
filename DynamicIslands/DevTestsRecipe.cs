@@ -207,7 +207,7 @@ namespace DynamicIslands
 
 		static readonly Regex Hangs = new Regex("Buoy|Water|Pipe|Chain|Rope|Cable|Lamp|Light|Flag|Banner|Floor|Deck|Plank|Bridge|Ramp|Stair|Crane|Roof|Scaffold", RegexOptions.IgnoreCase);
 
-		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it); the save sets a rock in the air down and a buried barrel up; a zipline rope is measured over the cave hill a world builds; a rope no raise clears gets the most room zipto can give it; a zipto far end under the cave hill goes onto its skin and the ground check sees a rope's last metres; a deck ladder's climbing side is cleared of the generator's boulders")]
+		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it); the save sets a rock in the air down and a buried barrel up; a zipline rope is measured over the cave hill a world builds; a rope no raise clears gets the most room zipto can give it; a zipto far end under the cave hill goes onto its skin and the ground check sees a rope's last metres; a deck ladder's climbing side is cleared of the generator's boulders; a rope into the hill's slope before its far end gets that end raised on a deck")]
 		public static void GroundingTestCommand()
 		{
 			StartTest(GroundingTestRoutine());
@@ -463,6 +463,24 @@ namespace DynamicIslands
 				float now7 = ZiplineEnds.TryParse(ObjectProps.Get(ze7.Props, ZiplineEnds.ZipTo), out to7) ? to7.y + org.y : float.NaN;
 				Check(ref ok, moved && skin7 > land7 + 1f && Mathf.Abs(now7 - skin7) < 0.1f, "a zipto far end under the cave hill's skin goes onto it: " + Num(now7 - land7) + " m over the land (the skin " + Num(skin7 - land7) + ")");
 				Check(ref ok, !ZipFarOnSkin(ze7, org), "a zipto far end on the skin stays there");
+				// 9. Its rope's last metres clear of the hill's slope (11-21 c3z15: Caisson Yard's summit rope, its far end on the skin,
+				// ran 0.24 m into the dune just before it): the near end as high as the hill's top, its rope sagging into the slope
+				// before the far end; zipto raises the far end on a deck till the last metres clear it, as the ground check measures
+				zl7.transform.position += Vector3.up * (skin7 - zl7.transform.position.y);
+				Physics.SyncTransforms();
+				Func<float, float, float> g9 = ZiplineEnds.OverSkins((x, z) => GroundY(x, z), ZiplineEnds.CaveSkins(hill7.transform));
+				MeshPath_Zipline_Landmark line9 = zl7.GetComponentInChildren<MeshPath_Zipline_Landmark>(true);
+				Func<float> end9 = () => { Vector3 n9, f9, a9; Physics.SyncTransforms(); return line9 != null && ZiplineEnds.Ends(zl7, ze7.Props, org, out n9, out f9) ? ZiplineEnds.FarStretchLowest(ZiplineEnds.RopeBetween(line9, f9, n9), n9, f9, g9, out a9) : float.NaN; };
+				float before9 = end9();
+				GameObject deck9, again9;
+				var lad9 = new HashSet<GameObject>(zipDeckLadders);
+				string w9 = ZipFarClear(ze7, out deck9);
+				float after9 = end9();
+				Check(ref ok, before9 < ZiplineEnds.FarEndLow && w9 != null && after9 >= ZiplineEnds.FarEndLow && after9 > before9, "a zipto rope into the hill's slope before its far end: its last " + Num(ZiplineEnds.FarSkip) + " m " + Num(before9) + " -> " + Num(after9) + " m over the ground" + (w9 != null ? " (" + w9.Trim() + ")" : ""));
+				Check(ref ok, deck9 != null, "the raised far end stands on a deck");
+				Check(ref ok, ZipFarClear(ze7, out again9) == null && again9 == null, "a zipto far end clear stays as it is");
+				foreach (GameObject x in zipDeckLadders.Where(y => y != null && !lad9.Contains(y)).ToList()) { zipDeckLadders.Remove(x); UnityEngine.Object.Destroy(x); }
+				if (deck9 != null) { recipePlaced.Remove(deck9); UnityEngine.Object.Destroy(deck9); }
 				UnityEngine.Object.DestroyImmediate(hill7);
 				Physics.SyncTransforms();
 			}
@@ -2448,7 +2466,7 @@ namespace DynamicIslands
 							// (over the cave hill a world builds over the island's cave pieces, made now to measure against - 11-21 c3z9)
 							GameObject zipHill = zipPending.Any(ze => ze != null) ? CaveMountain.Preview(PlacedEditorObjects()) : null;
 							if (zipHill != null) Log("  zipto: ropes measured over the cave hill a world builds over the island's caves too");
-							try { foreach (EditorGameObject ze in zipPending) if (ze != null) ZipClearGround(ze); }
+							try { foreach (EditorGameObject ze in zipPending) if (ze != null) { ZipClearGround(ze); GameObject fd; ZipFarClear(ze, out fd); } }
 							finally { if (zipHill != null) UnityEngine.Object.DestroyImmediate(zipHill); Physics.SyncTransforms(); }
 							zipPending.Clear();
 							// (Raft's sea finds the recipe's own terrain strokes carried out of the water - a mountain raised over the shelf
@@ -2914,6 +2932,76 @@ namespace DynamicIslands
 			}
 			Log("  zipto: the rope came " + Num(lineLow) + " m over the ground - its near end raised " + Num(r) + " m for " + why + ", the least now " + Num(low) + " m over that at " + Num(at.x - corner.x) + " " + Num(at.z - corner.z) + deck);
 			return r;
+		}
+
+		/// <summary>zipto's far end clear for its whole last stretch (11-21 c3z15: Caisson Yard's summit line, its far end set on the
+		/// cave hill's skin, still ran 0.24 m into the dune's slope just before it and ended in the sand): when the rope's last
+		/// FarSkip m come under FarEndClear m over the ground (the land, the hill's skin, what stands solid), zip.to goes up until
+		/// they don't (FarMaxRaise at most), its floor on a deck on posts to the ground, ladders down its far side when it stands
+		/// over 1 m up. Null when it was clear; else the log's words. deck: the deck made (null when none).</summary>
+		static string ZipFarClear(EditorGameObject e, out GameObject deck)
+		{
+			deck = null;
+			Terrain land = terraineditor.terrain;
+			MeshPath_Zipline_Landmark line = e != null ? e.GetComponentInChildren<MeshPath_Zipline_Landmark>(true) : null;
+			Vector3 near, far, to, at;
+			if (land == null || line == null || !ZiplineEnds.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipTo), out to)) return null;
+			Vector3 origin = land.transform.position;
+			Physics.SyncTransforms();
+			if (!ZiplineEnds.Ends(e.gameObject, e.Props, origin, out near, out far)) return null;
+			Func<float, float, float> ground = ZipGround(e);
+			float slack;
+			if (!float.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipSlack) ?? "", NumberStyles.Float, CultureInfo.InvariantCulture, out slack) || float.IsNaN(slack) || float.IsInfinity(slack) || slack == 0f) slack = float.NaN;
+			float low0 = ZiplineEnds.FarStretchLowest(ZiplineEnds.RopeBetween(line, far, near, slack), near, far, ground, out at), low = low0, r = 0f;
+			// (only where the ground before the end comes up over the room the end has at its own floor - an end on flat ground or
+			// a roof has its rope's last point a few cm over it, as Raft makes it, and is left as it is)
+			Vector3 fw = origin + to;
+			float own = far.y - ground(fw.x, fw.z);
+			if (low0 >= Mathf.Min(ZiplineEnds.FarEndClear, own) - 0.02f) return null;
+			Vector3 corner = new Vector3(TopFrame.Origin.x, 0f, TopFrame.Origin.y), at0 = at;
+			string where0 = Num(at0.x - corner.x) + " " + Num(at0.z - corner.z) + " (ground " + Num(ground(at0.x, at0.z)) + ZipGroundWhat(e, at0.x, at0.z) + ")";
+			while (low < ZiplineEnds.FarEndClear && r < ZiplineEnds.FarMaxRaise)
+			{
+				r = Mathf.Min(ZiplineEnds.FarMaxRaise, Mathf.Ceil((r + Mathf.Max(0.05f, ZiplineEnds.FarEndClear - low)) * 20f) / 20f);
+				Vector3 f2 = far + Vector3.up * r;
+				low = ZiplineEnds.FarStretchLowest(ZiplineEnds.RopeBetween(line, f2, near, slack), near, f2, ground, out at);
+			}
+			Vector3 floorW = origin + to + Vector3.up * r;
+			float under = ground(floorW.x, floorW.z);
+			PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(to + Vector3.up * r)));
+			string words = "  zipto: its rope came " + Num(low0) + " m over the ground in its last " + Num(ZiplineEnds.FarSkip) + " m at " + where0 + " - its far end raised " + Num(r) + " m, the least there now " + Num(low) + " m";
+			if (low < ZiplineEnds.FarEndClear)
+				words = "  WARNING:" + words.Substring(1) + ", short of " + Num(ZiplineEnds.FarEndClear) + " m with the most raise (" + Num(ZiplineEnds.FarMaxRaise) + " m): move the far end onto the top or the flat";
+			// (its floor on a deck where it stands off the ground: nothing floating - the far pieces stand on its top)
+			GameObject placedGo = GameObject.Find("PlacedObjects");
+			if (floorW.y - under > 0.15f && placedGo != null && ObjectLimit.Allow(1))
+			{
+				Transform placedRoot = placedGo.transform;
+				GameObject go = PlaceableCatalog.Spawn("Block_Floor_Wood", placedRoot);
+				Renderer[] rs = go != null ? PlacementOptions.ShapeRenderers(go) : new Renderer[0];
+				if (go != null && rs.Length > 0)
+				{
+					go.transform.rotation = PlacementOptions.Straight(go.transform.rotation, true);
+					Bounds b = rs[0].bounds;
+					foreach (Renderer rr in rs) b.Encapsulate(rr.bounds);
+					float top = floorW.y - 0.05f;
+					go.transform.position += new Vector3(floorW.x - b.center.x, top - b.max.y, floorW.z - b.center.z);
+					Collider deckCol = go.GetComponent<Collider>();
+					if (deckCol != null) deckCol.enabled = true;
+					EditorGameObject.Attach(go, "Block_Floor_Wood");
+					recipePlaced.Add(go);
+					CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { go }, true));
+					Physics.SyncTransforms();
+					Bounds db = rs[0].bounds;
+					foreach (Renderer rr in rs) db.Encapsulate(rr.bounds);
+					words += ", its floor on a deck " + Num(top - under) + " m over the ground" + ZipDeckPosts(db, placedRoot);
+					if (top - under > 1f) words += ZipDeckLadders(db, new Vector3(far.x - near.x, 0f, far.z - near.z), placedRoot);
+					deck = go;
+				}
+				else if (go != null) UnityEngine.Object.Destroy(go);
+			}
+			Log(words);
+			return words;
 		}
 
 		/// <summary>zipto's far end on the cave hill (11-21 c3z13): when the ground at its floor (zip.to) is the skin of the cave

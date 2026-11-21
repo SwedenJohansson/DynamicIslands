@@ -27,6 +27,10 @@ namespace DynamicIslands.Editor
 		/// FarEndLow m over the ground (11-21 c3z13: Caisson Yard's summit line ended in the cave hill's sand, its far floor on
 		/// the land under the hill's skin; the left-out stretch hid it).</summary>
 		public const float FarEndLow = 0f;
+		/// <summary>zipto keeps the rope's last FarSkip m at least FarEndClear m over the ground (a world's cave hill comes out a
+		/// little off the editor's measuring one), raising the far end on a deck up to FarMaxRaise m (11-21 c3z15: Caisson Yard's
+		/// summit rope, its far end on the hill's skin, ran 0.24 m into the dune's slope just before it).</summary>
+		public const float FarEndClear = 0.3f, FarMaxRaise = 3f;
 
 		/// <summary>The rope's lowest over the ground in its last FarSkip m, its far end included (FarEndLow).</summary>
 		public static float FarStretchLowest(List<Vector3> rope, Vector3 near, Vector3 far, System.Func<float, float, float> ground, out Vector3 at)
