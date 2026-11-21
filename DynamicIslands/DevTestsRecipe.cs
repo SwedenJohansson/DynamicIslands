@@ -340,6 +340,34 @@ namespace DynamicIslands
 			Check(ref ok, floatedBefore && !floatsAfter && boulder.activeSelf, "the save sets a boulder in the air down: it floated " + floatedBefore + ", after the settle it floats " + floatsAfter + " (shown " + boulder.activeSelf + ", its underside " + (rb.min.y - GroundY(rb.center.x, rb.center.z)).ToString("F2") + " m over the ground)");
 			Check(ref ok, bb.max.y > GroundY(bb.center.x, bb.center.z) + 0.05f, "the save sets a buried barrel up on the ground: its top " + (bb.max.y - GroundY(bb.center.x, bb.center.z)).ToString("F2") + " m over it");
 			Check(ref ok, (treasure.transform.position - treasureAt).magnitude < 0.01f, "the save leaves buried treasure under the ground: moved " + (treasure.transform.position - treasureAt).magnitude.ToString("F2") + " m");
+			// (a deck 6 m up over a lower floor 1 m up: its posts stand on that floor's top, not left out - 11-21 c3y11, Engine Court's
+			// ridge deck over the court's posts stood on its ladders alone)
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Block_Floor_Wood", "RT_Pillar" });
+			Transform root = GameObject.Find("PlacedObjects").transform;
+			var pillarsBefore = new HashSet<GameObject>(root.GetComponentsInChildren<EditorGameObject>().Where(x => x.GameObjectName == "RT_Pillar").Select(x => x.gameObject));
+			GameObject deckHi = PlaceableCatalog.Spawn("Block_Floor_Wood", root), deckLo = PlaceableCatalog.Spawn("Block_Floor_Wood", root);
+			if (deckHi == null || deckLo == null) { Fail("grounding test: no Block_Floor_Wood"); yield break; }
+			EditorGameObject.Attach(deckHi, "Block_Floor_Wood");
+			EditorGameObject.Attach(deckLo, "Block_Floor_Wood");
+			foreach (GameObject f in new[] { deckHi, deckLo }) { Collider fc = f.GetComponent<Collider>(); if (fc != null) fc.enabled = true; }
+			Vector3 deckAt = flat + new Vector3(-6f, 0f, -6f);
+			deckHi.transform.position = deckAt;
+			deckLo.transform.position = deckAt + new Vector3(0.6f, 0f, 0f);
+			Physics.SyncTransforms();
+			Bounds hb = MeshBox(deckHi), lb = MeshBox(deckLo);
+			deckHi.transform.position += Vector3.up * (GroundY(hb.center.x, hb.center.z) + 6f - hb.min.y);
+			deckLo.transform.position += Vector3.up * (GroundY(lb.center.x, lb.center.z) + 1f - lb.min.y);
+			Physics.SyncTransforms();
+			hb = MeshBox(deckHi); lb = MeshBox(deckLo);
+			StandPosts();
+			Physics.SyncTransforms();
+			List<GameObject> newPillars = root.GetComponentsInChildren<EditorGameObject>().Where(x => x.GameObjectName == "RT_Pillar" && !pillarsBefore.Contains(x.gameObject)).Select(x => x.gameObject).ToList();
+			int onLow = newPillars.Count(x => { Bounds pb = MeshBox(x); return Mathf.Abs(pb.max.y - hb.min.y) < 0.15f && Mathf.Abs(pb.min.y - lb.max.y) < 0.15f; });
+			int deckPosts = newPillars.Count(x => { Bounds pb = MeshBox(x); return Mathf.Abs(pb.max.y - hb.min.y) < 0.15f; });
+			Check(ref ok, onLow >= 1 && deckPosts >= 4, "a deck 6 m up over a lower floor gets its posts, those over the floor on its top: " + deckPosts + " posts under the deck, " + onLow + " on the lower floor");
+			foreach (GameObject x in newPillars) UnityEngine.Object.Destroy(x);
+			UnityEngine.Object.Destroy(deckHi);
+			UnityEngine.Object.Destroy(deckLo);
 			UnityEngine.Object.Destroy(boulder);
 			UnityEngine.Object.Destroy(barrel);
 			UnityEngine.Object.Destroy(treasure);
@@ -3125,7 +3153,18 @@ namespace DynamicIslands
 					// (not down through a building under the floor: a roof slab's corner over a room's ceiling with no collider
 					// read as over nothing, and its post went through the room from the roof to the pit's floor - Shelter
 					// Atoll's storeroom, RF5 11-05. The building holds the floor there; no post)
-					if (PostBlocked(building.Where(bb => bb.max.y < corner.y - 0.3f).ToList(), corner, foot)) { overBuilding++; continue; }
+					// (only a building whose top comes within 1.5 m of the floor holds it, as FloorsOverNothing reads it; one lower down
+					// takes the post on its top instead - 11-21 c3y11, Engine Court's 6.6 m ridge deck over the court's posts had all four
+					// posts left out and stood on its ladders alone)
+					List<Bounds> under = building.Where(bb => bb.max.y < corner.y - 0.3f && PostBlocked(new List<Bounds> { bb }, corner, foot)).ToList();
+					float standOn = float.MinValue;
+					if (under.Count > 0)
+					{
+						float onTop = under.Max(bb => bb.max.y);
+						if (onTop > corner.y - 1.5f) { overBuilding++; continue; }
+						foot = standOn = onTop;
+						if (corner.y - foot < 0.5f) continue;
+					}
 					// (not through a thing: in under the floor, towards its middle, until the post's line is clear)
 					Vector3 p = corner;
 					if (PostBlocked(things, p, foot))
@@ -3137,7 +3176,7 @@ namespace DynamicIslands
 							{
 								Vector3 c = corner + dir * step;
 								if (found || c.x < d.Box.min.x + 0.05f || c.x > d.Box.max.x - 0.05f || c.z < d.Box.min.z + 0.05f || c.z > d.Box.max.z - 0.05f) continue;
-								float f = GroundY(c.x, c.z) - 0.3f;
+								float f = Mathf.Max(GroundY(c.x, c.z) - 0.3f, standOn);
 								if (PostBlocked(things, c, f)) continue;
 								p = c; foot = f; found = true;
 							}
