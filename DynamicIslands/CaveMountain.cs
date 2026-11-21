@@ -1194,6 +1194,7 @@ namespace DynamicIslands.Editor
 			if (anyLone)
 			{
 				var dist = new float[nx, nz];
+				float[,] was = null, archOf = null; bool[,] sunkE = null;
 				// (the way in isn't an edge: measured from it too, the cheeks beside the arch were sunk into the ground right at its
 				// sides, and the den's flat front wall stood bare round the arch down to the sand, a box notch with square sides,
 				// Caisson Yard and Shelter Atoll 11-09 r57/r59 user)
@@ -1225,9 +1226,38 @@ namespace DynamicIslands.Editor
 							float past = ahead[j][i, k];
 							if (!on[i, k] || cut[i, k] || !(past > 0f) || past > LoneRun + LoneEdgeBand || !float.IsNaN(top[i, k]) || !float.IsNaN(corridor[i, k])) continue;
 							float cap = ground[i, k] - 0.6f + LoneEdgeRise * Mathf.Max(dist[i, k] - Cell, 0f);
-							if (height[i, k] > cap) { height[i, k] = cap; near[i, k] = true; capped++; Why[i, k] = 'E'; }
+							if (height[i, k] > cap)
+							{
+								if (was == null) { was = new float[nx, nz]; archOf = new float[nx, nz]; sunkE = new bool[nx, nz]; }
+								if (!sunkE[i, k]) { was[i, k] = height[i, k]; sunkE[i, k] = true; }
+								archOf[i, k] = Mathf.Max(archOf[i, k], m.ArchUp);
+								height[i, k] = cap; near[i, k] = true; capped++; Why[i, k] = 'E';
+							}
 						}
 				}
+				// (c3z47, Engine Decks: an edge cell sunk in front of the mouth's plane stood 6.6 m under the uncapped cell beside the
+				// arch just behind it - a sheer wall there. Sunk cells are raised back, never over their own height before, to at most
+				// LoneEdgeStep plus the arch's height under any neighbour, a few rounds so a raised cell's own neighbours follow)
+				if (was != null)
+					for (int round = 0; round < 8; round++)
+					{
+						int raised = 0;
+						for (int i = 1; i < nx - 1; i++)
+							for (int k = 1; k < nz - 1; k++)
+							{
+								if (!sunkE[i, k]) continue;
+								float want = height[i, k];
+								for (int d = 0; d < 4; d++)
+								{
+									int a = i + (d == 0 ? 1 : d == 1 ? -1 : 0), c = k + (d == 2 ? 1 : d == 3 ? -1 : 0);
+									if (!on[a, c] || cut[a, c]) continue;
+									want = Mathf.Max(want, height[a, c] - archOf[i, k] - LoneEdgeStep);
+								}
+								want = Mathf.Min(want, was[i, k]);
+								if (want > height[i, k] + 0.01f) { height[i, k] = want; raised++; }
+							}
+						if (raised == 0) break;
+					}
 				if (capped > 0) Debug.Log("[CUSTOM ISLANDS] Lone den skin edge sunk into the ground at " + capped + " cells");
 			}
 			// (the grid's own edge isn't the hill's: where the skin ran on to it, it was cut off there metres over the ground and
@@ -1333,6 +1363,7 @@ namespace DynamicIslands.Editor
 		/// arch each side; the hill beside it rises LoneSide a m off it and falls LoneFall a m out to the sand, for at most
 		/// LoneRun m; right beside the way in it is the arch's height at the mouth and down to the floor LoneEdge m out (a funnel
 		/// opening out to the sand: at the arch's height all along, the way in ran between two straight cut walls, 11-09 r47).</summary>
+		internal const float LoneEdgeStep = 4.5f; // (c3z47: m a sunk edge cell may lie under a neighbour past the arch's height - under CICaveGapsLook's LoneSheerMax 5)
 		internal const float LoneEdgeRise = 1.2f, LoneEdgeBand = 8f; // (how steeply a lone den's skin may rise off its edge, and how far past LoneRun that holds)
 		internal const float LoneSlot = 0.3f, LoneSide = 1.2f, LoneFall = 1.7f, LoneRun = 14f, LoneEdge = 2f, LoneSink = 1.5f, LoneDive = 2.5f;
 		// (11-18 w15U: a lone den's cheek curves up off the way in no steeper than LoneSteep a m - curving on, 1.2 + 0.6 a m per m out,

@@ -879,6 +879,20 @@ namespace DynamicIslands
 					ways.Add(w);
 				}
 			}
+			// a lone den (a room placed with no tunnel to it - Engine Decks', c3z47: "0 ways in ()"): walked in from its own
+			// mouth, over the lip and on to its middle
+			foreach (Transform x in rooms)
+			{
+				if (marked(x) || rooms.Any(o => o != x && x.IsChildOf(o))) continue;
+				Vector3 m = x.position + x.rotation * Vector3.forward * (CaveTool.RoomMouthZ * CaveMountain.OverMeasured(x, CaveTool.Room).x);
+				if (tunnels.Any(t => (t.position - m).magnitude < 25f) || ways.Any(w => w.Floor.Count > 0 && (w.Floor.Last() - x.position).magnitude < 25f)) continue;
+				var w2 = new GapWay { Kind = "den" };
+				w2.In = x.position - m; w2.In.y = 0f;
+				if (w2.In.sqrMagnitude < 0.01f) w2.In = x.rotation * Vector3.back;
+				w2.In.Normalize();
+				foreach (float f in new[] { -3f, -0.5f, 4f, 8f }) w2.Floor.Add(GapFloor(m + w2.In * f, 2f, 8f));
+				ways.Add(w2);
+			}
 			// (none: what the cave pieces were taken for - Deepwatch Station's lone tunnel still read "0 ways in", 11-20)
 			if (ways.Count == 0)
 				foreach (Transform x in pieces)

@@ -37,7 +37,14 @@ namespace DynamicIslands
 		/// NearSkip and last FarSkip m (where it comes down to its floors): "name's collider", at: where. Null when none.</summary>
 		static string RopeThrough(List<Vector3> rope, Vector3 near, Vector3 far, Transform self, Transform objects, out Vector3 at)
 		{
-			at = near;
+			Transform hit;
+			return RopeThrough(rope, near, far, self, objects, out at, out hit);
+		}
+
+		/// <summary>RopeThrough, with the placed object it passes through (null when none).</summary>
+		static string RopeThrough(List<Vector3> rope, Vector3 near, Vector3 far, Transform self, Transform objects, out Vector3 at, out Transform hit)
+		{
+			at = near; hit = null;
 			float len = new Vector2(far.x - near.x, far.z - near.z).magnitude;
 			if (rope == null || rope.Count < 2 || len < 0.5f) return null;
 			Func<Vector3, bool> inside = p =>
@@ -61,7 +68,7 @@ namespace DynamicIslands
 						if (c == null || c is TerrainCollider || c.name == CaveMountain.SkinName || c.transform.IsChildOf(self)) continue;
 						Transform r = PlacedRoot(c.transform, objects);
 						if (r == null || r == self || !Shows(r)) continue;
-						at = h.point;
+						at = h.point; hit = r;
 						return r.name + "'s " + c.name;
 					}
 				}

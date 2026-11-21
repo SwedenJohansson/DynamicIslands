@@ -483,6 +483,13 @@ namespace DynamicIslands
 						Vector3 from = b.center + dir * (d * 0.94f) + Vector3.up * (d * 0.34f);
 						RaycastHit hit;
 						float g = Physics.Raycast(new Vector3(from.x, 300f, from.z), Vector3.down, out hit, 600f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
+						// (over the island's own land - its box misses a long low spit or beach - the picture was taken from over it, the
+						// trees right in front filling it: Old Mine Islet's side 30, c3z47. Moved out along its side until over the sea)
+						for (int step = 0; step < 8 && g > 0f; step++)
+						{
+							from += dir * (d * 0.25f) + Vector3.up * (d * 0.085f);
+							g = Physics.Raycast(new Vector3(from.x, 300f, from.z), Vector3.down, out hit, 600f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
+						}
 						from.y = Mathf.Max(from.y, Mathf.Max(g, 0.5f) + 3f);
 						float fill;
 						if (!drowned)
