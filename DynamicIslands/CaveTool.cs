@@ -856,7 +856,39 @@ namespace DynamicIslands.Editor
 				Vector3[] wv = new Vector3[mv.Length], gn = new Vector3[mv.Length];
 				bool hasN = mn != null && mn.Length == mv.Length;
 				for (int i = 0; i < mv.Length; i++) wv[i] = c.TransformPoint(mv[i]);
-				for (int i = 0; i < mv.Length; i++) wv[i] = OnGround(wv[i], hasN ? c.TransformDirection(mn[i]) : Vector3.zero, out gn[i]);
+				// (11-21 cv42: each point's faces' own normals, by their winding as drawn, beside the mesh's normals - FrameCovered
+				// looks along both; and the points next to one laid out, looked for further, so the faces between don't dive
+				// under the cutting wall just inside the ring - Sinkmarket Floor)
+				var wn = new Vector3[mv.Length];
+				for (int t = 0; t + 2 < st.Length; t += 3)
+				{
+					Vector3 fw = Vector3.Cross(wv[st[t + 1]] - wv[st[t]], wv[st[t + 2]] - wv[st[t]]);
+					for (int k = 0; k < 3; k++) wn[st[t + k]] += fw;
+				}
+				var laid = new bool[mv.Length];
+				for (int i = 0; i < mv.Length; i++)
+				{
+					Vector3 was = wv[i];
+					wv[i] = OnGround(was, hasN ? c.TransformDirection(mn[i]) : Vector3.zero, wn[i], FrameCover, out gn[i]);
+					laid[i] = gn[i] != Vector3.zero;
+				}
+				for (int pass = 0; pass < 3; pass++)
+				{
+					var next = new bool[mv.Length];
+					for (int t = 0; t + 2 < st.Length; t += 3)
+						if (laid[st[t]] || laid[st[t + 1]] || laid[st[t + 2]])
+							for (int k = 0; k < 3; k++) if (!laid[st[t + k]]) next[st[t + k]] = true;
+					int more = 0;
+					for (int i = 0; i < mv.Length; i++)
+					{
+						if (!next[i]) continue;
+						Vector3 back = c.TransformPoint(mv[i]);
+						Vector3 moved = OnGround(back, hasN ? c.TransformDirection(mn[i]) : Vector3.zero, wn[i], FrameCoverNext, out gn[i]);
+						if (gn[i] == Vector3.zero) continue;
+						wv[i] = moved; laid[i] = true; more++;
+					}
+					if (more == 0) break;
+				}
 				var nv = new List<Vector3>(st.Length); var nn = new List<Vector3>(st.Length); var nu = new List<Vector2>(st.Length); var tri = new List<int>(st.Length);
 				for (int t = 0; t + 2 < st.Length; t += 3)
 				{
@@ -954,30 +986,44 @@ namespace DynamicIslands.Editor
 		/// (the collider has none). hit is
 		/// where n meets the ground. For tests too (CIFrameRing).
 		/// </summary>
-		public static bool FrameCovered(Vector3 w, Vector3 n, out RaycastHit hit)
+		public static bool FrameCovered(Vector3 w, Vector3 n, out RaycastHit hit) { return FrameCovered(w, n, FrameCover, out hit); }
+
+		/// <summary>FrameCovered with the ground looked for up to reach in front of the face.</summary>
+		public static bool FrameCovered(Vector3 w, Vector3 n, float reach, out RaycastHit hit)
 		{
 			hit = default(RaycastHit);
-			if (n.sqrMagnitude < 1e-6f) return false;
+			if (n.sqrMagnitude < 1e-6f) { FrameCoverMiss[0]++; return false; }
 			n = n.normalized;
-			if (n.y < -0.3f) return false; // (a face turned down: the ground over it is its roof's, not in front of it)
+			if (n.y < -0.3f) { FrameCoverMiss[0]++; return false; } // (a face turned down: the ground over it is its roof's, not in front of it)
 			foreach (Terrain t in Terrain.activeTerrains)
 			{
 				if (t == null || t.terrainData == null || !Over(t, w)) continue;
-				if (w.y >= t.SampleHeight(w) + t.transform.position.y) return false;
 				TerrainCollider tc = t.GetComponent<TerrainCollider>();
 				if (tc == null || !tc.enabled) return false;
-				if (!tc.Raycast(new Ray(w + n * FrameCover, -n), out hit, FrameCover)) return false;
+				// (11-21 cv42: no longer only for a point under the ground's height where it stands - Sinkmarket's frame still
+				// showed the cutting walls inside its ring, 14 rays of CIFrameRing; a ray from in front of the face back to it
+				// meets the ground's face only where the ground stands in front of it)
+				if (!tc.Raycast(new Ray(w + n * reach, -n), out hit, reach)) { FrameCoverMiss[1]++; return false; }
 				// (only a steep cutting wall: under a gentle hillside the frame's outside is under the hill on purpose)
-				return hit.normal.y < FrameCoverSteep && Vector3.Dot(hit.normal, n) > 0.3f;
+				if (hit.normal.y >= FrameCoverSteep) { FrameCoverMiss[2]++; return false; }
+				if (Vector3.Dot(hit.normal, n) <= 0.3f) { FrameCoverMiss[3]++; return false; }
+				return true;
 			}
 			return false;
 		}
+
+		/// <summary>Why FrameCovered left frame points, all islands since Raft started: no normal or turned down, no ground in
+		/// front within reach, the ground there not steep, the ground turned away from the face (log, tests).</summary>
+		public static readonly int[] FrameCoverMiss = new int[4];
+		/// <summary>How far in front of a frame point next to one laid out (FrameCovered) the ground is looked for (m): the faces
+		/// between a point laid out and one left under it dived under the cutting wall within FrameCover.</summary>
+		public const float FrameCoverNext = 2.5f;
 
 		/// <summary>
 		/// A world point 0-FrameSunk under the island ground (not over a hole cut in it) laid FrameOver over it, its normal then the
 		/// ground's (gn; zero when not lifted).
 		/// </summary>
-		static Vector3 OnGround(Vector3 w, Vector3 fn, out Vector3 gn)
+		static Vector3 OnGround(Vector3 w, Vector3 fn, Vector3 wn, float reach, out Vector3 gn)
 		{
 			float g;
 			if (!FrameLiftable(w, out g, out gn))
@@ -986,7 +1032,7 @@ namespace DynamicIslands.Editor
 				// Sinkmarket Floor's cutting walls ran 0.4-0.65 m in front of its frame's inner faces, 1.3 m and more straight
 				// down on a 74 degree wall, where the heightmap's smoothed normal said 44: pale walls stood inside the frame ring)
 				RaycastHit hit;
-				if (!FrameCovered(w, fn, out hit)) { gn = Vector3.zero; return w; }
+				if (!FrameCovered(w, fn, reach, out hit) && !FrameCovered(w, wn, reach, out hit)) { gn = Vector3.zero; return w; }
 				FramePointsLifted++; FramePointsCovered++;
 				gn = hit.normal;
 				return hit.point + hit.normal * FrameOver;

@@ -1957,7 +1957,9 @@ namespace DynamicIslands.Editor
 							if (dist[i] + Bumps(p, floorAt[i], radAt[i]) < 0f) { roof = p.y; break; }
 						}
 						if (float.IsNaN(roof) || roof >= groundAt[c]) continue;
-						float want = Mathf.Min(roof + Mathf.Max(RoofKeep / sY, h), groundAt[c] - Under / sY);
+						// (11-21 cv42: right up to the ground, not RoofKeep over the roof: capped there the rock still stood 0.9 m under
+						// the ground beside Pendulum Isle's mouth and the ears stayed; the rim lift then brings it to the cut's edge)
+						float want = groundAt[c] - Under / sY;
 						if (want > top[c]) { top[c] = want; RoofKept++; }
 					}
 			var field = new float[N];

@@ -1262,7 +1262,9 @@ namespace DynamicIslands
 				if (a.StartsWith("gap=")) float.TryParse(a.Substring(4), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out gap); else rest.Add(a);
 			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", rest.ToArray()) });
 			if (e == null) return;
-			var loot = e.Root.GetComponentsInChildren<Transform>(true).Where(t => t.name.StartsWith("Pickup_Landmark_") && t.parent != null && !t.parent.name.StartsWith("Pickup_Landmark_")).ToList();
+			// (only the pieces caveloot lays: cv42 counted Raft's own sea vines, Pickup_Landmark_SeavineKlump, under the hill's skin)
+			var kit = CaveKitObjects.Where(k => k.StartsWith("Pickup_Landmark_")).ToList();
+			var loot = e.Root.GetComponentsInChildren<Transform>(true).Where(t => kit.Any(k => t.name.StartsWith(k, System.StringComparison.Ordinal)) && t.parent != null && !t.parent.name.StartsWith("Pickup_Landmark_")).ToList();
 			if (loot.Count == 0) { Fail("no loot piece (Pickup_Landmark_*) on " + e.HostName); return; }
 			int bad = 0, seen = 0;
 			foreach (Transform t in loot)
@@ -1295,6 +1297,7 @@ namespace DynamicIslands
 		static bool CaveFloor(Transform t)
 		{
 			if (t.GetComponentInParent<DigTunnel>() != null) return true;
+			if (t.name == CaveMountain.SkinName) return false; // (the hill's outside, not a cave's floor)
 			for (; t != null; t = t.parent) if (t.name.StartsWith("BalboaCave", System.StringComparison.Ordinal) || t.name.StartsWith("Cave", System.StringComparison.Ordinal)) return true;
 			return false;
 		}
