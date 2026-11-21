@@ -368,6 +368,24 @@ namespace DynamicIslands
 			foreach (GameObject x in newPillars) UnityEngine.Object.Destroy(x);
 			UnityEngine.Object.Destroy(deckHi);
 			UnityEngine.Object.Destroy(deckLo);
+			// (a raised zipline deck stands its own four posts into the ground when it is made - 11-21 c3y11/c3y12)
+			var pillarsBefore2 = new HashSet<GameObject>(root.GetComponentsInChildren<EditorGameObject>().Where(x => x.GameObjectName == "RT_Pillar").Select(x => x.gameObject));
+			GameObject zipDeck = PlaceableCatalog.Spawn("Block_Floor_Wood", root);
+			if (zipDeck == null) { Fail("grounding test: no Block_Floor_Wood"); yield break; }
+			EditorGameObject.Attach(zipDeck, "Block_Floor_Wood");
+			zipDeck.transform.position = flat + new Vector3(-6f, 0f, 6f);
+			Physics.SyncTransforms();
+			Bounds zb = MeshBox(zipDeck);
+			zipDeck.transform.position += Vector3.up * (GroundY(zb.center.x, zb.center.z) + 4f - zb.min.y);
+			Physics.SyncTransforms();
+			zb = MeshBox(zipDeck);
+			string zipPosts = ZipDeckPosts(zb, root);
+			Physics.SyncTransforms();
+			List<GameObject> zipPillars = root.GetComponentsInChildren<EditorGameObject>().Where(x => x.GameObjectName == "RT_Pillar" && !pillarsBefore2.Contains(x.gameObject)).Select(x => x.gameObject).ToList();
+			int grounded = zipPillars.Count(x => { Bounds pb = MeshBox(x); return Mathf.Abs(pb.max.y - zb.min.y) < 0.15f && pb.min.y < GroundY(pb.center.x, pb.center.z); });
+			Check(ref ok, grounded == 4, "a raised zipline deck 4 m up stands four posts into the ground: " + grounded + " (" + zipPosts.TrimStart(',', ' ') + ")");
+			foreach (GameObject x in zipPillars) UnityEngine.Object.Destroy(x);
+			UnityEngine.Object.Destroy(zipDeck);
 			UnityEngine.Object.Destroy(boulder);
 			UnityEngine.Object.Destroy(barrel);
 			UnityEngine.Object.Destroy(treasure);
@@ -2737,6 +2755,7 @@ namespace DynamicIslands
 					// (a way up: ladders at the deck's back edge, away from the line, from the deck's top down into the ground)
 					Bounds db = rs[0].bounds;
 					foreach (Renderer rr in rs) db.Encapsulate(rr.bounds);
+					deck += ZipDeckPosts(db, placedRoot);
 					deck += ZipDeckLadders(db, new Vector3(near.x - far.x, 0f, near.z - far.z), placedRoot);
 				}
 				else UnityEngine.Object.Destroy(go);
@@ -2849,6 +2868,50 @@ namespace DynamicIslands
 			if (c == null) return "";
 			EditorGameObject owner = c.GetComponentInParent<EditorGameObject>();
 			return ", on " + (owner != null ? owner.GameObjectName : c.transform.root.name) + "'s " + c.name;
+		}
+
+		/// <summary>One of Raft's posts (RT_Pillar) stretched from <paramref name="foot"/> up to <paramref name="top"/> (StandPosts,
+		/// a raised zipline deck's corners). False when none was stood; <paramref name="spawned"/> false when the catalog had none.</summary>
+		static bool StandPost(Transform placedRoot, Vector3 top, float foot, out bool spawned)
+		{
+			GameObject go = PlaceableCatalog.Spawn("RT_Pillar", placedRoot);
+			spawned = go != null;
+			if (go == null) return false;
+			go.transform.rotation = PlacementOptions.Straight(go.transform.rotation, true);
+			Renderer[] rs = PlacementOptions.ShapeRenderers(go);
+			if (rs.Length == 0) { UnityEngine.Object.Destroy(go); return false; }
+			Bounds b = rs[0].bounds;
+			foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+			go.transform.localScale = new Vector3(go.transform.localScale.x, go.transform.localScale.y * (top.y - foot) / Mathf.Max(0.1f, b.size.y), go.transform.localScale.z);
+			b = rs[0].bounds;
+			foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+			go.transform.position += new Vector3(top.x - b.center.x, foot - b.min.y, top.z - b.center.z);
+			Collider ownCollider = go.GetComponent<Collider>();
+			if (ownCollider != null) ownCollider.enabled = true;
+			EditorGameObject.Attach(go, "RT_Pillar");
+			recipePlaced.Add(go);
+			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { go }, true));
+			return true;
+		}
+
+		/// <summary>Posts at a raised zipline deck's four corners, from its underside into the ground, stood when the deck is made
+		/// (11-21 c3y11/c3y12: Engine Court's and Thalassa Mooring's ridge decks were left to the save's StandPosts and stood
+		/// on their ladders alone). A corner whose post would go through a thing is left to the save's StandPosts, which moves it in.</summary>
+		static string ZipDeckPosts(Bounds deck, Transform placedRoot)
+		{
+			List<Bounds> things = PostObstacles(placedRoot);
+			int n = 0;
+			const float inset = 0.1f;
+			foreach (Vector3 c in new[] { new Vector3(deck.min.x + inset, deck.min.y, deck.min.z + inset), new Vector3(deck.max.x - inset, deck.min.y, deck.min.z + inset),
+				new Vector3(deck.min.x + inset, deck.min.y, deck.max.z - inset), new Vector3(deck.max.x - inset, deck.min.y, deck.max.z - inset) })
+			{
+				float foot = GroundY(c.x, c.z) - 0.3f;
+				if (c.y - foot < 0.5f || PostBlocked(things, c, foot) || !ObjectLimit.Allow(1)) continue;
+				bool spawned;
+				if (StandPost(placedRoot, c, foot, out spawned)) n++;
+				else if (!spawned) break;
+			}
+			return ", " + n + " post" + (n == 1 ? "" : "s") + " under it";
 		}
 
 		/// <summary>Ladders (Block_Ladder) up a raised zipline deck's side that faces away (back: the axis nearest it) from the
@@ -3183,22 +3246,8 @@ namespace DynamicIslands
 						if (!found) { blocked++; continue; }
 						dodged++;
 					}
-					GameObject go = PlaceableCatalog.Spawn("RT_Pillar", placedRoot);
-					if (go == null) return stood.Count;
-					go.transform.rotation = PlacementOptions.Straight(go.transform.rotation, true);
-					Renderer[] rs = PlacementOptions.ShapeRenderers(go);
-					if (rs.Length == 0) { UnityEngine.Object.Destroy(go); continue; }
-					Bounds b = rs[0].bounds;
-					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
-					go.transform.localScale = new Vector3(go.transform.localScale.x, go.transform.localScale.y * (p.y - foot) / Mathf.Max(0.1f, b.size.y), go.transform.localScale.z);
-					b = rs[0].bounds;
-					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
-					go.transform.position += new Vector3(p.x - b.center.x, foot - b.min.y, p.z - b.center.z);
-					Collider ownCollider = go.GetComponent<Collider>();
-					if (ownCollider != null) ownCollider.enabled = true;
-					EditorGameObject.Attach(go, "RT_Pillar");
-					recipePlaced.Add(go);
-					CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { go }, true));
+					bool spawned;
+					if (!StandPost(placedRoot, p, foot, out spawned)) { if (!spawned) return stood.Count; continue; }
 					stood.Add(p);
 				}
 			if (stood.Count > 0) Log("  " + stood.Count + " posts stood under " + gaps.Count + " floors and decks over nothing" + (dodged > 0 ? ", " + dodged + " moved off things" : ""));

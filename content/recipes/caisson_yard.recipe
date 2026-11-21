@@ -197,7 +197,10 @@ place Zone_Trigger cysummit at 12 -66 h=37.73
 # zipto raises this near end on a deck if the hill wants it)
 place ZiplinePath_Landmark cyzip at 11.35 -62.45 ground
 zipfrom cyzip 11.35 -62.45 ground
-zipto cyzip 6 -33
+prop cyzip zip.slack=-0.692
+# (11-21 c3z9: its last 6 m came down over the world's cave hill skin by the hill's foot - the rope 0.3 m into it, a rider
+# stopped 6.5 m short; the editor doesn't see that skin. The far end 4 m further out along the line, onto the flat yard, and a tight rope)
+zipto cyzip 5.3 -29.1
 place Loot_ChestSmall cyledge at 1.82 -55.82 ground sit yaw=40
 place SmallRock_02 - at -4.89 -49.9 ground sit scale=0.5
 place SmallRock_02 - at -4.89 -49.9 ground y=0.6 sit scale=0.32 yaw=40
