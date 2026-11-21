@@ -209,6 +209,8 @@ call shallows x=0 z=22 r=100 deep=6 n=1 seed=12930
 pop
 
 # --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; BoatStranded + chest; hatch with a chest; buried treasure; viewpoint ---
+# (c3z29 11-21: the tent's base stood 0.6 m over the slope - a level pad for the camp first)
+brush flatten at -37.5 23 r=3.5 s=20 frames=150
 place campfire_1 - at -39.4 21.8 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at -36.4 23.8 ground sit yaw=337
 place "Box Small" - at -41.4 24.3 ground sit

@@ -51,6 +51,10 @@ namespace DynamicIslands.Editor
 		public const float LineClear = 1f, MaxRaise = 8f, RiderFarSkip = 5f;
 		/// <summary>The room over LineLow a rider's want keeps the rope outside the far end's last FarSkip m (RiderWant).</summary>
 		public const float LineWantOver = 0.1f;
+		/// <summary>zipto when no raise of the near end nor a tighter rope clears (11-21 c3z29: lines on 15 islands ran through a
+		/// hump between their ends, only warned): the far end goes back along the line toward the near end, PullStep of the line
+		/// at a time and at most PullMost of it, never nearer than PullShortest m nor less than PullDrop m under the near end.</summary>
+		public const float PullStep = 0.05f, PullMost = 0.5f, PullShortest = 8f, PullDrop = 1f;
 
 		/// <summary>The room a rider wants d m before the far end (RopeLowest's want), on a line falling drop m over len m:
 		/// RiderClear, less where the rope's own fall to its far floor gives less - but full again RiderFarSkip m past the

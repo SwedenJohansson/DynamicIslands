@@ -438,6 +438,30 @@ namespace DynamicIslands
 			float pr, ps, pl; Vector3 pa;
 			ZipBestPartial(zline, zn, zf, wall, zsl, ZiplineEnds.MaxRaise, out pr, out ps, out pl, out pa);
 			Check(ref ok, pl < ZiplineEnds.LineClear && pl > asIs + 1f && (pr > 0f || ps != zown), "a rope through a wall no raise clears gets the most room it can: raised " + Num(pr) + " m, slack " + Num(ps) + " (own " + Num(zown) + "), the least " + Num(pl) + " m over the wall's top (" + Num(asIs) + " as it was)");
+			// 6b. ...and then its far end goes back along the line, short of a hump the rope runs through (11-21 c3z29: lines on 15
+			// islands ran into a hump between their ends, only warned), but not past a hump by its near end
+			EditorGameObject ze6 = EditorGameObject.Attach(zl, "ZiplinePath_Landmark");
+			if (ze6 != null)
+			{
+				float g6 = GroundY(flat.x, flat.z);
+				Vector3 n6 = new Vector3(flat.x, g6 + 6f, flat.z), fl6 = new Vector3(flat.x + 24f, GroundY(flat.x + 24f, flat.z), flat.z), f6 = fl6 + Vector3.up * 2f;
+				PropsCommand.Change(ze6, ObjectProps.With(ze6.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(fl6)));
+				Vector3 to6;
+				ZiplineEnds.TryParse(ObjectProps.Get(ze6.Props, ZiplineEnds.ZipTo), out to6);
+				f6 = to6 + Vector3.up * 2f;
+				Vector2 hump6 = new Vector2(flat.x + 18f, flat.z), wall6 = new Vector2(flat.x + 4f, flat.z);
+				Func<float, float, float> humped = (x, z) => Vector2.Distance(new Vector2(x, z), hump6) < 2.5f ? g6 + 4.5f : GroundY(x, z);
+				Func<float, float, float> walled = (x, z) => Vector2.Distance(new Vector2(x, z), wall6) < 2.5f ? n6.y + 3f : GroundY(x, z);
+				Vector3 nt6, nf6, a6, za6; float part6, r6, s6, l6, zt6; bool rd6;
+				float before6 = ZiplineEnds.RopeLowest(ZiplineEnds.RopeBetween(zline, f6, n6, zsl[zsl.Length - 1]), n6, f6, humped, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out za6, out zt6);
+				bool pulled6 = ZipPullIn(ze6, zline, Vector3.zero, n6, f6, humped, zsl, false, out nt6, out nf6, out part6, out r6, out s6, out l6, out a6, out rd6);
+				float after6 = pulled6 ? ZiplineEnds.RopeLowest(ZiplineEnds.RopeBetween(zline, nf6, n6, s6), n6, nf6, humped, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out za6, out zt6) : float.NaN;
+				Check(ref ok, before6 < 0f && pulled6 && part6 > 0f && part6 <= ZiplineEnds.PullMost + 0.001f && Vector2.Distance(new Vector2(nf6.x, nf6.z), hump6) > 2.5f && nf6.x < hump6.x && after6 >= ZiplineEnds.LineLow &&
+					Mathf.Abs(nt6.y - GroundY(nt6.x, nt6.z)) < 0.05f,
+					"a rope through a hump by its far end (" + Num(before6) + " m over it at the tightest) gets its far end pulled back " + Num(part6 * 24f) + " m, short of the hump, its floor on the ground (" + Num(nt6.y - GroundY(nt6.x, nt6.z)) + " m), the rope " + Num(after6) + " m over the ground");
+				Check(ref ok, !ZipPullIn(ze6, zline, Vector3.zero, n6, f6, walled, zsl, false, out nt6, out nf6, out part6, out r6, out s6, out l6, out a6, out rd6), "a rope through a hump by its near end keeps its far end (no pull clears it)");
+			}
+			else Check(ref ok, false, "grounding test: no ZiplinePath_Landmark for part 6b");
 			UnityEngine.Object.Destroy(zl);
 			// 7. A zipto far end over the cave hill goes onto the hill's skin, and the ground check sees a rope's last metres in the
 			// ground (11-21 c3z13: Caisson Yard's summit line ended in the hill's sand, its far floor on the land under the skin)
@@ -2911,6 +2935,18 @@ namespace DynamicIslands
 							Log("  WARNING: zipto: a rider on that rope comes " + Num(-rl) + " m short of a rider's room at " + Num(ra.x - corner.x) + " " + Num(ra.z - corner.z) + " (ground " + Num(ground(ra.x, ra.z)) + ZipGroundWhat(e, ra.x, ra.z) + "): move what is under it or an end");
 						return 0f;
 					}
+				// (none clears: its far end back along the line, short of the hump the rope runs through - 11-21 c3z29: tower lines
+				// on 9 islands ran 0.03-3.3 m into the ground between their ends, only warned)
+				{
+					float[] sl0 = !float.IsNaN(own0) && own0 != 0f ? new[] { own0, own0 * 0.5f, own0 * 0.25f, own0 * 0.1f } : new[] { own0 };
+					Vector3 nt, nfar, pa; float part, pr, ps, pl; bool prider;
+					if (ZipPullIn(e, line, land.transform.position, near, far, ground, sl0, false, out nt, out nfar, out part, out pr, out ps, out pl, out pa, out prider))
+					{
+						ZipPullSet(e, line, land, far, nt, ps, own0, "the rope came " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " (its near end on a deck) and no tighter rope clears it",
+							prider, pa, corner);
+						return 0f;
+					}
+				}
 				// (none clears: the tightest rope that leaves it more room than its own, still warned - 11-21 c3z11, Caisson Yard's
 				// lines left as they were came out worse than a partial fix)
 				float bestL = lineLow, bestS = float.NaN; Vector3 bestA = lineAt;
@@ -2954,6 +2990,21 @@ namespace DynamicIslands
 					why = pass == 0 ? "a rider's room (" + Num(ZiplineEnds.RiderClear) + " m)" : "the rope's " + Num(ZiplineEnds.LineClear) + " m (a rider's room would take over " + Num(ZiplineEnds.MaxRaise) + " m)";
 					if (rr <= ZiplineEnds.MaxRaise / 2f) break;
 				}
+			if (why == null)
+			{
+				// (no raise clears it where it is: its far end back along the line, short of the hump - 11-21 c3z29: lines on 8
+				// islands ran 1-4 m into a hill between their ends with their near ends raised the most)
+				Vector3 nt, nfar, pa2; float part, pr2, ps2, pl2; bool prider;
+				if (ZipPullIn(e, line, land.transform.position, near, far, ground, slacks, true, out nt, out nfar, out part, out pr2, out ps2, out pl2, out pa2, out prider))
+				{
+					float wasFar = far.y;
+					ZipPullSet(e, line, land, far, nt, float.NaN, own, "the rope came " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " and no raise of its near end up to " +
+						Num(ZiplineEnds.MaxRaise) + " m clears it", prider, pa2, corner);
+					ZiplineEnds.Ends(e.gameObject, e.Props, land.transform.position, out near, out far);
+					r = pr2; slack = ps2; low = pl2; at = pa2;
+					why = (prider ? "a rider's room (" + Num(ZiplineEnds.RiderClear) + " m)" : "the rope's " + Num(ZiplineEnds.LineClear) + " m") + " with its far end moved back (" + Num(far.y - wasFar) + " m higher)";
+				}
+			}
 			if (why == null)
 			{
 				// (none clears: the raise and rope that leave it the most room, still warned - 11-21 c3z11, Caisson Yard's ridge
@@ -3170,6 +3221,73 @@ namespace DynamicIslands
 			PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(new Vector3(to.x, g - origin.y, to.z))));
 			Log("  zipto: its far end's floor stood " + Num(g - w.y) + " m under the skin of the cave hill a world builds over it: set on the skin's top");
 			return true;
+		}
+
+		/// <summary>
+		/// zipto when no raise of its near end (none for a near end on a deck) nor a tighter rope clears (11-21 c3z29: lines on 15
+		/// islands ran through a hump of the ground between their ends, the save only warning "move an end"): its far end moved
+		/// back along the line toward the near end (ZiplineEnds.PullStep of it at a time, at most PullMost), its floor on the
+		/// ground there, never nearer the near end than PullShortest m nor less than PullDrop m under it - the first spot where the
+		/// rope clears: a rider's room, else the rope's LineClear (with a raise of the near end up to MaxRaise when raise). True
+		/// with the new zip.to (island frame), far end, part pulled, raise, slack, room left (over the want) and where; false
+		/// leaves the rope as Raft makes it at slacks[0].
+		/// </summary>
+		static bool ZipPullIn(EditorGameObject e, MeshPath_Zipline_Landmark line, Vector3 origin, Vector3 near, Vector3 far, Func<float, float, float> ground, float[] slacks, bool raise,
+			out Vector3 newTo, out Vector3 newFar, out float part, out float r, out float slack, out float low, out Vector3 at, out bool rider)
+		{
+			newTo = Vector3.zero; newFar = far; part = 0f; r = 0f; slack = slacks.Length > 0 ? slacks[0] : float.NaN; low = 0f; at = near; rider = false;
+			Vector3 to;
+			if (e == null || line == null || !ZiplineEnds.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipTo), out to)) return false;
+			// (the rope's end stands off its floor: the floor goes onto the ground, the rope's end with it)
+			Vector3 off = far - (origin + to);
+			Vector2 n2 = new Vector2(near.x, near.z), f2 = new Vector2(far.x, far.z);
+			for (int k = 1; k * ZiplineEnds.PullStep <= ZiplineEnds.PullMost + 0.001f; k++)
+			{
+				float s = k * ZiplineEnds.PullStep;
+				Vector2 p = Vector2.Lerp(f2, n2, s);
+				float len = Vector2.Distance(p, n2);
+				if (len < ZiplineEnds.PullShortest) break;
+				float fx = p.x - off.x, fz = p.y - off.z;
+				Vector3 fl = new Vector3(fx, ground(fx, fz), fz), f = fl + off;
+				if (near.y - f.y < ZiplineEnds.PullDrop) continue;
+				for (int pass = 0; pass < 2; pass++)
+					foreach (float sl in slacks)
+					{
+						Func<float, Func<float, float>> want = pass == 0 ? (Func<float, Func<float, float>>)(x => ZiplineEnds.RiderWant(near.y + x - f.y, len)) : x => d => ZiplineEnds.LineClear;
+						float rr = 0f, rl = -1f, rt = 0f; Vector3 ra = near;
+						bool ok;
+						if (raise) ok = ZipRaise(line, near, f, ground, want, ZiplineEnds.FarSkip, sl, out rr, out rl, out ra, out rt);
+						else
+						{
+							List<Vector3> rope = ZiplineEnds.RopeBetween(line, f, near, sl);
+							if (rope.Count >= 2) rl = ZiplineEnds.RopeLowest(rope, near, f, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, want(0f), out ra, out rt);
+							ok = rope.Count >= 2 && rl >= 0f;
+						}
+						if (!ok) continue;
+						newTo = fl - origin; newFar = f; part = s; r = rr; slack = sl; low = rl; at = ra; rider = pass == 0;
+						return true;
+					}
+			}
+			ZiplineEnds.RopeBetween(line, far, near, slacks.Length > 0 ? slacks[0] : float.NaN);
+			return false;
+		}
+
+		/// <summary>ZipPullIn's far end set (zip.to; zip.slack too when slack is given and not the line's own) and logged.</summary>
+		static void ZipPullSet(EditorGameObject e, MeshPath_Zipline_Landmark line, Terrain land, Vector3 oldFar, Vector3 newTo, float slack, float own, string what, bool rider, Vector3 at, Vector3 corner)
+		{
+			Vector3 org = land.transform.position, near, far;
+			PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(newTo)));
+			string tight = "";
+			if (!float.IsNaN(slack) && slack != own)
+			{
+				PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipSlack, slack.ToString("0.###", CultureInfo.InvariantCulture)));
+				tight = ", its rope tightened to slack " + slack.ToString("0.###", CultureInfo.InvariantCulture) + " (Raft's " + own.ToString("0.###", CultureInfo.InvariantCulture) + ")";
+			}
+			if (!ZiplineEnds.Ends(e.gameObject, e.Props, org, out near, out far)) far = oldFar;
+			else if (!float.IsNaN(slack)) ZiplineEnds.RopeBetween(line, far, near, slack);
+			Log("  zipto: " + what + " - its far end moved back " + Num(new Vector2(far.x - oldFar.x, far.z - oldFar.z).magnitude) + " m along the line to " + Num(far.x - corner.x) + " " + Num(far.z - corner.z) +
+				" (zip.to " + ZiplineEnds.Text(newTo) + ", its floor on the ground " + Num(far.y - oldFar.y) + " m higher than before)" + tight + ", for " + (rider ? "a rider's room" : "the rope's " + Num(ZiplineEnds.LineClear) + " m") +
+				" (the least at " + Num(at.x - corner.x) + " " + Num(at.z - corner.z) + "): set the recipe's zipto there");
 		}
 
 		/// <summary>zipto when no raise up to maxRaise nor a tighter rope clears (11-21): the raise (0.5 m steps) and slack of
@@ -3565,15 +3683,18 @@ namespace DynamicIslands
 		/// ground check's "sunk trunk") or more than 0.4 m over it with nothing placed under it ("trunk foot floating": the
 		/// recipe's strokes lowered the ground under it) set back on the ground round their pivot, as Place sets them. The foot
 		/// stays within 1 m under the land (lower ground under it is a cave floor or a ledge: the land then), and a tree whose
-		/// foot would be inside a placed rock or building stays where it is. A tree whose foot is on a steep drop's rim
+		/// foot would be inside a placed rock or building stays where it is - unless it is sunk: then it is left out (The General
+		/// Post Office's two snowy pines 1.4-1.5 m into Postmaster's Hill, their foot in a rock's bounds, c3z29 11-21). A tree whose foot is on a steep drop's rim
 		/// (the ground check's "trunk over a drop": 3 of 8 points a trunk's width round it 0.8 m or more lower) moves up to 3 m
 		/// onto the nearest spot that is not (27 such trees on 20 islands, IG5 11-18).</summary>
 		static int ReseatSunkTrees(float seaY)
 		{
 			EditorGameObject[] all = GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>();
 			int reseated = 0, kept = 0, moved = 0;
+			var sunkKept = new List<GameObject>();
 			foreach (EditorGameObject e in all)
 			{
+				if (!e.gameObject.activeSelf) continue;
 				bool tuft = Tuft.IsMatch(e.GameObjectName ?? "");
 				if (!tuft && !Trunk.IsMatch(e.GameObjectName ?? "")) continue;
 				// (a trunk laid down by the recipe - tilted more than 60 degrees - is no standing tree: its pivot is its cut end, not a
@@ -3595,10 +3716,21 @@ namespace DynamicIslands
 				float foot = PlacementOptions.LowestGroundUnder(new Bounds(p, new Vector3(1f, 0f, 1f)));
 				if (foot > land || foot < land - 1f) foot = land;
 				Vector3 to = new Vector3(p.x, foot + PlacementOptions.PivotAboveBottom(e.gameObject), p.z);
-				if (InsidePlaced(to, e, all)) { kept++; continue; }
+				if (InsidePlaced(to, e, all))
+				{
+					// (sunk more than 1 m with nowhere to stand it: the ground check fails it - left out, as a buried plant is)
+					if (!tuft && GroundY(e.transform.position.x, e.transform.position.z) - e.transform.position.y > 1f) sunkKept.Add(e.gameObject);
+					else kept++;
+					continue;
+				}
 				e.transform.position = to;
 				reseated++;
 				if (rim) moved++;
+			}
+			if (sunkKept.Count > 0)
+			{
+				CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(sunkKept, false));
+				Log("  reseat trees: " + sunkKept.Count + " sunk trees whose foot would be inside a placed object left out");
 			}
 			if (reseated + kept > 0) Log("  reseat trees: " + reseated + " sunk or floating trees and palms (and floating grass tufts and bushes) set back on the ground" + (moved > 0 ? ", " + moved + " of them moved off a drop's rim" : "") + (kept > 0 ? ", " + kept + " left (their foot would be inside a placed object)" : ""));
 			return reseated;
