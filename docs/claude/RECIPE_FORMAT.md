@@ -224,7 +224,8 @@ plan already open.
   whole.
 - `save` then settles what the ground check would fail (`SettleAtSave`, 11-21): a loose rock or boulder in the air
   (`RockFloats`) goes down onto what is under it, or is hidden when that would sink it more than half its height; a prop
-  buried whole (the check's `buried` rule) up to 2.5 m down goes up onto the ground. Deeper ones are left for the check.
+  buried whole (the check's `buried` rule) up to 2.5 m down goes up onto the ground. Deeper ones are left for the check. Buried treasure
+  (`Treasure_Buried`) is left where it is.
 - A strokes line after a `place` can leave that object floating or buried: shape the land first, then place. Check
   each island with `CIFloating` (editor) and `CIGroundIslands <name>` (world) - CHANGE_CHECKLISTS "Everything stands on
   the ground".

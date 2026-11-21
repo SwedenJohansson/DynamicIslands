@@ -317,11 +317,15 @@ namespace DynamicIslands
 			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "SmallBoulder2", "TP_Moontown_Barrel01" });
 			GameObject boulder = PlaceableCatalog.Spawn("SmallBoulder2", GameObject.Find("PlacedObjects").transform);
 			GameObject barrel = PlaceableCatalog.Spawn("TP_Moontown_Barrel01", GameObject.Find("PlacedObjects").transform);
-			if (flat == Vector3.zero || boulder == null || barrel == null) { Fail("grounding test: no flat ground, SmallBoulder2 or TP_Moontown_Barrel01"); yield break; }
+			GameObject treasure = PlaceableCatalog.Spawn(ContentCatalog.BuriedTreasure, GameObject.Find("PlacedObjects").transform);
+			if (flat == Vector3.zero || boulder == null || barrel == null || treasure == null) { Fail("grounding test: no flat ground, SmallBoulder2, TP_Moontown_Barrel01 or " + ContentCatalog.BuriedTreasure); yield break; }
 			EditorGameObject.Attach(boulder, "SmallBoulder2");
 			EditorGameObject.Attach(barrel, "TP_Moontown_Barrel01");
+			EditorGameObject.Attach(treasure, ContentCatalog.BuriedTreasure);
 			boulder.transform.position = flat;
 			barrel.transform.position = flat + new Vector3(6f, 0f, 0f);
+			treasure.transform.position = flat + new Vector3(0f, -0.6f, 6f);
+			Vector3 treasureAt = treasure.transform.position;
 			Physics.SyncTransforms();
 			Bounds rb = MeshBox(boulder), bb = MeshBox(barrel);
 			boulder.transform.position += Vector3.up * (GroundY(rb.center.x, rb.center.z) + 0.7f - rb.min.y);
@@ -335,8 +339,10 @@ namespace DynamicIslands
 			bool floatsAfter = RockFloats(boulder.transform, rb, ground, out seen, out high, out most, out least);
 			Check(ref ok, floatedBefore && !floatsAfter && boulder.activeSelf, "the save sets a boulder in the air down: it floated " + floatedBefore + ", after the settle it floats " + floatsAfter + " (shown " + boulder.activeSelf + ", its underside " + (rb.min.y - GroundY(rb.center.x, rb.center.z)).ToString("F2") + " m over the ground)");
 			Check(ref ok, bb.max.y > GroundY(bb.center.x, bb.center.z) + 0.05f, "the save sets a buried barrel up on the ground: its top " + (bb.max.y - GroundY(bb.center.x, bb.center.z)).ToString("F2") + " m over it");
+			Check(ref ok, (treasure.transform.position - treasureAt).magnitude < 0.01f, "the save leaves buried treasure under the ground: moved " + (treasure.transform.position - treasureAt).magnitude.ToString("F2") + " m");
 			UnityEngine.Object.Destroy(boulder);
 			UnityEngine.Object.Destroy(barrel);
+			UnityEngine.Object.Destroy(treasure);
 			if (ok) Log("PASS: grounding test"); else Fail("grounding test");
 		}
 
@@ -3264,7 +3270,8 @@ namespace DynamicIslands
 				if (!rock && NotABase.IsMatch(n)) continue;
 				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Note_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") ||
 					n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || Hangs.IsMatch(n) || ChainLink.IsMatch(n) || n.StartsWith("ZiplinePath", StringComparison.Ordinal) ||
-					n.StartsWith("VP_Skylift", StringComparison.Ordinal) || n == "Elevator" || CaveBacks.Wants(n) || Trunk.IsMatch(n)) continue;
+					n.StartsWith("VP_Skylift", StringComparison.Ordinal) || n == "Elevator" || CaveBacks.Wants(n) || Trunk.IsMatch(n) ||
+					ContentCatalog.IsTreasure(n)) continue; // (buried treasure is meant to be under the ground: Outer Breakwater's two were lifted 11-21)
 				Renderer[] rs = o.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
 				if (rs.Length == 0) continue;
 				float bottom = rs.Min(r => r.bounds.min.y);
