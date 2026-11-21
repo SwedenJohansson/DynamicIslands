@@ -2646,12 +2646,21 @@ namespace DynamicIslands
 				yield return null;
 				Log("Game mode " + want);
 			}
-			box.inputfield_GameName.text = name;
-			box.GameNameEndEdit(name);
-			string solo = Editor.IslandTest.SoloWhenOffline(box);
-			if (solo != null) Log(solo);
-			for (float t = 0; t < 5f && box.createGameButton != null && !box.createGameButton.interactable; t += 0.5f) yield return new WaitForSecondsRealtime(0.5f);
-			if (box.createGameButton != null && !box.createGameButton.interactable) { Fail("Create is disabled (name taken or invalid, or offline: PlayFab signed in " + Raft_Network.SignedIntoPlayfab + ")"); yield break; }
+			// (a name a world already has leaves Create disabled: the name with b, c ... after it instead, said in the log - 11-21 c3z20:
+			// three batches of one job each asked for 'cat3z20', the first made it, the others stayed at the menu and their checks
+			// failed "host, in a world" in a second, 39 islands unmeasured)
+			string asked = name;
+			for (int k = 1; ; k++)
+			{
+				box.inputfield_GameName.text = name;
+				box.GameNameEndEdit(name);
+				if (k == 1) { string solo = Editor.IslandTest.SoloWhenOffline(box); if (solo != null) Log(solo); }
+				for (float t = 0; t < 5f && box.createGameButton != null && !box.createGameButton.interactable; t += 0.5f) yield return new WaitForSecondsRealtime(0.5f);
+				if (box.createGameButton == null || box.createGameButton.interactable) break;
+				if (k >= 6) { Fail("Create is disabled (name taken or invalid, or offline: PlayFab signed in " + Raft_Network.SignedIntoPlayfab + "); tried '" + asked + "' and '" + asked + "b' to '" + name + "'"); yield break; }
+				name = asked + (char)('a' + k);
+			}
+			if (name != asked) Log("World name '" + asked + "' taken: '" + name + "' instead");
 			Log("Creating world '" + name + "'");
 			MadeWorld = name;
 			// (a test world gets defaultPlan unless a test chose one: not the plan the last world was made with, ROADMAP CB5)
