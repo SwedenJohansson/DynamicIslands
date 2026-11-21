@@ -710,7 +710,7 @@ items, Behaviour & events) asks first: **Save and close**, **Close without savin
   height point about every 2 m, so a 1 m brush moves just the nearest point (and paints one paint pixel) and 2 m that
   point and a little of the ones beside it: for a step, a narrow ditch or a path's edge. Objects standing on the ground you sculpt **go up and down with it** (trees, rocks, huts: lowering
   the ground no longer leaves them in the air, raising it no longer buries them); what stands higher, on a deck or a
-  roof, stays. **Ctrl+Z** undoes the stroke and the objects' moves together.
+  roof, stays, and so does a cave piece set deep under the ground. **Ctrl+Z** undoes the stroke and the objects' moves together.
   **Flatten to** (a field in the brush settings): type a height in metres above the sea (for example 4) and **Flatten**
   levels the ground to exactly that height, as a recipe's `brush flatten ... h=4` does. Leave it empty to flatten to the
   height where the stroke starts.

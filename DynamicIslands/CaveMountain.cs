@@ -239,6 +239,12 @@ namespace DynamicIslands.Editor
 							{
 								RaycastHit[] near = by == Vector3.zero ? hits : UnderSkin(at + by, m.FloorY + 40f, mine);
 								if (near != null && OwnRock(near[1].collider)) { rock = true; break; }
+								// (or the shell's flank buried a few metres under the ground the hill stands on: Ironreef's lower dead
+								// end, its roof 4 m under the sand 8 m beside the way, c3z43-c3z53)
+								if (near != null)
+									for (int h = 2; h < near.Length && near[h].point.y > near[1].point.y - 6f; h++)
+										if (OwnRock(near[h].collider)) { rock = true; break; }
+								if (rock) break;
 							}
 							if (rock) continue;
 							bad.Add(m.Name + (end == 0 ? " +" : " -") + " end: hill in front, " + f.ToString("0.0") + " m out, " + aside.ToString("0.0") + " m aside, " + (hits[0].point.y - hits[1].point.y).ToString("0.0") + " m over the " + hits[1].collider.name + " [" + CellText(at) + "]");
@@ -461,6 +467,9 @@ namespace DynamicIslands.Editor
 						{
 							Bounds cb = h.collider.bounds;
 							if (!float.IsInfinity(terr) && cb.min.y > terr + StandOff && cb.size.y < ThinUp && h.collider.GetComponentInParent<DigTunnel>() == null) continue;
+							// (nor a tree: a palm's collider 2.6 m over the terrain was taken for the ground under a lone den's cheek, which
+							// rose with it and stood 2 m over the real ground in front of Ranger's Rest's den, c3z46/c3z53)
+							if (TreeCollider(h.collider)) continue;
 							if (h.point.y > gr) { gr = h.point.y; groundBy[i, k] = h.collider.name; }
 						}
 						top[i, k] = roof;
@@ -1363,6 +1372,14 @@ namespace DynamicIslands.Editor
 		/// arch each side; the hill beside it rises LoneSide a m off it and falls LoneFall a m out to the sand, for at most
 		/// LoneRun m; right beside the way in it is the arch's height at the mouth and down to the floor LoneEdge m out (a funnel
 		/// opening out to the sand: at the arch's height all along, the way in ran between two straight cut walls, 11-09 r47).</summary>
+		static readonly System.Text.RegularExpressions.Regex TreeName = new System.Text.RegularExpressions.Regex("tree|palm|pine|birch|bush", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+		/// <summary>A tree's or bush's collider (its own name or its object's): not ground under the cave hill.</summary>
+		static bool TreeCollider(Collider c)
+		{
+			if (TreeName.IsMatch(c.name)) return true;
+			Transform t = c.transform.parent;
+			return t != null && TreeName.IsMatch(t.name); // (its object only - not the island above it, "Pinewood ...")
+		}
 		internal const float LoneEdgeStep = 4.5f; // (c3z47: m a sunk edge cell may lie under a neighbour past the arch's height - under CICaveGapsLook's LoneSheerMax 5)
 		internal const float LoneEdgeRise = 1.2f, LoneEdgeBand = 8f; // (how steeply a lone den's skin may rise off its edge, and how far past LoneRun that holds)
 		internal const float LoneSlot = 0.3f, LoneSide = 1.2f, LoneFall = 1.7f, LoneRun = 14f, LoneEdge = 2f, LoneSink = 1.5f, LoneDive = 2.5f;
