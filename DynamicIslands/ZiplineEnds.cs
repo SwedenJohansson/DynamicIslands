@@ -49,6 +49,8 @@ namespace DynamicIslands.Editor
 		/// MaxRaise m of deck (a 20 m deck on Engine Court's ridge); the last RiderFarSkip m left out of a rider's room (zipride
 		/// counts a rider stopped there as carried).</summary>
 		public const float LineClear = 1f, MaxRaise = 8f, RiderFarSkip = 5f;
+		/// <summary>The room over LineLow a rider's want keeps the rope outside the far end's last FarSkip m (RiderWant).</summary>
+		public const float LineWantOver = 0.1f;
 
 		/// <summary>The room a rider wants d m before the far end (RopeLowest's want), on a line falling drop m over len m:
 		/// RiderClear, less where the rope's own fall to its far floor gives less - but full again RiderFarSkip m past the
@@ -57,7 +59,10 @@ namespace DynamicIslands.Editor
 		public static System.Func<float, float> RiderWant(float drop, float len)
 		{
 			float slope = 0.8f * Mathf.Max(0f, drop) / Mathf.Max(1f, len);
-			return d => Mathf.Min(RiderClear, Mathf.Max(slope * d, RiderClear * (d - RiderFarSkip) / RiderFarSkip));
+			// (never under the ground check's LineLow, plus LineWantOver: zipto left the rope out 3-5 m before the far end and
+			// let it want 0 m at 5 m - 11-21 c3z30, The Rain Engine's east and south lines 0.03 and 0.35 m over the ground 3.2 m
+			// before their far ends, their near ends raised for a rider's room)
+			return d => Mathf.Min(RiderClear, Mathf.Max(LineLow + LineWantOver, Mathf.Max(slope * d, RiderClear * (d - RiderFarSkip) / RiderFarSkip)));
 		}
 
 		static readonly FieldInfo pointA = typeof(MeshPath_Zipline_Landmark).GetField("pointA", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);

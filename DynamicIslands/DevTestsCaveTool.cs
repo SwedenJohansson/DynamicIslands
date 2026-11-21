@@ -1107,7 +1107,7 @@ namespace DynamicIslands
 				string path = r.name; for (Transform t = r.transform.parent; t != null && t != e.Root.transform.parent; t = t.parent) path = t.name + "/" + path;
 				MeshFilter mf = r.GetComponent<MeshFilter>();
 				Vector3[] mp; int[] mt;
-				if (mf == null || mf.sharedMesh == null || !ReadMesh(mf.sharedMesh, out mp, out mt)) { through.Add(new KeyValuePair<float, string>(bdist, "its bounds " + bdist.ToString("0.0") + " m (" + (mf == null || mf.sharedMesh == null ? r.GetType().Name + ", no mesh" : "mesh " + mf.sharedMesh.name + " unread") + ") " + path)); continue; }
+				if (mf == null || mf.sharedMesh == null || !ReadMesh(mf.sharedMesh, out mp, out mt)) { through.Add(new KeyValuePair<float, string>(bdist, "its bounds " + bdist.ToString("0.0") + " m (" + (mf == null || mf.sharedMesh == null ? r.GetType().Name + ", no mesh" : "mesh " + mf.sharedMesh.name + " unread") + ") " + path)); float byc = RayColliders(r, mid, false); if (!float.IsNaN(byc) && byc < 40f) through.Add(new KeyValuePair<float, string>(byc, byc.ToString("0.0") + " m its colliders " + path)); continue; }
 				float f = RayMeshDistance(r, mid), bk = RayMeshDistance(r, mid, true);
 				if (f < 40f) through.Add(new KeyValuePair<float, string>(f, f.ToString("0.0") + " m its front " + path));
 				if (bk < 40f) through.Add(new KeyValuePair<float, string>(bk, bk.ToString("0.0") + " m its back " + path));
@@ -1218,7 +1218,9 @@ namespace DynamicIslands
 							if (d.topology != MeshTopology.Triangles) continue;
 							for (int i = d.indexStart; i < d.indexStart + d.indexCount; i++) ts.Add(d.baseVertex + (wide ? System.BitConverter.ToInt32(ib, i * 4) : System.BitConverter.ToUInt16(ib, i * 2)));
 						}
-						got = new KeyValuePair<Vector3[], int[]>(pts, ts.ToArray());
+						// (a buffer read back as zeros is no mesh: Raft's den shells, and the TradingPost's canvas, VP_Forklift and
+						// Seavine (c3z36) - its faces all one point, no ray met them, and the tent filling a picture was "nothing")
+						if (pts.Any(q => q != Vector3.zero)) got = new KeyValuePair<Vector3[], int[]>(pts, ts.ToArray());
 					}
 				}
 				catch (System.Exception) { }
@@ -1237,7 +1239,13 @@ namespace DynamicIslands
 			Vector3[] p; int[] tri;
 			// (Raft's own rock and the cave backs (uploaded) can't be read on the CPU: read from the GPU as CaveBacks does - without
 			// it the ray met their bounds' box, and a den's deco rock's box in front of the eye was reported as the odd look, w15Z)
-			if (m == null || !ReadMesh(m, out p, out tri)) return !r.bounds.Contains(ray.origin) && r.bounds.IntersectRay(ray, out bd) ? bd : float.PositiveInfinity; // (around the eye: can't tell)
+			// (one that can't be read at all: by its object's colliders, else its bounds - c3z36)
+			if (m == null || !ReadMesh(m, out p, out tri))
+			{
+				float byColliders = RayColliders(r, ray, backs);
+				if (!float.IsNaN(byColliders)) return byColliders;
+				return !r.bounds.Contains(ray.origin) && r.bounds.IntersectRay(ray, out bd) ? bd : float.PositiveInfinity; // (around the eye: can't tell)
+			}
 			Transform t = r.transform;
 			Vector3 o = t.InverseTransformPoint(ray.origin), dir = t.InverseTransformDirection(ray.direction);
 			Vector3 ls = t.lossyScale; bool flip = ls.x * ls.y * ls.z < 0f; // (a mirrored transform turns the winding)
@@ -1255,6 +1263,69 @@ namespace DynamicIslands
 				if (d > 0f && d < best) best = d;
 			}
 			return best == float.PositiveInfinity ? best : Vector3.Distance(ray.origin, t.TransformPoint(o + dir * best));
+		}
+
+		static readonly Dictionary<Renderer, Collider[]> rayColliders = new Dictionary<Renderer, Collider[]>();
+
+		/// <summary>A mesh the GPU can't give back (it reads as zeros: Raft's TradingPost, VP_Forklift, Seavine, the den shells) met by
+		/// its own object's solid colliders round it, which Raft fits to what is drawn: the distance to the nearest one the ray meets
+		/// from outside (backs: the farthest face it leaves through, by the ray run back), infinity for none met, NaN for no colliders.
+		/// (CIRayLook found "nothing" in 79 of 81 rays at Caisson Yard's crane end, a tent filling half the picture - c3z36.)</summary>
+		static float RayColliders(Renderer r, Ray ray, bool backs, float far = 80f)
+		{
+			Collider[] cs;
+			if (!rayColliders.TryGetValue(r, out cs))
+			{
+				Transform root = r.transform;
+				while (root.parent != null && !root.parent.name.StartsWith("Objects", System.StringComparison.Ordinal)) root = root.parent;
+				Bounds rb = r.bounds; rb.Expand(0.5f);
+				cs = root.GetComponentsInChildren<Collider>().Where(c => c.enabled && !c.isTrigger && rb.Intersects(c.bounds)).ToArray();
+				rayColliders[r] = cs;
+			}
+			if (cs.Length == 0) return float.NaN;
+			float best = float.PositiveInfinity;
+			RaycastHit h;
+			foreach (Collider c in cs)
+			{
+				if (c == null) continue;
+				if (!backs) { if (c.Raycast(ray, out h, far) && h.distance < best) best = h.distance; }
+				else if (c.Raycast(new Ray(ray.GetPoint(far), -ray.direction), out h, far) && far - h.distance < best) best = far - h.distance;
+			}
+			return best;
+		}
+
+		[ConsoleCommand(name: "CIRayCollide", docs: "Dev test, in a world: CIRayLook meets a mesh the GPU reads back as zeros by its colliders (c3z36) - Raft's TradingPost, put 60 m over the camera: rays from 12 m off each side at its middle meet it inside its box, and from its middle no ray is taken to meet its bounds at once")]
+		public static void RayCollideCommand(string[] args) { StartTest(RayCollideRoutine()); }
+
+		static IEnumerator RayCollideRoutine()
+		{
+			bool ok = true;
+			GameObject tp = PlaceableCatalog.Spawn(RaftStore.ObjectName, null);
+			if (tp == null) { Fail("ray collide: no " + RaftStore.ObjectName + " in the catalog"); yield break; }
+			tp.transform.position = (Camera.main != null ? Camera.main.transform.position : Vector3.zero) + Vector3.up * 60f;
+			yield return null;
+			Physics.SyncTransforms();
+			Renderer r = tp.GetComponentsInChildren<MeshRenderer>().Where(x => x.enabled && x.GetComponent<MeshFilter>() != null && x.GetComponent<MeshFilter>().sharedMesh != null).OrderByDescending(x => x.bounds.size.sqrMagnitude).FirstOrDefault();
+			if (r == null) { Fail("ray collide: the " + RaftStore.ObjectName + " has no mesh"); Object.Destroy(tp); yield break; }
+			Mesh m = r.GetComponent<MeshFilter>().sharedMesh;
+			Vector3[] p; int[] t;
+			bool read = ReadMesh(m, out p, out t);
+			Bounds b = r.bounds;
+			Log("  " + r.name + " (" + m.name + (m.isReadable ? ", readable" : ", not readable") + ", " + (read ? "read" : "not read: by its colliders") + "), bounds " + b.min.ToString("F1") + ".." + b.max.ToString("F1"));
+			int met = 0;
+			foreach (Vector3 dir in new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right })
+			{
+				float reach = Vector3.Dot(b.extents, new Vector3(Mathf.Abs(dir.x), 0f, Mathf.Abs(dir.z)));
+				Ray ray = new Ray(b.center - dir * (reach + 12f), dir);
+				float d = RayMeshDistance(r, ray), d0 = 12f, d1 = 12f + 2f * reach;
+				Log("  from " + Num(reach + 12f) + " m off along " + dir + ": " + (float.IsInfinity(d) ? "nothing" : Num(d) + " m (its box " + Num(d0) + ".." + Num(d1) + ")"));
+				if (d >= d0 - 0.1f && d <= d1 + 0.1f) met++;
+			}
+			Check(ref ok, met >= 2, "rays at the " + RaftStore.ObjectName + "'s middle from 12 m off meet it inside its box (" + met + " of 4 sides)");
+			float inside = RayMeshDistance(r, new Ray(b.center, Vector3.forward));
+			Check(ref ok, !(inside < 0.05f), "from its middle a ray isn't taken to meet its box at once (" + (float.IsInfinity(inside) ? "nothing" : Num(inside) + " m") + ")");
+			Object.Destroy(tp);
+			Log((ok ? "PASS" : "FAIL") + ": ray collide");
 		}
 
 		[ConsoleCommand(name: "CIMeshRead", docs: "Dev, in a world: how an unreadable mesh's points read back from the GPU (CaveBacks' source, w15AA): for the first n unreadable cave meshes (or with back, their backs), the read box by GetData, by AsyncGPUReadback and by a copy into a raw buffer, against the mesh's own box; with info, the camera's path and the first den pieces' shader, passes and colliders. CIMeshRead [n] [back] [info]")]

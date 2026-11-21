@@ -499,6 +499,15 @@ namespace DynamicIslands
 				float touchEnd = ZiplineEnds.FarStretchLowest(new List<Vector3> { fTouch, n7 }, n7, fTouch, g7, out a7), cutEnd = ZiplineEnds.FarStretchLowest(new List<Vector3> { fCut, n7 }, n7, fCut, g7, out a7);
 				Check(ref ok, touchEnd >= ZiplineEnds.FarEndLow && cutEnd < ZiplineEnds.FarEndLow, "the ground check: a rope touching its far floor " + Num(touchEnd) + " m passes, one 0.24 m in " + Num(cutEnd) + " fails");
 			}
+			// 10c. A rider's room never asks less than the ground check's rope room outside the last FarSkip m (11-21 c3z30: The Rain
+			// Engine's raised lines, their last 5 m left out of it, came 0.03 and 0.35 m over the ground 3.2 m before their far ends)
+			{
+				float wFlat = 999f, wFall = 999f;
+				Func<float, float> rwFlat = ZiplineEnds.RiderWant(0f, 20f), rwFall = ZiplineEnds.RiderWant(2.2f, 16f);
+				for (float d = ZiplineEnds.FarSkip; d <= 12f; d += 0.25f) { wFlat = Mathf.Min(wFlat, rwFlat(d)); wFall = Mathf.Min(wFall, rwFall(d)); }
+				Check(ref ok, wFlat > ZiplineEnds.LineLow && wFall > ZiplineEnds.LineLow && Mathf.Abs(rwFlat(20f) - ZiplineEnds.RiderClear) < 0.01f,
+					"a rider's room asks at least the rope's " + Num(ZiplineEnds.LineLow) + " m from " + Num(ZiplineEnds.FarSkip) + " m before the far end: a flat line " + Num(wFlat) + ", Rain Engine's east line's fall " + Num(wFall) + " (full " + Num(rwFlat(20f)) + " m further back)");
+			}
 			// 10b. ... and zipto builds no deck for a flat-ground far end whose rope touches its floor by a few mm
 			yield return null;
 			GameObject zl10 = PlaceableCatalog.Spawn("ZiplinePath_Landmark", root);
@@ -532,6 +541,34 @@ namespace DynamicIslands
 			}
 			else Check(ref ok, false, "grounding test: no ZiplinePath_Landmark for part 10");
 			if (zl10 != null) UnityEngine.Object.Destroy(zl10);
+			// 10d. A near floor buried in the land goes up onto it before the rope is measured (11-21 c3z30: The Rootcore's
+			// mouth-ledge line, its floor 8.3 m under the ledge, came out on a deck 0.6 m under the ground, its rope through the ledge)
+			yield return null;
+			GameObject zl11 = PlaceableCatalog.Spawn("ZiplinePath_Landmark", root);
+			EditorGameObject ze11 = zl11 != null ? EditorGameObject.Attach(zl11, "ZiplinePath_Landmark") : null;
+			if (ze11 != null)
+			{
+				zl11.transform.position = new Vector3(flat.x + 30f, GroundY(flat.x + 30f, flat.z) + 1.35f, flat.z);
+				Physics.SyncTransforms();
+				Vector3 nf0 = ZiplineEnds.NearFloor(zl11) ?? zl11.transform.position;
+				float sink = 3f + (nf0.y - GroundY(nf0.x, nf0.z));
+				zl11.transform.position += Vector3.down * sink;
+				Physics.SyncTransforms();
+				Vector3 nf1 = ZiplineEnds.NearFloor(zl11) ?? zl11.transform.position;
+				float under1 = GroundY(nf1.x, nf1.z) - nf1.y;
+				var placed11 = new HashSet<GameObject>(recipePlaced);
+				var lad11 = new HashSet<GameObject>(zipDeckLadders);
+				float lift11 = ZipNearOutOfLand(ze11, terraineditor.terrain);
+				Vector3 nf2 = ZiplineEnds.NearFloor(zl11) ?? zl11.transform.position;
+				float under2 = GroundY(nf2.x, nf2.z) - nf2.y;
+				Check(ref ok, under1 > 2.5f && lift11 > 2.5f && Mathf.Abs(under2) < 0.1f, "zipto lifts a near floor buried " + Num(under1) + " m in the land onto it: lifted " + Num(lift11) + " m, now " + Num(-under2) + " m over it");
+				// (and one on the land is left where it is)
+				Check(ref ok, ZipNearOutOfLand(ze11, terraineditor.terrain) == 0f, "zipto leaves a near floor on the land where it is");
+				foreach (GameObject x in recipePlaced.Where(y => y != null && !placed11.Contains(y)).ToList()) { recipePlaced.Remove(x); UnityEngine.Object.Destroy(x); }
+				foreach (GameObject x in zipDeckLadders.Where(y => y != null && !lad11.Contains(y)).ToList()) { zipDeckLadders.Remove(x); UnityEngine.Object.Destroy(x); }
+			}
+			else Check(ref ok, false, "grounding test: no ZiplinePath_Landmark for part 10d");
+			if (zl11 != null) UnityEngine.Object.Destroy(zl11);
 			// 8. zipto's deck ladders: a boulder of the generator's on a ladder's climbing side is removed (11-21 c3z13: Caisson Yard's
 			// ridge deck ladder shut by a SmallBoulder2, CILadderSide FAIL), the recipe's own kept
 			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Block_Floor_Wood", "Block_Ladder", "SmallBoulder2" });
@@ -2820,6 +2857,11 @@ namespace DynamicIslands
 			// (the far end's floor on the cave hill's skin where a world builds the hill over it - 11-21 c3z13: Caisson Yard's summit
 			// line's far end stood on the land 0.7 m under the skin, its rope ending in the sand)
 			if (ZipFarOnSkin(e, land.transform.position)) ZiplineEnds.Ends(e.gameObject, e.Props, land.transform.position, out near, out far);
+			// (a near floor buried in the land - the land raised round it after its place - goes up onto the land first, unless it
+			// stands in a dug passage's mouth (a hole in the land): 11-21 c3z30, The Rootcore's mouth-ledge line, its floor 8.3 m
+			// under the ledge, was raised 8 m for a rider's room onto a deck still 0.6 m under the ground, its rope through the ledge)
+			float lifted = ZipNearOutOfLand(e, land);
+			if (lifted > 0f) ZiplineEnds.Ends(e.gameObject, e.Props, land.transform.position, out near, out far);
 			// (the ground under the rope: the land, or what stands solid on it - a rock, a cliff, a block - as a world's rider meets
 			// it: 11-20, Caisson Yard's line ran into a rock pillar the land's own height left out)
 			Func<float, float, float> ground = ZipGround(e);
@@ -2903,7 +2945,9 @@ namespace DynamicIslands
 				foreach (float sl in slacks)
 				{
 					float rr, rl, rt; Vector3 ra;
-					bool ok = ZipRaise(line, near, far, ground, pass == 0 ? riderWant : ropeWant, pass == 0 ? ZiplineEnds.RiderFarSkip : ZiplineEnds.FarSkip, sl, out rr, out rl, out ra, out rt);
+					// (a rider's room too down to the ground check's last FarSkip m - RiderWant asks LineLow there at least: 11-21 c3z30,
+					// The Rain Engine's lines, raised with their last 5 m left out, came 0.03 m over the ground 3.2 m before their far ends)
+					bool ok = ZipRaise(line, near, far, ground, pass == 0 ? riderWant : ropeWant, ZiplineEnds.FarSkip, sl, out rr, out rl, out ra, out rt);
 					if (!ok) tried += (tried.Length > 0 ? "; " : "") + (pass == 0 ? "rider" : "rope") + " slack " + Num(sl) + ": " + Num(rl) + " m short at " + Num(ra.x - corner.x) + " " + Num(ra.z - corner.z) + " h=" + Num(ra.y) + " (ground " + Num(ground(ra.x, ra.z)) + ZipGroundWhat(e, ra.x, ra.z) + ")";
 					if (!ok || rr >= best) continue;
 					best = rr; r = rr; low = rl; at = ra; slack = sl;
@@ -2971,6 +3015,27 @@ namespace DynamicIslands
 			Log("  zipto: the rope came " + Num(lineLow) + " m over the ground - its near end raised " + Num(r) + " m for " + why + ", the least now " + Num(low) + " m over that at " + Num(at.x - corner.x) + " " + Num(at.z - corner.z) + deck);
 			return r;
 		}
+
+		/// <summary>A zipline's near floor more than NearBuried m under the land (a hole in the land - a dug passage's mouth - aside)
+		/// goes up onto it, the whole line with it (its far end stays at zip.to); logged. Returns the metres lifted (0: none).</summary>
+		static float ZipNearOutOfLand(EditorGameObject e, Terrain land)
+		{
+			Vector3? nf = ZiplineEnds.NearFloor(e.gameObject);
+			if (nf == null || land == null) return 0f;
+			Vector3 f = nf.Value;
+			float buried = GroundY(f.x, f.z) - f.y;
+			if (buried <= NearBuried) return 0f;
+			TerrainData td = land.terrainData;
+			int hn = td.holesResolution, hx = Mathf.FloorToInt((f.x - land.transform.position.x) / td.size.x * hn), hz = Mathf.FloorToInt((f.z - land.transform.position.z) / td.size.z * hn);
+			if (hx >= 0 && hz >= 0 && hx < hn && hz < hn && !td.GetHoles(hx, hz, 1, 1)[0, 0]) return 0f;
+			e.transform.position += Vector3.up * buried;
+			Physics.SyncTransforms();
+			Log("  zipto: its near floor stood " + Num(buried) + " m under the land at " + Num(f.x - TopFrame.Origin.x) + " " + Num(f.z - TopFrame.Origin.y) + " - the line lifted onto it");
+			return buried;
+		}
+
+		/// <summary>How far under the land a zipline's near floor may stand before zipto lifts it (ZipNearOutOfLand).</summary>
+		const float NearBuried = 0.5f;
 
 		/// <summary>zipto's far end clear for its whole last stretch (11-21 c3z15: Caisson Yard's summit line, its far end set on the
 		/// cave hill's skin, still ran 0.24 m into the dune's slope just before it and ended in the sand): when the rope's last
