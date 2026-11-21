@@ -999,6 +999,8 @@ namespace DynamicIslands
 		{
 			string name = CaveGapsLookName(args);
 			if (name.Length == 0) { Fail("CICaveGapsLook <island>"); return; }
+			string keep = args == null ? null : args.FirstOrDefault(a => a.StartsWith("keep=", StringComparison.OrdinalIgnoreCase));
+			GapsKeep = keep != null ? keep.Substring(5) : "";
 			StartTest(CaveGapsLookRoutine(name, args == null || !args.Contains("noshots")));
 		}
 
@@ -1008,7 +1010,21 @@ namespace DynamicIslands
 		static string CaveGapsLookName(string[] args)
 		{
 			if (args == null) return "";
-			return string.Join(" ", args.Where(a => !string.Equals(a, "noshots", StringComparison.OrdinalIgnoreCase)).ToArray()).Trim().Trim('"', '\'').Trim();
+			return string.Join(" ", args.Where(a => !string.Equals(a, "noshots", StringComparison.OrdinalIgnoreCase) && !a.StartsWith("keep=", StringComparison.OrdinalIgnoreCase)).ToArray()).Trim().Trim('"', '\'').Trim();
+		}
+
+		/// <summary>CICaveGapsLook keep=<n>_<shot> (1_out, 3_endroof): that picture's camera kept as the last play picture's, so
+		/// CIRayLook at=u,v picture can ask what one odd bit in it is (cave1119 r4: Vaporhold 1's pale blades in front of its
+		/// mouth under the sea, and the dug tunnel's window in its roof, were only ever seen in these pictures).</summary>
+		static string GapsKeep = "";
+
+		static IEnumerator GapsShot(IslandWorldState.Entry e, Vector3 from, Vector3 at, string name)
+		{
+			yield return CameraShot(from, at, name);
+			if (GapsKeep.Length == 0 || !name.EndsWith("_" + GapsKeep, StringComparison.OrdinalIgnoreCase) || e == null || e.Root == null) yield break;
+			Quaternion back = Quaternion.Inverse(e.Root.transform.rotation);
+			LastPictureFrom = back * (from - e.Position); LastPictureLook = back * (at - e.Position); LastPictureIsland = e.Name;
+			Log("  " + name + "'s camera kept for CIRayLook picture: " + LastPictureFrom.Value.ToString("F2") + " toward " + LastPictureLook.Value.ToString("F2"));
 		}
 
 		[ConsoleCommand(name: "CICaveGapsLookName", docs: "Dev, anywhere: CICaveGapsLook's island name from the console's words - a name with spaces, with or without quotes, with noshots after it; a name with no saved island is refused before anything is brought into the world")]
@@ -1368,13 +1384,13 @@ namespace DynamicIslands
 							SetHour(night ? 23f : 12f);
 							yield return new WaitForSeconds(0.6f);
 							string tod = night ? "night_" : "";
-							yield return CameraShot(outside, mouth + Vector3.up * 1.5f, shot + tod + "out");
-							if (!night) yield return CameraShot(mouth - w.In * 2f + Vector3.up * 26f, mouth + w.In * 12f, shot + "above");
-							yield return CameraShot(f[c / 3] + eyeUp, f[Mathf.Min(c - 1, 2 * c / 3 + 1)] + eyeUp, shot + tod + "in");
-							yield return CameraShot(f[Mathf.Max(1, 2 * c / 3)] + eyeUp, mouth + eyeUp, shot + tod + "lookout");
+							yield return GapsShot(e, outside, mouth + Vector3.up * 1.5f, shot + tod + "out");
+							if (!night) yield return GapsShot(e, mouth - w.In * 2f + Vector3.up * 26f, mouth + w.In * 12f, shot + "above");
+							yield return GapsShot(e, f[c / 3] + eyeUp, f[Mathf.Min(c - 1, 2 * c / 3 + 1)] + eyeUp, shot + tod + "in");
+							yield return GapsShot(e, f[Mathf.Max(1, 2 * c / 3)] + eyeUp, mouth + eyeUp, shot + tod + "lookout");
 							Vector3 dEnd = end - f[Mathf.Max(0, c - 3)]; dEnd.y = 0f;
 							if (dEnd.sqrMagnitude < 0.01f) dEnd = w.In;
-							yield return CameraShot(f[Mathf.Max(0, c - 2)] + eyeUp, end + dEnd.normalized * 3f + Vector3.up * 4.5f, shot + tod + "endroof");
+							yield return GapsShot(e, f[Mathf.Max(0, c - 2)] + eyeUp, end + dEnd.normalized * 3f + Vector3.up * 4.5f, shot + tod + "endroof");
 						}
 						SetHour(12f);
 					}

@@ -1104,7 +1104,7 @@ namespace DynamicIslands
 						edges[kk] = c + 1;
 						if (c == 0) mid[kk] = (v[a] + v[b]) * 0.5f;
 					}
-				int tOpen = 0, tAll = 0;
+				int tOpen = 0, tAll = 0, tCut = 0;
 				foreach (var kv in edges)
 				{
 					if (kv.Value != 1) continue;
@@ -1112,21 +1112,37 @@ namespace DynamicIslands
 					Vector3 w = rt.TransformPoint(mid[kv.Key]);
 					Terrain land = t.SkinLand;
 					float g = land != null ? land.SampleHeight(w) + land.transform.position.y : float.MinValue;
-					if (w.y < g + 0.1f) continue;
+					// (under the ground's height only where the ground is there: in a cut cell the sky shows through - cave1119 r4,
+					// Vaporhold's dug tunnel: a window in its roof just inside the mouth, under the cut ground, not counted)
+					bool cutHere = w.y < g + 0.1f && GroundCutAt(land, w);
+					if (w.y < g + 0.1f && !cutHere) continue;
 					if (Physics.Raycast(w + Vector3.up * 0.05f, Vector3.up, 200f, ~0, QueryTriggerInteraction.Ignore)) continue;
 					tOpen++;
+					if (cutHere) tCut++;
 					Vector3 l = inv * (w - e.Position);
 					var cell = new Vector3Int(Mathf.RoundToInt(l.x / 2f), Mathf.RoundToInt(l.y / 2f), Mathf.RoundToInt(l.z / 2f));
 					List<float> lst;
 					if (!clusters.TryGetValue(cell, out lst)) clusters[cell] = lst = new List<float>();
 					lst.Add(w.y - g);
 				}
-				Log("  tunnel at " + (inv * (t.transform.position - e.Position)).ToString("F1") + ": " + tAll + " open edge(s), " + tOpen + " out in the open");
+				Log("  tunnel at " + (inv * (t.transform.position - e.Position)).ToString("F1") + ": " + tAll + " open edge(s), " + tOpen + " out in the open (" + tCut + " under cut ground)");
 				all += tAll; open += tOpen;
 			}
 			foreach (var kv in clusters.OrderByDescending(x => x.Value.Count).Take(14))
 				Log("    near (" + kv.Key.x * 2 + ", " + kv.Key.y * 2 + ", " + kv.Key.z * 2 + "): " + kv.Value.Count + " edge(s), " + kv.Value.Min().ToString("0.0") + "-" + kv.Value.Max().ToString("0.0") + " m over the ground");
 			Log("PASS: dig open edges " + e.HostName + ": " + open + " out in the open of " + all + " open edge(s), " + clusters.Count + " cluster(s)");
+		}
+
+		/// <summary>The ground cut (a hole cell) at a world point.</summary>
+		static bool GroundCutAt(Terrain land, Vector3 w)
+		{
+			if (land == null) return false;
+			TerrainData td = land.terrainData;
+			int cells = td.holesResolution;
+			Vector3 lo = land.transform.position;
+			int x = Mathf.FloorToInt((w.x - lo.x) / (td.size.x / cells)), z = Mathf.FloorToInt((w.z - lo.z) / (td.size.z / cells));
+			if (x < 0 || z < 0 || x >= cells || z >= cells) return false;
+			return !td.GetHoles(x, z, 1, 1)[0, 0];
 		}
 
 		[ConsoleCommand(name: "CIDigMouthLook", docs: "Dev, in a world: every dug tunnel's mouths within 2000 m look as the ground round them (11-13 mouth fix) - the rim's top on a shader without shine (not Standard: a grey veil), the lining not out in the open in front of a face (a pale slab with a sawtooth edge: under 3% of its area), and each mouth's rim top, pictured, within 14 of the ground beside it in mean colour and at least 0.6 of its sharpness, on its faces no steeper than the ground beside and against the ground beside of its own colour (dig_mouthlook_<n>_<a|f|l>). 'standard': the same baked textures on Standard for the run instead, to compare; 'stdnormal': baked again on Standard with the mixed normal map; 'stdabs': baked again on Standard, the relief shaded in against flat ground")]
