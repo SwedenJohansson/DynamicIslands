@@ -1145,6 +1145,48 @@ namespace DynamicIslands
 			return !td.GetHoles(x, z, 1, 1)[0, 0];
 		}
 
+		[ConsoleCommand(name: "CIDigHoleRock", docs: "Dev, in a world: over every dug tunnel's cut ground cells on a loaded island, where the ground is not in the passage (0.6 m clear of it: not its opening), the tunnel's rock lies no more than <max> m (0.9) under the ground's height - a look straight down every 0.5 m. Under it, the passage lay open to the sky beside Pendulum Isle's mouth, its lining's lower walls 1-2.6 m down the cut squares: the dark ears, 11-21 cv41. CIDigHoleRock [max=<m>] <island>")]
+		public static void DigHoleRockCommand(string[] args)
+		{
+			float max = 0.9f;
+			var rest = new List<string>();
+			foreach (string a in args ?? new string[0])
+				if (a.StartsWith("max=")) float.TryParse(a.Substring(4), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out max); else rest.Add(a);
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", rest.ToArray()) });
+			if (e == null) return;
+			var tuns = e.Root.GetComponentsInChildren<DigTunnel>(true).Where(t => t.PointCount > 0 && t.transform.Find(DigTunnel.RockName) != null).ToList();
+			if (tuns.Count == 0) { Fail("no dug tunnel on " + e.HostName); return; }
+			int seen = 0, opening = 0, bad = 0;
+			var worst = new List<KeyValuePair<float, string>>();
+			foreach (DigTunnel t in tuns)
+			{
+				Terrain land = t.Land();
+				if (land == null) continue;
+				float sY = Mathf.Abs(t.transform.lossyScale.y) > 1e-4f ? Mathf.Abs(t.transform.lossyScale.y) : 1f;
+				Bounds b = t.WorldBounds();
+				for (float x = b.min.x; x <= b.max.x; x += 0.5f)
+					for (float z = b.min.z; z <= b.max.z; z += 0.5f)
+					{
+						var w = new Vector3(x, 0f, z);
+						if (!GroundCutAt(land, w)) continue;
+						w.y = land.SampleHeight(w) + land.transform.position.y;
+						if (t.Distance(t.transform.InverseTransformPoint(w)) * sY < 0.6f) { opening++; continue; }
+						RaycastHit[] hits = Physics.RaycastAll(w + Vector3.up * 4f, Vector3.down, 14f, ~0, QueryTriggerInteraction.Ignore).OrderBy(r => r.distance).ToArray();
+						if (hits.Length > 0 && hits[0].collider.GetComponentInParent<DigTunnel>() != t) continue; // (something else over it)
+						seen++;
+						float depth = hits.Length > 0 ? w.y - hits[0].point.y : 99f;
+						if (depth <= max) continue;
+						bad++;
+						worst.Add(new KeyValuePair<float, string>(depth, "(" + (x - e.Position.x).ToString("0.0") + ", " + (z - e.Position.z).ToString("0.0") + ") ground " + (w.y - e.Position.y).ToString("0.0") + ": "
+							+ (hits.Length > 0 ? "rock " + depth.ToString("0.00") + " m under it" : "nothing under it")));
+					}
+				Log("  " + t.name + ": " + t.RoofKept + " column(s) kept over the passage's roof");
+			}
+			foreach (KeyValuePair<float, string> k in worst.OrderByDescending(k => k.Key).Take(10)) Log("  " + k.Value + " - BAD");
+			if (bad > 0) Fail(bad + " of " + seen + " points over the cut ground with the rock more than " + max.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " m under the ground (" + opening + " in the opening left out)");
+			else Log("PASS: dug tunnels " + tuns.Count + ", " + seen + " points over the cut ground, the rock within " + max.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " m of the ground (" + opening + " in the opening left out)");
+		}
+
 		[ConsoleCommand(name: "CIDigMouthLook", docs: "Dev, in a world: every dug tunnel's mouths within 2000 m look as the ground round them (11-13 mouth fix) - the rim's top on a shader without shine (not Standard: a grey veil), the lining not out in the open in front of a face (a pale slab with a sawtooth edge: under 3% of its area), and each mouth's rim top, pictured, within 14 of the ground beside it in mean colour and at least 0.6 of its sharpness, on its faces no steeper than the ground beside and against the ground beside of its own colour (dig_mouthlook_<n>_<a|f|l>). 'standard': the same baked textures on Standard for the run instead, to compare; 'stdnormal': baked again on Standard with the mixed normal map; 'stdabs': baked again on Standard, the relief shaded in against flat ground")]
 		public static void DigMouthLookCommand(string[] args)
 		{

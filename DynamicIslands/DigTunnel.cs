@@ -67,6 +67,8 @@ namespace DynamicIslands.Editor
 		[NonSerialized] public int RimColumns;
 		/// <summary>Columns where the passage runs over the ground, walled and roofed all round by TubeWall of rock (round 4, last build).</summary>
 		[NonSerialized] public int TubeColumns;
+		/// <summary>Columns over the cut cells whose rock top was lifted over the passage's roof (RoofKeep, cv41).</summary>
+		[NonSerialized] public int RoofKept;
 		/// <summary>Tests: the tube pass's columns by what it did with them (last build).</summary>
 		[NonSerialized] public string TubeSkips = "";
 		[NonSerialized] public string RimTop = "";
@@ -264,6 +266,9 @@ namespace DynamicIslands.Editor
 		const float RimSkin = 0.12f;
 		/// <summary>How far a cut cell's rock top on a steep cutting wall may be let down under the ground by the ground's bend (cv38).</summary>
 		const float FootDrop = 0.5f;
+		/// <summary>Over the cut cells, where the ground covers the passage, its rock's top at least this far over the passage's
+		/// roof (up to the ground): let down under it, the passage lay open to the sky beside the mouth (cv41).</summary>
+		public const float RoofKeep = 0.4f;
 		static float RimHeight(float r) { return 0.3f + 0.25f * r; }
 		/// <summary>How far past the cut ground the rim goes down into it (gently, so it meets the ground in a soft line).</summary>
 		static float RimOut(float r) { return 0.8f + 0.1f * r; }
@@ -1635,7 +1640,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The neighbours moved, dug on or newly there since the lining was made (a world's island: built one by one).</summary>
 		public bool JoinsChanged(IList<DigTunnel> all = null) { return PointCount > 0 && JoinKey(Neighbours(all)) != joinBuilt; }
 
-		Bounds WorldBounds()
+		internal Bounds WorldBounds()
 		{
 			Bounds b = PathBounds();
 			Vector3 c = transform.TransformPoint(b.center), e = b.extents;
@@ -1931,6 +1936,30 @@ namespace DynamicIslands.Editor
 					}
 				TubeSkips = name + " " + TubeColumns + " tube, " + skUnder + " under the ground, " + skEnd + " at its " + ends.Count + " open end(s), " + skWet + " over water (sea " + sea.ToString("0.0") + ")";
 			}
+			// (11-21 cv41: over the cut cells, where the ground covers the passage, the rock's top kept RoofKeep over the passage's
+			// roof, up to the ground. Let down by Under and FootDrop on the steep step beside Pendulum Isle's mouth, the top lay
+			// under the roof of the passage's side bulges, open to the sky through the cut squares: its lining's lower walls
+			// (DigRock faces 2002, 2163, 2085, 1-2.6 m under the ground) were the dark ears. Not where the ground is in the
+			// passage: that is its opening)
+			RoofKept = 0;
+			if (fillUp != null && groundAt != null)
+				for (int z = 0; z < nz; z++)
+					for (int x = 0; x < nx; x++)
+					{
+						int c = x + z * nx;
+						if (!fillUp[c]) continue;
+						float roof = float.NaN;
+						for (int y = ny - 1; y >= 0; y--)
+						{
+							int i = x + y * sy + z * sz;
+							if (dist[i] == float.MaxValue) continue;
+							var p = new Vector3(o.x + x * h, o.y + y * h, o.z + z * h);
+							if (dist[i] + Bumps(p, floorAt[i], radAt[i]) < 0f) { roof = p.y; break; }
+						}
+						if (float.IsNaN(roof) || roof >= groundAt[c]) continue;
+						float want = Mathf.Min(roof + Mathf.Max(RoofKeep / sY, h), groundAt[c] - Under / sY);
+						if (want > top[c]) { top[c] = want; RoofKept++; }
+					}
 			var field = new float[N];
 			var outer = new bool[N];
 			var passage = new bool[N];
