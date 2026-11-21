@@ -762,6 +762,14 @@ place SmallBoulder3 - at 2.65 -26.2 ground sit scale=0.65 yaw=160
 # a second at -6.8 -26 stood in the tunnel's way down)
 # (on the very spot CICaveInside stands at, -7.9 -22.7: one beside it left the look free)
 place SmallBoulder3 - at -8.1 -22.8 ground y=-0.3 sit scale=1.7 yaw=20
+# (c3z45: the den's back (south-west, away from the tunnel) hung over the bay: its rim 4.4 m over the sea, the sea floor
+# 14 m down under it and no hill there - a 16.7 m gap seen into the shell from outside, and from inside a hole in its back
+# wall to the sky (CIGroundIslands 11-21). A rock foot raised under its back, 1.5-3.5 m out from its back wall (its
+# line along the den's width, yaw 25), up over the rim so the shell's foot sits in it; the room's own floor is cut free.)
+brush flatten from -35.9 -73.2 to -21.4 -79.9 r=6 s=20 frames=300 h=6
+brush smooth from -35.9 -73.2 to -21.4 -79.9 r=9 s=5 frames=20
+brush rock from -35.9 -73.2 to -21.4 -79.9 r=9 s=20 frames=30
+clear at -28.6 -76.5 r=9 all only=Pickup_Landmark
 # (a palm the den's rock grew round stood out of the sea stack's side, its crown inside: cleared)
 clear at -23.6 -64 r=16 all body only=Tree
 place Zone_Trigger shelair at -23.6 -64 h=3.6
