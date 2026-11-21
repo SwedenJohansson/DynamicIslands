@@ -671,6 +671,10 @@ namespace DynamicIslands.Editor
 		/// <summary>Of WallSkinMapped, the last WallLikeHill's faces in the hill's opening (no skin behind them) mapped as the skin at
 		/// the nearest outside point that has it; and its corners there lit by the skin's normals round them (log, tests).</summary>
 		public static int WallSkinBorrowed, WallSkinLitRound;
+		/// <summary>How many of the last WallLikeHill's outside corners took their texture from the skin's surface straight out from them.</summary>
+		public static int WallUvOnSkin;
+		/// <summary>The farthest (m, along outward) a den wall's corner's texture is looked up on the skin's surface from it (WallLikeHill).</summary>
+		const float WallUvReach = 6f;
 		/// <summary>Den wall outside faces left mapped by the world axis they face (no skin anywhere near), all islands since Raft started.</summary>
 		public static int WallFacesPlain;
 		/// <summary>How far behind a den wall's outside face (m) the hill's skin is looked for to map and light it as the skin (WallLikeHill).</summary>
@@ -777,7 +781,7 @@ namespace DynamicIslands.Editor
 			if (skm != null && skm.isReadable) { skv = skm.vertices; skn = skm.normals; sku = skm.uv; skt = skm.triangles; }
 			bool skinMap = skv != null && sku != null && skn != null && sku.Length == skv.Length && skn.Length == skv.Length && skt != null;
 			Transform skT = skinCol != null ? skinCol.transform : null;
-			WallSkinMapped = 0; WallSkinLit = 0; WallSkinBorrowed = 0; WallSkinLitRound = 0;
+			WallSkinMapped = 0; WallSkinLit = 0; WallSkinBorrowed = 0; WallSkinLitRound = 0; WallUvOnSkin = 0;
 			// (the skin's normal at a point near it, in the outside's space; null when the skin is not within WallSkinLitNear)
 			Func<Vector3, Vector3?> SkinNormal = w =>
 			{
@@ -867,6 +871,10 @@ namespace DynamicIslands.Editor
 			// The skin's depth at each point from a plane fitted to the skin points round it (WallFitSpread); only the arch's own
 			// rim - the outside's open edge in the opening - stays where it meets the way in's sleeve, blending over WallFlushFade)
 			var flush = new float[mv.Length];
+			// (11-21 cv47: how far along outward each point in the opening is from the fitted skin, before the rim keeps it and the
+			// clamp - its texture is laid as at that place on the skin, below)
+			var fitD = new float[mv.Length];
+			for (int v = 0; v < mv.Length; v++) fitD[v] = float.NaN;
 			int flushed = 0; float flushMax = 0f;
 			Vector3 right = Vector3.Cross(Vector3.up, outward);
 			if (right.sqrMagnitude < 1e-4f) right = Vector3.Cross(Vector3.forward, outward);
@@ -916,7 +924,8 @@ namespace DynamicIslands.Editor
 					float rim = float.MaxValue;
 					foreach (int rv in rimIdx) rim = Mathf.Min(rim, (Vector3.ProjectOnPlane(wv0[rv] - wv0[v], outward)).magnitude);
 					float keep = rimIdx.Count == 0 ? 1f : Mathf.Clamp01((rim - WallRimKeep) / WallFlushFade);
-					flush[v] = Mathf.Clamp((float)at - Vector3.Dot(wv0[v], outward), -WallFlushMax, WallFlushMax) * keep;
+					fitD[v] = (float)at - Vector3.Dot(wv0[v], outward);
+					flush[v] = Mathf.Clamp(fitD[v], -WallFlushMax, WallFlushMax) * keep;
 					if (Mathf.Abs(flush[v]) > 0.02f) { flushed++; flushMax = Mathf.Max(flushMax, Mathf.Abs(flush[v])); }
 				}
 			WallFlushed = flushed;
@@ -1001,7 +1010,14 @@ namespace DynamicIslands.Editor
 						if (sn.HasValue) WallSkinLit++;
 						else { sn = NormalRound(w); if (sn.HasValue) WallSkinLitRound++; }
 						nn.Add(sn ?? faceLocal);
-						nu.Add(side >= 0 ? SkinSideUv(side, skT.InverseTransformPoint(w)) + sideOff
+						// (11-21 cv47: the texture laid as at the skin's surface straight out from the corner, not at the corner
+						// itself: the funnel round the arch, kept where it meets the way in's sleeve, leans in, and the skin's flat
+						// projection laid on it drew a lighter panel of stretched ripples with straight seams either side of Gravewell
+						// Shaft's den arch - CIDenWallLook seams 42/48 px, cv46)
+						Vector3 uw = !float.IsNaN(fitD[vi]) ? wv0[vi] + outward * Mathf.Clamp(fitD[vi], -WallUvReach, WallUvReach)
+							: !float.IsNaN(skinD[vi]) ? wv0[vi] + outward * skinD[vi] : w;
+						if (uw != w) WallUvOnSkin++;
+						nu.Add(side >= 0 ? SkinSideUv(side, skT.InverseTransformPoint(uw)) + sideOff
 							: (ax == 0 ? new Vector2(w.z, w.y) : ax == 1 ? new Vector2(w.x, w.z) : new Vector2(w.x, w.y)) / 14f);
 					}
 				}
@@ -1011,7 +1027,7 @@ namespace DynamicIslands.Editor
 			m.SetVertices(nv);
 			m.SetNormals(nn);
 			m.SetUVs(0, nu);
-			Debug.Log("[CUSTOM ISLANDS] Plug " + den.name + ": " + WallSkinMapped + " outside face(s) mapped as the skin behind them (" + WallSkinBorrowed + " in the opening as the skin nearest them), " + WallSkinLit + " corner(s) lit by the skin's normal, " + WallSkinLitRound + " by the skin's normals round them");
+			Debug.Log("[CUSTOM ISLANDS] Plug " + den.name + ": " + WallSkinMapped + " outside face(s) mapped as the skin behind them (" + WallSkinBorrowed + " in the opening as the skin nearest them), " + WallSkinLit + " corner(s) lit by the skin's normal, " + WallSkinLitRound + " by the skin's normals round them; " + WallUvOnSkin + " corner(s) textured as the skin straight out from them");
 			m.subMeshCount = subs.Length;
 			for (int s = 0; s < subs.Length; s++) m.SetTriangles(subs[s], s);
 			m.RecalculateBounds();
@@ -1181,6 +1197,8 @@ namespace DynamicIslands.Editor
 		public const float FrameSinkMost = 1f;
 		/// <summary>Heightmap points let down under mouth frames (SinkGroundUnder), all islands since Raft started.</summary>
 		public static int GroundSunkUnderFrames;
+		/// <summary>Heightmap points SinkGroundUnder put back because letting them down laid bare a frame point buried on purpose.</summary>
+		public static int FrameSinkKeptBack;
 
 		/// <summary>
 		/// The island ground under a mouth frame's faces turned up (world triangles wv/st, as drawn) let down to FrameGroundUnder
@@ -1249,6 +1267,18 @@ namespace DynamicIslands.Editor
 						}
 				}
 				bool any = false;
+				float[,] was = (float[,])heights.Clone();
+				// (11-21 cv46: the frame's points already just under the ground, before any is let down - a point that comes into
+				// that band only because the ground under it went down is the frame under the hill on purpose laid bare: 3563 of
+				// Sinkmarket Floor's frame points showed through it, CIFrameSunk)
+				var near = new List<int>();
+				for (int v = 0; v < wv.Length; v++)
+				{
+					Vector3 p = wv[v];
+					if (p.x < o.x + x0 * sx - sx || p.x > o.x + x1 * sx + sx || p.z < o.z + z0 * sz - sz || p.z > o.z + z1 * sz + sz) continue;
+					float g; Vector3 gn;
+					if (!FrameLiftable(p, out g, out gn) && p.y < g) near.Add(v);
+				}
 				for (int j = 0; j < h; j++)
 					for (int i = 0; i < w; i++)
 					{
@@ -1259,7 +1289,28 @@ namespace DynamicIslands.Editor
 						heights[j, i] = Mathf.Clamp01((to - o.y) / size.y);
 						sunk++; any = true;
 					}
-				if (any) d.SetHeights(x0, z0, heights);
+				if (!any) continue;
+				d.SetHeights(x0, z0, heights);
+				// (any buried point now in the lift band: the heightmap points of its cell back as they were, until none is)
+				for (int round = 0; round < 4; round++)
+				{
+					bool back = false;
+					foreach (int v in near)
+					{
+						float g; Vector3 gn;
+						if (!FrameLiftable(wv[v], out g, out gn)) continue;
+						int ci = Mathf.FloorToInt((wv[v].x - o.x) / sx) - x0, cj = Mathf.FloorToInt((wv[v].z - o.z) / sz) - z0;
+						for (int dj = 0; dj <= 1; dj++)
+							for (int di = 0; di <= 1; di++)
+							{
+								int ii = ci + di, jj = cj + dj;
+								if (ii < 0 || jj < 0 || ii >= w || jj >= h || heights[jj, ii] == was[jj, ii]) continue;
+								heights[jj, ii] = was[jj, ii]; back = true; sunk--; FrameSinkKeptBack++;
+							}
+					}
+					if (!back) break;
+					d.SetHeights(x0, z0, heights);
+				}
 			}
 			return sunk;
 		}
