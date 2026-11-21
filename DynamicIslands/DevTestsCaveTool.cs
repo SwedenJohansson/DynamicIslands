@@ -1067,7 +1067,7 @@ namespace DynamicIslands
 			else Log("PASS: mouth frames " + frames.Count + ", none just under the ground");
 		}
 
-		[ConsoleCommand(name: "CILootGround", docs: "Dev, in a world: the loot pieces (Pickup_Landmark_*, as caveloot lays them) on a loaded island stand on the floor - the floor under each one's corners no more than <gap> m (0.12) under its bottom: on a sloping floor the low side of a piece set by its middle stood in the air, Rootcellar Deep's ramp stone 11-21 cv38. CILootGround [gap=<m>] <island>")]
+		[ConsoleCommand(name: "CILootGround", docs: "Dev, in a world: the loot pieces (Pickup_Landmark_*, as caveloot lays them) on a loaded island's cave floors (not Raft's own sea-floor pickups) stand on the floor - the floor under each one's corners no more than <gap> m (0.12) under its bottom: on a sloping floor the low side of a piece set by its middle stood in the air, Rootcellar Deep's ramp stone 11-21 cv38. CILootGround [gap=<m>] <island>")]
 		public static void LootGroundCommand(string[] args)
 		{
 			float gap = 0.12f;
@@ -1092,6 +1092,8 @@ namespace DynamicIslands
 					RaycastHit[] under = Physics.RaycastAll(from, Vector3.down, b.size.y + 2.3f, ~0, QueryTriggerInteraction.Ignore)
 						.Where(h => !h.collider.transform.IsChildOf(t) && h.collider.GetComponentInParent<Network_Player>() == null).OrderBy(h => h.distance).ToArray();
 					if (under.Length == 0) continue;
+					// (only the caves' loot: on a cave's floor under its middle - cv40 counted Raft's own pickups on the sea floor, 165 pieces)
+					if (c == Vector2.zero && !CaveFloor(under[0].collider.transform)) { any = false; break; }
 					any = true;
 					worst = Mathf.Max(worst, b.min.y - under[0].point.y);
 				}
@@ -1101,6 +1103,14 @@ namespace DynamicIslands
 			}
 			if (bad > 0) Fail(bad + " of " + seen + " loot pieces standing in the air");
 			else Log("PASS: loot pieces " + seen + " on the floor (within " + gap.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " m)");
+		}
+
+		/// <summary>Whether a collider is a cave's floor: a dug tunnel's rock, or a cave piece's (BalboaCave*, Cave*).</summary>
+		static bool CaveFloor(Transform t)
+		{
+			if (t.GetComponentInParent<DigTunnel>() != null) return true;
+			for (; t != null; t = t.parent) if (t.name.StartsWith("BalboaCave", System.StringComparison.Ordinal) || t.name.StartsWith("Cave", System.StringComparison.Ordinal)) return true;
+			return false;
 		}
 
 		[ConsoleCommand(name: "CIRayLook", docs: "Dev, in a world: what is seen from a point toward another on a loaded island (points from the island's land centre: a play's picture point minus the play's offset; or 'picture' in their place: the last play picture's own camera - w15Z: points given with the offset added looked out to sea) - a fan of 9x9 rays over 30 degrees, each ray's first renderer it sees the face of (its mesh's triangles, colliders or not; a face seen from behind is culled, as drawn - w15Z: an inside-out CaveBack round the eye was reported for the wall in front); fan=<degrees> narrows or widens the fan (30); at=<u>,<v> points the fan at that spot of a play picture taken from the first point at the second (0..1 across and down, the camera's own field of view, 16:9) - for asking what one odd bit in a picture is; logs a 9x9 map of what each ray met (top row up, left column left) and each thing seen with its share of the rays, path, material, shader and textures. For finding what draws an odd look (the blue rock, 11-06). CIRayLook [fan=<degrees>] [at=<u>,<v>] <island> <x> <y> <z> <tx> <ty> <tz> | picture")]
