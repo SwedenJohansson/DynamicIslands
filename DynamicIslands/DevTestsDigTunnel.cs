@@ -1145,6 +1145,94 @@ namespace DynamicIslands
 			return !td.GetHoles(x, z, 1, 1)[0, 0];
 		}
 
+		[ConsoleCommand(name: "CIDigEars", docs: "Dev, in a world, after a CIPlay on the island: rays over the last play picture (64x36) - the dug tunnel's rock (DigRock's drawn faces, met before anything else) seen more than 0.5 m outside its passage (not the lining) may not stand off the ground: more than <off> m (0.4) over or under the ground's height there. CIDigHoleRock looks only straight down the cut cells and passed while flat dark flaps stood out of the cliff each side of Pendulum Isle's mouth (cv43, 11-21); fails at 6 rays or more, logging each part (submesh) met, how far out and how far off the ground. CIDigEars [off=<m>] <island>")]
+		public static void DigEarsCommand(string[] args)
+		{
+			float off = 0.4f;
+			var rest = new List<string>();
+			foreach (string a in args ?? new string[0])
+				if (a.StartsWith("off=")) float.TryParse(a.Substring(4), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out off); else rest.Add(a);
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", rest.ToArray()) });
+			if (e == null) return;
+			string pi = LastPictureIsland ?? "";
+			bool ours = pi.Length > 0 && ((e.Name ?? "").IndexOf(pi, System.StringComparison.OrdinalIgnoreCase) >= 0 || (e.HostName ?? "").IndexOf(pi, System.StringComparison.OrdinalIgnoreCase) >= 0);
+			if (!LastPictureFrom.HasValue || !ours) { Fail("dig ears: no play picture of " + e.HostName + " (run CIPlay on it first)"); return; }
+			Terrain land = e.Root.GetComponentInChildren<Terrain>();
+			var tunnels = e.Root.GetComponentsInChildren<DigTunnel>(false).Where(t => t.PointCount > 0).ToList();
+			if (land == null || tunnels.Count == 0) { Fail("dig ears: no ground or no dug tunnel on " + e.HostName); return; }
+			// (the rock's drawn faces as world triangles, with the tunnel and submesh each came from)
+			var ta = new List<Vector3>(); var te1 = new List<Vector3>(); var te2 = new List<Vector3>(); var tt = new List<int>(); var tsub = new List<int>();
+			var rocks = new List<Transform>();
+			for (int k = 0; k < tunnels.Count; k++)
+			{
+				Transform r = tunnels[k].transform.Find(DigTunnel.RockName);
+				if (r == null) continue;
+				rocks.Add(r);
+				foreach (MeshFilter mf in r.GetComponentsInChildren<MeshFilter>(false))
+				{
+					Mesh m = mf.sharedMesh;
+					if (m == null || !m.isReadable) continue;
+					Vector3[] v = m.vertices;
+					for (int sm = 0; sm < m.subMeshCount; sm++)
+					{
+						int[] t = m.GetTriangles(sm);
+						for (int i = 0; i + 2 < t.Length; i += 3)
+						{
+							Vector3 a0 = mf.transform.TransformPoint(v[t[i]]), b0 = mf.transform.TransformPoint(v[t[i + 1]]), c0 = mf.transform.TransformPoint(v[t[i + 2]]);
+							if (Vector3.Cross(b0 - a0, c0 - a0).sqrMagnitude < 1e-12f) continue;
+							ta.Add(a0); te1.Add(b0 - a0); te2.Add(c0 - a0); tt.Add(k); tsub.Add(sm);
+						}
+					}
+				}
+			}
+			if (ta.Count == 0) { Fail("dig ears: no readable rock mesh on " + e.HostName); return; }
+			Vector3 from = e.Position + e.Root.transform.rotation * LastPictureFrom.Value, to = e.Position + e.Root.transform.rotation * LastPictureLook.Value;
+			Quaternion look = Quaternion.LookRotation(to - from);
+			float half = Mathf.Tan((Camera.main != null ? Camera.main.fieldOfView : 65f) * 0.5f * Mathf.Deg2Rad);
+			const int GX = 64, GY = 36;
+			int seen = 0, ears = 0;
+			var bySub = new Dictionary<string, int>(); var samples = new List<string>();
+			for (int y = 0; y < GY; y++)
+				for (int x = 0; x < GX; x++)
+				{
+					float u = (x + 0.5f) / GX, vv = (y + 0.5f) / GY;
+					Vector3 dir = (look * new Vector3((2f * u - 1f) * half * 16f / 9f, (1f - 2f * vv) * half, 1f)).normalized;
+					// (the nearest drawn rock face, seen from its front: a face seen from behind is culled, as drawn)
+					float tR = 200f; int ri = -1;
+					for (int i = 0; i < ta.Count; i++)
+					{
+						Vector3 pv = Vector3.Cross(dir, te2[i]); float det = Vector3.Dot(te1[i], pv);
+						if (det < 1e-9f) continue;
+						Vector3 tv = from - ta[i]; float bu = Vector3.Dot(tv, pv) / det; if (bu < 0f || bu > 1f) continue;
+						Vector3 qv = Vector3.Cross(tv, te1[i]); float bv = Vector3.Dot(dir, qv) / det; if (bv < 0f || bu + bv > 1f) continue;
+						float d = Vector3.Dot(te2[i], qv) / det;
+						if (d > 0.05f && d < tR) { tR = d; ri = i; }
+					}
+					if (ri < 0) continue;
+					// (anything else nearer - the ground, its holes open, or a placed thing - hides it)
+					bool hidden = false;
+					foreach (RaycastHit h in Physics.RaycastAll(from, dir, tR - 0.05f, ~0, QueryTriggerInteraction.Ignore))
+						if (!rocks.Any(r => h.collider.transform.IsChildOf(r)) && !h.collider.transform.IsChildOf(tunnels[tt[ri]].transform)) { hidden = true; break; }
+					if (hidden) continue;
+					seen++;
+					Vector3 p = from + dir * tR;
+					DigTunnel tun = tunnels[tt[ri]];
+					float sY = Mathf.Abs(tun.transform.lossyScale.y) > 1e-4f ? Mathf.Abs(tun.transform.lossyScale.y) : 1f;
+					float sOut = tun.Distance(tun.transform.InverseTransformPoint(p)) * sY;
+					float ground = land.SampleHeight(p) + land.transform.position.y, standOff = p.y - ground;
+					if (sOut <= 0.5f || Mathf.Abs(standOff) <= off) continue;
+					ears++;
+					string key = tun.name + " submesh " + tsub[ri];
+					bySub[key] = bySub.TryGetValue(key, out int bc) ? bc + 1 : 1;
+					Vector3 nrm = Vector3.Cross(te1[ri], te2[ri]).normalized;
+					if (samples.Count < 8) samples.Add("u " + u.ToString("0.00") + " v " + vv.ToString("0.00") + ": submesh " + tsub[ri] + " " + sOut.ToString("0.0") + " m out of the passage, " + standOff.ToString("+0.00;-0.00") + " m off the ground, normal " + nrm.ToString("F2") + " at " + (p - e.Position).ToString("F1"));
+				}
+			Log("  dug rock seen on " + seen + " of " + (GX * GY) + " rays, " + ears + " off the ground outside the passage" + (bySub.Count > 0 ? " (" + string.Join(", ", bySub.Select(kv => kv.Key + " " + kv.Value).ToArray()) + ")" : ""));
+			foreach (string sm in samples) Log("    " + sm);
+			if (ears >= 6) Fail(ears + " rays see the dug rock standing off the ground beside its passage (ears)");
+			else Log("PASS: dig ears - " + ears + " ray(s) see the dug rock off the ground outside its passage");
+		}
+
 		[ConsoleCommand(name: "CIDigHoleRock", docs: "Dev, in a world: over every dug tunnel's cut ground cells on a loaded island, where the ground is not in the passage (0.6 m clear of it: not its opening), the tunnel's rock lies no more than <max> m (0.9) under the ground's height - a look straight down every 0.5 m. Under it, the passage lay open to the sky beside Pendulum Isle's mouth, its lining's lower walls 1-2.6 m down the cut squares: the dark ears, 11-21 cv41. CIDigHoleRock [max=<m>] <island>")]
 		public static void DigHoleRockCommand(string[] args)
 		{
