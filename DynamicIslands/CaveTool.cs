@@ -1131,11 +1131,18 @@ namespace DynamicIslands.Editor
 				// (11-21 cv52: and the frame's rim tucked under the ground - where a face turned aside goes on down into the ground
 				// from points laid just over it, it stood 3-10 cm out of Overpass Shoal's channel floor all along its mouth's apron,
 				// black dashes where it faced away from the light)
-				FrameRimTucked += TuckRim(wv, st);
+				// (11-21 cv54: which points were tucked kept on the frame - CIFrameSunk and CIFrameRim read them, not guessed again from
+				// the finished mesh: the tuck lowers the rim, and the guess lost 897 of Overpass Shoal's, 1104 of Sinkmarket Floor's)
+				bool[] tucked = TuckRim(wv, st);
+				var rimOut = new List<bool>(st.Length);
 				var nv =new List<Vector3>(st.Length); var nn = new List<Vector3>(st.Length); var nu = new List<Vector2>(st.Length); var tri = new List<int>(st.Length);
 				for (int t = 0; t + 2 < st.Length; t += 3)
 				{
 					Vector3 a = wv[st[t]], b = wv[st[t + 1]], d = wv[st[t + 2]];
+					// (11-21 cv54: and a face lying flat a hand or less over flat ground left out - the ground drawn there is the floor:
+					// Sinkmarket Floor's mouth floor plate 4 cm over its sand stood as a flat golden plate in front of the camera, and
+					// 584 rays of the ground fighting through faces lying along it, CIFrameRing)
+					if (FlatOnGround(a, b, d)) { FrameFlatLeft++; continue; }
 					Vector3 fn = Vector3.Cross(b - a, d - a);
 					float fx = Mathf.Abs(fn.x), fy = Mathf.Abs(fn.y), fz = Mathf.Abs(fn.z);
 					int ax = fy >= fx && fy >= fz ? 1 : fx >= fz ? 0 : 2;
@@ -1145,6 +1152,7 @@ namespace DynamicIslands.Editor
 						Vector3 w = k == 0 ? a : k == 1 ? b : d;
 						tri.Add(nv.Count);
 						nv.Add(c.InverseTransformPoint(w));
+						rimOut.Add(tucked[vi]);
 						// (11-21 cv47: never a normal turned against its face as now drawn - a point moved onto the ground keeps its
 						// mesh normal, which could face away from the light: black triangles in Sinkmarket Floor's frame)
 						Vector3 vn = gn[vi] != Vector3.zero ? c.InverseTransformDirection(gn[vi]) : hasN ? mn[vi] : Vector3.zero;
@@ -1178,7 +1186,7 @@ namespace DynamicIslands.Editor
 				// (round 4: and its rock layer on every face: Balboa's sand layer, drawn on faces turned up, laid the frame's steep
 				// cutting walls pale - Old Mine Islet, Sinkmarket Floor; the hill's own steep faces are its rock layer - one rock)
 				DigTunnel.SideRockOnly(r, 0);
-				r.gameObject.AddComponent<HillWall>();
+				r.gameObject.AddComponent<HillWall>().Rim = rimOut.ToArray();
 				done++;
 			}
 			// (and the tunnel itself, inside and its back, in the hill's rock: its pale blue ice-ravine rock seen through the mouth
@@ -1260,55 +1268,77 @@ namespace DynamicIslands.Editor
 		public const float FrameRimShow = 0.15f;
 		/// <summary>How far under the ground (m, straight down) TuckRim lays a rim point.</summary>
 		public const float FrameRimUnder = 0.05f;
-		/// <summary>A rim face goes on down at least this far (m) under its rim point, its lowest point under the ground.</summary>
-		public const float FrameRimDrop = 0.1f;
 		/// <summary>Mouth frame rim points laid under the ground (TuckRim), all islands since Raft started.</summary>
 		public static int FrameRimTucked;
 
-		/// <summary>A frame face steeper than this (its normal's y; 0.5 = 60 degrees) is a side wall for the rim (FrameAside): Overpass
-		/// Shoal's apron's side wall faces stood at 0.13-0.20.</summary>
-		public const float FrameRimSteep = 0.5f;
+		/// <summary>A frame face crossing the ground at a steeper angle than this (the dot of its normal and the ground's; 0.5 = 60
+		/// degrees) is a side wall for the rim (FrameAside): Overpass Shoal's apron's side wall faces stood at 0.13-0.20 on its flat
+		/// channel floor. (11-21 cv54: by the ground's own slope, not straight up - by the face's steepness alone the faces lying
+		/// along the steep cutting walls counted as side walls, 1121 of Overpass Shoal's points and 1312 of Sinkmarket Floor's
+		/// were tucked under the ground, and CIFrameRim failed on their 3-5 cm.)</summary>
+		public const float FrameRimCross = 0.5f;
 
-		/// <summary>Whether a face (world points a b c) is turned aside: steeper than FrameRimSteep, not its underside.</summary>
+		/// <summary>Whether a face (world points a b c) is turned aside: crossing the ground (FrameRimCross) where the ground lies
+		/// no steeper than FrameCoverSteep, not turned down into it. False where there is no island ground under it.</summary>
 		public static bool FrameAside(Vector3 a, Vector3 b, Vector3 c)
 		{
 			Vector3 n = Vector3.Cross(b - a, c - a);
 			if (n.sqrMagnitude < 1e-10f) return false;
-			float y = n.normalized.y;
-			return y < FrameRimSteep && y >= -0.3f;
+			Vector3 gn;
+			if (!GroundNormalAt((a + b + c) / 3f, out gn) || gn.y < FrameCoverSteep) return false;
+			float d = Vector3.Dot(n.normalized, gn);
+			return d < FrameRimCross && d >= -0.3f;
+		}
+
+		/// <summary>The island ground's normal under a world point, where there is island ground.</summary>
+		public static bool GroundNormalAt(Vector3 w, out Vector3 gn)
+		{
+			gn = Vector3.up;
+			Terrain t = LiftTerrain(w);
+			if (t == null) return false;
+			TerrainData d = t.terrainData;
+			Vector3 o = t.transform.position;
+			gn = d.GetInterpolatedNormal((w.x - o.x) / d.size.x, (w.z - o.z) / d.size.z);
+			return true;
 		}
 
 		/// <summary>
 		/// A mouth frame's rim (world points wv, triangles st as drawn) laid FrameRimUnder under the ground: each point standing
-		/// 0-FrameRimShow over solid ground on a face turned aside whose lowest point lies FrameRimDrop under it and under solid
-		/// ground. The frame's points are laid FrameOver over the ground and the ground under its faces let down; where a side
-		/// wall goes on down into the ground from there, that strip of it stood out of the ground along the frame's edge.
-		/// Returns how many points were laid under.
+		/// 0-FrameRimShow over solid ground on a face turned aside (FrameAside) whose lowest point lies under solid ground. The
+		/// frame's points are laid FrameOver over the ground and the ground under its faces let down; where a side wall goes on
+		/// down into the ground from there, that strip of it stood out of the ground along the frame's edge. Returns which points
+		/// were laid under (and counts them in FrameRimTucked).
 		/// </summary>
-		static int TuckRim(Vector3[] wv, int[] st)
+		static bool[] TuckRim(Vector3[] wv, int[] st)
 		{
 			var tuck = new bool[wv.Length];
 			var to = new float[wv.Length];
+			var h = new float[3];
 			for (int t = 0; t + 2 < st.Length; t += 3)
 			{
 				if (!FrameAside(wv[st[t]], wv[st[t + 1]], wv[st[t + 2]])) continue;
-				int lo = st[t];
-				for (int k = 1; k < 3; k++) if (wv[st[t + k]].y < wv[lo].y) lo = st[t + k];
-				float gl;
-				if (!SolidGroundAt(wv[lo], out gl) || wv[lo].y > gl - 0.02f) continue;
+				bool solid = true; float low = float.MaxValue;
+				for (int k = 0; k < 3; k++)
+				{
+					float g;
+					if (!SolidGroundAt(wv[st[t + k]], out g)) { solid = false; break; }
+					h[k] = wv[st[t + k]].y - g;
+					low = Mathf.Min(low, h[k]);
+				}
+				if (!solid || low > -FrameRimIn) continue;
 				for (int k = 0; k < 3; k++)
 				{
 					int v = st[t + k];
-					float g;
-					if (v == lo || wv[v].y < wv[lo].y + FrameRimDrop || !SolidGroundAt(wv[v], out g)) continue;
-					if (wv[v].y < g - 0.01f || wv[v].y > g + FrameRimShow) continue;
-					tuck[v] = true; to[v] = g - FrameRimUnder;
+					if (h[k] < -0.01f || h[k] > FrameRimShow) continue;
+					tuck[v] = true; to[v] = wv[v].y - h[k] - FrameRimUnder;
 				}
 			}
-			int n = 0;
-			for (int v = 0; v < wv.Length; v++) if (tuck[v]) { wv[v].y = to[v]; n++; }
-			return n;
+			for (int v = 0; v < wv.Length; v++) if (tuck[v]) { wv[v].y = to[v]; FrameRimTucked++; }
+			return tuck;
 		}
+
+		/// <summary>A rim face's lowest point lies at least this far (m, straight down) under the ground: it goes on down into it.</summary>
+		public const float FrameRimIn = 0.02f;
 
 		/// <summary>The island ground's height under a world point, where the ground is there (not a hole cut in it).</summary>
 		public static bool SolidGroundAt(Vector3 w, out float g)
@@ -1344,27 +1374,39 @@ namespace DynamicIslands.Editor
 			return liftSolid[cz, cx];
 		}
 
-		/// <summary>Which of a finished mouth frame's points (world points w, triangles st) lie tucked under the ground as its rim
-		/// (TuckRim): 0-FrameRimUnder (and 2 cm) under solid ground, on a face turned aside going on down FrameRimDrop under
-		/// them. CIFrameSunk leaves these; CIFrameRim counts them.</summary>
-		public static bool[] FrameRimPoints(Vector3[] w, int[] st)
+		/// <summary>Which of a finished mouth frame's points (its mesh's points, n of them) TuckRim laid under the ground as its rim,
+		/// as FramesLikeHill kept them on the frame (HillWall.Rim). CIFrameSunk leaves these; CIFrameRim counts them.</summary>
+		public static bool[] FrameRimPoints(HillWall h, int n)
 		{
-			var rim = new bool[w.Length];
-			for (int t = 0; t + 2 < st.Length; t += 3)
-			{
-				if (!FrameAside(w[st[t]], w[st[t + 1]], w[st[t + 2]])) continue;
-				float low = Mathf.Min(w[st[t]].y, Mathf.Min(w[st[t + 1]].y, w[st[t + 2]].y));
-				for (int k = 0; k < 3; k++)
-				{
-					int v = st[t + k];
-					float g;
-					if (rim[v] || w[v].y < low + FrameRimDrop || !SolidGroundAt(w[v], out g)) continue;
-					if (w[v].y <= g + 0.005f && w[v].y >= g - FrameRimUnder - 0.02f) rim[v] = true;
-				}
-			}
-			return rim;
+			return h != null && h.Rim != null && h.Rim.Length == n ? h.Rim : new bool[n];
 		}
 
+		/// <summary>A frame face lying along flat ground no more than this (m, straight up) over it all over is left out of the
+		/// frame (FlatOnGround): the ground there is the floor.</summary>
+		public const float FrameFlatOn = 0.06f;
+		/// <summary>The ground under a face FlatOnGround leaves out lies at least this flat (its normal's y; 0.85 = 32 degrees).</summary>
+		public const float FrameFlatGround = 0.85f;
+		/// <summary>Mouth frame faces left out as lying flat on the ground (FlatOnGround), all islands since Raft started.</summary>
+		public static int FrameFlatLeft;
+
+		/// <summary>Whether a frame face (world points a b c) lies along flat solid ground (FrameFlatGround), its normal within 25
+		/// degrees of the ground's, its corners and middle 1 cm under to FrameFlatOn over it: the ground drawn there already is the
+		/// floor, and the face only fights it or stands on it as a plate of the frame's own texture.</summary>
+		public static bool FlatOnGround(Vector3 a, Vector3 b, Vector3 c)
+		{
+			Vector3 n = Vector3.Cross(b - a, c - a);
+			if (n.sqrMagnitude < 1e-10f) return false;
+			n.Normalize();
+			if (n.y < FrameFlatGround) return false;
+			Vector3 m = (a + b + c) / 3f, gn;
+			if (!GroundNormalAt(m, out gn) || gn.y < FrameFlatGround || Vector3.Dot(n, gn) < 0.9f) return false;
+			foreach (Vector3 p in new[] { a, b, c, m })
+			{
+				float g;
+				if (!SolidGroundAt(p, out g) || p.y < g - 0.01f || p.y > g + FrameFlatOn) return false;
+			}
+			return true;
+		}
 		/// <summary>Ground over a frame face by more than this (m, across it) is the frame under the hill on purpose: left.</summary>
 		public const float FrameSinkBand = 0.25f;
 		/// <summary>The most a heightmap point is let down under a frame face (m, straight down).</summary>
@@ -1718,7 +1760,11 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Marks a lone den's wall's outside drawn as the hill: TintWall leaves it as the hill. CaveLit lights it as it lights
 		/// the hill (CaveMountain marks its skin), so the two stay one rock.</summary>
-		public class HillWall : MonoBehaviour { }
+		public class HillWall : MonoBehaviour
+		{
+			/// <summary>A mouth frame's points (by its mesh's points) TuckRim laid under the ground as its rim; null on other walls.</summary>
+			[NonSerialized] public bool[] Rim;
+		}
 
 		/// <summary>A den's way-in sleeve's parts' shade, from its mouth in (CaveLit lights each part with the den's light times it).</summary>
 		public class SleeveShade : MonoBehaviour { [NonSerialized] public float[] Shade; }

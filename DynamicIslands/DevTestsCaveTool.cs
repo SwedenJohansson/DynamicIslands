@@ -1057,7 +1057,7 @@ namespace DynamicIslands
 				Vector3[] ws = mf.sharedMesh.vertices.Select(p => h.transform.TransformPoint(p)).ToArray();
 				bool[] up = CaveTool.FrameUpPoints(ws, mf.sharedMesh.triangles);
 				// (11-21 cv52: and the rim laid under the ground on purpose, CaveTool.TuckRim)
-				bool[] rim = CaveTool.FrameRimPoints(ws, mf.sharedMesh.triangles);
+				bool[] rim = CaveTool.FrameRimPoints(h, ws.Length);
 				for (int v = 0; v < ws.Length; v++)
 				{
 					if (!up[v]) continue;
@@ -1088,7 +1088,7 @@ namespace DynamicIslands
 				if (mf == null || mf.sharedMesh == null || !mf.sharedMesh.isReadable) continue;
 				Vector3[] w = mf.sharedMesh.vertices.Select(p => h.transform.TransformPoint(p)).ToArray();
 				int[] st = mf.sharedMesh.triangles;
-				int tucked = CaveTool.FrameRimPoints(w, st).Count(x => x);
+				int tucked = CaveTool.FrameRimPoints(h, w.Length).Count(x => x);
 				float len = 0f; int strips = 0, flat = 0;
 				var worst = new List<KeyValuePair<float, string>>();
 				for (int t = 0; t + 2 < st.Length; t += 3)
@@ -1102,16 +1102,16 @@ namespace DynamicIslands
 					{
 						// (a face turned up lying within 5 cm over the ground all over: the ground may fight through it - for the log)
 						Vector3 n = Vector3.Cross(b - a, c - a);
-						if (n.sqrMagnitude > 1e-10f && n.normalized.y >= CaveTool.FrameRimSteep && low >= 0f && top < 0.05f) flat++;
+						if (n.sqrMagnitude > 1e-10f && n.normalized.y >= CaveTool.FrameRimCross && low >= 0f && top < 0.05f) flat++;
 						continue;
 					}
 					// (a strip out of the ground at most FrameRimShow high, the face going on down into the ground)
-					if (top <= 0.005f || top > CaveTool.FrameRimShow || low > -0.02f) continue;
+					if (top <= 0.005f || top > CaveTool.FrameRimShow || low > -CaveTool.FrameRimIn) continue;
 					// (how long it runs: across the face's points standing out of the ground, or half the face's width where one does)
 					var outs = new List<Vector3>();
-					if (ha > -0.02f) outs.Add(a);
-					if (hb > -0.02f) outs.Add(b);
-					if (hc > -0.02f) outs.Add(c);
+					if (ha > -CaveTool.FrameRimIn) outs.Add(a);
+					if (hb > -CaveTool.FrameRimIn) outs.Add(b);
+					if (hc > -CaveTool.FrameRimIn) outs.Add(c);
 					float l = 0f;
 					for (int i = 0; i < outs.Count; i++) for (int j = i + 1; j < outs.Count; j++) l = Mathf.Max(l, Vector2.Distance(new Vector2(outs[i].x, outs[i].z), new Vector2(outs[j].x, outs[j].z)));
 					if (l < 0.01f) l = Mathf.Max(Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z)), Mathf.Max(Vector2.Distance(new Vector2(b.x, b.z), new Vector2(c.x, c.z)), Vector2.Distance(new Vector2(a.x, a.z), new Vector2(c.x, c.z)))) * 0.5f;
@@ -1165,7 +1165,7 @@ namespace DynamicIslands
 				if (mf == null || mf.sharedMesh == null || !mf.sharedMesh.isReadable) continue;
 				if (h.transform.parent != null) pieces.Add(h.transform.parent);
 				Vector3[] v = mf.sharedMesh.vertices; int[] t = mf.sharedMesh.triangles;
-				bool[] rim = CaveTool.FrameRimPoints(v.Select(p => h.transform.TransformPoint(p)).ToArray(), t);
+				bool[] rim = CaveTool.FrameRimPoints(h, v.Length);
 				for (int i = 0; i + 2 < t.Length; i += 3)
 				{
 					Vector3 a = h.transform.TransformPoint(v[t[i]]), b = h.transform.TransformPoint(v[t[i + 1]]), c = h.transform.TransformPoint(v[t[i + 2]]);
