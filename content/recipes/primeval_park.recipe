@@ -386,9 +386,13 @@ call hw_mast x=-53 z=80 h0=16 lv=6 a=pp_mast chest=pp_topchest top=Placeable_Fla
 call ar_cave x=-86 z=-44 h=3 yaw=0 al=pp_caverock chest=pp_cavechest
 # (c3z40: the rock's back corner (south-west, 15 m out) hung 7.4 m over a sea-wet slope past the pad - the hill
 # isn't laid over wet ground; the ground brought up dry under it so the hill closes round it, CIGroundIslands 11-21)
-brush flatten at -87 -58 r=5 s=20 frames=60 h=3
-brush smooth at -87 -58 r=8 s=5 frames=20
-clear at -87 -58 r=7
+# (c3z46 11-21: still a gap under the rock's back corner, 8.5 m: the ground at -2.2, the shell's back 7.2 m - the smooth after the small flatten
+# had taken the mound back down. Now a wider rock mound up under the rock's overhang, smoothed and laid again on top)
+brush flatten at -87.2 -58.7 r=7 s=20 frames=300 h=7.7
+brush smooth at -87.2 -58.7 r=10 s=4 frames=20
+brush flatten at -87.2 -58.7 r=4.5 s=20 frames=300 h=7.7
+brush rock at -87.2 -58.7 r=9 s=20 frames=30
+clear at -87.2 -58.7 r=9
 # (RA4 11-02, REACH: the cave's own passage flatten (h 3.4 out to its mouth at z -23, r 4.5) laid after Q's spit rose
 # the spit's top half back up - a 3 m bank again before the mouth; the spit laid again after the cave, mouth to sea)
 for k 0 7

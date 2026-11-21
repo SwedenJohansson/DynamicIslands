@@ -414,4 +414,11 @@ clear at -14.31 -16.57 r=2 only=Bush
 clear at 11.75 -33.28 r=2 only=Bush
 clear at -16.25 47.34 r=2 only=Balboa_Bush
 clear at -23.4 55 r=2 only=Balboa_Bush
+# (c3z43 11-21, CIGroundIslands: a generated palm 5 m over the ground and two bushes 3-5 m over it)
+clear at -35.26 51.49 r=2.5 all only=^Pickup_Landmark_Tree_Palm
+clear at -16.24 47.33 r=2 all only=^Balboa_Bush_03
+clear at -23.39 55.0 r=2 all only=^Balboa_Bush_03
+# (c3z43: in the Flooded Passage's dead end, from a spot on its floor by the west wall, the look down met the back of the
+# rock's inner slab 2.6 m off - a hole in Raft's own rock there: a boulder on that spot)
+place SmallBoulder3 - at -27.2 -22.7 h=6.5 drop scale=1.6
 save Rootweave Caves

@@ -198,6 +198,8 @@ call treasure x=0 z=0 r=18 n=1 seed=8840
 prop treasure8840 treasure.loot=TitaniumOre*2
 
 # (c3z40: a generator bamboo at -12 -5.4 stood 2.3 m deep in the ground round it - taken off, CIGroundIslands 11-21)
-clear at -12.09 -5.4 r=3 only=^Bamboo
+# (c3z46: still there - that clear used the report's point, which is from the land centre; the recipe's is that plus
+# the save's offset (-5.97 -7.33))
+clear at -18.06 -12.73 r=3 only=^Bamboo
 
 save Crane Yard

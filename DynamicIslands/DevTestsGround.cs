@@ -83,7 +83,7 @@ namespace DynamicIslands
 			else Log("PASS: " + c.Label + " - " + islands + " islands, " + objects + " objects, " + c.Pass);
 		}
 
-		[ConsoleCommand(name: "CIGroundIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIGroundWorld does, then taken away (IG2/IG3). <which>: part of the name (several joined by | - Geiger|Gannet_Rock, _ for a space), 'plans' (every island of every plan - the story lines), 'gen' (the saved generated ones) or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\ground_islands.txt. CIGroundIslands <which> [most] [skip the first n] [keep: left there, where each is logged - to look at it] [shots: a picture of each cave rim gap (from outside and from the rim) and each see-through look, shot_cave_*.png, with what the look ray meets]")]
+		[ConsoleCommand(name: "CIGroundIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIGroundWorld does, then taken away (IG2/IG3). <which>: part of the name (several joined by | - Geiger|Gannet_Rock, _ for a space), 'plans' (every island of every plan - the story lines), 'gen' (the saved generated ones) or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\ground_islands.txt. CIGroundIslands <which> [most] [skip the first n] [keep: left there, where each is logged - to look at it] [shots: a picture of each cave rim gap (from outside and from the rim) and each see-through look, shot_cave_*.png, with what the look ray meets] [as=<tag>: the results copied to ground_islands_<tag>.txt too, so two runs in one job keep both]")]
 		public static void GroundIslandsCommand(string[] args) { IslandsCheck(args, GroundCheck); }
 
 		static void IslandsCheck(string[] args, IslandCheck c)
@@ -91,14 +91,18 @@ namespace DynamicIslands
 			// (the word 'shots' anywhere: the pictures the check asks for - its worst sheets, cave looks - taken while each island is there)
 			checkShots = args != null && args.Contains("shots");
 			if (checkShots) args = args.Where(a => a != "shots").ToArray();
+			// (as=<tag>: the report also copied to <file>_islands_<tag>.txt - two phases of one job wrote the same file and the
+			// first one's lines were lost, c3z46 11-21)
+			string tag = args == null ? null : args.Where(a => a.StartsWith("as=", StringComparison.Ordinal)).Select(a => a.Substring(3)).LastOrDefault();
+			if (tag != null) { args = args.Where(a => !a.StartsWith("as=", StringComparison.Ordinal)).ToArray(); tag = new string(tag.Where(ch => char.IsLetterOrDigit(ch) || ch == '_' || ch == '-').ToArray()); if (tag.Length == 0) tag = null; }
 			string which = args != null && args.Length > 0 ? args[0] : "*";
 			int most = args != null && args.Length > 1 ? int.Parse(args[1]) : 9999;
 			int skip = args != null && args.Length > 2 ? int.Parse(args[2]) : 0;
 			bool keep = args != null && args.Length > 3 && args[3] == "keep";
-			StartTest(GroundIslandsRoutine(c, which, most, skip, keep));
+			StartTest(GroundIslandsRoutine(c, which, most, skip, keep, tag));
 		}
 
-		static IEnumerator GroundIslandsRoutine(IslandCheck c, string which, int most, int skip, bool keep = false)
+		static IEnumerator GroundIslandsRoutine(IslandCheck c, string which, int most, int skip, bool keep = false, string tag = null)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail(c.Label + " islands: host, in a world"); yield break; }
 			var kept = new System.Text.RegularExpressions.Regex("_[0-9a-f]{12}$");
@@ -161,9 +165,11 @@ namespace DynamicIslands
 			}
 			hbWhat = "idle";
 			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, c.File + "_islands.txt"), report.ToString());
+			string reportName = c.File + "_islands.txt";
+			if (tag != null) { reportName = c.File + "_islands_" + tag + ".txt"; File.WriteAllText(Path.Combine(DynamicIslands.assetpath, reportName), report.ToString()); }
 			string sum = done + " of " + names.Count + " islands measured" + (missed > 0 ? " (" + missed + " didn't come)" : "");
 			if (names.Count == 0) Fail(c.Label + " islands: none matched '" + which + "'");
-			else if (bad > 0 || missed > 0) Fail(c.Label + " islands: " + bad + " with " + problems + " problems; " + sum + " (" + c.File + "_islands.txt)");
+			else if (bad > 0 || missed > 0) Fail(c.Label + " islands: " + bad + " with " + problems + " problems; " + sum + " (" + reportName + ")");
 			else Log("PASS: " + c.Label + " islands - " + sum + ", " + c.Pass);
 		}
 
@@ -585,11 +591,14 @@ namespace DynamicIslands
 		/// sloped from its low side - the sea floor in front of it raised into a talus no steeper than `step` m per heightmap
 		/// point (1.95 m; 3 m = 57 degrees, which Raft paints rock and draws without the stretched sheet), from the face's top
 		/// down to `depth` m under the sea. Deeper the wall stays a wall: a blue hole or a dive shaft keeps its depth, only its
-		/// rim is sloped. Only ground at most 1 m over the sea is raised, nothing within 3 points of the terrain's edge, and
-		/// nothing under an editor object (its bounds), so no object is buried, and nothing between two opposite walls (a
-		/// narrow shaft or channel stays open: it stays as it was and is still reported). at x z r=: only faces in that circle. The
-		/// ground's hand paint is dropped on the raised points and the area painted again (the steep talus goes rock); one undo
-		/// step.</summary>
+		/// rim is sloped. A tall face's talus reaches past `reach` points as far as it needs to get down to `depth`. Only ground
+		/// at most 1 m over the sea is raised, nothing within 3 points of the terrain's edge, nothing a placed piece's body
+		/// stands in (its colliders; a piece without one, its bounds), so no piece is buried, and nothing between two opposite
+		/// walls (a narrow shaft or channel stays open: it stays as it was and is still reported). A small thing wholly under
+		/// the sea (4 m wide, 8 m tall at most: coral, kelp, a sea-floor rock) is carried up onto the new ground instead. The log
+		/// line names the pieces that held most of the talus back. at x z r=: only faces in that circle. The ground's hand paint
+		/// is dropped on the raised points and the area painted again (the steep talus goes rock); one undo step for the ground
+		/// (the carried things stay where they went).</summary>
 		static string CliffsStep(float rise, float step, float depth, int reach, Vector2? at, float atR)
 		{
 			Terrain land = terraineditor.terrain;
@@ -602,20 +611,49 @@ namespace DynamicIslands
 			List<SheetFace> faces = BareFaces(land, sea, rise, before);
 			if (at.HasValue) faces = faces.Where(f => (new Vector2(f.Hi.x, f.Hi.z) - at.Value).magnitude <= atR).ToList();
 			if (faces.Count == 0) return "cliffs: no bare cliff face" + (at.HasValue ? " in the circle" : "");
-			// (what stands there: an editor object's bounds keep the ground under it as it is)
-			var keep = new List<Bounds>();
+			// (what stands there keeps the ground under it as it is. A big piece with a body is measured by its body - a column of
+			// the talus that meets one of its colliders is left - not by its box: the boxes of sea stacks, wrecks and long rocks
+			// round a face left 1641-4853 points of the talus out and the faces bare (c3z43: Frontier Beacon's slab, The Abyss's
+			// band, Shelter Atoll's and Storm Spire's sheets, Old Mine Islet's cliffs round the boat). A small thing wholly under
+			// the sea - coral, kelp, a sea-floor rock, a pickup - does not hold the talus back: it rides up onto the new ground)
+			var keepBox = new List<KeyValuePair<Bounds, string>>();
+			var keepBody = new List<KeyValuePair<Bounds, string>>();
+			var bodyOf = new Dictionary<Collider, string>();
+			var carry = new List<KeyValuePair<Transform, Bounds>>();
 			foreach (EditorGameObject o in UnityEngine.Object.FindObjectsOfType<EditorGameObject>())
 			{
 				if (o == null || !o.gameObject.activeInHierarchy) continue;
 				Renderer[] rs = o.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled).ToArray();
-				Collider[] cs = o.GetComponentsInChildren<Collider>(false).Where(c => c.enabled && !c.isTrigger).ToArray();
+				Collider[] cs = o.GetComponentsInChildren<Collider>(false).Where(c => c.enabled && !c.isTrigger && !(c is TerrainCollider)).ToArray();
 				if (rs.Length == 0 && cs.Length == 0) continue;
 				Bounds b = rs.Length > 0 ? rs[0].bounds : cs[0].bounds;
 				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
 				foreach (Collider c in cs) b.Encapsulate(c.bounds);
-				b.Expand(new Vector3(1f, 0f, 1f));
-				keep.Add(b);
+				string n = (o.GameObjectName ?? o.name).Replace("(Clone)", "").Trim();
+				bool fixedPiece = n.StartsWith("ZiplinePath", StringComparison.Ordinal) || n.StartsWith("VP_Skylift", StringComparison.Ordinal) || n == "Elevator" ||
+					n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || CaveBacks.Wants(n);
+				if (!fixedPiece && b.max.y < sea - 0.3f && b.size.x <= 4f && b.size.z <= 4f && b.size.y <= 8f) { carry.Add(new KeyValuePair<Transform, Bounds>(o.transform, b)); continue; }
+				b.Expand(new Vector3(2f, 0f, 2f));
+				if (cs.Length == 0) { keepBox.Add(new KeyValuePair<Bounds, string>(b, n)); continue; }
+				keepBody.Add(new KeyValuePair<Bounds, string>(b, n));
+				foreach (Collider c in cs) bodyOf[c] = n;
 			}
+			var blockers = new Dictionary<string, int>();
+			Physics.SyncTransforms();
+			// (the piece standing in the talus column at wx,wz from the old ground h0 up to the talus's top, or null)
+			Func<float, float, float, float, string> standing = (wx, wz, h0, top) =>
+			{
+				foreach (var k in keepBox)
+					if (wx >= k.Key.min.x + 1f && wx <= k.Key.max.x - 1f && wz >= k.Key.min.z + 1f && wz <= k.Key.max.z - 1f && k.Key.min.y < top + 0.2f) return k.Value;
+				if (!keepBody.Any(k => wx >= k.Key.min.x && wx <= k.Key.max.x && wz >= k.Key.min.z && wz <= k.Key.max.z && k.Key.min.y < top + 0.2f)) return null;
+				Vector3 half = new Vector3(sx * 0.5f + 1f, (top + 0.2f - h0) * 0.5f + 0.1f, sz * 0.5f + 1f);
+				foreach (Collider c in Physics.OverlapBox(new Vector3(wx, (h0 + top + 0.2f) * 0.5f, wz), half, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore))
+				{
+					string who;
+					if (bodyOf.TryGetValue(c, out who)) return who;
+				}
+				return null;
+			};
 			float[,] after = (float[,])before.Clone();
 			float floor = sea - depth;
 			int blocked = 0;
@@ -628,13 +666,16 @@ namespace DynamicIslands
 			{
 				float apex = sea + f.Top;
 				Vector2 way = new Vector2(f.Lo.x - f.Hi.x, f.Lo.z - f.Hi.z).normalized;
-				for (int dz = -reach; dz <= reach; dz++)
-					for (int dx = -reach; dx <= reach; dx++)
+				// (a tall face's talus reaches as far as it needs to get down to the floor: cut short at reach it would end in a new
+				// wall at the waterline)
+				int fr = Mathf.Clamp(Mathf.CeilToInt((apex - floor) / step) + 1, reach, 40);
+				for (int dz = -fr; dz <= fr; dz++)
+					for (int dx = -fr; dx <= fr; dx++)
 					{
 						int x = f.Hx + dx, z = f.Hz + dz;
 						if (x < 3 || z < 3 || x > res - 4 || z > res - 4) continue;
 						float d = Mathf.Sqrt(dx * dx + dz * dz);
-						if (d < 0.5f || d > reach) continue;
+						if (d < 0.5f || d > fr) continue;
 						float target = apex - step * d;
 						if (target < floor) continue;
 						float h0 = before[z, x] * size.y + tp.y;
@@ -644,7 +685,8 @@ namespace DynamicIslands
 						else from[z * res + x] = way;
 						if (target <= after[z, x] * size.y + tp.y) continue;
 						float wx = tp.x + x * sx, wz = tp.z + z * sz;
-						if (keep.Any(b => wx >= b.min.x && wx <= b.max.x && wz >= b.min.z && wz <= b.max.z && b.min.y < target + 0.2f)) { blocked++; continue; }
+						string who = standing(wx, wz, h0, target);
+						if (who != null) { blocked++; int bn; blockers.TryGetValue(who, out bn); blockers[who] = bn + 1; continue; }
 						after[z, x] = (target - tp.y) / size.y;
 						raised.Add(z * res + x);
 					}
@@ -661,10 +703,26 @@ namespace DynamicIslands
 				raised.Remove(i);
 				kept++;
 			}
-			if (raised.Count == 0) return "cliffs: " + faces.Count + " bare faces, nothing raised (" + blocked + " points under objects)";
+			string most3 = blockers.Count == 0 ? "" : " (most under " + string.Join(", ", blockers.OrderByDescending(k => k.Value).Take(4).Select(k => k.Key + " " + k.Value).ToArray()) + ")";
+			if (raised.Count == 0) return "cliffs: " + faces.Count + " bare faces, nothing raised (" + blocked + " points under objects" + most3 + ")";
 			float[,,] alphaBefore = td.GetAlphamaps(0, 0, ares, ares);
 			float[,] maskBefore = terraineditor.paintMask != null ? (float[,])terraineditor.paintMask.Clone() : null;
+			// (the small things on the sea floor ride up with it: their ground before, at their middle)
+			var carryFrom = carry.Select(c => land.SampleHeight(c.Value.center) + tp.y).ToList();
 			td.SetHeights(0, 0, after);
+			int carried = 0;
+			for (int i = 0; i < carry.Count; i++)
+			{
+				Bounds cb = carry[i].Value;
+				float low = float.MaxValue;
+				foreach (Vector3 p in new[] { cb.center, new Vector3(cb.min.x, 0f, cb.min.z), new Vector3(cb.min.x, 0f, cb.max.z), new Vector3(cb.max.x, 0f, cb.min.z), new Vector3(cb.max.x, 0f, cb.max.z) })
+					low = Mathf.Min(low, land.SampleHeight(p) + tp.y);
+				float lift = low - carryFrom[i];
+				if (lift < 0.05f || carry[i].Key == null) continue;
+				carry[i].Key.position += Vector3.up * lift;
+				carried++;
+			}
+			if (carried > 0) Physics.SyncTransforms();
 			Vector3 min = new Vector3(float.MaxValue, 0f, float.MaxValue), max = new Vector3(float.MinValue, 0f, float.MinValue);
 			float most = 0f;
 			foreach (int i in raised)
@@ -683,7 +741,7 @@ namespace DynamicIslands
 			TerrainPainter.PaintWorldArea(land, sea, min, max, terraineditor.paintMask);
 			CommandUndoRedo.UndoRedoManager.Insert(new TerrainStrokeCommand(td, new RectInt(0, 0, res, res), before, new RectInt(0, 0, ares, ares), alphaBefore, maskBefore, terraineditor.paintMask));
 			int left = BareFaces(land, sea, rise, after).Count(f => !at.HasValue || (new Vector2(f.Hi.x, f.Hi.z) - at.Value).magnitude <= atR);
-			return "cliffs: " + faces.Count + " bare faces, " + raised.Count + " points raised (up to " + Num(most) + " m), " + blocked + " left under objects, " + kept + " left open between two walls; " + left + " bare faces left";
+			return "cliffs: " + faces.Count + " bare faces, " + raised.Count + " points raised (up to " + Num(most) + " m), " + carried + " small things on the sea floor carried up with it, " + blocked + " left under objects" + most3 + ", " + kept + " left open between two walls; " + left + " bare faces left";
 		}
 
 		/// <summary>Everything a look meets, back faces too, nearest first: "name d m (back)" - what the see-through ray went
@@ -956,7 +1014,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIOverlapWorld", docs: "Dev, in a world: nothing on the loaded custom islands passes through anything else - no post, pillar, wall, floor or roof piece more than 6 cm inside a piece of furniture, a prop, a chest, a machine, a tree or a plant (IG7; the user 2026-10-18: posts through a piano and a pool table). Things resting on floors, roofs on their posts, things on tables don't count. Also no themed scene's prop, chest or note more than 6 cm into another of the scenes (their collider boxes as they stand turned; lines 'scene <theme>: ...'; two metal crates, gen-large-37435). Problems per island; all in Mods\\DynamicIslands\\overlap_world.txt. CIOverlapWorld [part of the island name]")]
 		public static void OverlapWorldCommand(string[] args) { WorldCheck(args, OverlapCheck); }
 
-		[ConsoleCommand(name: "CIOverlapIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIOverlapWorld does, then taken away (IG7). <which>: part of the name, 'plans' (every island of every plan), 'gen' or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\overlap_islands.txt. CIOverlapIslands <which> [most] [skip] [keep]")]
+		[ConsoleCommand(name: "CIOverlapIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIOverlapWorld does, then taken away (IG7). <which>: part of the name, 'plans' (every island of every plan), 'gen' or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\overlap_islands.txt. CIOverlapIslands <which> [most] [skip] [keep] [as=<tag>: the results copied to overlap_islands_<tag>.txt too - the other Islands checks take it as well]")]
 		public static void OverlapIslandsCommand(string[] args) { IslandsCheck(args, OverlapCheck); }
 
 		[ConsoleCommand(name: "CIOverlapTypes", docs: "Dev, world (host, a test world 'CI ...'): brand-new islands of each map type made next to the raft by the generator as it is now, measured as CIOverlapWorld does, then taken away (IG7). Results in Mods\\DynamicIslands\\overlap_types.txt. CIOverlapTypes [types, comma-separated, or *] [islands of each, 2]")]

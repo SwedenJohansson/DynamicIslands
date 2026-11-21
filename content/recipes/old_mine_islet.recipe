@@ -159,9 +159,13 @@ call hw_wreck x=50 z=-34 h=2 yaw=30 obj=BoatStranded al=orebarge crate=bargecrat
 call ar_cave x=-48 z=34 h=3 yaw=0 al=greyrock chest=greyclaim
 # (c3z40: the rock's back corner (west, 16 m out) hung 11.3 m over the wet beach past the pad - the ground brought up
 # dry under it so the hill closes round it, CIGroundIslands 11-21)
-brush flatten at -62.5 27.5 r=5 s=20 frames=60 h=3
-brush smooth at -62.5 27.5 r=8 s=5 frames=20
-clear at -62.5 27.5 r=7
+# (c3z46 11-21: still a gap under the rock's back corner, 11.5 m: the ground at -1.8, the rock's outer slab's underside 9.7 m - the smooth after the small flatten
+# had taken the mound back down. Now a wider rock mound up under the rock's overhang, smoothed and laid again on top)
+brush flatten at -63 27.1 r=7 s=20 frames=300 h=10.2
+brush smooth at -63 27.1 r=10 s=4 frames=20
+brush flatten at -63 27.1 r=4.5 s=20 frames=300 h=10.2
+brush rock at -63 27.1 r=9 s=20 frames=30
+clear at -63 27.1 r=9
 place SmallBoulder4 - at -49 47 ground yaw=40 scale=0.9
 place SmallBoulder4 - at -45.5 51 ground yaw=110 scale=0.8
 # H Powder Hill (north-east, by the plane): the company's powder store on its top, away from the men
@@ -231,6 +235,11 @@ for rx 14 -10 -3.4
 place Beam_Long_01 - at $rx -19.9 h=4.25 rot=0,0,0
 place Beam_Long_01 - at $rx -18.9 h=4.25 rot=0,0,0
 next
+# (c3z46: two rail beams where the den's room ground is not cut level with its floor - the one at 7.2 -18.9 was set up
+# 1.6 m over the floor by the save's settle, the one at 3.8 -19.9 lay 0.3 m under the ground there (CIGroundIslands
+# 11-21): taken out, a gap in the old rails)
+clear at 7.2 -18.9 r=0.4 all only=^Beam_Long_01
+clear at 3.8 -19.9 r=0.4 all only=^Beam_Long_01
 place VP_Wagon02 - at 9 -19.4 h=4.25 sit yaw=90
 place VP_Wagon02 - at -1 -19.4 h=4.25 sit yaw=90
 place VP_Wagon02 orecart at -11 -19.4 h=4.25 sit yaw=90

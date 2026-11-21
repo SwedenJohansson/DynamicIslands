@@ -111,9 +111,13 @@ call hw_wreck x=104 z=-30 h=1.5 yaw=70 obj=BoatStranded al=poacherboat crate=boa
 call ar_cave x=-40 z=-84 h=2.5 yaw=0 al=caverock chest=cavebox
 # (c3z40: the rock's back corner (west, 16 m out) 3.3 m over ground left just wet (0.27 m) past the pad - brought up
 # dry to under its rim so the hill closes round it, CIGroundIslands 11-21)
-brush flatten at -54.5 -90.5 r=4 s=20 frames=60 h=3.2
-brush smooth at -54.5 -90.5 r=7 s=5 frames=20
-clear at -54.5 -90.5 r=6
+# (c3z46 11-21: still a gap under the rock's back corner, 4.9 m: the hill's skin 4.3 m up there, the rock's outer slab's underside 9.2 m - the smooth after the small flatten
+# had taken the mound back down. Now a wider rock mound up under the rock's overhang, smoothed and laid again on top)
+brush flatten at -54.7 -90.9 r=7 s=20 frames=300 h=9.7
+brush smooth at -54.7 -90.9 r=10 s=4 frames=20
+brush flatten at -54.7 -90.9 r=4.5 s=20 frames=300 h=9.7
+brush rock at -54.7 -90.9 r=9 s=20 frames=30
+clear at -54.7 -90.9 r=9
 # --- JUMP COURSE bb (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
 # JUMP bb pad=2.5 at=46 -86
 push at 46 -86

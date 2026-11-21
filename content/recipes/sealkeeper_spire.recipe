@@ -199,6 +199,13 @@ call sk_ridge x1=74 z1=-20 x2=80 z2=20 h=4 top=6 r=8
 call sk_plants x=77 z=0 r=16 seed=10961
 call sk_zone x=77 z=0 al=sk_ridge id=sk_ridge r=7 msg="The storm ridge. The Spire's switchboard windows flash with every gust; the zipline from here runs back down."
 call sk_cave x=-46 z=30 h=3 yaw=180 al=sk_caverock chest=sk_cavechest
+# (c3z43 11-21: a 1.0 m gap under the den rock's rim at its back corner, north-west: its underside 6.5 m, the hill's skin
+# 3.9, the ground 2.7 - a rock mound up under it, smoothed and laid again on top)
+brush flatten at -58.7 42.6 r=4 s=20 frames=300 h=7
+brush smooth at -58.7 42.6 r=6 s=4 frames=20
+brush flatten at -58.7 42.6 r=3 s=20 frames=300 h=7
+brush rock at -58.7 42.6 r=5 s=20 frames=30
+clear at -58.7 42.6 r=5
 call sk_zone x=-46 z=25 al=sk_cave id=sk_cave r=4 msg="The keepers' cave: where the Spire's crew sat out the worst storms."
 call sk_ruin x=0 z=-76 h=3 al=sk_ruin
 call sk_ruin x=-12 z=-74 h=3 al=sk_ruin2
