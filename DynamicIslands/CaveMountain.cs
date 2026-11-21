@@ -200,9 +200,10 @@ namespace DynamicIslands.Editor
 			Collider mine = skin != null ? skin.GetComponent<Collider>() : null;
 			if (mine == null) return bad;
 			Physics.SyncTransforms();
-			foreach (Mouth m in lastMouths)
+			for (int mi = 0; mi < lastMouths.Count; mi++)
 				for (int end = 0; end < 2; end++)
 				{
+					Mouth m = lastMouths[mi];
 					if (end == 0 ? !m.Plus : !m.Minus) continue;
 					float dir = end == 0 ? 1f : -1f, start = end == 0 ? m.StartPlus : m.StartMinus;
 					// (an end joined on to another piece: the roof runs on past it to the chain's mouth, which that piece checks at its
@@ -224,9 +225,13 @@ namespace DynamicIslands.Editor
 						{
 							float aside = s + Mathf.Sign(s) * m.HalfWidth;
 							Vector3 at = m.Pos + m.Along * (m.InsideAlong + dir * (start + f)) + m.Side * (m.InsideSide + aside);
-							if (OtherHill(at)) continue;
+							if (OtherHill(at) || OtherRoof(at, mi)) continue;
 							RaycastHit[] hits = UnderSkin(at, m.FloorY + 40f, mine);
 							if (hits == null || hits[0].point.y - hits[1].point.y <= 0.6f) continue;
+							// (a lone den's own cheeks, built so on purpose: right at the arch's rim as high as the arch and falling LoneFall
+							// per m out (11-09 user r41-r45) - no higher than that, its shoulder, not the hill spread over the ledge: Signal
+							// Rock's and the Iron Graveyard's capped dens, 4.9 m at 1.5 m out and 1.8 m at 3 m, c3z31)
+							if (!float.IsNaN(m.Front) && hits[0].point.y <= LoneCheekTop(m, f, aside) + CheekSlack) continue;
 							// (over the cave's own rock - a shell's flank out past its roof - or at its edge, within a step: the hill
 							// covering it, not the ground; the generator's dead-end caves)
 							bool rock = false;
@@ -261,6 +266,7 @@ namespace DynamicIslands.Editor
 		}
 
 		bool[,] otherHill; // (last build: out past an open end, where another cave's hill reaches)
+		int[,] roofBy; // (last build: whose roof each cell lies over or beside, by its mouth's index; -1 none)
 		float hillX0, hillZ0;
 		// (tests: the last build's cells, for CICaveCell)
 		float[,] dTop, dRim, dGround, dRaw, dHeight, dCover, dCorr; bool[,] dCut, dSea, dOn; string[,] dGroundBy; char[,] dWhy;
@@ -299,11 +305,33 @@ namespace DynamicIslands.Editor
 			return hits.Length >= 2 && hits[0].collider == skin ? hits : null;
 		}
 
+		/// <summary>(tests) How high a lone den's cheek is built f m out past its way in's start, aside m off its middle - the
+		/// lone-den ramp's own sum in Build (want, before the face behind and the ground cap it).</summary>
+		static float LoneCheekTop(Mouth m, float f, float aside)
+		{
+			float sl = Mathf.Abs(aside) - (m.ArchHalf + LoneSlot);
+			return m.FloorY + m.ArchUp * Mathf.Clamp01(1f - f / LoneEdge) + LoneCheek(sl) - LoneFall * f;
+		}
+
+		/// <summary>How far over its built height a lone den's cheek may stand in BlockedWays (the smoothing and the 1.25 m cells
+		/// between the probes).</summary>
+		internal const float CheekSlack = 0.8f;
+
 		bool OwnRock(Collider c)
 		{
 			foreach (Transform t in caves)
 				if (t != null && c.transform.IsChildOf(t)) return true;
 			return false;
+		}
+
+		/// <summary>Over or beside another cave piece's roof (mouth index other than mine): its hill, even where that piece lies
+		/// under the ground and the ground is what the skin stands on - Weatherglass Deep's glass room den beside the reef den's
+		/// way in, c3z32.</summary>
+		bool OtherRoof(Vector3 at, int mine)
+		{
+			if (roofBy == null) return false;
+			int i = Mathf.RoundToInt((at.x - hillX0) / Cell), k = Mathf.RoundToInt((at.z - hillZ0) / Cell);
+			return i >= 0 && k >= 0 && i < roofBy.GetLength(0) && k < roofBy.GetLength(1) && roofBy[i, k] >= 0 && roofBy[i, k] != mine;
 		}
 
 		bool OtherHill(Vector3 at)
@@ -659,7 +687,7 @@ namespace DynamicIslands.Editor
 			string seaOpt;
 			bool seaCutOn = props.Any(p => p != null && p.TryGetValue(ObjectProps.CaveSeaCut, out seaOpt) && seaOpt == "1");
 			SeaCutCells = 0;
-			otherHill = new bool[nx, nz]; hillX0 = x0; hillZ0 = z0;
+			otherHill = new bool[nx, nz]; hillX0 = x0; hillZ0 = z0; roofBy = coverBy;
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
 				{

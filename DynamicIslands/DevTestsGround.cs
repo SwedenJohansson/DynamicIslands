@@ -994,7 +994,9 @@ namespace DynamicIslands
 				// (nor what stands in a dug passage, under the land but in its air: Stalker's Hollow's cave lanterns, IG5 11-18)
 				// (nor Selene's interior pieces, built into a cave kit's tunnel under its hill like the cave pieces: Thalassa Mooring's
 				// sea-gate bars read "buried" 11-21)
-				if (!NotABase.IsMatch(n) && !CaveBacks.Wants(n) && land != null && whole.max.y < groundMid - 0.05f && whole.max.y > sea - 1f && !InDugPassage(whole))
+				// (nor what stands where the ground is cut away for a cave piece's room: SampleHeight reads the cut cell's old height,
+				// the hill over the den - Marrow Key Museum's vault hatch read "buried 12.2 m" in its den, z32 11-21)
+				if (!NotABase.IsMatch(n) && !CaveBacks.Wants(n) && land != null && whole.max.y < groundMid - 0.05f && whole.max.y > sea - 1f && !InDugPassage(whole) && !GroundCutAt(land, b.center))
 				{ node.Reported = node.Direct = true; lines.Add("buried: " + n + " at " + where + ", its top " + Num(groundMid - whole.max.y) + " m under the ground"); continue; }
 				// A zipline: each end on its own (its base reaches from one end's floor to the other's, over the dip between them -
 				// the Lodestone Array's lines read "partly in the air" 3.7 m over their moat, 2026-10-20): every piece no wider than
@@ -1700,6 +1702,17 @@ namespace DynamicIslands
 		/// <summary>An object in a dug passage's air: its middle, its top or its foot within half a metre of the passage (a lantern
 		/// hung on its wall, a beam holding its roof). The land's height there is the hill over the cave, so "buried" asked
 		/// the wrong question (IG5 11-18: Stalker's Hollow's lanterns read 10-11 m under the ground).</summary>
+		/// <summary>The land's hole cell at p is cut (no ground there: a cave piece's room or a dug passage).</summary>
+		internal static bool GroundCutAt(Terrain land, Vector3 p)
+		{
+			TerrainData td = land.terrainData;
+			int res = td.holesResolution;
+			Vector3 l = p - land.transform.position;
+			int hx = Mathf.FloorToInt(l.x / td.size.x * res), hz = Mathf.FloorToInt(l.z / td.size.z * res);
+			if (hx < 0 || hz < 0 || hx >= res || hz >= res) return false;
+			return !td.GetHoles(hx, hz, 1, 1)[0, 0];
+		}
+
 		static bool InDugPassage(Bounds whole)
 		{
 			Vector3 c = whole.center;

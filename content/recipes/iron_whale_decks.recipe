@@ -139,6 +139,10 @@ place Placeable_Lantern_Metal deckslights at -5.5 -4 drop
 place Placeable_Lantern_Metal deckslights at -0.5 -4 drop
 pop
 call ladders x=3 z=-5 h=12.16 n=2 yaw=180
+# (the ladders' pillars carried on down to the galley's roof under them: hung 7.2 m over it they read "floating" - z32 11-21)
+place Block_Pillar_Wood - at 3 -4.8 h=9.74
+place Block_Pillar_Wood - at 3 -4.8 h=7.32
+place Block_Pillar_Wood - at 3 -4.8 h=4.9
 
 # --- The seabed: a reef round the stern, scrap and iron ore spilled from the hull ------------------------------------
 scatter VP_CoralDigitate01 5 at -14 10 r=5 seed=12611 wet free=1
