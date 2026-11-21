@@ -97,6 +97,9 @@ prop treasure10052 treasure.loot=TitaniumOre*3
 # --- The cranes and the zipline (S to N) -------------------------------------------------------------------------------
 place UT_ElectricityIsland_Crane02 crane1 at -7 -7 h=1.9 sit scale=0.25 yaw=45
 place ZiplinePath_Landmark zipcrane at -0.6 -7.2 h=3.25 yaw=0
+# (11-21: its near floor set where it stands - with no zipfrom the line's own floor stood 26 m off its pivot, at 17.3 8.2,
+# and its rope ran from there to the seabed at 32.5 30.3, through a caisson's floor: a rider stopped 5 m out)
+zipfrom zipcrane -0.6 -7.2 h=3.25
 zipto zipcrane 9 16
 place UT_ElectricityIsland_Crane02 crane2 at 11 17 h=1.9 sit scale=0.25 yaw=225
 place Zone_Trigger crane2zone at 9.5 15.5 h=3
@@ -183,8 +186,11 @@ call ladtower x=12 z=-66 h0=22 lv=6 a=cytower
 place Loot_ChestSmall cylocker at 11.25 -65.25 h=37.2 drop yaw=180
 place Note_Paper cysumnote at 11.25 -66.75 h=36.84 drop yaw=20
 place Zone_Trigger cysummit at 12 -66 h=37.73
-place ZiplinePath_Landmark cyzip at 12.75 -66.75 h=36.73 yaw=0
-zipfrom cyzip 12.75 -66.75 h=36.73
+# (11-21: the zipline starts at the tower's foot, on its side towards the far end, as Thalassa Mooring's. From the top
+# its rope ran 5.5 m through the top's rope fence (a rider stopped 5 m out) and its floor shut the top ladder's climb side.
+# zipto raises this near end on a deck if the hill wants it)
+place ZiplinePath_Landmark cyzip at 11.35 -62.45 ground
+zipfrom cyzip 11.35 -62.45 ground
 zipto cyzip 6 -33
 place Loot_ChestSmall cyledge at 1.82 -55.82 ground sit yaw=40
 place SmallRock_02 - at -4.89 -49.9 ground sit scale=0.5

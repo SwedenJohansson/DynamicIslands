@@ -2698,6 +2698,8 @@ namespace DynamicIslands
 			if (root == null) return 0;
 			var gone = new List<GameObject>();
 			var names = new List<string>();
+			var kept = new HashSet<GameObject>();
+			var keptNames = new List<string>();
 			Vector2 n2 = new Vector2(near.x, near.z), f2 = new Vector2(far.x, far.z);
 			for (int round = 0; round < 4; round++)
 			{
@@ -2720,7 +2722,14 @@ namespace DynamicIslands
 						if (owner == null || owner == e || recipePlaced.Contains(owner.gameObject) || !owner.transform.IsChildOf(root) || now.Contains(owner.gameObject)) continue;
 						Bounds bb = c.bounds;
 						foreach (Renderer rd in owner.GetComponentsInChildren<Renderer>()) bb.Encapsulate(rd.bounds);
-						if (Mathf.Max(bb.size.x, bb.size.z) > 10f) continue;
+						// (a boulder goes whatever its size: 11-21 c3z5, Caisson Yard's ridge line still ran 7.4 m under a scaled-up
+						// SmallBoulder2 the 10 m rule kept as a cliff - logged once when a body that big is kept)
+						bool boulder = (owner.GameObjectName ?? "").IndexOf("Boulder", StringComparison.OrdinalIgnoreCase) >= 0;
+						if (!boulder && Mathf.Max(bb.size.x, bb.size.z) > 10f)
+						{
+							if (!kept.Contains(owner.gameObject)) { kept.Add(owner.gameObject); keptNames.Add(owner.GameObjectName + " (" + Num(Mathf.Max(bb.size.x, bb.size.z)) + " m across)"); }
+							continue;
+						}
 						now.Add(owner.gameObject);
 						Vector3 op = owner.transform.position;
 						names.Add(owner.GameObjectName + " at " + Num(op.x - TopFrame.Origin.x) + " " + Num(op.z - TopFrame.Origin.y) + " (the rope " + Num(p.y - g) + " m over its top)");
@@ -2732,6 +2741,8 @@ namespace DynamicIslands
 			}
 			if (gone.Count > 0)
 				Log("  zipto: " + gone.Count + " of the generator's objects in a rider's way under the rope removed: " + string.Join("; ", names.ToArray()));
+			if (keptNames.Count > 0)
+				Log("  zipto: kept in a rider's way under the rope (over 10 m across, taken for the island's own cliffs): " + string.Join("; ", keptNames.ToArray()));
 			return gone.Count;
 		}
 
