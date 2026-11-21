@@ -185,8 +185,12 @@ call tzone x=50.7 z=67.6 al=obsummit id=ob_summit r=4 msg="The garden peak besid
 call notebox x=50 z=72.5 yaw=36.87 al=obcairn
 call treasure x=54.4 z=69.2 r=1.5 n=1 seed=14941
 prop treasure14941 treasure.loot=TitaniumOre*2;Battery*1
-place ZiplinePath_Landmark obzip at 44.7 62.1 h=40.1
-zipfrom obzip 44.7 62.1 h=40.1
+# (11-21 c3z6: the line starts on the top's edge tile on its side (the tower's local 0.75 2.25), and the rope fence piece it
+# leaves through is gone. From the far corner (local 3.75 3.75) a rider hung under the top floor for 3.4 m and the rope ran
+# 4.5 m through the fence)
+clear at 43.68 58.24 r=0.4 all only=^Block_Wall_Fence_Rope$ above=39
+place ZiplinePath_Landmark obzip at 44.1 58.8 h=40.1
+zipfrom obzip 44.1 58.8 h=40.1
 zipto obzip 18 24
 place Creature_Goat obgoats at 34.8 56.4 ground
 prop obgoats creature.count=2
