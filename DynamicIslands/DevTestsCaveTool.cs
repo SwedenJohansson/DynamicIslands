@@ -1067,13 +1067,16 @@ namespace DynamicIslands
 			else Log("PASS: mouth frames " + frames.Count + ", none just under the ground");
 		}
 
-		[ConsoleCommand(name: "CIFrameRing", docs: "Dev, in a world, after a CIPlay on the island: rays over the last play picture (64x36) at the tunnel mouth frames drawn as the hill (CaveTool.FramesLikeHill) - none may meet steep island ground (CaveTool.FrameCoverSteep) standing within CaveTool.FrameCover in front of a frame face, along that face's normal: Sinkmarket Floor's cutting walls stood 0.4-0.65 m in front of its frame's inner faces as pale walls inside the ring while CIFrameSunk passed, 11-21 cv40. CIFrameRing <island>")]
+		[ConsoleCommand(name: "CIFrameRing", docs: "Dev, in a world, after a CIPlay on the island: rays over the last play picture (64x36) at the tunnel mouth frames drawn as the hill (CaveTool.FramesLikeHill) - none may meet steep island ground (CaveTool.FrameCoverSteep) standing within CaveTool.FrameCover in front of a frame face, along that face's normal: Sinkmarket Floor's cutting walls stood 0.4-0.65 m in front of its frame's inner faces as pale walls inside the ring while CIFrameSunk passed, 11-21 cv40 - and none may meet island ground lying along a frame face (normals within 45 degrees) within 0.05 m of it, in front or behind: the heightmap's triangles 1 cm behind Sinkmarket's mouth side walls poked through as a dark sawtooth, 11-21 cv45. FAIL at 3 rays of either. CIFrameRing <island>")]
 		public static void FrameRingCommand(string[] args)
 		{
 			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
 			if (e == null) return;
 			StartTest(FrameRingRoutine(e));
 		}
+
+		/// <summary>CIFrameRing: ground lying along a frame face within this (m, across it) fights through it.</summary>
+		const float FightNear = 0.05f;
 
 		static IEnumerator FrameRingRoutine(IslandWorldState.Entry e)
 		{
@@ -1103,8 +1106,8 @@ namespace DynamicIslands
 				}
 			}
 			const int GX = 64, GY = 36;
-			int metFrame = 0, bad = 0, deeper = 0;
-			var worst = new List<KeyValuePair<float, string>>();
+			int metFrame = 0, bad = 0, deeper = 0, fight = 0;
+			var worst = new List<KeyValuePair<float, string>>(); var fights = new List<KeyValuePair<float, string>>();
 			for (int y = 0; y < GY; y++)
 			{
 				for (int x = 0; x < GX; x++)
@@ -1129,7 +1132,9 @@ namespace DynamicIslands
 					}
 					if (fi < 0) continue;
 					metFrame++;
-					RaycastHit[] hits = Physics.RaycastAll(new Ray(from, dir), tF, ~0, QueryTriggerInteraction.Ignore).OrderBy(hh => hh.distance).ToArray();
+					float cosF = Mathf.Abs(Vector3.Dot(dir, tn[fi]));
+					float past = Mathf.Min(FightNear / Mathf.Max(cosF, 0.2f) + 0.01f, 0.5f);
+					RaycastHit[] hits = Physics.RaycastAll(new Ray(from, dir), tF + past, ~0, QueryTriggerInteraction.Ignore).OrderBy(hh => hh.distance).ToArray();
 					RaycastHit? land = null;
 					foreach (RaycastHit hh in hits)
 					{
@@ -1137,8 +1142,18 @@ namespace DynamicIslands
 						if (hh.collider.GetComponentInParent<Network_Player>() != null || pieces.Any(pc => hh.collider.transform.IsChildOf(pc))) continue;
 						break; // (something else in front: the ground there isn't what is seen)
 					}
+					// (11-21 cv45: and the ground lying along the face within FightNear of it, in front or just behind - Sinkmarket's
+					// cutting walls 1 cm behind its mouth's side walls, the heightmap's triangles poking through them as a dark sawtooth;
+					// not ground crossing the face at a slant, where a frame goes into the hill)
+					if (land.HasValue && Mathf.Abs(land.Value.distance - tF) * cosF < FightNear && Vector3.Dot(land.Value.normal, tn[fi]) > 0.7f)
+					{
+						fight++;
+						fights.Add(new KeyValuePair<float, string>(-Mathf.Abs(land.Value.distance - tF) * cosF, "at " + u.ToString("0.00", CultureInfo.InvariantCulture) + "," + vv.ToString("0.00", CultureInfo.InvariantCulture) + " of the picture: ground at "
+							+ (land.Value.point - e.Position).ToString("F2") + " (normal " + land.Value.normal.ToString("F2") + ") " + ((land.Value.distance - tF) * cosF).ToString("0.000", CultureInfo.InvariantCulture) + " m behind the frame's face (normal " + tn[fi].ToString("F2") + ")"));
+						continue;
+					}
 					if (!land.HasValue || land.Value.distance > tF - 0.02f || land.Value.normal.y >= CaveTool.FrameCoverSteep) continue;
-					float across = (tF - land.Value.distance) * Mathf.Abs(Vector3.Dot(dir, tn[fi]));
+					float across = (tF - land.Value.distance) * cosF;
 					if (across > CaveTool.FrameCover) { deeper++; continue; }
 					bad++;
 					worst.Add(new KeyValuePair<float, string>(across, "at " + u.ToString("0.00", CultureInfo.InvariantCulture) + "," + vv.ToString("0.00", CultureInfo.InvariantCulture) + " of the picture: ground at "
@@ -1147,8 +1162,9 @@ namespace DynamicIslands
 				yield return null;
 			}
 			foreach (var kv in worst.OrderByDescending(k => k.Key).Take(10)) Log("  " + kv.Value + " - BAD");
-			Log("  " + frames.Count + " frame(s), " + ta.Count + " faces, " + metFrame + " of " + (GX * GY) + " rays meet a frame face, " + bad + " see steep ground just in front of it, " + deeper + " ground further in front (frame under the hill)");
-			if (bad >= 3) Fail(bad + " rays see steep ground standing just in front of a mouth frame's face (inside the ring)");
+			foreach (var kv in fights.OrderByDescending(k => k.Key).Take(10)) Log("  " + kv.Value + " - FIGHT");
+			Log("  " + frames.Count + " frame(s), " + ta.Count + " faces, " + metFrame + " of " + (GX * GY) + " rays meet a frame face, " + bad + " see steep ground just in front of it, " + fight + " ground within " + FightNear.ToString("0.00", CultureInfo.InvariantCulture) + " m of it along it, " + deeper + " ground further in front (frame under the hill); " + CaveTool.GroundSunkUnderFrames + " ground point(s) let down under frame faces since start");
+			if (bad >= 3 || fight >= 3) Fail((bad >= 3 ? bad + " rays see steep ground standing just in front of a mouth frame's face (inside the ring)" : "") + (bad >= 3 && fight >= 3 ? "; " : "") + (fight >= 3 ? fight + " rays meet the ground within " + FightNear.ToString("0.00", CultureInfo.InvariantCulture) + " m of a mouth frame's face, lying along it (it fights through the frame)" : ""));
 			else Log("PASS: mouth frames " + frames.Count + ", no ground standing inside the ring (" + bad + " ray(s))");
 		}
 
@@ -1161,6 +1177,13 @@ namespace DynamicIslands
 		}
 
 		static int denLookN;
+		/// <summary>CIDenWallLook: a den wall's grain (its brightness slopes' direction-and-strength, 0..2) may differ from the hill's round it by this much.</summary>
+		const float DenGrainOff = 0.25f;
+		/// <summary>CIDenWallLook: a brightness step (of 255) across a column or row that counts toward a straight seam.</summary>
+		const float DenSeamStep = 12f;
+		/// <summary>CIDenWallLook: a straight seam this long (px of 360) or a fifth of the wall's box on the picture is BAD.</summary>
+		const int DenSeamRun = 20;
+
 		static IEnumerator DenWallLookRoutine(IslandWorldState.Entry e)
 		{
 			var outs = e.Root.GetComponentsInChildren<CaveTool.HillWall>(true).Where(h => h.name == CaveTool.PlugOutName).ToList();
@@ -1248,6 +1271,7 @@ namespace DynamicIslands
 					for (int y = H - 1; y >= 0; y--) { if (rowNear[y * W + x]) last = y; if (last - y <= R) near[y * W + x] = true; }
 				}
 				var wall = new List<float>(); var skin = new List<float>(); var metFirst = new Dictionary<string, int>();
+				var cls = new byte[W * H]; // (1 the wall, 2 the skin, 0 anything else)
 				// (nor the den's own rock: cv43 still found 4 px of skin round Gravewell's bear den, the picture all skin there -
 				// the den's colliders lie just over the skin the hill drapes on them)
 				Transform denT = plug.parent != null ? plug.parent : plug;
@@ -1255,7 +1279,7 @@ namespace DynamicIslands
 					for (int x = 0; x < W; x++)
 					{
 						int i = y * W + x;
-						if (mask[i]) { wall.Add(luma(with[i])); continue; }
+						if (mask[i]) { wall.Add(luma(with[i])); cls[i] = 1; continue; }
 						if (!near[i] || ((x + y) & 1) != 0) continue;
 						Vector3 dir = rot * new Vector3((2f * (x + 0.5f) / W - 1f) * half * W / H, (2f * (y + 0.5f) / H - 1f) * half, 1f);
 						// (the first thing met that is not the den's own plug: cv42 met the plug's colliders, still where the wall stood
@@ -1264,7 +1288,7 @@ namespace DynamicIslands
 						float nearest = float.MaxValue; Collider first = null;
 						foreach (RaycastHit hh in hits)
 							if (hh.distance < nearest && !hh.collider.transform.IsChildOf(denT)) { nearest = hh.distance; first = hh.collider; }
-						if (first != null && first.name == CaveMountain.SkinName) skin.Add(luma(with[i]));
+						if (first != null && first.name == CaveMountain.SkinName) { skin.Add(luma(with[i])); cls[i] = 2; }
 						string fk = first == null ? "(sky)" : first.name;
 						metFirst[fk] = metFirst.TryGetValue(fk, out int fc) ? fc + 1 : 1;
 					}
@@ -1275,10 +1299,77 @@ namespace DynamicIslands
 				skin.Sort();
 				float p10 = skin[skin.Count / 10], mw = wall.Average(), ms = skin.Average();
 				float dark = (float)wall.Count(l => l < p10) / wall.Count;
-				bool ok = Mathf.Abs(mw - ms) <= 14f && dark <= 0.3f;
+				// (11-21 cv45: and its texture's grain and straight seams - Gravewell Shaft's panel passed on brightness, 26 against 22,
+				// but still read as a lighter rectangle of stretched ripples running another way, straight seams left and right of
+				// its arch. The skipped pixels of the skin's checkerboard take their left neighbour's kind)
+				for (int y = 0; y < H; y++)
+					for (int x = 1; x < W; x++) { int i = y * W + x; if (cls[i] == 0 && near[i] && !mask[i] && ((x + y) & 1) != 0) cls[i] = cls[i - 1]; }
+				System.Func<int, int, float> L = (x, y) => luma(with[y * W + x]);
+				// (the grain: each side's structure tensor of the brightness slopes, as a direction-and-strength vector at twice the angle)
+				double wxx = 0, wyy = 0, wxy = 0, sxx = 0, syy = 0, sxy = 0, wg = 0, sg = 0; int wn = 0, sn = 0;
+				for (int y = 1; y < H - 1; y++)
+					for (int x = 1; x < W - 1; x++)
+					{
+						int i = y * W + x;
+						byte k = cls[i];
+						if (k == 0 || cls[i - 1] != k || cls[i + 1] != k || cls[i - W] != k || cls[i + W] != k) continue;
+						double gx = L(x + 1, y) - L(x - 1, y), gy = L(x, y + 1) - L(x, y - 1);
+						if (k == 1) { wxx += gx * gx; wyy += gy * gy; wxy += gx * gy; wg += System.Math.Sqrt(gx * gx + gy * gy); wn++; }
+						else { sxx += gx * gx; syy += gy * gy; sxy += gx * gy; sg += System.Math.Sqrt(gx * gx + gy * gy); sn++; }
+					}
+				float grainOff = 0f, wAng = 0f, sAng = 0f, wCoh = 0f, sCoh = 0f, slope = 1f;
+				bool grainSeen = wn >= 30 && sn >= 30 && wxx + wyy > 1e-3 && sxx + syy > 1e-3;
+				if (grainSeen)
+				{
+					double wtr = wxx + wyy, str = sxx + syy;
+					Vector2 wv = new Vector2((float)((wxx - wyy) / wtr), (float)(2 * wxy / wtr)), sv = new Vector2((float)((sxx - syy) / str), (float)(2 * sxy / str));
+					grainOff = (wv - sv).magnitude;
+					wCoh = wv.magnitude; sCoh = sv.magnitude;
+					wAng = 0.5f * Mathf.Atan2(wv.y, wv.x) * Mathf.Rad2Deg; sAng = 0.5f * Mathf.Atan2(sv.y, sv.x) * Mathf.Rad2Deg;
+					slope = (float)((wg / wn) / System.Math.Max(sg / sn, 1e-3));
+				}
+				// (straight seams: the longest run, down a column or along a row (a pixel either way), of the same brightness step
+				// across it over DenSeamStep, where the pixels across are the wall's or the skin's, at least one the wall's)
+				System.Func<bool, int> seamRun = vertical =>
+				{
+					int longest = 0;
+					int outerN = vertical ? W : H, innerN = vertical ? H : W;
+					var prev = new int[outerN]; var cur = new int[outerN];
+					for (int a = 0; a < innerN; a++)
+					{
+						for (int o = 2; o < outerN - 2; o++)
+						{
+							cur[o] = 0;
+							int x = vertical ? o : a, y = vertical ? a : o;
+							bool anyWall = false, okc = true;
+							for (int d = -2; d <= 2 && okc; d++)
+							{
+								byte k = cls[vertical ? y * W + x + d : (y + d) * W + x];
+								if (k == 0) okc = false; else if (k == 1) anyWall = true;
+							}
+							if (!okc || !anyWall) continue;
+							float step = vertical ? (L(x + 1, y) + L(x + 2, y) - L(x - 1, y) - L(x - 2, y)) * 0.5f : (L(x, y + 1) + L(x, y + 2) - L(x, y - 1) - L(x, y - 2)) * 0.5f;
+							if (Mathf.Abs(step) < DenSeamStep) continue;
+							int sgn = step > 0 ? 1 : -1, run = 0;
+							for (int q = o - 1; q <= o + 1; q++) if (prev[q] * sgn > run) run = prev[q] * sgn;
+							cur[o] = sgn * (run + 1);
+							if (run + 1 > longest) longest = run + 1;
+						}
+						var sw = prev; prev = cur; cur = sw;
+					}
+					return longest;
+				};
+				int vSeam = seamRun(true), hSeam = seamRun(false);
+				int seamMost = Mathf.Max(DenSeamRun, Mathf.RoundToInt(0.2f * Mathf.Min(by1 - by0, bx1 - bx0)));
+				bool grainOk = !grainSeen || (grainOff <= DenGrainOff && slope >= 0.65f && slope <= 1.5f);
+				bool seamOk = vSeam < seamMost && hSeam < seamMost;
+				bool ok = Mathf.Abs(mw - ms) <= 14f && dark <= 0.3f && grainOk && seamOk;
 				if (!ok) bad++;
 				Log("  " + den + " (shot_denlook_" + denLookN + "): its outside " + wall.Count + " px, brightness " + mw.ToString("0") + " against the hill's " + ms.ToString("0") + " (" + skin.Count + " px round it), "
-					+ (100f * dark).ToString("0") + "% darker than the hill's darkest tenth" + (ok ? "" : " - BAD"));
+					+ (100f * dark).ToString("0") + "% darker than the hill's darkest tenth; grain "
+					+ (grainSeen ? wAng.ToString("0") + " deg x" + wCoh.ToString("0.00") + " against the hill's " + sAng.ToString("0") + " deg x" + sCoh.ToString("0.00") + ", off " + grainOff.ToString("0.00") + " (most " + DenGrainOff.ToString("0.00") + "), slopes " + slope.ToString("0.00") + " of the hill's" + (grainOk ? "" : " - BAD") : "not seen (" + wn + "/" + sn + " px)")
+					+ "; straight seams " + vSeam + " px down, " + hSeam + " px across (most " + seamMost + ")" + (seamOk ? "" : " - BAD")
+					+ "; outside faces mapped by world axis since start: " + CaveTool.WallFacesPlain + (ok ? "" : " - BAD"));
 			}
 			if (looked == 0) Fail("den wall look: no den wall pictured");
 			else if (bad > 0) Fail(bad + " of " + looked + " den walls drawn darker than the hill round them");
@@ -1428,6 +1519,19 @@ namespace DynamicIslands
 				string path = r.name; for (Transform t = r.transform.parent; t != null && t != e.Root.transform.parent; t = t.parent) path = t.name + "/" + path;
 				string mats = string.Join("; ", r.sharedMaterials.Where(m => m != null).Select(m => m.name + " (" + m.shader.name + ": " + string.Join(" ", m.GetTexturePropertyNames().Where(t => m.GetTexture(t) != null).Select(t => t + "=" + m.GetTexture(t).name).ToArray()) + ")").ToArray());
 				var b = new MaterialPropertyBlock(); r.GetPropertyBlock(b);
+				// (11-21 cv46: and each part's own block's textures - a dug tunnel's lining wears Raft's rock and darker copies by
+				// them, which the material's names don't show: Pendulum Isle's pale walls)
+				Material[] sm = r.sharedMaterials;
+				var partTex = new List<string>();
+				for (int pi = 0; pi < sm.Length && sm.Length > 1; pi++)
+				{
+					if (sm[pi] == null) continue;
+					var pb = new MaterialPropertyBlock(); r.GetPropertyBlock(pb, pi);
+					if (pb.isEmpty) continue;
+					string[] over = sm[pi].GetTexturePropertyNames().Where(t => pb.GetTexture(t) != null).Select(t => t + "=" + pb.GetTexture(t).name).ToArray();
+					if (over.Length > 0) partTex.Add("part " + pi + ": " + string.Join(" ", over));
+				}
+				if (partTex.Count > 0) mats += " {blocks " + string.Join("; ", partTex.ToArray()) + "}";
 				int at2 = order.IndexOf(r);
 				Log("  " + (at2 < 26 ? (char)('A' + at2) : (char)('a' + at2 - 26)) + " " + kv.Value + "/" + rays + " " + path + " met " + nearHit[r].ToString("0.0") + " m off (bounds " + (r.bounds.min - e.Position).ToString("F1") + ".." + (r.bounds.max - e.Position).ToString("F1") + ") at " + (r.transform.position - e.Position).ToString("F1") + " [" + r.GetType().Name + (b.isEmpty ? "" : ", property block") + ", probes " + r.lightProbeUsage + "]: " + mats);
 			}
@@ -1594,6 +1698,14 @@ namespace DynamicIslands
 			{
 				Vector3[] ns = mf.sharedMesh.normals;
 				if (ns != null && ns.Length > tri[i + 2]) vn = ", corner normals " + t.TransformDirection(ns[tri[i]]).ToString("F2") + " " + t.TransformDirection(ns[tri[i + 1]]).ToString("F2") + " " + t.TransformDirection(ns[tri[i + 2]]).ToString("F2");
+				// (11-21 cv46: and which part - material - the face is drawn in)
+				Mesh sm = mf.sharedMesh;
+				if (sm.subMeshCount > 1 && tri.Length == sm.triangles.Length)
+					for (int s = 0; s < sm.subMeshCount; s++)
+					{
+						var d = sm.GetSubMesh(s);
+						if (i >= d.indexStart && i < d.indexStart + d.indexCount) { vn += ", part " + s; break; }
+					}
 			}
 			return " (face " + i / 3 + " at " + (at - isle).ToString("F2") + ", corners " + (a - isle).ToString("F2") + " " + (b - isle).ToString("F2") + " " + (c - isle).ToString("F2") + ", facing " + n.ToString("F2") + vn + ")";
 		}
