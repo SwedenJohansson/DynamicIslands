@@ -41,7 +41,7 @@ clear at 4.8 0 r=22
 clear from 24 0 to 98 0 r=8
 clear from -14 0 to -47 0 r=7
 clear at 40 42 r=6
-clear at -32 48 r=7
+clear at -46 60 r=7
 
 # --- The road on the embankment and down the sunken lane (stone floor) -------------------------------------------------
 ramp Block_Floor_Tier3 from -12.75 -1.5 3 to 23.25 -1.5 3 len=1.5 top=0
@@ -50,6 +50,16 @@ ramp Block_Floor_Tier3 from -12.75 1.5 3 to 23.25 1.5 3 len=1.5 top=0
 ramp Block_Floor_Tier3 from 24.75 -1.5 2.6 to 95.25 -1.5 -7.9 len=1.5 top=0
 ramp Block_Floor_Tier3 from 24.75 0 2.6 to 95.25 0 -7.9 len=1.5 top=0
 ramp Block_Floor_Tier3 from 24.75 1.5 2.6 to 95.25 1.5 -7.9 len=1.5 top=0
+
+# --- 11-08 (w03): the culvert under the overpass - optional, no quest step needs it -----------------------------------
+# An underwater mouth in the flooded channel under the overpass, between two of its pillars: an old storm culvert that
+# climbs out of the water under the north bank into a dry room the road crew walled off as a flood store - air, stone
+# and the crew's chest. hill=1: the north bank is low (2.5-4.5 m), the ridge keeps the room under rock. No rats: reached
+# only under water, no NavMesh floor. cavecheck: 6 m and more from the quest's things and the walk over the overpass.
+# (c3z29 11-21: laid before the overpass, not after it - laid last, its way in took away 7 m of the deck over the channel and
+# its north rail, the south rail left over the water and the van on nothing; the room in place, the opair zone and the crew chest stay below)
+call kit_st x=-24 z=5 yaw=0 len=22 slope=12 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=1 as=opcave
+prop opcave cave.rock=plain
 
 # --- The overpass: the road on west over stone pillars, ending in the air ---------------------------------------------
 for px -18 -46 -4
@@ -113,10 +123,11 @@ place campfire_1 - at 40 42 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 43 44 ground sit yaw=210
 place "Box Small" - at 38 44.5 ground sit
 place Note_Paper drivernote at 38 44.5 ground y=1.6 drop yaw=15
-# (w03 11-09: CIFloating - its base hung 1.5 m off the slope: a level pad for it)
-brush flatten at -32 48 r=4.5 s=20 frames=200 h=14.4
-brush smooth at -32 48 r=7 s=4 frames=30
-place VP_Excavator digger at -32 48 ground yaw=120
+# (w03 11-09: CIFloating - its base hung 1.5 m off the slope: a level pad for it; c3z29 11-21: moved off the culvert's hill,
+# which buried it 5.5 m at -32 48, to the open bank west of it)
+brush flatten at -46 60 r=4.5 s=20 frames=200 h=3.2
+brush smooth at -46 60 r=7 s=4 frames=30
+place VP_Excavator digger at -46 60 ground yaw=120
 prop digger tint.color=#8a6a4e
 prop digger tint.amount=0.4
 call hatchcache x=-40 z=-44 r=10 seed=10215 alias=roadhatch chest=roadhatchchest items=MetalIngot*2;Bolt*3;Rope*2
@@ -323,13 +334,6 @@ brush flatten from -4.2 53.5 to -5.8 60.5 r=3.8 s=20 frames=300 h=7.2
 brush smooth from -4.2 53.5 to -5.8 60.5 r=4.3 s=10 frames=12
 clear from -4.2 53.5 to -5.8 60.5 r=4.3 body
 
-# --- 11-08 (w03): the culvert under the overpass - optional, no quest step needs it -----------------------------------
-# An underwater mouth in the flooded channel under the overpass, between two of its pillars: an old storm culvert that
-# climbs out of the water under the north bank into a dry room the road crew walled off as a flood store - air, stone
-# and the crew's chest. hill=1: the north bank is low (2.5-4.5 m), the ridge keeps the room under rock. No rats: reached
-# only under water, no NavMesh floor. cavecheck: 6 m and more from the quest's things and the walk over the overpass.
-call kit_st x=-24 z=5 yaw=0 len=22 slope=12 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=1 as=opcave
-prop opcave cave.rock=plain
 place Zone_Trigger opair at -24 35 h=3.5
 prop opair obj.name=opair
 prop opair zone.id=op_culvert
