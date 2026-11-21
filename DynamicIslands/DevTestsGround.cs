@@ -1026,7 +1026,8 @@ namespace DynamicIslands
 				if (Trunk.IsMatch(n) && land != null && o.position.y > sea + 0.3f)
 				{
 					Vector3 foot = o.position;
-					foot.y = Mathf.Max(foot.y, land.SampleHeight(foot) + land.transform.position.y);
+					float tg = TrunkGround(foot, land);
+					if (!float.IsNaN(tg)) foot.y = Mathf.Max(foot.y, tg);
 					float rt = 0.6f * Mathf.Max(0.5f, o.lossyScale.x);
 					int over = 0;
 					float most = 0f;
@@ -1746,6 +1747,17 @@ namespace DynamicIslands
 			return Mathf.Max(0f, underside - under);
 		}
 
+		/// <summary>The ground a trunk's foot stands on: the land's height there, or - its foot in a dug passage's air, the land's
+		/// height there being the hill over the cave - the passage's floor under it (NaN: none found, not measured). The land's
+		/// height ignores the ground's holes, so a tree on a dug cave's floor read sunk by the hill over it (11-21).</summary>
+		static float TrunkGround(Vector3 foot, Terrain land)
+		{
+			float ground = land.SampleHeight(foot) + land.transform.position.y;
+			if (ground - foot.y <= 1f || !DigTunnel.InPassage(foot + Vector3.up * 0.6f, -0.5f)) return ground;
+			RaycastHit fh;
+			return DigFloor(foot + Vector3.up * 1.5f, out fh) ? fh.point.y : float.NaN;
+		}
+
 		/// <summary>A tree's or a palm's trunk foot (its pivot) more than 1 m under the land at it ("sunk trunk": set down by the
 		/// lowest ground under its crown, Stranded Gull's hill palm grew out of the cliff, the user, 2026-10-30 - "buried" needs
 		/// the whole top under the ground and a crown sticks out) or more than 0.4 m over what is under it ("trunk foot
@@ -1754,7 +1766,8 @@ namespace DynamicIslands
 		{
 			if (land == null || !Trunk.IsMatch(n)) return null;
 			Vector3 foot = o.position;
-			float ground = land.SampleHeight(foot) + land.transform.position.y;
+			float ground = TrunkGround(foot, land);
+			if (float.IsNaN(ground)) return null;
 			Vector3 lp = land.transform.position, ls = land.terrainData.size;
 			if (foot.x < lp.x || foot.x > lp.x + ls.x || foot.z < lp.z || foot.z > lp.z + ls.z || ground <= sea) return null;
 			string at = n + " at " + Num(foot.x - mid.x) + " " + Num(foot.z - mid.z) + " h=" + Num(foot.y - sea);

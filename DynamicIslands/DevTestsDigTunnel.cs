@@ -353,6 +353,30 @@ namespace DynamicIslands
 			}
 			Check(ref ok, noFloor == 0 && low == 0 && bigStep < 0.6f, "walkable: " + line.Count + " points, " + noFloor + " without a floor, " + low + " too low, the biggest step " + bigStep.ToString("0.00") + " m" + (bad.Count > 0 ? ": " + string.Join(", ", bad.Take(6).ToArray()) : ""));
 
+			// A tree on the passage's floor is not "sunk" (11-21: the ground check read a trunk's foot against the land's height,
+			// which ignores the ground's holes - the hill over the cave); one 2 m under the floor still is
+			{
+				const string tree = "Pickup_Landmark_Tree_Birch";
+				yield return PlaceableCatalog.EnsureLoaded(new List<string> { tree });
+				RaycastHit tf;
+				Vector3 tp = line[line.Count / 2];
+				GameObject tg = DigFloor(tp, out tf) ? PlaceableCatalog.Spawn(tree, t.transform) : null;
+				if (tg != null)
+				{
+					tg.transform.position = tf.point;
+					Physics.SyncTransforms();
+					float hill = t.SampleHeight(tf.point) + t.transform.position.y - tf.point.y;
+					string onFloor = TrunkFootProblem(tg.transform, tree, t, sea, Vector3.zero);
+					tg.transform.position = tf.point + Vector3.down * 2f;
+					Physics.SyncTransforms();
+					string under = TrunkFootProblem(tg.transform, tree, t, sea, Vector3.zero);
+					Check(ref ok, hill > 1f && onFloor == null && under != null && under.StartsWith("sunk trunk", System.StringComparison.Ordinal), "a tree in the passage, the hill " + hill.ToString("0.0") + " m over its floor: on the floor " + (onFloor ?? "fine") + "; 2 m under it " + (under ?? "not reported"));
+					UnityEngine.Object.DestroyImmediate(tg);
+					Physics.SyncTransforms();
+				}
+				else Check(ref ok, false, "a tree in the passage: no floor at its middle or no " + tree);
+			}
+
 			// From inside: no look out through the hill
 			{
 				var seen = new List<string>();
