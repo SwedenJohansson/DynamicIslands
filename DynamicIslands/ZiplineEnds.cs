@@ -26,7 +26,9 @@ namespace DynamicIslands.Editor
 		/// <summary>The ground check also fails a zipline whose rope, in the last FarSkip m down to its far end, comes under
 		/// FarEndLow m over the ground (11-21 c3z13: Caisson Yard's summit line ended in the cave hill's sand, its far floor on
 		/// the land under the hill's skin; the left-out stretch hid it).</summary>
-		public const float FarEndLow = 0f;
+		/// FarEndLow is a little under 0: a rope meeting its own far floor touches it by a few mm (11-21 c3z17/18: Thalassa
+		/// Mooring 0.0096 m, Engine Court 0.0038 m at the floor itself), not a cut like Caisson Yard's 0.24 m.
+		public const float FarEndLow = -0.05f;
 		/// <summary>zipto keeps the rope's last FarSkip m at least FarEndClear m over the ground (a world's cave hill comes out a
 		/// little off the editor's measuring one), raising the far end on a deck up to FarMaxRaise m (11-21 c3z15: Caisson Yard's
 		/// summit rope, its far end on the hill's skin, ran 0.24 m into the dune's slope just before it).</summary>

@@ -207,7 +207,7 @@ namespace DynamicIslands
 
 		static readonly Regex Hangs = new Regex("Buoy|Water|Pipe|Chain|Rope|Cable|Lamp|Light|Flag|Banner|Floor|Deck|Plank|Bridge|Ramp|Stair|Crane|Roof|Scaffold", RegexOptions.IgnoreCase);
 
-		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it); the save sets a rock in the air down and a buried barrel up; a zipline rope is measured over the cave hill a world builds; a rope no raise clears gets the most room zipto can give it; a zipto far end under the cave hill goes onto its skin and the ground check sees a rope's last metres; a deck ladder's climbing side is cleared of the generator's boulders; a rope into the hill's slope before its far end gets that end raised on a deck")]
+		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it); the save sets a rock in the air down and a buried barrel up; a zipline rope is measured over the cave hill a world builds; a rope no raise clears gets the most room zipto can give it; a zipto far end under the cave hill goes onto its skin and the ground check sees a rope's last metres; a deck ladder's climbing side is cleared of the generator's boulders; a rope into the hill's slope before its far end gets that end raised on a deck; a rope touching its own far floor by a few mm is no cut and gets no deck")]
 		public static void GroundingTestCommand()
 		{
 			StartTest(GroundingTestRoutine());
@@ -493,7 +493,45 @@ namespace DynamicIslands
 				Vector3 a7;
 				float inEnd = ZiplineEnds.FarStretchLowest(new List<Vector3> { fIn, n7 }, n7, fIn, g7, out a7), onEnd = ZiplineEnds.FarStretchLowest(new List<Vector3> { fOn, n7 }, n7, fOn, g7, out a7);
 				Check(ref ok, inEnd < ZiplineEnds.FarEndLow && onEnd >= ZiplineEnds.FarEndLow, "the ground check sees a rope's last " + Num(ZiplineEnds.FarSkip) + " m: ending 0.6 m in the ground " + Num(inEnd) + ", ending 1 m over it " + Num(onEnd));
+				// 10. A rope touching its own far floor by a few mm is no cut (11-21 c3z17/18: Thalassa Mooring 0.0096 m, Engine Court
+				// 0.0038 m under at the floor itself): the ground check passes it, a 0.24 m cut still fails (c3z15 Caisson Yard)
+				Vector3 fTouch = new Vector3(fIn.x, fIn.y + 0.6f - 0.01f, fIn.z), fCut = new Vector3(fIn.x, fIn.y + 0.6f - 0.24f, fIn.z);
+				float touchEnd = ZiplineEnds.FarStretchLowest(new List<Vector3> { fTouch, n7 }, n7, fTouch, g7, out a7), cutEnd = ZiplineEnds.FarStretchLowest(new List<Vector3> { fCut, n7 }, n7, fCut, g7, out a7);
+				Check(ref ok, touchEnd >= ZiplineEnds.FarEndLow && cutEnd < ZiplineEnds.FarEndLow, "the ground check: a rope touching its far floor " + Num(touchEnd) + " m passes, one 0.24 m in " + Num(cutEnd) + " fails");
 			}
+			// 10b. ... and zipto builds no deck for a flat-ground far end whose rope touches its floor by a few mm
+			yield return null;
+			GameObject zl10 = PlaceableCatalog.Spawn("ZiplinePath_Landmark", root);
+			EditorGameObject ze10 = zl10 != null ? EditorGameObject.Attach(zl10, "ZiplinePath_Landmark") : null;
+			if (ze10 != null)
+			{
+				Vector3 org = terraineditor.terrain.transform.position;
+				zl10.transform.position = new Vector3(flat.x + 30f, GroundY(flat.x + 30f, flat.z) + 4f, flat.z);
+				Physics.SyncTransforms();
+				MeshPath_Zipline_Landmark line10 = zl10.GetComponentInChildren<MeshPath_Zipline_Landmark>(true);
+				Func<float, float, float> g10 = ZipGround(ze10);
+				Vector3 to10 = new Vector3(flat.x + 12f, GroundY(flat.x + 12f, flat.z), flat.z) - org;
+				Func<float> end10 = () => { Vector3 n, f, a; Physics.SyncTransforms(); return line10 != null && ZiplineEnds.Ends(zl10, ze10.Props, org, out n, out f) ? ZiplineEnds.FarStretchLowest(ZiplineEnds.RopeBetween(line10, f, n), n, f, g10, out a) : float.NaN; };
+				// (the far end set so its rope touches the ground 8 mm under, as Raft's own floor contact)
+				for (int i = 0; i < 3; i++)
+				{
+					PropsCommand.Change(ze10, ObjectProps.With(ze10.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(to10)));
+					float l10 = end10();
+					if (float.IsNaN(l10) || Mathf.Abs(l10 + 0.008f) < 0.002f) break;
+					to10.y -= l10 + 0.008f;
+				}
+				PropsCommand.Change(ze10, ObjectProps.With(ze10.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(to10)));
+				float touch10 = end10();
+				string set10 = ObjectProps.Get(ze10.Props, ZiplineEnds.ZipTo);
+				GameObject deck10;
+				var lad10 = new HashSet<GameObject>(zipDeckLadders);
+				string w10 = ZipFarClear(ze10, out deck10);
+				Check(ref ok, touch10 < 0f && touch10 >= ZiplineEnds.FarEndLow && w10 == null && deck10 == null && ObjectProps.Get(ze10.Props, ZiplineEnds.ZipTo) == set10, "a flat-ground zipto far end whose rope touches its floor " + Num(touch10) + " m keeps its place, no deck" + (w10 != null ? " (" + w10.Trim() + ")" : ""));
+				foreach (GameObject x in zipDeckLadders.Where(y => y != null && !lad10.Contains(y)).ToList()) { zipDeckLadders.Remove(x); UnityEngine.Object.Destroy(x); }
+				if (deck10 != null) { recipePlaced.Remove(deck10); UnityEngine.Object.Destroy(deck10); }
+			}
+			else Check(ref ok, false, "grounding test: no ZiplinePath_Landmark for part 10");
+			if (zl10 != null) UnityEngine.Object.Destroy(zl10);
 			// 8. zipto's deck ladders: a boulder of the generator's on a ladder's climbing side is removed (11-21 c3z13: Caisson Yard's
 			// ridge deck ladder shut by a SmallBoulder2, CILadderSide FAIL), the recipe's own kept
 			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Block_Floor_Wood", "Block_Ladder", "SmallBoulder2" });
@@ -2954,10 +2992,11 @@ namespace DynamicIslands
 			if (!float.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipSlack) ?? "", NumberStyles.Float, CultureInfo.InvariantCulture, out slack) || float.IsNaN(slack) || float.IsInfinity(slack) || slack == 0f) slack = float.NaN;
 			float low0 = ZiplineEnds.FarStretchLowest(ZiplineEnds.RopeBetween(line, far, near, slack), near, far, ground, out at), low = low0, r = 0f;
 			// (only where the ground before the end comes up over the room the end has at its own floor - an end on flat ground or
-			// a roof has its rope's last point a few cm over it, as Raft makes it, and is left as it is)
+			// a roof has its rope's last point a few cm over it, as Raft makes it, or touching its floor by a few mm (11-21 c3z17/18:
+			// Thalassa Mooring, Engine Court), and is left as it is: the ground check's own FarEndLow margin under the room it has)
 			Vector3 fw = origin + to;
 			float own = far.y - ground(fw.x, fw.z);
-			if (low0 >= Mathf.Min(ZiplineEnds.FarEndClear, own) - 0.02f) return null;
+			if (low0 >= ZiplineEnds.FarEndLow && low0 >= Mathf.Min(ZiplineEnds.FarEndClear, own) + ZiplineEnds.FarEndLow) return null;
 			Vector3 corner = new Vector3(TopFrame.Origin.x, 0f, TopFrame.Origin.y), at0 = at;
 			string where0 = Num(at0.x - corner.x) + " " + Num(at0.z - corner.z) + " (ground " + Num(ground(at0.x, at0.z)) + ZipGroundWhat(e, at0.x, at0.z) + ")";
 			while (low < ZiplineEnds.FarEndClear && r < ZiplineEnds.FarMaxRaise)
