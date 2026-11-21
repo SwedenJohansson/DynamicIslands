@@ -93,6 +93,9 @@ zipto vaultzip 0 -6
 # the ice ring's rock at 150 degrees and the flood lever's box: the land under that stretch brought down to 3.3 m over
 # the sea - the rope is about 3.8 m there - short of the far end's floor at z -6)
 brush flatten from 0 -11 to 0 -9 r=1.5 s=20 frames=150 h=3.3
+# (c3z58 11-21: 0.39 m under the rope at 0 -11.7, 0.44 m wanted (the rope 3.71 m there) - the stretch before it lowered
+#     a little more, to 3.1 m)
+brush flatten from 0 -12.6 to 0 -10.6 r=1.5 s=20 frames=150 h=3.1
 call treasure x=14 z=-36 r=15 n=1 seed=12053
 
 # --- The far side: Oda's cage behind the collapsed door, her pack and notes; screechers under the cap --------------------
