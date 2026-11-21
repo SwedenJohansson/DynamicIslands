@@ -18,6 +18,10 @@ namespace DynamicIslands.Editor
 		/// <summary>Grid step, how steep the sides fall (m down per m out), how far they reach, and how far above the roofs.</summary>
 		public const float CellSize = Cell;
 		const float Cell = 1.25f, Slope = 1.5f, Reach = 16f, Over = 0.3f;
+		/// <summary>A skin corner more than this (m) over every corner round it is a lone peak, let down to LoneCornerOver over the highest of them.</summary>
+		const float LoneCorner = 1.2f, LoneCornerOver = 0.4f;
+		/// <summary>Lone peaks let down in the last skin built (log, tests).</summary>
+		[System.ThreadStatic] public static int LonePeaks;
 		/// <summary>The hill's fall bowed: Slope times (HillBow + m out / HillCurve) a m - as Slope 5 m out.</summary>
 		const float HillBow = 0.75f, HillCurve = 20f;
 		/// <summary>More softening passes over the hill's flanks at least RidgeClear m from every roof and corridor.</summary>
@@ -824,6 +828,19 @@ namespace DynamicIslands.Editor
 			// as a patchwork, and Balboa's rock shader (Mountains) blends its rock and sand by the normal, so each square came out
 			// orange or black on its own (11-06; the mosaic of 45-degree rectangles over Shelter Atoll's ammo cave was the den's
 			// front wall, though - CaveTool.PlugOpening)
+			// (11-21 cv43: a lone corner standing more than LoneCorner over every corner round it let down to LoneCornerOver over the
+			// highest: it stood as a pale pyramid out of the hill's foot right of Gravewell Shaft's den arch, CaveSkin face 6280)
+			LonePeaks = 0;
+			for (int i = 0; i < nx; i++)
+				for (int k = 0; k < nz; k++)
+				{
+					if (!on[i, k]) continue;
+					float mx = float.NegativeInfinity; int round = 0;
+					for (int a = Mathf.Max(i - 1, 0); a <= Mathf.Min(i + 1, nx - 1); a++)
+						for (int c = Mathf.Max(k - 1, 0); c <= Mathf.Min(k + 1, nz - 1); c++)
+							if ((a != i || c != k) && on[a, c]) { mx = Mathf.Max(mx, height[a, c]); round++; }
+					if (round >= 3 && height[i, k] > mx + LoneCorner) { height[i, k] = mx + LoneCornerOver; LonePeaks++; }
+				}
 			var gn = new Vector3[nx, nz];
 			for (int i = 0; i < nx; i++)
 				for (int k = 0; k < nz; k++)
@@ -917,17 +934,17 @@ namespace DynamicIslands.Editor
 				if (asDen >= 0 && caves[asDen] != null) RockAsDen(mr, caves[asDen].gameObject);
 			}
 			DressTunnels();
-			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : "") + (SkirtsCut > 0 ? ", " + SkirtsCut + " skirt strip(s) let down to the edge" : "") + (TunnelCaps > 0 ? ", " + TunnelCaps + " edge strip(s) closed beside a tunnel's way in" : "") + (SlitsShut > 0 ? ", " + SlitsShut + " edge strip(s) over a passage sliver drawn whole" : "")
+			Debug.Log("[CUSTOM ISLANDS] Cave mountain over " + caves.Count + " cave piece(s): " + verts.Count + " points, " + mr.sharedMaterial.name + ", bounds " + mr.bounds.min.ToString("0") + "-" + mr.bounds.max.ToString("0") + (OverDug > 0 ? ", " + OverDug + " cell(s) left open over dug passages" : "") + (SeaCutCells > 0 ? ", " + SeaCutCells + " sea cell(s) cut (cave.seacut)" : "") + (SkirtsCut > 0 ? ", " + SkirtsCut + " skirt strip(s) let down to the edge" : "") + (TunnelCaps > 0 ? ", " + TunnelCaps + " edge strip(s) closed beside a tunnel's way in" : "") + (SlitsShut > 0 ? ", " + SlitsShut + " edge strip(s) over a passage sliver drawn whole" : "") + (LonePeaks > 0 ? ", " + LonePeaks + " lone peak(s) let down" : "")
 				+ (LoneRoofGap > 0f ? ", lone den roof " + LoneRoofGap.ToString("0.0") + " m over its arch's cap" : "") + (LoneSteps != "" ? ", lone den step" + LoneSteps : "") + (LoneBrows > 0 ? ", lone den brow " + LoneBrows + " cell(s)" : "") + (CaveTry.All() != "none" ? ", try " + CaveTry.All() : ""));
 			// (lone dens walled before the hill was built: their walls' outsides drawn as the hill now)
 			foreach (Transform t in caves)
 				if (t != null) CaveTool.WallLikeHill(t.gameObject, mr);
 			// (and tunnels' mouth frames as the hill too: pale ravine rock slabs in its face, 11-19 cave1119)
-			int frames = 0, bodies0 = CaveTool.TunnelsLikeHill, lifted0 = CaveTool.FramePointsLifted, covered0 = CaveTool.FramePointsCovered;
+			int frames = 0, bodies0 = CaveTool.TunnelsLikeHill, lifted0 = CaveTool.FramePointsLifted, covered0 = CaveTool.FramePointsCovered, byH0 = CaveTool.FrameCoverByHeights;
 			int[] miss0 = (int[])CaveTool.FrameCoverMiss.Clone();
 			foreach (Transform t in caves)
 				if (t != null) frames += CaveTool.FramesLikeHill(t.gameObject, mr);
-			if (frames > 0) Debug.Log("[CUSTOM ISLANDS] Cave mountain: " + frames + " tunnel mouth frame(s) drawn as the hill, " + (CaveTool.TunnelsLikeHill - bodies0) + " tunnel body/back renderer(s) in the hill's rock, " + (CaveTool.FramePointsLifted - lifted0) + " frame point(s) lifted onto the ground (" + (CaveTool.FramePointsCovered - covered0) + " laid out onto a cutting wall; tries left: " + (CaveTool.FrameCoverMiss[0] - miss0[0]) + " no face, " + (CaveTool.FrameCoverMiss[1] - miss0[1]) + " no ground in front, " + (CaveTool.FrameCoverMiss[2] - miss0[2]) + " not steep, " + (CaveTool.FrameCoverMiss[3] - miss0[3]) + " turned away)");
+			if (frames > 0) Debug.Log("[CUSTOM ISLANDS] Cave mountain: " + frames + " tunnel mouth frame(s) drawn as the hill, " + (CaveTool.TunnelsLikeHill - bodies0) + " tunnel body/back renderer(s) in the hill's rock, " + (CaveTool.FramePointsLifted - lifted0) + " frame point(s) lifted onto the ground (" + (CaveTool.FramePointsCovered - covered0) + " laid out onto a cutting wall, " + (CaveTool.FrameCoverByHeights - byH0) + " ground met by the heights; tries left: " + (CaveTool.FrameCoverMiss[0] - miss0[0]) + " no face, " + (CaveTool.FrameCoverMiss[1] - miss0[1]) + " no ground in front, " + (CaveTool.FrameCoverMiss[2] - miss0[2]) + " not steep, " + (CaveTool.FrameCoverMiss[3] - miss0[3]) + " turned away)");
 			// (and join plates lying on a den's floor taken away: a pale flat sheet over the floor at a tunnel's end, 11-19 cave1119 uf)
 			int joins = 0;
 			foreach (Transform t in caves)

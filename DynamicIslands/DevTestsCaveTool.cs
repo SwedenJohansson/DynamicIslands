@@ -1226,7 +1226,10 @@ namespace DynamicIslands
 					last = 100000;
 					for (int y = H - 1; y >= 0; y--) { if (rowNear[y * W + x]) last = y; if (last - y <= R) near[y * W + x] = true; }
 				}
-				var wall = new List<float>(); var skin = new List<float>();
+				var wall = new List<float>(); var skin = new List<float>(); var metFirst = new Dictionary<string, int>();
+				// (nor the den's own rock: cv43 still found 4 px of skin round Gravewell's bear den, the picture all skin there -
+				// the den's colliders lie just over the skin the hill drapes on them)
+				Transform denT = plug.parent != null ? plug.parent : plug;
 				for (int y = 0; y < H; y++)
 					for (int x = 0; x < W; x++)
 					{
@@ -1239,12 +1242,14 @@ namespace DynamicIslands
 						RaycastHit[] hits = Physics.RaycastAll(from, dir, 80f, ~0, QueryTriggerInteraction.Ignore);
 						float nearest = float.MaxValue; Collider first = null;
 						foreach (RaycastHit hh in hits)
-							if (hh.distance < nearest && !hh.collider.transform.IsChildOf(plug)) { nearest = hh.distance; first = hh.collider; }
+							if (hh.distance < nearest && !hh.collider.transform.IsChildOf(denT)) { nearest = hh.distance; first = hh.collider; }
 						if (first != null && first.name == CaveMountain.SkinName) skin.Add(luma(with[i]));
+						string fk = first == null ? "(sky)" : first.name;
+						metFirst[fk] = metFirst.TryGetValue(fk, out int fc) ? fc + 1 : 1;
 					}
 				looked++;
 				if (wall.Count < 30) { Log("  " + den + ": its outside not seen past the hill (" + wall.Count + " px)"); continue; }
-				if (skin.Count < 30) { bad++; Log("  " + den + ": too little of the hill's skin round it seen (" + skin.Count + " px) - not checked, BAD"); continue; }
+				if (skin.Count < 30) { bad++; Log("  " + den + ": too little of the hill's skin round it seen (" + skin.Count + " px) - not checked, BAD; met first: " + string.Join(", ", metFirst.OrderByDescending(kv => kv.Value).Take(4).Select(kv => kv.Key + " " + kv.Value).ToArray())); continue; }
 				skin.Sort();
 				float p10 = skin[skin.Count / 10], mw = wall.Average(), ms = skin.Average();
 				float dark = (float)wall.Count(l => l < p10) / wall.Count;

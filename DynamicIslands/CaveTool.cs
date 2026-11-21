@@ -666,8 +666,14 @@ namespace DynamicIslands.Editor
 		public static float WallTiltSeen;
 		/// <summary>How many of the last WallLikeHill's outside points in the hill's opening were brought flush with the skin (log, tests).</summary>
 		public static int WallFlushed;
-		/// <summary>Over how far into the hill's opening (m, across the wall) its points' flush with the skin fades out (WallLikeHill).</summary>
-		const float WallFlushFade = 1.5f;
+		/// <summary>Over how far from the arch's rim (m, across the wall) the wall's points come onto the skin's surface (WallLikeHill).</summary>
+		const float WallFlushFade = 1.2f;
+		/// <summary>How far from the arch's rim (m) the wall's outside stays exactly where it was, to meet the way in's sleeve (WallLikeHill).</summary>
+		const float WallRimKeep = 0.3f;
+		/// <summary>How widely (m, a Gaussian's spread) the skin's points round a wall point count in the plane fitted to find the skin's depth there (WallLikeHill).</summary>
+		const float WallFitSpread = 2.5f;
+		/// <summary>At most this far (m) a wall point is moved onto the skin's fitted surface (WallLikeHill).</summary>
+		const float WallFlushMax = 2f;
 
 		/// <summary>
 		/// A lone den's wall's outside drawn as the hill over the den (CaveMountain's skin): the same rock, tint and light, its
@@ -785,30 +791,66 @@ namespace DynamicIslands.Editor
 					if (d > -SpikeProud && d < SkinCover + WallProud) { skinD[v] = d; hitIdx.Add(v); }
 				}
 			}
+			// (11-21 cv43: onto the skin's surface itself, not moved by its offset: shifted as a whole the wall kept its own relief, and
+			// the pillars either side of Gravewell Shaft's arch still stood as a 0.5-0.9 m step - CavePlugOut faces turned sideways.
+			// The skin's depth at each point from a plane fitted to the skin points round it (WallFitSpread); only the arch's own
+			// rim - the outside's open edge in the opening - stays where it meets the way in's sleeve, blending over WallFlushFade)
 			var flush = new float[mv.Length];
 			int flushed = 0; float flushMax = 0f;
-			if (hitIdx.Count > 0)
+			Vector3 right = Vector3.Cross(Vector3.up, outward);
+			if (right.sqrMagnitude < 1e-4f) right = Vector3.Cross(Vector3.forward, outward);
+			right.Normalize();
+			Vector3 upIn = Vector3.Cross(outward, right).normalized;
+			var edgeUse = new Dictionary<long, int>();
+			for (int s = 0; s < m.subMeshCount; s++)
+			{
+				int[] st = m.GetTriangles(s);
+				for (int t = 0; t + 2 < st.Length; t += 3)
+				{
+					if (flake.Contains(find(vid[st[t]]))) continue;
+					for (int k = 0; k < 3; k++)
+					{
+						int p0 = vid[st[t + k]], p1 = vid[st[t + (k + 1) % 3]];
+						if (p0 == p1) continue;
+						long key = p0 < p1 ? ((long)p0 << 32) | (uint)p1 : ((long)p1 << 32) | (uint)p0;
+						int had; edgeUse.TryGetValue(key, out had); edgeUse[key] = had + 1;
+					}
+				}
+			}
+			var openEdge = new HashSet<int>();
+			foreach (var kv in edgeUse) if (kv.Value == 1) { openEdge.Add((int)(kv.Key >> 32)); openEdge.Add((int)(kv.Key & 0xffffffffL)); }
+			var rimIdx = new List<int>();
+			for (int v = 0; v < mv.Length; v++) if (float.IsNaN(skinD[v]) && openEdge.Contains(vid[v])) rimIdx.Add(v);
+			if (hitIdx.Count >= 3)
 				for (int v = 0; v < mv.Length; v++)
 				{
 					if (!float.IsNaN(skinD[v])) continue;
-					Vector3 pv = Vector3.ProjectOnPlane(wv0[v], outward);
-					float best = float.MaxValue;
-					foreach (int hv in hitIdx) { float dd = (Vector3.ProjectOnPlane(wv0[hv], outward) - pv).sqrMagnitude; if (dd < best) best = dd; }
-					best = Mathf.Sqrt(best);
-					float wsum = 0f, dsum = 0f;
+					float pu = Vector3.Dot(wv0[v], right), pw = Vector3.Dot(wv0[v], upIn);
+					double s0 = 0, su = 0, sw = 0, suu = 0, suw = 0, sww = 0, sd = 0, sud = 0, swd = 0;
 					foreach (int hv in hitIdx)
 					{
-						float dd = (Vector3.ProjectOnPlane(wv0[hv], outward) - pv).magnitude;
-						if (dd > best + 0.5f) continue;
-						float wt = 1f / (0.05f + dd); wsum += wt; dsum += wt * skinD[hv];
+						float du = Vector3.Dot(wv0[hv], right) - pu, dw = Vector3.Dot(wv0[hv], upIn) - pw;
+						double wt = System.Math.Exp(-(du * du + dw * dw) / (2.0 * WallFitSpread * WallFitSpread));
+						if (wt < 1e-6) continue;
+						double dep = Vector3.Dot(wv0[hv], outward) + skinD[hv];
+						s0 += wt; su += wt * du; sw += wt * dw; suu += wt * du * du; suw += wt * du * dw; sww += wt * dw * dw;
+						sd += wt * dep; sud += wt * du * dep; swd += wt * dw * dep;
 					}
-					float fade = Mathf.Clamp01(1f - best / WallFlushFade);
-					flush[v] = Mathf.Clamp(dsum / wsum, -WallProud, WallProud) * fade;
+					if (s0 < 1e-4) continue;
+					// (a + b du + c dw through the weighted points: the plane's height at this point is a)
+					double det = s0 * (suu * sww - suw * suw) - su * (su * sww - suw * sw) + sw * (su * suw - suu * sw);
+					double at = sd / s0;
+					if (System.Math.Abs(det) > 1e-6 * s0 * s0 * s0)
+						at = (sd * (suu * sww - suw * suw) - su * (sud * sww - suw * swd) + sw * (sud * suw - suu * swd)) / det;
+					float rim = float.MaxValue;
+					foreach (int rv in rimIdx) rim = Mathf.Min(rim, (Vector3.ProjectOnPlane(wv0[rv] - wv0[v], outward)).magnitude);
+					float keep = rimIdx.Count == 0 ? 1f : Mathf.Clamp01((rim - WallRimKeep) / WallFlushFade);
+					flush[v] = Mathf.Clamp((float)at - Vector3.Dot(wv0[v], outward), -WallFlushMax, WallFlushMax) * keep;
 					if (Mathf.Abs(flush[v]) > 0.02f) { flushed++; flushMax = Mathf.Max(flushMax, Mathf.Abs(flush[v])); }
 				}
 			WallFlushed = flushed;
 			Debug.Log("[CUSTOM ISLANDS] Plug " + den.name + ": " + hitIdx.Count + " of " + mv.Length + " outside point(s) with the hill's skin in line, skin offset "
-				+ (hitIdx.Count > 0 ? hitIdx.Min(v => skinD[v]).ToString("0.00") + ".." + hitIdx.Max(v => skinD[v]).ToString("0.00") : "-") + " m; " + flushed + " in its opening brought flush (up to " + flushMax.ToString("0.00") + " m)");
+				+ (hitIdx.Count > 0 ? hitIdx.Min(v => skinD[v]).ToString("0.00") + ".." + hitIdx.Max(v => skinD[v]).ToString("0.00") : "-") + " m; " + flushed + " in its opening brought onto the skin's surface (up to " + flushMax.ToString("0.00") + " m), arch rim " + rimIdx.Count + " point(s)");
 			var subs = new List<int>[m.subMeshCount];
 			for (int s = 0; s < subs.Length; s++)
 			{
@@ -1047,7 +1089,9 @@ namespace DynamicIslands.Editor
 				// (11-21 cv42: no longer only for a point under the ground's height where it stands - Sinkmarket's frame still
 				// showed the cutting walls inside its ring, 14 rays of CIFrameRing; a ray from in front of the face back to it
 				// meets the ground's face only where the ground stands in front of it)
-				if (!tc.Raycast(new Ray(w + n * reach, -n), out hit, reach)) { FrameCoverMiss[1]++; return false; }
+				// (11-21 cv43: and by the heightmap itself where the collider's ray met nothing - 32025 tries met no ground in front
+				// while CIFrameRing's rays saw it 0.56-0.92 m in front of Sinkmarket's frame faces)
+				if (!tc.Raycast(new Ray(w + n * reach, -n), out hit, reach) && !HeightRay(t, w + n * reach, -n, reach, out hit)) { FrameCoverMiss[1]++; return false; }
 				// (only a steep cutting wall: under a gentle hillside the frame's outside is under the hill on purpose)
 				if (hit.normal.y >= FrameCoverSteep) { FrameCoverMiss[2]++; return false; }
 				if (Vector3.Dot(hit.normal, n) <= 0.3f) { FrameCoverMiss[3]++; return false; }
@@ -1055,6 +1099,36 @@ namespace DynamicIslands.Editor
 			}
 			return false;
 		}
+
+		/// <summary>A ray against a terrain's heights (not its collider): the first point along it under the ground, found in
+		/// 5 cm steps and halved down to 5 mm, with the ground's normal from its heights a heightmap step either side.</summary>
+		static bool HeightRay(Terrain t, Vector3 from, Vector3 dir, float len, out RaycastHit hit)
+		{
+			hit = default(RaycastHit);
+			float ty = t.transform.position.y;
+			System.Func<Vector3, float> under = q => t.SampleHeight(q) + ty - q.y;
+			if (under(from) > 0f) return false; // (starts under the ground: nothing in front)
+			float step = 0.05f, prev = 0f;
+			for (float d = step; d <= len + 1e-4f; d += step)
+			{
+				if (under(from + dir * d) <= 0f) { prev = d; continue; }
+				float lo = prev, hi = d;
+				while (hi - lo > 0.005f) { float mid = 0.5f * (lo + hi); if (under(from + dir * mid) > 0f) hi = mid; else lo = mid; }
+				Vector3 p = from + dir * hi;
+				float e = Mathf.Max(t.terrainData.heightmapScale.x, 0.05f), f = Mathf.Max(t.terrainData.heightmapScale.z, 0.05f);
+				float hx = t.SampleHeight(p + Vector3.right * e) - t.SampleHeight(p - Vector3.right * e);
+				float hz = t.SampleHeight(p + Vector3.forward * f) - t.SampleHeight(p - Vector3.forward * f);
+				hit.point = new Vector3(p.x, t.SampleHeight(p) + ty, p.z);
+				hit.normal = new Vector3(-hx / (2f * e), 1f, -hz / (2f * f)).normalized;
+				hit.distance = hi;
+				FrameCoverByHeights++;
+				return true;
+			}
+			return false;
+		}
+
+		/// <summary>FrameCovered's ground found by the heightmap where the terrain's collider met nothing (log, tests).</summary>
+		public static int FrameCoverByHeights;
 
 		/// <summary>Why FrameCovered left frame points, all islands since Raft started: no normal or turned down, no ground in
 		/// front within reach, the ground there not steep, the ground turned away from the face (log, tests).</summary>
