@@ -958,6 +958,29 @@ namespace DynamicIslands.Editor
 				if (wsum < 1e-4 || sum.sqrMagnitude < 1e-8f) return null;
 				return sum.normalized;
 			};
+			// (11-21 cv55: each point set back once, the same in every triangle it is in: decided per triangle, a point set back
+			// SpikeProud in one triangle stayed proud in the next, the wall torn along it into loose brown shards hanging in the den's
+			// way in - Sealkeeper Spire, c3z53)
+			var flat0 = new Vector3[mv.Length]; var wpos = new Vector3[mv.Length]; var wmoved = new bool[mv.Length];
+			for (int v = 0; v < mv.Length; v++)
+			{
+				flat0[v] = wv0[v] + outward * flush[v];
+				wpos[v] = UnderSkin(flat0[v], WallProud); wmoved[v] = moved;
+			}
+			var spike = new HashSet<int>();
+			for (int s = 0; s < m.subMeshCount; s++)
+			{
+				int[] st = m.GetTriangles(s);
+				for (int t = 0; t + 2 < st.Length; t += 3)
+				{
+					if (flake.Contains(find(vid[st[t]]))) continue;
+					bool am = wmoved[st[t]], bm = wmoved[st[t + 1]], cm = wmoved[st[t + 2]];
+					if ((am || bm || cm) && !(am && bm && cm))
+						for (int k = 0; k < 3; k++) if (!wmoved[st[t + k]]) spike.Add(vid[st[t + k]]);
+				}
+			}
+			for (int v = 0; v < mv.Length; v++)
+				if (!wmoved[v] && spike.Contains(vid[v])) { wpos[v] = UnderSkin(flat0[v], SpikeProud); wmoved[v] = moved; }
 			var subs = new List<int>[m.subMeshCount];
 			for (int s = 0; s < subs.Length; s++)
 			{
@@ -966,17 +989,8 @@ namespace DynamicIslands.Editor
 				for (int t = 0; t + 2 < st.Length; t += 3)
 				{
 					if (flake.Contains(find(vid[st[t]]))) continue;
-					nearSkin = false;
-					Vector3 a0 = wv0[st[t]] + outward * flush[st[t]], b0 = wv0[st[t + 1]] + outward * flush[st[t + 1]], c0 = wv0[st[t + 2]] + outward * flush[st[t + 2]];
-					Vector3 a = UnderSkin(a0, WallProud); bool am = moved;
-					Vector3 b = UnderSkin(b0, WallProud); bool bm = moved;
-					Vector3 c = UnderSkin(c0, WallProud); bool cm = moved;
-					if ((am || bm || cm) && !(am && bm && cm))
-					{
-						if (!am) a = UnderSkin(a0, SpikeProud);
-						if (!bm) b = UnderSkin(b0, SpikeProud);
-						if (!cm) c = UnderSkin(c0, SpikeProud);
-					}
+					nearSkin = wmoved[st[t]] || wmoved[st[t + 1]] || wmoved[st[t + 2]];
+					Vector3 a = wpos[st[t]], b = wpos[st[t + 1]], c = wpos[st[t + 2]];
 					Vector3 fn = Vector3.Cross(b - a, c - a);
 					float fx = Mathf.Abs(fn.x), fy = Mathf.Abs(fn.y), fz = Mathf.Abs(fn.z);
 					int ax = fy >= fx && fy >= fz ? 1 : fx >= fz ? 0 : 2;
