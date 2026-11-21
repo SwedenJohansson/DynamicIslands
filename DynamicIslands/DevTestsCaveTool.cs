@@ -1787,6 +1787,10 @@ namespace DynamicIslands
 		/// <summary>PictureSeeThrough: how far under the ground (m) a ray must be to count as in it, and how far over it to count
 		/// as out again.</summary>
 		const float PictureGroundDip = 0.3f;
+		/// <summary>PictureSeeThrough: a camera under the ground whose ray leaves it this near (m) is in the ground's skin - a
+		/// steep bank's edge, seen out of as if from its face (cv48: Overpass Shoal's op_cave_out, 1.1 m under the bank's
+		/// height at the water, every ray out of it 0.9 m on) - not inside the hill.</summary>
+		const float PictureEyeSkin = 1.5f;
 
 		[ConsoleCommand(name: "CIPictureSeeThrough", docs: "Dev, in a world: a picture's rays (64 x 36, as CIPlay's picture step checks every picture) that see through the island - past the back of its rock (cave pieces, the hill's skin, a dug tunnel's rock) or up through its ground from below - with a map of where. Points from the island's land centre as CIRayLook's (a play's picture point minus the play's offset), or 'picture': the last play picture's camera. With bad: PASS only when it does see through (the check is not blind: a camera inside the hill). CIPictureSeeThrough [bad] <island> <x> <y> <z> <tx> <ty> <tz> | [bad] picture")]
 		public static void PictureSeeThroughCommand(string[] args)
@@ -1820,8 +1824,8 @@ namespace DynamicIslands
 			foreach (string l in lines) Log("  " + l);
 			if (bad)
 			{
-				if (n > PictureSeeThroughAllowed) Log("PASS: picture see-through bad - the camera's rays do see through (" + n + " of 64x36)");
-				else Fail("picture see-through bad: blind - only " + n + " of 64x36 rays see through from a camera that should see through");
+				if (n > PictureSeeThroughAllowed) Log("PASS: picture see-through bad (self-check: the check is not blind) - " + n + " of 64x36 rays see through from a camera that should see through");
+				else Fail("picture see-through bad (self-check): blind - only " + n + " of 64x36 rays see through from a camera that should see through");
 			}
 			else if (n > PictureSeeThroughAllowed) Fail("picture see-through: " + n + " of 64x36 rays see through the island (" + PictureSeeThroughAllowed + " allowed)");
 			else Log("PASS: picture see-through - " + n + " of 64x36 rays (" + PictureSeeThroughAllowed + " allowed)");
@@ -1831,7 +1835,9 @@ namespace DynamicIslands
 		/// as drawn: past the back of its rock (cave pieces, the hill's skin, a dug tunnel's rock and other cave or rock meshes,
 		/// drawn one-sided) before any face drawn toward the eye, or up through its ground from below (the terrain is drawn from
 		/// above only; its holes are open), or into the ground and on to nothing. Colliders can't stand in: they are not what
-		/// is drawn. cv48: Overpass Shoal's op_bank picture stood 5 m inside the hill beside the culvert's room - the room seen
+		/// is drawn - except for a mesh it can't read (11-21 cv48: Raft's den meshes read from the GPU as zeros, so a den's walls
+		/// were missing and every picture inside one failed): its piece's own solid colliders round it stand in, met from the
+		/// front. A camera in the ground's skin (PictureEyeSkin) is not under it. cv48: Overpass Shoal's op_bank picture stood 5 m inside the hill beside the culvert's room - the room seen
 		/// through its outside, the sky through the ground - and its play passed (4 checks). lines: the count by kind, the
 		/// camera's ground, the first bad rays and a 16 x 9 map. Returns the bad rays.</summary>
 		static int PictureSeeThrough(IslandWorldState.Entry e, Vector3 from, Vector3 to, List<string> lines)
@@ -1847,6 +1853,9 @@ namespace DynamicIslands
 				// backs of its rock - what a camera behind it sees through)
 				var fr = new List<Vector3>(); var bk = new List<Vector3>();
 				var bkWho = new List<KeyValuePair<int, string>>();
+				// (meshes that can't be read - none, or every point the same: the GPU read of Raft's den meshes - and the colliders
+				// of their pieces that stand in for them)
+				var blind = new List<string>(); var stand = new List<Collider>(); var standSeen = new HashSet<Collider>();
 				foreach (Renderer r in e.Root.GetComponentsInChildren<Renderer>(false))
 				{
 					if (!r.enabled || !(r is MeshRenderer) || r.bounds.SqrDistance(from) > Far * Far) continue;
@@ -1855,7 +1864,17 @@ namespace DynamicIslands
 					if (r.GetComponentInParent<Network_Player>() != null || r.GetComponentInParent<AI_NetworkBehaviour>() != null) continue;
 					MeshFilter mf = r.GetComponent<MeshFilter>();
 					Vector3[] p; int[] tri;
-					if (mf == null || mf.sharedMesh == null || !ReadMesh(mf.sharedMesh, out p, out tri)) continue;
+					if (mf == null || mf.sharedMesh == null) continue;
+					if (!ReadMesh(mf.sharedMesh, out p, out tri) || PictureBlank(p, mf.sharedMesh))
+					{
+						if (!blind.Contains(r.name)) blind.Add(r.name);
+						// (the piece it belongs to: the island's object it is part of)
+						Transform top = r.transform;
+						while (top.parent != null && top.parent != e.Root.transform && top.parent.parent != e.Root.transform) top = top.parent;
+						foreach (Collider c in top.GetComponentsInChildren<Collider>(false))
+							if (c.enabled && !c.isTrigger && !(c is TerrainCollider) && c.bounds.Intersects(r.bounds) && standSeen.Add(c)) stand.Add(c);
+						continue;
+					}
 					bool both = ms.Any(m => m != null && m.HasProperty("_Cull") && m.GetFloat("_Cull") < 0.5f);
 					bool rock = !both && PictureRock(r);
 					Transform t = r.transform;
@@ -1896,11 +1915,13 @@ namespace DynamicIslands
 				float g0 = ground(from, hole);
 				bool eyeUnder = !float.IsNaN(g0) && !hole[0] && from.y < g0 - PictureGroundDip;
 				lines.Add("camera at " + (from - e.Position).ToString("F1") + " from the island's middle: " + (float.IsNaN(g0) ? "off its ground" : eyeUnder ? (g0 - from.y).ToString("0.0") + " m under its ground (a cave, or inside the hill)" : hole[0] ? "over a hole in its ground" : (from.y - g0).ToString("0.0") + " m over its ground")
-					+ "; " + fr.Count / 3 + " drawn faces, " + bk.Count / 3 + " rock backs within " + Far.ToString("0") + " m");
+					+ "; " + fr.Count / 3 + " drawn faces, " + bk.Count / 3 + " rock backs within " + Far.ToString("0") + " m"
+					+ (blind.Count > 0 ? "; " + blind.Count + " meshes not readable (" + string.Join(", ", blind.Take(4).ToArray()) + (blind.Count > 4 ? ", ..." : "") + "), " + stand.Count + " of their pieces' colliders stand in" : ""));
 				Quaternion look = Quaternion.LookRotation(to - from);
 				float half = Mathf.Tan((Camera.main != null ? Camera.main.fieldOfView : 65f) * 0.5f * Mathf.Deg2Rad);
 				var map = new int[9, 16];
 				var shown = new List<string>();
+				int skin = 0;
 				for (int y = 0; y < GY; y++)
 					for (int x = 0; x < GX; x++)
 					{
@@ -1909,6 +1930,7 @@ namespace DynamicIslands
 						float fD = Far, bD = float.PositiveInfinity; int bTri = -1;
 						if (colF != null && colF.Raycast(ray, out h, Far)) fD = h.distance;
 						if (colB != null && colB.Raycast(ray, out h, Far)) { bD = h.distance; bTri = h.triangleIndex; }
+						foreach (Collider c in stand) if (c != null && c.Raycast(ray, out h, fD)) fD = h.distance;
 						// (the ground along it up to the first face met: met from above, it stops the ray; crossed from below, or
 						// gone into and never left, it is seen through)
 						bool under = eyeUnder, metGround = false;
@@ -1920,7 +1942,12 @@ namespace DynamicIslands
 							if (float.IsNaN(g)) continue;
 							if (hole[0]) { under = false; continue; }
 							if (!under && q.y < g) { metGround = true; break; }
-							if (under && q.y > g + PictureGroundDip) { upAt = s; break; }
+							if (under && q.y > g + PictureGroundDip)
+							{
+								// (out of the ground this near the eye: the camera is in the ground's skin, not inside the hill)
+								if (s < PictureEyeSkin) { under = false; skin++; continue; }
+								upAt = s; break;
+							}
 						}
 						string why = null;
 						if (!metGround && bD < fD - 0.05f && (float.IsNaN(upAt) || bD < upAt))
@@ -1938,7 +1965,8 @@ namespace DynamicIslands
 						map[y * 9 / GY, x * 16 / GX]++;
 						if (shown.Count < 8) shown.Add("BAD ray at " + ((x + 0.5f) / GX).ToString("0.00", CultureInfo.InvariantCulture) + "," + ((y + 0.5f) / GY).ToString("0.00", CultureInfo.InvariantCulture) + " of the picture: " + why);
 					}
-				lines.Add(bad + " of " + (GX * GY) + " rays see through: " + backs + " past a rock's back, " + upGround + " up through the ground, " + lost + " into the ground; " + sky + " to the open sky (fine)");
+				lines.Add(bad + " of " + (GX * GY) + " rays see through: " + backs + " past a rock's back, " + upGround + " up through the ground, " + lost + " into the ground; " + sky + " to the open sky (fine)"
+					+ (skin > 0 ? "; " + skin + " out of the ground within " + PictureEyeSkin.ToString("0.0") + " m of the eye (the camera in the ground's skin, fine)" : ""));
 				lines.AddRange(shown);
 				if (bad > 0)
 					for (int k = 0; k < 9; k++)
@@ -1954,6 +1982,16 @@ namespace DynamicIslands
 				foreach (Object o in made) if (o != null) Object.Destroy(o);
 			}
 			return bad;
+		}
+
+		/// <summary>PictureSeeThrough: a mesh read as nothing - no points, or all at one point while the mesh's bounds are not (the
+		/// GPU read of Raft's den meshes, cv48).</summary>
+		static bool PictureBlank(Vector3[] p, Mesh m)
+		{
+			if (p == null || p.Length == 0) return true;
+			if (m.bounds.size.sqrMagnitude < 1e-4f) return false;
+			for (int i = 1; i < p.Length; i++) if ((p[i] - p[0]).sqrMagnitude > 1e-8f) return false;
+			return true;
 		}
 
 		/// <summary>PictureSeeThrough: rock drawn one-sided, its back never meant to be seen - the hill's skin, a cave piece and its
