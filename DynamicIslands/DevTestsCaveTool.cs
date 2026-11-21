@@ -1047,7 +1047,7 @@ namespace DynamicIslands
 			if (e == null) return;
 			var frames = e.Root.GetComponentsInChildren<CaveTool.HillWall>(true).Where(h => h.name == CaveTool.MouthName).ToList();
 			if (frames.Count == 0) { Fail("no mouth frame drawn as the hill (" + CaveTool.MouthName + ") on " + e.HostName); return; }
-			int left = 0, deeper = 0, all = 0;
+			int left = 0, deeper = 0, all = 0, tucked = 0;
 			foreach (CaveTool.HillWall h in frames)
 			{
 				MeshFilter mf = h.GetComponent<MeshFilter>();
@@ -1056,20 +1056,83 @@ namespace DynamicIslands
 				// (11-21 cv49: the points of faces turned up only, as FramesLikeHill - a point on the sill's underside never shows)
 				Vector3[] ws = mf.sharedMesh.vertices.Select(p => h.transform.TransformPoint(p)).ToArray();
 				bool[] up = CaveTool.FrameUpPoints(ws, mf.sharedMesh.triangles);
+				// (11-21 cv52: and the rim laid under the ground on purpose, CaveTool.TuckRim)
+				bool[] rim = CaveTool.FrameRimPoints(ws, mf.sharedMesh.triangles);
 				for (int v = 0; v < ws.Length; v++)
 				{
 					if (!up[v]) continue;
 					Vector3 w = ws[v]; float g; Vector3 gn;
 					all++;
+					if (rim[v]) { tucked++; continue; }
 					if (CaveTool.FrameLiftable(w, out g, out gn)) { left++; mine++; }
 					else if (w.y < g - 0.01f) deeper++;
 				}
 				if (mine > 0) Log("  " + (h.transform.parent != null ? h.transform.parent.name : h.name) + " at " + (h.transform.position - e.Position).ToString("F1") + ": " + mine + " point(s) still just under the ground - BAD");
 			}
-			Log("  " + frames.Count + " frame(s), " + all + " points on faces turned up, " + left + " just under the ground, " + deeper + " deeper (under the hill on purpose)");
+			Log("  " + frames.Count + " frame(s), " + all + " points on faces turned up, " + left + " just under the ground, " + deeper + " deeper (under the hill on purpose), " + tucked + " rim point(s) laid under it (TuckRim)");
 			if (left > 0) Fail(left + " frame point(s) left just under the ground: it shows through the frame");
 			else Log("PASS: mouth frames " + frames.Count + ", none just under the ground");
 		}
+
+		[ConsoleCommand(name: "CIFrameRim", docs: "Dev, in a world: tunnel mouth frames drawn as the hill (CaveTool.FramesLikeHill) on a loaded island - no long stretch of a frame face turned aside standing a strip of at most CaveTool.FrameRimShow out of the ground while it goes on down into it (CaveTool.TuckRim lays the rim under the ground): Overpass Shoal's mouth apron stood 3 cm over the channel floor, its side wall a row of black dashes, 11-21 cv50. FAIL at 0.5 m of such strips on one frame. Logs the rim points laid under the ground and the faces turned up lying within 5 cm over it. CIFrameRim <island>")]
+		public static void FrameRimCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
+			if (e == null) return;
+			var frames = e.Root.GetComponentsInChildren<CaveTool.HillWall>(true).Where(h => h.name == CaveTool.MouthName).ToList();
+			if (frames.Count == 0) { Fail("no mouth frame drawn as the hill (" + CaveTool.MouthName + ") on " + e.HostName); return; }
+			int badFrames = 0, tuckedAll = 0, flatAll = 0; float worstLen = 0f;
+			foreach (CaveTool.HillWall h in frames)
+			{
+				MeshFilter mf = h.GetComponent<MeshFilter>();
+				if (mf == null || mf.sharedMesh == null || !mf.sharedMesh.isReadable) continue;
+				Vector3[] w = mf.sharedMesh.vertices.Select(p => h.transform.TransformPoint(p)).ToArray();
+				int[] st = mf.sharedMesh.triangles;
+				int tucked = CaveTool.FrameRimPoints(w, st).Count(x => x);
+				float len = 0f; int strips = 0, flat = 0;
+				var worst = new List<KeyValuePair<float, string>>();
+				for (int t = 0; t + 2 < st.Length; t += 3)
+				{
+					Vector3 a = w[st[t]], b = w[st[t + 1]], c = w[st[t + 2]];
+					float ga, gb, gc;
+					if (!CaveTool.SolidGroundAt(a, out ga) || !CaveTool.SolidGroundAt(b, out gb) || !CaveTool.SolidGroundAt(c, out gc)) continue;
+					float ha = a.y - ga, hb = b.y - gb, hc = c.y - gc;
+					float top = Mathf.Max(ha, Mathf.Max(hb, hc)), low = Mathf.Min(ha, Mathf.Min(hb, hc));
+					if (!CaveTool.FrameAside(a, b, c))
+					{
+						// (a face turned up lying within 5 cm over the ground all over: the ground may fight through it - for the log)
+						Vector3 n = Vector3.Cross(b - a, c - a);
+						if (n.sqrMagnitude > 1e-10f && n.normalized.y >= CaveTool.FrameRimSteep && low >= 0f && top < 0.05f) flat++;
+						continue;
+					}
+					// (a strip out of the ground at most FrameRimShow high, the face going on down into the ground)
+					if (top <= 0.005f || top > CaveTool.FrameRimShow || low > -0.02f) continue;
+					// (how long it runs: across the face's points standing out of the ground, or half the face's width where one does)
+					var outs = new List<Vector3>();
+					if (ha > -0.02f) outs.Add(a);
+					if (hb > -0.02f) outs.Add(b);
+					if (hc > -0.02f) outs.Add(c);
+					float l = 0f;
+					for (int i = 0; i < outs.Count; i++) for (int j = i + 1; j < outs.Count; j++) l = Mathf.Max(l, Vector2.Distance(new Vector2(outs[i].x, outs[i].z), new Vector2(outs[j].x, outs[j].z)));
+					if (l < 0.01f) l = Mathf.Max(Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z)), Mathf.Max(Vector2.Distance(new Vector2(b.x, b.z), new Vector2(c.x, c.z)), Vector2.Distance(new Vector2(a.x, a.z), new Vector2(c.x, c.z)))) * 0.5f;
+					len += l; strips++;
+					Vector3 m = (a + b + c) / 3f;
+					worst.Add(new KeyValuePair<float, string>(l, "strip " + (top * 100f).ToString("0.0", CultureInfo.InvariantCulture) + " cm out of the ground, " + l.ToString("0.00", CultureInfo.InvariantCulture) + " m long, at " + (m - e.Position).ToString("F2")));
+				}
+				string where = (h.transform.parent != null ? h.transform.parent.name : h.name) + " at " + (h.transform.position - e.Position).ToString("F1");
+				Log("  " + where + ": " + strips + " face(s) turned aside standing a strip out of the ground, " + len.ToString("0.00", CultureInfo.InvariantCulture) + " m in all; " + tucked + " rim point(s) laid under the ground; " + flat + " face(s) turned up lying within 5 cm over it");
+				bool bad = len >= FrameRimLong;
+				foreach (var kv in worst.OrderByDescending(k => k.Key).Take(bad ? 8 : 3)) Log("    " + kv.Value + (bad ? " - BAD" : ""));
+				if (bad) badFrames++;
+				worstLen = Mathf.Max(worstLen, len); tuckedAll += tucked; flatAll += flat;
+			}
+			Log("  " + frames.Count + " frame(s), most strip out of the ground on one " + worstLen.ToString("0.00", CultureInfo.InvariantCulture) + " m, " + tuckedAll + " rim point(s) laid under the ground, " + flatAll + " face(s) turned up within 5 cm over it");
+			if (badFrames > 0) Fail(badFrames + " mouth frame(s) with " + FrameRimLong.ToString("0.0", CultureInfo.InvariantCulture) + " m or more of side faces standing a strip of at most " + (CaveTool.FrameRimShow * 100f).ToString("0", CultureInfo.InvariantCulture) + " cm out of the ground (dashes along the frame's edge)");
+			else Log("PASS: mouth frames " + frames.Count + ", no long strip of a side face standing just out of the ground");
+		}
+
+		/// <summary>CIFrameRim: this much (m) of side-face strips just out of the ground on one frame fails.</summary>
+		const float FrameRimLong = 0.5f;
 
 		[ConsoleCommand(name: "CIFrameRing", docs: "Dev, in a world, after a CIPlay on the island: rays over the last play picture (64x36) at the tunnel mouth frames drawn as the hill (CaveTool.FramesLikeHill) - none may meet steep island ground (CaveTool.FrameCoverSteep) standing within CaveTool.FrameCover in front of a frame face, along that face's normal: Sinkmarket Floor's cutting walls stood 0.4-0.65 m in front of its frame's inner faces as pale walls inside the ring while CIFrameSunk passed, 11-21 cv40 - and none may meet island ground lying along a frame face (normals within 45 degrees) within 0.05 m of it, in front or behind: the heightmap's triangles 1 cm behind Sinkmarket's mouth side walls poked through as a dark sawtooth, 11-21 cv45. FAIL at 3 rays of either. CIFrameRing <island>")]
 		public static void FrameRingCommand(string[] args)
@@ -1094,6 +1157,7 @@ namespace DynamicIslands
 			float half = Mathf.Tan((Camera.main != null ? Camera.main.fieldOfView : 65f) * 0.5f * Mathf.Deg2Rad);
 			// (the frames' drawn faces, as world triangles: the collider keeps the frame's mesh before it was laid on the ground)
 			var ta = new List<Vector3>(); var te1 = new List<Vector3>(); var te2 = new List<Vector3>(); var tn = new List<Vector3>();
+			var trim = new List<bool>(); // (11-21 cv52: a face with a rim point laid under the ground - it goes into the ground there on purpose)
 			var pieces = new List<Transform>();
 			foreach (CaveTool.HillWall h in frames)
 			{
@@ -1101,16 +1165,18 @@ namespace DynamicIslands
 				if (mf == null || mf.sharedMesh == null || !mf.sharedMesh.isReadable) continue;
 				if (h.transform.parent != null) pieces.Add(h.transform.parent);
 				Vector3[] v = mf.sharedMesh.vertices; int[] t = mf.sharedMesh.triangles;
+				bool[] rim = CaveTool.FrameRimPoints(v.Select(p => h.transform.TransformPoint(p)).ToArray(), t);
 				for (int i = 0; i + 2 < t.Length; i += 3)
 				{
 					Vector3 a = h.transform.TransformPoint(v[t[i]]), b = h.transform.TransformPoint(v[t[i + 1]]), c = h.transform.TransformPoint(v[t[i + 2]]);
 					Vector3 n = Vector3.Cross(b - a, c - a);
 					if (n.sqrMagnitude < 1e-12f) continue;
 					ta.Add(a); te1.Add(b - a); te2.Add(c - a); tn.Add(n.normalized);
+					trim.Add(rim[t[i]] || rim[t[i + 1]] || rim[t[i + 2]]);
 				}
 			}
 			const int GX = 64, GY = 36;
-			int metFrame = 0, bad = 0, deeper = 0, fight = 0;
+			int metFrame = 0, bad = 0, deeper = 0, fight = 0, rimFight = 0;
 			var worst = new List<KeyValuePair<float, string>>(); var fights = new List<KeyValuePair<float, string>>();
 			for (int y = 0; y < GY; y++)
 			{
@@ -1151,6 +1217,7 @@ namespace DynamicIslands
 					// not ground crossing the face at a slant, where a frame goes into the hill)
 					if (land.HasValue && Mathf.Abs(land.Value.distance - tF) * cosF < FightNear && Vector3.Dot(land.Value.normal, tn[fi]) > 0.7f)
 					{
+						if (trim[fi]) { rimFight++; continue; }
 						fight++;
 						fights.Add(new KeyValuePair<float, string>(-Mathf.Abs(land.Value.distance - tF) * cosF, "at " + u.ToString("0.00", CultureInfo.InvariantCulture) + "," + vv.ToString("0.00", CultureInfo.InvariantCulture) + " of the picture: ground at "
 							+ (land.Value.point - e.Position).ToString("F2") + " (normal " + land.Value.normal.ToString("F2") + ") " + ((land.Value.distance - tF) * cosF).ToString("0.000", CultureInfo.InvariantCulture) + " m behind the frame's face (normal " + tn[fi].ToString("F2") + ")"));
@@ -1167,7 +1234,7 @@ namespace DynamicIslands
 			}
 			foreach (var kv in worst.OrderByDescending(k => k.Key).Take(10)) Log("  " + kv.Value + " - BAD");
 			foreach (var kv in fights.OrderByDescending(k => k.Key).Take(10)) Log("  " + kv.Value + " - FIGHT");
-			Log("  " + frames.Count + " frame(s), " + ta.Count + " faces, " + metFrame + " of " + (GX * GY) + " rays meet a frame face, " + bad + " see steep ground just in front of it, " + fight + " ground within " + FightNear.ToString("0.00", CultureInfo.InvariantCulture) + " m of it along it, " + deeper + " ground further in front (frame under the hill); " + CaveTool.GroundSunkUnderFrames + " ground point(s) let down under frame faces since start");
+			Log("  " + frames.Count + " frame(s), " + ta.Count + " faces, " + metFrame + " of " + (GX * GY) + " rays meet a frame face, " + bad + " see steep ground just in front of it, " + fight + " ground within " + FightNear.ToString("0.00", CultureInfo.InvariantCulture) + " m of it along it (and " + rimFight + " where its rim goes into the ground, TuckRim), " + deeper + " ground further in front (frame under the hill); " + CaveTool.GroundSunkUnderFrames + " ground point(s) let down under frame faces since start");
 			// (11-21 cv47: and every renderer of the frames' pieces in the hill's rock with its main normal map flat and its rock layer
 			// on faces turned up: Balboa's baked normal on our uvs drew black triangles all over Sinkmarket Floor's frame, and its
 			// sand layer a golden band in its mouth)
