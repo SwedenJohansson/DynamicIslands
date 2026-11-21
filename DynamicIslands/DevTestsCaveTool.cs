@@ -1449,24 +1449,24 @@ namespace DynamicIslands
 			StartTest(RayLookRoutine(string.Join(" ", args.Take(args.Length - 6).ToArray()).Trim().Trim('"', '\'').Trim(), v, fan, at, who));
 		}
 
-		/// <summary>CIRayLook's work: the island loaded here, or (host) brought next to the raft as CICaveGapsLook brings one.
-		/// A test, so a run sees IDLE after it: run after a CIPlay, whose island is gone by then, the command only logged FAIL
-		/// and a job waited out its hour for IDLE (w15Y, 11-18).</summary>
-		static IEnumerator RayLookRoutine(string name, float[] v, float fan, Vector2? at, bool who = false)
+		/// <summary>CIRayLook's and CIPictureSeeThrough's island: the one loaded here, or (host) brought next to the raft as
+		/// CICaveGapsLook brings one, its hill built; got[0] null (and FAIL logged) when there is none.</summary>
+		static IEnumerator LookIsland(string name, string what, IslandWorldState.Entry[] got)
 		{
+			got[0] = null;
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Root != null && ((x.Name ?? "").IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0
 				|| (x.HostName ?? "").IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0));
 			if (e == null)
 			{
-				if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || CaveGapsLookIslandMissing(name)) { Fail("ray look: no loaded island called '" + name + "' here, and none to bring"); yield break; }
+				if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || CaveGapsLookIslandMissing(name)) { Fail(what + ": no loaded island called '" + name + "' here, and none to bring"); yield break; }
 				float elev = 0f;
 				try { elev = IslandFile.Load(IslandSpawner.PathFor(name)).Elevation; } catch { }
 				Vector3? spot = ScSpot(name, 400f, elev);
-				if (!spot.HasValue) { Fail("ray look: no open sea near the raft"); yield break; }
+				if (!spot.HasValue) { Fail(what + ": no open sea near the raft"); yield break; }
 				var made = new List<IslandWorldState.Entry>();
 				yield return ScBring(name, spot.Value, made);
 				e = made.LastOrDefault();
-				if (e == null || e.Root == null) { Fail("ray look: " + name + " didn't come"); yield break; }
+				if (e == null || e.Root == null) { Fail(what + ": " + name + " didn't come"); yield break; }
 				for (float w = 0f; w < 20f; w += 0.5f)
 				{
 					CaveMountain cm = e.Root.GetComponentInChildren<CaveMountain>();
@@ -1475,6 +1475,18 @@ namespace DynamicIslands
 				}
 				yield return new WaitForSeconds(2f);
 			}
+			got[0] = e;
+		}
+
+		/// <summary>CIRayLook's work: the island loaded here, or (host) brought next to the raft as CICaveGapsLook brings one.
+		/// A test, so a run sees IDLE after it: run after a CIPlay, whose island is gone by then, the command only logged FAIL
+		/// and a job waited out its hour for IDLE (w15Y, 11-18).</summary>
+		static IEnumerator RayLookRoutine(string name, float[] v, float fan, Vector2? at, bool who = false)
+		{
+			var got = new IslandWorldState.Entry[1];
+			yield return LookIsland(name, "ray look", got);
+			IslandWorldState.Entry e = got[0];
+			if (e == null) yield break;
 			Vector3 from = e.Position + e.Root.transform.rotation * new Vector3(v[0], v[1], v[2]),
 				to = e.Position + e.Root.transform.rotation * new Vector3(v[3], v[4], v[5]);
 			Quaternion look = Quaternion.LookRotation(to - from);
@@ -1738,6 +1750,191 @@ namespace DynamicIslands
 			}
 			if (best != float.PositiveInfinity) RayHitPoint = t.TransformPoint(o + dir * best);
 			return best == float.PositiveInfinity ? best : Vector3.Distance(ray.origin, t.TransformPoint(o + dir * best));
+		}
+
+		/// <summary>How many of a picture's 64 x 36 rays may see through the island (PictureSeeThrough) - about 1 %: a seam's
+		/// pinhole; CIPlay's picture step fails over it.</summary>
+		const int PictureSeeThroughAllowed = 23;
+		/// <summary>PictureSeeThrough: how far under the ground (m) a ray must be to count as in it, and how far over it to count
+		/// as out again.</summary>
+		const float PictureGroundDip = 0.3f;
+
+		[ConsoleCommand(name: "CIPictureSeeThrough", docs: "Dev, in a world: a picture's rays (64 x 36, as CIPlay's picture step checks every picture) that see through the island - past the back of its rock (cave pieces, the hill's skin, a dug tunnel's rock) or up through its ground from below - with a map of where. Points from the island's land centre as CIRayLook's (a play's picture point minus the play's offset), or 'picture': the last play picture's camera. With bad: PASS only when it does see through (the check is not blind: a camera inside the hill). CIPictureSeeThrough [bad] <island> <x> <y> <z> <tx> <ty> <tz> | [bad] picture")]
+		public static void PictureSeeThroughCommand(string[] args)
+		{
+			var rest = (args ?? new string[0]).ToList();
+			bool bad = rest.Remove("bad");
+			if (rest.Count == 1 && rest[0] == "picture")
+			{
+				if (!LastPictureFrom.HasValue) { Fail("picture see-through: no play picture taken yet"); return; }
+				Vector3 pf = LastPictureFrom.Value, pl = LastPictureLook.Value;
+				StartTest(PictureSeeThroughRoutine(LastPictureIsland, new[] { pf.x, pf.y, pf.z, pl.x, pl.y, pl.z }, bad));
+				return;
+			}
+			float[] v = new float[6];
+			bool ok = rest.Count >= 7;
+			for (int i = 0; ok && i < 6; i++) ok = float.TryParse(rest[rest.Count - 6 + i], NumberStyles.Float, CultureInfo.InvariantCulture, out v[i]);
+			if (!ok) { Fail("CIPictureSeeThrough [bad] <island> <x> <y> <z> <tx> <ty> <tz>, or CIPictureSeeThrough [bad] picture"); return; }
+			StartTest(PictureSeeThroughRoutine(string.Join(" ", rest.Take(rest.Count - 6).ToArray()).Trim().Trim('"', '\'').Trim(), v, bad));
+		}
+
+		static IEnumerator PictureSeeThroughRoutine(string name, float[] v, bool bad)
+		{
+			var got = new IslandWorldState.Entry[1];
+			yield return LookIsland(name, "picture see-through", got);
+			IslandWorldState.Entry e = got[0];
+			if (e == null) yield break;
+			Vector3 from = e.Position + e.Root.transform.rotation * new Vector3(v[0], v[1], v[2]),
+				to = e.Position + e.Root.transform.rotation * new Vector3(v[3], v[4], v[5]);
+			var lines = new List<string>();
+			int n = PictureSeeThrough(e, from, to, lines);
+			foreach (string l in lines) Log("  " + l);
+			if (bad)
+			{
+				if (n > PictureSeeThroughAllowed) Log("PASS: picture see-through bad - the camera's rays do see through (" + n + " of 64x36)");
+				else Fail("picture see-through bad: blind - only " + n + " of 64x36 rays see through from a camera that should see through");
+			}
+			else if (n > PictureSeeThroughAllowed) Fail("picture see-through: " + n + " of 64x36 rays see through the island (" + PictureSeeThroughAllowed + " allowed)");
+			else Log("PASS: picture see-through - " + n + " of 64x36 rays (" + PictureSeeThroughAllowed + " allowed)");
+		}
+
+		/// <summary>A picture's rays (64 x 36 over the frame, the main camera's field of view at 16:9) that see through the island
+		/// as drawn: past the back of its rock (cave pieces, the hill's skin, a dug tunnel's rock and other cave or rock meshes,
+		/// drawn one-sided) before any face drawn toward the eye, or up through its ground from below (the terrain is drawn from
+		/// above only; its holes are open), or into the ground and on to nothing. Colliders can't stand in: they are not what
+		/// is drawn. cv48: Overpass Shoal's op_bank picture stood 5 m inside the hill beside the culvert's room - the room seen
+		/// through its outside, the sky through the ground - and its play passed (4 checks). lines: the count by kind, the
+		/// camera's ground, the first bad rays and a 16 x 9 map. Returns the bad rays.</summary>
+		static int PictureSeeThrough(IslandWorldState.Entry e, Vector3 from, Vector3 to, List<string> lines)
+		{
+			const int GX = 64, GY = 36; const float Far = 80f;
+			var made = new List<Object>();
+			bool backWas = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = false;
+			int bad = 0, backs = 0, upGround = 0, lost = 0, sky = 0;
+			try
+			{
+				// (the island's drawn faces near the eye, in world space: fronts (both ways where the material draws both), and the
+				// backs of its rock - what a camera behind it sees through)
+				var fr = new List<Vector3>(); var bk = new List<Vector3>();
+				var bkWho = new List<KeyValuePair<int, string>>();
+				foreach (Renderer r in e.Root.GetComponentsInChildren<Renderer>(false))
+				{
+					if (!r.enabled || !(r is MeshRenderer) || r.bounds.SqrDistance(from) > Far * Far) continue;
+					Material[] ms = r.sharedMaterials;
+					if (ms.Length == 0 || ms.All(m => m == null || m.renderQueue >= 2450)) continue; // (water, glass, leaves: see-through anyway)
+					if (r.GetComponentInParent<Network_Player>() != null || r.GetComponentInParent<AI_NetworkBehaviour>() != null) continue;
+					MeshFilter mf = r.GetComponent<MeshFilter>();
+					Vector3[] p; int[] tri;
+					if (mf == null || mf.sharedMesh == null || !ReadMesh(mf.sharedMesh, out p, out tri)) continue;
+					bool both = ms.Any(m => m != null && m.HasProperty("_Cull") && m.GetFloat("_Cull") < 0.5f);
+					bool rock = !both && PictureRock(r);
+					Transform t = r.transform;
+					Vector3 ls = t.lossyScale; bool flip = ls.x * ls.y * ls.z < 0f;
+					var w = new Vector3[p.Length];
+					for (int i = 0; i < p.Length; i++) w[i] = t.TransformPoint(p[i]);
+					if (rock) bkWho.Add(new KeyValuePair<int, string>(bk.Count / 3, r.name + (mf.sharedMesh.name.Length > 0 && mf.sharedMesh.name != r.name ? " (" + mf.sharedMesh.name + ")" : "")));
+					for (int i = 0; i + 2 < tri.Length; i += 3)
+					{
+						if (tri[i] >= w.Length || tri[i + 1] >= w.Length || tri[i + 2] >= w.Length) continue;
+						Vector3 a = w[tri[i]], b = flip ? w[tri[i + 2]] : w[tri[i + 1]], c = flip ? w[tri[i + 1]] : w[tri[i + 2]];
+						if (Vector3.Cross(b - a, c - a).sqrMagnitude < 1e-10f) continue;
+						fr.Add(a); fr.Add(b); fr.Add(c);
+						if (both) { fr.Add(a); fr.Add(c); fr.Add(b); }
+						else if (rock) { bk.Add(a); bk.Add(c); bk.Add(b); }
+					}
+				}
+				MeshCollider colF = SeeThroughFaces(fr, made), colB = SeeThroughFaces(bk, made);
+				// (the ground: its height and its holes, read once)
+				var lands = e.Root.GetComponentsInChildren<Terrain>(false).Where(l => l.terrainData != null).ToList();
+				var solid = lands.Select(l => l.terrainData.GetHoles(0, 0, l.terrainData.holesResolution, l.terrainData.holesResolution)).ToList();
+				// (the ground's height at a point, NaN off it; open[0]: a hole there)
+				System.Func<Vector3, bool[], float> ground = (q, open) =>
+				{
+					open[0] = false;
+					for (int k = 0; k < lands.Count; k++)
+					{
+						TerrainData td = lands[k].terrainData; Vector3 lo = lands[k].transform.position;
+						float nx = (q.x - lo.x) / td.size.x, nz = (q.z - lo.z) / td.size.z;
+						if (nx < 0f || nx >= 1f || nz < 0f || nz >= 1f) continue;
+						int hr = td.holesResolution;
+						open[0] = !solid[k][Mathf.Clamp((int)(nz * hr), 0, hr - 1), Mathf.Clamp((int)(nx * hr), 0, hr - 1)];
+						return lands[k].SampleHeight(q) + lo.y;
+					}
+					return float.NaN;
+				};
+				var hole = new bool[1];
+				float g0 = ground(from, hole);
+				bool eyeUnder = !float.IsNaN(g0) && !hole[0] && from.y < g0 - PictureGroundDip;
+				lines.Add("camera at " + (from - e.Position).ToString("F1") + " from the island's middle: " + (float.IsNaN(g0) ? "off its ground" : eyeUnder ? (g0 - from.y).ToString("0.0") + " m under its ground (a cave, or inside the hill)" : hole[0] ? "over a hole in its ground" : (from.y - g0).ToString("0.0") + " m over its ground")
+					+ "; " + fr.Count / 3 + " drawn faces, " + bk.Count / 3 + " rock backs within " + Far.ToString("0") + " m");
+				Quaternion look = Quaternion.LookRotation(to - from);
+				float half = Mathf.Tan((Camera.main != null ? Camera.main.fieldOfView : 65f) * 0.5f * Mathf.Deg2Rad);
+				var map = new int[9, 16];
+				var shown = new List<string>();
+				for (int y = 0; y < GY; y++)
+					for (int x = 0; x < GX; x++)
+					{
+						Ray ray = new Ray(from, (look * new Vector3((2f * (x + 0.5f) / GX - 1f) * half * 16f / 9f, (1f - 2f * (y + 0.5f) / GY) * half, 1f)).normalized);
+						RaycastHit h;
+						float fD = Far, bD = float.PositiveInfinity; int bTri = -1;
+						if (colF != null && colF.Raycast(ray, out h, Far)) fD = h.distance;
+						if (colB != null && colB.Raycast(ray, out h, Far)) { bD = h.distance; bTri = h.triangleIndex; }
+						// (the ground along it up to the first face met: met from above, it stops the ray; crossed from below, or
+						// gone into and never left, it is seen through)
+						bool under = eyeUnder, metGround = false;
+						float upAt = float.NaN, stop = Mathf.Min(fD, bD);
+						for (float s = 0.2f; s < stop; s += 0.35f)
+						{
+							Vector3 q = ray.GetPoint(s);
+							float g = ground(q, hole);
+							if (float.IsNaN(g)) continue;
+							if (hole[0]) { under = false; continue; }
+							if (!under && q.y < g) { metGround = true; break; }
+							if (under && q.y > g + PictureGroundDip) { upAt = s; break; }
+						}
+						string why = null;
+						if (!metGround && bD < fD - 0.05f && (float.IsNaN(upAt) || bD < upAt))
+						{
+							backs++;
+							string who = "?";
+							foreach (var kv in bkWho) { if (kv.Key > bTri) break; who = kv.Value; }
+							why = "past the back of " + who + " " + bD.ToString("0.0") + " m out, then " + (fD < Far ? "a face at " + fD.ToString("0.0") + " m" : "the sky");
+						}
+						else if (!float.IsNaN(upAt)) { upGround++; why = "up through the ground from below " + upAt.ToString("0.0") + " m out"; }
+						else if (!metGround && under && fD >= Far) { lost++; why = "into the ground and on to nothing"; }
+						else if (!metGround && fD >= Far && ray.direction.y > 0f) sky++;
+						if (why == null) continue;
+						bad++;
+						map[y * 9 / GY, x * 16 / GX]++;
+						if (shown.Count < 8) shown.Add("BAD ray at " + ((x + 0.5f) / GX).ToString("0.00", CultureInfo.InvariantCulture) + "," + ((y + 0.5f) / GY).ToString("0.00", CultureInfo.InvariantCulture) + " of the picture: " + why);
+					}
+				lines.Add(bad + " of " + (GX * GY) + " rays see through: " + backs + " past a rock's back, " + upGround + " up through the ground, " + lost + " into the ground; " + sky + " to the open sky (fine)");
+				lines.AddRange(shown);
+				if (bad > 0)
+					for (int k = 0; k < 9; k++)
+					{
+						var row = new System.Text.StringBuilder("map ");
+						for (int i = 0; i < 16; i++) row.Append(map[k, i] == 0 ? '.' : map[k, i] < 10 ? (char)('0' + map[k, i]) : '#');
+						lines.Add(row.ToString());
+					}
+			}
+			finally
+			{
+				Physics.queriesHitBackfaces = backWas;
+				foreach (Object o in made) if (o != null) Object.Destroy(o);
+			}
+			return bad;
+		}
+
+		/// <summary>PictureSeeThrough: rock drawn one-sided, its back never meant to be seen - the hill's skin, a cave piece and its
+		/// backs, a dug tunnel's rock, a den's wall, any cave, rock, cliff or mountain mesh.</summary>
+		static bool PictureRock(Renderer r)
+		{
+			if (r.GetComponentInParent<CaveMountain>() != null || r.GetComponentInParent<DigTunnel>() != null) return true;
+			MeshFilter mf = r.GetComponent<MeshFilter>();
+			string n = (r.name + " " + (mf != null && mf.sharedMesh != null ? mf.sharedMesh.name : "")).ToLowerInvariant();
+			return n.Contains("cave") || n.Contains("rock") || n.Contains("cliff") || n.Contains("mountain");
 		}
 
 		[ConsoleCommand(name: "CIMeshRead", docs: "Dev, in a world: how an unreadable mesh's points read back from the GPU (CaveBacks' source, w15AA): for the first n unreadable cave meshes (or with back, their backs), the read box by GetData, by AsyncGPUReadback and by a copy into a raw buffer, against the mesh's own box; with info, the camera's path and the first den pieces' shader, passes and colliders. CIMeshRead [n] [back] [info]")]
