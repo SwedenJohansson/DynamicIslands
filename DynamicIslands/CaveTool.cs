@@ -1150,7 +1150,23 @@ namespace DynamicIslands.Editor
 				// black dashes where it faced away from the light)
 				// (11-21 cv54: which points were tucked kept on the frame - CIFrameSunk and CIFrameRim read them, not guessed again from
 				// the finished mesh: the tuck lowers the rim, and the guess lost 897 of Overpass Shoal's, 1104 of Sinkmarket Floor's)
-				bool[] tucked = TuckRim(wv, st);
+				bool[] tucked = TuckRim(wv, st, new bool[mv.Length]);
+				// (11-21 cv56: and a point the tuck left just under the ground on a face it turned up lifted onto it, then tucked
+				// again where that makes a rim - 1 of Overpass Shoal's and Sinkmarket Floor's each showed through, CIFrameSunk)
+				for (int round = 0; round < 3; round++)
+				{
+					bool[] up2 = FrameUpPoints(wv, st);
+					int lifted = 0;
+					for (int i = 0; i < mv.Length; i++)
+					{
+						float g; Vector3 n;
+						if (tucked[i] || !up2[i] || !FrameLiftable(wv[i], out g, out n)) continue;
+						wv[i] = OnGround(wv[i], Vector3.zero, Vector3.zero, 0f, out gn[i]);
+						FrameRelifted++; lifted++;
+					}
+					if (lifted == 0) break;
+					TuckRim(wv, st, tucked);
+				}
 				var rimOut = new List<bool>(st.Length);
 				var nv =new List<Vector3>(st.Length); var nn = new List<Vector3>(st.Length); var nu = new List<Vector2>(st.Length); var tri = new List<int>(st.Length);
 				for (int t = 0; t + 2 < st.Length; t += 3)
@@ -1329,33 +1345,45 @@ namespace DynamicIslands.Editor
 		/// down into the ground from there, that strip of it stood out of the ground along the frame's edge. Returns which points
 		/// were laid under (and counts them in FrameRimTucked).
 		/// </summary>
-		static bool[] TuckRim(Vector3[] wv, int[] st)
+		static bool[] TuckRim(Vector3[] wv, int[] st, bool[] tuck)
 		{
-			var tuck = new bool[wv.Length];
+			// (11-21 cv56: again until no more - a point laid under turns the faces round it: a side face that lay all over the
+			// ground, or a face turned up beside the rim, then goes on down into it with its other points still 3-6 cm out, and
+			// CIFrameRim found 8.00 m of Overpass Shoal's and 13.85 m of Sinkmarket Floor's rim so in cv54 and cv56 alike)
 			var to = new float[wv.Length];
+			var now = new bool[wv.Length];
 			var h = new float[3];
-			for (int t = 0; t + 2 < st.Length; t += 3)
+			for (int pass = 0; pass < FrameRimPasses; pass++)
 			{
-				if (!FrameAside(wv[st[t]], wv[st[t + 1]], wv[st[t + 2]])) continue;
-				bool solid = true; float low = float.MaxValue;
-				for (int k = 0; k < 3; k++)
+				Array.Clear(now, 0, now.Length);
+				for (int t = 0; t + 2 < st.Length; t += 3)
 				{
-					float g;
-					if (!SolidGroundAt(wv[st[t + k]], out g)) { solid = false; break; }
-					h[k] = wv[st[t + k]].y - g;
-					low = Mathf.Min(low, h[k]);
+					if (!FrameAside(wv[st[t]], wv[st[t + 1]], wv[st[t + 2]])) continue;
+					bool solid = true; float low = float.MaxValue;
+					for (int k = 0; k < 3; k++)
+					{
+						float g;
+						if (!SolidGroundAt(wv[st[t + k]], out g)) { solid = false; break; }
+						h[k] = wv[st[t + k]].y - g;
+						low = Mathf.Min(low, h[k]);
+					}
+					if (!solid || low > -FrameRimIn) continue;
+					for (int k = 0; k < 3; k++)
+					{
+						int v = st[t + k];
+						if (tuck[v] || h[k] < -0.01f || h[k] > FrameRimShow) continue;
+						now[v] = true; to[v] = wv[v].y - h[k] - FrameRimUnder;
+					}
 				}
-				if (!solid || low > -FrameRimIn) continue;
-				for (int k = 0; k < 3; k++)
-				{
-					int v = st[t + k];
-					if (h[k] < -0.01f || h[k] > FrameRimShow) continue;
-					tuck[v] = true; to[v] = wv[v].y - h[k] - FrameRimUnder;
-				}
+				int more = 0;
+				for (int v = 0; v < wv.Length; v++) if (now[v]) { wv[v].y = to[v]; tuck[v] = true; FrameRimTucked++; more++; }
+				if (more == 0) break;
 			}
-			for (int v = 0; v < wv.Length; v++) if (tuck[v]) { wv[v].y = to[v]; FrameRimTucked++; }
 			return tuck;
 		}
+
+		/// <summary>The most passes TuckRim makes (each pass the faces turned by the last one's points).</summary>
+		public const int FrameRimPasses = 6;
 
 		/// <summary>A rim face's lowest point lies at least this far (m, straight down) under the ground: it goes on down into it.</summary>
 		public const float FrameRimIn = 0.02f;

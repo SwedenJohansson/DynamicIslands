@@ -1088,7 +1088,8 @@ namespace DynamicIslands
 				if (mf == null || mf.sharedMesh == null || !mf.sharedMesh.isReadable) continue;
 				Vector3[] w = mf.sharedMesh.vertices.Select(p => h.transform.TransformPoint(p)).ToArray();
 				int[] st = mf.sharedMesh.triangles;
-				int tucked = CaveTool.FrameRimPoints(h, w.Length).Count(x => x);
+				bool[] rimPts = CaveTool.FrameRimPoints(h, w.Length);
+				int tucked = rimPts.Count(x => x);
 				float len = 0f; int strips = 0, flat = 0;
 				var worst = new List<KeyValuePair<float, string>>();
 				for (int t = 0; t + 2 < st.Length; t += 3)
@@ -1117,7 +1118,7 @@ namespace DynamicIslands
 					if (l < 0.01f) l = Mathf.Max(Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z)), Mathf.Max(Vector2.Distance(new Vector2(b.x, b.z), new Vector2(c.x, c.z)), Vector2.Distance(new Vector2(a.x, a.z), new Vector2(c.x, c.z)))) * 0.5f;
 					len += l; strips++;
 					Vector3 m = (a + b + c) / 3f;
-					worst.Add(new KeyValuePair<float, string>(l, "strip " + (top * 100f).ToString("0.0", CultureInfo.InvariantCulture) + " cm out of the ground, " + l.ToString("0.00", CultureInfo.InvariantCulture) + " m long, at " + (m - e.Position).ToString("F2")));
+					worst.Add(new KeyValuePair<float, string>(l, "strip " + (top * 100f).ToString("0.0", CultureInfo.InvariantCulture) + " cm out of the ground, " + l.ToString("0.00", CultureInfo.InvariantCulture) + " m long, at " + (m - e.Position).ToString("F2") + " (heights " + (ha * 100f).ToString("0", CultureInfo.InvariantCulture) + "/" + (hb * 100f).ToString("0", CultureInfo.InvariantCulture) + "/" + (hc * 100f).ToString("0", CultureInfo.InvariantCulture) + " cm, " + ((rimPts[st[t]] ? 1 : 0) + (rimPts[st[t + 1]] ? 1 : 0) + (rimPts[st[t + 2]] ? 1 : 0)) + "/3 tucked)"));
 				}
 				string where = (h.transform.parent != null ? h.transform.parent.name : h.name) + " at " + (h.transform.position - e.Position).ToString("F1");
 				Log("  " + where + ": " + strips + " face(s) turned aside standing a strip out of the ground, " + len.ToString("0.00", CultureInfo.InvariantCulture) + " m in all; " + tucked + " rim point(s) laid under the ground; " + flat + " face(s) turned up lying within 5 cm over it");
