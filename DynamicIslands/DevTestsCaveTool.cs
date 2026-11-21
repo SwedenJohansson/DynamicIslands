@@ -1067,6 +1067,192 @@ namespace DynamicIslands
 			else Log("PASS: mouth frames " + frames.Count + ", none just under the ground");
 		}
 
+		[ConsoleCommand(name: "CIFrameRing", docs: "Dev, in a world, after a CIPlay on the island: rays over the last play picture (64x36) at the tunnel mouth frames drawn as the hill (CaveTool.FramesLikeHill) - none may meet steep island ground (CaveTool.FrameCoverSteep) standing within CaveTool.FrameCover in front of a frame face, along that face's normal: Sinkmarket Floor's cutting walls stood 0.4-0.65 m in front of its frame's inner faces as pale walls inside the ring while CIFrameSunk passed, 11-21 cv40. CIFrameRing <island>")]
+		public static void FrameRingCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
+			if (e == null) return;
+			StartTest(FrameRingRoutine(e));
+		}
+
+		static IEnumerator FrameRingRoutine(IslandWorldState.Entry e)
+		{
+			var frames = e.Root.GetComponentsInChildren<CaveTool.HillWall>(true).Where(h => h.name == CaveTool.MouthName).ToList();
+			if (frames.Count == 0) { Fail("no mouth frame drawn as the hill (" + CaveTool.MouthName + ") on " + e.HostName); yield break; }
+			string pi = LastPictureIsland ?? "";
+			bool ours = pi.Length > 0 && ((e.Name ?? "").IndexOf(pi, System.StringComparison.OrdinalIgnoreCase) >= 0 || (e.HostName ?? "").IndexOf(pi, System.StringComparison.OrdinalIgnoreCase) >= 0);
+			if (!LastPictureFrom.HasValue || !ours) { Fail("frame ring: no play picture of " + e.HostName + " (run CIPlay on it first)"); yield break; }
+			Vector3 from = e.Position + e.Root.transform.rotation * LastPictureFrom.Value, to = e.Position + e.Root.transform.rotation * LastPictureLook.Value;
+			Quaternion look = Quaternion.LookRotation(to - from);
+			float half = Mathf.Tan((Camera.main != null ? Camera.main.fieldOfView : 65f) * 0.5f * Mathf.Deg2Rad);
+			// (the frames' drawn faces, as world triangles: the collider keeps the frame's mesh before it was laid on the ground)
+			var ta = new List<Vector3>(); var te1 = new List<Vector3>(); var te2 = new List<Vector3>(); var tn = new List<Vector3>();
+			var pieces = new List<Transform>();
+			foreach (CaveTool.HillWall h in frames)
+			{
+				MeshFilter mf = h.GetComponent<MeshFilter>();
+				if (mf == null || mf.sharedMesh == null || !mf.sharedMesh.isReadable) continue;
+				if (h.transform.parent != null) pieces.Add(h.transform.parent);
+				Vector3[] v = mf.sharedMesh.vertices; int[] t = mf.sharedMesh.triangles;
+				for (int i = 0; i + 2 < t.Length; i += 3)
+				{
+					Vector3 a = h.transform.TransformPoint(v[t[i]]), b = h.transform.TransformPoint(v[t[i + 1]]), c = h.transform.TransformPoint(v[t[i + 2]]);
+					Vector3 n = Vector3.Cross(b - a, c - a);
+					if (n.sqrMagnitude < 1e-12f) continue;
+					ta.Add(a); te1.Add(b - a); te2.Add(c - a); tn.Add(n.normalized);
+				}
+			}
+			const int GX = 64, GY = 36;
+			int metFrame = 0, bad = 0, deeper = 0;
+			var worst = new List<KeyValuePair<float, string>>();
+			for (int y = 0; y < GY; y++)
+			{
+				for (int x = 0; x < GX; x++)
+				{
+					float u = (x + 0.5f) / GX, vv = (y + 0.5f) / GY;
+					Vector3 dir = (look * new Vector3((2f * u - 1f) * half * 16f / 9f, (1f - 2f * vv) * half, 1f)).normalized;
+					float tF = 60f; int fi = -1;
+					for (int i = 0; i < ta.Count; i++)
+					{
+						if (Vector3.Dot(tn[i], dir) >= 0f) continue; // (seen from behind: culled, as drawn)
+						Vector3 p = Vector3.Cross(dir, te2[i]);
+						float det = Vector3.Dot(te1[i], p);
+						if (Mathf.Abs(det) < 1e-9f) continue;
+						float inv = 1f / det; Vector3 s = from - ta[i];
+						float bu = Vector3.Dot(s, p) * inv;
+						if (bu < 0f || bu > 1f) continue;
+						Vector3 q = Vector3.Cross(s, te1[i]);
+						float bv = Vector3.Dot(dir, q) * inv;
+						if (bv < 0f || bu + bv > 1f) continue;
+						float d = Vector3.Dot(te2[i], q) * inv;
+						if (d > 0.05f && d < tF) { tF = d; fi = i; }
+					}
+					if (fi < 0) continue;
+					metFrame++;
+					RaycastHit[] hits = Physics.RaycastAll(new Ray(from, dir), tF, ~0, QueryTriggerInteraction.Ignore).OrderBy(hh => hh.distance).ToArray();
+					RaycastHit? land = null;
+					foreach (RaycastHit hh in hits)
+					{
+						if (hh.collider is TerrainCollider) { land = hh; break; }
+						if (hh.collider.GetComponentInParent<Network_Player>() != null || pieces.Any(pc => hh.collider.transform.IsChildOf(pc))) continue;
+						break; // (something else in front: the ground there isn't what is seen)
+					}
+					if (!land.HasValue || land.Value.distance > tF - 0.02f || land.Value.normal.y >= CaveTool.FrameCoverSteep) continue;
+					float across = (tF - land.Value.distance) * Mathf.Abs(Vector3.Dot(dir, tn[fi]));
+					if (across > CaveTool.FrameCover) { deeper++; continue; }
+					bad++;
+					worst.Add(new KeyValuePair<float, string>(across, "at " + u.ToString("0.00", CultureInfo.InvariantCulture) + "," + vv.ToString("0.00", CultureInfo.InvariantCulture) + " of the picture: ground at "
+						+ (land.Value.point - e.Position).ToString("F2") + " (normal " + land.Value.normal.ToString("F2") + ") " + across.ToString("0.00", CultureInfo.InvariantCulture) + " m in front of the frame's face"));
+				}
+				yield return null;
+			}
+			foreach (var kv in worst.OrderByDescending(k => k.Key).Take(10)) Log("  " + kv.Value + " - BAD");
+			Log("  " + frames.Count + " frame(s), " + ta.Count + " faces, " + metFrame + " of " + (GX * GY) + " rays meet a frame face, " + bad + " see steep ground just in front of it, " + deeper + " ground further in front (frame under the hill)");
+			if (bad >= 3) Fail(bad + " rays see steep ground standing just in front of a mouth frame's face (inside the ring)");
+			else Log("PASS: mouth frames " + frames.Count + ", no ground standing inside the ring (" + bad + " ray(s))");
+		}
+
+		[ConsoleCommand(name: "CIDenWallLook", docs: "Dev, in a world: each lone den wall's outside drawn as the hill (CaveTool.WallLikeHill) on a loaded island, pictured from 8 m or more out in front of the den (shot_denlook_<n>.png): the pixels it draws (seen changing when it is hidden) against the hill's skin round them (rays meet the skin first, within 8 px) - mean brightness within 14 (of 255) and at most 30% of its pixels darker than the skin's darkest tenth: a dark panel with two spikes round Gravewell Shaft's den mouth while CIDenWalls and CIDenWallSlope passed, 11-21 cv40. CIDenWallLook <island>")]
+		public static void DenWallLookCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(new[] { string.Join(" ", args ?? new string[0]) });
+			if (e == null) return;
+			StartTest(DenWallLookRoutine(e));
+		}
+
+		static int denLookN;
+		static IEnumerator DenWallLookRoutine(IslandWorldState.Entry e)
+		{
+			var outs = e.Root.GetComponentsInChildren<CaveTool.HillWall>(true).Where(h => h.name == CaveTool.PlugOutName).ToList();
+			if (outs.Count == 0) { Fail("no den wall outside drawn as the hill (" + CaveTool.PlugOutName + ") on " + e.HostName); yield break; }
+			Camera cam = Camera.main;
+			if (cam == null) { Fail("den wall look: no camera"); yield break; }
+			const int W = 640, H = 360, R = 8;
+			int bad = 0, looked = 0;
+			foreach (CaveTool.HillWall h in outs)
+			{
+				MeshRenderer pr = h.GetComponent<MeshRenderer>();
+				Transform plug = h.transform.parent;
+				if (pr == null || plug == null) continue;
+				string den = plug.parent != null ? plug.parent.name : plug.name;
+				Bounds b = pr.bounds;
+				Vector3 from = b.center + plug.forward * Mathf.Max(b.extents.magnitude * 2.2f, 8f) + Vector3.up * 1.5f;
+				Quaternion rot = Quaternion.LookRotation(b.center - from);
+				float half = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+				yield return new WaitForEndOfFrame();
+				denLookN++;
+				Vector3 oldPos = cam.transform.position; Quaternion oldRot = cam.transform.rotation; RenderTexture oldRt = cam.targetTexture;
+				var rt = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32);
+				var tex = new Texture2D(W, H, TextureFormat.RGB24, false);
+				Color32[] with, without;
+				try
+				{
+					cam.transform.position = from; cam.transform.rotation = rot; cam.targetTexture = rt;
+					System.Func<Color32[]> grab = () =>
+					{
+						cam.Render();
+						RenderTexture was = RenderTexture.active; RenderTexture.active = rt;
+						tex.ReadPixels(new Rect(0, 0, W, H), 0, 0); tex.Apply();
+						RenderTexture.active = was;
+						return tex.GetPixels32();
+					};
+					with = grab();
+					SaveRt(rt, Path.Combine(DynamicIslands.assetpath, "shot_denlook_" + denLookN + ".png"));
+					pr.forceRenderingOff = true;
+					try { without = grab(); } finally { pr.forceRenderingOff = false; }
+				}
+				finally
+				{
+					cam.transform.position = oldPos; cam.transform.rotation = oldRot; cam.targetTexture = oldRt;
+					rt.Release(); Object.Destroy(rt); Object.Destroy(tex);
+				}
+				System.Func<Color32, float> luma = c => 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
+				var mask = new bool[W * H];
+				for (int i = 0; i < mask.Length; i++)
+					mask[i] = Mathf.Abs(with[i].r - without[i].r) + Mathf.Abs(with[i].g - without[i].g) + Mathf.Abs(with[i].b - without[i].b) > 24;
+				// (within R px of the wall's pixels: a box dilation, rows then columns)
+				var rowNear = new bool[W * H]; var near = new bool[W * H];
+				for (int y = 0; y < H; y++)
+				{
+					int last = -100000;
+					for (int x = 0; x < W; x++) { if (mask[y * W + x]) last = x; if (x - last <= R) rowNear[y * W + x] = true; }
+					last = 100000;
+					for (int x = W - 1; x >= 0; x--) { if (mask[y * W + x]) last = x; if (last - x <= R) rowNear[y * W + x] = true; }
+				}
+				for (int x = 0; x < W; x++)
+				{
+					int last = -100000;
+					for (int y = 0; y < H; y++) { if (rowNear[y * W + x]) last = y; if (y - last <= R) near[y * W + x] = true; }
+					last = 100000;
+					for (int y = H - 1; y >= 0; y--) { if (rowNear[y * W + x]) last = y; if (last - y <= R) near[y * W + x] = true; }
+				}
+				var wall = new List<float>(); var skin = new List<float>();
+				for (int y = 0; y < H; y++)
+					for (int x = 0; x < W; x++)
+					{
+						int i = y * W + x;
+						if (mask[i]) { wall.Add(luma(with[i])); continue; }
+						if (!near[i] || ((x + y) & 1) != 0) continue;
+						Vector3 dir = rot * new Vector3((2f * (x + 0.5f) / W - 1f) * half * W / H, (2f * (y + 0.5f) / H - 1f) * half, 1f);
+						RaycastHit hit;
+						if (Physics.Raycast(from, dir, out hit, 80f, ~0, QueryTriggerInteraction.Ignore) && hit.collider.name == CaveMountain.SkinName) skin.Add(luma(with[i]));
+					}
+				looked++;
+				if (wall.Count < 30) { Log("  " + den + ": its outside not seen past the hill (" + wall.Count + " px)"); continue; }
+				if (skin.Count < 30) { Log("  " + den + ": too little of the hill's skin round it seen (" + skin.Count + " px) - skipped"); continue; }
+				skin.Sort();
+				float p10 = skin[skin.Count / 10], mw = wall.Average(), ms = skin.Average();
+				float dark = (float)wall.Count(l => l < p10) / wall.Count;
+				bool ok = Mathf.Abs(mw - ms) <= 14f && dark <= 0.3f;
+				if (!ok) bad++;
+				Log("  " + den + " (shot_denlook_" + denLookN + "): its outside " + wall.Count + " px, brightness " + mw.ToString("0") + " against the hill's " + ms.ToString("0") + " (" + skin.Count + " px round it), "
+					+ (100f * dark).ToString("0") + "% darker than the hill's darkest tenth" + (ok ? "" : " - BAD"));
+			}
+			if (looked == 0) Fail("den wall look: no den wall pictured");
+			else if (bad > 0) Fail(bad + " of " + looked + " den walls drawn darker than the hill round them");
+			else Log("PASS: den walls " + looked + " drawn as the hill round them");
+		}
+
 		[ConsoleCommand(name: "CILootGround", docs: "Dev, in a world: the loot pieces (Pickup_Landmark_*, as caveloot lays them) on a loaded island's cave floors (not Raft's own sea-floor pickups) stand on the floor - the floor under each one's corners no more than <gap> m (0.12) under its bottom: on a sloping floor the low side of a piece set by its middle stood in the air, Rootcellar Deep's ramp stone 11-21 cv38. CILootGround [gap=<m>] <island>")]
 		public static void LootGroundCommand(string[] args)
 		{

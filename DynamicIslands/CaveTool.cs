@@ -363,6 +363,7 @@ namespace DynamicIslands.Editor
 		public static readonly float[] PlugShadeOut = { 1.45f };
 		// (11-08 user: the first band at 0.28 read as a black, notched frame round every den's arch - then a soft fall-off in three
 		// bands; 11-09 user: those read as 2-3 stepped rings on the arch's rim, a stair - now one band)
+		// (11-21 cv40: not drawn on a hill any more - WallLikeHill draws every band as the hill, a dark panel otherwise)
 		public static readonly float[] PlugShade = { 0.86f };
 		/// <summary>The name of a lone den's way-in sleeve's holder (CaveVeil): a short rock tunnel, seen from outside only.</summary>
 		public const string PlugVeilName = "CavePlugVeil";
@@ -685,8 +686,9 @@ namespace DynamicIslands.Editor
 			var block = new MaterialPropertyBlock();
 			skin.GetPropertyBlock(block);
 			r.SetPropertyBlock(block);
-			for (int i = 0; i < r.sharedMaterials.Length; i++)
-				r.SetPropertyBlock(i == 0 || i > PlugShade.Length ? block : Darker(r, skin.sharedMaterial, PlugShade[i - 1]), i);
+			// (11-21 cv40: every band as the hill - the darker band round the arch, with the faces' light, drew the whole wall seen
+			// through the hill's opening as a dark panel with two spikes over Gravewell Shaft's den; the way in's shade is its sleeve's)
+			for (int i = 0; i < r.sharedMaterials.Length; i++) r.SetPropertyBlock(block, i);
 			// (where the hill's skin is just in front of the wall or the wall's relief pokes through it, the wall is set back
 			// SkinCover m behind the skin: the wall's darker bands showed through the hill's rock in square patches on the arch's
 			// pillars, Shelter Atoll and Balboa Remade, 11-08 r26 user)
@@ -722,7 +724,9 @@ namespace DynamicIslands.Editor
 					if (skinCol.Raycast(new Ray(w + outward * 6f, -outward), out sh, 12f) && sh.normal.y > 0f) skinUp += sh.normal;
 				}
 			Vector3 faceTo = skinUp.sqrMagnitude > 1e-6f ? Vector3.RotateTowards(outward, skinUp.normalized, WallTilt * Mathf.Deg2Rad, 0f) : outward;
-			Quaternion tilt = Quaternion.FromToRotation(outT.InverseTransformDirection(outward).normalized, outT.InverseTransformDirection(faceTo).normalized);
+			// (11-21 cv40: every corner lit as that slope, not the wall's own normals turned by it: the funnel round the arch leans
+			// in, so its upper faces still faced 26 deg down after the turn and drew darker than the hill round them)
+			Vector3 faceLocal = outT.InverseTransformDirection(faceTo).normalized;
 			WallTiltSeen = Vector3.Angle(outward, faceTo);
 			// (each triangle its own corners, its texture laid along the world axis it faces most: one flat projection for the
 			// whole wall stretched the funnel's sides into stripes - the den's "zebra" frame, 11-08 user)
@@ -792,7 +796,7 @@ namespace DynamicIslands.Editor
 						Vector3 w = k == 0 ? a : k == 1 ? b : c;
 						subs[into].Add(nv.Count);
 						nv.Add(outT.InverseTransformPoint(w));
-						nn.Add(tilt * (mn != null && mn.Length == mv.Length ? mn[vi] : outT.InverseTransformDirection(fn.normalized)));
+						nn.Add(faceLocal);
 						nu.Add((ax == 0 ? new Vector2(w.z, w.y) : ax == 1 ? new Vector2(w.x, w.z) : new Vector2(w.x, w.y)) / 14f);
 					}
 				}
@@ -852,7 +856,7 @@ namespace DynamicIslands.Editor
 				Vector3[] wv = new Vector3[mv.Length], gn = new Vector3[mv.Length];
 				bool hasN = mn != null && mn.Length == mv.Length;
 				for (int i = 0; i < mv.Length; i++) wv[i] = c.TransformPoint(mv[i]);
-				for (int i = 0; i < mv.Length; i++) wv[i] = OnGround(wv[i], out gn[i]);
+				for (int i = 0; i < mv.Length; i++) wv[i] = OnGround(wv[i], hasN ? c.TransformDirection(mn[i]) : Vector3.zero, out gn[i]);
 				var nv = new List<Vector3>(st.Length); var nn = new List<Vector3>(st.Length); var nu = new List<Vector2>(st.Length); var tri = new List<int>(st.Length);
 				for (int t = 0; t + 2 < st.Length; t += 3)
 				{
@@ -935,16 +939,58 @@ namespace DynamicIslands.Editor
 		public const float FrameOver = 0.03f;
 		/// <summary>Mouth frame points lifted onto the ground, all islands since Raft started.</summary>
 		public static int FramePointsLifted;
+		/// <summary>How far in front of a mouth frame's face, along its own normal, the island ground may stand and the face is still
+		/// laid out onto it (FrameCovered, m); further is the frame under the hill on purpose.</summary>
+		public const float FrameCover = 1f;
+		/// <summary>FrameCovered only lays a frame onto ground steeper than this: its normal's height under it (0.5 = 60 degrees).</summary>
+		public const float FrameCoverSteep = 0.5f;
+		/// <summary>Of FramePointsLifted, those laid out along their face onto the ground in front of it (FrameCovered).</summary>
+		public static int FramePointsCovered;
 		static Terrain liftLand; static bool[,] liftSolid;
+
+		/// <summary>
+		/// Whether a mouth frame's world point w, its face's world normal n, has the island ground in front of its face within
+		/// FrameCover along n - the ground's own surface, steeper than FrameCoverSteep, turned the same way, not a hole cut in it
+		/// (the collider has none). hit is
+		/// where n meets the ground. For tests too (CIFrameRing).
+		/// </summary>
+		public static bool FrameCovered(Vector3 w, Vector3 n, out RaycastHit hit)
+		{
+			hit = default(RaycastHit);
+			if (n.sqrMagnitude < 1e-6f) return false;
+			n = n.normalized;
+			if (n.y < -0.3f) return false; // (a face turned down: the ground over it is its roof's, not in front of it)
+			foreach (Terrain t in Terrain.activeTerrains)
+			{
+				if (t == null || t.terrainData == null || !Over(t, w)) continue;
+				if (w.y >= t.SampleHeight(w) + t.transform.position.y) return false;
+				TerrainCollider tc = t.GetComponent<TerrainCollider>();
+				if (tc == null || !tc.enabled) return false;
+				if (!tc.Raycast(new Ray(w + n * FrameCover, -n), out hit, FrameCover)) return false;
+				// (only a steep cutting wall: under a gentle hillside the frame's outside is under the hill on purpose)
+				return hit.normal.y < FrameCoverSteep && Vector3.Dot(hit.normal, n) > 0.3f;
+			}
+			return false;
+		}
 
 		/// <summary>
 		/// A world point 0-FrameSunk under the island ground (not over a hole cut in it) laid FrameOver over it, its normal then the
 		/// ground's (gn; zero when not lifted).
 		/// </summary>
-		static Vector3 OnGround(Vector3 w, out Vector3 gn)
+		static Vector3 OnGround(Vector3 w, Vector3 fn, out Vector3 gn)
 		{
 			float g;
-			if (!FrameLiftable(w, out g, out gn)) { gn = Vector3.zero; return w; }
+			if (!FrameLiftable(w, out g, out gn))
+			{
+				// (11-21 cv40: and a point whose own face has the ground just in front of it, laid out onto the ground along it -
+				// Sinkmarket Floor's cutting walls ran 0.4-0.65 m in front of its frame's inner faces, 1.3 m and more straight
+				// down on a 74 degree wall, where the heightmap's smoothed normal said 44: pale walls stood inside the frame ring)
+				RaycastHit hit;
+				if (!FrameCovered(w, fn, out hit)) { gn = Vector3.zero; return w; }
+				FramePointsLifted++; FramePointsCovered++;
+				gn = hit.normal;
+				return hit.point + hit.normal * FrameOver;
+			}
 			FramePointsLifted++;
 			// (FrameOver measured across the slope, not straight up: on a steep wall 3 cm up is a hair off the ground and flickers)
 			return new Vector3(w.x, g + FrameOver / Mathf.Max(gn.y, 0.2f), w.z);

@@ -1706,6 +1706,8 @@ namespace DynamicIslands
 		/// bottom on the floor under its middle, and on a sloping floor its low side stood in the air - Rootcellar Deep's stone on
 		/// its gallery's 22 degree ramp (11-21 cv38). True when it was moved down.
 		/// </summary>
+		/// <summary>How far under its lowest corner's floor caveloot sets a piece's bottom (m): the world's floor is a hair off the editor's.</summary>
+		const float LootSink = 0.04f;
 		static bool LootDown(GameObject go)
 		{
 			Renderer[] rs = PlacementOptions.ShapeRenderers(go);
@@ -1723,7 +1725,9 @@ namespace DynamicIslands
 				if (under.Length > 0) low = Mathf.Min(low, under[0].point.y);
 			}
 			if (low == float.MaxValue) return false;
-			float down = Mathf.Min(b.min.y - low, b.size.y * 0.5f);
+			// (11-21 cv40: set LootSink under its lowest corner's floor, and a flat piece down to 0.3 m: a dirt pile 0.25 m high on a
+			// ramp stopped at half its height and stood 0.14 m over the floor on its low side, Rootcellar Deep)
+			float down = Mathf.Min(b.min.y - low + LootSink, Mathf.Max(b.size.y * 0.5f, 0.3f));
 			if (down < 0.02f) return false;
 			go.transform.position += Vector3.down * down;
 			return true;
