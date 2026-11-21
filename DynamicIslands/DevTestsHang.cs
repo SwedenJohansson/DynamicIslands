@@ -98,6 +98,7 @@ namespace DynamicIslands
 		static List<string> HangProblems(Transform objects, Terrain land, Vector3 mid, float sea)
 		{
 			var lines = new List<string>();
+			List<Collider> skins = null;
 			Func<Vector3, string> at = p => Num(p.x - mid.x) + " " + Num(p.z - mid.z) + " h=" + Num(p.y - sea);
 			foreach (Transform o in objects)
 			{
@@ -136,7 +137,9 @@ namespace DynamicIslands
 					MeshPath rope = o.GetComponentInChildren<MeshPath>(true);
 					if (land != null && rope != null && ZiplineEnds.Ends(o.gameObject, null, Vector3.zero, out zn, out zf))
 					{
-						float over = ZiplineEnds.RopeLowest(ZiplineEnds.Rope(rope), zn, zf, (x, z) => land.SampleHeight(new Vector3(x, 0f, z)) + land.transform.position.y, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out low, out lt);
+						// (over the cave hill's skin too where it covers the land - 11-21 c3z9: Caisson Yard's summit rope ran 0.32 m into it, ground PASS)
+						if (skins == null) skins = ZiplineEnds.CaveSkins(objects.parent != null ? objects.parent : objects);
+						float over = ZiplineEnds.RopeLowest(ZiplineEnds.Rope(rope), zn, zf, ZiplineEnds.OverSkins((x, z) => land.SampleHeight(new Vector3(x, 0f, z)) + land.transform.position.y, skins), ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out low, out lt);
 						if (over < ZiplineEnds.LineLow)
 							lines.Add("zipline line in the ground: " + n + " " + (over < 0f ? Num(-over) + " m under" : Num(over) + " m over") + " the ground at " + at(low) + " (its rope; " + Num(ZiplineEnds.LineLow) + " m wanted)");
 					}

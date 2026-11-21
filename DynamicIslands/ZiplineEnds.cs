@@ -157,6 +157,38 @@ namespace DynamicIslands.Editor
 			return list;
 		}
 
+		/// <summary>The ground under a rope at x z: <paramref name="land"/>'s, or the top of a cave hill's skin there when higher
+		/// (CaveMountain: a world builds it, the land's height leaves it out - 11-21 c3z9, Caisson Yard's summit rope 0.32 m in it).</summary>
+		public static System.Func<float, float, float> OverSkins(System.Func<float, float, float> land, IList<Collider> skins)
+		{
+			if (skins == null || skins.Count == 0) return land;
+			return (x, z) =>
+			{
+				float g = land(x, z);
+				bool backs = Physics.queriesHitBackfaces;
+				Physics.queriesHitBackfaces = true;
+				try
+				{
+					foreach (Collider c in skins)
+					{
+						if (c == null || !c.enabled) continue;
+						Bounds b = c.bounds;
+						RaycastHit h;
+						if (x >= b.min.x && x <= b.max.x && z >= b.min.z && z <= b.max.z &&
+							c.Raycast(new Ray(new Vector3(x, b.max.y + 1f, z), Vector3.down), out h, b.size.y + 2f) && h.point.y > g) g = h.point.y;
+					}
+				}
+				finally { Physics.queriesHitBackfaces = backs; }
+				return g;
+			};
+		}
+
+		/// <summary>The cave hills' skins (CaveMountain) under an island's root.</summary>
+		public static List<Collider> CaveSkins(Transform root)
+		{
+			return root == null ? new List<Collider>() : root.GetComponentsInChildren<MeshCollider>(true).Where(c => c.name == CaveMountain.SkinName).Cast<Collider>().ToList();
+		}
+
 		/// <summary>Where a rope (points, either end first) comes nearest the ground: how far over it (negative: under), every
 		/// 0.25 m, leaving out the first nearSkip m (along the ground) from near and the last farSkip m to far, less want(metres
 		/// to the far end): the room asked there (null: none). at, atT: that point and how far along (0 near, 1 far). 999 when nothing is left.</summary>

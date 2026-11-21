@@ -207,7 +207,7 @@ namespace DynamicIslands
 
 		static readonly Regex Hangs = new Regex("Buoy|Water|Pipe|Chain|Rope|Cable|Lamp|Light|Flag|Banner|Floor|Deck|Plank|Bridge|Ramp|Stair|Crane|Roof|Scaffold", RegexOptions.IgnoreCase);
 
-		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it); the save sets a rock in the air down and a buried barrel up")]
+		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it); the save sets a rock in the air down and a buried barrel up; a zipline rope is measured over the cave hill a world builds")]
 		public static void GroundingTestCommand()
 		{
 			StartTest(GroundingTestRoutine());
@@ -389,6 +389,37 @@ namespace DynamicIslands
 			UnityEngine.Object.Destroy(boulder);
 			UnityEngine.Object.Destroy(barrel);
 			UnityEngine.Object.Destroy(treasure);
+			// 5. A zipline rope over a cave piece is measured over the hill a world builds over it (11-21 c3z9: Caisson Yard's summit
+			// rope ran 0.32 m into the world's hill and stopped riders 6.5 m short; the editor and the ground check measured the land only)
+			yield return null;
+			GameObject den = PlaceableCatalog.Spawn(CaveTool.Room, root);
+			if (den == null) { Fail("grounding test: no " + CaveTool.Room); yield break; }
+			EditorGameObject.Attach(den, CaveTool.Room);
+			Vector3 dp = flat; // (the test's other things are gone by now)
+			den.transform.position = new Vector3(dp.x, GroundY(dp.x, dp.z), dp.z);
+			Physics.SyncTransforms();
+			Bounds denBox = MeshBox(den);
+			GameObject hill = CaveMountain.Preview(new[] { den.GetComponent<EditorGameObject>() });
+			Check(ref ok, hill != null && hill.transform.Find(CaveMountain.SkinName) != null, "the editor builds the cave hill a world builds over a bear den, to measure ropes against");
+			if (hill != null)
+			{
+				float cx = denBox.center.x, cz = denBox.center.z, landY = GroundY(cx, cz);
+				List<Collider> skins = ZiplineEnds.CaveSkins(hill.transform);
+				Func<float, float, float> landOnly = (x, z) => GroundY(x, z), withHill = ZiplineEnds.OverSkins(landOnly, skins);
+				float hillY = withHill(cx, cz), zipY = ZipGround(null)(cx, cz);
+				Check(ref ok, skins.Count == 1 && hillY > landY + 1f, "the hill's skin over the den's middle stands over the land: " + Num(hillY - landY) + " m");
+				Check(ref ok, Mathf.Abs(zipY - hillY) < 0.3f, "zipto's ground there is the hill's top: " + Num(zipY - landY) + " m over the land (the skin " + Num(hillY - landY) + ")");
+				// (a rope 0.5 m under the hill's top over the den: in the ground by the hill, clear of the land)
+				var rope = new List<Vector3> { new Vector3(cx - 3f, hillY - 0.5f, cz), new Vector3(cx + 3f, hillY - 0.5f, cz) };
+				Vector3 la; float lt;
+				float overLand = ZiplineEnds.RopeLowest(rope, rope[0], rope[1], landOnly, 0f, 0f, null, out la, out lt);
+				float overHill = ZiplineEnds.RopeLowest(rope, rope[0], rope[1], withHill, 0f, 0f, null, out la, out lt);
+				Check(ref ok, overHill < 0f && overLand > overHill + 0.5f, "a rope through the cave hill counts as in the ground: " + Num(overHill) + " m over the hill (" + Num(overLand) + " m over the land alone)");
+				UnityEngine.Object.DestroyImmediate(hill);
+				Physics.SyncTransforms();
+				Check(ref ok, GameObject.Find(CaveMountain.PreviewName) == null && skins.All(c => c == null), "the measuring hill is gone after (zipto's ground there now " + Num(ZipGround(null)(cx, cz) - landY) + " m over the land)");
+			}
+			UnityEngine.Object.Destroy(den);
 			if (ok) Log("PASS: grounding test"); else Fail("grounding test");
 		}
 
@@ -2330,7 +2361,11 @@ namespace DynamicIslands
 							string why = FileNames.IslandProblem(island);
 							if (why != null) { error = why; break; }
 							// (the ziplines zipto aimed: their ropes over the land as it ends up - ZipClearGround)
-							foreach (EditorGameObject ze in zipPending) if (ze != null) ZipClearGround(ze);
+							// (over the cave hill a world builds over the island's cave pieces, made now to measure against - 11-21 c3z9)
+							GameObject zipHill = zipPending.Any(ze => ze != null) ? CaveMountain.Preview(PlacedEditorObjects()) : null;
+							if (zipHill != null) Log("  zipto: ropes measured over the cave hill a world builds over the island's caves too");
+							try { foreach (EditorGameObject ze in zipPending) if (ze != null) ZipClearGround(ze); }
+							finally { if (zipHill != null) UnityEngine.Object.DestroyImmediate(zipHill); Physics.SyncTransforms(); }
 							zipPending.Clear();
 							// (Raft's sea finds the recipe's own terrain strokes carried out of the water - a mountain raised over the shelf
 							// the generator had dressed: Ironreef's ore lay 30-57 m up its slope - are the sea's: removed, the review 2026-10-03)

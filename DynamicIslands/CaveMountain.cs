@@ -49,6 +49,37 @@ namespace DynamicIslands.Editor
 			m.due = Time.realtimeSinceStartup + 1f;
 		}
 
+		/// <summary>Name of the throwaway object Preview builds the hill under.</summary>
+		public const string PreviewName = "CaveHill (measure)";
+
+		/// <summary>Editor: the hill a world builds over these placed cave pieces (only a world builds it), made now under a throwaway
+		/// object to measure against, its skin on the land's layer: zipto's rope over the ground at save (11-21 c3z9: Caisson Yard's
+		/// summit rope ran 0.32 m into the world's hill and stopped riders 6.5 m short; the editor didn't see the hill). Null when no
+		/// piece wants one or none came out. The caller destroys it (DestroyImmediate) before the island is saved.</summary>
+		public static GameObject Preview(IEnumerable<EditorGameObject> placed)
+		{
+			var go = new GameObject(PreviewName);
+			CaveMountain m = go.AddComponent<CaveMountain>();
+			foreach (EditorGameObject e in placed)
+			{
+				if (e == null || !e.gameObject.activeInHierarchy || !Wants(e.GameObjectName)) continue;
+				m.caves.Add(e.transform);
+				m.infos.Add(RaftProps.Get(e.GameObjectName));
+				m.props.Add(e.Props);
+			}
+			// (the editor's pieces may have their colliders off - a world switches them on, and the hill is draped by rays on them)
+			var off = new List<Collider>();
+			foreach (Transform t in m.caves)
+				foreach (Collider c in t.GetComponentsInChildren<Collider>(true))
+					if (!c.enabled && c.gameObject.activeInHierarchy) { c.enabled = true; off.Add(c); }
+			try { if (m.caves.Count > 0) m.Rebuild(); }
+			catch (System.Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Cave hill (measure): " + ex.Message); }
+			finally { foreach (Collider c in off) if (c != null) c.enabled = false; }
+			if (m.skin == null) { DestroyImmediate(go); return null; }
+			Physics.SyncTransforms();
+			return go;
+		}
+
 		/// <summary>A cave piece that needs a mountain over it (the Vines cave is a whole rock with its own outside already).</summary>
 		public static bool Wants(string name)
 		{
