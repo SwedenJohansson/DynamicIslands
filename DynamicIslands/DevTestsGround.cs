@@ -875,7 +875,7 @@ namespace DynamicIslands
 				var rockBlocked = new Dictionary<string, int>();
 				int stood = StandCliffRocks(rocks, toRock, sea, out covered, rockBlocked);
 				rockNote = "; " + stood + " " + rocks + " stood in the waterline at " + covered + " of the " + toRock.Count + " faces left (not at the terrain's edge)" +
-					(rockBlocked.Count == 0 ? "" : ", none where they would meet " + string.Join(", ", rockBlocked.OrderByDescending(k => k.Value).Take(4).Select(k => k.Key + " " + k.Value).ToArray()));
+					(rockBlocked.Count == 0 ? "" : ", none where they would meet " + string.Join(", ", rockBlocked.OrderByDescending(k => k.Value).Take(4).Select(k => k.Key + " " + k.Value).ToArray())) + rockFillNote;
 			}
 			return "cliffs: " + faces.Count + " bare faces, " + raised.Count + " points raised (up to " + Num(most) + " m), " + carried + " small things on the sea floor carried up with it, " + blocked + " left under objects" + most3 + ", " + kept + " left open between two walls; " + leftFaces.Count + " bare faces left" + whyLeft + rockNote;
 		}
@@ -904,7 +904,9 @@ namespace DynamicIslands
 					Bounds b = rr[0].bounds;
 					foreach (Renderer x in rr) b.Encapsulate(x.bounds);
 					lowTop = Mathf.Min(lowTop, b.max.y - sea); highFoot = Mathf.Max(highFoot, b.min.y - sea);
-					if (b.min.y > sea - 0.5f || b.max.y < sea + 1f) continue;
+					// (the stood ones: their feet 2.3-3 m under the sea, where the cliffs step sets them - c3z67 pictured the
+					// generator's own BigBoulder1_Low on a dirt mound and on a sand shelf, once the step took them too)
+					if (b.min.y < sea - 3.05f || b.min.y > sea - 2.25f || b.max.y < sea + 1f) continue;
 					rocks.Add(new KeyValuePair<Transform, Bounds>(r, b));
 				}
 			if (rocks.Count == 0)
@@ -920,26 +922,55 @@ namespace DynamicIslands
 			var said = new List<string>();
 			foreach (var k in pick)
 			{
-				Vector3 c = k.Value.center, outward = Vector3.forward;
-				float lowest = float.MaxValue;
-				for (int a = 0; a < 360; a += 30)
-				{
-					Vector3 d = Quaternion.Euler(0f, a, 0f) * Vector3.forward;
-					float g = land.SampleHeight(c + d * 8f) + tp.y;
-					if (g < lowest) { lowest = g; outward = d; }
-				}
+				Vector3 c = k.Value.center;
 				Vector3 at = new Vector3(c.x, Mathf.Clamp((k.Value.max.y + sea) * 0.5f, sea + 0.5f, sea + 6f), c.z);
-				// (8-14 m back, the stood rocks round it not counted in its way - c3z65: four of eight pictures were one boulder
-				// filling the frame: every eye had a neighbour rock in its view, and the 4 m one, with the least in its short
-				// look, won)
-				var ignore = new HashSet<Collider>(rocks.SelectMany(q => q.Key.GetComponentsInChildren<Collider>(true)));
-				Vector3 eye = SheetEye(land, tp, sea, new Vector3(c.x, sea, c.z), outward, at, ignore, new[] { 10f, 12f, 8f, 14f });
+				Vector3 eye = RockEye(land, tp, sea, k.Value, new HashSet<Collider>(k.Key.GetComponentsInChildren<Collider>(true)), at);
 				string name = "rock_" + e.Name + "_" + (list.Count + 1) + "_top" + Mathf.RoundToInt(k.Value.max.y - sea);
 				list.Add(new KeyValuePair<string, Vector3[]>(name, new[] { eye, at }));
 				said.Add(name + " at " + Num(c.x - e.Position.x) + " " + Num(c.z - e.Position.z) + " (" + Num(k.Value.size.x) + " x " + Num(k.Value.size.z) + " m, " + Num(k.Value.min.y - sea) + ".." + Num(k.Value.max.y - sea) + " m over the sea)");
 			}
 			Log("  rock pictures: " + rocks.Count + " " + piece + " in the waterline on " + e.Name + "; " + string.Join("; ", said.ToArray()));
 			return list;
+		}
+
+		/// <summary>The eye for a stood rock's picture (RockShots): over open water 8-16 m out the way the water is most open
+		/// round it, 4.5-9 m up looking down at it, with nothing but the rock itself the first thing met on the looks at its
+		/// middle and its top, and nothing within 1.5 m (c3z65: the sheet's eye stood 4 m from the rock, one boulder filling
+		/// the frame; c3z67: with the other rocks not counted, they stood between and filled it): the first clear one, else
+		/// the one with the least in the way.</summary>
+		static Vector3 RockEye(Terrain land, Vector3 tp, float sea, Bounds b, HashSet<Collider> target, Vector3 at)
+		{
+			Vector3 c = b.center, outward = Vector3.forward;
+			float bestOpen = float.MinValue;
+			for (int a = 0; a < 360; a += 15)
+			{
+				Vector3 d = Quaternion.Euler(0f, a, 0f) * Vector3.forward;
+				float open = 0f;
+				foreach (float s in new[] { 4f, 8f, 12f, 16f })
+					if (land.SampleHeight(c + d * s) + tp.y < sea - 0.3f) open += 1f;
+				open -= (land.SampleHeight(c + d * 8f) + tp.y - sea) * 0.01f;
+				if (open > bestOpen) { bestOpen = open; outward = d; }
+			}
+			Vector3 bestEye = Vector3.zero;
+			int bestScore = int.MaxValue;
+			foreach (float up in new[] { 6f, 9f, 4.5f })
+				foreach (float turn in new[] { 0f, 20f, -20f, 40f, -40f })
+					foreach (float d in new[] { 12f, 10f, 14f, 8f, 16f })
+					{
+						Vector3 way = Quaternion.Euler(0f, turn, 0f) * outward;
+						Vector3 p = new Vector3(c.x, sea + up, c.z) + way * d;
+						if (land.SampleHeight(p) + tp.y >= sea - 0.3f) continue;
+						int score = Physics.OverlapSphere(p, 1.5f, ~0, QueryTriggerInteraction.Ignore).Any(x => !(x is TerrainCollider)) ? 100 : 0;
+						foreach (Vector3 aim in new[] { at, new Vector3(c.x, b.max.y - 0.5f, c.z) })
+						{
+							Vector3 look = aim - p;
+							RaycastHit first = Physics.RaycastAll(p, look.normalized, look.magnitude + 2f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).FirstOrDefault();
+							if (first.collider != null && !target.Contains(first.collider)) score += first.collider is TerrainCollider ? 20 : 10;
+						}
+						if (score < bestScore) { bestScore = score; bestEye = p; }
+						if (score == 0) return p;
+					}
+			return bestEye != Vector3.zero ? bestEye : new Vector3(c.x, sea + 6f, c.z) + outward * 12f;
 		}
 
 		/// <summary>The eye for a picture of a face (or a stood rock) at 'at', seen from 'outward' of centre over the sea: the first
@@ -1028,6 +1059,7 @@ namespace DynamicIslands
 		static int StandCliffRocks(string rocks, List<SheetFace> todo, float sea, out int covered, Dictionary<string, int> blocked)
 		{
 			covered = 0;
+			rockFillNote = "";
 			if (frames.Count == 0) return 0;
 			Frame tf = TopFrame;
 			// (rocks=A|B|C: the pieces taken in turn by place; each rock turned up to 25 degrees off the wall's line, leaned up to
@@ -1057,123 +1089,182 @@ namespace DynamicIslands
 				}
 				return cap;
 			};
-			foreach (SheetFace f in todo)
+			Terrain land = terraineditor.terrain;
+			float landY = land != null ? land.transform.position.y : 0f;
+			// (where a rock may stand: nothing placed in its box (a log, a natural rock or a bush it may stand in front of; the
+			// rocks this step stood), 1 m under a zipline's rope at least, and water in front of it - c3z65b: Shelter Atoll's rocks
+			// stood on a sand shelf over a hollow, high and dry. Null when it may, else what is in the way)
+			System.Func<Vector3, Quaternion, float, Vector3, string> standIn = (q, turn, half, outward) =>
 			{
-				Vector3 mid = (f.Hi + f.Lo) * 0.5f;
-				Vector3 outward = new Vector3(f.Lo.x - f.Hi.x, 0f, f.Lo.z - f.Hi.z).normalized;
-				if (outward.sqrMagnitude < 0.5f) continue;
-				// (a face a rock already stood covers - its ray meets the rock, as the sheet check's does; the faces between two
-				// rocks get one of their own - c3z64: Caisson Yard's 4.6 m wall bare for 2/3 of the width between two rocks)
-				Vector3 from = f.Lo + outward * 0.5f; from.y = sea + Mathf.Clamp(f.Top * 0.5f, 0.25f, 3f);
-				if (own.Count > 0 && FaceCover(from, -outward, (f.Lo - f.Hi).magnitude + 1f, c => own.Contains(c)) != null) { covered++; continue; }
-				float yaw = Mathf.Atan2(outward.x, outward.z) * Mathf.Rad2Deg;
-				Quaternion turn = Quaternion.Euler(0f, yaw, 0f);
-				Vector3 along = turn * Vector3.right;
-				// (a rock where it would meet a placed piece - a ladder, an air pocket, a buoy, a tunnel's mouth - is moved along the
-				// wall up to 4 m either way, else left out; the rocks this step stood are no such piece, nor a log or a natural rock,
-				// which the rock may stand in front of - c3z63: Caisson Yard's last sheet, a 4.6 m wall, kept bare by 5 logs and a
-				// dug tunnel's mouth)
-				string hit = null;
-				Vector3 at = mid;
-				var rnd = new System.Random(Mathf.RoundToInt(mid.x * 10f) * 73856093 ^ Mathf.RoundToInt(mid.z * 10f) * 19349663);
-				string piece = pieces[rnd.Next(pieces.Length)];
-				float spin = (float)(rnd.NextDouble() * 50.0 - 25.0), lean = (float)(rnd.NextDouble() * 16.0 - 8.0), size = 0.8f + (float)rnd.NextDouble() * 0.4f;
-				float want = sea + f.Top + 0.3f + (float)rnd.NextDouble() * 1.2f;
-				// (up to 0.9 m along the wall from the face's middle, from its place: not evenly spaced - c3z65: The Abyss's pillar
-				// fronted by a straight row of 8 rocks; and where a piece is in or on the wall, 0.7 or 1.4 m out of it, still over
-				// the face's foot - c3z65: Caisson Yard's pit wall bare 10 m between two rocks, its 5 faces all meeting a dug
-				// tunnel, a fence or a floor)
-				float jit = (float)(rnd.NextDouble() * 1.8 - 0.9);
-				bool clear = false;
-				foreach (float push in new[] { 0f, 0.7f, 1.4f })
-				{
-					foreach (float off in new[] { 0f, 1.5f, -1.5f, 2.5f, -2.5f, 4f, -4f })
-					{
-						Vector3 q = mid + along * (off + jit) + outward * push;
-						Collider h = Physics.OverlapBox(new Vector3(q.x, sea + 0.5f, q.z), new Vector3(2.3f, 3.4f, 1.1f), turn, ~0, QueryTriggerInteraction.Ignore)
-							.FirstOrDefault(c => !(c is TerrainCollider) && !own.Contains(c) && !RockStandsBefore(c));
-						float cap = ropeCap(q);
-						if (h == null && cap >= sea + 1f) { hit = null; at = q; want = Mathf.Min(want, cap); clear = true; break; }
-						if (off == 0f && push == 0f) hit = h != null ? PieceName(h) : "a zipline's rope";
-					}
-					if (clear) break;
-				}
-				if (hit != null)
-				{
-					int bn; blocked.TryGetValue(hit, out bn); blocked[hit] = bn + 1;
-					continue;
-				}
-				mid = at;
-				Vector3 r = Quaternion.Euler(0f, -tf.Yaw, 0f) * new Vector3(mid.x - tf.Origin.x, 0f, mid.z - tf.Origin.y);
-				var opt = new Dictionary<string, string> { { "h", "-3" }, { "sit", "1" }, { "centred", "1" }, { "yaw", Num(yaw - tf.Yaw) } };
-				EditorGameObject e;
-				Place(piece, r.x, r.z, opt, out e);
-				if (e == null) continue;
+				Collider h = Physics.OverlapBox(new Vector3(q.x, sea + 0.5f, q.z), new Vector3(half, 3.4f, 1.1f), turn, ~0, QueryTriggerInteraction.Ignore)
+					.FirstOrDefault(c => !(c is TerrainCollider) && !own.Contains(c) && !RockStandsBefore(c));
+				if (h != null) return PieceName(h);
+				if (ropeCap(q) < sea + 1f) return "a zipline's rope";
+				if (land != null && land.SampleHeight(q + outward * 1.5f) + landY > sea - 0.5f) return "dry ground in front";
+				return null;
+			};
+			// (one rock shaped at its place: on its longest side, its wide side along the wall, turned and leaned, sized,
+			// stretched up to 'want' (at most 3 times) and wider by 'widen' of that, its middle at c, its foot at 'low')
+			System.Action<EditorGameObject, Vector3, Vector3, Vector3, float, float, float, float, float, float> shapeRock = (e, c, along, outward, low, want, spin, lean, size, widen) =>
+			{
 				Renderer[] rr = PlacementOptions.ShapeRenderers(e.gameObject);
-				if (rr.Length > 0)
+				if (rr.Length == 0) return;
+				System.Func<Bounds> shape = () => { Bounds b = rr[0].bounds; foreach (Renderer x in rr) b.Encapsulate(x.bounds); return b; };
+				// (on its longest side: the placer stands a piece with its own axes the world's, which lays the _Low boulders
+				// down - 2.3 m tall; turned a quarter about the wall's line or the way out, whichever stands it tallest)
+				Quaternion best = e.transform.rotation;
+				float tall = shape().size.y;
+				foreach (Quaternion q in new[] { Quaternion.AngleAxis(90f, along) * best, Quaternion.AngleAxis(90f, outward) * best })
 				{
-					System.Func<Bounds> shape = () => { Bounds b = rr[0].bounds; foreach (Renderer x in rr) b.Encapsulate(x.bounds); return b; };
-					// (on its longest side: the placer stands a piece with its own axes the world's, which lays the _Low boulders
-					// down - 2.3 m tall; turned a quarter about the wall's line or the way out, whichever stands it tallest)
-					Quaternion best = e.transform.rotation;
-					float tall = shape().size.y;
-					foreach (Quaternion q in new[] { Quaternion.AngleAxis(90f, along) * best, Quaternion.AngleAxis(90f, outward) * best })
-					{
-						e.transform.rotation = q;
-						float hq = shape().size.y;
-						if (hq > tall + 0.01f) { tall = hq; best = q; }
-					}
-					// (its wide side along the wall, its thin side out)
-					e.transform.rotation = best;
-					Bounds b0 = shape();
-					float w0 = Mathf.Abs(along.x) * b0.size.x + Mathf.Abs(along.z) * b0.size.z;
-					e.transform.rotation = Quaternion.AngleAxis(90f, Vector3.up) * best;
-					Bounds b1 = shape();
-					if (Mathf.Abs(along.x) * b1.size.x + Mathf.Abs(along.z) * b1.size.z <= w0) e.transform.rotation = best;
-					// (each its own: turned off the wall's line, leaned, bigger or smaller)
-					e.transform.rotation = Quaternion.AngleAxis(lean, along) * Quaternion.AngleAxis(spin, Vector3.up) * e.transform.rotation;
-					e.transform.localScale *= size;
-					// (stretched up to the face's top where that is over the rock's - Old Mine Islet's channel walls stand 4-9 m over
-					// the sea, The Abyss's blue hole 17 m: along its own axis that points most up, at most 3 times)
-					float low = Mathf.Max(sea - 3f, sea + f.Bot - 0.3f);
-					Bounds sb = shape();
-					if (want - low > sb.size.y && sb.size.y > 0.5f)
-					{
-						float k = Mathf.Min(3f, (want - low) / sb.size.y);
-						Transform t = e.transform;
-						float ax = Mathf.Abs(t.right.y), ay = Mathf.Abs(t.up.y), az = Mathf.Abs(t.forward.y);
-						Vector3 ls = t.localScale;
-						t.localScale = ax >= ay && ax >= az ? new Vector3(ls.x * k, ls.y, ls.z) : ay >= az ? new Vector3(ls.x, ls.y * k, ls.z) : new Vector3(ls.x, ls.y, ls.z * k);
-						// (and wider along the wall by a third of that - 1.7 times at 3 - unless it then meets a piece: c3z65's
-						// stretched rocks stood like posts, one every 3-4 m; a wider one covers more of the wall, so fewer stand)
-						float wk = 1f + (k - 1f) * 0.35f;
-						if (wk > 1.05f)
-						{
-							int upAxis = ax >= ay && ax >= az ? 0 : ay >= az ? 1 : 2;
-							float dx = upAxis == 0 ? -1f : Mathf.Abs(Vector3.Dot(t.right, along)), dy = upAxis == 1 ? -1f : Mathf.Abs(Vector3.Dot(t.up, along)), dz = upAxis == 2 ? -1f : Mathf.Abs(Vector3.Dot(t.forward, along));
-							Vector3 narrow = t.localScale;
-							t.localScale = dx >= dy && dx >= dz ? new Vector3(narrow.x * wk, narrow.y, narrow.z) : dy >= dz ? new Vector3(narrow.x, narrow.y * wk, narrow.z) : new Vector3(narrow.x, narrow.y, narrow.z * wk);
-							Bounds wb = shape();
-							t.position += new Vector3(mid.x - wb.center.x, low - wb.min.y, mid.z - wb.center.z);
-							Physics.SyncTransforms();
-							var mine = new HashSet<Collider>(e.GetComponentsInChildren<Collider>(true));
-							wb = shape();
-							if (Physics.OverlapBox(wb.center, wb.extents * 0.85f, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore)
-								.Any(c => !(c is TerrainCollider) && !mine.Contains(c) && !own.Contains(c) && !RockStandsBefore(c)) || ropeCap(wb.center) < wb.max.y)
-								t.localScale = narrow;
-						}
-					}
-					// (its middle on the face, its foot at the low point)
-					Bounds nb = shape();
-					e.transform.position += new Vector3(mid.x - nb.center.x, low - nb.min.y, mid.z - nb.center.z);
+					e.transform.rotation = q;
+					float hq = shape().size.y;
+					if (hq > tall + 0.01f) { tall = hq; best = q; }
 				}
+				// (its wide side along the wall, its thin side out)
+				e.transform.rotation = best;
+				Bounds b0 = shape();
+				float w0 = Mathf.Abs(along.x) * b0.size.x + Mathf.Abs(along.z) * b0.size.z;
+				e.transform.rotation = Quaternion.AngleAxis(90f, Vector3.up) * best;
+				Bounds b1 = shape();
+				if (Mathf.Abs(along.x) * b1.size.x + Mathf.Abs(along.z) * b1.size.z <= w0) e.transform.rotation = best;
+				// (each its own: turned off the wall's line, leaned, bigger or smaller)
+				e.transform.rotation = Quaternion.AngleAxis(lean, along) * Quaternion.AngleAxis(spin, Vector3.up) * e.transform.rotation;
+				e.transform.localScale *= size;
+				// (stretched up to the face's top where that is over the rock's - Old Mine Islet's channel walls stand 4-9 m over
+				// the sea, The Abyss's blue hole 17 m: along its own axis that points most up, at most 3 times)
+				Bounds sb = shape();
+				Transform t = e.transform;
+				if (want - low > sb.size.y && sb.size.y > 0.5f)
+				{
+					float k = Mathf.Min(3f, (want - low) / sb.size.y);
+					float ax = Mathf.Abs(t.right.y), ay = Mathf.Abs(t.up.y), az = Mathf.Abs(t.forward.y);
+					int upAxis = ax >= ay && ax >= az ? 0 : ay >= az ? 1 : 2;
+					Vector3 ls = t.localScale;
+					t.localScale = upAxis == 0 ? new Vector3(ls.x * k, ls.y, ls.z) : upAxis == 1 ? new Vector3(ls.x, ls.y * k, ls.z) : new Vector3(ls.x, ls.y, ls.z * k);
+					// (and wider along the wall by 'widen' of that, unless it then meets a piece or a rope: c3z65's stretched rocks
+					// stood like posts, one every 3-4 m; c3z67's at a third were 16 m monoliths - a quarter now)
+					float wk = 1f + (k - 1f) * widen;
+					if (wk > 1.05f)
+					{
+						float dx = upAxis == 0 ? -1f : Mathf.Abs(Vector3.Dot(t.right, along)), dy = upAxis == 1 ? -1f : Mathf.Abs(Vector3.Dot(t.up, along)), dz = upAxis == 2 ? -1f : Mathf.Abs(Vector3.Dot(t.forward, along));
+						Vector3 narrow = t.localScale;
+						t.localScale = dx >= dy && dx >= dz ? new Vector3(narrow.x * wk, narrow.y, narrow.z) : dy >= dz ? new Vector3(narrow.x, narrow.y * wk, narrow.z) : new Vector3(narrow.x, narrow.y, narrow.z * wk);
+						Bounds wb = shape();
+						t.position += new Vector3(c.x - wb.center.x, low - wb.min.y, c.z - wb.center.z);
+						Physics.SyncTransforms();
+						var mine = new HashSet<Collider>(e.GetComponentsInChildren<Collider>(true));
+						wb = shape();
+						if (Physics.OverlapBox(wb.center, wb.extents * 0.85f, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore)
+							.Any(x => !(x is TerrainCollider) && !mine.Contains(x) && !own.Contains(x) && !RockStandsBefore(x)) || ropeCap(wb.center) < wb.max.y)
+							t.localScale = narrow;
+					}
+				}
+				// (its middle at c, its foot at the low point)
+				Bounds nb = shape();
+				t.position += new Vector3(c.x - nb.center.x, low - nb.min.y, c.z - nb.center.z);
 				Physics.SyncTransforms();
-				foreach (Collider c in e.GetComponentsInChildren<Collider>(true)) own.Add(c);
-				stood.Add(mid);
-				covered++;
-			}
+			};
+			int notOwn = 0, filled = 0;
+			var stillBare = new List<string>();
+			// (pass 0: a rock at each bare face no rock already covers; pass 1 (c3z67): at each face the sheet check would still
+			// find bare - the faces the first pass took as covered by a rock that missed them, or blocked for a full-size rock -
+			// a smaller one, 0.55-0.7 times, half as far along and not widened: The Abyss's blue hole kept 8 faces bare between
+			// two rocks and a buoy, Caisson Yard's pit 3)
+			for (int pass = 0; pass < 2; pass++)
+				foreach (SheetFace f in todo)
+				{
+					Vector3 mid = (f.Hi + f.Lo) * 0.5f;
+					Vector3 outward = new Vector3(f.Lo.x - f.Hi.x, 0f, f.Lo.z - f.Hi.z).normalized;
+					if (outward.sqrMagnitude < 0.5f) continue;
+					// (a face a rock already stood covers - its ray meets the rock, as the sheet check's does; the faces between two
+					// rocks get one of their own - c3z64: Caisson Yard's 4.6 m wall bare for 2/3 of the width between two rocks)
+					Vector3 from = f.Lo + outward * 0.5f; from.y = sea + Mathf.Clamp(f.Top * 0.5f, 0.25f, 3f);
+					float len = (f.Lo - f.Hi).magnitude + 1f;
+					if (pass == 0 ? own.Count > 0 && FaceCover(from, -outward, len, c => own.Contains(c)) != null : FaceCover(from, -outward, len, null) != null)
+					{
+						if (pass == 0) covered++;
+						continue;
+					}
+					float yaw = Mathf.Atan2(outward.x, outward.z) * Mathf.Rad2Deg;
+					Quaternion turn = Quaternion.Euler(0f, yaw, 0f);
+					Vector3 along = turn * Vector3.right;
+					var rnd = new System.Random(Mathf.RoundToInt(mid.x * 10f) * 73856093 ^ Mathf.RoundToInt(mid.z * 10f) * 19349663 ^ pass);
+					string piece = pieces[rnd.Next(pieces.Length)];
+					float spin = (float)(rnd.NextDouble() * 50.0 - 25.0), lean = (float)(rnd.NextDouble() * 16.0 - 8.0);
+					float size = pass == 0 ? 0.8f + (float)rnd.NextDouble() * 0.4f : 0.55f + (float)rnd.NextDouble() * 0.15f;
+					float want = sea + f.Top + 0.3f + (float)rnd.NextDouble() * 1.2f;
+					// (up to 0.9 m along the wall from the face's middle, from its place: not evenly spaced (c3z65: The Abyss's pillar
+					// fronted by a straight row of 8 rocks) - kept only where the rock still covers its own face, below; where a
+					// piece is in or on the wall, along it up to 4 m either way, then 0.7 or 1.4 m out of it, still holding the face's
+					// ray start - c3z65: Caisson Yard's pit wall bare 10 m between two rocks, its faces all meeting a dug tunnel, a
+					// fence or a floor)
+					float jit = pass == 0 ? (float)(rnd.NextDouble() * 1.8 - 0.9) : 0f;
+					float half = 2.3f * size;
+					string hit = null;
+					Vector3 at = mid;
+					bool clear = false;
+					foreach (float push in new[] { 0f, 0.7f, 1.4f })
+					{
+						foreach (float off in pass == 0 ? new[] { 0f, 1.5f, -1.5f, 2.5f, -2.5f, 4f, -4f } : new[] { 0f, 0.8f, -0.8f, 1.6f, -1.6f })
+						{
+							Vector3 q = mid + along * (off + jit) + outward * push;
+							string why = standIn(q, turn, half, outward);
+							if (why == null) { at = q; clear = true; break; }
+							if (off == 0f && push == 0f) hit = why;
+						}
+						if (clear) break;
+					}
+					if (!clear)
+					{
+						if (pass == 0) { int bn; blocked.TryGetValue(hit, out bn); blocked[hit] = bn + 1; }
+						else if (stillBare.Count < 6)
+						{
+							Vector3 r0 = Quaternion.Euler(0f, -tf.Yaw, 0f) * new Vector3(mid.x - tf.Origin.x, 0f, mid.z - tf.Origin.y);
+							stillBare.Add(hit + " at " + Num(r0.x) + " " + Num(r0.z));
+						}
+						continue;
+					}
+					Vector3 plain = at - along * jit;
+					if (jit != 0f && standIn(plain, turn, half, outward) != null) plain = at;
+					float low = Mathf.Max(sea - 3f, sea + f.Bot - 0.3f);
+					foreach (Vector3 pt in new[] { at, plain }) want = Mathf.Min(want, ropeCap(pt));
+					Vector3 r = Quaternion.Euler(0f, -tf.Yaw, 0f) * new Vector3(at.x - tf.Origin.x, 0f, at.z - tf.Origin.y);
+					var opt = new Dictionary<string, string> { { "h", "-3" }, { "sit", "1" }, { "centred", "1" }, { "yaw", Num(yaw - tf.Yaw) } };
+					EditorGameObject e;
+					Place(piece, r.x, r.z, opt, out e);
+					if (e == null) continue;
+					// (the rock must cover its own face as the sheet check sees it: else again turned and leaned less and without the
+					// jitter, then straight at the face's middle, unwidened - c3z67: a 44 m wall in The Abyss bare between two
+					// rocks the first pass had counted as covering it)
+					Quaternion rot0 = e.transform.rotation;
+					Vector3 sc0 = e.transform.localScale;
+					var mineAll = new HashSet<Collider>(e.GetComponentsInChildren<Collider>(true));
+					bool ownFace = false;
+					for (int tryN = 0; tryN < 3 && !ownFace; tryN++)
+					{
+						float v = tryN == 0 ? 1f : tryN == 1 ? 0.4f : 0f;
+						e.transform.rotation = rot0;
+						e.transform.localScale = sc0;
+						shapeRock(e, tryN == 0 ? at : plain, along, outward, low, want, spin * v, lean * v, tryN == 2 ? Mathf.Max(size, pass == 0 ? 1f : size) : size, pass == 0 && tryN < 2 ? 0.25f : 0f);
+						ownFace = FaceCover(from, -outward, len, c => mineAll.Contains(c)) != null;
+					}
+					foreach (Collider c in mineAll) own.Add(c);
+					stood.Add(at);
+					if (!ownFace) notOwn++;
+					else if (pass == 0) covered++;
+					else filled++;
+					if (pass == 1 && !ownFace && stillBare.Count < 6)
+					{
+						Vector3 r0 = Quaternion.Euler(0f, -tf.Yaw, 0f) * new Vector3(mid.x - tf.Origin.x, 0f, mid.z - tf.Origin.y);
+						stillBare.Add("a rock not covering it at " + Num(r0.x) + " " + Num(r0.z));
+					}
+				}
+			rockFillNote = (filled > 0 ? "; " + filled + " smaller ones in the gaps left" : "") + (notOwn > 0 ? "; " + notOwn + " not covering their own face" : "") +
+				(stillBare.Count > 0 ? "; faces still bare: " + string.Join(", ", stillBare.ToArray()) : "");
 			return stood.Count;
 		}
+		/// <summary>StandCliffRocks' second pass and what it could not cover, for the cliffs step's log line.</summary>
+		static string rockFillNote = "";
 
 		/// <summary>Everything a look meets, back faces too, nearest first: "name d m (back)" - what the see-through ray went
 		/// through and what it saw (c3 round 3, for the cave fixes).</summary>
