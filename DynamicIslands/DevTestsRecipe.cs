@@ -3778,6 +3778,12 @@ namespace DynamicIslands
 		/// <summary>What lies loose on the land and rides ZipShaveGround's cut down instead of holding the land (c3z48, 11-21).</summary>
 		static readonly Regex ShaveRiders = new Regex(@"^(Pickup_|QuestItemPickup|Note_|Loot_)");
 
+		/// <summary>A lever's or a mechanism's works reach far from where it stands; land under the rope more than ShaveFarPart m
+		/// from such an object isn't held by it (c3z58: The Coldhold Vault's floodlever, UT_JumpPuzzle_LiftMechanism_Lever, held 10-11
+		/// points 44 m off).</summary>
+		static readonly Regex ShaveFarOwner = new Regex(@"Lever|Mechanism");
+		const float ShaveFarPart = 12f;
+
 		/// <summary>
 		/// zipto's last step (c3 round 4, 11-21 c3z38: ropes on 10 islands 0.03-3.97 m into a hump between their ends, or 0.1-0.4 m
 		/// short of the ground check's LineLow, after ZipClearGround had raised their near ends the most it does or found them on a
@@ -3820,6 +3826,7 @@ namespace DynamicIslands
 			// box knows its object, so a cut held off the rope can say by what - c3 round 8)
 			float margin = Mathf.Max(1f, 1.5f * Mathf.Max(sx, sz));
 			var keep = new List<KeyValuePair<Bounds, EditorGameObject>>();
+			var keepPart = new List<string>();
 			// (what lies loose on the land - a pickup, a find, a note, a crate - rides the cut down instead of holding it, and a
 			// zone or a creature's spawn (nothing a world shows) never holds it: 11-21 c3z48, the cuts under 5 islands' ropes were held
 			// by Zone_Trigger, Zone_Sound, Zone_Atmosphere and the quests' token pickups, leaving the ropes 0.03-0.76 m in the ground)
@@ -3839,12 +3846,13 @@ namespace DynamicIslands
 				IEnumerable<Renderer> rs = o.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled);
 				if (o == e) rs = rs.Where(r => Mathf.Max(r.bounds.size.x, r.bounds.size.z) < 4f);
 				IEnumerable<Collider> cs = o == e ? Enumerable.Empty<Collider>() : o.GetComponentsInChildren<Collider>(false).Where(c => c.enabled && !c.isTrigger);
-				foreach (Bounds b0 in rs.Select(r => r.bounds).Concat(cs.Select(c => c.bounds)))
+				foreach (KeyValuePair<Bounds, Component> pb in rs.Select(r => new KeyValuePair<Bounds, Component>(r.bounds, r)).Concat(cs.Select(c => new KeyValuePair<Bounds, Component>(c.bounds, c))))
 				{
-					Bounds b = b0;
+					Bounds b = pb.Key;
 					if (b.min.y > landY(b.center.x, b.center.z) + 0.5f) continue;
 					b.Expand(new Vector3(2f * margin, 0f, 2f * margin));
 					keep.Add(new KeyValuePair<Bounds, EditorGameObject>(b, o));
+					keepPart.Add(pb.Value.GetType().Name + " " + pb.Value.name + " " + Num(b.size.x) + " x " + Num(b.size.z) + " m");
 				}
 			}
 			float[,] before = td.GetHeights(0, 0, res, res), after = (float[,])before.Clone();
@@ -3855,6 +3863,8 @@ namespace DynamicIslands
 			var held = new HashSet<int>();
 			var free = new HashSet<int>();
 			var holders = new Dictionary<EditorGameObject, int>();
+			var holderPart = new Dictionary<EditorGameObject, string>();
+			var farParts = new Dictionary<string, int>();
 			for (int i = 0; i + 1 < rope.Count; i++)
 			{
 				Vector3 a = rope[i], b = rope[i + 1];
@@ -3881,8 +3891,21 @@ namespace DynamicIslands
 							if (!free.Contains(id))
 							{
 								EditorGameObject by = null;
-								foreach (KeyValuePair<Bounds, EditorGameObject> kb in keep)
-									if (wx >= kb.Key.min.x && wx <= kb.Key.max.x && wz >= kb.Key.min.z && wz <= kb.Key.max.z) { by = kb.Value; break; }
+								for (int ki = 0; ki < keep.Count; ki++)
+								{
+									KeyValuePair<Bounds, EditorGameObject> kb = keep[ki];
+									if (wx < kb.Key.min.x || wx > kb.Key.max.x || wz < kb.Key.min.z || wz > kb.Key.max.z) continue;
+									Vector3 op = kb.Value.transform.position;
+									if (kb.Value != e && ShaveFarOwner.IsMatch(kb.Value.GameObjectName ?? "") && new Vector2(wx - op.x, wz - op.z).magnitude > ShaveFarPart)
+									{
+										string fk = kb.Value.GameObjectName + "'s " + keepPart[ki];
+										int fn; farParts.TryGetValue(fk, out fn); farParts[fk] = fn + 1;
+										continue;
+									}
+									by = kb.Value;
+									if (!holderPart.ContainsKey(by)) holderPart[by] = keepPart[ki];
+									break;
+								}
 								if (by != null) { held.Add(id); int hn; holders.TryGetValue(by, out hn); holders[by] = hn + 1; continue; }
 								free.Add(id);
 							}
@@ -3896,11 +3919,13 @@ namespace DynamicIslands
 			// (which objects held the land, the most first: the recipe's own, its scattered ones, or the island's - c3 round 8)
 			string heldBy = holders.Count == 0 ? "" : " - held by " + string.Join("; ", holders.OrderByDescending(kv => kv.Value).Take(4).Select(kv => kv.Key.GameObjectName + " at " +
 				Num(kv.Key.transform.position.x - corner.x) + " " + Num(kv.Key.transform.position.z - corner.z) + " (" + kv.Value + " points, " +
-				(recipePlaced.Contains(kv.Key.gameObject) ? "the recipe's" : recipeScattered.Contains(kv.Key.gameObject) ? "the recipe's scattered" : kv.Key == e ? "the line's own" : "the island's") + ")").ToArray()) +
+				(recipePlaced.Contains(kv.Key.gameObject) ? "the recipe's" : recipeScattered.Contains(kv.Key.gameObject) ? "the recipe's scattered" : kv.Key == e ? "the line's own" : "the island's") +
+				(holderPart.ContainsKey(kv.Key) ? ", its " + holderPart[kv.Key] : "") + ")").ToArray()) +
 				(holders.Count > 4 ? " and " + (holders.Count - 4) + " more" : "");
+			string farNote = farParts.Count == 0 ? "" : "; not held by " + string.Join("; ", farParts.OrderByDescending(kv => kv.Value).Take(3).Select(kv => kv.Key + " (" + kv.Value + " points, over " + Num(ShaveFarPart) + " m off it)").ToArray());
 			if (cut.Count == 0)
 				return LogWords("  WARNING: zipto: its rope comes " + Num(real0) + " m over the ground at " + where0 + " and the land under it can't be cut (" + held.Count + " points under objects, " + onHill +
-					" rope points over the cave hill's skin)" + heldBy + ": move an end");
+					" rope points over the cave hill's skin)" + heldBy + farNote + ": move an end");
 			float[,,] alphaBefore = td.GetAlphamaps(0, 0, ares, ares);
 			float[,] maskBefore = terraineditor.paintMask != null ? (float[,])terraineditor.paintMask.Clone() : null;
 			td.SetHeights(0, 0, after);
@@ -3937,7 +3962,7 @@ namespace DynamicIslands
 			float real1 = at1.y - ground(at1.x, at1.z);
 			string words = "zipto: its rope came " + Num(real0) + " m over the ground at " + where0 + " - the land under it cut down up to " + Num(most) + " m (" + cut.Count + " points, " +
 				Num(min.x - corner.x) + " " + Num(min.z - corner.z) + " .. " + Num(max.x - corner.x) + " " + Num(max.z - corner.z) + ")" + (held.Count > 0 ? ", " + held.Count + " points held by objects on them" + heldBy : "") +
-				(onHill > 0 ? ", " + onHill + " rope points over the cave hill's skin" : "") + (deep.Count > 0 ? ", " + deep.Count + " points held at " + Num(ShaveMost) + " m deep" : "") + "; the least now " + Num(real1) + " m at " + Num(at1.x - corner.x) + " " + Num(at1.z - corner.z);
+				(onHill > 0 ? ", " + onHill + " rope points over the cave hill's skin" : "") + (deep.Count > 0 ? ", " + deep.Count + " points held at " + Num(ShaveMost) + " m deep" : "") + farNote + "; the least now " + Num(real1) + " m at " + Num(at1.x - corner.x) + " " + Num(at1.z - corner.z);
 			return LogWords(low1 < ZiplineEnds.LineLow ? "  WARNING: " + words + ": still under the ground check's " + Num(ZiplineEnds.LineWant(new Vector2(far.x - at1.x, far.z - at1.z).magnitude)) + " m there - move an end" : "  " + words);
 		}
 

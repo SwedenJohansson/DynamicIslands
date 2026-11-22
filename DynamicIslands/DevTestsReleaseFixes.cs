@@ -298,6 +298,51 @@ namespace DynamicIslands
 
 		/// <summary>What a shot shows, as a grid of rays (12 x 7, 60 degrees, 16:9): the object hit, its normal's height and the
 		/// distance - names the parts in a picture (a stretched pillar, a slab before a mouth).</summary>
+		/// <summary>The eye for a cave mouth's picture: close (q 0: 7 m out, 2.2 m up) or three-quarter (q 1: 16 m out turned 40
+		/// degrees, 7 m up), 1.7 m over what is under it. Kept when it stands in nothing solid (nothing within 0.4 m, and the look
+		/// meets no solid thing's inside first - back faces on); else other turns, distances and heights where the look also meets
+		/// nothing till 3 m short of the mouth (c3z54: Old Mine Islet's mouth q picture taken from inside the rock). Vector3.zero
+		/// when none.</summary>
+		static Vector3 MouthEye(Vector3 at, Vector3 outDir, int q, Vector3 look)
+		{
+			System.Func<float, float, float, Vector3> eyeAt = (turn, dist, up) =>
+			{
+				Vector3 p = at + (Quaternion.Euler(0f, turn, 0f) * outDir) * dist + Vector3.up * up;
+				RaycastHit gh;
+				if (Physics.Raycast(new Vector3(p.x, p.y + 40f, p.z), Vector3.down, out gh, 80f, ~0, QueryTriggerInteraction.Ignore)) p.y = Mathf.Max(p.y, gh.point.y + 1.7f);
+				p.y = Mathf.Max(p.y, 1.5f);
+				return p;
+			};
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				System.Func<Vector3, bool, bool> fits = (p, clearLook) =>
+				{
+					if (Physics.OverlapSphere(p, 0.4f, ~0, QueryTriggerInteraction.Ignore).Length > 0) return false;
+					Vector3 d = look - p;
+					RaycastHit h;
+					if (!Physics.Raycast(p, d.normalized, out h, d.magnitude, ~0, QueryTriggerInteraction.Ignore)) return true;
+					if (Vector3.Dot(h.normal, d) > 0f) return false;
+					return !clearLook || h.distance >= d.magnitude - 3f;
+				};
+				Vector3 first = q == 0 ? eyeAt(0f, 7f, 2.2f) : eyeAt(40f, 16f, 7f);
+				if (fits(first, false)) return first;
+				float[] turns = q == 0 ? new[] { 20f, -20f, 40f, -40f } : new[] { -40f, 25f, -25f, 55f, -55f, 0f };
+				float[] dists = q == 0 ? new[] { 7f, 9f, 5f } : new[] { 16f, 12f, 20f };
+				float[] ups = q == 0 ? new[] { 2.2f, 3.5f } : new[] { 7f, 10f, 5f };
+				foreach (float u in ups)
+					foreach (float t in turns)
+						foreach (float d in dists)
+						{
+							Vector3 p = eyeAt(t, d, u);
+							if (fits(p, true)) return p;
+						}
+				return Vector3.zero;
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+		}
+
 		static void PickGrid(Vector3 eye, Vector3 look, string label)
 		{
 			Quaternion rot = Quaternion.LookRotation(look - eye);
@@ -557,10 +602,8 @@ namespace DynamicIslands
 						Vector3 at = v.Key, outDir = v.Value;
 						foreach (int q in new[] { 0, 1 })
 						{
-							Vector3 eye = q == 0 ? at + outDir * 7f + Vector3.up * 2.2f : at + (Quaternion.Euler(0f, 40f, 0f) * outDir) * 16f + Vector3.up * 7f;
-							RaycastHit gh;
-							if (Physics.Raycast(new Vector3(eye.x, eye.y + 40f, eye.z), Vector3.down, out gh, 80f, ~0, QueryTriggerInteraction.Ignore)) eye.y = Mathf.Max(eye.y, gh.point.y + 1.7f);
-							eye.y = Mathf.Max(eye.y, 1.5f);
+							Vector3 eye = MouthEye(at, outDir, q, at + Vector3.up * (q == 0 ? 1.5f : 2.5f));
+							if (eye == Vector3.zero) { Log("    mouth " + mv + (q == 0 ? " close" : " three-quarter") + " view: every eye tried stands in a solid thing or behind one - skipped"); continue; }
 							yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), CaveShotPre + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
 							PickGrid(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), CaveShotPre + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
 							// (r84 test: the same with the sun's shadows off - is a jagged line a shadow?)
