@@ -91,6 +91,10 @@ namespace DynamicIslands
 			// (the word 'shots' anywhere: the pictures the check asks for - its worst sheets, cave looks - taken while each island is there)
 			checkShots = args != null && args.Contains("shots");
 			if (checkShots) args = args.Where(a => a != "shots").ToArray();
+			// (rocks=<piece>: with shots, CISheetIslands also pictures up to 4 of that piece standing in the waterline on each
+			// island - the cliffs step's rocks=, to see them standing, not floating or stretched oddly; c3z63 11-22)
+			checkRockShots = args == null ? null : args.Where(a => a.StartsWith("rocks=", StringComparison.Ordinal)).Select(a => a.Substring(6)).LastOrDefault();
+			if (checkRockShots != null) args = args.Where(a => !a.StartsWith("rocks=", StringComparison.Ordinal)).ToArray();
 			// (as=<tag>: the report also copied to <file>_islands_<tag>.txt - two phases of one job wrote the same file and the
 			// first one's lines were lost, c3z46 11-21)
 			string tag = args == null ? null : args.Where(a => a.StartsWith("as=", StringComparison.Ordinal)).Select(a => a.Substring(3)).LastOrDefault();
@@ -573,69 +577,14 @@ namespace DynamicIslands
 				// (a picture from its low side, 3.5 m over the sea, as far out as the land lets - 22 m, less in a pit)
 				Vector3 outward = new Vector3(outSum.x, 0f, outSum.z).normalized;
 				if (outward == Vector3.zero) outward = Vector3.forward;
-				Vector3 at = new Vector3(centre.x, sea + Mathf.Clamp(highest * 0.4f, 0.5f, 4f), centre.z), eye = at;
-				// (the eye over open water with nothing built between it and the face - Shelter Atoll's second picture stood behind a
-				// metal wall (c3z52): straight out first, then turned up to 60 degrees either way; none clear, the first over water)
-				// (clear = nothing built in the view cone near the eye either: a post or pillar 1-3 m beside the eye filled a third of
-				// Caisson Yard's and The Abyss's pictures (c3z59) - any collider within 12 m whose nearest point lies within 45 degrees
-				// of the look, or within 1.5 m whichever way; the land across the look or beside the eye too (c3z61); none clear,
-				// the wet eye with the fewest)
-				// (c3z62: Caisson Yard's first picture still looked along a channel, a brown land face 3-6 m beside and across the
-				// look filling the frame - the 2 m check missed it. The land in the picture is counted too: dry ground in a 60
-				// degree fan between the eye and the face, the more the worse, and any rising over the eye's sight line; an eye 7 m
-				// up and turns of 90 degrees and 4 m out tried after the 3.5 m ones; none clear, the eye with the least in its view)
-				Vector3 bestWet = Vector3.zero;
-				int bestCount = int.MaxValue;
-				bool found = false;
-				foreach (float up in new[] { 3.5f, 7f })
-				{
-					foreach (float turn in new[] { 0f, 30f, -30f, 60f, -60f, 90f, -90f })
-					{
-						Vector3 way = Quaternion.Euler(0f, turn, 0f) * outward;
-						foreach (float d in new[] { 22f, 16f, 11f, 7f, 4f })
-						{
-							Vector3 p = centre + way * d; p.y = sea + up;
-							if (land.SampleHeight(p) + tp.y >= p.y - 1f) continue;
-							Vector3 look = at - p;
-							float near = Mathf.Min(12f, look.magnitude - 2f);
-							int inCone = 0;
-							foreach (Collider c in Physics.OverlapSphere(p, 12f, ~0, QueryTriggerInteraction.Ignore))
-							{
-								if (c is TerrainCollider) continue;
-								Vector3 v = c.ClosestPointOnBounds(p) - p;
-								if (v.magnitude < 1.5f || (v.magnitude < near && Vector3.Angle(v, look) < 45f)) inCone += 1000;
-							}
-							foreach (RaycastHit h in Physics.RaycastAll(p, look.normalized, look.magnitude - 1.5f, ~0, QueryTriggerInteraction.Ignore))
-								if (!(h.collider is TerrainCollider) || h.distance < look.magnitude - 4f) { inCone += 1000; break; }
-							// (nor the land itself: c3z61's Caisson Yard picture stood pressed against a channel's other wall - the ground
-							// across the look before the face, or a wall within 2 m of the eye, makes it not clear)
-							foreach (Vector3 side in new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right })
-								if (land.SampleHeight(p + side * 2f) + tp.y >= p.y - 0.5f) { inCone += 500; break; }
-							Vector3 flat = new Vector3(look.x, 0f, look.z);
-							float span = flat.magnitude - 3f;
-							flat.Normalize();
-							for (float a = -30f; a <= 30f; a += 10f)
-								for (float s = 1.5f; s <= Mathf.Min(span, 20f); s += 1.5f)
-								{
-									Vector3 q = p + Quaternion.Euler(0f, a, 0f) * flat * s;
-									float g = land.SampleHeight(q) + tp.y;
-									if (g >= p.y + (at.y - p.y) * s / Mathf.Max(1f, span + 3f) - 0.5f) inCone += 5;
-									else if (g >= sea + 0.3f) inCone += 1;
-								}
-							if (inCone < bestCount) { bestCount = inCone; bestWet = p; }
-							if (inCone > 0) continue;
-							eye = p; found = true; break;
-						}
-						if (found) break;
-					}
-					if (found) break;
-				}
-				if (!found) eye = bestWet != Vector3.zero ? bestWet : centre + outward * 7f + Vector3.up * (sea + 3.5f - centre.y);
+				Vector3 at = new Vector3(centre.x, sea + Mathf.Clamp(highest * 0.4f, 0.5f, 4f), centre.z);
+				Vector3 eye = SheetEye(land, tp, sea, centre, outward, at, null);
 				shots.Add(new KeyValuePair<int, Vector3[]>(n, new[] { eye, at }));
 			}
 			foreach (var s in sheets.OrderByDescending(s => s.Key)) lines.Add(s.Value);
 			int shot = 0;
 			foreach (var s in shots.OrderByDescending(s => s.Key).Take(2)) QueueCheckShot("sheet_" + e.Name + "_" + ++shot, s.Value[0], s.Value[1]);
+			if (checkShots && checkRockShots != null) foreach (var rs in RockShots(e, land, tp, sea, checkRockShots)) QueueCheckShot(rs.Key, rs.Value[0], rs.Value[1]);
 			return lines;
 		}
 
@@ -891,6 +840,124 @@ namespace DynamicIslands
 			return "cliffs: " + faces.Count + " bare faces, " + raised.Count + " points raised (up to " + Num(most) + " m), " + carried + " small things on the sea floor carried up with it, " + blocked + " left under objects" + most3 + ", " + kept + " left open between two walls; " + leftFaces.Count + " bare faces left" + whyLeft + rockNote;
 		}
 
+		/// <summary>CISheetIslands' rocks=<piece> pictures (c3z63 11-22: the cliffs step's stood rocks are to be seen before a merge -
+		/// not floating, not see-through, not stretched oddly, not in a path): up to 4 of that piece reaching from under the sea to
+		/// over it - the tallest, then each the farthest from those already chosen - each from the way the land falls lowest 8 m
+		/// round it, the eye picked as a sheet's (the rock itself not counted in its way). The names say the island, the piece and
+		/// its top over the sea; the log lists them.</summary>
+		static List<KeyValuePair<string, Vector3[]>> RockShots(IslandWorldState.Entry e, Terrain land, Vector3 tp, float sea, string piece)
+		{
+			var list = new List<KeyValuePair<string, Vector3[]>>();
+			var rocks = new List<KeyValuePair<Transform, Bounds>>();
+			foreach (IslandObjectRef r in e.Root.GetComponentsInChildren<IslandObjectRef>(true))
+			{
+				if (r == null || !r.gameObject.activeInHierarchy || !string.Equals(r.ObjectName, piece, StringComparison.OrdinalIgnoreCase)) continue;
+				Renderer[] rr = r.GetComponentsInChildren<Renderer>();
+				if (rr.Length == 0) continue;
+				Bounds b = rr[0].bounds;
+				foreach (Renderer x in rr) b.Encapsulate(x.bounds);
+				if (b.min.y > sea - 0.5f || b.max.y < sea + 1f) continue;
+				rocks.Add(new KeyValuePair<Transform, Bounds>(r.transform, b));
+			}
+			if (rocks.Count == 0) { Log("  rock pictures: no " + piece + " standing in the waterline on " + e.Name); return list; }
+			var pick = new List<KeyValuePair<Transform, Bounds>> { rocks.OrderByDescending(k => k.Value.max.y).First() };
+			while (pick.Count < 4 && pick.Count < rocks.Count)
+				pick.Add(rocks.Where(k => !pick.Contains(k)).OrderByDescending(k => pick.Min(q => (q.Value.center - k.Value.center).magnitude)).First());
+			var said = new List<string>();
+			foreach (var k in pick)
+			{
+				Vector3 c = k.Value.center, outward = Vector3.forward;
+				float lowest = float.MaxValue;
+				for (int a = 0; a < 360; a += 30)
+				{
+					Vector3 d = Quaternion.Euler(0f, a, 0f) * Vector3.forward;
+					float g = land.SampleHeight(c + d * 8f) + tp.y;
+					if (g < lowest) { lowest = g; outward = d; }
+				}
+				Vector3 at = new Vector3(c.x, Mathf.Clamp((k.Value.max.y + sea) * 0.5f, sea + 0.5f, sea + 6f), c.z);
+				var ignore = new HashSet<Collider>(k.Key.GetComponentsInChildren<Collider>(true));
+				Vector3 eye = SheetEye(land, tp, sea, new Vector3(c.x, sea, c.z), outward, at, ignore);
+				string name = "rock_" + e.Name + "_" + (list.Count + 1) + "_top" + Mathf.RoundToInt(k.Value.max.y - sea);
+				list.Add(new KeyValuePair<string, Vector3[]>(name, new[] { eye, at }));
+				said.Add(name + " at " + Num(c.x - e.Position.x) + " " + Num(c.z - e.Position.z) + " (" + Num(k.Value.size.x) + " x " + Num(k.Value.size.z) + " m, " + Num(k.Value.min.y - sea) + ".." + Num(k.Value.max.y - sea) + " m over the sea)");
+			}
+			Log("  rock pictures: " + rocks.Count + " " + piece + " in the waterline on " + e.Name + "; " + string.Join("; ", said.ToArray()));
+			return list;
+		}
+
+		/// <summary>The eye for a picture of a face (or a stood rock) at 'at', seen from 'outward' of centre over the sea: the first
+		/// clear one, else the one with the least in its view. ignore: colliders that don't count (the rock pictured).</summary>
+		static Vector3 SheetEye(Terrain land, Vector3 tp, float sea, Vector3 centre, Vector3 outward, Vector3 at, HashSet<Collider> ignore)
+		{
+			// (the eye over open water with nothing built between it and the face - Shelter Atoll's second picture stood behind a
+			// metal wall (c3z52): straight out first, then turned up to 60 degrees either way; none clear, the first over water)
+			// (clear = nothing built in the view cone near the eye either: a post or pillar 1-3 m beside the eye filled a third of
+			// Caisson Yard's and The Abyss's pictures (c3z59) - any collider within 12 m whose nearest point lies within 45 degrees
+			// of the look, or within 1.5 m whichever way; the land across the look or beside the eye too (c3z61); none clear,
+			// the wet eye with the fewest)
+			// (c3z62: Caisson Yard's first picture still looked along a channel, a brown land face 3-6 m beside and across the
+			// look filling the frame - the 2 m check missed it. The land in the picture is counted too: dry ground in a 60
+			// degree fan between the eye and the face, the more the worse, and any rising over the eye's sight line; an eye 7 m
+			// up and turns of 90 degrees and 4 m out tried after the 3.5 m ones; none clear, the eye with the least in its view)
+			Vector3 eye = at;
+			Vector3 bestWet = Vector3.zero;
+			int bestCount = int.MaxValue;
+			bool found = false;
+			foreach (float up in new[] { 3.5f, 7f })
+			{
+				foreach (float turn in new[] { 0f, 30f, -30f, 60f, -60f, 90f, -90f })
+				{
+					Vector3 way = Quaternion.Euler(0f, turn, 0f) * outward;
+					foreach (float d in new[] { 22f, 16f, 11f, 7f, 4f })
+					{
+						Vector3 p = centre + way * d; p.y = sea + up;
+						if (land.SampleHeight(p) + tp.y >= p.y - 1f) continue;
+						Vector3 look = at - p;
+						float near = Mathf.Min(12f, look.magnitude - 2f);
+						int inCone = 0;
+						foreach (Collider c in Physics.OverlapSphere(p, 12f, ~0, QueryTriggerInteraction.Ignore))
+						{
+							if (c is TerrainCollider || (ignore != null && ignore.Contains(c))) continue;
+							Vector3 v = c.ClosestPointOnBounds(p) - p;
+							if (v.magnitude < 1.5f || (v.magnitude < near && Vector3.Angle(v, look) < 45f)) inCone += 1000;
+						}
+						foreach (RaycastHit h in Physics.RaycastAll(p, look.normalized, look.magnitude - 1.5f, ~0, QueryTriggerInteraction.Ignore))
+							if ((ignore == null || !ignore.Contains(h.collider)) && (!(h.collider is TerrainCollider) || h.distance < look.magnitude - 4f)) { inCone += 1000; break; }
+						// (nor the land itself: c3z61's Caisson Yard picture stood pressed against a channel's other wall - the ground
+						// across the look before the face, or a wall within 2 m of the eye, makes it not clear)
+						foreach (Vector3 side in new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right })
+							if (land.SampleHeight(p + side * 2f) + tp.y >= p.y - 0.5f) { inCone += 500; break; }
+						Vector3 flat = new Vector3(look.x, 0f, look.z);
+						float span = flat.magnitude - 3f;
+						flat.Normalize();
+						for (float a = -30f; a <= 30f; a += 10f)
+							for (float s = 1.5f; s <= Mathf.Min(span, 20f); s += 1.5f)
+							{
+								Vector3 q = p + Quaternion.Euler(0f, a, 0f) * flat * s;
+								float g = land.SampleHeight(q) + tp.y;
+								if (g >= p.y + (at.y - p.y) * s / Mathf.Max(1f, span + 3f) - 0.5f) inCone += 5;
+								else if (g >= sea + 0.3f) inCone += 1;
+							}
+						if (inCone < bestCount) { bestCount = inCone; bestWet = p; }
+						if (inCone > 0) continue;
+						eye = p; found = true; break;
+					}
+					if (found) break;
+				}
+				if (found) break;
+			}
+			if (!found) eye = bestWet != Vector3.zero ? bestWet : centre + outward * 7f + Vector3.up * (sea + 3.5f - centre.y);
+			return eye;
+		}
+
+		/// <summary>A piece a stood cliff rock may stand in front of (StandCliffRocks): a log, a natural rock, a bush.</summary>
+		static bool RockStandsBefore(Collider c)
+		{
+			EditorGameObject by = c.GetComponentInParent<EditorGameObject>();
+			string n = by != null ? (by.GameObjectName ?? by.name) : c.name;
+			return Regex.IsMatch(n, @"^Log(_|\s|$)|Driftwood", RegexOptions.IgnoreCase) || NaturalRock(n) || Tuft.IsMatch(n);
+		}
+
 		/// <summary>The cliffs step's rocks=: a rock piece stood in the waterline at each bare face the talus could not reach
 		/// (a pit's or a shaft's wall, a channel, one held back by a piece - not at the terrain's edge), half in the wall, on its
 		/// longest side and its wide side along the wall, from 3 m under the sea (or the face's foot when that is higher) up to the
@@ -915,10 +982,20 @@ namespace DynamicIslands
 				float yaw = Mathf.Atan2(outward.x, outward.z) * Mathf.Rad2Deg;
 				Quaternion turn = Quaternion.Euler(0f, yaw, 0f);
 				Vector3 along = turn * Vector3.right;
-				// (a rock where it would meet a placed piece - a ladder, an air pocket, a buoy - is left out; the rocks this step
-				// stood are no such piece)
-				Collider hit = Physics.OverlapBox(new Vector3(mid.x, sea + 0.5f, mid.z), new Vector3(2.3f, 3.4f, 1.1f), turn, ~0, QueryTriggerInteraction.Ignore)
-					.FirstOrDefault(c => !(c is TerrainCollider) && !own.Contains(c));
+				// (a rock where it would meet a placed piece - a ladder, an air pocket, a buoy, a tunnel's mouth - is moved along the
+				// wall up to 4 m either way, else left out; the rocks this step stood are no such piece, nor a log or a natural rock,
+				// which the rock may stand in front of - c3z63: Caisson Yard's last sheet, a 4.6 m wall, kept bare by 5 logs and a
+				// dug tunnel's mouth)
+				Collider hit = null;
+				Vector3 at = mid;
+				foreach (float off in new[] { 0f, 2.5f, -2.5f, 4f, -4f })
+				{
+					Vector3 q = mid + along * off;
+					Collider h = Physics.OverlapBox(new Vector3(q.x, sea + 0.5f, q.z), new Vector3(2.3f, 3.4f, 1.1f), turn, ~0, QueryTriggerInteraction.Ignore)
+						.FirstOrDefault(c => !(c is TerrainCollider) && !own.Contains(c) && !RockStandsBefore(c));
+					if (h == null) { hit = null; at = q; break; }
+					if (off == 0f) hit = h;
+				}
 				if (hit != null)
 				{
 					EditorGameObject by = hit.GetComponentInParent<EditorGameObject>();
@@ -926,6 +1003,7 @@ namespace DynamicIslands
 					int bn; blocked.TryGetValue(n, out bn); blocked[n] = bn + 1;
 					continue;
 				}
+				mid = at;
 				Vector3 r = Quaternion.Euler(0f, -tf.Yaw, 0f) * new Vector3(mid.x - tf.Origin.x, 0f, mid.z - tf.Origin.y);
 				var opt = new Dictionary<string, string> { { "h", "-3" }, { "sit", "1" }, { "centred", "1" }, { "yaw", Num(yaw - tf.Yaw) } };
 				EditorGameObject e;
@@ -1011,6 +1089,8 @@ namespace DynamicIslands
 		/// <summary>Pictures a check asks for (SheetProblems' sheets, GroundProblems' cave looks), taken by GroundIslandsRoutine
 		/// while the island is still there; only with the check's 'shots' word, at most 8 an island.</summary>
 		static bool checkShots;
+		/// <summary>CISheetIslands' rocks=: the piece whose stood rocks it pictures too (RockShots), else null.</summary>
+		static string checkRockShots;
 		static readonly List<KeyValuePair<string, Vector3[]>> checkShotQueue = new List<KeyValuePair<string, Vector3[]>>();
 		static void QueueCheckShot(string name, Vector3 from, Vector3 at)
 		{
