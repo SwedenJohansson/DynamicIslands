@@ -618,7 +618,7 @@ namespace DynamicIslands
 				Vector3 outward = new Vector3(outSum.x, 0f, outSum.z).normalized;
 				if (outward == Vector3.zero) outward = Vector3.forward;
 				Vector3 at = new Vector3(centre.x, sea + Mathf.Clamp(highest * 0.4f, 0.5f, 4f), centre.z);
-				Vector3 eye = SheetEye(land, tp, sea, centre, outward, at, null);
+				Vector3 eye = SheetEye(land, tp, sea, centre, outward, at, null, null);
 				shots.Add(new KeyValuePair<int, Vector3[]>(n, new[] { eye, at }));
 			}
 			foreach (var s in sheets.OrderByDescending(s => s.Key)) lines.Add(s.Value);
@@ -929,8 +929,11 @@ namespace DynamicIslands
 					if (g < lowest) { lowest = g; outward = d; }
 				}
 				Vector3 at = new Vector3(c.x, Mathf.Clamp((k.Value.max.y + sea) * 0.5f, sea + 0.5f, sea + 6f), c.z);
-				var ignore = new HashSet<Collider>(k.Key.GetComponentsInChildren<Collider>(true));
-				Vector3 eye = SheetEye(land, tp, sea, new Vector3(c.x, sea, c.z), outward, at, ignore);
+				// (8-14 m back, the stood rocks round it not counted in its way - c3z65: four of eight pictures were one boulder
+				// filling the frame: every eye had a neighbour rock in its view, and the 4 m one, with the least in its short
+				// look, won)
+				var ignore = new HashSet<Collider>(rocks.SelectMany(q => q.Key.GetComponentsInChildren<Collider>(true)));
+				Vector3 eye = SheetEye(land, tp, sea, new Vector3(c.x, sea, c.z), outward, at, ignore, new[] { 10f, 12f, 8f, 14f });
 				string name = "rock_" + e.Name + "_" + (list.Count + 1) + "_top" + Mathf.RoundToInt(k.Value.max.y - sea);
 				list.Add(new KeyValuePair<string, Vector3[]>(name, new[] { eye, at }));
 				said.Add(name + " at " + Num(c.x - e.Position.x) + " " + Num(c.z - e.Position.z) + " (" + Num(k.Value.size.x) + " x " + Num(k.Value.size.z) + " m, " + Num(k.Value.min.y - sea) + ".." + Num(k.Value.max.y - sea) + " m over the sea)");
@@ -941,8 +944,9 @@ namespace DynamicIslands
 
 		/// <summary>The eye for a picture of a face (or a stood rock) at 'at', seen from 'outward' of centre over the sea: the first
 		/// clear one, else the one with the least in its view. ignore: colliders that don't count (the rock pictured).</summary>
-		static Vector3 SheetEye(Terrain land, Vector3 tp, float sea, Vector3 centre, Vector3 outward, Vector3 at, HashSet<Collider> ignore)
+		static Vector3 SheetEye(Terrain land, Vector3 tp, float sea, Vector3 centre, Vector3 outward, Vector3 at, HashSet<Collider> ignore, float[] dists)
 		{
+			if (dists == null) dists = new[] { 22f, 16f, 11f, 7f, 4f };
 			// (the eye over open water with nothing built between it and the face - Shelter Atoll's second picture stood behind a
 			// metal wall (c3z52): straight out first, then turned up to 60 degrees either way; none clear, the first over water)
 			// (clear = nothing built in the view cone near the eye either: a post or pillar 1-3 m beside the eye filled a third of
@@ -962,7 +966,7 @@ namespace DynamicIslands
 				foreach (float turn in new[] { 0f, 30f, -30f, 60f, -60f, 90f, -90f })
 				{
 					Vector3 way = Quaternion.Euler(0f, turn, 0f) * outward;
-					foreach (float d in new[] { 22f, 16f, 11f, 7f, 4f })
+					foreach (float d in dists)
 					{
 						Vector3 p = centre + way * d; p.y = sea + up;
 						// (over the water: the ground under the eye under the sea - c3z64b: Shelter Atoll's picture was taken 7 m over
@@ -1002,7 +1006,7 @@ namespace DynamicIslands
 				}
 				if (found) break;
 			}
-			if (!found) eye = bestWet != Vector3.zero ? bestWet : centre + outward * 7f + Vector3.up * (sea + 3.5f - centre.y);
+			if (!found) eye = bestWet != Vector3.zero ? bestWet : centre + outward * Mathf.Min(7f, dists[0]) + Vector3.up * (sea + 3.5f - centre.y);
 			return eye;
 		}
 
@@ -1075,14 +1079,24 @@ namespace DynamicIslands
 				string piece = pieces[rnd.Next(pieces.Length)];
 				float spin = (float)(rnd.NextDouble() * 50.0 - 25.0), lean = (float)(rnd.NextDouble() * 16.0 - 8.0), size = 0.8f + (float)rnd.NextDouble() * 0.4f;
 				float want = sea + f.Top + 0.3f + (float)rnd.NextDouble() * 1.2f;
-				foreach (float off in new[] { 0f, 1.5f, -1.5f, 2.5f, -2.5f, 4f, -4f })
+				// (up to 0.9 m along the wall from the face's middle, from its place: not evenly spaced - c3z65: The Abyss's pillar
+				// fronted by a straight row of 8 rocks; and where a piece is in or on the wall, 0.7 or 1.4 m out of it, still over
+				// the face's foot - c3z65: Caisson Yard's pit wall bare 10 m between two rocks, its 5 faces all meeting a dug
+				// tunnel, a fence or a floor)
+				float jit = (float)(rnd.NextDouble() * 1.8 - 0.9);
+				bool clear = false;
+				foreach (float push in new[] { 0f, 0.7f, 1.4f })
 				{
-					Vector3 q = mid + along * off;
-					Collider h = Physics.OverlapBox(new Vector3(q.x, sea + 0.5f, q.z), new Vector3(2.3f, 3.4f, 1.1f), turn, ~0, QueryTriggerInteraction.Ignore)
-						.FirstOrDefault(c => !(c is TerrainCollider) && !own.Contains(c) && !RockStandsBefore(c));
-					float cap = ropeCap(q);
-					if (h == null && cap >= sea + 1f) { hit = null; at = q; want = Mathf.Min(want, cap); break; }
-					if (off == 0f) hit = h != null ? PieceName(h) : "a zipline's rope";
+					foreach (float off in new[] { 0f, 1.5f, -1.5f, 2.5f, -2.5f, 4f, -4f })
+					{
+						Vector3 q = mid + along * (off + jit) + outward * push;
+						Collider h = Physics.OverlapBox(new Vector3(q.x, sea + 0.5f, q.z), new Vector3(2.3f, 3.4f, 1.1f), turn, ~0, QueryTriggerInteraction.Ignore)
+							.FirstOrDefault(c => !(c is TerrainCollider) && !own.Contains(c) && !RockStandsBefore(c));
+						float cap = ropeCap(q);
+						if (h == null && cap >= sea + 1f) { hit = null; at = q; want = Mathf.Min(want, cap); clear = true; break; }
+						if (off == 0f && push == 0f) hit = h != null ? PieceName(h) : "a zipline's rope";
+					}
+					if (clear) break;
 				}
 				if (hit != null)
 				{
@@ -1130,6 +1144,24 @@ namespace DynamicIslands
 						float ax = Mathf.Abs(t.right.y), ay = Mathf.Abs(t.up.y), az = Mathf.Abs(t.forward.y);
 						Vector3 ls = t.localScale;
 						t.localScale = ax >= ay && ax >= az ? new Vector3(ls.x * k, ls.y, ls.z) : ay >= az ? new Vector3(ls.x, ls.y * k, ls.z) : new Vector3(ls.x, ls.y, ls.z * k);
+						// (and wider along the wall by a third of that - 1.7 times at 3 - unless it then meets a piece: c3z65's
+						// stretched rocks stood like posts, one every 3-4 m; a wider one covers more of the wall, so fewer stand)
+						float wk = 1f + (k - 1f) * 0.35f;
+						if (wk > 1.05f)
+						{
+							int upAxis = ax >= ay && ax >= az ? 0 : ay >= az ? 1 : 2;
+							float dx = upAxis == 0 ? -1f : Mathf.Abs(Vector3.Dot(t.right, along)), dy = upAxis == 1 ? -1f : Mathf.Abs(Vector3.Dot(t.up, along)), dz = upAxis == 2 ? -1f : Mathf.Abs(Vector3.Dot(t.forward, along));
+							Vector3 narrow = t.localScale;
+							t.localScale = dx >= dy && dx >= dz ? new Vector3(narrow.x * wk, narrow.y, narrow.z) : dy >= dz ? new Vector3(narrow.x, narrow.y * wk, narrow.z) : new Vector3(narrow.x, narrow.y, narrow.z * wk);
+							Bounds wb = shape();
+							t.position += new Vector3(mid.x - wb.center.x, low - wb.min.y, mid.z - wb.center.z);
+							Physics.SyncTransforms();
+							var mine = new HashSet<Collider>(e.GetComponentsInChildren<Collider>(true));
+							wb = shape();
+							if (Physics.OverlapBox(wb.center, wb.extents * 0.85f, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore)
+								.Any(c => !(c is TerrainCollider) && !mine.Contains(c) && !own.Contains(c) && !RockStandsBefore(c)) || ropeCap(wb.center) < wb.max.y)
+								t.localScale = narrow;
+						}
 					}
 					// (its middle on the face, its foot at the low point)
 					Bounds nb = shape();
