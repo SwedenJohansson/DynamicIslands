@@ -338,6 +338,8 @@ quest reward=Plank*6;Rope*3;Scrap*4
 # (G2 10-31: the ground check found 2 sunk trunks - a mango and a pineapple tree on the spike the strokes raised the ground round; set back on the land at the save)
 # (c3 round 3 11-21: CISheetIslands found bare cliff walls at the waterline here, drawn as stretched sheets. Their feet
 #     sloped as rock talus down to 10 m under the sea - a pit or a dive shaft keeps its depth, a narrow one is left open)
-cliffs
+# (c3z61: a low dark sheer coast round the island, 2-5 m over the sea - faces between two walls, and behind a sunken
+#     BigSharpRock_5 (now buried by the talus) - so rock stood in the waterline of the faces left (rocks=))
+cliffs rocks=BigBoulder4_Low
 reseat trees
 save Frontier Beacon

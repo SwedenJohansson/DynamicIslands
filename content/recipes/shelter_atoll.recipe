@@ -799,5 +799,7 @@ prop ammorats creature.count=2
 prop ammorats creature.respawn=0
 # (c3 round 3 11-21: CISheetIslands found bare cliff walls at the waterline here, drawn as stretched sheets. Their feet
 #     sloped as rock talus down to 10 m under the sea - a pit or a dive shaft keeps its depth, a narrow one is left open)
-cliffs
+# (c3z61: the lagoon's channels still sheer walls seen from a raft - 106 faces between two walls the talus leaves open -
+#     so rock stood in their waterline band (rocks=), clear of the wreck and the cave tunnels)
+cliffs rocks=BigBoulder4_Low
 save Shelter Atoll

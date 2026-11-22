@@ -2623,6 +2623,19 @@ namespace DynamicIslands
 							if (why != null) { error = why; break; }
 							// (the ziplines zipto aimed: their ropes over the land as it ends up - ZipClearGround)
 							// (over the cave hill a world builds over the island's cave pieces, made now to measure against - 11-21 c3z9)
+							// (a far end set on the ground before a later step raised it - the cliffs talus under Caisson Yard's crane line
+							// left its last 3 m of rope 0.07 m in the ground, c3z61 - goes back up onto the ground as it ends up)
+							foreach (EditorGameObject ze in zipPending)
+							{
+								if (ze == null || terraineditor.terrain == null) continue;
+								Vector3? zf = ZiplineEnds.FarEnd(ze.Props);
+								if (!zf.HasValue) continue;
+								Vector3 ztp = terraineditor.terrain.transform.position, zw = zf.Value + ztp;
+								float zg = GroundY(zw.x, zw.z);
+								if (zg <= zw.y + 0.02f) continue;
+								PropsCommand.Change(ze, ObjectProps.With(ze.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(new Vector3(zw.x, zg, zw.z) - ztp)));
+								Log("  zipto: " + ze.GameObjectName + "'s far end raised " + Num(zg - zw.y) + " m onto the ground a later step raised");
+							}
 							GameObject zipHill = zipPending.Any(ze => ze != null) ? CaveMountain.Preview(PlacedEditorObjects(), terraineditor.terrain != null ? terraineditor.terrain.transform.position : Vector3.zero) : null;
 							if (zipHill != null) Log("  zipto: ropes measured over the cave hill a world builds over the island's caves too");
 							try { foreach (EditorGameObject ze in zipPending) if (ze != null) { ZipClearGround(ze); GameObject fd; ZipFarClear(ze, out fd); ZipShaveGround(ze, zipHill); ZipClearThrough(ze); } }

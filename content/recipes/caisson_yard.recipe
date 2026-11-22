@@ -410,5 +410,7 @@ quest reward=MetalIngot*2;Bolt*4
 # (c3 round 3 11-21: the yard rock's sea side was one bare 28 m wall from 4.6 m over the sea down - Raft drew it as a pale
 #     stretched sheet in the crane-end picture (c3z37). Its foot sloped as a rock talus down to 10 m under the sea; the yard
 #     itself and everything standing in the water keep their ground)
-cliffs
+# (c3z61: two channel walls between the caissons' rock still bare - 20 faces between two walls the talus leaves open -
+#     so rock stood in their waterline band (rocks=), clear of the tunnels and pieces)
+cliffs rocks=BigBoulder4_Low
 save Caisson Yard

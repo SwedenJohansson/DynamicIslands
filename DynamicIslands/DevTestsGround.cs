@@ -578,7 +578,8 @@ namespace DynamicIslands
 				// metal wall (c3z52): straight out first, then turned up to 60 degrees either way; none clear, the first over water)
 				// (clear = nothing built in the view cone near the eye either: a post or pillar 1-3 m beside the eye filled a third of
 				// Caisson Yard's and The Abyss's pictures (c3z59) - any collider within 12 m whose nearest point lies within 45 degrees
-				// of the look, or within 1.5 m whichever way; none clear, the wet eye with the fewest)
+				// of the look, or within 1.5 m whichever way; the land across the look or beside the eye too (c3z61); none clear,
+				// the wet eye with the fewest)
 				Vector3 bestWet = Vector3.zero;
 				int bestCount = int.MaxValue;
 				bool found = false;
@@ -599,7 +600,11 @@ namespace DynamicIslands
 							if (v.magnitude < 1.5f || (v.magnitude < near && Vector3.Angle(v, look) < 45f)) inCone++;
 						}
 						foreach (RaycastHit h in Physics.RaycastAll(p, look.normalized, look.magnitude - 1.5f, ~0, QueryTriggerInteraction.Ignore))
-							if (!(h.collider is TerrainCollider)) { inCone++; break; }
+							if (!(h.collider is TerrainCollider) || h.distance < look.magnitude - 4f) { inCone++; break; }
+						// (nor the land itself: c3z61's Caisson Yard picture stood pressed against a channel's other wall - the ground
+						// across the look before the face, or a wall within 2 m of the eye, makes it not clear)
+						foreach (Vector3 side in new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right })
+							if (land.SampleHeight(p + side * 2f) + tp.y >= p.y - 0.5f) { inCone++; break; }
 						if (inCone < bestCount) { bestCount = inCone; bestWet = p; }
 						if (inCone > 0) continue;
 						eye = p; found = true; break;
@@ -867,7 +872,7 @@ namespace DynamicIslands
 
 		/// <summary>The cliffs step's rocks=: a rock piece stood in the waterline at each bare face the talus could not reach
 		/// (a pit's or a shaft's wall, a channel, one held back by a piece - not at the terrain's edge), half in the wall, its thin
-		/// side out, from 3 m under the sea up; one rock for the faces within 2 m of it, none where it would meet a placed
+		/// side out, from 3 m under the sea up to the face's top (stretched up to 3 times its height); one rock for the faces within 2 m of it, none where it would meet a placed
 		/// piece. Raft then draws a rock at the waterline in front of the stretched wall (c3z61: The Abyss's blue hole). How
 		/// many were stood.</summary>
 		static int StandCliffRocks(string rocks, List<SheetFace> todo, float sea, out int covered)
@@ -891,6 +896,24 @@ namespace DynamicIslands
 				EditorGameObject e;
 				Place(rocks, r.x, r.z, opt, out e);
 				if (e == null) continue;
+				// (stretched up to the face's top where that is over the rock's: Old Mine Islet's channel walls stand 4-9 m over
+				// the sea; at most 3 times its height)
+				Renderer[] rr = PlacementOptions.ShapeRenderers(e.gameObject);
+				if (rr.Length > 0)
+				{
+					Bounds rb = rr[0].bounds;
+					foreach (Renderer x in rr) rb.Encapsulate(x.bounds);
+					float want = sea + f.Top + 0.3f;
+					if (rb.max.y < want && rb.size.y > 0.5f)
+					{
+						float k = Mathf.Min(3f, (want - rb.min.y) / rb.size.y), low = rb.min.y;
+						Vector3 ls = e.transform.localScale;
+						e.transform.localScale = new Vector3(ls.x, ls.y * k, ls.z);
+						Bounds nb = rr[0].bounds;
+						foreach (Renderer x in rr) nb.Encapsulate(x.bounds);
+						e.transform.position += Vector3.up * (low - nb.min.y);
+					}
+				}
 				stood.Add(mid);
 				covered++;
 				Physics.SyncTransforms();
