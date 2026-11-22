@@ -916,30 +916,41 @@ namespace DynamicIslands
 					.Select(t => t.name).Where(n => n.IndexOf("Boulder", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Rock", StringComparison.OrdinalIgnoreCase) >= 0).Distinct().Take(4).ToArray())) + ")");
 				return list;
 			}
-			var pick = new List<KeyValuePair<Transform, Bounds>> { rocks.OrderByDescending(k => k.Value.max.y).First() };
-			while (pick.Count < 4 && pick.Count < rocks.Count)
-				pick.Add(rocks.Where(k => !pick.Contains(k)).OrderByDescending(k => pick.Min(q => (q.Value.center - k.Value.center).magnitude)).First());
+			// (the tallest, then each the farthest from those before it; up to 4 with a clear eye, the ones without one skipped -
+			// c3z68: 4 of 8 pictures were the fallback eye, a rock filling the frame; at most 12 tried)
+			var order = new List<KeyValuePair<Transform, Bounds>> { rocks.OrderByDescending(k => k.Value.max.y).First() };
+			while (order.Count < 12 && order.Count < rocks.Count)
+				order.Add(rocks.Where(k => !order.Contains(k)).OrderByDescending(k => order.Min(q => (q.Value.center - k.Value.center).magnitude)).First());
 			var said = new List<string>();
-			foreach (var k in pick)
+			var skipped = new List<string>();
+			foreach (var k in order)
 			{
+				if (list.Count >= 4) break;
 				Vector3 c = k.Value.center;
 				Vector3 at = new Vector3(c.x, Mathf.Clamp((k.Value.max.y + sea) * 0.5f, sea + 0.5f, sea + 6f), c.z);
-				Vector3 eye = RockEye(land, tp, sea, k.Value, new HashSet<Collider>(k.Key.GetComponentsInChildren<Collider>(true)), at);
+				bool clearEye;
+				Vector3 eye = RockEye(land, tp, sea, k.Value, new HashSet<Collider>(k.Key.GetComponentsInChildren<Collider>(true)), at, out clearEye);
+				if (!clearEye) { skipped.Add(Num(c.x - e.Position.x) + " " + Num(c.z - e.Position.z)); continue; }
 				string name = "rock_" + e.Name + "_" + (list.Count + 1) + "_top" + Mathf.RoundToInt(k.Value.max.y - sea);
 				list.Add(new KeyValuePair<string, Vector3[]>(name, new[] { eye, at }));
 				said.Add(name + " at " + Num(c.x - e.Position.x) + " " + Num(c.z - e.Position.z) + " (" + Num(k.Value.size.x) + " x " + Num(k.Value.size.z) + " m, " + Num(k.Value.min.y - sea) + ".." + Num(k.Value.max.y - sea) + " m over the sea)");
 			}
-			Log("  rock pictures: " + rocks.Count + " " + piece + " in the waterline on " + e.Name + "; " + string.Join("; ", said.ToArray()));
+			Log("  rock pictures: " + rocks.Count + " " + piece + " in the waterline on " + e.Name + "; " + (said.Count > 0 ? string.Join("; ", said.ToArray()) : "none with a clear eye") +
+				(skipped.Count > 0 ? "; no clear eye for the rock at " + string.Join(", ", skipped.ToArray()) : ""));
 			return list;
 		}
 
-		/// <summary>The eye for a stood rock's picture (RockShots): over open water 8-16 m out the way the water is most open
-		/// round it, 4.5-9 m up looking down at it, with nothing but the rock itself the first thing met on the looks at its
-		/// middle and its top, and nothing within 1.5 m (c3z65: the sheet's eye stood 4 m from the rock, one boulder filling
-		/// the frame; c3z67: with the other rocks not counted, they stood between and filled it): the first clear one, else
+		/// <summary>The eye for a stood rock's picture (RockShots): over open water out the way the water is most open round it
+		/// (8-16 m, farther for a big rock: 1-2.5 times as its width is 5-12.5 m), 4.5-12 m up looking down at it, turned up
+		/// to 80 degrees either way; clear when nothing is within 1.5 m, the rock itself is the first thing met on the looks at
+		/// its middle and its top, and nothing else lies in the near part of the view (looks 12 and 24 degrees aside and 8
+		/// up and down: nothing in their first 85%, the land not in their first 60%), each look with back faces on - an eye
+		/// inside another rock meets that rock's inside. (c3z65: the sheet's eye stood 4 m from the rock; c3z67: with the other
+		/// rocks not counted, they filled it; c3z68: 4 of 8 were the fallback, two of them just rock texture.) clear false:
 		/// the one with the least in the way.</summary>
-		static Vector3 RockEye(Terrain land, Vector3 tp, float sea, Bounds b, HashSet<Collider> target, Vector3 at)
+		static Vector3 RockEye(Terrain land, Vector3 tp, float sea, Bounds b, HashSet<Collider> target, Vector3 at, out bool clear)
 		{
+			clear = false;
 			Vector3 c = b.center, outward = Vector3.forward;
 			float bestOpen = float.MinValue;
 			for (int a = 0; a < 360; a += 15)
@@ -951,26 +962,42 @@ namespace DynamicIslands
 				open -= (land.SampleHeight(c + d * 8f) + tp.y - sea) * 0.01f;
 				if (open > bestOpen) { bestOpen = open; outward = d; }
 			}
+			float far = Mathf.Clamp(Mathf.Max(b.size.x, b.size.z) / 5f, 1f, 2.5f);
 			Vector3 bestEye = Vector3.zero;
 			int bestScore = int.MaxValue;
-			foreach (float up in new[] { 6f, 9f, 4.5f })
-				foreach (float turn in new[] { 0f, 20f, -20f, 40f, -40f })
-					foreach (float d in new[] { 12f, 10f, 14f, 8f, 16f })
-					{
-						Vector3 way = Quaternion.Euler(0f, turn, 0f) * outward;
-						Vector3 p = new Vector3(c.x, sea + up, c.z) + way * d;
-						if (land.SampleHeight(p) + tp.y >= sea - 0.3f) continue;
-						int score = Physics.OverlapSphere(p, 1.5f, ~0, QueryTriggerInteraction.Ignore).Any(x => !(x is TerrainCollider)) ? 100 : 0;
-						foreach (Vector3 aim in new[] { at, new Vector3(c.x, b.max.y - 0.5f, c.z) })
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				foreach (float up in new[] { 6f, 9f, 4.5f, 12f })
+					foreach (float turn in new[] { 0f, 20f, -20f, 40f, -40f, 60f, -60f, 80f, -80f })
+						foreach (float d0 in new[] { 12f, 10f, 14f, 8f, 16f })
 						{
-							Vector3 look = aim - p;
-							RaycastHit first = Physics.RaycastAll(p, look.normalized, look.magnitude + 2f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).FirstOrDefault();
-							if (first.collider != null && !target.Contains(first.collider)) score += first.collider is TerrainCollider ? 20 : 10;
+							Vector3 way = Quaternion.Euler(0f, turn, 0f) * outward;
+							Vector3 p = new Vector3(c.x, sea + up, c.z) + way * d0 * far;
+							if (land.SampleHeight(p) + tp.y >= sea - 0.3f) continue;
+							int score = Physics.OverlapSphere(p, 1.5f, ~0, QueryTriggerInteraction.Ignore).Any(x => !(x is TerrainCollider)) ? 100 : 0;
+							foreach (Vector3 aim in new[] { at, new Vector3(c.x, b.max.y - 0.5f, c.z) })
+							{
+								Vector3 look = aim - p;
+								RaycastHit first = Physics.RaycastAll(p, look.normalized, look.magnitude + 2f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).FirstOrDefault();
+								if (first.collider != null && !target.Contains(first.collider)) score += first.collider is TerrainCollider ? 20 : 10;
+							}
+							Vector3 main = at - p;
+							float dist = main.magnitude;
+							Vector3 side = Vector3.Cross(Vector3.up, main).normalized;
+							foreach (var tilt in new[] { new Vector2(12f, 0f), new Vector2(-12f, 0f), new Vector2(24f, 0f), new Vector2(-24f, 0f), new Vector2(0f, 8f), new Vector2(0f, -8f) })
+							{
+								Vector3 dir = Quaternion.AngleAxis(tilt.y, side) * Quaternion.AngleAxis(tilt.x, Vector3.up) * main.normalized;
+								foreach (RaycastHit h in Physics.RaycastAll(p, dir, dist * 0.85f, ~0, QueryTriggerInteraction.Ignore))
+									if (!target.Contains(h.collider) && (!(h.collider is TerrainCollider) || h.distance < dist * 0.6f)) { score += 3; break; }
+							}
+							if (score < bestScore) { bestScore = score; bestEye = p; }
+							if (score == 0) { clear = true; return p; }
 						}
-						if (score < bestScore) { bestScore = score; bestEye = p; }
-						if (score == 0) return p;
-					}
-			return bestEye != Vector3.zero ? bestEye : new Vector3(c.x, sea + 6f, c.z) + outward * 12f;
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+			return bestEye != Vector3.zero ? bestEye : new Vector3(c.x, sea + 6f, c.z) + outward * 12f * far;
 		}
 
 		/// <summary>The eye for a picture of a face (or a stood rock) at 'at', seen from 'outward' of centre over the sea: the first
