@@ -96,8 +96,11 @@ brush flatten from -7.19 -16.05 to -6.48 -17.92 r=1.8 s=20 frames=150 h=6.7
 brush flatten from -6.48 -17.92 to -5.59 -20.25 r=1.8 s=20 frames=150 h=6.0
 brush rock from -7.19 -16.05 to -5.59 -20.25 r=2.5 s=10 frames=30
 # (c3z59 11-21: the rope 0.47 m over the ground 15.3 m out along it (frame -1.38 -31.33), 0.5 wanted - the rope 3.41 m
-#     there, the ground 2.94 m. That stretch lowered a little more, to 2.8 m)
-brush flatten from -1.74 -30.40 to -1.02 -32.26 r=1.5 s=20 frames=150 h=2.8
+#     there, the ground 2.94 m. That stretch lowered a little more.
+#     c3z61h: 0.28 m over the ground at frame -0.90 -32.60, where the rope is 3.07 m - that flatten, run on to -1.02 -32.26
+#     and reaching 2.7 m past its end, raised the lower ground there to 2.8 m. Now only the stretch at 3.41 m, to 2.5 m,
+#     reaching no further than r)
+brush flatten from -1.74 -30.40 to -1.38 -31.33 r=1.5 s=20 frames=150 h=2.5 line
 clear at -9.15 -18.18 r=2
 place Loot_Crate anchorbox at -9.15 -18.18 ground sit yaw=160
 

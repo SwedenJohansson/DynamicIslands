@@ -498,5 +498,7 @@ clear at 40.78 -18.27 r=1.5 only=BigSharpRock
 
 # (c3 round 3 11-21: CISheetIslands found bare cliff walls at the waterline here, drawn as stretched sheets. Their feet
 #     sloped as rock talus down to 10 m under the sea - a pit or a dive shaft keeps its depth, a narrow one is left open)
-cliffs
+# (c3z61h: the blue hole's inner wall round 4.56 -5.91 still a dark sheet on both sides of the buoy - a pit's wall can't be
+#     sloped - so rock stood in its waterline band (rocks=), wherever it meets no placed piece (the air pockets, the buoy))
+cliffs rocks=BigBoulder4_Low
 save The Abyss

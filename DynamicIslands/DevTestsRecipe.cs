@@ -2038,6 +2038,7 @@ namespace DynamicIslands
 			SetOrigin(new Vector2(500f, 500f));
 			// (the objects the recipe places, loaded first - Raft's scenes for the on-demand ones)
 			var wanted = lines.Select(l => Tokens(l.Text)).Where(t => t.Length > 1 && (t[0] == "place" || t[0] == "scatter" || t[0] == "line" || t[0] == "ramp" || t[0] == "beside")).Select(t => t[1])
+				.Concat(lines.Select(l => Tokens(l.Text)).Where(t => t.Length > 1 && t[0] == "cliffs").SelectMany(t => t.Where(w => w.StartsWith("rocks=", StringComparison.Ordinal)).Select(w => w.Substring(6))))
 				.Concat(lines.Any(l => Tokens(l.Text).FirstOrDefault() == "store") ? new[] { RaftStore.ObjectName } : new string[0])
 				.Concat(lines.Any(l => Tokens(l.Text).FirstOrDefault() == "vending") ? new[] { RaftVending.ObjectName } : new string[0]).Where(n => n != "none").Distinct().ToList();
 			yield return PlaceableCatalog.EnsureLoaded(wanted);
@@ -2774,8 +2775,9 @@ namespace DynamicIslands
 						}
 						case "cliffs":
 						{
-							// cliffs [rise=7] [step=3] [depth=10] [reach=12] [at x z r=20]: bare cliff faces at the waterline sloped from
-							// their low side (CliffsStep, c3 round 3 - Raft draws them as one stretched sheet; CISheetIslands finds them)
+							// cliffs [rise=7] [step=3] [depth=10] [reach=12] [at x z r=20] [rocks=piece]: bare cliff faces at the waterline
+							// sloped from their low side (CliffsStep, c3 round 3 - Raft draws them as one stretched sheet; CISheetIslands
+							// finds them); rocks=: that rock piece stood in the waterline at the faces the slope can't reach (a pit's wall)
 							var co = Options(t.Skip(1).Where(w => w.Contains("=")));
 							float crise = co.ContainsKey("rise") ? F(co["rise"]) : SheetRise, cstep = co.ContainsKey("step") ? F(co["step"]) : 3f;
 							float cdepth = co.ContainsKey("depth") ? F(co["depth"]) : 10f, cr = co.ContainsKey("r") ? F(co["r"]) : 20f;
@@ -2784,7 +2786,7 @@ namespace DynamicIslands
 							Vector2? cwhere = null;
 							if (cat > 0 && cat + 2 < t.Length) cwhere = WorldXZ(F(t[cat + 1]), F(t[cat + 2]));
 							if (cstep < 0.5f || crise < 2f) { error = "cliffs: step= 0.5 or more, rise= 2 or more"; break; }
-							Log("  " + CliffsStep(crise, cstep, cdepth, creach, cwhere, cr));
+							Log("  " + CliffsStep(crise, cstep, cdepth, creach, cwhere, cr, co.ContainsKey("rocks") ? co["rocks"] : null));
 							break;
 						}
 						case "where":
