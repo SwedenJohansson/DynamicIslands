@@ -299,12 +299,15 @@ namespace DynamicIslands
 		/// <summary>What a shot shows, as a grid of rays (12 x 7, 60 degrees, 16:9): the object hit, its normal's height and the
 		/// distance - names the parts in a picture (a stretched pillar, a slab before a mouth).</summary>
 		/// <summary>The eye for a cave mouth's picture: close (q 0: 7 m out, 2.2 m up) or three-quarter (q 1: 16 m out turned 40
-		/// degrees, 7 m up), 1.7 m over what is under it. Kept when it stands in nothing solid (nothing within 0.4 m, and the look
-		/// meets no solid thing's inside first - back faces on); else other turns, distances and heights where the look also meets
-		/// nothing till 3 m short of the mouth (c3z54: Old Mine Islet's mouth q picture taken from inside the rock). Vector3.zero
-		/// when none.</summary>
-		static Vector3 MouthEye(Vector3 at, Vector3 outDir, int q, Vector3 look)
+		/// degrees, 7 m up), 1.7 m over what is under it. Kept when it sees the mouth: it stands in nothing solid (nothing within
+		/// 0.4 m) and the look at the mouth meets nothing, or first meets something within 2.5 m of the mouth from the front (back
+		/// faces on), and so do at least 3 of the looks 1 m to each side, 0.8 m over and 0.6 m under it - the opening, not a
+		/// pin-hole. Else other turns, distances and heights, the same test (c3z54: Old Mine Islet's q picture from inside the rock;
+		/// c3z70: its high mouths 3-5 pictured as walls of rock, a rock between eye and mouth had passed). Vector3.zero when none;
+		/// 'how' says where the eye was moved.</summary>
+		static Vector3 MouthEye(Vector3 at, Vector3 outDir, int q, Vector3 look, out string how)
 		{
+			how = "";
 			System.Func<float, float, float, Vector3> eyeAt = (turn, dist, up) =>
 			{
 				Vector3 p = at + (Quaternion.Euler(0f, turn, 0f) * outDir) * dist + Vector3.up * up;
@@ -317,26 +320,36 @@ namespace DynamicIslands
 			Physics.queriesHitBackfaces = true;
 			try
 			{
-				System.Func<Vector3, bool, bool> fits = (p, clearLook) =>
+				System.Func<Vector3, Vector3, bool> seen = (p, aim) =>
 				{
-					if (Physics.OverlapSphere(p, 0.4f, ~0, QueryTriggerInteraction.Ignore).Length > 0) return false;
-					Vector3 d = look - p;
+					Vector3 d = aim - p;
 					RaycastHit h;
 					if (!Physics.Raycast(p, d.normalized, out h, d.magnitude, ~0, QueryTriggerInteraction.Ignore)) return true;
-					if (Vector3.Dot(h.normal, d) > 0f) return false;
-					return !clearLook || h.distance >= d.magnitude - 3f;
+					return Vector3.Dot(h.normal, d) <= 0f && h.distance >= d.magnitude - 2.5f;
+				};
+				System.Func<Vector3, bool> fits = p =>
+				{
+					if (Physics.OverlapSphere(p, 0.4f, ~0, QueryTriggerInteraction.Ignore).Length > 0) return false;
+					if (!seen(p, look)) return false;
+					Vector3 side = Vector3.Cross(Vector3.up, look - p).normalized;
+					int ok = 0;
+					foreach (Vector3 aim in new[] { look + side, look - side, look + Vector3.up * 0.8f, look - Vector3.up * 0.6f })
+						if (seen(p, aim)) ok++;
+					return ok >= 3;
 				};
 				Vector3 first = q == 0 ? eyeAt(0f, 7f, 2.2f) : eyeAt(40f, 16f, 7f);
-				if (fits(first, false)) return first;
-				float[] turns = q == 0 ? new[] { 20f, -20f, 40f, -40f } : new[] { -40f, 25f, -25f, 55f, -55f, 0f };
-				float[] dists = q == 0 ? new[] { 7f, 9f, 5f } : new[] { 16f, 12f, 20f };
-				float[] ups = q == 0 ? new[] { 2.2f, 3.5f } : new[] { 7f, 10f, 5f };
+				if (fits(first)) return first;
+				float[] turns = q == 0 ? new[] { 0f, 20f, -20f, 40f, -40f, 60f, -60f } : new[] { 40f, -40f, 25f, -25f, 55f, -55f, 0f, 70f, -70f };
+				float[] dists = q == 0 ? new[] { 7f, 5f, 9f, 4f, 11f } : new[] { 16f, 12f, 20f, 9f };
+				float[] ups = q == 0 ? new[] { 2.2f, 1.2f, 3.5f, 5f } : new[] { 7f, 10f, 5f, 3.5f };
 				foreach (float u in ups)
 					foreach (float t in turns)
 						foreach (float d in dists)
 						{
 							Vector3 p = eyeAt(t, d, u);
-							if (fits(p, true)) return p;
+							if (!fits(p)) continue;
+							how = "eye moved to " + t.ToString("F0") + " degrees, " + d.ToString("F0") + " m out, " + u.ToString("F1") + " m up";
+							return p;
 						}
 				return Vector3.zero;
 			}
@@ -602,8 +615,10 @@ namespace DynamicIslands
 						Vector3 at = v.Key, outDir = v.Value;
 						foreach (int q in new[] { 0, 1 })
 						{
-							Vector3 eye = MouthEye(at, outDir, q, at + Vector3.up * (q == 0 ? 1.5f : 2.5f));
-							if (eye == Vector3.zero) { Log("    mouth " + mv + (q == 0 ? " close" : " three-quarter") + " view: every eye tried stands in a solid thing or behind one - skipped"); continue; }
+							string eyeHow;
+							Vector3 eye = MouthEye(at, outDir, q, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), out eyeHow);
+							if (eye == Vector3.zero) { Log("    mouth " + mv + (q == 0 ? " close" : " three-quarter") + " view: no eye tried sees the mouth (in a solid thing, or something more than 2.5 m before it) - skipped"); continue; }
+							if (eyeHow != "") Log("    mouth " + mv + (q == 0 ? " close" : " three-quarter") + " view: " + eyeHow);
 							yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), CaveShotPre + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
 							PickGrid(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), CaveShotPre + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
 							// (r84 test: the same with the sun's shadows off - is a jagged line a shadow?)
