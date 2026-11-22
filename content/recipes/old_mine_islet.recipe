@@ -504,7 +504,7 @@ clear at -5.08 15.18 r=1 only=Balboa_BigBush_01
 #     sloped as rock talus down to 10 m under the sea - a pit or a dive shaft keeps its depth, a narrow one is left open)
 # (c3z61: the sea channels and inlets between the islet's rocks still sheer 10-50 m walls seen from a raft - 140 faces
 #     between two walls the talus leaves open - so rock stood in their waterline band (rocks=), up to their tops)
-cliffs rocks=BigBoulder4_Low
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 reseat trees
 # (c3z40: eight generator trees north of the mine (12 -1..21 17) stood 1.8-6.2 m deep in the ground round them, past what
 # the save's reseat sets back - taken off, CIGroundIslands 11-21)

@@ -801,5 +801,5 @@ prop ammorats creature.respawn=0
 #     sloped as rock talus down to 10 m under the sea - a pit or a dive shaft keeps its depth, a narrow one is left open)
 # (c3z61: the lagoon's channels still sheer walls seen from a raft - 106 faces between two walls the talus leaves open -
 #     so rock stood in their waterline band (rocks=), clear of the wreck and the cave tunnels)
-cliffs rocks=BigBoulder4_Low
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save Shelter Atoll

@@ -412,5 +412,5 @@ quest reward=MetalIngot*2;Bolt*4
 #     itself and everything standing in the water keep their ground)
 # (c3z61: two channel walls between the caissons' rock still bare - 20 faces between two walls the talus leaves open -
 #     so rock stood in their waterline band (rocks=), clear of the tunnels and pieces)
-cliffs rocks=BigBoulder4_Low
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save Caisson Yard

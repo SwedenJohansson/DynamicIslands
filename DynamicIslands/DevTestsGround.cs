@@ -897,7 +897,7 @@ namespace DynamicIslands
 			if (objects != null)
 				foreach (Transform r in objects)
 				{
-					if (r == null || !r.gameObject.activeInHierarchy || !string.Equals(r.name.Replace("(Clone)", "").Trim(), piece, StringComparison.OrdinalIgnoreCase)) continue;
+					if (r == null || !r.gameObject.activeInHierarchy || !piece.Split('|').Any(pc => string.Equals(r.name.Replace("(Clone)", "").Trim(), pc, StringComparison.OrdinalIgnoreCase))) continue;
 					named++;
 					Renderer[] rr = r.GetComponentsInChildren<Renderer>();
 					if (rr.Length == 0) continue;
@@ -965,7 +965,9 @@ namespace DynamicIslands
 					foreach (float d in new[] { 22f, 16f, 11f, 7f, 4f })
 					{
 						Vector3 p = centre + way * d; p.y = sea + up;
-						if (land.SampleHeight(p) + tp.y >= p.y - 1f) continue;
+						// (over the water: the ground under the eye under the sea - c3z64b: Shelter Atoll's picture was taken 7 m over
+						// grass, which passed the old test of land 1 m under the eye)
+						if (land.SampleHeight(p) + tp.y >= sea - 0.3f) continue;
 						Vector3 look = at - p;
 						float near = Mathf.Min(12f, look.magnitude - 2f);
 						int inCone = 0;
@@ -1024,6 +1026,11 @@ namespace DynamicIslands
 			covered = 0;
 			if (frames.Count == 0) return 0;
 			Frame tf = TopFrame;
+			// (rocks=A|B|C: the pieces taken in turn by place; each rock turned up to 25 degrees off the wall's line, leaned up to
+			// 8 degrees, 0.8-1.2 times its size and reaching 0-1.2 m over the face's top, from its place - c3z64b: Old Mine Islet's
+			// channel lined with one BigBoulder4_Low after another, all the same size and turn, read as a palisade)
+			string[] pieces = rocks.Split(new[] { '|' }, System.StringSplitOptions.RemoveEmptyEntries);
+			if (pieces.Length == 0) return 0;
 			var stood = new List<Vector3>();
 			var own = new HashSet<Collider>();
 			// (the ziplines' ropes, near end to far end (zip.to): a rock stretched up under one met the rope - c3z64: Caisson
@@ -1064,7 +1071,10 @@ namespace DynamicIslands
 				// dug tunnel's mouth)
 				string hit = null;
 				Vector3 at = mid;
-				float want = sea + f.Top + 0.3f;
+				var rnd = new System.Random(Mathf.RoundToInt(mid.x * 10f) * 73856093 ^ Mathf.RoundToInt(mid.z * 10f) * 19349663);
+				string piece = pieces[rnd.Next(pieces.Length)];
+				float spin = (float)(rnd.NextDouble() * 50.0 - 25.0), lean = (float)(rnd.NextDouble() * 16.0 - 8.0), size = 0.8f + (float)rnd.NextDouble() * 0.4f;
+				float want = sea + f.Top + 0.3f + (float)rnd.NextDouble() * 1.2f;
 				foreach (float off in new[] { 0f, 1.5f, -1.5f, 2.5f, -2.5f, 4f, -4f })
 				{
 					Vector3 q = mid + along * off;
@@ -1083,7 +1093,7 @@ namespace DynamicIslands
 				Vector3 r = Quaternion.Euler(0f, -tf.Yaw, 0f) * new Vector3(mid.x - tf.Origin.x, 0f, mid.z - tf.Origin.y);
 				var opt = new Dictionary<string, string> { { "h", "-3" }, { "sit", "1" }, { "centred", "1" }, { "yaw", Num(yaw - tf.Yaw) } };
 				EditorGameObject e;
-				Place(rocks, r.x, r.z, opt, out e);
+				Place(piece, r.x, r.z, opt, out e);
 				if (e == null) continue;
 				Renderer[] rr = PlacementOptions.ShapeRenderers(e.gameObject);
 				if (rr.Length > 0)
@@ -1106,6 +1116,9 @@ namespace DynamicIslands
 					e.transform.rotation = Quaternion.AngleAxis(90f, Vector3.up) * best;
 					Bounds b1 = shape();
 					if (Mathf.Abs(along.x) * b1.size.x + Mathf.Abs(along.z) * b1.size.z <= w0) e.transform.rotation = best;
+					// (each its own: turned off the wall's line, leaned, bigger or smaller)
+					e.transform.rotation = Quaternion.AngleAxis(lean, along) * Quaternion.AngleAxis(spin, Vector3.up) * e.transform.rotation;
+					e.transform.localScale *= size;
 					// (stretched up to the face's top where that is over the rock's - Old Mine Islet's channel walls stand 4-9 m over
 					// the sea, The Abyss's blue hole 17 m: along its own axis that points most up, at most 3 times)
 					float low = Mathf.Max(sea - 3f, sea + f.Bot - 0.3f);
