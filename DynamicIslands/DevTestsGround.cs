@@ -468,11 +468,51 @@ namespace DynamicIslands
 						Vector3 from = f.Lo + outward * 0.5f; from.y = y;
 						// (the low side's ground over the ray's start: a trench, not a face seen from the sea)
 						if (land.SampleHeight(from) + tp.y > y) continue;
-						RaycastHit hit;
-						bool bare = !Physics.Raycast(from, -outward, out hit, sx + 1f, ~0, QueryTriggerInteraction.Ignore) || hit.collider is TerrainCollider;
-						if (bare) list.Add(f);
+						if (FaceCover(from, -outward, sx + 1f, null) == null) list.Add(f);
 					}
 			return list;
+		}
+
+		/// <summary>What stands in front of a face: from the ray's start (0.5 m out of the face's low point, halfway up its part over
+		/// the sea) back towards the face for len m, the first collider before the land - or one the start lies in. A rock stood half
+		/// in the wall holds the start inside it, and a ray never meets the collider it starts in: c3z64 counted Caisson Yard's yard
+		/// rock bare where a stood rock (and the logs it stood over) covered it - a new 7-face sheet. So the colliders round the
+		/// start count, and with back faces on a mesh's inside does (a natural rock's or a log's only: a one-sided skin seen from
+		/// behind is no cover). counts: only these count (null: all but the land). Null when the face is bare.</summary>
+		static Collider FaceCover(Vector3 from, Vector3 back, float len, System.Func<Collider, bool> counts)
+		{
+			foreach (Collider c in Physics.OverlapSphere(from, 0.05f, ~0, QueryTriggerInteraction.Ignore))
+				if (!(c is TerrainCollider) && (counts != null ? counts(c) : CoversFromInside(c))) return c;
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				foreach (RaycastHit h in Physics.RaycastAll(from, back, len, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+				{
+					if (h.collider is TerrainCollider) return null;
+					bool inside = Vector3.Dot(h.normal, back) > 0f;
+					if (counts != null ? counts(h.collider) : !inside || CoversFromInside(h.collider)) return h.collider;
+				}
+				return null;
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+		}
+
+		/// <summary>A collider whose inside a face's ray may start in and still be cover: a natural rock's or a log's.</summary>
+		static bool CoversFromInside(Collider c)
+		{
+			string n = PieceName(c);
+			return NaturalRock(n) || Regex.IsMatch(n, @"^Log(_|\s|$)|Driftwood", RegexOptions.IgnoreCase);
+		}
+
+		/// <summary>The piece a collider belongs to: the editor's name, or in a spawned island the child of its Objects, "(Clone)" off.</summary>
+		static string PieceName(Collider c)
+		{
+			EditorGameObject by = c.GetComponentInParent<EditorGameObject>();
+			if (by != null) return (by.GameObjectName ?? by.name).Replace("(Clone)", "").Trim();
+			for (Transform t = c.transform; t != null; t = t.parent)
+				if (t.parent != null && t.parent.name == "Objects") return t.name.Replace("(Clone)", "").Trim();
+			return c.name.Replace("(Clone)", "").Trim();
 		}
 
 		/// <summary>In how many of 8 ways the land rises over the sea within 80 m of a face's foot: 6 or more is a pit's wall
@@ -849,17 +889,31 @@ namespace DynamicIslands
 		{
 			var list = new List<KeyValuePair<string, Vector3[]>>();
 			var rocks = new List<KeyValuePair<Transform, Bounds>>();
-			foreach (IslandObjectRef r in e.Root.GetComponentsInChildren<IslandObjectRef>(true))
+			// (the island's Objects by name, "(Clone)" off: an IslandObjectRef is only on an object with props, and a plain rock
+			// has none - c3z64 found no rock on either island though 24 and 18 stood)
+			Transform objects = e.Root.transform.Find("Objects");
+			int named = 0;
+			float lowTop = float.MaxValue, highFoot = float.MinValue;
+			if (objects != null)
+				foreach (Transform r in objects)
+				{
+					if (r == null || !r.gameObject.activeInHierarchy || !string.Equals(r.name.Replace("(Clone)", "").Trim(), piece, StringComparison.OrdinalIgnoreCase)) continue;
+					named++;
+					Renderer[] rr = r.GetComponentsInChildren<Renderer>();
+					if (rr.Length == 0) continue;
+					Bounds b = rr[0].bounds;
+					foreach (Renderer x in rr) b.Encapsulate(x.bounds);
+					lowTop = Mathf.Min(lowTop, b.max.y - sea); highFoot = Mathf.Max(highFoot, b.min.y - sea);
+					if (b.min.y > sea - 0.5f || b.max.y < sea + 1f) continue;
+					rocks.Add(new KeyValuePair<Transform, Bounds>(r, b));
+				}
+			if (rocks.Count == 0)
 			{
-				if (r == null || !r.gameObject.activeInHierarchy || !string.Equals(r.ObjectName, piece, StringComparison.OrdinalIgnoreCase)) continue;
-				Renderer[] rr = r.GetComponentsInChildren<Renderer>();
-				if (rr.Length == 0) continue;
-				Bounds b = rr[0].bounds;
-				foreach (Renderer x in rr) b.Encapsulate(x.bounds);
-				if (b.min.y > sea - 0.5f || b.max.y < sea + 1f) continue;
-				rocks.Add(new KeyValuePair<Transform, Bounds>(r.transform, b));
+				Log("  rock pictures: no " + piece + " standing in the waterline on " + e.Name + " (" + named + " of that name among " + (objects != null ? objects.childCount : 0) + " objects" +
+					(named > 0 ? "; tops from " + Num(lowTop) + " m, feet up to " + Num(highFoot) + " m over the sea" : "; e.g. " + string.Join(", ", (objects != null ? objects.Cast<Transform>() : Enumerable.Empty<Transform>())
+					.Select(t => t.name).Where(n => n.IndexOf("Boulder", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Rock", StringComparison.OrdinalIgnoreCase) >= 0).Distinct().Take(4).ToArray())) + ")");
+				return list;
 			}
-			if (rocks.Count == 0) { Log("  rock pictures: no " + piece + " standing in the waterline on " + e.Name); return list; }
 			var pick = new List<KeyValuePair<Transform, Bounds>> { rocks.OrderByDescending(k => k.Value.max.y).First() };
 			while (pick.Count < 4 && pick.Count < rocks.Count)
 				pick.Add(rocks.Where(k => !pick.Contains(k)).OrderByDescending(k => pick.Min(q => (q.Value.center - k.Value.center).magnitude)).First());
@@ -953,8 +1007,7 @@ namespace DynamicIslands
 		/// <summary>A piece a stood cliff rock may stand in front of (StandCliffRocks): a log, a natural rock, a bush.</summary>
 		static bool RockStandsBefore(Collider c)
 		{
-			EditorGameObject by = c.GetComponentInParent<EditorGameObject>();
-			string n = by != null ? (by.GameObjectName ?? by.name) : c.name;
+			string n = PieceName(c);
 			return Regex.IsMatch(n, @"^Log(_|\s|$)|Driftwood", RegexOptions.IgnoreCase) || NaturalRock(n) || Tuft.IsMatch(n);
 		}
 
@@ -973,12 +1026,35 @@ namespace DynamicIslands
 			Frame tf = TopFrame;
 			var stood = new List<Vector3>();
 			var own = new HashSet<Collider>();
+			// (the ziplines' ropes, near end to far end (zip.to): a rock stretched up under one met the rope - c3z64: Caisson
+			// Yard's cyzip, its far end raised 3 m over a stood rock. A rock by a rope stays 2.5 m under it, else is left out)
+			var ropes = new List<KeyValuePair<Vector3, Vector3>>();
+			Vector3 landAt = terraineditor.terrain != null ? terraineditor.terrain.transform.position : Vector3.zero;
+			foreach (EditorGameObject z in UnityEngine.Object.FindObjectsOfType<EditorGameObject>())
+			{
+				Vector3 to;
+				if (z != null && z.Props != null && ZiplineEnds.TryParse(ObjectProps.Get(z.Props, ZiplineEnds.ZipTo), out to)) ropes.Add(new KeyValuePair<Vector3, Vector3>(z.transform.position, landAt + to));
+			}
+			System.Func<Vector3, float> ropeCap = q =>
+			{
+				float cap = float.PositiveInfinity;
+				foreach (var rp in ropes)
+				{
+					Vector2 a = new Vector2(rp.Key.x, rp.Key.z), ab = new Vector2(rp.Value.x, rp.Value.z) - a;
+					float u = ab.sqrMagnitude > 0.01f ? Mathf.Clamp01(Vector2.Dot(new Vector2(q.x, q.z) - a, ab) / ab.sqrMagnitude) : 0f;
+					if ((a + ab * u - new Vector2(q.x, q.z)).magnitude < 3.5f) cap = Mathf.Min(cap, Mathf.Lerp(rp.Key.y, rp.Value.y, u) - 2.5f);
+				}
+				return cap;
+			};
 			foreach (SheetFace f in todo)
 			{
 				Vector3 mid = (f.Hi + f.Lo) * 0.5f;
-				if (stood.Any(p => new Vector2(p.x - mid.x, p.z - mid.z).magnitude < 2f)) { covered++; continue; }
 				Vector3 outward = new Vector3(f.Lo.x - f.Hi.x, 0f, f.Lo.z - f.Hi.z).normalized;
 				if (outward.sqrMagnitude < 0.5f) continue;
+				// (a face a rock already stood covers - its ray meets the rock, as the sheet check's does; the faces between two
+				// rocks get one of their own - c3z64: Caisson Yard's 4.6 m wall bare for 2/3 of the width between two rocks)
+				Vector3 from = f.Lo + outward * 0.5f; from.y = sea + Mathf.Clamp(f.Top * 0.5f, 0.25f, 3f);
+				if (own.Count > 0 && FaceCover(from, -outward, (f.Lo - f.Hi).magnitude + 1f, c => own.Contains(c)) != null) { covered++; continue; }
 				float yaw = Mathf.Atan2(outward.x, outward.z) * Mathf.Rad2Deg;
 				Quaternion turn = Quaternion.Euler(0f, yaw, 0f);
 				Vector3 along = turn * Vector3.right;
@@ -986,21 +1062,21 @@ namespace DynamicIslands
 				// wall up to 4 m either way, else left out; the rocks this step stood are no such piece, nor a log or a natural rock,
 				// which the rock may stand in front of - c3z63: Caisson Yard's last sheet, a 4.6 m wall, kept bare by 5 logs and a
 				// dug tunnel's mouth)
-				Collider hit = null;
+				string hit = null;
 				Vector3 at = mid;
-				foreach (float off in new[] { 0f, 2.5f, -2.5f, 4f, -4f })
+				float want = sea + f.Top + 0.3f;
+				foreach (float off in new[] { 0f, 1.5f, -1.5f, 2.5f, -2.5f, 4f, -4f })
 				{
 					Vector3 q = mid + along * off;
 					Collider h = Physics.OverlapBox(new Vector3(q.x, sea + 0.5f, q.z), new Vector3(2.3f, 3.4f, 1.1f), turn, ~0, QueryTriggerInteraction.Ignore)
 						.FirstOrDefault(c => !(c is TerrainCollider) && !own.Contains(c) && !RockStandsBefore(c));
-					if (h == null) { hit = null; at = q; break; }
-					if (off == 0f) hit = h;
+					float cap = ropeCap(q);
+					if (h == null && cap >= sea + 1f) { hit = null; at = q; want = Mathf.Min(want, cap); break; }
+					if (off == 0f) hit = h != null ? PieceName(h) : "a zipline's rope";
 				}
 				if (hit != null)
 				{
-					EditorGameObject by = hit.GetComponentInParent<EditorGameObject>();
-					string n = by != null ? (by.GameObjectName ?? by.name) : hit.name;
-					int bn; blocked.TryGetValue(n, out bn); blocked[n] = bn + 1;
+					int bn; blocked.TryGetValue(hit, out bn); blocked[hit] = bn + 1;
 					continue;
 				}
 				mid = at;
@@ -1032,7 +1108,7 @@ namespace DynamicIslands
 					if (Mathf.Abs(along.x) * b1.size.x + Mathf.Abs(along.z) * b1.size.z <= w0) e.transform.rotation = best;
 					// (stretched up to the face's top where that is over the rock's - Old Mine Islet's channel walls stand 4-9 m over
 					// the sea, The Abyss's blue hole 17 m: along its own axis that points most up, at most 3 times)
-					float low = Mathf.Max(sea - 3f, sea + f.Bot - 0.3f), want = sea + f.Top + 0.3f;
+					float low = Mathf.Max(sea - 3f, sea + f.Bot - 0.3f);
 					Bounds sb = shape();
 					if (want - low > sb.size.y && sb.size.y > 0.5f)
 					{
