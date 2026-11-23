@@ -619,7 +619,8 @@ clear at -7.45 -20.69 r=2 all only=^Bush2
 # (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth)
-cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
+# (keep=, lib 3.5.1 minor fixes 11-23: the talus filled or buried the Drowned Shaft's channel at its mouth (its beams and the zone) - left as built)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=-55,-9,9
 # (the rocks= stood rock in the Drowned Shaft itself - in its channel and in the drowned cave, seen through from inside
 #     (BigBoulder2_Low's back, 6 looks) - taken out again: the shaft is a dive shaft, its walls stay walls)
 clear from -90 -8 to -22 -8 r=7 all only=^BigBoulder

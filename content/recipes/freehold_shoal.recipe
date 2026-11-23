@@ -318,5 +318,6 @@ loot fhshelterchest Rope*2;Nail*6;CopperIngot*1;Plastic*2
 # (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth)
-cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
+# (keep=, lib 3.5.1 minor fixes 11-23: the talus filled or buried the sunk house's dive site - the house, the boat, its crate and the puffers - left as built)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=-72,6,16
 save Freehold Shoal
