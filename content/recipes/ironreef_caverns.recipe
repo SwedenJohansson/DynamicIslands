@@ -614,4 +614,67 @@ clear at 27.77 -4.05 r=1.5 only=Bush
 # (c3z43 11-21, CIGroundIslands: a generated bamboo on a drop's edge and a bush 9 m over the ground on the mountain)
 clear at -66.28 -19.72 r=2 all only=^Bamboo
 clear at -7.45 -20.69 r=2 all only=^Bush2
+# (lib 3.5.1 extra fixes 11-23: the Drowned Shaft's walls were the land's own faces at the waterline, drawn as one
+#     stretched pale sheet under the drowned cave (CISheetIslands: 9 cells, 30 m) - rock stood there showed through the
+#     cave and talus filled the channel, so the adit is timbered instead: solid wooden walls along its south and north
+#     walls and its far end, from the water up to h 4.4, their backs in the rock; the shaft keeps its depth and its way out)
+place Block_Wall_Tier3 adit at -56.04 -12.14 h=-0.42
+place Block_Wall_Tier3 adit at -56.04 -12.14 h=1.98
+place Block_Wall_Tier3 adit at -54.54 -12.09 h=-0.42
+place Block_Wall_Tier3 adit at -54.54 -12.09 h=1.98
+place Block_Wall_Tier3 adit at -53.04 -12.09 h=-0.42
+place Block_Wall_Tier3 adit at -53.04 -12.09 h=1.98
+place Block_Wall_Tier3 adit at -51.54 -12.07 h=-0.42
+place Block_Wall_Tier3 adit at -51.54 -12.07 h=1.98
+place Block_Wall_Tier3 adit at -50.04 -12.03 h=-0.42
+place Block_Wall_Tier3 adit at -50.04 -12.03 h=1.98
+place Block_Wall_Tier3 adit at -48.54 -12.01 h=-0.42
+place Block_Wall_Tier3 adit at -48.54 -12.01 h=1.98
+place Block_Wall_Tier3 adit at -47.04 -11.98 h=-0.42
+place Block_Wall_Tier3 adit at -47.04 -11.98 h=1.98
+place Block_Wall_Tier3 adit at -45.54 -11.94 h=-0.42
+place Block_Wall_Tier3 adit at -45.54 -11.94 h=1.98
+place Block_Wall_Tier3 adit at -44.04 -11.91 h=-0.42
+place Block_Wall_Tier3 adit at -44.04 -11.91 h=1.98
+place Block_Wall_Tier3 adit at -42.54 -11.87 h=-0.42
+place Block_Wall_Tier3 adit at -42.54 -11.87 h=1.98
+place Block_Wall_Tier3 adit at -41.04 -11.85 h=-0.42
+place Block_Wall_Tier3 adit at -41.04 -11.85 h=1.98
+place Block_Wall_Tier3 adit at -39.54 -11.80 h=-0.42
+place Block_Wall_Tier3 adit at -39.54 -11.80 h=1.98
+place Block_Wall_Tier3 adit at -38.04 -11.78 h=-0.42
+place Block_Wall_Tier3 adit at -38.04 -11.78 h=1.98
+place Block_Wall_Tier3 adit at -36.54 -11.76 h=-0.42
+place Block_Wall_Tier3 adit at -36.54 -11.76 h=1.98
+place Block_Wall_Tier3 adit at -35.04 -11.71 h=-0.42
+place Block_Wall_Tier3 adit at -35.04 -11.71 h=1.98
+place Block_Wall_Tier3 adit at -33.54 -11.69 h=-0.42
+place Block_Wall_Tier3 adit at -33.54 -11.69 h=1.98
+place Block_Wall_Tier3 adit at -32.04 -11.64 h=-0.42
+place Block_Wall_Tier3 adit at -32.04 -11.64 h=1.98
+place Block_Wall_Tier3 adit at -30.54 -11.53 h=-0.42
+place Block_Wall_Tier3 adit at -30.54 -11.53 h=1.98
+place Block_Wall_Tier3 adit at -29.04 -11.35 h=-0.42
+place Block_Wall_Tier3 adit at -29.04 -11.35 h=1.98
+place Block_Wall_Tier3 adit at -33.54 -7.95 h=-0.42
+place Block_Wall_Tier3 adit at -33.54 -7.95 h=1.98
+place Block_Wall_Tier3 adit at -32.04 -8.19 h=-0.42
+place Block_Wall_Tier3 adit at -32.04 -8.19 h=1.98
+place Block_Wall_Tier3 adit at -30.54 -8.31 h=-0.42
+place Block_Wall_Tier3 adit at -30.54 -8.31 h=1.98
+place Block_Wall_Tier3 adit at -56.04 -2.57 h=-0.42
+place Block_Wall_Tier3 adit at -56.04 -2.57 h=1.68
+place Block_Wall_Tier3 adit at -54.54 -2.67 h=-0.42
+place Block_Wall_Tier3 adit at -54.54 -2.67 h=1.98
+place Block_Wall_Tier3 adit at -53.04 -2.75 h=-0.42
+place Block_Wall_Tier3 adit at -53.04 -2.75 h=1.98
+place Block_Wall_Tier3 adit at -51.54 -2.75 h=-0.42
+place Block_Wall_Tier3 adit at -51.54 -2.75 h=1.98
+place Block_Wall_Tier3 adit at -50.04 -1.95 h=-0.42
+place Block_Wall_Tier3 adit at -28.40 -11.39 h=-0.42 yaw=90
+place Block_Wall_Tier3 adit at -28.40 -11.39 h=1.98 yaw=90
+place Block_Wall_Tier3 adit at -27.45 -9.89 h=-0.42 yaw=90
+place Block_Wall_Tier3 adit at -27.45 -9.89 h=1.98 yaw=90
+place Block_Wall_Tier3 adit at -28.92 -8.39 h=-0.42 yaw=90
+place Block_Wall_Tier3 adit at -28.92 -8.39 h=1.98 yaw=90
 save Ironreef Caverns
