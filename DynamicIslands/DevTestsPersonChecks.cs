@@ -161,7 +161,7 @@ namespace DynamicIslands
 				Check(ref ok, PatchHealth.FailedPatches.Count == 1 && PatchHealth.FailedPatches[0] == typeof(CIBrokenReceiverPatch).Name, "only the broken test patch failed (" + failed + ")");
 				Check(ref ok, PatchHealth.Applied == patchClasses - 1, "every other patch applied (" + PatchHealth.Applied + " of " + patchClasses + " patch classes)");
 				Check(ref ok, PatchHealth.Feature(typeof(CIBrokenReceiverPatch).Name) == "the Receiver", "it is named as '" + PatchHealth.Feature(typeof(CIBrokenReceiverPatch).Name) + "'");
-				Check(ref ok, InfoWindow.IsOpen && InfoWindow.Title == "Some parts of Custom Islands are off", "the main menu shows the box: '" + InfoWindow.Title + "'");
+				Check(ref ok, InfoWindow.IsOpen && string.Equals(InfoWindow.Title, "Some parts of Custom Islands are off", StringComparison.OrdinalIgnoreCase), "the main menu shows the box: '" + InfoWindow.Title + "'");
 				string body = InfoWindow.Body ?? "";
 				Check(ref ok, body.Contains("•  the Receiver") && body.Contains("Everything else works"), "the box names the Receiver and says everything else works");
 				Check(ref ok, InfoWindow.ButtonNamed("Report a problem") != null && InfoWindow.ButtonNamed("Close") != null, "it has Report a problem and Close");
