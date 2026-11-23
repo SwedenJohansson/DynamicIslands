@@ -511,8 +511,9 @@ namespace DynamicIslands
 			td.SetHeights(0, 0, h);
 			Physics.SyncTransforms();
 			yield return null;
-			// (in front of A's east face: a crate on the floor 6 m out, a puffer fish 8 m out 14 m under the sea - the talus reaches 10 m out
-			// there, 3 m a point down to 10 m under the sea: the first test's crate 12 m out stood past it; one far off)
+			// (in front of A's east face: a crate on the floor 6 m out, a puffer fish 10 m out 14 m under the sea - the talus reaches 10 m out
+			// there, 3 m a point down to 10 m under the sea: the first test's crate 12 m out stood past it; the fish 8 m out (ground 5 m under
+			// the sea after) had no room under the sea for its box and sat on the new ground - 11-23 mnu3; one far off)
 			try
 			{
 				File.WriteAllLines(pb, new[]
@@ -520,7 +521,7 @@ namespace DynamicIslands
 					"# CICliffsKeepUnit: the things on the sea floor",
 					"origin " + inv(c.x) + " " + inv(c.z),
 					"place Loot_Crate cikcrate at " + inv(A.x - c.x + 26f) + " 0",
-					"place Creature_PufferFish cikfish at " + inv(A.x - c.x + 28f) + " 6 h=-14",
+					"place Creature_PufferFish cikfish at " + inv(A.x - c.x + 30f) + " 6 h=-14",
 					"place Creature_PufferFish cikfar at 0 -200 h=-14",
 					"place Block_Wall_Tier3 cikwall at " + inv(A.x - c.x) + " 26",
 				});
@@ -538,7 +539,7 @@ namespace DynamicIslands
 				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
 				return b;
 			};
-			EditorGameObject crate = find("Loot_Crate", A + new Vector2(26f, 0f)), fish = find("Creature_PufferFish", A + new Vector2(28f, 6f)), far = find("Creature_PufferFish", new Vector2(c.x, c.z - 200f));
+			EditorGameObject crate = find("Loot_Crate", A + new Vector2(26f, 0f)), fish = find("Creature_PufferFish", A + new Vector2(30f, 6f)), far = find("Creature_PufferFish", new Vector2(c.x, c.z - 200f));
 			if (crate == null || fish == null || far == null || fish == far) { Fail("cliffs keep: the crate and two fish not placed"); yield break; }
 			EditorGameObject wall = find("Block_Wall_Tier3", A + new Vector2(0f, 26f));
 			if (wall == null) { Fail("cliffs keep: the sunk wall not placed"); yield break; }
@@ -569,7 +570,7 @@ namespace DynamicIslands
 				string.Join(",", Enumerable.Range(1, 8).Select(i => { int gx = Mathf.RoundToInt((A.x + 20f + 2f * i - tp.x) / (size.x / (res - 1))), gz = Mathf.RoundToInt((A.y - tp.z) / (size.z / (res - 1)));
 					return " " + inv(before[gz, gx] * size.y + tp.y - sea) + ">" + inv(after[gz, gx] * size.y + tp.y - sea); }).ToArray()) + ")");
 			Check(ref ok, fish1.min.y > fish0.min.y + 3f && fish1.min.y >= f1 && fish1.max.y < sea,
-				"the fish over the new ground, still in the water: bottom " + inv(fish0.min.y - sea) + " -> " + inv(fish1.min.y - sea) + " m (it was " + inv(fishGap) + " m over the floor), the ground " + inv(f1 - sea));
+				"the fish over the new ground, still in the water: bottom " + inv(fish0.min.y - sea) + " -> " + inv(fish1.min.y - sea) + " m, top " + inv(fish0.max.y - sea) + " -> " + inv(fish1.max.y - sea) + " m (it was " + inv(fishGap) + " m over the floor), the ground " + inv(f1 - sea));
 			Check(ref ok, Mathf.Abs(far.transform.position.y - farY) < 0.01f, "the far fish not moved");
 			// (a building piece on the sea floor holds the talus back, never rides up on it: Skyhook Mast's sunk room - 11-23)
 			Check(ref ok, Mathf.Abs(wall.transform.position.y - wallY) < 0.01f, "the sunk wall in front of A's north face not moved: " + inv(wallY - sea) + " -> " + inv(wall.transform.position.y - sea) + " m");
