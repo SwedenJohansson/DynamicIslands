@@ -502,6 +502,26 @@ clear at 1.8 -32 r=1.8 all only=CaravanIsland_SmallRock
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth)
 # (keep=, lib 3.5.1 minor fixes 11-23: the talus filled or buried the dock pool's mouth under the hangar door and the jetty (the swim-in way), the sunk barrel by the jetty and the pet pool - left as built)
-# (walls=, lib 3.5.1 extra fixes 11-23: the kept walls still showed as bare sheets - no talus there, so the pit keeps its depth, but rock is stood on its faces)
-cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=-50,-5,8|-30,-7,7 walls=-47,8,10
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=-50,-5,8|-30,-7,7|-47,8,10
+# (lib 3.5.1 extra fixes 11-23: the kept dock pool still showed as a bare sheet - its 13 m north wall under the hangar
+# roof and its east end. Rocks stood there (walls=) filled the pool's mouth in front of the garage door and stuck into the
+# hangar, so the pool is lined with the hangar's concrete instead: its north wall from the facade to the control wing,
+# from the pool's floor to the roof, and its east end up to the walkway. Each piece 1.5 cm thicker than the one on it, as
+# the facade's)
+place RT_Wall1 - at -42.6 7.9 h=-6.2 sx=1.0889 sy=2 sz=1.3
+place RT_Wall1 - at -42.6 7.9 h=-0.2 sx=1.0889 sy=1 sz=1.2
+place RT_Wall1 - at -42.6 7.9 h=2.8 sx=1.0889 sy=1 sz=1.1
+place RT_Wall1 - at -42.6 7.9 h=5.8 sx=1.0889 sy=0.567 sz=1
+place RT_Wall1 - at -39.333 7.9 h=-6.2 sx=1.0889 sy=2 sz=1.3
+place RT_Wall1 - at -39.333 7.9 h=-0.2 sx=1.0889 sy=1 sz=1.2
+place RT_Wall1 - at -39.333 7.9 h=2.8 sx=1.0889 sy=1 sz=1.1
+place RT_Wall1 - at -39.333 7.9 h=5.8 sx=1.0889 sy=0.567 sz=1
+place RT_Wall1 - at -36.067 7.9 h=-6.2 sx=0.5556 sy=2 sz=1.3
+place RT_Wall1 - at -36.067 7.9 h=-0.2 sx=0.5556 sy=1 sz=1.2
+place RT_Wall1 - at -36.067 7.9 h=2.8 sx=0.5556 sy=1 sz=1.1
+place RT_Wall1 - at -36.067 7.9 h=5.8 sx=0.5556 sy=0.567 sz=1
+place RT_Wall1 - at -35 4 h=-6.2 yaw=90 sx=1.3333 sy=2.4 sz=1.3
+# (the talus buried a sand find on the slope south of the facade, 2 m in the ground, and it was left out: one put back
+# on the talus there, 3 m under the sea)
+place Pickup_Landmark_Sand - at -42.7 -19
 save Crater Lair
