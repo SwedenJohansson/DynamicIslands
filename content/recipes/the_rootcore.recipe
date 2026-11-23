@@ -508,4 +508,7 @@ prop rcwreck obj.name=rcwreck
 # (11-10 w02, REACH: a 6x2 m dip in the north beach at -11.8 97.5 - in, no way out: smoothed, its rocks cleared)
 brush smooth at -10 98 r=4 s=10 frames=30
 clear at -9 98.2 r=2.5
+# (lib 3.5.1 minor fixes 11-23: the ground check found a mango tree's foot 1.0 m under the ground here, the hill raised
+#     round it - just over the save's reseat line, so it stayed sunk; taken out)
+clear at -17.83 49.15 r=1 all only=Pickup_Landmark_Tree_Mango
 save The Rootcore

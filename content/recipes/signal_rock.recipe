@@ -379,4 +379,8 @@ clear at 9.94 -18.71 r=1.5 only=BigBoulder4_Low
 # (ground check 10-30, "sunk trunk": a big palm, its foot 1.9 m in the slope - taken out. The report is from the land centre,
 # 16.7847 3.2432 off this recipe's origin: added here)
 clear at 7.92 -24.33 r=0.8 all only=BigPalm4
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save Signal Rock
