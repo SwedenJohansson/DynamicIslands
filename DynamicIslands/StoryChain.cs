@@ -232,8 +232,10 @@ namespace DynamicIslands.Editor
 					// (a kept number moved: the journal's page still gives the old one - Tick adds one with the new)
 					if (digits != null && digits.Length == 4) Moved.Add(r.Id);
 					var rnd = new System.Random(StableHash(IslandWorldState.WorldKey + "/" + r.Id));
+					// (given up after a while: with every code taken it never ended - audit 2026-10-06)
+					int tries = 0;
 					do digits = new[] { rnd.Next(10), rnd.Next(10), rnd.Next(10), rnd.Next(10) };
-					while (taken.Any(t => t.SequenceEqual(digits)));
+					while (taken.Any(t => t.SequenceEqual(digits)) && ++tries < 1000);
 				}
 				taken.Add(digits);
 				Frequencies.Add(new KeyValuePair<string, int[]>(r.Id, digits));
