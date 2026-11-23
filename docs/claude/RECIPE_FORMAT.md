@@ -94,8 +94,8 @@ plan save
   recipe's item lists; checks rule lines, story places, steps and their targets, story items/blueprints/titanium in play
   order, Raft item names (`content\objects\items.txt`), action lines cut by a real line break, compass words and
   chest wording; `note:` done-whens by number or title, for rules beside Raft's story too (part `BESIDE`), and story
-  items with `raft=` that a has/take check or cage key needs held (T8 take-out, `story-items` WARN; quest softlock
-  audit 11-23). `--mods`/`--stage` an empty folder and `--library <release folder>` check one release alone. ERROR = can't finish or silently lost; exit 1 on any ERROR. Its lists mirror IntroRule/IslandQuest/
+  items with `raft=` that a has/take check or cage key needs held (T8 take-out, `story-items` INFO; quest softlock
+  audit 11-23), and has/take checks of Raft items players use up (M9: a blueprint WARN, a food or drink INFO). `--mods`/`--stage` an empty folder and `--library <release folder>` check one release alone. ERROR = can't finish or silently lost; exit 1 on any ERROR. Its lists mirror IntroRule/IslandQuest/
   BehaviourProps.Verbs - keep them in step with the C#.
 - `prop <cave piece alias> cave.seacut=1` (`ObjectProps.CaveSeaCut`): the cave hill over that island leaves out its skin over
   deep sea and the shore ring (`CaveMountain.SeaCut`), so a mound raised from the sea floor closes no pool under it

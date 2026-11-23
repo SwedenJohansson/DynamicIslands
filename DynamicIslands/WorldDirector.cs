@@ -520,6 +520,8 @@ namespace DynamicIslands.Editor
 			public List<string> EventPages;
 			/// <summary>Those pages' texts ("object number:title" -> text).</summary>
 			public Dictionary<string, string> EventPageTexts;
+			/// <summary>The story items its checks and survivor cages need (T8 guard, StoryNeeds).</summary>
+			public List<StoryNeeds.Need> Needs;
 		}
 
 		static readonly Dictionary<string, Info> cache = new Dictionary<string, Info>(StringComparer.OrdinalIgnoreCase);
@@ -569,6 +571,7 @@ namespace DynamicIslands.Editor
 				info.EventPageTexts = new Dictionary<string, string>();
 				foreach (KeyValuePair<string, string> kv in Enumerable.Range(0, f.Objects.Count).SelectMany(i => journalText(i, f.Objects[i].Props)).Concat(journalText(Behaviours.IslandIndex, f.Props)))
 					if (!info.EventPageTexts.ContainsKey(kv.Key)) info.EventPageTexts[kv.Key] = kv.Value;
+				info.Needs = StoryNeeds.FromFile(f);
 				info.CheckedAt = Time.unscaledTime;
 				cache[name] = info;
 				return info;
@@ -733,6 +736,9 @@ namespace DynamicIslands.Editor
 			IslandSettings s = e.Root != null ? e.Root.GetComponent<IslandSettings>() : null;
 			return s != null ? s.Props : Props(e.Name);
 		}
+
+		/// <summary>The story items the island's checks and survivor cages need (empty if the file is missing): the T8 guard.</summary>
+		internal static List<StoryNeeds.Need> NeedsOf(string name) { Info i = Get(name); return i != null && i.Needs != null ? i.Needs : new List<StoryNeeds.Need>(); }
 
 		/// <summary>The names of the island's trigger zones (empty if the file is missing): the plan editor's lists.</summary>
 		public static List<string> ZonesOf(string name) { Info i = Get(name); return i != null ? i.Zones.Where(z => !string.IsNullOrEmpty(z)).Distinct(StringComparer.OrdinalIgnoreCase).ToList() : new List<string>(); }

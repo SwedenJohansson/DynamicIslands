@@ -49,6 +49,8 @@ namespace DynamicIslands.Editor
 		static void AfterChange(IslandWorldState.Entry e, int key, int day)
 		{
 			if (day >= 0 && IsZoneKey(key) && Raft_Network.IsHost) CreatureSpawner.OnIslandReady(e);
+			// (a player: the host freed a story treasure dug for good - its point comes back here too; quest softlock audit M6)
+			if (day < 0 && !Raft_Network.IsHost && e.Root != null && (key - BuriedTreasure.KeepBase) >= 0 && (key - BuriedTreasure.KeepBase) < 0x10000) BuriedTreasure.OnIslandReady(e);
 		}
 
 		/// <summary>From the network: day &lt; 0 = available again (refilled).</summary>

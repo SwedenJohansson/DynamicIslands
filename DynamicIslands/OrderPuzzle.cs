@@ -14,8 +14,8 @@ namespace DynamicIslands.Editor
 	/// the right next piece moves it on, any other piece is a wrong press: the progress goes back to 0, the pressed piece
 	/// runs its "wrong" event, and half a second later the group's pieces go back as placed (lights off, opened pieces
 	/// closed). The last step sends the signal "order:group" and runs every piece's "solved" event, once for good.
-	/// "wrong" and "solved" are not resumable events (PlayerFeatures.ResumableEvents is full): their actions after a wait
-	/// run in this session only.
+	/// "wrong" and "solved" keep their actions after a wait as the other events do (Behaviours.ExtraPendingEvents - quest
+	/// softlock audit M7).
 	/// </summary>
 	public static class OrderPuzzle
 	{

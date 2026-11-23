@@ -75,7 +75,8 @@ namespace DynamicIslands
 				string[] more = (string[])t.GetProperty("MorePendingEvents", flags).GetValue(null, null);
 				if (resumable == null || key == null || evOf == null || events == null || more == null) { Fail("fix3 pending: Behaviours' pending methods not found"); return; }
 				int kept = 0;
-				foreach (string ev in events.Concat(more).SelectMany(x => new[] { x, x + "!" }))
+				var keys = new HashSet<int>();
+				foreach (string ev in events.Concat(more).SelectMany(x => new[] { x, x + "!" }).Concat(Behaviours.ExtraPendingEvents).Distinct())
 				{
 					if (!(bool)resumable.Invoke(null, new object[] { ev })) continue;
 					kept++;
@@ -83,11 +84,13 @@ namespace DynamicIslands
 					{
 						int k = (int)key.Invoke(null, new object[] { index, ev });
 						string back = (string)evOf.Invoke(null, new object[] { k });
-						bool sameObject = ((k - (k >= Behaviours.MorePendingBase ? Behaviours.MorePendingBase : Behaviours.PendingBase)) >> 4) == index;
-						Check(ref ok, back == ev && sameObject, "'" + ev + "' at " + index + ": its key " + k.ToString("X") + " reads back as '" + back + "'" + (sameObject ? "" : ", another object's"));
+						bool sameObject = Behaviours.PendingBaseOf(k) >= 0 && ((k - Behaviours.PendingBaseOf(k)) >> 4) == index;
+						Check(ref ok, back == ev && sameObject && keys.Add(k), "'" + ev + "' at " + index + ": its key " + k.ToString("X") + " reads back as '" + back + "'" + (sameObject ? "" : ", another object's"));
 					}
 				}
-				Check(ref ok, !(bool)resumable.Invoke(null, new object[] { "arrive!" }) && !(bool)resumable.Invoke(null, new object[] { "quest!" }), "arrive! and quest! are not kept (they run this session only)");
+				// (quest softlock audit M7: these were not kept - their numbers didn't fit - and are now, under ExtraPendingBase)
+				Check(ref ok, new[] { "arrive!", "quest!", "phase!", "stack!", "solved", "wrong!", "crowd", "crowdleft!", "trade", "choice4" }.All(x => (bool)resumable.Invoke(null, new object[] { x })), "arrive!, quest!, phase!, stack!, solved, wrong, crowd, crowdleft, trade and choice4 are kept");
+				Check(ref ok, Behaviours.ExtraPendingEvents.Length <= 16 && Behaviours.ExtraPendingBase > Behaviours.MorePendingBase + 0xFFFFF && Behaviours.QueuedBase > Behaviours.ExtraPendingBase + 0xFFFFF && Behaviours.QueuedBase + 0xFFFFF < Behaviours.SignalBase, "the extra pending and queued keys meet no other keys");
 				Check(ref ok, (bool)resumable.Invoke(null, new object[] { "use!" }) && (bool)resumable.Invoke(null, new object[] { "arrive" }), "use! and arrive are kept");
 				Log("  " + kept + " event(s) kept over a wait");
 			}

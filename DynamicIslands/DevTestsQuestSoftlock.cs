@@ -244,5 +244,384 @@ namespace DynamicIslands
 			}
 			if (ok) Log("PASS: story note stale"); else Fail("story note stale");
 		}
+
+		[ConsoleCommand(name: "CIStoryTakeOutGuard", docs: "Dev, world (host): T8 guard - a story item a quest still needs (a note's take check, a survivor cage's key on an island here; a has check on an island the plan still brings) can't be taken out of the journal as its Raft item: the Take out button is greyed out and says where, the host refuses a player's take-out (outno with where); the crew takes out what it holds beyond the needs; once the cage is opened and the note read, it is free again (TEST_CATALOGUE QSL6)")]
+		public static void StoryTakeOutGuardCommand() { StartTest(StoryTakeOutGuardRoutine()); }
+
+		static IEnumerator StoryTakeOutGuardRoutine()
+		{
+			for (float t = 0f; t < 60f && !(LoadSceneManager.IsGameSceneLoaded && WorldDirector.WorldHandled); t += Time.unscaledDeltaTime) yield return null;
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null || !CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			const string id = "ci-qsl6-plank", raft = "Plank";
+			var def = new StoryItemDef { Id = id, Name = "Old plank", RaftItem = raft };
+			var asker = new Network_UserId(4242UL);
+			var sent = new List<IslandNetMessage>();
+			Func<int> count = () => StoryBook.Count(id);
+			Action ask = () => { IslandNetwork.Loopback = sent.Add; try { StoryBook.OnMessage(new IslandNetMessage { Kind = IslandNetMessage.Story, Name = "out", Data = Uri.EscapeDataString(id) }, 4242UL, asker); } finally { IslandNetwork.Loopback = null; } };
+			string far = "ciqsl6-far", farPath = IslandSpawner.PathFor(far), later = "ciqsl6-later", laterPath = IslandSpawner.PathFor(later);
+			IslandWorldState.Entry fe = null;
+			var rule = new IntroRule { Id = "ciqsl6", What = "island", WhatArg = later, When = "signal", WhenRef = "ciqsl6-never" };
+			StoryBook.Take(id, 99);
+			try
+			{
+				// An island here: a note whose read takes one, a survivor cage locked with one
+				IslandFile ff = SampleIsland();
+				ff.Name = far;
+				int note = ff.Objects.Count;
+				ff.Objects.Add(new IslandObject { Name = ff.Objects[0].Name, Position = ff.Objects[0].Position, Props = P(BehaviourProps.CheckKey("read"), "take|story:" + id + "|1") });
+				int cage = ff.Objects.Count;
+				ff.Objects.Add(new IslandObject { Name = Survivors.CageObject, Position = ff.Objects[0].Position, Props = P(Survivors.KeyProp, id) });
+				ff.Save(farPath);
+				IslandCache.ForgetFile(farPath);
+				GiveDef(def, 2);
+				Check(ref ok, StoryNeeds.KeptFor(id) == null, "no island needs it yet: free (" + StoryNeeds.KeptFor(id) + ")");
+				Vector3 at = CustomIslandSpawner.RaftPosition.Value - CustomIslandSpawner.SailDirection() * (CustomIslandSpawner.UnloadDistance + 3000f);
+				at.y = 0f;
+				fe = IslandWorldState.Add(far, at, null, false);
+				if (fe == null) { Fail("the far island was not added"); yield break; }
+				string where;
+				int need = StoryNeeds.Needed(id, out where);
+				Check(ref ok, need == 2 && StoryNeeds.KeptFor(id) != null, "the note and the cage need both the crew holds (needed " + need + " on '" + where + "', held " + count() + ")");
+
+				// The journal: Take out greyed out, saying where; a click and TakeOut do nothing
+				int planks = player.Inventory.GetItemCount(raft);
+				JournalWindow.Open();
+				yield return null; yield return null;
+				Check(ref ok, JournalWindow.ShowItemOf(id), "the journal shows the item");
+				string label = JournalWindow.TakeOutLabel;
+				Check(ref ok, label != null && label.StartsWith("Needed on") && !JournalWindow.TakeOutEnabled, "Take out is greyed out and says where (" + label + ", enabled " + JournalWindow.TakeOutEnabled + ")");
+				JournalWindow.ClickTakeOut();
+				Check(ref ok, !StoryBook.TakeOut(id), "TakeOut refuses it");
+				yield return null; yield return null;
+				Check(ref ok, count() == 2 && player.Inventory.GetItemCount(raft) == planks, "kept: 2 in the journal, no plank (" + count() + ", " + planks + " -> " + player.Inventory.GetItemCount(raft) + ")");
+
+				// A player's take-out: the host says no, and why
+				ask();
+				IslandNetMessage no = sent.LastOrDefault(m => m.Name == "outno" || m.Name == "outok");
+				Check(ref ok, count() == 2 && no != null && no.Name == "outno" && Uri.UnescapeDataString((no.Data ?? "").Split('|').Last()).Length > 0, "the host refuses a player's take-out, saying where (" + count() + ", " + (no != null ? no.Name + " " + no.Data : "none") + ")");
+
+				// One more than the needs: that one can be taken out, then none again
+				GiveDef(def, 1);
+				JournalWindow.ShowItemOf(id);
+				Check(ref ok, JournalWindow.TakeOutEnabled && JournalWindow.TakeOutLabel.StartsWith("Take out"), "with one beyond the needs, Take out works (" + JournalWindow.TakeOutLabel + ")");
+				sent.Clear();
+				ask();
+				Check(ref ok, count() == 2 && sent.Any(m => m.Name == "outok"), "a player takes the spare one out (" + count() + ")");
+				Check(ref ok, StoryNeeds.KeptFor(id) != null, "then the rest is kept again");
+
+				// The cage opened: one is free; the note read too: all are
+				fe.State[Survivors.KeyBase + (cage & 0xFFFF)] = new ObjectState { Active = false, Yield = -1 };
+				Check(ref ok, StoryNeeds.Needed(id, out where) == 1 && StoryNeeds.KeptFor(id) == null, "the cage opened: one needed, one free (" + StoryNeeds.Needed(id, out where) + ")");
+				fe.State[Behaviours.DoneBase + note] = new ObjectState { Active = false, Yield = -1 };
+				Check(ref ok, StoryNeeds.Needed(id, out where) == 0, "the note read too: none needed (" + StoryNeeds.Needed(id, out where) + ")");
+				JournalWindow.ShowItemOf(id);
+				Check(ref ok, JournalWindow.TakeOutEnabled, "Take out works again");
+				JournalWindow.ClickTakeOut();
+				yield return null; yield return null;
+				Check(ref ok, count() == 1 && player.Inventory.GetItemCount(raft) == planks + 1, "taken out: one left, a plank (" + count() + ", " + player.Inventory.GetItemCount(raft) + ")");
+
+				// An island the plan still brings (not here yet): its has check holds
+				IslandFile lf = SampleIsland();
+				lf.Name = later;
+				if (lf.Props == null) lf.Props = new Dictionary<string, string>();
+				lf.Props[BehaviourProps.CheckKey("arrive")] = "has|story:" + id + "|1";
+				lf.Save(laterPath);
+				IslandCache.ForgetFile(laterPath);
+				WorldDirector.Plan.Rules.Add(rule);
+				Check(ref ok, StoryNeeds.Needed(id, out where) == 1 && StoryNeeds.KeptFor(id) != null && where == later, "an island the plan still brings needs the last one (" + where + ")");
+				WorldDirector.Plan.Rules.Remove(rule);
+				Check(ref ok, StoryNeeds.KeptFor(id) == null, "without that rule it is free");
+			}
+			finally
+			{
+				IslandNetwork.Loopback = null;
+				WorldDirector.Plan.Rules.Remove(rule);
+				JournalWindow.Close();
+				if (fe != null) IslandWorldState.RemoveIds(new List<int> { fe.Id }, false);
+				foreach (string path in new[] { farPath, laterPath }) { try { File.Delete(path); IslandCache.ForgetFile(path); } catch { } }
+				StoryBook.Take(id, 99);
+			}
+			if (ok) Log("PASS: story take out guard"); else Fail("story take out guard");
+		}
+
+		[ConsoleCommand(name: "CIRefusedFreesFar", docs: "Dev, world (host): M3/M4 - a player's zone walk-in, chest opening and story-item pickup refused because their island isn't loaded on the host: the zone, chest and pickup the player marked used (or claimed) are ready again, read from the island's file (before: they stayed used with nothing done - the door or key the story needed never came) (TEST_CATALOGUE QSL7)")]
+		public static void RefusedFreesFarCommand() { StartTest(RefusedFreesFarRoutine()); }
+
+		static IEnumerator RefusedFreesFarRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var player = new Network_UserId(4343UL);
+			var sent = new List<IslandNetMessage>();
+			string far = "ciqsl7-far", farPath = IslandSpawner.PathFor(far);
+			IslandFile ff = SampleIsland();
+			ff.Name = far;
+			Vector3 p0 = ff.Objects.Count > 0 ? ff.Objects[0].Position : Vector3.zero;
+			Func<string, Dictionary<string, string>, int> add = (name, props) => { ff.Objects.Add(new IslandObject { Name = name, Position = p0, Props = props, Scale = Vector3.one }); return ff.Objects.Count - 1; };
+			int zi = add(ContentCatalog.TriggerZone, P(ObjectProps.ZoneId, "qsl7zone", ObjectProps.ZoneRadius, "2"));
+			int ci = add("Loot_Chest", P(ObjectProps.LootItems, "Plank*1", ObjectProps.NoteTitle, "QSL chest"));
+			int pi = add("QuestItemPickup_QSL", P(BehaviourProps.Name, "qsl7key"));
+			ff.Save(farPath);
+			IslandCache.ForgetFile(farPath);
+			// (the keys a player's machine marks: the zone's by its place among the zones, the chest's among the loot containers)
+			int zoneKey = TriggerZone.KeyBase + ff.Objects.Take(zi).Count(o => o.Name == ContentCatalog.TriggerZone);
+			int chestKey = ContentState.LootKeyBase + StableIds.LayoutOf(ff, false).Loot.IndexOf(ci);
+			int pickupKey = QuestItemPickups.KeyBase + pi;
+			IslandWorldState.Entry fe = null;
+			try
+			{
+				IslandNetwork.Loopback = sent.Add;
+				Vector3 at = CustomIslandSpawner.RaftPosition.Value - CustomIslandSpawner.SailDirection() * (CustomIslandSpawner.UnloadDistance + 3000f);
+				at.y = 0f;
+				fe = IslandWorldState.Add(far, at, null, false);
+				Check(ref ok, fe != null && fe.Root == null, "a far island, not loaded here");
+				if (fe != null)
+				{
+					foreach (int k in new[] { zoneKey, chestKey, pickupKey }) fe.State[k] = new ObjectState { Active = false, Yield = 0, Day = 1 };
+					int freed = Behaviours.FreedOnRefusal;
+					Behaviours.OnEventMessage(fe.Id, zi, "enter", false, player, true);
+					Check(ref ok, !ContentState.IsUsed(fe, zoneKey), "M3: the zone the player walked into is ready again (key " + zoneKey.ToString("X") + ")");
+					Behaviours.OnEventMessage(fe.Id, ci, "open", false, player, true);
+					Check(ref ok, !ContentState.IsUsed(fe, chestKey), "M3: the chest the player opened is full again (key " + chestKey.ToString("X") + ")");
+					Behaviours.OnEventMessage(fe.Id, pi, "use", false, player, true);
+					Check(ref ok, !ContentState.IsUsed(fe, pickupKey), "M4: the story item's pickup claim is free again (key " + pickupKey.ToString("X") + ")");
+					Check(ref ok, Behaviours.FreedOnRefusal == freed + 3, "three freed (" + (Behaviours.FreedOnRefusal - freed) + ")");
+					// (an object that is none of them: nothing freed)
+					int other = 0, n = Behaviours.FreedOnRefusal;
+					Behaviours.OnEventMessage(fe.Id, other, "enter", false, player, true);
+					Check(ref ok, Behaviours.FreedOnRefusal == n, "an object that is no zone frees nothing");
+				}
+			}
+			finally
+			{
+				IslandNetwork.Loopback = null;
+				if (fe != null) IslandWorldState.RemoveIds(new List<int> { fe.Id }, false);
+				try { File.Delete(farPath); IslandCache.ForgetFile(farPath); } catch { }
+			}
+			if (ok) Log("PASS: refused frees far"); else Fail("refused frees far");
+		}
+
+		[ConsoleCommand(name: "CIQueuedSurvivesSave", docs: "Dev, world (host): M5 - players' events on an island not loaded on the host are kept in its saved state: a save and quit (its state written and read back, this session's part forgotten) keeps them, and they are done when it loads; the same event from the same player once; at most MaxQueued per island, the rest left out with a warning (before: 64 in all, 10 minutes, this session only) (TEST_CATALOGUE QSL8)")]
+		public static void QueuedSurvivesSaveCommand() { StartTest(QueuedSurvivesSaveRoutine()); }
+
+		static IEnumerator QueuedSurvivesSaveRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			const System.Reflection.BindingFlags priv = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+			var p1 = new Network_UserId(4301UL);
+			var p2 = new Network_UserId(4302UL);
+			string far = "ciqsl8-far", farPath = IslandSpawner.PathFor(far);
+			IslandFile ff = SampleIsland();
+			ff.Name = far;
+			ff.Save(farPath);
+			IslandCache.ForgetFile(farPath);
+			IslandWorldState.Entry fe = null;
+			GameObject fake = null;
+			try
+			{
+				Vector3 at = CustomIslandSpawner.RaftPosition.Value - CustomIslandSpawner.SailDirection() * (CustomIslandSpawner.UnloadDistance + 3000f);
+				at.y = 0f;
+				fe = IslandWorldState.Add(far, at, null, false);
+				Check(ref ok, fe != null && fe.Root == null, "a far island, not loaded here");
+				if (fe != null)
+				{
+					IslandWorldState.Entry isl = fe;
+					Func<List<KeyValuePair<int, ObjectState>>> queued = () => isl.State.Where(k => k.Key >= Behaviours.QueuedBase && k.Key < Behaviours.QueuedBase + 0x100000).OrderBy(k => k.Key).ToList();
+					Behaviours.OnEventMessage(fe.Id, 9001, "use", false, p1, false);
+					Behaviours.OnEventMessage(fe.Id, 9001, "use", false, p1, false);
+					Behaviours.OnEventMessage(fe.Id, 9001, "use", false, p2, false);
+					Behaviours.OnEventMessage(fe.Id, 9002, Islanders.TalkEvent, false, p1, false);
+					Check(ref ok, queued().Count == 3 && Behaviours.NotLoadedCount >= 3, "kept in the island's state: 3 (the same player's same event once, another player's kept) - " + queued().Count);
+
+					// (a save and quit: the state written and read back; what only this session knew is forgotten)
+					string saved = IslandObjectState.Encode(fe.State);
+					Dictionary<int, ObjectState> back = IslandObjectState.Decode(saved);
+					var backQueued = back.Where(k => k.Key >= Behaviours.QueuedBase && k.Key < Behaviours.QueuedBase + 0x100000).OrderBy(k => k.Key).ToList();
+					Check(ref ok, backQueued.Count == 3 && backQueued.Select(k => k.Value.Yield).SequenceEqual(new[] { 9001, 9001, 9002 }), "a save keeps them: " + string.Join(", ", backQueued.Select(k => k.Key.ToString("X") + "=" + k.Value.Yield).ToArray()));
+					foreach (var kv in queued()) fe.State.Remove(kv.Key);
+					foreach (var kv in backQueued) fe.State[kv.Key] = kv.Value;
+					var qf = typeof(Behaviours).GetField("queuedFrom", priv) != null ? typeof(Behaviours).GetField("queuedFrom", priv).GetValue(null) as IDictionary : null;
+					if (qf != null) foreach (object k in qf.Keys.Cast<object>().ToList()) if ((int)((long)k >> 32) == fe.Id) qf.Remove(k);
+					var watch = typeof(Behaviours).GetMethod("WatchQueued", priv);
+					if (watch != null) watch.Invoke(null, new object[] { fe });
+
+					// (the island loads: done, as the host's player's - the save doesn't know who sent them)
+					int done = Behaviours.NotLoadedDone;
+					fake = new GameObject("ciqsl8-fake-root");
+					fake.transform.position = new Vector3(0f, -2000f, 0f);
+					fe.Root = fake;
+					var tick = typeof(Behaviours).GetMethod("DoNotLoadedYet", priv);
+					try { if (tick != null) tick.Invoke(null, null); } finally { fe.Root = null; }
+					Check(ref ok, Behaviours.NotLoadedDone == done + 3 && queued().Count == 0, "after the save they are done when the island loads (" + (Behaviours.NotLoadedDone - done) + " done, " + queued().Count + " left)");
+
+					// (the cap)
+					int full = Behaviours.QueueFull;
+					for (int i = 0; i < Behaviours.MaxQueued + 10; i++) Behaviours.OnEventMessage(fe.Id, 10000 + i, "use", false, p1, false);
+					Check(ref ok, queued().Count == Behaviours.MaxQueued && Behaviours.QueueFull == full + 10, "at most " + Behaviours.MaxQueued + " per island (" + queued().Count + "), 10 left out (" + (Behaviours.QueueFull - full) + ")");
+				}
+			}
+			finally
+			{
+				if (fe != null) { fe.Root = null; IslandWorldState.RemoveIds(new List<int> { fe.Id }, false); }
+				if (fake != null) UnityEngine.Object.Destroy(fake);
+				try { File.Delete(farPath); IslandCache.ForgetFile(farPath); } catch { }
+			}
+			if (ok) Log("PASS: queued survives save"); else Fail("queued survives save");
+		}
+
+		[ConsoleCommand(name: "CIStoryTreasureRegrows", docs: "Dev, world (host): M6 - a buried treasure that held a story item, dug up for good: while a check still needs the item and the crew holds none, it can be dug again when its island loads (keys freed); while the crew holds one, or once no check needs it, it stays dug (TEST_CATALOGUE QSL9)")]
+		public static void StoryTreasureRegrowsCommand() { StartTest(StoryTreasureRegrowsRoutine()); }
+
+		static IEnumerator StoryTreasureRegrowsRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			const string coin = "qsl9coin";
+			Action clear = () => { int c = StoryBook.Count(coin); if (c > 0) StoryBook.Take(coin, c); };
+			clear();
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				add(ContentCatalog.TriggerZone, -8f, 8f, P(ObjectProps.ZoneId, "qsl9zone", ObjectProps.ZoneRadius, "2", BehaviourProps.CheckKey("enter"), "take|story:" + coin + "|1"));
+				int ti = add(ContentCatalog.BuriedTreasure, 6f, -6f, P(ObjectProps.TreasureLoot, "Plank*2;" + StoryItems.Ref(coin) + "*1"));
+				file.Objects[ti].Scale = Vector3.one;
+				file.Props[StoryItems.Key] = coin + "|Old coin||A coin for a test.";
+			});
+			IslandWorldState.Entry isl = null;
+			yield return SpawnPlayerIsland(f, x => isl = x);
+			if (isl == null || isl.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(isl); yield break; }
+			try
+			{
+				yield return new WaitForSeconds(1f);
+				BuriedTreasure b = isl.Root.GetComponentInChildren<BuriedTreasure>(true);
+				TriggerZone z = isl.Root.GetComponentInChildren<TriggerZone>(true);
+				Check(ref ok, b != null && b.HoldsStory && z != null, "a story treasure and the zone that takes its coin");
+				if (b != null && z != null)
+				{
+					int ord = BuriedTreasure.Ordinal(isl.Id, b.Number), keep = BuriedTreasure.KeepBase + b.Number;
+					Action dug = () => { isl.State[ord] = new ObjectState { Active = false, Yield = 0, Day = 1 }; isl.State[keep] = new ObjectState { Active = false, Yield = 0, Day = 1 }; b.Made = false; };
+					string where;
+					Check(ref ok, StoryNeeds.Needed(coin, out where) == 1, "the zone's take check needs the coin (" + where + ")");
+					int regrown = BuriedTreasure.RegrownForStory;
+
+					// (a) the crew holds one: stays dug
+					StoryBook.Give(coin, 1);
+					dug();
+					BuriedTreasure.OnIslandReady(isl);
+					Check(ref ok, BuriedTreasure.RegrownForStory == regrown && ContentState.IsUsed(isl, keep) && !b.Made, "the crew holds the coin: the treasure stays dug for good");
+
+					// (b) used up or lost: it can be dug again
+					clear();
+					BuriedTreasure.OnIslandReady(isl);
+					Check(ref ok, BuriedTreasure.RegrownForStory == regrown + 1 && !ContentState.IsUsed(isl, keep) && !ContentState.IsUsed(isl, ord) && b.Made, "the crew has none and the zone still needs it: it can be dug again (regrown " + (BuriedTreasure.RegrownForStory - regrown) + ", made " + b.Made + ")");
+
+					// (c) the zone fired: nothing needs the coin - stays dug
+					isl.State[z.StateKey] = new ObjectState { Active = false, Yield = 0, Day = 1 };
+					dug();
+					BuriedTreasure.OnIslandReady(isl);
+					Check(ref ok, BuriedTreasure.RegrownForStory == regrown + 1 && ContentState.IsUsed(isl, keep) && !b.Made, "once nothing needs the coin, it stays dug");
+				}
+			}
+			finally { clear(); RemovePlayerIsland(isl); }
+			if (ok) Log("PASS: story treasure regrows"); else Fail("story treasure regrows");
+		}
+
+		[ConsoleCommand(name: "CISkipReplays", docs: "Dev, world (host): M8 - skipping a read, reach or talk step sets off its note, zone or islander as the host's player would: their events give what they give, the note is marked read, the zone used, the islander talked to; read or walked into later for real, nothing is given twice; on an island not loaded here the skip is kept in its saved state and done when it loads (TEST_CATALOGUE QSL10)")]
+		public static void SkipReplaysCommand() { StartTest(SkipReplaysRoutine()); }
+
+		static IEnumerator SkipReplaysRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			const System.Reflection.BindingFlags priv = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+			string[] items = { "qsl10read", "qsl10zone", "qsl10talk" };
+			Action clear = () => { foreach (string it in items) { int c = StoryBook.Count(it); if (c > 0) StoryBook.Take(it, c); } };
+			Func<string> counts = () => string.Join("/", items.Select(it => StoryBook.Count(it).ToString()).ToArray());
+			clear();
+			int ni = -1, zi = -1, ii = -1;
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				file.Props[IslandQuest.KeyTitle] = "QSL skip";
+				file.Props[IslandQuest.KeySteps] = "read|QSL letter|1|Read the letter\nreach|qsl10gate|1|Walk through the gate\n" + Islanders.QuestType + "|QSL Pat|1|Talk to Pat\nsignal|qsl10-end|1|Ring the bell";
+				ni = add("Note_Paper", 3f, 0f, P(ObjectProps.NoteTitle, "QSL letter", ObjectProps.NoteText, "The key is under the stone.", BehaviourProps.EventKey("read"), "give||" + StoryItems.Ref(items[0]) + "*1"));
+				zi = add(ContentCatalog.TriggerZone, -8f, 8f, P(ObjectProps.ZoneId, "qsl10gate", ObjectProps.ZoneRadius, "2", BehaviourProps.EventKey("enter"), "give||" + StoryItems.Ref(items[1]) + "*1"));
+				ii = add(Islanders.ObjectName, 0f, 6f, P(BehaviourProps.Name, "QSL Pat", BehaviourProps.EventKey(Islanders.TalkEvent), "give||" + StoryItems.Ref(items[2]) + "*1"));
+			});
+			IslandWorldState.Entry isl = null;
+			yield return SpawnPlayerIsland(f, x => isl = x);
+			if (isl == null || isl.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(isl); yield break; }
+			string far = "ciqsl10-far", farPath = IslandSpawner.PathFor(far);
+			IslandWorldState.Entry fe = null;
+			GameObject fake = null;
+			try
+			{
+				yield return new WaitForSeconds(1f);
+				int replayed = QuestSkip.Replayed;
+				TriggerZone z = Behaviours.RefsOf(isl).Where(r => r.Index == zi).Select(r => r.GetComponent<TriggerZone>()).FirstOrDefault();
+				Check(ref ok, z != null && !z.HasFired && QuestTracker.StepOf(isl) == 0, "the quest is at its read step, the zone not set off");
+
+				Check(ref ok, QuestSkip.Skip(isl, 0), "the read step skipped");
+				yield return new WaitForSeconds(0.5f);
+				Check(ref ok, StoryBook.Count(items[0]) == 1 && isl.State.ContainsKey(Behaviours.DoneBase + ni), "its note's read event gave its item, the note is read (" + counts() + ")");
+				Check(ref ok, QuestSkip.Skip(isl, 0), "the reach step skipped");
+				yield return new WaitForSeconds(0.5f);
+				Check(ref ok, StoryBook.Count(items[1]) == 1 && z != null && z.HasFired, "its zone's enter event gave its item, the zone is used (" + counts() + ")");
+				Check(ref ok, QuestSkip.Skip(isl, 0), "the talk step skipped");
+				yield return new WaitForSeconds(0.5f);
+				Check(ref ok, StoryBook.Count(items[2]) == 1 && ContentState.IsUsed(isl, Islanders.TalkedBase + ii), "its islander's talk event gave its item, talked to (" + counts() + ")");
+				Check(ref ok, QuestSkip.Replayed == replayed + 3 && QuestTracker.StepOf(isl) == 3, "three set off, the quest at its last step (" + (QuestSkip.Replayed - replayed) + ", step " + (QuestTracker.StepOf(isl) + 1) + ")");
+
+				// (later done for real: nothing twice)
+				Behaviours.Fire(isl, ni, "read", true);
+				if (z != null) z.Enter();
+				yield return new WaitForSeconds(0.5f);
+				Check(ref ok, StoryBook.Count(items[0]) == 1 && StoryBook.Count(items[1]) == 1, "read and walked into for real later: nothing given twice (" + counts() + ")");
+
+				// (an island not loaded here: kept in its state, done when it loads)
+				IslandFile ff = SampleIsland();
+				ff.Name = far;
+				ff.Props[IslandQuest.KeyTitle] = "QSL far";
+				ff.Props[IslandQuest.KeySteps] = "read|QSL far letter|1|Read the letter";
+				int fi = ff.Objects.Count;
+				ff.Objects.Add(new IslandObject { Name = "Note_Paper", Position = ff.Objects.Count > 0 ? ff.Objects[0].Position : Vector3.zero, Scale = Vector3.one, Props = P(ObjectProps.NoteTitle, "QSL far letter", ObjectProps.NoteText, "Far away.") });
+				ff.Save(farPath);
+				IslandCache.ForgetFile(farPath);
+				Vector3 at = CustomIslandSpawner.RaftPosition.Value - CustomIslandSpawner.SailDirection() * (CustomIslandSpawner.UnloadDistance + 3000f);
+				at.y = 0f;
+				fe = IslandWorldState.Add(far, at, null, false);
+				Check(ref ok, fe != null && fe.Root == null, "a far island, not loaded here");
+				if (fe != null)
+				{
+					IslandWorldState.Entry fisl = fe;
+					Func<List<KeyValuePair<int, ObjectState>>> queued = () => fisl.State.Where(k => k.Key >= Behaviours.QueuedBase && k.Key < Behaviours.QueuedBase + 0x100000).ToList();
+					int kept = QuestSkip.ReplayKept;
+					string said = QuestSkip.Replay(fe, IslandQuest.From(ff.Props, 0).Steps[0]);
+					Check(ref ok, QuestSkip.ReplayKept == kept + 1 && queued().Count == 1 && queued()[0].Value.Yield == fi, "far: the note's read is kept in the island's state (" + said + ")");
+					int done = Behaviours.NotLoadedDone;
+					fake = new GameObject("ciqsl10-fake-root");
+					fake.transform.position = new Vector3(0f, -2000f, 0f);
+					fe.Root = fake;
+					var tick = typeof(Behaviours).GetMethod("DoNotLoadedYet", priv);
+					try { if (tick != null) tick.Invoke(null, null); } finally { fe.Root = null; }
+					Check(ref ok, Behaviours.NotLoadedDone == done + 1 && queued().Count == 0, "far: done when the island loads (" + (Behaviours.NotLoadedDone - done) + ")");
+				}
+			}
+			finally
+			{
+				clear();
+				RemovePlayerIsland(isl);
+				if (fe != null) { fe.Root = null; IslandWorldState.RemoveIds(new List<int> { fe.Id }, false); }
+				if (fake != null) UnityEngine.Object.Destroy(fake);
+				try { File.Delete(farPath); IslandCache.ForgetFile(farPath); } catch { }
+			}
+			if (ok) Log("PASS: skip replays"); else Fail("skip replays");
+		}
 	}
 }
