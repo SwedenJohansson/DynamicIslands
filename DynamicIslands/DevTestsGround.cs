@@ -559,7 +559,10 @@ namespace DynamicIslands
 			Bounds crate1 = box(crate), fish1 = box(fish);
 			float g1 = t.SampleHeight(crate1.center) + tp.y, f1 = t.SampleHeight(fish1.center) + tp.y;
 			Check(ref ok, crate1.min.y > crate0.min.y + 3f && crate1.min.y >= g1 - 0.3f && crate1.min.y <= g1 + 1f,
-				"the crate on the new ground: " + inv(crate0.min.y - sea) + " -> " + inv(crate1.min.y - sea) + " m, the ground " + inv(g1 - sea));
+				"the crate on the new ground: " + inv(crate0.min.y - sea) + " -> " + inv(crate1.min.y - sea) + " m, the ground " + inv(g1 - sea) +
+				" (it stands at A + " + inv(crate1.center.x - A.x) + " " + inv(crate1.center.z - A.y) + "; the ground in front of A's east face, 2-16 m out, before -> after:" +
+				string.Join(",", Enumerable.Range(1, 8).Select(i => { int gx = Mathf.RoundToInt((A.x + 20f + 2f * i - tp.x) / (size.x / (res - 1))), gz = Mathf.RoundToInt((A.y - tp.z) / (size.z / (res - 1)));
+					return " " + inv(before[gz, gx] * size.y + tp.y - sea) + ">" + inv(after[gz, gx] * size.y + tp.y - sea); }).ToArray()) + ")");
 			Check(ref ok, fish1.min.y > fish0.min.y + 3f && fish1.min.y >= f1 && fish1.max.y < sea,
 				"the fish over the new ground, still in the water: bottom " + inv(fish0.min.y - sea) + " -> " + inv(fish1.min.y - sea) + " m (it was " + inv(fishGap) + " m over the floor), the ground " + inv(f1 - sea));
 			Check(ref ok, Mathf.Abs(far.transform.position.y - farY) < 0.01f, "the far fish not moved");
