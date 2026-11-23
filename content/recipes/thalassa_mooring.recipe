@@ -408,11 +408,13 @@ prop thelaine on.choice3=message||Then pass quickly. The tide has a long memory 
 #     waterline; rock (cliffs rocks=) stood in the shaft the bell rides down and over the ledge, and the deck's posts were
 #     lost with them - instead a steel lining round the shaft at the waterline, its back in the rim, from h -0.4 up to the
 #     shelf, open on the north side over the ledge out of the water)
+# (the two at the south-east corner 0.2 m higher: there the rim is a little higher, the save took them for buried and set them
+#     up on the ground, 2.4 m over the rim - their tops now just over it)
 place Block_Wall_Tier3 lining at 1.88 -2.25 h=-0.42 yaw=90
 place Block_Wall_Tier3 lining at 1.88 -0.75 h=-0.42 yaw=90
 place Block_Wall_Tier3 lining at 1.88 0.75 h=-0.42 yaw=90
 place Block_Wall_Tier3 lining at 1.88 2.25 h=-0.42 yaw=90
-place Block_Wall_Tier3 lining at 9.42 -2.25 h=-0.42 yaw=90
+place Block_Wall_Tier3 lining at 9.42 -2.25 h=-0.2 yaw=90
 place Block_Wall_Tier3 lining at 9.42 -0.75 h=-0.42 yaw=90
 place Block_Wall_Tier3 lining at 9.42 0.75 h=-0.42 yaw=90
 place Block_Wall_Tier3 lining at 9.42 2.25 h=-0.42 yaw=90
@@ -420,7 +422,7 @@ place Block_Wall_Tier3 lining at 2.63 -3.05 h=-0.42
 place Block_Wall_Tier3 lining at 4.14 -3.05 h=-0.42
 place Block_Wall_Tier3 lining at 5.65 -3.05 h=-0.42
 place Block_Wall_Tier3 lining at 7.16 -3.05 h=-0.42
-place Block_Wall_Tier3 lining at 8.67 -3.05 h=-0.42
+place Block_Wall_Tier3 lining at 8.67 -3.05 h=-0.2
 place Block_Wall_Tier3 lining at 7.13 2.53 h=-0.42
 place Block_Wall_Tier3 lining at 8.65 2.53 h=-0.42
 prop lining tint.color=#5b6266
