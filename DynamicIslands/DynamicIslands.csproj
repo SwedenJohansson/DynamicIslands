@@ -434,6 +434,7 @@
     <Compile Include="DevTestsFix3.cs" />
     <Compile Include="DevTestsNoteCarry.cs" />
     <Compile Include="DevTestsIssueSweep.cs" />
+    <Compile Include="DevTestsSweep.cs" />
     <Compile Include="ScatterTool.cs" />
     <Compile Include="StableIds.cs" />
     <Compile Include="ObjectThumbnails.cs" />
