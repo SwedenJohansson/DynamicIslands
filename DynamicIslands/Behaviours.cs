@@ -1126,12 +1126,18 @@ namespace DynamicIslands.Editor
 				if (index >= 0 && index != IslandIndex && e.Root == null)
 				{
 					Debug.Log("[CUSTOM ISLANDS] A player's '" + ev + "' on '" + e.HostName + "' isn't done: the island isn't loaded on the host" + (answer ? " (they get its \"otherwise\")" : ""));
-					if (answer && from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev.TrimEnd('!') + "!");
+					if (answer && from.HasValue)
+					{
+						IslandNetwork.SendEventTo(from.Value, e.Id, index, ev.TrimEnd('!') + "!");
+						bool anyFile;
+						if (!ev.EndsWith("!")) GiveBackTakes(CheckedFromFile(e, index, ev, out anyFile), anyFile, from.Value.Id, null);
+					}
 					else if (notLoadedYet.Count < 64) notLoadedYet.Add(new NotLoaded { Island = e.Id, Index = index, Ev = ev, From = from, Seed = GapBehaviours.Seed, At = Time.unscaledTime });
 					return;
 				}
 				string failed;
-				bool holds = StoryChecksHold(e, index, ev, from.HasValue ? from.Value.Id : 0UL, out failed);
+				HashSet<string> refusedTakes;
+				bool holds = StoryChecksHold(e, index, ev, from.HasValue ? from.Value.Id : 0UL, out failed, out refusedTakes);
 				// (tests: refused as when another player used the crew's item at the same moment - RK3, CIRk34 refuse)
 				if (holds && answer && RefuseForTests) { holds = false; failed = "the crew's check (a test refusal)"; }
 				if (!holds)
@@ -1140,6 +1146,7 @@ namespace DynamicIslands.Editor
 					// (the player who tried gets the event's "otherwise" part, as when their own check fails)
 					if (from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev.TrimEnd('!') + "!");
 					FreeRefused(e, index, ev, true);
+					if (from.HasValue && !ev.EndsWith("!")) GiveBackTakes(ChecksOf(e, index, ev), AnyOf(e, index, ev), from.Value.Id, refusedTakes);
 					return;
 				}
 				int seed = GapBehaviours.Seed; // (the player's, from the message: their random pick)
@@ -1157,6 +1164,44 @@ namespace DynamicIslands.Editor
 				if (answer) HostAnswered(e, index, ev);
 				Schedule(e, index, actions, false, false, ev);
 			}
+		}
+
+		/// <summary>
+		/// Host, a player's event refused: the crew's story items its "take" checks used up are given back. The player's
+		/// machine took them before asking (StoryBook.Take reaches the host first), so a keycard door the host said no to
+		/// kept the card - the story's only one - and stayed shut for good (quest softlock audit 11-23). Takes the host
+		/// refused itself (refused, or StoryBook.TakeRefused when null) were never made. With "any" checks the player took
+		/// only the one that passed, not known here: given back only when the event has a single check.
+		/// </summary>
+		internal static void GiveBackTakes(List<ObjCheck> checks, bool any, ulong player, HashSet<string> refused)
+		{
+			if (!Raft_Network.IsHost || checks == null || (any && checks.Count > 1)) return;
+			foreach (ObjCheck c in checks)
+			{
+				if (c.Kind != "take" || c.Not || !StoryItems.IsStory(c.Target)) continue;
+				string id = StoryItems.IdOf(c.Target);
+				if (refused != null ? refused.Contains(id) : StoryBook.TakeRefused(player, id)) continue;
+				StoryBook.GiveBack(id, c.Count);
+				GivenBackOnRefusal++;
+			}
+		}
+
+		/// <summary>Host: story takes given back after a refusal (the CI checks read it).</summary>
+		internal static int GivenBackOnRefusal;
+
+		/// <summary>An event's checks from the island's saved file (an island not loaded here has no objects to read them from).</summary>
+		internal static List<ObjCheck> CheckedFromFile(IslandWorldState.Entry e, int index, string ev, out bool any)
+		{
+			any = false;
+			try
+			{
+				IslandFile f = IslandFile.Load(IslandSpawner.PathFor(e.Name));
+				if (f == null || index < 0 || index >= f.Objects.Count || f.Objects[index].Props == null) return new List<ObjCheck>();
+				string text = ObjectProps.Get(f.Objects[index].Props, BehaviourProps.CheckKey(ev));
+				any = ObjCheck.IsAny(text);
+				return ObjCheck.ParseLines(text);
+			}
+			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Reading '" + e.Name + "' for a refused event's checks: " + x.Message); return new List<ObjCheck>(); }
 		}
 
 		/// <summary>Host: zones and chests freed again after a refusal (the CI checks read it).</summary>
@@ -1196,9 +1241,10 @@ namespace DynamicIslands.Editor
 		/// what is left now. Other checks (a player's own items, states, signals) stay the player's. An event's "otherwise"
 		/// part ("use!") has nothing to make again.
 		/// </summary>
-		static bool StoryChecksHold(IslandWorldState.Entry e, int index, string ev, ulong player, out string failed)
+		static bool StoryChecksHold(IslandWorldState.Entry e, int index, string ev, ulong player, out string failed, out HashSet<string> refusedOut)
 		{
 			failed = null;
+			refusedOut = null;
 			if (ev.EndsWith("!")) return true;
 			List<ObjCheck> checks = ChecksOf(e, index, ev);
 			List<ObjCheck> story = checks.Where(c => (c.Kind == "has" || c.Kind == "take") && StoryItems.IsStory(c.Target)).ToList();
@@ -1207,6 +1253,7 @@ namespace DynamicIslands.Editor
 			if (any && story.Count < checks.Count) return true; // (another kind of check may be the one that passed: not known here)
 			var taken = new HashSet<string>(story.Where(c => c.Kind == "take" && !c.Not).Select(c => StoryItems.IdOf(c.Target)), StringComparer.OrdinalIgnoreCase);
 			var refused = new HashSet<string>(taken.Where(id => StoryBook.TakeRefused(player, id)).ToList(), StringComparer.OrdinalIgnoreCase);
+			refusedOut = refused;
 			bool passed = false;
 			foreach (ObjCheck c in story)
 			{

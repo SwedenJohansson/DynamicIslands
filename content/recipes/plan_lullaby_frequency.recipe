@@ -14,7 +14,7 @@ plan random on
 plan story on
 plan rule cannery | island:Hollins Cannery | start | receiver:500 | At 3:12 the Receiver hums by itself - a lullaby, under it a cannery's call sign. | Hollins Cannery | beside | quest | Hollins Cannery | 4
 plan rule agnes | island:Saint Agnes Sanatorium | quest:cannery | receiver:800 | The lullaby again, clearer - and a nurse's voice: "Saint Agnes. The children are asleep." | Saint Agnes Sanatorium | beside | quest | Saint Agnes Sanatorium | 4
-plan rule effigy | island:Effigy Shoals | day:8 | receiver:700 | On the eighth night the hum has words, and a bearing: sandbars, and figures standing on them. | Effigy Shoals | beside | note:3 | Effigy Shoals | 4
+plan rule effigy | island:Effigy Shoals | day:8 | receiver:700 | On the eighth night the hum has words, and a bearing: sandbars, and figures standing on them. | Effigy Shoals | beside | note:Who made them | Effigy Shoals | 4
 plan rule returning | island:The Returning Islet | day:2:again | ahead:400 | A small grey rock ahead with one palm, and a hut on stilts. A candle is lit. | The Returning Islet
 plan rule terraces | island:Stillwater Terraces | zone:effigy:circle | receiver:900 | In the effigies' circle the Receiver finds the song's next voice: rice terraces, and bells. | Stillwater Terraces | beside | zone:altar | Stillwater Terraces | 4
 plan rule causeway | island:Mistlock Causeway | step:terraces:4 | receiver:900 | The bell stones hum when they touch: a bearing, to a causeway lost in mist. | Mistlock Causeway | beside | quest | Mistlock Causeway | 4

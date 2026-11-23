@@ -305,7 +305,7 @@ namespace DynamicIslands.Editor
 				case "step": return arg + " step(s) of its quest are done";
 				case "zone": return "its zone '" + arg + "' fires";
 				case "signal": return "its signal '" + arg + "' is sent";
-				case "note": return "its note #" + arg + " is read";
+				case "note": return (arg.Trim().Length > 0 && arg.Trim().All(char.IsDigit) ? "its note #" + arg : "its note '" + arg + "'") + " is read";
 			}
 			return "its quest is done (or players reach it, if it has none)";
 		}

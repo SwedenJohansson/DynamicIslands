@@ -21,7 +21,7 @@ undo steps, as when a person works in the editor. The player is `DevTests.Recipe
 
 - Blank lines and lines whose first non-space character is `#` are skipped. A `#` later in a line is not a comment.
 - Words are split at spaces. `"double quotes"` keep spaces together and are dropped (`Tokens`).
-- Text arguments run to the end of the line (`Rest`); there the quotes stay. In text, `\n` is a new line (`Unescape`).
+- Text arguments run to the end of the line (`Rest`); there the quotes stay. In text, `\n` is a new line (`Unescape`), and `\\n` stays a written `\n` (11-23): inside a `prop` event value (`on.choice1=journal|...`) a real new line starts the next action, so a journal page's or dialogue's own new lines are written `\\n` there and only the line between actions is `\n` (Camp Blackwater's, The Dead Letter Office's and Wreckers' Cove's islander pages were cut after their first line; `CIRecipeJournalBreak`).
 - Numbers use `.` as the decimal point. Step names ignore case.
 - The whole file is first expanded (`ExpandRecipe` -> `ExpandLines`), then the steps run in order.
 
@@ -93,7 +93,9 @@ plan save
   quest can be finished: reads the installed mod's plans + islands, the library deploy folder (+ staged copies) and every
   recipe's item lists; checks rule lines, story places, steps and their targets, story items/blueprints/titanium in play
   order, Raft item names (`content\objects\items.txt`), action lines cut by a real line break, compass words and
-  chest wording. ERROR = can't finish or silently lost; exit 1 on any ERROR. Its lists mirror IntroRule/IslandQuest/
+  chest wording; `note:` done-whens by number or title, for rules beside Raft's story too (part `BESIDE`), and story
+  items with `raft=` that a has/take check or cage key needs held (T8 take-out, `story-items` WARN; quest softlock
+  audit 11-23). `--mods`/`--stage` an empty folder and `--library <release folder>` check one release alone. ERROR = can't finish or silently lost; exit 1 on any ERROR. Its lists mirror IntroRule/IslandQuest/
   BehaviourProps.Verbs - keep them in step with the C#.
 - `prop <cave piece alias> cave.seacut=1` (`ObjectProps.CaveSeaCut`): the cave hill over that island leaves out its skin over
   deep sea and the shore ring (`CaveMountain.SeaCut`), so a mound raised from the sea floor closes no pool under it

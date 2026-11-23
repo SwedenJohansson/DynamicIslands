@@ -4683,7 +4683,9 @@ namespace DynamicIslands
 
 		static float F(string s) { return float.Parse(s.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture); }
 
-		static string Unescape(string s) { return (s ?? "").Replace("\\n", "\n"); }
+		// (\\n stays a written \n: a new line inside a journal or dialogue text in an event, whose actions a real
+		// line break splits - quest softlock audit 11-23: three islanders' journal pages were cut after their first line)
+		static string Unescape(string s) { return (s ?? "").Replace("\\\\n", "\u0001").Replace("\\n", "\n").Replace("\u0001", "\\n"); }
 
 		static Dictionary<string, string> Options(IEnumerable<string> tokens)
 		{

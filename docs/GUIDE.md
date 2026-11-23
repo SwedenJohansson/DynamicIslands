@@ -2154,7 +2154,7 @@ for them; players find them in the journal (J), or in Raft's notebook (T) for a 
 beside an item links it to one of Raft's own items (**-** clears it): players can then **take it out** of the journal
 as that item, into their inventory ([3](#the-journal-j)) - a map piece that becomes a real blueprint, a log that
 becomes planks. Story items stay journal items (a saved world never holds an item Raft doesn't know); the link is
-only a way out. Raft's own quest item pickups (search "QuestItemPickup") work as story items too: picked up, the crew gets Raft's item (`story:raft-<type>`). The list has the pickups of Vasagatan (the bolt cutters, keys, the keycard...), Temperance and Utopia too.
+only a way out, and there is no way back: an item taken out no longer counts for a **has**/**take** check or a cage's key, so a door or cage that needs it stays shut. Link only items no check needs (a **Collect** step still counts it). Raft's own quest item pickups (search "QuestItemPickup") work as story items too: picked up, the crew gets Raft's item (`story:raft-<type>`). The list has the pickups of Vasagatan (the bolt cutters, keys, the keycard...), Temperance and Utopia too.
 
 **What ends up in the players' journal** ([3](#the-journal-j)), so you can plan a story with it:
 
@@ -3289,7 +3289,7 @@ rule = id | what | when | where | message | Receiver name
 | where | `ahead:<m>`, `near:<island>:<m>:<direction>`, `receiver:<m>`, `sailing:<m>`. In `near`, `self` = the island where the WHEN happened (the window writes it when **of** is empty); the direction can also be degrees. End with `:needs=<blueprint>` (`engine`, `steering`, `controls` or a Raft item name, e.g. `near:self:700:east:needs=engine`) to hold the Receiver dot and the side placing until the player has that blueprint (the DOT choice) |
 
 Two more parts put an island into the main story: `| first` / `after:<story island or rule id>` / `instead:<story island>` / `beside`
-and when it's done: `quest`, `visit`, `step:<n>`, `zone:<zone>`, `signal:<signal>`, `note:<note number>` (empty: its quest, or reaching it). Three more parts style its notebook tab: `| tab title | tab colour | tab intro`; the colour is a number, 1 pink, 2 sand, 4 purple, 5 teal, 6 olive, 7 red, 8 green, 9 blue, 10 light blue (there is no 3; empty or 0 = by the island's place in the story). Other lines: `description = ...`, `storyending = ...` (the last page; `\n` = a new line), `endingtitle = ...` and `credits = ...` (the credits' title and the makers' names, `\n` between names),
+and when it's done: `quest`, `visit`, `step:<n>`, `zone:<zone>`, `signal:<signal>`, `note:<note number or title>` (empty: its quest, or reaching it). Prefer the note's title (`note:Letter addressed to your raft`, any case): a note's number is its place in the island file and changes when the island is saved again with things added or taken away. A number that is no note with a text on the island any more is not a dead end: on an island with one note, reading that note finishes the step; otherwise the island's quest does (the log says `its note '...' is no note with a text on ...`). The plan check reports a title no note has, or a stale number, for a rule beside Raft's story too (its done-when marks its notebook chapter done). Three more parts style its notebook tab: `| tab title | tab colour | tab intro`; the colour is a number, 1 pink, 2 sand, 4 purple, 5 teal, 6 olive, 7 red, 8 green, 9 blue, 10 light blue (there is no 3; empty or 0 = by the island's place in the story). Other lines: `description = ...`, `storyending = ...` (the last page; `\n` = a new line), `endingtitle = ...` and `credits = ...` (the credits' title and the makers' names, `\n` between names),
 `random = on/off` (no line: off), `story = on/off`, `storyleaveout = Balboa, Tangaroa`. The mod writes two more lines itself, which you leave as they are: `id = <12 letters and digits>` (which plan this is, whatever its name: a world remembers it, so a new plan later given an old plan's name isn't taken for an edit of it; plans from before 2026-10-10 and library plans have none) and `modversion = 3.5` (the version of the mod that saved the plan: a plan saved by a newer version keeps the lines this version can't read, and when it has some you are told to update the mod). Lines this version can't read are kept as they are. Save the file; the World plan window and the New Game box read it the
 next time they open.
 
@@ -3309,6 +3309,9 @@ Up to eight players (Raft's maximum). **Every player needs the mod.**
   (each player hears them while near the island) and camera moments (each player within range sees them). Things
   that move follow a clock all players share, so everyone sees them in the same place. Carried pieces, collapses,
   moved objects and lures are the host's: every player sees who carries what, and a player who joins gets it.
+- **A use the host says no to costs nothing:** when a player's door, zone or note needs a story item and the host
+  refuses it (another player used the crew's last one at the same moment, or the island isn't loaded on the host), the
+  story item goes back to the crew's journal, so a keycard door can still be opened.
 - **What grows back** is the host's decision: things come back when the island loads on the host after the regrow
   days; a player who has the island loaded sees it the next time it loads there.
 - **Joining:** use Steam's "Join Game" on a friend (Raft's own Join World list is empty in this Raft version). Big
@@ -5290,7 +5293,7 @@ Telegraph Narrows a telescope.
 
 | Island | What it is | What to look at |
 |---|---|---|
-| ![](images/library/dead_letter_office.jpg) **The Dead Letter Office** (first, 500) | A brick post office on a granite skerry, its clock stopped at nine | Done when the letter to your raft is read (`note:2567`), five dead letters as story items carried to later islands |
+| ![](images/library/dead_letter_office.jpg) **The Dead Letter Office** (first, 500) | A brick post office on a granite skerry, its clock stopped at nine | Done when the letter to your raft is read (`note:Letter addressed to your raft`), five dead letters as story items carried to later islands |
 | ![](images/library/pillarbox_pier.jpg) **Pillarbox Pier** (800) | A long pier with the ferry office and its sorting shed | Done when a zone is reached (`zone:sorting`), a dead letter posted with a `take` check |
 | ![](images/library/parcel_canopy.jpg) **Parcel Canopy** (900) | A jungle airstrip with the mail pilot's plane in the trees | Vines cut with the machete, a beacon whose **signal** finishes the island (`signal:beacon`) |
 | ![](images/library/pneumatic_heights.jpg) **Pneumatic Heights** (1000) | A terraced tube-post town round its exchange tower | Comes on day 10 (`day:10`), done after step 18 (`step:18`), valves, tubes and capsules, rats from the cellar |
@@ -5340,7 +5343,7 @@ sanatorium, a shoal of effigies that turn to watch you, terraces where the statu
 a causeway in the mist, a silent choir on a seabird cliff and a drowned children's dormitory. The end is a quarry of
 five listening mirrors. The islands show how far the rule kinds go in one plan: a quest (`quest:cannery`), a day
 (`day:8`), a side island that comes back every second day (`day:2:again`, `ahead:400`), a zone on an earlier island
-(`zone:effigy:circle`), a quest step (`step:terraces:4`), a landing (`visit:causeway`) and notes read (`note:3`).
+(`zone:effigy:circle`), a quest step (`step:terraces:4`), a landing (`visit:causeway`) and a note read (`note:Who made them`).
 Raft's story is on, so Raft's blueprints stay on Raft's islands and the plan has no **Blueprint** steps. Saint Agnes has
 Raft's vending machine and Tangaroa tokens; Gannet Cliff and The Listening Mirrors have a **Raft store**. Its main islands are about as big as Raft's own big islands: each has a hill to climb, a dive, a cave, a wreck or ruin to search, a buried treasure for the metal detector and notes read aloud, and its quest crosses the whole island.
 
@@ -5348,7 +5351,7 @@ Raft's vending machine and Tangaroa tokens; Gannet Cliff and The Listening Mirro
 |---|---|---|
 | ![](images/library/hollins_cannery.jpg) **Hollins Cannery** (first, 500) | A fish cannery on a rocky shore, its slipway and yard | A small quest; the first lullaby on the hall's radio |
 | ![](images/library/saint_agnes_sanatorium.jpg) **Saint Agnes Sanatorium** (800) | Wards, a day room and a cot veranda on a hill terrace | A locked ward, the hydrotherapy house, Raft's vending machine by the gate |
-| ![](images/library/effigy_shoals.jpg) **Effigy Shoals** (day 8, 700) | Sandbars of scarecrow effigies | Done when three notes are read (`note:3`); a second set of effigies, shown later, faces the landing |
+| ![](images/library/effigy_shoals.jpg) **Effigy Shoals** (day 8, 700) | Sandbars of scarecrow effigies | Done when its note 'Who made them' is read (`note:Who made them`); a second set of effigies, shown later, faces the landing |
 | ![](images/library/the_returning_islet.jpg) **The Returning Islet** (side, every 2nd day) | One palm and a hut on stilts with a candle lit | Comes back ahead of the raft (`day:2:again`); a timed `wait` step |
 | ![](images/library/stillwater_terraces.jpg) **Stillwater Terraces** (900) | Flooded rice terraces with a shrine at the top | Three sets of statues, one shown at a time (`show`/`hide` on zones); three Bell stones set in a stand open the stair |
 | ![](images/library/mistlock_causeway.jpg) **Mistlock Causeway** (900) | Plank decks on posts across a misty lagoon, two forks | A safe branch told by sound (`Zone_Sound`); the wrong one sends you back; a timed gate lever |

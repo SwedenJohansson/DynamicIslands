@@ -1013,7 +1013,13 @@ namespace DynamicIslands.Editor
 			{
 				int n;
 				List<int> notes = f.Sample ? null : IslandCache.NotesOf(f.Name);
-				if (!int.TryParse(arg.Trim(), out n)) c.Add(i, Level.Problem, who + " waits for a note of " + f.Describe + " but doesn't say which.", "Choose the note with the ▾ after the note field.");
+				if (arg.Trim().Length == 0) c.Add(i, Level.Problem, who + " waits for a note of " + f.Describe + " but doesn't say which.", "Choose the note with the ▾ after the note field.");
+				else if (!int.TryParse(arg.Trim(), out n))
+				{
+					// (a note by its title: StoryChain.NoteRead - a title survives a rebuild that moves the objects)
+					if (!f.Sample && !IslandCache.NoteTextsOf(f.Name).Values.Any(t => t.Key.Equals(arg.Trim(), StringComparison.OrdinalIgnoreCase)))
+						c.Add(i, Level.Problem, who + " waits for the note '" + arg.Trim() + "' of " + f.Describe + ", which has no note with a text by that title.", "Pick the note from the ▾ list, or give its exact title.");
+				}
 				else if (notes != null && !notes.Contains(n)) c.Add(i, Level.Problem, who + " waits for note #" + n + " of " + f.Describe + ", which has " + (notes.Count == 0 ? "no notes with a text" : "only notes " + string.Join(", ", notes.Select(x => "#" + x).ToArray())) + ".", "Pick the note from the ▾ list.");
 			}
 			else if (kind == "signal")
@@ -1571,7 +1577,19 @@ namespace DynamicIslands.Editor
 			if (r.MainStory && r.Where != "receiver")
 				c.Add(i, Level.Problem, R(c, i) + " is main story, but it isn't on the Receiver: a main story island needs coordinates (its own frequency) - its tab in Raft's notebook shows them.",
 					"WHERE: choose \"On the Receiver\" (or make it a side quest in STORY).");
-			if (r.Beside) foreach (Facts f in Brings(c, r)) CheckNotebook(c, i, r, f);
+			if (r.Beside)
+			{
+				// (its done-when too: before, only story rules' were looked at, so Effigy Shoals' note:3 - no note - went unseen and its
+				// notebook chapter never showed done; quest softlock audit 11-23)
+				string bk = r.StoryDone.Split(':')[0], ba = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
+				foreach (Facts f in Brings(c, r))
+				{
+					CheckNotebook(c, i, r, f);
+					if (bk == "" && !f.Quest.Exists) continue;
+					if (bk == "" || bk == "quest") CheckIslandFor(c, i, "quest", "", f, "STORY");
+					else if (bk == "step" || bk == "zone" || bk == "signal" || bk == "note") CheckIslandFor(c, i, bk, ba, f, "STORY");
+				}
+			}
 			if (!r.InStory) return;
 			bool endsWithUtopia = StoryChain.EndsStory(c.Plan, ChunkPointType.Landmark_Utopia);
 			// (Utopia ends Raft's story: it never counts as done, so an island after it never unlocks)

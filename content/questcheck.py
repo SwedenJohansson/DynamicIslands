@@ -68,6 +68,7 @@ TITANIUM = {'TitaniumOre', 'TitaniumIngot'}
 F = []
 LIBRARY_NAMES = set()   # every island name the library ships (a single island's own rule may bring another entry)
 STATS = Counter()
+TAKEOUT, CHECKS = {}, {}   # story id -> islands that let it be taken out (raft=) / checks that need it held, every island read
 
 
 def add(level, scope, where, text):
@@ -218,10 +219,13 @@ def facts(path):
          'zones': set(), 'signals': set(), 'notes': set(), 'chests_full': set(), 'chests_empty': set(), 'notecount': 0,
          'pages': 0, 'chestcount': 0, 'emptychests': 0, 'creatures': {}, 'tamable': {}, 'needs': set(), 'gives': {},
          'loot_gives': set(), 'gives_free': {}, 'holders': {}, 'names': set(), 'islanders': set(), 'receivers': set(), 'receivercount': 0, 'sets': {},
-         'lights': {}, 'counters': set(), 'note_idx': [], 'targets': [], 'storydefs': set(), 'alltext': '',
-         'badverbs': [], 'raftitems': {}}
+         'lights': {}, 'counters': set(), 'note_idx': [], 'note_titles': set(), 'targets': [], 'storydefs': set(), 'alltext': '',
+         'badverbs': [], 'raftitems': {}, 'takeout': set(), 'checks': {}}
     for line in (P.get('story.items') or '').split('\n'):
         if line.strip(): x['storydefs'].add(low(line.split('|')[0]))
+        # (T8: '|raft=' lets the crew take it out of the journal as that Raft item - its count drops, and has/take
+        # checks and cage keys read the count: quest softlock audit 11-23)
+        if re.search(r'\|\s*raft\s*=\s*\S', line): x['takeout'].add(low(line.split('|')[0]))
     text = [v for k, v in P.items() if k != 'story.items']
     owners = [{k: v for k, v in P.items() if k != 'story.items' and not re.match(r'^quest\d?\.steps$', k)}]
     for i, o in enumerate(O):
@@ -244,7 +248,7 @@ def facts(path):
             x['notecount'] += 1
             if p.get('note.title', '').strip(): x['notes'].add(low(p['note.title']))
             if p.get('note.text', '').strip():
-                x['pages'] += 1; x['note_idx'].append(i)
+                x['pages'] += 1; x['note_idx'].append(i); x['note_titles'].add(low(p.get('note.title', '')))
         if not nm.startswith('Zone_') and (nm.startswith('Loot_') or 'loot.items' in p):
             x['chestcount'] += 1; x['receivercount'] += 1
             t = low(p.get('note.title', ''))
@@ -305,6 +309,16 @@ def facts(path):
         sends.append(s)
     senders = Counter(g for s in sends for g in s)
     for i, p in enumerate(owners):
+        who = (O[i - 1]['props'].get('obj.name', '') or O[i - 1]['name']) if i > 0 else 'island'
+        for k, v in p.items():
+            if k.startswith('if.'):
+                for l in (v or '').split('\n'):
+                    m = NEED_RX.match(l.strip())
+                    if m: x['checks'].setdefault(low(m.group(1)), set()).add('%s %s' % (who, k))
+            elif k == 'trade.give':
+                for m in GIVE_RX.finditer(v or ''): x['checks'].setdefault(low(m.group(1)), set()).add('%s %s' % (who, k))
+            elif k == 'survivor.key' and (v or '').strip():
+                x['checks'].setdefault(low(re.sub(r'^story:', '', v.strip(), flags=re.I)), set()).add('%s cage key' % who)
         for k, v in p.items():
             if k.startswith('if.'):
                 lines = (v or '').split('\n')
@@ -328,6 +342,8 @@ def facts(path):
         x['quests'].append(st)
         x['dropped'] += [(n, d) for d in dr]; x['badcount'] += [(n, l, why) for l, why in bc]; x['cut'] += [(n, len(cut))] if cut else []
     while len(x['quests']) > 1 and not x['quests'][-1]: x['quests'].pop()
+    for sid in x['takeout']: TAKEOUT.setdefault(sid, set()).add(x['file'])
+    for sid, w in x['checks'].items(): CHECKS.setdefault(sid, set()).update("'%s' %s" % (x['file'], s) for s in w)
     return x
 
 
@@ -556,6 +572,16 @@ def check_plan(plan, islands, scope, storyline=True):
                 add('ERROR', scope, loc(r), "%s is placed near '%s': no rule or island of that name - never placed" % (rid(r), r['whereref']))
         elif r['where'] == 'near' and r['when'] in ('start', 'km', 'day'):
             add('ERROR', scope, loc(r), '%s is placed near "where it happened" but its WHEN happens at no island' % rid(r))
+    # beside Raft's story: the done-when marks the notebook chapter done (quest softlock audit 11-23: Effigy Shoals' note:3)
+    for r in rules:
+        if not r['beside']: continue
+        kind = r['done'].split(':')[0] if r['done'] else ''
+        arg = r['done'].split(':', 1)[1] if ':' in r['done'] else ''
+        for n in brings(r):
+            f = c.fx(n)
+            if not f or kind == '' and not f['quests'][0]: continue
+            if kind in ('', 'quest'): check_island_for(r, 'quest', '', f, 'BESIDE', loc(r), scope)
+            elif kind in ('step', 'zone', 'signal', 'note'): check_island_for(r, kind, arg, f, 'BESIDE', loc(r), scope)
     # story
     steps, unplaced = build_steps(plan)
     utopia_ends = plan['story'] and 'utopia' not in plan['leaveout'] and not any(x['place'] == 'instead:utopia' for x in rules)
@@ -588,9 +614,15 @@ def check_plan(plan, islands, scope, storyline=True):
     return c, steps
 
 
+def note_ok(arg, f):
+    # a note by its number on the island, or by its title (StoryChain.NoteRead: a title survives a rebuild)
+    a = arg.strip()
+    return int(a) in f['note_idx'] if a.isdigit() else bool(a) and low(a) in f['note_titles']
+
+
 def check_island_for(r, kind, arg, f, part, where, scope):
-    who = "rule '%s'%s" % (r['id'], ' (STORY done-when)' if part == 'STORY' else '')
-    eff = 'the story stops here' if part == 'STORY' else 'the rule never fires'
+    who = "rule '%s'%s" % (r['id'], ' (STORY done-when)' if part in ('STORY', 'BESIDE') else '')
+    eff = 'the story stops here' if part == 'STORY' else 'its notebook chapter never shows done' if part == 'BESIDE' else 'the rule never fires'
     nm = f['file']
     if kind == 'quest' and part != 'STORY' and arg.strip().isdigit() and int(arg) > 1:
         if int(arg) > len(f['quests']) or not f['quests'][int(arg) - 1]:
@@ -603,8 +635,8 @@ def check_island_for(r, kind, arg, f, part, where, scope):
     elif kind == 'zone':
         if low(arg) not in f['zones']: add('ERROR', scope, where, "%s waits for zone '%s' of '%s', which it doesn't have: %s" % (who, arg, nm, eff))
     elif kind == 'note':
-        if not arg.strip().isdigit() or int(arg) not in f['note_idx']:
-            add('ERROR', scope, where, "%s waits for note #%s of '%s', which is no note with a text: %s" % (who, arg, nm, eff))
+        if not note_ok(arg, f):
+            add('ERROR', scope, where, "%s waits for note %s of '%s', which is no note with a text: %s" % (who, '#' + arg if arg.strip().isdigit() else "'%s'" % arg.strip(), nm, eff))
     elif kind == 'signal':
         if low(arg) not in f['signals']: add('ERROR', scope, where, "%s waits for signal '%s' from '%s', which nothing there sends: %s" % (who, arg, nm, eff))
 
@@ -626,7 +658,7 @@ def simulate(c, ids, steps, utopia_ends):
             elif kind == 'step': ok = arg.isdigit() and int(arg) <= len(f['quests'][0])
             elif kind == 'zone': ok = low(arg) in f['zones']
             elif kind == 'signal': ok = low(arg) in f['signals']
-            elif kind == 'note': ok = arg.strip().isdigit() and int(arg) in f['note_idx']
+            elif kind == 'note': ok = note_ok(arg, f)
             if not ok: blocked.add(low(r['id']))
 
     def step_done(s):
@@ -912,6 +944,10 @@ def main():
                 except Exception as e: add('ERROR', 'library-island', p, 'can not be read: %s' % e); continue
                 counts['library islands'] += 1
                 island_checks(f, 'library-island:' + os.path.basename(d), None, None, {})
+    # T8: a story item the crew can take out of the journal while a check still needs it held (quest softlock audit 11-23)
+    for sid in sorted(set(TAKEOUT) & set(CHECKS)):
+        for isl in sorted(TAKEOUT[sid]):
+            add('WARN', 'story-items', rloc(isl, sid + '|'), "story item '%s' has raft= (it can be taken out of the journal) but %s need it held: taken out, they stay shut for good - drop raft= or the check" % (sid, ', '.join(sorted(CHECKS[sid])[:4])))
     order = {'ERROR': 0, 'WARN': 1, 'INFO': 2}
     # (one finding once: an island in two plans or packs is told for each scope - fold same text+where)
     seen, out = set(), []

@@ -525,6 +525,24 @@ namespace DynamicIslands.Editor
 		/// <summary>From the network.</summary>
 		public static void OnMessage(IslandNetMessage msg) { OnMessage(msg, 0UL); }
 
+		/// <summary>
+		/// Host: story items a player's refused event used up given back to the crew. The player's machine takes the item at
+		/// once (its "take" reaches the host first); when the host then says no - the island isn't loaded here, or another
+		/// of the event's story checks no longer holds - nothing was done, and a keycard door's only card was gone for good
+		/// (quest softlock audit 11-23). Not counted as found again (a collect step counted it once).
+		/// </summary>
+		internal static void GiveBack(string id, int count)
+		{
+			id = StoryItems.IdOf(id);
+			Held h;
+			if (!Raft_Network.IsHost || count <= 0 || !held.TryGetValue(id, out h)) return;
+			h.Count += count;
+			h.Found = Mathf.Max(h.Found, h.Count);
+			Debug.Log("[CUSTOM ISLANDS] Story item '" + h.Def.ShownName + "' x" + count + " given back (the player's event was refused): " + h.Count);
+			IslandNetwork.SendStory(StateMessage());
+			Raise();
+		}
+
 		/// <summary>Host: a player's "take" the crew no longer had enough for, by player and item, and when (TakeRefused).</summary>
 		static readonly Dictionary<string, float> refusedTakes = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 		const float RefusedTakeSeconds = 10f;
