@@ -427,11 +427,57 @@ namespace DynamicIslands
 
 		static readonly IslandCheck SheetCheck = new IslandCheck { Label = "sheet", File = "sheet", Pass = "no bare cliff sheet at the waterline", Measure = SheetProblems };
 
-		[ConsoleCommand(name: "CISheetIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one; no bare land cliff at the waterline - the land's own face rising 7 m or more in one heightmap step from under the sea to over it, nothing standing in front of it, along 3 or more 8 m cells: Raft draws it as one pale stretched sheet (Caisson Yard's yard rock, c3z37 11-21). Each line says whether the face is a pit's wall (seen from its rim) or the open coast (seen from the sea) and how it is painted. Fix: the recipe step cliffs. Same arguments as CIOverlapIslands, plus 'shots' (a picture of the 2 largest sheets per island from the low side, shot_sheet_*.png). Results in Mods\\DynamicIslands\\sheet_islands.txt.")]
+		[ConsoleCommand(name: "CISheetIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one; no bare land cliff at the waterline - the land's own face rising 7 m or more in one heightmap step from under the sea to over it, nothing standing in front of it, along 3 or more 8 m cells: Raft draws it as one pale stretched sheet (Caisson Yard's yard rock, c3z37 11-21). Each line says whether the face is a pit's wall (seen from its rim) or the open coast (seen from the sea) and how it is painted. Fix: the recipe step cliffs. Same arguments as CIOverlapIslands, plus 'shots' (a picture of every sheet per island, largest first, from the low side, shot_sheet_<island>_<n>.png). Results in Mods\\DynamicIslands\\sheet_islands.txt.")]
 		public static void SheetIslandsCommand(string[] args) { IslandsCheck(args, SheetCheck); }
 
 		[ConsoleCommand(name: "CISheetWorld", docs: "Dev, in a world: CISheetIslands on the loaded custom islands. CISheetWorld [part of the island name]. Results in Mods\\DynamicIslands\\sheet_world.txt.")]
 		public static void SheetWorldCommand(string[] args) { WorldCheck(args, SheetCheck); }
+
+		[ConsoleCommand(name: "CISheetShotsUnit", docs: "Dev, anywhere: CISheetIslands' 'shots' picture every sheet, not just the 2 largest (lib 3.5.1 11-23: Take(2) left smaller new sheets unpictured) and past the 8-picture cap - a made-up terrain far off with 9 square plateaus 10 m over the sea in 20 m deep water: 9 sheets, 9 sheet pictures queued, largest first (_1 .. _9)")]
+		public static void CISheetShotsUnit()
+		{
+			var td = new TerrainData();
+			td.heightmapResolution = 129;
+			td.size = new Vector3(256f, 60f, 256f);
+			int res = td.heightmapResolution;
+			var h = new float[res, res];
+			float low = 10f / 60f, high = 40f / 60f; // (terrain at y -30: the sea floor 20 m under the sea, the plateaus 10 m over it)
+			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) h[z, x] = low;
+			int[] starts = { 14, 54, 94 };
+			int k = 0;
+			foreach (int bz in starts)
+				foreach (int bx in starts)
+				{
+					int side = 8 + 2 * k++; // (sizes 8..24 points: each sheet a different size, so 'largest first' is checkable)
+					for (int z = bz; z < bz + side && z < res; z++) for (int x = bx; x < bx + side && x < res; x++) h[z, x] = high;
+				}
+			td.SetHeights(0, 0, h);
+			GameObject go = Terrain.CreateTerrainGameObject(td);
+			go.transform.position = new Vector3(6000f, -30f, 6000f);
+			bool was = checkShots;
+			string wasRocks = checkRockShots;
+			try
+			{
+				Physics.SyncTransforms();
+				checkShots = true; checkRockShots = null; checkShotQueue.Clear();
+				var e = new IslandWorldState.Entry { Name = "ci sheet unit", Root = go, Position = go.transform.position + new Vector3(128f, 30f, 128f) };
+				int n;
+				List<string> lines = SheetProblems(e, out n);
+				var names = checkShotQueue.Select(s => s.Key).ToList();
+				var want = Enumerable.Range(1, 9).Select(i => "sheet_ci_sheet_unit_" + i).ToList();
+				var cells = lines.Select(l => int.Parse(Regex.Match(l, @", (\d+) cells of").Groups[1].Value)).ToList();
+				bool order = cells.Zip(cells.Skip(1), (a, b) => a >= b).All(x => x);
+				if (lines.Count == 9 && names.SequenceEqual(want) && order)
+					Log("PASS: sheet shots - 9 sheets (" + string.Join(" ", cells.Select(c => c.ToString()).ToArray()) + " cells, " + n + " faces), 9 pictures queued in that order");
+				else Fail("sheet shots: " + lines.Count + " sheets (cells " + string.Join(" ", cells.Select(c => c.ToString()).ToArray()) + ", largest first " + order + "), queued " + names.Count + ": " + string.Join(", ", names.ToArray()));
+			}
+			catch (Exception ex) { Fail("sheet shots: " + ex.GetType().Name + " " + ex.Message); }
+			finally
+			{
+				checkShotQueue.Clear(); checkShots = was; checkRockShots = wasRocks;
+				UnityEngine.Object.Destroy(go);
+			}
+		}
 
 		const float SheetRise = 7f;   // (one heightmap step this tall: the land's skin stretched up a wall)
 		const float SheetCellM = 8f;  // (faces are gathered in cells this wide; neighbouring cells make one sheet)
@@ -538,7 +584,7 @@ namespace DynamicIslands
 		/// above, so such a face is drawn as the ground's texture smeared down a wall - Caisson Yard's crane-end picture showed a
 		/// pale sheet half the frame wide that no check caught (c3z37 11-21). Each sheet says whether it is the open coast or a
 		/// pit's wall (SheetEnclosed), how high it stands over the sea, and what the ground there is painted; with the check's
-		/// 'shots' word the two largest are pictured from their low side (shot_sheet_...). count = the faces measured.</summary>
+		/// 'shots' word every one is pictured from its low side, largest first (shot_sheet_<island>_<n>). count = the faces measured.</summary>
 		static List<string> SheetProblems(IslandWorldState.Entry e, out int count)
 		{
 			var lines = new List<string>();
@@ -622,8 +668,10 @@ namespace DynamicIslands
 				shots.Add(new KeyValuePair<int, Vector3[]>(n, new[] { eye, at }));
 			}
 			foreach (var s in sheets.OrderByDescending(s => s.Key)) lines.Add(s.Value);
+			// (every sheet pictured, largest first, past the queue's cap of 8: with only the 2 largest a new or changed smaller
+			// sheet went unpictured - lib 3.5.1 11-23, Varuna Point's 4 sheets, Balboa's 3)
 			int shot = 0;
-			foreach (var s in shots.OrderByDescending(s => s.Key).Take(2)) QueueCheckShot("sheet_" + e.Name + "_" + ++shot, s.Value[0], s.Value[1]);
+			foreach (var s in shots.OrderByDescending(s => s.Key)) QueueCheckShot("sheet_" + e.Name + "_" + ++shot, s.Value[0], s.Value[1], true);
 			if (checkShots && checkRockShots != null) foreach (var rs in RockShots(e, land, tp, sea, checkRockShots)) QueueCheckShot(rs.Key, rs.Value[0], rs.Value[1]);
 			return lines;
 		}
@@ -1437,14 +1485,15 @@ namespace DynamicIslands
 		}
 
 		/// <summary>Pictures a check asks for (SheetProblems' sheets, GroundProblems' cave looks), taken by GroundIslandsRoutine
-		/// while the island is still there; only with the check's 'shots' word, at most 8 an island.</summary>
+		/// while the island is still there; only with the check's 'shots' word, at most 8 an island - but every sheet (all: a
+		/// sheet's picture is queued whatever the count).</summary>
 		static bool checkShots;
 		/// <summary>CISheetIslands' rocks=: the piece whose stood rocks it pictures too (RockShots), else null.</summary>
 		static string checkRockShots;
 		static readonly List<KeyValuePair<string, Vector3[]>> checkShotQueue = new List<KeyValuePair<string, Vector3[]>>();
-		static void QueueCheckShot(string name, Vector3 from, Vector3 at)
+		static void QueueCheckShot(string name, Vector3 from, Vector3 at, bool all = false)
 		{
-			if (!checkShots || checkShotQueue.Count >= 8) return;
+			if (!checkShots || (!all && checkShotQueue.Count >= 8)) return;
 			checkShotQueue.Add(new KeyValuePair<string, Vector3[]>(Regex.Replace(name, "[^A-Za-z0-9_]+", "_"), new[] { from, at }));
 		}
 
