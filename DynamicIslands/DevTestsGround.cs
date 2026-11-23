@@ -821,7 +821,7 @@ namespace DynamicIslands
 			var keepBoxCap = new List<float>();
 			var rockCapOf = new Dictionary<Collider, float>();
 			var carry = new List<KeyValuePair<Transform, Bounds>>();
-			// (loot, pickups and creatures low enough for the talus to bury: they ride up with it - Ironreef's clay, Cistern Hall's
+			// (loot, pickups and creatures the talus would bury ride up with it - Vasagatan's clay and mango tree, Cistern Hall's
 			// mushrooms, Sundown's angler went under the talus - lib 3.5.1 11-23)
 			var loose = new List<KeyValuePair<Transform, Bounds>>();
 			foreach (EditorGameObject o in UnityEngine.Object.FindObjectsOfType<EditorGameObject>())
@@ -833,7 +833,7 @@ namespace DynamicIslands
 					Renderer[] lr = o.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled).ToArray();
 					Bounds lb = lr.Length > 0 ? lr[0].bounds : new Bounds(o.transform.position, Vector3.one);
 					foreach (Renderer r in lr) lb.Encapsulate(r.bounds);
-					if (lb.min.y < sea + 1f) loose.Add(new KeyValuePair<Transform, Bounds>(o.transform, lb));
+					loose.Add(new KeyValuePair<Transform, Bounds>(o.transform, lb));
 					continue;
 				}
 				Renderer[] rs = o.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled).ToArray();
@@ -982,19 +982,19 @@ namespace DynamicIslands
 				carry[i].Key.position += Vector3.up * lift;
 				carried++;
 			}
-			// (a loose thing moves only when the new ground at its middle comes up past its bottom, by as much as the ground rose
-			// there - a fish keeps its water under it, a crate sits on the new ground as it sat on the old)
+			// (a loose thing moves only where the ground at its middle rose and came up past its bottom, by as much as the ground
+			// rose there - a fish keeps its water under it, a crate or a tree sits in the new ground as it sat in the old)
 			int lifted = 0;
 			for (int i = 0; i < loose.Count; i++)
 			{
 				Bounds lb = loose[i].Value;
 				float now = land.SampleHeight(lb.center) + tp.y;
-				if (now <= lb.min.y + 0.05f || loose[i].Key == null) continue;
-				// (as far as the ground rose, but one under the sea stays under it if it can - only what sitting on the new ground needs
-				// may lift it out)
+				if (now - looseFrom[i] < 0.05f || now <= lb.min.y + 0.05f || loose[i].Key == null) continue;
+				// (as far as the ground rose, but one under the sea stays under it if it can - only what keeping it no deeper in the
+				// ground than it was needs may lift it out)
 				float lift = now - looseFrom[i];
 				if (lb.max.y < sea) lift = Mathf.Min(lift, sea - 0.5f - lb.max.y);
-				lift = Mathf.Max(lift, now - lb.min.y + 0.1f);
+				lift = Mathf.Max(lift, now - lb.min.y - Mathf.Max(0f, looseFrom[i] - lb.min.y));
 				loose[i].Key.position += Vector3.up * lift;
 				lifted++;
 			}
