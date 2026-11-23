@@ -443,5 +443,6 @@ loot hkcutbox Scrap*4;Nail*8;Rope*1;MetalIngot*1
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth)
 # (keep=, lib 3.5.1 minor fixes 11-23: the talus filled or buried the Union strongroom's dive site - the sunk block, the boat, its crate and the puffers - left as built)
-cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=71,-23,16
+# (walls=, lib 3.5.1 extra fixes 11-23: the kept walls still showed as bare sheets - no talus there, so the pit keeps its depth, but rock is stood on its faces)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low walls=71,-23,16
 save Hookline Stack
