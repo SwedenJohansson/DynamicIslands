@@ -788,7 +788,7 @@ namespace DynamicIslands
 		/// coordinates. at x z r=: only faces in that circle. rocks=piece: that rock stood in the waterline at the faces still
 		/// bare (StandCliffRocks - a pit's wall the talus can't slope). keep: circles (world x, z, radius) the talus leaves as
 		/// they are - no point raised in them, no face in them sloped or rocked (a dock pool, a dive site, a fish pool). Loot,
-		/// pickups and creatures the talus would bury ride up with it, keeping their height over the ground (under the sea if they
+		/// pickups, notes and creatures the talus would bury ride up with it, keeping their height over the ground (under the sea if they
 		/// were). The ground's hand paint
 		/// is dropped on the raised points and the area painted again (the steep talus goes rock); one undo step for the ground
 		/// (the carried things stay where they went).</summary>
@@ -821,14 +821,14 @@ namespace DynamicIslands
 			var keepBoxCap = new List<float>();
 			var rockCapOf = new Dictionary<Collider, float>();
 			var carry = new List<KeyValuePair<Transform, Bounds>>();
-			// (loot, pickups and creatures the talus would bury ride up with it - Vasagatan's clay and mango tree, Cistern Hall's
-			// mushrooms, Sundown's angler went under the talus - lib 3.5.1 11-23)
+			// (loot, pickups, notes and creatures the talus would bury ride up with it - Vasagatan's clay and mango tree, Cistern
+			// Hall's mushrooms, Sundown's angler, The Foundation Piles' notes on the pool floor went under the talus - lib 3.5.1 11-23)
 			var loose = new List<KeyValuePair<Transform, Bounds>>();
 			foreach (EditorGameObject o in UnityEngine.Object.FindObjectsOfType<EditorGameObject>())
 			{
 				if (o == null || !o.gameObject.activeInHierarchy) continue;
 				string n0 = (o.GameObjectName ?? o.name).Replace("(Clone)", "").Trim();
-				if (ContentCatalog.IsCreature(n0) || n0.StartsWith("Loot_", StringComparison.Ordinal) || n0.StartsWith("Pickup_", StringComparison.Ordinal))
+				if (ContentCatalog.IsCreature(n0) || n0.StartsWith("Loot_", StringComparison.Ordinal) || n0.StartsWith("Pickup_", StringComparison.Ordinal) || n0.StartsWith("Note_", StringComparison.Ordinal))
 				{
 					Renderer[] lr = o.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled).ToArray();
 					Bounds lb = lr.Length > 0 ? lr[0].bounds : new Bounds(o.transform.position, Vector3.one);
