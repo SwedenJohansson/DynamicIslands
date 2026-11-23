@@ -54,6 +54,14 @@ brush flatten at -20 16 r=9 s=20 frames=100 h=2.5
 brush grass at -20 16 r=8 s=20 frames=20
 brush flatten from 10 -2 to 16 1 r=3 s=10 frames=60 h=1.4
 brush flatten at 22 6 r=6 s=20 frames=100 h=-3.5
+# (lib 3.5.1 MUST-FIX 11-23: the deep pool's only low edge was the track's end at 1.4 m, over a swimmer's climb - the
+# track now runs on down into the pool as a ramp: 0.9, 0.5, 0 m at the water, then -0.7 and -1.2 m under it, on the
+# pool's south-west side, 4.4 m and more from the van. Rock stood in the pool's pale waterline band)
+brush flatten at 14 -0.2 r=1.4 s=20 frames=120 h=0.9
+brush flatten at 15.5 0.6 r=1.4 s=20 frames=120 h=0.5
+brush flatten at 17 1.4 r=1.4 s=20 frames=120 h=0
+brush flatten at 18.3 2.1 r=1.3 s=20 frames=120 h=-0.7
+brush flatten at 19.3 2.7 r=1.2 s=20 frames=120 h=-1.2
 brush seabed at 22 6 r=5 s=20 frames=15
 clear from -18 -26 to 4 -5 r=6
 clear at -18 -2 r=12
@@ -216,4 +224,7 @@ note vanchest Chest by the sunk van | The van's cargo box, thrown out when it we
 loot vanchest Scrap*4;Glass*2;MetalIngot*2;Plastic*3
 prop vanchest loot.refill=0
 
+cliffs at 22 6 r=9 rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
+# (the stood rocks that reach the ramp out - one of them 5x a boulder - taken off it again: the way out stays clear)
+clear from 13 -0.7 to 20 3 r=1.6 body all only=BigBoulder
 save Wingfall Mire
