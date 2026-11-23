@@ -176,11 +176,16 @@ namespace DynamicIslands.Editor
 		/// gave or opened - a key, a door, the next island's signal - never came. Its "done" mark first: a note read, a zone
 		/// that fires once fired or an islander talked to already is left alone (later done for real, the same marks keep
 		/// it from giving twice). On an island not built here: kept in its saved state, done when it loads
-		/// (Behaviours.QueueSkipped). A step without a target ("read any note") or another kind of step: nothing.
+		/// (Behaviours.QueueSkipped). An "open", "set" or "lights" step likewise (M8 limit closed 11-23): its chest opened for
+		/// the host's player (its checks, loot, used mark, "open" event; one opened already is left alone), its set's pieces'
+		/// "set" event and signal, its group's lights switched on (their "lit" events, then "alllit" and the signal) - a
+		/// set or group done already (its signal) is left alone, and a step asking for part of one (2 of 5) sets off nothing.
+		/// A step without a target ("read any note") or another kind of step: nothing.
 		/// </summary>
 		internal static string Replay(IslandWorldState.Entry e, IslandQuest.Step s)
 		{
-			string ev = s.Type == "read" ? "read" : s.Type == "reach" ? "enter" : s.Type == Islanders.QuestType ? Islanders.TalkEvent : null;
+			string ev = s.Type == "read" ? "read" : s.Type == "reach" ? "enter" : s.Type == Islanders.QuestType ? Islanders.TalkEvent
+				: s.Type == "open" ? "open" : s.Type == Collectibles.QuestType ? Collectibles.SetEvent : s.Type == Lights.QuestType ? Lights.AllLitEvent : null;
 			string target = s.Target.Trim();
 			if (ev == null || target.Length == 0 || e == null || !Raft_Network.IsHost) return "";
 			try
@@ -188,14 +193,30 @@ namespace DynamicIslands.Editor
 				IslandFile f = IslandFile.Load(IslandSpawner.PathFor(e.Name));
 				if (f == null) return "";
 				StableIds.Layout l = null;
+				Func<IslandObject, string> nameOf = o =>
+				{
+					Dictionary<string, string> q = o.Props ?? new Dictionary<string, string>();
+					string n = ev == "read" ? (ObjectProps.IsNote(o.Name, q) ? ObjectProps.Get(q, ObjectProps.NoteTitle) : null)
+						: ev == "enter" ? (o.Name == ContentCatalog.TriggerZone ? ObjectProps.Get(q, ObjectProps.ZoneId) : null)
+						: ev == "open" ? (ObjectProps.IsLoot(o.Name, q) ? ObjectProps.Get(q, ObjectProps.NoteTitle) : null)
+						: ev == Collectibles.SetEvent ? (Collectibles.IsPiece(q) ? Collectibles.SetOf(q) : null)
+						: ev == Lights.AllLitEvent ? (Lights.IsLight(o.Name, q) ? Lights.GroupOf(q) : null)
+						: (Islanders.Is(o.Name) ? Islanders.NameOf(q) : null);
+					return n != null && string.Equals(target, IslandQuest.Clean(n), StringComparison.OrdinalIgnoreCase) ? n : null;
+				};
+				// (a set or light group: the whole of it, once - done already: its signal; a step asking for part of it: nothing)
+				if (ev == Collectibles.SetEvent || ev == Lights.AllLitEvent)
+				{
+					int total = f.Objects.Count(o => nameOf(o) != null);
+					if (Behaviours.HasSignal(e, ev == Collectibles.SetEvent ? Collectibles.SignalOf(target) : Lights.SignalOf(target)) || (s.Count > 0 && s.Count < total)) return "";
+				}
 				for (int i = 0; i < f.Objects.Count; i++)
 				{
 					IslandObject o = f.Objects[i];
 					Dictionary<string, string> p = o.Props ?? new Dictionary<string, string>();
-					string name = ev == "read" ? (ObjectProps.IsNote(o.Name, p) ? ObjectProps.Get(p, ObjectProps.NoteTitle) : null)
-						: ev == "enter" ? (o.Name == ContentCatalog.TriggerZone ? ObjectProps.Get(p, ObjectProps.ZoneId) : null)
-						: (Islanders.Is(o.Name) ? Islanders.NameOf(p) : null);
-					if (name == null || !string.Equals(target, IslandQuest.Clean(name), StringComparison.OrdinalIgnoreCase)) continue;
+					string name = nameOf(o);
+					if (name == null) continue;
+					if (ev == "open") { int k = Behaviours.RefusedKey(e, i, "open"); if (k >= 0 && ContentState.IsUsed(e, k)) continue; }
 					// (done already - by a player, or an earlier skip: the next one of that name, if any)
 					if (ev == "read" && e.State.ContainsKey(Behaviours.DoneBase + i)) continue;
 					if (ev == Islanders.TalkEvent && ContentState.IsUsed(e, Islanders.TalkedBase + i)) continue;
@@ -215,8 +236,8 @@ namespace DynamicIslands.Editor
 			return "";
 		}
 
-		/// <summary>Host, the island built here: object index's note read, zone walked into or islander talked to by the host's
-		/// player (Replay), unless done already. False when nothing was set off.</summary>
+		/// <summary>Host, the island built here: object index's note read, zone walked into, islander talked to, chest opened,
+		/// set or light group done by the host's player (Replay), unless done already. False when nothing was set off.</summary>
 		internal static bool ReplayLoaded(IslandWorldState.Entry e, int index, string ev)
 		{
 			IslandObjectRef r = Behaviours.RefsOf(e).FirstOrDefault(x => x.Index == index);
@@ -239,6 +260,42 @@ namespace DynamicIslands.Editor
 			{
 				if (ContentState.IsUsed(e, Islanders.TalkedBase + index)) return false;
 				Islanders.Talked(e, r.transform, index, Islanders.NameOf(r.Props), 0);
+			}
+			else if (ev == "open")
+			{
+				// (as LootCrate.Open after its claim: the checks - a key taken - the used mark, the loot, the "open" event)
+				LootCrate c = r.GetComponentInChildren<LootCrate>(true);
+				if (c == null || c.Looted || !Behaviours.Allows(e, index, "open")) return false;
+				ContentState.MarkUsed(c.transform, c.StateKey);
+				TriggerZone.Give(c.ThisFill());
+				Behaviours.Fire(e, index, "open", true, true);
+			}
+			else if (ev == Collectibles.SetEvent)
+			{
+				string set = Collectibles.SetOf(r.Props);
+				if (set.Length == 0 || Behaviours.HasSignal(e, Collectibles.SignalOf(set))) return false;
+				// (as Collectibles.Tick when the last piece is found: the signal - Tick won't do it again - and every piece's "set")
+				Behaviours.SendSignal(e, Collectibles.SignalOf(set));
+				foreach (IslandObjectRef x in Behaviours.RefsOf(e).Where(x => Collectibles.IsPiece(x.Props) && string.Equals(Collectibles.SetOf(x.Props), set, StringComparison.OrdinalIgnoreCase)).ToList())
+					Behaviours.FireFromHost(e, x.Index, Collectibles.SetEvent);
+			}
+			else if (ev == Lights.AllLitEvent)
+			{
+				string g = Lights.GroupOf(r.Props);
+				List<IslandObjectRef> all = g.Length > 0 ? Lights.GroupLights(e, g) : new List<IslandObjectRef>();
+				if (all.Count == 0 || Behaviours.HasSignal(e, Lights.SignalOf(g)) || all.All(x => Lights.Lit(e, x))) return false;
+				// (one by one as a player switching them: each one's "lit", the last one's Changed the group's "alllit" and
+				// signal; its PuzzleLight told first, so it doesn't see the change again)
+				foreach (IslandObjectRef x in all)
+				{
+					if (Lights.Lit(e, x)) continue;
+					bool visible, open;
+					Behaviours.StateNow(e, x, out visible, out open);
+					Behaviours.SetState(e, x.Index, visible, !Lights.StartsOn(x.Props));
+					PuzzleLight pl = x.GetComponentInChildren<PuzzleLight>(true);
+					if (pl != null) pl.Sync();
+					Lights.Changed(e, x, true);
+				}
 			}
 			else return false;
 			Replayed++;
