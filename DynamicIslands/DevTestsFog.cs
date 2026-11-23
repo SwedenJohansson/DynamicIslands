@@ -169,14 +169,14 @@ namespace DynamicIslands
 				yield return CameraShot(eye, at, "fog_day_clear");
 				FogBanks.TestVisibility = sight; FogBanks.TestInstant = true; FogBanks.TestTarget = 1f;
 				yield return new WaitForSeconds(2f);
-				Log("fog look: day, shown " + FogBanks.ShownDistance.ToString("F0") + " (Raft's " + FogBanks.RaftDistance.ToString("F0") + ")");
+				Log("fog look: day, shown " + FogBanks.ShownDistance.ToString("F0") + " (Raft's " + FogBanks.RaftDistance.ToString("F0") + "), colour " + FogBanks.ColourShown + ", night " + FogBanks.Night.ToString("F2") + ", veil " + FogBanks.TintShown.ToString("F2"));
 				yield return CameraShot(eye, at, "fog_day");
 				// Looming: the shore from further out (only a shadow) and closer in (firming up)
 				yield return CameraShot(eyeAt(sight * 1.2f), at, "fog_day_far");
 				yield return CameraShot(eyeAt(15f), at, "fog_day_near");
 				SetHour(23f);
 				yield return new WaitForSeconds(3f);
-				Log("fog look: night, shown " + FogBanks.ShownDistance.ToString("F0") + " (Raft's " + FogBanks.RaftDistance.ToString("F0") + ")");
+				Log("fog look: night, shown " + FogBanks.ShownDistance.ToString("F0") + " (Raft's " + FogBanks.RaftDistance.ToString("F0") + "), colour " + FogBanks.ColourShown + ", night " + FogBanks.Night.ToString("F2") + ", veil " + FogBanks.TintShown.ToString("F2") + ", density " + FogBanks.ShownDensity.ToString("F2"));
 				yield return CameraShot(eye, at, "fog_night");
 				FogBanks.TestTarget = 0f;
 				yield return new WaitForSeconds(1f);

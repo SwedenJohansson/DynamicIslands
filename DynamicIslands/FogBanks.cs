@@ -196,10 +196,10 @@ namespace DynamicIslands.Editor
 		/// The near fog: Unity's own fog (RenderSettings), which Raft's sea and everything drawn after the sky's fog take.
 		/// AzureSky's fog is drawn over the solid world only (an opaque image effect), so the water and the raft's surroundings
 		/// stayed clear to the horizon. Linear from NearStart x sight (clear around you) to NearEnd x sight (gone), in the
-		/// colour of the sky's horizon ambient (pale by day, dark at night). Raft's values are kept and put back when the
+		/// fog's colour (FogColour: the horizon ambient greyed, lifted at night). Raft's values are kept and put back when the
 		/// fog has lifted, under water (Raft's water fog) or out of the world.
 		/// </summary>
-		internal static float NearStart = 0.1f, NearEnd = 1.25f;
+		internal static float NearStart = 0.2f, NearEnd = 1.25f;
 		const float FarEnd = 1500f;
 		static bool nearTaken, nearFogWas;
 		static FogMode nearModeWas;
@@ -222,12 +222,34 @@ namespace DynamicIslands.Editor
 			RenderSettings.fogMode = FogMode.Linear;
 			RenderSettings.fogStartDistance = Mathf.Lerp(FarEnd * 0.5f, Visibility * NearStart, w);
 			RenderSettings.fogEndDistance = end;
-			Color c = RenderSettings.ambientMode == UnityEngine.Rendering.AmbientMode.Trilight
-				? Color.Lerp(RenderSettings.ambientEquatorColor, RenderSettings.ambientSkyColor, 0.25f) : RenderSettings.ambientLight;
-			c.a = 1f;
+			Color c = FogColour();
 			RenderSettings.fogColor = c;
 			NearEndShown = end;
-			SetTint(c, TintAlpha * w);
+			SetTint(c, TintAlpha * Mathf.Lerp(1f, NightTint, Night) * w);
+		}
+
+		/// <summary>How dark the hour is, 0 (day) to 1 (night), from the sky's horizon ambient (W8).</summary>
+		public static float Night { get; private set; }
+		/// <summary>The fog's colour shown now (tests).</summary>
+		public static Color ColourShown { get; private set; }
+		/// <summary>
+		/// The fog's colour: the sky's horizon ambient, but greyed (Raft's horizon ambient is a strong cyan, and the fog took
+		/// it whole: the day fog was a cyan wall, more coloured than the clear view - W8) and at night lifted to a moonlit
+		/// blue-grey (the night ambient is near black, so the fog and its veil darkened the night view below the clear one).
+		/// </summary>
+		internal static float Grey = 0.55f, NightGrey = 0.3f, NightTint = 0.5f;
+		internal static Color NightFloor = new Color(0.11f, 0.17f, 0.27f, 1f);
+		static Color FogColour()
+		{
+			Color c = RenderSettings.ambientMode == UnityEngine.Rendering.AmbientMode.Trilight
+				? Color.Lerp(RenderSettings.ambientEquatorColor, RenderSettings.ambientSkyColor, 0.25f) : RenderSettings.ambientLight;
+			float lum = 0.2126f * c.r + 0.7152f * c.g + 0.0722f * c.b;
+			Night = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.08f, 0.3f, lum));
+			float grey = Mathf.Lerp(Grey, NightGrey, Night);
+			c = Color.Lerp(c, new Color(lum, lum, lum) * 1.1f, grey);
+			c = new Color(Mathf.Max(c.r, NightFloor.r), Mathf.Max(c.g, NightFloor.g), Mathf.Max(c.b, NightFloor.b), 1f);
+			ColourShown = c;
+			return c;
 		}
 
 		/// <summary>
@@ -235,7 +257,7 @@ namespace DynamicIslands.Editor
 		/// sea ignores both the sky's fog and Unity's, so without it the water 40-60 m out stayed crisp; with it the whole
 		/// view greys over and the water fades into the fog. Off (disabled, alpha 0) whenever the fog is not ours.
 		/// </summary>
-		internal static float TintAlpha = 0.35f;
+		internal static float TintAlpha = 0.22f;
 		static UnityEngine.UI.Image tint;
 		/// <summary>The veil's strength now (tests): 0 when hidden.</summary>
 		public static float TintShown { get { return tint != null && tint.enabled ? tint.color.a : 0f; } }
@@ -288,6 +310,9 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		/// <summary>The sky's fog density at the thickest at night (1 by day).</summary>
+		internal static float NightDensity = 0.75f;
+
 		/// <summary>FogBanksSkyPatch, before Raft's sky hands its fog to the shaders: ours lent.</summary>
 		internal static Saved Lend(AzureSkyController s)
 		{
@@ -305,7 +330,8 @@ namespace DynamicIslands.Editor
 			// (both worked out before either is set: nothing between them can throw and leave the sky half-changed with no
 			// saved values to put back - RK12 L5)
 			float distance = Mathf.Min(saved.Distance, Mathf.Exp(Mathf.Lerp(Mathf.Log(from), Mathf.Log(want), w)));
-			float density = Mathf.Lerp(saved.Density, 1f, w);
+			// (at night a little less than full: the sky's night fog is dark navy and hid a lit island wholly - W8)
+			float density = Mathf.Lerp(saved.Density, Mathf.Lerp(1f, NightDensity, Night), w);
 			s.fogDistance = distance;
 			s.fogDensity = density;
 			ShownDistance = s.fogDistance; ShownDensity = s.fogDensity;
