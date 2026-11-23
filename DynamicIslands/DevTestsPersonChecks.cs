@@ -182,6 +182,36 @@ namespace DynamicIslands
 		}
 
 		#endregion
+
+		#region H7 picture check 11-23 - a "+n EXP" number stays behind the level box
+
+		[ConsoleCommand(name: "CILevelFloatBehindBox", docs: "Dev, in a world (H7 picture check 11-23): a '+n EXP' number shown while the level up box is open draws behind the box, not over its title - every 'Exp' number comes before 'LevelBanner' on the levels canvas")]
+		public static void LevelFloatBehindBoxCommand(string[] args) { StartTest(LevelFloatBehindBoxRoutine()); }
+
+		static IEnumerator LevelFloatBehindBoxRoutine()
+		{
+			bool ok = true;
+			LevelHud.Ensure();
+			LevelHud.Announce("Level 2!", "test box", false);
+			Vector3 at = Camera.main != null ? Camera.main.transform.position + Camera.main.transform.forward * 4f : Vector3.zero;
+			LevelHud.Float("+7 EXP", at);
+			LevelHud.Float("+3 EXP", at);
+			yield return null;
+			GameObject canvas = GameObject.Find("CustomIslands_Levels");
+			Transform box = canvas != null ? canvas.transform.Find("LevelBanner") : null;
+			Check(ref ok, box != null, "the levels canvas has its LevelBanner");
+			if (box != null)
+			{
+				var exps = canvas.transform.Cast<Transform>().Where(c => c.name == "Exp").ToList();
+				Check(ref ok, exps.Count >= 2, exps.Count + " EXP numbers on the canvas");
+				int over = exps.Count(c => c.GetSiblingIndex() > box.GetSiblingIndex());
+				Check(ref ok, over == 0, over + " EXP numbers drawn over the box (box at " + box.GetSiblingIndex() + ", numbers at " + string.Join(",", exps.Select(c => c.GetSiblingIndex().ToString()).ToArray()) + ")");
+			}
+			LevelHud.Clear();
+			if (ok) Log("PASS: EXP numbers behind the level box"); else Fail("EXP numbers behind the level box");
+		}
+
+		#endregion
 	}
 
 	/// <summary>
