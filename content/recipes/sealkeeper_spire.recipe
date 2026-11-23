@@ -199,6 +199,13 @@ call sk_ridge x1=74 z1=-20 x2=80 z2=20 h=4 top=6 r=8
 call sk_plants x=77 z=0 r=16 seed=10961
 call sk_zone x=77 z=0 al=sk_ridge id=sk_ridge r=7 msg="The storm ridge. The Spire's switchboard windows flash with every gust; the zipline from here runs back down."
 call sk_cave x=-46 z=30 h=3 yaw=180 al=sk_caverock chest=sk_cavechest
+# (lib 3.5.1 minor fixes 11-23: a 1.1 m gap under the den rock's rim at its other back corner, north-east: its underside
+#     5.7 m, the hill's skin 4.3, the ground 3.2 - a rock mound up under it as at the north-west corner)
+brush flatten at -36.4 43.5 r=4 s=20 frames=300 h=6.2
+brush smooth at -36.4 43.5 r=6 s=4 frames=20
+brush flatten at -36.4 43.5 r=3 s=20 frames=300 h=6.2
+brush rock at -36.4 43.5 r=5 s=20 frames=30
+clear at -36.4 43.5 r=5
 # (c3z43 11-21: a 1.0 m gap under the den rock's rim at its back corner, north-west: its underside 6.5 m, the hill's skin
 # 3.9, the ground 2.7 - a rock mound up under it, smoothed and laid again on top)
 brush flatten at -58.7 42.6 r=4 s=20 frames=300 h=7
@@ -233,6 +240,13 @@ call powerradio x=6 z=-72 yaw=0 alias=skgen ralias=skradio rx=-0.75 rz=-76 rh=5 
 call sk_peak x=44 z=-66 h=26 r=24
 call sk_pit x=-50 z=-62 h0=-14
 call sk_cave x=-78 z=16 h=3 yaw=0 al=skcave2 chest=skcave2chest
+# (lib 3.5.1 minor fixes 11-23: a 1.5 m gap under the second den rock's rim at its back corner, south-west: its underside
+#     5.7 m, the hill's skin 3.8, the ground 2.4 - a rock mound up under it, as at the keepers' cave)
+brush flatten at -87.6 2.5 r=4 s=20 frames=300 h=6.2
+brush smooth at -87.6 2.5 r=6 s=4 frames=20
+brush flatten at -87.6 2.5 r=3 s=20 frames=300 h=6.2
+brush rock at -87.6 2.5 r=5 s=20 frames=30
+clear at -87.6 2.5 r=5
 call sk_plants x=44 z=-66 r=26.4 seed=24810
 call sk_reef x=-40 z=-56 r=5 seed=24830
 

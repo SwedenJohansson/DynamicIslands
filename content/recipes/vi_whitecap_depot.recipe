@@ -34,6 +34,10 @@ brush flatten from 11 32 to 11 47 r=3.5 s=20 frames=60 h=2.4
 # (c3z46 11-21: still seen through from the lip - the rock's floor runs out under the snow there at 0.8 m, so a place on
 # it had its eyes 2.4 m up, just under the snow the widening had laid at 2.4: the ground there now 1.8, well under them)
 brush flatten from 12 38 to 12 46 r=2.5 s=20 frames=60 h=1.8
+# (lib 3.5.1 minor fixes 11-23: still seen through from the lip at 12.2 42.2 - a place on the rock's floor there, 0.8 m up,
+#     under the snow laid at 1.8, saw the ground from below 7.5 m on; the lip's ground taken down under that floor)
+brush flatten from 12.6 39.5 to 12.6 45 r=2 s=20 frames=60 h=0.6
+brush smooth from 12.6 39 to 12.6 45.5 r=3 s=6 frames=12
 clear at 0 -4 r=19
 clear at 23 -21 r=7
 clear at -18.5 -16.5 r=5
