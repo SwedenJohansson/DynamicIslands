@@ -222,13 +222,17 @@ namespace DynamicIslands
 					"updated, only the ground changed: the world that uses cilib-a gets the new version too (no copy kept, the report says so)");
 				File.Delete(pack2);
 
-				// Version 3: an object removed - the saved world keeps the version it started with (version 2)
+				// Version 3: an object removed and its rule taken out - the saved world keeps the version it started with
+				// (version 2). (An object removed alone no longer keeps it: since the 11-14 sweep the world is carried to the
+				// new version with its state - CILibCarryOlder; a rule list that changed places can't be carried.)
 				string hashA2 = IslandNetwork.HashOf(LibA);
 				File.WriteAllLines(fake, new[] { "# Custom islands in world 'CI Lib World': name|...", "@plan=" + planName, LibA + "|0|0|0||start||" + hashA2 });
 				string pack3 = Path.Combine(LibraryPack.LibraryFolder, "ci-lib-pack3.zip");
 				IslandFile a3 = IslandFile.Load(IslandSpawner.PathFor(LibA));
 				int objects3 = a3.Objects.Count;
 				if (objects3 > 0) a3.Objects.RemoveAt(0);
+				int rules3 = WorldDirector.RulesFromProps(a3.Props).Count;
+				WorldDirector.SetRulesInProps(a3.Props, new IntroRule[0]);
 				a3.Save(tmpA);
 				WriteTestZip(pack3, new[] { Entry("ci-lib-pack/info.json", new LibraryInfo { id = "ci-lib-pack", kind = "plan", title = "CI Lib Pack", author = "CI Tester", version = 3, plan = LibPlan + ".plan" }.ToJson()),
 					Entry("ci-lib-pack/" + LibA + ".island", File.ReadAllBytes(tmpA)), Entry("ci-lib-pack/" + LibB + ".island", pack.Files[LibB + ".island"]), Entry("ci-lib-pack/" + LibC + ".island", pack.Files[LibC + ".island"]),
@@ -237,8 +241,8 @@ namespace DynamicIslands
 				LibraryPackContents p3 = LibraryPack.Read(pack3, out error);
 				r = LibraryPack.Install(p3, false, false, LibraryPack.SourceImport);
 				Log("  " + r.ToString().Replace("\n", " / "));
-				Check(ref ok, objects3 > 0 && File.Exists(IslandSpawner.PathFor(IslandNetwork.DownloadName(LibA, hashA2))) && IslandNetwork.HashOf(LibA) != hashA2,
-					"updated, an object removed: cilib-a is the new version, and the world that uses it keeps the one it started with (" + IslandNetwork.DownloadName(LibA, hashA2) + ")");
+				Check(ref ok, objects3 > 0 && rules3 > 0 && File.Exists(IslandSpawner.PathFor(IslandNetwork.DownloadName(LibA, hashA2))) && IslandNetwork.HashOf(LibA) != hashA2,
+					"updated, an object and its rule removed: cilib-a is the new version, and the world that uses it keeps the one it started with (" + IslandNetwork.DownloadName(LibA, hashA2) + ")");
 				Check(ref ok, WorldCopy.LocalFileFor(LibA, hashA2) == IslandNetwork.DownloadName(LibA, hashA2), "that world's island line finds its version: " + WorldCopy.LocalFileFor(LibA, hashA2));
 				File.Delete(pack3);
 
