@@ -730,13 +730,14 @@ namespace DynamicIslands
 				float tallest = 0f, highest = 0f, deepest = 0f;
 				Vector3 sum = Vector3.zero, outSum = Vector3.zero;
 				var paint = new float[TerrainPainter.LayerCount];
+				var faceList = new List<string>(); // (each face's top point and its foot, from the island's middle: what to cover)
 				while (stack.Count > 0)
 				{
 					long q = stack.Pop(); List<SheetFace> c = cells[q];
 					n++;
 					foreach (SheetFace f in c)
 					{
-						faces++; tallest = Mathf.Max(tallest, f.Rise); highest = Mathf.Max(highest, f.Top); deepest = Mathf.Min(deepest, f.Bot);
+						faces++; faceList.Add(Num(f.Hi.x - mid.x) + "," + Num(f.Hi.z - mid.z) + ">" + Num(f.Lo.x - mid.x) + "," + Num(f.Lo.z - mid.z) + " h" + Num(f.Top)); tallest = Mathf.Max(tallest, f.Rise); highest = Mathf.Max(highest, f.Top); deepest = Mathf.Min(deepest, f.Bot);
 						sum += (f.Hi + f.Lo) * 0.5f; outSum += (f.Lo - f.Hi).normalized;
 						if (alpha != null)
 						{
@@ -766,7 +767,8 @@ namespace DynamicIslands
 					", " + n + " cells of " + Num(SheetCellM) + " m (" + faces + " faces), up to " + Num(tallest) + " m in one step, its top h=" + Num(highest) + ", its foot h=" + Num(deepest) +
 					"; " + (pit ? "a pit's wall (land round it in " + enc.ToString("F1") + " of 8 ways: a blue hole or a dive shaft, seen from its rim)" : "the open coast (land round it in " + enc.ToString("F1") + " of 8 ways: seen from the sea)") +
 					", painted " + layerName[best] + " " + Mathf.RoundToInt(share * 100f) + "%" +
-					" - drawn as the ground's texture stretched down a wall; slope it (the recipe step cliffs), or stand rock or a wall in front of it"));
+					" - drawn as the ground's texture stretched down a wall; slope it (the recipe step cliffs), or stand rock or a wall in front of it" +
+					" (faces, top > foot: " + string.Join("; ", faceList.ToArray()) + ")"));
 				// (a picture from its low side, 3.5 m over the sea, as far out as the land lets - 22 m, less in a pit)
 				Vector3 outward = new Vector3(outSum.x, 0f, outSum.z).normalized;
 				if (outward == Vector3.zero) outward = Vector3.forward;
