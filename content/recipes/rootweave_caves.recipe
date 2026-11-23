@@ -425,4 +425,7 @@ place SmallBoulder3 - at -27.2 -22.7 h=6.5 drop scale=1.6
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth)
 cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
+# (the rocks= stood three boulders in the waterline behind the flooded cave's back, seen through the ground from inside
+#     it (the ground check, lib 3.5.1 minor fixes 11-23) - taken out)
+clear at -46.9 -27.4 r=2.5 all only=^BigBoulder1_Low
 save Rootweave Caves
