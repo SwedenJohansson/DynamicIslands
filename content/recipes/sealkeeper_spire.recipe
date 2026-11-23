@@ -473,4 +473,7 @@ step collect|story:descended|1|Pull the descend lever
 quest done=The choice is made and the Director has gone down after Fennick. Under the trench lip the Hollow lights up - the Receiver finds it on band 500.
 quest reward=TitaniumOre*2;Battery*2
 
+# (lib 3.5.1 minor fixes 11-23: the second den still seen through from beside its mouth - 1 look from -72.3 32.2, 4.5 m
+#     up, east into the rock's back 18 m on - a big boulder on that very spot, as at Shelter Atoll's mouth, RF2)
+place SmallBoulder3 - at -72.1 32.3 ground y=-0.3 sit scale=1.7 yaw=60
 save Sealkeeper Spire

@@ -382,6 +382,10 @@ step reach|jump_sc_top|1|Hop up the caretaker's slab scaffold by the water and l
 quest done=Ines went down the road after her son's shuttle, and Teo after her with the oxygen. The Receiver finds the toll booth's radio on band 700.
 quest reward=Plank*8;Rope*3;OxygenBottle*1;Flipper*1
 
+# (lib 3.5.1 minor fixes 11-23: the summit zipline's rope still ended 0.36 m in the shore at -38.35 12.70, in its last
+#     3 m, the rope 2.48 m up there - the shore under that last stretch taken down to 1.9 m and smoothed out)
+brush flatten from -41.2 14.4 to -37.9 12.4 r=1.6 s=20 frames=60 h=1.9
+brush smooth from -41.6 14.6 to -37.5 12.2 r=3 s=6 frames=12
 # (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth)
