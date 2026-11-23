@@ -479,7 +479,7 @@ namespace DynamicIslands
 			}
 		}
 
-		[ConsoleCommand(name: "CICliffsKeepUnit", docs: "Dev, the editor (opened when needed): the recipe's cliffs step keeps keep= circles as they are and carries the loot and creatures its talus would bury (lib 3.5.1 11-23: the talus filled Crater Lair's dock pool, buried the dive sites' boats and Sundown's angler). A generated island's ground is set to a 20 m deep sea floor with two 40 m plateaus 10 m over the sea; a crate and a puffer fish in front of plateau A, a fish far off, cliffs keep= round plateau B: A sloped, nothing in B's circle changed, the crate on the new ground, the fish still in the water over it, the far fish not moved")]
+		[ConsoleCommand(name: "CICliffsKeepUnit", docs: "Dev, the editor (opened when needed): the recipe's cliffs step keeps keep= circles as they are and carries the loot and creatures its talus would bury (lib 3.5.1 11-23: the talus filled Crater Lair's dock pool, buried the dive sites' boats and Sundown's angler). A generated island's ground is set to a 20 m deep sea floor with two 40 m plateaus 10 m over the sea; a crate and a puffer fish in front of plateau A, a fish far off, a sunk wall piece in front of A, cliffs keep= round plateau B: A sloped, nothing in B's circle changed, the crate on the new ground, the fish still in the water over it, the far fish and the wall not moved")]
 		public static void CliffsKeepUnitCommand(string[] args) { StartTest(CliffsKeepUnitRoutine()); }
 
 		static IEnumerator CliffsKeepUnitRoutine()
@@ -511,16 +511,18 @@ namespace DynamicIslands
 			td.SetHeights(0, 0, h);
 			Physics.SyncTransforms();
 			yield return null;
-			// (in front of A's east face: a crate on the floor 12 m out, a puffer fish 14 m out 14 m under the sea; one far off)
+			// (in front of A's east face: a crate on the floor 6 m out, a puffer fish 8 m out 14 m under the sea - the talus reaches 10 m out
+			// there, 3 m a point down to 10 m under the sea: the first test's crate 12 m out stood past it; one far off)
 			try
 			{
 				File.WriteAllLines(pb, new[]
 				{
 					"# CICliffsKeepUnit: the things on the sea floor",
 					"origin " + inv(c.x) + " " + inv(c.z),
-					"place Loot_Crate cikcrate at " + inv(A.x - c.x + 32f) + " 0",
-					"place Creature_PufferFish cikfish at " + inv(A.x - c.x + 34f) + " 6 h=-14",
+					"place Loot_Crate cikcrate at " + inv(A.x - c.x + 26f) + " 0",
+					"place Creature_PufferFish cikfish at " + inv(A.x - c.x + 28f) + " 6 h=-14",
 					"place Creature_PufferFish cikfar at 0 -200 h=-14",
+					"place Block_Wall_Tier3 cikwall at " + inv(A.x - c.x) + " 26",
 				});
 				File.WriteAllLines(pc, new[] { "# CICliffsKeepUnit: the cliffs step", "origin " + inv(c.x) + " " + inv(c.z), "cliffs keep=" + inv(B.x - c.x) + ",0,50" });
 			}
@@ -536,10 +538,13 @@ namespace DynamicIslands
 				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
 				return b;
 			};
-			EditorGameObject crate = find("Loot_Crate", A + new Vector2(32f, 0f)), fish = find("Creature_PufferFish", A + new Vector2(34f, 6f)), far = find("Creature_PufferFish", new Vector2(c.x, c.z - 200f));
+			EditorGameObject crate = find("Loot_Crate", A + new Vector2(26f, 0f)), fish = find("Creature_PufferFish", A + new Vector2(28f, 6f)), far = find("Creature_PufferFish", new Vector2(c.x, c.z - 200f));
 			if (crate == null || fish == null || far == null || fish == far) { Fail("cliffs keep: the crate and two fish not placed"); yield break; }
+			EditorGameObject wall = find("Block_Wall_Tier3", A + new Vector2(0f, 26f));
+			if (wall == null) { Fail("cliffs keep: the sunk wall not placed"); yield break; }
+			float wallY = wall.transform.position.y;
 			Bounds crate0 = box(crate), fish0 = box(fish);
-			float farY = far.transform.position.y, fishGap = fish0.min.y - (t.SampleHeight(fish0.center) + tp.y);
+			float farY = far.transform.position.y, crateSunk = crate0.min.y - (t.SampleHeight(crate0.center) + tp.y), fishGap = fish0.min.y - (t.SampleHeight(fish0.center) + tp.y);
 			float[,] before = td.GetHeights(0, 0, res, res);
 			yield return RecipeRoutine("ci_cliffkeep_c");
 			yield return null;
@@ -558,14 +563,16 @@ namespace DynamicIslands
 			Check(ref ok, inB > 1000 && changedB == 0, "nothing changed in B's keep circle: " + changedB + " of " + inB + " points");
 			Bounds crate1 = box(crate), fish1 = box(fish);
 			float g1 = t.SampleHeight(crate1.center) + tp.y, f1 = t.SampleHeight(fish1.center) + tp.y;
-			Check(ref ok, crate1.min.y > crate0.min.y + 3f && crate1.min.y >= g1 - 0.3f && crate1.min.y <= g1 + 1f,
-				"the crate on the new ground: " + inv(crate0.min.y - sea) + " -> " + inv(crate1.min.y - sea) + " m, the ground " + inv(g1 - sea) +
+			Check(ref ok, crate1.min.y > crate0.min.y + 3f && Mathf.Abs(crate1.min.y - g1 - crateSunk) < 0.5f,
+				"the crate on the new ground: " + inv(crate0.min.y - sea) + " -> " + inv(crate1.min.y - sea) + " m, the ground " + inv(g1 - sea) + " (its bottom " + inv(crateSunk) + " m from the ground before)" +
 				" (it stands at A + " + inv(crate1.center.x - A.x) + " " + inv(crate1.center.z - A.y) + "; the ground in front of A's east face, 2-16 m out, before -> after:" +
 				string.Join(",", Enumerable.Range(1, 8).Select(i => { int gx = Mathf.RoundToInt((A.x + 20f + 2f * i - tp.x) / (size.x / (res - 1))), gz = Mathf.RoundToInt((A.y - tp.z) / (size.z / (res - 1)));
 					return " " + inv(before[gz, gx] * size.y + tp.y - sea) + ">" + inv(after[gz, gx] * size.y + tp.y - sea); }).ToArray()) + ")");
 			Check(ref ok, fish1.min.y > fish0.min.y + 3f && fish1.min.y >= f1 && fish1.max.y < sea,
 				"the fish over the new ground, still in the water: bottom " + inv(fish0.min.y - sea) + " -> " + inv(fish1.min.y - sea) + " m (it was " + inv(fishGap) + " m over the floor), the ground " + inv(f1 - sea));
 			Check(ref ok, Mathf.Abs(far.transform.position.y - farY) < 0.01f, "the far fish not moved");
+			// (a building piece on the sea floor holds the talus back, never rides up on it: Skyhook Mast's sunk room - 11-23)
+			Check(ref ok, Mathf.Abs(wall.transform.position.y - wallY) < 0.01f, "the sunk wall in front of A's north face not moved: " + inv(wallY - sea) + " -> " + inv(wall.transform.position.y - sea) + " m");
 			if (ok) Log("PASS: cliffs keep - A sloped (" + raisedA + " points), B's circle as it was, the crate and the fish carried up");
 			else Fail("cliffs keep");
 		}
@@ -852,7 +859,10 @@ namespace DynamicIslands
 					n.StartsWith("Pickup_", StringComparison.Ordinal) || n == ContentCatalog.MarkerOnly || CameraPath.IsPoint(n)) continue;
 				bool fixedPiece = n.StartsWith("ZiplinePath", StringComparison.Ordinal) || n.StartsWith("VP_Skylift", StringComparison.Ordinal) || n == "Elevator" ||
 					n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || CaveBacks.Wants(n);
-				if (!fixedPiece && b.max.y < sea - 0.3f && b.size.x <= 4f && b.size.z <= 4f && b.size.y <= 8f) { carry.Add(new KeyValuePair<Transform, Bounds>(o.transform, b)); continue; }
+				// (a building piece - a sunk room's walls, a pier's stairs - is never carried: it holds the talus back. Carried, Skyhook
+				// Mast's sunk room's walls rode up 0.1-1.1 m apart and its floor filled 2 m deep round the note - lib 3.5.1 11-23)
+				bool builtPiece = CaveTool.IsBuildingPiece(n) || n.StartsWith("Relay_", StringComparison.Ordinal) || n.StartsWith("Placeable_", StringComparison.Ordinal);
+				if (!fixedPiece && !builtPiece && b.max.y < sea - 0.3f && b.size.x <= 4f && b.size.z <= 4f && b.size.y <= 8f) { carry.Add(new KeyValuePair<Transform, Bounds>(o.transform, b)); continue; }
 				// (a natural rock - a sea stack, a boulder, coral - may sink into the talus up to its middle or 1 m under its top,
 				// whichever is higher, and one wholly under the sea may be buried: it then looks set in the slope. Whole, the big
 				// rocks round a face held its talus back and left it a sheet - c3z59: Old Mine Islet; c3z61: The Abyss's south coast
