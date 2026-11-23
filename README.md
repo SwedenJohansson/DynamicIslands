@@ -237,7 +237,7 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 ### Keys in the settings files
 
 `spawnpool.txt`, `world_rules.txt` and `randomizer.txt` are written by the mod and can be edited by hand (changes are
-picked up while the game runs). **Defaults...** in World settings sets the first in a window. A decimal comma (`0,5`) reads as 0.5 (only a number with one comma and no dot).
+picked up while the game runs: `spawnpool.txt` a second after the save, so a save still going on is not read half-way; edit with Raft closed where you can). **Defaults...** in World settings sets the first in a window. A decimal comma (`0,5`) reads as 0.5 (only a number with one comma and no dot).
 
 **`spawnpool.txt`** (the host's counts; lines that start with `#` are notes; a number outside its range is kept within it, and an unknown key is ignored and named in the log):
 
