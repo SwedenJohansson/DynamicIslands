@@ -770,7 +770,7 @@ namespace DynamicIslands.Editor
 				}
 				Material[] mats = mr.sharedMaterials;
 				mr.sharedMaterials = new[] { mats[0], mats[1], ground };
-				RimTop = world ? "the ground's baked (" + ground.shader.name + ", " + bakedTop.mainTexture.width + "x" + bakedTop.mainTexture.height + (bakedTop.HasProperty("_BumpMap") && bakedTop.GetTexture("_BumpMap") != null ? ", normals" : bakedTop.mainTexture.name == ReliefName ? ", relief" : ", flat") + ")" : "the ground's own (" + ground.shader.name + ")";
+				RimTop = world ? "the ground's baked (" + ground.shader.name + ", " + bakedTop.mainTexture.width + "x" + bakedTop.mainTexture.height + ", " + BakedLook(bakedTop) + ")" : "the ground's own (" + ground.shader.name + ")";
 				Dressed(land);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's rim: " + e.Message); }
@@ -1073,7 +1073,10 @@ namespace DynamicIslands.Editor
 			var nh = new int[nl];
 			bool anyNormal = false;
 			// (the bumped look's shader; without it - Raft's build has none - the normal maps' relief is baked into the colour)
-			Shader bumped = !normals ? null : TestLook == 1 ? Shader.Find("Standard") : TestLook == 2 ? null : BumpedShader();
+			// (MF1, 11-24: first the ground's own terrain shader, the baked mix its one layer - lit pixel by pixel through the baked
+			// normal map as the ground is through its layers' - TerrainLit)
+			Shader terrainLit = normals && (TestLook == 0 || TestLook == 5) ? TerrainLit(land) : null;
+			Shader bumped = !normals || terrainLit != null ? null : TestLook == 1 ? Shader.Find("Standard") : TestLook == 2 ? null : BumpedShader();
 			for (int l = 0; l < nl; l++)
 			{
 				TerrainLayer tl = layers[l];
@@ -1094,6 +1097,9 @@ namespace DynamicIslands.Editor
 			}
 			var outPix = new Color32[tw * th];
 			Color32[] outNrm = anyNormal ? new Color32[tw * th] : null;
+			// (terrain lit: the layers' smoothness goes in the alpha - the terrain's Standard shader takes it from there - and
+			// their mean metallic on the material)
+			double metal = 0, metalW = 0;
 			int wz = w.GetLength(0), wx = w.GetLength(1);
 			for (int j = 0; j < th; j++)
 				for (int i = 0; i < tw; i++)
@@ -1103,7 +1109,7 @@ namespace DynamicIslands.Editor
 					float fx = Mathf.Clamp(u * ar - 0.5f - ax0, 0f, wx - 1), fz = Mathf.Clamp(v * ar - 0.5f - az0, 0f, wz - 1);
 					int x0 = Mathf.Min((int)fx, wx - 1), z0 = Mathf.Min((int)fz, wz - 1), x1 = Mathf.Min(x0 + 1, wx - 1), z1 = Mathf.Min(z0 + 1, wz - 1);
 					float tx = fx - x0, tz = fz - z0;
-					float cr = 0f, cg = 0f, cb = 0f, sum = 0f;
+					float cr = 0f, cg = 0f, cb = 0f, ca = 0f, sum = 0f;
 					float nx = 0f, ny = 0f, nz = 0f;
 					float lx = u * size.x, lz = v * size.z;
 					for (int l = 0; l < nl; l++)
@@ -1116,6 +1122,7 @@ namespace DynamicIslands.Editor
 						int px = ((int)Mathf.Floor(su * pw[l]) % pw[l] + pw[l]) % pw[l], py = ((int)Mathf.Floor(sv * ph[l]) % ph[l] + ph[l]) % ph[l];
 						Color32 c = pix[l][py * pw[l] + px];
 						cr += c.r * wt; cg += c.g * wt; cb += c.b * wt; sum += wt;
+						if (terrainLit != null) { ca += c.a * Mathf.Clamp01(tl.smoothness) * wt; metal += tl.metallic * wt; metalW += wt; }
 						if (outNrm == null) continue;
 						// (as the terrain's shader mixes them: each unpacked - x from red times alpha, the DXT5nm way or plain -
 						// scaled by the layer's normal scale, weighted; a layer without one counts as flat)
@@ -1127,7 +1134,7 @@ namespace DynamicIslands.Editor
 						nx += ex * wt; ny += ey * wt; nz += ez * wt;
 					}
 					if (sum <= 0f) { outPix[j * tw + i] = new Color32(128, 128, 128, 255); if (outNrm != null) outNrm[j * tw + i] = new Color32(128, 128, 255, 255); continue; }
-					outPix[j * tw + i] = new Color32((byte)Mathf.Clamp(cr / sum, 0f, 255f), (byte)Mathf.Clamp(cg / sum, 0f, 255f), (byte)Mathf.Clamp(cb / sum, 0f, 255f), 255);
+					outPix[j * tw + i] = new Color32((byte)Mathf.Clamp(cr / sum, 0f, 255f), (byte)Mathf.Clamp(cg / sum, 0f, 255f), (byte)Mathf.Clamp(cb / sum, 0f, 255f), terrainLit != null ? (byte)Mathf.Clamp(ca / sum, 0f, 255f) : (byte)255);
 					if (outNrm == null) continue;
 					float len = Mathf.Sqrt(nx * nx + ny * ny + nz * nz);
 					if (len < 1e-5f) { outNrm[j * tw + i] = new Color32(128, 128, 255, 255); continue; }
@@ -1135,13 +1142,15 @@ namespace DynamicIslands.Editor
 					outNrm[j * tw + i] = new Color32((byte)Mathf.Clamp(nx * 127.5f + 127.5f, 0f, 255f), (byte)Mathf.Clamp(ny * 127.5f + 127.5f, 0f, 255f), (byte)Mathf.Clamp(nz * 127.5f + 127.5f, 0f, 255f), 255);
 				}
 			// (no bumped shader in the game: the normal maps' relief shaded into the colour instead, the top on plain diffuse)
-			bool relief = bumped == null && outNrm != null;
+			if (TestLook == 5) outNrm = null;
+			bool relief = terrainLit == null && bumped == null && outNrm != null;
 			if (relief) { Relief(outPix, outNrm, TestLook == 2); outNrm = null; }
 			Texture tex = Upload(outPix, tw, th, relief ? ReliefName : "DigTunnelGroundBaked", false);
 			Texture ntex = outNrm != null ? Upload(outNrm, tw, th, "DigTunnelGroundBakedNormal", true) : null;
 			// (made for the other look - with or without normals: made again)
-			if (mat != null && (ntex != null) != mat.HasProperty("_BumpMap")) { DropBaked(mat); mat = null; }
-			if (mat == null)
+			if (mat != null && ((terrainLit != null) != (mat.name == TerrainLitName) || (terrainLit != null ? mat.shader != terrainLit : (ntex != null) != mat.HasProperty("_BumpMap")))) { DropBaked(mat); mat = null; }
+			if (mat == null && terrainLit != null) mat = new Material(terrainLit) { name = TerrainLitName };
+			else if (mat == null)
 			{
 				// (11-13: the legacy diffuse shader, lit as the ground's own Nature/Terrain/Diffuse is - no shine. On Standard,
 				// even matt, the deferred camera added the sky's grey reflection: round every mouth a pale grey veil over the
@@ -1163,11 +1172,7 @@ namespace DynamicIslands.Editor
 				if (mat.HasProperty("_SpecColor")) mat.SetColor("_SpecColor", Color.black);
 				if (s.name.StartsWith("Standard", StringComparison.Ordinal) && ntex != null) mat.EnableKeyword("_NORMALMAP");
 			}
-			else
-			{
-				if (mat.mainTexture != null) Destroy(mat.mainTexture);
-				if (mat.HasProperty("_BumpMap") && mat.GetTexture("_BumpMap") != null) Destroy(mat.GetTexture("_BumpMap"));
-			}
+			else DropTextures(mat);
 			mat.mainTexture = tex;
 			var scale = new Vector2(1f / r.width, 1f / r.height);
 			var offset = new Vector2(-r.xMin / r.width, -r.yMin / r.height);
@@ -1179,8 +1184,69 @@ namespace DynamicIslands.Editor
 				mat.SetTextureScale("_BumpMap", scale);
 				mat.SetTextureOffset("_BumpMap", offset);
 			}
+			else if (mat.name == TerrainLitName) LayTerrainLit(mat, tex, ntex, scale, offset, metalW > 0 ? (float)(metal / metalW) : 0f);
 			else if (ntex != null) Destroy(ntex);
 			return mat;
+		}
+
+		/// <summary>The baked top's material name on the ground's own terrain shader (TerrainLit).</summary>
+		internal const string TerrainLitName = "DigTunnelGroundBakedTerrain";
+
+		/// <summary>MF1, 11-24: the ground's own shader when it is one of Unity's terrain shaders (Nature/Terrain/Standard or
+		/// Diffuse). The baked top on it lights as the ground does: the sun through its normal map pixel by pixel, the same
+		/// shine or none. The relief shaded into the colour (Relief), lit from one fixed side, was half as sharp as the lit
+		/// ash beside it on Cinderfall (CIDigMouthLook 0.6 against 1.1). Null for any other shader (its names unknown).</summary>
+		static Shader TerrainLit(Terrain land)
+		{
+			Shader s = land != null && land.materialTemplate != null ? land.materialTemplate.shader : null;
+			if (s == null) s = Shader.Find("Nature/Terrain/Standard") ?? Shader.Find("Nature/Terrain/Diffuse");
+			return s != null && s.isSupported && s.name.StartsWith("Nature/Terrain/", StringComparison.Ordinal) ? s : null;
+		}
+
+		/// <summary>The baked textures laid on a terrain-shader material as its one layer: a splat map all first layer, the
+		/// baked mix tiled once over the top's rect (the mesh's uv is the terrain's), the baked normal map (already scaled),
+		/// the layers' smoothness in the mix's alpha.</summary>
+		static void LayTerrainLit(Material m, Texture tex, Texture ntex, Vector2 scale, Vector2 offset, float metallic)
+		{
+			m.SetTexture("_Control", OneLayerControl());
+			// (the terrain shaders don't declare these: set as vectors, as GroundMaterial does)
+			m.SetVector("_Control_ST", new Vector4(1f, 1f, 0f, 0f));
+			var st = new Vector4(scale.x, scale.y, offset.x, offset.y);
+			for (int i = 0; i < 4; i++)
+			{
+				// (the other three layers weigh nothing in the splat map)
+				m.SetTexture("_Splat" + i, i == 0 ? tex : Texture2D.blackTexture);
+				m.SetVector("_Splat" + i + "_ST", st);
+				m.SetTexture("_Normal" + i, ntex);
+				m.SetFloat("_NormalScale" + i, 1f);
+				m.SetFloat("_Smoothness" + i, 1f);
+				m.SetFloat("_Metallic" + i, metallic);
+			}
+			if (ntex != null) { m.EnableKeyword("_NORMALMAP"); terrainNormals[m] = ntex; }
+			else { m.DisableKeyword("_NORMALMAP"); terrainNormals.Remove(m); }
+		}
+
+		/// <summary>The baked normal map of each terrain-lit top (DropTextures; the terrain shaders don't declare _Normal0).</summary>
+		static readonly Dictionary<Material, Texture> terrainNormals = new Dictionary<Material, Texture>();
+
+		/// <summary>A 1x1 splat map, all the first layer.</summary>
+		static Texture2D OneLayerControl()
+		{
+			if (oneLayer != null) return oneLayer;
+			oneLayer = new Texture2D(1, 1, TextureFormat.RGBA32, false, true) { name = "DigTunnelOneLayer", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Point };
+			oneLayer.SetPixels32(new[] { new Color32(255, 0, 0, 0) });
+			oneLayer.Apply(false, true);
+			return oneLayer;
+		}
+		static Texture2D oneLayer;
+
+		/// <summary>How a baked top is lit, for logs: terrain lit, normals (a bumped shader), relief or flat.</summary>
+		internal static string BakedLook(Material m)
+		{
+			if (m == null) return "none";
+			if (m.name == TerrainLitName) return terrainNormals.ContainsKey(m) ? "terrain lit" : "terrain, flat";
+			if (m.HasProperty("_BumpMap") && m.GetTexture("_BumpMap") != null) return "normals";
+			return m.mainTexture != null && m.mainTexture.name == ReliefName ? "relief" : "flat";
 		}
 
 		/// <summary>The baked top's shader with normal maps and no shine, the first of these Raft has (11-13: Raft's build has no
@@ -1227,7 +1293,9 @@ namespace DynamicIslands.Editor
 		/// from high up (the sun's side when there is one, 55 degrees up), with ReliefAround of light from all round, each
 		/// texel against the mean of all - the cracks dark, the mean colour as baked.</summary>
 		/// <summary>Test only (CIDigMouthLook's comparisons): 1 - the top on Standard with its baked normal map; 2 - on Standard,
-		/// the relief shaded in against flat ground (absolute) rather than its mean. 0: the game's look.</summary>
+		/// the relief shaded in against flat ground (absolute) rather than its mean; 3 - the look before MF1 (11-24): the
+		/// relief shaded in, on legacy diffuse; 5 - terrain lit without the normal map. 0: the game's look (terrain lit, else the
+		/// relief).</summary>
 		internal static int TestLook;
 
 		/// <summary>Test only: the rim top baked again in a look to compare (TestLook), a material of its own; null when none.</summary>
@@ -1282,9 +1350,17 @@ namespace DynamicIslands.Editor
 		static void DropBaked(Material m)
 		{
 			if (m == null) return;
+			DropTextures(m);
+			Destroy(m);
+		}
+
+		/// <summary>Drops a baked material's textures (the material kept).</summary>
+		static void DropTextures(Material m)
+		{
 			if (m.mainTexture != null) Destroy(m.mainTexture);
 			if (m.HasProperty("_BumpMap") && m.GetTexture("_BumpMap") != null) Destroy(m.GetTexture("_BumpMap"));
-			Destroy(m);
+			Texture n;
+			if (terrainNormals.TryGetValue(m, out n)) { if (n != null) Destroy(n); terrainNormals.Remove(m); }
 		}
 
 		static readonly Dictionary<KeyValuePair<Texture, int>, Texture2D> readable = new Dictionary<KeyValuePair<Texture, int>, Texture2D>();
