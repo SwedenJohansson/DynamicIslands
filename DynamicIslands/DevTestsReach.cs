@@ -259,12 +259,12 @@ namespace DynamicIslands
 			Log("PASS: reach controls " + (reachControls ? "on" : "off"));
 		}
 
-		[ConsoleCommand(name: "CIReachSwim", docs: "Dev, world: PQ11 - the reach walker's swim alone: the player put in the sea 150 m off, Walk held 3 s with and without a look pitch; the metres moved")]
 		/// <summary>Something solid on the line between two grid spots, from either end (a mesh is hit from its front only).</summary>
 		static bool Between(Vector3 a, Vector3 b, int mask)
 		{
 			return Physics.Linecast(a, b, mask, QueryTriggerInteraction.Ignore) || Physics.Linecast(b, a, mask, QueryTriggerInteraction.Ignore);
 		}
+		[ConsoleCommand(name: "CIReachSwim", docs: "Dev, world: PQ11 - the reach walker's swim alone: the player put in the sea 150 m off, Walk held 3 s with and without a look pitch; the metres moved")]
 		public static void ReachSwimCommand(string[] args) { StartTest(ReachSwimRoutine()); }
 
 		static IEnumerator ReachSwimRoutine()
