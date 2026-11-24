@@ -516,10 +516,22 @@ place RT_Wall1 - at -39.333 7.9 h=-6.2 sx=1.0889 sy=2 sz=1.3
 place RT_Wall1 - at -39.333 7.9 h=-0.2 sx=1.0889 sy=1 sz=1.2
 place RT_Wall1 - at -39.333 7.9 h=2.8 sx=1.0889 sy=1 sz=1.1
 place RT_Wall1 - at -39.333 7.9 h=5.8 sx=1.0889 sy=0.567 sz=1
-place RT_Wall1 - at -36.067 7.9 h=-6.2 sx=0.5556 sy=2 sz=1.3
-place RT_Wall1 - at -36.067 7.9 h=-0.2 sx=0.5556 sy=1 sz=1.2
-place RT_Wall1 - at -36.067 7.9 h=2.8 sx=0.5556 sy=1 sz=1.1
-place RT_Wall1 - at -36.067 7.9 h=5.8 sx=0.5556 sy=0.567 sz=1
+# (11-24: a wall piece runs 3 m west of its place (east of it at yaw 180), so the east column is as wide as the others -
+# it was 1.7 m wide and left the pool's north wall bare between it and the middle column; its foot piece reaches 0.1 m
+# over the ground there, or the save step takes it for buried and lifts it)
+place RT_Wall1 - at -36.067 7.9 h=-6.2 sx=1.0889 sy=2.1 sz=1.3
+place RT_Wall1 - at -36.067 7.9 h=-0.2 sx=1.0889 sy=1 sz=1.2
+place RT_Wall1 - at -36.067 7.9 h=2.8 sx=1.0889 sy=1 sz=1.1
+place RT_Wall1 - at -36.067 7.9 h=5.8 sx=1.0889 sy=0.567 sz=1
+# (11-24: the ridge over the pool's north wall still showed bare outside, on its sea side: its west nose and north face
+# (16.8 m drop), and the low bank south of the pool's mouth. Concrete like the facade stands in front of them, set where
+# the ground is 2-3 m under the piece's top so no gap a player could drop into opens behind it; the mouth (z 3.6-8.2 at
+# the facade's west corner) stays open)
+place RT_Wall1 - at -44.55 8.6 h=-4 yaw=90 sx=0.5167 sy=2 sz=1.1
+place RT_Wall1 - at -44.55 8.6 h=2 yaw=90 sx=0.5167 sy=0.667 sz=1
+place RT_Wall1 - at -44.55 10.15 h=-4 yaw=180 sx=0.9833 sy=2 sz=1.1
+place RT_Wall1 - at -44.55 10.15 h=2 yaw=180 sx=0.9833 sy=0.667 sz=1
+place RT_Wall1 - at -44.6 0.6 h=-4 yaw=90 sx=1 sy=1.633 sz=1
 place RT_Wall1 - at -35 4 h=-6.2 yaw=90 sx=1.3333 sy=2.4 sz=1.3
 # (the talus buried a sand find on the slope south of the facade, 2 m in the ground, and it was left out: one put back
 # on the talus there, 3 m under the sea)
