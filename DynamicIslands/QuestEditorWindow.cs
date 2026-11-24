@@ -36,7 +36,6 @@ namespace DynamicIslands.Editor
 		InputField bringDistField, bringMessageField, bringLabelField;
 		RectTransform bringDetails;
 		public const string BringRuleId = "quest-done";
-		static readonly string[] BringKinds = { "nothing", "island", "type" };
 
 		public static void Create(Transform canvas)
 		{

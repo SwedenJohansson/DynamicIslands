@@ -55,8 +55,6 @@ namespace DynamicIslands.Editor
 
 		/// <summary>For tests: forget the cached size so the next read comes from world_rules.txt.</summary>
 		internal static void ReloadGrid() { gridStep = null; }
-		/// <summary>How far down a floating object may go (m below the sea).</summary>
-		public const float FloatDepth = 0.35f;
 		/// <summary>A floating foundation's own height above the sea, and the deck a player walks on above it - measured on the
 		/// player's raft (CIRaftDeckProbe: the block at 0.13 m, Raft's raft collider 0.22 m higher).</summary>
 		public const float FoundationFloat = 0.13f, FoundationTop = 0.22f;

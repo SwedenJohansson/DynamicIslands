@@ -76,8 +76,6 @@ namespace DynamicIslands.Editor
 		internal static float PanelScreenShare { get { return panel != null && canvas != null && Screen.height > 0 ? panel.rect.height * canvas.scaleFactor / Screen.height : 0f; } }
 		/// <summary>The small map is on the screen in the top right corner (the quest panel keeps out of it: QuestTracker.Place).</summary>
 		public static bool CornerShown { get { return Mode == Corner && Shown && canvas != null && canvas.gameObject.activeSelf; } }
-		/// <summary>How far down from the top of the screen the corner map reaches, its island name under it included (UI units, see Layout).</summary>
-		public const float CornerBottom = CornerTop + CornerSize + 20f;
 		/// <summary>The corner map with its island name under it, in screen pixels, while it shows (the quest panel keeps out of it).</summary>
 		public static bool CornerScreenRect(out Rect r)
 		{

@@ -67,7 +67,7 @@ namespace DynamicIslands.Editor
 		[NonSerialized] public int RimColumns;
 		/// <summary>Columns where the passage runs over the ground, walled and roofed all round by TubeWall of rock (round 4, last build).</summary>
 		[NonSerialized] public int TubeColumns;
-		/// <summary>Columns over the cut cells whose rock top was lifted over the passage's roof (RoofKeep, cv41).</summary>
+		/// <summary>Columns over the cut cells whose rock top was lifted over the passage's roof (cv41).</summary>
 		[NonSerialized] public int RoofKept;
 		/// <summary>Tests: the tube pass's columns by what it did with them (last build).</summary>
 		[NonSerialized] public string TubeSkips = "";
@@ -266,9 +266,6 @@ namespace DynamicIslands.Editor
 		const float RimSkin = 0.12f;
 		/// <summary>How far a cut cell's rock top on a steep cutting wall may be let down under the ground by the ground's bend (cv38).</summary>
 		const float FootDrop = 0.5f;
-		/// <summary>Over the cut cells, where the ground covers the passage, its rock's top at least this far over the passage's
-		/// roof (up to the ground): let down under it, the passage lay open to the sky beside the mouth (cv41).</summary>
-		public const float RoofKeep = 0.4f;
 		static float RimHeight(float r) { return 0.3f + 0.25f * r; }
 		/// <summary>How far past the cut ground the rim goes down into it (gently, so it meets the ground in a soft line).</summary>
 		static float RimOut(float r) { return 0.8f + 0.1f * r; }
@@ -1493,8 +1490,6 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { nextLookCheck = Time.unscaledTime + 30f; Debug.LogWarning("[CUSTOM ISLANDS] Dug tunnel's rim: " + e.Message); }
 		}
 
-		/// <summary>A face of the rim turned up at least this much (its normal's height) takes the ground's look.</summary>
-		const float TopUp = 0.6f;
 		/// <summary>A face of the rim with its middle this close over the ground (m, across the slope; a little under it too)
 		/// and turned up out of it (its own face, not its corners' smoothed normals) lies on the ground: it takes the ground's look,
 		/// whatever the slope or however steeply it crosses the ground (the saw-tooth along the line where the rim's skin meets it).

@@ -58,10 +58,8 @@ namespace DynamicIslands.Editor
 		public static int Hits { get { return arm != null ? arm.Hits : 0; } }
 		public static int Need { get { return arm != null ? arm.Need : HitsNeeded; } }
 		public static uint BlockIndex { get { return arm != null ? arm.BlockIndex : 0u; } }
-		public static int EventSeed { get { return arm != null ? arm.Seed : 0; } }
 		/// <summary>The side of the grabbed floor the arm comes from (an index into StormSeas.Sides; open water).</summary>
 		public static int Side { get { return arm != null ? arm.SideIndex : -1; } }
-		public static int ExtraArms { get { return arm != null ? arm.Extras : 0; } }
 		public static Arm Current { get { return arm; } }
 
 		// Counters for the command and tests (not saved)

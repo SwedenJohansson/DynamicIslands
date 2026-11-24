@@ -358,13 +358,12 @@ namespace DynamicIslands.Editor
 		public const float WallTilt = 65f;
 		const float FlakeArea = 6f; // (r84: a loose bit of the wall's outside smaller than this, m2, is dropped - WallLikeHill)
 		/// <summary>A lone den's way in in shade: its wall's outside round the arch drawn darker, in bands out to the arch's size times
-		/// these (the first band darkest, by PlugShade), the rest as the hill. Each band's edge is a smooth, uneven line (the
+		/// these (the first band darkest), the rest as the hill. Each band's edge is a smooth, uneven line (the
 		/// triangles cut along it): whole 0.5 m cells drew it as a staircase, 11-06 review.</summary>
 		public static readonly float[] PlugShadeOut = { 1.45f };
 		// (11-08 user: the first band at 0.28 read as a black, notched frame round every den's arch - then a soft fall-off in three
 		// bands; 11-09 user: those read as 2-3 stepped rings on the arch's rim, a stair - now one band)
 		// (11-21 cv40: not drawn on a hill any more - WallLikeHill draws every band as the hill, a dark panel otherwise)
-		public static readonly float[] PlugShade = { 0.86f };
 		/// <summary>The name of a lone den's way-in sleeve's holder (CaveVeil): a short rock tunnel, seen from outside only.</summary>
 		public const string PlugVeilName = "CavePlugVeil";
 
@@ -1923,24 +1922,6 @@ namespace DynamicIslands.Editor
 		}
 
 		static readonly Color Key = new Color(1f, 0f, 1f, 1f);
-
-		/// <summary>A material's colour texture: _MainTex, else its shader's first texture that is not a normal, mask or such map.</summary>
-		internal static Texture ColourTexture(Material m, out string prop)
-		{
-			prop = null;
-			if (m == null) return null;
-			if (m.HasProperty("_MainTex") && m.GetTexture("_MainTex") != null) { prop = "_MainTex"; return m.GetTexture(prop); }
-			Shader sh = m.shader;
-			for (int i = 0; i < sh.GetPropertyCount(); i++)
-			{
-				if (sh.GetPropertyType(i) != ShaderPropertyType.Texture) continue;
-				string tp = sh.GetPropertyName(i), low = tp.ToLowerInvariant();
-				if (low.Contains("normal") || low.Contains("bump") || low.Contains("mask") || low.Contains("noise") || low.Contains("height")
-					|| low.Contains("occlusion") || low.Contains("metal") || low.Contains("smooth") || low.Contains("emission")) continue;
-				if (m.GetTexture(tp) != null) { prop = tp; return m.GetTexture(tp); }
-			}
-			return null;
-		}
 
 		/// <summary>
 		/// The colour some renderers show as the game draws them: lit by the scene's lights, with their own shaders, property

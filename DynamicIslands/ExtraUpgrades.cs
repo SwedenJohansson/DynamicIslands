@@ -654,8 +654,6 @@ namespace DynamicIslands.Editor
 			return u != null && u.Item != null && u.Base != null && WorldOptions.On(WorldOptions.Upgrades) && (u.Table || UpgradeTable.IsLearned(u));
 		}
 
-		public static bool LargeBatteryCraftable { get { return Craftable(Find(LargeBatteryName)); } }
-
 		static float baseMaxSpeed = -1f;
 		static Raft speedRaft;
 

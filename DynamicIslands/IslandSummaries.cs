@@ -60,9 +60,6 @@ namespace DynamicIslands.Editor
 		/// <summary>Tests: island files read since the start (not taken from the cache).</summary>
 		public static int FilesRead { get; private set; }
 
-		/// <summary>Tests: the look under way (null when none).</summary>
-		public static Job Running { get { return running != null && !running.Finished ? running : null; } }
-
 		/// <summary>An island's summary (null if there is no such file or it can't be read). Reads the file here when it
 		/// changed: lists Prepare first, so that is rare.</summary>
 		public static Summary Of(string name)

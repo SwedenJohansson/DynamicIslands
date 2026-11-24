@@ -1632,9 +1632,6 @@ namespace DynamicIslands.Editor
 		/// <summary>The Life under water quick button Like Raft: as dense as around Raft's own islands.</summary>
 		public static void SeaLikeRaft(IslandGenSettings s) { s.Water = s.SeaRocks = s.SeaFinds = s.Sunken = 0.5f; }
 
-		/// <summary>The slider value that gives this many objects per 1000 m² (the inverse of the density curve).</summary>
-		public static float AmountFor(string cat, float perThousand) { return Mathf.Clamp01(Mathf.Sqrt(Mathf.Max(0f, perThousand) / MaxDensity(cat))); }
-
 		#endregion
 
 		#region Generating in the editor

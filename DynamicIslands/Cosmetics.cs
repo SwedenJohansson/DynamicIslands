@@ -61,8 +61,6 @@ namespace DynamicIslands.Editor
 		public static IEnumerable<ExtraUpgrades.Upgrade> Hats { get { return All.Where(u => u.Worn != null); } }
 		public static IEnumerable<ExtraUpgrades.Upgrade> Trophies { get { return All.Where(u => u.Worn == null); } }
 
-		public static bool IsCosmetic(string uniqueName) { return !string.IsNullOrEmpty(uniqueName) && All.Any(u => u.Name == uniqueName); }
-
 		[ConsoleCommand(name: "Cosmetics", docs: "Cosmetic rewards (hats and trophies for quest chests and rewards): Cosmetics = the list and whether each is registered; Cosmetics give = one of each to this player - tests")]
 		public static void CosmeticsCommand(string[] args)
 		{

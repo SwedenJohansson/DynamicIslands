@@ -14,7 +14,6 @@ namespace DynamicIslands.Editor
 	public class EditorGameObject : MonoBehaviour
 	{
 		public string GameObjectName;
-		public float arrowLength = 5;
 		/// <summary>The object's extra data (creature settings, note text, tint...), saved with the island; see ObjectProps.</summary>
 		public Dictionary<string, string> Props = new Dictionary<string, string>();
 		/// <summary>The object's own number in the island it was opened from (R1b, IslandObject.Uid); 0 for a new one or a copy.</summary>
@@ -34,37 +33,6 @@ namespace DynamicIslands.Editor
 			CaveBacks.Add(go, name); // (a cave piece's rock, or a Selene room's wall, seen from outside too - X7)
 			return ego;
 		}
-
-		void Start()
-		{
-
-
-		}
-
-
-		public void ShowGizmos(GizmosType GizmoType)
-		{
-			switch (GizmoType)
-			{
-				case GizmosType.Position:
-					break;
-
-				case GizmosType.Rotation:
-					break;
-
-				case GizmosType.Scale:
-					break;
-			}
-		}
-
-		public enum GizmosType
-		{
-			Position = 0,
-			Rotation =1,
-			Scale = 2
-		}
-
-
 	}
 
 	/// <summary>

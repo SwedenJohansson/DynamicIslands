@@ -265,7 +265,6 @@ namespace DynamicIslands.Editor
 			public Vector2 C;
 			public float R, Top, Base, Apron, ApronTop, LadderAng, P1, P2, P3, Noise;
 			public Mesa Twin;
-			public bool Carve = true;
 			public float Rim(float ang) { return R * (1f + Noise * (0.6f * Mathf.Sin(3f * ang + P1) + 0.35f * Mathf.Sin(5f * ang + P2) + 0.18f * Mathf.Sin(9f * ang + P3))); }
 			public float RimToward(Vector2 dir) { return Rim(Mathf.Atan2(dir.y, dir.x)); }
 			public float Reach { get { return R * (1f + Noise * 1.2f) * Mathf.Max(1f, Apron) + Wall(Top - Base) * 3f + 4f; } }
