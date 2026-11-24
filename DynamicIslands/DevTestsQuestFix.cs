@@ -100,7 +100,7 @@ namespace DynamicIslands
 			string outPath = Path.Combine(dir, "quest_scan.txt");
 			File.WriteAllLines(outPath, lines.ToArray());
 			Log("quest scan: " + files.Length + " files, " + read + " read, " + failed + " failed, " + withQuest + " with a quest, " + flagged + " flagged -> " + outPath);
-			Log("PASS: CIQuestScan done");
+			if (read > 0 && failed == 0) Log("PASS: CIQuestScan done"); else Fail("CIQuestScan: " + read + " files read, " + failed + " failed");
 		}
 
 		[ConsoleCommand(name: "CIQuestNet", docs: "Dev, world (host): questfix 11-14 - a player drops quest steps not from the host; the host takes a player's plain step one on at most; a daily quest count from someone not in the session is refused and a player's is capped; a main story island with its quest open comes back past the 3-return cap")]

@@ -109,12 +109,12 @@ namespace DynamicIslands
 			List<string> held = all.Where(e => WorldIslands.TakesPart(e) && heldBy(e) != null).ToList();
 			var expectPool = new HashSet<string>(all.Where(e => WorldIslands.TakesPart(e) && heldBy(e) == null), StringComparer.OrdinalIgnoreCase);
 			List<string> missing = expectPool.Where(e => !pool.Contains(e)).ToList(), extraIn = pool.Where(e => !expectPool.Contains(e)).ToList();
-			Check(ref ok, missing.Count == 0 && extraIn.Count == 0, "the spawner's pool is the whole pool less those (" + pool.Count + " of " + all.Count +
+			Check(ref ok, pool.Count > 0 && missing.Count == 0 && extraIn.Count == 0, "the spawner's pool is the whole pool less those (" + pool.Count + " of " + all.Count +
 				(held.Count > 0 ? "; held back for now: " + string.Join(", ", held.Select(e => e + " - " + heldBy(e)).ToArray()) : "") + ")" +
 				(missing.Count > 0 ? " - missing: " + string.Join(", ", missing.ToArray()) : "") + (extraIn.Count > 0 ? " - in it but shouldn't be: " + string.Join(", ", extraIn.ToArray()) : ""));
 			var picked = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			for (int i = 0; i < 400; i++) { string p = CustomIslandSpawner.PickFromPool(); if (p != null) picked.Add(p); }
-			Check(ref ok, !picked.Any(p => want.Contains(p)), "400 picks: none left out (" + picked.Count + " different ones picked)");
+			Check(ref ok, picked.Count > 0 && !picked.Any(p => want.Contains(p)), "400 picks: none left out (" + picked.Count + " different ones picked)");
 
 			// The world file
 			IslandWorldState.Save();

@@ -50,6 +50,7 @@ namespace DynamicIslands
 			Vector3? raft = CustomIslandSpawner.RaftPosition;
 			if (!raft.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
 			bool ok = true;
+			Check(ref ok, names.Length > 0, names.Length + " island(s) named to check");
 			Check(ref ok, new[] { ContentCatalog.MacheteItem, ContentCatalog.ZiplineItem, "MetalDetector", "Shovel" }.All(ContentCatalog.ItemExists), "Raft's tools exist: machete, zipline tool, metal detector, shovel");
 			TreasurePointManager tm = UnityEngine.Object.FindObjectOfType<TreasurePointManager>();
 			FieldInfo pa = typeof(MeshPath_Zipline_Landmark).GetField("pointA", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);

@@ -434,7 +434,7 @@ namespace DynamicIslands
 				Transform plan = box.transform.Find("CustomIslands_Plan"), holder = box.transform.Find(WorldSettingsWindow.ButtonName);
 				int looked;
 				List<string> cut = NgbCutTexts(box.transform, t => (plan != null && t.transform.IsChildOf(plan)) || (holder != null && t.transform.IsChildOf(holder)), out looked);
-				Check(ref ok, cut.Count == 0, "the box: " + looked + " texts of ours, none cut off" + (cut.Count > 0 ? ": " + string.Join("; ", cut.Take(6).ToArray()) : ""));
+				Check(ref ok, looked > 0 && cut.Count == 0, "the box: " + looked + " texts of ours, none cut off" + (cut.Count > 0 ? ": " + string.Join("; ", cut.Take(6).ToArray()) : ""));
 				List<string> raftCut = NgbCutTexts(box.transform, t => !(plan != null && t.transform.IsChildOf(plan)) && !(holder != null && t.transform.IsChildOf(holder)), out looked);
 				Log("  (Raft's own texts in the box: " + looked + ", " + (raftCut.Count == 0 ? "none cut off" : "cut off by Raft's own layout: " + string.Join("; ", raftCut.Take(6).ToArray())) + ")");
 				var bad = new List<string>();
@@ -452,7 +452,7 @@ namespace DynamicIslands
 				if (panel == null) yield break;
 				NgbCheckOnScreen(ref ok, panel, "the World settings window");
 				cut = NgbCutTexts(panel, t => true, out looked);
-				Check(ref ok, cut.Count == 0, "the window: " + looked + " texts, none cut off" + (cut.Count > 0 ? ": " + string.Join("; ", cut.Take(6).ToArray()) + (cut.Count > 6 ? " (+" + (cut.Count - 6) + ")" : "") : ""));
+				Check(ref ok, looked > 0 && cut.Count == 0, "the window: " + looked + " texts, none cut off" + (cut.Count > 0 ? ": " + string.Join("; ", cut.Take(6).ToArray()) + (cut.Count > 6 ? " (+" + (cut.Count - 6) + ")" : "") : ""));
 				Button done = panel.GetComponentsInChildren<Button>(false).FirstOrDefault(b => { Text t = b.GetComponentInChildren<Text>(); return t != null && t.text.Trim().Equals("Done", StringComparison.OrdinalIgnoreCase); });
 				NgbCheckOnScreen(ref ok, done != null ? (RectTransform)done.transform : null, "its Done button");
 				yield return NgbHelpMarks(WorldSettingsWindow.Window.GetComponentsInChildren<UIKit.HelpMark>(false), "window", bad, counts);

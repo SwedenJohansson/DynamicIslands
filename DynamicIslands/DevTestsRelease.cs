@@ -517,8 +517,9 @@ namespace DynamicIslands
 			if (raftObj != null) yield return PutPlayer(RAPI.GetLocalPlayer(), raftObj.transform.position + Vector3.up * 2f, false);
 			int before = IslandWorldState.Islands.Count;
 			yield return SailRoutine(100f, 25f);
-			yield return new WaitForSeconds(5f);
-			bool far = IslandWorldState.Islands.Count > before && IslandWorldState.Islands.Skip(before).Any(e => (e.Name ?? "").StartsWith("gen-"));
+			// (by the rule's id: the plan keeps random islands on, so any 'gen-' island could be one of those)
+			yield return WaitFor(() => IslandWorldState.Islands.Any(e => e.Rule == "far"), 30f);
+			bool far = IslandWorldState.Islands.Any(e => e.Rule == "far");
 			Check(ref ok, far, "2.5 km sailed: the 'far' rule brought an island (" + string.Join(", ", IslandWorldState.Islands.Skip(before).Select(e => e.Name).ToArray()) + ")");
 			// Each rule once
 			var names = IslandWorldState.Islands.Select(e => e.HostName ?? e.Name).ToList();

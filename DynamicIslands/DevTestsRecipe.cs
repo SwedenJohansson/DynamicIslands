@@ -706,14 +706,15 @@ namespace DynamicIslands
 				(only.Length == 0 || n.IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0)).OrderBy(n => n).ToList();
 			var report = new StringBuilder();
 			int bad = 0, problems = 0;
+			var unread = new List<string>();
 			foreach (string name in names)
 			{
 				DynamicIslands.currentIslandName = "";
 				bool loaded = false;
-				try { loaded = DynamicIslands.LoadIsland(name); } catch (Exception e) { Log("  " + name + ": loading failed: " + e.Message); continue; }
-				if (!loaded) { Log("  " + name + ": the editor didn't load it"); continue; }
+				try { loaded = DynamicIslands.LoadIsland(name); } catch (Exception e) { Log("  " + name + ": loading failed: " + e.Message); unread.Add(name); continue; }
+				if (!loaded) { Log("  " + name + ": the editor didn't load it"); unread.Add(name); continue; }
 				for (float t = 0; t < 120f && DynamicIslands.currentIslandName != name; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
-				if (DynamicIslands.currentIslandName != name) { Log("  " + name + ": still not loaded after 2 minutes"); continue; }
+				if (DynamicIslands.currentIslandName != name) { Log("  " + name + ": still not loaded after 2 minutes"); unread.Add(name); continue; }
 				yield return null; yield return null;
 				var lines = new List<string>();
 				floatLines = lines;
@@ -730,7 +731,8 @@ namespace DynamicIslands
 				foreach (string l in lines.Where(l => l.StartsWith("  ")).Take(details)) Log("  " + l);
 			}
 			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "floating_sweep.txt"), report.ToString());
-			Log((bad == 0 ? "PASS" : "FAIL") + ": floating sweep - " + bad + " of " + names.Count + " islands with " + problems + " problems (floating_sweep.txt)");
+			Log((bad == 0 && unread.Count == 0 && names.Count > 0 ? "PASS" : "FAIL") + ": floating sweep - " + bad + " of " + names.Count + " islands with " + problems + " problems (floating_sweep.txt)" +
+				(unread.Count > 0 ? "; not measured: " + string.Join(", ", unread.ToArray()) : ""));
 		}
 
 		[ConsoleCommand(name: "CIRemoveBuried", docs: "Dev, editor: takes out the objects buried whole under the ground (CIFloating's \"buried\" ones: nobody sees them) of the named islands and saves each; the old file goes to Mods\\DynamicIslands\\deleted\\ first (ROADMAP CA30): CIRemoveBuried <island>[,<island>...]")]
