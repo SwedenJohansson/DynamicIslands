@@ -5,6 +5,7 @@ using DynamicIslands.Editor;
 using HMLLibrary;
 using RaftModLoader;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DynamicIslands
 {
@@ -58,6 +59,12 @@ namespace DynamicIslands
 				string label = UIKit.LabelOf(b) != null ? UIKit.LabelOf(b).text : "";
 				Check(ref ok, label == SpawnToRaft.Label, "its label: '" + label + "'");
 				Check(ref ok, b.interactable, "it can be clicked (" + (SpawnToRaft.WhyNot() ?? "ready") + (Raft_Network.IsHost ? ", host" : ", client") + ")");
+				if (!Raft_Network.IsHost)
+				{
+					Text note = WorldWindow.NoteText("SkipNote");
+					Check(ref ok, skip != null && skip.gameObject.activeInHierarchy && !skip.interactable, "client: Skip current quest step shows, greyed");
+					Check(ref ok, note != null && note.text.Contains("ask the host"), "client: the note says to ask the host ('" + (note != null ? note.text : "none") + "')");
+				}
 				Screenshot(new[] { "spawn_window" });
 				yield return new WaitForSecondsRealtime(0.8f);
 

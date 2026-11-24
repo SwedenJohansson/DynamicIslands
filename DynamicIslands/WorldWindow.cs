@@ -100,6 +100,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Tests: a button of the window by its name ("Monsters_Savage", "Option_ghostrafts", "Levels"...).</summary>
 		public static Button ButtonNamed(string name) { Button b; return buttons.TryGetValue(name, out b) ? b : null; }
 		/// <summary>Tests: whether a tick-box row of the window ("Option_ghostrafts", "Levels", "Part_colours", "Island_...") is ticked.</summary>
+		/// <summary>The stuck section's notes by name (StuckNote, SkipNote), for the tests.</summary>
+		public static Text NoteText(string name) { return name == "StuckNote" ? stuckText : name == "SkipNote" ? skipNote : null; }
 		public static bool Ticked(string name) { return UIKit.IsChecked(ButtonNamed(name)); }
 		static bool Host { get { return Raft_Network.IsHost; } }
 
