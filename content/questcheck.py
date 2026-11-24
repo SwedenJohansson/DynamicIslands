@@ -15,7 +15,7 @@ Sources (each optional; defaults are this PC's):
   --mods DIR      the installed mod folder: plans\\*.plan + *.island (built from content/recipes)
   --library DIR   the library deploy folder (index.json, plans\\<pack>, islands\\<entry>)
   --stage DIR     staged newer library files (searched recursively; a staged island/plan replaces the deploy copy;
-                  several folders split by ';')
+                  several folders split by ';'; default none)
 Run:  python -I content/questcheck.py [--json out.json] [--all] [--quiet]
 Prints one line per finding (ERROR/WARN; INFO with --all) and a count summary. Exit code 1 when there is an ERROR.
 """
@@ -29,8 +29,8 @@ ITEMS_TXT = os.path.join(HERE, 'objects', 'items.txt')
 RAFT_BP_TXT = os.path.join(REPO, 'DynamicIslands', 'raft_blueprints.txt')
 DAILY_CS = os.path.join(REPO, 'DynamicIslands', 'DailyQuest.cs')
 DEF_MODS = r'D:\Games\SteamLibrary\steamapps\common\Raft\Mods\DynamicIslands'
-DEF_LIBRARY = r'C:\Users\Johan\Desktop\RAFT_DRIVE_DEPLOY'
-DEF_STAGE = r'D:\Temp\scratch_8e762ddb\drive_stage'
+DEF_LIBRARY = r'D:\Source K2H Final	runkRaft\Releases\Custom Islands library 3.5.1'  # newest built library (Desktop RAFT_DRIVE_DEPLOY = live 3.5)
+DEF_STAGE = ''  # none: old staging folders hold superseded islands and gave false errors
 
 # ---- the game's own lists (keep in step with the C#) ----
 WHAT = {'island', 'type', 'pool', 'oneof'}                                           # IntroRule.WhatKinds
