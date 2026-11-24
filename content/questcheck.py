@@ -29,7 +29,7 @@ ITEMS_TXT = os.path.join(HERE, 'objects', 'items.txt')
 RAFT_BP_TXT = os.path.join(REPO, 'DynamicIslands', 'raft_blueprints.txt')
 DAILY_CS = os.path.join(REPO, 'DynamicIslands', 'DailyQuest.cs')
 DEF_MODS = r'D:\Games\SteamLibrary\steamapps\common\Raft\Mods\DynamicIslands'
-DEF_LIBRARY = r'D:\Source K2H Final	runkRaft\Releases\Custom Islands library 3.5.1'  # newest built library (Desktop RAFT_DRIVE_DEPLOY = live 3.5)
+DEF_LIBRARY = r'D:\Source K2H Final\trunkRaft\Releases\Custom Islands library 3.5.1'  # newest built library (Desktop RAFT_DRIVE_DEPLOY = live 3.5)
 DEF_STAGE = ''  # none: old staging folders hold superseded islands and gave false errors
 
 # ---- the game's own lists (keep in step with the C#) ----
