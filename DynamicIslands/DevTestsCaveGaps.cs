@@ -382,7 +382,6 @@ namespace DynamicIslands
 		// and the raised room dry with breath coming back.
 		static readonly string[] GapIslands = { "cgaps-dig", "cgaps-st", "cgaps-uw" };
 		static string CgInv(float f) { return f.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture); }
-		static string XZ(Vector3 v) { return CgInv(v.x) + "," + CgInv(v.z); }
 		static string XZs(Vector3 v) { return CgInv(v.x) + " " + CgInv(v.z); }
 
 		/// <summary>The foot of a hill dug into along d (toward the island's middle): the best place minOut-90 m out; score:

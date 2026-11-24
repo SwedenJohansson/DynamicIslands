@@ -25,7 +25,6 @@ namespace DynamicIslands
 		static void CuSet(bool down) { cuDown = down; cuChangeFrame = Time.frameCount + 1; }
 
 		static MethodInfo cuIsPressed, cuWasPressed, cuWasReleased;
-		static readonly Dictionary<MethodInfo, MethodInfo> cuReadValue = new Dictionary<MethodInfo, MethodInfo>();
 		static MethodInfo CuInput(string name) => typeof(CustomInputConfig).GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
 			.FirstOrDefault(m => m.Name == name && m.GetParameters().Length == 2 && m.GetParameters()[1].ParameterType == typeof(string));
 
@@ -155,8 +154,6 @@ namespace DynamicIslands
 			}
 			return r;
 		}
-
-		static List<string> CuHitsOn(GameObject model) => cuHits.Where(h => h.Value != null && model != null && h.Value.transform.IsChildOf(model.transform)).Select(h => h.Key).ToList();
 
 		static int CuInventoryTotal(Network_Player p) => p.Inventory.allSlots.Where(s => s != null && !s.IsEmpty).Sum(s => s.itemInstance.Amount);
 
