@@ -422,4 +422,9 @@ clear at 52.32 72.63 r=0.5 all body only=SmallBoulder4
 
 # (11-03 fixC, CIFloatingSweep: a scattered coral hung over the ground, cleared the stray scatter)
 clear at 49.74 -24.87 r=1.5 only=LeafCoral_1 all
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth; the sunk stern's ledge in the bay kept as it was (keep=):
+#     the step piled talus 2-5 m over her rails, the engine pipe and the broken-off propeller on the sand)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=-24,-42,10
 save Vasagatan Remade

@@ -498,4 +498,9 @@ clear at -39.26 -15.93 r=1.2 all only=SmallBoulder2
 clear at -33.06 -13.97 r=1.5 only=CaravanIsland_BrownGrass all
 # (11-17 w14: a generated small rock blocked the spikes play's walk from the lever back to the halls - cleared)
 clear at 1.8 -32 r=1.8 all only=CaravanIsland_SmallRock
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+# (keep=, lib 3.5.1 minor fixes 11-23: the talus filled or buried the dock pool's mouth under the hangar door and the jetty (the swim-in way), the sunk barrel by the jetty and the pet pool - left as built)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=-47,8,10|-50,-5,8|-30,-7,7
 save Crater Lair

@@ -404,8 +404,11 @@ quest?**, which names the current quest and its step), or the console command `S
 counts the step as done: the quest moves on as if you had done it (the next step, and the reward and the finished
 quest after the last one), and what the step would have given is given, so the steps after it can still be done: a
 **collect** step gives the crew the story items it is short of, a **signal** step sends its signal (or puts its object
-in the state it waits for, such as `Gate=open`). Other steps just count as done; their notes, chests and zones stay as
-they are. It works on the **current quest** - any quest: a storyline island's, a plan's or a random island's, main or
+in the state it waits for, such as `Gate=open`), and a **read**, **reach** or **talk** step sets off the note, zone or
+islander it names as if the host had read it, walked in or talked: what that gives or opens (items, a door, the next
+island's signal, a journal page) comes, and it counts as done, so doing it for real later gives nothing twice. On an
+island the host hasn't loaded this happens when the island loads. Other steps (open, set, all lit and the rest) and a
+read step with no note named just count as done; their chests and objects stay as they are. It works on the **current quest** - any quest: a storyline island's, a plan's or a random island's, main or
 side quest: the one on the quest panel while it shows one, else the quest that last started or moved on (in a saved
 world just loaded, the one that moved on last). With no quest under way it says **No quest in progress**. Only the
 host can skip (players who joined don't get the button, and `SkipStep` tells them only the host can); everyone sees the
@@ -462,7 +465,10 @@ Tab, Space, Backspace and mouse buttons are passed over). Raft's **Reset Keybind
   key (J: journal)"). An item that is **used up** (say a key a locked door takes) leaves the journal.
   An item its builder linked to one of Raft's own items has a **Take out: <item>** button over its description: it
   takes one out of the journal into your inventory as that Raft item (the crew has one less; the host decides, so two
-  players can't take out the last one twice). It can't be put back.
+  players can't take out the last one twice). It can't be put back, so the journal keeps what a quest still needs:
+  while a lock, check or survivor's cage on an island here (or one the story still brings) needs every one the crew
+  holds, the button is greyed out and says **Needed on <island>**. It works again once that note is read, that cage
+  opened or that island's quest done; spare ones beyond the need can always be taken out.
 - **Quest Pages** (bottom left), **by island** - each island's quest line: each island's pages under its name and its quest's title (**√ done** once the
   quest is done, the whole line in light green) and how many of its notes you have found, **(5/7 notes)** - so you know if some are still left on it - the island you were at last first, its newest page first - so notes of several islands don't get
   mixed up. They are every note you read on a custom island - the first time anyone reads it, once, with its title -
@@ -836,7 +842,8 @@ Select a buried treasure for its own settings: **Extra loot...** chooses items i
 treasure loot - Raft's items or the island's story items - once, to whoever picks the chest up (**None** takes them
 out again). Raft's shovel only digs where the detector has found the treasure, so without a detector players find
 nothing. A treasure that holds a **story item** never comes back once dug up: dug for one player, it is dug for the whole
-crew, and the story item goes to the crew.
+crew, and the story item goes to the crew. Only if the crew no longer holds that item (used up or lost) while a check or
+a survivor's cage still needs it can the treasure be dug again, from the next time the island loads on the host.
 
 **Keycard doors.** Raft's card reader door (**PlantationDoor**, the Tangaroa card reader) and its other key doors
 (Utopia's entrance and hut doors, Varuna's garage, Temperance's reactor door, the padlocked door) are ready pieces:
@@ -1989,6 +1996,8 @@ Select any object → **Behaviour & events...**. No code needed:
   items, play a sound, teleport the player, send a signal, write a journal page, **unlock one of Raft's characters**
   for the player (its name or number; it is kept in the player's Raft profile, like Raft's own unlocks), or **wait**
   some seconds first: under each event, **+ Add an action** adds one, **+ Wait** a pause and **+ Only if...** a check.
+  The actions after a wait are kept with the world: if the island unloads, or the host saves and quits, before they run,
+  they run when it loads again.
   Each action is chosen from a **▼ list**
   that says what it does; **…** beside a name lists the names on this island. The actions that work on objects (show,
   hide, show/hide, open, close, open/close, teleport to) name them in the **name** field: leave it empty (or pick
@@ -2154,7 +2163,7 @@ for them; players find them in the journal (J), or in Raft's notebook (T) for a 
 beside an item links it to one of Raft's own items (**-** clears it): players can then **take it out** of the journal
 as that item, into their inventory ([3](#the-journal-j)) - a map piece that becomes a real blueprint, a log that
 becomes planks. Story items stay journal items (a saved world never holds an item Raft doesn't know); the link is
-only a way out, and there is no way back: an item taken out no longer counts for a **has**/**take** check or a cage's key, so a door or cage that needs it stays shut. Link only items no check needs (a **Collect** step still counts it). Raft's own quest item pickups (search "QuestItemPickup") work as story items too: picked up, the crew gets Raft's item (`story:raft-<type>`). The list has the pickups of Vasagatan (the bolt cutters, keys, the keycard...), Temperance and Utopia too.
+only a way out, and there is no way back: an item taken out no longer counts for a **has**/**take** check or a cage's key. So the journal keeps what a quest still needs: while a **has**/**take** check or a cage's key on an island in the world, or on one the story plan still brings, needs every one the crew holds, it can't be taken out (players see **Needed on <island>**; the spare ones can). A need ends once its note is read or its island's **arrive** has run, its once-only zone or its chest that doesn't fill again was used, its cage opened, or its island's quests are all done. A check on an event that runs again (an object's look or use, a repeating zone) on an island with no quest keeps the item for good, and an island that arrives from the library pool rather than the plan isn't known in advance, so where you can, link only items no check needs (a **Collect** step still counts it). Raft's own quest item pickups (search "QuestItemPickup") work as story items too: picked up, the crew gets Raft's item (`story:raft-<type>`). The list has the pickups of Vasagatan (the bolt cutters, keys, the keycard...), Temperance and Utopia too.
 
 **What ends up in the players' journal** ([3](#the-journal-j)), so you can plan a story with it:
 
@@ -3311,7 +3320,11 @@ Up to eight players (Raft's maximum). **Every player needs the mod.**
   moved objects and lures are the host's: every player sees who carries what, and a player who joins gets it.
 - **A use the host says no to costs nothing:** when a player's door, zone or note needs a story item and the host
   refuses it (another player used the crew's last one at the same moment, or the island isn't loaded on the host), the
-  story item goes back to the crew's journal, so a keycard door can still be opened.
+  story item goes back to the crew's journal, so a keycard door can still be opened, and the zone, chest or story
+  pickup it used is ready again.
+- **Uses on an island far from the host are kept:** a player's use on an island the host hasn't loaded (the host far
+  away) is kept in the saved world - through a save and quit too, up to 256 per island - and done when the island loads
+  on the host.
 - **What grows back** is the host's decision: things come back when the island loads on the host after the regrow
   days; a player who has the island loaded sees it the next time it loads there.
 - **Joining:** use Steam's "Join Game" on a friend (Raft's own Join World list is empty in this Raft version). Big
@@ -4432,8 +4445,8 @@ Press **F10** for RML's console.
 | `Monsters` / `Monsters <level>` | World or main menu | The monster difficulty / change it (host; at the main menu: the next new world). The level is `timid`, `normal`, `fierce`, `savage` or `nightmare`; `easy`, `moderate`, `hard` and `impossible` (the words the levels were first called: they mean timid, fierce, savage and nightmare) and the numbers 0-4 (timid to nightmare) work too; any other word is refused and the five are listed |
 | `BuildCost` / `BuildCost <0-100>` | World or main menu | The build cost / change it (host; at the main menu: the next new world). Any whole number from 0 to 100, with or without `%` (`BuildCost 25%`); the slider in World settings moves in steps of 5 |
 | `AnimalLooks` / `AnimalLooks <level>` | World or main menu | Rare animal looks and the looks tamed per animal / change it (host; at the main menu: the next new world). The level is `Normal`, `More`, `Lots` or 0-2 |
-| `SkipStep` | World (host) | Stuck on a quest? The current quest's step counts as done and the quest moves on (a collect step's story items or a signal step's signal given first; the last step finishes the quest). The same as **Esc > Custom Islands > Skip current quest step**, without the question. No quest under way: "No quest in progress" |
-| `QuestTest` / `QuestTest step <n\|done> [quest]` / `signal <name>` / `give <story item> [count]` / `skip [quest]` / `reset` | World | Try the quest of the custom island nearest you: its quests and steps / jump to a step, back too / send a signal on it / give the crew a story item / skip the current step as `SkipStep` does (its story items or signal given) / the island back to new and made again (all but the list: host) |
+| `SkipStep` | World (host) | Stuck on a quest? The current quest's step counts as done and the quest moves on (a collect step's story items or a signal step's signal given first, a read, reach or talk step's note, zone or islander set off; the last step finishes the quest). The same as **Esc > Custom Islands > Skip current quest step**, without the question. No quest under way: "No quest in progress" |
+| `QuestTest` / `QuestTest step <n\|done> [quest]` / `signal <name>` / `give <story item> [count]` / `skip [quest]` / `reset` | World | Try the quest of the custom island nearest you: its quests and steps / jump to a step, back too / send a signal on it / give the crew a story item / skip the current step as `SkipStep` does (its story items, signal, note, zone or talk) / the island back to new and made again (all but the list: host) |
 | `RegrowDays` / `RegrowDays <days>` | World | This world's days until things come back / change it (host; 0 = never; an island's own rule wins) |
 | `DailyQuest` / `DailyQuest new [gather/fish/monsters n [item]]` | World | Today's daily quest (option Daily quest): the task, how far you are, the reward / a new quest now (host; with a kind and a number: that quest, e.g. `DailyQuest new gather 20 Plank`) |
 | `UpgradeTable` | World | The upgrade research table (option Extra upgrades): what this world has researched and learned there |

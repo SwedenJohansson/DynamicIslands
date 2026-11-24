@@ -2788,7 +2788,7 @@ namespace DynamicIslands
 						}
 						case "cliffs":
 						{
-							// cliffs [rise=7] [step=3] [depth=10] [reach=12] [at x z r=20] [rocks=piece]: bare cliff faces at the waterline
+							// cliffs [rise=7] [step=3] [depth=10] [reach=12] [at x z r=20] [rocks=piece] [keep=x,z,r|..]: bare cliff faces at the waterline
 							// sloped from their low side (CliffsStep, c3 round 3 - Raft draws them as one stretched sheet; CISheetIslands
 							// finds them); rocks=: that rock piece stood in the waterline at the faces the slope can't reach (a pit's wall)
 							var co = Options(t.Skip(1).Where(w => w.Contains("=")));
@@ -2799,7 +2799,21 @@ namespace DynamicIslands
 							Vector2? cwhere = null;
 							if (cat > 0 && cat + 2 < t.Length) cwhere = WorldXZ(F(t[cat + 1]), F(t[cat + 2]));
 							if (cstep < 0.5f || crise < 2f) { error = "cliffs: step= 0.5 or more, rise= 2 or more"; break; }
-							Log("  " + CliffsStep(crise, cstep, cdepth, creach, cwhere, cr, co.ContainsKey("rocks") ? co["rocks"] : null));
+							// (keep=x,z,r|x,z,r: circles in the recipe's coordinates the talus leaves as they are - a dock pool, a dive site)
+							List<Vector3> ckeep = null;
+							if (co.ContainsKey("keep"))
+							{
+								ckeep = new List<Vector3>();
+								foreach (string kc in co["keep"].Split('|'))
+								{
+									string[] kp = kc.Split(',');
+									if (kp.Length != 3) { error = "cliffs: keep=x,z,r|x,z,r (" + kc + ")"; break; }
+									Vector2 kw = WorldXZ(F(kp[0]), F(kp[1]));
+									ckeep.Add(new Vector3(kw.x, kw.y, F(kp[2])));
+								}
+								if (error != null) break;
+							}
+							Log("  " + CliffsStep(crise, cstep, cdepth, creach, cwhere, cr, co.ContainsKey("rocks") ? co["rocks"] : null, ckeep));
 							break;
 						}
 						case "where":

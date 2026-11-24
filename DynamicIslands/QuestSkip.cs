@@ -18,7 +18,9 @@ namespace DynamicIslands.Editor
 	/// (QuestTracker.JumpTo forward = Set: the next step, events, rules, the reward and finished state at the end; players
 	/// are told by the usual QuestStep message, the world is saved). Before that, what the step would have given where the mod
 	/// can know it: a "collect" step's story items the crew is short of, a "signal" step's signal (or its object put in the
-	/// state it waits for). Also F10 "QuestTest skip [quest]" (tests: the nearest island's quest n).
+	/// state it waits for), and a "read", "reach" or "talk" step's note, zone or islander set off as the host's player
+	/// would (Replay: its events, items and used mark - later done for real it gives nothing twice; on an island not built
+	/// here when it loads). Also F10 "QuestTest skip [quest]" (tests: the nearest island's quest n).
 	/// </summary>
 	public static class QuestSkip
 	{
@@ -115,7 +117,8 @@ namespace DynamicIslands.Editor
 			int step = QuestTracker.StepOf(e, n);
 			if (!q.Exists || step >= q.Steps.Count || (expect >= 0 && step != expect)) return false;
 			IslandQuest.Step s = q.Steps[step];
-			string given = Produce(e, s);
+			string given = Produce(e, s), replayed = Replay(e, s);
+			if (replayed.Length > 0) given += (given.Length > 0 ? "; " : "") + replayed;
 			Debug.Log("[CUSTOM ISLANDS] Quest step skipped by host: " + e.HostName + " quest " + (n + 1) + " step " + (step + 1) + " (" + s.Type + (s.Target.Length > 0 ? " " + s.Target : "") + (given.Length > 0 ? "; " + given : "") + ")");
 			// (the item or signal may have moved it on already - the counted check runs inside Give/Set; else as QuestTest step)
 			if (QuestTracker.StepOf(e, n) == step) QuestTracker.JumpTo(e, n, step + 1);
@@ -160,6 +163,87 @@ namespace DynamicIslands.Editor
 			}
 			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Quest step skip: giving what the step gives failed: " + x.Message); }
 			return "";
+		}
+
+		/// <summary>Host: steps replayed now (an island built here) and kept for their island's load (the CI checks read them).</summary>
+		internal static int Replayed, ReplayKept;
+
+		/// <summary>
+		/// Host (quest softlock audit M8): a "read", "reach" or "talk" step skipped - the note, zone or islander it names is
+		/// set off as the host's player doing it would: the note's "read" event (its checks, items, doors; marked read for the
+		/// crew) and its page in the book, the zone's walk-in (its checks, message, loot, used mark, "enter" event), the
+		/// islander's talk (marked talked to, its "talk" event). Before, only the step moved on: what the note, zone or talk
+		/// gave or opened - a key, a door, the next island's signal - never came. Its "done" mark first: a note read, a zone
+		/// that fires once fired or an islander talked to already is left alone (later done for real, the same marks keep
+		/// it from giving twice). On an island not built here: kept in its saved state, done when it loads
+		/// (Behaviours.QueueSkipped). A step without a target ("read any note") or another kind of step: nothing.
+		/// </summary>
+		internal static string Replay(IslandWorldState.Entry e, IslandQuest.Step s)
+		{
+			string ev = s.Type == "read" ? "read" : s.Type == "reach" ? "enter" : s.Type == Islanders.QuestType ? Islanders.TalkEvent : null;
+			string target = s.Target.Trim();
+			if (ev == null || target.Length == 0 || e == null || !Raft_Network.IsHost) return "";
+			try
+			{
+				IslandFile f = IslandFile.Load(IslandSpawner.PathFor(e.Name));
+				if (f == null) return "";
+				StableIds.Layout l = null;
+				for (int i = 0; i < f.Objects.Count; i++)
+				{
+					IslandObject o = f.Objects[i];
+					Dictionary<string, string> p = o.Props ?? new Dictionary<string, string>();
+					string name = ev == "read" ? (ObjectProps.IsNote(o.Name, p) ? ObjectProps.Get(p, ObjectProps.NoteTitle) : null)
+						: ev == "enter" ? (o.Name == ContentCatalog.TriggerZone ? ObjectProps.Get(p, ObjectProps.ZoneId) : null)
+						: (Islanders.Is(o.Name) ? Islanders.NameOf(p) : null);
+					if (name == null || !string.Equals(target, IslandQuest.Clean(name), StringComparison.OrdinalIgnoreCase)) continue;
+					// (done already - by a player, or an earlier skip: the next one of that name, if any)
+					if (ev == "read" && e.State.ContainsKey(Behaviours.DoneBase + i)) continue;
+					if (ev == Islanders.TalkEvent && ContentState.IsUsed(e, Islanders.TalkedBase + i)) continue;
+					if (ev == "enter" && !ObjectProps.Repeats(p))
+					{
+						if (l == null) l = StableIds.LayoutOf(f, e.Position.y > IslandSpawner.FlyingThreshold);
+						int z = l.Zones.IndexOf(i);
+						if (z >= 0 && ContentState.IsUsed(e, TriggerZone.KeyBase + z)) continue;
+					}
+					if (e.Root != null) return ReplayLoaded(e, i, ev) ? ev + " of " + name + " set off" : "";
+					Behaviours.QueueSkipped(e, i, ev);
+					ReplayKept++;
+					return ev + " of " + name + " kept for when the island loads here";
+				}
+			}
+			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Quest step skip: setting off the step's " + ev + " failed: " + x.Message); }
+			return "";
+		}
+
+		/// <summary>Host, the island built here: object index's note read, zone walked into or islander talked to by the host's
+		/// player (Replay), unless done already. False when nothing was set off.</summary>
+		internal static bool ReplayLoaded(IslandWorldState.Entry e, int index, string ev)
+		{
+			IslandObjectRef r = Behaviours.RefsOf(e).FirstOrDefault(x => x.Index == index);
+			if (r == null) return false;
+			if (ev == "read")
+			{
+				if (e.State.ContainsKey(Behaviours.DoneBase + index)) return false;
+				CustomNote n = r.GetComponentInChildren<CustomNote>(true);
+				Behaviours.Fire(e, index, "read", true);
+				if (n != null && n.Text.Trim().Length > 0)
+					StoryBook.AddPage("note:" + StoryBook.PageIsland(e) + ":" + index, n.Title.Length > 0 ? n.Title : "Note", n.Text, Behaviours.IslandTitle(e));
+			}
+			else if (ev == "enter")
+			{
+				TriggerZone z = r.GetComponent<TriggerZone>();
+				if (z == null || (!z.Repeats && z.HasFired)) return false;
+				z.Enter();
+			}
+			else if (ev == Islanders.TalkEvent)
+			{
+				if (ContentState.IsUsed(e, Islanders.TalkedBase + index)) return false;
+				Islanders.Talked(e, r.transform, index, Islanders.NameOf(r.Props), 0);
+			}
+			else return false;
+			Replayed++;
+			Debug.Log("[CUSTOM ISLANDS] Quest step skipped: '" + e.HostName + "' object " + index + "'s " + ev + " set off for the host's player");
+			return true;
 		}
 
 		#region The confirm box

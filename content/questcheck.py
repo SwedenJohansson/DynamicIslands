@@ -58,6 +58,10 @@ STATES = {'open', 'closed', 'shown', 'hidden'}
 WEATHERS = {'clear', 'calm', 'fog', 'waves', 'rain', 'storm', 'snow'}
 FISH = {'Raw_Pomfret', 'Raw_Mackerel', 'Raw_Herring', 'Raw_Tilapia', 'Raw_Catfish', 'Raw_Salmon'}  # Raft's rod (FishNames)
 NEED_RX = re.compile(r'^(?:has|take)\|story:([^|;*\s]+)')
+RAFT_NEED_RX = re.compile(r'^(has|take)\|(?!story:)([^|;*\s]+)', re.I)
+# M9: Raft items a player uses up on their own - eaten or drunk (food, drinks), or learned (a blueprint is gone once
+# learned). A has/take check of one can be emptied before the player reaches it (quest softlock audit 11-23)
+EATEN_RX = re.compile(r'^(Raw_|Cooked_|Claybowl_(?!Empty$)|DrinkingGlass_|Jar_Honey$|Bucket_Milk$|Banana$|Berries_Red$|Coconut$|Mango$|Pineapple$|Watermelon$)', re.I)
 GIVE_RX = re.compile(r'story:([^|;*\s]+)(?:\*(\d+))?')
 COMPASS_RX = re.compile(r'\b(north|south|east|west)(ern|wards?|-?east|-?west)?\b|\b(NE|NW|SE|SW)\b')
 CONTAINER_RX = re.compile(r'\b(chest|crate|box|barrel|locker|safe|trunk|cabinet|cupboard|case|drawer|stash|coffer|strongbox|hold|shed|cache|wardrobe|bin|basket|sack|bag|hive|lockbox|tin|fridge)(e?s)?\b', re.I)
@@ -220,7 +224,7 @@ def facts(path):
          'pages': 0, 'chestcount': 0, 'emptychests': 0, 'creatures': {}, 'tamable': {}, 'needs': set(), 'gives': {},
          'loot_gives': set(), 'gives_free': {}, 'holders': {}, 'names': set(), 'islanders': set(), 'receivers': set(), 'receivercount': 0, 'sets': {},
          'lights': {}, 'counters': set(), 'note_idx': [], 'note_titles': set(), 'targets': [], 'storydefs': set(), 'alltext': '',
-         'badverbs': [], 'raftitems': {}, 'takeout': set(), 'checks': {}}
+         'badverbs': [], 'raftitems': {}, 'takeout': set(), 'checks': {}, 'usedup': {}}
     for line in (P.get('story.items') or '').split('\n'):
         if line.strip(): x['storydefs'].add(low(line.split('|')[0]))
         # (T8: '|raft=' lets the crew take it out of the journal as that Raft item - its count drops, and has/take
@@ -315,6 +319,9 @@ def facts(path):
                 for l in (v or '').split('\n'):
                     m = NEED_RX.match(l.strip())
                     if m: x['checks'].setdefault(low(m.group(1)), set()).add('%s %s' % (who, k))
+                    m = RAFT_NEED_RX.match(l.strip())
+                    if m and (m.group(2).startswith('Blueprint_') or EATEN_RX.match(m.group(2))):
+                        x['usedup'].setdefault(m.group(2), set()).add('%s %s' % (who, k))
             elif k == 'trade.give':
                 for m in GIVE_RX.finditer(v or ''): x['checks'].setdefault(low(m.group(1)), set()).add('%s %s' % (who, k))
             elif k == 'survivor.key' and (v or '').strip():
@@ -730,6 +737,12 @@ def island_checks(f, scope, c, rule, fired):
             elif not item_ok(it): add('ERROR', scope, rloc(nm, qkey(qi, 'reward')), "'%s' %s reward '%s': Raft has no such item - it is dropped (players get nothing for it)" % (nm, qn(qi), it))
             elif ITEMS[it.lower()] != it: add('WARN', scope, rloc(nm, qkey(qi, 'reward')), "'%s' %s reward '%s': Raft's name is '%s' (case)" % (nm, qn(qi), it, ITEMS[it.lower()]))
         if not title.strip() and qi > 0: add('INFO', scope, rloc(nm), "'%s' %s has steps but no title" % (nm, qn(qi)))
+    # M9: a has/take check of a Raft item the player eats, drinks or learns on their own (quest softlock audit 11-23)
+    for it, where in sorted(f['usedup'].items()):
+        if it.startswith('Blueprint_'):
+            add('WARN', scope, rloc(nm, it), "'%s': %s check(s) for the Raft item '%s': a player who learns it no longer holds it, and a blueprint seldom comes twice - use a story item (the crew's) or a blueprint step" % (nm, ', '.join(sorted(where)[:3]), it))
+        else:
+            add('INFO', scope, rloc(nm, it), "'%s': %s check(s) for the Raft item '%s': players may eat or drink it first - fine while they can get more (fish, farm, cook), else use a story item (the crew's)" % (nm, ', '.join(sorted(where)[:3]), it))
     # loot / zone / give items that don't exist
     for it, src in f['raftitems'].items():
         if not item_ok(it): add('ERROR', scope, rloc(nm, it + '*'), "'%s': %s names '%s', which Raft doesn't have (given as nothing)" % (nm, src, it))
@@ -944,10 +957,11 @@ def main():
                 except Exception as e: add('ERROR', 'library-island', p, 'can not be read: %s' % e); continue
                 counts['library islands'] += 1
                 island_checks(f, 'library-island:' + os.path.basename(d), None, None, {})
-    # T8: a story item the crew can take out of the journal while a check still needs it held (quest softlock audit 11-23)
+    # T8: a story item the crew can take out of the journal that a check needs held (quest softlock audit 11-23; the engine's
+    # StoryNeeds guard keeps it for islands here and the plan's - only an island from the pool isn't known in advance)
     for sid in sorted(set(TAKEOUT) & set(CHECKS)):
         for isl in sorted(TAKEOUT[sid]):
-            add('WARN', 'story-items', rloc(isl, sid + '|'), "story item '%s' has raft= (it can be taken out of the journal) but %s need it held: taken out, they stay shut for good - drop raft= or the check" % (sid, ', '.join(sorted(CHECKS[sid])[:4])))
+            add('INFO', 'story-items', rloc(isl, sid + '|'), "story item '%s' has raft= (it can be taken out of the journal) and %s need it held: the journal keeps it while they need it (islands here or the plan still brings), not for an island from the library pool - drop raft= if one may" % (sid, ', '.join(sorted(CHECKS[sid])[:4])))
     order = {'ERROR': 0, 'WARN': 1, 'INFO': 2}
     # (one finding once: an island in two plans or packs is told for each scope - fold same text+where)
     seen, out = set(), []

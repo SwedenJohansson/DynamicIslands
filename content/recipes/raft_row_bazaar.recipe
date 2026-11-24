@@ -481,4 +481,9 @@ prop rbjohnny talk.text=Welcome to the Row. Everything floats here, even the pri
 prop rbjohnny on.choice1=journal|Fixer Johnny: the city|The Crown runs the city - the council up on the bridgeworks. But the Crown only runs it because the pumps run. Whoever keeps the pumps going keeps the streets dry, and whoever keeps the streets dry gets to make the rules. The Row floats, so the Row does not need the pumps. That is why the Crown hates us.\nmessage||Johnny tells you who runs the city: the Crown, and the pumps under it. It is in your journal.
 prop rbjohnny on.choice2=give||Rope*2\nmessage||Johnny wants the rope back with interest.
 prop rbjohnny on.choice3=hide|rbbackdoor\nshow|rbstrongchest\nmessage||Johnny slides a bolt somewhere you cannot see. The back door of his strongroom is open.
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+# (keep=, lib 3.5.1 minor fixes 11-23: the talus filled or buried the sunk arcade's dive site - the arcade, the boat, its crate and the puffers - left as built)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=-78,-14,17
 save Raft Row Bazaar
