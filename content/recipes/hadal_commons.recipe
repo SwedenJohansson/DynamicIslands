@@ -327,6 +327,9 @@ clear at 63.65 57.2 r=0.8 all only=SmallBoulder2
 clear at -63 -43.5 r=0.3 all only=RT_WallWindowBroken above=-1 below=1
 clear at -63 -46.5 r=0.3 all only=RT_WallWindowBroken above=-1 below=1
 clear at -63 -44.25 r=0.8 all only=RT_Fence above=2 below=4
+# (11-24 REACH: with the top storey's walls and the roof rail gone, the top ladder led up the hatch shaft to a roof with
+# no floor to step off onto - 'no floor at its top'; the building is under water, swum through: the top one gone too)
+clear at -63.75 -43.8 r=0.6 all only=Block_Ladder above=-1 below=1
 
 info title=Hadal Commons
 info author=Custom Islands

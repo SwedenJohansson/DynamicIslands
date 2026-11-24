@@ -1,7 +1,7 @@
 # Rootweave Caves (CIPlay rootweave_caves): the Fungus Hall (mouth 0 -45), the turbine's mast box on the hilltop, the
 # Bee Hall (mouth 42 4), the Flooded Passage (mouth -48 -8, under the sea), the Den (mouth -4 44) and its mama bear.
 island Rootweave Caves
-offset 0 0
+offset 1.2266 0.3427
 expect step 0
 expect title The Living Labyrinth
 zone fungus_hall
