@@ -347,6 +347,7 @@
     <Compile Include="DevTestsLevels.cs" />
     <Compile Include="DevTestsLevelsMore.cs" />
     <Compile Include="DevTestsUpgradeShots.cs" />
+    <Compile Include="DevTestsShowcase.cs" />
     <Compile Include="DevTestsMoreB.cs" />
     <Compile Include="ChoiceWindow.cs" />
     <Compile Include="IslandDifficulty.cs" />
@@ -436,6 +437,7 @@
     <Compile Include="DevTestsFix3.cs" />
     <Compile Include="DevTestsNoteCarry.cs" />
     <Compile Include="DevTestsIssueSweep.cs" />
+    <Compile Include="DevTestsSweep.cs" />
     <Compile Include="ScatterTool.cs" />
     <Compile Include="StableIds.cs" />
     <Compile Include="ObjectThumbnails.cs" />

@@ -389,9 +389,13 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read world plan '" + name + "': " + e.Message); return null; }
 		}
 
+		/// <summary>At most this many rules in one plan.</summary>
+		public const int MaxPlanRules = 1000;
+
 		public static WorldPlan Parse(string name, string text)
 		{
 			var plan = new WorldPlan { Name = name, Random = false };
+			bool tooMany = false;
 			foreach (string raw in (text ?? "").Split('\n'))
 			{
 				string line = raw.Trim();
@@ -418,7 +422,9 @@ namespace DynamicIslands.Editor
 					case "id": plan.Id = value; break;
 					case "rule":
 						IntroRule r = IntroRule.Parse(value);
-						if (r != null) plan.Rules.Add(r);
+						// (a plan of 20,000 rules hung Raft making their ids distinct - audit 2026-10-06)
+						if (r != null && plan.Rules.Count >= MaxPlanRules) { if (!tooMany) Debug.LogWarning("[CUSTOM ISLANDS] World plan '" + name + "': more than " + MaxPlanRules + " rules - the rest are left out"); tooMany = true; }
+						else if (r != null) plan.Rules.Add(r);
 						else { plan.Kept.Add(line); plan.UnreadRules.Add(value); Debug.LogWarning("[CUSTOM ISLANDS] World plan '" + name + "': a rule this version can't read is kept as it is: " + value); }
 						break;
 					default: plan.Kept.Add(line); break;
