@@ -1,0 +1,12 @@
+# Raft buildings: file|name|scene|parts|node paths in the scene|left out (regex) - made by CICaptureBuildings, tested by CIRaftBuildings
+# whole:<catalog name>|name|scene|meshes|node path - a whole piece of Raft's scene as one object
+balboa_relay_tower|Balboa relay tower|45#Landmark_BalboaIsland|228|45#Landmark_BalboaIsland/Pivot Offset/Interactables/Relay station C/RelayStation_C/Satellite_Tower|
+balboa_stair_tower|Balboa stair tower|45#Landmark_BalboaIsland|102|45#Landmark_BalboaIsland/Pivot Offset/Interactables/Relay station C/RelayStation_C/Stairs|
+balboa_dish_roof|Balboa dish roof|45#Landmark_BalboaIsland|11|45#Landmark_BalboaIsland/Pivot Offset/Interactables/Relay station C/RelayStation_C/Satellite_Roof|
+balboa_relay_antenna|Balboa relay antenna|45#Landmark_BalboaIsland|10|45#Landmark_BalboaIsland/Pivot Offset/Interactables/Relay station C/RelayStation_C/Structure/Relay_Antenna (3)|
+tangaroa_apartment_floor|Tangaroa apartment floor|50#Landmark_Tangaroa#|47|50#Landmark_Tangaroa#/Offset/TangaroaDecorations/Habitat/Buildings/TangaroaBuilding 5/Combine parent 5/All exterior - REPLACE/5.2 Exterior/lvl_2 (1)|
+tangaroa_bookshelf|Tangaroa bookshelf|50#Landmark_Tangaroa#|39|50#Landmark_Tangaroa#/Offset/TangaroaDecorations/Habitat/Buildings/TangaroaBuilding 8/Other/Decoration floor 14 ON/OFF/Shelf_Filled_04 (2)|
+temperance_weather_station_room|Temperance weather station room|55#Landmark_Temperance#|60|55#Landmark_Temperance#/Tunnel_Weatherstation/Walls;55#Landmark_Temperance#/Tunnel_Weatherstation/Floor;55#Landmark_Temperance#/Tunnel_Weatherstation/Ceiling|
+temperance_lab_shelf|Temperance lab shelf|55#Landmark_Temperance#|33|55#Landmark_Temperance#/Tunnel_Moontowm/Decoration/Shelf Filled (5)|
+caravan_town_rocket_wreck|Caravan Town rocket wreck|49#Landmark_CaravanIsland#RealDeal|14|49#Landmark_CaravanIsland#RealDeal/ParentOffset/CaravanLogic/QuestInteractable_Caravan_Rocket/CaravanRocketDebris|
+whole:RaftWhole_Vasagatan_Hull|Vasagatan hull|44#Landmark_Vasagatan|70|44#Landmark_Vasagatan/Boat related/Boat_Hull
