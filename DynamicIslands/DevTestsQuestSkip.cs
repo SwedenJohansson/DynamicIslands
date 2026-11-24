@@ -11,7 +11,7 @@ namespace DynamicIslands
 	/// <summary>3.2: skipping the current quest step (QuestSkip) - F10 SkipStep and Esc > Custom Islands > Skip current quest step.</summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CIQuestSkip", docs: "Dev, in a world (host): SK1-4 + FU3 - skipping the current quest step - F10 SkipStep on the quest panel's quest (a collect step gives the missing story items), Esc > Custom Islands > Skip current quest step asks first (pictures qskip_settings, qskip_confirm) and skips (a signal step sends its signal), the last step finishes the quest, then the side quest is current; QuestTest skip 2 finishes it; with no quest left SkipStep says No quest in progress; no old Stuck? button")]
+		[ConsoleCommand(name: "CIQuestSkip", docs: "Dev, in a world (host): SK1-4 + FU3 - skipping the current quest step - F10 SkipStep on the quest panel's quest (a collect step gives the missing story items), Esc > Custom Islands > Skip current quest step asks first (pictures qskip_settings, qskip_confirm) and skips (a signal step sends its signal), the last step finishes the quest, then the side quest is current; QuestTest skip 2 finishes it; with no quest left SkipStep says No quest in progress; no old Stuck? button; SK5 Spawn to raft beside Skip, Other quest picks the side quest")]
 		public static void QuestSkipCommand() { StartTest(QuestSkipRoutine()); }
 
 		static IEnumerator QuestSkipRoutine()
@@ -49,6 +49,21 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(1.2f);
 				Button b = WorldWindow.ButtonNamed("SkipStep");
 				Check(ref ok, b != null && b.gameObject.activeInHierarchy && b.interactable, "the settings page has Skip current quest step, clickable for the host");
+				// SK5 (11-24): Spawn to raft beside it, clickable; the side quest - not begun, behind the open main quest the panel
+				// shows - can be chosen with Other quest (before, only the panel's, the last moved on or a begun quest could be)
+				Button spawn = WorldWindow.ButtonNamed("SpawnToRaft"), other = WorldWindow.ButtonNamed("OtherQuest");
+				Check(ref ok, spawn != null && b != null && spawn.transform.parent == b.transform.parent && spawn.gameObject.activeInHierarchy && spawn.interactable,
+					"Spawn to raft is beside Skip current quest step, clickable (" + (SpawnToRaft.WhyNot() ?? "ready") + ")");
+				Check(ref ok, QuestSkip.Candidates().Any(k => k.Key == e && k.Value == 1), "the side quest (step 1, not begun) is a candidate");
+				Check(ref ok, other != null && other.gameObject.activeInHierarchy && other.interactable && UIKit.LabelOf(other).text.StartsWith("Other quest (1/"),
+					"Other quest shows (" + (other != null ? UIKit.LabelOf(other).text : "none") + ")");
+				int guard = 0;
+				while (guard++ < 10 && !(QuestSkip.Current(out cur, out n) && cur == e && n == 1)) { if (other != null) other.onClick.Invoke(); }
+				Check(ref ok, QuestSkip.DescribeCurrent().Contains("CI side") && UIKit.LabelOf(other).text.StartsWith("Other quest (") && !UIKit.LabelOf(other).text.StartsWith("Other quest (1/"),
+					"Other quest: the side quest is current (" + QuestSkip.DescribeCurrent() + ", " + UIKit.LabelOf(other).text + ")");
+				QuestSkip.ResetChoice();
+				WorldWindow.Refresh();
+				Check(ref ok, QuestSkip.Current(out cur, out n) && cur == e && n == 0, "choice reset: the main quest is current again");
 				QuestSkip.HoldOpen = true;
 				Screenshot(new[] { "qskip_settings" });
 				yield return new WaitForSeconds(1.5f);
@@ -75,13 +90,16 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(0.6f);
 				Check(ref ok, QuestTracker.IsDone(e, 1), "QuestTest skip 2: the side quest's last step skipped, the side quest is done");
 
-				// SK3 (11-19): no quest under way - SkipStep says so and changes nothing
+				// SK3 (11-19): no quest under way - SkipStep says so and changes nothing (another island's quest near the
+				// raft in this test world would be the current one: then only that none of this island's is left)
+				bool others = QuestSkip.Candidates().Count > 0;
+				if (others) Log("  (other quests in progress near: " + QuestSkip.DescribeCurrent() + " - the message isn't checked)");
 				List<string> said = new List<string>();
 				Application.LogCallback grab = (text, trace, type) => { if (text != null && text.StartsWith("[CUSTOM ISLANDS]")) said.Add(text); };
 				Application.logMessageReceived += grab;
-				try { QuestSkip.SkipStepCommand(new string[0]); }
+				try { if (!others) QuestSkip.SkipStepCommand(new string[0]); }
 				finally { Application.logMessageReceived -= grab; }
-				Check(ref ok, said.Any(s => s.Contains(QuestSkip.NoQuest)) && QuestTracker.IsDone(e, 0) && QuestTracker.IsDone(e, 1),
+				Check(ref ok, (others ? !QuestSkip.Candidates().Any(k => k.Key == e) : said.Any(s => s.Contains(QuestSkip.NoQuest))) && QuestTracker.IsDone(e, 0) && QuestTracker.IsDone(e, 1),
 					"SkipStep with no quest under way: '" + QuestSkip.NoQuest + "' (" + string.Join(" / ", said.ToArray()) + ")");
 
 				// SK4 (11-19): the old "Stuck? Skip this step" panel button and its setting are gone (panel + Esc page texts)

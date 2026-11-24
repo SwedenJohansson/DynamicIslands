@@ -113,7 +113,7 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
    - [9.4 Extra options](#94-extra-options)
    - [9.5 Islands while sailing](#95-islands-while-sailing)
    - [9.6 The level up system](#96-the-level-up-system)
-   - [9.7 SPAWN TO RAFT: the way out when you are stuck](#97-spawn-to-raft-the-way-out-when-you-are-stuck)
+   - [9.7 Spawn to raft: the way out when you are stuck](#97-spawn-to-raft-the-way-out-when-you-are-stuck)
 10. [Settings files](#10-settings-files)
 11. [Console commands](#11-console-commands)
 12. [Limitations: what can't be changed](#12-limitations-what-cant-be-changed)
@@ -399,7 +399,7 @@ you put it there and that is the shorter way), and goes back to its place when t
 
 **Stuck? Skip the current quest step.** If a step can no longer be done (a story key used up by the wrong lock, a
 lever that will not move), the host can skip it: **Esc > Custom Islands > Skip current quest step** (under **Stuck on a
-quest?**, which names the current quest and its step), or the console command `SkipStep` (F10). The button asks first -
+quest or in a hole?**, which names the current quest and its step; **Spawn to raft** sits beside it, [9.7](#97-spawn-to-raft-the-way-out-when-you-are-stuck)), or the console command `SkipStep` (F10). The button asks first -
 "Only if you are stuck: this step counts as done and the quest moves on. Can't be undone." - and **Skip step** then
 counts the step as done: the quest moves on as if you had done it (the next step, and the reward and the finished
 quest after the last one), and what the step would have given is given, so the steps after it can still be done: a
@@ -411,9 +411,12 @@ island the host hasn't loaded this happens when the island loads. An open step o
 what opening it does), a set step finishes its set and a light-up step switches the group's lights on, each once. Other
 steps, a read step with no note named and a set or light-up step asking for only part of the group just count as done. It works on the **current quest** - any quest: a storyline island's, a plan's or a random island's, main or
 side quest: the one on the quest panel while it shows one, else the quest that last started or moved on (in a saved
-world just loaded, the one that moved on last). With no quest under way it says **No quest in progress**. Only the
-host can skip (players who joined don't get the button, and `SkipStep` tells them only the host can); everyone sees the
-quest move on, and it is saved with the world.
+world just loaded, the one that moved on last), else an open quest of an island near a player. Not the quest you are
+stuck on? **Other quest (1/3)** next to the buttons goes through every quest in progress, including a side quest while
+the main quest is still open, a quest still at its first step, and a quest on the island where another player is
+stuck (the host can skip that player's step). With no quest under way it says **No quest in progress**. Only the
+host can skip: players who joined see the button greyed with "Only the host can skip a step: ask the host" (and
+`SkipStep` tells them the same); everyone sees the quest move on, and it is saved with the world.
 
 **A reward lost with a save.** A reward follows Raft's saves: if Raft crashes, you quit without saving or you load an
 older save after a quest's reward was paid, the reward went with it - so when you finish the quest again, it is paid
@@ -3487,7 +3490,7 @@ final until you click **Create** in the New Game box.
 
 **In a world:** press **Esc → Custom Islands** (a button in Raft's pause menu). The world's own settings window
 opens: monster difficulty, build cost, the world randomizer, the extra options, the level up system and the islands
-while sailing, plus the world's plan and story (where each island's quest stands is in the quest book), and **Stuck on a quest?** with **Skip current quest step** (host; [Quests](#quests): "Stuck? Skip the current quest step"). The **host** changes them there, and every player gets the change at
+while sailing, plus the world's plan and story (where each island's quest stands is in the quest book), and **Stuck on a quest or in a hole?** with **Skip current quest step** (host; [Quests](#quests): "Stuck? Skip the current quest step") and **Spawn to raft** (every player, [9.7](#97-spawn-to-raft-the-way-out-when-you-are-stuck)) side by side. The **host** changes them there, and every player gets the change at
 once. Players who joined see the host's settings, greyed out. (While you try an island from the editor, the same
 window has **Back to the editor**, [4.9](#49-trying-the-island-in-a-world-test).)
 
@@ -4280,17 +4283,20 @@ small gold **Lv 5** under your name.
 
 ---
 
-### 9.7 SPAWN TO RAFT: the way out when you are stuck
+### 9.7 Spawn to raft: the way out when you are stuck
 
-If you have got stuck in a place you cannot get out of, open Raft's **Esc** menu. The **SPAWN TO RAFT** button sits
-just before **Exit**. It opens a box that says "Only use this if you have gotten stuck in a place you cannot get
-out of." with **Yes** and **No**:
+If you have got stuck in a place you cannot get out of, press **Esc > Custom Islands**. Under **Stuck on a quest or
+in a hole?** the **Spawn to raft** button sits next to **Skip current quest step**, so both ways out are in one place.
+It opens a box that says "Only use this if you have gotten stuck in a place you cannot get out of." with **Cancel**
+and **Spawn to raft**:
 
-- **No** takes you back to the menu.
-- **Yes** closes the menu and stands you on your raft.
+- **Cancel** takes you back to the window.
+- **Spawn to raft** closes the window and the menu and stands you on your raft.
 
-The button is greyed out while you are dead, asleep in a bed or on a zipline, or when no raft floor is found. In
-multiplayer each player moves only themselves: nobody else is taken to the raft.
+Every player can use it, the host and players who joined alike, and each player moves only themselves: nobody else
+is taken to the raft and the quests stay as they are. The button is greyed out while you are dead, asleep in a bed
+or on a zipline. If no raft floor is found at that moment, the box still opens and **Spawn to raft** tells you why
+it can't move you. (Until 11-24 this was a **SPAWN TO RAFT** button in Raft's own Esc menu.)
 
 ---
 
@@ -4625,7 +4631,7 @@ before you stop.
 
 **I'm stuck in a cave or under water on a custom island.** Use Raft's **Unstuck** (Esc menu). Near a custom island it
 is there at once when you are under the sea or haven't got anywhere for 20 seconds (Raft itself waits 30 seconds),
-and it takes you back to your raft. If that doesn't help, **Esc > SPAWN TO RAFT** is the last way out: it asks
+and it takes you back to your raft. If that doesn't help, **Esc > Custom Islands > Spawn to raft** is the last way out: it asks
 "Only use this if you have gotten stuck in a place you cannot get out of", and **Yes** puts you on your raft.
 
 **I can't get onto a flying island (or a cliff island).** Build stairs or pillars up from the raft. The generator's

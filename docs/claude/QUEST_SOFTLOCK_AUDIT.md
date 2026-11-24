@@ -14,6 +14,11 @@ recipe review (SL1-SL14, the 3.5.1 library) plus Raft tests through the queue (T
   steps without an object event (kill, collect, blueprint, has...) just count as done.
 - Rows 8, M3, M4, M5, M8 also played by two real players (host + Sandboxie box Raft2, `CIQslMp` + qslmp.ps1): 23/23 PASS
   (host 20261123112820_qslmp2_15467 + box 20261123112819_qslmp2_19933).
+- 11-24 (branch `skipbtn`, user "make sure that button always works"): the skip could not reach a side quest behind
+  an open main quest, a quest stuck at its first step out of the panel's reach (after a reload), or a client's quest
+  far from the host. `QuestSkip.Candidates` + "Other quest" fix all three; Spawn to raft sits beside Skip in
+  Esc > Custom Islands for every player (TEST_CATALOGUE SB1-SB6). Still by design: a client can't skip (asks the host);
+  kill, walk, tame, pages and counter steps replay nothing.
 - Rebuild needed: Camp Blackwater, The Dead Letter Office, Wreckers' Cove (journal pages); Stillwater Terraces,
   Static Shoals, Altitude Market, Caisson Yard, Hadal Commons, Shuttlewreck Reef, The Stalker's Hollow (loot names).
 - Branch `quest-softlock` (base content-1104 250ccb39). The 3.5.1 plans were hot-fixed by main (note titles).

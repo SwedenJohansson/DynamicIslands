@@ -144,7 +144,7 @@ namespace DynamicIslands.Editor
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null) return;
 			Vector3 at = spot.Value;
-			// (moved far off since the last frame's Put - Raft's Unstuck, the pause menu's Spawn to raft, a console gotoraft: the
+			// (moved far off since the last frame's Put - Raft's Unstuck, Spawn to raft (Esc > Custom Islands), a console gotoraft: the
 			//  player asked to go there. Put back every frame, they hung in the air until the hold timed out - UR2)
 			if (holding && Flat(player.transform.position - at) > Misplaced) { Release(null, "was moved " + Flat(player.transform.position - at).ToString("F0") + " m away while held: let go"); return; }
 			// (hurt while held - a shark biting a player frozen over the water: let go at once - AU82)
