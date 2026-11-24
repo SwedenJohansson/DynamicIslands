@@ -691,8 +691,12 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIFloatingSweep", docs: "Dev, editor: CIFloating on every saved island (ROADMAP CA30) - each opened in the editor and measured; the islands with problems are named with their first <details> (3) lines; all of them in Mods\\DynamicIslands\\floating_sweep.txt. Leaves out the test islands (ci...), the world-kept copies and the randomizer's extras (rnd-...). CIFloatingSweep [part of the name|*] [details]")]
 		public static void FloatingSweepCommand(string[] args)
 		{
-			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
-			int details = args != null && args.Length > 1 ? (int)F(args[1]) : 3;
+			// (a name may have spaces: "CIFloatingSweep Old Vine" read "Vine" as the details count and threw - hollow-tests 11-24;
+			//  a number last is the details count, the words before it the name)
+			var parts = args ?? new string[0];
+			int details = 3, n;
+			if (parts.Length > 1 && int.TryParse(parts[parts.Length - 1], out n)) { details = n; parts = parts.Take(parts.Length - 1).ToArray(); }
+			string only = parts.Length > 0 && parts[0] != "*" ? string.Join(" ", parts) : "";
 			StartTest(FloatingSweepRoutine(only, details));
 		}
 

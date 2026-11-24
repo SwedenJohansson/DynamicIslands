@@ -2424,7 +2424,8 @@ namespace DynamicIslands
 				for (float until = Time.realtimeSinceStartup + 5f; !ChoiceWindow.IsOpen && Time.realtimeSinceStartup < until; ) yield return new WaitForSecondsRealtime(0.25f);
 				if (ChoiceWindow.IsOpen) { ChoiceWindow.Close(); Log("The offer of unsaved work closed (tests): " + string.Join(", ", EditorAutosave.Waiting().ToArray())); }
 			}
-			if (report) Log("Editor ready: " + PlaceableCatalog.Names.Count() + " objects loaded");
+			// (CIEditor reports a result, so a job counts it: hollow-tests 11-24)
+			if (report) Log("PASS: editor ready: " + PlaceableCatalog.Names.Count() + " objects loaded");
 		}
 
 		[ConsoleCommand(name: "CITab", docs: "Dev, editor: switches the editor tab: CITab terrain|objects|island")]
