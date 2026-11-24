@@ -96,6 +96,7 @@
     <Compile Include="DevTestsQuestWait.cs" />
     <Compile Include="DevTestsStateWatch.cs" />
     <Compile Include="DevTestsContent.cs" />
+    <Compile Include="DevTestsRaftBuildings.cs" />
     <Compile Include="DevTestsStableIds.cs" />
     <Compile Include="DevTestsBugHunt1030.cs" />
     <Compile Include="DevTestsNextFixes.cs" />
@@ -468,6 +469,7 @@
     <Compile Include="TerrainStamps.cs" />
     <Compile Include="TextPromptWindow.cs" />
     <Compile Include="GroupLibrary.cs" />
+    <Compile Include="RaftBuildings.cs" />
     <Compile Include="TerrainBrushes.cs" />
     <Compile Include="TerrainPainter.cs" />
     <Compile Include="UnityScripts\TabSelector.cs" />

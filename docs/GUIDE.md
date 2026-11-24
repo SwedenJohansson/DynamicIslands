@@ -915,6 +915,12 @@ against a wall) stands up straight; a bigger lean - more than 25°, a boulder ly
   the Stamps tab, a stamp), type a new name and press **Rename**, or press **Delete** twice - it is moved to
   `Mods\DynamicIslands\deleted\groups` (or `...\stamps`), where you can get it back. Islands keep what was placed
   from a group: a placed group is separate objects.
+- **Raft buildings:** the category under **My groups** holds single buildings from Raft's own story islands
+  (Balboa: relay tower, stair tower, dish roof, relay antenna; Tangaroa: apartment floor, bookshelf; Temperance:
+  weather station room, lab shelf; Caravan Town: rocket wreck), ready to place like a group:
+  one click puts the whole building down, one Ctrl+Z takes it away, and its parts stay separate objects to move or
+  delete. A building loads from its Raft island the first time you pick it (a few seconds). **Vasagatan hull** is
+  the Vasagatan's hull and decks as one object (its furniture is among the Vasagatan's own objects).
 
 ![My groups and stamps](images/editor-groups-stamps.jpg)
 *My groups and stamps: the saved groups (or stamps), the name to rename to, Rename and Delete.*
