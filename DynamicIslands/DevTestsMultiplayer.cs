@@ -15,7 +15,8 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIAlive", docs: "Dev: fills up the local player's hunger, thirst, health and oxygen, and respawns them if they are down")]
 		public static void AliveCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(AliveRoutine());
+			PlayerTrust.ForTests = true; // (CB2: the CI tests set players' records and use things from afar - CITrust turns it off)
+			StartTest(AliveRoutine());
 		}
 
 		static System.Collections.IEnumerator AliveRoutine()
@@ -78,17 +79,18 @@ namespace DynamicIslands
 		/// pickups) with a door and its lever, a chest with a story key, a vault the key opens, and a note.
 		/// Its objects: door, lever (switches the door, gives 2 planks), vault (needs story:mp-key), note "MP note".
 		/// </summary>
-		[ConsoleCommand(name: "CIMPIsland", docs: "Dev, in game (host): spawns and keeps 'cimpworld', an island for the two-player test (door + lever, key chest + vault, a note, trees and pickups)")]
-		public static void MPIslandCommand()
+		[ConsoleCommand(name: "CIMPIsland", docs: "Dev, in game (host): spawns and keeps 'cimpworld', an island for the two-player test (door + lever, key chest + vault, a note, trees and pickups); CIMPIsland regrow <days>: with the island's own regrow rule")]
+		public static void MPIslandCommand(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(MPIslandRoutine());
+			int days;
+			StartTest(MPIslandRoutine(args != null && args.Length > 1 && args[0] == "regrow" && int.TryParse(args[1], out days) ? days : -1));
 		}
 
-		static System.Collections.IEnumerator MPIslandRoutine()
+		static System.Collections.IEnumerator MPIslandRoutine(int regrow = -1)
 		{
 			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
 			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = "cimpworld";
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -112,6 +114,7 @@ namespace DynamicIslands
 			f.Objects.Add(new IslandObject { Name = "Creature_Boar", Position = ground(c.x + 10f, c.y + 8f), Props = P(ObjectProps.CreatureDamage, "0") });
 			f.Props[IslandQuest.KeyTitle] = "Crew quest";
 			f.Props[IslandQuest.KeySteps] = "reach|mpzone|1|\nread|MP note|1|";
+			if (regrow >= 0) f.Props[IslandProps.RegrowDays] = regrow.ToString();
 			f.Save(IslandSpawner.PathFor("cimpworld"));
 			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, CustomIslandSpawner.LandRadius("cimpworld"), 390f);
 			if (!spot.HasValue) { Fail("no open sea near the raft"); yield break; }
@@ -119,7 +122,7 @@ namespace DynamicIslands
 			yield return DynamicIslands.instance.SpawnIslandFile("cimpworld", spot.Value, true);
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => i.HostName == "cimpworld");
 			if (e == null || e.Root == null) { Fail("cimpworld did not spawn"); yield break; }
-			Log("PASS: cimpworld spawned (island " + e.Id + ") at " + spot.Value.ToString("F0") + ": " + e.Root.GetComponentsInChildren<HarvestableTree>().Length + " trees, " +
+			Log("PASS: cimpworld spawned (island " + e.Id + ") at " + spot.Value.ToString("F0") + (regrow >= 0 ? ", its own rule: regrow " + IslandRules.RegrowDays(e) + " days" : "") + ": " + e.Root.GetComponentsInChildren<HarvestableTree>().Length + " trees, " +
 				e.Root.GetComponentsInChildren<PickupItem_Networked>().Count(p => p.GetComponent<HarvestableTree>() == null) + " pickups");
 		}
 
@@ -139,10 +142,59 @@ namespace DynamicIslands
 
 		static IslandWorldState.Entry LoadedIsland(string[] args)
 		{
+			// (the island's own name or its host's: "Old Mine Islet" is no host's name, 11-06)
 			string name = args != null && args.Length > 0 ? args[0] : "";
-			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(i => i.Root != null && i.HostName.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(i => i.Root != null && ((i.Name ?? "").IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0
+				|| (i.HostName ?? "").IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0));
 			if (e == null) Fail("no loaded island called '" + name + "' here");
 			return e;
+		}
+
+		[ConsoleCommand(name: "CIGroundProbe", docs: "Dev, in game (either player): the ground at an island object on this machine, to compare host and client - the island's root, its terrains, and at the object and 8 points 2 m round it: each terrain's SampleHeight and the solid hits of a ray down (name, layer, whether the player collides with it); then the local player. CIGroundProbe <island> <object>")]
+		public static void GroundProbeCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			IslandObjectRef r = FaceTarget(e, args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()) : "");
+			if (r == null) { Fail("no object '" + string.Join(" ", args.Skip(1).ToArray()) + "' on '" + e.HostName + "'"); return; }
+			Network_Player player = RAPI.GetLocalPlayer();
+			int playerLayer = player != null ? player.gameObject.layer : 0;
+			Vector3 at = r.transform.position;
+			Log("Ground probe (" + (Raft_Network.IsHost ? "host" : "client") + ") '" + e.HostName + "' root " + e.Root.transform.position.ToString("F2") + " entry " + e.Position.ToString("F2") +
+				", '" + r.Name.Trim() + "' at " + at.ToString("F2") + " (local " + e.Root.transform.InverseTransformPoint(at).ToString("F2") + ")");
+			Terrain[] terrains = e.Root.GetComponentsInChildren<Terrain>(true);
+			foreach (Terrain t in terrains)
+			{
+				TerrainCollider tc = t.GetComponent<TerrainCollider>();
+				Log("  terrain '" + t.name + "' active " + t.gameObject.activeInHierarchy + " at " + t.transform.position.ToString("F2") + " size " + t.terrainData.size.ToString("F1") +
+					" res " + t.terrainData.heightmapResolution + ", collider " + (tc == null ? "none" : (tc.enabled ? "on" : "OFF") + " data " + (tc.terrainData == t.terrainData ? "same" : "OTHER")) + ", layer " + t.gameObject.layer);
+			}
+			for (int k = -1; k < 8; k++)
+			{
+				Vector3 p = k < 0 ? at : at + Quaternion.Euler(0f, k * 45f, 0f) * Vector3.forward * 2f;
+				var sb = new System.Text.StringBuilder();
+				sb.Append(k < 0 ? "  at the object" : "  point " + k).Append(" (" + p.x.ToString("F1") + ", " + p.z.ToString("F1") + "):");
+				foreach (Terrain t in terrains)
+				{
+					Vector3 tp = t.transform.position, ts = t.terrainData.size;
+					bool inside = p.x >= tp.x && p.x <= tp.x + ts.x && p.z >= tp.z && p.z <= tp.z + ts.z;
+					sb.Append(" terrain " + (inside ? (t.SampleHeight(p) + tp.y).ToString("F2") : "outside"));
+				}
+				RaycastHit[] hits = Physics.RaycastAll(new Vector3(p.x, at.y + 30f, p.z), Vector3.down, 80f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).Take(5).ToArray();
+				sb.Append("; ray:");
+				if (hits.Length == 0) sb.Append(" nothing");
+				foreach (RaycastHit h in hits)
+					sb.Append(" " + h.collider.name + "@" + h.point.y.ToString("F2") + " L" + h.collider.gameObject.layer + (Physics.GetIgnoreLayerCollision(playerLayer, h.collider.gameObject.layer) ? " (player passes)" : "") + ";");
+				Log(sb.ToString());
+			}
+			if (player != null)
+			{
+				RaycastHit under;
+				bool any = Physics.Raycast(player.transform.position + Vector3.up * 0.5f, Vector3.down, out under, 60f, ~0, QueryTriggerInteraction.Ignore);
+				Log("  player at " + player.transform.position.ToString("F2") + " layer " + playerLayer + ", under: " + (any ? under.collider.name + "@" + under.point.y.ToString("F2") : "nothing") +
+					", controller " + (player.PersonController != null && player.PersonController.controller != null ? (player.PersonController.controller.enabled ? "on" : "OFF") + " grounded " + player.PersonController.controller.isGrounded : "?"));
+			}
+			Log("PASS: ground probe");
 		}
 
 		static void PutPlayerNear(Transform t, float offset = 1.5f)
@@ -151,7 +203,9 @@ namespace DynamicIslands
 			if (player == null || t == null) return;
 			Vector3 target = t.position + new Vector3(offset, 0f, offset);
 			RaycastHit hit;
-			if (Physics.Raycast(target + Vector3.up * 30f, Vector3.down, out hit, 60f, 1 << IslandSpawner.TerrainLayer)) target.y = hit.point.y + 1.2f;
+			// (from just above the animal: from 30 m up the ray landed on a mast platform over a cove's puffer fish, in the
+			// mast-top zone - Signal Rock's screechers woke early, SL6 2026-10-19)
+			if (Physics.Raycast(target + Vector3.up * 3f, Vector3.down, out hit, 60f, 1 << IslandSpawner.TerrainLayer)) target.y = hit.point.y + 1.2f;
 			// (off the raft first: a player still a child of the rocking raft was swung 14 m out of the gift zone - PlayerMove)
 			PlayerMove.To(player, target);
 			KeepAlive(player);
@@ -167,6 +221,26 @@ namespace DynamicIslands
 			Log("Misplace set: the next place Raft gives is moved " + PlayerHold.TestOffset.ToString("F0"));
 		}
 
+		[ConsoleCommand(name: "CIHoldAtSea", docs: "Dev, in a world (either player): holds the player 150 m off the raft over the open sea, as a join once did (AU82) - they must be let go within 5 s")]
+		public static void HoldAtSeaCommand()
+		{
+			StartTest(HoldAtSea());
+		}
+
+		static IEnumerator HoldAtSea()
+		{
+			Network_Player p = RAPI.GetLocalPlayer();
+			if (p == null) { Fail("hold at sea: no player"); yield break; }
+			Raft r = UnityEngine.Object.FindObjectOfType<Raft>();
+			Vector3 at = (r != null ? r.transform.position : p.transform.position) + new Vector3(150f, 1.5f, 0f);
+			PlayerHold.TestHold(at);
+			float t0 = Time.unscaledTime;
+			while (PlayerHold.Busy && Time.unscaledTime - t0 < 10f) yield return null;
+			float took = Time.unscaledTime - t0;
+			if (!PlayerHold.Busy && took < 5f) Log("PASS: hold at sea (let go after " + took.ToString("F1") + " s)");
+			else Fail("hold at sea: still held after " + took.ToString("F1") + " s");
+		}
+
 		[ConsoleCommand(name: "CIOnRaft", docs: "Dev, in game (either player): puts the local player on the raft, as Raft does after loading far from it")]
 		public static void OnRaftCommand()
 		{
@@ -177,12 +251,18 @@ namespace DynamicIslands
 			Vector3? middle = CustomIslandSpawner.RaftPosition;
 			if (!middle.HasValue) { Fail("no raft"); return; }
 			Vector3 target = middle.Value + Vector3.up * 1.5f;
-			RaycastHit hit;
-			if (Physics.Raycast(middle.Value + Vector3.up * 20f, Vector3.down, out hit, 40f, ~(1 << LayerMask.NameToLayer("LocalPlayer")), QueryTriggerInteraction.Ignore)) target.y = hit.point.y + 1.2f;
+			// (the raft's own floor first: a raft beached under an island's slope had terrain above its middle - the
+			// player was put on the island, 8 m above the deck)
+			RaycastHit hit = default(RaycastHit);
+			RaycastHit[] hits = Physics.RaycastAll(middle.Value + Vector3.up * 20f, Vector3.down, 40f, ~(1 << LayerMask.NameToLayer("LocalPlayer")), QueryTriggerInteraction.Ignore).OrderBy(x => x.distance).ToArray();
+			bool onBlock = false;
+			foreach (RaycastHit h in hits) if (h.collider.GetComponentInParent<Block>() != null) { hit = h; onBlock = true; break; }
+			if (!onBlock && hits.Length > 0) hit = hits[0];
+			if (hit.collider != null) target.y = hit.point.y + 1.2f;
 			// (off the raft first: a player still a child of the rocking raft was swung 14 m out of the gift zone - PlayerMove)
 			PlayerMove.To(player, target);
 			KeepAlive(player);
-			Log("On the raft: " + (player.transform.position - middle.Value).magnitude.ToString("F0") + " m from its middle, standing on " + (hit.collider != null ? hit.collider.name : "nothing"));
+			Log("On the raft: " + (player.transform.position - middle.Value).magnitude.ToString("F0") + " m from its middle, standing on " + (hit.collider != null ? hit.collider.name : "nothing") + (onBlock ? " (a raft block" + (hits[0].collider != hit.collider ? ", under " + hits[0].collider.name : "") + ")" : " (not the raft)"));
 		}
 
 		[ConsoleCommand(name: "CIUse", docs: "Dev, in game (either player): uses an object as a player pressing E would: CIUse <island> <object name or index>")]
@@ -196,7 +276,7 @@ namespace DynamicIslands
 			if (r == null) { Fail("no object '" + what + "' on '" + e.HostName + "'"); return; }
 			PutPlayerNear(r.transform);
 			Behaviours.Fire(e, r.Index, "use", true);
-			DynamicIslands.instance.StartCoroutine(AfterAction("Used '" + what + "' on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")"));
+			StartTest(AfterAction("Used '" + what + "' on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")"));
 		}
 
 		[ConsoleCommand(name: "CIGoto", docs: "Dev, in game (either player): puts the local player next to an object of the island (its name, or a trigger zone's id): CIGoto <island> <name>")]
@@ -209,8 +289,8 @@ namespace DynamicIslands
 				string.Equals(o.Name, what, StringComparison.OrdinalIgnoreCase) || string.Equals(ObjectProps.Get(o.Props, ObjectProps.ZoneId), what, StringComparison.OrdinalIgnoreCase));
 			if (r == null) { Fail("no object or zone '" + what + "' on '" + e.HostName + "'"); return; }
 			PutPlayerNear(r.transform, 0.3f); // (near the middle: a zone measures the distance in 3D, a slope adds to it)
-			DynamicIslands.instance.StartCoroutine(StayThere(r.transform));
-			DynamicIslands.instance.StartCoroutine(AfterAction("Went to '" + what + "' on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")", 2f)); // (zones check once a second)
+			StartTest(StayThere(r.transform));
+			StartTest(AfterAction("Went to '" + what + "' on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + ")", 2f)); // (zones check once a second)
 		}
 
 
@@ -226,8 +306,23 @@ namespace DynamicIslands
 			if (p == null || z == null || (z.transform.position - target.position).magnitude > 1f) yield break;
 			float d = (p.transform.position - z.transform.position).magnitude;
 			if (d <= z.Radius) yield break;
-			Log("  (the player was moved " + d.ToString("F1") + " m away from zone '" + z.Id + "' at once: put there again)");
+			Log("  (the player was moved " + d.ToString("F1") + " m away from zone '" + z.Id + "' at once: put there again; " + Whereabouts(p, z.transform.position) + ")");
 			PutPlayerNear(target, 0.3f);
+			yield return new WaitForSeconds(0.6f);
+			if (p == null || z == null) yield break;
+			d = (p.transform.position - z.transform.position).magnitude;
+			if (d > z.Radius) Log("  (moved " + d.ToString("F1") + " m away again; " + Whereabouts(p, z.transform.position) + ")");
+		}
+
+		/// <summary>What may have moved a player off a test spot: their parent, what is under them, the raft's distance.</summary>
+		static string Whereabouts(Network_Player p, Vector3 spot)
+		{
+			Vector3 at = p.transform.position;
+			RaycastHit hit;
+			string under = Physics.Raycast(at + Vector3.up * 0.5f, Vector3.down, out hit, 4f, ~0, QueryTriggerInteraction.Ignore) ? hit.collider.name + " (layer " + LayerMask.LayerToName(hit.collider.gameObject.layer) + ")" : "nothing";
+			Raft raft = ComponentManager<Raft>.Value;
+			return "now " + at.ToString("F1") + ", " + (at - spot).ToString("F1") + " from the spot, parent " + (p.transform.parent != null ? p.transform.parent.name : "none")
+				+ ", under " + under + (raft != null ? ", raft " + (raft.transform.position - at).magnitude.ToString("F0") + " m" : "");
 		}
 
 		[ConsoleCommand(name: "CIChests", docs: "Dev, in game (either player): an island's chests as this machine has them, in CIOpenChest's order: CHEST <n> '<title>' opened|closed")]
@@ -258,7 +353,7 @@ namespace DynamicIslands
 				: chests.FirstOrDefault(c => titleOf(c).Equals(title, StringComparison.OrdinalIgnoreCase));
 			if (chest == null) { Fail("no such chest on '" + e.HostName + "' (" + chests.Length + " chests)"); return; }
 			PutPlayerNear(chest.transform);
-			DynamicIslands.instance.StartCoroutine(OpenChestRoutine(e, chest));
+			StartTest(OpenChestRoutine(e, chest));
 		}
 
 		static IEnumerator OpenChestRoutine(IslandWorldState.Entry e, LootCrate chest)
@@ -274,7 +369,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIManyPlayers", docs: "Dev, anywhere: what the host decides for many players at once (up to Raft's 8), without them: a chest or a fire-once zone goes to the first of seven players asking (Claims) and is held for them, then used; an event that happens once (arrive, read) runs its shared part once however many ask; story items given by an action are the crew's (the host's, once)")]
-		public static void ManyPlayersCommand() { DynamicIslands.instance.StartCoroutine(ManyPlayersRoutine()); }
+		public static void ManyPlayersCommand() { StartTest(ManyPlayersRoutine()); }
 
 		static IEnumerator ManyPlayersRoutine()
 		{
@@ -324,7 +419,7 @@ namespace DynamicIslands
 			PutPlayerNear(note.transform);
 			NoteReader.Open(note);
 			NoteReader.Close();
-			DynamicIslands.instance.StartCoroutine(AfterAction("Read '" + note.Title + "' on '" + e.HostName + "'"));
+			StartTest(AfterAction("Read '" + note.Title + "' on '" + e.HostName + "'"));
 		}
 
 		/// <summary>One axe hit on a tree, as Raft's Axe.OnAxeHit does it: the host chops; a client sends Message_AxeHit to the host.</summary>
@@ -358,7 +453,8 @@ namespace DynamicIslands
 			IslandWorldState.Entry e = LoadedIsland(args);
 			if (e == null) return;
 			string part = args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()) : "";
-			PickupItem_Networked pn = e.Root.GetComponentsInChildren<PickupItem_Networked>()
+			// (the lowest id: the same pickup on both players - their child lists come in different orders, IM28)
+			PickupItem_Networked pn = e.Root.GetComponentsInChildren<PickupItem_Networked>().OrderBy(p => p.ObjectIndex)
 				.FirstOrDefault(p => p.GetComponent<HarvestableTree>() == null && p.gameObject.activeInHierarchy && p.GetComponent<PickupItem>() != null &&
 					(part.Length == 0 || p.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0 || (p.transform.parent != null && p.transform.parent.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0)));
 			if (pn == null) { Fail("nothing to pick up on '" + e.HostName + "'" + (part.Length > 0 ? " called '" + part + "'" : "")); return; }

@@ -55,6 +55,7 @@ namespace DynamicIslands.Editor
 		public static void Close()
 		{
 			if (instance == null) return;
+			if (instance.gameObject.activeSelf) EditorInput.SubWindowClosedFrame = Time.frameCount;
 			instance.gameObject.SetActive(false);
 			instance.target = null;
 			instance.pickOne = null;
@@ -105,7 +106,7 @@ namespace DynamicIslands.Editor
 			tiles.RemoveAll(t => t.Value == null || t.Value.transform.parent == storyGrid);
 			if (!withStory) return;
 			foreach (StoryItemDef d in StoryItems.Of(DynamicIslands.currentIslandProps))
-				Tile(storyGrid, StoryItems.Ref(d.Id), d.ShownName + " (story)", StoryItems.IconSprite(d.Icon), "Story item '" + d.ShownName + "': the crew keeps it in the journal");
+				Tile(storyGrid, StoryItems.Ref(d.Id), d.ShownName + " (story)", StoryItems.IconSprite(d.Icon), "Story item '" + d.ShownName + "': the crew keeps it (Raft's notebook for the main story, else the journal)");
 		}
 
 		void Pick(string name)
@@ -140,7 +141,7 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			EditorInput.IsTyping = search.isFocused;
-			if (Input.GetKeyDown(KeyCode.Escape) || ((Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && !search.isFocused)) Close();
+			if (EscKey.Down(this) || ((Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && !search.isFocused)) Close();
 		}
 
 		void OnDisable() { EditorInput.IsTyping = false; }

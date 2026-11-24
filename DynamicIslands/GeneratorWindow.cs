@@ -29,6 +29,21 @@ namespace DynamicIslands.Editor
 		IslandGenSettings s = new IslandGenSettings();
 		public const int TabNormal = 0, TabRandomize = 1, TabReady = 2;
 		int tab;
+		/// <summary>The last settings generated on the Generate island tab, and the last ones a Randomize / Ready-made generate left in IslandGenerator.Last.</summary>
+		static IslandGenSettings lastNormal, randomizeMade;
+		/// <summary>True while the settings are the ones a Randomize / Ready-made generate left (the window opened on them).</summary>
+		bool fromOtherTab;
+
+		/// <summary>The Generate island tab's own settings in place of a Randomize / Ready-made generate's (seed and style kept).</summary>
+		void OwnSettings()
+		{
+			if (!fromOtherTab) return;
+			fromOtherTab = false;
+			int seed = s.Seed, style = s.Style;
+			s = lastNormal != null ? lastNormal.Copy() : IslandGenSettings.RaftLike(seed);
+			s.Seed = seed;
+			s.Style = style;
+		}
 		int mapType = 6;
 		RaftIsland chosen;
 		bool variation;
@@ -68,7 +83,11 @@ namespace DynamicIslands.Editor
 			IslandFilesWindow.Close();
 			instance.gameObject.SetActive(true);
 			instance.transform.SetAsLastSibling();
+			// (after a Randomize existing or Ready-made generate - e.g. LikeIt(Tangaroa), a 139 m round island - the
+			// Generate island tab doesn't open on it: it opens on its own last settings, at first the Raft-like default)
 			instance.s = IslandGenerator.Last.Copy();
+			instance.fromOtherTab = randomizeMade != null && ReferenceEquals(IslandGenerator.Last, randomizeMade);
+			if (instance.tab == TabNormal) instance.OwnSettings();
 			instance.s.Style = DynamicIslands.currentStyle; // start from the island's current style
 			// (a Raft island's ground belongs to Randomize existing, with that island picked)
 			if (instance.tab != TabRandomize || instance.chosen == null || !instance.variation) instance.s.Source = "";
@@ -87,14 +106,17 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			EditorInput.IsTyping = seedField != null && seedField.isFocused;
-			if (TextPromptWindow.IsOpen || DropList.Busy) return; // (its own Enter and Esc; an open list closes on Esc by itself)
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (TextPromptWindow.IsOpen || DropList.Busy || EditorInput.SubWindowJustClosed) return; // (its own Enter and Esc; an open list closes on Esc by itself)
+			if (EscKey.Down(this)) Close();
 			else if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) OnGenerate();
 			if (previewDue > 0f && Time.unscaledTime >= previewDue) { previewDue = -1f; UpdatePreview(); }
 			if (reachDue > 0f && Time.unscaledTime >= reachDue) { reachDue = -1f; UpdateReach(); }
 		}
 
-		void OnDisable() { EditorInput.IsTyping = false; }
+		// (closing the window drops a Generate still waiting for Raft's scenes: reopened, it generated anyway - CA14)
+		void OnDisable() { EditorInput.IsTyping = false; loadingBuildings = false; waitingRun++; }
+
+		int waitingRun;
 
 		#region Building
 
@@ -183,7 +205,7 @@ namespace DynamicIslands.Editor
 			UIKit.Vertical(presetsRoot.gameObject, 4f, new RectOffset(0, 0, 0, 0));
 			RectTransform pr = UIKit.Row(mine, 26f, 4f, "PresetButtons");
 			UIKit.Button(pr, "Save these settings...", SavePreset, "Keep all of these settings (not the seed) as a preset of your own, to use again for other islands", -1, 26f, 12);
-			UIKit.Button(pr, "Defaults", () => { int seed = s.Seed; s = new IslandGenSettings { Seed = seed, Style = s.Style }; ShowAll(); SetStatus("All settings back to their defaults (the seed and style stay)."); }, "Every setting back to its default (the seed and style stay)", 90, 26f, 12);
+			UIKit.Button(pr, "Defaults", () => { int seed = s.Seed; int style = s.Style; s = IslandGenSettings.RaftLike(seed); s.Style = style; ShowAll(); SetStatus("All settings back to their defaults (the seed and style stay)."); }, "Every setting back to its default (the seed and style stay)", 90, 26f, 12);
 			UIKit.Help(pr, "Presets are your own recipes: Save these settings keeps everything on this tab (style, layout, size, coast, nature, animals, loot) under a name. Click a preset to use it again with any seed. The × next to one deletes it (click it twice). Presets live in Mods\\DynamicIslands\\generator_presets.");
 			RefreshPresets();
 
@@ -192,10 +214,10 @@ namespace DynamicIslands.Editor
 				"Style sets the ground textures (sand, grass, snow, desert, forest floor, ash) and which objects grow: tropical palms and bushes, snowy pines and drifts, desert cacti and grass, forest birches and pines, or volcanic rock with a crater on the highest peak. Animals and loot follow the style too, unless you choose them.",
 				() => TerrainPainter.StyleName(s.Style) + (TerrainPainter.HasStyle(s.Style) ? "" : " (textures not loaded)"), step => { int n = TerrainPainter.Styles.Length; s.Style = ((s.Style + step) % n + n) % n; },
 				Enumerable.Range(0, TerrainPainter.Styles.Length).Select(i => new DropList.Option(i.ToString(), TerrainPainter.StyleName(i), StyleHints[Mathf.Min(i, StyleHints.Length - 1)])).ToList(), () => s.Style, i => s.Style = i);
-			Stepper(island, "Layout", "One island, an atoll, an archipelago, sea stacks, a plateau, a marsh, a crescent or twin peaks",
-				"Layout is the basic shape of the land. Round: one island with peaks. Atoll: a ring of low land around a lagoon. Archipelago: several islets on a shallow shelf. Sea stacks: steep rock pillars. Plateau: a flat-topped mesa with a ramp up. Marsh: low land with pools. Crescent: a curved island around a sheltered bay (like Raft's Cresent). Twin peaks: two tall peaks (like Raft's Twin peak). Every other setting shapes it further.",
-				() => IslandShapes.Names[s.Shape], step => { int n = IslandShapes.Names.Length; s.Shape = ((s.Shape + step) % n + n) % n; SetStatus(IslandShapes.Hints[s.Shape] + "."); },
-				Enumerable.Range(0, IslandShapes.Names.Length).Select(i => new DropList.Option(i.ToString(), IslandShapes.Names[i], IslandShapes.Hints[i])).ToList(), () => s.Shape, i => { s.Shape = i; SetStatus(IslandShapes.Hints[s.Shape] + "."); });
+			Stepper(island, "Layout", "Like one of Raft's small or big islands, or one island, an atoll, an archipelago, sea stacks, a plateau, a marsh, a crescent or twin peaks",
+				"Layout is the basic shape of the land. Raft small island (the first one): shaped like one of Raft's own small islands, the seed picking which - an uneven coast, a beach all round to wade onto from the raft, a hill in the middle. Raft large island: the same from Raft's big islands. Round: one island with peaks. Atoll: a ring of low land around a lagoon. Archipelago: several islets on a shallow shelf. Sea stacks: steep rock pillars. Plateau: a flat-topped mesa with a ramp up. Marsh: low land with pools. Crescent: a curved island around a sheltered bay (like Raft's Cresent). Twin peaks: two tall peaks (like Raft's Twin peak). Every other setting shapes it further.",
+				() => IslandShapes.Names[s.Shape], step => { int[] o = IslandShapes.Order; int n = o.Length, at = Mathf.Max(0, Array.IndexOf(o, s.Shape)); s.Shape = o[((at + step) % n + n) % n]; SetStatus(IslandShapes.Hints[s.Shape] + "."); },
+				IslandShapes.Order.Select(i => new DropList.Option(i.ToString(), IslandShapes.Names[i], IslandShapes.Hints[i])).ToList(), () => s.Shape, i => { s.Shape = i; SetStatus(IslandShapes.Hints[s.Shape] + "."); });
 
 			RectTransform size = UIKit.Group(root, "Size and height");
 			Slider(size, "Size", IslandGenSettings.MinRadius, IslandGenSettings.MaxRadius, () => s.Radius, v => s.Radius = v, v => "land about " + (v * 2f).ToString("F0") + " m across",
@@ -258,24 +280,42 @@ namespace DynamicIslands.Editor
 		{
 			RectTransform nature = UIKit.Group(root, "Nature");
 			RectTransform quick = UIKit.Row(nature, 26f, 4f, "Quick");
-			foreach (var q in new[] { new KeyValuePair<string, float>("None", 0f), new KeyValuePair<string, float>("Sparse", 0.18f), new KeyValuePair<string, float>("Like Raft", 0.33f), new KeyValuePair<string, float>("Dense", 0.62f), new KeyValuePair<string, float>("Jungle", 1f) })
+			// (each quick button against Like Raft: every kind as thick on the ground as on Raft's own islands of the style)
+			foreach (var q in new[] { new KeyValuePair<string, float>("None", 0f), new KeyValuePair<string, float>("Sparse", 0.55f), new KeyValuePair<string, float>("Like Raft", 1f), new KeyValuePair<string, float>("Dense", 1.9f), new KeyValuePair<string, float>("Jungle", -1f) })
 			{
-				float v = q.Value;
-				UIKit.Button(quick, q.Key, () => { s.Trees = s.Bushes = v; s.Rocks = s.Harvest = Mathf.Min(v, 0.75f); s.BeachThings = Mathf.Min(v, 0.6f); ShowAll(); },
-					"Set the land's object sliders at once" + (v >= 1f ? " (max: barely walkable)" : ""), -1, 26f, 12);
+				float f = q.Value;
+				UIKit.Button(quick, q.Key, () =>
+				{
+					if (f < 0f) { s.Trees = s.Bushes = 1f; s.Rocks = s.Harvest = 0.75f; s.BeachThings = 0.6f; }
+					else
+					{
+						IslandGenerator.NatureLikeRaft(s);
+						s.Trees = Mathf.Clamp01(s.Trees * f); s.Bushes = Mathf.Clamp01(s.Bushes * f); s.Rocks = Mathf.Clamp01(s.Rocks * f);
+						s.Harvest = Mathf.Clamp01(s.Harvest * f); s.BeachThings = Mathf.Clamp01(s.BeachThings * f);
+					}
+					ShowAll();
+				}, "Set the land's object sliders at once" + (f < 0f ? " (max: barely walkable)" : f == 1f ? " (as on Raft's own islands of the style)" : ""), -1, 26f, 12);
 			}
-			UIKit.Help(quick, "Quick settings for all the land's object sliders at once (not the life under water): None, Sparse, Like Raft (about as dense as Raft's big islands), Dense, and Jungle (the maximum: trees about 3 m apart with bushes between, barely walkable). Fine-tune each kind below.");
-			Func<float, string> amount = v => v <= 0.01f ? "none" : v < 0.25f ? "sparse" : v < 0.45f ? "like Raft" : v < 0.75f ? "dense" : v < 0.97f ? "very dense" : "jungle";
-			Slider(nature, "Trees", 0f, 1f, () => s.Amount(s.Trees), v => s.Trees = v, amount, "Palms, pines, birches, cacti... by style",
+			UIKit.Help(quick, "Quick settings for all the land's object sliders at once (not the life under water). Like Raft sets each kind as thick on the ground as on Raft's own islands of the style - measured on them: a small island like Raft's small ones (five times the bushes and three times the trees for its land, green nearly down to the water), a big one like its big ones (sandy beaches, few things to pick up on the land). Sparse is about a third of that, Dense about three and a half times; Jungle is the maximum: trees about 3 m apart with bushes between, barely walkable. Fine-tune each kind below.");
+			// (each slider's word against its own Like Raft)
+			Func<string, Func<float, string>> amount = cat => v =>
+			{
+				float r = v / Mathf.Max(0.01f, IslandGenerator.LikeRaftAmount(s.Style, cat));
+				return v <= 0.01f ? "none" : r < 0.75f ? "less than Raft" : r < 1.3f ? "like Raft" : v >= 0.97f ? "jungle" : r < 2f ? "dense" : "very dense";
+			};
+			Slider(nature, "Trees", 0f, 1f, () => IslandGenerator.AmountOf(s, IslandGenerator.CatTrees), v => s.Trees = v, amount(IslandGenerator.CatTrees), "Palms, pines, birches, cacti... by style",
 				"Trees of the style, where Raft's own islands have them (measured): bamboo by the beach, palms from a few metres inland, mango trees further in (tropical); snowy pines; bushy trees and cacti (desert); birches and pines (forest) - on grass, not on the bare beach or rocky cliffs. At the top they stand about 3 m apart: a jungle. Harvestable palms and trees give Raft's wood and fruit.");
-			Slider(nature, "Bushes and plants", 0f, 1f, () => s.Amount(s.Bushes), v => s.Bushes = v, amount, "Undergrowth between the trees",
+			Slider(nature, "Bushes and plants", 0f, 1f, () => IslandGenerator.AmountOf(s, IslandGenerator.CatBushes), v => s.Bushes = v, amount(IslandGenerator.CatBushes), "Undergrowth between the trees",
 				"Bushes, ferns, grass and other undergrowth (snow drifts on snowy islands). They fill the gaps between the trees; dense undergrowth makes an island feel wild.");
-			Slider(nature, "Rocks", 0f, 1f, () => s.Amount(s.Rocks), v => s.Rocks = v, amount, "Boulders on steep and high ground",
+			Slider(nature, "Rocks", 0f, 1f, () => IslandGenerator.AmountOf(s, IslandGenerator.CatRocks), v => s.Rocks = v, amount(IslandGenerator.CatRocks), "Boulders on steep and high ground",
 				"Boulders and stones, mostly on steep slopes and high ground, some on the land and beach. Big ones are scaled down so they don't swamp the island.");
-			Slider(nature, "Beach things", 0f, 1f, () => s.Amount(s.BeachThings), v => s.BeachThings = v, amount, "Driftwood and stones on the beach",
+			Slider(nature, "Beach things", 0f, 1f, () => IslandGenerator.AmountOf(s, IslandGenerator.CatBeach), v => s.BeachThings = v, amount(IslandGenerator.CatBeach), "Driftwood and stones on the beach",
 				"Driftwood logs and small stones on the beach and the wet sand.");
-			Slider(nature, "Harvestables", 0f, 1f, () => s.Amount(s.Harvest), v => s.Harvest = v, amount, "Stone, clay, sand, berries, pineapples on the land",
+			Slider(nature, "Harvestables", 0f, 1f, () => IslandGenerator.AmountOf(s, IslandGenerator.CatHarvest), v => s.Harvest = v, amount(IslandGenerator.CatHarvest), "Stone, clay, sand, berries, pineapples on the land",
 				"Things players collect with Raft's tools on the land and beach: stones, clay and sand, berry bushes or pineapples by style. (What lies under water is below, in Life under water.)");
+			Slider(nature, "Things to gather", 0f, 1f, () => s.Gather, v => s.Gather = v, v => v <= 0.01f ? "none" : v < 0.35f ? "a little" : v < 0.7f ? "some" : "much",
+				"Trees to cut, fruit, berries and flowers that suit the style", "More of what players gather and cut on the land, chosen by the style: palms, mango trees, pineapples, watermelons, bananas and flowers (tropical); pines, berry bushes and flowers (snowy); palms, pineapples, watermelons and flowers (desert); birches, pines, berry bushes and flowers (forest); palms, mango trees, pineapples and black flowers (volcanic). On fairly flat land above the sea, kept off the island's other objects; at the top about " + GenGather.LandPer1000.ToString("F0") + " per 1000 m2 of land. Off (none) as before.");
+			GatherKinds(nature, GenGather.LandKeys, GenGather.LandLabels, true);
 			Slider(nature, "Groups", 0f, 1f, () => s.Clusters, v => s.Clusters = v, v => v < 0.15f ? "spread evenly" : v < 0.6f ? "some groves" : "groves and clearings",
 				"Spread evenly, or in groves with clearings", "How much the objects gather: evenly spread on the left; groves of trees, fields of bushes and rock piles with open clearings between them on the right, and corals in reefs with sand between them. The amounts stay the same.");
 			UIKit.Label(nature, "Very dense islands take a few seconds to generate; one island gets at most " + IslandGenerator.MaxObjects + " objects (land and sea together).", 12, UIKit.TextMuted);
@@ -290,7 +330,7 @@ namespace DynamicIslands.Editor
 			}
 			UIKit.Help(sq, "The sea around the island is dressed like Raft's own islands of its style, from measurements of them: which corals, sea plants, rocks, pickups and sunken things lie there, how dense they are at each depth, how far from the coast, and on how steep ground. " +
 				"Tropical islands get Raft's coral reefs, sea vines with seaweed, stones, clay, sand, scrap, metal and copper ore on the steep slopes and giant clams; forest islands Balboa's sunken barrels and ore; desert islands Caravan's sea vines and red rock; snowy islands Temperance's bare, icy rock. " +
-				"Like Raft sets them as dense as there; Teeming is three times that.");
+				"Like Raft sets them as dense as there; Teeming is twice that.");
 			Func<float, string> sea = v => v <= 0.01f ? "none" : v < 0.3f ? "sparse" : v < 0.44f ? "less than Raft" : v < 0.57f ? "like Raft" : v < 0.8f ? "richer than Raft" : "teeming";
 			Slider(life, "Corals and plants", 0f, 1f, () => s.AmountSea(s.Water), v => s.Water = v, sea, "Corals, sea vines (with seaweed) and kelp",
 				"Corals of Raft's reefs, sea vines with seaweed to pick, and tall kelp, at the depths they grow at around Raft's islands (most 4-25 m down). They gather in reefs (Groups). Separate from the land, so an island can have a rich reef and a bare top.");
@@ -298,6 +338,11 @@ namespace DynamicIslands.Editor
 				"Boulders in the shallow water and big rock formations sunk into the drop-off further down, as around Raft's islands.");
 			Slider(life, "Things to collect", 0f, 1f, () => s.AmountSea(s.SeaFinds), v => s.SeaFinds = v, sea, "Stones, clay, sand, scrap, ores, giant clams",
 				"Raft's pickups under water: stones, clay and sand on the shelf, scrap on the sea floor, metal and copper ore on the steep slopes further down, giant clams and silver algae now and then. Players dive for them.");
+			Slider(life, "Finds in the shallows", 0f, 1f, () => s.Shallows, v => s.Shallows = v, v => v <= 0.01f ? "none" : v < 0.35f ? "a little" : v < 0.7f ? "some" : "much",
+				"Sand, clay, stone, ores, scrap, clams and seaweed just off the shore", "Raft's sea finds where players reach them easily, 0.6-6 m under water just off the shore (How far out below sets the depth): sand, clay, stones, metal and copper ore, scrap, giant clams and seaweed - as the library's islands have them. On top of Things to collect above; at the top about " + GenGather.SeaPer1000.ToString("F0") + " per 1000 m2 of shallows. Off (none) as before.");
+			GatherKinds(life, GenGather.SeaKeys, GenGather.SeaLabels, false);
+			Slider(life, "How far out", GenGather.MinDepth, GenGather.MaxDepth, () => s.ShallowsDepth, v => s.ShallowsDepth = v, v => "down to " + v.ToString("F0") + " m" + (v < 4f ? " (at the shore)" : v < 8f ? " (just off it)" : v < 13f ? " (out on the shelf)" : " (far out)"),
+				"How far out (how deep) the finds in the shallows go", "Finds in the shallows lie from 0.6 m under water down to this depth: on the left only right at the shore, where players wade for them; to the right further out over the shelf, where they dive. 6 m as before. The same amount (Finds in the shallows) spread over more water.");
 			Slider(life, "Sunken barrels", 0f, 1f, () => s.AmountSea(s.Sunken), v => s.Sunken = v, sea, "Barrels, containers, buoys and wreckage on the sea floor",
 				"Sunken barrels, containers, buoys and bits of wreckage, as around Balboa and Caravan Island (Raft's tropical islands have few). Decoration: the loot boxes are under Loot.");
 
@@ -321,7 +366,6 @@ namespace DynamicIslands.Editor
 			}
 			Choice(animals, "Toughness", ObjectProps.Presets.Select(p => p.Key).ToArray(), () => Array.FindIndex(ObjectProps.Presets, p => p.Key == s.Difficulty), v => s.Difficulty = ObjectProps.Presets[v].Key,
 				"How tough the hostile animals are: Easy (half health and damage), Normal (Raft's own), Hard (twice the health, 1.5 x damage) or Boss (four times the health). Each spot can still be changed by hand afterwards.");
-			LevelsChoice(animals);
 			Slider(animals, "Friendly animals", 0, IslandGenSettings.MaxCreatureSpots, () => s.Friendly, v => s.Friendly = Mathf.RoundToInt(v), v => v < 0.5f ? "none" : v.ToString("F0") + " spot(s)",
 				"Chickens, goats, llamas to catch", "Animals players can catch with Raft's net launcher and keep on the raft: chickens, goats and llamas, by style. They live on flat ground.", true);
 			Slider(animals, "Sea creatures", 0, IslandGenSettings.MaxCreatureSpots, () => s.SeaLife, v => s.SeaLife = Mathf.RoundToInt(v), v => v < 0.5f ? "none" : v.ToString("F0") + " spot(s)",
@@ -336,15 +380,72 @@ namespace DynamicIslands.Editor
 				"The richest boxes", "The best tier a box can have (see Lowest tier for what each tier holds). Set both the same for boxes of one tier only.", true);
 			Choice(loot, "Placed", new[] { "In the open", "Hidden" }, () => s.LootHidden ? 1 : 0, v => s.LootHidden = v == 1,
 				"In the open: boxes stand on clear ground where players see them. Hidden: tucked in next to trees, bushes and rocks, so players have to search.");
+
+			// Buildings and caves (the user, 2026-10-03)
+			RectTransform built = UIKit.Group(root, "Buildings and caves");
+			Choice(built, "Buildings", new[] { "Off", "On" }, () => s.Buildings ? 1 : 0, v => s.Buildings = v == 1,
+				"Buildings on the island's open, level land: huts and cabins of Raft's building blocks (on foundations, the ground built up under them, a roof on their walls and pillars) or scenes from the quest islands, each with a chest and often a note. Kind and How many choose them.");
+			List<string> buildKinds = GenBuildings.Kinds;
+			Stepper(built, "Kind", "Which buildings: mixed, huts, cabins or one of the quest islands' scenes",
+				"Mixed: a bit of everything that suits the island's style. Wrecks and landmarks: boats run aground on the beach or sunk off the coast, plane wrecks on the land or under water, small boats pulled up the beach, vans, caravans, shacks, statues on high ground and rocket debris - Raft's own set pieces, a chest by the ones on land. Castaway huts: Raft's thatch walls and roof, a hammock and a chest. Wooden cabins: Raft's wooden walls and roof, a bed, a chest and a log. The scenes (castaways' camp, caravan outpost, radio outpost, scrapyard, old market, bear country, frozen camp, hotel garden) are made of the quest islands' own props, with a chest and a note - a scene whose props this Raft hasn't loaded is left out.",
+				() => GenBuildings.Label(s.BuildingKind) + (s.Buildings ? "" : " (Buildings off)"), step => { int i = Mathf.Max(0, buildKinds.IndexOf(s.BuildingKind)); s.BuildingKind = buildKinds[((i + step) % buildKinds.Count + buildKinds.Count) % buildKinds.Count]; },
+				Enumerable.Range(0, buildKinds.Count).Select(i => new DropList.Option(i.ToString(), GenBuildings.Label(buildKinds[i]), GenBuildings.Hint(buildKinds[i]))).ToList(), () => Mathf.Max(0, buildKinds.IndexOf(s.BuildingKind)), i => s.BuildingKind = buildKinds[i]);
+			Slider(built, "How many", 0, GenBuildings.MaxCount, () => s.BuildingCount, v => s.BuildingCount = Mathf.RoundToInt(v), v => v.ToString("F0"),
+				"How many buildings or scenes", "How many buildings, scenes, wrecks and landmarks the island gets (0-" + GenBuildings.MaxCount + "), at least 22 m apart: buildings on open, level land, wrecks also on the beach and the sea floor. A small or steep island has room for fewer: the report under the preview says how many found a spot.", true);
+			Choice(built, "Caves", new[] { "Off", "On" }, () => s.Caves ? 1 : 0, v => s.Caves = v == 1,
+				"A cave set into the land: one of Raft's own cave pieces (Balboa's), its mouth towards open, level ground, with a guard (a bear, polar bear, hyena, warthog or rat by style) and a hoard inside. It needs a hill next to open, level land; if none fits, the report says so.");
+			QuestGroup(root);
 		}
 
-		/// <summary>The island's level up system rule (IslandProps.Levels): on the Normal, Randomize and Ready-made tabs.</summary>
-		void LevelsChoice(Transform parent)
+		/// <summary>The kinds of things to gather the builder switches on and off (GatherOff, ROADMAP LM9): on the land only the
+		/// style's own (the others hidden), in the shallows all of Raft's sea finds. "All" switches the group's kinds on again.</summary>
+		void GatherKinds(Transform parent, string[] keys, string[] labels, bool land)
 		{
-			Choice(parent, "Level up", new[] { "Off", "On (EXP from monsters)" }, () => s.Levels ? 1 : 0, v => s.Levels = v == 1,
-				"The level up system: once the island is in a world, players there earn EXP by hitting monsters (the number floats over the monster) and level up. " +
-				"Level 2 takes about 5 monster kills, level 3 about 10 more, level 4 about 20 more, then 10 more each level; every level gives " + LevelRules.PointsPerLevel + " stat points for walk, run and swim speed, jump height, damage, health, hunger and oxygen " +
-				"(+1% a point, at most " + LevelRules.MaxPoints + " each; the stats page is " + PlayerLevels.Key + " in a world). Also on the Island tab (Rules).");
+			RectTransform own = UIKit.Row(parent, 24f, 3f, land ? "GatherAll" : "ShallowsAll");
+			Button all = UIKit.Button(own, "All kinds", () => { foreach (string k in keys) if (!GenGather.IsOn(s.GatherOff, k)) s.GatherOff = GenGather.Toggle(s.GatherOff, k); ShowAll(); },
+				land ? "Every kind of thing to gather the style has" : "Every kind of find in the shallows", -1, 24f, 11);
+			UIKit.Help(own, land
+				? "Which things to gather come: click a kind to switch it off or on again (lit = on). Only the island's style's own kinds are listed: palms, mangoes, pineapples, watermelons, bananas, flowers, dirt and wild beehives (tropical); pines, berries and flowers (snowy); palms, pineapples, watermelons and flowers (desert); birches, pines, berries, flowers, dirt and beehives (forest); palms, mangoes, pineapples, flowers, dirt and beehives (volcanic). With every kind off, Things to gather adds nothing. Saved with the settings and in recipes (GatherOff); all on as before."
+				: "Which finds lie in the shallows: click a kind to switch it off or on again (lit = on) - sand, clay, stone, iron and copper ore, scrap, giant clams and seaweed. With every kind off, Finds in the shallows adds nothing. Saved with the settings and in recipes (GatherOff); all on as before.");
+			refresh.Add(() => UIKit.SetActive(all, keys.All(k => GenGather.IsOn(s.GatherOff, k))));
+			const int perRow = 6;
+			for (int r = 0; r * perRow < keys.Length; r++)
+			{
+				RectTransform row = UIKit.Row(parent, 24f, 3f, land ? "GatherKinds" : "ShallowsKinds");
+				var inRow = new List<KeyValuePair<Button, string>>();
+				for (int i = r * perRow; i < Math.Min(keys.Length, (r + 1) * perRow); i++)
+				{
+					string key = keys[i];
+					Button b = UIKit.Button(row, labels[i], () => { s.GatherOff = GenGather.Toggle(s.GatherOff, key); ShowAll(); },
+						labels[i] + ": switch " + (land ? "this thing to gather" : "this find") + " on or off", -1, 24f, 11);
+					b.name = "Gather_" + key;
+					inRow.Add(new KeyValuePair<Button, string>(b, key));
+				}
+				GameObject rowObject = row.gameObject;
+				refresh.Add(() =>
+				{
+					List<string> offered = land ? GenGather.LandKeysOf(s.Style) : null;
+					bool any = false;
+					foreach (var kb in inRow)
+					{
+						bool shown = offered == null || offered.Contains(kb.Value);
+						kb.Key.gameObject.SetActive(shown);
+						UIKit.SetActive(kb.Key, GenGather.IsOn(s.GatherOff, kb.Value));
+						any |= shown;
+					}
+					rowObject.SetActive(any);
+				});
+			}
+		}
+
+		/// <summary>A quest made with the island: how many steps (Normal and Randomize existing tabs; the user, 2026-10-03).</summary>
+		void QuestGroup(Transform root)
+		{
+			RectTransform quest = UIKit.Group(root, "Quest");
+			Slider(quest, "Quest steps", 0, GenQuest.MaxSteps, () => s.QuestSteps, v => s.QuestSteps = Mathf.RoundToInt(v), v => v < 0.5f ? "no quest" : v.ToString("F0") + " step" + (v < 1.5f ? "" : "s"),
+				"A quest made with the island", "A quest of this many steps, made with the island and its things: first a castaway's note to read where players come ashore, then (by the seed) a lookout to climb to, monsters to defeat, map pieces to collect from small chests, a torn page to find, a supply crate, animals to catch - and last the castaway's hoard at the top of the island. One step: just the hidden hoard. It replaces the island's quest; the Island tab's Quest shows it and you can change it there. A step whose place doesn't fit on a small island is left out (the report says so).", true);
+			Slider(quest, "Raft's features", 0, GenFeatures.Max, () => s.Features, v => s.Features = Mathf.RoundToInt(v), v => v < 0.5f ? "none" : v.ToString("F0"),
+				"Things Raft's story islands have the player do", "Things Raft's story islands have the player do, put on the island (different ones first): a cache behind vines for the machete, treasure buried for the metal detector and the shovel, a zipline from the top down to the beach, a strongbox behind a code panel (its code on a note elsewhere), a grove of wild beehives, dirt for the shovel. Past six, Raft's story machinery: a generator to start with a part from a toolbox and a radio that then works, an engine to start with fuel from a crate, a chest in a cage for Raft's bolt cutters, a lift up a cliff. An explorer's chest near the shore holds the tools they need.", true);
 		}
 
 		/// <summary>Deep sea floor like Raft's, or the older flat seabed 20 m down.</summary>
@@ -422,7 +523,7 @@ namespace DynamicIslands.Editor
 			UIKit.Button(likeGroup, "Change these settings in the Normal tab", () => SetTab(TabNormal), "All of the generator's settings, filled in from the island", -1, 26f, 12);
 
 			variationGroup = UIKit.Group(root, "Change its shape");
-			Slider(variationGroup, "Size", IslandGenSettings.MinRadius, IslandGenSettings.MaxRadius, () => s.Radius, v => s.Radius = v, v => "land about " + (v * 2f).ToString("F0") + " m across",
+			Slider(variationGroup, "Size", IslandGenSettings.MinRadius, IslandGenSettings.MaxSourceRadius, () => s.Radius, v => s.Radius = v, v => "land about " + (v * 2f).ToString("F0") + " m across",
 				"Scales the island", "Scales the island's ground to this size (the heights follow Highest point). Its own size is the starting value.");
 			Slider(variationGroup, "Highest point", IslandGenSettings.MinHeight, IslandGenSettings.MaxHeight, () => s.Height, v => s.Height = v, v => v.ToString("F0") + " m above the sea",
 				"Raises or lowers its hills", "Raises or lowers the land so its top is this high; the coast stays where it is.");
@@ -447,7 +548,20 @@ namespace DynamicIslands.Editor
 			SeaFloorChoice(variationGroup);
 			Choice(variationGroup, "Seabed", new[] { "Sand", "Rocky", "Reef ring" }, () => s.Seabed, v => s.Seabed = v, "The shallow sea floor around it: as measured (Sand), with rocky bumps, or with a reef ring just under the surface.");
 
-			BuildContent(root);
+			// Rebuild it: a story island's structure made anew from its own pieces (the user, 2026-10-03: the Radio Tower's
+			// pieces can become another radio tower, an oil rig, a lighthouse under construction)
+			rebuildGroup = UIKit.Group(root, "Rebuild it");
+			UIKit.Label(rebuildGroup, "Built anew from the island's own pieces on the new ground, different with every seed.", 12, UIKit.TextMuted);
+			Stepper(rebuildGroup, "Design", "What the island's pieces become", "Each of Raft's story islands rebuilds something like it from its own pieces: the Radio Tower's become a new radio tower, an oil rig or a lighthouse being built; Balboa's a logging camp or a relay station; Caravan Town's a caravan circle or a market on scaffold decks; Tangaroa's a seaside café or the founder's garden; Varuna Point's a building site or a half-built tower; Temperance's an igloo village or a weather outpost; Utopia's a water station or a market yard; the Vasagatan's its lounge or its engine yard on the land. Random design picks one by the seed. None keeps only the ground and nature.",
+				() => RemakeLabel(), step => { List<string> ids = RemakeIds(); int i = Mathf.Max(0, ids.IndexOf(s.Remake ?? "")); s.Remake = ids[((i + step) % ids.Count + ids.Count) % ids.Count]; },
+				RemakeOptions(), () => Mathf.Max(0, RemakeIds().IndexOf(s.Remake ?? "")), i => { List<string> ids = RemakeIds(); if (i < ids.Count) s.Remake = ids[i]; });
+			// (the list follows the chosen island)
+			DropdownButton designDrop = rebuildGroup.GetComponentsInChildren<DropdownButton>(true).FirstOrDefault(x => x.name == "Drop_Design");
+			RaftIsland designsFor = null;
+			refresh.Add(() => { if (designDrop != null && chosen != designsFor) { designsFor = chosen; designDrop.Options = RemakeOptions(); } });
+			refresh.Add(() => rebuildGroup.gameObject.SetActive(chosen != null && Remakes.For(chosen.Scene).Count > 0));
+			// (this tab remakes the chosen island: the Normal tab's other groups aren't shown here - the user, 2026-10-03)
+			QuestGroup(root);
 			refresh.Add(() =>
 			{
 				likeGroup.gameObject.SetActive(chosen != null && !variation);
@@ -459,11 +573,13 @@ namespace DynamicIslands.Editor
 		void Choose(RaftIsland island)
 		{
 			chosen = island;
+			List<Remakes.Design> designs = Remakes.For(island.Scene);
+			s.Remake = designs.Count > 0 ? designs[0].Scene + Remakes.Any : "";
 			ApplyChosen();
 			chosenText.text = "<color=#eddeba>" + island.Label + "</color>  (" + island.Style.ToLowerInvariant() + ")\nLand about " + island.Length.ToString("F0") + " x " + island.Width.ToString("F0") + " m, highest point " + island.Top.ToString("F0") +
 				" m, " + island.Peaks + " peak(s), shallow water to " + island.Shelf.ToString("F0") + " m from its middle.\n" +
 				string.Join(", ", new[] { RaftIslands.Trees, RaftIslands.Bushes, RaftIslands.Rocks, RaftIslands.Harvest }.Where(k => island.Count(k) > 0).Select(k => island.Count(k) + " " + k).ToArray()) +
-				(island.Kind == "mesh" ? "\n<i>(a built place: its buildings count as ground)</i>" : "");
+				(Remakes.LookFor(island.Scene) != null ? "\n<i>Its look: " + Remakes.LookFor(island.Scene).Hint.ToLowerInvariant() + "</i>" : island.Kind == "mesh" ? "\n<i>(a built place: its buildings count as ground)</i>" : "");
 			SetStatus((variation ? "A variation of " : "Something new like ") + island.Label + ". Generate makes it.");
 		}
 
@@ -498,7 +614,6 @@ namespace DynamicIslands.Editor
 			RectTransform about = UIKit.Group(root, "Ready-made islands");
 			UIKit.Label(about, "A ready-made island is a whole island with a story: its layout and style, and content placed by the generator - chests with loot, notes, creatures, trigger zones, atmosphere and a quest. " +
 				"Make saves it as a new island file (gen-<type>-<seed>) and opens it here to change as you like. World plans and the islands that appear while sailing can bring these types too.", 12, UIKit.TextMuted);
-			LevelsChoice(about);
 			RectTransform row = null;
 			for (int i = 0; i < MapTypes.All.Count; i++)
 			{
@@ -637,6 +752,7 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < tabButtons.Length; i++) UIKit.SetActive(tabButtons[i], i == t);
 			if (generateLabel != null) generateLabel.text = t == TabReady ? "Make" : "Generate";
 			// (Normal makes islands from a layout; the variation of a Raft island lives on the other tab)
+			if (t == TabNormal) OwnSettings();
 			if (t == TabNormal && s.Source.Length > 0) { s.Source = ""; SetStatus("The Normal tab makes islands from a layout (the Raft island's ground stays on Randomize existing)."); }
 			// (back on Randomize existing, a variation starts from its island's ground again; the other settings stay as they were)
 			if (t == TabRandomize && chosen != null && variation) s.Source = chosen.Scene;
@@ -662,10 +778,11 @@ namespace DynamicIslands.Editor
 					type = MapTypes.All[Mathf.Clamp(mapType, 0, MapTypes.All.Count - 1)];
 					ps = MapTypes.Roll(type, new System.Random(s.Seed), out elevation);
 				}
-				else ps = s;
-				float span = Mathf.Clamp(IslandGenerator.Reach(ps) * 2.1f, 60f, IslandGenerator.BuildArea.x);
+				else ps = tab == TabRandomize ? Effective() : s; // (Randomize: its extra under-water kinds count in the estimate too - CA29)
+				Vector3 terrainSize = IslandGenerator.AreaFor(ps); // (LM7: a variation of Temperance is bigger than the build area)
+				float span = Mathf.Clamp(IslandGenerator.Reach(ps) * 2.1f, 60f, terrainSize.x);
 				float step = span / (Res - 1);
-				float[,] m = type != null && type.Build != null ? new float[Res, Res] : IslandGenerator.HeightsMetres(ps, IslandGenerator.BuildArea, Res, span);
+				float[,] m = type != null && type.Build != null ? new float[Res, Res] : IslandGenerator.HeightsMetres(ps, terrainSize, Res, span);
 				previewTex = IslandGenerator.Preview(m, step, ps.Style, previewTex, ps.WaterLevel);
 				preview.texture = previewTex;
 				// What it shows
@@ -714,7 +831,7 @@ namespace DynamicIslands.Editor
 					ps = MapTypes.Roll(type, new System.Random(s.Seed), out elevation);
 				}
 				else if (tab == TabRandomize && chosen == null) { lastReach = null; reachText.text = "<color=#8c8c8c>Pick one of Raft's islands to see whether players can get onto it.</color>"; return; }
-				else ps = s;
+				else ps = Effective(); // (what Generate makes: on Randomize existing no caves or buildings, so the line matches the ground)
 				float t0 = Time.realtimeSinceStartup;
 				lastReach = IslandReach.Assess(ps, elevation);
 				reachText.text = "<color=" + IslandReach.ColourOf(lastReach.Level) + ">" + lastReach.Text + "</color>";
@@ -765,12 +882,23 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		string saveArmed;
+		float saveUntil;
+
 		void SavePreset()
 		{
 			TextPromptWindow.Open("Save generator preset", "All of the generator's settings on this tab (not the seed) are kept under this name, to use again with any seed.", "my island", name =>
 			{
 				string safe = new string((name ?? "").Trim().Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray());
 				if (safe.Length == 0) { SetStatus("A preset needs a name."); return; }
+				// (a name in use: replaced only when saved under it again - two steps, like ×)
+				if (File.Exists(Path.Combine(PresetFolder, safe + ".txt")) && (!safe.Equals(saveArmed, StringComparison.OrdinalIgnoreCase) || Time.unscaledTime > saveUntil))
+				{
+					saveArmed = safe; saveUntil = Time.unscaledTime + 10f;
+					SetStatus("There is a preset '" + safe + "' already: Save these settings under that name again to replace it.");
+					return;
+				}
+				saveArmed = null;
 				Directory.CreateDirectory(PresetFolder);
 				IslandGenSettings keep = s.Copy();
 				keep.Source = ""; // (a variation of a Raft island isn't a preset for the Normal tab)
@@ -805,7 +933,8 @@ namespace DynamicIslands.Editor
 				return;
 			}
 			deleteArmed = null;
-			try { File.Delete(Path.Combine(PresetFolder, name + ".txt")); } catch (Exception e) { SetStatus("Could not delete: " + e.Message); return; }
+			// (to deleted\presets, not deleted for good, like the rest of the mod's files - AU41)
+			try { string f = Path.Combine(PresetFolder, name + ".txt"); if (File.Exists(f)) PiecesFiles.MoveToDeleted(f, "presets"); } catch (Exception e) { SetStatus("Could not delete: " + e.Message); return; }
 			RefreshPresets();
 			SetStatus("Deleted the preset '" + name + "'.");
 		}
@@ -821,14 +950,115 @@ namespace DynamicIslands.Editor
 			else { s.Seed = UnityEngine.Random.Range(1, 999999); seedField.text = s.Seed.ToString(CultureInfo.InvariantCulture); }
 			if (tab == TabReady) { OnMakeType(); return; }
 			if (tab == TabRandomize && chosen == null) { SetStatus("Pick one of Raft's islands first."); return; }
+			// (buildings and caves, and on Randomize existing the other kinds under water (LM7), use objects of Raft's own
+			// islands: their scenes load first, then it generates)
+			List<string> scenes = PlaceableCatalog.ScenesNeededFor(NeededNames());
+			if (scenes.Count > 0)
+			{
+				if (loadingBuildings) { SetStatus("Still loading Raft's islands (" + scenes.Count + " scene" + (scenes.Count == 1 ? "" : "s") + ")... it generates when they are in."); return; }
+				loadingBuildings = true;
+				SetStatus("Loading Raft's islands for " + (tab == TabRandomize ? "what lies under water" : "the buildings and caves") + " (" + scenes.Count + " scene" + (scenes.Count == 1 ? "" : "s") + ")... it generates when they are in.");
+				DynamicIslands.instance.StartCoroutine(LoadThenGenerate());
+				return;
+			}
+			Generate();
+		}
+
+		bool loadingBuildings;
+		RectTransform rebuildGroup;
+
+		/// <summary>The design choices of the chosen island (ROADMAP CW1: each story island has its own): random, each
+		/// design, none.</summary>
+		List<string> RemakeIds()
+		{
+			List<Remakes.Design> designs = chosen != null ? Remakes.For(chosen.Scene) : new List<Remakes.Design>();
+			if (designs.Count == 0) designs = Remakes.All.Take(3).ToList();
+			var ids = new List<string> { designs[0].Scene + Remakes.Any };
+			ids.AddRange(designs.Select(d => d.Id));
+			ids.Add("");
+			return ids;
+		}
+
+		List<DropList.Option> RemakeOptions() { return Enumerable.Range(0, RemakeIds().Count).Select(i => new DropList.Option(i.ToString(), RemakeLabel(i), RemakeHint(i))).ToList(); }
+
+		string RemakeLabel() { return RemakeLabel(Mathf.Max(0, RemakeIds().IndexOf(s.Remake ?? ""))); }
+
+		string RemakeLabel(int i)
+		{
+			List<string> ids = RemakeIds();
+			if (i >= ids.Count) return "-";
+			string id = ids[i];
+			if (id.Length == 0) return "None (ground and nature only)";
+			if (id.EndsWith(Remakes.Any)) return "Random design";
+			Remakes.Design d = Remakes.All.FirstOrDefault(x => x.Id == id);
+			return d != null ? d.Label : id;
+		}
+
+		string RemakeHint(int i)
+		{
+			List<string> ids = RemakeIds();
+			if (i >= ids.Count) return "";
+			Remakes.Design d = Remakes.All.FirstOrDefault(x => x.Id == ids[i]);
+			return d != null ? d.Hint : ids[i].Length == 0 ? "Only the island's ground and nature, made anew" : "One of the designs, picked by the seed";
+		}
+
+		/// <summary>The settings Generate uses: on the Randomize existing tab only what it shows (not the Normal tab's buildings and caves).</summary>
+		IslandGenSettings Effective()
+		{
+			if (tab != TabRandomize)
+			{
+				if (string.IsNullOrEmpty(s.Remake) && string.IsNullOrEmpty(s.Look)) return s;
+				IslandGenSettings normal = s.Copy();
+				normal.Remake = "";
+				normal.Look = "";
+				return normal;
+			}
+			IslandGenSettings run = s.Copy();
+			if (chosen == null || Remakes.For(chosen.Scene).Count == 0) run.Remake = "";
+			run.Buildings = false;
+			run.Caves = false;
+			run.RaftSeaKinds = true; // (LM7: every kind Raft's islands have under water that the catalog has)
+			return run;
+		}
+
+		/// <summary>Objects of Raft's scenes that Generate needs loaded first: the buildings' and caves', and the extra kinds under water.</summary>
+		List<string> NeededNames()
+		{
+			IslandGenSettings run = Effective();
+			return GenBuildings.NeededNames(run).Concat(IslandGenerator.SeaNamesNeeded(run)).Distinct().ToList();
+		}
+
+		/// <summary>What the last Generate made (the window closes after it; tests read it).</summary>
+		public static string LastResult { get; private set; }
+
+		System.Collections.IEnumerator LoadThenGenerate()
+		{
+			int run = waitingRun;
+			yield return PlaceableCatalog.EnsureLoaded(NeededNames());
+			if (this == null || run != waitingRun) yield break;
+			loadingBuildings = false;
+			if (gameObject.activeInHierarchy) Generate();
+		}
+
+		void Generate()
+		{
+			LastResult = null; // (a test reading it saw the last run's result - CB13)
 			try
 			{
-				int n = IslandGenerator.GenerateInEditor(s);
-				IslandGenerator.FrameCamera(s);
+				IslandGenSettings run = Effective();
+				int n = IslandGenerator.GenerateInEditor(run);
+				if (tab == TabNormal) { lastNormal = run.Copy(); randomizeMade = null; }
+				else randomizeMade = IslandGenerator.Last;
+				IslandGenerator.FrameCamera(run);
 				EditorUI.RefreshIsland();
 				GenReport r = IslandGenerator.LastReport;
-				SetStatus("Island " + s.Seed + " generated in " + r.Seconds.ToString("F1") + " s: land about " + r.LandLength.ToString("F0") + " x " + r.LandWidth.ToString("F0") + " m, " + r.Top.ToString("F0") + " m high; " +
-					n + " objects (" + r.Describe() + ")" + (r.Wanted > IslandGenerator.MaxObjects ? " - thinned from " + r.Wanted : "") + ". Ctrl+Z undoes it.");
+				string done = "Island " + s.Seed + " generated in " + r.Seconds.ToString("F1") + " s: land about " + r.LandLength.ToString("F0") + " x " + r.LandWidth.ToString("F0") + " m, " + r.Top.ToString("F0") + " m high; " +
+					n + " objects (" + r.Describe() + ")" + (r.Wanted > IslandGenerator.MaxObjects ? " - thinned from " + r.Wanted : "") + ". Ctrl+Z undoes it.";
+				SetStatus(done);
+				// (the window steps aside so the new island is in view at once - GENERATE opens it again; the user, 2026-10-03)
+				LastResult = done;
+				Close();
+				DynamicIslands.Notify(done);
 			}
 			catch (Exception e)
 			{
@@ -847,13 +1077,13 @@ namespace DynamicIslands.Editor
 				return;
 			}
 			confirmUntil = 0f;
-			string name = MakeType(type, s.Seed, s.Levels);
+			string name = MakeType(type, s.Seed);
 			if (name == null) { SetStatus("Making the island failed - see the console (F10)."); return; }
 			if (DynamicIslands.LoadIsland(name)) { Close(); DynamicIslands.Notify("Made a " + type.Label.ToLowerInvariant() + ": '" + name + "'. Change it as you like and Save as with your own name - gen-... islands are left out of plans and random islands.");  }
 		}
 
 		/// <summary>Makes an island of a map type from a seed and saves it; returns its name (null if it failed).</summary>
-		public static string MakeType(MapType type, int seed, bool levels = false)
+		public static string MakeType(MapType type, int seed)
 		{
 			try
 			{
@@ -861,7 +1091,6 @@ namespace DynamicIslands.Editor
 				IslandGenSettings ms = MapTypes.Roll(type, new System.Random(seed), out elevation);
 				string name = MapTypes.FreeFileName(type, ms);
 				IslandFile file = MapTypes.Create(type, ms, elevation, name);
-				if (levels) file.Props[IslandProps.Levels] = "on";
 				file.Save(IslandSpawner.PathFor(name));
 				return name;
 			}
@@ -878,7 +1107,7 @@ namespace DynamicIslands.Editor
 		public static void ShowTab(int t) { if (instance != null) instance.SetTab(Mathf.Clamp(t, 0, 2)); }
 
 		/// <summary>Sets the window's settings as if the controls were used (tests).</summary>
-		public static void Use(IslandGenSettings settings) { if (instance != null) { instance.s = settings.Copy(); instance.ShowAll(); } }
+		public static void Use(IslandGenSettings settings) { if (instance != null) { instance.s = settings.Copy(); instance.fromOtherTab = false; instance.ShowAll(); } }
 
 		/// <summary>The window's settings now (tests).</summary>
 		public static IslandGenSettings Current { get { return instance != null ? instance.s.Copy() : null; } }

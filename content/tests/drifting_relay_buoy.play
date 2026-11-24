@@ -1,0 +1,41 @@
+# Drifting Relay Buoy (CIPlay drifting_relay_buoy): the sand bar at 1 m round 0 0, the buoy round 12 0; the buoy, the
+# message, the box, the lamp, the answer.
+island Drifting Relay Buoy
+offset 0 0
+expect step 0
+expect title The Relay Buoy
+expect hidden relayanswer
+zone buoy
+expect step 1
+read Relay message
+expect step 2
+open Buoy box
+wait 3
+expect step 3
+use buoylamp
+expect shown relayanswer
+expect step 4
+# (story pass 10-24: the blue hole is optional; the strips on the bar, the mast, the Keeper's log on the peak)
+read Relay strip: Hedda
+read Relay strip: Teo
+zone rb_dive
+air rb_air
+open Relay 6 chest
+wait 3
+open Relay 6 float box
+wait 3
+dig 1
+# (10-28: the dp_tower ladders now hang inside the landing holes - the bottom one's grip is here)
+climb -21.4 -7.9
+open Mast stash
+wait 3
+read Dune cairn
+dig 0
+zone rb_top
+expect step 5
+open Mast locker
+wait 3
+read Keeper's log: Relay 7
+expect step 6
+read Relay answer
+expect done

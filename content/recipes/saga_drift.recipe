@@ -1,0 +1,408 @@
+# Saga Drift - the seventh island of the library's plan The Frozen Horizon (storyline SL12, chapter 7: The Floating City)
+# Nine old whaling ships lashed hull to hull and frozen into one sheet of sea ice, plank streets laid across the ice
+# between them; round the hulls the city's own buildings: the flensing yard turned smelter yard, the council cabin with
+# its planter boxes, the rendering house, the ship's chapel on the north shore and the anchor winch at the flagship's
+# bow. Rats and screechers own it now; fog off the ice. Quest "The Floating City" (10 steps): the gangway, the city
+# charter, three screechers, the electric smelter's plans (the smelter yard), the council minutes ("the comms off, on
+# the Coldhold's order"), four rats (in the rendering house), the advanced biofuel extractor's plans, the chapel
+# strongbox (its keypad wants the year the charter was signed), the advanced anchor's plans (the winch), the last sermon.
+# DEEP 10-24: 12 -> 15 steps - the harbour master's ledger (berg cave), the crane top on the berg, the winch's pawl.
+# Story pass 10-24: 16 steps - Sparks' tent (his farewell) after the minutes; the berg climbed on foot to the fallen crane.
+#
+# Built by the recipe player (CIRecipe saga_drift) through the editor's own operations. Points (metres over the sea):
+# the ice at 0.6 (r 38 round 0 0); the nine hulls in three rows (x -12, 0, 12; z -22, 0, 22; each 7 x 16 m, along z);
+# the streets: z -11 and z 11 across, x -6 and x 6 along; the gangway from 0 -46 to 0 -34; the smelter yard x 21..27,
+# z -9..-3; the council cabin x -28..-23.5, z -16..-13; the rendering house x -28..-23.5, z 12..15; the chapel x -3..3,
+# z 33..37.5; the anchor winch at 12 33.
+# (Adapted: Raft's stranded boat has no deck to build on, so the city's houses stand on the ice round the hulls; the
+# titanium treasure is on the north-west spit at -30 26, clear of the hulls.)
+include lib_sea
+include lib_huts
+include lib_features
+include lib_frozen
+include lib_verdance
+include lib_areas
+# RESIZE 10-24: Radius 48 -> 90 (Height 2 -> 3), the island grows round the old content, which stays where it was.
+new
+gen Trees=0 Bushes=0 Rocks=0.15 Harvest=0.05 BeachThings=0.25
+gen Seed=12701 Radius=90 Height=3 Roughness=0.25 Peaks=2 Shape=0 Style=1 BeachWidth=0.4 Cliffs=0.05 PeakShape=0.3
+gen Water=0.5 SeaRocks=0.25 SeaFinds=0.35 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.4
+generate
+
+# --- Terrain: one sheet of sea ice at 0.6 m ----------------------------------------------------------------------------
+brush flatten at 0 0 r=38 s=20 frames=400 h=0.6
+brush flatten from 0 -34 to 0 -46 r=2.5 s=20 frames=80 h=0.2
+# RESIZE 10-24 retest: the bigger island stands higher here - the huts' pads flattened again
+brush flatten at 0 35.25 r=7 s=20 frames=400 h=0.6
+brush flatten at -25.75 -14.5 r=5 s=20 frames=200 h=0.6
+brush flatten at -25.75 13.5 r=5 s=20 frames=200 h=0.6
+brush flatten at 26.4 32.6 r=5 s=8 frames=40
+origin
+clear at 26.4 32.6 r=6
+clear at 0 0 r=38
+clear from 0 -34 to 0 -46 r=3
+
+# --- The nine hulls, frozen in ------------------------------------------------------------------------------------------
+place BoatStranded hulls at -12 -22 h=3.6 yaw=3 roll=-4
+place BoatStranded hulls at 0 -22 h=3.4 yaw=178 roll=3
+place BoatStranded hulls at 12 -22 h=3.7 yaw=-4 roll=5
+place BoatStranded hulls at -12 0 h=3.5 yaw=182 roll=2
+place BoatStranded flagship at 0 0 h=3.9 yaw=0
+place BoatStranded hulls at 12 0 h=3.4 yaw=176 roll=-3
+place BoatStranded hulls at -12 22 h=3.6 yaw=-2 roll=4
+place BoatStranded hulls at 0 22 h=3.5 yaw=181 roll=-5
+place BoatStranded hulls at 12 22 h=3.8 yaw=4 roll=2
+prop hulls tint.color=#6a5a4a
+prop hulls tint.amount=0.35
+
+# --- The plank streets across the ice, the lashings between the hulls ---------------------------------------------------
+line Block_Floor_Wood from -24 -11 to 24 -11 step=1.5 follow
+line Block_Floor_Wood from -24 11 to 24 11 step=1.5 follow
+line Block_Floor_Wood from -6 -30 to -6 30 step=1.5 follow
+line Block_Floor_Wood from 6 -30 to 6 30 step=1.5 follow
+for lz -26 26 13
+place Beam_Long_01 - at -6 $lz ground y=0.2 yaw=90
+place Beam_Long_01 - at 6 $lz ground y=0.2 yaw=90
+next
+
+# --- The gangway: the plank way up from the water, the city charter on its board ---------------------------------------
+line Block_Floor_Wood from 0 -46 to 0 -33 step=1.5 follow
+place Zone_Trigger gangzone at 0 -34 ground y=1
+place Note_Sign charter at 2 -35 ground sit yaw=200
+place TP_Moontown_SealedCrate01 - at -3 -36 ground sit yaw=15
+
+# --- The smelter yard (the old flensing deck): the electric smelter's plans ---------------------------------------------
+push at 21 -9 h=0.6
+call floors w=4 d=4 y=0.1
+place Placeable_CookingStand_Smelter - at 1.5 4.5 y=0.1 sit yaw=180
+place Placeable_CookingStand_Smelter_Electric - at 3.5 4.6 y=0.1 sit yaw=180
+place Loot_ChestLarge flensechest at 5 1.2 y=0.1 sit yaw=270
+place Beam_Long_01 - at 3 0.2 y=0.1
+pop
+place Zone_Trigger yardzone at 24 -6 ground y=1
+scatter "Pickup_Landmark_Scrap 1_OceanBottom" 2 at 40 -40 r=3 seed=12711 free=1
+
+# --- The council cabin and its planter boxes ---------------------------------------------------------------------------
+push at -28 -16 h=0.6
+call hut w=3 d=2 y=0.1
+place Placeable_Table_Basic - at 2.2 1.6 y=0.1 sit
+place Note_Book minutes at 2.2 1.6 y=1 drop yaw=20
+place Loot_Chest councilchest at 0.9 2.4 y=0.1 sit yaw=180
+pop
+place Zone_Trigger councilzone at -25.75 -18 ground y=1
+place Placeable_Cropplot_Small - at -21 -16 ground sit
+place Placeable_Cropplot_Small - at -21 -14 ground sit
+place Placeable_Cropplot_Small - at -19 -16 ground sit
+place Placeable_Cropplot_Small - at -19 -14 ground sit
+
+# --- The rendering house: the advanced biofuel extractor's plans, rats among the oil casks -------------------------------
+push at -28 12 h=0.6
+call hut w=3 d=2 y=0.1
+place Loot_ChestLarge renderchest at 3.6 2.2 y=0.1 sit yaw=180
+place Reef_Barrel2 - at 0.9 2.2 y=0.1 sit
+place Reef_Barrel2 - at 1.9 2.3 y=0.1 sit
+pop
+place Creature_Rat rats at -25.5 13.5 ground y=0.4
+
+# --- The chapel on the north shore: benches, candles, the strongbox and its keypad, the last sermon ---------------------
+push at -3 33 h=0.6
+call hut w=4 d=3 y=0.1
+# (R 10-31: reach - the first bench stood across the doorway, the strongbox and the sermon unreached: the pews
+# moved off the door's lane)
+place Bench_01 - at 2.8 1.5 y=0.1 sit yaw=180
+place Bench_01 - at 4.9 1.5 y=0.1 sit yaw=180
+place Placeable_Candlestick - at 3 4 y=0.1 sit
+# (11-03 fixC, CIFloatingSweep: the chapel strongbox hung 1 m over the floor with nothing under it, set on the floor like the benches)
+place Loot_Chest chapelbox at 1 4 y=0.1 sit yaw=180
+place RT_PowerBox chapelpad at 0.2 3 y=1.2 yaw=90
+place Note_Paper sermon at 4.6 3.8 y=1.1 drop yaw=170
+pop
+
+# --- The anchor winch at the flagship's bow ----------------------------------------------------------------------------
+# REDO 10-24: the winch was frozen by order - the city's "all hands" is three bells, one on each of three hulls
+place Placeable_Anchor_Stationary - at 12 33 ground sit yaw=180
+call crank x=9.8 z=32.2 yaw=180 alias=anchorwinch
+place TangaroaBucket bell1 at -12 -22 h=10 drop rot=180,0,0 scale=1.3
+place TangaroaBucket bell2 at 12 0 h=10 drop rot=180,0,0 scale=1.3
+place TangaroaBucket bell3 at -12 22 h=10 drop rot=180,0,0 scale=1.3
+place Loot_Chest anchorchest at 14 32 ground sit yaw=200
+
+# --- Screechers on the hulls, the titanium treasure, the sea: reefs, puffers, fog ----------------------------------------
+place Creature_StoneBird screechers at 0 -10 h=14
+call treasure x=-30 z=26 r=15 n=1 seed=12051
+place Creature_PufferFish puffers at 56.25 -67.5 h=-2
+scatter VP_CoralDigitate01 4 at 56.25 -67.5 r=4 seed=12721 wet free=1
+scatter VP_CoralBulb04 3 at 56.25 -67.5 r=4 seed=12722 wet free=1
+scatter SeaVine3_klump 4 at -67.5 56.25 r=5 seed=12723 wet free=1
+scatter VP_CoralDigitate01 3 at -67.5 56.25 r=4 seed=12724 wet free=1
+scatter Pickup_Landmark_GiantClam 2 at 30 -36 r=6 wet seed=12725
+call shallows x=0 z=0 r=90 deep=5 n=1 seed=12730
+call snowfall x=0 z=0 r=46 al=snow fog=#c0c8cc fa=0.5
+
+# --- DEEP 10-24 (one-hour pass): the Berg Quarter, the net loft, the tenth ship ---------------------------------------
+# The Berg Quarter (east): an iceberg frozen into the city's ice, 24 m, climbed on foot; on its top the old harbour
+# crane's fallen cab (story pass 10-24: a cairn, the winch's pawl in the crane cab chest; no tower, no zipline); the berg cave on its south
+# side (the harbour master's ledger); the net loft ruin and the West Ridge; the tenth ship, sunk 14 m in the south-west
+# (its strongbox, an air pocket); a third buried treasure on the berg's foot.
+call fz_mount x=64 z=-4 h=24 r=7
+call ar_plants_snowy x=64 z=-4 r=26 seed=12745
+# (agent Q 10-30, REACH: the berg's top stood on a 6 m ice wall over its shoulder - the crane cab, its chest and the
+# top unreached on foot: a path cut round the berg's west side up to the top, 0.6 m a step)
+brush flatten at 54.13 -7.59 r=1.6 s=20 frames=120 h=16.00
+brush flatten at 54.19 -6.37 r=1.6 s=20 frames=120 h=16.57
+brush flatten at 54.39 -5.20 r=1.6 s=20 frames=120 h=17.14
+brush flatten at 54.72 -4.12 r=1.6 s=20 frames=120 h=17.71
+brush flatten at 55.17 -3.12 r=1.6 s=20 frames=120 h=18.29
+brush flatten at 55.73 -2.22 r=1.6 s=20 frames=120 h=18.86
+brush flatten at 56.36 -1.43 r=1.6 s=20 frames=120 h=19.43
+brush flatten at 57.07 -0.77 r=1.6 s=20 frames=120 h=20.00
+brush flatten at 57.82 -0.22 r=1.6 s=20 frames=120 h=20.57
+brush flatten at 58.60 0.20 r=1.6 s=20 frames=120 h=21.14
+brush flatten at 59.40 0.49 r=1.6 s=20 frames=120 h=21.71
+brush flatten at 60.19 0.66 r=1.6 s=20 frames=120 h=22.29
+brush flatten at 60.95 0.72 r=1.6 s=20 frames=120 h=22.86
+brush flatten at 61.68 0.66 r=1.6 s=20 frames=120 h=23.43
+brush flatten at 62.36 0.51 r=1.6 s=20 frames=120 h=24.00
+clear at 58 -3 r=9 body
+call fz_cairn x=64 z=-1 al=cranecairn chest=cranecab zal=cranezone zid=crane_top msg="The berg's top. The old harbour crane lies toppled down the far side; its split cab sits here on the ice. Below, the nine ships - and from here you see the dark shape under the ice beside the city: a tenth."
+place Beam_Long_01 cranejib at 60.6 -6.2 ground y=0.2 yaw=35
+place Beam_Long_01 cranejib at 61.8 -7.6 ground y=0.25 yaw=80
+prop cranejib tint.color=#5a3a2a
+prop cranejib tint.amount=0.6
+place Creature_PolarBear bergbear at 48 -12 ground
+prop bergbear creature.count=1
+prop bergbear creature.respawn=0
+call treasure x=50 z=-16 r=8 n=1 seed=12741
+# the berg cave (its mouth north, to the berg)
+call ar_cave x=64 z=-40 h=4 yaw=0 al=bergcave chest=bergcavechest
+call icetint al=bergcave
+# (agent Q 10-30, REACH: the berg cave's mouth lies in a 4 m cut below the berg's lowest shelf - the cave, its chest
+# and the ledger unreached: a ramp down from the shelf into the cut)
+brush flatten at 56.80 -26.60 r=1.6 s=20 frames=120 h=8.1
+brush flatten at 57.56 -27.25 r=1.6 s=20 frames=120 h=7.5
+brush flatten at 58.33 -27.89 r=1.6 s=20 frames=120 h=6.9
+brush flatten at 59.09 -28.54 r=1.6 s=20 frames=120 h=6.3
+brush flatten at 59.86 -29.19 r=1.6 s=20 frames=120 h=5.7
+brush flatten at 60.62 -29.84 r=1.6 s=20 frames=120 h=5.1
+brush flatten at 61.39 -30.48 r=1.6 s=20 frames=120 h=4.5
+clear from 56.8 -26.6 to 61.4 -30.5 r=2.6 body
+# (R 11-01 15:40: reach - still no way out: the ramp head (8.1 m) lay more than a jump under the shelf - the ramp carried
+# on up the same line, 0.45 m a step, to 14 m, so it meets the shelf wherever the shelf is)
+brush flatten at 56.03 -25.96 r=1.8 s=20 frames=160 h=8.55
+brush flatten at 55.27 -25.31 r=1.8 s=20 frames=160 h=9.00
+brush flatten at 54.50 -24.67 r=1.8 s=20 frames=160 h=9.45
+brush flatten at 53.74 -24.02 r=1.8 s=20 frames=160 h=9.90
+brush flatten at 52.97 -23.38 r=1.8 s=20 frames=160 h=10.35
+brush flatten at 52.20 -22.73 r=1.8 s=20 frames=160 h=10.80
+brush flatten at 51.44 -22.09 r=1.8 s=20 frames=160 h=11.25
+brush flatten at 50.67 -21.44 r=1.8 s=20 frames=160 h=11.70
+brush flatten at 49.91 -20.80 r=1.8 s=20 frames=160 h=12.15
+brush flatten at 49.14 -20.15 r=1.8 s=20 frames=160 h=12.60
+brush flatten at 48.37 -19.51 r=1.8 s=20 frames=160 h=13.05
+brush flatten at 47.61 -18.86 r=1.8 s=20 frames=160 h=13.50
+brush flatten at 46.84 -18.22 r=1.8 s=20 frames=160 h=13.95
+clear from 56.8 -26.6 to 46.84 -18.22 r=2.8 body
+# (R 10-31: reach - down the ramp a player got into the cave but never out: the shelf above the ramp is higher than a
+# jump and the cave rock walls the pad in on the other sides - a beach from the cave mouth east along the cut and down
+# the berg's foot into the sea, 0.7 m a step)
+brush flatten at 64.50 -28.60 r=2.2 s=20 frames=200 h=3.9
+brush flatten at 67.39 -28.31 r=2.2 s=20 frames=200 h=3.2
+brush flatten at 70.28 -28.02 r=2.2 s=20 frames=200 h=2.5
+brush flatten at 73.17 -27.73 r=2.2 s=20 frames=200 h=1.8
+brush flatten at 76.06 -27.44 r=2.2 s=20 frames=200 h=1.1
+brush flatten at 78.94 -27.16 r=2.2 s=20 frames=200 h=0.4
+brush flatten at 81.83 -26.87 r=2.2 s=20 frames=200 h=-0.3
+brush flatten at 84.72 -26.58 r=2.2 s=20 frames=200 h=-1.0
+brush flatten at 87.61 -26.29 r=2.2 s=20 frames=200 h=-1.7
+brush flatten at 90.50 -26.00 r=2.2 s=20 frames=200 h=-2.4
+clear from 64.5 -28.6 to 90.5 -26.0 r=3.2 body
+# (R 11-01: reach - the beach began 3.6 m off the ramp foot, the pad still walled in: the beach carried on to the ramp foot)
+brush flatten at 62.43 -29.87 r=2.2 s=20 frames=200 h=4.3
+brush flatten at 63.47 -29.23 r=2.2 s=20 frames=200 h=4.1
+clear from 61.4 -30.5 to 64.5 -28.6 r=2.6 body
+# (R 11-01 19:35: reach - the ramp runs under the cave's ice roof and the walker never found its way down it: an open-sky
+# ramp cut from the shelf straight down into the cut before the cave mouth, 4 m wide, 0.6 m a step)
+brush flatten at 49.50 -22.30 r=2.0 s=20 frames=160 h=11.70
+brush flatten at 50.46 -22.30 r=2.0 s=20 frames=160 h=11.09
+brush flatten at 51.42 -22.30 r=2.0 s=20 frames=160 h=10.48
+brush flatten at 52.38 -22.30 r=2.0 s=20 frames=160 h=9.88
+brush flatten at 53.33 -22.30 r=2.0 s=20 frames=160 h=9.27
+brush flatten at 54.29 -22.30 r=2.0 s=20 frames=160 h=8.66
+brush flatten at 55.25 -22.30 r=2.0 s=20 frames=160 h=8.05
+brush flatten at 56.21 -22.30 r=2.0 s=20 frames=160 h=7.44
+brush flatten at 57.17 -22.30 r=2.0 s=20 frames=160 h=6.83
+brush flatten at 58.12 -22.30 r=2.0 s=20 frames=160 h=6.22
+brush flatten at 59.08 -22.30 r=2.0 s=20 frames=160 h=5.62
+brush flatten at 60.04 -22.30 r=2.0 s=20 frames=160 h=5.01
+brush flatten at 61.00 -22.30 r=2.0 s=20 frames=160 h=4.40
+clear from 49.5 -22.3 to 61 -22.3 r=3 body
+place Note_Book ledger at 63.2 -34.6 h=4.5 drop yaw=200
+place Zone_Trigger bergcavezone at 64 -35 h=5.4
+prop bergcavezone zone.id=berg_cave
+prop bergcavezone zone.radius=3
+prop bergcavezone zone.message=A cave in the berg's blue ice. A desk of crates, a ledger, a lamp: the harbour master's last office.
+# the net loft (west): a roofless ruin, its crate; the West Ridge behind it
+call ar_ruin x=-62 z=-20 h=3 yaw=0 al=netloft
+place Note_Paper netnote at -62.75 -20 h=4.05 drop yaw=10
+place Loot_Crate netcrate at -59.6 -23.6 ground sit yaw=30
+call ar_ridge x1=-80 z1=0 x2=-62 z2=36 h=6 top=8 r=7
+call ar_plants_snowy x=-70 z=18 r=24 seed=12748
+# the tenth ship (south-west), 14 m down
+call fz_dive x=-45 z=-62 d=14 r=12 yaw=0 obj=BoatStranded al=tenthship chest=tenthchest aid=tenthair aal=tenthairz abub=tenthairb cx=6 cz=2 ax=-6 az=-3
+place Zone_Trigger tenthview at -36 -50 ground y=1
+prop tenthview zone.id=tenth_ship
+prop tenthview zone.radius=5
+prop tenthview zone.message=Through the clear ice-water, a hull - the tenth ship, the one the charter never names.
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; TP_SnowVehicle02 + chest; hatch with a chest; buried treasure; viewpoint ---
+place campfire_1 - at 26.4 32.6 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at 29.4 34.6 ground sit yaw=137
+place "Box Small" - at 24.4 35.1 ground sit
+place Note_Paper dnote at 24.4 35.1 ground y=1.6 drop yaw=20
+note dnote Good Morning, Ice! - callers | GOOD MORNING, ICE! - CALLER LOG, T. HALLEN (SPARKS)\n\nOn air at seven, every day, from this tent - the council took my mast but not my battery.\nCaller 38: the Iron Whale. A woman reading the ice like a weather forecast. Lovely voice. Gone in four seconds.\nCaller 39: nobody. Static. I played it a record anyway.\nCaller 40: a seal. Barked twice. I counted it.\nCaller 41: a penguin. Said nothing. Best caller this week.\nCaller 42: the courier's dogs, howling down the line while he was by with the post. He asked me very nicely to switch off. I asked him very nicely who was asking.\nNote for the council: it is not broadcasting if nobody answers. It is talking to the ice, and the ice has never once complained.
+place Note_Paper sparksbye at 25.2 34.4 ground y=0.75 drop yaw=300
+note sparksbye Sparks' farewell | SPARKS' FAREWELL - pinned inside the tent flap\n\nTo whoever comes looking, and to the council, who will not:\nYou banished me for talking. Fair enough. It is the only thing I was ever any good at.\nI am taking the small raft and Bramble, who is a llama and therefore the most sensible member of this city. She has packed nothing and is calm about it. I have packed the set, two batteries and the best of the QSL cards the stations sent me over the years. The rest are in the box by the fire. Keep them; they prove we were all here once, and talking.\nI will go on air at seven wherever the ice drops me. If you hear Good Morning, Ice on a band you were not expecting, that is me - still not dead, still not quiet.\n- Tor Hallen
+place Loot_ChestSmall sparkscards at 27.6 31.4 ground sit yaw=210
+note sparkscards Sparks' card box | Sparks' card box: QSL cards from every station, and one penguin.
+loot sparkscards CopperIngot*2;Plastic*2;TradeToken*1
+prop sparkscards loot.refill=0
+place Zone_Trigger sparkszone at 26.4 34 ground y=1
+prop sparkszone zone.id=sparks_tent
+prop sparkszone zone.radius=4
+prop sparkszone zone.repeat=never
+prop sparkszone zone.message=A tent on the ice, a car battery, a wire up a pole. Somebody went on broadcasting out here.
+place TP_SnowVehicle02 dvan at -26.4 -32.6 ground yaw=257
+prop dvan tint.color=#7a8a96
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -30.4 -29.6 ground sit yaw=197
+note dwreckchest Driver's box | Under the driver's seat: bolts, glass, a scrap of leather.
+loot dwreckchest Bolt*2;Glass*2;Leather*2
+prop dwreckchest loot.refill=0
+call hatchcache x=-15 z=-12 r=8 seed=12791 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
+call vinecache x=-12 z=15 r=15 seed=12793 chest=dvinechest vines=dvines items=Rope*3;Wool*2;Bolt*3
+call treasure x=-39.7 z=13.7 r=15 n=1 seed=12792
+prop treasure12792 treasure.loot=TitaniumOre*2;MetalOre*2
+place Zone_Trigger dview at -15.1 39.2 ground
+prop dview zone.id=saga_drift_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=Nine old ships frozen into one sheet of ice, their masts like a winter forest.
+
+# --- Settings, story item, notes, behaviours, quest ----------------------------------------------------------------------
+info title=Saga Drift
+info author=Custom Islands
+info description=Nine old whaling ships lashed hull to hull and frozen into the ice: a city with plank streets, a smelter yard, a council cabin, a chapel - and no one in it but rats and screechers. The seventh island of The Frozen Horizon.
+island on.arrive=message||Nine masts in the fog, and not a light among them. The best radio on the white sea - silent.
+
+story chapelcode|The chapel's code|Placeable_Lantern_Metal|You typed the charter's year into the chapel strongbox's keypad.
+
+note charter City charter | SAGA DRIFT - CITY CHARTER\n\nNine keels, one city. Signed on the ice in the year 1909, when the last ship was lashed.\nNo ship leaves alone. No light goes out alone. The radio belongs to all.\n\n(the chapel keeps the city's strongbox; its lock is set to the year of this charter)
+note minutes Council cabin minutes | COUNCIL OF SAGA DRIFT - MINUTES, KEPT BY THE CLERK, R. AAS\n\nItem 1: the order from the Coldhold, come by the courier's dog sledge, sealed. The Warden writes: all comms off, every band, so the signal from the south will not find us. Carried, five to four. The radio was shut down the same night.\nItem 2: the Whale to be told nothing. Not carried. The Whale was sent north on our band anyway - on the Coldhold's order, in our voice. The clerk notes his shame.\nItem 3: Tor Hallen, called Sparks, found broadcasting from a tent on the ice outside the ships, against Item 1, for the fourth time. Banished. He asked to take the llama. Carried, nine to nothing; nobody else will feed her.\nItem 4: the rendering house is full of rats again.
+note sermon Last sermon | (the chaplain's last sermon, on the lectern - Father Ansgar)\n\nWe were nine ships because no ship can live alone up here. We lashed our keels and promised each other: no light goes out alone.\nNow the vault asks us to be silent for its sake. A seed bank under the glacier, they say, for when the world is green again. The Warden is afraid of something in the south. So am I. I am afraid of it the way I am afraid of the dark - which is to say, I light a candle and keep talking.\nWe sent Tor away for singing to penguins. God forgive us, the penguins miss him.\nI say a city that stops talking is already dead.\nThe glacier is on 1000. Go and see what they are keeping.
+note flensechest Smelter yard chest | Smelter yard chest: the electric smelter's plans, for when the generator runs.
+note councilchest Council chest | The council's chest: beets from the planter boxes, the city's seal.
+note renderchest Rendering house chest | Rendering house chest: the advanced biofuel extractor's plans, oil-stained.
+note chapelbox Chapel strongbox | The city's treasury in tokens, the chaplain's prayer book.
+note anchorchest Winch locker | Winch locker: the advanced anchor's plans - it held nine ships.
+loot flensechest Blueprint_SmelterElectric*1;MetalIngot*2;Scrap*3
+prop flensechest loot.refill=0
+loot councilchest Raw_Beet*4;Plank*6;Rope*2
+prop councilchest loot.refill=0
+loot renderchest Blueprint_BiofuelExtractorAdvanced*1;Leather*2;Bolt*2
+prop renderchest loot.refill=0
+loot chapelbox TradeToken*6;MetalIngot*2;Raw_Beet*2
+prop chapelbox loot.refill=0
+loot anchorchest Blueprint_AnchorStationaryAdvanced*1;MetalIngot*2;Rope*4
+prop anchorchest obj.name=anchorchest
+prop anchorchest beh.hidden=1
+prop bell1 obj.name=bell1
+prop bell1 beh.use=Ring the gangway ship's bell
+prop bell1 if.use=!signal|bell1
+prop bell1 on.use=signal||bell1\ngive||story:bellrung*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The bell clangs over the ice. Far off, something creaks on the flagship's bow.
+prop bell2 obj.name=bell2
+prop bell2 beh.use=Ring the middle ship's bell
+prop bell2 if.use=!signal|bell2
+prop bell2 on.use=signal||bell2\ngive||story:bellrung*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||A second bell. The ice round the anchor cracks.
+prop bell3 obj.name=bell3
+prop bell3 beh.use=Ring the far ship's bell
+prop bell3 if.use=!signal|bell3
+prop bell3 on.use=signal||bell3\ngive||story:bellrung*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The third bell - the city's old 'all hands'. The winch is ready to turn.
+story bellrung|A ship's bell rung|Placeable_Lantern_Metal|One of the three bells of the city's "all hands".
+story winchfree|The anchor winch freed|Placeable_Lantern_Metal|The flagship's winch turns again.
+prop anchorwinch obj.name=anchorwinch
+prop anchorwinch beh.use=Turn the anchor winch
+prop anchorwinch if.use=quest|13\ntake|story:pawl|1\ntake|story:bellrung|3
+prop anchorwinch on.use=give||story:winchfree*1\nshow|anchorchest\nmessage||The chain groans and comes up a link at a time. The winch locker under it is free.
+prop anchorwinch else.use=message||Frozen by order: "THE WINCH TURNS ON ALL HANDS ONLY." Three bells call all hands - one on each of three hulls. And the winch's pawl is gone: the harbour master's ledger will say where.
+prop dhatchchest if.open=wears|HeadLight*
+prop dhatchchest else.open=message||A ship's hold under the hatch, pitch black - wear a headlight.
+prop anchorchest loot.refill=0
+prop treasure12051 treasure.loot=TitaniumOre*3
+
+# --- DEEP 10-24: the pawl, the ledger, the extras ---
+story pawl|The winch's pawl|Placeable_Lantern_Metal|The anchor winch's iron pawl - without it the chain runs free.
+note ledger Harbour master's ledger | HARBOUR MASTER'S LEDGER - K. VIK\n\nThe Coldhold's order came with the post: the anchor winch is not to turn, so no ship leaves to carry word south. I took its pawl out myself.\nThe old harbour crane on the berg went over in the January gale, jib first, down the far side. Its cab lies split on the top, where no one goes now. I carried the pawl up there on my own two feet, wrapped it in the city flag and put it in the cab's chest. Then I sat in the wreck and cried a bit, which the ledger need not record, and does.\nThe city's all hands is three bells. With the bells rung and the pawl back, the winch turns.\nLast line: the tenth ship went down in the lead the winter we signed. We do not count her. We should.
+note cranecab Crane cab chest | The fallen crane's cab: the winch's pawl, wrapped in a flag.
+loot cranecab story:pawl*1;MetalIngot*2;Rope*2
+prop cranecab loot.refill=0
+note bergcavechest Harbour office chest | Harbour master's chest: harbour dues in tokens, and his dry socks.
+loot bergcavechest TradeToken*3;Wool*2;Bolt*2
+prop bergcavechest loot.refill=0
+note netnote Net mender's note | (pinned to the net loft's table - INGRID, NET MENDER)\n\nNets for nine ships, and one for the tenth that no one mends. I mend it anyway, every spring, a few knots at a time, in case she comes up.\nMy husband says I am mad. My husband also says the Warden is a great man, so I take his opinions the way I take the tide.\nThe radio is off, and the city is so quiet you can hear the ice talking under the hulls. It does not say anything kind.\nThe good twine is in the crate by the door. Take what you need. Mend something.
+note netcrate Net loft crate | The net loft's crate: twine, floats, a mender's needle.
+loot netcrate Rope*4;Plastic*3;Nail*6
+prop netcrate loot.refill=0
+note tenthchest Tenth ship's strongbox | Fourteen metres down: the tenth ship's charter, signed 1908, her captain's purse.
+loot tenthchest TitaniumIngot*1;MetalIngot*3;TradeToken*4
+prop treasure12741 treasure.loot=MetalOre*3;CopperOre*2
+
+prop gangzone zone.id=gangway
+prop gangzone zone.radius=4
+prop gangzone zone.message=The gangway. Overhead, on the masts, something shrieks.
+prop yardzone zone.id=smelter_yard
+prop yardzone zone.radius=4
+prop yardzone zone.message=The smelter yard - once the flensing deck. Cold furnaces.
+prop councilzone zone.id=council
+prop councilzone zone.radius=4
+prop councilzone zone.message=The council cabin. Something scuttles in the rendering house across the ice.
+prop screechers creature.count=3
+prop screechers creature.respawn=0
+prop screechers creature.zone=gangway
+prop rats creature.count=4
+prop rats creature.respawn=0
+prop rats creature.zone=council
+prop puffers creature.count=3
+
+prop chapelpad obj.name=chapelpad
+prop chapelpad beh.use=Type the strongbox's code
+prop chapelpad lock.code=1909
+prop chapelpad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The keypad beeps and the strongbox's bolt slides back.\nsignal||chapelcode\ngive||story:chapelcode*1
+prop chapelpad else.use=message||The strongbox wants the year the city was founded. The charter by the gangway says it.
+prop chapelbox obj.name=chapelbox
+prop chapelbox if.open=signal|chapelcode
+prop chapelbox else.open=message||The strongbox is locked. The keypad beside it wants a year.
+
+quest title=The Floating City
+quest intro=Nine ships frozen into one city - and silent. Make for the forest of masts and climb the gangway.
+step reach|gangway|1|Make for the nine ships; climb the gangway onto the ice
+step read|City charter|1|Read the city charter by the gangway
+step kill|Screecher|3|Drive off the three screechers nesting on the masts
+step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter's plans from the smelter yard
+step read|Council cabin minutes|1|Read the council cabin minutes
+step read|Sparks' farewell|1|Find the banished radio man's tent on the ice outside the ships
+step open|Chapel strongbox|1|Open the chapel strongbox (the charter knows its year)
+step kill|Rat|4|Clear the four rats out of the rendering house
+step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel extractor's plans from the rendering house
+step read|Harbour master's ledger|1|The winch's pawl is gone. Find the harbour master's ledger in the cave at the foot of the big iceberg
+step reach|crane_top|1|Climb the iceberg on foot to the fallen crane's cab on its top
+step collect|story:pawl|1|Take the winch's pawl from the crane cab chest
+step collect|story:bellrung|3|Ring the three ships' bells - "all hands"
+step collect|story:winchfree|1|Turn the anchor winch at the flagship's bow
+step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor's plans from the winch locker
+step read|Last sermon|1|Read the chaplain's last sermon
+quest done=The vault ordered the silence. The glacier calls on 1000.
+quest reward=MetalIngot*3;Rope*4;Raw_Beet*3
+
+# (box agent 10-25: generated rocks left hanging over the ground check - cleared)
+clear at -60.21 -20.39 r=1.5 all body only=SmallBoulder2
+save Saga Drift

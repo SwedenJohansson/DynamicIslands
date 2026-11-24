@@ -58,6 +58,20 @@ namespace DynamicIslands
 				Check(ref ok, DynamicIslands.ShiftsState(before, file(new[] { Obj("A"), Obj("C") })), "an object removed: a shift");
 				Check(ref ok, DynamicIslands.ShiftsState(before, file(new[] { Obj("B"), Obj("A"), Obj("C") })), "the order changed: a shift");
 				Check(ref ok, DynamicIslands.ShiftsState(before, file(new[] { Obj("A"), Obj("B", loot), Obj("C") })), "an object made a chest (the chests' numbering): a shift");
+				// (AU23: the island's rules and quest steps are kept by their place too)
+				Func<string, string, IslandFile> withProps = (rules, steps) =>
+				{
+					IslandFile pf = file(new[] { Obj("A") });
+					WorldDirector.SetRulesInProps(pf.Props, rules.Split(',').Where(w => w.Length > 0).Select(w => new IntroRule { When = w, What = "island", WhatArg = "X" }));
+					if (steps.Length > 0) pf.Props[IslandQuest.KeySteps] = steps;
+					return pf;
+				};
+				IslandFile ruled = withProps("start,quest", "reach|z|1|\nread|N|1|");
+				Check(ref ok, !DynamicIslands.ShiftsState(ruled, withProps("start,quest,day", "reach|z|1|\nread|N|1|\nopen|C|1|")), "a rule and a step added at the end: no shift");
+				Check(ref ok, !DynamicIslands.ShiftsState(ruled, withProps("start,quest", "reach|z|2|Go there\nread|N|1|")), "a step's count or text changed: no shift");
+				Check(ref ok, DynamicIslands.ShiftsState(ruled, withProps("quest", "reach|z|1|\nread|N|1|")), "a rule removed: a shift");
+				Check(ref ok, DynamicIslands.ShiftsState(ruled, withProps("start,quest", "read|N|1|")), "a quest step removed: a shift");
+				Check(ref ok, DynamicIslands.ShiftsState(ruled, withProps("start,quest", "reach|z|1|\nread|Other note|1|")), "a step's note renamed: a shift");
 
 				// Patches
 				Check(ref ok, PatchHealth.FailedPatches.Count == 0 && PatchHealth.Applied >= 30, PatchHealth.Applied + " patches applied, " + PatchHealth.FailedPatches.Count + " failed");
@@ -68,7 +82,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CISafetyEditor", docs: "Dev, editor: the safety fixes in the editor - an island setting is an undo step and an unsaved change (undo brings it back); selecting objects isn't an undo step; an object Raft doesn't have loads as a red placeholder and is saved back unchanged; saving over an island a saved world uses keeps that world on its version when objects were removed, not when one was added at the end; a deleted island is moved to 'deleted'. Test files are removed after")]
-		public static void SafetyEditorCommand() { DynamicIslands.instance.StartCoroutine(SafetyEditorRoutine()); }
+		public static void SafetyEditorCommand() { StartTest(SafetyEditorRoutine()); }
 
 		static IEnumerator SafetyEditorRoutine()
 		{
@@ -138,15 +152,27 @@ namespace DynamicIslands
 				yield return null;
 				DynamicIslands.SaveIsland(name);
 				Check(ref ok, added != null && !File.Exists(copy), "an object added at the end: no copy kept, the world gets this version");
-				// ... an object removed: the world keeps its version
+				// ... an object removed: the world gets this version, what was used there carried to the same objects (R1b)
 				hash = IslandNetwork.HashOf(name);
 				File.WriteAllLines(worldFile, new[] { "# Custom islands in world 'CI Safety': name|x|y|z", "@auto=on", name + "|0|0|0||||" + hash });
 				copy = IslandSpawner.PathFor(IslandNetwork.DownloadName(name, hash));
 				cleanup.Add(copy);
+				cleanup.Add(Path.Combine(Path.Combine(Path.GetDirectoryName(deleted), LibraryPack.KeptVersionsFolder), Path.GetFileName(copy)));
 				if (first != null) first.gameObject.SetActive(false); // (deleted in the editor = hidden, not saved)
 				yield return null;
 				DynamicIslands.SaveIsland(name);
-				Check(ref ok, File.Exists(copy) && IslandNetwork.HashOf(IslandNetwork.DownloadName(name, hash)) == hash, "an object removed: the world keeps the version it started with (" + Path.GetFileName(copy) + ")");
+				string[] line = File.ReadAllLines(worldFile).First(l => l.StartsWith(name + "|")).Split('|');
+				Check(ref ok, !File.Exists(copy) && line[7] == IslandNetwork.HashOf(name), "an object removed: the world gets this version (its state carried), no copy kept");
+				// ... a quest step removed: the world keeps its version
+				DynamicIslands.currentIslandProps[IslandQuest.KeySteps] = "reach|z|1|\nread|N|1|";
+				DynamicIslands.SaveIsland(name);
+				hash = IslandNetwork.HashOf(name);
+				File.WriteAllLines(worldFile, new[] { "# Custom islands in world 'CI Safety': name|x|y|z", "@auto=on", name + "|0|0|0||||" + hash });
+				copy = IslandSpawner.PathFor(IslandNetwork.DownloadName(name, hash));
+				cleanup.Add(copy);
+				DynamicIslands.currentIslandProps[IslandQuest.KeySteps] = "read|N|1|";
+				DynamicIslands.SaveIsland(name);
+				Check(ref ok, File.Exists(copy) && IslandNetwork.HashOf(IslandNetwork.DownloadName(name, hash)) == hash, "a quest step removed: the world keeps the version it started with (" + Path.GetFileName(copy) + ")");
 				Check(ref ok, WorldCopy.LocalFileFor(name, hash) == IslandNetwork.DownloadName(name, hash), "... and loads that one by its hash");
 
 				// Deleting moves it aside
@@ -165,7 +191,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CISafetyWorld", docs: "Dev, world: LoadEditor inside a world is refused (the world stays, the player is told); Resync asks the host again without harm")]
-		public static void SafetyWorldCommand() { DynamicIslands.instance.StartCoroutine(SafetyWorldRoutine()); }
+		public static void SafetyWorldCommand() { StartTest(SafetyWorldRoutine()); }
 
 		static IEnumerator SafetyWorldRoutine()
 		{
@@ -174,6 +200,19 @@ namespace DynamicIslands
 			DynamicIslands.LoadEditor(new string[0]);
 			yield return new WaitForSeconds(3f);
 			Check(ref ok, LoadSceneManager.IsGameSceneLoaded && !DynamicIslands.InEditor(), "LoadEditor inside a world is refused: still in the world");
+			if (Raft_Network.IsHost)
+			{
+				// (CB12: what players send can't grow without end - a long journal page is cut, holds that ran out are dropped)
+				StoryBook.AddPage("ci-cb12-long", new string('T', 500), new string('x', StoryBook.MaxPageText + 5000), "ci");
+				StoryBook.Page page = StoryBook.Pages.FirstOrDefault(p => p.Key == "ci-cb12-long");
+				Check(ref ok, page != null && page.Text.Length == StoryBook.MaxPageText && page.Title.Length == StoryBook.MaxTitle, "a journal page too long is cut to " + StoryBook.MaxPageText + " letters (" + (page != null ? page.Text.Length.ToString() : "none") + ")");
+				var fake = new IslandWorldState.Entry { Id = -77 };
+				for (int i = 0; i < Claims.MaxHeld + 50; i++) Claims.HostGrant(fake, 1000 + i, 1UL);
+				int full = Claims.HeldCount;
+				yield return new WaitForSecondsRealtime(6.5f);
+				Claims.HostGrant(fake, 5, 1UL);
+				Check(ref ok, full >= Claims.MaxHeld + 50 && Claims.HeldCount < 50, "the host's claim holds: " + full + " fresh ones kept, those run out dropped (" + Claims.HeldCount + " left)");
+			}
 			if (!Raft_Network.IsHost) { IslandNetwork.Resync(); yield return new WaitForSeconds(8f); Check(ref ok, IslandNetwork.HasList, "Resync: the host's list came again"); }
 			if (ok) Log("PASS: safety world"); else Fail("safety world");
 		}

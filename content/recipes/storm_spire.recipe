@@ -1,0 +1,487 @@
+# Storm Spire - an island of the library's plan Raft 2: The Drowned Frontier (station Seven of the Frontier Corps)
+# A needle of rock in the storm belt, its top cut flat for the Corps' weather station (33.5 m): a radio tower room with a
+# mast and a turning wind vane on its roof; up the needle's west side the station's lift tower - its car
+# stuck at the top, a ladder up the tower with a landing halfway - and a bridge from its top to the station; the shed and
+# the meteorologist's tapes at the landing on the west beach; grey storm light, mist and rain round the spire. Quest "Eye
+# of the Storm" (17 steps): the tapes, the climb, the storm bird on the mast, the dive for the cove's
+# box, three conductor rods (the shed, the tower's landing, the cove), the station's locker (the electric smelter's, the advanced biofuel
+# extractor's and the advanced anchor's blueprints).
+# RAFT2 10-26 (1-hour pass): the needle's new shore - Thunder Knoll (north) with a lightning mast, Lightning Cave (south-east), the old met hut (east) where Ivo Brand waits (a lamp puzzle), a weather plane down in the south-west shallows, a jump course (north-east), the Corps' storm maze (south), five storm glasses (a set), a buried cache; by the shed the storm siren that wants the mast's rotor and the cave's coil
+#
+# Built by the recipe player (CIRecipe storm_spire) through the editor's own operations.
+include lib_sea
+include lib_rt
+include lib_features
+include lib_highwater
+include lib_areas
+include lib_raft2
+include lib_caves
+new
+# (nature: forest, Like Raft - pines up a rock needle; Whiteout Reach after it is the snowy one)
+gen Trees=0.21 Bushes=0.38 Rocks=0.42 Harvest=0.1 BeachThings=0.3
+gen Seed=8107 Radius=55 Height=48 Roughness=0.6 Peaks=1 Shape=0 Style=3 PeakShape=0.9 Cliffs=0.6
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.4 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+
+# --- Terrain: the needle's top cut flat for the station (33.5 m), the lift tower's pad at its west foot (9.5 m), the
+# landing on the west beach (3 m) ---------------------------------------------------------------------------------------
+# (the top 16 m across: at 11 m the station's corners hung over its edge; 0.1 m under the bridge and the station's floor)
+brush flatten at 1 9 r=8 s=20 frames=90 h=33.4
+brush flatten at -11 9 r=3.5 s=20 frames=50 h=9.5
+# (a path up to the pad from the beach side - its edge stood as a 2 m bank: 14 m long, rising to the pad's height at
+# its west edge; a shorter one ended in a step under the tower's west pillars)
+for i 0 12 1
+brush flatten at {-28+$i*1.17} 9 r=2.6 s=20 frames=15 h={3.6+$i*0.5}
+next
+brush smooth from -29 9 to -15.5 9 r=2.6 s=10 frames=12
+# (the pad levelled again after the path: its smoothing left the tower's west pillars 0.4-0.6 m over the ground)
+brush flatten at -11 9 r=2.6 s=20 frames=40 h=9.5
+# (and under the tower's west pillars, where the pad meets the path: their feet stood 0.4 m over the ground)
+brush flatten from -12.25 7.5 to -12.25 10.5 r=1.8 s=20 frames=40 h=9.55
+brush flatten at -33 8 r=5 s=20 frames=50 h=3
+# (the needle's sides and top painted rock: cut flat and widened, it stood as a smooth tan column)
+brush rock at 1 9 r=11 s=20 frames=40
+origin
+# --- RAFT2 10-26 terrain: the land grows (banks first), then the pads of the new areas -------------------------------
+# the banks round the needle: north (to Thunder Knoll), east, south-east, south (the maze), south-west, north-east
+brush flatten from 10 48 to 14 62 r=11 s=20 frames=500 h=3
+brush flatten from 50 0 to 76 -4 r=12 s=20 frames=500 h=3
+brush flatten from 36 -40 to 52 -58 r=11 s=20 frames=500 h=3
+brush flatten from -10 -50 to -12 -68 r=12 s=20 frames=500 h=3
+brush flatten from -40 -36 to -60 -52 r=10 s=20 frames=500 h=2
+brush flatten from 36 34 to 54 44 r=12 s=20 frames=500 h=3
+brush auto at 14 60 r=14 s=10 frames=25
+brush auto at 64 -4 r=18 s=10 frames=25
+brush auto at 46 -52 r=14 s=10 frames=25
+brush auto at -12 -62 r=14 s=10 frames=25
+brush auto at -52 -46 r=14 s=10 frames=25
+brush auto at 46 40 r=14 s=10 frames=25
+# the pads: the cave (Lightning Cave), the ruined house, the plane
+call r2_pad x=56 z=-74 r=14 h=3
+brush flatten from 56 -66 to 56 -50 r=6 s=20 frames=300 h=3
+call r2_pad x=78 z=-4 r=11 h=3
+call r2_pad x=-64 z=-56 r=11 h=2
+brush flatten from -12 -68 to -12 -86 r=14 s=20 frames=500 h=3
+call r2_pad x=-12 z=-82 r=17 h=3
+# Thunder Knoll: summit 18 m, base r 20, the trail from the foot toward the hub
+call hw_mount x=18 z=80 b=20 h=18
+# RAFT2 10-27: Thunder Knoll not a straight column (hw_mount levels its r 9 summit again after smoothing, so it stood as
+# a sheer block): rings at the trail's own heights (a cone the trail's pads sit in as ledges), smoothed into slopes down
+# to the sea, shoulders on its sides, a rounded summit (r 8 at 18 m, as the trail ends) with a low crown east of the
+# mast; the mast's and the zipline's feet kept level; the trail is cut after
+brush flatten at 18 80 r=17 s=20 frames=300 h=7.6
+brush flatten at 18 80 r=14 s=20 frames=300 h=11.1
+brush flatten at 18 80 r=11 s=20 frames=300 h=14.5
+brush smooth at 18 80 r=26 s=6 frames=60
+brush flatten at 3.9 74.87 r=4.5 s=20 frames=200 h=10
+brush flatten at 19.26 65.56 r=4 s=20 frames=200 h=10.5
+brush flatten at 27.64 91.49 r=5 s=20 frames=200 h=10
+brush flatten at 10.54 69.35 r=3 s=20 frames=200 h=12.5
+brush flatten at 6.31 86.75 r=3 s=20 frames=200 h=12
+brush flatten at 30.22 75.55 r=3 s=20 frames=200 h=12.5
+brush flatten at 13.55 92.22 r=3 s=20 frames=200 h=12.5
+brush smooth at 18 80 r=20 s=3 frames=20
+brush flatten at 18 80 r=8 s=20 frames=150 h=17.6
+brush smooth at 18 80 r=11 s=4 frames=25
+brush flatten at 19.5 78.5 r=5 s=20 frames=120 h=18.4
+brush flatten at 20 78 r=3 s=20 frames=120 h=19
+brush smooth at 19.5 78.5 r=6 s=3 frames=15
+brush flatten at 15 81.5 r=5 s=20 frames=250 h=18.05
+brush flatten at 15.5 78.4 r=2.6 s=20 frames=200 h=18.05
+brush flatten at 21.2 77.4 r=2 s=20 frames=100 h=19.1
+brush auto at 18 80 r=24 s=10 frames=25
+call hw_trail x=18 z=80 b=20 h=18 a0=-149.22 turn=300 n=34 h0=3
+# RAFT2 11-14: the reach grid found a pocket on the trail's west turn (pads 5-14, 5.5-7.5 m, by 7.5 84): the pads there
+# are cut into the shoulders and did not come down level in 220 frames, so a 1.1 m step closed it in. Cut again at half
+# the pad spacing with more frames, so the trail climbs there in even 0.22 m steps; the low spot inside the turn filled
+# to the trail's height and joined to it
+for k 10 28 1
+set t {$k/68}
+set rr {21-13*$t}
+set aa {-149.22+300*$t}
+brush flatten at {18+$rr*sin($aa)} {80+$rr*cos($aa)} r=3.2 s=20 frames=500 h={3+15*$t}
+next
+brush flatten from 7.5 84 to 2.2 85 r=2.2 s=20 frames=200 h=6.9
+brush flatten at -38 -14 r=4 s=8 frames=60
+clear at -38 -14 r=7
+clear at 1 9 r=9
+clear at -11 9 r=5
+clear at -33 8 r=7
+clear from -33 8 to -12 9 r=2.5
+
+# --- The landing on the west beach: the shed (Raft's wooden walls, a wooden roof, its door to the spire) with the first
+# rod, the meteorologist's tapes on a crate by it ------------------------------------------------------------------------
+push at -35.5 5.5 h=3
+for fx 0.75 2.25 1.5
+for fz 0.75 2.25 1.5
+place Block_Floor_Wood - at $fx $fz y=0.2
+next
+next
+place Block_Wall_Wood - at 0.75 0 y=0.2
+place Block_Wall_Wood - at 2.25 0 y=0.2
+place Block_Wall_Wood - at 0.75 3 y=0.2
+place Block_Wall_Wood - at 2.25 3 y=0.2
+place Block_Wall_Wood - at 0 0.75 y=0.2 yaw=90
+place Block_Wall_Wood - at 0 2.25 y=0.2 yaw=90
+place Block_Wall_Wood - at 3 0.75 y=0.2 yaw=90
+place Block_Pillar_Wood - at 0 0 y=0.2
+place Block_Pillar_Wood - at 3 0 y=0.2
+place Block_Pillar_Wood - at 0 3 y=0.2
+place Block_Pillar_Wood - at 3 3 y=0.2
+roof 2 2 at 0 0 y=0.2 wood
+place "Box Small" rodshed at 0.9 2.2 y=0.2 sit yaw=10
+pop
+place Crate_Big_01 - at -30.5 9.5 ground yaw=15
+place Note_Paper tapes at -30.5 9.5 h=8 sit drop yaw=80
+place Placeable_Lantern_Metal - at -30.1 9.9 h=8 sit drop
+place Zone_Trigger spirefoot at -31 8 h=4
+
+# --- The station's lift tower at the needle's west foot: four storeys of the radio tower's thick pillars, Raft's 6 m
+# ladders up its west face, a landing halfway with the second rod, the stuck car on its top, a bridge to the station -----
+push at -11 9 h=9.5
+for lv 0 18 6
+place RT_PillarThick - at -1.25 -1.25 y=$lv
+place RT_PillarThick - at 1.25 -1.25 y=$lv
+place RT_PillarThick - at -1.25 1.25 y=$lv
+place RT_PillarThick - at 1.25 1.25 y=$lv
+place LandmarkLadder_6m - at -1.45 0 y=$lv yaw=90
+next
+place Block_Floor_Wood landing at 0 0 y=12
+place "Box Small" rodledge at 0.2 0.3 y=12 sit yaw=35
+for fx -0.75 0.75 1.5
+for fz -0.75 0.75 1.5
+place Block_Floor_Wood - at $fx $fz y=24
+next
+next
+place Block_Wall_Fence_Rope - at -0.75 1.5 y=24
+place Block_Wall_Fence_Rope - at 0.75 1.5 y=24
+place Block_Wall_Fence_Rope - at -0.75 -1.5 y=24
+place Block_Wall_Fence_Rope - at 0.75 -1.5 y=24
+# (the bridge to the station's door: five blocks - three ended 2 m short of the top, over a 22 m drop)
+for bx 2.25 8.25 1.5
+place Block_Floor_Wood - at $bx 0 y=24
+place Block_Wall_Fence_Rope - at $bx -0.75 y=24
+place Block_Wall_Fence_Rope - at $bx 0.75 y=24
+next
+pop
+
+# --- The weather station on the needle's top: a radio tower room (its door to the bridge), the instrument panel and the
+# locker behind it; on its roof the mast with a wind vane turning in the storm, the storm bird (the radio tower's
+# down-pipe as a lightning rod lay flat on the roof - left out) ----------------------------------------------------------
+push at 4 9 h=33.5
+call rt_storey l2=RT_WallDoor1 f1=RT_WallWindow1 b2=RT_WallWindow1 r2=RT_WallWindow2
+place RT_Floor - at 0 4.5 y=3.05
+place "Table Office" - at -3 3.4 sit
+place RT_RadarScreen - at -2.9 3.85 y=1.08 sit yaw=180 scale=0.5
+place Locker stationlocker at -0.55 2.4 sit yaw=270
+place Placeable_Lantern_Metal - at -4.2 3.6 y=1.2 sit drop
+place RT_PillarThick mast at -1.2 -3.2 y=3.05
+# (the vane's foot is wider than the mast: it stands on a 2 x 2 m scaffold platform on the mast's top)
+place Scaffolding_2x2m - at -1.2 -3.2 y=9.05
+place Placeable_WindTurbine vane at -1.2 -3.2 y=10.05 scale=0.45
+place Zone_Trigger spiretop at -3 0 y=1.5
+place Creature_StoneBird stormbird at -3 0 y=9
+pop
+
+# (box agent 10-24: a generated sand rock grew round the cove box - cleared)
+clear at -30 57 r=3 only=Rock|Boulder
+# --- The north cove off the north-west shore (3.8 m down, a level spot - CISeaSpots): the third rod's box on its floor --
+place "Box Small" rodcove at -30 57 ground yaw=40
+
+# --- The storm round the spire: grey light and mist, the rain's sound -----------------------------------------------------
+place Zone_Atmosphere storm at 0 9 h=18
+place Zone_Sound rain at 0 9 h=10
+
+# --- RAFT2 10-26 (the user: one hour per island - hills, a cave, a house, a wreck, secrets): the needle's new shore - Thunder Knoll (north) with a lightning mast, Lightning Cave (south-east), the old met hut (east) where Ivo Brand waits (a lamp puzzle), a weather plane down in the south-west shallows, a jump course (north-east), the Corps' storm maze (south), five storm glasses (a set), a buried cache; by the shed the storm siren that wants the mast's rotor and the cave's coil ------
+call hw_zone x=7.25 z=61.96 al=ss_trailz id=ss_trail r=5 msg="The trail up Thunder Knoll starts here - round and up."
+call hw_zone x=18 z=80 al=ss_summitz id=ss_summit r=8 h=1 msg="The top of Thunder Knoll. The whole island below you."
+call hw_mast x=15 z=82 h0=18 lv=5 a=ss_mast chest=ss_topchest top=Placeable_Lantern_Metal
+place ZiplinePath_Landmark ss_zip at 21.2 77.4 h=19.35
+zipto ss_zip -34 -10
+place Creature_Goat ss_goats at 11.25 64.96 ground
+prop ss_goats creature.count=2
+call ar_cave x=56 z=-74 h=3 yaw=0 al=ss_caverock chest=ss_cavechest
+# RAFT2 11-14: the den's dome reached 66 m back over the south sea and its skin roofed shore pockets (by 76.8 -105.4):
+# capped, its height kept
+prop ss_caverock cave.dome=18
+call hw_zone x=55 z=-65 al=ss_cavez id=ss_cave r=4 h=1 msg="Lightning Cave. The thunder sounds far away in here."
+call ar_ruin x=78 z=-4 h=3 yaw=0 w=3 d=2 al=ss_ruin
+call r2_islander x=77 z=-8.5 yaw=200 al=ss_isl nm="Ivo Brand" pose=sit
+prop ss_isl talk.text=Sit down before the wind sits you down.\n---\nI read the glasses for the Corps for nine years. Rain, rain, hail, rain. Then the siren went quiet and the boats stopped coming.\n---\nThe siren wants its rotor from the mast on Thunder Knoll and its coil from Lightning Cave. And if you've time, the storm maze south - the Corps built it to teach recruits not to panic.\n---\nAnd my lamps - four round the house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.
+place Placeable_Chair_Basic - at 77 -8.5 ground sit yaw=200
+call r2_lamp x=71 z=-5 al=ss_lamp1 nm="Met lamp 1" grp="Met lamps" on=1
+call r2_lamp x=77 z=2 al=ss_lamp2 nm="Met lamp 2" grp="Met lamps" on=0
+call r2_lamp x=84 z=-5 al=ss_lamp3 nm="Met lamp 3" grp="Met lamps" on=0
+call r2_lamp x=77 z=-12 al=ss_lamp4 nm="Met lamp 4" grp="Met lamps" on=1
+prop ss_lamp1 on.use=light|Met lamp 2|toggle
+prop ss_lamp2 on.use=light|Met lamp 3|toggle
+prop ss_lamp3 on.use=light|Met lamp 4|toggle
+prop ss_lamp4 on.use=light|Met lamp 1|toggle
+prop ss_lamp1 on.alllit=show|ss_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call r2_hidden x=79 z=0.6 al=ss_lampchest
+place Creature_Chicken ss_hens at 86 2 ground
+prop ss_hens creature.count=3
+call ar_plane x=-64 z=-56 h=2 yaw=40 al=ss_plane crate=ss_planecrate
+place Note_Paper ss_pilot at -65.78 -51.9 ground y=0.1 drop yaw=70
+call hw_zone x=-64 z=-56 al=ss_planez id=ss_plane r=6 h=1 msg="A weather plane in the shallows, one wing in the water."
+# JUMP ss pad=3 at=58 48
+push at 58 48
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpss at -4.24 -4.24 h=3.6
+place Block_Foundation_Tier3 jpss at -5.77 -1.65 h=4.35
+place Block_Foundation_Tier3 jpss at -5.85 1.35 h=5.1
+place Block_Foundation_Tier3 jpss at -4.46 4.01 h=5.85
+place Block_Foundation_Tier3 jpss at -1.95 5.67 h=6.6
+place Block_Foundation_Tier3 jpss at 1.04 5.91 h=7.35
+place Block_Foundation_Tier3 jpss at 3.78 4.66 h=8.1
+place Block_Foundation_Tier3 jpss at 5.56 2.25 h=8.85
+place Block_Foundation_Tier3 jpss at 5.96 -0.73 h=9.6
+place Block_Foundation_Tier3 jpss at 4.85 -3.53 h=10.35
+place Block_Foundation_Tier3 jpss at 2.54 -5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppss at -5.77 -1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppss at -5.85 1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppss at -4.46 4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppss at -1.95 5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppss at 1.04 5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppss at 3.78 4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppss at 5.56 2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppss at 5.96 -0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppss at 4.85 -3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppss at 2.54 -5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpss tint.color=#5d6066
+prop jpss tint.amount=0.35
+prop jppss tint.color=#5d6066
+prop jppss tint.amount=0.35
+place Loot_Chest jcss at 1.04 5.91 h=7.35 sit yaw=0
+prop jcss loot.refill=0
+place Loot_ChestSmall jbss at 2.54 -5.44 h=11.1 sit yaw=0
+prop jbss loot.refill=0
+pop
+call hw_zone x=58 z=40 al=ss_jumpz id=ss_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+push at -19.5 -89.5 h=3
+place Block_Wall_Tier3 ss_maze at 0.75 0 y=0.05
+place Block_Wall_Tier3 ss_maze at 2.25 0 y=0.05
+place Block_Wall_Tier3 ss_maze at 0.75 6 y=0.05
+place Block_Wall_Tier3 ss_maze at 2.25 6 y=0.05
+place Block_Wall_Tier3 ss_maze at 0.75 15 y=0.05
+place Block_Wall_Tier3 ss_maze at 2.25 15 y=0.05
+place Block_Wall_Tier3 ss_maze at 3.75 0 y=0.05
+place Block_Wall_Tier3 ss_maze at 5.25 0 y=0.05
+place Block_Wall_Tier3 ss_maze at 3.75 9 y=0.05
+place Block_Wall_Tier3 ss_maze at 5.25 9 y=0.05
+place Block_Wall_Tier3 ss_maze at 3.75 15 y=0.05
+place Block_Wall_Tier3 ss_maze at 5.25 15 y=0.05
+place Block_Wall_Tier3 ss_maze at 6.75 6 y=0.05
+place Block_Wall_Tier3 ss_maze at 8.25 6 y=0.05
+place Block_Wall_Tier3 ss_maze at 6.75 12 y=0.05
+place Block_Wall_Tier3 ss_maze at 8.25 12 y=0.05
+place Block_Wall_Tier3 ss_maze at 6.75 15 y=0.05
+place Block_Wall_Tier3 ss_maze at 8.25 15 y=0.05
+place Block_Wall_Tier3 ss_maze at 9.75 0 y=0.05
+place Block_Wall_Tier3 ss_maze at 11.25 0 y=0.05
+place Block_Wall_Tier3 ss_maze at 9.75 3 y=0.05
+place Block_Wall_Tier3 ss_maze at 11.25 3 y=0.05
+place Block_Wall_Tier3 ss_maze at 9.75 12 y=0.05
+place Block_Wall_Tier3 ss_maze at 11.25 12 y=0.05
+place Block_Wall_Tier3 ss_maze at 9.75 15 y=0.05
+place Block_Wall_Tier3 ss_maze at 11.25 15 y=0.05
+place Block_Wall_Tier3 ss_maze at 12.75 0 y=0.05
+place Block_Wall_Tier3 ss_maze at 14.25 0 y=0.05
+place Block_Wall_Tier3 ss_maze at 12.75 15 y=0.05
+place Block_Wall_Tier3 ss_maze at 14.25 15 y=0.05
+place Block_Wall_Tier3 ss_maze at 0 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 0 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 0 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 0 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 0 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 0 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 0 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 0 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 0 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 0 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 3 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 3 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 3 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 3 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 6 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 6 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 6 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 6 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 6 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 6 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 9 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 9 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 9 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 9 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 9 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 9 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 12 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 12 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 12 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 12 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 15 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 15 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 15 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 15 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 15 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 15 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 15 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 15 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 15 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 ss_maze at 15 14.25 y=0.05 yaw=90
+place Loot_ChestSmall ss_mazechest at 1.5 4.5 y=0.05 sit yaw=0
+pop
+prop ss_maze tint.color=#5a5a52
+prop ss_maze tint.amount=0.55
+prop ss_mazechest loot.refill=0
+call hw_zone x=-13.5 z=-91 al=ss_mazez id=ss_maze r=3 msg="The storm maze. Find the middle without losing your head."
+call r2_piece x=30 z=-30 al=ss_piece1 set="Storm glasses"
+call r2_piece x=16 z=58 al=ss_piece2 set="Storm glasses"
+# ss_piece3 is placed after the storm cellar (its hill raises the ground here)
+call r2_piece x=44 z=-52 al=ss_piece4 set="Storm glasses"
+call r2_piece x=-52 z=-46 al=ss_piece5 set="Storm glasses"
+prop ss_piece1 on.set=show|ss_setchest\nmessage||All five storm glasses found.
+call r2_hidden x=-33 z=-18 al=ss_setchest kind=Loot_Chest
+call treasure x=-34 z=34 r=5 n=1 seed=26778 kind=0
+prop treasure26778 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_hill x=18 z=80 r=18 seed=26791
+call ar_plants_hill x=66 z=-4 r=12 seed=26792
+call ar_plants_hill x=-50 z=-46 r=10 seed=26793
+call hw_machine x=-38 z=-14 yaw=69.78 al=ss_machine nm="Storm siren" obj=TP_LaserControlPanel_lever sc=3 a=ss_top b=ss_cave done=ss_fixed rew=ss_rewchest rnote=ss_rewnote msg="It works." hint="It wants the siren rotor from Thunder Knoll and the siren coil from Lightning Cave."
+call hw_note x=-40.6 z=-12.8 yaw=89.78 al=ss_hint
+
+# RAFT2 10-26: scattered rocks that came out floating on the new slopes (CIGroundIslands)
+clear at 25.24 91.47 r=1.5 all only=SmallBoulder4
+# --- W09 11-12: the storm cellar - a straight cave under the spire's shoulder (kit_st, the cave tool), Raft's den room at
+# its end; the met-men sat out the worst storms down here. A zone names it ----------------------------------------------
+call kit_st x=45 z=-6 yaw=270 len=10.4 slope=0 end=room size=0.7 hill=1 dirt=2 mush=2 stone=0 vines=0 titanium=0 light=0 as=sscellar
+prop sscellar cave.rock=plain
+# (11-12 w09fix2: capped - its full dome joined Lightning Cave's hill and the skin closed round that den's mouth)
+prop sscellar cave.dome=14
+# cavecheck inside sscellarz
+place Zone_Trigger sscellarz at 24 -6 h=4.5
+prop sscellarz obj.name=sscellarz
+prop sscellarz zone.id=ss_cellar
+prop sscellarz zone.radius=6
+prop sscellarz zone.message=The storm cellar under the spire. Quiet down here - the met-men sat out the worst of it with the lamps off.
+# W09: storm glass 3 goes down after the cellar hill, so it sits on the raised ground
+call r2_piece x=68 z=-14 al=ss_piece3 set="Storm glasses"
+
+# --- Settings, story items, notes, behaviours, quest (17 steps) ---------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): pines, birches, berries ----------
+scatter "Pickup_Landmark_Tree_Pine" 3 at 0 0 r=38.5 seed=4353 free=5
+scatter "Pickup_Landmark_Tree_Birch" 3 at 0 0 r=38.5 seed=4363 free=5
+scatter "Pickup_Landmark_BerryBush" 3 at 0 0 r=38.5 seed=4373 free=3
+# RAFT2 10-26 b: no plants on the hills' steep rock faces
+call r2_bareflank x=18 z=80 b=20 h=18
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=75 deep=5 n=2
+
+info title=Storm Spire
+info author=Custom Islands
+info description=Station Seven of the Frontier Corps: a weather station on a needle of rock in the storm belt, its lightning line broken. A short climb, three conductor rods and a storm bird. The seventh island of Raft 2: The Drowned Frontier.
+island on.arrive=message||A needle of rock in grey rain, a mast on its top crackling with every gust. A tape recorder clicks somewhere at the landing: "...the line is broken..."
+
+story rod|Conductor rod|quest:Temperance_ElectricalCable|A copper conductor rod for the spire's lightning line.
+
+note tapes Meteorologist's tapes | (a tape recorder on a crate by the shed, still playing) ...the lightning line is broken in three places and the instruments burn out with every strike. Spare rods: one in the shed here, one on the lift tower's landing halfway up, one went over the edge into the north cove... The lift's car is stuck at the top - climb its tower. The smelter plans are in the station's locker, behind the instrument panel. The Corps went on north - to Whiteout Reach, before winter.
+note rodshed Shed box | The shed's box: a copper rod, a coil of wire.
+loot rodshed story:rod*1;Rope*2
+prop rodshed loot.refill=0
+note rodledge Landing box | A box on the lift tower's landing, halfway up: a copper rod, wet and green.
+loot rodledge story:rod*1;Scrap*3
+prop rodledge loot.refill=0
+note rodcove Cove box | A box on the cove's floor: the third copper rod.
+loot rodcove story:rod*1;Plastic*2
+prop rodcove loot.refill=0
+note stationlocker Station locker | The weather station's locker, behind the instrument panel: an electric smelter, an advanced biofuel extractor, an anchor for any storm.
+loot stationlocker Blueprint_SmelterElectric*1;Blueprint_BiofuelExtractorAdvanced*1;Blueprint_AnchorStationaryAdvanced*1;CopperIngot*3
+prop stationlocker loot.refill=0
+prop stationlocker if.open=quest|13\ntake|story:rod|3
+prop stationlocker else.open=message||The locker is behind the instrument panel - and the panel's lightning line is broken in three places. It takes three rods.
+
+prop vane obj.name=vane
+prop vane beh.spin=40
+prop spirefoot zone.id=spirefoot
+prop spirefoot zone.radius=8
+prop spirefoot zone.message=The spire's landing: a shed, a crate with a tape recorder still clicking - and the station far above in the rain.
+prop spiretop zone.id=spiretop
+prop spiretop zone.radius=9
+prop spiretop zone.message=The weather station on the needle's top - and a stone bird screaming from the mast!
+prop stormbird creature.count=1
+prop stormbird creature.size=1.5
+prop stormbird creature.health=3
+prop stormbird creature.respawn=0
+prop stormbird creature.zone=spiretop
+prop storm atmo.fog=#5a6670
+prop storm atmo.fogAmount=0.35
+prop storm atmo.light=#8a98a8
+prop storm atmo.lightAmount=0.35
+prop storm atmo.particles=mist
+prop storm zone.radius=45
+prop rain sound.event=event:/amb/rain_ocean
+prop rain sound.volume=0.6
+prop rain zone.radius=40
+
+story ss_top|Siren rotor|Bolt|The storm siren's rotor, bolted to the lightning mast's deck so it would not blow away.
+story ss_cave|Siren coil|Bolt|The siren's coil, wound in copper and wrapped in a dry sack at the back of the cave.
+story ss_fixed|Storm siren working|Bolt|The storm siren, working again.
+note ss_hint Met-man's warning | STORM SIREN - SILENT. Rotor: on the lightning mast, top of Thunder Knoll (north). Coil: Lightning Cave, south-east. Ivo at the old met hut, east, knows the knoll's trail.
+loot ss_topchest story:ss_top*1;Rope*2;Scrap*2
+loot ss_cavechest story:ss_cave*1;Nail*6;Plastic*2
+note ss_rewnote Siren log | The siren winds up and wails over the storm belt - every boat inside fifty miles knows to run for shelter. In the cover: 'Station Seven: the storm never ends here. Go on to the winter camp - but not in winter.'
+note ss_rewchest Storm siren reward | What the storm siren kept.
+loot ss_rewchest CopperIngot*2;Bolt*3;Rope*2
+note ss_topchest Lightning mast deck box | A box lashed to the deck rail at the top of the lightning mast.
+note ss_cavechest Lightning Cave chest | A chest at the back of Lightning Cave, dry under the rock.
+note ss_lampchest Ivo's barometer box | Ivo's barometer box, behind the hut's back wall: the old glass, its logbook and a purse.
+loot ss_lampchest CopperIngot*2;TradeToken*2;Rope*2
+note ss_setchest Glass case | The case the storm glasses came in - and the Corps' spare instruments.
+loot ss_setchest Glass*3;Bolt*4;MetalIngot*1
+note ss_planecrate Weather plane's crate | The weather plane's crate: balloons, gauges and tools.
+loot ss_planecrate Plastic*3;Scrap*3;Nail*6
+prop ss_planecrate loot.refill=0
+note ss_pilot Weather pilot's log | SOUNDING FLIGHT 12. Lightning took the left engine. Put her down in the shallows south-west of the spire. Instruments saved. Tell Ivo his glasses were right.
+note jcss Anemometer ledge | The met hands climbed these stones to read the wind.
+loot jcss Rope*3;Plank*4;MetalIngot*1
+note jbss Top of the wind stack | Somebody's stash at the very top.
+loot jbss CopperIngot*1;Bolt*2;TradeToken*1
+note ss_mazechest Recruit's prize box | The prize at the heart of the storm maze: whoever reached it first got the box.
+loot ss_mazechest CopperIngot*2;Rope*2;TradeToken*1
+
+quest title=Eye of the Storm
+quest intro=A weather spire in the storm belt, its lightning line broken. Station Seven: start at the spire's landing.
+step read|Meteorologist's tapes|1|Listen to the meteorologist's tapes at the spire's landing
+step reach|spiretop|1|Climb the lift tower to the station - a rod waits on the landing halfway
+step kill|Screecher|1|Drive off the storm bird on the mast
+step open|Cove box|1|Dive into the cove for the rod that went over the edge - it is in a box on the floor
+step collect|story:rod|3|Have all three conductor rods: the shed, the tower's landing, the cove
+step read|Met-man's warning|1|Read the met-man's warning by the storm siren
+step talk|Ivo Brand|1|Talk to Ivo Brand at the ruined house on the cliff top
+step reach|ss_trail|1|Make for Thunder Knoll, the hill with the lightning mast, and find the foot of its trail
+step reach|ss_summit|1|Climb the trail to the top of Thunder Knoll
+step collect|story:ss_top|1|Climb the lightning mast and take the siren rotor from the box on its deck
+step reach|ss_cave|1|Find Lightning Cave, the dark cave mouth in the rocks
+step collect|story:ss_cave|1|Take the siren coil from the chest at the back of the cave
+step read|Siren log|1|Bring both to the storm siren and read what it shows
+step open|Station locker|1|Mend the lightning line and open the station's locker
+step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter plans from the station locker
+step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced biofuel extractor plans from the station locker
+step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced stationary anchor plans from the station locker
+quest done=The line holds as the next strike hits - the instruments live again, and their last reading points the way to Whiteout Reach.
+quest reward=CopperIngot*2;Plank*6;Rope*2
+
+# --- A Raft store at the needle's foot: the Corps' supply post, still trading (Raft's goods, and plans the crew missed) --
+store supplypost at -34 -8 ground
+
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=42 n=1 seed=8856
+prop treasure8856 treasure.loot=TitaniumOre*2
+
+save Storm Spire

@@ -1,0 +1,17 @@
+# Root Warrens rats (CIPlay rootweave_caves_rats, 11-08; in a test world): two rats on the lower level (root cellar and
+# the ramp's foot) - alive, on the dug floor, under the rock, walking. The player waits outside mouth C, far from both.
+# Points as in its recipe.
+island Rootweave Caves keep
+offset 0 0
+hour 11
+weather Calm
+at 8.2 44
+wait 5
+expect animals Rat 2
+expect animalsinside Rat 2
+picture rat_rootweave_cellar 22.5 11.5 23.5 20.5 10.3 20.5
+picture rat_rootweave_ramp 17 12.5 25 22.5 10.3 22
+wait 30
+expect animalsmoved Rat 1
+expect animals Rat 2
+expect animalsinside Rat 2

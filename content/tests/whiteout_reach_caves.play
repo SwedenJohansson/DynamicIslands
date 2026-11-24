@@ -1,0 +1,16 @@
+# Whiteout Reach's ice store (CIPlay whiteout_reach_caves, 11-12 w09; in a test world 'CI ...'). Points as in the
+# recipe: the mouth on the flank at 48 -15 (ground ~5.6), kit_st (yaw 270) 11.2 m in to the den room round 27 -15
+# (zone wr_icestore, the ice store chest at 25 -13.5).
+island Whiteout Reach keep
+hour 11
+weather Calm
+empty
+picture wr_cave_out 57 8.6 -14 48 7.6 -15
+walk 54 -15 to 48 -15 to 42 -15 to 36 -15 to 28 -15
+wait 2
+expect message Corps ice store
+open Ice store chest
+wait 2
+expect item Hinge 2
+picture wr_cave_in 34 8.5 -15 24 7.8 -14 light=20
+walk 28 -15 to 36 -15 to 42 -15 to 48 -15 to 54 -15 below=9

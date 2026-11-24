@@ -1,0 +1,13 @@
+island The Rootcore
+offset 0 0
+hour 11
+weather Calm
+at 23 60
+wait 3
+picture ov_camp 23 +40 56 23 0 60
+at 30.5 51.5
+wait 3
+picture ov_chest 30.5 +40 47.5 30.5 0 51.5
+at 1 40
+wait 3
+picture ov_dome 1 +70 -10 1 0 14

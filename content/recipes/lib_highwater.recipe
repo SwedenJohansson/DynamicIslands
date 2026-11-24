@@ -1,0 +1,269 @@
+# lib_highwater - shared pieces of the plan The City That Never Sank (SL13, Highwater): the drowned towers' roofs the
+# city lives on, the plank bridges between them, the market stalls and the laundry lines. A recipe that calls these
+# includes lib_rt (rt_storey, rt_railing, rt_legs) and lib_huts (floors, corners) first.
+#
+# hw_roof: a drowned tower's flat roof, one RT_Floor (6 x 9 m, x -6..0, z -4.5..4.5 of the frame) at the frame's floor,
+# on Raft's thick radio-tower pillars down d m (to the seabed), a railing round it (bm / fm / lm / rm = none opens the
+# middle of that side for a bridge or a stair). a: an alias for the slab, to tint the city's concrete.
+macro hw_roof d=12 a=- bm=RT_Fence fm=RT_Fence lm=RT_Fence rm=RT_Fence
+place RT_Floor $a at 0 4.5
+call rt_legs d=$d
+call rt_railing y=0 bm=$bm fm=$fm lm=$lm rm=$rm
+end
+#
+# hw_penthouse: a drowned tower's top storey standing out of the sea: thick legs down d m, one storey (rt_storey, its
+# wall slots as there), its roof slab 3 m up with a railing (the roof terrace). a: alias for the walls (tint).
+macro hw_penthouse d=12 a=- b1=RT_Wall1 b2=RT_Wall1 f1=RT_Wall1 f2=RT_WallDoor1 l1=RT_Wall1 l2=RT_WallWindow1 l3=RT_Wall1 r1=RT_Wall1 r2=RT_WallWindow1 r3=RT_Wall1
+call rt_legs d=$d
+call rt_storey a=$a b1=$b1 b2=$b2 f1=$f1 f2=$f2 l1=$l1 l2=$l2 l3=$l3 r1=$r1 r2=$r2 r3=$r3
+place RT_Floor $a at 0 4.5 y=3
+call rt_railing y=3
+end
+#
+# hw_bridge: a plank bridge n blocks long along the frame's +x at deck height y (the frame's floor + y), Raft's wooden
+# floor blocks with Raft's rope fence along both sides (x 0..n*1.5, z -0.75..0.75). The save stands posts under it to
+# the seabed (StandPosts), so it never hangs on nothing.
+macro hw_bridge n=6 y=0
+for bx 0.75 {$n*1.5-0.75} 1.5
+place Block_Floor_Wood - at $bx 0 y=$y
+place Block_Wall_Fence_Rope - at $bx -0.75 y=$y
+place Block_Wall_Fence_Rope - at $bx 0.75 y=$y
+next
+end
+#
+# hw_stall: a market stall of w x d cells (1.5 m) from the frame's corner: Raft's wooden floor at y, pillars at its
+# corners and a hipped wooden roof standing on them, a counter (a half wall) along its front (z 0) - open
+# on the other sides.
+macro hw_stall w=2 d=2 y=0.1
+call floors w=$w d=$d y=$y
+call corners w=$w d=$d y=$y
+for sx 0.75 {$w*1.5-0.75} 1.5
+place Block_HalfWall_Wood - at $sx 0 y=$y
+next
+roof $w $d at 0 0 y=$y wood
+end
+#
+# hw_laundry: a laundry line between two Raft wooden pillars n m apart along the frame's +x (pillars standing on the
+# frame's floor at y) and Raft's string lights strung between their tops.
+macro hw_laundry n=4 y=0.1
+place Block_Pillar_Wood - at 0 0 y=$y
+place Block_Pillar_Wood - at $n 0 y=$y
+line Placeable_StringLight_Horizontal from 0 0 to $n 0 step=2 y={$y+2.2}
+end
+#
+# hw_airpocket: lib_gravity's air pocket (Raft's own air pocket on the ground at x z, its zone with air and bubbles);
+# h: the frame floor of a shop or a pile cap when it is not the ground (ground otherwise)
+macro hw_airpocket x=0 z=0 id=air al=air bub=airbub r=2.5 msg="An air pocket - breathe."
+place AirPocket_1 - at $x $z ground y=0.05 scale=0.6
+place Zone_Trigger $al at $x $z ground y=1.6
+place Zone_Atmosphere $bub at $x $z ground y=1.2
+prop $al obj.name=$al
+prop $al zone.id=$id
+prop $al zone.radius=$r
+prop $al zone.repeat=1
+prop $al zone.air=1
+prop $al zone.message=$msg
+prop $bub atmo.particles=bubbles
+prop $bub zone.radius=3
+end
+#
+# hw_skyline: Highwater on the horizon - three of Utopia's towers far off on the island's edge, standing on the seabed
+# with their tops 25-40 m out of the sea (centred: the tower's middle at h). Look pieces only.
+macro hw_skyline x=0 z=0 a=skyline
+place UT_Set_Tower01 $a at $x $z h=-190 centred yaw=20
+place UT_Set_Tower02 $a at {$x+30} {$z+18} h=-196 centred yaw=70
+place UT_Set_Tower03 $a at {$x-26} {$z+24} h=-200 centred yaw=140
+end
+#
+# hw_reef: a small reef on the sea floor within r of x z (as lib_concord's reef): Raft's corals and a silver algae
+macro hw_reef x=0 z=0 r=4 seed=1
+scatter VP_CoralDigitate02 4 at $x $z r=$r seed=$seed wet free=1
+scatter VP_CoralBulb04 3 at $x $z r=$r seed={$seed+1} wet free=1
+scatter LeafCoral_1 3 at $x $z r=$r seed={$seed+2} wet free=1
+scatter "Pickup_Landmark_SilverAlgae" 1 at $x $z r=$r seed={$seed+3} wet
+end
+#
+# --- 10-24b: the islands' extra areas (the SL13 upgrade; lib_areas does the ridges, caves, ruins and planes) ---------
+# hw_zone: a trigger zone at x z with id, radius and message (alias al), h over the ground (lib_concord's tzone, which
+# the Highwater recipes don't include)
+macro hw_zone x=0 z=0 al=zone id=zone r=4 msg="" h=0
+place Zone_Trigger $al at $x $z ground y=$h
+prop $al zone.id=$id
+prop $al zone.radius=$r
+prop $al zone.message=$msg
+end
+#
+# hw_note: a note lying on a small box at x z (alias al) (dropped from 1.6 m: from 0.7 m it started inside the box and fell through it, PQ11 10-27)
+macro hw_note x=0 z=0 yaw=0 al=note
+place "Box Small" - at $x $z ground sit yaw=$yaw
+place Note_Paper $al at $x $z ground y=1.6 drop yaw={$yaw+15}
+end
+#
+# hw_wreck: one of Raft's vehicles (VEHICLES.md) wrecked on its own pad h m over the sea at x z, turned yaw, tinted
+# rust-grey, the plants under it cleared, a crate (alias crate) 5 m to its side
+macro hw_wreck x=0 z=0 h=3 yaw=0 obj=Van_4 al=wreck crate=wreckcrate r=9
+set s {sin($yaw)}
+set c {cos($yaw)}
+brush flatten at $x $z r=$r s=20 frames=300 h=$h
+clear at $x $z r={$r+1}
+place "$obj" $al at $x $z ground sit yaw=$yaw
+prop $al tint.color=#5a5048
+prop $al tint.amount=0.45
+place Loot_Crate $crate at {$x+5*$c} {$z-5*$s} ground sit yaw={$yaw+15}
+prop $crate loot.refill=0
+end
+#
+# hw_hazard: a hazard zone (GUIDE 5.4, 10-24 gap features) r m round x z, h over the ground: kind acid / shock / miasma /
+# spikes / cold / dark / deep, dmg per second (dark: 0), safe = what protects (suit, wears|HeadLight*,
+# wears|OxygenBottle*, none...), msg = why it hurts. Named al, so a lever's hide|al switches it off.
+macro hw_hazard x=0 z=0 al=hazard kind=dark r=5 dmg=0 safe=none msg="" h=1
+place Zone_Trigger $al at $x $z ground y=$h
+prop $al obj.name=$al
+prop $al zone.id=$al
+prop $al zone.radius=$r
+prop $al zone.hazard=$kind
+prop $al zone.damage=$dmg
+prop $al zone.safe=$safe
+prop $al zone.hazardMsg=$msg
+end
+#
+# --- DEEP 10-24: the one-hour set-pieces (the user: real height and depth on every island, a big climb and a deep dive) ---
+# hw_mount: a mountain b m round x z, its summit plateau (r 9) h m over the sea: four rings of flatten, smoothed into
+# one slope, the plateau levelled again, painted, the generator's plants cleared. Steep: the way up is hw_trail.
+macro hw_mount x=0 z=0 b=26 h=36
+brush flatten at $x $z r=$b s=20 frames=600 h={$h*0.22}
+brush flatten at $x $z r={$b*0.78} s=20 frames=600 h={$h*0.44}
+brush flatten at $x $z r={$b*0.58} s=20 frames=600 h={$h*0.66}
+brush flatten at $x $z r={$b*0.4} s=20 frames=600 h={$h*0.86}
+brush flatten at $x $z r=9 s=20 frames=600 h=$h
+brush smooth at $x $z r={$b*1.1} s=5 frames=80
+brush flatten at $x $z r=9 s=20 frames=500 h=$h
+brush auto at $x $z r={$b*1.2} s=10 frames=25
+clear at $x $z r={$b+3}
+end
+#
+# hw_trail: the climbing path up hw_mount - n pads (r 3.2) on a spiral of turn degrees, from b+1 m out at h0 (the foot,
+# bearing a0 from the summit) to 8 m out at the summit's h, each cut level into the slope and cleared
+macro hw_trail x=0 z=0 b=26 h=36 a0=0 turn=300 n=40 h0=3
+for k 0 $n
+set t {$k/$n}
+set rr {$b+1-($b-7)*$t}
+set aa {$a0+$turn*$t}
+set px {$x+$rr*sin($aa)}
+set pz {$z+$rr*cos($aa)}
+brush flatten at $px $pz r=3.2 s=20 frames=220 h={$h0+($h-$h0)*$t}
+clear at $px $pz r=3.6
+next
+end
+#
+# hw_basin: a deep hole in the sea floor r m round x z, h m under the sea (as low as -19), for a sunk house or wreck
+macro hw_basin x=0 z=0 r=14 h=-14
+brush flatten at $x $z r=$r s=20 frames=600 h=$h
+brush flatten at $x $z r={$r*0.6} s=20 frames=400 h=$h
+clear at $x $z r={$r+1}
+end
+#
+# hw_mast: a lookout mast on a summit: lib_sunken's ladder tower (a 3x3 m shaft of Tier3 walls, a ladder inside, lv
+# storeys of 2.42 m, a rope-fenced deck on top), centred on x z, its floor h0 over the sea, door to -z. On the deck: a
+# chest (alias chest, at the -x -z tile) and a look piece top (at the +x -z tile).
+# (box agent 10-25: as vd_tower - the ladder at 2.8 took its wall's place, now 0.1 m off it; the top deck 0.165 m lower so the ladder's top reaches it)
+# deckdrop: the deck that much lower, the top walls a low parapet round it. Raft holds a climber at a ladder's top with the
+# feet 0.33 m under its end, and a jump off a ladder rises 0.2 m: the deck tiles beside the hatch, 0.47 m over the feet, were
+# out of reach and the player fell back down the shaft (Old Mine's headframe, reach trace 11-06). 0.45 puts the deck at the
+# climber's feet, so stepping sideways off the ladder lands on it.
+macro hw_mast x=0 z=0 h0=30 lv=9 a=mast chest=mastchest top=none deckdrop=0
+push at {$x-1.5} {$z-1.5} h=$h0
+for k 0 {$lv-1}
+place Block_Wall_Tier3 $a at 2.25 0 y={$k*2.42}
+place Block_Wall_Tier3 $a at 0.75 3 y={$k*2.42}
+place Block_Wall_Tier3 $a at 2.25 3 y={$k*2.42}
+place Block_Wall_Tier3 $a at 0 0.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 $a at 0 2.25 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 $a at 3 0.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 $a at 3 2.25 y={$k*2.42} yaw=90
+# (REACH 10-28 (4): Block_Ladder_Tier3's climb trigger sits 0.3 m behind the piece and 0.55 m to its -x; at yaw 180 it
+# lay in the back wall and nobody could take hold (hw_mast/ladtower "never took hold" on several islands). At yaw 0, as
+# the drowned building's ladders that work, it is 0.3 m in front of the piece; x 2.6 centres it under the top hole)
+place Block_Ladder_Tier3 - at 2.6 2.7 y={$k*2.42} yaw=0
+next
+place Block_Wall_Door_Tier3 $a at 0.75 0 y=0
+for k 1 {$lv-1}
+place Block_Wall_Tier3 $a at 0.75 0 y={$k*2.42}
+next
+place Block_Floor_Tier3 $a at 0.75 0.75 y={$lv*2.42+0.05-$deckdrop}
+place Block_Floor_Tier3 $a at 2.25 0.75 y={$lv*2.42+0.05-$deckdrop}
+place Block_Floor_Tier3 $a at 0.75 2.25 y={$lv*2.42+0.05-$deckdrop}
+place Block_Wall_Fence_Rope - at 0.75 0 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 2.25 0 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 0.75 3 y={$lv*2.42+0.05}
+place Block_Wall_Fence_Rope - at 0 0.75 y={$lv*2.42+0.05} yaw=90
+place Block_Wall_Fence_Rope - at 0 2.25 y={$lv*2.42+0.05} yaw=90
+place Block_Wall_Fence_Rope - at 3 0.75 y={$lv*2.42+0.05} yaw=90
+place Loot_Chest $chest at 0.75 0.75 y={$lv*2.42+0.9-$deckdrop} drop yaw=180
+place $top - at 2.25 0.75 y={$lv*2.42+0.9-$deckdrop} drop
+pop
+prop $a tint.color=#6e6a64
+prop $a tint.amount=0.55
+prop $chest loot.refill=0
+end
+#
+# hw_sunkhouse: a drowned two-room house of Tier3 walls on the floor of a basin (hw_basin first) at x z, turned yaw: the
+# front room (an air pocket, its door gap to -z) and the back room (a chest, alias chest) joined by a gap in the
+# middle wall, a flat roof of floor tiles on the walls
+macro hw_sunkhouse x=0 z=0 h=-14 yaw=0 a=sunk chest=sunkchest air=sunkair bub=sunkbub door=Block_Wall_Door_Tier3 dal=sunkdoor rn=3
+push at $x $z h=$h yaw=$yaw
+place Block_Wall_Tier3 $a at 0.75 -3
+place $door $dal at -0.75 -3
+prop $dal obj.name=$dal
+place Block_Wall_Tier3 $a at -0.75 3
+place Block_Wall_Tier3 $a at 0.75 3
+for k 0 3
+place Block_Wall_Tier3 $a at -1.5 {$k*1.5-2.25} yaw=90
+place Block_Wall_Tier3 $a at 1.5 {$k*1.5-2.25} yaw=90
+place Block_Floor_Tier3 $a at -0.75 {$k*1.5-2.25} y=2.635
+next
+for k 0 $rn
+place Block_Floor_Tier3 $a at 0.75 {$k*1.5-2.25} y=2.635
+next
+place Block_Wall_Tier3 $a at -0.75 0
+# (REACH 10-28: no AirPocket_1 rock in the room - at this size it filled the front room and its collider stopped the
+# swimmer between the door and the gap to the back room on every island with this house; the air zone and bubbles stay)
+place Zone_Trigger $air at 0 -1.6 ground y=1.6
+place Zone_Atmosphere $bub at 0 -1.6 ground y=1.2
+prop $air obj.name=$air
+prop $air zone.id=$air
+prop $air zone.radius=2.5
+prop $air zone.repeat=1
+prop $air zone.air=1
+prop $air zone.message="An air pocket - breathe."
+prop $bub atmo.particles=bubbles
+prop $bub zone.radius=3
+place Loot_Chest $chest at 0 1.9 ground sit yaw=180
+pop
+prop $a tint.color=#4e5a58
+prop $a tint.amount=0.5
+prop $dal tint.color=#4e5a58
+prop $dal tint.amount=0.5
+prop $chest loot.refill=0
+end
+#
+# (door = the front door piece, alias dal; rn=2 leaves the back roof tile over the strongbox out - a way in from above)
+#
+# hw_machine: what the climb and the dive are for - a machine on a post at x z (alias al, its name nm) that needs both
+# story items (a, b): used, it gives story done, shows the hidden reward chest (alias rew) and note (alias rnote)
+macro hw_machine x=0 z=0 yaw=0 al=machine nm=Machine obj=RT_PowerBox sc=1 a=top b=deep done=fixed rew=machinechest rnote=machinenote msg="It runs." hint="Something is missing."
+place RT_Pillar - at $x $z ground sit sy=0.4
+place $obj $al at $x $z ground y=1.25 scale=$sc yaw=$yaw
+prop $al obj.name=$al
+prop $al beh.use=$nm
+prop $al if.use=has|story:$a|1\nhas|story:$b|1\n!signal|$done
+prop $al on.use=signal||$done\ngive||story:$done*1\nshow|$rew\nshow|$rnote\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||$msg
+prop $al else.use=message||$hint
+place Loot_Chest $rew at {$x+2*cos($yaw)} {$z-2*sin($yaw)} ground sit yaw={$yaw+180}
+prop $rew obj.name=$rew
+prop $rew beh.hidden=1
+prop $rew loot.refill=0
+place Note_Paper $rnote at {$x-1.6*cos($yaw)} {$z+1.6*sin($yaw)} ground y=0.1 drop
+prop $rnote obj.name=$rnote
+prop $rnote beh.hidden=1
+end

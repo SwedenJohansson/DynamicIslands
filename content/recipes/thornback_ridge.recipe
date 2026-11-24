@@ -1,0 +1,242 @@
+# Thornback Ridge - the side island of the library's plan The Last Green World (SL11, Verdance), day 6
+# A long thorny ridge of rock and bush, a mango grove in its lee, and a hermit's camp on a ledge halfway up: a shelter,
+# a fire, a chest, a hen run. A boar herd has taken the grove. Quest "The Hermit" (6 steps): the camp, the hermit's
+# journal, four boars, the hermit's chest, one hen for the raft, the hermit's map.
+#
+# Built by the recipe player (CIRecipe thornback_ridge) through the editor's own operations. Points (metres over the
+# sea): the ridge along x -30..30 at z 6, the camp ledge 3 m round -8 -10, the grove round 18 -20, the landing beach 0 -40.
+include lib_sea
+include lib_features
+include lib_huts
+include lib_verdance
+include lib_ni8
+# DEEP 10-24: Radius 60 -> 80, the old content moved again (push 2.5 -6.1 -> 2.5 -26.1) so its beach stays at the coast.
+# RESIZE 10-24: Radius 48 -> 60 (Height 14 -> 14), the old content moved 2.5 -6.1 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+new
+gen Trees=0.2 Bushes=0.45 Rocks=0.4 Harvest=0.3 BeachThings=0.3
+gen Seed=11121 Radius=80 Height=14 Roughness=0.45 Peaks=2 Shape=0.4 Style=0 PeakShape=0.5 Cliffs=0.35 BeachWidth=0.5
+gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+push at 2.5 -26.1
+
+# --- Terrain: the ridge, the camp ledge, the grove, the landing beach --------------------------------------------
+brush raise from -30 6 to 30 6 r=10 s=20 frames=10
+brush rock from -30 6 to 30 6 r=7 s=10 frames=30
+brush flatten at -8 -10 r=8 s=20 frames=200 h=3
+brush grass at -8 -10 r=8 s=6 frames=30
+brush flatten at 18 -20 r=10 s=20 frames=150 h=1.8
+brush grass at 18 -20 r=10 s=6 frames=30
+brush flatten at 0 -40 r=7 s=20 frames=120 h=1.2
+brush sand at 0 -40 r=9 s=10 frames=30
+pop
+brush flatten at 13.1 23.6 r=5 s=8 frames=40
+origin
+clear at 13.1 23.6 r=6
+push at 2.5 -26.1
+clear at -8 -10 r=7
+clear at 0 -40 r=6
+
+# --- The hermit's camp: shelter, fire, chest, journal, hen run, map ------------------------------------------------
+push at -10 -12 h=3
+call shelter w=2 d=2 y=0.1
+place Loot_Chest hermitchest at 1.5 2.2 y=0.1 sit yaw=180
+place "Box Small" - at 0.7 0.8 y=0.1 sit
+place Note_Paper hermitmap at 0.7 0.8 y=1.7 drop yaw=15
+pop
+place campfire_1 - at -4 -10 ground sit
+place Note_Sign hermitjournal at -6 -6 ground sit yaw=180
+place Zone_Trigger campzone at -6 -9 ground
+place Creature_Chicken hens at -12 -2 ground
+prop hens creature.count=3
+# STORY 10-24: Jonas's trade slip by the hen run; Teodor's note on a box by the fire
+place Note_Paper jonastrade at -11 -4 ground y=0.3 drop yaw=60
+place "Box Small" - at -2.6 -8 ground sit yaw=20
+place Note_Paper teodorpass at -2.6 -8 ground y=1.6 drop yaw=40
+
+# --- The grove and its boar herd; thorns along the ridge --------------------------------------------------------
+place Creature_Boar herd at 18 -20 ground
+prop herd creature.count=4
+prop herd creature.respawn=0
+scatter Pickup_Landmark_Tree_Mango 4 at 18 -20 r=9 seed=11122 free=3
+scatter Pickup_Landmark_BerryBush 3 at -24 -8 r=8 seed=11123 free=2
+call trailbush x=6 z=-4 yaw=30
+call trailbush x=-18 z=0 yaw=120
+scatter Pickup_Landmark_Flower_Red 4 at 4 -30 r=8 seed=11124 free=2
+call shallows x=-2.5 z=26.1 r=95 deep=5 n=2 seed=11125
+pop
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; Caravan_Yellow_01 + chest; vine-hidden chest; viewpoint ---
+place campfire_1 - at 13.1 23.6 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at 16.1 25.6 ground sit yaw=357
+place "Box Small" - at 11.1 26.1 ground sit
+place Note_Paper dnote at 11.1 26.1 ground y=1.6 drop yaw=20
+note dnote Lost traveller's note | I came for the seeds like everyone else. The paths move here; I am sure of it. I marked this tree twice.\n\nA tall man in a stained lab coat passed my fire last night. He did not ask the way. He walked straight to the hermit's ledge, left something there, and went back to his skiff without a word.\n\nIf the fire is cold, I went towards the sea.
+place Caravan_Yellow_01 dvan at -21 17 ground yaw=117
+prop dvan tint.color=#7a7040
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -25 20 ground sit yaw=57
+note dwreckchest Abandoned supplies | The crew's supplies, left behind: plank, rope and a few seeds.
+loot dwreckchest Plank*4;Rope*2;Seed_Pineapple*1
+prop dwreckchest loot.refill=0
+call vinecache x=-5.2 z=26.5 r=15 seed=11211 chest=dvinechest vines=dvines items=Rope*3;Nail*10;Leather*2
+# REDO 10-24 (optional): the hermit buried his savings - the metal detector finds them
+call treasure x=18 z=-20 r=12 n=1 seed=11219
+prop treasure11219 treasure.loot=TradeToken*3;MetalOre*2
+# REDO 10-24 TREASURE2: a second buried treasure on the far side for the detector + shovel
+call treasure x=-14.4 z=16.0 r=12 n=1 seed=11269
+prop treasure11269 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*2
+place Zone_Trigger dview at 15.4 9.3 ground
+prop dview zone.id=thornback_ridge_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=The thorny ridge runs off like a spine, the mango grove sheltered in its lee.
+
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): Radius 60 -> 80: the eagle eyrie on the north spine (climb, zipline to the ridge), the hermit's sunk boat (dive), his boathouse, the east cave, the west lookout
+# the climb: a mountain (trail winding up from bearing 150), a 8-storey climbing tower on its top, the summit box
+call vd_mount x=-40 z=45 top=26 r=18 a0=150 turns=1.25 hb=3
+call vd_tower x=-40 z=45 h0=26 lv=8 a=tbtw box=tbbox zal=tbtopz zid=tb_top msg="The eagle eyrie at the end of the spine. Sticks as long as oars, and a hermit's rope ladder up the last of it."
+note tbbox Eyrie box | HERMIT - EYRIE. The eagles left when the boars came. I kept my boat key up here, then I lost the boat. Fair trade.
+loot tbbox Rope*3;Feather*4;Leather*1
+place ZiplinePath_Landmark tbzip at -35.03 43.28 h=47.05
+zipto tbzip -10 -8
+# the dive: BoatStranded on the sea floor 12 m down, its crate, an air pocket
+call vd_dive x=30 z=85 h=-12 yaw=200 obj="BoatStranded" al=tbwreck crate=tbcrate zal=tbwz zid=tb_wreck msg="The hermit's boat, on the bottom off the cove. Its seat locker is still lashed shut." air=tbair bub=tbbub
+note tbcrate Boat's seat locker | A key on a cork float - the float rotted, the key sank with the boat. Tag: BOATHOUSE.
+loot tbcrate story:boathousekey*1;Scrap*3;Rope*1
+# the hermit's boathouse on the north cove: four posts, a tent roof's worth of sailcloth, his locker
+clear at 35 60 r=6
+brush flatten at 35 60 r=5 s=20 frames=150
+place ReefHuts_Pillar3 - at 32.5 57.5 ground sit sy=0.6
+place ReefHuts_Pillar3 - at 37.5 57.5 ground sit sy=0.6
+place ReefHuts_Pillar3 - at 32.5 62.5 ground sit sy=0.6
+place ReefHuts_Pillar3 - at 37.5 62.5 ground sit sy=0.6
+place Balboa_DecorationPrefabBase_SimpleTent - at 31 65 ground sit yaw=20
+place "Box Big" boatlock at 36 59 ground sit yaw=200
+place Loot_ChestSmall boatchest at 34 59 ground sit yaw=200
+# the west lookout (secret): a low hill over the west shore
+call vd_mount x=-60 z=-15 top=12 r=12 a0=60 turns=1 n=30 hb=3
+place Loot_ChestSmall tbwest at -60 -15 h=12 sit yaw=60
+note tbwest West lookout box | The hermit's tally of boars: four columns, and a fifth with one mark - ME.
+loot tbwest Rope*2;Leather*2;Coconut*2
+prop tbwest loot.refill=0
+call vd_spot x=-60 z=-13.5 al=tbwestz id=tb_west r=3 msg="From the lookout the thorny ridge is a sleeping beast with its spine up."
+call ni8cave x=50 z=20 h=3 yaw=180 al=tbcavecave
+place Loot_ChestSmall tbcavecavebox at 52.5 15 h=3.45 sit yaw=200
+place Placeable_Lantern_Metal - at 47.4 16 h=3.45 sit
+note tbcavecavebox Thorn cave chest | A cave under the thorns, dry and warm: the hermit's winter store.
+loot tbcavecavebox Rope*2;Plank*3;HoneyComb*1
+prop tbcavecavebox loot.refill=0
+call treasure x=-10 z=60 r=10 n=1 seed=11391 kind=0
+prop treasure11391 treasure.loot=TitaniumOre*1;Bolt*3
+place Creature_Goat tbgoats at 0 50 ground
+prop tbgoats creature.count=3
+
+# --- Settings, notes, quest ---------------------------------------------------------------------------------------
+info title=Thornback Ridge
+info author=Custom Islands
+info description=A thorny ridge with a hermit's camp on a ledge, a mango grove taken by boars, and hens. A side island of The Last Green World.
+island on.arrive=message||A ridge of thorns and rock. Smoke from a ledge halfway up - and grunting from the mango trees below it.
+
+note hermitjournal Hermit's journal | HERMIT'S JOURNAL - GUNNAR HOLT\n\nDay 400 or so. I stopped counting properly when the Seedkeepers stopped coming. The boars have the mangoes again. Four of them, big ones, and the biggest has a look on his face like he pays rent.\n\nThe hens are fine. The hens are always fine. I have outlived three dogs and a wife's patience, and the hens will outlive me.\n\nIf you clear the grove, the chest is yours. I would do it myself, but my knees have voted against it.\n\nJonas from the Heart still trades honey for eggs when the water is calm. He says Teodor has gone strange. Jonas says that about everyone who skips lunch.
+note hermitchest Hermit's chest | The hermit's chest: leather, seeds, beets from his patch.
+note jonastrade Trade slip | JONAS - TRADE SLIP\n\nOne jar of honey (the good one, from the clover hives) for twelve eggs. Gunnar, I counted. There were eleven. I am writing it down so that history knows.\n\nThe bees are nervous this month. The green on the Heart smells wrong to them, and bees are never wrong about smells. Teodor says they are imagining it. Teodor has not slept since spring.\n\nNext calm day I will bring the soup pot. You can owe me the egg.\n\n- Jonas Brandt, cook, beekeeper, creditor
+note teodorpass Note by the fire | Gunnar -\n\nI am leaving the doors open behind me, all the way to the Heart. If anyone comes from the sea, send them on. Do not tell them about me yet. They should see it all first, and decide with clean eyes.\n\nI know what you think of me. You are mostly right.\n\n- T.L.
+loot hermitchest Leather*3;Seed_Watermelon*2;Seed_Strawberry*2;Raw_Beet*3
+prop hermitchest loot.refill=0
+note hermitmap Hermit's map | A map scratched on bark: the Heart at the centre, every island round it, and an arrow down through its roots. Under it, in Gunnar's square letters:\n\nTHE CORE IS UNDER THE TREE. DO NOT WAKE HER.\n\nAnd smaller, newer, in another hand: She is already awake, Gunnar. Someone has to decide what she becomes. - T.L.\n\nGunnar has added: Go to the Heart, then. Take a hen. Nobody should go down there without something to talk to.
+
+prop campzone zone.id=camp
+prop campzone zone.radius=4
+prop campzone zone.message=The hermit's camp. A warm fire, a journal nailed to a post, hens in the bushes.
+
+# DEEP 10-24 settings
+story boathousekey|Boathouse key|Placeable_Lantern_Metal|The hermit's boathouse key, from his sunk boat.
+prop boatlock obj.name=boatlock
+prop boatlock beh.use=Open the hermit's boathouse locker
+prop boatlock if.use=quest|7\n!signal|boathouse\ntake|story:boathousekey|1
+prop boatlock on.use=signal||boathouse\nshow|boatchest\nmessage||The key turns in the salt-stiff lock. Inside: his tackle and a log in a tin.
+prop boatlock else.use=message||The boathouse locker, locked. The eyrie box said the key went down with the boat.
+prop boatchest obj.name=boatchest
+prop boatchest beh.hidden=1
+note boatchest Hermit's boat log | BOAT LOG - G. HOLT\n\nSpring. Fished the cove; the eagles watched me like I owed them money.\nSummer. The boars came over the ridge. The eagles left. I would have left too, if I had wings or sense.\nAutumn. Lost the boat in a squall. Swam. Kept the hens; they kept me.\n\nLater. A woman in a ranger's coat rowed past with a goat in the bow. She waved. The goat did not.\n\nA raft came by after that - if that is you, take a hen, and take my map. It is the only thing I have that points anywhere.
+loot boatchest Rope*2;Leather*1;TradeToken*2
+prop boatchest loot.refill=0
+# --- JUMP COURSE tb (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
+# Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
+# JUMP tb pad=3 at=72 -15
+push at 72 -15
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jptb at -0.10 5.64 h=3.60
+place Block_Foundation_Tier3 jptb at -2.92 5.64 h=4.10
+place Block_Foundation_Tier3 jptb at -5.93 5.64 h=4.50
+place Block_Foundation_Tier3 jptb at -5.93 3.03 h=5.40
+place Block_Foundation_Tier3 jptb at -5.93 -1.21 h=5.90 sx=0.3 sz=3
+place Block_Foundation_Tier3 jptb at -5.93 -5.64 h=6.70
+place Block_Foundation_Tier3 jptb at -3.02 -5.64 h=7.60
+place Block_Foundation_Tier3 jptb at -0.40 -5.64 h=6.60
+place Block_Foundation_Tier3 jptb at 2.41 -5.64 h=7.55
+place Block_Foundation_Tier3 jptb at 5.12 -5.64 h=8.50
+place Block_Foundation_Tier3 jptb at 5.12 -2.02 h=9.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jptb at -1.30 -2.02 h=9.70 sx=2 sz=2
+place Block_Foundation_Tier3 jptb at -1.30 3.21 h=10.00
+# JUMP end
+# (10-25: each slab stands on one solid column - a stretched foundation of its own footprint, from 0.6 m under the pad flush up to the slab)
+place Block_Foundation_Tier3 jpptb at -2.92 5.64 h=3.418 sy=1.493
+place Block_Foundation_Tier3 jpptb at -5.93 5.64 h=3.818 sy=2.079
+place Block_Foundation_Tier3 jpptb at -5.93 3.03 h=4.718 sy=3.399
+place Block_Foundation_Tier3 jpptb at -5.93 -1.21 h=5.218 sy=4.132 sx=0.3 sz=3
+place Block_Foundation_Tier3 jpptb at -5.93 -5.64 h=6.018 sy=5.305
+place Block_Foundation_Tier3 jpptb at -3.02 -5.64 h=6.918 sy=6.625
+place Block_Foundation_Tier3 jpptb at -0.40 -5.64 h=5.918 sy=5.158
+place Block_Foundation_Tier3 jpptb at 2.41 -5.64 h=6.868 sy=6.551
+place Block_Foundation_Tier3 jpptb at 5.12 -5.64 h=7.818 sy=7.944
+place Block_Foundation_Tier3 jpptb at 5.12 -2.02 h=8.718 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jpptb at -1.30 -2.02 h=9.018 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jpptb at -1.30 3.21 h=9.318 sy=10.144
+prop jptb tint.color=#857563
+prop jptb tint.amount=0.35
+prop jpptb tint.color=#857563
+prop jpptb tint.amount=0.35
+place Loot_Chest jctb at 5.12 -2.02 h=9.40 sit yaw=0
+note jctb Herder's lookout | The goatherds hopped up these slabs to count the flock on the ridge.
+loot jctb Leather*2;Rope*3;Plank*4
+prop jctb loot.refill=0
+place Loot_ChestSmall jbtb at -1.30 3.21 h=10.00 sit yaw=0
+note jbtb Goat's leap | 'Only the old billy made the long jumps,' says the tag on this box.
+loot jbtb MetalIngot*2;Leather*1
+prop jbtb loot.refill=0
+place Zone_Trigger jytb at -1.30 3.21 h=11.00
+prop jytb zone.id=jump_tb_finale
+prop jytb zone.radius=1.8
+prop jytb zone.repeat=never
+prop jytb zone.message=The goat's leap: you jump like the old billy now.
+pop
+# --- end of jump course tb ---
+
+quest title=The Hermit
+quest intro=A camp on Thornback Ridge. Make for the tall eagle eyrie on the ridge, then find the hermit's camp.
+step reach|camp|1|Climb to the hermit's camp
+step read|Hermit's journal|1|Read the hermit's journal
+step kill|Warthog|4|Drive the four boars out of the mango grove
+step open|Hermit's chest|1|Open the hermit's chest
+step catch|Chicken|1|Catch a hen for the raft
+step reach|tb_top|1|Climb to the eagle eyrie at the end of the ridge spine
+step collect|story:boathousekey|1|Dive to the hermit's boat off the cove and open its seat locker
+step read|Hermit's boat log|1|Open his boathouse locker and read the boat log
+step read|Hermit's map|1|Read the hermit's map
+quest done=The grove is clear. The hermit's map points at the Heart.
+quest reward=Seed_Mango*2;Feather*3
+
+# (box agent 10-25: names for the guide pictures' snap points)
+prop tbtw obj.name=tbtw
+prop tbwreck obj.name=tbwreck
+# (box agent 10-25: two of the base's boulders hung 1.2-1.5 m over the slope after the story pass - cleared)
+clear at -0.23 -41.79 r=1.5 only=BigBoulder
+clear at -13.33 -32.88 r=1.5 only=SmallBoulder
+save Thornback Ridge

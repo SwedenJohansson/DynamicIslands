@@ -1,0 +1,69 @@
+# Glacier Mouth (CIPlay glacier_mouth): the depot, the orders, the bears, the drill rig, the leader's chest, the
+# Ringwave (camera) and its note, the cave mouth chest.
+island Glacier Mouth
+# RESIZE 10-24: the recipe moved this island's old content by 0 -24.8; the points below are in the old frame
+offset 0 24.8
+expect step 0
+expect title The Glacier
+zone depot
+expect step 1
+read Expedition orders
+expect step 2
+kill Polar bear
+expect step 3
+expect hidden drillrig
+use drillhead
+expect story drilled 0
+open Depot stores
+open Torn sled
+open Old camp crate
+wait 3
+expect story drillbit 3
+expect step 4
+use drillhead
+expect story drillbit 0
+expect shown drillrig
+expect step 5
+open Drill rig chest
+wait 3
+expect step 6
+open Leader's chest
+wait 3
+expect step 7
+# DEEP 10-24: the Icefall, the survey cairn, the crevasse collapse, the snowcat's key
+zone icefall
+expect step 8
+zone glacier_top
+expect step 9
+read Survey log
+expect step 10
+expect shown icelid
+expect hidden icerubble
+zone crevasse
+wait 8
+expect hidden icelid
+expect shown icerubble
+expect step 11
+air snowair
+open Survey snowcat's box
+wait 3
+expect story surveykey 1
+expect step 12
+zone ringwave
+wait 6
+read Carving note
+expect step 13
+open Cave mouth chest
+wait 3
+expect step 14
+# U22 jump course (10-24): teleport onto its top A slab instead of jumping the hops
+at 72.38 28.56 h=9.65
+zone jump_gm_top
+wait 2
+expect done
+# the extras: the mast chest, the ice cave cache, three treasures
+open Survey cairn chest
+open Ice cave cache
+dig 0
+dig 1
+dig 2

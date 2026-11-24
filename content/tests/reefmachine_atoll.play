@@ -1,0 +1,69 @@
+# Reefmachine Atoll (CIPlay reefmachine_atoll): the lagoon floor at -5 m (round 0 0); the frame rows, the frame plate,
+# the rays, the sunk boat, the puffers, the pump head's air, its chest, the frame valve (twice), the service note, the cage.
+island Reefmachine Atoll
+offset 0 0
+expect step 0
+expect title The Intake
+zone frame_row
+expect step 1
+read Frame plate
+expect step 2
+kill Stingray
+expect animals Stingray 0
+expect step 3
+open Service boat
+wait 3
+expect step 4
+kill Puffer fish
+air pump_head
+expect step 6
+open Pump head
+wait 3
+expect step 7
+expect shown cagegate
+use framevalve
+expect story valve 1
+expect hidden cagegate
+use framevalve
+expect story valve 1
+expect step 8
+read Service note
+expect step 9
+use sluicecrank
+expect message socket is empty
+open Supply plane's crate
+wait 3
+expect story reefhandle 1
+expect step 10
+read Pump keeper's diary
+expect step 11
+use sluicecrank
+expect shown sluicecrate
+open Sluice crate
+wait 3
+expect story raft-Vasagatan_BoltCutter 1
+expect step 12
+# (deep pass 10-24: the top locker refuses, the dive, the air bell, the dive chest, the buried tins, the tower)
+open Frame tower locker
+expect message A dial lock
+zone ra_dive
+expect step 13
+air ra_air
+open Drowned supply van
+wait 3
+expect story reeflog 1
+expect step 14
+open Van glovebox
+wait 3
+dig 3
+climb -49.76 -37.56
+open Frame tower stash
+wait 3
+read Reef cairn
+dig 2
+zone ra_top
+open Frame tower locker
+wait 3
+expect story chainkey 1
+zone cage
+expect done

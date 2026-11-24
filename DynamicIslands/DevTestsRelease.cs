@@ -53,7 +53,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScreens", docs: "Dev, editor: every window of the editor at 8 screen sizes (1024x768 to 3440x1440 ultra-wide): the editor's bars, the generator (each tab), world plans, island files, quests, story items, behaviours, the item, sound and note pickers, a text prompt and a choice - each panel and every control on the screen; pictures shot_screen_<w>x<h>_*. The screen size is put back after")]
-		public static void ScreensCommand() { DynamicIslands.instance.StartCoroutine(ScreensRoutine()); }
+		public static void ScreensCommand() { StartTest(ScreensRoutine()); }
 
 		static IEnumerator ScreensRoutine()
 		{
@@ -128,7 +128,7 @@ namespace DynamicIslands
 		static KeyValuePair<string, KeyValuePair<Action, Type>> Win(string name, Action open, Type t) { return new KeyValuePair<string, KeyValuePair<Action, Type>>(name, new KeyValuePair<Action, Type>(open, t)); }
 
 		[ConsoleCommand(name: "CIScreensMenu", docs: "Dev, main menu: Raft's New Game box with the mod's panels (world plan, randomizer, world rules) at 8 screen sizes: the box, every one of its buttons, sliders and fields - Raft's Create too - on the screen, and each of the mod's panels inside the box; pictures shot_screen_<w>x<h>_newgame. The screen size is put back after")]
-		public static void ScreensMenuCommand() { DynamicIslands.instance.StartCoroutine(ScreensMenuRoutine()); }
+		public static void ScreensMenuCommand() { StartTest(ScreensMenuRoutine()); }
 
 		static IEnumerator ScreensMenuRoutine()
 		{
@@ -188,6 +188,14 @@ namespace DynamicIslands
 					Check(ref ok, lOff.Count == 0, w + "x" + h + " island library window: " + (lOff.Count == 0 ? "every control on the screen" : "off the screen: " + string.Join(", ", lOff.Take(5).ToArray())));
 					if (size.x == 1024 || lOff.Count > 0) { Screenshot(new[] { "screen_" + w + "x" + h + "_library" }); yield return new WaitForSecondsRealtime(0.6f); }
 					LibraryWindow.Close();
+					// (and the plan picker, CT5)
+					PlanPickerWindow.Open();
+					yield return new WaitForSecondsRealtime(0.6f);
+					Canvas.ForceUpdateCanvases();
+					var ppOff = PlanPickerWindow.Root != null ? OffScreen(PlanPickerWindow.Root.gameObject, w, h) : new List<string> { "no window" };
+					Check(ref ok, ppOff.Count == 0, w + "x" + h + " plan picker window: " + (ppOff.Count == 0 ? "every control on the screen" : "off the screen: " + string.Join(", ", ppOff.Take(5).ToArray())));
+					if (size.x == 1280 || ppOff.Count > 0) { Screenshot(new[] { "screen_" + w + "x" + h + "_planpicker" }); yield return new WaitForSecondsRealtime(0.6f); }
+					PlanPickerWindow.Close();
 					box.gameObject.SetActive(false);
 					yield return null;
 				}
@@ -195,6 +203,55 @@ namespace DynamicIslands
 			finally { Screen.SetResolution(w0, h0, mode0); box.gameObject.SetActive(false); }
 			yield return new WaitForSecondsRealtime(1f);
 			if (ok) Log("PASS: every screen size in the New Game box"); else Fail("every screen size in the New Game box");
+		}
+
+		[ConsoleCommand(name: "CIScreensLevels", docs: "Dev, world: the level up system's stats page (every stat full, the longest texts), the level bar and a level up's box at 8 screen sizes: every row, text and the Close button on the screen; pictures shot_screen_<w>x<h>_stats. The player's record and the screen size are put back after (IL19)")]
+		public static void ScreensLevelsCommand() { StartTest(ScreensLevelsRoutine()); }
+
+		static IEnumerator ScreensLevelsRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || RAPI.GetLocalPlayer() == null) { Fail("every screen size for the levels: run in a world"); yield break; }
+			bool ok = true;
+			int w0 = Screen.width, h0 = Screen.height;
+			FullScreenMode mode0 = Screen.fullScreenMode;
+			bool wasOn = PlayerLevels.On;
+			if (!wasOn) PlayerLevels.TurnOn(false);
+			LevelRecord mine = PlayerLevels.Mine != null ? PlayerLevels.Mine.Copy() : new LevelRecord();
+			var full = new LevelRecord { Xp = LevelRules.TotalFor(70), Kills = 900 };
+			for (int i = 0; i < LevelRules.StatCount; i++) full.Points[i] = LevelRules.MaxPoints;
+			PlayerLevels.SetMine(full);
+			try
+			{
+				foreach (Vector2Int size in ScreenSizes)
+				{
+					Screen.SetResolution(size.x, size.y, FullScreenMode.Windowed);
+					yield return new WaitForSecondsRealtime(1.2f);
+					int w = Screen.width, h = Screen.height;
+					LevelHud.ShowBar();
+					LevelHud.Announce("LEVEL UP!", "Level 70. Every level gives " + LevelRules.PointsPerLevel + " stat points: press " + PlayerLevels.Key + " to spend them - a long line to see it wraps and fits.", true);
+					LevelWindow.Open();
+					yield return new WaitForSecondsRealtime(0.6f);
+					Canvas.ForceUpdateCanvases();
+					GameObject page = GameObject.Find("CustomIslands_Stats"), hud = GameObject.Find("CustomIslands_Levels");
+					var off = page != null ? OffScreen(page, w, h) : new List<string> { "no stats page" };
+					Check(ref ok, LevelWindow.IsOpen && off.Count == 0, w + "x" + h + " stats page: " + (off.Count == 0 ? "every row and the Close button on the screen" : "off the screen: " + string.Join(", ", off.Take(5).ToArray())));
+					var hudOff = hud != null ? OffScreen(hud, w, h) : new List<string> { "no level bar" };
+					Check(ref ok, LevelHud.BarShown && hudOff.Count == 0, w + "x" + h + " level bar and box: " + (hudOff.Count == 0 ? "on the screen" : "off the screen: " + string.Join(", ", hudOff.Take(5).ToArray())));
+					if (size.x == 1280 || size.x == 3440 || off.Count > 0 || hudOff.Count > 0) { Screenshot(new[] { "screen_" + w + "x" + h + "_stats" }); yield return new WaitForSecondsRealtime(0.6f); }
+					LevelWindow.Close();
+					LevelHud.Clear();
+					yield return null;
+				}
+			}
+			finally
+			{
+				Screen.SetResolution(w0, h0, mode0);
+				LevelWindow.Close();
+				PlayerLevels.SetMine(mine);
+				if (!wasOn) PlayerLevels.TurnOff();
+			}
+			yield return new WaitForSecondsRealtime(1f);
+			if (ok) Log("PASS: every screen size for the levels"); else Fail("every screen size for the levels");
 		}
 
 		#endregion
@@ -208,6 +265,7 @@ namespace DynamicIslands
 		/// <summary>A button of a window by its label (UIKit names them Button_&lt;label&gt;), clicked as a player would.</summary>
 		static bool Click(GameObject root, string label)
 		{
+			if (root == null) return false;
 			Button b = root.GetComponentsInChildren<Button>(false).FirstOrDefault(x => x.name == "Button_" + label || (UIKit.LabelOf(x) != null && UIKit.LabelOf(x).text == label));
 			if (b == null || !b.interactable) return false;
 			b.onClick.Invoke();
@@ -225,7 +283,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryPlanMake", docs: "Dev, editor: a player's story plan made in the World Plans window from their own islands: two islands saved (a home island with a gate zone and a quest, a bay with a chest and a quest); a new plan 'CI Story' through New... and its name prompt; four rules added with + Add a rule and filled in through each card's fields and drop-down lists (start: home ahead; home's gate zone fires: the bay north of home; the bay's quest done: a treasure island east of the bay; after 2 km: an oddity ahead); a description; Check finds no problem; Save; closed, opened again: the same plan. Then Copy..., Delete, Templates..., the rule arrows and remove, the random islands switch on a scratch plan")]
-		public static void StoryPlanMakeCommand() { DynamicIslands.instance.StartCoroutine(StoryPlanMakeRoutine()); }
+		public static void StoryPlanMakeCommand() { StartTest(StoryPlanMakeRoutine()); }
 
 		static IEnumerator StoryPlanMakeRoutine()
 		{
@@ -265,6 +323,9 @@ namespace DynamicIslands
 			if (win == null) { Fail("story plan made"); yield break; }
 			Check(ref ok, Click(win, "New..."), "New... clicked");
 			yield return null; yield return null;
+			// (New... asks how to start first: an empty plan - TODO 5b)
+			Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.PickValue(WorldPlanWindow.NewEmpty), "New...: an empty plan");
+			yield return null; yield return null;
 			GameObject prompt = WindowObject(typeof(TextPromptWindow));
 			Check(ref ok, prompt != null && TypeInto(prompt, "Name", StoryPlan) && Click(prompt, "OK"), "the name prompt: '" + StoryPlan + "', OK");
 			yield return null; yield return null;
@@ -278,6 +339,9 @@ namespace DynamicIslands
 				new[] { "treasure", "quest", "bay", "", "type", "treasure", "near", "600", "east", "bay", "", "Treasure" },
 				new[] { "far", "km", "", "2", "type", "oddity", "ahead", "400", "", "", "", "" },
 			};
+			// (islands that come on their own are on the Other islands tab - TODO 5b)
+			Check(ref ok, ClickTab(win, "Tab_Other"), "the Other islands tab");
+			yield return null;
 			for (int i = 0; i < rules.Length; i++)
 			{
 				string[] r = rules[i];
@@ -303,6 +367,8 @@ namespace DynamicIslands
 				if (r[11].Length > 0) typed &= TypeInto(cd, "Receiver name", r[11]);
 				Check(ref ok, typed, "rule " + (i + 1) + " '" + r[0] + "': filled in through its card");
 			}
+			Check(ref ok, ClickTab(win, "Tab_Settings"), "the Settings tab");
+			yield return null;
 			Check(ref ok, TypeInto(win, "Description, shown when choosing the plan (e.g. A story across five islands)", "A test story across four islands"), "the description typed");
 			Check(ref ok, Click(win, "Check"), "Check clicked");
 			yield return null;
@@ -340,19 +406,26 @@ namespace DynamicIslands
 			if (prompt != null) Click(prompt, "OK"); // (the name it suggests: "CI Story copy")
 			yield return null; yield return null;
 			Check(ref ok, System.IO.File.Exists(WorldPlan.PathFor(StoryPlan + " copy")), "the copy saved as '" + StoryPlan + " copy'");
-			int before = cards().Count;
+			// (the plan's rules, not the cards shown: since 5b a tab shows only its own - the main story line's or the other islands')
+			int before = WorldPlanWindow.Plan.Rules.Count;
+			ClickTab(win, "Tab_Settings");
+			yield return null;
 			Button random = win.GetComponentsInChildren<Button>(false).FirstOrDefault(b => UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text.StartsWith("Random islands while sailing"));
 			string r0 = random != null ? UIKit.LabelOf(random).text : "";
 			if (random != null) random.onClick.Invoke();
 			yield return null;
 			Check(ref ok, random != null && UIKit.LabelOf(random).text != r0, "the random islands switch: '" + r0 + "' -> '" + (random != null ? UIKit.LabelOf(random).text : "") + "'");
+			ClickTab(win, "Tab_Other");
+			yield return null;
 			Check(ref ok, Click(win, "Templates..."), "Templates... clicked");
 			yield return null; yield return null;
 			GameObject choice = WindowObject(typeof(ChoiceWindow));
 			Button firstTemplate = choice != null ? choice.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name.StartsWith("Button_") && UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text.Length > 0 && b.name != "Button_Close" && b.name != "Button_Cancel") : null;
 			if (firstTemplate != null) firstTemplate.onClick.Invoke();
 			yield return null; yield return null;
-			int withTemplate = cards().Count;
+			int withTemplate = WorldPlanWindow.Plan.Rules.Count;
+			// (the arrows on a tab with two cards at least)
+			if (cards().Count < 2) { WorldPlanWindow.ShowTab(WorldPlanWindow.Tab == WorldPlanWindow.TabStory ? WorldPlanWindow.TabOther : WorldPlanWindow.TabStory); yield return null; }
 			Check(ref ok, withTemplate > before, "a template adds its rules: " + before + " -> " + withTemplate);
 			GameObject last = cards().LastOrDefault();
 			string lastId = last != null ? last.GetComponentsInChildren<InputField>(false).Select(f => f.text).FirstOrDefault() : "";
@@ -364,7 +437,7 @@ namespace DynamicIslands
 			GameObject first = cards().FirstOrDefault();
 			if (first != null) Click(first, "Remove");
 			yield return null; yield return null;
-			Check(ref ok, cards().Count == withTemplate - 1, "the remove button takes a rule out: " + withTemplate + " -> " + cards().Count);
+			Check(ref ok, WorldPlanWindow.Plan.Rules.Count == withTemplate - 1, "the remove button takes a rule out: " + withTemplate + " -> " + WorldPlanWindow.Plan.Rules.Count);
 			Check(ref ok, Click(win, "Delete"), "Delete clicked");
 			yield return null; yield return null;
 			Check(ref ok, !System.IO.File.Exists(WorldPlan.PathFor(StoryPlan + " copy")) && System.IO.File.Exists(WorldPlan.PathFor(StoryPlan)), "the copy deleted, the story plan kept");
@@ -373,7 +446,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryPlay", docs: "Dev, in game (host, a new world made with the plan 'CI Story': CIPlanBox \"CI Story\" then CINewWorld): the plan played through. The home island comes ahead of the raft with its Receiver name and message, loaded exactly as saved (the same ground and every object of its file); its gate zone brings the bay 600 m north of it; the bay's quest (open its chest) brings a treasure island east of the bay; 2 km sailed bring an oddity. Each once, never twice. Logs STORY lines for CIStoryCheck")]
-		public static void StoryPlayCommand() { DynamicIslands.instance.StartCoroutine(StoryPlayRoutine()); }
+		public static void StoryPlayCommand() { StartTest(StoryPlayRoutine()); }
 
 		/// <summary>An island in the world against its file: the same ground heights and every object of the file there.</summary>
 		static string LoadedAsSaved(IslandWorldState.Entry e)
@@ -433,7 +506,9 @@ namespace DynamicIslands
 				{
 					Vector3 d = treasure.Position - bay.Position;
 					float bearing = (Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg + 360f) % 360f;
-					Check(ref ok, bearing > 60f && bearing < 120f, "the bay's quest brought the treasure island east of it: " + bearing.ToString("F0") + "° ('" + treasure.Name + "')");
+					// (the east half: when Raft's islands are in the way the spot search turns up to 80° from the direction -
+					// WorldDirector.Candidates; once it came at 125°, 35° off)
+					Check(ref ok, bearing > 5f && bearing < 175f, "the bay's quest brought the treasure island east of it: " + bearing.ToString("F0") + "° ('" + treasure.Name + "')");
 				}
 				else Check(ref ok, false, "the bay's quest brought no treasure island");
 			}
@@ -459,7 +534,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryCheck", docs: "Dev, in game (host): after the story world was saved and loaded again: the plan still the world's, its islands the same (each once), the rules that fired don't fire again; logs STORY lines to compare with CIStoryPlay's. On player 2 (joined): home and the bay once each, with their Receiver names, and the same STORY island lines as the host's")]
-		public static void StoryCheckCommand() { DynamicIslands.instance.StartCoroutine(StoryCheckRoutine()); }
+		public static void StoryCheckCommand() { StartTest(StoryCheckRoutine()); }
 
 		static IEnumerator StoryCheckRoutine()
 		{
@@ -483,7 +558,7 @@ namespace DynamicIslands
 		#endregion
 
 		[ConsoleCommand(name: "CIBoxClicks", docs: "Dev, main menu: Raft's New Game box clicked as a player does: the plan button goes round every plan (built-in and the player's own) and back to the first, each shows its name and description; the randomizer level button goes Off, Light, Normal, Wild and round; each part button switches its part off and on (greyed when Off). Leaves the plan <plan> (default CI Story) chosen and the randomizer Off: CIBoxClicks [plan]")]
-		public static void BoxClicksCommand(string[] args) { DynamicIslands.instance.StartCoroutine(BoxClicksRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : StoryPlan)); }
+		public static void BoxClicksCommand(string[] args) { StartTest(BoxClicksRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : StoryPlan)); }
 
 		static IEnumerator BoxClicksRoutine(string wantPlan)
 		{
@@ -494,32 +569,32 @@ namespace DynamicIslands
 			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
 			yield return new WaitForSecondsRealtime(1f);
 			Transform planRow = box.transform.Find("CustomIslands_Plan");
-			// (the plan's drop-down list, not the head's "Get more..." - the island library)
-			Button plan = planRow != null ? planRow.GetComponentsInChildren<Button>(true).FirstOrDefault(x => x.name == "Drop_Plan") : null;
+			// ("Choose plan...", the plan picker window (CT5), not the head's "Get more..." - the island library)
+			Button plan = planRow != null ? planRow.GetComponentsInChildren<Button>(true).FirstOrDefault(x => x.name == "Button_ChoosePlan") : null;
 			Text detail = planRow != null ? planRow.GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Detail") : null;
 			if (plan == null) { Fail("New Game box clicks: no plan list"); yield break; }
-			// The plan list: every plan picked in turn from the list clicked open
+			// The plan list: every plan picked in turn in the picker
 			List<string> plans = WorldPlan.All();
 			string first = NewWorldOptions.Selected;
 			var seen = new List<string>();
 			var wrongDetail = new List<string>();
 			foreach (string name in plans)
 			{
-				bool picked = DropList.Click(plan, name);
+				bool picked = ChoosePlanInPicker(plan, name);
 				yield return null;
-				string label = UIKit.LabelOf(plan).text.Trim();
+				string label = ChosenPlanText(planRow);
 				if (picked) seen.Add(label);
 				WorldPlan p = WorldPlan.Load(label);
 				if (p == null || detail == null || !detail.text.StartsWith(p.Description.Length > 0 ? p.Description : p.Rules.Count + " rule(s)")) wrongDetail.Add(label);
 			}
-			DropList.Click(plan, first);
+			ChoosePlanInPicker(plan, first);
 			yield return null;
 			Check(ref ok, seen.Distinct().Count() == plans.Count && NewWorldOptions.Selected == first, "the plan list has all " + plans.Count + " plans, each picked from it (" + string.Join(", ", seen.ToArray()) + "), and back to '" + first + "'");
 			Check(ref ok, wrongDetail.Count == 0, "each plan shows its description" + (wrongDetail.Count > 0 ? " - not: " + string.Join(", ", wrongDetail.ToArray()) : ""));
 			Check(ref ok, plans.Contains(wantPlan), "the player's plan '" + wantPlan + "' is among them");
-			DropList.Click(plan, wantPlan);
+			ChoosePlanInPicker(plan, wantPlan);
 			yield return null;
-			Check(ref ok, NewWorldOptions.Selected == wantPlan && UIKit.LabelOf(plan).text.StartsWith(wantPlan), "picked '" + wantPlan + "' from the list: chosen (" + NewWorldOptions.Selected + ")");
+			Check(ref ok, NewWorldOptions.Selected == wantPlan && ChosenPlanText(planRow).StartsWith(wantPlan), "picked '" + wantPlan + "' from the list: chosen (" + NewWorldOptions.Selected + ")");
 			// The randomizer: level round, then each part
 			// (the randomizer is in the World settings window now: opened from the box's button, as a player does)
 			if (WorldSettingsWindow.OpenButton != null) WorldSettingsWindow.OpenButton.onClick.Invoke();
@@ -560,8 +635,8 @@ namespace DynamicIslands
 
 		#region Broken and odd files
 
-		[ConsoleCommand(name: "CIBadFiles", docs: "Dev, main menu or editor: files a player hand-edits or that got broken are read without errors, with warnings and safe values: spawnpool.txt with words for numbers, negative and crossed distances, unknown keys and styles, a missing default plan, island names with spaces and letters like åäö; randomizer.txt and world_rules.txt with nonsense; a generator preset with nonsense and huge numbers; a world plan with broken lines; island files that are empty, random bytes, cut in half or from a newer version. Every real file is put back after")]
-		public static void BadFilesCommand() { DynamicIslands.instance.StartCoroutine(BadFilesRoutine()); }
+		[ConsoleCommand(name: "CIBadFiles", docs: "Dev, main menu or editor: files a player hand-edits or that got broken are read without errors, with warnings and safe values: spawnpool.txt with words for numbers, negative and crossed distances, unknown keys and styles, a missing default plan, island names with spaces and letters like åäö; randomizer.txt and world_rules.txt with nonsense; a generator preset with nonsense and huge numbers; a world plan with broken lines; island files that are empty, random bytes, cut in half or from a newer version. SL3: an island file with broken quest lines (an unknown step kind, counts abc / 0 / 500, one field only, 12 step lines, quest10) is read without errors with safe counts and Check runs on it. Every real file is put back after")]
+		public static void BadFilesCommand() { StartTest(BadFilesRoutine()); }
 
 		static IEnumerator BadFilesRoutine()
 		{
@@ -614,6 +689,8 @@ namespace DynamicIslands
 				CustomIslandSpawner.LoadPool(true);
 				WorldDirector.DefaultPlan = defaultPlanBefore;
 			}
+			// The upgrade table's world file lines with nonsense
+			UtBadLines(ref ok, errors);
 			// A generator preset with nonsense and huge numbers
 			IslandGenSettings s = IslandGenSettings.FromText("Radius=99999\nHeight=-5\nSeed=abc\nStyle=77\nTrees=5\nnonsense\n=\n");
 			Check(ref ok, s.Radius <= IslandGenSettings.MaxRadius && s.Radius >= IslandGenSettings.MinRadius && s.Height >= 2f && s.Style >= 0 && s.Style < TerrainPainter.Styles.Length && s.Amount(s.Trees) <= 1f,
@@ -628,8 +705,8 @@ namespace DynamicIslands
 			Check(ref ok, errors.Count == 0 && bad != null && WorldPlan.All().Contains("cibadplan"), "a plan with broken lines: read (" + (bad != null ? bad.Rules.Count + " rule(s) kept" : "null") + "), listed");
 			System.IO.File.Delete(planPath);
 			// Island files: empty, random bytes, cut in half, from a newer version - each refused with a message, never a crash
-			string good = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland) ?? IslandSpawner.ListSavedIslands().FirstOrDefault();
-			byte[] whole = good != null ? System.IO.File.ReadAllBytes(IslandSpawner.PathFor(good)) : new byte[0];
+			// (the tests' own sample island's bytes, not whichever island the player has saved)
+			byte[] whole = DynamicIslands.instance.GetEmbeddedFileBytes(SampleFixture) ?? new byte[0];
 			var rng = new System.Random(5);
 			byte[] noise = new byte[4096]; rng.NextBytes(noise);
 			byte[] newer = (byte[])whole.Clone();
@@ -656,6 +733,76 @@ namespace DynamicIslands
 				System.IO.File.Delete(path);
 				Check(ref ok, !result.StartsWith("read"), "an island file " + c.Key + ": " + (result.Length > 120 ? result.Substring(0, 120) : result) + (listed ? " (listed)" : ""));
 			}
+			// SL3: an island file whose quest lines are broken - read without errors, unknown steps skipped, counts kept to 1-99, Check runs
+			{
+				const string badQuestIsland = "cibadquest";
+				string bqPath = IslandSpawner.PathFor(badQuestIsland);
+				try
+				{
+					int res = 17;
+					var heights = new float[res, res]; for (int y = 0; y < res; y++) for (int x = 0; x < res; x++) heights[y, x] = 0.4f;
+					var bq = new IslandFile { TerrainSize = new Vector3(64f, 60f, 64f), HeightmapResolution = res, Heights = heights, Name = badQuestIsland };
+					var lines = new List<string> { "teleport|nowhere|1|an unknown kind", "collect|cikey|abc|count is a word", "collect|cikey|0|count is zero", "kill|Warthog|500|count is far too big", "reach" };
+					for (int i = 0; i < 7; i++) lines.Add("reach|gate|1|step " + (i + 6)); // (12 lines in all)
+					bq.Props["quest.title"] = "Broken quest";
+					bq.Props["quest.steps"] = string.Join("\n", lines.ToArray());
+					bq.Props["quest2.title"] = "Quest two";
+					bq.Props["quest2.steps"] = "reach|gate|1|fine\nnonsense|x|1";
+					bq.Props["quest3.title"] = "Far too long";
+					bq.Props["quest3.steps"] = string.Join("\n", Enumerable.Range(1, IslandQuest.MaxFileSteps + 20).Select(i => "reach|gate|1|step " + i).ToArray());
+					bq.Props["quest9.steps"] = "reach|gate|1|the ninth";
+					bq.Props["quest10.title"] = "A tenth quest"; // (an island has at most nine)
+					bq.Props["quest10.steps"] = "reach|gate|1|the tenth";
+					bq.Save(bqPath);
+					errors.Clear();
+					IslandFile back = null;
+					string thrown = null;
+					IslandQuest main = null, second = null, third = null;
+					int quests = 0;
+					try
+					{
+						back = IslandFile.Load(bqPath);
+						main = IslandQuest.From(back.Props, 0, true);
+						second = IslandQuest.From(back.Props, 1, true);
+						third = IslandQuest.From(back.Props, 2, true);
+						quests = IslandQuest.CountIn(back.Props);
+					}
+					catch (Exception e) { thrown = e.GetType().Name + " " + e.Message; }
+					Check(ref ok, thrown == null && errors.Count == 0 && main != null, "SL3 broken quest lines: read without errors" + (thrown != null ? " - " + thrown : errors.Count > 0 ? " - " + errors[0] : ""));
+					if (main != null)
+					{
+						Check(ref ok, !main.Steps.Any(st => st.Type == "teleport") && main.Steps.All(st => IslandQuest.Types.Contains(st.Type)), "SL3: the unknown step kind is skipped (" + main.Steps.Count + " of 12 lines kept)");
+						Check(ref ok, main.Steps.All(st => st.Count >= 1 && st.Count <= 99), "SL3: every count is kept to 1-99");
+						var counts = main.Steps.Take(4).Select(st => st.Count).ToList();
+						Check(ref ok, counts.Count == 4 && counts[0] == 1 && counts[1] == 1 && counts[2] == 99 && counts[3] == 1, "SL3: 'abc' and 0 become 1, 500 becomes 99, one field only becomes a step with count 1 (" + string.Join(",", counts.Select(c => c.ToString()).ToArray()) + ")");
+						// (11 good lines: more than the editor's 10 - a recipe's quest runs to 40 - all read)
+						Check(ref ok, main.Steps.Count == 11, "SL3: a quest with more steps than the editor adds is read whole (" + main.Steps.Count + " of 11)");
+					}
+					Check(ref ok, third != null && third.Steps.Count == IslandQuest.MaxFileSteps, "SL3: a quest file with " + (IslandQuest.MaxFileSteps + 20) + " steps is read up to " + IslandQuest.MaxFileSteps + " (" + (third != null ? third.Steps.Count : 0) + ")");
+					Check(ref ok, second != null && second.Steps.Count == 1 && quests <= IslandQuest.MaxQuests && quests == 9, "SL3: quest 2 skips its unknown line; the island counts " + quests + " quests (quest10.* ignored, at most " + IslandQuest.MaxQuests + ")");
+					// Check runs on it: the island's own quest findings, and a plan whose rule brings it
+					errors.Clear();
+					string checkThrown = null;
+					int found = 0;
+					try
+					{
+						found += PlanChecker.QuestFindings(back).Count;
+						var badPlan = new WorldPlan { Name = "CI bad quest", Random = false };
+						badPlan.Rules.Add(IntroRule.Parse("start | island:" + badQuestIsland + " | start | ahead:300 | msg | Start"));
+						badPlan.Rules.Add(IntroRule.Parse("after | type:camp | step:start:12 | ahead:300 | msg | After"));
+						found += PlanChecker.Check(badPlan, false, true).Count;
+					}
+					catch (Exception e) { checkThrown = e.GetType().Name + " " + e.Message; }
+					Check(ref ok, checkThrown == null && errors.Count == 0, "SL3: Check runs on the broken quest without throwing (" + found + " finding(s))" + (checkThrown != null ? " - " + checkThrown : ""));
+				}
+				finally { try { if (System.IO.File.Exists(bqPath)) System.IO.File.Delete(bqPath); } catch { } }
+			}
+			// World file lines with nonsense (needs a test world 'CI ...': skipped, and logged, in the menu or the editor)
+			GwBadWorldLines(ref ok);
+			// Broken terrain stamp and object group files
+			var gwStamps = new[] { true };
+			yield return GwBadStampsPart(gwStamps);
+			ok &= gwStamps[0];
 			Application.logMessageReceived -= watch;
 			if (ok) Log("PASS: broken files"); else Fail("broken files");
 		}
@@ -663,7 +810,7 @@ namespace DynamicIslands
 		#endregion
 
 		[ConsoleCommand(name: "CIPlanRules", docs: "Dev, in game (host): the plan rules no other test plays in a world - 'on day' (today: brought; day 999: waits), 'quest step done' (the start island's first step), 'after rule' (a chain), 'from the spawn pool'; a rule whose saved island is missing waits, says why once, and breaks nothing; a plan edited while the world plays (a new rule fires); a plan deleted (its rules stop, the islands stay, nothing breaks). The world's plan, its islands and km are put back after")]
-		public static void PlanRulesCommand() { DynamicIslands.instance.StartCoroutine(PlanRulesRoutine()); }
+		public static void PlanRulesCommand() { StartTest(PlanRulesRoutine()); }
 
 		static IEnumerator PlanRulesRoutine()
 		{
@@ -755,7 +902,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIFilesWindow", docs: "Dev, editor: the Islands window (Open / Save as) clicked as a player does: Save with no name and with a name holding : * ? is refused with a message; a new name saves and closes; the name of another saved island asks first and overwrites on the second Save; the height field clamps 9999 to 250, reads nonsense as 0; Open with a missing name says so; clicking an island fills its name, a double-click opens it; Delete asks first, typing in between cancels the question, the second Delete removes the file and its row; Close. Then the other click-twice buttons: the top bar's New (once: nothing happens; twice: an empty island) and a generator preset's ×. The island open before is opened again after")]
-		public static void FilesWindowCommand() { DynamicIslands.instance.StartCoroutine(FilesWindowRoutine()); }
+		public static void FilesWindowCommand() { StartTest(FilesWindowRoutine()); }
 
 		static IEnumerator FilesWindowRoutine()
 		{
@@ -869,7 +1016,7 @@ namespace DynamicIslands
 		#endregion
 
 		[ConsoleCommand(name: "CIPlanWindowEdits", docs: "Dev, editor: the World Plans window's rule buttons and Close: ▼ moves a rule down, ▲ on the first and ▼ on the last do nothing; the first template added twice gets new ids for the second copy and its references follow them (never pointing at the first copy); Close throws unsaved changes away (the file and a reopened plan as before); Save keeps a new order")]
-		public static void PlanWindowEditsCommand() { DynamicIslands.instance.StartCoroutine(PlanWindowEditsRoutine()); }
+		public static void PlanWindowEditsCommand() { StartTest(PlanWindowEditsRoutine()); }
 
 		static IEnumerator PlanWindowEditsRoutine()
 		{
@@ -959,7 +1106,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIRaftSettings", docs: "Dev, world (host, a custom island loaded near the raft): Raft's own settings as a player sets them (the settings screen's dropdowns, toggles and sliders, so Raft applies them): every graphics quality, water, texture, shadow, reflection and FPS option, ambient occlusion and anti-aliasing, FOV at its ends; then every language of Raft's. After each: no error of the mod, the island still there with its ground drawn, the mod's item names, journal and quest panel still work. Everything put back after; pictures shot_settings_*")]
-		public static void RaftSettingsCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RaftSettingsRoutine(args != null && args.Length > 0 ? args[0] : null)); }
+		public static void RaftSettingsCommand(string[] args) { StartTest(RaftSettingsRoutine(args != null && args.Length > 0 ? args[0] : null)); }
 
 		static IEnumerator RaftSettingsRoutine(string only = null)
 		{
@@ -967,7 +1114,7 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			bool ok = true;
 			IslandWorldState.Entry island = IslandWorldState.Islands.Where(e => e.Root != null && e.Root.GetComponentInChildren<Terrain>() != null).OrderBy(e => (e.Position - (CustomIslandSpawner.RaftPosition ?? Vector3.zero)).sqrMagnitude).FirstOrDefault();
-			if (island == null) { Fail("Raft's settings: no custom island with land loaded (SpawnIsland citest first)"); yield break; }
+			if (island == null) { Fail("Raft's settings: no custom island with land loaded (CIMPIsland first)"); yield break; }
 			int objects = island.Root.GetComponentsInChildren<IslandObjectRef>(true).Length;
 			var errors = new List<string>();
 			Application.LogCallback watch = (text, trace, type) =>

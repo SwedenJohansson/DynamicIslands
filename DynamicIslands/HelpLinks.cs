@@ -14,6 +14,10 @@ namespace DynamicIslands.Editor
 		public const string Discord = "https://discord.gg/U7DfKY9tN";
 		public const string Repo = "https://github.com/SwedenJohansson/DynamicIslands";
 		public const string Issues = Repo + "/issues";
+		/// <summary>The mod's page on raftmodding.com, where new versions come out (the mod never updates itself).</summary>
+		public const string ModPage = "https://www.raftmodding.com/mods/custom-islands";
+		/// <summary>The newest version's number on raftmodding.com (the updateUrl in modinfo.json, which RML reads too).</summary>
+		public const string VersionUrl = "https://www.raftmodding.com/api/v1/mods/custom-islands/version.txt";
 		public const string GuideOnline = Repo + "/blob/master/docs/GUIDE.md";
 		public const string GuidePdfOnline = Repo + "/blob/master/docs/Custom-Islands-Guide.pdf";
 		/// <summary>The guide as a PDF: in the .rmod (pack.ps1 puts it there), written to Mods\DynamicIslands\ to open it.</summary>
@@ -32,6 +36,8 @@ namespace DynamicIslands.Editor
 		{
 			LastOpened = url;
 			Debug.Log("[CUSTOM ISLANDS] Opening " + url + (NotOpened ? " (test: not opened)" : ""));
+			// (a Raft run by the tests' command file says so, or a click on it seems to do nothing - user, 2026-11-02)
+			if (Automated && !TestMode) DynamicIslands.Notify("This Raft is run by the tests: links don't open here (" + url + ")");
 			if (NotOpened) return;
 			try { Application.OpenURL(url); }
 			catch (Exception e) { DynamicIslands.Notify("Could not open " + url + ": " + e.Message, true); }
@@ -62,7 +68,7 @@ namespace DynamicIslands.Editor
 				if (!File.Exists(path) || new FileInfo(path).Length != pdf.Length)
 				{
 					Directory.CreateDirectory(DynamicIslands.assetpath);
-					File.WriteAllBytes(path, pdf);
+					SafeFile.WriteAllBytes(path, pdf); // (in one step: a PDF cut short isn't left for the reader - AU41)
 				}
 				return path;
 			}
@@ -95,7 +101,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The versions a report needs: the mod's and Raft's.</summary>
 		public static string Versions { get { return "Custom Islands " + ExperimentalNotice.Version + ", Raft " + Application.version; } }
 
-		/// <summary>The form to fill in (the guide's section 13), with the versions filled in.</summary>
+		/// <summary>The form to fill in (the guide's section 14), with the versions filled in.</summary>
 		public static string ReportTemplate
 		{
 			get
@@ -104,9 +110,9 @@ namespace DynamicIslands.Editor
 					"Steps to make it happen:\n  1.\n  2.\n  3.\n" +
 					"What I expected:\n" +
 					"How often: every time / now and then / once\n" +
-					"Versions: " + Versions + ", mod loader:          other mods:\n" +
+					"Versions: " + Versions + ", mod loader:, other mods:\n" +
 					"Single player or together: (host / joined, how many players)\n" +
-					"World plan and World settings: (what WorldPlan, WorldOptions, Monsters, BuildCost, Randomizer, WorldIslands print in the F10 console)\n" +
+					"World settings: (what WorldOptions, Monsters, BuildCost, Randomizer, WorldPlan, WorldIslands, SpawnPool print)\n" +
 					"Islands and world plans used: (names, files or download links)\n" +
 					"Attached: Player.log, Player-prev.log, screenshots, ...\n";
 			}

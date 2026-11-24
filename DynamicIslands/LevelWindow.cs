@@ -113,6 +113,31 @@ namespace DynamicIslands.Editor
 			if (instance.hud != null) instance.hud.gameObject.SetActive(false);
 		}
 
+		/// <summary>The level box's usual place (from the top of the screen) and the gap it keeps under an island banner.</summary>
+		const float BannerTop = 190f, BannerGap = 12f;
+
+		/// <summary>The level box moves down while an island banner reaches its place, and back up after (AUDIT 11-09 #13).</summary>
+		void KeepBelowIslandBanner()
+		{
+			RectTransform r = (RectTransform)banner.transform;
+			float scale = canvasRect != null && canvasRect.lossyScale.y > 0f ? canvasRect.lossyScale.y : 1f;
+			float island = IslandInfo.BannerBottomPx / scale;
+			float y = island > 0f ? Mathf.Max(BannerTop, island + BannerGap) : BannerTop;
+			if (Mathf.Abs(r.anchoredPosition.y + y) > 0.5f) r.anchoredPosition = new Vector2(r.anchoredPosition.x, -y);
+		}
+
+		/// <summary>Tests: the level box's corners on screen, or null when it isn't up.</summary>
+		internal static Rect? BannerScreenRect
+		{
+			get
+			{
+				if (instance == null || !instance.banner.gameObject.activeSelf) return null;
+				Vector3[] c = new Vector3[4];
+				((RectTransform)instance.banner.transform).GetWorldCorners(c);
+				return Rect.MinMaxRect(c[0].x, c[0].y, c[2].x, c[2].y);
+			}
+		}
+
 		static void Build()
 		{
 			Canvas canvas = UIKit.CreateCanvas("CustomIslands_Levels", 410); // (above the island banners (400): an EXP number behind one would be lost)
@@ -122,7 +147,7 @@ namespace DynamicIslands.Editor
 
 			// The box, below where the island banners show; a level up's box opens the stats page when clicked
 			RectTransform n = UIKit.Rect("LevelBanner", canvas.transform);
-			UIKit.Anchor(n, new Vector2(0.5f, 1f), new Vector2(0, -190), new Vector2(560, 0));
+			UIKit.Anchor(n, new Vector2(0.5f, 1f), new Vector2(0, -BannerTop), new Vector2(560, 0));
 			UIKit.Surface(n);
 			UIKit.Vertical(n.gameObject, 4f, new RectOffset(22, 22, 12, 14), true);
 			instance.bannerTitle = UIKit.Label(n, "", 28, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Bold, "Title");
@@ -473,9 +498,11 @@ namespace DynamicIslands.Editor
 				float t = Time.unscaledTime - bannerShownAt;
 				banner.alpha = Mathf.Clamp01(t / 0.4f) * Mathf.Clamp01((bannerSeconds - t) / 1f);
 				if (t > bannerSeconds) banner.gameObject.SetActive(false);
+				KeepBelowIslandBanner();
 			}
 			// The level bar: placed again now and then (Raft's HUD can change size), lit up for a moment after EXP
-			if (Time.unscaledTime >= nextPlace || hud == null) { nextPlace = Time.unscaledTime + 2f; PlaceHud(); }
+			// (not every frame while the bar can't be built - no Raft HUD found: a FindObjectOfType each frame. Audit 2026-10-06)
+			if (Time.unscaledTime >= nextPlace) { nextPlace = Time.unscaledTime + (hud == null ? 0.5f : 2f); PlaceHud(); }
 			if (hud == null) return;
 			if (!hud.gameObject.activeSelf) { hud.gameObject.SetActive(true); RefreshBar(); }
 			float p = Mathf.Clamp01(1f - (Time.unscaledTime - pulseAt) / PulseSeconds);
@@ -505,10 +532,12 @@ namespace DynamicIslands.Editor
 		{
 			if (Time.unscaledTime < nextCheck) return;
 			nextCheck = Time.unscaledTime + 0.5f;
+			// (levels off: nothing to show once the tags shown are hidden)
+			if (!PlayerLevels.On && Shown.Count == 0) return;
 			Shown.Clear();
 			Network_Player local = null;
 			try { local = RAPI.GetLocalPlayer(); } catch { }
-			foreach (Network_Player p in Object.FindObjectsOfType<Network_Player>())
+			foreach (Network_Player p in Players.All)
 			{
 				if (p == null || p == local || p.playerNameTextMesh == null) continue;
 				TextMesh name = p.playerNameTextMesh;
@@ -551,10 +580,13 @@ namespace DynamicIslands.Editor
 
 	/// <summary>
 	/// The stats page (K) in a world with the level up system on: the level and EXP, the monsters defeated, and the nine stats to put the
-	/// level's points into (+1% a point, at most 10 each). Points put in can be taken back until the page is closed.
+	/// level's points into (+1% a point, at most 15 each). Points put in can be taken back until the page is closed.
 	/// </summary>
 	public class LevelWindow : MonoBehaviour
 	{
+		/// <summary>A point's box: 15 of them fit where 10 boxes of 17 px were (15 points since 2026-10-06).</summary>
+		const int PipWidth = 11;
+
 		static LevelWindow instance;
 		public static bool IsOpen { get { return instance != null && instance.gameObject.activeSelf; } }
 
@@ -564,7 +596,7 @@ namespace DynamicIslands.Editor
 		readonly Text[] values = new Text[LevelRules.StatCount];
 		readonly Button[] plus = new Button[LevelRules.StatCount], minus = new Button[LevelRules.StatCount];
 		int[] openedWith = new int[LevelRules.StatCount];
-		bool cursorWasFree;
+		static Text keyHint;
 
 		static readonly Color PipOn = new Color(0.97f, 0.8f, 0.42f, 1f), PipOff = new Color(0.16f, 0.09f, 0.04f, 0.85f);
 
@@ -572,21 +604,17 @@ namespace DynamicIslands.Editor
 		public static void Tick()
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || DynamicIslands.InEditor() || !PlayerLevels.On) { if (IsOpen) instance.Hide(); return; }
-			if (!Input.GetKeyDown(PlayerLevels.Key) || Typing() || NoteReader.IsOpen || JournalWindow.IsOpen) return;
+			if (!Input.GetKeyDown(PlayerLevels.Key) || ModKeys.Blocked() || NoteReader.IsOpen || JournalWindow.IsOpen || ModKeys.Listening) return;
 			if (IsOpen) instance.Hide(); else Open();
-		}
-
-		static bool Typing()
-		{
-			GameObject sel = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
-			InputField f = sel != null ? sel.GetComponent<InputField>() : null;
-			return f != null && f.isFocused;
 		}
 
 		public static void Open()
 		{
 			if (!PlayerLevels.On) return;
 			if (instance == null) Build();
+			// (audit 11-09: one page at a time - the journal and notebook were left open under the stats page)
+			JournalWindow.Close();
+			PlayerNotebookWindow.Close();
 			instance.Show();
 		}
 
@@ -659,12 +687,12 @@ namespace DynamicIslands.Editor
 				UIKit.Size(name.gameObject, 118, -1, 0);
 				RectTransform pipRow = UIKit.Rect("Pips", row);
 				UIKit.Horizontal(pipRow.gameObject, 3f);
-				UIKit.Size(pipRow.gameObject, 10 * 17 + 9 * 3, 16, 0);
+				UIKit.Size(pipRow.gameObject, LevelRules.MaxPoints * PipWidth + (LevelRules.MaxPoints - 1) * 3, 16, 0);
 				instance.pips[i] = new Image[LevelRules.MaxPoints];
 				for (int p = 0; p < LevelRules.MaxPoints; p++)
 				{
 					RectTransform pip = UIKit.Rect("Pip" + p, pipRow);
-					UIKit.Size(pip.gameObject, 17, 16, 0);
+					UIKit.Size(pip.gameObject, PipWidth, 16, 0);
 					instance.pips[i][p] = UIKit.Background(pip.gameObject, PipOff, 3);
 				}
 				instance.values[i] = UIKit.Label(row, "", 14, UIKit.Accent, TextAnchor.MiddleRight, FontStyle.Normal, "Value");
@@ -674,12 +702,12 @@ namespace DynamicIslands.Editor
 				UIKit.Hint(row.gameObject, LevelRules.StatHints[i]);
 			}
 
-			Text about = UIKit.Label(panel, "Hit monsters to earn EXP: the tougher the monster and the harder it bites, the more (Bruce the shark is worth " + LevelRules.ReferenceXp +
-				"). Level 2 takes about 5 monster kills, level 3 about 10 more, level 4 about 20 more, then 10 more each level. Every level gives " + LevelRules.PointsPerLevel +
+			Text about = UIKit.Label(panel, "Hit monsters to earn EXP: the tougher the monster and the harder it bites, the more (Bruce the shark is worth " + LevelRules.BruceXp +
+				"). Level 2 takes about 3 shark kills, level 3 about 5 more, level 4 about 10 more, then 5 more each level. Every level gives " + LevelRules.PointsPerLevel +
 				" stat points; each point is +1% (Hunger, Thirst and Oxygen last 1% longer), at most " + LevelRules.MaxPoints + " points in a stat. With every stat full the levels go on, without points.", 12, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Normal, "About");
 			about.lineSpacing = 1.05f;
 			RectTransform bottom = UIKit.Row(panel, 34f, 8f, "Bottom");
-			UIKit.Label(bottom, PlayerLevels.Key + " or Esc to close", 13, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
+			keyHint = UIKit.Label(bottom, ModKeys.Name(PlayerLevels.Key) + " or Esc to close", 13, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "KeyHint");
 			UIKit.Button(bottom, "Close", Close, null, 120, 34);
 			canvas.gameObject.SetActive(false);
 		}
@@ -687,8 +715,8 @@ namespace DynamicIslands.Editor
 		void Show()
 		{
 			gameObject.SetActive(true);
-			cursorWasFree = Cursor.visible;
-			if (!cursorWasFree) try { RAPI.ToggleCursor(true); } catch { }
+			if (keyHint != null) keyHint.text = ModKeys.Name(PlayerLevels.Key) + " or Esc to close";
+			ModCursor.Take(this);
 			LevelRecord r = PlayerLevels.Mine;
 			openedWith = r != null ? (int[])r.Points.Clone() : new int[LevelRules.StatCount];
 			Fill();
@@ -698,12 +726,12 @@ namespace DynamicIslands.Editor
 		{
 			if (!gameObject.activeSelf) return;
 			gameObject.SetActive(false);
-			if (!cursorWasFree) try { RAPI.ToggleCursor(false); } catch { }
+			ModCursor.Give(this); // (in a world only - CA17)
 		}
 
 		void Update()
 		{
-			if (Input.GetKeyDown(KeyCode.Escape)) Hide();
+			if (EscKey.Down(this) || !LoadSceneManager.IsGameSceneLoaded) Hide();
 		}
 
 		void Fill()

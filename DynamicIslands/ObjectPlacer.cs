@@ -14,6 +14,13 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public class ObjectPlacer : MonoBehaviour
 	{
+		/// <summary>The object being placed now, or null (ROADMAP P3: looked up with FindObjectOfType every frame before).</summary>
+		public static ObjectPlacer Current { get { return current != null ? current : null; } }
+		static ObjectPlacer current;
+
+		void Awake() { current = this; }
+		void OnDestroy() { if (current == this) current = null; }
+
 		public string GameObjectName;
 
 		public Terrain terrain;
@@ -45,7 +52,8 @@ namespace DynamicIslands.Editor
 
 			layerMask = (1 << LayerMask.NameToLayer("Default")) | (1 << LayerMask.NameToLayer("Obstruction"));
 			ownColliders = GetComponentsInChildren<Collider>(true);
-			baseRotation = transform.rotation;
+			// (an object of Raft's islands that stood almost straight in Raft's scene stands straight - a ladder leant 14°)
+			baseRotation = PlacementOptions.Straight(transform.rotation);
 			baseScale = transform.localScale;
 			if (PlacementOptions.RandomTurnAndSize && !PlacementOptions.SnapToGrid)
 			{
@@ -63,13 +71,13 @@ namespace DynamicIslands.Editor
 		void Update()
 		{
 			// (Esc cancels: the gizmo selects objects on click again - it didn't until the tab changed)
-			if (Input.GetKeyDown(KeyCode.Escape)) { if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.placingObject = false; Destroy(this.gameObject); return; }
+			if (Input.GetKeyDown(KeyCode.Escape)) { EscKey.Swallow(); if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.placingObject = false; Destroy(this.gameObject); return; }
 
 			if (!EditorInput.IsTyping)
 			{
 				float turn = PlacementOptions.SnapToGrid ? 90f : 15f;
-				if (Input.GetKeyDown(KeyCode.Q)) yaw = PlacementOptions.SnapToGrid ? Mathf.Round((yaw - turn) / turn) * turn : yaw - turn;
-				if (Input.GetKeyDown(KeyCode.E)) yaw = PlacementOptions.SnapToGrid ? Mathf.Round((yaw + turn) / turn) * turn : yaw + turn;
+				if (Input.GetKeyDown(CameraSettings.DownKey) && !EditorCamera.Looking) yaw = PlacementOptions.SnapToGrid ? Mathf.Round((yaw - turn) / turn) * turn : yaw - turn;
+				if (Input.GetKeyDown(CameraSettings.UpKey) && !EditorCamera.Looking) yaw = PlacementOptions.SnapToGrid ? Mathf.Round((yaw + turn) / turn) * turn : yaw + turn;
 				if (Input.GetKeyDown(KeyCode.LeftBracket)) scale = Mathf.Max(0.1f, scale / 1.1f);
 				if (Input.GetKeyDown(KeyCode.RightBracket)) scale = Mathf.Min(10f, scale * 1.1f);
 			}
@@ -97,6 +105,10 @@ namespace DynamicIslands.Editor
 			{
 				if (hit.collider == null || ownColliders.Contains(hit.collider) || hit.collider.transform.IsChildOf(transform)) continue;
 				transform.position = PlacementOptions.FloatIfBlock(GameObjectName, PlacementOptions.Snap(hit.point));
+				// (on bare ground, standing straight: down to the lowest ground under its base, so a house on legs or a van on
+				// a slope doesn't stand on its high side with the low side in the air)
+				if (hit.collider is TerrainCollider && !PlacementOptions.AlignToSlope && !PlacementOptions.SnapToGrid)
+					transform.position = new Vector3(transform.position.x, PlacementOptions.RestingPivotY(gameObject), transform.position.z);
 				groundNormal = hit.normal;
 				return;
 			}

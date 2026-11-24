@@ -23,12 +23,14 @@ namespace DynamicIslands.Editor
 		public string Path = "", Updated = "";
 		public long Size;
 		public int Islands;
+		/// <summary>An island entry's monsters (index.json "monsters", counted by build-index.ps1 as IslandDifficulty does), -1 when the list doesn't say.</summary>
+		public int Monsters = -1;
 		public List<LibraryFileRef> Files = new List<LibraryFileRef>();
 
-		/// <summary>The files an install needs: the islands and the plan (not the pictures).</summary>
+		/// <summary>The files an install needs: the islands, the plan and the map types they bring (not the pictures).</summary>
 		public IEnumerable<LibraryFileRef> InstallFiles
 		{
-			get { return Files.Where(f => f.Name.EndsWith(IslandFile.Extension, StringComparison.OrdinalIgnoreCase) || f.Name.EndsWith(WorldPlan.Extension, StringComparison.OrdinalIgnoreCase)); }
+			get { return Files.Where(f => f.Name.EndsWith(IslandFile.Extension, StringComparison.OrdinalIgnoreCase) || f.Name.EndsWith(WorldPlan.Extension, StringComparison.OrdinalIgnoreCase) || f.Name.EndsWith(MapTypeFiles.Extension, StringComparison.OrdinalIgnoreCase)); }
 		}
 	}
 
@@ -41,7 +43,10 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class LibraryClient
 	{
-		public const string DefaultAddress = "https://raw.githubusercontent.com/SwedenJohansson/CustomIslands-Library/main/";
+		/// <summary>The library: Franz's shared Google Drive folder (2026-10-01). Until then it was the GitHub repository below -
+		/// a library.txt that still names that address (written by an older version) reads the new one.</summary>
+		public const string DefaultAddress = "https://drive.google.com/drive/folders/1qXHPud7BAUILVrcEDPJn4FnGggrZdswi";
+		public const string OldDefaultAddress = "https://raw.githubusercontent.com/SwedenJohansson/CustomIslands-Library/main/";
 		public const int Format = 1;
 		const float CacheMinutes = 10f;
 
@@ -70,8 +75,9 @@ namespace DynamicIslands.Editor
 			try
 			{
 				if (!File.Exists(SettingsPath))
-					SafeFile.WriteAllText(SettingsPath, "# The island library (the ISLAND LIBRARY window). The mod goes online only while that window is open,\r\n" +
-						"# and sends nothing but the downloads.\r\n# online = on|off\r\nonline = on\r\n# address = where index.json is (a folder address ending in /)\r\naddress = " + DefaultAddress + "\r\n");
+					SafeFile.WriteAllText(SettingsPath, "# The island library (the ISLAND LIBRARY window). The library goes online only while that window is open,\r\n" +
+						"# and sends nothing but the downloads.\r\n# online = on|off\r\nonline = on\r\n# address = where index.json is: a Google Drive folder link, or a web folder address ending in /\r\naddress = " + DefaultAddress + "\r\n" +
+						"# key = a Google API key for the Drive API (optional: without one the folder's public listing is read)\r\n");
 				foreach (string line in File.ReadAllLines(SettingsPath))
 				{
 					int eq = line.IndexOf('=');
@@ -91,9 +97,26 @@ namespace DynamicIslands.Editor
 			get
 			{
 				string a = TestAddress ?? Setting("address");
-				if (string.IsNullOrEmpty(a)) a = DefaultAddress;
+				// (an older version wrote the GitHub address into library.txt: the library moved to Franz's Drive folder)
+				if (string.IsNullOrEmpty(a) || a.TrimEnd('/').Equals(OldDefaultAddress.TrimEnd('/'), StringComparison.OrdinalIgnoreCase)) a = DefaultAddress;
+				string id;
+				if (LibraryDrive.IsDrive(a, out id)) return a;
 				return a.EndsWith("/") ? a : a + "/";
 			}
+		}
+
+		/// <summary>library.txt's Google API key for the Drive API, or null (the folder's public listing is read then).</summary>
+		static string DriveKey { get { string k = TestAddress != null ? null : Setting("key"); return string.IsNullOrEmpty(k) ? null : k; } }
+
+		/// <summary>Where a file of the library downloads from: a path in the Drive folder found by its id, or the web
+		/// address (or local copy) beside the list. done(url or null, error or null).</summary>
+		static IEnumerator FileUrl(string path, Action<string, string> done)
+		{
+			string root;
+			if (!LibraryDrive.IsDrive(Address, out root)) { done(Url(downloadBase ?? Address, path), null); yield break; }
+			string id = null, error = null;
+			yield return LibraryDrive.Find(root, path, DriveKey, (i, err) => { id = i; error = err; });
+			done(id != null ? LibraryDrive.DownloadUrl(id, DriveKey) : null, error);
 		}
 
 		#endregion
@@ -122,8 +145,22 @@ namespace DynamicIslands.Editor
 			if (!Online) { LastError = "The online library is switched off (online = off in Mods\\DynamicIslands\\library.txt)."; done(LastError); yield break; }
 			if (!force && entries != null && (DateTime.Now - fetchedAt).TotalMinutes < CacheMinutes) { done(null); yield break; }
 			string address = Address;
+			string url, driveRoot;
+			if (LibraryDrive.IsDrive(address, out driveRoot))
+			{
+				// (Drive: the folder is listed again - files copied in since show; then the list by its id)
+				LibraryDrive.Forget();
+				string id = null, error = null;
+				yield return LibraryDrive.Find(driveRoot, "index.json", DriveKey, (i, err) => { id = i; error = err; });
+				if (id == null)
+				{
+					LastError = "Can't read the island library: " + error + ". Packs someone sent you can still be installed: Import... in the island editor.";
+					entries = null; done(LastError); yield break;
+				}
+				url = LibraryDrive.DownloadUrl(id, DriveKey);
+			}
 			// (a web address gets "?t=" so GitHub's cache hands out the newest list; a file address can't have one)
-			string url = address + "index.json" + (address.StartsWith("http") ? "?t=" + DateTime.UtcNow.Ticks : "");
+			else url = address + "index.json" + (address.StartsWith("http") ? "?t=" + DateTime.UtcNow.Ticks : "");
 			string text = null;
 			using (UnityWebRequest req = Get(url))
 			{
@@ -153,7 +190,7 @@ namespace DynamicIslands.Editor
 				var e = new LibraryEntry
 				{
 					Info = LibraryInfo.From(o), Path = LibraryJson.Str(o, "path"), Updated = LibraryJson.Str(o, "updated"),
-					Size = LibraryJson.Int(o, "size"), Islands = LibraryJson.Int(o, "islands"),
+					Size = LibraryJson.Int(o, "size"), Islands = LibraryJson.Int(o, "islands"), Monsters = LibraryJson.Int(o, "monsters", -1),
 					Files = LibraryJson.Objects(o, "files").Select(f => new LibraryFileRef { Name = LibraryJson.Str(f, "name"), Size = LibraryJson.Int(f, "size"), Sha256 = LibraryJson.Str(f, "sha256").ToLowerInvariant() }).ToList(),
 				};
 				if (e.Info.id.Length == 0) e.Info.id = LibraryJson.Str(o, "id");
@@ -164,7 +201,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Forgets the list (read again next time) - tests switching addresses.</summary>
-		public static void Forget() { entries = null; fetchedAt = DateTime.MinValue; }
+		public static void Forget() { entries = null; fetchedAt = DateTime.MinValue; LibraryDrive.Forget(); }
 
 		/// <summary>Whether an entry is installed here, and whether the library has a newer version.</summary>
 		public static State StateOf(LibraryEntry e)
@@ -172,8 +209,21 @@ namespace DynamicIslands.Editor
 			LibraryInstalled i = LibraryPack.Installed().FirstOrDefault(x => x.id.Equals(e.Info.id, StringComparison.OrdinalIgnoreCase));
 			if (i == null) return State.NotInstalled;
 			// (a file it installed was deleted since - in the editor, or by hand: it showed as Installed with Download off)
-			if (i.files.Any(f => !File.Exists(f.kind == LibraryPack.KindPlan ? WorldPlan.PathFor(f.name) : IslandSpawner.PathFor(f.name)))) return State.NotInstalled;
-			return e.Info.version > i.version ? State.Update : State.Installed;
+			if (i.files.Any(f => !File.Exists(LibraryPack.PathOf(f)))) return State.NotInstalled;
+			if (e.Info.version > i.version) return State.Update;
+			// (T10: a file changed in the library without a new version number - only for installs that recorded their files)
+			return Changed(e, i) ? State.Update : State.Installed;
+		}
+
+		/// <summary>Whether the library's files differ from the ones this install came from (a file changed, added or gone).</summary>
+		public static bool Changed(LibraryEntry e, LibraryInstalled i)
+		{
+			if (i.packed.Count == 0) return false;
+			List<LibraryFileRef> now = e.InstallFiles.ToList();
+			if (now.Count == 0) return false;
+			if (now.Count != i.packed.Count) return true;
+			string sha;
+			return now.Any(f => !i.packed.TryGetValue(f.Name, out sha) || !sha.Equals(f.Sha256, StringComparison.OrdinalIgnoreCase));
 		}
 
 		#endregion
@@ -181,11 +231,38 @@ namespace DynamicIslands.Editor
 		#region Pictures
 
 		/// <summary>An entry's picture (the icon, or picture n), from the cache or downloaded. done(texture or null).</summary>
+		/// <summary>The largest side of a library picture in pixels: a small file can claim a huge picture (CB12).</summary>
+		public const int MaxPictureSide = 4096;
+
+		/// <summary>Whether a PNG or JPEG says it is larger than MaxPictureSide, read from its header before Unity unpacks it.</summary>
+		public static bool TooLarge(byte[] b)
+		{
+			if (b == null || b.Length < 24) return false;
+			if (b[0] == 0x89 && b[1] == (byte)'P' && b[2] == (byte)'N' && b[3] == (byte)'G')
+				return Big(b[16] << 24 | b[17] << 16 | b[18] << 8 | b[19]) || Big(b[20] << 24 | b[21] << 16 | b[22] << 8 | b[23]);
+			if (b[0] != 0xFF || b[1] != 0xD8) return false;
+			// (JPEG: the frame header SOF0-SOF15, but not DHT C4, JPG C8 or DAC CC, holds height and width)
+			int i = 2;
+			while (i + 9 < b.Length)
+			{
+				if (b[i] != 0xFF) return false;
+				int m = b[i + 1];
+				if (m == 0xD8 || m == 0x01 || (m >= 0xD0 && m <= 0xD7)) { i += 2; continue; }
+				if (m >= 0xC0 && m <= 0xCF && m != 0xC4 && m != 0xC8 && m != 0xCC) return Big(b[i + 5] << 8 | b[i + 6]) || Big(b[i + 7] << 8 | b[i + 8]);
+				i += 2 + (b[i + 2] << 8 | b[i + 3]);
+			}
+			return false;
+		}
+
+		static bool Big(int side) { return side <= 0 || side > MaxPictureSide; }
+
 		public static IEnumerator Picture(LibraryEntry e, string name, Action<Texture2D> done)
 		{
 			LibraryFileRef f = e.Files.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 			if (f == null || f.Size > 600 * 1024) { done(null); yield break; }
-			string key = e.Info.id + "-" + (f.Sha256.Length >= 12 ? f.Sha256.Substring(0, 12) : f.Name);
+			// (a file's name in the cache: the index's id and names go through IdFrom - "..\\..\\x" or "C:\\x" from the index wrote
+			// a picture anywhere)
+			string key = LibraryPack.IdFrom(e.Info.id) + "-" + LibraryPack.IdFrom(f.Sha256.Length >= 12 ? f.Sha256.Substring(0, 12) : f.Name);
 			Texture2D tex;
 			if (textures.TryGetValue(key, out tex) && tex != null) { done(tex); yield break; }
 			string cached = System.IO.Path.Combine(CacheFolder, key + ".img");
@@ -193,14 +270,19 @@ namespace DynamicIslands.Editor
 			try { if (File.Exists(cached)) bytes = File.ReadAllBytes(cached); } catch { }
 			if (bytes == null)
 			{
-				using (UnityWebRequest req = Get(Url(downloadBase, e.Path + "/" + f.Name)))
+				string url = null;
+				yield return FileUrl(e.Path + "/" + f.Name, (u, err) => url = u);
+				if (url == null) { done(null); yield break; }
+				using (UnityWebRequest req = Get(url))
 				{
 					yield return req.SendWebRequest();
 					if (!Failed(req)) bytes = req.downloadHandler.data;
 				}
 				if (bytes == null || (f.Sha256.Length > 0 && LibraryPack.Sha256(bytes) != f.Sha256)) { done(null); yield break; }
-				try { Directory.CreateDirectory(CacheFolder); File.WriteAllBytes(cached, bytes); } catch { }
+				// (in one step: a half-written picture in the cache was read as the whole one next time - AU41)
+				try { Directory.CreateDirectory(CacheFolder); SafeFile.WriteAllBytes(cached, bytes); } catch { }
 			}
+			if (TooLarge(bytes)) { Debug.LogWarning("[CUSTOM ISLANDS] A library picture of " + e.Path + " is larger than " + MaxPictureSide + " pixels a side: not shown"); done(null); yield break; }
 			tex = new Texture2D(2, 2, TextureFormat.RGB24, false);
 			if (!tex.LoadImage(bytes)) { UnityEngine.Object.Destroy(tex); done(null); yield break; }
 			textures[key] = tex;
@@ -212,7 +294,7 @@ namespace DynamicIslands.Editor
 		#region Downloading
 
 		/// <summary>
-		/// Downloads an entry's islands and plan (each file's size and SHA-256 checked), checks them as a pack and installs
+		/// Downloads an entry's islands, plan and map types (each file's size and SHA-256 checked), checks them as a pack and installs
 		/// it. progress(text) as it goes; done(report or null, error or null). Nothing is installed unless every file arrived.
 		/// </summary>
 		public static IEnumerator Download(LibraryEntry e, bool appearWhileSailing, bool replaceChanged, Action<string> progress, Action<LibraryPack.Report, string> done)
@@ -226,7 +308,10 @@ namespace DynamicIslands.Editor
 				foreach (LibraryFileRef f in wanted)
 				{
 					if (!LibraryPack.IsSafeFileName(f.Name)) { done(null, "The library lists a file with a name that isn't allowed ('" + f.Name + "')."); yield break; }
-					using (UnityWebRequest req = Get(Url(downloadBase, e.Path + "/" + f.Name)))
+					string url = null, where = null;
+					yield return FileUrl(e.Path + "/" + f.Name, (u, err) => { url = u; where = err; });
+					if (url == null) { failed = "'" + f.Name + "' isn't in the library (" + where + ")"; break; }
+					using (UnityWebRequest req = Get(url))
 					{
 						UnityWebRequestAsyncOperation op = req.SendWebRequest();
 						while (!op.isDone)

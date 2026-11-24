@@ -1,0 +1,72 @@
+# Riverfork Delta (CIPlay riverfork_delta): the mouth at 0 -52, the outpost at -2 -16, the vines -11 1, the ferry
+# crank -16 8.5, upriver round 0 45 with the fuel cache -8 48 and the pressing shed 6 42.
+island Riverfork Delta
+offset 0 0
+expect step 0
+expect title The Rivers
+zone mouth
+expect step 1
+read River chart
+expect step 2
+open Outpost tool rack
+wait 3
+expect item Machete 1
+expect step 3
+use westvines
+expect hidden westvines
+zone west_arm
+expect step 4
+use ferrycrank
+expect story ferry 1
+expect step 5
+open West bank can
+use eastvines
+expect shown dcaneast
+open Fisher's can
+zone upriver
+expect step 6
+kill Warthog
+expect animals Warthog 0
+expect step 7
+open Fuel cache
+wait 3
+expect step 10
+expect hidden press
+use shedvines
+expect shown press
+use press
+expect story fuelcan 0
+expect shown pressshed
+expect step 11
+open Pressing shed
+wait 3
+expect step 12
+zone dl_wreck
+open Barge's fuse box
+wait 3
+expect story fuse 1
+expect step 13
+use relaym
+expect shown relaymlamp
+use relaye
+expect hidden relayelamp
+use bridgelever
+wait 4
+use relaye
+expect shown relayelamp
+use northvines
+expect shown relayn
+use relayn
+expect story relay 3
+expect step 14
+use mapscreen
+expect story rivercode 1
+expect step 15
+zone dl_top
+read Crane cab box
+expect step 16
+code cranepad 4172
+expect story route 1
+expect step 17
+read Ranger log 4
+expect done

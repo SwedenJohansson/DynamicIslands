@@ -1,0 +1,120 @@
+# The Fogworks (CIPlay the_fogworks): the plan The Rainmakers' fourth island, quest "The Fog Shift"
+# The bay (floor -2.5 m) on the south side: the street boardwalk x -36..36 z -46.5..-43.5 (deck 2 m), the dock x -1.5..1.5
+# z -72..-46.5, a path north to the yard cut through the bank; halls on the yard at z -14..-9.5: the pump hall x -32..-26, the control
+# room -12..-7.5, the condenser 6..12, the boiler house 24..30; the towers at x -30 / 30, z -62, the watch mast -30 -55.5.
+island The Fogworks
+offset -0.0582 13.6067
+expect step 0
+expect title The Fog Shift
+wait 5
+expect hidden controlsafe
+zone town_dock
+expect step 1
+read Fogworks bulletin
+expect step 2
+zone pump_hall
+expect step 3
+use fogwire
+expect message not set as the bulletin says
+use valveA
+use valveB
+use fogwire
+expect message not set as the bulletin says
+use valveB
+use valveC
+use fogwire
+expect story foglines 1
+expect step 4
+read Shift chief's notes
+expect step 5
+zone condenser
+wait 2
+kill Rat
+expect step 6
+code safekeypad 1111 wrong
+code safekeypad 3157
+expect shown controlsafe
+open Control room safe
+wait 3
+expect item Blueprint_EngineControls 1
+expect step 8
+zone tower_top
+expect step 9
+open Tower cabin chest
+wait 3
+expect item Blueprint_MetalDetector 1
+expect step 11
+open Founders' Day crate
+expect message NOT TO BE OPENED
+use fogradio
+expect story confession 1
+expect step 12
+open Founders' Day crate
+wait 3
+expect item Blueprint_Firework 1
+expect item Blueprint_ZiplineBase 1
+expect item Blueprint_ZiplineTool 1
+expect item Blueprint_BatteryCharger 1
+expect story boilerkey 1
+expect step 17
+# RAIN 10-26: the hub, Hanne Vik, the climb, Condensate Cave, the secrets
+expect hidden fw_rewchest
+use fw_machine
+expect hidden fw_rewchest
+read Night shift notice
+expect step 18
+use Hanne Vik
+wait 1
+expect step 19
+expect hidden fw_lampchest
+use Shift lamp 1
+use Shift lamp 2
+use Shift lamp 3
+wait 1
+expect shown fw_lampchest
+open Hanne's shift box
+zone fw_trail
+expect step 20
+zone fw_summit
+expect step 21
+open Fog lookout deck box
+wait 3
+expect story fw_top 1
+expect step 22
+zone fw_cave
+expect step 23
+open Condensate Cave chest
+wait 3
+expect story fw_cave 1
+expect step 24
+use fw_machine
+expect shown fw_rewchest
+expect story fw_fixed 1
+open Fog horn reward
+wait 3
+read Fog horn tape
+expect step 25
+# the secrets: the plane, the jumps, the set
+zone fw_plane
+open Supply plane's crate
+read Supply pilot's note
+zone fw_jumps
+open Stack perch
+open Stack top
+expect hidden fw_setchest
+use fw_piece1
+use fw_piece2
+use fw_piece3
+use fw_piece4
+use fw_piece5
+wait 2
+expect shown fw_setchest
+open Shift chest
+open Boilerman's locker
+expect message padlocked
+use mattiscage
+expect survivor rainmakers_mattis
+expect story boilerkey 0
+open Boilerman's locker
+expect item MetalIngot 4
+expect done

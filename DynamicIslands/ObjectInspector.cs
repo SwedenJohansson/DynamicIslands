@@ -14,7 +14,7 @@ namespace DynamicIslands.Editor
 	///   Colour    - a tint for any object, creatures included (swatches, strength, custom RGB)
 	/// Every change is an undo step (slider drags merge into one).
 	/// </summary>
-	public static class ObjectInspector
+	public static partial class ObjectInspector
 	{
 		static RectTransform root;
 		static EditorGameObject shown;
@@ -68,7 +68,8 @@ namespace DynamicIslands.Editor
 			bool gone = !ReferenceEquals(shown, null) && shown == null;
 			if (sel != shown || dirty || gone) Rebuild(sel);
 
-			bool nowTyping = (titleField != null && titleField.isFocused) || amountFields.Any(f => f != null && f.isFocused);
+			bool nowTyping = (titleField != null && titleField.isFocused) || amountFields.Any(f => f != null && f.isFocused) || placeFields.Any(f => f != null && f.isFocused);
+			if (!nowTyping) ShowPlace();
 			if (nowTyping) EditorInput.IsTyping = true;
 			else if (typing && !NoteEditorWindow.IsOpen && !ItemPickerWindow.IsOpen) EditorInput.IsTyping = false;
 			typing = nowTyping;
@@ -81,22 +82,34 @@ namespace DynamicIslands.Editor
 			shown = target;
 			titleField = null;
 			amountFields.Clear();
+			chanceFields.Clear();
+			placeFields.Clear();
 			foreach (Transform child in root) { child.gameObject.SetActive(false); UnityEngine.Object.Destroy(child.gameObject); }
 			root.gameObject.SetActive(target != null);
 			if (target == null) return;
 			if (target.Props == null) target.Props = new Dictionary<string, string>();
+			Groups(target);
+			PlaceGroup(target);
+		}
 
+		static void Groups(EditorGameObject target)
+		{
+			ToolsHint(target);
 			ContentCatalog.CreatureKind kind = ContentCatalog.CreatureOf(target.GameObjectName);
 			if (ContentCatalog.IsZone(target.GameObjectName))
 			{
 				// (nothing to colour: zones are invisible in a world)
 				if (target.GameObjectName == ContentCatalog.AtmosphereZoneName) AtmosphereGroup(target);
 				else if (target.GameObjectName == ContentCatalog.SoundZoneName) SoundGroup(target);
-				else { ZoneGroup(target); LootGroup(target, true); }
+				else { ZoneGroup(target); HazardGroup(target); MechZoneGroup(target); CoopZoneGroup(target); LootGroup(target, true); }
 				BehaviourGroup(target);
 				return;
 			}
+			if (CameraPath.IsPoint(target.GameObjectName)) { CameraPointGroup(target); BehaviourGroup(target); return; }
+			if (Minimap.IsMarker(target.GameObjectName)) { MapMarkerGroup(target); BehaviourGroup(target); return; }
 			if (ContentCatalog.IsHelper(target.GameObjectName)) { BehaviourGroup(target); return; }
+			if (ContentCatalog.IsTreasure(target.GameObjectName)) { TreasureGroup(target); return; }
+			if (KeycardDoor.Is(target.GameObjectName)) KeycardGroup(target);
 			if (kind != null) CreatureGroup(target, kind);
 			else
 			{
@@ -107,9 +120,16 @@ namespace DynamicIslands.Editor
 				{
 					if (note) NoteGroup(target);
 					if (loot) LootGroup(target, false);
-					if (!note || !loot) AddFeatureGroup(target, note, loot);
+					// (GW1: a trade stand - neither readable nor a chest: those take the same interact key)
+					if (!note && !loot && TradeStand.IsTrade(target.Props)) TradeGroup(target);
+					else if (!note || !loot) AddFeatureGroup(target, note, loot);
 				}
+				if (target.GameObjectName.StartsWith("ZiplinePath", System.StringComparison.Ordinal)) ZiplineGroup(target);
+				if (Survivors.IsCage(target.GameObjectName)) SurvivorGroup(target);
+				PlayerGroup(target);
 			}
+			GapGroup(target, kind);
+			MechGroup(target, kind);
 			BehaviourGroup(target);
 			ColourGroup(target, kind != null);
 		}
@@ -122,6 +142,106 @@ namespace DynamicIslands.Editor
 			t.lineSpacing = 1.05f;
 			Button b = UIKit.Button(g, "Behaviour & events...", () => BehaviourWindow.Open(target), "A name, movement (spin, bob, a door or lift), hidden at first, players can use it, collision, and what happens when...", -1, 26f, 13);
 			if (BehaviourProps.Any(target.Props)) UIKit.SetActive(b, true);
+			// A keypad code lock (CodeLock): players type the code before the use runs
+			if (ObjectProps.Get(target.Props, BehaviourProps.Use).Length > 0)
+			{
+				InputField code = UIKit.Field(g, "Keypad code (none)", ObjectProps.Get(target.Props, CodeLock.Code), 26f, "Digits a player types on a keypad before using it (Tangaroa's launch keypad, Vasagatan's code): put the code on a note somewhere. Empty: no keypad");
+				code.contentType = InputField.ContentType.IntegerNumber;
+				code.onEndEdit.AddListener(v => Set(target, CodeLock.Code, v.Trim().Length > 0 ? v.Trim() : null, null));
+				amountFields.Add(code); // (typing the code: Delete hid the object, 1-4 changed the gizmo, WASD flew)
+			}
+		}
+
+		/// <summary>A key door (RF4): the story item that opens it, and whether it is used up.</summary>
+		static void KeycardGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, KeycardDoor.IsCardReader(target.GameObjectName) ? "Keycard door" : "Key door");
+			string card = KeycardDoor.CardOf(target.Props);
+			bool usedUp = KeycardDoor.UsedUp(target.Props);
+			UIKit.Label(g, card != null ? "Opens for a player who has " + StoryItems.Label(card) + (usedUp ? " (the card is used up)." : " (they keep it).") + " Open, it stays open for everyone."
+				: "<i>No card opens it: it opens for anyone.</i>", 12, card != null ? UIKit.TextMuted : UIKit.Danger);
+			var options = new List<DropList.Option> { new DropList.Option("", "None (opens for anyone)") };
+			options.AddRange(KeycardDoor.Choices(DynamicIslands.currentIslandProps, card).Select(c => new DropList.Option(c.Key, c.Value)));
+			RectTransform row = UIKit.Row(g, 26f, 4f, "CardRow");
+			UIKit.Label(row, "Card", 12, UIKit.TextMuted);
+			DropList.Make(row, "Drop_Card", options, card ?? "", v => { PropsCommand.Change(target, KeycardDoor.WithCard(target.Props, v, KeycardDoor.UsedUp(target.Props))); Refresh(); }, 200,
+				"The story item that opens it: one of the island's own (Story items in the island's settings) or one of Raft's quest items");
+			Button used = UIKit.Check(g, "Card used up", () =>
+			{
+				string c = KeycardDoor.CardOf(target.Props);
+				if (c == null) return;
+				PropsCommand.Change(target, KeycardDoor.WithCard(target.Props, c, !KeycardDoor.UsedUp(target.Props)));
+				Refresh();
+			}, "Ticked: the card goes when the door opens. Not ticked: the player keeps it (for other doors too)");
+			UIKit.SetCheck(used, usedUp);
+		}
+
+		/// <summary>Buried treasure (RF4): what it is, and extra loot of its own in its chest.</summary>
+		static void TreasureGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Buried treasure");
+			List<KeyValuePair<string, int>> loot = ObjectProps.Loot(target.Props, ObjectProps.TreasureLoot);
+			UIKit.Label(g, "Only Raft's metal detector finds it: it beeps faster nearer. Three digs with the shovel bring up a chest with Raft's treasure loot"
+				+ (loot.Count > 0 ? ", and also: " + string.Join(", ", loot.Select(l => (StoryItems.IsStory(l.Key) ? StoryItems.Label(l.Key) : ContentCatalog.ItemLabel(l.Key)) + " \u00D7" + l.Value).ToArray()) + "." : ".")
+				+ (loot.Any(l => StoryItems.IsStory(l.Key)) ? " It holds a story item, so it never comes back once dug up." : " Dug up, it comes back after the regrow days."), 12, UIKit.TextMuted);
+			RectTransform row = UIKit.Row(g, 26f, 4f, "TreasureLoot");
+			Button add = UIKit.Button(row, "Extra loot...", () => ItemPickerWindow.OpenFor(() => ObjectProps.Get(target.Props, ObjectProps.TreasureLoot),
+				v => PropsCommand.Change(target, ObjectProps.With(target.Props, ObjectProps.TreasureLoot, string.IsNullOrEmpty(v) ? null : v))),
+				"Items (or story items) the chest gives besides Raft's treasure loot, once, to whoever picks it up", -1, 26f, 12);
+			UIKit.SetActive(add, loot.Count == 0);
+			if (loot.Count > 0) UIKit.Button(row, "None", () => { PropsCommand.Change(target, ObjectProps.With(target.Props, ObjectProps.TreasureLoot, null)); Refresh(); }, "Only Raft's treasure loot", 60, 26f, 12);
+		}
+
+		/// <summary>Raft's zipline line: where its far end stands (ZiplineEnds; in a world Raft makes the line there).</summary>
+		/// <summary>A feature that wants one of Raft's tools (RaftFeatures): which, so the builder gives it on this island or
+		/// one met before - the plan's Check follows it.</summary>
+		static void ToolsHint(EditorGameObject target)
+		{
+			RaftFeatures.Feature f = RaftFeatures.Of(target.GameObjectName, target.Props);
+			if (f == null) return;
+			RectTransform g = UIKit.Group(root, "Raft's tools");
+			string tools = string.Join(f.Any ? " or the " : " and the ", f.Tools.Select(RaftFeatures.LabelOf).ToArray());
+			UIKit.Label(g, (f.Advisory ? "Players will want the " : "Players need the ") + tools + " here (" + f.Label + "). Give it on this island or one met before it: the plan's Check warns when no island does.", 12, UIKit.TextMuted).name = "ToolsHint";
+		}
+
+		static void ZiplineGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Zipline");
+			Terrain terrain = terraineditor.terrain;
+			Vector3? far = ZiplineEnds.FarEnd(target.Props);
+			string where = far.HasValue && terrain != null
+				? "Far end " + Vector3.Distance(terrain.transform.position + far.Value, target.transform.position).ToString("F0") + " m away, " + (terrain.transform.position.y + far.Value.y - target.transform.position.y).ToString("+0;-0") + " m up"
+				: "Raft's own line (as in its scene). Players ride it with the zipline tool.";
+			UIKit.Label(g, where, 12, UIKit.TextMuted);
+			// (the ends' places, as the Position fields count them - X Y Z, Y above the sea - so the near end can be set on a deck)
+			Vector3? nearFloor = ZiplineEnds.NearFloor(target.gameObject);
+			UIKit.Label(g, "Near end " + (nearFloor.HasValue ? ZiplineEnds.Text(nearFloor.Value - Corner) : "?") + (far.HasValue && terrain != null ? " · far end " + ZiplineEnds.Text(terrain.transform.position + far.Value - Corner) : ""), 12, UIKit.TextMuted).name = "ZipEnds";
+			RectTransform nearRow = UIKit.Row(g, 26f, 4f, "ZipNearRow");
+			UIKit.Button(nearRow, "Near end: where I look", () => { if (NearEndTo(target, ScatterTool.ViewCentre())) Refresh(); },
+				"Moves the whole zipline so its near end's floor stands where the camera looks (on a deck, a roof, the ground). Look at the spot, then click. Ctrl+Z undoes it", -1, 26f, 12).name = "Button_ZipNearEnd";
+			RectTransform row = UIKit.Row(g, 26f, 4f, "ZipRow");
+			UIKit.Button(row, "Far end: where I look", () =>
+			{
+				Vector3? at = ScatterTool.ViewCentre();
+				if (!at.HasValue || terrain == null) return;
+				PropsCommand.Change(target, ObjectProps.With(target.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(at.Value - terrain.transform.position)));
+			}, "Puts the line's far end (its lower floor) on the ground the camera looks at; in a world the line runs from this object to there. Keep it lower than this end, as a zipline runs downhill.", -1, 26f, 12);
+			if (far.HasValue) UIKit.Button(row, "Raft's own", () => PropsCommand.Change(target, ObjectProps.With(target.Props, ZiplineEnds.ZipTo, null)), "Back to the line as Raft made it", 90, 26f, 12);
+		}
+
+		/// <summary>Moves the zipline object so its near end's floor stands at <paramref name="at"/> (one undo step; also tests).</summary>
+		internal static bool NearEndTo(EditorGameObject target, Vector3? at)
+		{
+			Vector3? nearFloor = target != null ? ZiplineEnds.NearFloor(target.gameObject) : null;
+			if (!at.HasValue || !nearFloor.HasValue) return false;
+			var gizmo = DynamicIslands.EditorGizmoHandler;
+			var cmd = new RuntimeGizmos.TransformCommand(gizmo, target.transform);
+			target.transform.position += at.Value - nearFloor.Value;
+			cmd.StoreNewTransformValues();
+			CommandUndoRedo.UndoRedoManager.Insert(cmd);
+			if (gizmo != null) gizmo.SetPivotPoint();
+			nextPlaceShow = 0f;
+			return true;
 		}
 
 		#region Creature editor
@@ -152,16 +272,16 @@ namespace DynamicIslands.Editor
 				UIKit.SetActive(b, preset.Key == current || (preset.Key == "Normal" && current.Length == 0));
 			}
 
-			Multiplier(g, target, "Health", ObjectProps.CreatureHealth, ObjectProps.MinMultiplier, ObjectProps.MaxMultiplier, ObjectProps.Health(p), "How much damage it takes to kill (Raft's own health times this)");
+			Multiplier(g, target, "Health", ObjectProps.CreatureHealth, ObjectProps.MinMultiplier, ObjectProps.MaxHealth, ObjectProps.Health(p), "How much damage it takes to kill (Raft's own health times this)");
 			Multiplier(g, target, "Damage", ObjectProps.CreatureDamage, 0f, ObjectProps.MaxMultiplier, ObjectProps.Damage(p), "How hard it hits players (0 = harmless)");
 			Multiplier(g, target, "Speed", ObjectProps.CreatureSpeed, ObjectProps.MinMultiplier, 2.5f, ObjectProps.Speed(p), "How fast it walks, runs and swims");
-			Multiplier(g, target, "Size", ObjectProps.CreatureSize, ObjectProps.MinSize, ObjectProps.MaxSize, ObjectProps.Size(p), "How big it is (also shown on the marker)");
+			Multiplier(g, target, "Size", ObjectProps.CreatureSize, ObjectProps.MinSize, ObjectProps.MaxSize, ObjectProps.Size(p), "How big it is: x0.5 to x3 of Raft's size (also shown on the marker). Its body and hit box grow with it; its health doesn't - set Health for a tougher one");
 
 			RectTransform rrow = UIKit.Row(g, 26f, 4f, "Respawn");
 			UIKit.Label(rrow, "Comes back after", 13, UIKit.TextMuted);
 			bool respawns = ObjectProps.Respawns(p);
 			Button on = UIKit.Button(rrow, (EditorRegrowDays > 0 ? EditorRegrowDays + " days" : "never (island rule)"), () => { Set(target, ObjectProps.CreatureRespawn, null); Refresh(); },
-				"Killed or caught animals come back after the world's regrow time (spawnpool.txt: regrowDays), like trees", 110, 26f, 12);
+				"Killed or caught animals come back after the island's regrow days (its Island tab rule, else the world's setting), like trees", 110, 26f, 12);
 			Button off = UIKit.Button(rrow, "Never", () => { Set(target, ObjectProps.CreatureRespawn, "0"); Refresh(); }, "Once killed or caught, gone for good in that world", 64, 26f, 12);
 			UIKit.SetActive(on, respawns);
 			UIKit.SetActive(off, !respawns);
@@ -179,6 +299,104 @@ namespace DynamicIslands.Editor
 				Refresh();
 			}, choices.Count > 1 ? "Click to choose: at once, or when a player walks into one of the island's trigger zones (an ambush)" : "Place a trigger zone (Zones & triggers) to make this an ambush", -1, 26f, 12);
 			UIKit.SetActive(wake, waits.Length > 0);
+			if (Taming.Tamable(kind.Type)) // (QE11: what a tame step feeds it)
+			{
+				string food = ObjectProps.Get(p, Taming.FoodProp).Trim();
+				InputField ff = SurvivorField(g, "Tame with", food, 26f, "The food a player holds next to it to tame it for a tame quest step (an item's name, e.g. Raw_Potato). Empty = " + Taming.DefaultFood(kind.Type));
+				ff.characterLimit = 60;
+				ff.onEndEdit.AddListener(v => { Set(target, Taming.FoodProp, v.Trim().Length > 0 ? v.Trim() : null); Refresh(); });
+				amountFields.Add(ff);
+				string shown = food.Length > 0 ? food : Taming.DefaultFood(kind.Type);
+				if (ItemManager.GetItemByName(shown) == null) UIKit.Size(UIKit.Label(g, "Check: no item is called '" + shown + "'", 11, UIKit.Danger, TextAnchor.MiddleLeft).gameObject, -1, 16);
+				else if (food.Length == 0) UIKit.Size(UIKit.Label(g, "Tamed with " + ContentCatalog.ItemLabel(shown) + " (the default)", 11, UIKit.TextMuted, TextAnchor.MiddleLeft).gameObject, -1, 16);
+			}
+			BossPhaseRows(g, target);
+		}
+
+		/// <summary>A boss phase (RF5): at a share of its health the creature calls more, gets faster and sends a signal.</summary>
+		static void BossPhaseRows(RectTransform g, EditorGameObject target)
+		{
+			Dictionary<string, string> p = target.Props;
+			bool has = BossPhases.Has(p);
+			RectTransform row = UIKit.Row(g, 26f, 4f, "BossPhase");
+			UIKit.Size(UIKit.Label(row, "Boss phase", 13, UIKit.TextMuted).gameObject, 80);
+			Button b = UIKit.Button(row, has ? BossPhases.Describe(p) : "none", () =>
+			{
+				Dictionary<string, string> np = ObjectProps.With(target.Props, BossPhases.Share, has ? null : "0.5");
+				if (!has) { np = ObjectProps.With(np, BossPhases.Summon, "2"); np = ObjectProps.With(np, BossPhases.Speed, "1.3"); }
+				else { np = ObjectProps.With(np, BossPhases.Summon, null); np = ObjectProps.With(np, BossPhases.Speed, null); np = ObjectProps.With(np, BossPhases.SummonKind, null); np = ObjectProps.With(np, BossPhases.Signal, null); }
+				PropsCommand.Change(target, np);
+				Refresh();
+			}, "Click to turn on or off: once per fight, when one of its animals falls to a share of its health, it calls more creatures, gets faster, sends a signal (for world plans) and runs its 'phase' event", -1, 26f, 12);
+			UIKit.SetActive(b, has);
+			if (!has) return;
+			UIKit.Slider(g, "Starts at health", 10, 90, Mathf.Round(BossPhases.ShareOf(p) * 100f), v => v.ToString("F0") + " %",
+				v => Set(target, BossPhases.Share, ObjectProps.Format(Mathf.Round(v) / 100f), null, false), "The share of its health it falls to before the phase starts", true);
+			UIKit.Slider(g, "Calls", 0, BossPhases.MaxSummon, BossPhases.SummonCount(p), v => v < 1 ? "none" : v.ToString("F0") + " more",
+				v => Set(target, BossPhases.Summon, ((int)v).ToString(), "0", false), "How many creatures it calls (they come around it, with Raft's own stats)", true);
+			// The kind it calls: steps through its own kind and the hostile ones
+			string kindName = ObjectProps.Get(p, BossPhases.SummonKind);
+			List<string> kinds = new[] { "" }.Concat(ContentCatalog.Creatures.Where(k => k.Category == ContentCatalog.HostileCategory).Select(k => k.Name)).Distinct().ToList();
+			if (kindName.Length > 0 && !kinds.Contains(kindName)) kinds.Add(kindName);
+			RectTransform krow = UIKit.Row(g, 26f, 4f, "BossKind");
+			UIKit.Size(UIKit.Label(krow, "Of kind", 13, UIKit.TextMuted).gameObject, 80);
+			ContentCatalog.CreatureKind called = kindName.Length > 0 ? ContentCatalog.CreatureOf(kindName) : null;
+			UIKit.Button(krow, called != null ? called.Label : "its own", () =>
+			{
+				string next = kinds[(kinds.IndexOf(kindName) + 1) % kinds.Count];
+				Set(target, BossPhases.SummonKind, next.Length > 0 ? next : null);
+				Refresh();
+			}, "Click to step through: its own kind, or one of the hostile creatures", -1, 26f, 12);
+			UIKit.SliderRow s = UIKit.Slider(g, "Speed then", BossPhases.MinSpeed, BossPhases.MaxSpeed, BossPhases.SpeedOf(p), v => "×" + v.ToString("0.00"), null, "How much faster it gets (on top of its speed above)");
+			s.Slider.onValueChanged.AddListener(v => Set(target, BossPhases.Speed, ObjectProps.Format(Mathf.Round(v * 20f) / 20f), "1", false));
+			InputField sig = UIKit.Field(g, "Signal (phase)", ObjectProps.Get(p, BossPhases.Signal), 26f, "The signal it sends when the phase starts (world plans and 'signal' checks can wait for it). Empty: 'phase'");
+			sig.onEndEdit.AddListener(v => Set(target, BossPhases.Signal, v.Trim().Length > 0 ? v.Trim() : null, null));
+			amountFields.Add(sig);
+		}
+
+		/// <summary>A survivor's cage (RF3): who is in it, what they say, the story item that opens it, the signal.</summary>
+		static void SurvivorGroup(EditorGameObject target)
+		{
+			Dictionary<string, string> p = target.Props;
+			RectTransform g = UIKit.Group(root, "Survivor");
+			InputField name = SurvivorField(g, "Name", ObjectProps.Get(p, Survivors.NameProp, Survivors.DefaultName), 26f, "The survivor's name (in the bubble and on the raft)");
+			name.characterLimit = 32;
+			name.onEndEdit.AddListener(v => Set(target, Survivors.NameProp, v.Trim().Length > 0 ? v.Trim() : null, null));
+			amountFields.Add(name);
+			// Who it is: steps through Raft's characters (none: one picked by the survivor's id)
+			string ch = ObjectProps.Get(p, Survivors.CharacterProp);
+			List<string> chars = new[] { "" }.Concat(Behaviours.Characters().Where(c => c != null).Select(c => c.displayName)).Distinct().ToList();
+			if (ch.Length > 0 && !chars.Contains(ch)) chars.Add(ch);
+			RectTransform crow = UIKit.Row(g, 26f, 4f, "SurvivorCharacter");
+			UIKit.Size(UIKit.Label(crow, "Looks like", 13, UIKit.TextMuted).gameObject, 80);
+			UIKit.Button(crow, ch.Length > 0 ? ch : "any (by its id)", () =>
+			{
+				string next = chars[(chars.IndexOf(ch) + 1) % chars.Count];
+				Set(target, Survivors.CharacterProp, next.Length > 0 ? next : null);
+				Refresh();
+			}, "Click to step through Raft's characters", -1, 26f, 12);
+			UIKit.Size(UIKit.Label(g, "What the survivor says when freed", 12, UIKit.TextMuted).gameObject, -1, 16);
+			InputField line = UIKit.TextArea(g, "A line in a speech bubble", 46f, "Shown over the survivor for a few seconds, then the survivor is on the raft");
+			line.text = ObjectProps.Get(p, Survivors.LineProp, Survivors.DefaultLine);
+			line.characterLimit = 160;
+			line.onEndEdit.AddListener(v => Set(target, Survivors.LineProp, v.Trim().Length > 0 ? v.Trim() : null));
+			amountFields.Add(line);
+			InputField key = SurvivorField(g, "Key item", StoryItems.IdOf(ObjectProps.Get(p, Survivors.KeyProp)), 26f, "The story item that opens the cage (used up). Empty: the cage isn't locked");
+			key.onEndEdit.AddListener(v => Set(target, Survivors.KeyProp, v.Trim().Length > 0 ? StoryItems.Ref(StoryItems.IdOf(v.Trim())) : null, null));
+			amountFields.Add(key);
+			InputField id = SurvivorField(g, "Survivor id", ObjectProps.Get(p, Survivors.IdProp), 26f, "One survivor per id in a world (empty: the island's name and the cage). Two cages with one id free one survivor");
+			id.onEndEdit.AddListener(v => Set(target, Survivors.IdProp, v.Trim().Length > 0 ? v.Trim() : null, null));
+			amountFields.Add(id);
+			InputField sig = SurvivorField(g, "Signal", ObjectProps.Get(p, Survivors.SignalProp), 26f, "The signal sent when the survivor is freed (world plans and 'signal' checks can wait for it). Empty: 'survivor'");
+			sig.onEndEdit.AddListener(v => Set(target, Survivors.SignalProp, v.Trim().Length > 0 ? v.Trim() : null, null));
+			amountFields.Add(sig);
+		}
+
+		static InputField SurvivorField(RectTransform g, string label, string text, float height, string hint)
+		{
+			RectTransform row = UIKit.Row(g, height, 4f, label);
+			UIKit.Size(UIKit.Label(row, label, 13, UIKit.TextMuted).gameObject, 80);
+			return UIKit.Field(row, label, text, height, hint);
 		}
 
 		static void Multiplier(Transform g, EditorGameObject target, string label, string key, float min, float max, float value, string hint)
@@ -204,7 +422,8 @@ namespace DynamicIslands.Editor
 			RectTransform g = UIKit.Group(root, "Note");
 			titleField = UIKit.Field(g, "Title", ObjectProps.Get(p, ObjectProps.NoteTitle, ""), 30f, "The note's title (Enter keeps it)");
 			titleField.characterLimit = NoteEditorWindow.MaxTitle;
-			titleField.onEndEdit.AddListener(v => Set(target, ObjectProps.NoteTitle, v.Trim(), null));
+			// (player 10-30: the quest's steps that read or open it follow a new title)
+			titleField.onEndEdit.AddListener(v => { string old = ObjectProps.Get(target.Props, ObjectProps.NoteTitle, ""); Set(target, ObjectProps.NoteTitle, v.Trim(), null); EditorRenames.NoteTitle(target, old, v); });
 			string text = ObjectProps.Get(p, ObjectProps.NoteText, "");
 			string preview = text.Length == 0 ? "<i>(no text yet)</i>" : Escape(text.Length > 140 ? text.Substring(0, 140).TrimEnd() + "\u2026" : text);
 			Text pt = UIKit.Label(g, preview, 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Preview");
@@ -253,6 +472,8 @@ namespace DynamicIslands.Editor
 					Refresh();
 					ItemPickerWindow.Open(target);
 				}, "Put items in this object: players open it and take them");
+			if (!note && !loot)
+				UIKit.Button(row, "Trade stand...", () => MakeTradeStand(target), "Players trade with it: they pay items you set and get others (your own offer, a stock or no limit)");
 		}
 
 		#endregion
@@ -291,6 +512,15 @@ namespace DynamicIslands.Editor
 			UIKit.SetActive(once, !repeats && !onceEver);
 			UIKit.SetActive(ever, onceEver);
 			UIKit.SetActive(every, repeats);
+
+			// (an air pocket: a diver breathes inside it, as in Raft's air pockets under Caravan Town)
+			RectTransform air = UIKit.Row(g, 26f, 4f, "Air");
+			UIKit.Size(UIKit.Label(air, "Air", 13, UIKit.TextMuted).gameObject, 44);
+			bool isAir = ObjectProps.GetBool(p, ObjectProps.ZoneAir, false);
+			Button noAir = UIKit.Button(air, "None", () => { Set(target, ObjectProps.ZoneAir, null); Refresh(); }, "An ordinary zone: no air in it", -1, 26f, 12);
+			Button yesAir = UIKit.Button(air, "Air pocket", () => { Set(target, ObjectProps.ZoneAir, "1"); Refresh(); }, "An air pocket: a player inside breathes - breath back to full, while the zone is shown (for a dive, as in Raft's air pockets under Caravan Town)", -1, 26f, 12);
+			UIKit.SetActive(noAir, !isAir);
+			UIKit.SetActive(yesAir, isAir);
 
 			GameObject placed = GameObject.Find("PlacedObjects");
 			int linked = placed == null || id.Length == 0 ? 0 : placed.GetComponentsInChildren<EditorGameObject>().Count(e => ObjectProps.Get(e.Props, ObjectProps.CreatureZone) == id);
@@ -380,6 +610,7 @@ namespace DynamicIslands.Editor
 		{
 			if (newId.Length == 0 || newId == oldId) { Refresh(); return; }
 			Set(target, ObjectProps.ZoneId, newId);
+			EditorRenames.ZoneId(target, oldId, newId); // (player 10-30: and the quest's "reach" steps, in the same undo step)
 			GameObject placed = GameObject.Find("PlacedObjects");
 			if (placed != null && oldId.Length > 0)
 				foreach (EditorGameObject e in placed.GetComponentsInChildren<EditorGameObject>().Where(e => ObjectProps.Get(e.Props, ObjectProps.CreatureZone) == oldId).ToList())
@@ -406,6 +637,10 @@ namespace DynamicIslands.Editor
 				rows = UIKit.ScrollList(box, out scroll, 4f);
 				UIKit.Stretch((RectTransform)scroll.transform);
 			}
+			bool random = !zone && RandomLoot.IsRandom(target.Props);
+			Dictionary<string, int> chances = RandomLoot.Chances(target.Props);
+			float nothing;
+			List<float> odds = random ? RandomLoot.Odds(target.Props, loot, out nothing) : null;
 			if (loot.Count == 0) UIKit.Label(g, zone ? "<i>Nothing: add items to give players who walk in.</i>" : "<i>Empty: add items, or pick a ready-made set.</i>", 12, UIKit.TextMuted);
 			for (int i = 0; i < loot.Count; i++)
 			{
@@ -418,7 +653,7 @@ namespace DynamicIslands.Editor
 				icon.sprite = ContentCatalog.ItemSprite(item); icon.preserveAspect = true; icon.raycastTarget = false;
 				if (icon.sprite == null) icon.color = new Color(1, 1, 1, 0.1f);
 				Text label = UIKit.Label(row, ContentCatalog.ItemLabel(item), 12, ContentCatalog.ItemExists(item) ? UIKit.TextColor : UIKit.Danger);
-				label.horizontalOverflow = HorizontalWrapMode.Overflow;
+				UIKit.Fit(label, 8);
 				InputField amount = UIKit.Field(row, "1", loot[i].Value.ToString(), 24f, "How many");
 				UIKit.Size(amount.gameObject, 46, 24);
 				amount.contentType = InputField.ContentType.IntegerNumber;
@@ -430,6 +665,23 @@ namespace DynamicIslands.Editor
 					SetLootAmount(target, index, Mathf.Clamp(n, 0, ObjectProps.MaxLootAmount));
 				});
 				amountFields.Add(amount);
+				if (random)
+				{
+					// (its chance in percent; the tooltip has its odds of being in one fill - QE14)
+					InputField pct = UIKit.Field(row, "100", RandomLoot.ChanceOf(chances, item).ToString(), 24f,
+						"Chance in percent (1-100). In one fill: " + odds[index].ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "%");
+					UIKit.Size(pct.gameObject, 38, 24);
+					pct.contentType = InputField.ContentType.IntegerNumber;
+					pct.characterLimit = 3;
+					pct.onEndEdit.AddListener(v =>
+					{
+						int n;
+						if (!int.TryParse(v, out n)) n = 100;
+						PropsCommand.Change(target, RandomLoot.WithChance(target.Props, item, Mathf.Clamp(n, 0, 100)));
+						Refresh();
+					});
+					chanceFields.Add(pct); amountFields.Add(pct);
+				}
 				Button remove = UIKit.Button(row, "\u00D7", () => SetLootAmount(target, index, 0), "Take it out of the chest", 24, 24, 13);
 				UIKit.DangerButton(remove);
 			}
@@ -448,11 +700,39 @@ namespace DynamicIslands.Editor
 				}, "Fill it with a ready-made set: " + string.Join(", ", items.Select(x => x.Split('*')[0]).ToArray()), -1, 24f, 11);
 			}
 			if (zone) return;
+			// Gives everything, or a random part of the list (QE14)
+			RectTransform mode = UIKit.Row(g, 24f, 4f, "Mode");
+			UIKit.Label(mode, "Gives", 12, UIKit.TextMuted);
+			Button all = UIKit.Button(mode, "Everything", () => { PropsCommand.Change(target, ObjectProps.With(ObjectProps.With(ObjectProps.With(target.Props, RandomLoot.Mode, null), RandomLoot.Chance, null), RandomLoot.Pick, null)); Refresh(); },
+				"Every fill gives the whole list", 76, 24f, 11);
+			Button rnd = UIKit.Button(mode, "Random", () => { Set(target, RandomLoot.Mode, RandomLoot.RandomMode); Refresh(); },
+				"Every fill rolls: each item has a chance in percent (the field after its amount), or 'Pick' takes that many different items weighted by their chances", 64, 24f, 11);
+			UIKit.SetActive(all, !random);
+			UIKit.SetActive(rnd, random);
+			if (random)
+			{
+				RectTransform pickRow = UIKit.Row(g, 24f, 4f, "Pick");
+				UIKit.Label(pickRow, "Pick", 12, UIKit.TextMuted);
+				InputField pick = UIKit.Field(pickRow, "0", RandomLoot.PickCount(target.Props).ToString(), 24f, "How many different items one fill gives (0 = each item rolls its own chance)");
+				UIKit.Size(pick.gameObject, 40, 24);
+				pick.contentType = InputField.ContentType.IntegerNumber;
+				pick.characterLimit = 2;
+				pick.onEndEdit.AddListener(v =>
+				{
+					int n;
+					if (!int.TryParse(v, out n) || n < 0) n = 0;
+					Set(target, RandomLoot.Pick, n > 0 ? n.ToString() : null);
+					Refresh();
+				});
+				chanceFields.Add(pick); amountFields.Add(pick);
+				UIKit.Label(pickRow, "(0 = each rolls its chance)", 11, UIKit.TextMuted);
+				UIKit.Label(g, "<i>" + RandomLoot.Summary(target.Props, loot) + "</i>", 11, UIKit.TextMuted);
+			}
 			RectTransform refill = UIKit.Row(g, 24f, 4f, "Refill");
 			UIKit.Label(refill, "Fills up again", 12, UIKit.TextMuted);
 			bool refills = ObjectProps.LootRefills(target.Props);
 			Button on = UIKit.Button(refill, EditorRegrowDays > 0 ? "after " + EditorRegrowDays + " days" : "never (rule)", () => { Set(target, ObjectProps.LootRefill, null); Refresh(); },
-				"Once looted, it fills up again after the world's regrow time (spawnpool.txt: regrowDays)", 96, 24f, 11);
+				"Once looted, it fills up again after the island's regrow days (its Island tab rule, else the world's setting)", 96, 24f, 11);
 			Button off = UIKit.Button(refill, "Never", () => { Set(target, ObjectProps.LootRefill, "0"); Refresh(); }, "Once looted, it stays empty in that world", 56, 24f, 11);
 			UIKit.SetActive(on, refills);
 			UIKit.SetActive(off, !refills);
@@ -468,6 +748,90 @@ namespace DynamicIslands.Editor
 		}
 
 		static readonly List<InputField> amountFields = new List<InputField>();
+		/// <summary>A random chest's chance fields, then its Pick field (tests).</summary>
+		static readonly List<InputField> chanceFields = new List<InputField>();
+		internal static IList<InputField> ChanceFields { get { return chanceFields; } }
+
+		#region Place exactly
+
+		/// <summary>Position X, Y, Z / Turn X, Y, Z / Size X, Y, Z of the shown object (ROADMAP E4), in that order.</summary>
+		static readonly List<InputField> placeFields = new List<InputField>();
+		static readonly string[] PlaceRows = { "Position", "Turn", "Size" };
+		static float nextPlaceShow;
+
+		/// <summary>Tests: the place fields (position, turn, size; x, y, z each).</summary>
+		internal static IList<InputField> PlaceFields { get { return placeFields; } }
+
+		/// <summary>
+		/// "Place exactly": the object's position (metres from the build area's corner, Y above the sea), turn (degrees)
+		/// and size, typed. Enter (or leaving a field) moves it - one undo step.
+		/// </summary>
+		static void PlaceGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Place exactly");
+			UIKit.Hint(g.gameObject, "Type where the object is: X and Z in metres across the build area, Y in metres above the sea; its turn in degrees; its size (1 = as made). Enter moves it (Ctrl+Z undoes).");
+			for (int r = 0; r < 3; r++)
+			{
+				RectTransform row = UIKit.Row(g, 24f, 3f, PlaceRows[r]);
+				Text l = UIKit.Label(row, PlaceRows[r], 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Normal, "Label");
+				UIKit.Size(l.gameObject, 52, 24);
+				for (int a = 0; a < 3; a++)
+				{
+					InputField f = UIKit.Field(row, "xyz"[a].ToString(), "", 24f, PlaceRows[r] + " " + "XYZ"[a]);
+					f.name = "Place_" + PlaceRows[r] + "_" + "XYZ"[a];
+					f.contentType = InputField.ContentType.DecimalNumber;
+					f.characterLimit = 9;
+					f.onEndEdit.AddListener(v => ApplyPlace(target));
+					placeFields.Add(f);
+				}
+			}
+			nextPlaceShow = 0f;
+			ShowPlace();
+		}
+
+		static Vector3 Corner { get { return terraineditor.terrain != null ? terraineditor.terrain.transform.position + new Vector3(0f, DynamicIslands.EditorWaterLevel, 0f) : new Vector3(0f, DynamicIslands.EditorWaterLevel, 0f); } }
+
+		static string Num(float v) { return (Mathf.Round(v * 100f) / 100f).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture); }
+
+		/// <summary>The fields show where the object is now (it may have been moved with the gizmo).</summary>
+		static void ShowPlace()
+		{
+			if (placeFields.Count != 9 || shown == null || Time.unscaledTime < nextPlaceShow) return;
+			nextPlaceShow = Time.unscaledTime + 0.2f;
+			Transform t = shown.transform;
+			Vector3 p = t.position - Corner, e = t.rotation.eulerAngles, s = t.lossyScale;
+			float[] v = { p.x, p.y, p.z, e.x, e.y, e.z, s.x, s.y, s.z };
+			for (int i = 0; i < 9; i++)
+			{
+				string text = Num(i >= 3 && i < 6 && v[i] > 180f ? v[i] - 360f : v[i]);
+				if (placeFields[i].text != text) placeFields[i].text = text;
+			}
+		}
+
+		/// <summary>The typed place applied to the object, one undo step.</summary>
+		internal static void ApplyPlace(EditorGameObject target)
+		{
+			if (target == null || placeFields.Count != 9) return;
+			var v = new float[9];
+			for (int i = 0; i < 9; i++)
+				if (!float.TryParse(placeFields[i].text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v[i])) { nextPlaceShow = 0f; return; }
+			Transform t = target.transform;
+			Vector3 pos = Corner + new Vector3(v[0], v[1], v[2]);
+			Quaternion rot = Quaternion.Euler(v[3], v[4], v[5]);
+			Vector3 scale = new Vector3(Mathf.Clamp(v[6], 0.01f, 10000f), Mathf.Clamp(v[7], 0.01f, 10000f), Mathf.Clamp(v[8], 0.01f, 10000f));
+			if ((pos - t.position).sqrMagnitude < 1e-6f && Quaternion.Angle(rot, t.rotation) < 0.01f && (scale - t.lossyScale).sqrMagnitude < 1e-6f) return;
+			var gizmo = DynamicIslands.EditorGizmoHandler;
+			var cmd = new RuntimeGizmos.TransformCommand(gizmo, t);
+			t.position = pos;
+			t.rotation = rot;
+			t.localScale = t.parent != null && t.parent.lossyScale != Vector3.one ? Vector3.Scale(scale, new Vector3(1f / t.parent.lossyScale.x, 1f / t.parent.lossyScale.y, 1f / t.parent.lossyScale.z)) : scale;
+			cmd.StoreNewTransformValues();
+			CommandUndoRedo.UndoRedoManager.Insert(cmd);
+			if (gizmo != null) gizmo.SetPivotPoint();
+			nextPlaceShow = 0f;
+		}
+
+		#endregion
 
 		static void SetLootAmount(EditorGameObject target, int index, int amount)
 		{

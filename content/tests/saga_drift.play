@@ -1,0 +1,71 @@
+# Saga Drift (CIPlay saga_drift): the gangway, the charter, the screechers, the smelter yard, the council minutes, Sparks'
+# tent, the chapel keypad (1909) and strongbox, the rats, the rendering house, the winch locker, the last sermon.
+island Saga Drift
+offset 0 0
+expect step 0
+expect title The Floating City
+zone gangway
+expect step 1
+read City charter
+expect step 2
+kill Screecher
+expect step 3
+open Smelter yard chest
+wait 3
+expect step 4
+read Council cabin minutes
+expect step 5
+zone sparks_tent
+read Good Morning, Ice! - callers
+read Sparks' farewell
+open Sparks' card box
+expect step 6
+code chapelpad 1909
+expect story chapelcode 1
+open Chapel strongbox
+wait 3
+expect step 7
+zone council
+kill Rat
+expect step 8
+open Rendering house chest
+wait 3
+expect step 9
+# DEEP 10-24: the berg cave's ledger, the crane on the berg, the pawl
+zone berg_cave
+read Harbour master's ledger
+expect step 10
+zone crane_top
+expect step 11
+open Crane cab chest
+wait 3
+expect story pawl 1
+expect step 12
+expect hidden anchorchest
+use anchorwinch
+expect story winchfree 0
+use bell1
+use bell2
+use bell3
+expect story bellrung 3
+expect step 13
+use anchorwinch
+expect story bellrung 0
+expect story pawl 0
+expect shown anchorchest
+expect step 14
+open Winch locker
+wait 3
+expect step 15
+read Last sermon
+expect done
+# the extras: the harbour office chest, the net loft, the tenth ship, three treasures
+open Harbour office chest
+read Net mender's note
+open Net loft crate
+zone tenth_ship
+air tenthair
+open Tenth ship's strongbox
+dig 0
+dig 1
+dig 2

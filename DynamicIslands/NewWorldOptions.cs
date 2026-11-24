@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
@@ -8,9 +9,10 @@ using UnityEngine.UI;
 namespace DynamicIslands.Editor
 {
 	/// <summary>
-	/// "Custom Islands plan" in Raft's New Game box: a drop-down list of the world plans (Random islands, No custom
+	/// "Custom Islands plan" in Raft's New Game box: the chosen world plan and "Choose plan..." (PlanPickerWindow, ROADMAP CT5) over a list of the world plans (Random islands, No custom
 	/// islands, the saved and downloaded plans), each with its description, and the chosen plan's description under it. Pressing Create keeps the
-	/// choice for the world being made (WorldDirector.PendingPlan), which gets the plan when it has loaded.
+	/// choice for the world being made (WorldDirector.PendingPlan), which gets the plan when it has loaded; it is remembered for
+	/// the next world (LastPlanFileName, ROADMAP CB5).
 	/// "World randomizer" (in the World settings window): how much the world is randomized (a drop-down: off, light,
 	/// normal, wild) and which parts (WorldRandomizer.Pending; the last choice is remembered for the next world).
 	/// </summary>
@@ -19,11 +21,36 @@ namespace DynamicIslands.Editor
 	{
 		static RectTransform row, randRow;
 		static Button planButton, levelButton, moreButton;
-		static Text detailText, randText;
+		static Text detailText, randText, chosenText;
 		static readonly List<Button> partButtons = new List<Button>();
 
-		/// <summary>The plan shown in the box.</summary>
-		public static string Selected { get { return WorldDirector.PendingPlan ?? WorldDirector.DefaultPlan; } }
+		/// <summary>The plan shown in the box: the one picked, else the one the last world was made with, else defaultPlan.</summary>
+		public static string Selected { get { return WorldDirector.PendingPlan ?? LastPlan ?? WorldDirector.DefaultPlan; } }
+
+		/// <summary>The plan chosen for the last world made in the New Game box (ROADMAP CB5).</summary>
+		public const string LastPlanFileName = "newworld_plan.txt";
+		static string LastPlanPath { get { return Path.Combine(DynamicIslands.assetpath, LastPlanFileName); } }
+
+		/// <summary>The plan the last world was made with, if it is still there (null when none was or it was removed).</summary>
+		public static string LastPlan
+		{
+			get
+			{
+				try
+				{
+					if (!File.Exists(LastPlanPath)) return null;
+					string name = (File.ReadAllLines(LastPlanPath).FirstOrDefault(l => !l.StartsWith("#")) ?? "").Trim();
+					return name.Length > 0 && WorldPlan.Load(name) != null ? name : null;
+				}
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + LastPlanPath + ": " + e.Message); return null; }
+			}
+		}
+
+		internal static void SaveLastPlan(string name)
+		{
+			try { SafeFile.WriteAllText(LastPlanPath, "# The plan chosen in the New Game box for the last world (offered first for the next one)\n" + name + "\n"); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + LastPlanPath + ": " + e.Message); }
+		}
 
 		/// <summary>The randomizer settings shown in the box.</summary>
 		public static RandomizerSettings Randomizer { get { if (WorldRandomizer.Pending == null) WorldRandomizer.Pending = WorldRandomizer.Defaults; return WorldRandomizer.Pending; } }
@@ -34,29 +61,52 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Adding the plan choice to the New Game box: " + e); }
 		}
 
+		/// <summary>The box's last line: where the world's settings are found once it is under way (ROADMAP PF-D5).</summary>
+		public const string WorldWindowLine = "In the world: Esc > Custom Islands changes the islands and settings (not the plan).";
+
 		static void Ensure(NewGameBox box)
 		{
-			WorldPlanWindow.EnsureSamples();
 			if (row == null)
 			{
 				// In the empty space right of the name and password fields, above the bottom edge
 				row = UIKit.Rect("CustomIslands_Plan", box.transform);
 				row.anchorMin = row.anchorMax = new Vector2(1f, 0f);
 				row.pivot = new Vector2(1f, 0f);
-				row.anchoredPosition = new Vector2(-16f, 84f);
-				row.sizeDelta = new Vector2(292f, 120f);
+				row.anchoredPosition = new Vector2(-16f, 104f); // (above Raft's "Online features not available in offline mode" line)
+				// (CT2, the user 2026-10-06: the heading wrapped into the buttons and the description was cut off - the heading
+				// has its own line, the buttons theirs under the description, which gets three lines and its whole text as a hint)
+				row.sizeDelta = new Vector2(292f, 168f);
 				UIKit.Background(row.gameObject, UIKit.GroupBg, 6);
-				UIKit.Vertical(row.gameObject, 5f, new RectOffset(10, 10, 8, 8));
-				RectTransform head = UIKit.Row(row, 20f, 4f, "Head");
-				Text title = UIKit.Label(head, "CUSTOM ISLANDS PLAN", 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
+				UIKit.Vertical(row.gameObject, 4f, new RectOffset(10, 10, 6, 8));
+				Text title = UIKit.Label(row, "CUSTOM ISLANDS PLAN", 13, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
+				title.horizontalOverflow = HorizontalWrapMode.Overflow;
 				UIKit.Size(title.gameObject, -1, 18);
-				moreButton = UIKit.Button(head, "Get more...", () => LibraryWindow.Open(0, true), "The island library: world plans others made, to download (a downloaded plan is then chosen here)", 96, 20f, 11);
-				moreButton.name = "Button_GetMorePlans";
-				planButton = DropList.Make(row, "Drop_Plan", PlanOptions(), Selected, v => { WorldDirector.PendingPlan = v; Show(); }, -1,
-					"Which islands the new world gets: pick a plan - each says what it does", 32f, 14);
+				// (ROADMAP CT5: the chosen plan's name and "Choose plan...", which opens the plan picker window - a list with
+				// each plan's picture, description and islands - instead of a drop-down list)
+				RectTransform choice = UIKit.Row(row, 30f, 6f, "Choice");
+				chosenText = UIKit.Label(choice, "", 14, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Bold, "Chosen");
+				chosenText.horizontalOverflow = HorizontalWrapMode.Wrap;
+				chosenText.resizeTextForBestFit = true; chosenText.resizeTextMinSize = 10; chosenText.resizeTextMaxSize = 14;
+				chosenText.raycastTarget = true;
+				planButton = UIKit.Button(choice, "Choose plan...", PlanPickerWindow.Open, "Which islands the new world gets: a window with every plan, its picture, what it does and the islands it brings", 116, 28f, 12);
+				planButton.name = "Button_ChoosePlan";
+				UIKit.Primary(planButton);
 				detailText = UIKit.Label(row, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
-				UIKit.Size(detailText.gameObject, -1, 42);
+				UIKit.Size(detailText.gameObject, -1, 44);
 				detailText.verticalOverflow = VerticalWrapMode.Truncate;
+				detailText.raycastTarget = true;
+				RectTransform head = UIKit.Row(row, 22f, 6f, "Head");
+				moreButton = UIKit.Button(head, "Get more plans...", () => LibraryWindow.Open(0, true), "The island library: world plans others made, to download (a downloaded plan is then chosen here)", 133, 22f, 11);
+				moreButton.name = "Button_GetMorePlans";
+				// (ROADMAP T6: look inside the plan before choosing it - its rules, what it does to Raft's story)
+				Button view = UIKit.Button(head, "View the plan...", () => ShowPlan(Selected), "What the chosen plan does: its islands, when and where each comes, and Raft's story", 133, 22f, 11);
+				view.name = "Button_ViewPlan";
+				// (ROADMAP PF-D5: a player never found the world window - say where it is; the plan itself can't change there)
+				Text later = UIKit.Label(row, WorldWindowLine, 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Later");
+				later.name = "Text_WorldWindowLine";
+				UIKit.Size(later.gameObject, -1, 14);
+				later.horizontalOverflow = HorizontalWrapMode.Wrap;
+				later.resizeTextForBestFit = true; later.resizeTextMinSize = 9; later.resizeTextMaxSize = 11;
 			}
 			Show();
 		}
@@ -125,6 +175,25 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Every plan a new world can get, with what it does (the list again each time: a plan may have been downloaded).</summary>
+		/// <summary>The plan's own description, its story and each of its rules in words (ROADMAP T6).</summary>
+		internal static string PlanText(WorldPlan p)
+		{
+			if (p == null) return "This plan isn't on this PC.";
+			var lines = new List<string>();
+			if (p.Description.Trim().Length > 0) lines.Add(p.Description.Trim());
+			lines.Add("Random islands while sailing: " + (p.Random ? "yes" : "no") + ".  Raft's story islands: " + (!p.RaftStory ? "off - the plan's own story" : p.LeaveOut.Count > 0 ? "on, without " + string.Join(", ", p.LeaveOut.ToArray()) : "on") + ".");
+			if (p.Rules.Count > 0) lines.Add("");
+			foreach (IntroRule r in p.Rules.Take(24)) lines.Add("• " + r.Describe());
+			if (p.Rules.Count > 24) lines.Add("... and " + (p.Rules.Count - 24) + " more rules");
+			return string.Join("\n", lines.ToArray());
+		}
+
+		static void ShowPlan(string name)
+		{
+			WorldPlan p = WorldPlan.Load(name);
+			InfoWindow.Open("Plan: " + name, PlanText(p), new InfoWindow.Choice("Close", InfoWindow.Close));
+		}
+
 		internal static List<DropList.Option> PlanOptions()
 		{
 			return WorldPlan.All().Select(n => WorldPlan.Load(n)).Where(p => p != null).Select(p => new DropList.Option(p.Name, p.Name, Describe(p))).ToList();
@@ -137,9 +206,10 @@ namespace DynamicIslands.Editor
 
 		static List<DropList.Option> LevelOptions()
 		{
-			return Enumerable.Range(0, RandomizerSettings.LevelNames.Length).Select(i => new DropList.Option(i.ToString(), RandomizerSettings.LevelNames[i], LevelText(i))).ToList();
+			return Enumerable.Range(0, RandomizerSettings.LevelNames.Length).Select(i => new DropList.Option(i.ToString(), RandomizerSettings.LevelNames[i], RandomizerSettings.LevelHint(i))).ToList();
 		}
 
+		/// <summary>The short line under the level (two lines of 11 px fit there); the exact numbers are the options' hover hints (LevelHint).</summary>
 		static string LevelText(int level)
 		{
 			return level == RandomizerSettings.Off ? "A normal Raft world. Pick Light, Normal or Wild to make this one different." :
@@ -162,10 +232,10 @@ namespace DynamicIslands.Editor
 			{
 				WorldPlan p = WorldPlan.Load(Selected);
 				if (p == null) { WorldDirector.PendingPlan = WorldPlan.RandomName; p = WorldPlan.Load(WorldPlan.RandomName); }
-				DropdownButton d = planButton.GetComponent<DropdownButton>();
-				if (d != null) { d.Options = PlanOptions(); d.Value = p.Name; }
-				UIKit.LabelOf(planButton).text = p.Name;
+				chosenText.text = p.Name;
+				UIKit.Hint(chosenText.gameObject, "The plan the new world gets: " + p.Name);
 				detailText.text = Describe(p);
+				UIKit.Hint(detailText.gameObject, Describe(p));
 			}
 			if (levelButton != null)
 			{
@@ -191,10 +261,15 @@ namespace DynamicIslands.Editor
 	{
 		static void Prefix()
 		{
-			WorldDirector.PendingPlan = NewWorldOptions.Selected;
-			RandomizerSettings r = NewWorldOptions.Randomizer;
-			WorldRandomizer.SaveDefaults(r);
-			Debug.Log("[CUSTOM ISLANDS] Creating a world with the plan '" + WorldDirector.PendingPlan + "', world randomizer " + r.Describe());
+			try
+			{
+				WorldDirector.PendingPlan = NewWorldOptions.Selected;
+				NewWorldOptions.SaveLastPlan(WorldDirector.PendingPlan);
+				RandomizerSettings r = NewWorldOptions.Randomizer;
+				WorldRandomizer.SaveDefaults(r);
+				Debug.Log("[CUSTOM ISLANDS] Creating a world with the plan '" + WorldDirector.PendingPlan + "', world randomizer " + r.Describe());
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] New world plan: " + e); }
 		}
 	}
 }

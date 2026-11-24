@@ -1,0 +1,251 @@
+# Altitude Market - an island of the library's plan The Gravity Sea (a sky island, 35 m over the sea)
+# The Lodestone Quay's market town, torn up with the hill on Lift Day: a market square of Caravan Town's caravans, tents,
+# baskets and crates on a jagged rock plate, the old cable-car station grown shut with vines, a clock tower on stilts
+# (screechers nest round it; its room behind a keypad) with a zipline from its deck down to the lower terrace, and at the
+# east edge of the lower terrace the ballast crane with its ballast stone hanging from its hook over the drop. The station's old vending
+# machine still takes Tangaroa tokens. Quest "Market Day in the Sky" (11 steps): the rim, the crier's board, the vines
+# into the station, its two blueprints, the screechers, the clock tower room's keypad, the fireworks stall, the rigger's
+# chest (the plan's done-when, step 9), the zipline down and the ballast release (signal "ballast": brings Sinkmarket
+# Floor, where the stone lands).
+#
+# Built by the recipe player (CIRecipe altitude_market) through the editor's own operations. Points (metres over the
+# island's own water line; in the world it all floats 35 m higher): the square at 5 m (r 16 round 0 0); the station
+# x -15..-10.5, z -4..-1; the clock tower x 8..12.5, z 6..10.5, its deck 2.6 m up; the lower terrace at 2 m round 18 -14;
+# the ballast crane at 20.5 -17 (its hook at 23.1 -19.6).
+include lib_features
+include lib_huts
+include lib_gravity
+include lib_areas
+include lib_highwater
+# RESIZE 10-25 (box agent, older-storyline deep pass): Radius 34 -> 85: the whole torn-off town plate; the old market
+# moved 30 -38 as one frame (push) so its lower terrace and the ballast crane still lean out over the south-east edge.
+# DEEP 10-25: Pylon Hill - the cable car's top pylon on a hill in the north-west; the craneman took the ballast
+# release's key up it. The toll house in ruins in the north-east, the smugglers' hole in the west, the newspaper plane
+# in the south-west. Voices: craneman Oskar Lund, toll keeper Greta Holm, the smuggler Nils, the newspaper pilot.
+new
+gen Trees=0.08 Bushes=0.3 Rocks=0.3 Harvest=0.25 BeachThings=0
+gen Seed=9551 Radius=85 Height=11 Roughness=0.45 Peaks=1 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.7 PeakShape=0.5
+gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
+generate
+elevation 35
+
+# --- Terrain: the square at 5 m, the lower terrace at 2 m -----------------------------------------------------------
+push at 30 -38
+brush flatten at 0 0 r=16 s=20 frames=200 h=5
+brush flatten at 18 -14 r=6 s=20 frames=120 h=2
+brush flatten from 13 -10 to 17 -13 r=3 s=12 frames=40 h=3.5
+brush grass at 0 0 r=14 s=20 frames=20
+pop
+origin
+# --- DEEP 10-25 terrain: Pylon Hill (north-west, summit 30 m, base r 28) and its trail, the smugglers' hole (west),
+# the toll house's pad (north-east), the newspaper plane's pad (south-west) -----------------------------------------
+call hw_mount x=-25 z=40 b=28 h=30
+call hw_trail x=-25 z=40 b=28 h=30 a0=140 turn=300 n=40 h0=6
+call ar_cave x=-58 z=-10 h=6 yaw=0 al=smugrock chest=smugchest
+brush flatten at 20 50 r=12 s=20 frames=500 h=6
+call ar_ruin x=20 z=50 h=6 yaw=10 w=3 d=2 al=tollhouse
+call ar_plane x=-20 z=-55 h=5 yaw=60 al=newsplane crate=newscrate
+push at 30 -38
+clear at 0 0 r=10
+clear at -12.75 -2.5 r=4
+clear at 10.25 8.25 r=4
+clear at 18 -14 r=6
+
+# --- The market square: caravans and tents for stalls, baskets and crates; the crier's board -------------------------
+place Caravan_Blue_01 stalls at -6 -3 ground sit yaw=90
+place Caravan_Yellow_01 stalls at 6 -3 ground sit yaw=270
+place Balboa_DecorationPrefabBase_SimpleTent stalls at -6 5 ground sit yaw=90
+place Balboa_DecorationPrefabBase_SimpleTent stalls at 6 5 ground sit yaw=270
+place UT_MarketBasket01 - at -3.6 -2 ground sit yaw=20
+place UT_MarketBasket03 - at -3.8 -3.4 ground sit yaw=70
+place UT_MarketCrateSmall01 - at 3.6 -2.2 ground sit yaw=10
+place UT_MarketCrateSmall02 - at 3.4 -3.6 ground sit yaw=80
+place UT_MarketStackBox01 - at -3.6 4.6 ground sit yaw=40
+place UT_MarketBasket02 - at 3.6 5.2 ground sit yaw=160
+place Note_Sign crier at 0 -7 ground sit yaw=180
+place Zone_Trigger rimzone at 0 -13 ground
+
+# --- The old cable-car station (a hut, its door grown shut with vines), the office chest inside ---------------------
+push at -15 -4 h=5
+call hut w=3 d=2 y=0.1
+place Loot_Chest stationoffice at 3.7 2.3 y=0.1 sit yaw=180
+place Zone_Trigger stationzone at 2.25 1.5 y=1
+pop
+place ChoppableVines stationvines at -14.25 -4.8 ground yaw=0
+# (a porter's toolbox by the door: a machete for a player who has none yet - Rootcellar Deep's chest has one too)
+place Loot_Chest portertools at -11 -6.5 ground sit yaw=200
+
+# --- The clock tower on stilts: its room behind a keypad (on a stilt), a zipline from its deck down to the terrace ---
+push at 8 6 h=5
+# (REACH 10-28: deck 2.6 -> 2.3 m: the 2.42 m ladder on the ground (4.8) ended 0.4 m under the deck and the climber
+# stuck under its edge)
+# (fixC 11-03: floating sweep - one pillar foot 0.56 m above the slope; foot=0.7 sinks all four into the ground)
+call stilt_hut y=2.3 foot=0.7
+place Placeable_Clock_Basic - at 0.9 3.6 y=2.4 sit yaw=90
+place Loot_Chest clockroom at 3.6 3.6 y=2.4 sit yaw=270
+place Loot_Chest riggerchest at 0.9 1.2 y=2.4 sit yaw=90
+place RT_PowerBox clockpad at 4.6 0.15 y=1.4 yaw=90
+pop
+place Zone_Trigger towerzone at 10.25 8.25 ground
+place Creature_StoneBird screechers at 10 8 h=16
+place ZiplinePath_Landmark zipdown at 11.5 8 h=7.7
+zipto zipdown 17 -12
+# (Raft's zipline has no stand: its near floor (5.72 m west, 0.97 m north of the pivot, 1.35 m under it) hung 1.3 m over
+# the ground west of the tower - an iron post under it, as on the Lodestone Array)
+place RT_PillarThick zippost at 5.78 8.97 ground sy=0.232
+prop zippost tint.color=#3c4046
+prop zippost tint.amount=0.6
+place Zone_Trigger terracezone at 18 -14 ground
+
+# --- The fireworks stall by the south-east tent ---------------------------------------------------------------------
+place Placeable_Table_Basic - at 4 8.5 ground sit yaw=0
+place Loot_Chest fireworks at 2.4 8.5 ground sit yaw=90
+
+# --- The ballast crane on the lower terrace's east edge, its stone hanging from the hook over the drop; the lever
+place UT_ElectricityIsland_Crane02 ballastcrane at 20.5 -17 ground sit scale=0.45 yaw=135
+place SmallRock_02 ballaststone at 23.1 -19.6 h=3.5 scale=1.1 yaw=40
+place RT_Pillar - at 17 -17 ground sy=0.4
+place TP_LaserControlPanel_lever release at 17 -17 ground y=1.25 scale=3 yaw=135
+place Placeable_Lantern_Metal ballastcam at 16 -12 ground y=1.1 drop
+
+# --- The station's old vending machine and tokens dropped round the square -------------------------------------------
+vending marketvend at -4 -9 ground yaw=180
+place QuestItemPickup_Tangaroa_Token - at -9 -9 ground
+place QuestItemPickup_Tangaroa_Token - at 9 -8 ground
+place QuestItemPickup_Tangaroa_Token - at -2 10 ground
+place QuestItemPickup_Tangaroa_Token - at 16 -15 ground
+
+# --- Things to gather ------------------------------------------------------------------------------------------------
+scatter "Pickup_Landmark_PineappleLandmark" 2 at -8 10 r=4 seed=9561 free=2
+call dirt x=10 z=-6 r=5 n=2 seed=9562
+pop
+
+# --- DEEP 10-25: Pylon Hill and the cable car's top pylon; the trail's foot and the summit as zones; the key ---------
+call hw_zone x=-6.4 z=17.8 al=pylonfootz id=pylonfoot r=5 msg="Pylon Hill. The cable car's cables run from its top out over the edge - and stop in the air."
+call hw_zone x=-25 z=40 al=pylontopz id=pylontop r=8 h=1 msg="The top of Pylon Hill. The whole town below, the sea 65 m down, and the quay's hill far off, cut flat."
+call hw_mast x=-25 z=40 h0=30 lv=4 a=pylon chest=keybox top=Placeable_Lantern_Metal
+place Note_Paper oskarnote at -29 36.5 h=30.1 drop yaw=10
+scatter "Pickup_Landmark_Tree_Palm 3" 3 at -25 40 r=30 seed=9581 free=3
+scatter Bamboo_1 4 at -25 40 r=30 seed=9582 free=2
+scatter Bush 8 at -25 40 r=30 seed=9583 free=1
+scatter Bush2 5 at -25 40 r=30 seed=9584 free=1
+call treasure x=-20 z=45 r=4 n=1 seed=9585 kind=0
+prop treasure9585 treasure.loot=MetalOre*2;CopperOre*3
+# --- The smugglers' hole (west): Nils's note and his box --------------------------------------------------------------
+call hw_zone x=-58 z=-5 al=smugz id=smughole r=4 msg="A hole under the rock, out of the crier's sight. Somebody slept here - and counted money."
+# (REACH 10-28: by the lantern no spot could reach the note (no clear line) - now on the floor beside Nils's box)
+place Note_Paper nilsnote at -59.3 -3.8 h=6.45 drop yaw=30
+loot smugchest TradeToken*3;CopperOre*2;Rope*2;Battery*1
+prop smugchest loot.refill=0
+note smugchest Smuggler's box | Nils's box: Tangaroa tokens, copper and a battery he meant to sell twice.
+# --- The toll house (north-east): Greta's ledger on the table ---------------------------------------------------------
+call hw_zone x=20 z=50 al=tollz id=tollhouse r=6 msg="The town's toll house, roofless. A board still says TOLL - 2 TOKENS, CARTS 5."
+place Note_Paper gretaledger at 19.26 50.13 h=7.05 drop yaw=10
+call treasure x=28 z=44 r=4 n=1 seed=9586 kind=0
+prop treasure9586 treasure.loot=Scrap*3;Bolt*2;Hinge*1;TradeToken*2
+place Creature_Llama llamas2 at 30 60 ground
+prop llamas2 creature.count=2
+# --- The newspaper plane (south-west): a secret -----------------------------------------------------------------------
+loot newscrate Battery*1;Plastic*4;Rope*2;Nail*6
+prop newscrate loot.refill=0
+note newscrate Newspaper plane's cargo | Bundles of the Halvard Courier, Lift Day edition: INSTITUTE SAYS 'NO CAUSE FOR ALARM'.
+place Note_Paper newsnote at -26 -61 ground drop yaw=60
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Altitude Market
+info author=Custom Islands
+info description=The quay's market town, torn into the sky 35 m up and as big as Raft's own big islands: caravans and tents on a rock plate, Pylon Hill with the cable car's top pylon, a toll house in ruins, a smugglers' hole, a newspaper plane, a cable-car station grown shut with vines, a clock tower full of screechers, a zipline and a ballast crane over the drop. The fourth island of The Gravity Sea.
+island on.arrive=message||A market in the sky: caravans, tents, a clock tower - and a crane leaning out over nothing.
+
+story clockcode|Clock tower keypad open|Note_Paper|The clock tower room's keypad, unlocked with the crier's code.
+story ballastdrop|Ballast dropped|Placeable_Lantern_Metal|You let the ballast stone go: it fell 35 m into the sea, where the market's lower town lies.
+
+note crier Market crier's board | MARKET DAY - HEAR YE\n\nThe market is OPEN, Lift Day or no Lift Day.\nStalls: fruit, rope, fireworks (in the tent by the square).\nThe cable-car is shut - vines. Bring a blade.\nClock tower room: the code is the hour the hill went up, 3:51, then 7 for luck - 3517.\nThe ballast crane holds the market level. DO NOT pull the release.
+story cranekey|Ballast release key|Bolt|The ballast release's key, which the craneman Oskar hid on the cable car's top pylon.
+loot keybox story:cranekey*1;Rope*2;Plank*2
+prop keybox loot.refill=0
+prop keybox if.open=quest|14
+prop keybox else.open=message||The box is lashed fast to the rail. The trail up Pylon Hill comes first.
+note keybox Pylon deck box | A box lashed to the top pylon's rail. Inside, on a string, a heavy key stamped BALLAST.
+note oskarnote Craneman Oskar Lund's note | To whoever comes up here after me -\n\nThe ballast crane holds this town level. Take the stone off the hook and the plate tips, and everything on it slides towards the sea - or so the Institute told me, and I believed them for three weeks.\n\nThen I measured. The plate does not tip. It does not care. It hangs where the field wants it, and the stone is only a stone.\n\nI have hidden the release key up here anyway, in the deck box, so no drunk at the fireworks stall pulls it for a laugh. If you are sober and you have a reason: take it. Down there, under the crane, there are people on the seabed who have been waiting for a sign that somebody is up here.\n\n- O. Lund, craneman
+note gretaledger Toll keeper Greta Holm's ledger | TOLLS - G. HOLM\n\nLift Day: 41 carts in, 0 carts out. Nobody can leave. I have stopped charging.\nDay 2: The crier still cries. Prices are up. Water is up most.\nDay 5: Nils from the far end is selling the same battery to everyone. Twice to the Institute.\nDay 9: Oskar has gone up the pylon hill with the crane's key. 'Safety', he says. He has also taken his lunch, his blanket and my good chair.\nDay 14: Someone in the sea under us is ringing a bell. Oskar says it is the lower town, the half of us that went down. I go to the edge every evening and listen.
+note nilsnote Smuggler's note | (In pencil, on the back of a toll ticket)\n\nBattery: sold to H. (Inst.) - 3 tokens\nBattery (same): sold to H. again - 3 tokens\nBattery (same): sold to Greta - 1 token and a pie\n\nGreta knows. Greta always knows.\nIf the stone goes, I go down after it. There is copper in the lower town and nobody to sell it to me.
+note newsnote Newspaper pilot's note | Landed in the south field. The Courier's Lift Day edition is in the crate, if anybody up here still wants the news. The headline did not age well. - P. Varga, Halvard Courier air delivery
+note portertools Porter's toolbox | The cable-car porter's toolbox: a machete for the vines on the station door, and a coil of rope.
+note stationoffice Station office | The cable-car station's office chest: the engine plans for the cars and a metal detector's, "to find what fell".
+note clockroom Clock tower room | The clock tower room's chest: the market's fireworks money and a rigger's spare rope.
+note fireworks Fireworks stall | The fireworks seller's chest: rockets for the Lift Day show that never was, and how to make them.
+note riggerchest Rigger's chest | The rigger's chest on the tower deck: a zipline base's plans, "the quick way down to the terrace" - and his air bottle, for whatever falls into the sea below.
+loot stationoffice Blueprint_EngineControls*1;Blueprint_MetalDetector*1;Scrap*3
+prop stationoffice loot.refill=0
+loot portertools Machete*1;Rope*1
+prop portertools loot.refill=0
+loot clockroom TradeToken*4;Rope*3;Bolt*2
+prop clockroom loot.refill=0
+loot fireworks Blueprint_Firework*1;Placeable_Firework*2;Rope*2
+prop fireworks loot.refill=0
+loot riggerchest Blueprint_ZiplineBase*1;Blueprint_ZiplineTool*1;Blueprint_BatteryCharger*1;Rope*4;Scrap*2;OxygenBottle*1
+prop riggerchest loot.refill=0
+
+prop stationvines obj.name=stationvines
+prop stationvines on.use=hide|stationvines\nsignal||vines\nmessage||The machete bites through the vines. The station door is free.
+prop stationoffice if.open=signal|vines
+prop stationoffice else.open=message||The office is behind the vines.
+prop stationzone zone.id=station
+prop stationzone zone.radius=2
+prop stationzone zone.message=The cable-car station. The cables run out over the edge - and end in the air.
+
+prop clockpad obj.name=clockpad
+prop clockpad beh.use=Type the clock tower code
+prop clockpad lock.code=3517
+prop clockpad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The keypad clicks and the tower room's chest unbolts.\nsignal||clockcode\ngive||story:clockcode*1
+prop clockpad else.use=message||The keypad wants the tower's code. The crier's board has it.
+prop clockroom if.open=signal|clockcode
+prop clockroom else.open=message||The tower room's chest is bolted from the keypad on the stilt below.
+
+prop towerzone zone.id=clocktower
+prop towerzone zone.radius=9
+prop towerzone zone.repeat=never
+prop towerzone zone.message=Screechers! They nest round the clock tower.
+prop screechers creature.count=4
+prop screechers creature.respawn=0
+prop screechers creature.zone=clocktower
+
+prop terracezone zone.id=lower_terrace
+prop terracezone zone.radius=4
+prop terracezone zone.message=The lower terrace. The ballast crane leans out over the drop.
+prop rimzone zone.id=market_rim
+prop rimzone zone.radius=8
+prop rimzone zone.message=The market's rim. Stalls, a clock tower - and the sea 35 m below.
+
+prop ballaststone obj.name=ballaststone
+prop ballastcam obj.name=ballastcam
+prop release obj.name=release
+prop release beh.use=Pull the ballast release
+prop release if.use=has|story:cranekey|1\n!signal|ballast
+prop release on.use=signal||ballast\nhide|ballaststone\ngive||story:ballastdrop*1\nmessage||The crane's hook swings free. The ballast stone tips over the edge - and long seconds later, far below, a splash.\ncamera|ballastcam|ballaststone|5|30
+prop release else.use=message||The release is locked - its key is gone. A chalked arrow on the crane points up at Pylon Hill. (If the stone is already gone: down there, under the splash, is the market's lower town.)
+
+quest title=Market Day in the Sky
+quest intro=A market town 35 m over the sea. Make for the clock tower and climb onto its rim.
+step reach|market_rim|1|Make for the clock tower; climb onto the market's rim
+step read|Market crier's board|1|Read the crier's board in the square
+step reach|station|1|Cut the vines and go into the cable-car station
+step blueprint|Blueprint_EngineControls|1|Take the engine control plans from the station office
+step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the station office
+step kill|Screecher|4|Drive the screechers off the clock tower
+step open|Clock tower room|1|Open the clock tower room's chest (the crier's code)
+step blueprint|Blueprint_Firework|1|Take the firework plans from the fireworks stall
+step blueprint|Blueprint_ZiplineBase|1|Take the zipline base plans from the rigger's chest
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the rigger's chest
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the rigger's chest
+step read|Toll keeper Greta Holm's ledger|1|Find the toll house outside the town square and read Greta's ledger
+step reach|pylonfoot|1|Find the path up Pylon Hill, the hill with the pylons
+step reach|pylontop|1|Climb Pylon Hill
+step collect|story:cranekey|1|Climb the top pylon and take the ballast release key from its deck box
+step reach|lower_terrace|1|Take the zipline down to the lower terrace
+step collect|story:ballastdrop|1|Pull the ballast release on the crane
+quest done=The stone fell into the market's lower town on the seabed, 30 m down. The Receiver picks up a diving bell there - band 700.
+quest reward=MetalIngot*3;Rope*4
+
+save Altitude Market

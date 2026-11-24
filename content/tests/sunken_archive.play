@@ -1,0 +1,80 @@
+# Play test of The Sunken Archive (CIPlay sunken_archive, in a test world 'CI ...'). Points as in its recipe: the jetty
+# (0.55 m) at the reading room's door on the archive's north face, the reading room (0.5 m), the flooded stacks below
+# (floors at -2.55 and -5.6 m, broken windows), the air pocket in the deepest room.
+# Quest "Card Catalogue", 10 steps: reading room, letter, shelf box, floor box, the deepest room's air pocket, the vault,
+# the keeper, the deep box, the three cards, the vault opened.
+island The Sunken Archive
+offset 8.6652 1.5661
+expect step 0
+expect title Card Catalogue
+
+# Along the jetty into the reading room: the archivist's letter
+walk -6 0 to -6.5 -6 to -6.5 -9.5 h=0.5
+zone readingroom
+expect step 1
+read Archivist's letter
+expect step 2
+
+# The flooded stacks: two card boxes on the upper flooded floor, the third in the deepest room (its air pocket, the
+# vault's keeper)
+at -6 -14.5 h=-1.4
+open Shelf card box
+expect step 3
+at -3.6 -9.5 h=-1.4
+open Floor card box
+expect step 4
+at -4.5 -14.5 h=-4.4
+air deepair
+zone vault
+expect step 6
+kill Angler fish
+expect step 7
+open Deep card box
+expect story card 3
+expect step 9
+# RAFT2 10-26: Ines Varga, the climb, Binding Cave, the secrets
+use Ines Varga
+wait 1
+expect step 10
+expect hidden sa_lampchest
+use Reading lamp 1
+wait 1
+expect shown sa_lampchest
+open Ines's bindery box
+zone sa_trail
+expect step 11
+zone sa_summit
+expect step 12
+open Reading mast deck box
+wait 3
+zone sa_cave
+expect step 13
+open Binding Cave chest
+wait 3
+expect step 14
+# the secrets
+zone sa_plane
+open Book plane's crate
+read Book pilot's slip
+zone sa_jumps
+open Shelver's ledge
+open Top of the shelf stack
+expect hidden sa_setchest
+use sa_piece1
+use sa_piece2
+use sa_piece3
+use sa_piece4
+use sa_piece5
+wait 2
+expect shown sa_setchest
+open Ex libris chest
+
+# Up in the reading room: the cards through the index desk; down to the vault
+use indexterminal
+expect message whirrs
+expect story card 0
+open Rare book vault
+wait 5
+expect item Blueprint_EngineControls 1
+expect item Blueprint_ZiplineBase 1
+expect done

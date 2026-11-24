@@ -120,13 +120,16 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIAdventureBuild", docs: "Dev, editor: SC60 - the voyage 'CI Voyage' built from nothing: four islands made with the generator and given their content (chests, notes, zones, creatures, a door and a lever, story items, a quest with every step type, island events, an island rule); the plan with every When and Where; Check; Test in a world for each island; exported as a pack. CIAdventureBuild notest = without the Tests (minutes)")]
-		public static void AdventureBuildCommand(string[] args) { DynamicIslands.instance.StartCoroutine(AdventureBuildRoutine(args == null || !args.Contains("notest"))); }
+		public static void AdventureBuildCommand(string[] args) { StartTest(AdventureBuildRoutine(args == null || !args.Contains("notest"))); }
 
 		static IEnumerator AdventureBuildRoutine(bool test)
 		{
 			yield return WaitForEditor(false);
 			yield return PlaceableCatalog.EnsureBuilt();
 			bool ok = true;
+			// (the voyage's pack installed here by an earlier fetch goes first: removed later, it took the islands and the
+			// plan just built under the same names to the deleted folder)
+			try { LibraryPack.Remove(VoyagePackId); } catch { }
 			try { BuildVoyageIslands(); }
 			catch (Exception ex) { Fail("adventure build: " + ex); yield break; }
 			foreach (string n in VoyageIslands)
@@ -173,7 +176,6 @@ namespace DynamicIslands
 				}
 			// Exported as a pack
 			string error;
-			try { LibraryPack.Remove(VoyagePackId); } catch { }
 			string zip = LibraryPack.Export(new LibraryInfo { title = VoyagePlan, id = VoyagePackId, author = "CI Tester", summary = "The test voyage", remix = true }, null, WorldPlan.Load(VoyagePlan), null, null, out error);
 			LibraryPackContents pack = zip != null ? LibraryPack.Read(zip, out error) : null;
 			Check(ref ok, pack != null && VoyageIslands.All(n => pack.Files.ContainsKey(n + ".island")) && pack.Files.ContainsKey(VoyagePlan + ".plan"),
@@ -230,7 +232,7 @@ namespace DynamicIslands
 		public static void AdventurePlayCommand(string[] args)
 		{
 			string part = args != null && args.Length > 0 ? args[0] : "landing";
-			DynamicIslands.instance.StartCoroutine(AdventurePlayRoutine(part));
+			StartTest(AdventurePlayRoutine(part));
 		}
 
 		static IEnumerator AdventurePlayRoutine(string part)

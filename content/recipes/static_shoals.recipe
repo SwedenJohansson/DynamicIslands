@@ -1,0 +1,456 @@
+# Static Shoals - the fourth island of The End of the Ocean (SL14, the Concord Engine's relay field)
+# Two low sand bars under a grey sky that never lifts, four tall radio masts strung with cable, and static on every band:
+# the masts still shout the engine's old traffic into the air. The Fleet's last radio barge is beached on the main bar;
+# Teo left his note in it - the Fleet's way south ends here. Screechers nest on the masts. A zipline runs from mast 1
+# over the channel to mast 4's hut on the east bar. Quest "Static" (15 steps): Teo's note, the engine control plans in
+# the barge, the screechers, the zipline to mast 4, the metal detector plans in its hut, the flare locker, the relay spares crate in the vine-hung shoal cave, the workshop.
+#
+# Built by the recipe player (CIRecipe static_shoals) through the editor's own operations. Points (metres over the sea):
+# the main bar at 1.5 m round -10 -4 (r 12), the radio barge at -4 0, mast 1 at -14 2 (the zipline's start), mast 2 at
+# -4 -14, mast 3 at -20 -10 (the workshop hut x -18..-15, z -16..-13), mast 4 on the east bar round 18 12 (its hut on
+# posts, deck at 4.1 m, x 16..20.5, z 10..14.5).
+include lib_sea
+include lib_features
+include lib_huts
+include lib_gravity
+include lib_concord
+include lib_areas
+include lib_deep14
+include lib_caves
+new
+# (nature 10-24: hills and Raft-like trees over the whole island - the coordinator's check after the resize)
+gen Trees=0.38 Bushes=0.35 Rocks=0.5 Harvest=0.15 BeachThings=0.5
+gen Seed=14081 Radius=85 Height=10 Roughness=0.3 Peaks=3 Shape=1 Style=0 PeakShape=0.3 Cliffs=0.2 BeachWidth=0.9
+gen Water=0.6 SeaRocks=0.5 SeaFinds=0.4 Sunken=0.4 Hostiles=0 Friendly=0 SeaLife=0.3
+generate
+
+# --- Terrain: the main bar, the channel, the east bar ------------------------------------------------------------------
+brush flatten at -10 -4 r=12 s=20 frames=200 h=1.5
+brush flatten at 18 12 r=6 s=20 frames=200 h=1.5
+brush flatten from 4 2 to 10 6 r=4 s=20 frames=150 h=-2
+brush sand at -10 -4 r=14 s=10 frames=40
+# (REACH 10-30 G1: the east bar stood 1.5 m sheer out of the sea - a swimmer under mast 4's ladder never got out; a sand
+# ramp now runs down into the sea south of the hut. The mast workshop's door faced the beach below the main bar's edge -
+# its door is now in the back wall, and a pad levels the sand in front of it; the hut's south half hung over the sea
+# off the bar's edge - sand now built up under the whole hut)
+for k 0 4
+brush flatten at 18 {7.6-$k} r=1.6 s=20 frames=150 h={1.5-0.5*$k}
+next
+brush sand from 18 7.6 to 18 3.6 r=1.8 s=10 frames=20
+brush flatten at -17.25 -12.1 r=1.6 s=20 frames=150 h=1.5
+brush flatten at -16.5 -14.5 r=2.8 s=20 frames=150 h=1.5
+brush sand at -16.5 -14.5 r=3 s=10 frames=20
+origin
+clear at -10 -4 r=12
+clear at 18 12 r=6
+clear from 18 7.6 to 18 3.6 r=2.6 body
+clear at -17.25 -12.1 r=2.6 body
+clear at -16.5 -14.5 r=3 body
+
+# --- The four masts: two thick pillars high, a dish, a red light, a cable hub at the foot ------------------------------
+macro mast x=0 z=0 yaw=0
+place RT_PillarThick masts at $x $z ground sy=1.25
+place RT_PillarThick masts at $x $z ground y=6
+place Antenna_pole - at $x $z ground y=12 sy=0.6
+place RT_SatteliteDisc - at $x $z ground y=10 yaw=$yaw scale=0.45
+place TP_RotatingRedLight - at $x $z ground y=12.6
+place UT_ElectricCableHub01 - at {$x+1} $z ground sit scale=0.6
+end
+call mast x=-14 z=2 yaw=200
+call mast x=-4 z=-14 yaw=160
+call mast x=-20 z=-10 yaw=240
+call mast x=21 z=15 yaw=180
+prop masts tint.color=#545a60
+prop masts tint.amount=0.6
+scatter SeaVine3 6 at 6 4 r=6 seed=14082 wet free=1
+
+# --- The grey sky and the static ----------------------------------------------------------------------------------------
+call weather x=0 z=0 al=greysky r=60 fog=#262b31 fa=0.55 light=#7c8894 la=0.5 parts=mist h=4
+call loopsound x=-8 z=-4 al=staticsound ev=event:/exploring/temperence/generator r=30 vol=0.3 h=3
+call loopsound x=0 z=0 al=rainsound ev=event:/amb/rain_ocean r=50 vol=0.4 h=2
+
+# --- The radio barge on the main bar: Teo's note, the Fleet's chest ------------------------------------------------------
+place RT_Floor barge at -2 2 ground sit sx=0.6 sz=0.5 yaw=20
+place RT_PlasticBoat - at -7 5 ground yaw=20
+place Placeable_Table_Basic - at -4.5 0.5 ground y=0.3 sit yaw=20
+place RT_PowerBox - at -4.5 0.5 ground y=1.3 scale=0.6 yaw=200
+place Note_Paper teonote at -3.6 0.2 ground y=1.3 drop yaw=15
+place Loot_Chest fleetchest at -6 -1.5 ground y=0.3 sit yaw=200
+prop barge tint.color=#4a4038
+prop barge tint.amount=0.6
+call tzone x=-4 z=0 al=bargezone id=barge r=5 msg="The Fleet's radio barge, beached. Its set is dead; the masts are not."
+
+# --- Screechers on the masts; mast 1's zipline over the channel to mast 4 ----------------------------------------------
+place Creature_StoneBird screechers at -8 -4 ground y=6
+prop screechers creature.count=4
+prop screechers creature.respawn=0
+push at -13.35 2.15 h=1.5
+call zipdeck y=5
+pop
+place ZiplinePath_Landmark zip14 at -6.88 1.93 h=7.97
+zipto zip14 15 11
+
+# --- Mast 4's hut on posts on the east bar: the metal detector plans -----------------------------------------------------
+push at 16 10 h=1.5
+call stilt_hut y=2.6
+place Loot_Chest mast4chest at 3.6 3.6 y=2.7 sit yaw=225
+pop
+call tzone x=18.25 z=12.25 al=mast4zone id=mast_4 r=4 h=2.6 msg="Mast 4's hut, on posts over the bar. The static is loudest here."
+
+# --- The flare locker under mast 2, the mast workshop under mast 3 --------------------------------------------------------
+place Loot_ChestLarge flarelocker at -4.5 -9 ground sit yaw=160
+place Placeable_Flag_05 - at -5.1 -9.8 ground sit
+push at -18 -16 h=1.5
+call floors w=2 d=2 y=0.1
+place Block_Wall_Wood - at 0.75 0 y=0.1
+place Block_Wall_Wood - at 2.25 0 y=0.1
+place Block_Wall_Door_Wood - at 0.75 3 y=0.1
+place Block_Wall_Wood - at 2.25 3 y=0.1
+for fz 0.75 2.25 1.5
+place Block_Wall_Wood - at 0 $fz y=0.1 yaw=90
+place Block_Wall_Wood - at 3 $fz y=0.1 yaw=90
+next
+call corners w=2 d=2 y=0.1
+roof 2 2 at 0 0 y=0.1 wood
+place Loot_Chest workshop at 2.2 2.4 y=0.1 sit yaw=180
+place "Box Big" - at 0.8 0.8 y=0.1 sit yaw=10
+pop
+
+# --- Things to gather: copper and scrap on the bars, the wreck finds; the shallows ----------------------------------------
+scatter "Pickup_Landmark_Copper 1" 3 at -10 -4 r=10 seed=14083 free=2
+scatter "Pickup_Landmark_Scrap 1_Land" 4 at -10 -4 r=11 seed=14084 free=2
+scatter "Pickup_Landmark_Iron 1" 1 at 18 12 r=4 seed=14085 free=2
+call reef x=-30 z=20 r=5 seed=14086
+call shallows x=0 z=0 r=104.32 deep=5 n=1 seed=14090
+
+# --- Discoveries: things to find off the quest path (not needed for the quest) ---------------------------------
+call tzone x=0.7 z=68.1 al=shoalsview id=shoalsview r=4 msg="The highest bar of the shoals. The static is loud even without a Receiver - a fizz in the air, like rain that never falls."
+place Loot_Chest barchest at 15.2 -64.4 ground sit yaw=346
+prop barchest loot.refill=0
+call notebox x=-64 z=-19 yaw=264 al=radiomanpage
+brush flatten at 71.2 0.3 r=6 s=20 frames=120 h=4.6
+clear at 71.2 0.3 r=6
+place BoatStranded - at 71.2 0.3 ground y=0.1 sit yaw=179 scale=0.7
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): the north-west ridge on the outer
+# ring with its lookout and a buried treasure, the cave in the east bar, the Fleet's ruined net house on the south bar, the
+# spotter plane on the north bar - the outer ring of bars round the masts
+call ar_ridge x1=-56 z1=24 x2=-32 z2=60 h=10 top=6 r=8
+call ar_plants_tropical x=-44 z=42 r=26 seed=14251
+call tzone x=-44 z=42 al=nwridge id=nwridge r=7 msg="The top of the outer ring. Inside it, the four masts and the static; outside it, the sea goes on south - quiet, as if listening."
+call treasure x=-44 z=42 r=12 n=1 seed=14261
+call ar_cave x=60 z=20 h=6 yaw=180 al=shoalcave chest=shoalcavechest
+call tzone x=60 z=15 al=shoalcavezone id=shoalcave r=4 msg="A cave in the bar. Somebody wired a speaker in here and left it humming - the same static, softer."
+call ar_ruin x=-12 z=-58 h=6 yaw=0 al=nethouse
+call notebox x=-9.5 z=-62.5 yaw=20 al=netbook
+call notebox x=-16.5 z=-52.5 yaw=110 al=heddass
+call ar_plane x=32 z=52 h=6 yaw=100 al=spotterplane crate=spottercrate
+call notebox x=26.5 z=48.5 yaw=70 al=spotterlog
+# vine cache placed by hand (scatter found no spot in run25): the chest behind Raft's choppable vines, machete
+place Loot_Chest vinechest14291 at -60 -32 ground sit yaw=0
+prop vinechest14291 obj.name=vinechest14291
+prop vinechest14291 note.title=Behind the vines
+prop vinechest14291 beh.hidden=1
+loot vinechest14291 Rope*3;Nail*8;Battery*1
+beside ChoppableVines vinewall14291 vinechest14291 d=1.6
+prop vinewall14291 on.use=hide|\nshow|vinechest14291\nmessage||The machete bites through the vines. Something was hidden behind them.
+call ar_plants_tropical x=-60 z=-32 r=14 seed=14271
+call ar_plants_tropical x=52 z=-36 r=14 seed=14281
+
+# --- Tools in use (10-24: a tool given earlier in the storyline is used again here, for optional finds): the
+# machete from Triangulation Rocks cuts the vines over a hidden chest
+
+# --- Unique layer (10-24): static_shoals device - see SL14_progress.md UNIQUE ISLANDS
+call powerradio x=-16.5 z=-62 yaw=90 alias=netgen ralias=netradio rx=-12.75 rz=-58 rh=8 ryaw=180 cache=netdrop cx=39.9 cz=50.6 cr=6 cseed=14471 items=Battery*2;CopperIngot*2;TitaniumOre*2 kx=55 kz=27 kr=14 seed=14472 toolbox=nettoolbox
+prop netradio on.use=message||Static... then a voice, close and tired: 'This is Teo. If you hear this, the drop by the spotter plane is yours. Then follow the Engine's pull - it's south.'\nsignal||radio\ngive||story:teovoice*1\nshow|netdrop
+prop spottercrate note.title=Spotter plane's crate
+story teovoice|Teo's voice|Placeable_Reciever|Teo's voice on the net house radio: the drop by the spotter plane, and the Engine's pull to the south.
+prop spottercrate if.open=has|story:raft-Vasagatan_BoltCutter|1
+prop spottercrate else.open=message||The spotter crate is chained to the wing. Bolt cutters would get through the chain.
+loot spottercrate TitaniumOre*2;Battery*1;Rope*3
+prop spottercrate loot.refill=0
+
+# --- Story pass (10-24 storyfix): a DARK MAZE instead of the tower and the pit - the Fleet's cable store, a stone block
+# of 8 x 6 cells (1.5 m) on a pad by the dune peak, roofed and unlit (a dark hazard: bring a light), its entrance in the
+# south-west corner, the floor plan beside it; the coil store, the wiring room locker and two small finds in dead ends.
+# The dune peak keeps its cairn and buried tin. The maze was laid by a seeded walk (seed 14933), so every cell is reached.
+# (the pad 0.15 m under the floor: a flatten leaves the ground a few cm over its height, and the sand poked through the
+# cell floors laid flush on it - 47 floors "buried", 11-05)
+brush flatten at 36 -55 r=9 s=20 frames=300 h=5.75
+clear at 36 -55 r=10
+push at 30 -59.5 h=5.9
+place Block_Floor_Tier3 ssmaze at 0.75 0.75 y=0
+place Block_Floor_Tier3 ssmaze at 0.75 0.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 0.75 2.25 y=0
+place Block_Floor_Tier3 ssmaze at 0.75 2.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 0.75 3.75 y=0
+place Block_Floor_Tier3 ssmaze at 0.75 3.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 0.75 5.25 y=0
+place Block_Floor_Tier3 ssmaze at 0.75 5.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 0.75 6.75 y=0
+place Block_Floor_Tier3 ssmaze at 0.75 6.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 0.75 8.25 y=0
+place Block_Floor_Tier3 ssmaze at 0.75 8.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 2.25 0.75 y=0
+place Block_Floor_Tier3 ssmaze at 2.25 0.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 2.25 2.25 y=0
+place Block_Floor_Tier3 ssmaze at 2.25 2.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 2.25 3.75 y=0
+place Block_Floor_Tier3 ssmaze at 2.25 3.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 2.25 5.25 y=0
+place Block_Floor_Tier3 ssmaze at 2.25 5.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 2.25 6.75 y=0
+place Block_Floor_Tier3 ssmaze at 2.25 6.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 2.25 8.25 y=0
+place Block_Floor_Tier3 ssmaze at 2.25 8.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 3.75 0.75 y=0
+place Block_Floor_Tier3 ssmaze at 3.75 0.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 3.75 2.25 y=0
+place Block_Floor_Tier3 ssmaze at 3.75 2.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 3.75 3.75 y=0
+place Block_Floor_Tier3 ssmaze at 3.75 3.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 3.75 5.25 y=0
+place Block_Floor_Tier3 ssmaze at 3.75 5.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 3.75 6.75 y=0
+place Block_Floor_Tier3 ssmaze at 3.75 6.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 3.75 8.25 y=0
+place Block_Floor_Tier3 ssmaze at 3.75 8.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 5.25 0.75 y=0
+place Block_Floor_Tier3 ssmaze at 5.25 0.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 5.25 2.25 y=0
+place Block_Floor_Tier3 ssmaze at 5.25 2.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 5.25 3.75 y=0
+place Block_Floor_Tier3 ssmaze at 5.25 3.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 5.25 5.25 y=0
+place Block_Floor_Tier3 ssmaze at 5.25 5.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 5.25 6.75 y=0
+place Block_Floor_Tier3 ssmaze at 5.25 6.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 5.25 8.25 y=0
+place Block_Floor_Tier3 ssmaze at 5.25 8.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 6.75 0.75 y=0
+place Block_Floor_Tier3 ssmaze at 6.75 0.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 6.75 2.25 y=0
+place Block_Floor_Tier3 ssmaze at 6.75 2.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 6.75 3.75 y=0
+place Block_Floor_Tier3 ssmaze at 6.75 3.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 6.75 5.25 y=0
+place Block_Floor_Tier3 ssmaze at 6.75 5.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 6.75 6.75 y=0
+place Block_Floor_Tier3 ssmaze at 6.75 6.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 6.75 8.25 y=0
+place Block_Floor_Tier3 ssmaze at 6.75 8.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 8.25 0.75 y=0
+place Block_Floor_Tier3 ssmaze at 8.25 0.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 8.25 2.25 y=0
+place Block_Floor_Tier3 ssmaze at 8.25 2.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 8.25 3.75 y=0
+place Block_Floor_Tier3 ssmaze at 8.25 3.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 8.25 5.25 y=0
+place Block_Floor_Tier3 ssmaze at 8.25 5.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 8.25 6.75 y=0
+place Block_Floor_Tier3 ssmaze at 8.25 6.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 8.25 8.25 y=0
+place Block_Floor_Tier3 ssmaze at 8.25 8.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 9.75 0.75 y=0
+place Block_Floor_Tier3 ssmaze at 9.75 0.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 9.75 2.25 y=0
+place Block_Floor_Tier3 ssmaze at 9.75 2.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 9.75 3.75 y=0
+place Block_Floor_Tier3 ssmaze at 9.75 3.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 9.75 5.25 y=0
+place Block_Floor_Tier3 ssmaze at 9.75 5.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 9.75 6.75 y=0
+place Block_Floor_Tier3 ssmaze at 9.75 6.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 9.75 8.25 y=0
+place Block_Floor_Tier3 ssmaze at 9.75 8.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 11.25 0.75 y=0
+place Block_Floor_Tier3 ssmaze at 11.25 0.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 11.25 2.25 y=0
+place Block_Floor_Tier3 ssmaze at 11.25 2.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 11.25 3.75 y=0
+place Block_Floor_Tier3 ssmaze at 11.25 3.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 11.25 5.25 y=0
+place Block_Floor_Tier3 ssmaze at 11.25 5.25 y=2.635
+place Block_Floor_Tier3 ssmaze at 11.25 6.75 y=0
+place Block_Floor_Tier3 ssmaze at 11.25 6.75 y=2.635
+place Block_Floor_Tier3 ssmaze at 11.25 8.25 y=0
+place Block_Floor_Tier3 ssmaze at 11.25 8.25 y=2.635
+place Block_Wall_Tier3 ssmaze at 0.75 1.5 y=0
+place Block_Wall_Tier3 ssmaze at 0.75 9.0 y=0
+place Block_Wall_Tier3 ssmaze at 2.25 0.0 y=0
+place Block_Wall_Tier3 ssmaze at 2.25 3.0 y=0
+place Block_Wall_Tier3 ssmaze at 2.25 6.0 y=0
+place Block_Wall_Tier3 ssmaze at 2.25 9.0 y=0
+place Block_Wall_Tier3 ssmaze at 3.75 0.0 y=0
+place Block_Wall_Tier3 ssmaze at 3.75 1.5 y=0
+place Block_Wall_Tier3 ssmaze at 3.75 3.0 y=0
+place Block_Wall_Tier3 ssmaze at 3.75 7.5 y=0
+place Block_Wall_Tier3 ssmaze at 3.75 9.0 y=0
+place Block_Wall_Tier3 ssmaze at 5.25 0.0 y=0
+place Block_Wall_Tier3 ssmaze at 5.25 1.5 y=0
+place Block_Wall_Tier3 ssmaze at 5.25 4.5 y=0
+place Block_Wall_Tier3 ssmaze at 5.25 6.0 y=0
+place Block_Wall_Tier3 ssmaze at 5.25 9.0 y=0
+place Block_Wall_Tier3 ssmaze at 6.75 0.0 y=0
+place Block_Wall_Tier3 ssmaze at 6.75 1.5 y=0
+place Block_Wall_Tier3 ssmaze at 6.75 7.5 y=0
+place Block_Wall_Tier3 ssmaze at 6.75 9.0 y=0
+place Block_Wall_Tier3 ssmaze at 8.25 0.0 y=0
+place Block_Wall_Tier3 ssmaze at 8.25 3.0 y=0
+place Block_Wall_Tier3 ssmaze at 8.25 9.0 y=0
+place Block_Wall_Tier3 ssmaze at 9.75 0.0 y=0
+place Block_Wall_Tier3 ssmaze at 9.75 1.5 y=0
+place Block_Wall_Tier3 ssmaze at 9.75 9.0 y=0
+place Block_Wall_Tier3 ssmaze at 11.25 0.0 y=0
+place Block_Wall_Tier3 ssmaze at 11.25 6.0 y=0
+place Block_Wall_Tier3 ssmaze at 11.25 9.0 y=0
+place Block_Wall_Tier3 ssmaze at 0.0 0.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 3.0 0.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 12.0 0.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 0.0 2.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 1.5 2.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 6.0 2.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 9.0 2.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 10.5 2.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 12.0 2.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 0.0 3.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 3.0 3.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 6.0 3.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 9.0 3.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 10.5 3.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 12.0 3.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 0.0 5.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 1.5 5.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 3.0 5.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 4.5 5.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 7.5 5.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 9.0 5.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 12.0 5.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 0.0 6.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 3.0 6.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 6.0 6.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 7.5 6.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 9.0 6.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 10.5 6.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 12.0 6.75 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 0.0 8.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 1.5 8.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 9.0 8.25 y=0 yaw=90
+place Block_Wall_Tier3 ssmaze at 12.0 8.25 y=0 yaw=90
+place Loot_Chest sstop at 11.25 6.75 y=0 yaw=0
+place Loot_Chest ssdivechest at 9.75 2.25 y=0 yaw=0
+place Loot_ChestSmall ssstash at 3.75 0.75 y=0 yaw=0
+place Loot_ChestSmall ssdivesecret at 5.25 5.25 y=0 yaw=0
+pop
+prop ssmaze tint.color=#3d4146
+prop ssmaze tint.amount=0.6
+call dp_hazard x=36 z=-55 al=ssdark kind=dark r=8 dmg=0 msg="Pitch dark between the cable racks. A light would help." y=1
+call tzone x=30.75 z=-58.4 al=ssmazezone id=ss_maze r=1.6 h=1 msg="The Fleet's cable store. Inside it is black as a pocket, and the static hums in the walls."
+call notebox x=29 z=-60.6 yaw=200 al=ssplan
+place Note_Paper keeperss at 32.6 -60.3 ground drop yaw=15
+call dp_ground tx=38 tz=-58 hb=5.9 sx=45.12 sz=-68.87 hs=27.5
+call tzone x=43.2 z=-65.94 al=sssummit id=ss_summit r=4 msg="The dune peak beside the relay mast." h=1
+call notebox x=48.05 z=-66.95 yaw=146.77 al=sscairn
+call treasure x=43.45 z=-69.97 r=12 n=1 seed=14931
+prop treasure14931 treasure.loot=TitaniumOre*2;Battery*1
+place Creature_Goat ssgoats at 38.09 -47.18 ground
+prop ssgoats creature.count=2
+call treasure x=-28.34 z=-34.28 r=12 n=1 seed=14932
+prop treasure14932 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+
+# --- 11-12 w08: the relay spares store - a cut through the shoal rock, vines over its mouth -------------------------------
+# The Fleet's spares store for the masts, dug into the shoal's west rock: machete vines over the mouth (the machete is
+# Triangulation Rocks' camp chest, the plan's island before), a straight cut under the ridge to a dry room - dirt, cave
+# vines and the relay spares crate (a quest step). hill=1 keeps the room under rock where the ridge falls to the sea.
+# cavecheck: clear of the ridge zone and the treasure on the ridge top.
+# cavecheck machete
+# (11-12 w08 play: the mouth stood 4 m over the channel's water with no way up - a stepped beach out of the water to it,
+# 0.7 m a step, and the shore rocks cleared off it)
+clear from -29 40 to -34 40 r=3 only=(?i)boulder|rock|tree|bush|palm|coral|algae
+brush flatten at -29.4 40 r=1.6 s=20 frames=150 h=0.2
+brush flatten at -30.6 40 r=1.5 s=20 frames=150 h=0.9
+brush flatten at -31.8 40 r=1.4 s=20 frames=150 h=1.6
+brush flatten at -33 40 r=1.3 s=20 frames=150 h=2.3
+brush smooth from -29 40 to -33.5 40 r=1.8 s=4 frames=20
+call kit_st x=-35 z=40 yaw=270 len=14 slope=0 end=room size=0.7 hill=1 dirt=2 mush=0 stone=0 vines=2 gate=1 as=sscave
+prop sscave cave.rock=plain
+# cavecheck inside ssspares
+place Loot_ChestSmall ssspares at -60.1 42 h=5 drop yaw=110
+prop ssspares obj.name=ssspares
+prop ssspares loot.refill=0
+note ssspares Relay spares crate | FLEET - MAST SPARES. Valves, wire, a spare insulator. Signed out to: Teo (twice). Signed back in: never.
+loot ssspares CopperIngot*2;Scrap*3;Rope*1;Battery*1
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Static Shoals
+info author=Custom Islands
+info description=Two sand bars under a sky that never clears, four radio masts strung with cable shouting static on every band, and the Fleet's last radio barge beached on the main bar.
+island on.arrive=message||Static on every band at once. Four masts stand over two grey sand bars, their red lights turning.
+
+note teonote Teo's note | TEO - on the back of a Fleet logbook page\n\nThe Fleet's way south ends here. Most of them turned back at the static. I do not blame them; it gets into your teeth, and then into your dreams, and my dreams were bad enough already.\n\nSomebody has to keep the masts lit so the boats can find their way home, so it is me. Hedda said she would wait for me at the wall. Ines went ahead with the radio, because of course she did.\n\nThe engine plans are in the chest - the Fleet's mechanics drew them from what they found in the masts. Mast 4 has a hut. Ride the cable, and do not look down; I looked down.\n\nIf you find tobacco, it was mine. Review of the Static Shoals: no stars. Too loud.\n\n- T. Varga
+note fleetchest Fleet chest | The Fleet's chest: the engine control plans the mechanics drew, and a zipline handle for the cable to mast 4.
+note mast4chest Mast 4 hut | A chest in mast 4's hut: a metal detector's plans, the static crackling in its coil.
+note flarelocker Flare locker | The masts' flare locker: a firework's plans and a box of dry rockets.
+note workshop Mast workshop | The workshop under mast 3: a zipline base's plans, for the cable crews.
+loot fleetchest Blueprint_EngineControls*1;ZiplineTool*1;Scrap*4
+prop fleetchest loot.refill=0
+loot mast4chest Blueprint_MetalDetector*1;Battery*1;CopperOre*2
+prop mast4chest loot.refill=0
+loot flarelocker Blueprint_Firework*1;Plastic*4;Rope*2
+prop flarelocker loot.refill=0
+loot workshop Blueprint_ZiplineBase*1;MetalIngot*2;Bolt*2
+prop workshop loot.refill=0
+
+note barchest Washed-up crate | A crate washed up on the bar, sealed in tar: it kept dry.
+loot barchest Scrap*6;Plastic*4;Battery*1;Rope*2
+note radiomanpage Radioman's last page | The last page of a radioman's pad, under a stone on the far bar:\n\nSTATIC ON ALL BANDS. NOT WEATHER.\n\nIt comes from the masts. The Concord built them to drown the pulse so nobody would follow it - and it worked for thirty years. We had a dance on the barge when the pulse went quiet in the static. I danced with the cook. He trod on me.\n\nThen last month an old man came through in a dory and asked me which band the static was strongest on. He sat all night with my set, and in the morning there was a hole in the static exactly the shape of the pulse. I do not know how he did it. I am going to follow the hole.
+note shoalcavechest Speaker cave chest | A chest under the humming speaker: wire, a coil, and a battery still half charged.
+loot shoalcavechest Battery*1;CircuitBoard*1;CopperOre*2;Bolt*2
+prop shoalcavechest loot.refill=0
+note netbook Net house book | THE FLEET'S NET HOUSE - catch book, last page\n\nNo fish since the static started. Not one.\nThe nets come up clean and the needle on the barge's set points south.\nThe Fleet sails tomorrow to see what scares the fish. Teo stays to keep the masts lit.\n\nThe radio on our table still works if anyone gets the generator going. The part is in the mechanic's box by the humming cave.
+note spotterlog Spotter plane log | SPOTTER PLANE LOG\n\nFlew the Fleet's course south ahead of the boats.\nThe static on the Receiver turned to a voice for a moment - numbers, read out slowly, in no language I know.\nLost the horizon in the grey. Put down on the bar. The Fleet never saw my flare.
+# (deep pass 10-24: the climb and the dive)
+story genpart2|Coil pack|Battery|A coil pack for the net house generator, sealed in a drowned van. One of its three parts.
+story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
+note ssdivechest Coil room | A sealed coil pack, tagged FOR THE NET HOUSE.
+loot ssdivechest story:genpart2*1;Plastic*4;Scrap*3;Rope*2
+prop ssdivechest loot.refill=0
+prop ssdivechest if.open=quest|11
+prop ssdivechest else.open=message||The coil room's chest is sealed. Come in through the cable store's door by the dune peak, the Fleet's way.
+note sstop Wiring room locker | The coil fits the card: a chain key and a spark plug.
+loot sstop story:chainkey*1;TitaniumOre*2;CircuitBoard*1;Bolt*3
+prop sstop loot.refill=0
+prop sstop obj.name=sstop
+prop sstop if.open=has|story:genpart2|1
+prop sstop else.open=message||The wiring room locker. A wiring card on the lid matches a coil pack - you don't have one.
+note ssstash Cable reel | A bag of spares tied to a cable reel.
+loot ssstash Battery*1;CircuitBoard*1;Nail*6
+prop ssstash loot.refill=0
+note ssdivesecret Radioman's tool tray | A radioman's pliers and solder, put away neatly.
+loot ssdivesecret MetalIngot*2;Bolt*3;Rope*1
+prop ssdivesecret loot.refill=0
+note sscairn Static cairn | A cairn on the dune peak, a radio headset hung on it, and a page of Ines's radio log:\n\nIf you listen long enough the static is a voice. Teo says so, and for once Teo is right.\n\nThe old man again, clear as anything with the masts so loud: Five posts. Five keys. Five pairs of hands. Calling, calling. He knows our names now. He said Hedda's. He said mine.\n\nI have not told Hedda. She would turn us round, and I cannot turn round. Not with the pulse this close.\n\nSouth of here the Receiver shows a wall across the sea, and a gate in it. Hedda waits there. I am going on to meet her. - I.
+note ssplan Cable store floor plan | FLEET CABLE STORE - painted on a board by the door\n\nCoil room, wiring room, reels. Keep the door shut. Mind the dark.\n\nScratched under it, by someone who came out again: left hand on the wall, all the way, and you will see every room. It took me an hour. Do not drop your light; the floor eats lights. Teo had to come in after me and he has not let me forget it.\n\n- H.
+note keeperss Keeper's log: Static | KEEPER'S LOG. Static Shoals - oilcloth, tacked to the cable store door:\n\nThe Concord drowned her in noise. Four masts, shouting nonsense day and night, so that no one would hear the Well calling its crew. Thirty years they shouted. They did not reckon on a keeper who has listened to one light for forty.\n\nI cut a hole in the static the shape of her call. It took a night and most of my patience. Now the pulse goes out clean and the pilgrims follow it like ducklings.\n\nI am sorry about the boy at the net house. He keeps the masts lit for a fleet that is not coming back. That is a keeper's sort of foolishness. I recognise it.\n\nThe wiring card is in the dark store, with a key. Bring a light. I could not; my lamp is for her.\n\n- S.W.
+note heddass Hedda's watch | CAPTAIN'S WATCH - Hedda's capitals, on a page left in the net house\n\nTeo is staying. He says the boats need the masts. The boats are not coming back, and he knows it, and he is staying anyway. I have never been prouder of a fool.\n\nI gave him my good knife. He cried, which he will deny, and so will I.\n\nInes walks about with her ear to the set and does not sleep. Something talks to her on it. She thinks I have not noticed. I notice everything; it is my only skill.\n\nTomorrow I go south to the wall to look for a way through. Ines will follow when she has listened enough. I have left the coil pack where the Fleet keeps its cable - in the dark store by the peak. Whoever you are: mind the dark.
+quest title=Static
+quest intro=A beached radio barge on a grey bar, static from every mast. Look in the barge.
+step read|Teo's note|1|Read Teo's note in the beached radio barge, the big wreck on the bar
+step blueprint|Blueprint_EngineControls|1|Take the engine control plans from the Fleet chest by the barge
+step kill|Screecher|4|Drive the screechers off the masts
+step reach|mast_4|1|Ride the cable from mast 1 to mast 4's hut
+step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans in mast 4's hut
+step blueprint|Blueprint_Firework|1|Take the firework plans from the flare locker under mast 2
+step read|Net house book|1|Read the catch book in the ruined net house out on the bar
+step open|Mechanic's toolbox|1|Find the mechanic's toolbox by the humming cave in the bar's rocks
+step collect|story:teovoice|1|Start the net house generator and listen to its radio
+step open|Relay spares crate|1|Cut the vines from the cave mouth in the shoal rock and open the relay spares crate inside
+step open|Supply drop|1|Open the supply drop crate by the crashed spotter plane
+step reach|ss_maze|1|Find your way into the dark cable store by the dune peak
+step collect|story:genpart2|1|Find the coil pack in the cable store's coil room
+step open|Wiring room locker|1|Open the wiring room locker deep in the cable store
+step blueprint|Blueprint_ZiplineBase|1|Take the zipline base plans in the workshop under mast 3
+quest done=The masts are yours, and so is the static. Beyond it, on the Receiver: a wall, and a gate in it.
+quest reward=Rope*6;Scrap*6;CopperOre*2
+
+save Static Shoals

@@ -1,0 +1,72 @@
+# Hookline Stack (CIPlay hookline_stack): the Union hall, the charter, the hall desk (engine controls), crane three,
+# the foreman's box (metal detector), the flare store (firework), crane three's cab (zipline); then the contract: the
+# missing expedition notice, the dive rope, two salvage caches on the street below, the tally, the Union's receipt.
+# offset 0 0 is a placeholder: phase 2 sets it from the recipe's save log (PLAY_FORMAT: Coordinates).
+island Hookline Stack
+offset 0 0
+expect step 0
+expect title The Salvagers' Union
+zone union_hall
+expect step 1
+read Union charter
+expect step 2
+read Council requisition
+expect step 3
+open Hall desk
+wait 3
+expect step 4
+# STORY 10-24: the climb first, for Bram's strongroom key
+zone hk_trail
+expect step 5
+openat 1.88 -64.26
+zone hk_summit
+expect step 6
+expect stand -0.28 -56.71 h=36
+open Dragline's boom ladder deck box
+wait 3
+expect story hk_top 1
+expect step 7
+zone crane_3
+expect step 8
+open Foreman's box
+wait 3
+expect step 9
+open Flare store
+wait 3
+expect step 10
+zone spoil_heap
+expect step 11
+open Toppled crane's toolbox
+wait 3
+expect step 12
+read Tally book
+expect step 13
+zone divers_cave
+expect step 14
+read Bram's tonnage note
+expect step 15
+zone hk_deep
+expect step 16
+expect stand 75 -28 h=-16
+open Union strongroom strongbox
+wait 3
+expect story hk_deep 1
+expect step 17
+read Bram's letter
+expect step 18
+open Crane cab
+wait 3
+expect done
+expect step 0 quest=2
+expect title Lost Below quest=2
+read Missing expedition notice
+expect step 1 quest=2
+zone dive_rope
+expect step 2 quest=2
+openat -82.3 -48.9
+openat -84.3 -39.9
+expect story salvagetag 2
+expect step 3 quest=2
+use tally
+read Union receipt
+expect done quest=2

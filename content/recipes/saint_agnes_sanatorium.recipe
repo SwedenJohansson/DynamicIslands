@@ -1,0 +1,342 @@
+# Saint Agnes Sanatorium - the second island of the library's plan The Lullaby Frequency (SL1, horror), twice the size
+# A seaside sanatorium on a wooded headland: the day room wing with a grand piano alone in it, Ward C behind a locked
+# door, a long open veranda of patients' cots on posts under a wooden roof, the hydrotherapy house with its basin, mist
+# on the lawn, an old vending machine by the gate. Quest "Admitted With the Song" (12 steps): the gate, the admissions
+# book, Nurse Edda's rota, the piano (it plays by itself after that and shows the music box), the Ward C key, Ward C,
+# the three bed charts, the hydrotherapy house, the drain crank, four pale roaches, Doctor Vell's cabinet, his last entry.
+# RESIZE + DEEP 10-25 (deep pass, The Lullaby Frequency): Radius 63 -> 85, as big as Raft's own big islands; the wings,
+# veranda, hydrotherapy house and gate stay in the middle, the drive runs on down to the south beach. New: Chapel Hill
+# in the north-west (a 28 m climb to the sanatorium's bell tower; Doctor Vell left his cabinet key with the chaplain up
+# there, so the cabinet only opens once you have climbed it), the drowned sea-bathing house in a deep hole off the south-
+# east shore (an air pocket; the bath attendant's note), the cave in the north where the runaway patients hid, a supply
+# plane in the east, two buried treasures. Quest 12 -> 18 steps. Voices: Chaplain Aldous Penn, bath attendant Mabel Orr,
+# orderly Kip Rennie.
+#
+# Built by the recipe player (CIRecipe saint_agnes_sanatorium) through the editor's own operations.
+include lib_sea
+include lib_features
+include lib_sl1
+include lib_huts
+include lib_areas
+include lib_highwater
+include lib_caves
+new
+# (nature: forest headland, Like Raft: Trees 0.3, Bushes 0.28, Rocks 0.43)
+gen Trees=0.3 Bushes=0.28 Rocks=0.43 Harvest=0.25 BeachThings=0.3
+gen Seed=1202 Radius=85 Height=14 Roughness=0.35 Peaks=1 Shape=0 Style=3 PeakShape=0.35 Cliffs=0.15 BeachWidth=0.5
+gen Water=0.5 SeaRocks=0.45 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+
+# --- Terrain: the sanatorium's terrace at 6 m, the lawn and the drive up from the south beach -------------------------
+brush flatten from -18 -4 to 16 -4 r=14 s=20 frames=150 h=6
+brush flatten from -2 6 to -2 14 r=8 s=20 frames=80 h=6
+brush flatten from 0 -16 to 0 -26 r=10 s=16 frames=80 h=6
+brush smooth from 0 -28 to 0 -50 r=5 s=6 frames=30
+# --- DEEP 10-25 terrain: the drive on to the south beach, Chapel Hill (north-west, summit 28 m, base r 24) and its
+# path, the sea-bathing house's hole (south-east, -14 m), the cave's and the plane's pads
+brush smooth from 0 -50 to 0 -84 r=5 s=6 frames=40
+call hw_mount x=-40 z=40 b=24 h=28
+call hw_trail x=-40 z=40 b=24 h=28 a0=135.0 turn=300 n=36 h0=6
+brush flatten at -40 40 r=9 s=20 frames=400 h=28
+call hw_basin x=60 z=-58 r=14 h=-14
+brush flatten at 20 70 r=12 s=20 frames=300 h=4
+brush flatten at 55 30 r=13 s=20 frames=300 h=4
+origin
+clear from -20 -4 to 16 -4 r=15
+clear from -2 4 to -2 16 r=8
+clear from 0 -14 to 0 -50 r=4
+clear at 9 -17 r=6
+clear from 0 -50 to 0 -84 r=4
+# (w10fix3 11-13, REACH: a generated rock off the north shore at -12 87.5 roofed a pocket of water a swimmer got into but
+# not out of)
+clear at -12 88.5 r=5 body
+call ar_cave x=20 z=70 h=4 yaw=180 al=patientrock chest=patientchest
+call ar_plane x=55 z=30 h=4 yaw=200 al=supplyplane crate=supplycrate
+
+# --- The day room wing: 12 x 6 m of white metal walls under a wooden roof, the piano alone in it ---------------------
+push at -15 -6 h=6
+call shed w=8 d=4 door=3
+place Tangaroa_BallroomKit_GrandPiano piano at 9 3.8 y=0.6 sit drop yaw=90
+place Loot_ChestSmall musicbox at 9 3.8 y=2.8 sit drop yaw=90
+place "Table Office" admitdesk at 2 4.9 y=1.2 sit drop yaw=0
+place Note_Paper admissions at 2 4.9 y=2.2 sit drop yaw=10
+# (w10fix3 11-14, REACH: in the corner by the west wall the walk out snagged on the desk now and then - by the door now)
+place "Table Office" nursedesk at 7.5 1.0 y=1.2 sit drop yaw=180
+place Note_Paper rota at 7.5 1.0 y=2.2 sit drop yaw=-15
+for cx 1.5 6 1.5
+place Placeable_Chair_Wood - at $cx 2.6 y=0.8 sit drop yaw=0
+next
+place Zone_Atmosphere dayroomdim at 6 3 y=1.2
+pop
+
+# --- Ward C: its own wing east of the drive, the door locked; three beds and their charts -----------------------------
+push at 3 -6 h=6
+call shed w=6 d=4 door=2
+place Block_Wall_Tier3 wardcdoor at 3.75 0 y=0.2
+place Placeable_Bed_Basic - at 1.5 4.4 y=0.6 sit drop yaw=90
+place Placeable_Bed_Basic - at 4.5 4.4 y=0.6 sit drop yaw=90
+place Placeable_Bed_Basic - at 7.5 4.4 y=0.6 sit drop yaw=90
+place Note_Paper bed4 at 1.5 4.4 y=1.4 sit drop yaw=5
+place Note_Paper bed7 at 4.5 4.4 y=1.4 sit drop yaw=-8
+place Note_Paper bed9 at 7.5 4.4 y=1.4 sit drop yaw=12
+place Zone_Trigger wardczone at 4.5 2.5 y=1
+place Zone_Atmosphere wardcdark at 4.5 3 y=1.2
+pop
+
+# --- The veranda: an open deck of cots on posts under a wooden roof, south of the day room --------------------------
+push at -15 -12.5 h=6
+call floors w=8 d=2 y=0.6
+for px 0 12 3
+place Block_Pillar_Wood - at $px 0 y=0 sy=0.24
+place Block_Pillar_Wood - at $px 3 y=0 sy=0.24
+place Block_Pillar_Wood - at $px 0 y=0.6
+place Block_Pillar_Wood - at $px 3 y=0.6
+next
+roof 8 2 at 0 0 y=0.6 wood
+for bx 1.5 10.5 3
+place Placeable_Bed_Basic - at $bx 1.6 y=1.2 sit drop yaw=0
+next
+pop
+
+# --- The hydrotherapy house north of the wings: the basin of murky water, the drain crank, Doctor Vell's cabinet ------
+push at -5 6 h=6
+call shed w=5 d=4 door=1
+for wx 3 4.5 1.5
+for wz 2.25 3.75 1.5
+place Block_Floor_Tier3 basinwater at $wx $wz y=0.32
+next
+next
+prop basinwater tint.color=#2f5a5c
+prop basinwater tint.amount=0.75
+place WaterPipe_Long_2 drainpipes at 6.6 1 y=0.3 sit drop yaw=90
+place TP_Selene_DoorCrankWheel crank at 0.5 3 y=1.4 yaw=90
+place Loot_Chest vellcabinet at 6.6 5.2 y=0.6 sit drop yaw=180
+place "Table Office" velltable at 1.5 5.1 y=1.2 sit drop yaw=0
+place Note_Paper vellentry at 1.5 5.1 y=2.2 sit drop yaw=20
+place Zone_Trigger hydrozone at 3.75 1.2 y=1
+place Zone_Trigger drainzone at 3.75 3 y=1
+place Creature_Roach roaches at 4.5 4.5 y=0.6
+pop
+
+# --- The gate on the drive, the vending machine by it, the mist on the lawn -------------------------------------
+place Block_Pillar_Wood - at -2.4 -30 ground
+place Block_Pillar_Wood - at 2.4 -30 ground
+place Placeable_Lantern_Metal - at -2.4 -30 ground y=2.8 sit drop
+place Placeable_Lantern_Metal - at 2.4 -30 ground y=2.8 sit drop
+place Zone_Trigger gatezone at 0 -30 ground y=1
+vending agnesvend at 9 -17 ground yaw=270
+place QuestItemPickup_Tangaroa_Token - at 6 -20 ground
+place QuestItemPickup_Tangaroa_Token - at -6 -18 ground
+place QuestItemPickup_Tangaroa_Token - at -18 -16 ground
+place QuestItemPickup_Tangaroa_Token - at 14 -2 ground
+place Zone_Atmosphere lawnmist at 0 -20 ground y=2
+place Zone_Sound lullaby at -6 -2 ground y=2
+
+# --- Things to gather -------------------------------------------------------------------------------------------------
+scatter "Pickup_Landmark_Tree_Mango" 2 at 0 0 r=48 seed=1221 free=5
+scatter "Pickup_Landmark_Flower_Yellow" 3 at 0 0 r=48 seed=1222 free=4
+call dirt x=22 z=18 r=10 n=3 seed=1223
+call shallows r=96 deep=5 n=3 seed=30108
+call hw_reef x=70 z=-66 r=3 seed=30101
+call hw_reef x=72 z=-52 r=3 seed=30102
+
+# --- DEEP 10-25: Chapel Hill - its foot and top as zones, the bell tower on top (Vell's cabinet key in its deck box) ----
+call hw_zone x=-22.32 z=22.32 al=hillfootz id=hillfoot r=5 msg="Chapel Hill. Steps cut into the slope wind up to a bell tower - and the bell is swinging, with no wind."
+call hw_zone x=-40 z=40 al=hilltopz id=hilltop r=8 h=1 msg="The top of Chapel Hill. The bell tower's bell is wet, and it hums the lullaby every time it swings."
+call hw_mast x=-40 z=40 h0=28 lv=4 a=belltower chest=bellchest top=Placeable_Lantern_Metal
+place Note_Paper pennnote at -36.5 38 h=28.1 drop yaw=200
+loot bellchest story:cabinetkey*1;Battery*1;Rope*2;HealingSalve*1
+note bellchest Bell tower box | The chaplain's box on the bell tower's deck: a battery, rope, a salve - and a small steel key with a paper tag: CABINET - DR V.
+place Zone_Sound bellhum at -40 40 h=30
+prop bellhum sound.event=event:/raft/radar/radar_humm
+prop bellhum sound.volume=0.4
+prop bellhum zone.radius=14
+scatter Bush 6 at -40 40 r=24 seed=30103 free=1
+scatter Bush2 4 at -40 40 r=24 seed=30104 free=1
+scatter "Pickup_Landmark_Rock 1" 3 at -40 40 r=24 seed=30105 free=2
+place Creature_Goat hillgoats at -19.32 25.32 ground
+prop hillgoats creature.count=2
+# --- The sea-bathing house (south-east), drowned in a hole 14 m down, an air pocket: Mabel's note, the back room's chest -
+# (w10fix3 11-14, REACH: the walk still ended on the roof, 2 m over the note and the chest - rn=2: the back roof tile
+# over the chest left out, a way in from above as well as the door)
+call hw_sunkhouse x=60 z=-58 h=-14 yaw=0 a=seabath chest=bathchest air=bathair bub=bathbub dal=bathdoor rn=2
+call hw_zone x=60 z=-58 al=bathzone id=seabath r=7 h=1 msg="The sea-bathing house, 14 m down. Towels still folded on the bench. Its front room still holds air."
+# (w10fix3 11-14, REACH: the grid went down through the roof (two layers of tiles 0.1 m apart did not stop it) and the
+# walk ended on the roof, 2-4 m over the chest and Mabel's note - a low inner ceiling 0.6 m under the roof, under every
+# roof tile but the open one over the chest)
+push at 60 -58 h=-14
+for k 0 3
+place Block_Floor_Tier3 bathseam at -0.75 {$k*1.5-2.25} y=2.0
+next
+for k 0 2
+place Block_Floor_Tier3 bathseam at 0.75 {$k*1.5-2.25} y=2.0
+next
+pop
+prop bathseam tint.color=#4e5a58
+prop bathseam tint.amount=0.5
+# (w10fix3 11-13, REACH: on the floor in the corner by the door the walk ended 4 m from the eye - on the bench now, in
+# the middle of the air pocket)
+place Placeable_Table_Basic bathbench at 59.2 -58.9 ground yaw=90
+place Note_Paper mabelnote at 59.2 -58.9 h=-12.6 sit drop yaw=20
+loot bathchest MetalIngot*1;Rope*2;Glass*2;HealingSalve*1
+prop bathchest loot.refill=0
+note bathchest Bathing house chest | The attendants' chest: rope, glass for the cubicle lamps, an iron ingot and a salve.
+place Creature_PufferFish bathpuffers at 66 -50 h=-9
+prop bathpuffers creature.count=2
+# --- The patients' cave (north): a secret -------------------------------------------------------------------------------
+call hw_zone x=20 z=65 al=cavez id=patientcave r=4 msg="A cave in the rock. Blankets from the wards, nine of them, laid in a ring - and scratched in the wall, over and over, a lullaby's notes."
+# (w10fix3 11-13, REACH: at h+0.45 the note fell through the den floor (h+0.9) into the rock - dropped from above now)
+place Note_Paper kipnote at 19.2 65.6 h=6.2 drop yaw=180
+loot patientchest Rope*2;Scrap*2;Battery*1;MetalOre*2
+prop patientchest loot.refill=0
+note patientchest Orderly's box | Kip Rennie's box: rope, a battery for his torch, scrap and the ore the patients dug from the cave wall with spoons.
+call treasure x=26 z=62 r=7 n=1 seed=30106 kind=0
+prop treasure30106 treasure.loot=Scrap*3;Bolt*2;Hinge*1
+# --- The supply plane (east): a secret ----------------------------------------------------------------------------------
+loot supplycrate Plastic*3;Rope*2;HealingSalve*2;CopperIngot*1
+prop supplycrate loot.refill=0
+note supplycrate Supply plane's crate | The sanatorium's supply crate: salves, plastic, rope and a copper ingot. The delivery slip is signed - by nobody.
+call treasure x=60 z=22 r=7 n=1 seed=30107 kind=0
+prop treasure30107 treasure.loot=MetalOre*3;CopperOre*2
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Saint Agnes Sanatorium
+info author=Custom Islands
+info description=A sanatorium on a wooded headland as big as Raft's own big islands: Chapel Hill with its humming bell tower, a sea-bathing house drowned off the shore, the cave where the patients hid, a supply plane - and a day room with a grand piano, a locked ward, a veranda of empty cots and a hydrotherapy house nobody has drained. The second island of The Lullaby Frequency.
+# (w10fix3 11-13, REACH: Ward C's beds are behind its key door (quest step 5) - the fresh grid keeps a gated door shut;
+# the play unlocks it and walks in)
+island reach.byplay=Bed 4 chart;Bed 7 chart;Bed 9 chart;ward_c
+island on.arrive=message||White walls in the trees, and mist lying on the lawn. From inside, faintly, a piano.
+
+story pianoplayed|The piano played|Placeable_Lantern_Metal|You touched the day room's piano. It has not stopped playing since.
+story wardckey|Ward C key|Placeable_Lantern_Metal|The key to Ward C, left with the music in the piano's music box.
+story chart|Bed chart read|Note_Paper|One of Ward C's bed charts, read.
+story cabinetkey|Doctor Vell's cabinet key|Placeable_Lantern_Metal|A small steel key with a paper tag - CABINET - DR V. - from the bell tower on Chapel Hill.
+story drained|Basin drained|Placeable_Pipe_Water|The hydrotherapy basin is drained.
+
+note admissions Admissions book | ADMISSIONS - ST AGNES\n\nWard A: fevers, two.\nWard B: the drowned-and-saved, five.\nWard C: ADMITTED WITH THE SONG. Eleven this month. All from the Hollin coast. All humming.\n\nDr Vell asks that Ward C be kept locked after dark.
+note rota Nurse Edda's rota | ROTA - Edda\n\nMon-Thu nights: Ward C.\nFri: off (thank God).\n\nNote for the day staff: I've left the key to Ward C with the music. You know where. Nobody goes in after 3. NOBODY.
+note bed4 Bed 4 chart | BED 4. Male, 30s, net-mender.\nHears: water running UNDER the floor.\nHums: constantly. Sleeps: no.
+note bed7 Bed 7 chart | BED 7. Female, 60s, chapel cleaner.\nHears: a chapel bell, far off, wet.\nHums: at 3:12 exactly.
+note bed9 Bed 9 chart | BED 9. Girl, 9.\nHears: \"Mother, in the water.\"\nDrew the same picture forty times: a light hanging over teeth.\n\nUnder the chapel of water - Dr V.
+note pennnote Chaplain Aldous Penn's sermon notes | SERMON NOTES - A. PENN, CHAPLAIN\n\nSunday. Psalm 107: they that go down to the sea. The Ward C patients would not sing the hymn. They sang the other thing instead, all eleven, in tune, with their eyes shut.\n\nMonday. Vell came up the hill at night and gave me the key to his cabinet. He said if he did not come back from the baths I was to burn what is in it. I said I would. I have not been able to.\n\nTuesday. The bell rings at 3:12. I have tied the rope. It rings anyway, and it is wet, as if it had been lifted out of the sea.\n\nWednesday. From up here I can see the bathing house roof under the water, off the south-east shore. Lights in it. There are no lights in it.\n\nLord, let me be wrong about the east.
+note mabelnote Bath attendant Mabel Orr's note | (Written on a towel ticket, dry in the air pocket)\n\nDr Vell said the sea baths would calm them. Cold water, salt, quiet. It worked the first week.\n\nThe second week they started floating face-down, all at once, perfectly still, listening. When I pulled them up they were smiling.\n\nThe night the sea came over the bathing house I stayed in the cubicles with the last of them, a girl from bed nine. The water came in and she said, Don't be scared, Mabel, Mother is only coming to look.\n\nThe water stopped at the ceiling. The girl walked out through the door along the bottom, east, towards the shoals, and I could not hold her.\n\nI am still holding my breath.
+note kipnote Orderly Kip Rennie's note | K. RENNIE, ORDERLY\n\nNine of them went missing from the wards on Friday. I found them here, in the cave on the north shore, sitting in a ring on the ward blankets, humming.\n\nThey had scratched the song on the wall. All of it. Every note the same, as if one hand had done it nine times.\n\nI asked them why they had come here. A man from bed four said the rock is thinner here, and you can hear her better.\n\nI took them back up to the wards one at a time. When I came back for the last ones, the ring of blankets was laid out again, neat, and there were ten.\n\nI have not counted the tenth. I am not going to.
+note vellentry Vell - final entry | Final entry.\n\nThe basin drained, the pipes gave up their roaches, and under them nothing. The song does not come from the patients. It comes THROUGH them.\n\nThe song is a lure. Not for us - for it.\n\nThe Quiet Choir think they can listen to it safely. They're building mirrors. God help them.
+note musicbox Music box | A tin music box on the piano's lid, its comb still turning. Tied to the key: a tag - WARD C.
+loot musicbox story:wardckey*1
+prop musicbox loot.refill=0
+prop musicbox obj.name=musicbox
+prop musicbox beh.hidden=1
+note vellcabinet Doctor Vell's cabinet | Doctor Vell's cabinet: his instruments, a battery for the ward lamps, and salves.
+loot vellcabinet Battery*1;HealingSalve*2;MetalIngot*3;Bolt*2
+prop vellcabinet loot.refill=0
+prop vellcabinet if.open=quest|16\nhas|story:cabinetkey|1
+prop vellcabinet else.open=message||Doctor Vell's cabinet is locked. A card is pinned to it in his hand: KEY WITH THE CHAPLAIN - CHAPEL HILL.
+
+prop piano obj.name=piano
+prop piano beh.use=Play the piano
+prop piano if.use=!signal|ag_piano
+prop piano on.use=signal||ag_piano\nplaysound||event:/raft/piano|0.6|loop|near\nshow|musicbox\ngive||story:pianoplayed*1\nmessage||You press one key. The piano answers with a whole tune - the lullaby - and a little music box rises on its lid.
+prop piano else.use=message||The piano keeps playing by itself.
+
+prop wardcdoor obj.name=wardcdoor
+prop wardcdoor beh.use=Unlock Ward C
+prop wardcdoor if.use=quest|5\nhas|story:wardckey|1
+prop wardcdoor on.use=hide|\nmessage||The Ward C key turns. The door swings in on three beds and a smell of salt.
+prop wardcdoor else.use=message||WARD C - KEEP LOCKED AFTER DARK. The door is locked.
+prop wardczone zone.id=ward_c
+prop wardczone zone.radius=3
+prop wardczone zone.message=Ward C. Three beds, three charts. The window is painted over.
+prop wardcdark atmo.fog=#141a20
+prop wardcdark atmo.fogAmount=0.55
+prop wardcdark atmo.light=#2a3038
+prop wardcdark atmo.lightAmount=0.6
+prop wardcdark zone.radius=5
+prop dayroomdim atmo.fog=#3a4046
+prop dayroomdim atmo.fogAmount=0.35
+prop dayroomdim atmo.light=#5a6066
+prop dayroomdim atmo.lightAmount=0.35
+prop dayroomdim zone.radius=6
+prop bed4 if.read=!signal|ag_bed4
+prop bed4 on.read=signal||ag_bed4\ngive||story:chart*1
+prop bed7 if.read=!signal|ag_bed7
+prop bed7 on.read=signal||ag_bed7\ngive||story:chart*1
+prop bed9 if.read=!signal|ag_bed9
+prop bed9 on.read=signal||ag_bed9\ngive||story:chart*1
+
+prop hydrozone zone.id=hydro
+prop hydrozone zone.radius=2.5
+prop hydrozone zone.message=The hydrotherapy house. The basin is full of still, dark water, and a crank wheel waits on the wall.
+prop crank obj.name=crank
+prop crank beh.use=Turn the drain crank
+prop crank if.use=!signal|ag_drained
+prop crank on.use=signal||ag_drained\nhide|basinwater\nshow|drainzone\ngive||story:drained*1\nsound||event:/amb/wreck_creaks\nmessage||The crank squeals round. The basin gurgles empty - and the drain pipes start to rattle.
+prop basinwater obj.name=basinwater
+prop drainzone obj.name=drainzone
+prop drainzone beh.hidden=1
+prop drainzone zone.id=drain
+prop drainzone zone.radius=4
+prop drainzone zone.repeat=never
+prop drainzone zone.message=Pale roaches pour out of the drained pipes!
+prop roaches creature.count=4
+prop roaches creature.respawn=0
+prop roaches creature.zone=drain
+prop roaches creature.size=1.4
+prop roaches tint.color=#e8e4d0
+prop roaches tint.amount=0.6
+
+prop gatezone zone.id=gate
+prop gatezone zone.radius=5
+prop gatezone zone.message=SAINT AGNES - REST AND SEA AIR. The gate is open.
+prop lawnmist atmo.fog=#c8ccd0
+prop lawnmist atmo.fogAmount=0.3
+prop lawnmist atmo.light=#b0b6bc
+prop lawnmist atmo.lightAmount=0.2
+prop lawnmist atmo.particles=mist
+prop lawnmist zone.radius=20
+prop lullaby sound.event=event:/exploring/elevator/elevator_music
+prop lullaby sound.volume=0.25
+prop lullaby zone.radius=26
+
+quest title=Admitted With the Song
+quest intro=A sanatorium on the headland, its gate open. Make for the big sanatorium building and go up the drive to the gate.
+step reach|gate|1|Make for the sanatorium and go up the drive to the gate
+step read|Admissions book|1|Read the admissions book in the day room
+step read|Nurse Edda's rota|1|Read Nurse Edda's rota
+step collect|story:pianoplayed|1|Play the piano in the day room
+step collect|story:wardckey|1|Take the Ward C key from the music box
+step reach|ward_c|1|Unlock Ward C and go in
+step collect|story:chart|3|Read the charts of beds 4, 7 and 9
+step reach|hydro|1|Go to the hydrotherapy house beside the sanatorium wings
+step collect|story:drained|1|Turn the crank to drain the basin
+step kill|Roach|4|Deal with the roaches from the pipes
+step reach|hillfoot|1|Find the path up Chapel Hill, the hill with the bell tower
+step reach|hilltop|1|Climb Chapel Hill to the bell tower
+step read|Chaplain Aldous Penn's sermon notes|1|Read the chaplain's notes by the bell tower
+step collect|story:cabinetkey|1|Take Doctor Vell's cabinet key from the box on the bell tower's deck
+step reach|seabath|1|Dive to the drowned sea-bathing house out in the water
+step read|Bath attendant Mabel Orr's note|1|Breathe in the bathing house's front room and read the attendant's note
+step open|Doctor Vell's cabinet|1|Open Doctor Vell's cabinet
+step read|Vell - final entry|1|Read Doctor Vell's final entry
+quest done="Not for us - for it." The charts point out over the sea, where the Choir's effigies stand. They will not show on the Receiver yet - the song needs more nights.
+quest reward=TitaniumIngot*1;MetalIngot*4;CopperIngot*2;Battery*1
+
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place VP_Forklift - at -3.5 -25 ground sit yaw=0
+# --- CONTENT 11-12 (w10): the old cold cellars - a dug tunnel (kit_dig) into Chapel Hill's face beside the hill's foot, level
+# to a cold room where the sanatorium kept its ice and the night nurses heard the lullaby through the rock. A sign says so.
+# (r3b: at yaw 320 the room ran under the hill's north flank and the ground showed through 13 m in - turned 10 degrees
+# towards the hill's middle, 2 m shorter and a narrower room: 8 m of hill over it, 6 m clear of the bell tower's things)
+call kit_dig x=-19.7 z=35.5 yaw=310 flat=0 len=10 slope=0 r=1.6 room=1 roomr=2.5 roomlen=3 dirt=2 mush=3 stone=0 vines=0 titanium=0 as=sacellar
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear or nothing, so nobody can guess what is inside)
+# one rat in the cold room at the cellar's end (floor ~7.7)
+# cavecheck inside sarat
+place Creature_Rat sarat at -28.3 42.6 h=8.0
+prop sarat creature.count=1
+prop sarat creature.respawn=0
+prop sacellar cave.rock=plain
+place Note_Sign sacellarsign at -13 30.5 ground sit yaw=300
+prop sacellarsign obj.name=sacellarsign
+note sacellarsign OLD COLD CELLARS | Dug into Chapel Hill for the kitchens' ice. Closed 1951: the night nurses would not go down any more - they said the rock sings. The way in is the dark cut in the hill's face, just past this sign.
+save Saint Agnes Sanatorium

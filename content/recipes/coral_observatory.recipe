@@ -1,0 +1,222 @@
+# Coral Observatory - a big quest island of the library (The Long Voyage: after Varuna Point)
+# A ring of palm islets around a wide lagoon, and moored in the lagoon a research platform: one of Tangaroa's floating
+# bases with a lab of Temperance's Selene rooms on it, a radio mast and a footbridge to the ring. The scientists left
+# when the reef began to die; their last samples still lie in cases on the lagoon floor - and one in the blue hole,
+# where a giant angler fish has made its home. Quest "The Reef Remembers" (11 steps): the platform, the director's
+# log, the dive locker's case key, the two garden cases, the blue hole's edge, the puffer fish by it, the giant angler, the
+# hole's case, the three samples, the analyzer and the director's safe.
+# DEEP 10-25 (deep pass, The Long Voyage): Radius 88 kept. New, off the quest (steps unchanged, 14): Survey Hill on the
+# west ring (a 22 m climb by a cut path from the lagoon side, a survey mast and the biologist Ines Calder's notes on its
+# top), the divers' cave on the east ring by the footbridge (the diver Tomas Reyes's letter, his box), and his pay
+# buried on the south ring - a second treasure.
+# OLDER4 10-26: the reef lamps - four channel lamps round the ring (north, east, south, west); lit all together they
+# show the tide-gauge locker on the south ring (a secret off the quest).
+#
+# Built by the recipe player (CIRecipe coral_observatory) through the editor's own operations.
+include lib_sea
+include lib_selene
+include lib_features
+include lib_areas
+include lib_highwater
+include lib_lastpost
+new
+# (nature: Like Raft (as thick on the land as Raft's own tropical islands) - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
+gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
+gen Seed=6060 Radius=88 Height=9 Roughness=0.35 Peaks=1 Shape=1 Style=0 BeachWidth=0.7 Cliffs=0.15 PeakShape=0.3
+gen SeaFloor=0 Shelf=0.6 Seabed=2
+gen Water=0.5 Clusters=0.6 SeaRocks=0.5 SeaFinds=0.6 Sunken=0.4 Hostiles=0 Friendly=0.2 SeaLife=0.6
+generate
+
+# --- Terrain: a blue hole in the lagoon's west part, where the giant angler lives ------------------------------------
+brush lower at -26 -8 r=8 s=20 frames=28
+brush smooth at -26 -8 r=10 s=10 frames=12
+clear at -26 -8 r=11
+# --- DEEP 10-25 terrain (all on the ring's land: the land's centre stays put): Survey Hill (west ring, summit 22 m,
+# base r 14) and its path from the lagoon side
+call hw_mount x=-62 z=16 b=14 h=22
+call hw_trail x=-62 z=16 b=14 h=22 a0=60 turn=300 n=30 h0=6
+brush flatten at -62 16 r=8 s=20 frames=400 h=22
+origin
+
+# --- The observatory: Tangaroa's floating ring moored in the lagoon, a deck of the radio tower's floors on it, a lab of
+# two Selene rooms on the deck --------------------------------------------------------------------------------------
+place Flotation platform at 0 0 h=0
+place FlotationBase_Ladders - at 0 0 h=0
+push at 0 0 h=1.94
+# (each floor spans 6 m to its west and 9 m to its south from its corner)
+for fx -6 12 6
+place RT_Floor - at $fx 0
+place RT_Floor - at $fx 9
+next
+call selene_cell -6 3 e=none s=TP_Selene_Int_Room_Entrance floor=none
+call selene_cell 0 3 w=none floor=none
+# the lab (west room): the analyzer, its light (the lamps' tops at the ceiling, 4.73 m over the floor), the director's safe
+place TP_Selene_ComputerRoom_Server01 analyzer at -5.2 1.5 sit yaw=90
+place Stairwell_CeilingLamp analyzerlight at -3 0 y=4.72
+place VG_Safe safe at -5.3 -2 sit yaw=90
+# the director's office (east room): her desk and log, a lamp
+place "VG_DecorationPrefabBase_Desk Variant" - at 3 1.6 sit yaw=180
+place Note_Paper directorlog at 3 1.6 y=0.8 sit yaw=180
+place TP_DeskLamp - at 3.8 1.8 y=0.8 sit yaw=180
+place Stairwell_CeilingLamp - at 3 0 y=4.72
+# on the deck: the dive locker by the bridge, the radio mast, lamps, crates
+place Locker divelocker at 10 -3 sit yaw=270
+place RT_PillarThick mast at -9 6.5 y=0
+place RT_PillarThick mast at -9 6.5 y=6
+place RT_SatteliteDisc - at -9 6.5 y=12 yaw=135
+place RT_RoofLamp - at -9 6.5 y=12.6
+place RT_Floodlight - at 11.3 4 sit yaw=90
+place RT_Floodlight - at -11.3 -6 sit yaw=270
+place Crate_Big_01 - at 9 7 sit yaw=10
+place Placeable_Lantern_Metal - at 9 7 y=0.45 sit
+place Reef_Barrel1 - at 7.5 7.5 sit
+place Zone_Trigger station at 8 0 y=1.5
+pop
+
+# --- The footbridge from the platform's east edge to the ring (planks on posts) -------------------------------------
+ramp Block_Floor_Wood from 11.6 -0.75 2.0 to 55.6 -0.75 2.9 len=1.5 top=0
+ramp Block_Floor_Wood from 11.6 0.75 2.0 to 55.6 0.75 2.9 len=1.5 top=0
+for bx 16 52 4.5
+place Relay_support_beam_wood - at $bx -1.7 h=-4.5 rot=0,0,-90 sx=0.7
+place Relay_support_beam_wood - at $bx 1.7 h=-4.5 rot=0,0,-90 sx=0.7
+next
+
+# --- The lagoon floor: two sample cases among the corals, light bottles beside them, puffer fish ----------------------
+place Loot_ChestSmall casea at -22 20 ground sit yaw=30
+place UT_LightBottle01 - at -21 21.5 ground sit
+place Loot_ChestSmall caseb at -16 -24 ground sit yaw=-40
+place UT_LightBottle02 - at -15 -22.5 ground sit
+place Creature_PufferFish puffers at -18 0 h=-1.5
+
+# --- The blue hole: the last case at its bottom, the giant angler fish in it ----------------------------------------
+place Loot_ChestSmall casec at -26 -8 ground sit yaw=45
+place UT_LightBottle03 - at -25 -6.6 ground sit
+place Creature_AnglerFish lanternjaw at -26 -8 h=-8
+place Zone_Trigger edge at -26 -8 h=-4
+
+# --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, bananas, palms ----------
+scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=61.6 seed=4175 free=5
+scatter "Banana_Bush_2" 6 at 0 0 r=61.6 seed=4185 free=3
+scatter "Pickup_Landmark_Tree_Palm 1" 4 at 0 0 r=61.6 seed=4195 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 4 at 0 0 r=61.6 seed=4196 free=5
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=108 deep=5 n=2
+
+# --- DEEP 10-25: Survey Hill - the survey mast on the west ring, Ines Calder's notes -----------------------------------
+call hw_zone x=-49.01 z=23.5 al=surveyfootz id=surveyfoot r=5 msg="Steps cut into the hill, and a rope rail - the observatory's path up Survey Hill. A mast stands on the top."
+call hw_zone x=-62 z=16 al=surveytopz id=surveytop r=7 h=1 msg="Survey Hill. The whole ring lies below you, the platform in its lagoon - and beyond the ring the sea has a different colour, a cold grey-green band."
+call hw_mast x=-62 z=16 h0=22 lv=2 a=surveymast chest=surveychest top=Placeable_Lantern_Metal
+place Note_Paper inesnote at -58.5 14 h=22.1 drop yaw=200
+loot surveychest Rope*2;Glass*3;Plastic*2;Battery*1
+note surveychest Survey box | The survey box on the mast: a thermometer on a long line, glass sample jars, rope - and a battery for the beacon.
+scatter Bush 3 at -62 16 r=14 seed=32034 free=1
+# --- DEEP 10-25: the divers' cave on the east ring, Tomas Reyes's letter and box ---------------------------------------
+call ar_cave x=66 z=18 h=6 yaw=180 al=diverock chest=divebox
+call hw_zone x=66 z=13 al=divecavez id=divecave r=4 msg="A cave in the ring, a wetsuit hung up to dry in its mouth years ago and never taken down."
+place Note_Paper tomasnote at 67.5 12.5 h=6.45 drop yaw=0
+loot divebox Rope*2;Scrap*3;Bolt*2;OxygenBottle*1
+prop divebox loot.refill=0
+note divebox Diver's box | Tomas's box at the back of the cave: rope, scrap, a few bolts - and a full oxygen bottle, his spare.
+call treasure x=-40 z=-55 r=12 n=1 seed=32033 kind=0
+prop treasure32033 treasure.loot=CopperIngot*2;Bolt*3;Glass*2
+# --- OLDER4 10-26: the reef lamps - the observatory's four channel lamps on the ring; each one lit lights the next ---
+call lp_lamp x=8 z=72 al=co_lamp1 nm="Reef lamp north" grp="Reef lamps" on=0
+call lp_lamp x=64 z=-16 al=co_lamp2 nm="Reef lamp east" grp="Reef lamps" on=0
+call lp_lamp x=0 z=-64 al=co_lamp3 nm="Reef lamp south" grp="Reef lamps" on=0
+call lp_lamp x=-72 z=-8 al=co_lamp4 nm="Reef lamp west" grp="Reef lamps" on=0
+prop co_lamp1 on.use=light|Reef lamp east|toggle
+prop co_lamp2 on.use=light|Reef lamp south|toggle
+prop co_lamp3 on.use=light|Reef lamp west|toggle
+prop co_lamp4 on.use=light|Reef lamp north|toggle
+prop co_lamp1 on.alllit=show|co_lampchest\nmessage||All four reef lamps burn - the channels are marked, the way the divers had them. On the ring a locker lid has sprung open.
+call lp_hidden x=12 z=-60 al=co_lampchest kind=Loot_Chest
+note co_lampchest Tide-gauge locker | The tide-gauge locker: the divers' spare kit, kept for whoever relit the channel lamps. "Four lamps, four channels. Never dive the reef in the dark."
+loot co_lampchest CopperIngot*2;Glass*3;Rope*2;MetalIngot*2
+
+info title=Coral Observatory
+info author=Custom Islands
+info description=A ring of palm islets around a wide lagoon, a survey hill and a divers' cave, and moored in the lagoon a research platform - one of Tangaroa's floating rings with a lab on it. The scientists' last coral samples still lie in cases on the lagoon floor, and one in the blue hole, where a giant angler fish lives. Inspired by Raft's Tangaroa and Varuna Point.
+island on.arrive=message||A ring of palm islets around a turquoise lagoon - and in the middle, a platform with a lab and a mast, dark.
+
+note inesnote Biologist Ines Calder's notes | SURVEY HILL - I. CALDER, REEF BIOLOGY\n\nDay 212. Water at the outer gardens two degrees colder than last month. At the inner gardens, one. The cold comes from the open sea and it is getting closer.\n\nDay 230. Bleaching line moved another four metres. The staghorn is white as bone at the edge of the lagoon. The director says it is a bad year. It is not a bad year.\n\nDay 241. From up here you can see it: a grey-green band on the sea beyond the ring, where the current comes in. Nothing lives in it. It is the colour of meltwater.\n\nI have asked the director for a boat to follow it out to sea. She says the samples first. The samples will only tell her what I can already see from this hill.
+note tomasnote Diver Tomas Reyes's letter | T. REYES, STATION DIVER - TO WHOEVER TAKES MY JOB\n\nThree cases on the floor of the lagoon, and the last one down the blue hole. That was my job, and I did it, and then the big fish moved into the hole and I did not go down again.\n\nThe director wanted the samples. Ines wanted a boat. I wanted to go home. Two of us got what we wanted.\n\nI kept my spare bottle here, where it's cool. If you go down the hole, take it. That fish has a light on its head and teeth like a saw, and it likes to sit right over the case.\n\nMy pay is buried on the shore, by the old pier posts. Nobody was going to pay me again anyway.
+story casekey|Sample case key|quest:Tangaroa_KeyCard|The key card that opens the observatory's sample cases.
+story sample|Coral sample|Placeable_Utopia_Bottle|A sealed jar of coral from the observatory's reef, for the analyzer.
+note directorlog Director's log | CORAL OBSERVATORY - DIRECTOR'S LOG\n\nThe reef is dying from the edges in. Our last three samples are sealed in cases on the lagoon floor: two in the gardens, one at the bottom of the blue hole.\nThe big angler in the hole took Halvorsen's light - and nearly Halvorsen. Don't dive there alone.\nThe case key is in the dive locker. Bring all three samples to the analyzer: if the cold current from the open sea is what is killing the reef, the analyzer will say so - and my notes in the safe go to whoever reads it.
+note divelocker Dive locker | The observatory's dive locker: fins, a cracked mask, and the key card to the sample cases.
+loot divelocker story:casekey*1;OxygenBottle*1;Rope*2
+prop divelocker loot.refill=0
+note casea Garden sample case A | A sealed sample case among the corals: a jar of reef, labelled A.
+loot casea story:sample*1
+prop casea loot.refill=0
+prop casea if.open=has|story:casekey|1
+prop casea else.open=message||The case is locked. Its key card is in the observatory's dive locker.
+note caseb Garden sample case B | A sealed sample case among the corals: a jar of reef, labelled B.
+loot caseb story:sample*1
+prop caseb loot.refill=0
+prop caseb if.open=has|story:casekey|1
+prop caseb else.open=message||The case is locked. Its key card is in the observatory's dive locker.
+note casec Blue hole sample case C | The last sample case, at the bottom of the blue hole - scratched by something with teeth.
+loot casec story:sample*1;CopperIngot*2
+prop casec loot.refill=0
+prop casec if.open=has|story:casekey|1
+prop casec else.open=message||The case is locked. Its key card is in the observatory's dive locker.
+note safe Director's safe | The director's safe: her notes on the reef and the cold current - and the station's spare blueprints.
+loot safe Blueprint_Recycler*1;Blueprint_Cropplot_Large_Tier3*1;Blueprint_Cropplot_Medium_Tier3*1;Battery*2;MetalIngot*4
+prop safe loot.refill=0
+prop safe if.open=signal|analysed
+prop safe else.open=message||The safe is wired to the analyzer. Run the samples first.
+
+prop analyzer obj.name=analyzer
+prop analyzer beh.use=Put the three samples in the analyzer
+prop analyzer if.use=quest|10\ntake|story:sample|3
+prop analyzer on.use=message||The analyzer hums and prints: the reef is dying of cold - a current from the open sea, colder every year. The safe's lock clicks open.\nshow|analyzerlight\nsignal||analysed\nsound||event:/exploring/obstacles/tangaroa/generator_placepart
+prop analyzer else.use=message||The analyzer has three empty slots. It wants all three samples.
+prop analyzerlight obj.name=analyzerlight
+prop analyzerlight beh.hidden=1
+
+prop station zone.id=station
+prop station zone.radius=9
+prop station zone.message=The observatory's platform: a lab, a dive locker, a mast - and nobody.
+prop edge zone.id=edge
+prop edge zone.radius=10
+prop edge zone.message=The blue hole: the lagoon floor falls away into dark blue - and a light moves down there.
+prop lanternjaw creature.count=1
+prop lanternjaw creature.size=2.6
+prop lanternjaw creature.health=6
+prop lanternjaw creature.damage=2
+prop lanternjaw creature.respawn=0
+prop lanternjaw creature.zone=edge
+prop lanternjaw tint.color=#2a3a52
+prop lanternjaw tint.amount=0.5
+prop puffers creature.count=3
+prop puffers creature.respawn=0
+
+quest title=The Reef Remembers
+quest intro=A research platform moored in an atoll's lagoon, dark since its scientists left. Climb aboard and find out why.
+step reach|station|1|Make for the observatory platform in the lagoon and climb aboard
+step read|Director's log|1|Read the director's log
+step open|Dive locker|1|Open the dive locker by the footbridge for the sample case key
+step open|Garden sample case A|1|Dive to the coral gardens and unlock sample case A
+step open|Garden sample case B|1|Dive to the gardens on the far side of the platform and open case B
+step reach|edge|1|Swim out to the edge of the blue hole
+step kill|Puffer fish|3|Clear the puffer fish drifting about the hole's rim
+step kill|Angler fish|1|Drive the giant angler fish out of the blue hole
+step open|Blue hole sample case C|1|Dive down the blue hole and open the last case, C
+step collect|story:sample|3|Carry all three coral samples back to the lab
+step open|Director's safe|1|Run the analyzer and open the director's safe
+step blueprint|Blueprint_Recycler|1|Take the recycler plans from the director's safe
+step blueprint|Blueprint_Cropplot_Large_Tier3|1|Take the large crop plot plans from the director's safe
+step blueprint|Blueprint_Cropplot_Medium_Tier3|1|Take the medium crop plot plans from the director's safe
+quest done=The analyzer's printout says it plainly: the reef is dying of cold, a current from the open sea. Wherever it comes from, that is where the story goes next.
+quest reward=CopperIngot*4;Plastic*10;Glass*6
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=80 n=1 seed=8821
+prop treasure8821 treasure.loot=TitaniumOre*3
+
+# (generator stones left in the air by the shaping - taken out, 10-25)
+clear at 77.18 -21.01 r=1 only=SmallBoulder1
+clear at -18.83 55 r=1 only=SmallBoulder1
+save Coral Observatory

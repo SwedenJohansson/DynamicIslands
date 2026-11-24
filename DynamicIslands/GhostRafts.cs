@@ -33,7 +33,9 @@ namespace DynamicIslands.Editor
 		internal static bool ReadLine(string key, string value)
 		{
 			if (key != "ghostsailed") return false;
-			float.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out sailed);
+			// (NaN and Infinity read as numbers: NaN would stop them coming all session, Infinity would be saved again - left out)
+			float v;
+			sailed = float.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out v) && !float.IsNaN(v) && !float.IsInfinity(v) ? Mathf.Max(0f, v) : 0f;
 			return true;
 		}
 
@@ -106,7 +108,7 @@ namespace DynamicIslands.Editor
 			int size = SizeOf(s.Seed);
 			float g = PlacementOptions.GridSize, sea = k.Sea;
 			// (afloat like the player's raft: a deck a player stands on, 0.35 m above the sea)
-			float floatY = sea + PlacementOptions.FoundationFloat, deck = floatY + PlacementOptions.FoundationTop;
+			float floatY = sea + PlacementOptions.FoundationFloat, deck = floatY + PlacementOptions.FoundationPlanks; // (walls, pillars and loot on the planks)
 			int w = size == Large ? 8 + rnd.Next(3) : size == Medium ? 5 + rnd.Next(2) : 3 + rnd.Next(2);
 			int d = size == Large ? 6 + rnd.Next(3) : size == Medium ? 4 + rnd.Next(2) : 2 + rnd.Next(2);
 			// the raft's middle in the build area
@@ -142,7 +144,7 @@ namespace DynamicIslands.Editor
 				k.Add("Note_Paper", at(hx, hz) + new Vector3(0.3f, 0f, 0.3f), 0f, Note("Captain's log", CaptainTexts, rnd), 0f);
 				k.Add("Block_Ladder", at(w, d / 2) + new Vector3(-g / 2, 0f, 0f), 90f, null, 0f);
 				if (size == Medium && rnd.NextDouble() < 0.45)
-					k.Creature("Rat", flat(w - 2, 1), 1 + rnd.Next(2), "Normal", 1f, null, false, deck);
+					k.Creature("Rat", flat(w - 2, 1), 1 + rnd.Next(2), "Normal", 1f, null, false, deck, 0f);
 			}
 			if (size == Large)
 			{
@@ -159,9 +161,11 @@ namespace DynamicIslands.Editor
 				k.Add("Loot_Chest", at(w / 2, d / 2), 180f, hoard, 0f);
 				k.Add("Loot_Barrel", at(2, d - 2), 0f, loot("Food"), 0f);
 				k.Add("Loot_Barrel", at(w - 3, 1), 0f, loot("Metal"), 0f);
-				k.Creature("Rat", flat(2, 2), 3 + rnd.Next(3), "Hard", 1f, null, false, deck);
-				k.Creature("Rat", flat(w - 3, d - 3), 2 + rnd.Next(2), "Normal", 1f, null, false, deck);
-				k.Creature("StoneBird", flat(w / 2, d / 2), 1 + rnd.Next(2), "Normal", 1f, null, false, deck + 10f);
+				// (not clearing around them: that takes away whatever has no settings - the raft's foundations, walls and pillars;
+				// the hoard chest stood on the sea where the screechers' foundation had been, CA30)
+				k.Creature("Rat", flat(2, 2), 3 + rnd.Next(3), "Hard", 1f, null, false, deck, 0f);
+				k.Creature("Rat", flat(w - 3, d - 3), 2 + rnd.Next(2), "Normal", 1f, null, false, deck, 0f);
+				k.Creature("StoneBird", flat(w / 2, d / 2), 1 + rnd.Next(2), "Normal", 1f, null, false, deck + 10f, 0f);
 			}
 			f.Props[IslandProps.Title] = size == Large ? "Ghost raft (large)" : "Ghost raft";
 			return f;
@@ -181,9 +185,9 @@ namespace DynamicIslands.Editor
 			k.Add("Block_Wall_Thatch", c + new Vector3(0f, 0f, -g / 2), 0f, null, 0f);
 			k.Add("Block_Wall_Thatch", c + new Vector3(g, 0f, g * 1.5f), 180f, null, 0f);
 			k.Add("Block_Wall_Thatch", c + new Vector3(-g / 2, 0f, g), 90f, null, 0f);
-			k.Add("Block_Roof_Straight_Thatch", c + new Vector3(0f, 2.4f, 0f), 0f, null, 0f);
-			k.Add("Block_Roof_Straight_Thatch", c + new Vector3(g, 2.4f, 0f), 0f, null, 0f);
-			if (rnd.NextDouble() < 0.5) k.Add("Block_Roof_Straight_Thatch", c + new Vector3(0f, 2.4f, g), 0f, null, 0f);
+			// (a hipped roof on the pillars and walls - half the time with its back corner gone: the ghost raft is a ruin)
+			bool whole = rnd.NextDouble() < 0.5;
+			RaftRoof.Hip((n, p, ry) => k.Add(n, p, ry, null, 0f), c + new Vector3(0f, RaftRoof.OnWalls, 0f), 2, 2, false, i => !whole && i == 3);
 		}
 
 		#endregion

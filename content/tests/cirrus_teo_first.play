@@ -1,0 +1,28 @@
+# Cirrus Silo Farm, Teo first (CIPlay cirrus_teo_first, FV4): the silo key used on Teo's cage before silo
+# three's hatch (same trap as Lowstreet, 11-07). The key is used up, yet the hatch opens.
+island Cirrus Silo Farm
+offset 0 37
+expect step 0
+expect title The Seed Silos
+wait 5
+expect animals Goat 5
+expect hidden silostore
+walk 0 -34 to 0 -28 to 0 -22
+zone farm_gate
+expect step 1
+open Farm tool chest
+expect item NetGun 1
+catch Goat 3
+expect step 2
+read Farmer Teo's letter to his daughter
+expect step 3
+use silohatch
+expect message locked
+open Farmhouse drawer
+expect story silokey 1
+use teocage
+expect survivor rainmakers_teo
+expect story silokey 0
+use silohatch
+expect story silohatch 1
+expect shown silostore

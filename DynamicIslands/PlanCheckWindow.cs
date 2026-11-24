@@ -51,12 +51,13 @@ namespace DynamicIslands.Editor
 		public static void Close()
 		{
 			if (instance == null) return;
+			if (instance.gameObject.activeSelf) EditorInput.SubWindowClosedFrame = Time.frameCount;
 			instance.gameObject.SetActive(false);
 		}
 
 		void Update()
 		{
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) Close();
 		}
 
 		void Build()

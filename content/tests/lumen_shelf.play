@@ -1,0 +1,62 @@
+# Lumen Shelf (CIPlay lumen_shelf): the spar's foot, the survey notes, the spar platform chest (air in the spar on the
+# way), lamp 3 and its air, the three anglers, the survey hut, the sled box, the edge's air under the arch, the mess
+# chest, the last survey note.
+island Lumen Shelf
+offset 0.2094 -1.8777
+# (room in the bag first: a full bag from earlier plays in the world drops quest loot - 11-09)
+empty
+expect step 0
+expect title The Glowing Shelf
+zone spar_foot
+expect step 1
+read Survey line notes
+expect step 2
+air spar_air1
+air spar_air2
+open Spar platform chest
+wait 3
+expect step 3
+zone lamp_3
+air lamp_3
+expect step 4
+kill Angler fish
+expect step 5
+open Survey hut chest
+wait 3
+expect step 6
+open Survey sled box
+wait 3
+expect step 7
+read Surveyor's hut note
+expect step 8
+zone lu_cave
+expect step 9
+read Caravan logbook
+expect step 10
+zone edge
+air edge
+expect step 11
+open Mess chest
+wait 3
+expect step 12
+read Last survey note
+expect step 13
+use luswitch1
+expect story lu_gate 1
+expect step 14
+air lu_dair
+open Survey office chest
+wait 3
+expect step 15
+open Lens box (first floor)
+wait 3
+open Lens box (second floor)
+wait 3
+open Lens box (top floor)
+wait 3
+expect story lu_lens 4
+expect step 16
+use luflood2x
+expect story lu_lit 1
+expect shown luflood2
+expect done

@@ -1,0 +1,21 @@
+# Cave rats (11-05, CIPlay shelter_atoll_rats; in a test world): two Tangaroa rats at the back of the ammo cave 
+# - alive, on the floor, under the cave's rock (not on the rock over it), walking; a picture
+# of them. Points as in its recipe.
+island Shelter Atoll keep
+offset 20.3141 8.6569
+hour 12
+weather Calm
+at 61 100
+wait 5
+expect animals Tangaroa rat 2
+expect animalsinside Tangaroa rat 2
+# (from the sea, the beach up to the mouth; from the mouth, the mountain's sides round it - 11-06: no rock underside
+# over the water, no orange and black squares on the sides)
+picture rat_shelter_ammo_out 61 6 121 61 3.5 96
+picture rat_shelter_ammo_side 45 7 113 60 4 93
+picture rat_shelter_ammo_mouth 61 4.4 102.5 62 3.4 86
+picture rat_shelter_ammo_in 63 4.6 81.5 63.5 3.3 75.5
+wait 15
+expect animalsmoved Tangaroa rat 1
+expect animals Tangaroa rat 2
+expect animalsinside Tangaroa rat 2

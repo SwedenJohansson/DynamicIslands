@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -104,7 +104,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIOddities", docs: "Dev, anywhere: every oddity island and the boss lair can be made: set piece, loot, note, title; lair with a much tougher named beast, guards, hoard and quest; every object exists in this Raft")]
-		public static void OdditiesCommand() { DynamicIslands.instance.StartCoroutine(OdditiesRoutine()); }
+		public static void OdditiesCommand() { StartTest(OdditiesRoutine()); }
 
 		static IEnumerator OdditiesRoutine()
 		{
@@ -170,7 +170,7 @@ namespace DynamicIslands
 		{
 			bool keep = args != null && args.Any(a => a.Equals("keep", StringComparison.OrdinalIgnoreCase));
 			bool shots = args != null && args.Any(a => a.Equals("shots", StringComparison.OrdinalIgnoreCase));
-			DynamicIslands.instance.StartCoroutine(RandomizerWorldRoutine(keep, shots));
+			StartTest(RandomizerWorldRoutine(keep, shots));
 		}
 
 		static IEnumerator RandomizerWorldRoutine(bool keep, bool shots)
@@ -193,6 +193,9 @@ namespace DynamicIslands
 
 			// Crates and clams: some moved; Raft still finds each by its old place; the same spots again
 			var moved = new List<KeyValuePair<LandmarkItem, Vector3>>();
+			// (each item's island as the loop found it: GetComponentInParent<Landmark>() gave null for one (an item not under
+			// its island's transform) and OriginalOf threw - RUN2 10-20)
+			var islandOf = new Dictionary<LandmarkItem, Landmark>();
 			int lootItems = 0;
 			bool findable = true;
 			foreach (Landmark l in nat)
@@ -200,12 +203,12 @@ namespace DynamicIslands
 				{
 					lootItems++;
 					Vector3? o = WorldRandomizer.OriginalOf(l, i);
-					if (o.HasValue && (o.Value - i.transform.position).magnitude > 1f) moved.Add(new KeyValuePair<LandmarkItem, Vector3>(i, i.transform.position));
+					if (o.HasValue && (o.Value - i.transform.position).magnitude > 1f) { moved.Add(new KeyValuePair<LandmarkItem, Vector3>(i, i.transform.position)); islandOf[i] = l; }
 					if (l.GetLandmarkItemByLocalPosition(i.localLandmarkPosition) != i) findable = false;
 				}
 			Check(ref ok, moved.Count > 0 && moved.Count <= lootItems, moved.Count + " of " + lootItems + " crates and clams lie somewhere else (wild: about 80%)");
 			Check(ref ok, findable, "Raft still finds every crate and clam by the place it knows (picking up, saving and the network use it)");
-			bool land = moved.All(m => { Vector3? o = WorldRandomizer.OriginalOf(m.Key.GetComponentInParent<Landmark>(), m.Key); return !o.HasValue || (o.Value.y < -0.5f) == (m.Value.y < -0.5f); });
+			bool land = moved.All(m => { Vector3? o = WorldRandomizer.OriginalOf(islandOf[m.Key], m.Key); return !o.HasValue || (o.Value.y < -0.5f) == (m.Value.y < -0.5f); });
 			Check(ref ok, land, "crates on land stay on land, under-water ones under water");
 			WorldRandomizer.Rehandle();
 			yield return new WaitForSeconds(3f);
@@ -305,7 +308,7 @@ namespace DynamicIslands
 			CustomIslandSpawner.CacheSize(name, radius, el);
 			IslandWorldState.Entry e = IslandWorldState.Add(name, spot.Value, null, false);
 			e.Loading = true;
-			DynamicIslands.instance.StartCoroutine(CustomIslandSpawner.GenerateAndSpawn(() => MapTypes.Create(type, s, el, name), name, e));
+			StartTest(CustomIslandSpawner.GenerateAndSpawn(() => MapTypes.Create(type, s, el, name), name, e));
 			return e;
 		}
 
@@ -451,7 +454,7 @@ namespace DynamicIslands
 
 
 		[ConsoleCommand(name: "CIRandomizerOff", docs: "Dev, world (host): with the randomizer Off, Raft's islands are Raft's (catalogue IR16): handled again and sailed 6 km, nothing is coloured, made an alpha, moved or added, every crate and clam lies where Raft put it, no oddity, lair or large island is due. Run CIRandomizerClean first")]
-		public static void RandomizerOffCommand() { DynamicIslands.instance.StartCoroutine(RandomizerOffRoutine()); }
+		public static void RandomizerOffCommand() { StartTest(RandomizerOffRoutine()); }
 
 		static IEnumerator RandomizerOffRoutine()
 		{
@@ -485,7 +488,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIRandomizerStream", docs: "Dev, world (host): Raft's island and its extras stream out and in (catalogue IR6, IR7): the nearest of Raft's plain islands gets its extras, one of their chests is opened; the raft sails 1.5 km away (Raft's island and the extras go) and back: the chest is still opened, every moved crate and clam lies where it lay before, the island has the same extras")]
-		public static void RandomizerStreamCommand() { DynamicIslands.instance.StartCoroutine(RandomizerStreamRoutine()); }
+		public static void RandomizerStreamCommand() { StartTest(RandomizerStreamRoutine()); }
 
 		static IEnumerator RandomizerStreamRoutine()
 		{
@@ -573,7 +576,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIColourHit", docs: "Dev, world (host, the randomizer on): a coloured animal near the raft hit by a player (Raft's DamageEntity, 1 health): Raft's damage flash plays and its colour is still there 2 s later (catalogue IR13)")]
-		public static void ColourHitCommand() { DynamicIslands.instance.StartCoroutine(ColourHitRoutine()); }
+		public static void ColourHitCommand() { StartTest(ColourHitRoutine()); }
 
 		static string LookOf(AI_NetworkBehaviour a)
 		{
@@ -632,7 +635,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIRandomizerTypes", docs: "Dev, world (host): every oddity kind, the boss lair and a large island loaded in a world in turn (catalogue IR12): each loads, its set pieces from other scenes load on demand, nothing is missing from the catalog, no error; pictures shot_type_*")]
-		public static void RandomizerTypesCommand() { DynamicIslands.instance.StartCoroutine(RandomizerTypesRoutine()); }
+		public static void RandomizerTypesCommand() { StartTest(RandomizerTypesRoutine()); }
 
 		static IEnumerator RandomizerTypesRoutine()
 		{
@@ -673,7 +676,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIRandomizerSail", docs: "Dev, world (host): sailing brings the randomizer's islands by itself (catalogue IR3): Wild, 40 km sailed in steps of 250 m (OnSailed, with its retry every 200 m) - an oddity, a boss lair and a large island come, none on top of Raft's islands")]
-		public static void RandomizerSailCommand() { DynamicIslands.instance.StartCoroutine(RandomizerSailRoutine()); }
+		public static void RandomizerSailCommand() { StartTest(RandomizerSailRoutine()); }
 
 		static IEnumerator RandomizerSailRoutine()
 		{
@@ -718,7 +721,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIForceAlpha", docs: "Dev, world (host): makes the nearest live warthog (or <kind>) of Raft's own an alpha the way a world does - a seed whose roll makes it one (every player works it out from the seed): CIForceAlpha [kind]. Logs ALPHA <index>")]
-		public static void ForceAlphaCommand(string[] args) { DynamicIslands.instance.StartCoroutine(ForceAlphaRoutine(args != null && args.Length > 0 ? args[0] : "Boar")); }
+		public static void ForceAlphaCommand(string[] args) { StartTest(ForceAlphaRoutine(args != null && args.Length > 0 ? args[0] : "Boar")); }
 
 		static IEnumerator ForceAlphaRoutine(string kind)
 		{
@@ -774,8 +777,20 @@ namespace DynamicIslands
 			Log("PASS: spoils");
 		}
 
+		[ConsoleCommand(name: "CIAlphaHealth", docs: "Dev, world (either player): the health of the animal with network index <index> on this machine, as HEALTH #<index> <health>/<max> (an alpha that turned while player 2 was connected has the host's numbers exactly there: message AlphaHealth): CIAlphaHealth <index>")]
+		public static void AlphaHealthCommand(string[] args)
+		{
+			uint idx;
+			if (args == null || args.Length == 0 || !uint.TryParse(args[0], out idx)) { Fail("CIAlphaHealth <index>"); return; }
+			AI_NetworkBehaviour a = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().FirstOrDefault(x => x != null && x.ObjectIndex == idx);
+			if (a == null || a.networkEntity == null || a.networkEntity.stat_health == null) { Fail("no animal #" + idx + " here"); return; }
+			Stat_Health h = a.networkEntity.stat_health;
+			Log("HEALTH #" + idx + " " + h.Value.ToString("F1") + "/" + h.Max.ToString("F1") + " (" + a.behaviourType + (Raft_Network.IsHost ? ", host" : ", player 2") + ")");
+			Log("PASS: alpha health");
+		}
+
 		[ConsoleCommand(name: "CIModeWorld", docs: "Dev, world (host): the randomizer's animals follow Raft's game mode in a world (catalogue IR15): a large island loaded in Creative has no puffer fish or screechers (Raft's own islands in Creative have none), its warthogs and animals to catch are there; in Peaceful the puffer fish are there too (as on Raft's islands). The world's mode is put back after")]
-		public static void ModeWorldCommand() { DynamicIslands.instance.StartCoroutine(ModeWorldRoutine()); }
+		public static void ModeWorldCommand() { StartTest(ModeWorldRoutine()); }
 
 		static IEnumerator ModeWorldRoutine()
 		{
@@ -811,10 +826,17 @@ namespace DynamicIslands
 			if (ok) Log("PASS: creatures follow the game mode"); else Fail("creatures follow the game mode");
 		}
 
-		[ConsoleCommand(name: "CITreasureHunt", docs: "Dev, world (host): the randomizer's treasure hunt on one of Raft's islands played through (catalogue IR4): the nearest plain island gets it (forced), the bottle's map read, the X reached, the buried chest opened - the quest moves on at each and is done. CITreasureHunt [keep]; logs Treasure extras: '<name>'")]
-		public static void TreasureHuntCommand(string[] args) { DynamicIslands.instance.StartCoroutine(TreasureHuntRoutine(args != null && args.Any(a => a == "keep"))); }
+		[ConsoleCommand(name: "CITreasureHunt", docs: "Dev, world (host): the randomizer's treasure hunt on one of Raft's islands played through (catalogue IR4): the nearest plain island gets it (forced), the bottle's map read, the X reached, the buried chest opened - the quest moves on at each and is done. CITreasureHunt [keep]; CITreasureHunt half = only the map read, kept (IR4); CITreasureHunt rest <name> = that hunt played on by this player (after a load, or player 2); CITreasureHunt state <name> = its step here (3 = done); logs Treasure extras: '<name>'")]
+		public static void TreasureHuntCommand(string[] args)
+		{
+			args = args ?? new string[0];
+			// (IR4: "half" = the map read only, all kept, for a save and load; "rest <name>" = the rest played by this player,
+			// host or not; "state <name>" = where that hunt is on this machine)
+			if (args.Length >= 2 && (args[0] == "rest" || args[0] == "state")) { StartTest(TreasureHuntRestRoutine(string.Join(" ", args.Skip(1).ToArray()), args[0] == "rest")); return; }
+			StartTest(TreasureHuntRoutine(args.Any(a => a == "keep" || a == "half"), args.Any(a => a == "half")));
+		}
 
-		static IEnumerator TreasureHuntRoutine(bool keep)
+		static IEnumerator TreasureHuntRoutine(bool keep, bool half = false)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
 			yield return EnsureAlive();
@@ -847,7 +869,7 @@ namespace DynamicIslands
 				string forcedName = WorldRandomizer.ExtrasPrefix + WorldRandomizer.Current.Seed + "-" + (WorldRandomizer.SpawnKey(l) ^ 4711u);
 				Func<IslandWorldState.Entry> mine = () => IslandWorldState.Islands.LastOrDefault(i => WorldRandomizer.IsExtras(i) && !extrasBefore.Contains(i.Id) && i.Name == forcedName);
 				RandomizerContent.ForceFind = "treasure";
-				DynamicIslands.instance.StartCoroutine(WorldRandomizer.ForceExtras(l, 4711));
+				StartTest(WorldRandomizer.ForceExtras(l, 4711));
 				for (float t = 0; t < 30f && mine() == null; t += 0.5f) yield return new WaitForSeconds(0.5f);
 				RandomizerContent.ForceFind = null;
 				e = mine();
@@ -870,6 +892,15 @@ namespace DynamicIslands
 			NoteReader.Open(map); NoteReader.Close();
 			yield return new WaitForSeconds(1f);
 			int s1 = QuestTracker.StepOf(e);
+			if (half)
+			{
+				Check(ref ok, s1 == 1 && !x.HasFired && !chest.Looted, "half done: the map read (step " + s1 + "), the X and the chest left");
+				Log("TREASURE hunt kept: '" + e.Name + "'");
+				Raft rh = UnityEngine.Object.FindObjectOfType<Raft>();
+				if (rh != null) yield return PutPlayer(player, rh.transform.position + Vector3.up * 2f, false);
+				if (ok) Log("PASS: treasure hunt half"); else Fail("treasure hunt half");
+				yield break;
+			}
 			yield return PutPlayer(player, x.transform.position + Vector3.up * 1.5f, false);
 			yield return new WaitForSeconds(2f);
 			int s2 = QuestTracker.StepOf(e);
@@ -884,6 +915,47 @@ namespace DynamicIslands
 			if (!keep) { IslandWorldState.RemoveIds(new[] { e.Id }, true); WorldRandomizer.Set(before); }
 			if (ok) Log("PASS: treasure hunt"); else Fail("treasure hunt");
 		}
+		/// <summary>IR4: a treasure hunt left half done (the map read) - after a save and load, or by another player - played on.</summary>
+		static IEnumerator TreasureHuntRestRoutine(string name, bool play)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("in a world"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			Network_Player player = RAPI.GetLocalPlayer();
+			IslandWorldState.Entry e = null;
+			for (float t = 0; t < 20f && (e = IslandWorldState.Islands.FirstOrDefault(i => i.Name == name)) == null; t += 1f) yield return new WaitForSeconds(1f);
+			if (e == null) { Fail("no island '" + name + "' in this world here"); yield break; }
+			if (!play)
+			{
+				TriggerZone zx = e.Root != null ? e.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "x") : null;
+				Log("TREASURE '" + name + "': step " + QuestTracker.StepOf(e) + (zx != null ? ", the X " + (zx.HasFired ? "reached" : "not reached") : ", not loaded here"));
+				if (QuestTracker.StepOf(e) == 3) Log("PASS: treasure hunt state"); else Fail("treasure hunt state: step " + QuestTracker.StepOf(e) + " (3 wanted)");
+				yield break;
+			}
+			if (e.Root == null) yield return PutPlayer(player, e.Position + Vector3.up * 60f, false);
+			for (float t = 0; t < 60f && e.Root == null; t += 1f) yield return new WaitForSeconds(1f);
+			if (e.Root == null) { Fail("'" + name + "' didn't load here"); yield break; }
+			yield return new WaitForSeconds(2f);
+			TriggerZone x = e.Root.GetComponentsInChildren<TriggerZone>(true).FirstOrDefault(z => z.Id == "x");
+			LootCrate chest = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(c => { IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>(); return r != null && ObjectProps.Get(r.Props, ObjectProps.NoteTitle) == "Buried treasure"; });
+			if (x == null || chest == null) { Fail("'" + name + "': the X " + (x != null) + ", the chest " + (chest != null)); yield break; }
+			int s1 = QuestTracker.StepOf(e);
+			Check(ref ok, s1 == 1 && !x.HasFired && !chest.Looted, "left half done: step " + s1 + " (the map read), the X " + (x.HasFired ? "reached" : "not reached") + ", the chest " + (chest.Looted ? "opened" : "shut"));
+			yield return PutPlayer(player, x.transform.position + Vector3.up * 1.5f, false);
+			int s2 = 0;
+			for (float t = 0; t < 6f && (s2 = QuestTracker.StepOf(e)) < 2; t += 0.5f) yield return new WaitForSeconds(0.5f);
+			PutPlayerNear(chest.transform);
+			List<string> got = chest.Open(); NoteReader.Close();
+			int s3 = 0;
+			for (float t = 0; t < 6f && (s3 = QuestTracker.StepOf(e)) < 3; t += 0.5f) yield return new WaitForSeconds(0.5f);
+			Check(ref ok, s2 == 2 && s3 == 3, "played on: the X reached " + s2 + ", the chest opened " + s3 + " (2, 3 = done)");
+			if (got.Count == 0) got = chest.LastGiven; // (a client opens when the host says yes, a moment later)
+			Check(ref ok, got.Count > 0, "the treasure: " + string.Join(", ", got.ToArray()));
+			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftObj != null) yield return PutPlayer(player, raftObj.transform.position + Vector3.up * 2f, false);
+			if (ok) Log("PASS: treasure hunt rest"); else Fail("treasure hunt rest");
+		}
+
 		[ConsoleCommand(name: "CIRandomizerPending", docs: "Dev, main menu: the randomizer settings the next new world gets (as if chosen in the New Game box): CIRandomizerPending <off|light|normal|wild> [-part ...]")]
 		public static void RandomizerPendingCommand(string[] args)
 		{
@@ -944,8 +1016,98 @@ namespace DynamicIslands
 			Log("PASS: probed ground");
 		}
 
+		[ConsoleCommand(name: "CIPlanPickerWindow", docs: "Dev, main menu: the New Game box's plan picker (CT5) - every plan listed, pictures, select / double-click / keys / search / cancel; shot_planpicker.png")]
+		public static void PlanPickerWindowCommand() { StartTest(PlanPickerWindowTest()); }
+
+		static IEnumerator PlanPickerWindowTest()
+		{
+			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+			if (box == null) { Fail("plan picker: no New Game box (main menu?)"); yield break; }
+			string before = WorldDirector.PendingPlan;
+			box.gameObject.SetActive(true);
+			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
+			yield return new WaitForSecondsRealtime(1f);
+			bool ok = true;
+			Transform row = box.transform.Find("CustomIslands_Plan");
+			UnityEngine.UI.Button choose = row != null ? row.GetComponentsInChildren<UnityEngine.UI.Button>(true).FirstOrDefault(x => x.name == "Button_ChoosePlan") : null;
+			Check(ref ok, choose != null && row.GetComponentsInChildren<UnityEngine.UI.Button>(true).All(x => x.name != "Drop_Plan"), "the box has Choose plan... and no drop-down list");
+			Check(ref ok, ChosenPlanText(row) == NewWorldOptions.Selected, "the box shows the chosen plan (" + ChosenPlanText(row) + ")");
+			if (choose == null) { Fail("plan picker"); yield break; }
+			string start = NewWorldOptions.Selected;
+			choose.onClick.Invoke();
+			yield return null;
+			List<string> plans = WorldPlan.All(), shown = PlanPickerWindow.Shown();
+			Check(ref ok, PlanPickerWindow.IsOpen, "Choose plan... opens the window");
+			Check(ref ok, shown.Count == plans.Count && plans.All(shown.Contains), "every plan is listed (" + shown.Count + " of " + plans.Count + ")");
+			Check(ref ok, PlanPickerWindow.Highlighted == start, "the box's plan is selected when it opens (" + PlanPickerWindow.Highlighted + ")");
+			// (fits the screen: the panel's corners inside it)
+			RectTransform panel = PlanPickerWindow.Root.Find("Panel") as RectTransform;
+			var pc = new Vector3[4]; if (panel != null) panel.GetWorldCorners(pc);
+			Canvas cv = PlanPickerWindow.Root.GetComponent<Canvas>();
+			Vector2 lo = RectTransformUtility.WorldToScreenPoint(cv.renderMode == RenderMode.ScreenSpaceOverlay ? null : cv.worldCamera, pc[0]), hi = RectTransformUtility.WorldToScreenPoint(cv.renderMode == RenderMode.ScreenSpaceOverlay ? null : cv.worldCamera, pc[2]);
+			Check(ref ok, panel != null && lo.x >= -1 && lo.y >= -1 && hi.x <= Screen.width + 1 && hi.y <= Screen.height + 1, "the window fits the screen (" + Screen.width + "x" + Screen.height + ": " + lo + "-" + hi + ")");
+			// every plan: its row selects it, the title and a picture follow
+			var noPicture = new List<string>(); var maps = new List<string>(); var wrong = new List<string>();
+			UnityEngine.UI.Text title = PlanPickerWindow.Root.GetComponentsInChildren<UnityEngine.UI.Text>(true).FirstOrDefault(t => t.name == "PlanTitle");
+			foreach (string n in plans)
+			{
+				UnityEngine.UI.Button r = PlanPickerWindow.Root.GetComponentsInChildren<UnityEngine.UI.Button>(true).FirstOrDefault(x => x.name == PlanPickerWindow.RowPrefix + n);
+				if (r == null) { wrong.Add(n + " (no row)"); continue; }
+				r.onClick.Invoke();
+				yield return null;
+				if (PlanPickerWindow.Highlighted != n || title == null || title.text != n) wrong.Add(n);
+				if (PlanPickerWindow.Picture == null) noPicture.Add(n);
+				else if (!PlanPickerWindow.PictureIsPlaceholder) maps.Add(n);
+				yield return new WaitForSecondsRealtime(0.35f); // (no double-click)
+			}
+			Check(ref ok, wrong.Count == 0, "clicking each plan shows it" + (wrong.Count > 0 ? " - not: " + string.Join(", ", wrong.ToArray()) : ""));
+			Check(ref ok, noPicture.Count == 0 && maps.Count > 0, "each plan has a picture or the placeholder; " + maps.Count + " with a picture (" + string.Join(", ", maps.Take(8).ToArray()) + ")");
+			Check(ref ok, NewWorldOptions.Selected == start, "clicking alone doesn't choose (" + NewWorldOptions.Selected + ")");
+			// keys
+			string h0 = PlanPickerWindow.Highlighted;
+			PlanPickerWindow.Move(-1);
+			string h1 = PlanPickerWindow.Highlighted;
+			PlanPickerWindow.Move(1);
+			Check(ref ok, h1 != h0 && PlanPickerWindow.Highlighted == h0, "up/down move the selection (" + h0 + " > " + h1 + " > " + PlanPickerWindow.Highlighted + ")");
+			// search
+			string pick = maps.FirstOrDefault(m => m != start) ?? plans.First(m => m != start);
+			PlanPickerWindow.Search.text = pick;
+			yield return null;
+			List<string> found = PlanPickerWindow.Shown();
+			Check(ref ok, found.Contains(pick) && found.Count < plans.Count, "search '" + pick + "' shows " + found.Count + " plan(s), with it");
+			PlanPickerWindow.Search.text = "zzz-no-such-plan";
+			yield return null;
+			Check(ref ok, PlanPickerWindow.Shown().Count == 0, "a search with no match lists none");
+			PlanPickerWindow.Search.text = "";
+			yield return null;
+			// picture of a plan with a picture
+			PlanPickerWindow.Select(pick);
+			yield return new WaitForSecondsRealtime(0.5f);
+			string file = System.IO.Path.GetFullPath(System.IO.Path.Combine(DynamicIslands.assetpath, "shot_planpicker.png"));
+			ScreenCapture.CaptureScreenshot(file);
+			Log("Screenshot " + file);
+			yield return new WaitForSecondsRealtime(0.5f);
+			// cancel keeps the choice
+			UnityEngine.UI.Button cancel = PlanPickerWindow.Root.GetComponentsInChildren<UnityEngine.UI.Button>(true).FirstOrDefault(x => x.name == "Button_Cancel");
+			if (cancel != null) cancel.onClick.Invoke();
+			Check(ref ok, cancel != null && !PlanPickerWindow.IsOpen && NewWorldOptions.Selected == start, "Cancel closes it and keeps " + start);
+			// double-click chooses
+			choose.onClick.Invoke();
+			yield return null;
+			UnityEngine.UI.Button pr = PlanPickerWindow.Root.GetComponentsInChildren<UnityEngine.UI.Button>(true).FirstOrDefault(x => x.name == PlanPickerWindow.RowPrefix + pick);
+			if (pr != null) { pr.onClick.Invoke(); pr.onClick.Invoke(); }
+			yield return null;
+			Check(ref ok, !PlanPickerWindow.IsOpen && NewWorldOptions.Selected == pick && ChosenPlanText(row) == pick, "a double-click chooses '" + pick + "' (" + NewWorldOptions.Selected + ", the box shows " + ChosenPlanText(row) + ")");
+			// Select chooses
+			Check(ref ok, ChoosePlanInPicker(choose, start) && ChosenPlanText(row) == start, "Select chooses '" + start + "' again");
+			WorldDirector.PendingPlan = before;
+			NewWorldOptions.Refresh();
+			box.Button_Close();
+			if (ok) Log("PASS: plan picker window"); else Fail("plan picker window");
+		}
+
 		[ConsoleCommand(name: "CINewGameBoxShot", docs: "Dev, main menu: opens Raft's New Game box with the plan and randomizer panels, checks they fit inside it, takes shot_newgame.png and closes it")]
-		public static void NewGameBoxShotCommand() { DynamicIslands.instance.StartCoroutine(NewGameBoxShot()); }
+		public static void NewGameBoxShotCommand() { StartTest(NewGameBoxShot()); }
 
 		static IEnumerator NewGameBoxShot()
 		{
@@ -969,6 +1131,28 @@ namespace DynamicIslands
 				bool inside = r != null && c[0].x >= b[0].x - 1f && c[0].y >= b[0].y - 1f && c[2].x <= b[2].x + 1f && c[2].y <= b[2].y + 1f;
 				Check(ref ok, r != null && r.gameObject.activeInHierarchy && inside, n + (r == null ? " missing" : inside ? " inside the box" : " sticks out of the box"));
 			}
+			// (CT2: the heading on one line, the description in full or with its hint, nothing of Raft's over the panel)
+			RectTransform plan = box.transform.Find("CustomIslands_Plan") as RectTransform;
+			if (plan != null)
+			{
+				UnityEngine.UI.Text title = plan.GetComponentsInChildren<UnityEngine.UI.Text>(true).FirstOrDefault(t => t.name == "Title");
+				UnityEngine.UI.Text detail = plan.GetComponentsInChildren<UnityEngine.UI.Text>(true).FirstOrDefault(t => t.name == "Detail");
+				Check(ref ok, title != null && title.cachedTextGenerator.lineCount == 1, "the plan heading is on one line");
+				Check(ref ok, detail != null && detail.raycastTarget, "the plan description has its whole text as a hover hint");
+				var pc = new Vector3[4]; plan.GetWorldCorners(pc);
+				foreach (UnityEngine.UI.Text t in box.GetComponentsInChildren<UnityEngine.UI.Text>(true).Where(t => !t.transform.IsChildOf(plan) && t.text.Length > 0))
+				{
+					var tc = new Vector3[4]; t.rectTransform.GetWorldCorners(tc);
+					// (where the letters are, not the label's whole rect)
+					float pw = Mathf.Min(t.preferredWidth * t.rectTransform.lossyScale.x, tc[2].x - tc[0].x), mid = (tc[0].x + tc[2].x) / 2f;
+					int col = (int)t.alignment % 3;
+					float x0 = col == 0 ? tc[0].x : col == 1 ? mid - pw / 2f : tc[2].x - pw, x1 = x0 + pw;
+					bool over = x0 < pc[2].x && x1 > pc[0].x && tc[0].y < pc[2].y && tc[2].y > pc[0].y;
+					if (over || t.text.IndexOf("offline", StringComparison.OrdinalIgnoreCase) >= 0)
+						Log("  text \"" + t.text.Replace("\n", " ") + "\" (" + t.name + ", active " + t.gameObject.activeInHierarchy + ") at " + tc[0] + "-" + tc[2] + (over ? " OVER the plan panel " + pc[0] + "-" + pc[2] : ""));
+					if (over && t.gameObject.activeInHierarchy) Check(ref ok, false, "Raft's text \"" + t.text + "\" lies over the plan panel");
+				}
+			}
 			Check(ref ok, box.transform.Find("CustomIslands_Randomizer") == null && box.transform.Find(NewWorldRulesBox.PanelName) == null, "the box is Raft's own: no randomizer and no world rules in it");
 			int buttons = (NewWorldOptions.LevelButton != null ? 1 : 0) + NewWorldOptions.PartButtons.Count;
 			bool inWindow = NewWorldOptions.LevelButton != null && WorldSettingsWindow.Window != null && NewWorldOptions.LevelButton.transform.IsChildOf(WorldSettingsWindow.Window);
@@ -986,6 +1170,69 @@ namespace DynamicIslands
 			box.gameObject.SetActive(false);
 			WorldRandomizer.Pending = pending;
 			if (ok) Log("PASS: New Game box"); else Fail("New Game box");
+		}
+
+		[ConsoleCommand(name: "CIRandomizerChips", docs: "Dev, main menu: the World settings window's randomizer parts clicked one by one as a player does (each click leaves its part out and greys it, a second puts it back and lights it), at Off every part is greyed and can't be clicked; then leaves Normal without Alphas and Bosses for the next new world - CIRandomizerChipsCheck in that world (IR5)")]
+		public static void RandomizerChipsCommand() { StartTest(RandomizerChipsRoutine()); }
+
+		static IEnumerator RandomizerChipsRoutine()
+		{
+			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
+			if (box == null || LoadSceneManager.IsGameSceneLoaded) { Fail("no New Game box (main menu?)"); yield break; }
+			bool ok = true;
+			WorldRandomizer.Pending = new RandomizerSettings { Level = RandomizerSettings.Normal };
+			box.gameObject.SetActive(true);
+			try { box.Close(); } catch { } box.Open();
+			yield return new WaitForSeconds(0.5f);
+			WorldSettingsWindow.Open();
+			yield return new WaitForSeconds(0.5f);
+			IList<UnityEngine.UI.Button> parts = NewWorldOptions.PartButtons;
+			Check(ref ok, parts.Count == RandomizerSettings.Features.Length && parts.All(b => b != null && b.gameObject.activeInHierarchy && b.interactable), parts.Count + " part buttons, all shown and clickable at Normal");
+			if (parts.Count != RandomizerSettings.Features.Length) { WorldSettingsWindow.Close(); box.gameObject.SetActive(false); Fail("randomizer chips"); yield break; }
+			Func<UnityEngine.UI.Button, Sprite> look = b => b.targetGraphic is UnityEngine.UI.Image ? ((UnityEngine.UI.Image)b.targetGraphic).sprite : null;
+			Sprite lit = look(parts[0]);
+			for (int i = 0; i < parts.Count; i++)
+			{
+				string f = RandomizerSettings.Features[i], label = RandomizerSettings.FeatureLabels[i];
+				parts[i].onClick.Invoke();
+				yield return null;
+				bool offOk = NewWorldOptions.Randomizer.Disabled.Contains(f) && look(parts[i]) != lit && parts.Where((b, k) => k != i).All(b => look(b) == lit);
+				parts[i].onClick.Invoke();
+				yield return null;
+				bool onOk = !NewWorldOptions.Randomizer.Disabled.Contains(f) && look(parts[i]) == lit;
+				Check(ref ok, offOk && onOk, label + ": a click leaves it out and greys it (" + offOk + "), a second puts it back (" + onOk + ")");
+			}
+			NewWorldOptions.Randomizer.Level = RandomizerSettings.Off;
+			NewWorldOptions.Refresh();
+			yield return null;
+			Check(ref ok, parts.All(b => !b.interactable && look(b) != lit), "at Off every part is greyed and can't be clicked");
+			NewWorldOptions.Randomizer.Level = RandomizerSettings.Normal;
+			NewWorldOptions.Refresh();
+			yield return null;
+			Check(ref ok, parts.All(b => b.interactable && look(b) == lit), "back at Normal: every part lit and clickable again");
+			// (for the next new world: Alphas and Bosses left out)
+			parts[Array.IndexOf(RandomizerSettings.Features, RandomizerSettings.Alphas)].onClick.Invoke();
+			parts[Array.IndexOf(RandomizerSettings.Features, RandomizerSettings.Bosses)].onClick.Invoke();
+			yield return null;
+			Screenshot(new[] { "randomizer_chips" });
+			yield return new WaitForSeconds(1f);
+			Log("The next new world's randomizer: " + NewWorldOptions.Randomizer.Describe());
+			WorldSettingsWindow.Close();
+			box.gameObject.SetActive(false);
+			if (ok) Log("PASS: randomizer chips"); else Fail("randomizer chips");
+		}
+
+		[ConsoleCommand(name: "CIRandomizerChipsCheck", docs: "Dev, world: the world created after CIRandomizerChips has exactly the parts left lit - Normal, everything but Alphas and Bosses - and none of their extras; then the New Game box's remembered choice goes back to Off (IR5)")]
+		public static void RandomizerChipsCheckCommand()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("run in a world"); return; }
+			bool ok = true;
+			RandomizerSettings s = WorldRandomizer.Current;
+			string[] off = RandomizerSettings.Features.Where(f => s.Disabled.Contains(f)).ToArray();
+			Check(ref ok, s.Level == RandomizerSettings.Normal && off.Length == 2 && off.Contains(RandomizerSettings.Alphas) && off.Contains(RandomizerSettings.Bosses), "this world's randomizer: " + s.Describe() + " (want Normal without Alphas and Bosses)");
+			WorldRandomizer.SaveDefaults(new RandomizerSettings());
+			WorldRandomizer.Pending = null;
+			if (ok) Log("PASS: randomizer chips check"); else Fail("randomizer chips check");
 		}
 
 		[ConsoleCommand(name: "CITime", docs: "Dev, world: sets the time of day (hour 0-24), as Raft's own cheat does: CITime <hour>")]
@@ -1061,7 +1308,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIIslandsLikeRaft", docs: "Dev, anywhere: the randomizer's islands fit in Raft's world: land objects per 1000 m² and trees to cut compared with Raft's own small and big islands (raft_land.txt); large islands have puffer fish, warthogs, animals to catch, scenes and a cave")]
-		public static void IslandsLikeRaftCommand() { DynamicIslands.instance.StartCoroutine(IslandsLikeRaftRoutine()); }
+		public static void IslandsLikeRaftCommand() { StartTest(IslandsLikeRaftRoutine()); }
 
 		static IEnumerator IslandsLikeRaftRoutine()
 		{
@@ -1133,7 +1380,7 @@ namespace DynamicIslands
 
 
 		[ConsoleCommand(name: "CIIslandsSound", docs: "Dev, anywhere: the randomizer's islands are sound: nothing of the land floats or is buried (also where a den levelled the ground), no scene prop, set piece or den stands over the sea, scene props don't stand inside each other, a den's floor is on its levelled ground (8 oddities, the lair, 6 large islands)")]
-		public static void IslandsSoundCommand() { DynamicIslands.instance.StartCoroutine(IslandsSoundRoutine()); }
+		public static void IslandsSoundCommand() { StartTest(IslandsSoundRoutine()); }
 
 		static IEnumerator IslandsSoundRoutine()
 		{
@@ -1155,11 +1402,17 @@ namespace DynamicIslands
 				Func<IslandObject, float> above = o => o.Position.y - k.Ground(new Vector2(o.Position.x, o.Position.z));
 				// Nature on the land (objects without settings): on the ground, big rocks sunk up to a third of their size
 				var nature = f.Objects.Where(o => (o.Props == null || o.Props.Count == 0) && k.Ground(new Vector2(o.Position.x, o.Position.z)) > k.Sea + 0.2f).ToList();
-				var floating = nature.Where(o => above(o) > 0.5f && !System.Text.RegularExpressions.Regex.IsMatch(o.Name, "^(Block_(Roof|Wall|Pillar|Stair)|Placeable_)")).ToList(); // (a hut's walls and roof stand on it)
-				var buried = nature.Where(o => above(o) < (rock.IsMatch(o.Name) ? -6f : -1.2f)).ToList();
+				// (by the mesh where it's known: its bottom in the air floats - ice at the shore hangs below its pivot - and a plant
+				// sunk deeper than its pivot rule is still sound while a quarter of it shows)
+				Func<IslandObject, float> bottom = o => { Bounds b; return PlaceableCatalog.LocalBounds(o.Name, out b) ? above(o) + b.min.y * Mathf.Abs(o.Scale.y) : above(o); };
+				Func<IslandObject, bool> shows = o => { Bounds b; return PlaceableCatalog.LocalBounds(o.Name, out b) && above(o) + b.max.y * Mathf.Abs(o.Scale.y) > 0.25f * b.size.y * Mathf.Abs(o.Scale.y); };
+				var floating = nature.Where(o => bottom(o) > 0.5f && !System.Text.RegularExpressions.Regex.IsMatch(o.Name, "^(Block_(Roof|Wall|Pillar|Stair)|Placeable_)")).ToList(); // (a hut's walls and roof stand on it)
+				var buried = nature.Where(o => above(o) < (rock.IsMatch(o.Name) ? -6f : -1.2f) && (rock.IsMatch(o.Name) || !shows(o))).ToList();
 				// Set pieces and dens: over land, not the sea
 				var pieces = f.Objects.Where(o => o.Props != null && o.Props.ContainsKey("set.piece")).ToList();
-				var overSea = pieces.Where(o => k.Ground(new Vector2(o.Position.x, o.Position.z)) < k.Sea + 0.3f).ToList();
+				// (a plane or boat sunk on purpose lies 4 m or more under the sea - IslandGenerator.Landmark)
+				var overSea = pieces.Where(o => k.Ground(new Vector2(o.Position.x, o.Position.z)) < k.Sea + 0.3f
+					&& !(System.Text.RegularExpressions.Regex.IsMatch(o.Name, "^(Airplane|BoatStranded)$") && k.Ground(new Vector2(o.Position.x, o.Position.z)) < k.Sea - 3f)).ToList();
 				// Scene props inside each other: the inner part of their footprints (a third of the smaller side) apart
 				var props = pieces.Where(o => !o.Props.ContainsKey("cave") && RaftProps.Get(o.Name) != null).ToList();
 				var inside = new List<string>();
@@ -1169,6 +1422,14 @@ namespace DynamicIslands
 						PropInfo pa = RaftProps.Get(props[a].Name), pb = RaftProps.Get(props[b].Name);
 						float ra = Mathf.Min(pa.Size.x, pa.Size.z) / 3f, rb = Mathf.Min(pb.Size.x, pb.Size.z) / 3f;
 						if (new Vector2(props[a].Position.x - props[b].Position.x, props[a].Position.z - props[b].Position.z).magnitude < ra + rb) inside.Add(props[a].Name + "/" + props[b].Name);
+						// (a scene's own props by their turned boxes, as the generator spaces them: two metal crates 2.4 m apart stood
+						// 0.35 m into each other, gen-large-37435 2026-10-21)
+						else if (props[a].Props.ContainsKey(RandomizerIslands.SceneProp) && props[b].Props.ContainsKey(RandomizerIslands.SceneProp))
+						{
+							float into = RandomizerIslands.Into(RandomizerIslands.FootOf(props[a].Name, new Vector2(props[a].Position.x, props[a].Position.z), props[a].EulerRotation),
+								RandomizerIslands.FootOf(props[b].Name, new Vector2(props[b].Position.x, props[b].Position.z), props[b].EulerRotation));
+							if (into > 0.06f) inside.Add(props[a].Name + "/" + props[b].Name + " (boxes " + into.ToString("F2", inv) + " m)");
+						}
 					}
 				// A den's floor on the ground levelled for it (a point in its passage)
 				string den = "";
@@ -1184,14 +1445,14 @@ namespace DynamicIslands
 				bool good = floating.Count == 0 && buried.Count == 0 && overSea.Count == 0 && inside.Count == 0;
 				Check(ref ok, good, types[i] + " '" + ObjectProps.Get(f.Props, IslandProps.Title) + "': " + nature.Count + " land objects, floating " + floating.Count + ", buried " + buried.Count + "; " + pieces.Count + " set pieces, over the sea " + overSea.Count + ", inside each other " + inside.Count + den);
 				if (!good)
-					Log("  " + string.Join("; ", floating.Take(4).Select(o => "floats " + o.Name + " " + above(o).ToString("F1", inv)).Concat(buried.Take(4).Select(o => "buried " + o.Name + " " + above(o).ToString("F1", inv)))
-						.Concat(overSea.Take(4).Select(o => "over the sea " + o.Name)).Concat(inside.Take(6).Select(x => "inside " + x)).ToArray()));
+					Log("  " + string.Join("; ", floating.Take(4).Select(o => "floats " + o.Name + " " + bottom(o).ToString("F1", inv)).Concat(buried.Take(4).Select(o => "buried " + o.Name + " " + above(o).ToString("F1", inv)))
+						.Concat(overSea.Take(4).Select(o => "over the sea " + o.Name + " (ground " + (k.Ground(new Vector2(o.Position.x, o.Position.z)) - k.Sea).ToString("F1", inv) + " m)")).Concat(inside.Take(6).Select(x => "inside " + x)).ToArray()));
 				yield return null;
 			}
 			if (ok) Log("PASS: islands are sound"); else Fail("islands are sound");
 		}
 		[ConsoleCommand(name: "CIRandomizerLarge", docs: "Dev, world (host): a large island near the raft - loads, its animals (warthogs, animals to catch, puffer fish), scenes, and its cave: players walk in, the guard wakes inside it; pictures shot_large_*. CIRandomizerLarge [keep]")]
-		public static void RandomizerLargeCommand(string[] args) { DynamicIslands.instance.StartCoroutine(RandomizerLargeRoutine(args != null && args.Any(a => a == "keep"))); }
+		public static void RandomizerLargeCommand(string[] args) { StartTest(RandomizerLargeRoutine(args != null && args.Any(a => a == "keep"))); }
 
 		static IEnumerator RandomizerLargeRoutine(bool keep)
 		{
@@ -1205,19 +1466,21 @@ namespace DynamicIslands
 			for (float t = 0; t < 90f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
 			if (e.Root == null) { Fail("the large island didn't load"); yield break; }
 			GameObject root = e.Root;
-			var tag = root.GetComponent<IslandInfoTag>();
+			// (since 10-19 only an island with a quest has an IslandInfoTag: loaded = its IslandSettings, the title from those)
+			IslandSettings settings = root.GetComponent<IslandSettings>();
+			string title = settings != null && settings.Props != null ? ObjectProps.Get(settings.Props, IslandProps.Title) : "?";
 			var refs = root.GetComponentsInChildren<IslandObjectRef>(true).ToList();
 			int scene = refs.Count(r => r.Props != null && r.Props.ContainsKey("set.piece") && !r.Props.ContainsKey("cave"));
 			List<Transform> caves = root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
 			Log("Large island: '" + e.Name + "'");
-			Check(ref ok, tag != null && scene >= 3, "'" + (tag != null ? tag.Title : "?") + "' loaded: " + refs.Count + " objects with settings, " + scene + " scene props, " + caves.Count + " cave pieces");
+			Check(ref ok, settings != null && scene >= 3, "'" + title + "' loaded: " + refs.Count + " objects with settings, " + scene + " scene props, " + caves.Count + " cave pieces");
 			// Its animals (not the cave's guard: it waits)
 			List<CreatureSpawnPoint> spots = root.GetComponentsInChildren<CreatureSpawnPoint>(true).ToList();
 			for (float t = 0; t < 120f && spots.Any(p => p.RecordedAlive == CreatureSpawnPoint.Spawning || (p.RecordedAlive == -1 && ObjectProps.Get(p.Props, ObjectProps.CreatureZone).Length == 0)); t += 1f) yield return new WaitForSeconds(1f);
 			Check(ref ok, spots.Count(p => p.RecordedAlive > 0) >= 5, spots.Count + " creature spots, alive: " + string.Join(", ", spots.GroupBy(p => p.Kind.Label).Select(g => g.Key + " " + g.Sum(p => Math.Max(0, p.RecordedAlive))).ToArray()));
 			Network_Player player = RAPI.GetLocalPlayer();
 			// Pictures: from above, of each scene
-			Vector3 mid = root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero);
+			Vector3 mid = root.transform.position + LocalLandCentre(root, e.Name);
 			yield return CameraShot(mid + new Vector3(0f, 110f, -150f), mid, "large_overview", true);
 			foreach (IslandObjectRef r in refs.Where(x => x.Props != null && x.Props.ContainsKey("set.piece") && !x.Props.ContainsKey("cave") && RaftProps.Get(x.ObjectName) != null && RandomizerIslands.Themes.Any(th => th.Anchors.Contains(x.ObjectName))).Take(3))
 				yield return ShotOf(player, r.transform, "large_scene_" + r.ObjectName.Replace(" ", "_"), 9f);
@@ -1236,6 +1499,8 @@ namespace DynamicIslands
 					yield return DenShots(player, zone.transform.position, hoardBox != null ? hoardBox.transform.position : first.position, "large_cave");
 					string denAt; float denOff = DenOffset(first, zone.transform.position, out denAt);
 					Check(ref ok, Mathf.Abs(denOff) < 1.5f, "the den stands on its floor: " + denAt);
+					string rimAt; float rimGap = DenRimGap(first, out rimAt);
+					Check(ref ok, rimGap < 0.6f, "the den's rim meets the ground all round, nothing to see into under it (AU83): " + rimAt);
 					var leftIn = DenLeftovers(first);
 					Check(ref ok, leftIn.Count == 0, "nothing of Raft's story or animals inside the den" + (leftIn.Count > 0 ? ": " + string.Join(", ", leftIn.ToArray()) : ""));
 					CreatureSpawnPoint guard = spots.FirstOrDefault(p => ObjectProps.Get(p.Props, ObjectProps.CreatureZone) == "cave");
@@ -1279,6 +1544,79 @@ namespace DynamicIslands
 		{
 			return den.GetComponentsInChildren<Transform>(true).Where(t => t != den && (t.name.StartsWith("Pickup_") || t.GetComponent<SkinnedMeshRenderer>() != null || t.GetComponent<PickupItem>() != null || t.GetComponent<LandmarkItem>() != null))
 				.Select(t => t.name).Distinct().ToList();
+		}
+
+		/// <summary>
+		/// AU83: walks in to a den (or any cave piece) over the ground from 24 ways round it (not from its mouths) to where its rock first stands
+		/// there: a wall that meets the ground (a ray along the ground hits it: no gap), or rock overhead (the gap up to
+		/// it - its rim floating over the ground, where you saw into the shell). The largest gap (m).
+		/// </summary>
+		static float DenRimGap(Transform den, out string detail)
+		{
+			PropInfo p = RaftProps.Get(den.name);
+			List<Collider> cols = den.GetComponentsInChildren<Collider>(true).Where(c => c.enabled && !c.isTrigger).ToList();
+			if (p == null || !p.IsCave || cols.Count == 0) { detail = "not measured or no colliders"; return 99f; }
+			Bounds b = cols[0].bounds;
+			foreach (Collider c in cols) b.Encapsulate(c.bounds);
+			Vector3 o3 = den.rotation * (p.Axis == 0 ? Vector3.right : Vector3.forward);
+			Vector2 outDir = new Vector2(o3.x, o3.z).normalized, mid = new Vector2(b.center.x, b.center.z);
+			Func<Vector2, float> ground = q =>
+			{
+				float best = float.MinValue;
+				foreach (RaycastHit h in Physics.RaycastAll(new Vector3(q.x, b.max.y + 5f, q.y), Vector3.down, b.size.y + 80f, ~0, QueryTriggerInteraction.Ignore))
+					if (!cols.Contains(h.collider) && h.collider.GetComponentInParent<AI_NetworkBehaviour>() == null && h.collider.GetComponentInParent<Network_Player>() == null) best = Mathf.Max(best, h.point.y);
+				return best;
+			};
+			Func<Vector3, Vector3, float, float> rock = (from, dir, len) =>
+			{
+				float best = float.MaxValue;
+				RaycastHit h;
+				foreach (Collider c in cols) if (c.Raycast(new Ray(from, dir), out h, len)) best = Mathf.Min(best, h.distance);
+				return best;
+			};
+			float worst = 0f;
+			int sides = 0, buried = 0;
+			string at = "";
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				float start = new Vector2(b.extents.x, b.extents.z).magnitude + 2f;
+				for (int i = 0; i < 24; i++)
+				{
+					float a = i * Mathf.PI / 12f;
+					Vector2 dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+					if ((p.OpenPlus && Vector2.Dot(dir, outDir) > 0.6f) || (p.OpenMinus && Vector2.Dot(dir, outDir) < -0.6f)) continue;
+					Vector3 prev = Vector3.zero;
+					bool hasPrev = false;
+					for (float t = start; t > 0f; t -= 0.5f)
+					{
+						Vector2 q = mid + dir * t;
+						float g = ground(q);
+						if (g == float.MinValue) { hasPrev = false; continue; }
+						Vector3 here = new Vector3(q.x, g, q.y);
+						if (hasPrev)
+						{
+							Vector3 d = here + Vector3.up * 0.3f - prev;
+							if (d.sqrMagnitude > 0.0001f && rock(prev, d.normalized, d.magnitude) < float.MaxValue) { sides++; break; }
+						}
+						float up = rock(here + Vector3.up * 0.05f, Vector3.up, 40f);
+						if (up < float.MaxValue)
+						{
+							sides++;
+							if (up > worst) { worst = up; at = " (worst " + up.ToString("F1") + " m, " + (a * Mathf.Rad2Deg).ToString("F0") + "° round, at " + here.ToString("F0") + ")"; }
+							break;
+						}
+						// (the shell under the ground here: the hill covers that side - no rim to see, no gap)
+						if (rock(here + Vector3.up * 0.05f, Vector3.down, 40f) < float.MaxValue) { sides++; buried++; break; }
+						prev = here + Vector3.up * 0.3f;
+						hasPrev = true;
+					}
+				}
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+			detail = sides + " sides walked (" + buried + " under the hill), the largest gap under its rim " + worst.ToString("F1") + " m" + at;
+			return sides > 0 ? worst : 99f;
 		}
 
 		/// <summary>
@@ -1371,10 +1709,11 @@ namespace DynamicIslands
 				cam.farClipPlane = Mathf.Max(far, 2500f);
 				cam.targetTexture = rt;
 				// (the player's underwater and wobble effects on Raft's camera would bend the picture: off for this one frame)
-				var effects = cam.GetComponents<Behaviour>().Where(b => b != null && b.enabled && !(b is Camera) && System.Text.RegularExpressions.Regex.IsMatch(b.GetType().Name, "(?i)underwater|wobble|distort|refract|drunk|blur|wave")).ToList();
+				var effects = cam.GetComponents<Behaviour>().Where(b => b != null && b.enabled && !(b is Camera) && System.Text.RegularExpressions.Regex.IsMatch(b.GetType().Name, "(?i)underwater|wobble|distort|refract|drunk|blur|wave|waterdrops")).ToList();
 				if (!effectsLogged) { effectsLogged = true; Log("  (the camera's effects: " + string.Join(", ", cam.GetComponents<Behaviour>().Where(b => b != null && !(b is Camera)).Select(b => b.GetType().Name + (b.enabled ? "" : " off")).ToArray()) + "; off for pictures: " + effects.Count + ")"); }
 				foreach (Behaviour b in effects) b.enabled = false;
-				try { cam.Render(); } finally { foreach (Behaviour b in effects) b.enabled = true; }
+				bool gfx = GfxShotBegin(); // (CIGfx low: the user's quality)
+				try { cam.Render(); } finally { foreach (Behaviour b in effects) b.enabled = true; GfxShotEnd(gfx); }
 				RenderTexture.active = rt;
 				tex.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0);
 				tex.Apply();
@@ -1394,7 +1733,34 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIGrotto", docs: "Dev, world (host): the nearest of Raft's big islands gets a den (one of Balboa's cave outcrops) and an outpost (the randomizer's extras, forced): they load, the guard wakes inside the cave; pictures shot_grotto_*")]
-		public static void GrottoCommand(string[] args) { DynamicIslands.instance.StartCoroutine(GrottoRoutine(args != null && args.Any(a => a == "keep"))); }
+		public static void GrottoCommand(string[] args) { StartTest(GrottoRoutine(args != null && args.Any(a => a == "keep"))); }
+
+		/// <summary>Raft adds one of its big islands ahead (as its timer does) and the raft sails up to it until it spawns.</summary>
+		static IEnumerator BringBigIsland(Action<Landmark> found)
+		{
+			ChunkManager chunks = ComponentManager<ChunkManager>.Value ?? UnityEngine.Object.FindObjectOfType<ChunkManager>();
+			ChunkPoint point = chunks != null ? chunks.AddChunkPointForcibly(ChunkPointType.Landmark_Big) : null;
+			if (point == null) { Log("  (Raft brought no big island)"); yield break; }
+			Log("  (Raft brings a big island " + Flat(point.worldPosition - CustomIslandSpawner.RaftPosition.Value).magnitude.ToString("F0") + " m away)");
+			// (Raft shifts the world back to its middle as the raft moves: the point follows those shifts, as in CIBlueprintsWorld)
+			Vector3 p0 = point.worldPosition, shifted = Vector3.zero;
+			Action<Vector3> onShift = d => shifted += d;
+			WorldShiftManager.OnWorldShift += onShift;
+			Func<Vector3> target = () => point.worldPosition != p0 ? point.worldPosition : p0 + shifted;
+			// (by its place, not by the object: Raft reuses its island objects - the one tried before may come back as this one)
+			Func<Landmark> at = () => WorldManager.AllLandmarks.FirstOrDefault(l => l != null && l.isSpawned && WorldRandomizer.KindOf(l) == "Landmark_Big" && Flat(l.transform.position - target()).magnitude < 300f);
+			Func<bool> spawned = () => at() != null;
+			try
+			{
+				for (int leg = 0; leg < 6 && !spawned(); leg++)
+				{
+					yield return SailTo(() => target() + (CustomIslandSpawner.RaftPosition.Value - target()).normalized * 200f, 60f);
+					yield return WaitFor(spawned, 20f);
+				}
+			}
+			finally { WorldShiftManager.OnWorldShift -= onShift; }
+			found(at());
+		}
 
 		static IEnumerator GrottoRoutine(bool keep)
 		{
@@ -1405,36 +1771,60 @@ namespace DynamicIslands
 			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
 			Func<Landmark> nearestBig = () => WorldManager.AllLandmarks.Where(l => l != null && l.isSpawned && WorldRandomizer.KindOf(l) == "Landmark_Big").OrderBy(l => (l.transform.position - (CustomIslandSpawner.RaftPosition ?? raft)).sqrMagnitude).FirstOrDefault();
 			Landmark big = nearestBig();
-			// (none near: sail on until one of Raft's big islands is, about 1 km at a time)
-			for (int i = 0; i < 10 && big == null; i++) { yield return SailRoutine(40f, 25f); big = nearestBig(); }
-			if (big == null) { Fail("a cave on Raft's island: none of Raft's big islands near the raft after 10 km"); yield break; }
+			// (custom islands off meanwhile: placed ahead of the raft, a dense world's islands could leave Raft's big one no
+			// room to fit)
+			bool autoBefore = CustomIslandSpawner.Enabled;
+			CustomIslandSpawner.Enabled = false;
+			// (none near: Raft brings one, as its own timer does - it adds big islands by time, not by distance sailed: in
+			// three worlds none came within 25 km of fast sailing)
+			if (big == null) { yield return BringBigIsland(l => big = l); if (big == null) big = nearestBig(); }
+			if (big == null) { CustomIslandSpawner.Enabled = autoBefore; Fail("a cave on Raft's island: Raft brought none of its big islands"); yield break; }
 			RandomizerSettings before = WorldRandomizer.Current.Copy();
 			if (!WorldRandomizer.Current.On) WorldRandomizer.Set(new RandomizerSettings { Level = RandomizerSettings.Normal, Seed = 77 });
-			// Go there first: Raft switches the ground of far islands off
-			yield return PutPlayer(player, big.transform.position + Vector3.up * 80f, false);
-			for (float t = 0; t < 30f && !WorldRandomizer.GroundOn(big); t += 1f) yield return new WaitForSeconds(1f);
-			SetHour(11f);
-			RandomizerContent.ForceBigFinds = true;
 			int n = IslandWorldState.Islands.Count;
-			// (the den's spot is a roll: on a crowded or bumpy island of Raft's one roll may find none - a few rolls, as a
-			// world's islands would each have)
 			IslandWorldState.Entry e = null;
 			List<Transform> caves = new List<Transform>();
-			foreach (int salt in new[] { 1234, 2345, 3456, 4567 })
+			// (a bumpy or crowded island - Twin peak - may have no spot a den fits on at all: then the next of Raft's big islands)
+			var tried = new List<Landmark>();
+			for (int isle = 0; isle < 3 && big != null; isle++)
 			{
+				tried.Add(big);
+				// Go there first: Raft switches the ground of far islands off
+				yield return PutPlayer(player, big.transform.position + Vector3.up * 80f, false);
+				for (float t = 0; t < 30f && !WorldRandomizer.GroundOn(big); t += 1f) yield return new WaitForSeconds(1f);
+				SetHour(11f);
 				RandomizerContent.ForceBigFinds = true;
-				try { DynamicIslands.instance.StartCoroutine(WorldRandomizer.ForceExtras(big, salt)); }
-				finally { }
-				yield return new WaitForSeconds(3f);
-				RandomizerContent.ForceBigFinds = false;
-				e = IslandWorldState.Islands.LastOrDefault(x => WorldRandomizer.IsExtras(x));
-				for (float t = 0; e != null && t < 60f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
-				if (e == null || e.Root == null) continue;
-				caves = e.Root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
+				// (the den's spot is a roll: on a crowded or bumpy island of Raft's one roll may find none - a few rolls, as a
+				// world's islands would each have)
+				foreach (int salt in new[] { 1234, 2345, 3456, 4567 })
+				{
+					RandomizerContent.ForceBigFinds = true;
+					try { StartTest(WorldRandomizer.ForceExtras(big, salt)); }
+					finally { }
+					yield return new WaitForSeconds(3f);
+					RandomizerContent.ForceBigFinds = false;
+					e = IslandWorldState.Islands.LastOrDefault(x => WorldRandomizer.IsExtras(x));
+					for (float t = 0; e != null && t < 60f && e.Root == null && !e.Failed; t += 1f) yield return new WaitForSeconds(1f);
+					if (e == null || e.Root == null) continue;
+					caves = e.Root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
+					if (caves.Count > 0 || !RandomizerIslands.CanBuildCaves) break;
+					Log("  (no den with roll " + salt + ": another)");
+				}
 				if (caves.Count > 0 || !RandomizerIslands.CanBuildCaves) break;
-				Log("  (no den with roll " + salt + ": another)");
+				Landmark last = big;
+				big = WorldManager.AllLandmarks.Where(l => l != null && l.isSpawned && WorldRandomizer.KindOf(l) == "Landmark_Big" && !tried.Contains(l)).OrderBy(l => (l.transform.position - last.transform.position).sqrMagnitude).FirstOrDefault();
+				// (none other loaded: back on the raft, and Raft brings another, as at the start)
+				if (big == null)
+				{
+					Raft onRaft = UnityEngine.Object.FindObjectOfType<Raft>();
+					if (onRaft != null) yield return PutPlayer(player, onRaft.transform.position + Vector3.up * 2f, false);
+					yield return BringBigIsland(l => big = l);
+				}
+				if (big == null) { big = last; break; }
+				Log("  (no den on '" + last.name + "': the next of Raft's big islands, '" + big.name + "')");
 			}
-			if (e == null || e.Root == null) { Fail("the extras didn't load"); yield break; }
+			CustomIslandSpawner.Enabled = autoBefore;
+			if (e == null || e.Root == null) { Fail(caves.Count == 0 && tried.Count > 1 ? "no den fitted on " + tried.Count + " of Raft's big islands (4 rolls each)" : "the extras didn't load"); yield break; }
 			Log("Den extras: '" + e.Name + "'");
 			// (everything of the extras over Raft's island and its reef: nothing far out at sea)
 			Collider farthest = e.Root.GetComponentsInChildren<Collider>().Where(c => !c.isTrigger).OrderByDescending(c => new Vector2(c.bounds.center.x - e.Position.x, c.bounds.center.z - e.Position.z).sqrMagnitude).FirstOrDefault();
@@ -1453,6 +1843,8 @@ namespace DynamicIslands
 					yield return DenShots(player, zone.transform.position, hoardBox != null ? hoardBox.transform.position : caves[0].position, "grotto");
 					string denAt; float denOff = DenOffset(caves[0], zone.transform.position, out denAt);
 					Check(ref ok, Mathf.Abs(denOff) < 1.5f, "the den stands on its floor: " + denAt);
+					string rimAt; float rimGap = DenRimGap(caves[0], out rimAt);
+					Check(ref ok, rimGap < 0.6f, "the den's rim meets the ground all round, nothing to see into under it (AU83): " + rimAt);
 					var leftIn = DenLeftovers(caves[0]);
 					Check(ref ok, leftIn.Count == 0, "nothing of Raft's story or animals inside the den" + (leftIn.Count > 0 ? ": " + string.Join(", ", leftIn.ToArray()) : ""));
 					if (Mathf.Abs(denOff) >= 1.5f)
@@ -1531,7 +1923,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStorySafe", docs: "Dev, main menu or editor: opens each of Raft's island scenes and checks the randomizer changes only its plain islands (big and small), never a story island, the stranded boat, the pilot's island or a floating raft")]
-		public static void StorySafeCommand() { DynamicIslands.instance.StartCoroutine(StorySafeRoutine()); }
+		public static void StorySafeCommand() { StartTest(StorySafeRoutine()); }
 
 		static IEnumerator StorySafeRoutine()
 		{
@@ -1576,7 +1968,7 @@ namespace DynamicIslands
 			string name = args != null ? string.Join(" ", args) : "";
 			IslandWorldState.Entry e = IslandWorldState.Islands.LastOrDefault(i => string.Equals(i.HostName, name, StringComparison.OrdinalIgnoreCase) || string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase));
 			if (e == null) { Fail("no island called '" + name + "' in the list"); return; }
-			DynamicIslands.instance.StartCoroutine(GoToIslandRoutine(e));
+			StartTest(GoToIslandRoutine(e));
 		}
 
 		static IEnumerator GoToIslandRoutine(IslandWorldState.Entry e)
@@ -1661,14 +2053,45 @@ namespace DynamicIslands
 			"Placeable_Lantern_FireBasket", "Placeable_Lantern_Basic", "Placeable_Lantern_Metal", "Placeable_Lantern_Fireplace", "Placeable_StringLight_Horizontal", "Placeable_Utopia_LightBottleYellow",
 		};
 
+		[ConsoleCommand(name: "CIPropColliders", docs: "Dev, any time: a copy of each named object (comma separated) as it spawns - its scale, its meshes' box and each solid collider's box, from the pivot (min..max, m): what a scene's spacing must keep apart. CIPropColliders <name>[,<name>...]")]
+		public static void PropCollidersCommand(string[] args)
+		{
+			if (args == null || args.Length < 1) { Fail("CIPropColliders <name>[,<name>...]"); return; }
+			StartTest(PropCollidersRoutine(string.Join(" ", args)));
+		}
+
+		static IEnumerator PropCollidersRoutine(string names)
+		{
+			yield return PlaceableCatalog.EnsureBuilt();
+			Func<Vector3, string> v = x => Num(x.x) + "/" + Num(x.y) + "/" + Num(x.z);
+			foreach (string n in names.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0))
+			{
+				GameObject proto = PlaceableCatalog.Get(n);
+				if (proto == null) { Log("colliders " + n + ": not in this Raft"); continue; }
+				GameObject copy = UnityEngine.Object.Instantiate(proto, new Vector3(0f, 3000f, 0f), Quaternion.identity);
+				copy.SetActive(true);
+				Vector3 at = copy.transform.position;
+				var parts = new List<string>();
+				Renderer[] rs = global::DynamicIslands.Editor.PlacementOptions.ShapeRenderers(copy);
+				if (rs.Length > 0) { Bounds m = rs[0].bounds; foreach (Renderer r in rs) m.Encapsulate(r.bounds); parts.Add("meshes " + v(m.min - at) + " .. " + v(m.max - at)); }
+				foreach (Collider c in copy.GetComponentsInChildren<Collider>(true).Where(c => !c.isTrigger))
+					parts.Add(c.name + " " + c.GetType().Name + (c.enabled && c.gameObject.activeInHierarchy ? "" : " (off)") + " " + v(c.bounds.min - at) + " .. " + v(c.bounds.max - at));
+				Log("colliders " + n + ": scale " + v(copy.transform.lossyScale) + "; " + string.Join("; ", parts.ToArray()));
+				UnityEngine.Object.Destroy(copy);
+			}
+			Log("PASS: prop colliders");
+		}
+
 		[ConsoleCommand(name: "CIMeasureProps", docs: "Dev, main menu or editor: measures Raft's objects the randomizer builds with (size, bottom; the inside of cave pieces) into raft_props.txt in Mods\\DynamicIslands. CIMeasureProps [names, comma separated]")]
 		public static void MeasurePropsCommand(string[] args)
 		{
 			string[] names = args != null && args.Length > 0 ? string.Join(" ", args).Split(',').Select(s => s.Trim()).ToArray() : MeasuredProps;
-			DynamicIslands.instance.StartCoroutine(MeasureProps(names));
+			StartTest(MeasureProps(names));
 		}
 
-		static IEnumerator MeasureProps(string[] names)
+		/// <summary>Measures objects into raft_props.txt (the randomizer's list), or into another file (fileName: a path; the
+		/// randomizer's list is then left alone - the recipes' object lists).</summary>
+		static IEnumerator MeasureProps(string[] names, string fileName = null)
 		{
 			yield return PlaceableCatalog.EnsureBuilt();
 			yield return PlaceableCatalog.EnsureLoaded(names);
@@ -1752,9 +2175,9 @@ namespace DynamicIslands
 				UnityEngine.Object.Destroy(go);
 			}
 			UnityEngine.Object.Destroy(lab);
-			string path = System.IO.Path.Combine(DynamicIslands.assetpath, RaftProps.FileName);
+			string path = fileName ?? System.IO.Path.Combine(DynamicIslands.assetpath, RaftProps.FileName);
 			System.IO.File.WriteAllLines(path, lines.ToArray());
-			RaftProps.Reload();
+			if (fileName == null) RaftProps.Reload();
 			Log("Measured " + measured + " props (" + missing + " not in this Raft): " + System.IO.Path.GetFullPath(path));
 			if (measured > 0) Log("PASS: measured props"); else Fail("measured no props");
 		}
@@ -1767,7 +2190,7 @@ namespace DynamicIslands
 					"Balboa_Shack", "Balboa_DecorationPrefabBase_SimpleTent", "CaravanRocket", "CaravanRocketDebris_Body1", "CaravanRocketDebris_Body2", "CaravanRocketDebris_Top1", "CaravanRocketDebris_Exhaust",
 					"CaravanRocketDebris_Leg1", "CaravanRocketDebris_Door", "CaravanRocketDebris_Canister", "TangaroaFounderStatue", "RaftMonument", "Well", "RT_PlasticBoat", "RT_SharkCage", "Tire_02", "Pallet",
 					"ReefHuts_Wall2", "ReefHuts_Tarpaulin", "Crate_Big_01", "Scarecrow", "RT_WindMill", "Scaffolding_2x2m" };
-			DynamicIslands.instance.StartCoroutine(ProbeSetPieces(names));
+			StartTest(ProbeSetPieces(names));
 		}
 
 		static IEnumerator ProbeSetPieces(string[] names)

@@ -34,6 +34,11 @@ namespace CommandUndoRedo
 			undoRedo.Insert(command); Changes++;
 		}
 
+		public static void AppendToLast(ICommand command)
+		{
+			undoRedo.AppendToLast(command); Changes++;
+		}
+
 		public static void Execute(ICommand command)
 		{
 			undoRedo.Execute(command); Changes++;

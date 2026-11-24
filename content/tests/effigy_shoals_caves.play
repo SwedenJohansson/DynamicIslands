@@ -1,0 +1,22 @@
+# Effigy Shoals' undercroft (CIPlay effigy_shoals_caves, 11-12 w10; in a test world 'CI ...'). Points as in its
+# recipe: the mouth on the sea floor at 72 -54 (~3 m down), the tunnel climbing west (kit_uw yaw 270, len 29, slope 12)
+# under the Ash Dunes to the dry room 43 -54 .. 21 -54 (floor ~3), the Choir's chest at 30 -54; the sign at 50 -42.
+# Walk in along the flooded tunnel from the sea (as Thalassa Mooring's sea gate), take the chest, back out to the sea.
+island Effigy Shoals keep
+offset 1.4812 -1.9664
+hour 11
+weather Calm
+at 50 -40 h=3
+wait 2
+read THE UNDERCROFT
+picture ef_cave_shore 66 8 -36 40 6 -54
+picture ef_cave_mouth 80 -1 -54 72 -2.5 -54
+walk 78 -54 to 74 -54 to 64 -54 to 54 -54 to 44 -54 to 36 -54 to 31 -54 below=-2
+picture ef_cave_in 41 5 -54 29 3.8 -54 light=20
+open The Choir's undercroft
+wait 2
+expect item CopperIngot 2
+at 36 -54 h=4.5
+wait 1
+walk 36 -54 to 44 -54 to 54 -54 to 64 -54 below=4.5
+swim 68 -54 -1.5 to 72 -54 -2 to 78 -54 -2 to 84 -54 -1

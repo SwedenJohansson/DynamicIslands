@@ -1,0 +1,472 @@
+# Cinderfall - an island of the library's plan Raft 2: The Drowned Frontier (station Three of the Frontier Corps)
+# A volcano of black rock and ash, the Corps' geothermal plant at its foot: the workers' tents on the ash plain, the
+# turbine hall, pipes up the slope - and three relief valves stuck open on its flanks, the pressure rising. Quest
+# "Pressure" (17 steps): the camp, the engineer's warning, the three valves one by one (the west plateau, the south-east
+# spur, the north shoulder where the stone birds' matriarch nests - reached, she driven off, then its valve), the turbine
+# hall reached and its roaches, the plant's store opened (the machete's, the biofuel refiner's, the fuel tank's and the
+# fuel pipe's blueprints).
+# RAFT2 10-26 (1-hour pass): the ash flats' secrets - Slag Cave (south-east), the old survey hut (east) where Tomas Reyes waits (a lamp puzzle), a survey plane on the north-west flats, a jump course (north), the slag-heap maze (east), five obsidian shards (a set), a buried cache
+#
+# Built by the recipe player (CIRecipe cinderfall) through the editor's own operations.
+include lib_sea
+include lib_rt
+include lib_features
+include lib_highwater
+include lib_areas
+include lib_raft2
+new
+# (nature: volcanic: Like Raft's desert, with little scrub on the ash - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
+gen Trees=0.3 Bushes=0.3 Rocks=0.5 Harvest=0.3 BeachThings=0.3
+gen Seed=8103 Radius=80 Height=45 Roughness=0.55 Peaks=1 Shape=0 Style=4 PeakShape=0.6 Cliffs=0.4
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.4 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+
+# --- Terrain: the camp on the ash plain (3.2 m), the turbine hall's pad (3.45 m), the three valves' ledges (the west
+# plateau, the south-east spur, the north shoulder at 16 m) and the ramp up to the shoulder ------------------------------
+brush flatten at -10 48 r=9 s=20 frames=50 h=3.2
+brush flatten at 3 31.5 r=7 s=20 frames=60 h=3.45
+brush flatten at -56 -3 r=4.5 s=20 frames=40 h=10.4
+# (a way up onto the west plateau from the plain's north-west - the slopes elsewhere stopped a player)
+for i 0 5 1
+brush flatten at {-60+$i*0.5} {24-$i*4} r=3.5 s=20 frames=30 h={4.4+$i*1.2}
+next
+brush smooth from -60 24 to -57.5 4 r=4 s=10 frames=20
+brush flatten at 30 -28 r=4.5 s=20 frames=40 h=7
+brush flatten at -8 13 r=5 s=20 frames=60 h=16
+for i 0 11 1
+brush flatten at {20-$i*2.36} {32-$i*1.64} r=3.8 s=20 frames=30 h={3.6+$i*1.13}
+next
+brush smooth from 20 32 to -6 14 r=4.5 s=10 frames=20
+origin
+# --- RAFT2 10-26 terrain: the land grows (banks first), then the pads of the new areas -------------------------------
+# a knoll of ash on the east flats, so they are no flat plain (east of the path from the camp to the valves)
+call hw_mount x=44 z=16 b=10 h=6
+# the pads: the cave (Slag Cave), the ruined house, the plane
+call r2_pad x=58 z=-48 r=14 h=3
+brush flatten from 58 -40 to 58 -24 r=6 s=20 frames=300 h=3
+call r2_pad x=56 z=34 r=11 h=2.6
+call r2_pad x=-48 z=54 r=11 h=2
+call r2_pad x=68 z=4 r=12 h=2.6
+# RAFT2 10-26 b: relief round the ruined house - a rocky rise to its north-east and a lower one to its north-west,
+# so the house stands in a hollow, not on a bare flat top
+brush flatten at 66 44 r=6 s=20 frames=300 h=4.6
+brush flatten at 66.5 44.5 r=3.5 s=20 frames=300 h=6.4
+brush flatten at 45 43 r=5 s=20 frames=300 h=3.8
+brush flatten at 44.5 43.5 r=2.8 s=20 frames=300 h=5
+brush smooth at 66 44 r=8 s=4 frames=30
+brush smooth at 45 43 r=7 s=4 frames=30
+brush auto at 56 40 r=18 s=10 frames=25
+clear at 66 44 r=8
+clear at 45 43 r=7
+clear at -10 48 r=11
+clear at 3 31.5 r=9
+clear from -60 24 to -57.5 4 r=4
+clear at -56 -3 r=6
+clear at 30 -28 r=6
+clear at -8 13 r=7
+clear from 20 32 to -6 14 r=5
+
+# --- The workers' camp on the ash plain: three tents, a campfire, crates; the engineer's warning on a crate ------------
+place Balboa_DecorationPrefabBase_SimpleTent - at -16 50 ground yaw=170
+place Balboa_DecorationPrefabBase_SimpleTent - at -10 52.5 ground yaw=180
+place Balboa_DecorationPrefabBase_SimpleTent - at -4 50 ground yaw=190
+place campfire_1 - at -10 46.5 ground
+place Crate_Big_01 warningcrate at -13 44.5 ground yaw=15
+place Note_Paper engineerswarning at -13 44.5 h=6 sit drop yaw=70
+place Crate_Big_02 - at -6 44 ground yaw=-20
+place "Box Small" - at -4.5 45.5 ground yaw=30
+place Placeable_Flag_03 - at -18 44 ground
+place Zone_Trigger camp at -10 47 h=4.4
+
+# --- The turbine hall at the volcano's foot: one of the radio tower's rooms, its machines, the plant's store - and the
+# roaches; the pipes up the slope behind it ---------------------------------------------------------------------------
+# (turned round: its door in the front wall, facing the camp - a door in a back wall stays shut)
+push at 0 31.5 h=3.6 yaw=180
+call rt_storey f2=RT_WallDoor1 f1=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1 b1=RT_WallWindowBroken1
+place RT_Floor - at 0 4.5 y=3.05
+place TP_LaboratoryMachine_Large01 - at -3.2 3.4 sit
+place TP_LaboratoryMachine_Large02 - at -5.2 3.4 sit
+place TP_Selene_ComputerRoom_Server01 - at -5.3 -1 sit yaw=90
+place Locker plantstore at -5.4 2.6 sit yaw=90
+place "Table Office" - at -1.4 3.3 sit yaw=180
+pop
+place Zone_Trigger hall at 3 31.5 h=4.6
+place Creature_Roach roaches at 3 30.5 h=3.8
+place VP_ConcretePipe02 - at 10.5 33 ground yaw=0
+place VP_ConcretePipe02 - at 12.5 29 ground yaw=15
+place VP_ConcretePipe01 - at 9 38 ground yaw=40
+
+# --- The three relief valves: a vent pipe out of the ground on each ledge (the radio tower's down-pipe with its bend -
+# its pipe 0.27 m east and 2.79 m south of its pivot), the valve wheel on its side at waist height ----------------------
+place RT_PipeDownBend - at -56.27 -0.21 ground
+place UT_DrawBridgeMechanism_Cogwheel01 valve1 at -55.78 -3 h=11.6 yaw=0
+place RT_PipeDownBend - at 29.73 -25.21 ground
+place UT_DrawBridgeMechanism_Cogwheel01 valve2 at 30.22 -28 h=8.2 yaw=0
+place RT_PipeDownBend - at -8.27 14.79 ground
+place UT_DrawBridgeMechanism_Cogwheel01 valve3 at -7.78 12 h=17.2 yaw=0
+place Zone_Trigger nest at -8 14 h=17.2
+place Creature_StoneBird matriarch at -10 15 h=17.5
+
+# --- Friendly animals (placed: the generator's Friendly and SeaLife are whole numbers - the 0.2 and 0.3 above gave none;
+# the user, 2026-10-03: "add some friendly animals to some of the islands"): hens behind the workers' tents, dolphins off the north shore -
+place Creature_Chicken hens at -13 56
+prop hens creature.count=3
+place Creature_Dolphin dolphins at 0 100 h=-3
+prop dolphins creature.count=2
+
+# --- RAFT2 10-26 (the user: one hour per island - hills, a cave, a house, a wreck, secrets): the ash flats' secrets - Slag Cave (south-east), the old survey hut (east) where Tomas Reyes waits (a lamp puzzle), a survey plane on the north-west flats, a jump course (north), the slag-heap maze (east), five obsidian shards (a set), a buried cache ------
+call ar_cave x=58 z=-48 h=3 yaw=0 al=cf_caverock chest=cf_cavechest
+call hw_zone x=57 z=-39 al=cf_cavez id=cf_cave r=4 h=1 msg="Slag Cave. The rock is warm to the touch."
+call ar_ruin x=56 z=34 h=2.6 yaw=0 w=3 d=2 al=cf_ruin
+# 11-12 (w09): the islander upgraded - Forgekeeper Johnny, who kept the plant's forge lit for the Corps, waits at the
+# ruined survey house now (Tomas Reyes, the surveyor, is gone; his lamps and box stay). His answers: the machete, the
+# Drowned Gate (journal), a few offcuts. Talking to him opens the forge annex's hatch in the lava tubes (cf_annexhatch).
+call r2_islander x=55 z=29.5 yaw=200 al=cf_isl nm="Forgekeeper Johnny" pose=stand
+prop cf_isl islander.character=Johnny
+prop cf_isl talk.text=The ash never stops. Neither does the forge. I kept it lit for the Corps, and I keep it lit now they're gone.\n---\nTomas Reyes surveyed this rock before they built the plant. Told them the mountain breathes. His samples are still in Slag Cave, in the rocks by the shore. And the lads built a maze out of the slag heaps east of here, for fun. There's a box in the middle.\n---\nTomas's lamps - four round this house. Each one you turn wakes its neighbour too. Light all four and look behind the back wall.\nAnd the old lava tubes in the mountain's foot, past the turbine hall - my annex is down there, off the tube. Tell the hatch Johnny sent you.\n> How do I cut the weed?\n> What is beyond the gate?\n> Need anything?
+prop cf_isl on.choice1=message||The Corps drew up a machete for the weed. Its blueprint is in the plant's store, the locker in the turbine hall - it opens to the three valve tags.
+prop cf_isl on.choice2=journal|Forgekeeper Johnny: the Drowned Gate|Past the frontier the Corps built a sea gate across a drowned valley: two lock gates, a pump hall, the keeper's house on the wall. It has been shut since the water rose. Under the wall the old culverts still climb to a dry store - the divers kept their kit there.\nmessage||Johnny scratches the gate on a slate for you: two locks, a pump hall, the culverts under the wall.
+prop cf_isl on.choice3=give||Scrap*3\nmessage||Johnny tips three offcuts off the anvil into your hands. Better in your raft than in my ash.
+call r2_lamp x=49 z=33 al=cf_lamp1 nm="Survey lamp 1" grp="Survey lamps" on=0
+call r2_lamp x=55 z=40 al=cf_lamp2 nm="Survey lamp 2" grp="Survey lamps" on=1
+call r2_lamp x=62 z=33 al=cf_lamp3 nm="Survey lamp 3" grp="Survey lamps" on=1
+call r2_lamp x=55 z=26 al=cf_lamp4 nm="Survey lamp 4" grp="Survey lamps" on=0
+prop cf_lamp1 on.use=light|Survey lamp 2|toggle
+prop cf_lamp2 on.use=light|Survey lamp 3|toggle
+prop cf_lamp3 on.use=light|Survey lamp 4|toggle
+prop cf_lamp4 on.use=light|Survey lamp 1|toggle
+prop cf_lamp1 on.alllit=show|cf_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call r2_hidden x=57 z=38.6 al=cf_lampchest
+place Creature_Chicken cf_hens at 64 40 ground
+prop cf_hens creature.count=3
+call ar_plane x=-48 z=54 h=2 yaw=30 al=cf_plane crate=cf_planecrate
+place Note_Paper cf_pilot at -50.46 57.73 ground y=0.1 drop yaw=60
+call hw_zone x=-48 z=54 al=cf_planez id=cf_plane r=6 h=1 msg="A survey plane on the ash, grey with it."
+# JUMP cf pad=2.5 at=10 66
+push at 10 66
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2.5
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2.5
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpcf at 4.24 4.24 h=3.1
+place Block_Foundation_Tier3 jpcf at 5.77 1.65 h=3.85
+place Block_Foundation_Tier3 jpcf at 5.85 -1.35 h=4.6
+place Block_Foundation_Tier3 jpcf at 4.46 -4.01 h=5.35
+place Block_Foundation_Tier3 jpcf at 1.95 -5.67 h=6.1
+place Block_Foundation_Tier3 jpcf at -1.04 -5.91 h=6.85
+place Block_Foundation_Tier3 jpcf at -3.78 -4.66 h=7.6
+place Block_Foundation_Tier3 jpcf at -5.56 -2.25 h=8.35
+place Block_Foundation_Tier3 jpcf at -5.96 0.73 h=9.1
+place Block_Foundation_Tier3 jpcf at -4.85 3.53 h=9.85
+place Block_Foundation_Tier3 jpcf at -2.54 5.44 h=10.6 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppcf at 5.77 1.65 h=3.168 sy=1.861
+place Block_Foundation_Tier3 jppcf at 5.85 -1.35 h=3.918 sy=2.959
+place Block_Foundation_Tier3 jppcf at 4.46 -4.01 h=4.668 sy=4.058
+place Block_Foundation_Tier3 jppcf at 1.95 -5.67 h=5.418 sy=5.157
+place Block_Foundation_Tier3 jppcf at -1.04 -5.91 h=6.168 sy=6.255
+place Block_Foundation_Tier3 jppcf at -3.78 -4.66 h=6.918 sy=7.354
+place Block_Foundation_Tier3 jppcf at -5.56 -2.25 h=7.668 sy=8.453
+place Block_Foundation_Tier3 jppcf at -5.96 0.73 h=8.418 sy=9.552
+place Block_Foundation_Tier3 jppcf at -4.85 3.53 h=9.168 sy=10.650
+place Block_Foundation_Tier3 jppcf at -2.54 5.44 h=9.918 sy=11.749 sx=2 sz=2
+prop jpcf tint.color=#4a4542
+prop jpcf tint.amount=0.35
+prop jppcf tint.color=#4a4542
+prop jppcf tint.amount=0.35
+place Loot_Chest jccf at -1.04 -5.91 h=6.85 sit yaw=0
+prop jccf loot.refill=0
+place Loot_ChestSmall jbcf at -2.54 5.44 h=10.6 sit yaw=0
+prop jbcf loot.refill=0
+pop
+call hw_zone x=10 z=58 al=cf_jumpz id=cf_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+push at 60.5 -3.5 h=2.6
+place Block_Wall_Tier3 cf_maze at 0.75 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 2.25 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 0.75 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 2.25 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 3.75 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 5.25 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 3.75 6 y=0.05
+place Block_Wall_Tier3 cf_maze at 5.25 6 y=0.05
+place Block_Wall_Tier3 cf_maze at 3.75 9 y=0.05
+place Block_Wall_Tier3 cf_maze at 5.25 9 y=0.05
+place Block_Wall_Tier3 cf_maze at 3.75 12 y=0.05
+place Block_Wall_Tier3 cf_maze at 5.25 12 y=0.05
+place Block_Wall_Tier3 cf_maze at 3.75 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 5.25 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 6.75 9 y=0.05
+place Block_Wall_Tier3 cf_maze at 8.25 9 y=0.05
+place Block_Wall_Tier3 cf_maze at 6.75 12 y=0.05
+place Block_Wall_Tier3 cf_maze at 8.25 12 y=0.05
+place Block_Wall_Tier3 cf_maze at 6.75 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 8.25 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 9.75 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 11.25 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 9.75 9 y=0.05
+place Block_Wall_Tier3 cf_maze at 11.25 9 y=0.05
+place Block_Wall_Tier3 cf_maze at 9.75 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 11.25 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 12.75 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 14.25 0 y=0.05
+place Block_Wall_Tier3 cf_maze at 12.75 3 y=0.05
+place Block_Wall_Tier3 cf_maze at 14.25 3 y=0.05
+place Block_Wall_Tier3 cf_maze at 12.75 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 14.25 15 y=0.05
+place Block_Wall_Tier3 cf_maze at 0 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 0 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 3 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 3 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 3 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 3 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 6 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 6 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 6 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 6 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 9 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 9 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 9 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 9 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 9 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 9 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 12 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 12 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 12 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 12 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 cf_maze at 15 14.25 y=0.05 yaw=90
+# (11-03 fixC, CIFloatingSweep: the maze chest stood 0.38 m over the ground, lowered by the gap)
+place Loot_ChestSmall cf_mazechest at 13.5 1.5 y=-0.33 sit yaw=0
+pop
+prop cf_maze tint.color=#5a5a52
+prop cf_maze tint.amount=0.55
+prop cf_mazechest loot.refill=0
+call hw_zone x=66.5 z=-5 al=cf_mazez id=cf_maze r=3 msg="The slag maze. The heaps are higher than they look."
+call r2_piece x=20 z=40 al=cf_piece1 set="Obsidian shards"
+call r2_piece x=50 z=-20 al=cf_piece2 set="Obsidian shards"
+call r2_piece x=-44 z=30 al=cf_piece3 set="Obsidian shards"
+call r2_piece x=0 z=60 al=cf_piece4 set="Obsidian shards"
+call r2_piece x=30 z=-42 al=cf_piece5 set="Obsidian shards"
+prop cf_piece1 on.set=show|cf_setchest\nmessage||All five obsidian shards found.
+call r2_hidden x=61 z=41 al=cf_setchest kind=Loot_Chest
+call treasure x=-28 z=40 r=5 n=1 seed=27078 kind=0
+prop treasure27078 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_desert x=30 z=30 r=10 seed=27091
+call ar_plants_desert x=56 z=-40 r=8 seed=27092
+
+# RAFT2 10-26: scattered rocks that came out floating on the new slopes (CIGroundIslands)
+clear at 35.68 24.95 r=1.5 all only=BigSharpRock_5
+clear at 51.44 -34.89 r=1.5 all only=CaravanIsland_BrownGrass
+clear at 25.62 23.09 r=1.5 all only=CaravanIsland_SmallRock
+clear at 35.67 34.96 r=1.5 all only=BigSharpRock_5
+# --- 11-12 (w09): the old lava tubes - optional, no quest step (plan 09 row: DIG lava tubes from the forge to the ash
+# field). Two mouths in the mountain's foot west of the turbine hall: one off the hall's flats (A, -28 27), one on the
+# ash field (B, -45 18.5); each stroke takes its floor from its own mouth (~4.5 m), the two meet inside. A branch climbs
+# no further than the floor to the slag chamber (stone, mushrooms) deep under the cone; a second branch runs to Johnny's
+# forge annex, its hatch opened only for someone Johnny sent (talked gate). Mouths 1.4-2 m out from the foot's slope;
+# 6 m and more from the valves, the nest, the shards and the treasure. All dug, plain rock (cave.rock=plain).
+dig -45,18.5 -42,12 -36,9 r=2 slope=0 as=cftubes
+dig -28,27 -28,20 -30,13 -36,9 r=2 slope=0 as=cftubes
+dig -33,11 -27,3 -21,-3 r=2 slope=0 as=cftubes
+dig -21,-3 -16,-6 r=3.5 slope=0 as=cftubes
+dig -39,10.5 -42,3 -44,-2 r=1.75 slope=0 as=cftubes
+dig -44,-2 -46,-6 r=3 slope=0 as=cftubes
+caveloot cftubes dirt=0 mush=2 stone=3 vines=0 titanium=0 light=0 wet=0
+prop cftubes cave.rock=plain
+# cavecheck inside cf_annexhatch cf_annexchest
+place TangaroaHatchRoom_Hatch cf_annexhatch at -46.5 -6.5 h=6 drop yaw=200
+prop cf_annexhatch obj.name=cf_annexhatch
+prop cf_annexhatch beh.use=Open the annex hatch
+prop cf_annexhatch if.use=talked|Forgekeeper Johnny
+prop cf_annexhatch on.use=hide|cf_annexhatch\nshow|cf_annexchest\nmessage||The hatch lifts on Johnny's annex - the forge's spare stock, dry under the mountain.
+prop cf_annexhatch else.use=message||The hatch is chained shut. A tag on the chain: "Ask the forge. - J."
+place Loot_ChestSmall cf_annexchest at -45.4 -7.4 h=6 drop yaw=200
+prop cf_annexchest obj.name=cf_annexchest
+prop cf_annexchest beh.hidden=1
+prop cf_annexchest loot.refill=0
+note cf_annexchest Johnny's annex | The forge's spare stock, kept where the ash can't reach: bar iron, copper, a tin of bolts. Chalked on the lid: "Borrow it, bring it back. - J."
+loot cf_annexchest MetalIngot*3;CopperIngot*2;Bolt*4;Scrap*4
+
+# --- 11-12 (w09): the vent pool on the high plateau - optional, no quest step (plan 09 row: ACID hot ash pool, side,
+# safe=suit). A vent under the plateau keeps a pool of scalding, sulphur-green water in a dish of ash; the Corps
+# surveyors lost a locker in it. Their heat suits wait in the box at the rim. The dish's sides are a gentle slope (a
+# way out all round). 20 m and more from the west valve, the ramp up and the lava tubes.
+brush flatten at -38 -48 r=5 s=20 frames=300 h=9.2
+brush flatten at -38 -48 r=3.5 s=20 frames=300 h=9
+brush smooth at -38 -48 r=5.5 s=6 frames=15
+clear at -38 -48 r=7 only=(?i)boulder|rock|tree|bush|bamboo
+# the way up to the plateau from the east valley (CC reach 11-12: the walker found no way up to the pool): a graded
+# slope of ash from the valley floor (~6.6 at 20 -64) to the plateau (~9.8 at 6 -60), cleared of rocks and scrub
+clear from 22 -65 to -28 -54 r=3 only=(?i)boulder|rock|tree|bush|bamboo
+brush flatten at 19 -64.5 r=3 s=20 frames=300 h=6.9
+brush flatten at 15.5 -63.5 r=3 s=20 frames=300 h=7.8
+brush flatten at 12 -62.5 r=3 s=20 frames=300 h=8.7
+brush flatten at 8.5 -61.5 r=3 s=20 frames=300 h=9.5
+brush smooth at 14 -63 r=7 s=6 frames=15
+place TP_SeleneReactor_Water_Radiated cf_ventpool at -38 -48 ground scale=0.3 yaw=30
+prop cf_ventpool obj.name=cf_ventpool
+place SmallRock_02 cf_ventrock at -40.6 -49.6 h=11 drop yaw=60 scale=0.45 sy=0.5
+place SmallRock_02 cf_ventrock at -35.6 -46.2 h=11 drop yaw=170 scale=0.45 sy=0.5
+place SmallRock_02 cf_ventrock at -36.2 -50.6 h=11 drop yaw=280 scale=0.45 sy=0.5
+prop cf_ventrock tint.color=#c8b040
+prop cf_ventrock tint.amount=0.6
+place Zone_Atmosphere cf_ventmist at -38 -48 h=10
+prop cf_ventmist zone.radius=4
+prop cf_ventmist atmo.particles=steam
+prop cf_ventmist atmo.fog=#a09060
+prop cf_ventmist atmo.fogAmount=0.3
+prop cf_ventmist atmo.light=#ffb060
+prop cf_ventmist atmo.lightAmount=0.3
+place Zone_Trigger cf_vent at -38 -48 h=10
+prop cf_vent obj.name=cf_vent
+prop cf_vent zone.id=cf_vent
+prop cf_vent zone.radius=3.4
+prop cf_vent zone.hazard=acid
+prop cf_vent zone.damage=4
+prop cf_vent zone.safe=suit
+prop cf_vent zone.hazardMsg=The pool scalds - vent water, ash and sulphur. A Corps heat suit from the box at the rim keeps it off.
+place Loot_ChestSmall cf_ventlocker at -38 -48 h=10.5 drop yaw=200
+note cf_ventlocker Surveyors' locker | The Corps surveyors' locker, lost in the vent pool: a spare cell, a gauge board and a bar of titanium for the plant's turbine.
+loot cf_ventlocker Battery*1;CircuitBoard*1;TitaniumIngot*1;Bolt*3
+prop cf_ventlocker loot.refill=0
+place "Box Big" cf_ventsuits at -32.4 -53.2 ground sit yaw=225
+prop cf_ventsuits obj.name=cf_ventsuits
+prop cf_ventsuits beh.use=Put on a Corps heat suit
+prop cf_ventsuits on.use=suit||180\nmessage||A Corps heat suit, quilted and silvered, sealed at the wrists and boots - three minutes before the heat gets through.
+place Note_Sign cf_ventwarn at -31.2 -51.6 ground sit yaw=240
+note cf_ventwarn VENT POOL - SCALDING | The vent under this plateau keeps the pool near boiling. It burns skin and boots. Wear a heat suit from the box.\n- Corps survey, T. Reyes
+place TP_Moontown_Barrel02 - at -44.4 -53.4 ground sit yaw=80
+place TP_Moontown_Barrel02 - at -45.4 -52.2 ground sit yaw=200
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): palms, pineapples, flowers ----------
+scatter "Pickup_Landmark_Tree_Palm 3" 6 at 0 0 r=56.0 seed=4476 free=5
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=56.0 seed=4486 free=3
+scatter "Pickup_Landmark_Flower_Black" 4 at 0 0 r=56.0 seed=4496 free=3
+scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=56.0 seed=4497 free=3
+# RAFT2 10-26 b: no plants on the hills' steep rock faces
+call r2_bareflank x=44 z=16 b=10 h=6
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=100 deep=5 n=2
+
+info title=Cinderfall
+info author=Custom Islands
+info description=Station Three of the Frontier Corps: a volcano of black rock and ash, the Corps' geothermal plant at its foot - and three relief valves stuck open on its flanks while the pressure rises. The third island of Raft 2: The Drowned Frontier.
+island on.arrive=message||A black volcano breathing steam, tents on the ash, a hall of machines at its foot. Somewhere a gauge is ticking upwards.
+
+story valvetag|Valve tag|quest:Varuna_CraneKey|The brass tag from a relief valve, taken once it was shut - the plant's store opens to all three.
+
+note engineerswarning Engineer's warning | FRONTIER CORPS - STATION THREE - CINDERFALL PLANT\n\nPRESSURE RISING. The three relief valves are stuck open - one on the high plateau, one on the rocky spur across the plain, one on the shoulder up the ramp, where the stone birds nest.\n\nShut each by its wheel and bring me its brass tag: the plant's store opens to the three tags. The roaches have the turbine hall - mind your boots.\n\nThe Corps went on to the Sunken Archive. The machete is in the store - you'll want it there.
+note plantstore Plant store | The plant's store: the machete, the plans for a biofuel refiner, a fuel tank and fuel pipes - all a raft needs to run on its own fuel.
+loot plantstore Blueprint_Machete*1;Blueprint_BiofuelExtractor*1;Blueprint_Fueltank*1;Blueprint_Pipe_Fuel*1;Scrap*6;ExplosiveGoo*3
+prop plantstore loot.refill=0
+prop plantstore if.open=has|story:valvetag|3
+prop plantstore else.open=message||The store's lock has three slots for brass valve tags. The engineer's warning said where the valves are.
+
+prop valve1 obj.name=valve1
+prop valve1 beh.use=Shut the relief valve
+prop valve1 if.use=!signal|valve1
+prop valve1 on.use=message||The wheel fights you, then turns: the valve groans shut and the hiss dies. You pocket its brass tag.\nsignal||valve1\ngive||story:valvetag*1
+prop valve1 else.use=message||This valve is shut.
+prop valve2 obj.name=valve2
+prop valve2 beh.use=Shut the relief valve
+prop valve2 if.use=!signal|valve2
+prop valve2 on.use=message||The wheel fights you, then turns: the valve groans shut and the hiss dies. You pocket its brass tag.\nsignal||valve2\ngive||story:valvetag*1
+prop valve2 else.use=message||This valve is shut.
+prop valve3 obj.name=valve3
+prop valve3 beh.use=Shut the relief valve
+prop valve3 if.use=!signal|valve3
+prop valve3 on.use=message||The wheel fights you, then turns: the valve groans shut and the hiss dies. You pocket its brass tag.\nsignal||valve3\ngive||story:valvetag*1
+prop valve3 else.use=message||This valve is shut.
+
+prop camp zone.id=camp
+prop camp zone.radius=8
+prop camp zone.message=The workers' camp: three tents, a cold campfire - and nobody.
+prop hall zone.id=hall
+prop hall zone.radius=5
+prop hall zone.message=The turbine hall - and roaches pouring out of the machines!
+prop nest zone.id=nest
+prop nest zone.radius=6
+prop nest zone.message=The north shoulder: the third valve - and a huge stone bird rising from her nest beside it!
+prop roaches creature.count=3
+prop roaches creature.respawn=0
+prop roaches creature.zone=hall
+prop matriarch creature.count=1
+prop matriarch creature.size=1.8
+prop matriarch creature.health=4
+prop matriarch creature.respawn=0
+prop matriarch creature.zone=nest
+prop matriarch tint.color=#3b2b25
+prop matriarch tint.amount=0.5
+
+loot cf_cavechest CopperIngot*2;Glass*2;Nail*6;MetalOre*2
+prop cf_cavechest loot.refill=0
+note cf_cavechest Slag Cave chest | A chest at the back of Slag Cave, dry under the rock.
+note cf_lampchest Tomas's survey box | Tomas's survey box: maps of the volcano, a compass and his wages.
+loot cf_lampchest CopperIngot*2;TradeToken*2;Rope*2
+note cf_setchest Sample chest | The survey's sample chest - the five shards back in their slots, and the crew's spare tools.
+loot cf_setchest Glass*3;Bolt*4;MetalIngot*1
+note cf_planecrate Survey plane's crate | The survey plane's crate: rock hammers, sample bags and tools.
+loot cf_planecrate Plastic*3;Scrap*3;Nail*6
+prop cf_planecrate loot.refill=0
+note cf_pilot Survey pilot's note | SURVEY 4 - Cinderfall. Ash cloud at two thousand. Engine choked, glided onto the ash flats. Tomas, your mountain is breathing again.
+note jccf Ash lookout box | The stokers stacked stones to see over the ash.
+loot jccf Rope*3;Plank*4;MetalIngot*1
+note jbcf Top of the ash stack | Somebody's stash at the very top.
+loot jbcf CopperIngot*1;Bolt*2;TradeToken*1
+note cf_mazechest Slag maze box | The crew's prize box in the middle of the slag maze.
+loot cf_mazechest CopperIngot*2;Rope*2;TradeToken*1
+
+quest title=Pressure
+quest intro=A volcano breathing steam and a plant at its foot, its pressure rising. Station Three: make for the volcano and start at the workers' camp below it.
+step reach|camp|1|Make for the volcano; the workers' camp is on the ash plain below it
+step read|Engineer's warning|1|Read the engineer's warning
+step collect|story:valvetag|1|Climb to the high plateau, shut its relief valve and pocket the brass tag
+step collect|story:valvetag|2|Cross the plain to the rocky spur and shut the second valve
+step reach|nest|1|Take the ramp up to the shoulder where the stone birds nest
+step kill|Screecher|1|Drive off the stone birds' matriarch by the third valve
+step collect|story:valvetag|3|Shut the last valve - three brass tags, and the hiss dies
+step reach|hall|1|Go down to the turbine hall at the volcano's foot
+step kill|Roach|3|Clear the roaches out of the turbine hall
+step talk|Forgekeeper Johnny|1|Talk to Forgekeeper Johnny at the ruined house on the ash plain
+step reach|cf_cave|1|Find Slag Cave, the cave mouth in the rocks by the shore
+step open|Slag Cave chest|1|Open the chest at the back of Slag Cave
+step open|Plant store|1|Open the plant's store with the three valve tags
+step blueprint|Blueprint_Machete|1|Take the machete plans from the plant store
+step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from the plant store
+step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the plant store
+step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from the plant store
+quest done=The gauges settle, the hiss is gone. In the store the Corps left a machete and their fuel plans - and a note: the Sunken Archive, out in the lagoon.
+quest reward=Plank*8;Scrap*6;Rope*2
+
+# Buried treasure (the story line's middle): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=40 n=1 seed=8829
+prop treasure8829 treasure.loot=TitaniumOre*3
+# Puffer fish off the shore (explosive goo)
+place Creature_PufferFish puffers at 0 92 h=-3
+prop puffers creature.count=3
+
+# --- Raft's vehicles (VI4, 2026-10-23): parked on open ground, clear of paths and quest objects ---
+place VP_Excavator - at -15 36 ground sit yaw=90
+# the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
+clear at -25.19 -28.12 r=1.5 only=CaravanIsland_SmallRock
+clear at -63.4 -30.15 r=1.5 only=BigSharpRock
+
+save Cinderfall

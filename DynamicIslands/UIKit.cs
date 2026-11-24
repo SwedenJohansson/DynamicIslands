@@ -240,6 +240,36 @@ namespace DynamicIslands.Editor
 			r.sizeDelta = size;
 		}
 
+		/// <summary>Raft's light tan of its item slots, as a sheet to read on (tinted as a slot button at rest).</summary>
+		public static readonly Color Parchment = new Color(0.86f, 0.83f, 0.78f, 1f);
+		/// <summary>Lettering on the tan sheet: Raft's dark brown.</summary>
+		public static readonly Color ParchmentInk = new Color(0.2f, 0.13f, 0.06f, 1f);
+
+		/// <summary>
+		/// A sheet to read on in Raft's light tan - its item slots' look (ItemBG_wo_Frame), with Raft's dark rim: the journal's
+		/// page and the note reader (the user, 2026-10-02: the cream paper felt like Windows Notepad). Without Raft's sprite a
+		/// tan rounded sheet.
+		/// </summary>
+		public static Image ParchmentSheet(RectTransform r)
+		{
+			Image img = Ensure<Image>(r.gameObject);
+			Sprite s = RaftSprite("ItemBG_wo_Frame");
+			if (s != null)
+			{
+				img.sprite = s;
+				img.type = s.border != Vector4.zero ? Image.Type.Sliced : Image.Type.Simple;
+				img.color = Parchment;
+			}
+			else
+			{
+				img.sprite = Rounded(6);
+				img.type = Image.Type.Sliced;
+				img.color = Tan;
+			}
+			Border(r, PanelRim, 6, 2f);
+			return img;
+		}
+
 		public static Image Background(GameObject go, Color color, int radius = 8)
 		{
 			Image img = Ensure<Image>(go);
@@ -306,6 +336,79 @@ namespace DynamicIslands.Editor
 			return r;
 		}
 
+		/// <summary>
+		/// Dev and tests: what doesn't fit in a window at a screen of this size (pixels) and UI scale (1 = the mod's own; 1.25 =
+		/// everything a quarter larger): the window itself past the edge of the screen, and every button (and ? mark) that lies
+		/// outside the window or is squeezed to nothing - a row of fixed widths wider than the window pushed its last buttons
+		/// out (World plans' Close). One line each; empty when everything fits. The window is taken to be centred, as the
+		/// editor's windows are. A button in a scrolled list (under a mask) is only checked across: scrolled out of view is fine.
+		/// </summary>
+		public static List<string> RowOverflow(RectTransform window, Vector2 screen, float uiScale = 1f)
+		{
+			var problems = new List<string>();
+			if (window == null) { problems.Add("no window"); return problems; }
+			Canvas.ForceUpdateCanvases();
+			Canvas canvas = window.GetComponentInParent<Canvas>();
+			if (canvas != null) canvas = canvas.rootCanvas;
+			RectTransform root = canvas != null ? (RectTransform)canvas.transform : null;
+			UnityEngine.Rect own = LocalRect(window, root);
+			// (the canvas size Raft's screen gives, in the units the window is laid out in)
+			float scale = ScaleFor(canvas != null ? canvas.GetComponent<CanvasScaler>() : null, screen) * Mathf.Max(0.1f, uiScale);
+			Vector2 logical = screen / scale;
+			UnityEngine.Rect area = new UnityEngine.Rect(-logical.x / 2f, -logical.y / 2f, logical.x, logical.y);
+			UnityEngine.Rect placed = new UnityEngine.Rect(own.x - (root != null ? root.rect.center.x : 0f), own.y - (root != null ? root.rect.center.y : 0f), own.width, own.height);
+			if (!Inside(placed, area, 1f))
+				problems.Add(window.name + " (" + Mathf.RoundToInt(own.width) + " x " + Mathf.RoundToInt(own.height) + ") doesn't fit the screen " +
+					Mathf.RoundToInt(screen.x) + " x " + Mathf.RoundToInt(screen.y) + " at UI scale " + uiScale.ToString("0.##") + " (" + Mathf.RoundToInt(logical.x) + " x " + Mathf.RoundToInt(logical.y) + ")");
+			foreach (Button b in window.GetComponentsInChildren<Button>(false))
+			{
+				RectTransform r = (RectTransform)b.transform;
+				UnityEngine.Rect rect = LocalRect(r, root);
+				string name = b.name + " in " + (r.parent != null ? r.parent.name : "?");
+				if (rect.width < 4f || rect.height < 4f) { problems.Add(name + " is squeezed to " + Mathf.RoundToInt(rect.width) + " x " + Mathf.RoundToInt(rect.height)); continue; }
+				RectMask2D clip = r.parent != null ? r.parent.GetComponentInParent<RectMask2D>() : null;
+				Mask mask = r.parent != null ? r.parent.GetComponentInParent<Mask>() : null;
+				RectTransform view = clip != null && clip.transform.IsChildOf(window) ? (RectTransform)clip.transform : mask != null && mask.transform.IsChildOf(window) ? (RectTransform)mask.transform : null;
+				if (view != null)
+				{
+					UnityEngine.Rect v = LocalRect(view, root);
+					if (rect.xMin < v.xMin - 1f || rect.xMax > v.xMax + 1f) problems.Add(name + " sticks out of its list by " + Mathf.RoundToInt(Mathf.Max(v.xMin - rect.xMin, rect.xMax - v.xMax)) + " px");
+				}
+				else if (!Inside(rect, own, 1f))
+					problems.Add(name + " lies outside " + window.name + " by " + Mathf.RoundToInt(Mathf.Max(Mathf.Max(own.xMin - rect.xMin, rect.xMax - own.xMax), Mathf.Max(own.yMin - rect.yMin, rect.yMax - own.yMax))) + " px");
+			}
+			return problems;
+		}
+
+		/// <summary>A rect's corners in another's local space (the whole screen's, for a canvas root).</summary>
+		static UnityEngine.Rect LocalRect(RectTransform r, RectTransform space)
+		{
+			var c = new Vector3[4];
+			r.GetWorldCorners(c);
+			if (space != null) for (int i = 0; i < 4; i++) c[i] = space.InverseTransformPoint(c[i]);
+			return UnityEngine.Rect.MinMaxRect(Mathf.Min(c[0].x, c[2].x), Mathf.Min(c[0].y, c[2].y), Mathf.Max(c[0].x, c[2].x), Mathf.Max(c[0].y, c[2].y));
+		}
+
+		static bool Inside(UnityEngine.Rect inner, UnityEngine.Rect outer, float slack)
+		{
+			return inner.xMin >= outer.xMin - slack && inner.yMin >= outer.yMin - slack && inner.xMax <= outer.xMax + slack && inner.yMax <= outer.yMax + slack;
+		}
+
+		/// <summary>The scale a canvas scaler gives a screen of this size (as CanvasScaler works it out).</summary>
+		public static float ScaleFor(CanvasScaler scaler, Vector2 screen)
+		{
+			if (scaler == null || scaler.uiScaleMode != CanvasScaler.ScaleMode.ScaleWithScreenSize) return scaler != null && scaler.uiScaleMode == CanvasScaler.ScaleMode.ConstantPixelSize ? scaler.scaleFactor : 1f;
+			Vector2 reference = scaler.referenceResolution;
+			if (reference.x <= 0f || reference.y <= 0f) return 1f;
+			float w = screen.x / reference.x, h = screen.y / reference.y;
+			switch (scaler.screenMatchMode)
+			{
+				case CanvasScaler.ScreenMatchMode.Expand: return Mathf.Min(w, h);
+				case CanvasScaler.ScreenMatchMode.Shrink: return Mathf.Max(w, h);
+				default: return Mathf.Pow(2f, Mathf.Lerp(Mathf.Log(w, 2f), Mathf.Log(h, 2f), scaler.matchWidthOrHeight));
+			}
+		}
+
 		#endregion
 
 		#region Controls
@@ -323,6 +426,16 @@ namespace DynamicIslands.Editor
 			// A bold label in the accent colour, large or in capitals, is a heading: Raft's title font and colour, larger, with its shadow
 			if (color.HasValue && c == Accent && style == FontStyle.Bold && (size >= 16 || (text ?? "").Any(char.IsLetter) && text == text.ToUpperInvariant())) Heading(t, size);
 			else if (c.grayscale > 0.5f) TextShade(t, size >= 18 ? 1.5f : 1f);
+			return t;
+		}
+
+		/// <summary>Keeps a long text inside its box: it wraps, then shrinks down to minSize (default two thirds of its size) instead of spilling out.</summary>
+		public static Text Fit(Text t, int minSize = 0)
+		{
+			int max = t.fontSize;
+			if (minSize <= 0) minSize = Mathf.Max(8, Mathf.RoundToInt(max * 0.65f));
+			t.resizeTextForBestFit = true; t.resizeTextMaxSize = max; t.resizeTextMinSize = Mathf.Min(minSize, max);
+			t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Truncate;
 			return t;
 		}
 
@@ -393,6 +506,29 @@ namespace DynamicIslands.Editor
 			b.onClick.AddListener(() => { if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == b.gameObject) EventSystem.current.SetSelectedGameObject(null); });
 			if (onClick != null) b.onClick.AddListener(() => onClick());
 			if (hint != null) Hint(r.gameObject, hint);
+			return b;
+		}
+
+		/// <summary>A copy of a button made by Button() (its look, label and parts) under the parent, with its own click: much
+		/// cheaper than building one from scratch when a list has a thousand rows (the Islands window took 3-6 s with 1,000
+		/// islands). The label's text is set and its font and size (fontSize as given to Button()) picked again as Button() does.</summary>
+		public static Button CopyButton(Button template, Transform parent, string label, Action onClick, int fontSize = FontSize)
+		{
+			GameObject go = UnityEngine.Object.Instantiate(template.gameObject, parent, false);
+			go.name = "Button_" + label;
+			var b = go.GetComponent<Button>();
+			b.onClick = new Button.ButtonClickedEvent();
+			Register(b);
+			b.onClick.AddListener(() => { if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == b.gameObject) EventSystem.current.SetSelectedGameObject(null); });
+			if (onClick != null) b.onClick.AddListener(() => onClick());
+			Text t = LabelOf(b);
+			if (t != null)
+			{
+				t.text = label;
+				UseTitleFont(t);
+				int max = t.font == TitleFont && TitleFont != Font ? Mathf.RoundToInt(fontSize * 1.3f) : fontSize;
+				t.fontSize = max; t.resizeTextMaxSize = max; t.resizeTextMinSize = Mathf.Min(t.resizeTextMinSize, max);
+			}
 			return b;
 		}
 
@@ -616,6 +752,66 @@ namespace DynamicIslands.Editor
 			if (onClick != null) b.onClick.AddListener(() => onClick());
 			if (hint != null) Hint(r.gameObject, hint);
 			return b;
+		}
+
+		/// <summary>
+		/// A compact tick-box row: a small box (ticked or not, SetCheck) and its label (LabelOf), on no background - the
+		/// row lights up faintly under the mouse. For long lists of on/off settings where a full button each is too big.
+		/// </summary>
+		public static Button Check(Transform parent, string label, Action onClick, string hint = null, float height = 20f, int fontSize = 12)
+		{
+			RectTransform r = Rect("Check_" + label, parent);
+			Image img = Background(r.gameObject, Accent, 4);
+			var b = r.gameObject.AddComponent<Button>();
+			Register(b);
+			b.targetGraphic = img;
+			ColorBlock cb = b.colors;
+			cb.normalColor = new Color(1f, 1f, 1f, 0f); cb.highlightedColor = new Color(1f, 1f, 1f, 0.16f); cb.pressedColor = new Color(1f, 1f, 1f, 0.28f);
+			cb.selectedColor = cb.normalColor; cb.disabledColor = cb.normalColor; cb.colorMultiplier = 1f; cb.fadeDuration = 0.06f;
+			b.colors = cb;
+			var nav = b.navigation; nav.mode = Navigation.Mode.None; b.navigation = nav;
+			// (the box keeps its size, centred in the row; the label fills the rest)
+			HorizontalLayoutGroup h = Horizontal(r.gameObject, 6f, new RectOffset(3, 4, 0, 0));
+			h.childForceExpandWidth = false; h.childForceExpandHeight = false;
+			// (18: still 10 px on a 1366 x 768 screen)
+			float side = Mathf.Min(18f, height - 4f);
+			RectTransform box = Rect("Box", r);
+			Background(box.gameObject, FieldBg, 3);
+			Border(box, Tan, 3, 1f);
+			Size(box.gameObject, side, side);
+			// (the tick is a filled square, not a glyph: Raft's fonts may lack one)
+			RectTransform tick = Rect("Tick", box);
+			Stretch(tick, 3, 3, 3, 3);
+			Background(tick.gameObject, Accent, 2).raycastTarget = false;
+			Text t = Label(r, label, fontSize, TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "Text");
+			t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Truncate;
+			t.resizeTextForBestFit = true; t.resizeTextMinSize = Mathf.Min(9, fontSize); t.resizeTextMaxSize = fontSize;
+			Size(t.gameObject, -1, height);
+			Size(r.gameObject, -1, height);
+			b.onClick.AddListener(() => { if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == b.gameObject) EventSystem.current.SetSelectedGameObject(null); });
+			if (onClick != null) b.onClick.AddListener(() => onClick());
+			if (hint != null) Hint(r.gameObject, hint);
+			return b;
+		}
+
+		/// <summary>Shows a Check row ticked or not; one that can't be clicked (interactable false) is dimmed.</summary>
+		public static void SetCheck(Button b, bool on)
+		{
+			if (b == null) return;
+			Transform tick = b.transform.Find("Box/Tick");
+			if (tick != null) tick.gameObject.SetActive(on);
+			Transform box = b.transform.Find("Box");
+			Image fill = box != null ? box.GetComponent<Image>() : null;
+			if (fill != null) fill.color = on ? new Color(0.45f, 0.29f, 0.13f, 1f) : FieldBg;
+			Text t = LabelOf(b);
+			if (t != null) t.color = b.interactable ? (on ? Accent : TextColor) : new Color(TextMuted.r, TextMuted.g, TextMuted.b, 0.6f);
+		}
+
+		/// <summary>Whether a Check row shows ticked (tests).</summary>
+		public static bool IsChecked(Button b)
+		{
+			Transform tick = b != null ? b.transform.Find("Box/Tick") : null;
+			return tick != null && tick.gameObject.activeSelf;
 		}
 
 		/// <summary>A thin horizontal line between sections.</summary>
@@ -861,7 +1057,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Keeps the shown popup next to its mark.</summary>
 		class HelpPlacer : MonoBehaviour
 		{
-			void LateUpdate() { if (helpShownBy != null && helpPopup != null && helpPopup.gameObject.activeSelf) PlaceHelp(helpShownBy); }
+			void LateUpdate() { if (helpShownBy != null && helpPopup != null && helpPopup.gameObject.activeSelf) PlaceHelp(helpShownBy); PlaceTip(); }
 		}
 
 		static void HideHelp(HelpMark mark)
@@ -885,6 +1081,14 @@ namespace DynamicIslands.Editor
 			helpText.lineSpacing = 1.05f;
 			foreach (Graphic g in helpPopup.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
 			helpPopup.gameObject.SetActive(false);
+			// (the hover tip, for controls where no status bar shows their hint: smaller, as wide as its text up to 300)
+			tipPopup = Panel(canvas.transform, "HintTip", new RectOffset(9, 9, 6, 7), 2f);
+			tipPopup.anchorMin = tipPopup.anchorMax = new Vector2(0, 1);
+			tipPopup.pivot = new Vector2(0, 1);
+			tipPopup.sizeDelta = new Vector2(300, 0);
+			tipText = Label(tipPopup, "", 12, TextColor);
+			foreach (Graphic g in tipPopup.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
+			tipPopup.gameObject.SetActive(false);
 		}
 
 		#endregion
@@ -894,18 +1098,103 @@ namespace DynamicIslands.Editor
 		/// <summary>Raised when the mouse enters (text) or leaves (null) a control with a hint.</summary>
 		public static event Action<string> HintChanged;
 
+		/// <summary>
+		/// Windows that show hints in a bar of their own (the editor's status bar, the in-world window's hint line) say here
+		/// when that bar is on the screen. Anywhere else - the main menu's windows, the stats page, the alpha box - a
+		/// control's hint shows in a small tip by the mouse after a moment (until 2026-10-15 those hints were never drawn).
+		/// </summary>
+		public static readonly List<Func<bool>> HintBars = new List<Func<bool>>();
+
+		static bool HintBarShown()
+		{
+			foreach (Func<bool> shown in HintBars) { try { if (shown()) return true; } catch { } }
+			return false;
+		}
+
 		public static void Hint(GameObject go, string hint)
 		{
 			var h = Ensure<HintTarget>(go);
 			h.Text = hint;
 		}
 
+		/// <summary>
+		/// Turns a hint's text into what shows when the mouse comes over it (null: as written). The editor sets it so the
+		/// hints name the keys of the chosen layout (WASD / ZQSD, ROADMAP L2) at the time they show, not when built.
+		/// </summary>
+		public static Func<string, string> HintKeys;
+
+		/// <summary>A hint shown exactly as written (one that names both key layouts itself).</summary>
+		public static void HintAsWritten(GameObject go) { Ensure<HintTarget>(go).AsWritten = true; }
+
 		public class HintTarget : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 		{
 			public string Text;
-			public void OnPointerEnter(PointerEventData e) { if (HintChanged != null) HintChanged(Text); }
-			public void OnPointerExit(PointerEventData e) { if (HintChanged != null) HintChanged(null); }
-			void OnDisable() { if (HintChanged != null) HintChanged(null); }
+			public bool AsWritten;
+			/// <summary>The text as it shows now.</summary>
+			public string Shown
+			{
+				get
+				{
+					if (AsWritten || HintKeys == null || string.IsNullOrEmpty(Text)) return Text;
+					try { return HintKeys(Text); } catch { return Text; }
+				}
+			}
+			public void OnPointerEnter(PointerEventData e) { if (HintChanged != null) HintChanged(Shown); if (!HintBarShown()) ShowTip(this); }
+			public void OnPointerExit(PointerEventData e) { if (HintChanged != null) HintChanged(null); HideTip(this); }
+			void OnDisable() { if (HintChanged != null) HintChanged(null); HideTip(this); }
+		}
+
+		static RectTransform tipPopup;
+		static Text tipText;
+		static HintTarget tipShownBy;
+		static float tipAt;
+
+		/// <summary>The hover tip's text while it shows (null when none): the tests read it.</summary>
+		public static string ShownTip { get { return tipPopup != null && tipPopup.gameObject.activeSelf ? tipText.text : null; } }
+		/// <summary>Tests: the tip itself (where it is on the screen).</summary>
+		public static RectTransform HintTip { get { return tipPopup; } }
+
+		/// <summary>The tip comes once the mouse has rested on the control a moment (HelpPlacer shows and places it).</summary>
+		static void ShowTip(HintTarget t)
+		{
+			if (string.IsNullOrEmpty(t.Text)) return;
+			if (helpPopup == null) BuildHelpPopup();
+			tipShownBy = t;
+			tipAt = Time.unscaledTime + 0.6f;
+			tipText.text = t.Shown;
+			tipPopup.gameObject.SetActive(false);
+		}
+
+		static void HideTip(HintTarget t)
+		{
+			if (tipShownBy != t) return;
+			tipShownBy = null;
+			if (tipPopup != null) tipPopup.gameObject.SetActive(false);
+		}
+
+		/// <summary>The tip below and right of the mouse, kept on the screen; as wide as its text, up to 300.</summary>
+		static void PlaceTip()
+		{
+			if (tipShownBy == null || tipPopup == null) return;
+			if (!tipShownBy.isActiveAndEnabled) { HideTip(tipShownBy); return; }
+			if (Time.unscaledTime < tipAt) return;
+			if (!tipPopup.gameObject.activeSelf)
+			{
+				tipPopup.sizeDelta = new Vector2(Mathf.Min(300f, tipText.preferredWidth + 20f), 0);
+				tipPopup.gameObject.SetActive(true);
+				tipPopup.SetAsLastSibling();
+			}
+			LayoutRebuilder.ForceRebuildLayoutImmediate(tipPopup);
+			var canvas = (RectTransform)tipPopup.parent;
+			Vector2 local;
+			RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas, Input.mousePosition, null, out local);
+			Vector2 size = new Vector2(tipPopup.rect.width, Mathf.Max(tipPopup.rect.height, LayoutUtility.GetPreferredHeight(tipPopup)));
+			Rect area = canvas.rect;
+			float x = Mathf.Clamp(local.x + 14f, area.xMin + 4f, area.xMax - size.x - 4f);
+			float y = local.y - 22f;
+			if (y - size.y < area.yMin + 4f) y = local.y + size.y + 8f; // above the mouse, when there's no room below
+			y = Mathf.Clamp(y, area.yMin + size.y + 4f, area.yMax - 4f);
+			tipPopup.anchoredPosition = new Vector2(x - area.xMin, y - area.yMax);
 		}
 
 		#endregion

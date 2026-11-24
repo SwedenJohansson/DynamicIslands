@@ -1,0 +1,457 @@
+# The Stalker's Hollow - an island of the library's plan The Sunken Kingdom (sunken 40 m; chapter 9, the deep - finale 2)
+# A cavern under the trench lip: a round arena floor ringed by rock, four stone alcoves round it that still hold air,
+# the Network's last lamps on posts, and in the middle a seal valve on a stone plinth. Across the arena the Network gate
+# under the Ringwave - shut. The Abyssal Stalker hunts here: a huge dark angler (size 3), two phases, calling smaller
+# anglers when hurt. What the Spire's choice did shows at the valve: RESTORE lights the alcoves teal and opens the gate;
+# SEAL drops a stone plug over it. Quest "The Deep" (23 steps).
+#
+# Points (metres over the arena floor; the surface at 40): the arena at 0, r 16 round 0 0; the lip (a terrace) at 8
+# round -22 0 with the warden's post and the chain up to the buoy (an air deck at 24); the alcoves (3 x 3 m, doors to
+# the arena): 1 north round 0 13.5, 2 east 13.5 0, 3 south 0 -13.5, 4 west -12.5 7; the plinth at 0 0; the gate at
+# 15 13 (north-east), facing the arena.
+include lib_features
+include lib_sea
+include lib_gravity
+include lib_sunken
+include lib_caves
+# RESIZE 10-24: Radius 40 -> 95 (Height 10 -> 10), the island grows round the old content, which stays where it was.
+new
+gen Trees=0 Bushes=0 Rocks=0.5 Harvest=0 BeachThings=0
+gen Seed=11001 Radius=110 Height=10 Roughness=0.5 Peaks=3 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.6 PeakShape=0.5
+gen Water=0.5 SeaRocks=0.6 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.2
+generate
+elevation -40
+
+brush flatten at 0 0 r=16 s=20 frames=260 h=0
+brush flatten at -22 0 r=6 s=25 frames=260 h=8
+brush flatten at 15 13 r=4 s=25 frames=200 h=0
+# the alcoves' floors (the arena flatten fades out at their back walls)
+brush flatten at 0 13.5 r=4 s=25 frames=200 h=0
+brush flatten at 13.5 0 r=4 s=25 frames=200 h=0
+brush flatten at 0 -13.5 r=4 s=25 frames=200 h=0
+brush flatten at -12.5 4 r=4 s=25 frames=200 h=0
+brush flatten at 36.7 -20.4 r=4 s=8 frames=40
+origin
+clear at 36.7 -20.4 r=5
+clear at 0 0 r=15
+
+# --- The lip: the warden's post, the chain up, the ramp down into the arena ---------------------------------------------
+place Zone_Trigger lipzone at -22 0 h=9.5
+place Note_Board wardenentry at -24 2.5 ground yaw=90
+place Placeable_Table_Basic - at -24 -1.5 ground sit yaw=90
+call stonelamp x=-20 z=3
+call stonelamp x=-20 z=-3
+call airpocketat x=-23.5 z=-3.5 h=8 id=lip_air al=lipair bub=lipbub r=2 msg="Air under the lip - the warden's last pocket."
+call buoychain x=-25 z=0 h=40 n=7 al=buoy zal=buoyzone id=surface_line
+place Block_Foundation airdeck at -24.15 0 h=24
+prop airdeck tint.color=#5b6266
+prop airdeck tint.amount=0.5
+call airpocketat x=-24.15 z=0 h=24 id=chain_air al=chainair bub=chainbub r=2 msg="An air platform on the chain, 16 m down."
+ramp Block_Floor_Tier3 from -17 0 7.8 to -11 0 0.3 len=1.5 top=0
+
+# --- The four alcoves: stone niches with air, a lamp each (teal lamps hidden until RESTORE) ------------------------------
+# (w03 11-09: CIFloating found the alcoves' floors at h=0 a few cm under the ground, the nearest-the-chain one 2.5 m
+# under the rising ground at its back - each alcove's ground flattened just under its floor first)
+brush flatten at 0 13.5 r=2.6 s=20 frames=200 h=-0.12
+brush flatten at 13.5 0 r=2.6 s=20 frames=200 h=-0.12
+brush flatten at 0 -13.5 r=2.6 s=20 frames=200 h=-0.12
+brush flatten at -12.5 7 r=2.6 s=20 frames=260 h=-0.12
+push at -1.5 12 h=0 yaw=0
+call stonehouse w=2 d=2 a=alcoves
+pop
+push at 12 1.5 h=0 yaw=90
+call stonehouse w=2 d=2 a=alcoves
+pop
+push at 1.5 -12 h=0 yaw=180
+call stonehouse w=2 d=2 a=alcoves
+pop
+push at -11 5.5 h=0 yaw=270
+call stonehouse w=2 d=2 a=alcoves
+pop
+call airpocketat x=0 z=13.5 h=0 id=alcove_1 al=alc1air bub=alc1bub r=1.8 msg="Air in the alcove next to the chain one. Something big passes the doorway."
+call airpocketat x=13.5 z=0 h=0 id=alcove_2 al=alc2air bub=alc2bub r=1.8 msg="Air in the next alcove round the arena."
+call airpocketat x=0 z=-13.5 h=0 id=alcove_3 al=alc3air bub=alc3bub r=1.8 msg="Air in the alcove across from the chain one."
+call airpocketat x=-12.5 z=7 h=0 id=alcove_4 al=alc4air bub=alc4bub r=1.8 msg="Air in the alcove nearest the chain. Paper on the floor."
+place Placeable_Lantern_Metal teal at 0.6 14.6 h=0 sit
+place Placeable_Lantern_Metal teal at 14.6 -0.6 h=0 sit
+place Placeable_Lantern_Metal teal at -0.6 -14.6 h=0 sit
+place Placeable_Lantern_Metal teal at -13.6 7.6 h=0 sit
+prop teal tint.color=#2fd0c0
+prop teal tint.amount=0.7
+call stonelamp x=-6 z=11
+call stonelamp x=9 z=9
+call stonelamp x=10 z=-8
+call stonelamp x=-7 z=-10
+
+# --- The plinth and the seal valve; the Ringwave note on it --------------------------------------------------------------
+place Block_Foundation plinth at 0 0 h=0.2 sx=1.5 sz=1.5
+prop plinth tint.color=#3d4146
+prop plinth tint.amount=0.6
+place RT_Pillar - at 0 -0.6 h=0.42 sy=0.45
+place TP_Selene_DoorCrankWheel valve at 0 -0.69 h=1.77
+place Note_Paper ringwavenote at 0.8 0.7 h=1.3 drop yaw=30
+place Zone_Trigger valvezone at 0 0 h=2.5
+place Zone_Trigger arenazone at 0 0 h=3
+
+# --- The Network gate under the Ringwave: shut bars (gone on RESTORE), a stone plug (dropped on SEAL) --------------------
+place UT_MainEntranceDoor gate at 15 13 ground yaw=225
+call ringwave x=15.6 z=13.6 h=7.5 yaw=225 s=2 al=gatewave
+place Block_Wall_Fence_Rope gatebars at 13.9 11.9 ground yaw=135 sx=2
+prop gatebars tint.color=#3a3a3a
+prop gatebars tint.amount=0.7
+place SmallRock_02 plug at 14 12 ground y=0.5 scale=2.2
+prop plug tint.color=#4a4c50
+prop plug tint.amount=0.6
+
+# --- The Stalker ----------------------------------------------------------------------------------------------------------
+place Creature_AnglerFish stalker at 4 6 ground y=3
+
+# --- The dark, reefs, vines, the last word ------------------------------------------------------------------------------
+place Note_Paper lastrestore at -12.2 6.4 h=0 drop yaw=20
+place Note_Paper lastseal at -12.2 6.4 h=0 drop yaw=340
+place Zone_Atmosphere hollowdark at 0 0 h=5
+call coralwall x=-8 z=-14 n=4 yaw=20 seed=11002
+call coralwall x=10 z=-13 n=4 yaw=-30 seed=11003
+call coralwall x=-12 z=14 n=4 yaw=60 seed=11004
+scatter SeaVine3 6 at 6 -4 r=8 seed=11005 free=1
+scatter Pickup_Landmark_SilverAlgae 4 at -6 -4 r=8 seed=11006 free=1
+call shallows x=0 z=0 r=119 deep=6 n=1 seed=11007
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): diver's cache + slate + air pocket; Van3 + chest; hatch with a chest; buried treasure; viewpoint ---
+place "Box Small" dcampbox at 36.7 -20.4 ground sit
+place Note_Paper dnote at 36.7 -20.4 ground y=1.6 drop yaw=30
+place Loot_ChestSmall dcamp at 38.7 -18.9 ground sit yaw=237
+call airpocket x=34.2 z=-22.4 id=stalkers_hollow_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
+note dnote Ines's last slate | DIVE SLATE - I. MARLOWE\n\nTo whoever has Mo.\nI followed you down the chain as far as the lip. Further than this, the Stalker would hear me, and you have enough to carry.\nFennick and Halvard went to the vent. Neither of them came back up the chain. I sat here a long time with my light off.\nGo and finish it. Then go up, find a boy on a high island with a warden's hat over his eyes, and give him his whale. Tell him his mum is coming. Tell him she counted everybody.
+note dcamp Diver's cache | A diver's spare kit, wired shut against the current.
+loot dcamp Rope*2;Glass*3;Plastic*4
+prop dcamp loot.refill=0
+place Van3 dvan at -36.7 20.4 ground yaw=357
+prop dvan tint.color=#6b4a32
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -40.7 23.4 ground sit yaw=297
+note dwreckchest Driver's locker | The driver's locker, still dry inside: a torch's glass, plastic, a few bolts.
+loot dwreckchest Glass*2;Plastic*5;Bolt*2
+prop dwreckchest loot.refill=0
+call hatchcache x=-20.4 z=-36.7 r=4 seed=11091 alias=dhatch chest=dhatchchest items=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=20.4 z=36.7 r=6 n=1 seed=11092
+prop treasure11092 treasure.loot=TitaniumOre*2;CopperOre*2
+place Zone_Trigger dview at -8 41.2 ground y=1.5
+prop dview zone.id=stalkers_hollow_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=From the rim the arena is a ring of pale stone in the dark - and something big moves at its edge.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): round the arena on the trench floor - the lip ridge in the north,
+# the dark cave in the east, the watchers' post in the west, a sunk boat in the south, the dark valve trench in the south-east
+call sk_ridge x1=-62 z1=54 x2=-36 z2=78 h=4 top=5 r=8
+call sk_reef x=-49 z=66 r=6 seed=11061
+call sk_reef x=-36 z=78 r=5 seed=11071
+call sk_zone x=-49 z=66 al=sh_ridge id=sh_ridge r=7 msg="The lip ridge. The trench wall goes straight up from here to the Spire, and something big moves along the bottom."
+# (11-12 w03b: was a bear den (sk_cave x=64 z=26 yaw=180). Its dome rose 24 m and ran 64 m back over the warren's slope
+# and the bone pit's way, and after the den rounds 3-4 its mouth could not be reached (CC reach: cave, air and hoard all
+# "can't get there"). Now a dug cave (user 11-11: a cave need not be a den) in a rock knoll of its own, the mouth to the
+# arena side, the stroke started 1.4 m out from the knoll's foot and climbing 8 degrees (CAVE_LESSONS 136))
+call sk_seamount x=64 z=34 top=20 r=16
+dig 64,19.6 64,30 r=1.75 slope=8 as=sh_caverock
+dig 64,30 64,35 r=3 as=sh_caverock
+prop sh_caverock cave.rock=plain
+# cavecheck inside sh_cavechest
+place Loot_ChestSmall sh_cavechest at 65.6 33.6 h=9.1 drop yaw=240
+place Placeable_Lantern_Metal - at 62.4 32 h=9.1 drop
+call sk_zone x=64 z=20.5 al=sh_cave id=sh_cave r=4 msg="A cave in the rock wall. The Stalker's scratches go all the way in."
+call sk_dark x=64 z=21 h=1 r=6 al=sh_dark
+call airpocketat x=64 z=32.5 h=8.5 id=sh_air al=sh_air bub=sh_airbub r=2.2 msg="Air under the rock - breathe."
+call sk_ruin x=-62 z=-22 h=2 al=sh_ruin
+call sk_notebox x=-59.5 z=-26.5 yaw=10 al=sh_ruinnote
+call sk_wreck x=0 z=-84 h=2 yaw=100 v=BoatStranded al=sh_wreck crate=sh_wreckcrate scale=1
+call sk_notebox x=6 z=-88 yaw=70 al=sh_wrecknote
+
+# --- Unique layer (10-24): the vent valve in the dark south-east trench: a crank on a post (a dark hazard zone round it,
+# lamps that keep the creatures off - beh.repel - along the way); turned, it lets the vent box up
+call stonelamp x=30 z=-30 al=shlamp1
+call stonelamp x=42 z=-42 al=shlamp2
+call crankcache x=60 z=-60 yaw=225 alias=ventcrank sig=ventvalve chest=ventbox cx=66 cz=-62 cyaw=30 items=TitaniumIngot*2;MetalIngot*2;Bolt*3 title="Vent box"
+place Loot_Chest gatecache at 17.8 15.8 ground sit yaw=225
+place Loot_Chest sealcache at -14.5 9 ground sit yaw=110
+place Zone_Trigger shtrenchdark at 62 -61 ground y=1
+
+# --- DEEP 1-HOUR (10-24): the lip rock (42.5 m from the floor, a beacon at the surface) and the warden house in the south-west pit with the crown vault; three floodlights against the Stalker
+# the rock that breaks the surface (42.5 m up from the floor), a beacon tower on its dry top
+call sk_seamount x=44 z=80 top=42.5 r=24
+# REACH 11-09 (w03): the dry top stood 2.5 m over the water on a steep lip all round (surface probe: 39.8 -> 42.4 in 2 m;
+# no way out of the sea to the tower): a ramp up its west side, as on Biome Seven (the ledge chest stays 5 m off)
+brush flatten at 36 78 r=1.8 s=20 frames=200 h=39.6
+brush flatten at 37.5 78 r=1.8 s=20 frames=200 h=40.4
+brush flatten at 39 78 r=1.8 s=20 frames=200 h=41.2
+brush flatten at 40.3 78 r=1.6 s=20 frames=200 h=42
+brush smooth at 38.2 78 r=3 s=4 frames=20
+call sk_pit x=-50 z=-74 h0=-6
+# (11-12 w03b: was a bear den (sk_cave x=86 z=-16 yaw=0) whose mouth reach could not get to; now a dug cave in a knoll,
+# the mouth north to the open floor, started 1.4 m out from the knoll's foot)
+# (11-12 (2): knolls raised (top 14 -> 20, 13 -> 18): the first ones were so low that the rooms broke out through their tops)
+call sk_seamount x=86 z=-20 top=18 r=15
+dig 86,-6.1 86,-16 r=2.2 slope=8 as=shcave2
+dig 86,-16 86,-21 r=3 as=shcave2
+prop shcave2 cave.rock=plain
+# cavecheck inside shcave2chest
+place Loot_ChestSmall shcave2chest at 86.6 -19.6 h=7.5 drop yaw=20
+place Placeable_Lantern_Metal - at 84.4 -18 h=7.5 drop
+call sk_reef x=65.6 z=80 r=6 seed=24910
+call sk_reef x=27.2 z=94.4 r=6 seed=24920
+call sk_reef x=-40 z=-68 r=5 seed=24930
+
+# the summit: the lip rock - the tower (ladder inside), the locker, the note, the zone
+call ladtower x=44 z=80 h0=42.5 lv=3 a=shtower
+place Loot_ChestSmall shlocker at 43.25 80.75 h=50.2 drop yaw=180
+place Note_Paper shsumnote at 43.25 79.25 h=50.08 drop yaw=20
+place Zone_Trigger shsummit at 44 80 h=50.98
+place Loot_ChestSmall shledge at 30.8 80 ground sit yaw=40
+place SmallRock_02 - at 49 82 ground sit scale=0.5
+call treasure x=46.5 z=82 r=12 n=1 seed=24911
+prop treasure24911 treasure.loot=TitaniumOre*3;CopperOre*2
+call treasure x=69.29 z=-12.89 r=5 n=1 seed=24912
+prop treasure24912 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=86 z=-6.5 h=1 r=6 al=shcave2dark
+
+# the drowned building: the warden house, its ground floor 46 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=-50 z=-74 h0=-6 n=3 w=RT_WallWindowBroken a=shbld cap=0 cal=shcap
+place Loot_Chest shdeep at -51.8 -76.5 h=-6 sit yaw=0
+place Placeable_Table_Basic - at -51.5 -73 h=-3 sit yaw=0
+place Note_Paper shbldnote at -51.5 -73 h=-1.7 drop yaw=10
+call airpocketat x=-50.5 z=-76 h=-3 id=sh_dair al=shdair bub=shdbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=-50 z=-85 al=shdeepzone id=sh_deep r=4 msg="The pit floor: the drowned building stands below you."
+
+# M23 the Stalker hates light: three floodlights round the arena, each a hit on the Stalker (34%); boss.shield = in its
+# second phase only they hurt it. The crown vault on the warden house's second floor wants nine crest shards
+place RT_Floodlight hfl1 at 8 -11 ground sit yaw=330
+place RT_Floodlight hfl2 at -9 -9 ground sit yaw=45
+place RT_Floodlight hfl3 at -15 -3 ground sit yaw=80
+place Loot_ChestLarge shcrown at -48.8 -77 h=0 sit yaw=0
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+# the generator's rocks that floated over the slope, and walls left wholly under the ground (ground check, 2026-10-23)
+clear at 15.31 6.03 r=1.5 only=SmallBoulder
+clear at -14 7.75 r=0.6 all only=Block_Wall
+clear at -13.25 8.5 r=0.6 all only=Block_Wall
+
+info title=The Stalker's Hollow
+info author=Custom Islands
+info description=A cavern under the trench lip, 40 m down: four alcoves of air round an arena, a seal valve on a plinth, the Network gate - and the Abyssal Stalker. The tenth island of The Sunken Kingdom, the end of its finale.
+island on.arrive=message||A buoy, and a chain going down past the trench lip. A teal glint far below - or a lamp.
+
+story stalkerhurt|Stalker wounded|Scrap|You wounded the Abyssal Stalker - it called the small ones.
+story stalker|Abyssal Stalker|Scrap|You drove off the Abyssal Stalker.
+story valve|Seal valve turned|Hinge|You turned the seal valve in the Hollow.
+
+note wardenentry Warden's last entry | WARDEN'S LOG - LAST ENTRY - G. FENNICK\n\nIt hunts by the lamps. Keep to the alcoves - it can't get its head in.\nWhen it's hurt it calls the little ones. Don't stay out in the open then. The floodlights round the hollow are the only thing it is afraid of; turn them on it while it is calling.\nThe valve on the plinth answers the Spire. Whatever gets pulled up there, the valve finishes it down here.\nThe Director came down the chain an hour after me, with a lamp. First sensible thing he has done in nine years. We are going to the vent together to wedge it while the big one sleeps.\nIf you are the Stalker: I did say. Several times. In writing.
+note ringwavenote What the Ringwave means (part 1) | Scratched into the plinth's brass plate:\n\nTHE RING IS THE SEA. THE THREE WAVES ARE THE THREE LAYERS IT WAS BUILT TO MOVE.\n\nThe rest of the plate has rusted through.
+note lastrestore The last word | RESTORED.\n\nThe gate under the Ringwave stands open, the alcoves glow teal, and somewhere far up the cable the pumps are running. Up the trench, the Commons' great doors are open and four hundred people are walking into the light.\nBy the vent, in the silt: a warden's whistle, a burnt-out lamp, two sets of footprints going in and none coming out.\nOn the cable radio, Ines: "Lights all the way to the roofs. Milo's plane landed. It's coming up with us, so we'll keep the floodlights on. Bring Mo home."
+note lastseal The last word | SEALED.\n\nThe stone plug sits over the gate, and the Hollow is quiet. The Network's lamps will go out one by one, and the Commons will live on in the dark, safe and very quiet, for as long as dark lasts.\nBy the vent, in the silt: a warden's whistle, a burnt-out lamp, two sets of footprints going in and none coming out.\nOn the cable radio, Ines: "It's dark. It's quiet. Halvard got what he wanted, in the end. I'll go up the lift to Milo. Bring Mo home."
+
+prop lipzone zone.id=lip
+prop lipzone zone.radius=4
+prop lipzone zone.message=The trench lip. Below it, the Hollow - a round floor, lamps, and something moving.
+prop alc1air on.enter=message||Out in the dark a big shape turns toward the lamps.
+prop stalker obj.name=stalker
+prop stalker creature.count=1
+prop stalker creature.respawn=0
+prop stalker creature.zone=arena
+prop stalker creature.size=3
+prop stalker creature.health=12
+prop stalker creature.damage=2
+prop stalker boss.phase=0.5
+prop stalker boss.summon=3
+prop stalker boss.summonKind=Creature_AnglerFish
+prop stalker on.phase=give||story:stalkerhurt*1\nmessage||The Stalker shudders and starts to call - and small lights come up out of the dark to it. Turn the floodlights on it!
+prop stalker on.defeat=give||story:stalkerhurt*1\ngive||story:stalker*1\nmessage||The Abyssal Stalker sinks past the lamps and does not come back up.
+prop arenazone zone.id=arena
+prop arenazone zone.radius=15
+prop valvezone zone.id=valve
+prop valvezone zone.radius=3
+prop valvezone zone.message=The seal valve. A brass plate on the plinth, half rusted.
+prop valve obj.name=valve
+prop valve beh.use=Turn the seal valve
+prop valve if.use=has|story:restorechoice|1
+prop valve on.use=give||story:valve*1\nshow|teal\nhide|gatebars\nsignal||hollowgate\nshow|lastrestore\nmessage||RESTORE answers: the alcoves light up teal and the gate's bars draw back.
+prop valve else.use=give||story:valve*1\nshow|plug\nshow|lastseal\nshow|sealcache\nmessage||SEAL answers: a stone plug grinds down over the gate.
+prop teal obj.name=teal
+prop teal beh.hidden=1
+prop gatebars obj.name=gatebars
+prop plug obj.name=plug
+prop plug beh.hidden=1
+prop lastrestore obj.name=lastrestore
+prop lastrestore beh.hidden=1
+prop lastseal obj.name=lastseal
+prop lastseal beh.hidden=1
+prop hollowdark atmo.fog=#041018
+prop hollowdark atmo.fogAmount=0.7
+prop hollowdark atmo.light=#1f4a52
+prop hollowdark atmo.lightAmount=0.2
+prop hollowdark zone.radius=36
+
+note sh_cavechest Stalker's hoard | Things the Stalker dragged in: a diver's tank, a lamp, a broken bag.
+loot sh_cavechest OxygenBottle*1;TitaniumOre*2;Rope*2;Battery*1
+prop sh_cavechest loot.refill=0
+note sh_ruinnote Watchers' post log | WATCHERS' POST - LOG\n\nWe watched the Hollow for the Network. The Stalker comes up the trench at night and goes back at dawn, like a commuter.\nIt keeps out of strong light - not dim lamps, those it likes, it comes to them like a moth. Strong light, the floodlights, burns it.\nThe old valve in the trench shuts the vent it breathes from.\nLast night two men went past the post towards the vent: a warden in a big coat with no hat, and the Director himself, carrying a lamp. The warden was talking the whole way. The Director was listening. We have never seen him listen.
+note sh_wrecknote Boat's last log | BOAT'S LAST LOG\n\nWe came over the trench lip to see the Hollow lit - the Spire had set its fuses, and the whole sea could see.\nThe Stalker came up under us and took the hull like a dog takes a slipper. The crew swam for the post. I stayed with the boat, because somebody should, and because I can't swim, which I have never told anybody.\nI watched it go back down to the Hollow afterwards. It went straight past the lamps and lay down in the dark by the vent, the way you'd lie down by a fire.
+note sh_wreckcrate Boat's locker | The boat's locker: titanium, rope, a lamp in oilcloth.
+loot sh_wreckcrate TitaniumIngot*1;Rope*3;Bolt*2;CopperOre*2
+prop sh_wreckcrate loot.refill=0
+prop shlamp1 beh.repel=8
+prop shlamp2 beh.repel=8
+prop shtrenchdark zone.radius=9
+prop shtrenchdark zone.hazard=dark
+prop shtrenchdark zone.hazardMsg=The trench is pitch dark. A headlight would show the valve.
+note gatecache Network gate cache | Behind the Network gate: the last keepers' cache, left for whoever opened the way.
+loot gatecache TitaniumIngot*3;Battery*2;CopperIngot*2
+prop gatecache loot.refill=0
+prop sealcache obj.name=sealcache
+prop sealcache beh.hidden=1
+note sealcache Sealers' cache | The sealers' cache, pushed up out of the floor when the plug came down: what the Network kept for the day it was closed for good.
+loot sealcache TitaniumIngot*3;Battery*2;CopperIngot*2
+prop sealcache loot.refill=0
+prop gate if.use=signal|hollowgate
+prop gate else.use=message||Barred from inside. The seal valve opens it - if the Spire chose RESTORE.
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story sh_key|Warden house key|Hinge|The warden house key, from the chest at the bottom of the drowned house.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note shdeep Warden house chest | The wardens' chest: titanium and the last crest shard.
+loot shdeep story:sk_crest*1;TradeToken*2;TitaniumOre*2;Bolt*3;OxygenBottle*1
+prop shdeep loot.refill=0
+note shlocker Lip rock locker | The wardens' locker on the lip rock: spare tanks.
+loot shlocker TitaniumIngot*2;MetalIngot*2;Battery*1;Cooked_Potato*2
+prop shlocker loot.refill=0
+note shsumnote Warden's last card | THE LIP ROCK\n\nWe climbed up here to breathe between watches. From here you see the Spire's lights on the trench, and on a clear night, very far off, the Spirecrest beacon blinking on the roofs.\nThe crown vault in our house wants nine crest shards - one from every drowned building of the kingdom.\nI always meant to bring the boy up here and show him the beacon. Tell him it's not a bad light, just a lonely one. - G.F.
+note shbldnote Warden house roll | WARDEN HOUSE - DUTY ROLL\n\nFennick. Fennick. Fennick. (Everyone else went up the lift.)\nThe Stalker hates strong light. Three floodlights stand round its hollow; turn them on it when it is hurt and calling the small ones, and keep to the alcoves between.\nThe crown vault upstairs opens for nine crest shards, one from every drowned building of the kingdom. I put the last one here myself, so that whoever comes all the way down gets something for it.\nIf it is you, Ines: I am sorry about the cage. I am sorry about all of it.
+note shledge Watcher's cache | A watcher's cache on the lip rock's shelf.
+loot shledge Rope*3;Bolt*2;Feather*3
+prop shledge loot.refill=0
+note shcave2chest Warden's spare chest | A warden's spare chest in the rock cave.
+loot shcave2chest CopperOre*3;Rope*2;Battery*1
+prop shcave2chest loot.refill=0
+prop shsummit zone.id=sh_summit
+prop shsummit zone.radius=2.5
+prop shsummit zone.message=Out of the water on the lip rock. Somewhere far below, the Hollow.
+story sh_flood|Floodlight on the Stalker|Placeable_Lantern_Metal|A floodlight turned on the Abyssal Stalker.
+prop stalker boss.shield=1
+prop hfl1 obj.name=hfl1
+prop hfl1 beh.use=Turn the floodlight on the Stalker
+prop hfl1 if.use=!signal|hfl1
+prop hfl1 on.use=signal||hfl1\nhit|stalker|34\ngive||story:sh_flood*1\nmessage||The floodlight blazes into the hollow - the Stalker writhes away from it.
+prop hfl2 obj.name=hfl2
+prop hfl2 beh.use=Turn the floodlight on the Stalker
+prop hfl2 if.use=!signal|hfl2
+prop hfl2 on.use=signal||hfl2\nhit|stalker|34\ngive||story:sh_flood*1\nmessage||A second light - the Stalker thrashes in the glare.
+prop hfl3 obj.name=hfl3
+prop hfl3 beh.use=Turn the floodlight on the Stalker
+prop hfl3 if.use=!signal|hfl3
+prop hfl3 on.use=signal||hfl3\nhit|stalker|34\ngive||story:sh_flood*1\nmessage||The third light. The hollow is white as day.
+note shcrown Crown vault | The crown vault of the Sunken Kingdom, on the warden house's second floor: nine shards of the crest open it.
+loot shcrown TitaniumIngot*4;MetalIngot*4;CircuitBoard*2;Battery*2
+prop shcrown loot.refill=0
+prop shcrown if.open=has|story:sk_crest|9
+prop shcrown else.open=message||Nine sockets in the vault's lid, shaped like crest shards. Every drowned building of the kingdom kept one.
+
+# --- 11-08 (w03): the Stalker's warren under the lip rock (plan 03 row: big system, dug hollow + 2 straight tunnels) ---
+# The lip rock's foot holds the Stalker's warren: a level tunnel in from the south-west foot (the side facing the arena)
+# and one from the east foot over the trench meet in a dug hollow under the rock, where the Stalker sleeps off a hunt -
+# air under its roof, mushrooms on its leavings, a titanium seam in the wall. Two ways out to the sea; no rats (sunken).
+# The hollow keeps 13 m and more from the summit tower, the locker and the ledge chest (cavecheck).
+# (11-09 w03 (2): was two hill=0 cave pieces into the rock - they stayed buried (the tool only raises ground) - and digs
+# 18-20 m under them joined by shafts; now all dug, level from each foot, heights in the island frame: sea floor ~3, sea 40)
+# (11-09 w03 (3): a level stroke takes its floor from the ground where it starts, and a stroke starting over a dug
+# passage takes that passage's floor - 44,57 was 11 m up the rock's slope, so the south tunnel and the hollow sat 7 m
+# over the east tunnel. Now the east tunnel first (its foot at sea-floor height), the hollow branched from it, and the
+# south tunnel from the low south-west foot at 30,56 into the hollow - all three about 4 m up)
+# (11-09 w03 look: both mouths sat at the foot of a steep face, the rim's flat-ground top a big patterned patch up the
+# wall over each, and two of the island's boulders right in the south-west way in. The faces round the mouths are
+# smoothed into slopes first (CAVE_LESSONS 47) and those boulders cleared)
+brush smooth at 30.6 56.4 r=5 s=8 frames=60
+brush smooth at 67.3 71.8 r=5 s=8 frames=60
+# (11-09 w03: CICaveInside found 4 points of the south-west mouth's rim rock standing loose out of the steep face north-west
+# of the mouth at ~27.7 60.7 - the face there smoothed too, so the ground lies over the tunnel's shell)
+brush smooth at 27.9 60.4 r=3 s=8 frames=60
+clear at 29.6 54 r=2 only=(?i)boulder|rock
+dig 68,72 52,68 r=1.75 slope=0 as=shsys
+dig 52,68 49.5,67.5 47,66 r=3.2 slope=0 as=shsys
+dig 30,56 38.5,61 47,66 r=1.75 slope=0 as=shsys
+caveloot shsys dirt=0 mush=3 stone=0 vines=0 titanium=1 light=1 wet=1
+place Zone_Trigger shsysair at 49.5 67.5 h=7.6
+prop shsysair obj.name=shsysair
+prop shsysair zone.id=sh_warren
+prop shsysair zone.radius=5
+prop shsysair zone.repeat=1
+prop shsysair zone.air=1
+prop shsysair zone.message=Air under the lip rock - the Stalker's own hollow. The floor is scraped smooth where it lies.
+# The bone pit behind the cave knoll: the Stalker drops what it does not eat into a hollow in the basin floor, and the
+# wardens drove stakes in to keep it from nesting there. A plank ledge runs round the rim; the pit floor hurts.
+# (11-09 w03: was a dug pit - 3.7 m deep, its floor under the sea, pale dig rock inside and no way out; now a sand
+# hollow a metre deep whose soft sides walk out)
+# (11-09 w03 (2): moved 7 m further back - the den's dry dome, laid over the ground after the recipe, filled the hollow
+# at 34.5 and buried its planks and stakes)
+# (11-09 w03 (3): the den's whole back slope is dome (17 m up at 41.5, 8 m at 56); now on the flat sea floor (h 3)
+# between the dome's foot and the lip rock, east of the rock, 7 m short of the warren's east tunnel)
+# (11-12 w03b: the den and its dome are gone (a dug cave in a knoll at 64 34 now); the pit stays where it is)
+brush flatten from 66.5 62.5 to 71.5 62.5 r=2 s=20 frames=200 h=1
+place Note_Sign shpitwarn at 64.5 62.5 ground sit yaw=167
+note shpitwarn DANGER - BONE PIT | The Stalker's bone pit. Stakes in the floor, under the bones. Keep to the planks round the rim.\n- G. Fennick, warden
+place Block_Floor_Wood - at 66.75 64.6 ground drop yaw=0
+place Block_Floor_Wood - at 66.75 60.4 ground drop yaw=0
+place Block_Floor_Wood - at 68.25 64.6 ground drop yaw=0
+place Block_Floor_Wood - at 68.25 60.4 ground drop yaw=0
+place Block_Floor_Wood - at 69.75 64.6 ground drop yaw=0
+place Block_Floor_Wood - at 69.75 60.4 ground drop yaw=0
+place Block_Floor_Wood - at 71.25 64.6 ground drop yaw=0
+place Block_Floor_Wood - at 71.25 60.4 ground drop yaw=0
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 67 62.5 h=1 sit scale=0.25 yaw=40
+place SmallBoulder3 - at 67.9 63.3 h=1 sit scale=0.3 yaw=100
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 69 62.5 h=1 sit scale=0.25 yaw=150
+place SmallBoulder3 - at 69.9 61.7 h=1 sit scale=0.3 yaw=210
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 71 62.5 h=1 sit scale=0.25 yaw=265
+place SmallBoulder3 - at 71.9 63.3 h=1 sit scale=0.3 yaw=325
+place Zone_Trigger shspike1 at 67 62.5 h=1.5
+prop shspike1 zone.id=shspike1
+prop shspike1 zone.radius=1.5
+prop shspike1 zone.hazard=spikes
+prop shspike1 zone.damage=4
+prop shspike1 zone.safe=none
+prop shspike1 zone.hazardMsg=Stakes under the bones! Back up onto the planks.
+place Zone_Trigger shspike2 at 69 62.5 h=1.5
+prop shspike2 zone.id=shspike2
+prop shspike2 zone.radius=1.5
+prop shspike2 zone.hazard=spikes
+prop shspike2 zone.damage=4
+prop shspike2 zone.safe=none
+prop shspike2 zone.hazardMsg=Stakes under the bones! Back up onto the planks.
+place Zone_Trigger shspike3 at 71 62.5 h=1.5
+prop shspike3 zone.id=shspike3
+prop shspike3 zone.radius=1.5
+prop shspike3 zone.hazard=spikes
+prop shspike3 zone.damage=4
+prop shspike3 zone.safe=none
+prop shspike3 zone.hazardMsg=Stakes under the bones! Back up onto the planks.
+
+quest title=The Deep
+quest intro=Fennick and the Director went down to the Hollow. Go down the chain to the trench lip after them.
+step reach|lip|1|Go down the chain to the trench lip
+step read|Warden's last entry|1|Read the warden's last entry
+step read|Watchers' post log|1|Read the log at the watchers' post
+step read|Boat's last log|1|Read the last log at the sunken boat
+step open|Warden house chest|1|Dive to the bottom of the drowned warden house and open its chest
+step read|Warden house roll|1|Read the duty roll in the drowned warden house
+step reach|alcove_1|1|Go down into the Hollow and get into the stone alcove next to the chain one
+step collect|story:stalkerhurt|1|Wound the Abyssal Stalker
+step collect|story:sh_flood|3|While it calls the small ones, turn the three floodlights on it
+step reach|alcove_2|1|Get into the next stone alcove round the arena before the small ones reach you
+step collect|story:stalker|1|Drive off the Abyssal Stalker
+step reach|valve|1|Go to the seal valve on the plinth
+step collect|story:valve|1|Turn the seal valve
+step read|What the Ringwave means (part 1)|1|Read the plate on the plinth
+step reach|alcove_4|1|Go to the stone alcove nearest the chain
+step read|The last word|1|Read the last word
+step reach|surface_line|1|Climb the chain back to the surface
+quest done=The Sunken Kingdom is decided. Mo is going home. The Receiver goes quiet on every band but one.
+quest reward=TitaniumOre*3;Battery*2;MetalIngot*4
+
+save The Stalker's Hollow

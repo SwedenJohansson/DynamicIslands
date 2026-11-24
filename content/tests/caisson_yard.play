@@ -1,0 +1,47 @@
+# Caisson Yard (CIPlay caisson_yard): the yard, the foreman's board, crane 2 (by the zipline), the smelter chest, the
+# fuel shed, the anchor gear, the trench chart.
+island Caisson Yard
+offset -3.2334 -5.3746
+# (11-09: room in the bag first - a full bag from earlier plays in the world dropped the zipline plans)
+empty
+expect step 0
+expect title The Caisson Yard
+zone yard
+expect step 1
+read Foreman's board
+expect step 2
+zone crane_2
+expect step 3
+open Smelter chest
+wait 3
+expect step 5
+open Fuel shed chest
+wait 3
+expect step 6
+open Anchor gear chest
+wait 3
+expect step 8
+read Yard office book
+expect step 9
+open Lost property box
+wait 3
+expect story sk_mo 1
+expect step 10
+read Crane driver's report
+expect step 11
+read Trench chart
+expect step 12
+open Crane key box
+wait 3
+expect story cy_cranekey 1
+expect step 13
+use cylever
+expect story cy_drop 1
+expect hidden cycap
+expect step 14
+air cy_dair
+open Yard store chest
+wait 3
+expect step 15
+read Yard pump log
+expect done

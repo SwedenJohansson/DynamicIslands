@@ -107,14 +107,41 @@ namespace DynamicIslands.Editor
 			return st;
 		}
 
+		static string PathFor(string name) { return Path.Combine(Folder, name + ".stamp"); }
+
+		public static bool Exists(string name) { return File.Exists(PathFor(name)); }
+
+		/// <summary>Renames a saved stamp (ROADMAP T4); the list is read again, the same stamp stays chosen.</summary>
+		public static void Rename(string from, string to)
+		{
+			Stamp current = Current;
+			PiecesFiles.Move(PathFor(from), PathFor(to));
+			Load();
+			int i = All.FindIndex(s => !s.BuiltIn && s.Name == (current != null && !current.BuiltIn && current.Name == from ? to : current != null ? current.Name : ""));
+			Selected = i >= 0 ? i : 0;
+		}
+
+		/// <summary>Deletes a saved stamp (ROADMAP T4): moved to Mods\DynamicIslands\deleted\stamps, where it can be got back.</summary>
+		public static void MoveToDeleted(string name)
+		{
+			Stamp current = Current;
+			PiecesFiles.MoveToDeleted(PathFor(name), "stamps");
+			Load();
+			int i = current == null ? -1 : All.FindIndex(s => s.BuiltIn == current.BuiltIn && s.Name == current.Name);
+			Selected = i >= 0 ? i : 0;
+		}
+
 		public static void Save(Stamp st)
 		{
 			Directory.CreateDirectory(Folder);
-			using (var w = new BinaryWriter(File.Create(Path.Combine(Folder, st.Name + ".stamp"))))
+			// (written whole, then in the file's place in one step - SafeFile: a crash mid-save left a broken stamp, AU41)
+			var bytes = new MemoryStream();
+			using (var w = new BinaryWriter(bytes))
 			{
 				w.Write(Magic); w.Write(1); w.Write(Size);
 				for (int z = 0; z < Size; z++) for (int x = 0; x < Size; x++) w.Write(st.Heights[z, x]);
 			}
+			SafeFile.WriteAllBytes(Path.Combine(Folder, st.Name + ".stamp"), bytes.ToArray());
 		}
 
 		/// <summary>Height of a stamp at (u, v) in -1..1 (bilinear), in units of its radius.</summary>

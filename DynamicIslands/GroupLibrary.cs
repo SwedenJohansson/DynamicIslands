@@ -75,7 +75,9 @@ namespace DynamicIslands.Editor
 			// The pivot: the middle of the objects, at the lowest one's height (so the group stands on the ground)
 			Vector3 pivot = new Vector3(list.Average(o => o.transform.position.x), list.Min(o => o.transform.position.y), list.Average(o => o.transform.position.z));
 			Directory.CreateDirectory(Folder);
-			using (var w = new BinaryWriter(File.Create(PathFor(name))))
+			// (written whole, then in the file's place in one step - SafeFile: a crash mid-save left a broken group, AU41)
+			var bytes = new MemoryStream();
+			using (var w = new BinaryWriter(bytes))
 			{
 				w.Write(Magic); w.Write(1); w.Write(list.Count);
 				foreach (EditorGameObject o in list)
@@ -87,6 +89,7 @@ namespace DynamicIslands.Editor
 					foreach (var kv in p) { w.Write(kv.Key); w.Write(kv.Value ?? ""); }
 				}
 			}
+			SafeFile.WriteAllBytes(PathFor(name), bytes.ToArray());
 			return list.Count;
 		}
 
@@ -111,10 +114,41 @@ namespace DynamicIslands.Editor
 
 		public static bool Delete(string name)
 		{
-			if (!File.Exists(PathFor(name))) return false;
-			File.Delete(PathFor(name));
-			PlaceableCatalog.RemoveCustom(Prefix + name);
+			// (a typed name: no folders in it; and to the deleted folder like the groups window's Delete, not for good)
+			if (FileNames.Problem(name) != null || !File.Exists(PathFor(name))) return false;
+			MoveToDeleted(name);
 			return true;
+		}
+
+		public static bool Exists(string name) { return File.Exists(PathFor(name)); }
+
+		/// <summary>
+		/// The groups window's Delete (ROADMAP T4): the group leaves "My groups" and its file is moved to
+		/// Mods\DynamicIslands\deleted\groups (an older one of the same name gets a date), where it can be got back.
+		/// </summary>
+		public static void MoveToDeleted(string name)
+		{
+			PiecesFiles.MoveToDeleted(PathFor(name), "groups");
+			PlaceableCatalog.RemoveCustom(Prefix + name);
+			PlaceableCatalog.NotifyChanged();
+		}
+
+		/// <summary>Renames a group (its file and its entry in "My groups"). Placed copies on islands are separate objects: untouched.</summary>
+		public static IEnumerator Rename(string from, string to)
+		{
+			RenameFile(from, to);
+			yield return Register(to);
+		}
+
+		/// <summary>
+		/// The file's part of Rename, at once: an error (the file in use) reaches the caller, not a coroutine nobody watches
+		/// (review 2026-10-06: the window said "Renamed" while the file kept its name). Register(to) follows.
+		/// </summary>
+		public static void RenameFile(string from, string to)
+		{
+			PiecesFiles.Move(PathFor(from), PathFor(to));
+			PlaceableCatalog.RemoveCustom(Prefix + from);
+			ObjectThumbnails.Forget(Prefix + from);
 		}
 
 		/// <summary>Puts every saved group in the object catalog (loading the Raft scenes their objects come from first).</summary>

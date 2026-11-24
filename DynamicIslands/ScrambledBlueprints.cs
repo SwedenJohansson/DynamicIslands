@@ -26,7 +26,9 @@ namespace DynamicIslands.Editor
 		{
 			"Blueprint_Reciever", "Blueprint_Antenna", "Blueprint_SteeringWheel", "Blueprint_MotorWheel", "Blueprint_EngineControls",
 			"Blueprint_Fueltank", "Blueprint_Pipe_Fuel", "Blueprint_BiofuelExtractor", "Blueprint_Machete", "Blueprint_ZiplineTool",
-			"Blueprint_ZiplineBase", "Blueprint_HeadLight", "Blueprint_BatteryCharger",
+			"Blueprint_ZiplineBase", "Blueprint_HeadLight", "Blueprint_BatteryCharger", "Blueprint_Recycler", // (the Radio Tower's and the workbench's: no pickup to move)
+			// (the electric zipline: Utopia's cables may want it - AU42; kept where Raft puts it to be safe)
+			"Blueprint_ZiplineToolElectric",
 		};
 
 		/// <summary>Blueprint -> the story island(s) it lies on (from raft_blueprints.txt).</summary>
@@ -117,6 +119,8 @@ namespace DynamicIslands.Editor
 		class Original { public ItemInstance Instance; public int Seed; }
 		static readonly Dictionary<PickupItem, Original> originals = new Dictionary<PickupItem, Original>();
 		static readonly Dictionary<Landmark, int> looked = new Dictionary<Landmark, int>();
+		/// <summary>Each island's hierarchy size when its pickups were last counted: unchanged, they aren't counted again.</summary>
+		static readonly Dictionary<Landmark, int> lookedShape = new Dictionary<Landmark, int>();
 		static float nextTick;
 
 		/// <summary>Tests: the pickups changed now (their island and "from > to").</summary>
@@ -135,6 +139,10 @@ namespace DynamicIslands.Editor
 				foreach (Landmark l in WorldManager.AllLandmarks)
 				{
 					if (l == null || !l.isSpawned) continue;
+					// (nothing added or taken away under it since the last look: the same pickups - no walk through the island)
+					int shape = l.transform.hierarchyCount, seenShape;
+					if (lookedShape.TryGetValue(l, out seenShape) && seenShape == shape && looked.ContainsKey(l)) continue;
+					lookedShape[l] = shape;
 					int count = l.GetComponentsInChildren<PickupItem>(true).Length;
 					int seen;
 					if (looked.TryGetValue(l, out seen) && seen == count) continue;
@@ -151,6 +159,34 @@ namespace DynamicIslands.Editor
 			looked.Clear();
 			pairs = null;
 			nextTick = 0f;
+		}
+
+		/// <summary>
+		/// The islands there now get their partners at once, not at the next look (AU65: the host's options reach a player who
+		/// joins a few seconds in; until the next look a blueprint picked up was Raft's own).
+		/// </summary>
+		public static void ApplyNow()
+		{
+			nextTick = 0f;
+			Tick();
+		}
+
+		/// <summary>
+		/// This machine's player picks something up: a blueprint pickup of Raft's island that the 1.5 s look hasn't got to yet
+		/// (its island just appeared or grew, or the options just came) gets its partner first, so what is picked up is the
+		/// partner (AU65). Pickups without a blueprint that moves cost nothing here.
+		/// </summary>
+		internal static void BeforePickup(PickupItem p)
+		{
+			if (p == null || !LoadSceneManager.IsGameSceneLoaded) return;
+			int want = Active ? WorldOptions.Seed : 0;
+			Original o;
+			if (originals.TryGetValue(p, out o)) { if (o.Seed == want) return; }
+			else if (want == 0 || !HasMovable(p)) return;
+			Landmark l = p.GetComponentInParent<Landmark>();
+			if (l == null) return;
+			looked[l] = l.GetComponentsInChildren<PickupItem>(true).Length;
+			Apply(l);
 		}
 
 		static void Apply(Landmark l)
@@ -229,5 +265,43 @@ namespace DynamicIslands.Editor
 		}
 
 		#endregion
+	}
+
+	/// <summary>
+	/// Raft's player picks something up (Pickup.PickupItem, on the machine of the player who picks it up): a blueprint gets
+	/// its partner first if it hasn't yet (ScrambledBlueprints.BeforePickup - AU65). Found by name: a Raft version without
+	/// it only loses this check (Prepare logs it and leaves the patch out - questfix round 2), the 1.5 s look still swaps.
+	/// </summary>
+	[HarmonyPatch]
+	static class ScrambledBlueprintsPickup
+	{
+		static System.Reflection.MethodBase TargetMethod()
+		{
+			// (Raft's own class, from the assembly PickupItem is in)
+			Type pickup = typeof(PickupItem).Assembly.GetType("Pickup");
+			const System.Reflection.BindingFlags all = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly;
+			return pickup == null ? null : pickup.GetMethods(all).FirstOrDefault(m => m.Name == "PickupItem" && m.GetParameters().Any(x => x.ParameterType == typeof(PickupItem)));
+		}
+
+		static bool Prepare()
+		{
+			if (TargetMethod() != null) return true;
+			Debug.LogWarning("[CUSTOM ISLANDS] [blueprints] Raft's Pickup.PickupItem isn't in this Raft version: a scrambled blueprint gets its partner by the 1.5 s look only");
+			return false;
+		}
+
+		static void Prefix(object[] __args)
+		{
+			try
+			{
+				if (__args == null) return;
+				foreach (object a in __args)
+				{
+					PickupItem p = a as PickupItem;
+					if (p != null) { ScrambledBlueprints.BeforePickup(p); return; }
+				}
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [blueprints] Before a pickup: " + e.Message); }
+		}
 	}
 }

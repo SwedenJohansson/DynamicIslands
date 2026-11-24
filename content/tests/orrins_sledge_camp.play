@@ -1,0 +1,70 @@
+# Orrin's Sledge Camp (CIPlay orrins_sledge_camp): the barn (the bears come), Orrin's note 1, two polar bears, the sledge
+# shed, Orrin's hut (note 2), the cook hut (note 3), the lookout, the zipline crate, Orrin's note 4.
+island Orrin's Sledge Camp
+# RESIZE 10-24: the recipe moved this island's old content by -9.2 -23; the points below are in the old frame
+offset 9.2 23
+expect step 0
+expect title The Sledge Camp
+expect animals Goat 3
+zone barn
+expect step 1
+read Orrin's note 1
+expect step 2
+kill Polar bear
+expect step 3
+# REDO 10-24: the shed's chest waits for the sledge winch
+expect hidden sledgeshed
+open Hay chest
+open Orrin's chest
+wait 3
+expect step 4
+read Orrin's note 2
+read Orrin's daybook
+read Orrin's tool rack
+expect step 5
+open Camp stores
+expect item Bucket 1
+read Orrin's note 3
+zone lookout
+open Lookout box
+wait 3
+expect step 6
+expect hidden ziplinecrate
+expect item Machete 1
+use pinevines
+expect shown ziplinecrate
+open Zipline crate
+wait 3
+expect story harness 3
+expect step 9
+use sledgewinch
+expect story harness 0
+expect shown sledgeshed
+expect step 10
+open Sledge shed
+wait 3
+# DEEP 10-24: Orrin's trail
+expect step 12
+zone quarry
+expect step 13
+zone bear_cave
+read Orrin's trail mark
+expect step 14
+zone rim_top
+expect step 15
+open Orrin's rim cache
+wait 3
+expect step 16
+read The Warden's letter
+expect done
+read Orrin's note 4
+# the extras: the quarry crate, the cave stash, the trapper's ruin, the ice-hole lake, two treasures
+open Quarry crate
+open Bear cave stash
+read Trapper's log
+open Trapper's chest
+zone ice_lake
+air lakeair
+open Sledge truck's toolbox
+dig 1
+dig 2

@@ -1,0 +1,322 @@
+# Canopy Stair - the eighth island of the library's plan The Last Green World (SL11, Verdance)
+# A steep green island climbing to a root shelf 10 m up, giant roots (Raft's logs, tinted dark) lying up its slopes like
+# a stair. On the shelf the Seedkeepers' last camp: two tents (roofs on posts) with their chests, seed crates, a Raft
+# store, and a zipline anchor pointing north, toward the Heart. Mango and pine on the slopes, red and blue flowers on the
+# shelf. Quest "The Climb" (6 steps): the shelf, the roll call, the titanium tools plans, the big backpack plans, the
+# electric zipline plans in the anchor box, Oda's letter. Buried on the shelf: titanium.
+#
+# Built by the recipe player (CIRecipe canopy_stair) through the editor's own operations. Points (metres over the
+# sea): the shelf 10 m round 0 4 (r 18), tent 1 x -6..-3, z 8..11, tent 2 x 3..6, z 8..11, the store -12 4, the anchor
+# box 2 18, the landing cove 1.2 m round 0 -42.
+include lib_sea
+include lib_features
+include lib_huts
+include lib_verdance
+include lib_ni8
+# RESIZE 10-24: Radius 50 -> 88 (Height 16 -> 16), the old content moved 0 -20.9 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+new
+gen Trees=0.3 Bushes=0.3 Rocks=0.2 Harvest=0.3 BeachThings=0.25
+gen Seed=11091 Radius=88 Height=16 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.35 Cliffs=0.3 BeachWidth=0.5
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.4 Sunken=0.2 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+push at 0 -20.9
+
+# --- Terrain: the root shelf on top, the landing cove ----------------------------------------------------------------
+brush flatten at 0 4 r=18 s=20 frames=300 h=10
+brush flatten at 0 -42 r=7 s=20 frames=200 h=1.2
+brush sand at 0 -42 r=9 s=10 frames=30
+brush grass at 0 4 r=18 s=6 frames=30
+# RESIZE 10-24 retest: the island now grows north over a ridge - the zipline anchor moved up onto the ridge (a pad for its deck)
+brush flatten at 0 33.6 r=3 s=20 frames=150 h=14.8
+pop
+brush flatten at -28 22.7 r=5 s=8 frames=40
+origin
+clear at -28 22.7 r=6
+push at 0 -20.9
+clear at 0 4 r=15
+clear at 0 -42 r=6
+clear at 0 33 r=4
+
+# --- The root stair: giant roots lying up the south slope (logs, tinted dark, following the ground) ----------------
+place Log stairroots at -2 -34 ground sit yaw=85 scale=2.2
+place Log stairroots at 3 -27 ground sit yaw=100 scale=2.2
+place Log stairroots at -3 -20 ground sit yaw=75 scale=2.2
+place Log stairroots at 2 -13 ground sit yaw=95 scale=2.2
+place Log stairroots at 16 -6 ground sit yaw=20 scale=2.4
+place Log stairroots at -17 -2 ground sit yaw=160 scale=2.4
+
+# --- The Seedkeepers' last camp: two tents with their chests, seed crates, the roll call, the store ----------------
+push at -6 8 h=10
+call shelter w=2 d=2 y=0.1
+place Loot_Chest tentone at 1.5 2.2 y=0.1 sit yaw=180
+pop
+push at 3 8 h=10
+call shelter w=2 d=2 y=0.1
+place Loot_Chest tenttwo at 1.5 2.2 y=0.1 sit yaw=180
+place "Box Small" - at 0.7 0.8 y=0.1 sit
+# (REACH 10-28: dropped, the letter fell through the box's top into it - now set on its lid, 0.99 m up)
+place Note_Paper odaletter at 0.7 0.8 y=1.0 sit yaw=15
+pop
+place "Box Big" - at -1 2 ground sit yaw=15
+place "Box Big" - at 0.4 0.6 ground sit yaw=40
+place "Box Small" - at 1.5 2.2 ground sit yaw=5
+place Note_Sign rollcall at 0 -6 ground sit yaw=180
+place Zone_Trigger shelfzone at 0 -2 ground
+store campshop at -12 4 ground
+place campfire_1 - at 8 0 ground sit
+
+# --- The zipline anchor on the ridge north of the shelf, pointing toward the Heart, and its box ----------------------
+# (RESIZE 10-24 retest: was at the shelf's north edge, 0 18; the bigger island's ridge now stands in the line's way)
+push at -0.75 32.9 h=14.8
+call zipdeck y=2.6
+pop
+place ZiplinePath_Landmark heartzip at 5.72 32.68 h=18.87
+zipto heartzip 0 76
+place Loot_Crate anchorbox at 2.5 31 ground sit yaw=10
+# REDO 10-24: the anchor's winch (the island's machine) needs three rope coils from three ledges
+clear at -3 30 r=1.2
+call crank x=-3 z=30 yaw=180 alias=anchorwinch
+# the stair ledge (behind a vine wall: the machete on the main path), the west ledge, the east root
+clear at 6.5 -24 r=2.5
+place Loot_ChestSmall coil1 at 7 -24 ground sit yaw=270
+beside ChoppableVines stairvines coil1 d=1.6
+clear at -26 -10 r=2
+place Loot_ChestSmall coil2 at -26 -10 ground sit yaw=90
+place "Box Small" - at -27.5 -8.5 ground sit yaw=30
+clear at 20 -10 r=2
+place Loot_ChestSmall coil3 at 20 -10 ground sit yaw=250
+place Placeable_Lantern_Metal - at 21.5 -11 ground sit
+# (optional) Oda's locker on the shelf: her ranger key from Ranger Landing
+clear at -8 -3 r=1.5
+place "Box Big" rangerlock at -8 -3 ground sit yaw=160
+beside Loot_ChestSmall rangercache rangerlock d=0.3
+
+# --- Mango and pine, red and blue flowers, bananas; titanium buried on the shelf; the shallows ---------------------
+scatter Pickup_Landmark_Tree_Mango 3 at -22 -18 r=10 seed=11092 free=3
+scatter Pickup_Landmark_Tree_Pine 2 at 22 -18 r=10 seed=11093 free=3
+scatter Pickup_Landmark_Flower_Red 4 at -6 -2 r=12 seed=11094 free=2
+scatter Pickup_Landmark_Flower_Blue 4 at 6 -2 r=12 seed=11095 free=2
+scatter Pickup_Landmark_MarketGood_Banana_Basket01 2 at 10 -38 r=6 seed=11096 free=2
+call treasure x=-4 z=14 r=12 n=1 seed=11052
+prop treasure11052 treasure.loot=TitaniumOre*3
+call shallows x=0 z=20.9 r=109 deep=5 n=2 seed=11097
+pop
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; VP_Excavator + chest; vine-hidden chest; buried treasure; viewpoint ---
+place campfire_1 - at -28 22.7 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at -25 24.7 ground sit yaw=327
+place "Box Small" - at -30 25.2 ground sit
+place Note_Paper dnote at -30 25.2 ground y=1.6 drop yaw=20
+note dnote Seedkeeper's note | MARIT - CLIFF LINE, day 9\n\nNew record to the top of the Great Cliff: 4 minutes. Oda's record on her silly tower is 36 seconds, which she will tell you about for an hour if you let her. Do not let her.\n\nThe pitons hold. The vines hold better; I could climb this cliff on the green alone now, and that is the problem.\n\nTeodor called up on the radio, all excited: "Has anyone new come ashore?" Nobody, I said. "Soon," he said. He says "soon" a lot lately, the way you say it to a dog when you are holding its dinner.\n\nWe go back by the beach.
+place VP_Excavator dvan at 34.1 -18.9 ground yaw=87
+prop dvan tint.color=#7a6a3a
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at 30.1 -15.9 ground sit yaw=27
+note dwreckchest Abandoned supplies | The crew's supplies, left behind: plank, rope and a few seeds.
+loot dwreckchest Plank*4;Rope*2;Seed_Pineapple*1
+prop dwreckchest loot.refill=0
+call vinecache x=24.5 z=30.3 r=15 seed=11181 chest=dvinechest vines=dvines items=Rope*3;Nail*10;Leather*2
+call treasure x=-33.4 z=-20.1 r=15 n=1 seed=11182
+prop treasure11182 treasure.loot=CopperOre*2;Clay*3
+place Zone_Trigger dview at -0.3 15 ground
+prop dview zone.id=canopy_stair_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=The giant roots climb the slope like a stair, up to the Seedkeepers' tents on the shelf.
+
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): the Great Cliff and its rope gantry (52 m climb, zipline down to the shelf), the Seedkeepers' supply plane off the west shore (dive), the pilot's camp ruin, goats on the ledges
+# the climb: a mountain (trail winding up from bearing 120), a 10-storey climbing tower on its top, the summit box
+call vd_mount x=-50 z=40 top=28 r=20 a0=120 turns=1.25 hb=3
+call vd_tower x=-50 z=40 h0=28 lv=10 a=cstw box=csbox zal=cstopz zid=cs_top msg="The top of the Great Cliff, the highest rope on Verdance. Marit's pitons run all the way up the gantry."
+note csbox Cliff gantry box | SEEDKEEPERS - CLIFF LINE. Marit fixed the ropes; the plane dropped the supplies. The pilot camped just off the shelf and kept her key on a string round her neck.
+loot csbox Rope*4;Bolt*2;Leather*2
+place ZiplinePath_Landmark cszip at -45.03 38.28 h=53.89
+zipto cszip -14 -4
+# the dive: Airplane on the sea floor 12 m down, its crate, an air pocket
+call vd_dive x=-92 z=-40 h=-12 yaw=70 obj="Airplane" al=cswreck crate=cscrate zal=cswz zid=cs_wreck msg="The Seedkeepers' supply plane, nose-down on the sand off the shore. The cockpit locker is still shut." air=csair bub=csbub
+note cscrate Plane's cockpit locker | The pilot's flight bag: a hut key on a string, a compass, a tin of biscuits gone to paste.
+loot cscrate story:pilotkey*1;Scrap*3;Bolt*2
+# the pilot's camp east of the shelf: four old pillars of a burnt hut, a tent, the pilot's locker (her key is in the plane)
+clear at 50 30 r=6
+brush flatten at 50 30 r=5 s=20 frames=150
+place ReefHuts_Pillar3 - at 47.5 27.5 ground sit sy=0.6
+place ReefHuts_Pillar3 - at 52.5 27.5 ground sit sy=0.6
+place ReefHuts_Pillar3 - at 47.5 32.5 ground sit sy=0.6
+place ReefHuts_Pillar3 - at 52.5 32.5 ground sit sy=0.6
+place Balboa_DecorationPrefabBase_SimpleTent - at 46 35.5 ground sit yaw=200
+place campfire_1 - at 50 30 ground sit
+place "Box Big" pilotlock at 52 29 ground sit yaw=250
+place Loot_ChestSmall pilotchest at 52.6 30.6 ground sit yaw=250
+call ni8cave x=40 z=-60 h=2 yaw=0 al=cscavecave
+place Loot_ChestSmall cscavecavebox at 37.5 -55 h=2.45 sit yaw=20
+place Placeable_Lantern_Metal - at 42.6 -56 h=2.45 sit
+note cscavecavebox Ledge cave chest | A dry cave under the ledges. Someone slept here with the goats: straw, a blanket, a jar of honey.
+loot cscavecavebox Rope*2;Leather*2;HoneyComb*1
+prop cscavecavebox loot.refill=0
+# the east knoll (secret): a low hill with a goatherd's box on top
+call vd_mount x=55 z=-30 top=12 r=12 a0=200 turns=1 n=30 hb=3
+place Loot_ChestSmall csknoll at 55 -30 h=12 sit yaw=230
+note csknoll Goatherd box | A goatherd's box: a ball of wool, a carving of a goat with a torn ear - and Burr's bell, Oda's bootlace still on the strap. A note round it: HE FOUND MARIT'S OLD GOATS UP HERE AND WOULD NOT LEAVE THEM. LET HIM HAVE HIS FRIENDS FOR AN HOUR. I WILL HANG THE BELL BACK ON HIM AT THE TOP. - O.
+loot csknoll Wool*3;Rope*2;Coconut*2
+prop csknoll loot.refill=0
+call vd_spot x=55 z=-28.5 al=csknollz id=cs_knoll r=3 msg="From the knoll the root stair climbs the slope like a giant's staircase."
+call vinecache x=-20 z=65 r=8 seed=11391 chest=csvine vines=csvinevines items=Rope*2;Nail*8;Seed_Pine*1
+prop csvine note.title=Root-choked crate
+place Creature_Goat csgoats at -40 -30 ground
+prop csgoats creature.count=3
+place Creature_Chicken cshens at 30 10 ground
+prop cshens creature.count=2
+
+# --- STORY 10-24: Jonas's packing list by the roll call, Marit's line note on the west ledge
+place Note_Paper jonaslist at 1.6 -7.2 ground y=0.3 drop
+note jonaslist Jonas's packing list | JONAS - TO TAKE UP TO THE HEART\n\n- honey (all of it, Teodor asked)\n- the good pan\n- the other good pan, in case\n- bees\n- salt\n- Marit's birthday cake, in a tin, do NOT tell her\n\nNOT TO TAKE:\n- the jars Teodor keeps giving me "for the kitchen". They are not for the kitchen. Nothing for a kitchen glows.\n\nNote to self: be cheerful. Everybody up there is frightened and somebody has to be the one making toast. That is my whole plan. Toast.
+place Note_Paper maritline at -24.6 -11.4 ground y=0.3 drop
+note maritline Note on the west ledge | M. - LEDGE LINE\n\nThis line is for whoever comes after Oda, because somebody will. Teodor is certain of it. He has been leaving the spit beacon on every night for a month, and when I asked him why, he said, "So that someone can find us who does not already know what to think."\n\nI think he means you.\n\nThe rope is good. Clip in at every piton. Do not look at the vines while you climb; they look back.\n\nAt the top: the Heart. I will be on the balconies. Wave.
+
+# --- Settings, notes, behaviours, quest -------------------------------------------------------------------------
+info title=Canopy Stair
+info author=Custom Islands
+info description=A steep island climbing on giant roots to a shelf where the Seedkeepers made their last camp, a zipline pointing out to the Heart. The eighth island of The Last Green World.
+island on.arrive=message||Roots as thick as boats lie up the slope like a stair. At the top, tents - and a zipline line strung out into the haze.
+
+prop stairroots tint.color=#4a3424
+prop stairroots tint.amount=0.5
+
+note rollcall Seedkeepers' roll call | ROLL CALL - LAST CAMP - written by Marit, corrected by Jonas\n\nMarit - Heart lab\nJonas - Heart lab (with bees) (bees not optional - J.)\nAki - root gate\nTeodor - stayed in the marsh. He said so on the radio. He said it twice.\nRiver people (14) - gone below\nLise's crew (4) - gone below, looking for them\n\nWhoever reads this: the tents are yours. We will not need them, or we will need them very much and not be able to come back for them. Either way.\n\nRope coils left on the ledges - stair, ledge, big root. Rig the anchor before you ride.
+note odaletter Oda's letter | To whoever came after me -\n\nYou have been one day behind me since the spit. I have seen your fires. You put them out properly. Thank you.\n\nI found them - the Seedkeepers, the river people, all of it. Teodor did not stay in the marsh. He came up this stair a week ago with a crate of jars, and Marit let him into the Heart, because she is my sister and she has always believed people when they say sorry.\n\nThe Heart of Green is at the top of the zipline. The band is 1200. Marit is in the lab, if she is anywhere. Count the balconies when you climb; she always did.\n\nBurr has gone on ahead. He knows the way to Marit better than I do.\n\n- Oda Fenn
+note tentone Tent chest | Marit's tent chest: titanium tool plans, worn soft at the folds.
+note tenttwo Jonas' tent chest | Jonas' tent chest: a big backpack's plans and his spare rope.
+note anchorbox Anchor box | The zipline anchor's box: plans for a powered zipline tool.
+loot tentone Blueprint_TitaniumTools*1;Bolt*2
+prop tentone loot.refill=0
+# (box agent 10-25: a spare machete here - the vines need one, and a fresh world or a lost one from the delta left the island stuck)
+loot tenttwo Blueprint_BackpackAdvanced*1;Rope*3;Leather*1;Machete*1
+prop tenttwo loot.refill=0
+loot anchorbox Blueprint_ZiplineToolElectric*1;Battery*1
+prop anchorbox loot.refill=0
+prop anchorbox obj.name=anchorbox
+prop anchorbox beh.hidden=1
+story ropecoil|Rope coil|Rope|A coil of the Seedkeepers' climbing rope, left on a ledge. The anchor takes three.
+story rigged|Anchor rigged|Rope|The zipline anchor is rigged; its box is unlocked.
+note coil1 Stair ledge | A ledge on the root stair, overgrown: a rope coil and pitons.
+loot coil1 story:ropecoil*1;Nail*6
+prop coil1 loot.refill=0
+prop coil1 obj.name=coil1
+prop coil1 beh.hidden=1
+prop stairvines obj.name=stairvines
+prop stairvines on.use=hide|\nshow|coil1\nmessage||The machete cuts the vines off the ledge: a coil of rope hangs on a piton.
+note coil2 West ledge | The ledge where Marit fixed her lines: a rope coil.
+loot coil2 story:ropecoil*1;Leather*1
+prop coil2 loot.refill=0
+note coil3 East root | The big root's top, a coil tied off on it.
+loot coil3 story:ropecoil*1;Bolt*2
+prop coil3 loot.refill=0
+prop anchorwinch beh.use=Rig the anchor
+prop anchorwinch if.use=quest|5\ntake|story:ropecoil|3
+prop anchorwinch on.use=message||Three coils, spliced and wound on. The anchor line sings tight toward the Heart - and the anchor box's catch drops.\ngive||story:rigged*1\nshow|anchorbox
+prop anchorwinch else.use=message||The anchor's winch, empty. The roll call: "Coils left on the ledges - stair, ledge, big root."
+note rangercache Oda's locker | Oda's locker on the shelf: her spare lamp, rope and a battery.
+loot rangercache Placeable_Lantern_Metal*1;Rope*3;Battery*1
+prop rangercache loot.refill=0
+prop rangercache obj.name=rangercache
+prop rangercache beh.hidden=1
+prop rangerlock obj.name=rangerlock
+prop rangerlock beh.use=Open Oda's locker
+prop rangerlock if.use=has|story:rangerkey
+prop rangerlock on.use=hide|\nshow|rangercache\nmessage||Oda's key, Oda's locker.
+prop rangerlock else.use=message||A locker stencilled RANGER - O. FENN. Her key would open it.
+
+prop shelfzone zone.id=shelf
+prop shelfzone zone.radius=7
+prop shelfzone zone.message=The root shelf. The Seedkeepers' last camp: two tents, crates, a cold fire.
+
+# DEEP 10-24 settings
+story pilotkey|Pilot's key|Placeable_Lantern_Metal|A hut key on a string, from the cockpit locker of the sunk supply plane.
+prop pilotlock obj.name=pilotlock
+prop pilotlock beh.use=Open the pilot's locker with her key
+prop pilotlock if.use=quest|9\n!signal|pilot\ntake|story:pilotkey|1
+prop pilotlock on.use=signal||pilot\nshow|pilotchest\nmessage||The key turns stiffly. Inside the locker: her flight log and her spares.
+prop pilotlock else.use=message||The pilot's locker, padlocked. The gantry box said she kept the key round her neck - and she flew the plane.
+prop pilotchest obj.name=pilotchest
+prop pilotchest beh.hidden=1
+note pilotchest Pilot's flight log | FLIGHT LOG - VERDANCE SUPPLY\n\nRun 31. Dropped rope and seed at the cliff. Marit waved from the top.\nRun 32. The canopy has grown a metre since run 31. The strip is gone.\nRun 33. Ditching off the shore. If you read this, the ropes are on the ledges, the Heart is up the zipline, and I swam.
+loot pilotchest Rope*2;Leather*1;Battery*1
+prop pilotchest loot.refill=0
+# --- JUMP COURSE cs (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
+# Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
+# JUMP cs pad=4 at=-66 -3
+push at -66 -3
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=4
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=4
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpcs at -3.36 7.80 h=4.50
+place Block_Foundation_Tier3 jpcs at -0.75 7.80 h=4.90
+place Block_Foundation_Tier3 jpcs at 2.06 7.80 h=5.40
+place Block_Foundation_Tier3 jpcs at 2.06 4.88 h=6.00
+place Block_Foundation_Tier3 jpcs at 2.06 2.06 h=6.80
+place Block_Foundation_Tier3 jpcs at -0.75 2.06 h=7.70
+place Block_Foundation_Tier3 jpcs at -3.46 2.06 h=8.65
+place Block_Foundation_Tier3 jpcs at -6.38 2.06 h=9.45
+place Block_Foundation_Tier3 jpcs at -6.38 -1.56 h=10.35 sx=2 sz=2
+# JUMP from 9
+place Block_Foundation_Tier3 jpcs at -6.38 -6.99 h=10.35 sx=2
+place Block_Foundation_Tier3 jpcs at -0.05 -6.99 h=10.65 sx=2
+place Block_Foundation_Tier3 jpcs at 6.38 -6.99 h=10.65 sx=2 sz=2
+# JUMP end
+# (10-25: each slab stands on one solid column - a stretched foundation of its own footprint, from 0.6 m under the pad flush up to the slab)
+place Block_Foundation_Tier3 jppcs at -0.75 7.80 h=4.218 sy=1.199
+place Block_Foundation_Tier3 jppcs at 2.06 7.80 h=4.718 sy=1.933
+place Block_Foundation_Tier3 jppcs at 2.06 4.88 h=5.318 sy=2.812
+place Block_Foundation_Tier3 jppcs at 2.06 2.06 h=6.118 sy=3.985
+place Block_Foundation_Tier3 jppcs at -0.75 2.06 h=7.018 sy=5.305
+place Block_Foundation_Tier3 jppcs at -3.46 2.06 h=7.968 sy=6.698
+place Block_Foundation_Tier3 jppcs at -6.38 2.06 h=8.768 sy=7.871
+place Block_Foundation_Tier3 jppcs at -6.38 -1.56 h=9.668 sy=9.191 sx=2 sz=2
+place Block_Foundation_Tier3 jppcs at -6.38 -6.99 h=9.668 sy=9.191 sx=2
+place Block_Foundation_Tier3 jppcs at -0.05 -6.99 h=9.968 sy=9.63 sx=2
+place Block_Foundation_Tier3 jppcs at 6.38 -6.99 h=9.968 sy=9.63 sx=2 sz=2
+prop jpcs tint.color=#7a6a52
+prop jpcs tint.amount=0.35
+prop jppcs tint.color=#7a6a52
+prop jppcs tint.amount=0.35
+place Zone_Trigger jzcs at -6.38 -1.56 h=11.35
+prop jzcs zone.id=jump_cs_top
+prop jzcs zone.radius=1.8
+prop jzcs zone.repeat=never
+prop jzcs zone.message=The top of the woodcutters' hop-stones. Oda wrote that Jonas came up here every evening: the whole canopy, green to the sea.
+place Loot_ChestSmall jbcs at 6.38 -6.99 h=10.65 sit yaw=0
+note jbcs Woodcutter's tin | Kept at the far stone, where only the best jumper of the camp ever got.
+loot jbcs Seed_Mango*1;Rope*2;Plank*4
+prop jbcs loot.refill=0
+place Zone_Trigger jycs at 6.38 -6.99 h=11.65
+prop jycs zone.id=jump_cs_finale
+prop jycs zone.radius=1.8
+prop jycs zone.repeat=never
+prop jycs zone.message=The far hop-stone. The woodcutters' best jumper stood here.
+pop
+# --- end of jump course cs ---
+
+quest title=The Climb
+quest intro=Make for the great cliff with the rope gantry, then climb the root stair to the shelf on top.
+step reach|shelf|1|Climb the root stair to the shelf
+step read|Seedkeepers' roll call|1|Read the Seedkeepers' roll call
+step blueprint|Blueprint_TitaniumTools|1|Take the titanium tool plans from Marit's tent
+step blueprint|Blueprint_BackpackAdvanced|1|Take the big backpack plans from Jonas' tent
+step collect|story:ropecoil|3|Find three rope coils in small chests: on the stair, a ledge and the big root
+step collect|story:rigged|1|Rig the zipline anchor's winch
+step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline plans from the anchor box
+step reach|cs_top|1|Climb the Great Cliff's rope gantry
+step collect|story:pilotkey|1|Dive to the supply plane wreck off the shore and open its cockpit locker
+step read|Pilot's flight log|1|Open the pilot's locker at her camp near the shelf and read her log
+step read|Oda's letter|1|Read Oda's letter in Jonas' tent
+step reach|jump_cs_top|1|Climb the woodcutters' hop-stones on the shore and look out from the top
+quest done=The Heart of Green. Band 1200.
+quest reward=Seed_Mango*2;Seed_Flower_Blue*1
+
+# (box agent 10-25: names for the guide pictures' snap points)
+prop cstw obj.name=cstw
+prop cswreck obj.name=cswreck
+save Canopy Stair

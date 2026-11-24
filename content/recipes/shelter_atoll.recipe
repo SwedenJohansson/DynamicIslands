@@ -1,0 +1,789 @@
+# Shelter Atoll - a small/medium island of the library (a new theme: a shelter under the ground)
+# An atoll of palms around a shallow lagoon. On the islet in the middle: a concrete slab with vents, an antenna and a
+# hatch - Civil Defence Shelter No. 7, buried in the islet. Down the hatch's ladder: seven of Selene's rooms (the hatch
+# hall, the main hall, the dormitory, the radio room, the generator room, the gate hall and the commander's room), dark
+# but for two red emergency lights - until the generator runs again, which lights the rooms and opens the commander's
+# door and the blast gate onto the lagoon. Quest "Shelter No. 7" (7 steps): the notice at the hatch, down the
+# ladder, the radio log, the rats in the dormitory, the last can of fuel, the generator and the commander's orders, and
+# his safe.
+# ABYSS 10-26 (1-hour pass): the atoll grows to Raft's size by an outer barrier of land round the ring (outer works:
+# Radar Hill, pillboxes and runway lights, the north channel's patrol boat, a supply plane, a decontamination maze, an
+# ammo cave). Quest 10 -> 15 steps: the radar valve, the patrol boat's coil and the relay before the hatch.
+# DEEP 10-25 (deep pass, The Long Voyage): radius 50 kept. New: Lookout Dune, an 11 m dune raised on the ring's west
+# side (a cut path up, the shelter's observation post on top, the lookout Nadia Ferris's log, her cache under a hatch - a
+# secret) and her tin buried on its north foot. Quest 8 -> 10 steps: the lookout after the notice, before the hatch.
+# The dune moved the land's centre a little west: the plays carry an offset.
+#
+# Built by the recipe player (CIRecipe shelter_atoll) through the editor's own operations (macros from lib_selene).
+# The shelter sits in a pit under a roof slab at ground level: the ground can't lie over rooms, so the islet's top is
+# lowered where the rooms are and the slab is the ground there.
+include lib_sea
+include lib_selene
+include lib_features
+include lib_highwater
+include lib_areas
+include lib_abyss
+include lib_caves
+new
+# (nature: the atoll's palms are the recipe's own; little else - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
+gen Trees=0 Bushes=0.25 Rocks=0.3 Harvest=0.15 BeachThings=0.5
+gen Seed=707 Radius=50 Height=3 Roughness=0.35 Peaks=0 Shape=1 Style=0 BeachWidth=0.6 Cliffs=0 PeakShape=0.3
+gen SeaFloor=0 Shelf=0.4 Seabed=1
+# (sea: Raft's finds and corals as dense as around Raft's islands - Like Raft 0.5 - the review, 2026-10-03)
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.3
+generate
+
+# --- The islet: a hill raised from the lagoon floor, its top levelled; it falls away east to the ring ----------------
+clear at 0 0 r=30
+brush raise at 0 0 r=30 s=20 frames=11
+brush flatten at 0 0 r=22 s=20 frames=60
+brush raise at 22 0 r=10 s=20 frames=5
+brush raise at 29 0 r=8 s=20 frames=2
+brush smooth from 14 0 to 36 0 r=8 s=20 frames=30
+# --- DEEP 10-25 terrain: Lookout Dune on the ring's west side (summit 11 m, base r 13) and its path from the south
+call hw_mount x=-40 z=10 b=13 h=11
+call hw_trail x=-40 z=10 b=13 h=11 a0=180 turn=300 n=20 h0=3
+brush flatten at -40 10 r=7 s=20 frames=400 h=11
+brush sand at -40 10 r=15 s=10 frames=30
+
+# --- ABYSS 10-26 (1-hour pass): the atoll grows to Raft's size by an outer barrier of land round the old ring (the
+# ring, the islet and the dune as they were). The civil defence's outer works: Radar Hill (north-east), the outer
+# barrier with two pillboxes and the runway lights (east to south), a patrol boat sunk in the north channel, a supply
+# plane on the south-west bank, a decontamination maze (south) and an ammo cave under Radar Hill. Land bridges first.
+brush flatten from 30 30 to 46 44 r=9 s=20 frames=500 h=3
+brush flatten from 44 -6 to 60 -10 r=9 s=20 frames=500 h=3
+brush flatten from 2 -44 to 4 -62 r=9 s=20 frames=500 h=3
+brush flatten from -30 -32 to -44 -44 r=9 s=20 frames=500 h=3
+brush flatten from -32 34 to -22 52 r=8 s=20 frames=500 h=3
+# (a knoll of dune on the west arm, so it is no flat plain: the way to the plane goes over it)
+brush flatten at -34 -38 r=5 s=20 frames=400 h=6.5
+brush smooth at -34 -38 r=10 s=5 frames=80
+brush auto at -34 -38 r=11 s=10 frames=25
+# A Radar Hill (north-east): summit 20 m, base r 22, the trail from its south-west foot, the radar mast on top
+call hw_mount x=60 z=54 b=22 h=20
+call hw_trail x=60 z=54 b=22 h=20 a0=225 turn=-300 n=28 h0=3
+brush flatten at 60 54 r=7 s=20 frames=400 h=20
+call hw_mast x=60 z=54 h0=20 lv=3 a=radarmast chest=radarbox top=Placeable_Lantern_Metal
+# B The outer barrier (east to south): a bank h 3.5 with two humps of dune on its sea side, two pillboxes on it
+brush flatten from 62 -8 to 58 -40 r=10 s=20 frames=600 h=3.5
+brush flatten from 58 -40 to 24 -66 r=10 s=20 frames=600 h=3.5
+brush flatten from 24 -66 to 10 -70 r=8 s=20 frames=400 h=3.5
+# (REACH 10-30: a pool between the ring and the barrier with walls 2-3 m high, and the islet's east side falling 2.5 m
+# straight into the lagoon - both traps for anyone in the water: a slope out of the pool and a beach up onto the islet)
+# (circles r 2.8 stepping 0.6 m every 1.5 m, laid from the top down - 10-30 agent N: the first try with r 2.2
+# circles left both walls in place)
+# (10-31: the reach walk got stuck on the walls either side of the r 2.8 slope (a 1.5 m step at 38.8 -17.5) and at its
+# top (2.9 against the ring's 3.5): wider, one more circle onto the ring, then smoothed)
+# (11-03 fixC: both fixes had been laid at the walker's stuck coordinates, which leave out the play's offset
+# 14.72 -1.31 - the slope sat on the ring's grass and the fill in the lagoon. Moved by the offset: the slope now climbs
+# the pool's east wall onto the barrier, the fill lies under the bank the walk could not climb)
+brush flatten at 58.3 -14.2 r=3.5 s=20 frames=200 h=3.5
+brush flatten at 56.9 -14.8 r=3.5 s=20 frames=200 h=2.9
+brush flatten at 55.5 -15.4 r=3.5 s=20 frames=200 h=2.3
+brush flatten at 54.1 -16 r=3.5 s=20 frames=200 h=1.7
+brush flatten at 52.7 -16.6 r=3.5 s=20 frames=200 h=1.1
+brush flatten at 51.3 -17.2 r=3.5 s=20 frames=200 h=0.5
+brush smooth from 52.7 -16.6 to 58.3 -14.2 r=4.5 s=4 frames=8
+clear from 52.7 -16.6 to 58.3 -14.2 r=5.5 body
+# (the hole at 46.2 9.7 under the islet's east bank held water below the sea's level - a pool nobody could climb out
+# of: filled to a sand slope above the water instead)
+brush flatten at 44.3 9.5 r=2.8 s=20 frames=200 h=1.3
+brush flatten at 45.8 9.5 r=2.8 s=20 frames=200 h=0.9
+brush flatten at 47.3 9.5 r=2.8 s=20 frames=200 h=0.6
+brush flatten at 48.7 9.5 r=2.8 s=20 frames=200 h=0.5
+brush smooth from 44.3 9.5 to 48.7 9.5 r=4.5 s=4 frames=8
+clear from 44.3 9.5 to 48.7 9.5 r=5.5 body
+call hw_mount x=78 z=-24 b=12 h=9
+call hw_mount x=50 z=-76 b=10 h=7
+call ab_ruin x=64 z=-30 h=3.5 yaw=90 w=2 d=2 al=pillbox
+call ab_ruin x=38 z=-60 h=3.5 yaw=140 w=2 d=2 al=pillbox
+# C The north channel: a bank across the atoll's north, cut by a channel 11 m deep where the patrol boat went down
+brush flatten from -24 58 to 36 58 r=9 s=20 frames=600 h=3
+call hw_basin x=2 z=60 r=9 h=-11
+place BoatStranded patrolboat at 2 60 ground sit yaw=70
+prop patrolboat tint.color=#4a5048
+prop patrolboat tint.amount=0.5
+# D The supply plane (south-west bank): down on the bank past the bridge
+call ar_plane x=-56 z=-54 h=3 yaw=40 al=supplyplane crate=supplycrate
+# E The decontamination maze (south): 5 x 5 cells of 3 m (x -6..9, z -84..-69), its gate on the north at x 1.5
+brush flatten at 1.5 -76 r=13 s=20 frames=500 h=3
+brush smooth at 1.5 -76 r=17 s=4 frames=40
+brush flatten at 1.5 -76 r=13.5 s=20 frames=400 h=3
+clear at 1.5 -76 r=12
+line Block_Wall_Tier3 from -6 -84 to 9 -84 step=1.5 y=-0.15
+line Block_Wall_Tier3 from -3 -81 to 0 -81 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 3 -81 to 6 -81 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 0 -78 to 3 -78 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 3 -75 to 6 -75 step=1.5 y=-0.15
+line Block_Wall_Tier3 from -6 -72 to 3 -72 step=1.5 y=-0.15
+line Block_Wall_Tier3 from -6 -69 to 0 -69 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 3 -69 to 9 -69 step=1.5 y=-0.15
+line Block_Wall_Tier3 from -6 -84 to -6 -69 step=1.5 y=-0.15
+line Block_Wall_Tier3 from -3 -81 to -3 -75 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 0 -84 to 0 -81 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 0 -78 to 0 -72 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 3 -81 to 3 -78 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 6 -78 to 6 -69 step=1.5 y=-0.15
+line Block_Wall_Tier3 from 9 -84 to 9 -69 step=1.5 y=-0.15
+# F The ammo cave (Radar Hill's north foot): a rock with a hole in it, its mouth to the sea
+# (11-08 d: the den at 3/4 size, its mouth where it was (z 98): the full-size den's roof stood 17 m over its floor and the
+# hill over it rose as two steep towers either side of the mouth; now one rounded dome covers it - CaveMountain.DryDomes)
+call ar_cave x=62 z=86 h=3 yaw=0 al=ammorock chest=ammochest s=0.75
+# (11-07 review: the hill over it Balboa's sandy rock, blue-grey on its steep faces round the brown den: its rock as the den's)
+# (11-08 user: one rock - the plain mountain rock; cave.rock=den dropped, it laid the orange den rock over the hill)
+# (11-07 second review: pits by the rock's leaning walls, teeth along the hill's foot on the raised flanks: its foot on dry land)
+prop ammorock cave.foot=dry cave.rock=plain
+# (REACH 10-30: the cave floor ended 3 m over the sea in a cliff - no way in from the water (reach: ammo chest and the
+# cave "can't get there"): a beach slope from the mouth down into the sea)
+# (11-06 review: a narrow fan read as a causeway, and from the sea the rock's flat underside showed over the water on
+# both sides of it: a beach as wide as the rock, from its pad (h=3) down into the sea at about 15 degrees)
+# (11-06 second review: that beach read as a wide flat sand slab: now a shore as wide as the rock only at its foot, so
+# no underside shows, narrowing as it goes down into the sea - a spit of beach, its sides sloping down as well, smoothed)
+# (11-06 third review: rows of flattened sand still read as a wide flat slab with sheer sides, and the beach at its top
+# (h 3) left the den's floor lip (3.9) showing as a straight brown ledge: now a rounded fan of shore from the lip down
+# into the sea, its rings laid from the largest and lowest up, then smoothed - its sides slope as its front does)
+# (11-06 fourth review: the sea floor here is 70-150 m down, so the fan stood on a sheer column whose sides showed under
+# the water, and smoothing next to that drop pulled the fan's top down: first a shelf under it and along the rock's
+# sides, sloping down to 26 m, so the shore goes on down under the water as the island's own does; smoothing kept off
+# the rock's foot, where the den's room is cut out of the ground)
+brush flatten at 61 117 r=22 s=20 frames=200 h=-26
+brush flatten from 41 78 to 41 104 r=4 s=20 frames=200 h=-20
+brush flatten from 81.5 78 to 81.5 104 r=4 s=20 frames=200 h=-20
+brush flatten at 61 113 r=19 s=20 frames=200 h=-18
+brush flatten from 45 82 to 45 102 r=5 s=20 frames=200 h=-12
+brush flatten from 77.5 82 to 77.5 102 r=5 s=20 frames=200 h=-12
+brush flatten at 61 110 r=15.5 s=20 frames=200 h=-11
+brush flatten from 47.5 84 to 47.5 100 r=3.5 s=20 frames=200 h=-5
+brush flatten from 75 84 to 75 100 r=3.5 s=20 frames=200 h=-5
+brush flatten from 30 86 to 30 104 r=4 s=20 frames=200 h=-8
+brush flatten from 100 74 to 100 104 r=4 s=20 frames=200 h=-8
+brush flatten from 35 86 to 35 106 r=4 s=20 frames=200 h=-3
+brush flatten from 95 74 to 95 106 r=4 s=20 frames=200 h=-3
+brush flatten from 40 74 to 40 104 r=4 s=20 frames=200 h=0.5
+brush flatten from 84 74 to 84 104 r=4 s=20 frames=200 h=0.5
+brush flatten from 40 104 to 84 104 r=3 s=20 frames=200 h=0.5
+brush smooth from 33 76 to 33 104 r=6 s=4 frames=30
+brush smooth from 97 76 to 97 104 r=6 s=4 frames=30
+brush flatten at 61 108 r=12.5 s=20 frames=200 h=-5.5
+brush smooth at 61 115 r=17 s=4 frames=20
+brush flatten at 61 107 r=10 s=20 frames=200 h=-2.6
+brush flatten at 61 105 r=8.5 s=20 frames=200 h=-1
+brush flatten at 61 103.2 r=7 s=20 frames=200 h=0.5
+brush flatten at 61 101.6 r=5.5 s=20 frames=200 h=1.9
+brush flatten from 54 99.5 to 68 99.5 r=3 s=20 frames=200 h=3.2
+brush smooth at 61 106 r=8.5 s=4 frames=40
+brush flatten from 55 99 to 67 99 r=2.2 s=20 frames=60 h=3.6
+brush smooth from 52 100.5 to 70 100.5 r=4 s=4 frames=10
+# (11-07 review: the den (30 m wide) stood half over the sea on its 28 m pad: the hill's sides went down into clear
+# water, cut off in sheer slabs at the mouth's plane, and bridged the water to Radar Hill; the beach's sides were a hard
+# box edge. Now the den's whole footprint is land at its pad's height (h 3, laid after the beach fan), its sides fall
+# by a shore (0.5) and shelves (-3, -8, laid with the fan's shelves) to the sea, and a shoulder (1.5) rounds the beach)
+brush flatten from 42 100 to 42 110 r=6 s=20 frames=200 h=1.2
+brush flatten from 82 100 to 82 110 r=6 s=20 frames=200 h=1.2
+brush flatten from 48 70 to 76 70 r=6 s=20 frames=200 h=3
+brush flatten from 50 82 to 74 82 r=8 s=20 frames=200 h=3
+brush flatten from 50 93 to 74 93 r=7 s=20 frames=200 h=3
+brush flatten from 34 118 to 90 118 r=5 s=20 frames=200 h=-3
+brush flatten from 30 124 to 94 124 r=5 s=20 frames=200 h=-8
+brush flatten from 26 70 to 26 120 r=4 s=20 frames=200 h=-12
+brush flatten from 104 70 to 104 120 r=4 s=20 frames=200 h=-12
+brush flatten from 80 62 to 90 62 r=5 s=20 frames=200 h=1.5
+brush flatten from 88 64 to 88 100 r=5 s=20 frames=200 h=1.5
+brush flatten from 34 62 to 44 62 r=5 s=20 frames=200 h=1.5
+brush flatten from 37 64 to 37 84 r=5 s=20 frames=200 h=1.5
+brush flatten from 41 70 to 41 98 r=3 s=20 frames=200 h=2
+brush smooth from 33 62 to 33 92 r=6 s=4 frames=20
+brush smooth from 91 62 to 91 104 r=6 s=4 frames=20
+brush smooth from 32 112 to 92 112 r=8 s=4 frames=30
+brush smooth from 32 120 to 92 120 r=8 s=4 frames=30
+brush smooth from 39 80 to 39 112 r=5 s=4 frames=20
+brush smooth from 85 80 to 85 112 r=5 s=4 frames=20
+# (11-07 den round 2: the den pad (h 3, r 6 round z 70) cut Radar Hill's north foot into a sheer 10 m wall right behind
+# the shell, its top just over the hill's skin (13-14): its square heightmap edge stood out as teeth on the skyline from
+# the south-west. Now a ramp from under the skin's back (10) up to the hill (18), the shell's back and room (z 66.5+) left at 3)
+brush flatten from 53 65 to 72 65 r=1.6 s=20 frames=60 h=10
+brush flatten from 49 63.3 to 75 63.3 r=1.6 s=20 frames=60 h=13.5
+brush flatten from 48 61.6 to 76 61.6 r=1.6 s=20 frames=60 h=16
+brush flatten from 47 59.9 to 77 59.9 r=1.6 s=20 frames=60 h=18
+brush smooth from 48 62.5 to 76 62.5 r=3 s=4 frames=10
+brush flatten from 47 101.5 to 75 101.5 r=4.5 s=20 frames=200 h=1.5
+# (fourth review: the smoothing left the shore's top 0.9 m under the den's floor lip, a straight brown step with its dark
+# underside showing on both sides of the beach: the top laid last, as wide as the lip and level with it, with a
+# shoulder below it on each side, and sand up to the lip instead of grass)
+brush flatten from 51 100.3 to 71 100.3 r=3 s=20 frames=60 h=2.4
+brush flatten from 53 98.6 to 69 98.6 r=2.2 s=20 frames=60 h=3.92
+# (11-07 third review: a pale gap under each of the den's front corners, its shell's foot over a pit the trenches left)
+brush flatten from 72 99 to 79 99 r=3 s=20 frames=60 h=2.8
+brush flatten from 44 99 to 50 99 r=2.5 s=20 frames=60 h=2.8
+# (11-07 den round 2: from the east, a dark hollow under the hill's east flank: the old trench along x 77.5-81.5 (dug
+# down to -10 before the den pad, which only reached its edge) still ran under the skin there. Filled up to the pad)
+brush flatten from 79.5 80 to 79.5 97 r=3 s=20 frames=60 h=2.6
+brush smooth from 80 79 to 80 98 r=4 s=4 frames=10
+brush sand from 53 100 to 69 100 r=4 s=20 frames=40
+brush sand from 36 103 to 86 103 r=6 s=20 frames=40
+brush sand from 39 78 to 40 110 r=6 s=20 frames=40
+brush sand from 88 62 to 86 110 r=7 s=20 frames=40
+clear from 61 101 to 61 110 r=7 body
+clear from 34 104 to 88 104 r=7 body
+clear from 54 103 to 68 103 r=6 body
+# The new land planted (palms, bamboo, bushes as on the ring; boulders only on the flats)
+call ar_plants_tropical x=40 z=38 r=10 seed=26301
+call ar_plants_hill x=60 z=54 r=22 seed=26311
+call ar_plants_tropical x=60 z=-20 r=12 seed=26321
+call ar_plants_hill x=78 z=-24 r=11 seed=26331
+call ar_plants_tropical x=-16 z=58 r=8 seed=26341
+call ar_plants_tropical x=26 z=58 r=8 seed=26351
+call ar_plants_tropical x=-38 z=-40 r=8 seed=26361
+call ar_plants_hill x=50 z=-76 r=9 seed=26371
+call ar_plants_tropical x=-26 z=46 r=6 seed=26381
+
+# --- The atoll: palms around the ring, bushes on the islet's slopes -----------------------------------------------
+scatter "Pickup_Landmark_Tree_Palm 1" 3 at 37 0 r=6 seed=101
+scatter "Pickup_Landmark_Tree_Palm 2" 3 at 26 26 r=6 seed=102
+scatter "Pickup_Landmark_Tree_Palm 3" 3 at 0 37 r=6 seed=103
+scatter "Pickup_Landmark_Tree_Palm 4" 3 at -26 26 r=6 seed=104
+scatter "Pickup_Landmark_Tree_Palm 1" 3 at -37 0 r=6 seed=105
+scatter "Pickup_Landmark_Tree_Palm 2" 3 at -26 -26 r=6 seed=106
+scatter "Pickup_Landmark_Tree_Palm 3" 3 at 0 -37 r=6 seed=107
+scatter "Pickup_Landmark_Tree_Palm 4" 3 at 26 -26 r=6 seed=108
+scatter Bush 5 at 30 20 r=10 seed=109
+scatter Bush2 5 at -30 -20 r=10 seed=110
+scatter Monstera_1 3 at -20 30 r=8 seed=111
+
+# --- The shelter: its floor 6 m under the islet's top. The pit for its rooms, the lagoon let in at its gate ----------
+push at 0 0 y=-6
+macro pitrow z
+for px -9 9 3
+brush lower at $px $z r=4 s=20 frames=10
+next
+end
+call pitrow 9
+call pitrow 6
+call pitrow 3
+call pitrow 0
+call pitrow -3
+call pitrow -6
+call pitrow -9
+brush lower from -10 -15 to 10 -15 r=6 s=20 frames=30
+brush lower from -8 -21 to 8 -21 r=6 s=20 frames=20
+
+# The rooms (cells of 6 m; cell x z spans x..x+6, z-6..z): the hatch hall (Selene's ladder room) opens south into the
+# main hall; the dormitory west of it, the radio room east; south of the main hall the gate hall, with the generator
+# room west and the commander's room east (its doorway shut by sliding leaves)
+place TP_Selene_Int_Tunnel_Ladder_Bot - at -3 9
+call selene_cell -3 3 n=TP_Selene_Int_Room_Entrance s=none w=TP_Selene_Int_Room_Entrance e=TP_Selene_Int_Room_Entrance
+call selene_cell -9 3 e=TP_Selene_Int_Room_Entrance
+call selene_cell 3 3 w=TP_Selene_Int_Room_Entrance n=TP_Selene_Int_Room_Entrance
+# (11-04: the expedition's storeroom north of the radio room, its doorway barred - it opens for those who talked to
+# Dr. Shogo at the channel; optional, off the quest)
+call selene_cell 3 9 s=none
+place TP_Selene_Int_DoorLargeL storedoor at 6 3 yaw=90 sy=1.051
+place TP_Selene_Int_DoorLargeR storedoor at 6 3 yaw=90 sy=1.051
+call selene_cell -3 -3 n=none s=none w=TP_Selene_Int_Room_Entrance e=TP_Selene_Int_Room_Entrance
+call selene_cell -9 -3 e=TP_Selene_Int_Room_Entrance
+call selene_cell 3 -3 w=TP_Selene_Int_Room_Entrance
+# (both leaves pivot on the doorway's middle: the left one reaches +z, the right one -z)
+place TP_Selene_Int_DoorLargeL cmddoorL at 3 -6 sy=1.051
+place TP_Selene_Int_DoorLargeR cmddoorR at 3 -6 sy=1.051
+
+# The blast gate (Selene's entrance gate) at the gate hall's open end, behind a facade of the tower's concrete walls;
+# a strip of floor across to the landing
+place TP_SeleneEntranceGate gate at 0 -9.5
+place RT_Floor - at 3 -9 y=-0.07 sx=0.993 sz=0.111
+# (each course 1.5 cm thicker than the one on it: of the same thickness, the ground check's rays down the upper course's
+# faces grazed the lower one's edge and read the pit's floor through it - CIGroundIslands)
+for wx -6 -3 3
+place RT_Wall1 - at $wx -10 sz=1.1
+next
+for wx -9 -3 3
+place RT_Wall1 - at $wx -10 y=3
+next
+for wx 6 9 3
+place RT_Wall1 - at $wx -10 sz=1.1
+next
+for wx 6 12 3
+place RT_Wall1 - at $wx -10 y=3
+next
+place RT_Wall1 - at 0 -10 y=4.5 sy=0.5
+place RT_Wall1 - at 3 -10 y=4.5 sy=0.5
+for wx -9 12 3
+place RT_Wall1 - at $wx -10 y=6 sy=0.1
+next
+# (the facade's end walls stand over the pit's sloping edge: a tall piece from y -3 to 3 and a course under it, down into
+# the slope. The tall piece is the old first course and the one under it in one, 30% thicker than the course on it: that
+# first course's base hung up to 3.2 m over the slope at its inner end, and the course on it, at x 12, 2.9 m - the ground
+# check, IG2, 2026-10-12)
+for wx -9 12 21
+place RT_Wall1 - at $wx -10 y=-3 sy=2 sz=1.3
+place RT_Wall1 - at $wx -10 y=-6 sz=1.3
+next
+
+# The landing in front of the gate: tower floor on thick pillars in the lagoon, two crates left on it
+place RT_Floor - at 9 -10 y=-0.07 sx=0.993 sz=0.778
+place RT_Floor - at 3 -10 y=-0.07 sx=0.993 sz=0.778
+place RT_Floor - at -3 -10 y=-0.07 sx=0.993 sz=0.778
+# (11-04: the lagoon cave's approach is cut down to its mouth's floor, about 7 m, under the landing's middle: its
+# pillars go 3 m deeper now, so they stand in the cut and not over it - CIFloating)
+for lx -8.7 8.7 5.8
+place RT_PillarThick - at $lx -16.7 y=-9 sy=1.5
+next
+place "Box Small" - at -7.6 -11.3 sit yaw=15
+place "Box Small" - at -6.4 -11.1 sit yaw=-10
+place Zone_Trigger outside at 0 -13 y=1.5
+
+# The roof: a slab of the tower's floor at ground level, a hole over the hatch hall's ladder shaft with a concrete collar
+macro slab x1 x2 z1 z2
+place RT_Floor - at $x2 $z2 y=6 sx={($x2-$x1)/6.04} sz={($z2-$z1)/9}
+end
+call slab -14 -6.9 4.5 14
+call slab -14 -6.9 -5 4.5
+call slab -14 -6.9 -10 -5
+call slab -6.9 -1.3 4.5 14
+call slab -6.9 -1.3 -5 4.5
+call slab -6.9 -1.3 -10 -5
+call slab 1.3 6.9 4.5 14
+call slab 1.3 6.9 -5 4.5
+call slab 1.3 6.9 -10 -5
+call slab 6.9 14 4.5 14
+call slab 6.9 14 -5 4.5
+call slab 6.9 14 -10 -5
+call slab -1.3 1.3 7.2 14
+call slab -1.3 1.3 -1.6 4.6
+call slab -1.3 1.3 -10 -1.6
+place VP_ConcretePipe02 collar at 0 5.9 y=6.25 rot=90,0,0 scale=1.5 sz=0.1
+
+# On the roof: the notice by the hatch, vents, a radio mast, toxic barrels, sand and rubble blown over the edges
+place Note_Sign notice at 2.6 7.8 y=6 yaw=200
+place Zone_Trigger roof at 0 8.5 y=7.5
+place "VG_DecorationPrefabBase_Ventilation_Box Variant" - at -8 7 y=6 sit yaw=90
+place "VG_DecorationPrefabBase_Ventilation_Box Variant" - at 8 -4 y=6 sit yaw=180
+place RT_DuctTop - at -6 -6 y=6 sit yaw=30
+place Antenna_pole - at 10 10 y=6 sit
+place Antenna_dish - at 10 10 y=12.1 sit yaw=140
+place Antenna_support01 - at 10.6 10 y=6 sit
+place Balboa_DecorationPrefabBase_ToxicBarrel - at 11 2 y=6 sit
+place Balboa_DecorationPrefabBase_ToxicBarrel - at 11.8 2.9 y=6 sit
+place Balboa_DecorationPrefabBase_ToxicBarrel - at 10.9 3.7 y=6 sit tilt=80 yaw=40
+place "Box Small" - at -11 -7 y=6 sit yaw=20
+place "Box Small" - at -11.6 -8.2 y=6 sit yaw=-15
+place VP_RubblePile_Small01 - at -12 11.5 y=6 sit yaw=30
+place VP_RubblePile_Small02 - at 12 -8 y=6 sit yaw=200
+place VP_RubblePile_Small03 - at -12.5 -2 y=6 sit yaw=100
+place Bush - at -15 6 ground
+place Bush2 - at -15 -6 ground
+place Bush - at 15 7 ground
+place Bush2 - at 15.2 -5 ground
+place Bush - at -6 15.5 ground
+place Bush2 - at 7 15.5 ground
+place "Pickup_Landmark_Tree_Palm 1" - at -17 13 ground
+place "Pickup_Landmark_Tree_Palm 3" - at 17 14 ground yaw=120
+place "Pickup_Landmark_Tree_Palm 2" - at -18 -9 ground yaw=60
+
+# --- Inside. The hatch hall: an extinguisher; the main hall: a table, chairs and a red emergency light --------------
+place "Fire Estinguisher" - at -2.1 3.5 sit
+place Zone_Trigger hatchhall at 0 4.5 y=1.5
+place "Table Office" - at 0 0.2 sit
+place "Chair Office" - at -0.6 -0.6 sit yaw=180
+place "Chair Office" - at 0.7 1.1 sit yaw=20
+place TP_RotatingRedLight redlight at 0.2 0.4 y=2 drop
+
+# The dormitory: bunk beds, the radio operator's locker with the fuel, a footlocker - and rats
+place "VG_DecorationPrefabBase_BunkBed Variant" - at -7.6 1.8 sit
+place "VG_DecorationPrefabBase_BunkBed Variant" - at -7.6 -1.8 sit
+place Balboa_DecorationPrefabBase_SmallLocker bunklocker at -4.3 2.4 sit yaw=180
+place Loot_Chest footlocker at -5.4 -2.3 sit
+place Creature_Rat rats at -6.5 0 y=0.5
+place Zone_Trigger dorm at -6 0 y=1.5
+
+# The radio room: the operator's table with the radios and the log, the radar screen, a computer
+place "Table Office" - at 7.6 0 sit yaw=90
+place RT_CommRadio opradio at 7.8 0.6 y=0.8 sit yaw=90
+prop opradio obj.name=opradio
+place Model_Radio - at 7.8 -0.6 y=0.8 sit yaw=90
+place Note_Book radiolog at 7.3 0 y=0.81 yaw=90
+place "Chair Office" - at 6.5 0 sit yaw=270
+place Balboa_DecorationPrefabBase_Microphone - at 8.2 1.8 sit yaw=200
+place RT_RadarScreen - at 4.1 2.4 sit yaw=180
+place TP_Selene_ComputerGeneric_01 - at 6 -2.4 sit
+
+# The gate hall: crates of supplies, the second emergency light
+place Loot_Crate supply at 2.1 -8.2 sit yaw=10
+place "Box Small" - at -2 -8.2 sit yaw=5
+place "Box Small" - at -2.1 -7.1 sit yaw=-20
+place TP_RotatingRedLight redlight at -2.4 -3.6 y=2 drop
+
+# The generator room: the dry generator, barrels and a cable roll
+place Balboa_DecorationPrefabBase_Generator generator at -6.5 -8 sit
+place Balboa_DecorationPrefabBase_ToxicBarrel - at -8.2 -8 sit
+place Balboa_DecorationPrefabBase_ToxicBarrel - at -8.2 -7 sit
+place VP_Cable_Roll01 - at -8 -4 sit
+place Zone_Sound hum at -6 -6 y=1.5
+
+# The commander's room: the map table with his orders, the safe, a server cabinet
+place MapTable - at 5.9 -5.6 sit centred yaw=90 scale=0.8
+place Note_Paper orders at 5.9 -5.2 y=1.3 drop yaw=90
+place Loot_ChestLarge safe at 8.3 -8.2 sit yaw=270
+place TP_Selene_ComputerRoom_Server01 - at 8.2 -3.9 sit yaw=270
+
+# Lamps (dark until the generator runs) and the dark air in every room
+place Stairwell_CeilingLamp lamps at 0 4.3 y=4.4
+place Stairwell_CeilingLamp lamps at 0 0 y=4.6
+place Stairwell_CeilingLamp lamps at -6 0 y=4.6
+place Stairwell_CeilingLamp lamps at 6 0 y=4.6
+place Stairwell_CeilingLamp lamps at 0 -6 y=4.6
+place Stairwell_CeilingLamp lamps at -6 -6 y=4.6
+place Stairwell_CeilingLamp lamps at 6 -6 y=4.6
+place Zone_Atmosphere dark at 0 5.5 y=1
+place Zone_Atmosphere dark at 0 0 y=1
+place Zone_Atmosphere dark at -6 0 y=1
+place Zone_Atmosphere dark at 6 0 y=1
+place Zone_Atmosphere dark at 0 -6 y=1
+place Zone_Atmosphere dark at -6 -6 y=1
+place Zone_Atmosphere dark at 6 -6 y=1
+place Zone_Sound drips at 0 -1 y=2
+place Loot_Crate storecrate at 7.6 7.6 sit yaw=10
+place "Box Small" - at 4.0 8.0 sit yaw=15
+place "Box Small" - at 4.9 8.2 sit yaw=-10
+place "Box Small" - at 4.4 8.1 y=0.55 sit yaw=40
+place VP_Cable_Roll01 - at 8.1 4.4 sit
+place "Box Small" - at 3.9 4.4 sit yaw=25
+# (a lamp on: the room was all but black in the dark zone - RF7, 11-05)
+place Story_Light storelamp at 5.2 5 sit
+prop storelamp light.on=1
+prop storelamp light.group=StoreLamp
+place Stairwell_CeilingLamp lamps at 6 6 y=4.6
+place Zone_Atmosphere dark at 6 6 y=1
+pop
+
+# --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, bananas, pineapples ----------
+scatter "Pickup_Landmark_Tree_Mango" 3 at 0 0 r=35.0 seed=4380 free=5
+scatter "Banana_Bush_2" 3 at 0 0 r=35.0 seed=4390 free=3
+scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=35.0 seed=4400 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=70 deep=5 n=2
+
+# --- DEEP 10-25: Lookout Dune - the observation post, Nadia Ferris's log, her cache, her tin ------------------------
+call hw_zone x=-40.0 z=-4.0 al=dunefootz id=dunefoot r=5 msg="Steps dug into the dune and shored with planks, a rope rail beside them."
+call hw_zone x=-40 z=10 al=dunetopz id=dunetop r=7 h=1 msg="Lookout Dune. The shelter's observation post: the whole atoll below you, the slab on the islet and its hatch."
+# (11-03 fixC, CIFloatingSweep: the dune top under the post's door is 10.47, the door stood 0.36 m over it: h0 10.65)
+call hw_mast x=-40 z=10 h0=10.65 lv=2 a=dunepost chest=dunepostchest top=Placeable_Lantern_Metal
+place Note_Paper ferrisnote at -36.5 8 h=11.1 drop yaw=200
+loot dunepostchest Rope*2;Battery*1;Plastic*2
+prop dunepostchest loot.refill=0
+# (a level patch for the hatch, 10-25: on the dune's slope its top was half a metre under the sand)
+# (10-25: r=4 and a set height - the scatter may set the hatch up to 2 m off the centre; with no h the dune's slope
+# stayed and the hatch's top was still 0.3 m under at -35.2 14.2)
+# (ground check 10-30: in The Long Voyage's copy the scatter set the hatch 3.7 m off, at -33.7 13.3, past the patch's edge,
+# its top 0.3 m under - a wider patch, so the hatch lands on the flat wherever the scatter sets it)
+brush flatten at -37 13.5 r=6 s=20 frames=200 h=10
+clear at -37 13.5 r=7 body
+call hatchcache x=-37 z=13.5 r=2 seed=32063 alias=dunehatch chest=dunestash items=Scrap*4;Rope*2;CircuitBoard*1;Bolt*2
+scatter "Pickup_Landmark_Tree_Palm 2" 2 at -40 10 r=11 seed=32064 free=1
+scatter Bush2 3 at -40 10 r=12 seed=32065
+call treasure x=-42 z=21 r=12 n=1 seed=32062 kind=0
+prop treasure32062 treasure.loot=CopperIngot*2;MetalIngot*2;Scrap*4
+
+# --- ABYSS 10-26: the outer works' zones, notes, machine, puzzles and secrets ------------------------------------------
+# Radar Hill: the zone at its foot and on top, the radar valve in the mast's deck box
+call hw_zone x=40 z=38 al=radarfootz id=radarfoot r=5 msg="Radar Hill. A path cut round it to the radar mast on its top."
+call hw_zone x=60 z=54 al=radartopz id=radartop r=7 h=1 msg="The top of Radar Hill. The radar dish is gone; the mast still stands, and the whole atoll lies below - the ring, the islet, the outer barrier."
+note radarbox Radar deck box | A box bolted to the mast's deck: a radar valve in a padded case, stamped RELAY - SHELTER No. 7.
+loot radarbox story:radarvalve*1;Battery*1;Plastic*2
+# The north channel: the bank, the patrol boat on the channel's floor, its locker and an air pocket beside it
+call hw_zone x=-14 z=58 al=channelz id=channel r=5 msg="The channel. Down in the green water, a patrol boat lies on its side."
+# 11-04: Dr. Shogo of the Abyss Expedition, on a chair at the channel (a sitter needs a seat: on the bare ground the
+# sit pose floats). His answers: the expedition's log, the way to the supplies in the lagoon cave, or later
+place Placeable_Chair_Wood shogochair at -16 55 ground sit yaw=74
+prop shogochair obj.name=shogochair
+place Story_Islander signe at -16 55 ground yaw=74
+prop signe obj.name=Dr. Shogo
+prop signe islander.character=Shogo
+prop signe islander.pose=sit
+prop signe talk.text=You came down the mine road? Then you have seen the old drifts. The expedition went deeper, to the Abyss.\n---\nThe patrol boat on the channel's floor kept a signal coil in its locker, for the relay by the slab. Its sailors never got it there.\nThe runway lights on the barrier? Each one throws its neighbours too. Start at the second and walk out to the sea - leave the first alone.\n---\nYou have a diver's look. Ask, then.\n> What happened to them?\n> Is there a safe way through the reef caves?\n> Not now.
+prop signe on.choice1=journal|Expedition log|Abyss Expedition, Shelter No. 7. Day 1: the shelter makes a fine base; the commander's men left their stores. Day 6: the reef caves run deeper than the charts say. Day 11: the deep team went down past the drifts and has not come back. I stay with the boat and the log.\nmessage||Shogo hands you the log.
+prop signe on.choice2=show|shelsupply\nmessage||Dive by the sunken dinghy off the landing at the blast gate: a cave opens in the lagoon floor there and climbs into the sea rock past the reef, to a dry cave. We left a chest of diving supplies in it.
+prop signe on.choice3=message||Come back when you are ready to dive.
+place Loot_Crate boatlocker at 6.5 62.5 ground sit yaw=160
+note boatlocker Patrol boat locker | The patrol boat's locker, jammed half shut: a signal coil in oilcloth, labelled RELAY, and a sailor's tin.
+loot boatlocker story:sigcoil*1;Rope*2;Bolt*2
+prop boatlocker loot.refill=0
+call hw_airpocket x=-3 z=57 id=boatair al=boatair bub=boatbub msg="An air pocket under the bank's edge - breathe."
+# The relay box on the islet, north of the slab: both parts, and the relay chest by it opens
+clear at 0 18 r=3
+call hw_machine x=0 z=18 yaw=180 al=relaybox nm="Relay box" a=radarvalve b=sigcoil done=sheltrelay rew=relaychest rnote=relaynote msg="The relay hums. Under your feet, deep in the islet, a bell rings once - the shelter knows someone is here." hint="The relay box has no valve and no coil. The radar mast and the patrol boat had them."
+note relaychest Relay chest | The relay crew's chest, unlocked by the relay: their rations, batteries and the shelter's spare key ring.
+loot relaychest Battery*2;CircuitBoard*1;MetalIngot*2;Rope*2
+note relaynote Relay crew's card | RELAY CREW - SHELTER No. 7\n\nValve from the radar mast. Coil from the patrol boat.\nWith both in, the shelter hears us. Without them, nobody hears anybody.\n\nThe boat went down in the channel with the coil on board. - Sgt. Oskarsson
+# The outer barrier: the runway lights (puzzle: all four lit shows the signal locker); a light switches its
+# neighbours too. Start: 2 and 4 lit; lights 2, 3 and 4 used, in any order, light them all.
+call ab_lamp x=58 z=-14 al=runway1 nm="Runway light 1" grp="Runway lights" on=0
+call ab_lamp x=56 z=-38 al=runway2 nm="Runway light 2" grp="Runway lights" on=1
+call ab_lamp x=44 z=-52 al=runway3 nm="Runway light 3" grp="Runway lights" on=0
+call ab_lamp x=30 z=-62 al=runway4 nm="Runway light 4" grp="Runway lights" on=1
+prop runway1 on.use=light|Runway light 2|toggle
+prop runway2 on.use=light|Runway light 1|toggle\nlight|Runway light 3|toggle
+prop runway3 on.use=light|Runway light 2|toggle\nlight|Runway light 4|toggle
+prop runway4 on.use=light|Runway light 3|toggle
+prop runway1 on.alllit=show|signallocker\nmessage||All four runway lights burn. By the first pillbox a locker stands open.
+call ab_hidden x=61 z=-24 al=signallocker
+note signallocker Signal locker | The barrier crew's signal locker: flares, a lamp and their pay, never collected.
+loot signallocker Battery*2;MetalIngot*2;TradeToken*2;Rope*2
+call hw_zone x=60 z=-20 al=barrierz id=barrier r=6 msg="The outer barrier. Pillboxes, lamp-posts for a runway that never had a plane land on it."
+# Dog tags: five tags of the shelter's garrison, lost about the outer works (a set: a secret)
+call ab_piece x=44 z=40 al=tag1 set="Dog tags" nm="Dog tag 1"
+call ab_piece x=-20 z=60 al=tag2 set="Dog tags" nm="Dog tag 2"
+call ab_piece x=66 z=-34 al=tag3 set="Dog tags" nm="Dog tag 3"
+call ab_piece x=-50 z=-48 al=tag4 set="Dog tags" nm="Dog tag 4"
+call ab_piece x=12 z=-66 al=tag5 set="Dog tags" nm="Dog tag 5"
+prop tag1 on.set=give||TitaniumIngot*1;MetalIngot*2\nmessage||All five dog tags. The garrison of Shelter No. 7 is accounted for.
+# The decontamination maze: its heart's chest (a secret)
+call hw_zone x=1.5 z=-66 al=decongatez id=decongate r=4 msg="DECONTAMINATION - walk the lanes slowly. A maze of concrete walls."
+call hw_zone x=1.5 z=-76.5 h=1 al=deconheartz id=deconheart r=1.5 msg="The heart of the maze: the decontamination crew's chest."
+place Loot_Chest deconchest at 1.5 -77 ground sit yaw=0
+note deconchest Decon crew's chest | The decontamination crew's chest: suits, soap - and a crate of good salve.
+loot deconchest HealingSalve_Good*2;Plastic*3;MetalIngot*2
+prop deconchest loot.refill=0
+# The supply plane's crate and the ammo cave's chest
+note supplycrate Supply plane's crate | A crate from the supply plane's hold: tinned food, rope and a sealed box of bolts.
+loot supplycrate Rope*3;Bolt*3;Plastic*2
+prop supplycrate loot.refill=0
+note ammochest Ammo cave's chest | A chest in the ammo cave under Radar Hill: the shells are long gone, but not the copper.
+loot ammochest CopperIngot*3;MetalIngot*2;TitaniumOre*2
+prop ammochest loot.refill=0
+call hw_zone x=62 z=90 al=ammoz id=ammocave r=4 msg="A hole in the rock under Radar Hill, its mouth to the sea. Ammunition crates - empty."
+# Dr. Calder's field note, at the north bank's west end
+place Note_Paper caldernote2 at -19.5 56.5 ground y=0.1 drop yaw=40
+call treasure x=40 z=-48 r=8 n=1 seed=26391 kind=0
+prop treasure26391 treasure.loot=MetalIngot*2;TitaniumOre*1;Battery*1
+
+info title=Shelter Atoll
+info author=Custom Islands
+info description=An atoll of palms as big as Raft's own islands: a lagoon, a lookout post on a tall dune, the civil defence's outer works round it - Radar Hill, a barrier of pillboxes and runway lights, a patrol boat sunk in the channel, a decontamination maze - and on the islet in the middle, a concrete slab with a hatch. Civil Defence Shelter No. 7 lies buried underneath: seven dark rooms, rats in the bunks and a dry generator. Bring a light.
+island on.arrive=message||An atoll with an islet in its lagoon. On the islet: a concrete slab, a radio mast - and a hatch.
+
+story fuel|Can of fuel|BioFuel|The shelter's last can of generator fuel, from the radio operator's bunk locker.
+story radarvalve|Radar valve|CircuitBoard|The relay's radar valve, from the deck box of the radar mast on Radar Hill.
+story sigcoil|Signal coil|Battery|The relay's signal coil, from the crate of the patrol boat sunk in the channel.
+story sheltrelay|Relay running|Placeable_Lantern_Metal|You ran the relay by the slab with its valve and coil: the shelter rang.
+note caldernote2 Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 2\n\nThe shelter's people built for a war that never came. Their radar charted the sea floor instead: out in the open sea the bottom falls away, and on it stands a whole island, drowned.\n\nThe shelter's radio still works, they say. If it picks up a buoy, follow it down.\n- R. C.
+note ferrisnote Lookout Nadia Ferris's log | N. FERRIS - LOOKOUT, SHELTER No. 7\n\nWatch 1. Posted on the tall dune with binoculars and a lamp. My orders: report anything on the horizon to the radio room below.\n\nWatch 9. Nothing on the horizon for nine days. Rats in the dormitory. The commander has locked himself in his room with the charts and won't say why.\n\nWatch 12. The generator is almost dry. The operator says he's hidden the last can of fuel in his bunk locker, so the commander can't burn it all on his own lamp.\n\nWatch 14. I've stopped going down. It is better up here, in the wind.\n\nIf you're reading this, go down the hatch on the islet. Start the generator - it opens his door and the blast gate. My spare kit is under the hatch beside this post, and my tin is buried at the foot of the dune.
+note notice Shelter notice | CIVIL DEFENCE SHELTER No. 7\n\nEMERGENCY HATCH - climb down slowly, one at a time.\n\nThe blast gate on the lagoon side opens from inside only, and only with the generator running.\n\nCapacity: 24. Keep this hatch clear.
+note radiolog Radio log | RADIO LOG - SHELTER 7\n\nDay 12: No answer from the mainland. The water is still rising.\nDay 31: Rats in the dormitory. Big ones - they came up the vent shaft.\nDay 46: The generator is dry. I put the LAST can of fuel in my bunk locker, so nobody burns it on the heaters.\nDay 47: The commander has sealed himself in with his charts. I'm going up the hatch to look for a boat.\n\nIf you read this: the can is in the dormitory. Fill the generator and the doors will open. - Radio operator Makela
+note orders Commander's orders | FINAL ORDERS\n\nHold the shelter until relieved.\n\nNobody came. The charts show land across the sea - a big island with a tower on it. Whoever gets the power back: take the charts, the blueprint and the spare parts in my safe, and go.
+note bunklocker Bunk locker | A dented locker with MAKELA stencilled on the door. Inside, wrapped in a blanket: a can of fuel.
+loot bunklocker story:fuel*1;Wool*6;Egg*4
+prop bunklocker loot.refill=0
+note footlocker Footlocker | A footlocker under the bunks: a sewing kit, rope and a torn jacket.
+loot footlocker Rope*3;Leather*2;Nail*8
+prop footlocker loot.refill=0
+note supply Supply crate | Shelter supplies: nails, bolts and spare parts.
+loot supply Nail*10;Bolt*4;Hinge*2;Scrap*4
+prop supply loot.refill=0
+note safe Commander's safe | The commander's safe: his charts of the islands across the sea, a blueprint, metal ingots and good healing salve.
+loot safe Blueprint_Fueltank*1;MetalIngot*4;CopperIngot*3;HealingSalve_Good*2
+prop safe loot.refill=0
+prop safe tint.color=#3a4048
+prop safe tint.amount=0.6
+
+prop roof zone.id=roof
+prop roof zone.radius=6
+prop roof zone.message=A concrete slab, rusty vents - and a hatch with a ladder going down into the dark.
+prop hatchhall zone.id=hatchhall
+prop hatchhall zone.radius=2.5
+prop hatchhall zone.message=Cold, still air. Somewhere ahead a red light turns slowly.
+prop dorm zone.id=dorm
+prop dorm zone.radius=3.5
+prop dorm zone.message=Squeaking in the bunks - rats, big ones!
+prop outside zone.id=outside
+prop outside zone.radius=4
+prop outside zone.message=Daylight! The blast gate stands open onto the lagoon.
+prop rats creature.count=3
+prop rats creature.size=1.4
+prop rats creature.respawn=0
+prop rats creature.zone=dorm
+prop rats tint.color=#3a3430
+prop rats tint.amount=0.4
+
+prop generator obj.name=generator
+prop generator beh.use=Start the generator
+prop generator if.use=take|story:fuel|1
+prop generator on.use=message||You pour in the fuel. The generator coughs, sputters - and runs. Lights flicker on through the shelter, and somewhere heavy doors slide open.\nhide|dark\nshow|lamps\nshow|hum\nopen|cmddoor\nopen|gate\nsound||event:/exploring/obstacles/tangaroa/generator_placepart\nsound||event:/exploring/obstacles/varuna/garagedoor_open\nsignal||power
+prop generator else.use=message||The generator is bone dry. It needs fuel.
+prop gate obj.name=gate
+prop gate beh.move=-7.2,0,0
+prop gate beh.moveTime=6
+prop gate beh.moveMode=switch
+prop cmddoorL obj.name=cmddoor
+prop cmddoorL beh.move=0,0,1.3
+prop cmddoorL beh.moveTime=1.5
+prop cmddoorL beh.moveMode=switch
+prop cmddoorR obj.name=cmddoor
+prop cmddoorR beh.move=0,0,-1.3
+prop cmddoorR beh.moveTime=1.5
+prop cmddoorR beh.moveMode=switch
+prop storedoor obj.name=storedoor
+prop storedoor beh.use=Lift the storeroom's bar
+prop storedoor if.use=talked|Dr. Shogo
+prop storedoor on.use=hide|storedoor\nmessage||You reach through the gap the way Dr. Shogo told you and lift the bar. The expedition's storeroom.
+prop storedoor else.use=message||The door is barred from inside.
+note storecrate Expedition stores | The expedition's stores, packed for the dive: rope, air and tins.
+loot storecrate OxygenBottle*1;PlasticBottle_Water*2;Rope*2;Battery*1;Scrap*3
+prop storecrate loot.refill=0
+prop lamps obj.name=lamps
+prop lamps beh.hidden=1
+prop dark obj.name=dark
+prop dark atmo.fog=#060606
+prop dark atmo.fogAmount=0.85
+prop dark atmo.light=#1c1616
+prop dark atmo.lightAmount=0.9
+prop dark atmo.particles=mist
+prop dark zone.radius=5
+prop hum obj.name=hum
+prop hum beh.hidden=1
+prop hum sound.event=event:/exploring/temperence/generator
+prop hum sound.volume=0.6
+prop hum zone.radius=9
+prop drips sound.event=event:/amb/cave
+prop drips sound.volume=0.5
+prop drips zone.radius=10
+prop redlight beh.spin=90
+
+quest title=Shelter No. 7
+quest intro=A concrete slab on the islet in the lagoon, with vents, a radio mast and a hatch. Something was built under this atoll - and nobody has come out in a long time.
+step read|Shelter notice|1|Make for the radio mast on the islet in the lagoon; read the notice by the hatch
+step reach|dunetop|1|Climb the tall dune with the lookout post on top
+step read|Lookout Nadia Ferris's log|1|Read the lookout's log by the post: what happened below
+step reach|radartop|1|Climb Radar Hill to the radar mast on its top
+step collect|story:radarvalve|1|Open the box on the radar mast's deck and take the valve
+step reach|channel|1|Go to the channel where the patrol boat went down
+step collect|story:sigcoil|1|Dive to the sunk patrol boat and open the crate for the signal coil
+step collect|story:sheltrelay|1|Put the valve and the coil in the relay box on the islet by the slab
+step reach|hatchhall|1|Climb down the ladder into the shelter
+step read|Radio log|1|Read the radio log
+step kill|Rat|3|Clear the rats out of the dormitory
+step collect|story:fuel|1|Open the operator's bunk locker in the dormitory for the last fuel can
+step read|Commander's orders|1|Start the generator, then read the commander's orders in his room
+step open|Commander's safe|1|Open the commander's safe and take his charts
+step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the commander's safe
+quest done=The lights are on, the blast gate stands open onto the lagoon, and the commander's charts are yours.
+quest reward=Battery*2;CircuitBoard*2;Scrap*6
+
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=42 n=1 seed=8854
+prop treasure8854 treasure.loot=TitaniumOre*2
+
+# (box agent 10-24: generated rocks left hanging over the ground check - cleared)
+clear at 42.06 -10.84 r=1.2 all only=SmallBoulder1
+# (ABYSS 10-26: the old reef's rock pillars and a coral under the outer barrier's new land - cleared)
+clear at 64.85 -2 r=1.6 all only=Pillar_04
+clear at -30.7 48.8 r=0.8 all only=TableCoral_2
+# (ABYSS 10-26: plant-scatter rocks left hanging on the new land's slopes - cleared)
+clear at 39.64 37.63 r=1 all only=SmallBoulder2
+clear at 64.65 -23.80 r=1 all only=SmallBoulder2
+clear at 62.01 -13.07 r=1 all only=SmallBoulder2
+clear at 85.07 -22.88 r=1 all only=SmallBoulder4
+clear at -12.76 54.35 r=1 all only=SmallBoulder2
+clear at -22.43 55.15 r=1 all only=SmallBoulder2
+clear at 33.68 59.14 r=1 all only=SmallBoulder2
+clear at -39.22 -41.00 r=1 all only=SmallBoulder2
+clear at 53.93 -82.37 r=1 all only=SmallBoulder4
+clear at -23.49 45.16 r=1 all only=SmallBoulder2
+clear at -19.29 57.61 r=2 all only=SmallBoulder2
+clear at -23.12 55.98 r=2 all only=SmallBoulder2
+clear at -22.11 45.21 r=2 all only=SmallBoulder2
+# (ground check 10-30: a rock hanging 1.8 m over Radar Hill's foot - cleared. The report's points are from the land
+# centre, 14.7199 -1.3105 off this recipe's origin: added here)
+clear at 43.40 42.73 r=1 all body only=SmallBoulder2
+# (ground check 10-30, "sunk trunk": palms, bamboo and a mango with their trunk foot 1-13 m in the ground - the trunk
+# coming out of the slope, or the whole tree under a hill. Taken out; the islet's two palms set down again below, last,
+# when the land is done)
+clear at 68.48 65.71 r=0.6 all only=Bamboo_1
+clear at 52.13 -20.64 r=0.6 all only=Tree_Palm.4
+clear at 51.85 -21.44 r=0.6 all only=Bamboo_1
+clear at 82.63 -18.15 r=0.6 all only=Tree_Palm.3
+clear at 73.62 -17.22 r=0.6 all only=Bamboo_1
+clear at 44.66 -80.10 r=0.6 all only=Tree_Palm.3
+clear at 42.99 -76.47 r=0.6 all only=Tree_Palm.3
+clear at 44.58 -82.57 r=0.6 all only=Tree_Palm.4
+clear at 55.61 -81.15 r=0.6 all only=Tree_Mango
+clear at 2.55 42.02 r=0.6 all only=Tree_Palm.3
+clear at 2.99 41.67 r=0.6 all only=Tree_Palm.3
+clear at 1.07 41.46 r=0.6 all only=Tree_Palm.3
+clear at -22.83 29.27 r=0.6 all only=Tree_Palm.4
+clear at -17 13 r=0.6 all only=Tree_Palm.1
+clear at -18 -9 r=0.6 all only=Tree_Palm.2
+# (10-31: "ground" still left these three 1.1-1.4 m deep: set by their pivot instead, just under the ground)
+place "Pickup_Landmark_Tree_Palm 1" - at -17 13 y=-0.3
+place "Pickup_Landmark_Tree_Palm 2" - at -18 -9 y=-0.3 yaw=60
+place "Pickup_Landmark_Tree_Palm 3" - at 2 41.7 y=-0.3 yaw=200
+# (ABYSS 10-26: the old reef's corals the new banks lifted out of the sea - cleared)
+clear at -34.6 42.8 r=2.3 all only=Coral
+clear at -31.8 46.4 r=3.0 all only=Coral
+clear at -26.2 -38.9 r=0.6 all only=Coral
+clear at 11.5 56.4 r=2.0 all only=Coral
+clear at 11.6 64.2 r=1.3 all only=Coral
+clear at 12.9 58.7 r=3.7 all only=Coral
+clear at 13.1 61.7 r=3.5 all only=Coral
+clear at 41.4 30.3 r=3.1 all only=Coral
+clear at 51.6 -12.8 r=0.6 all only=Coral
+clear at 50.6 -7.6 r=5.1 all only=Coral
+clear at 50.8 -1.8 r=2.7 all only=Coral
+clear at 56.1 -13.2 r=4.5 all only=Coral
+clear at 56.0 -7.9 r=5.3 all only=Coral
+clear at 54.9 -2.3 r=5.5 all only=Coral
+clear at 60.5 -13.5 r=2.0 all only=Coral
+clear at 61.7 -6.8 r=5.4 all only=Coral
+clear at 61.4 -2.7 r=2.4 all only=Coral
+# --- 11-04: the lagoon cave ---
+# (11-04) A cave from the lagoon floor in front of the landing, under the ring and up into a sea stack in the bay past
+# the reef: an underwater mouth by a sunken dinghy, the tunnel climbing out of the water, a dry den with air. Not under
+# the shelter as first planned: the den is some 21 x 22 m and 11 m high at the least size, the lagoon 2-6 m deep and
+# the shelter's rooms fill the islet. hill=0: no ridge over the lagoon (a ridge would fill the landing's water).
+call kit_st x=-4 z=-22 yaw=205 len=35.6 slope=12 end=room size=0.7 hill=0 dirt=2 mush=2 stone=1 vines=1 as=shelcave
+# (the dinghy in front of the mouth, off its right side and clear of the landing's deck; the mouth's sides are walled with two boulders on the cut's
+# floor: hill=0 leaves the mouth piece's flanks bare where its approach is cut down, and a diver beside the mouth saw
+# into the tunnel through the shell's back - X7, CICaveInside)
+# (11-05: "ground sit" sat it on the landing deck's corner, up in the air over the water: dropped from under the surface
+# onto the lagoon floor, sunk as the islanders' notes say)
+# (11-05 round 2: it had dropped onto the mouth frame's rock, over a hollow; now on the lagoon floor east of the landing's
+# pillars, keeled over and half in the sand as a wreck - RF1)
+place RT_PlasticBoat dinghy at 0.5 -14.8 y=-0.5 sit yaw=150 tilt=14 roll=25
+prop dinghy obj.name=dinghy
+# (Raft's grey boulders, not Temperance's snow-capped blue rock - it stood out navy blue on the lagoon's sand, 11-05)
+place SmallBoulder3 - at -11.5 -19.6 ground sit scale=0.65 yaw=40
+# (and one close by the mouth's right lip: from inside the mouth a slit beside it looked out through the shell's back)
+place SmallBoulder3 - at -7.9 -19.5 ground sit scale=0.65 yaw=100
+place SmallBoulder3 - at 2.65 -26.2 ground sit scale=0.65 yaw=160
+# (the mouth piece's shell back, seen from beside the frame's west flank: 21 open spots - a big boulder over it, RF2;
+# a second at -6.8 -26 stood in the tunnel's way down)
+# (on the very spot CICaveInside stands at, -7.9 -22.7: one beside it left the look free)
+place SmallBoulder3 - at -8.1 -22.8 ground y=-0.3 sit scale=1.7 yaw=20
+# (a palm the den's rock grew round stood out of the sea stack's side, its crown inside: cleared)
+clear at -23.6 -64 r=16 all body only=Tree
+place Zone_Trigger shelair at -23.6 -64 h=3.6
+prop shelair obj.name=shelair
+prop shelair zone.id=shelair
+prop shelair zone.radius=7
+prop shelair zone.repeat=1
+prop shelair zone.air=1
+prop shelair zone.message=A dry cave in the sea rock - air. The expedition camped here.
+# cavecheck inside shelsupply
+place Loot_ChestSmall shelsupply at -26 -66.5 h=6 drop yaw=25
+prop shelsupply obj.name=shelsupply
+prop shelsupply beh.hidden=1
+prop shelsupply loot.refill=0
+note shelsupply Expedition supply chest | The Abyss Expedition's chest, left in the dry cave for the divers: air, water and salve.
+loot shelsupply OxygenBottle*2;PlasticBottle_Water*2;HealingSalve_Good*1;Rope*2
+# --- 11-05: cave rats (the user: "in some caves there can be a monster, like a rat") ---
+# Tangaroa rats, not Raft's rats: the quest's "Clear the rats out of the dormitory" counts animals labelled Rat, and
+# rats killed in a cave must not count for the dormitory. On the cave's floor, 6 m and more from the chests
+# and off the way in. No respawn.
+# (11-06 review: Radar Hill's planting (ar_plants_hill at 60 54 r=22) put palms under the ammo cave's rock, at its back
+# where the rats live - no trees under rock: taken out of the cave)
+clear at 62 80 r=11 all only=Palm|Tree|Bamboo|Banana|Mango below=9
+# The ammo cave: two at its back, 12 m from its chest by the mouth (the same den as The Abyss's lava tube). The lagoon cave's den is reached only under water and gets no NavMesh floor: no rats there
+place Creature_Rat_Tangaroa ammorats at 63 79 h=4.5
+prop ammorats creature.count=2
+prop ammorats creature.respawn=0
+save Shelter Atoll

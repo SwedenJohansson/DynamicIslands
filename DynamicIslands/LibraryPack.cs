@@ -6,6 +6,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using ICSharpCode.SharpZipLib.Zip;
+using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using UnityEngine;
 
 namespace DynamicIslands.Editor
@@ -48,12 +49,27 @@ namespace DynamicIslands.Editor
 			var d = new LibraryInfo();
 			return new LibraryInfo
 			{
-				id = LibraryJson.Str(o, "id"), kind = LibraryJson.Str(o, "kind", d.kind), title = LibraryJson.Str(o, "title"), author = LibraryJson.Str(o, "author"),
-				version = Math.Max(1, LibraryJson.Int(o, "version", 1)), summary = LibraryJson.Str(o, "summary"), description = LibraryJson.Str(o, "description"),
-				tags = LibraryJson.Strings(o, "tags"), players = LibraryJson.Str(o, "players", d.players), length = LibraryJson.Str(o, "length"), icon = LibraryJson.Str(o, "icon"),
+				id = LibraryJson.Str(o, "id"), kind = LibraryJson.Str(o, "kind", d.kind), title = Plain(LibraryJson.Str(o, "title"), 80), author = Plain(LibraryJson.Str(o, "author"), 60),
+				version = Math.Max(1, LibraryJson.Int(o, "version", 1)), summary = Plain(LibraryJson.Str(o, "summary"), 300), description = Plain(LibraryJson.Str(o, "description"), 4000),
+				tags = LibraryJson.Strings(o, "tags").Select(x => Plain(x, 30)).ToArray(), players = LibraryJson.Str(o, "players", d.players), length = LibraryJson.Str(o, "length"), icon = LibraryJson.Str(o, "icon"),
 				pictures = LibraryJson.Strings(o, "pictures"), plan = LibraryJson.Str(o, "plan"), remix = LibraryJson.Bool(o, "remix", true), featured = LibraryJson.Bool(o, "featured"),
 				minModVersion = LibraryJson.Str(o, "minModVersion"), created = LibraryJson.Str(o, "created"), basedOn = LibraryJson.Str(o, "basedOn"),
 			};
+		}
+
+		static readonly System.Text.RegularExpressions.Regex RichTag = new System.Text.RegularExpressions.Regex(@"</?(size|color|b|i|material|quad|sprite|link|font|mark|align|voffset|cspace|indent|line-height|pos|rotate|s|u|sub|sup|alpha|nobr|page|br)(=[^>]*)?>",
+			System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+		/// <summary>
+		/// An entry's text as plain text (ROADMAP X6, test UL7): Unity's rich text tags taken out - a "&lt;size=300&gt;" title
+		/// covered the library window - tabs as spaces, other control characters gone, and at most max characters.
+		/// </summary>
+		public static string Plain(string s, int max)
+		{
+			if (string.IsNullOrEmpty(s)) return "";
+			string t = RichTag.Replace(s, "").Replace('\t', ' ');
+			t = new string(t.Where(ch => ch == '\n' || !char.IsControl(ch)).ToArray()).Trim();
+			return t.Length > max ? t.Substring(0, max - 3).TrimEnd() + "..." : t;
 		}
 
 		public static LibraryInfo FromJson(string json)
@@ -72,6 +88,12 @@ namespace DynamicIslands.Editor
 		public int version = 1;
 		public bool remix = true;
 		public List<LibraryInstalledFile> files = new List<LibraryInstalledFile>();
+		/// <summary>The pack's own files as they came (name, SHA-256) - the library lists the same, so a file changed there
+		/// without a new version number still shows as an update (T10). Empty for installs made before.</summary>
+		public Dictionary<string, string> packed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		/// <summary>Story item ids this entry installed under another id (T8: another entry had the same): the pack's id -> the
+		/// id here. An update keeps them, so the worlds that hold them keep them.</summary>
+		public Dictionary<string, string> storyIds = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
 		public string Source { get { return source + ":" + id + "@" + version.ToString(CultureInfo.InvariantCulture); } }
 
@@ -81,17 +103,22 @@ namespace DynamicIslands.Editor
 			{
 				{ "id", id }, { "source", source }, { "title", title }, { "author", author }, { "kind", kind }, { "version", version }, { "remix", remix }, { "date", date }, { "plan", plan },
 				{ "files", files.Select(f => (object)new Dictionary<string, object> { { "name", f.name }, { "original", f.original }, { "kind", f.kind }, { "sha256", f.sha256 }, { "shared", f.shared } }).ToList() },
+				{ "packed", packed.Select(k => (object)new Dictionary<string, object> { { "name", k.Key }, { "sha256", k.Value } }).ToList() },
+				{ "storyIds", storyIds.Select(k => (object)new Dictionary<string, object> { { "from", k.Key }, { "to", k.Value } }).ToList() },
 			};
 		}
 
 		public static LibraryInstalled From(Dictionary<string, object> o)
 		{
-			return new LibraryInstalled
+			var r = new LibraryInstalled
 			{
 				id = LibraryJson.Str(o, "id"), source = LibraryJson.Str(o, "source", LibraryPack.SourceImport), title = LibraryJson.Str(o, "title"), author = LibraryJson.Str(o, "author"),
 				kind = LibraryJson.Str(o, "kind", LibraryPack.KindIsland), version = LibraryJson.Int(o, "version", 1), remix = LibraryJson.Bool(o, "remix", true), date = LibraryJson.Str(o, "date"), plan = LibraryJson.Str(o, "plan"),
 				files = LibraryJson.Objects(o, "files").Select(f => new LibraryInstalledFile { name = LibraryJson.Str(f, "name"), original = LibraryJson.Str(f, "original"), kind = LibraryJson.Str(f, "kind", LibraryPack.KindIsland), sha256 = LibraryJson.Str(f, "sha256"), shared = LibraryJson.Bool(f, "shared") }).ToList(),
 			};
+			foreach (Dictionary<string, object> f in LibraryJson.Objects(o, "packed")) r.packed[LibraryJson.Str(f, "name")] = LibraryJson.Str(f, "sha256");
+			foreach (Dictionary<string, object> f in LibraryJson.Objects(o, "storyIds")) r.storyIds[LibraryJson.Str(f, "from")] = LibraryJson.Str(f, "to");
+			return r;
 		}
 	}
 
@@ -127,9 +154,30 @@ namespace DynamicIslands.Editor
 	public static class LibraryPack
 	{
 		public const string KindIsland = "island", KindPlan = "plan", SourceImport = "import", SourceLibrary = "library";
+		/// <summary>A file's kind in installed.json: a map type file (ROADMAP T7) a pack brought along with its islands or plan.</summary>
+		public const string KindMapType = "maptype";
 		public const long MaxTotalBytes = 50L * 1024 * 1024;
 		public const int MaxFiles = 64;
-		static readonly string[] AllowedExtensions = { IslandFile.Extension, WorldPlan.Extension, ".json", ".jpg", ".jpeg", ".png" };
+		static readonly string[] AllowedExtensions = { IslandFile.Extension, WorldPlan.Extension, MapTypeFiles.Extension, ".json", ".jpg", ".jpeg", ".png" };
+
+		/// <summary>Where an installed entry's file is: an island, the plan or a map type file.</summary>
+		public static string PathOf(LibraryInstalledFile f) { return f.kind == KindPlan ? WorldPlan.PathFor(f.name) : f.kind == KindMapType ? MapTypeFiles.PathFor(f.name) : IslandSpawner.PathFor(f.name); }
+
+		static string ExtensionOf(string kind) { return kind == KindPlan ? WorldPlan.Extension : kind == KindMapType ? MapTypeFiles.Extension : IslandFile.Extension; }
+
+		/// <summary>
+		/// The map types of files (MapTypeFiles) the plan's rules and the islands' own rules bring ("type:&lt;name&gt;"): they go
+		/// into the pack with them, so the entry works where those types aren't. Built-in types need nothing.
+		/// </summary>
+		static List<string> MapTypesUsed(IEnumerable<string> islands, WorldPlan plan)
+		{
+			var rules = new List<IntroRule>();
+			if (plan != null) rules.AddRange(plan.Rules);
+			foreach (string n in islands)
+				try { rules.AddRange(WorldDirector.RulesFromProps(IslandCache.Props(n))); } catch { }
+			return rules.Where(r => r.What == "type").Select(r => MapTypes.Get(r.WhatArg)).Where(t => t != null && t.FromFile != null && File.Exists(t.FromFile))
+				.Select(t => t.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+		}
 
 		public static string LibraryFolder { get { return Path.Combine(DynamicIslands.assetpath, "library"); } }
 		public static string ExportFolder { get { return Path.Combine(DynamicIslands.assetpath, "exports"); } }
@@ -192,13 +240,57 @@ namespace DynamicIslands.Editor
 			using (var sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "").ToLowerInvariant();
 		}
 
-		static string ShaOfFile(string path) { return File.Exists(path) ? Sha256(File.ReadAllBytes(path)) : null; }
+		internal static string ShaOfFile(string path) { return File.Exists(path) ? Sha256(File.ReadAllBytes(path)) : null; }
 
 		/// <summary>The format number of an island file's bytes (-1 if it isn't one).</summary>
 		public static int IslandFormat(byte[] b)
 		{
 			if (b == null || b.Length < 8 || b[0] != 'C' || b[1] != 'I' || b[2] != 'S' || b[3] != 'L') return -1;
 			return BitConverter.ToInt32(b, 4);
+		}
+
+		/// <summary>An island file's body may unpack to at most this much (the densest islands are a few MB): more is a damaged
+		/// or harmful file - a few packed MB can unpack to gigabytes.</summary>
+		public const long MaxIslandBytes = 64L * 1024 * 1024;
+
+		/// <summary>
+		/// Why an island file's bytes (with a valid header, IslandFormat) can't be installed - its body unpacks to more than
+		/// MaxIslandBytes, or it doesn't read in full as an island - or null when it is fine (AU39).
+		/// </summary>
+		static string IslandBodyProblem(byte[] bytes, string label)
+		{
+			try
+			{
+				// (counted while unpacking, before IslandFile reads it: what it allocates is then bounded by real data)
+				long size = 0;
+				using (var m = new MemoryStream(bytes, 8, bytes.Length - 8))
+				using (var inflate = new InflaterInputStream(m))
+				{
+					var buffer = new byte[65536];
+					int n;
+					while ((n = inflate.Read(buffer, 0, buffer.Length)) > 0)
+					{
+						size += n;
+						if (size > MaxIslandBytes) return "unpacks to more than " + (MaxIslandBytes / 1024 / 1024) + " MB - it isn't a real island.";
+					}
+				}
+				IslandFile.FromBytes(bytes, label);
+				return null;
+			}
+			catch (Exception e) { return "is damaged and can't be read (" + e.Message + ")."; }
+		}
+
+		/// <summary>
+		/// Text from a pack (its title or author) as part of a file name (AU39 - the author went into the plan's file name
+		/// as it was, "/" and ".." too): only characters a file name and the mod's lists may hold, at most max characters
+		/// (Windows refuses paths over 260 characters), no dot or space at the end. Empty when nothing is left.
+		/// </summary>
+		static string NamePart(string text, int max)
+		{
+			char[] invalid = Path.GetInvalidFileNameChars();
+			string clean = new string((text ?? "").Where(c => !char.IsControl(c) && !invalid.Contains(c) && "#%?=,;".IndexOf(c) < 0).ToArray()).Trim();
+			if (clean.Length > max) clean = clean.Substring(0, max);
+			return clean.TrimEnd('.', ' ');
 		}
 
 		#endregion
@@ -330,6 +422,8 @@ namespace DynamicIslands.Editor
 					files.Add(new KeyValuePair<string, byte[]>(info.plan, Encoding.UTF8.GetBytes(plan.ToText())));
 				}
 				else info.plan = "";
+				foreach (string t in MapTypesUsed(islands, plan))
+					files.Add(new KeyValuePair<string, byte[]>(t + MapTypeFiles.Extension, File.ReadAllBytes(MapTypeFiles.PathFor(t))));
 				info.icon = icon != null ? "icon.jpg" : "";
 				pictures = (pictures ?? new byte[0][]).Where(p => p != null).Take(4).ToList();
 				info.pictures = Enumerable.Range(1, pictures.Count).Select(i => "picture" + i + ".jpg").ToArray();
@@ -350,7 +444,7 @@ namespace DynamicIslands.Editor
 
 		static void WriteZip(string path, string folder, IEnumerable<KeyValuePair<string, byte[]>> files)
 		{
-			string tmp = path + ".tmp";
+			string tmp = SafeFile.TempFor(path);
 			using (var zip = new ZipOutputStream(File.Create(tmp)))
 			{
 				zip.SetLevel(6);
@@ -363,13 +457,22 @@ namespace DynamicIslands.Editor
 				}
 				zip.Finish();
 			}
-			if (File.Exists(path)) File.Delete(path);
-			File.Move(tmp, path);
+			// (in the old export's place in one step; it was deleted, then moved - AU41)
+			SafeFile.Commit(tmp, path);
 		}
 
 		#endregion
 
 		#region Reading a pack
+
+		/// <summary>What zip tools add on their own (macOS's __MACOSX folder and ._ files, .DS_Store, Windows' Thumbs.db and
+		/// desktop.ini): passed by, so a pack repacked by one still reads.</summary>
+		static bool IsZipJunk(string[] parts)
+		{
+			string name = parts[parts.Length - 1];
+			return parts.Any(p => p.Equals("__MACOSX", StringComparison.OrdinalIgnoreCase)) || name.StartsWith("._")
+				|| name.Equals(".DS_Store", StringComparison.OrdinalIgnoreCase) || name.Equals("Thumbs.db", StringComparison.OrdinalIgnoreCase) || name.Equals("desktop.ini", StringComparison.OrdinalIgnoreCase);
+		}
 
 		/// <summary>
 		/// Reads and checks a pack: at most 64 files and 50 MB unpacked (counted while unpacking, whatever the zip claims),
@@ -394,6 +497,7 @@ namespace DynamicIslands.Editor
 						if (e.IsDirectory) continue;
 						string full = (e.Name ?? "").Replace('\\', '/');
 						string[] parts = full.Split('/');
+						if (IsZipJunk(parts)) continue;
 						if (parts.Length > 2 || parts.Any(p => p == ".." || p == ".")) { error = "It holds a file in a place it may not ('" + full + "')."; return null; }
 						string top = parts.Length == 2 ? parts[0] : "";
 						if (folder == null) folder = top;
@@ -460,6 +564,21 @@ namespace DynamicIslands.Editor
 				int format = IslandFormat(pack.Files[n]);
 				if (format < 0) { error = "'" + n + "' isn't an island file."; return false; }
 				if (format > IslandFile.FormatVersion) { error = "'" + n + "' was saved by a newer Custom Islands than this one - update the mod to use it."; return false; }
+				// (AU39: the name as an island name here - at most 60 characters, nothing the mod's lists use - and the whole
+				// file read, not only its header: a damaged or huge body installed, and failed later in the editor or a world)
+				string nameProblem = FileNames.IslandProblem(n.Substring(0, n.Length - IslandFile.Extension.Length));
+				if (nameProblem != null) { error = "'" + n + "' has a name this version can't use: " + nameProblem; return false; }
+				string bodyProblem = IslandBodyProblem(pack.Files[n], n);
+				if (bodyProblem != null) { error = "'" + n + "' " + bodyProblem; return false; }
+			}
+			// Map type files: names this version takes, and files it reads (a broken one would only be left out at the next start)
+			foreach (string n in pack.Files.Keys.Where(f => f.EndsWith(MapTypeFiles.Extension, StringComparison.OrdinalIgnoreCase)).ToList())
+			{
+				string typeName = n.Substring(0, n.Length - MapTypeFiles.Extension.Length);
+				string typeProblem = MapTypeFiles.NameProblem(typeName);
+				if (typeProblem != null) { error = "Its map type '" + n + "' can't be used: " + typeProblem + "."; return false; }
+				string typeError;
+				if (MapTypeFiles.Parse(typeName, Encoding.UTF8.GetString(pack.Files[n]), out typeError) == null) { error = "Its map type '" + n + "' can't be read (" + typeError + ") - it may need a newer Custom Islands."; return false; }
 			}
 			// (a plan may bring only new islands of a map type: no island file in it)
 			if (!pack.IslandNames.Any() && !info.IsPlan) { error = "It holds no island."; return false; }
@@ -467,6 +586,8 @@ namespace DynamicIslands.Editor
 			{
 				byte[] planBytes;
 				if (info.plan.Length == 0 || !pack.Files.TryGetValue(info.plan, out planBytes)) { error = "Its plan '" + info.plan + "' isn't in it."; return false; }
+				string planProblem = FileNames.Problem(Path.GetFileNameWithoutExtension(info.plan));
+				if (planProblem != null) { error = "Its plan '" + info.plan + "' has a name this version can't use: " + planProblem; return false; }
 				WorldPlan plan = WorldPlan.Parse(Path.GetFileNameWithoutExtension(info.plan), Encoding.UTF8.GetString(planBytes));
 				var names = new HashSet<string>(pack.IslandNames, StringComparer.OrdinalIgnoreCase);
 				string absent = plan.Rules.SelectMany(IslandsOf).FirstOrDefault(n => !names.Contains(n));
@@ -493,13 +614,29 @@ namespace DynamicIslands.Editor
 		public static void SaveInstalled(List<LibraryInstalled> entries)
 		{
 			Directory.CreateDirectory(LibraryFolder);
+			// (an installed.json that can't be read was taken for an empty one by Installed, and this wrote over it: every
+			// other entry forgotten - its files never updated or removed. A copy goes to the deleted folder first; one that
+			// can't be read at all - locked - isn't written over)
+			if (File.Exists(InstalledPath))
+			{
+				string text = null;
+				try { text = File.ReadAllText(InstalledPath); } catch (Exception e) { throw new IOException(Path.GetFileName(InstalledPath) + " can't be read (" + e.Message + ") - it isn't written over", e); }
+				try { LibraryJson.Objects(LibraryJson.Parse(text) as Dictionary<string, object>, "entries").Select(LibraryInstalled.From).ToList(); }
+				catch (Exception)
+				{
+					string folder = Path.Combine(Path.Combine(DynamicIslands.assetpath, IslandFilesWindow.DeletedFolderName), "library");
+					Directory.CreateDirectory(folder);
+					File.Copy(InstalledPath, Path.Combine(folder, "installed " + DateTime.Now.ToString("yyyy-MM-dd HHmmss", CultureInfo.InvariantCulture) + ".json"), true);
+					Debug.LogWarning("[CUSTOM ISLANDS] " + InstalledPath + " couldn't be read: a copy is kept in " + folder);
+				}
+			}
 			SafeFile.WriteAllText(InstalledPath, LibraryJson.Write(new Dictionary<string, object> { { "entries", entries.Select(e => (object)e.ToDict()).ToList() } }));
 		}
 
 		/// <summary>The entry that wrote this file (an island "Name.island" or a plan "Name.plan"), if one did.</summary>
 		public static LibraryInstalled OwnerOf(string fileName)
 		{
-			return Installed().FirstOrDefault(e => e.files.Any(f => !f.shared && (f.name + (f.kind == KindPlan ? WorldPlan.Extension : IslandFile.Extension)).Equals(fileName, StringComparison.OrdinalIgnoreCase)));
+			return Installed().FirstOrDefault(e => e.files.Any(f => !f.shared && (f.name + ExtensionOf(f.kind)).Equals(fileName, StringComparison.OrdinalIgnoreCase)));
 		}
 
 		/// <summary>An installed entry's islands and plan the player has changed since (saved over in the editor or World Plans).</summary>
@@ -510,7 +647,7 @@ namespace DynamicIslands.Editor
 			if (e == null) return result;
 			foreach (LibraryInstalledFile f in e.files.Where(f => !f.shared))
 			{
-				string path = f.kind == KindPlan ? WorldPlan.PathFor(f.name) : IslandSpawner.PathFor(f.name);
+				string path = PathOf(f);
 				try { if (File.Exists(path) && ShaOfFile(path) != f.sha256) result.Add(f.name); } catch { }
 			}
 			return result;
@@ -534,12 +671,13 @@ namespace DynamicIslands.Editor
 			var result = new List<string>();
 			try
 			{
-				if (!Directory.Exists(WorldsFolder)) return result;
-				foreach (string file in Directory.GetFiles(WorldsFolder, "*.txt"))
+				// (also the copies in Raft's world folders: a world only there - a shared save not loaded here yet - kept no
+				// copy of the old version, and its state landed on the wrong objects)
+				foreach (string file in WorldStateFiles())
 				{
-					string[] lines = File.ReadAllLines(file);
-					string head = lines.FirstOrDefault(l => l.StartsWith("# Custom islands in world '"));
-					string world = head != null && head.IndexOf('\'') >= 0 ? head.Substring(head.IndexOf('\'') + 1).Split('\'')[0] : Path.GetFileNameWithoutExtension(file);
+					string[] lines;
+					try { lines = File.ReadAllLines(file); } catch { continue; }
+					string world = Housekeeping.WorldName(lines, file);
 					// (the editor's test world: counted, every edit-and-test round kept another copy of the island for it, and
 					// the save notices and the Delete warning named it)
 					if (world.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) continue;
@@ -576,14 +714,76 @@ namespace DynamicIslands.Editor
 		/// Installs a pack (checked by Read). appearWhileSailing: an island entry's islands also turn up by chance while
 		/// sailing (spawnpool.txt weight 1, else 0; a plan's islands always 0). replaceChanged: an earlier version's file the
 		/// player has changed since is replaced too (else kept). source: SourceImport or SourceLibrary.
+		/// An install that fails part way (a full disk, a file in use, a path Windows refuses) puts back every file it had
+		/// written or removed, so no file is left that installed.json doesn't know (AU39), and throws.
 		/// </summary>
 		public static Report Install(LibraryPackContents pack, bool appearWhileSailing, bool replaceChanged, string source)
+		{
+			var undo = new InstallUndo();
+			try { return InstallFiles(pack, appearWhileSailing, replaceChanged, source, undo); }
+			catch (Exception e)
+			{
+				int put = undo.RollBack();
+				IslandCache.Forget();
+				Log("Installing '" + (pack.Info != null ? pack.Info.title : "?") + "' failed part way (" + e.Message + "): " + put + " file(s) put back as they were");
+				throw new IOException(e.Message + " - nothing was installed (what it had written was put back)", e);
+			}
+		}
+
+		/// <summary>
+		/// The files an install wrote or removed, as they were before (null: the file wasn't there), to put back when it
+		/// fails part way (AU39: islands were written first and installed.json last, so a failure in between left islands
+		/// no entry knew - never updated, never removed with it). Not undone: a kept copy of an island for saved worlds
+		/// (KeepForWorlds) - it holds the version that is put back, so those worlds play the same island either way.
+		/// </summary>
+		class InstallUndo
+		{
+			readonly List<KeyValuePair<string, byte[]>> before = new List<KeyValuePair<string, byte[]>>();
+
+			/// <summary>Called before a file is written or deleted (once per file: the first time is how it was).</summary>
+			public void Remember(string path)
+			{
+				if (before.Any(b => b.Key.Equals(path, StringComparison.OrdinalIgnoreCase))) return;
+				before.Add(new KeyValuePair<string, byte[]>(path, File.Exists(path) ? File.ReadAllBytes(path) : null));
+			}
+
+			/// <summary>Every remembered file as it was, the last one first. Returns how many were put back.</summary>
+			public int RollBack()
+			{
+				int n = 0;
+				for (int i = before.Count - 1; i >= 0; i--)
+				{
+					string path = before[i].Key;
+					try
+					{
+						if (before[i].Value != null) SafeFile.WriteAllBytes(path, before[i].Value);
+						else if (File.Exists(path)) File.Delete(path);
+						n++;
+					}
+					catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [library] Could not put back " + path + ": " + e.Message); }
+				}
+				return n;
+			}
+		}
+
+		static Report InstallFiles(LibraryPackContents pack, bool appearWhileSailing, bool replaceChanged, string source, InstallUndo undo)
 		{
 			var report = new Report();
 			LibraryInfo info = pack.Info;
 			List<LibraryInstalled> all = Installed();
 			LibraryInstalled old = all.FirstOrDefault(e => e.id.Equals(info.id, StringComparison.OrdinalIgnoreCase));
+			// (another author's pack with the same id isn't its update: it overwrote that entry's files - ROADMAP CB4. It is an
+			// entry of its own, "<id>-<author>", which its own next version finds again)
+			if (old != null && old.author.Trim().Length > 0 && info.author.Trim().Length > 0 && !old.author.Trim().Equals(info.author.Trim(), StringComparison.OrdinalIgnoreCase))
+			{
+				string own = IdFrom(info.id + "-" + info.author);
+				report.Add("'" + info.title + "' by " + info.author + " has the id of '" + old.title + "' by " + old.author + " ('" + info.id + "'): installed as an entry of its own ('" + own + "'), not as its update");
+				info.id = own;
+				old = all.FirstOrDefault(e => e.id.Equals(info.id, StringComparison.OrdinalIgnoreCase));
+			}
 			var entry = new LibraryInstalled { id = info.id, source = source, title = info.title, author = info.author, kind = info.kind, version = info.version, remix = info.remix, date = DateTime.Now.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) };
+			foreach (var f in pack.Files) if (f.Key.EndsWith(IslandFile.Extension, StringComparison.OrdinalIgnoreCase) || f.Key.EndsWith(WorldPlan.Extension, StringComparison.OrdinalIgnoreCase) || f.Key.EndsWith(MapTypeFiles.Extension, StringComparison.OrdinalIgnoreCase))
+				entry.packed[f.Key] = Sha256(f.Value);
 			report.Add((old != null ? "Updating '" : "Installing '") + info.title + "' by " + info.author + " (version " + info.version + (old != null ? ", was " + old.version : "") + ")");
 
 			// Where each island goes: its own name if free or the same file is here, the name it had in the earlier version,
@@ -598,13 +798,17 @@ namespace DynamicIslands.Editor
 				LibraryInstalledFile before = old != null ? old.files.FirstOrDefault(f => f.kind == KindIsland && f.original.Equals(n, StringComparison.OrdinalIgnoreCase)) : null;
 				target[n] = before != null && !before.shared ? before.name : n;
 			}
+			Dictionary<string, string> storyIds = StoryIdsFor(pack, info, old, all, originals, report);
+			entry.storyIds = storyIds;
 			var content = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
+			var copies = new List<string>();
+			var updated = new List<string>();
 			for (int round = 0; round < 8; round++)
 			{
 				bool changed = false;
 				foreach (string n in originals)
 				{
-					byte[] bytes = Rewritten(pack.Files[n + IslandFile.Extension], originals, target, ruleIds);
+					byte[] bytes = Rewritten(pack.Files[n + IslandFile.Extension], originals, target, ruleIds, storyIds);
 					content[n] = bytes;
 					string t = target[n];
 					string path = IslandSpawner.PathFor(t);
@@ -639,14 +843,27 @@ namespace DynamicIslands.Editor
 						string current = ShaOfFile(path);
 						if (current != before.sha256 && !replaceChanged)
 						{
-							entry.files.Add(new LibraryInstalledFile { name = t, original = n, sha256 = current, kind = KindIsland });
+							// (the hash the entry installed, not the player's: with theirs the file counted as unchanged, and the next
+							// update replaced it without asking)
+							entry.files.Add(new LibraryInstalledFile { name = t, original = n, sha256 = before.sha256, kind = KindIsland });
 							report.Add("Kept your changed '" + t + "' (the new version's is not installed)");
 							continue;
+						}
+						// (T10: replaced - the player's version stays as a copy of its own, out of the random pool, so nothing is lost)
+						if (current != before.sha256)
+						{
+							string copy = YoursName(t, false);
+							undo.Remember(IslandSpawner.PathFor(copy));
+							SafeFile.WriteAllBytes(IslandSpawner.PathFor(copy), File.ReadAllBytes(path));
+							copies.Add(copy);
+							report.Add("Your changed '" + t + "' is kept as '" + copy + "'");
 						}
 						// (saved worlds: the same rule as an editor save - an update that keeps the objects' order reaches them, one
 						// that would shift what was used there keeps them on the version they started with)
 						KeepForWorlds(t, bytes, report);
+						updated.Add(t);
 					}
+					undo.Remember(path);
 					SafeFile.WriteAllBytes(path, bytes);
 					// (the island open in the editor was replaced under it: the next Ctrl+S put the old one back without a word)
 					if (DynamicIslands.InEditor() && t.Equals(DynamicIslands.currentIslandName, StringComparison.OrdinalIgnoreCase))
@@ -657,23 +874,6 @@ namespace DynamicIslands.Editor
 				report.Islands.Add(t);
 			}
 
-			// Story items with the id of another installed entry's: a world's crew holds one of each id for all its islands
-			// (T8 - two packs' "key": the key found for one opens the other's door). Said, so the player knows.
-			try
-			{
-				var ours = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-				foreach (string t in report.Islands) foreach (StoryItemDef d in StoryItems.Of(IslandCache.Props(t))) ours[d.Id] = d.ShownName;
-				if (ours.Count > 0)
-					foreach (LibraryInstalled other in all.Where(e => !e.id.Equals(info.id, StringComparison.OrdinalIgnoreCase)))
-						foreach (LibraryInstalledFile f in other.files.Where(f => f.kind == KindIsland && !report.Islands.Contains(f.name, StringComparer.OrdinalIgnoreCase)))
-							foreach (StoryItemDef d in StoryItems.Of(IslandCache.Props(f.name)).Where(d => ours.ContainsKey(d.Id)).ToList())
-							{
-								report.Add("Note: its story item '" + d.Id + "' (" + ours[d.Id] + ") has the same id as one of '" + other.title + "' ('" + d.ShownName + "' on '" + f.name + "'). In a world with both, the crew holds one '" + d.Id + "' for both: found on either island, it counts on the other.");
-								ours.Remove(d.Id);
-							}
-			}
-			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Comparing story items: " + ex.Message); }
-
 			// The plan
 			if (plan != null)
 			{
@@ -681,7 +881,7 @@ namespace DynamicIslands.Editor
 				LibraryInstalledFile before = old != null ? old.files.FirstOrDefault(f => f.kind == KindPlan && !f.shared) : null;
 				string name = before != null ? before.name : plan.Name;
 				string text = plan.ToText();
-				bool same = false;
+				bool same = false, keep = false;
 				if (before == null)
 				{
 					string existing = WorldPlan.PathFor(name);
@@ -694,50 +894,147 @@ namespace DynamicIslands.Editor
 					else if (File.Exists(existing)) { same = true; report.Add("The plan '" + name + "' is already here (the same plan) - shared"); }
 					else report.Add("Installed the plan '" + name + "'");
 				}
+				// (the player's changes to the installed plan, as for its islands: kept unless they chose to replace them - it
+				// was written over at every update; the hash recorded stays the entry's, so the next update asks again)
+				else if (!replaceChanged && File.Exists(WorldPlan.PathFor(name)) && ShaOfFile(WorldPlan.PathFor(name)) != before.sha256 && ShaOfFile(WorldPlan.PathFor(name)) != Sha256(Encoding.UTF8.GetBytes(text)))
+					keep = true;
 				else report.Add("Updated the plan '" + name + "' (worlds already started keep their own copy of it)");
 				plan.Name = name;
-				Directory.CreateDirectory(WorldPlan.Folder);
-				SafeFile.WriteAllText(WorldPlan.PathFor(name), text);
+				if (keep) report.Add("Kept your changed plan '" + name + "' (the new version's is not installed)");
+				else
+				{
+					string planPath = WorldPlan.PathFor(name);
+					if (before != null && File.Exists(planPath) && ShaOfFile(planPath) != before.sha256 && ShaOfFile(planPath) != Sha256(Encoding.UTF8.GetBytes(text)))
+					{
+						string copy = YoursName(name, true);
+						undo.Remember(WorldPlan.PathFor(copy));
+						SafeFile.WriteAllBytes(WorldPlan.PathFor(copy), File.ReadAllBytes(planPath));
+						report.Add("Your changed plan '" + name + "' is kept as '" + copy + "'");
+					}
+					Directory.CreateDirectory(WorldPlan.Folder);
+					undo.Remember(WorldPlan.PathFor(name));
+					SafeFile.WriteAllText(WorldPlan.PathFor(name), text);
+				}
 				entry.plan = name;
-				entry.files.Add(new LibraryInstalledFile { name = name, original = Path.GetFileNameWithoutExtension(info.plan), sha256 = Sha256(Encoding.UTF8.GetBytes(text)), kind = KindPlan, shared = same });
+				entry.files.Add(new LibraryInstalledFile { name = name, original = Path.GetFileNameWithoutExtension(info.plan), sha256 = keep ? before.sha256 : Sha256(Encoding.UTF8.GetBytes(text)), kind = KindPlan, shared = same });
 				report.PlanName = name;
+			}
+
+			// Map type files (ROADMAP T7): under their own names - a different file of that name here is the player's (or another
+			// entry's), kept, and said; the pack's islands made from that type are files already, only new ones would differ
+			bool types = false;
+			foreach (string fileName in pack.Files.Keys.Where(f => f.EndsWith(MapTypeFiles.Extension, StringComparison.OrdinalIgnoreCase)).ToList())
+			{
+				string t = fileName.Substring(0, fileName.Length - MapTypeFiles.Extension.Length);
+				byte[] bytes = pack.Files[fileName];
+				string sha = Sha256(bytes), path = MapTypeFiles.PathFor(t);
+				LibraryInstalledFile before = old != null ? old.files.FirstOrDefault(f => f.kind == KindMapType && !f.shared && f.name.Equals(t, StringComparison.OrdinalIgnoreCase)) : null;
+				if (File.Exists(path) && ShaOfFile(path) == sha)
+				{
+					entry.files.Add(new LibraryInstalledFile { name = t, original = t, sha256 = sha, kind = KindMapType, shared = before == null });
+					report.Add(before != null ? "The map type '" + t + "' is unchanged" : "The map type '" + t + "' is already here (the same file) - shared");
+					continue;
+				}
+				if (File.Exists(path) && (before == null || (ShaOfFile(path) != before.sha256 && !replaceChanged)))
+				{
+					if (before != null) entry.files.Add(new LibraryInstalledFile { name = t, original = t, sha256 = before.sha256, kind = KindMapType });
+					report.Add("Kept your map type '" + t + "' (the pack's is different and is not installed: new islands of that type are made from yours)");
+					continue;
+				}
+				Directory.CreateDirectory(MapTypeFiles.Folder);
+				undo.Remember(path);
+				SafeFile.WriteAllBytes(path, bytes);
+				entry.files.Add(new LibraryInstalledFile { name = t, original = t, sha256 = sha, kind = KindMapType });
+				report.Add((before != null ? "Updated" : "Installed") + " the map type '" + t + "'");
+				types = true;
 			}
 
 			// An earlier version's files the new one doesn't have any more
 			if (old != null)
 				foreach (LibraryInstalledFile f in old.files.Where(f => !f.shared && !entry.files.Any(x => x.name.Equals(f.name, StringComparison.OrdinalIgnoreCase) && x.kind == f.kind)))
-					RemoveFile(f, entry.id, all, report);
-
-			// Random islands while sailing: a plan's islands never, an island entry's as the player chose (their own islands untouched)
-			foreach (LibraryInstalledFile f in entry.files.Where(f => f.kind == KindIsland && !f.shared))
-				SetPoolWeight(f.name, !info.IsPlan && appearWhileSailing ? 1f : 0f);
+					RemoveFile(f, entry.id, all, report, undo);
 
 			all.RemoveAll(e => e.id.Equals(info.id, StringComparison.OrdinalIgnoreCase));
 			all.Add(entry);
 			SaveInstalled(all);
+			NoteUpdated(updated, info.title);
+			// (worlds on a kept copy of an updated island: the update reached them only through the editor's box - a library fix
+			// for a stuck quest never came to worlds already moved to a copy; as an editor save, those whose state can be
+			// carried get the new file now - sweep 11-14. After installed.json: the install can't be rolled back any more)
+			foreach (string t in updated) CarryOlderWorlds(t, report);
+
+			if (types || (old != null && old.files.Any(f => f.kind == KindMapType))) MapTypeFiles.LoadAll();
+
+			// Random islands while sailing: a plan's islands never, an island entry's as the player chose (their own islands
+			// untouched). (After installed.json: an install that fails before it leaves spawnpool.txt as it was)
+			foreach (LibraryInstalledFile f in entry.files.Where(f => f.kind == KindIsland && !f.shared))
+				SetPoolWeight(f.name, !info.IsPlan && appearWhileSailing ? 1f : 0f);
+			foreach (string c in copies) SetPoolWeight(c, 0f);
 			IslandCache.Forget();
 			return report;
 		}
 
 		/// <summary>An island file's bytes with its "bring" rules pointing at the entry's new names (unchanged if none moved).</summary>
-		static byte[] Rewritten(byte[] bytes, List<string> originals, Dictionary<string, string> target, HashSet<string> planRuleIds)
+		/// <summary>T8: the pack's story item ids that another installed entry has too, each with an id of its own here
+		/// ("key" -> "key-&lt;entry id&gt;"): a world's crew holds one of each id, so two packs' "key" was one key - found for
+		/// one, it opened the other's door. An update keeps the ids its earlier version got (worlds hold them).</summary>
+		static Dictionary<string, string> StoryIdsFor(LibraryPackContents pack, LibraryInfo info, LibraryInstalled old, List<LibraryInstalled> all, List<string> originals, Report report)
 		{
-			if (!originals.Any(n => !target[n].Equals(n, StringComparison.Ordinal))) return bytes;
+			var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			try
+			{
+				var ours = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+				var ourShas = new HashSet<string>();
+				foreach (string n in originals)
+				{
+					byte[] bytes = pack.Files[n + IslandFile.Extension];
+					ourShas.Add(Sha256(bytes));
+					IslandFile f = IslandFile.FromBytes(bytes, n);
+					if (f != null && f.Props != null) foreach (StoryItemDef d in StoryItems.Of(f.Props)) ours[d.Id] = d.ShownName;
+				}
+				if (ours.Count == 0) return map;
+				if (old != null) foreach (var k in old.storyIds) if (ours.ContainsKey(k.Key)) map[k.Key] = k.Value;
+				// (the other entries' ids - not from an island that is this pack's own, shared with an entry that has it too)
+				var theirs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+				foreach (LibraryInstalled other in all.Where(e => !e.id.Equals(info.id, StringComparison.OrdinalIgnoreCase)))
+					foreach (LibraryInstalledFile f in other.files.Where(f => f.kind == KindIsland && !ourShas.Contains(f.sha256)))
+						foreach (StoryItemDef d in StoryItems.Of(IslandCache.Props(f.name)))
+							if (!theirs.ContainsKey(d.Id)) theirs[d.Id] = other.title;
+				string suffix = IdFrom(info.id);
+				foreach (string id in ours.Keys.Where(theirs.ContainsKey).ToList())
+				{
+					if (map.ContainsKey(id)) continue;
+					string to = id + "-" + suffix;
+					for (int i = 2; theirs.ContainsKey(to) || ours.ContainsKey(to) || map.Values.Contains(to, StringComparer.OrdinalIgnoreCase); i++) to = id + "-" + suffix + "-" + i;
+					map[id] = to;
+					report.Add("Its story item '" + ours[id] + "' has the id '" + to + "' here ('" + id + "' in the pack): '" + theirs[id] + "' has a story item '" + id + "' too - in a world with both, they stay two things");
+				}
+			}
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Comparing story items: " + ex.Message); map.Clear(); }
+			return map;
+		}
+
+		static byte[] Rewritten(byte[] bytes, List<string> originals, Dictionary<string, string> target, HashSet<string> planRuleIds, Dictionary<string, string> storyIds)
+		{
+			if (!originals.Any(n => !target[n].Equals(n, StringComparison.Ordinal)) && storyIds.Count == 0) return bytes;
 			string tmp = Path.Combine(LibraryFolder, "rewrite.tmp" + IslandFile.Extension);
 			Directory.CreateDirectory(LibraryFolder);
 			try
 			{
 				File.WriteAllBytes(tmp, bytes);
 				IslandFile f = IslandFile.Load(tmp);
+				bool changed = StoryItems.RenameIds(f, storyIds);
 				string text;
-				if (f.Props == null || !f.Props.TryGetValue(WorldDirector.IslandRulesKey, out text)) return bytes;
-				List<IntroRule> rules = IntroRule.ParseLines(text);
-				string before = IntroRule.ToLines(rules);
-				var ids = new HashSet<string>(planRuleIds, StringComparer.OrdinalIgnoreCase);
-				ids.UnionWith(rules.Select(x => x.Id));
-				foreach (IntroRule r in rules) Rename(r, target, ids);
-				if (IntroRule.ToLines(rules) == before) return bytes;
-				WorldDirector.SetRulesInProps(f.Props, rules);
+				if (f.Props != null && f.Props.TryGetValue(WorldDirector.IslandRulesKey, out text))
+				{
+					List<IntroRule> rules = IntroRule.ParseLines(text);
+					string before = IntroRule.ToLines(rules);
+					var ids = new HashSet<string>(planRuleIds, StringComparer.OrdinalIgnoreCase);
+					ids.UnionWith(rules.Select(x => x.Id));
+					foreach (IntroRule r in rules) Rename(r, target, ids);
+					if (IntroRule.ToLines(rules) != before) { WorldDirector.SetRulesInProps(f.Props, rules); changed = true; }
+				}
+				if (!changed) return bytes;
 				f.Save(tmp);
 				return File.ReadAllBytes(tmp);
 			}
@@ -759,23 +1056,101 @@ namespace DynamicIslands.Editor
 
 		static string FreeName(string name, string title, List<string> originals, Dictionary<string, string> target)
 		{
-			string clean = new string((title ?? "").Where(c => !Path.GetInvalidFileNameChars().Contains(c) && c != '#' && c != '%' && c != '?').ToArray()).Trim();
+			string clean = NamePart(title, 30);
 			if (clean.Length == 0) clean = "library";
 			for (int i = 1; ; i++)
 			{
-				string candidate = name + " (" + clean + ")" + (i > 1 ? " " + i : "");
+				string candidate = Fit(name, " (" + clean + ")" + (i > 1 ? " " + i : ""));
 				bool used = File.Exists(IslandSpawner.PathFor(candidate)) || originals.Any(o => target[o].Equals(candidate, StringComparison.OrdinalIgnoreCase));
 				if (!used) return candidate;
 			}
 		}
 
-		static string FreePlanName(string name, string author)
+		/// <summary>name + tail within FileNames.MaxLength (the name shortened): a longer one installed, but this version
+		/// refused it when the pack was exported again and imported, and players' PCs refused it from a host.</summary>
+		static string Fit(string name, string tail)
+		{
+			if (name.Length + tail.Length <= FileNames.MaxLength) return name + tail;
+			return name.Substring(0, Math.Max(1, FileNames.MaxLength - tail.Length)).TrimEnd('.', ' ') + tail;
+		}
+
+		/// <summary>The islands updates replaced, for the worlds that have them (T10: told once when such a world loads):
+		/// "island|title|UTC ticks" lines in library/updated.txt.</summary>
+		public static string UpdatedLog { get { return Path.Combine(LibraryFolder, "updated.txt"); } }
+
+		static void NoteUpdated(List<string> islands, string title)
+		{
+			if (islands.Count == 0) return;
+			try
+			{
+				Directory.CreateDirectory(LibraryFolder);
+				string now = DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture);
+				File.AppendAllText(UpdatedLog, string.Concat(islands.Select(n => n + "|" + (title ?? "").Replace("|", " ") + "|" + now + Environment.NewLine).ToArray()));
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [library] Noting the updated islands: " + e.Message); }
+		}
+
+		/// <summary>Islands an update replaced after the given time (UTC ticks), with the entry's title: island -> title.</summary>
+		public static Dictionary<string, string> UpdatedSince(long ticks)
+		{
+			var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			try
+			{
+				if (!File.Exists(UpdatedLog)) return result;
+				foreach (string line in File.ReadAllLines(UpdatedLog))
+				{
+					string[] p = line.Split('|');
+					long t;
+					if (p.Length < 3 || !long.TryParse(p[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out t) || t <= ticks) continue;
+					result[p[0]] = p[1];
+				}
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [library] Reading the updated islands: " + e.Message); }
+			return result;
+		}
+
+		/// <summary>A free name for the player's own version of a file an update replaces: "name (yours)", "name (yours) 2"...</summary>
+		static string YoursName(string name, bool plan)
 		{
 			for (int i = 1; ; i++)
 			{
-				string candidate = name + " (" + (author.Trim().Length > 0 ? author.Trim() : "library") + ")" + (i > 1 ? " " + i : "");
+				string candidate = Fit(name, " (yours)" + (i > 1 ? " " + i : ""));
+				if (!File.Exists(plan ? WorldPlan.PathFor(candidate) : IslandSpawner.PathFor(candidate)) && !(plan && WorldPlan.IsBuiltIn(candidate))) return candidate;
+			}
+		}
+
+		static string FreePlanName(string name, string author)
+		{
+			string clean = NamePart(author, 30);
+			if (clean.Length == 0) clean = "library";
+			for (int i = 1; ; i++)
+			{
+				string candidate = Fit(name, " (" + clean + ")" + (i > 1 ? " " + i : ""));
 				if (!File.Exists(WorldPlan.PathFor(candidate)) && !WorldPlan.IsBuiltIn(candidate)) return candidate;
 			}
+		}
+
+		/// <summary>
+		/// After an update: saved worlds that play an older copy of the island get the new file when what was used there can be
+		/// carried to the same objects (rules and quest steps in their places, R1b) - as after an editor save. The others keep
+		/// their copy (the editor's "Give my worlds this version" box can still move them). Returns how many worlds moved.
+		/// </summary>
+		internal static int CarryOlderWorlds(string island, Report report)
+		{
+			try
+			{
+				if (WorldsOnOlderVersion(island).Count == 0) return 0;
+				List<string> moved;
+				int carried;
+				List<string> changed = GiveWorldsThisVersion(island, out moved, true, out carried);
+				if (changed.Count > 0 && report != null)
+					report.Add(string.Join(", ", changed.Select(w => "'" + w + "'").ToArray()) + " play" + (changed.Count == 1 ? "s" : "") + " the new '" + island + "' now (what was used there stays with the same objects)");
+				List<string> left = WorldsOnOlderVersion(island);
+				if (left.Count > 0 && report != null)
+					report.Add(string.Join(", ", left.Select(w => "'" + w + "'").ToArray()) + " keep" + (left.Count == 1 ? "s" : "") + " an older '" + island + "' (its rules or quest steps changed places)");
+				return changed.Count;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Giving saved worlds the new '" + island + "': " + e.Message); return 0; }
 		}
 
 		/// <summary>Before an island file is replaced: saved worlds that use it keep playing this version (as its hash copy).</summary>
@@ -794,7 +1169,8 @@ namespace DynamicIslands.Editor
 				return;
 			}
 			string copy = IslandSpawner.PathFor(IslandNetwork.DownloadName(island, hash));
-			if (!File.Exists(copy)) File.Copy(IslandSpawner.PathFor(island), copy);
+			// (whole or not at all: a copy Raft stopped in was never written again, and the worlds were pointed at it)
+			if (!File.Exists(copy)) SafeFile.WriteAllBytes(copy, File.ReadAllBytes(IslandSpawner.PathFor(island)));
 			RepointWorlds(island, hash);
 			report.Add("Kept the version of '" + island + "' that " + string.Join(", ", worlds.Select(w => "'" + w + "'").ToArray()) + " started with");
 		}
@@ -810,8 +1186,7 @@ namespace DynamicIslands.Editor
 			int count = 0;
 			try
 			{
-				if (!Directory.Exists(WorldsFolder)) return 0;
-				foreach (string file in Directory.GetFiles(WorldsFolder, "*.txt"))
+				foreach (string file in WorldStateFiles())
 				{
 					string[] lines = File.ReadAllLines(file);
 					bool changed = false;
@@ -834,6 +1209,243 @@ namespace DynamicIslands.Editor
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Pointing saved worlds at the kept version of '" + island + "': " + e.Message); }
 			return count;
+		}
+
+		/// <summary>Every file with a saved world's islands: the mod's worlds\*.txt and the copies in Raft's world folders and their saves (AU27).</summary>
+		static List<string> WorldStateFiles()
+		{
+			var files = new List<string>();
+			if (Directory.Exists(WorldsFolder)) files.AddRange(Directory.GetFiles(WorldsFolder, "*.txt"));
+			try
+			{
+				string raftWorlds = SaveAndLoad.WorldPath;
+				if (!string.IsNullOrEmpty(raftWorlds) && Directory.Exists(raftWorlds)) files.AddRange(Directory.GetFiles(raftWorlds, global::DynamicIslands.Editor.WorldCopy.FileName, SearchOption.AllDirectories));
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking through Raft's world folders: " + e.Message); }
+			return files;
+		}
+
+		/// <summary>The hash a world line plays an island from, when it isn't the island's file now ("" otherwise).</summary>
+		static string OlderHash(string line, string island, string now)
+		{
+			if (line.StartsWith("@") || line.StartsWith("#")) return "";
+			string[] p = line.Split('|');
+			if (p.Length < 8 || !p[0].Trim().Equals(island, StringComparison.OrdinalIgnoreCase)) return "";
+			string had = p[7].Trim();
+			return had.Length == 0 || had == now ? "" : had;
+		}
+
+		/// <summary>
+		/// R1c: the saved worlds that play an island from an older version (a kept copy &lt;island&gt;_&lt;hash&gt;, see
+		/// KeepForWorlds) instead of its file now - by their names, without the editor's test world. Empty when none.
+		/// </summary>
+		public static List<string> WorldsOnOlderVersion(string island)
+		{
+			var result = new List<string>();
+			try
+			{
+				string now = IslandNetwork.HashOf(island);
+				if (now == null || IslandNetwork.IsDownloadName(island)) return result;
+				foreach (string file in WorldStateFiles())
+				{
+					string[] lines = File.ReadAllLines(file);
+					// (only a hash with its kept copy here: a world whose hash has no copy plays the island's file now - an
+					// ordinary save that added objects changed the hash, and the world's line names the new one at its next save)
+					if (!lines.Any(l => { string had = OlderHash(l, island, now); return had.Length > 0 && File.Exists(IslandSpawner.PathFor(IslandNetwork.DownloadName(island, had))); })) continue;
+					string world = Housekeeping.WorldName(lines, file);
+					if (!world.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) result.Add(world);
+				}
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking for worlds on an older '" + island + "': " + e.Message); }
+			return result.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+		}
+
+		/// <summary>
+		/// R1c "Give my worlds this version": every saved world that plays an older copy of the island (the mod's world
+		/// files and the copies in Raft's world folders) is pointed at the island's file now, and the old copies no world
+		/// names any more go to deleted\kept versions (never erased; the worlds' lines name the new hash now, so a copy put
+		/// back is only another island file).
+		/// R1b: what was used there is carried to the same objects in the new file (StableIds.Carry) when the old copy is
+		/// here and its rules and quest steps keep their places; otherwise the world's state stays as it was.
+		/// carriedOnly: only the worlds whose state can be carried (the automatic step after a save) - the others keep their copy.
+		/// Returns the worlds that changed; moved gets the copies that were moved aside.
+		/// </summary>
+		public static List<string> GiveWorldsThisVersion(string island, out List<string> moved) { int carried; return GiveWorldsThisVersion(island, out moved, false, out carried); }
+
+		public static List<string> GiveWorldsThisVersion(string island, out List<string> moved, bool carriedOnly, out int carried)
+		{
+			moved = new List<string>();
+			carried = 0;
+			IslandFile current = null;
+			var copies = new Dictionary<string, IslandFile>(StringComparer.OrdinalIgnoreCase);
+			var worlds = new List<string>();
+			string now = IslandNetwork.HashOf(island);
+			if (now == null) throw new FileNotFoundException("'" + island + "' has no file");
+			var olds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			List<string> files = WorldStateFiles();
+			foreach (string file in files)
+			{
+				string[] lines = File.ReadAllLines(file);
+				bool changed = false;
+				// (the island copies whose state was carried: their journal pages go with it - Files #2)
+				var pagesOf = new List<KeyValuePair<string, string>>();
+				for (int i = 0; i < lines.Length; i++)
+				{
+					string had = OlderHash(lines[i], island, now);
+					if (had.Length == 0) continue;
+					string[] p = lines[i].Split('|');
+					string state = CarryState(island, had, p, ref current, copies);
+					if (state == null && carriedOnly) continue;
+					if (state == null) p[4] = RemapQuestState(island, had, p[4], ref current, copies);
+					if (state != null) { p[4] = state; carried++; pagesOf.Add(new KeyValuePair<string, string>(PageIslandOfLine(lines, i), had)); }
+					p[7] = now;
+					lines[i] = string.Join("|", p);
+					olds.Add(had);
+					changed = true;
+				}
+				if (!changed) continue;
+				if (pagesOf.Count > 0) lines = CarryPages(lines, pagesOf, current, copies, island);
+				// (not the editor's test world: it is made again for each test, and its next save wrote the old hash back - CA29)
+				string world = Housekeeping.WorldName(lines, file);
+				if (world.Equals(IslandTest.WorldName, StringComparison.OrdinalIgnoreCase)) continue;
+				SafeFile.WriteAllLines(file, lines);
+				worlds.Add(world);
+				Debug.Log("[CUSTOM ISLANDS] " + file + ": '" + island + "' is played from its file now (" + now + ")");
+			}
+			// (the old copies: only those no world line names any more, as its own island or by a hash of this one)
+			var stillNamed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			foreach (string file in files)
+				foreach (string l in File.ReadAllLines(file))
+				{
+					if (l.StartsWith("@") || l.StartsWith("#")) continue;
+					string[] p = l.Split('|');
+					stillNamed.Add(p[0].Trim());
+					if (p.Length >= 8 && p[0].Trim().Equals(island, StringComparison.OrdinalIgnoreCase) && p[7].Trim().Length > 0) stillNamed.Add(IslandNetwork.DownloadName(island, p[7].Trim()));
+				}
+			foreach (string had in olds)
+			{
+				string copy = IslandNetwork.DownloadName(island, had);
+				string path = IslandSpawner.PathFor(copy);
+				if (stillNamed.Contains(copy) || !File.Exists(path)) continue;
+				try { PiecesFiles.MoveToDeleted(path, KeptVersionsFolder); moved.Add(copy); }
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not move the old copy " + copy + " aside: " + e.Message); }
+			}
+			if (moved.Count > 0) IslandCache.Forget();
+			Debug.Log("[CUSTOM ISLANDS] Gave " + worlds.Count + " world(s) the version " + now + " of '" + island + "', moved " + moved.Count + " old cop" + (moved.Count == 1 ? "y" : "ies") + " aside");
+			return worlds.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+		}
+
+		/// <summary>
+		/// The journal's name for the island of a world file's line (StoryBook.PageIsland): its name, with "|2" for the second
+		/// island line of that name, and so on - the islands' order when the world loads (lines it can't read don't count).
+		/// </summary>
+		static string PageIslandOfLine(string[] lines, int index)
+		{
+			string name = lines[index].Split('|')[0];
+			int copy = 1;
+			for (int i = 0; i < index; i++)
+			{
+				string l = lines[i];
+				if (l.StartsWith("@") || l.StartsWith("#") || l.Trim().Length == 0) continue;
+				string[] p = l.Split('|');
+				float v;
+				if (p.Length < 4 || !p[0].Equals(name, StringComparison.OrdinalIgnoreCase) || !new[] { p[1], p[2], p[3] }.All(s => float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v))) continue;
+				copy++;
+			}
+			return copy == 1 ? name : name + "|" + copy.ToString(CultureInfo.InvariantCulture);
+		}
+
+		/// <summary>
+		/// Files #2: the world's journal pages of the island copies whose state was carried (page island, old hash) moved with
+		/// it - "note:" and "act:" keys name an object by its place in the file (StableIds.MovePageKey). All or nothing: on an
+		/// error the pages stay as they were.
+		/// </summary>
+		static string[] CarryPages(string[] lines, List<KeyValuePair<string, string>> pagesOf, IslandFile current, Dictionary<string, IslandFile> copies, string island)
+		{
+			try
+			{
+				var maps = pagesOf.Select(c => new KeyValuePair<string, int[]>(c.Key, StableIds.IndexMap(copies[c.Value], current))).ToList();
+				var taken = new HashSet<string>(lines.Select(StoryBook.PageKeyOfLine).Where(k => k != null));
+				var result = (string[])lines.Clone();
+				int movedPages = 0;
+				for (int i = 0; i < result.Length; i++)
+				{
+					string key = StoryBook.PageKeyOfLine(result[i]);
+					if (key == null) continue;
+					foreach (KeyValuePair<string, int[]> m in maps)
+					{
+						string moved = StableIds.MovePageKey(key, m.Key, m.Value, taken);
+						if (moved == key) continue;
+						result[i] = StoryBook.WithPageKey(result[i], moved);
+						taken.Add(moved);
+						movedPages++;
+						break;
+					}
+				}
+				if (movedPages > 0) Debug.Log("[CUSTOM ISLANDS] '" + island + "': " + movedPages + " journal page(s) moved with their objects");
+				return result;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Moving a world's journal pages of '" + island + "': " + e.Message); return lines; }
+		}
+
+		/// <summary>questfix 11-15: a world line's state kept as it was (not carried) has its quest steps put on the same steps
+		/// of the new version (QuestTracker.RemapSteps) - else a removed or moved step put the world's quest on another step,
+		/// or past the end. Unchanged when the old copy isn't here or the steps are the same.</summary>
+		static string RemapQuestState(string island, string had, string encoded, ref IslandFile current, Dictionary<string, IslandFile> copies)
+		{
+			try
+			{
+				IslandFile was;
+				if (!copies.TryGetValue(had, out was))
+				{
+					string path = IslandSpawner.PathFor(IslandNetwork.DownloadName(island, had));
+					copies[had] = was = File.Exists(path) ? IslandFile.Load(path) : null;
+				}
+				if (was == null) return encoded;
+				if (current == null) current = IslandFile.Load(IslandSpawner.PathFor(island));
+				Dictionary<int, ObjectState> state = IslandObjectState.Decode(encoded);
+				int n = QuestTracker.RemapSteps(was.Props, current.Props, state);
+				if (n == 0) return encoded;
+				Debug.Log("[CUSTOM ISLANDS] '" + island + "': " + n + " quest(s) of a world put on the same steps of the new version");
+				return IslandObjectState.Encode(state);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Moving a world's quest steps of '" + island + "': " + e.Message); return encoded; }
+		}
+
+		/// <summary>A world line's state of the island carried from its old copy (hash had) to the island's file now; null when it can't be.</summary>
+		static string CarryState(string island, string had, string[] p, ref IslandFile current, Dictionary<string, IslandFile> copies)
+		{
+			try
+			{
+				if (p.Length < 8) return null;
+				IslandFile was;
+				if (!copies.TryGetValue(had, out was))
+				{
+					string path = IslandSpawner.PathFor(IslandNetwork.DownloadName(island, had));
+					copies[had] = was = File.Exists(path) ? IslandFile.Load(path) : null;
+				}
+				if (was == null) return null;
+				if (current == null) current = IslandFile.Load(IslandSpawner.PathFor(island));
+				if (!StableIds.ListsKept(was, current)) return null;
+				int dropped;
+				string unsure, state = StableIds.Carry(was, current, p[4], StableIds.FlyingAt(p[2]), out dropped, out unsure);
+				if (state == null) Debug.Log("[CUSTOM ISLANDS] '" + island + "': a world's state can't be carried to the new version now - " + unsure);
+				else if (dropped > 0) Debug.Log("[CUSTOM ISLANDS] '" + island + "': " + dropped + " saved thing(s) of removed objects left out");
+				return state;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Carrying a world's state of '" + island + "': " + e.Message); return null; }
+		}
+
+		/// <summary>Where "Give my worlds this version" moves the old copies: Mods\DynamicIslands\deleted\&lt;this&gt;.</summary>
+		public const string KeptVersionsFolder = "kept versions";
+
+		/// <summary>The player's message for GiveWorldsThisVersion's result.</summary>
+		public static string GaveText(string island, List<string> worlds, List<string> moved)
+		{
+			if (worlds.Count == 0) return "No saved world plays an older '" + island + "' - nothing was changed.";
+			return "These worlds play this '" + island + "' now: " + string.Join(", ", worlds.Select(w => "'" + w + "'").ToArray()) + "." +
+				(moved.Count > 0 ? " The old cop" + (moved.Count == 1 ? "y was" : "ies were") + " moved to Mods\\DynamicIslands\\" + IslandFilesWindow.DeletedFolderName + "\\" + KeptVersionsFolder + "." : "") +
+				" What was picked, looted or opened there may now fit other objects.";
 		}
 
 		/// <summary>Sets an island's weight in spawnpool.txt (0 = never turns up by chance while sailing).</summary>
@@ -893,19 +1505,25 @@ namespace DynamicIslands.Editor
 			return report;
 		}
 
-		static void RemoveFile(LibraryInstalledFile f, string id, List<LibraryInstalled> all, Report report)
+		/// <summary>undo: an install's removal of an earlier version's file, put back if the install then fails.</summary>
+		static void RemoveFile(LibraryInstalledFile f, string id, List<LibraryInstalled> all, Report report, InstallUndo undo = null)
 		{
-			bool plan = f.kind == KindPlan;
-			string path = plan ? WorldPlan.PathFor(f.name) : IslandSpawner.PathFor(f.name);
+			bool plan = f.kind == KindPlan, type = f.kind == KindMapType;
+			string path = PathOf(f);
 			if (!File.Exists(path)) return;
 			if (all.Any(e => !e.id.Equals(id, StringComparison.OrdinalIgnoreCase) && e.files.Any(x => x.kind == f.kind && x.name.Equals(f.name, StringComparison.OrdinalIgnoreCase))))
 			{ report.Add("Kept '" + f.name + "': another installed entry uses it too"); return; }
-			List<string> worlds = plan ? WorldsUsing(null, f.name) : WorldsUsing(f.name);
+			// (a map type: worlds keep the islands made from it as files - none needs the type itself)
+			List<string> worlds = type ? new List<string>() : plan ? WorldsUsing(null, f.name) : WorldsUsing(f.name);
 			if (worlds.Count > 0) { report.Add("Kept '" + f.name + "': " + (worlds.Count == 1 ? "the world " : "the worlds ") + string.Join(", ", worlds.Select(w => "'" + w + "'").ToArray()) + (worlds.Count == 1 ? " uses it" : " use it")); return; }
-			try { File.Delete(path); }
+			if (undo != null) undo.Remember(path);
+			// (to the deleted folder, never for good: the player may have changed it, and an update's undo is only in memory -
+			// Raft stopping before installed.json was written lost the file)
+			try { PiecesFiles.MoveToDeleted(path, "library"); }
 			catch (Exception e) when (SafeFile.InUse(e)) { report.Add("Kept '" + f.name + "': it is in use by another program (close it there and Remove again)"); return; }
-			if (!plan) RemovePoolLine(f.name);
-			report.Add("Removed " + (plan ? "the plan '" : "'") + f.name + "'");
+			if (!plan && !type) RemovePoolLine(f.name);
+			if (type) MapTypeFiles.LoadAll();
+			report.Add("Removed " + (plan ? "the plan '" : type ? "the map type '" : "'") + f.name + "' (kept in Mods\\DynamicIslands\\" + IslandFilesWindow.DeletedFolderName + "\\library)");
 		}
 
 		/// <summary>The copies of islands downloaded from multiplayer hosts (&lt;name&gt;_&lt;hash&gt;), with the saved worlds that use each
@@ -918,7 +1536,7 @@ namespace DynamicIslands.Editor
 			int n = 0;
 			foreach (var c in HostCopies().Where(c => c.Value.Count == 0))
 			{
-				try { File.Delete(IslandSpawner.PathFor(c.Key)); n++; } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not remove " + c.Key + ": " + e.Message); }
+				try { IslandFilesWindow.MoveToDeleted(c.Key); n++; } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not remove " + c.Key + ": " + e.Message); }
 			}
 			if (n > 0) { Log("Removed " + n + " unused island copies downloaded from hosts"); IslandCache.Forget(); }
 			return n;

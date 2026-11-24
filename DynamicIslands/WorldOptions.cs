@@ -14,22 +14,109 @@ namespace DynamicIslands.Editor
 	///   - blueprints: Raft's blueprints on its story islands are found on other islands than usual (ScrambledBlueprints);
 	///   - storyorder: Raft's story islands come in another order (StoryOrder);
 	///   - ghostrafts: abandoned rafts drift by while sailing, some large and guarded (GhostRafts);
-	///   - privatestorage: a storage opens only for the player who built it (PrivateStorage).
+	///   - privatestorage: a storage opens only for the player who built it (PrivateStorage);
+	///   - longvoyage: random custom islands come half as often and further apart (WorldIslands.NewTarget, CustomIslandSpawner);
+	///   - ironraft: the raft's blocks take half damage from the shark (IronRaft);
+	///   - sharedxp: players near a kill get 60 % of its EXP too (LevelSystem.ShareKill);
+	///   - nightdanger: monsters tougher and the shark keener at night, both calmer by day (NightDanger);
+	///   - dailyquest: a small task each day, a small reward when done before dark (DailyQuest);
+	///   - rogueshark: now and then a second, rust-red shark that stays until killed (RogueShark);
+	///   - barrels: now and then a silver or golden barrel in the sea, with a little extra loot (GoldenBarrels);
+	///   - stormdays: now and then a day of rough sea and rain, the shark keener (StormDays);
+	///   - traderraft: very rarely a merchant's raft comes by: basic resources for seeds, trees or a blueprint (TraderRaft);
+	///   - ghostship: on about one night in four a glowing ghost ship comes by, its crew ghosts; it sinks at dawn (GhostShip);
+	///   - upgrades: better versions of Raft's things to craft (ExtraUpgrades.Defs);
+	///   - ufo: now and then a flying saucer crosses the sky, looks only (UfoSightings).
+	///   - stormseas: storms much more often, rocking the raft harder; now and then one breaks a floor on its edge (StormSeas).
+	///   - glowsea: on about one night in four the sea around the raft and the fish glow blue; fish bite faster (GlowSea).
+	///   - lightning: now and then in a storm a bolt hits the sea near the raft, rarely its antenna; looks only (LightningStrikes).
+	///   - whalebreach: now and then, by day, a whale breaches far from the raft, looks only (WhaleBreach);
+	///   - fogbanks: now and then thick fog rolls in for a few hours, 45-75 m to see (FogBanks);
+	///   - kraken: rarely a giant tentacle grabs a raft floor on the edge; hit it off, or it tears that floor (and maybe its neighbours) away (Kraken);
+	///   - fogsight: the haze comes ~30 % closer; binoculars, the telescope and Marine binoculars see further through it (FogSight).
+	///   - minimap: the island map in the top-right corner near an island (Minimap); M hides/shows it, never full screen. Off by
+	///     default (11-09; it replaced "nominimap", which old worlds may still have in @options - Parse drops it, so they have no map).
+	///     The per-PC Minimap box can still hide it on one PC. Pings work either way.
+	///   - mirrorislands: about one random custom island in three comes mirrored left to right (MirrorIslands). Never quest, plan or story islands.
+	///   - fullerislands: islands generated while sailing come fuller, with at most one lone hostile and one friendly animal (IslandGenerator.Fuller, PF-D1).
 	/// Saved in the world file ("@options=", "@optionseed=" - the seed every shuffle of the world comes from), sent by the host
 	/// to every player who joins and when they change (network kind 17: Data = "on=a,b;seed=n", Name = the private
 	/// storages' builders). The last choice in the box is kept in world_rules.txt ("options=").
 	/// </summary>
 	public static class WorldOptions
 	{
-		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage";
-		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage };
-		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages" };
+		public const string Blueprints = "blueprints", StoryOrder = "storyorder", GhostRafts = "ghostrafts", PrivateStorage = "privatestorage", LongVoyage = "longvoyage", IronRaft = "ironraft", SharedXp = "sharedxp", NightDanger = "nightdanger", DailyQuest = "dailyquest", RogueShark = "rogueshark", Barrels = "barrels", StormDays = "stormdays", TraderRaft = "traderraft", Upgrades = "upgrades", StormSeas = "stormseas", Ufo = "ufo", GlowSea = "glowsea", Lightning = "lightning", GhostShip = "ghostship", WhaleBreach = "whalebreach", Fog = "fogbanks", Kraken = "kraken", FogSight = "fogsight", MirrorIslands = "mirrorislands", MinimapOn = "minimap", FullerIslands = "fullerislands";
+		public static readonly string[] All = { Blueprints, StoryOrder, GhostRafts, PrivateStorage, LongVoyage, IronRaft, SharedXp, NightDanger, DailyQuest, RogueShark, Barrels, StormDays, TraderRaft, Upgrades, StormSeas, Ufo, GlowSea, Lightning, GhostShip, WhaleBreach, Fog, Kraken, FogSight, MirrorIslands, MinimapOn, FullerIslands };
+		/// <summary>
+		/// Options no longer offered (the user, 2026-10-09): not in the New Game box, left out of the remembered choice, and in
+		/// World settings only while a world still has them on (so the host can switch them off). A world that has one on keeps it.
+		/// </summary>
+		public static readonly string[] Retired = { Blueprints, StoryOrder };
+		public static bool IsRetired(string option) { return Array.IndexOf(Retired, option) >= 0; }
+		public static string[] Offered { get { return All.Where(o => !IsRetired(o)).ToArray(); } }
+		public static readonly string[] Labels = { "Scrambled blueprints", "Story islands in a new order", "Ghost rafts", "Private storages", "Long voyage", "Iron raft", "Shared EXP", "Night is dangerous", "Daily quest", "Rogue shark", "Silver & golden barrels", "Storm days", "Trader raft", "Extra upgrades", "Storm seas", "UFO sightings", "Bioluminescent sea", "Lightning strikes", "Ghost ship", "Whale breach", "Fog banks", "Kraken arm", "Binoculars see through fog", "Mirrored islands", "Island minimap", "Fuller random islands" };
 		public static readonly string[] Hints =
 		{
 			"The blueprints lying on Raft's story islands are found on other story islands than usual. What the story needs (the steering wheel, the engine and its fuel, the machete) is never moved: the story can always be finished.",
 			"Raft's story islands come in another order: the Receiver's frequencies and the notes that lead on follow the new order. The ending stays last. For players who know the way by heart.",
 			"Abandoned rafts drift by while sailing: small ones with a little loot and a note, and now and then a large one guarded by rats and screechers, with a better hoard.",
 			"A storage opens only for the player who built it: each player keeps their own things. Storages built before the option was on (or by nobody) open for everyone.",
+			"Random custom islands come half as often and lie further apart, so food, water and the raft matter more between stops. Raft's own islands, and quest and plan islands, keep their places.",
+			"The raft's blocks take half damage from shark bites: fewer repairs. Taking pieces down with the hammer or the axe works as always, and shark bait is eaten as fast as ever.",
+			"With the level up system on: when a player defeats a monster, every other player within 50 m gets 60 % of its EXP too (less what their own hits on it already earned). Only defeated monsters count; playing alone nothing changes.",
+			"After dark monsters are tougher (x1.3 health and damage on top of the monster difficulty) and the shark comes for the raft more often; by day both are calmer (x0.85, the shark less often).",
+			"Each morning the crew gets a small task for the day: gather some planks, plastic, palm leaves or scrap, catch a few fish or defeat a few monsters. Done before dark, everyone gets a small reward (basic resources or food); not done, it runs out.",
+			"Now and then a second shark comes beside the usual one: rust-red, and it doesn't leave on its own - only when it's killed. Once it is, no other comes for several days. Never before day 3. Now and then it is a giant: twice the size, much tougher.",
+			"Now and then a barrel drifting in the sea is silver (about 1 in 40) or golden (about 1 in 150). Besides the usual loot, a silver one holds a few extra nails, rope and scrap; a golden one more of them, and sometimes a battery or bolts.",
+			"On about one day in ten the sea is rough and it rains from morning to morning: the shark comes for the raft more often, and the rain waters the crops. Everyone is warned at nightfall the evening before. Never before day 3.",
+			"Very rarely (about once in 7 km of sailing, never in the first 3 km) a trader's raft comes up ahead. Its stalls swap basic resources - planks, plastic, rope, scrap - for fruit and flower seeds, a tree seed, and now and then a blueprint. Each stall has a little stock, shared by all players.",
+			"Better versions of Raft's things, listed next to the thing they improve once it is learned: battery, grill, furnace, storage, net, fuel and water tanks, greenhouse plot, engine, wind turbine, bed, hook, rod, flippers, air tank, charger, recycler, lantern, telescope, titanium weapons, paddle, floodlight, pot, juicer, scarecrow, hammer, longbow, head light, lamp, axe and marine binoculars.",
+			"Storms come much more often (a calm spell is half as long, and half the time Raft's next weather is a storm) and rock the raft harder. Each storm has a 1 in 4 chance to break one raft floor on the edge or a corner of the raft - never one in the middle: what stood on it falls into the sea. A raft of 4 floors or fewer is never broken. The host's storms and floors are every player's.",
+			"Now and then (about three times in a week of days, half of them at night) a flying saucer crosses the sky high above the raft, from horizon to horizon in about half a minute, in a new colour each time. At night it glows green or purple. Looks only: every player sees the same one.",
+			"On about one night in four the sea around the raft glows: tiny blue lights twinkle on the waves and drift under them, a swimmer stirs up sparks, and the fish shine. On those nights fish bite twice as fast on a rod. Looks only otherwise; the same nights for every player.",
+			"In a storm (Raft's rain or rough snow, Storm days and Storm seas too), now and then a bolt of lightning hits the sea 30-150 m from the raft: a jagged bolt, a flash that lights everything up, thunder. Some storms have none, a few have up to four. Very rarely it hits the raft's Receiver antenna (or wind turbine). Looks only: nothing is damaged, nothing burns, nobody is hurt.",
+			"On about one night in four a ghost ship comes by soon after dark: a glowing wreck close beside the raft, near enough to swim or sail to. Its chests hold good loot, but its crew are ghosts - see-through rats and screechers that fight like the living. At dawn it sinks with whatever is still aboard. Players asleep when it would come: no ship that night. The same ship, ghosts and loot for every player.",
+			"Now and then, by day (about once or twice a Raft day), a whale breaches far out at sea, 170-320 m from the raft: it rises, leaps half out of the water, falls back with a great splash and spray, and dives away. Looks only: it never comes near the raft or the players. Every player sees the same whale at the same place.",
+			"Now and then (on about three days in five, by day or by night) thick fog rolls in over the sea for three to six hours, fading in and out. In it you see only 45-75 m: islands show up late, so the radar matters. While a storm blows the wind keeps the fog away. Looks only; the same for every player.",
+			"Rarely (about one day in eight from day 8, with Storm seas one storm in four, never near an island) a giant tentacle grabs a floor on the raft's edge. 10 melee or spear hits in a minute and it sinks; if not, that floor tears away with all on it, each floor beside it with a 1 in 2 chance. Rafts of 8 floors or fewer are safe. Its other arms slam at players near them - step away.",
+			"The sea's haze comes about 30 % closer than in Raft, so islands show up later. Raise binoculars and you see about 20 % further than Raft's usual view, the telescope about 50 % further; Marine binoculars (an extra upgrade from the upgrade table, made with titanium) see furthest and lighten the view at dusk and at night. Raft's weather keeps its own fog: a storm or a fog bank still closes in. Each player sees through their own binoculars only.",
+			"About one random custom island in three comes mirrored left to right: its land, paint and everything on it, so islands you know look new. Which ones is fixed for the world (from its seed and the island's name), the same for every player. Islands with a quest, plan and story islands, and islands with moving parts, events or zip lines are never mirrored. Looks only: what was taken or used on an island stays so.",
+			"Near an island a small map of it sits in the top-right corner of the screen: you, the other players, quest markers and the builder's map markers. M hides the map and shows it again; + and - zoom. It never covers the screen. Each player can still hide it for good with the Minimap box in Defaults... Off: no map at all. Pings (G) work either way.",
+			"Islands generated while sailing come fuller: plants, rocks and things to gather as thick as on Raft's own islands, more on the sea floor around them, one or two of Raft's features, now and then a ruin or a hut, and at most one hostile animal (on about 7 islands in 10) and one friendly animal (about 1 in 2), each alone and never coming back once killed or caught. Fixed by the world's seed: the same on every PC. Islands already made stay as they are.",
+		};
+
+		/// <summary>
+		/// The short text under each toggle in World settings: three lines of 11 pt at most (the user, 2026-10-20: the long
+		/// ones ran out of the box). The whole Hints text shows on hover over the toggle.
+		/// </summary>
+		public static readonly string[] Shorts =
+		{
+			"Raft's story blueprints lie on other story islands than usual. What the story needs is never moved.",
+			"Raft's story islands come in another order; the Receiver and the notes follow it. The ending stays last.",
+			"Abandoned rafts drift by: small ones with a little loot and a note, now and then a large one guarded by rats and screechers.",
+			"A storage opens only for the player who built it: each player keeps their own things.",
+			"Random custom islands come half as often and lie further apart. Raft's own, quest and plan islands stay where they are.",
+			"The raft's blocks take half damage from shark bites: fewer repairs.",
+			"With levels on: players within 50 m of a defeated monster get 60 % of its EXP too.",
+			"After dark monsters are tougher and the shark comes more often; by day both are calmer.",
+			"Each morning the crew gets a small task. Done before dark, everyone gets a small reward.",
+			"Now and then a second, rust-red shark comes and stays until it is killed. Sometimes it is a giant. Never before day 3.",
+			"Now and then a drifting barrel is silver or golden, with extra nails, rope and scrap - sometimes a battery or bolts.",
+			"On about one day in ten the sea is rough and it rains from morning to morning: the shark comes more often. Warned the evening before.",
+			"Very rarely a trader's raft comes up ahead. Its stalls swap basic resources for seeds and now and then a blueprint.",
+			"About 30 better versions of Raft's things to craft (large battery, turbo engine, comfy bed, longbow and more), next to the thing they improve.",
+			"Storms come much more often and rock the raft harder. Now and then one breaks a floor on the raft's edge; rafts of 4 floors or fewer never.",
+			"Now and then a flying saucer crosses the sky high above the raft, glowing at night. Looks only.",
+			"On about one night in four the sea and the fish glow blue, and fish bite twice as fast on a rod.",
+			"In storms, lightning now and then hits the sea near the raft, rarely its antenna. Looks only: nothing is damaged.",
+			"On about one night in four a ghost ship comes by: good loot, guarded by ghost rats and screechers. It sinks at dawn.",
+			"Now and then, by day, a whale breaches far out at sea. Looks only: it never comes near the raft.",
+			"Now and then thick fog rolls in for a few hours: you see only 45-75 m, so the radar matters. Looks only.",
+			"Rarely a giant tentacle grabs the raft's edge: hit it 10 times in a minute, or it tears that floor away (maybe its neighbours too). Its other arms slam at players near them - step away.",
+			"The haze comes closer; binoculars and the telescope see through it, Marine binoculars furthest and in the dark too.",
+			"About one random custom island in three comes mirrored, so known islands look new. Never quest, plan or story islands.",
+			"A small island map in the top-right corner near an island. M hides and shows it.",
+			"Islands generated while sailing come fuller: more plants, finds and sea floor, at most one lone hostile and one friendly animal.",
 		};
 
 		/// <summary>The current world's options (clients get the host's).</summary>
@@ -44,6 +131,23 @@ namespace DynamicIslands.Editor
 		public static bool On(string option) { return Current.Contains(option); }
 
 		static void Log(string msg) { Debug.Log("[CUSTOM ISLANDS] [options] " + msg); }
+
+		/// <summary>
+		/// A well-mixed number from a world's seed, a day (or index) and a salt, the same on every machine. Not System.Random
+		/// seeded with a sum: the first value of nearby seeds is nearly the same, so day after day rolled alike.
+		/// </summary>
+		public static int Mix(int seed, int day, int salt)
+		{
+			unchecked
+			{
+				uint h = (uint)seed * 2654435761u ^ (uint)day * 2246822519u ^ (uint)salt * 3266489917u;
+				h ^= h >> 15; h *= 2246822519u; h ^= h >> 13; h *= 3266489917u; h ^= h >> 16;
+				return (int)h;
+			}
+		}
+
+		/// <summary>Mix as a number in [0, 1).</summary>
+		public static double Unit(int seed, int day, int salt) { return (uint)Mix(seed, day, salt) / 4294967296.0; }
 
 		public static string Label(string option) { int i = Array.IndexOf(All, option); return i >= 0 ? Labels[i] : option; }
 
@@ -75,7 +179,7 @@ namespace DynamicIslands.Editor
 
 		#region The last choice (world_rules.txt)
 
-		public static HashSet<string> Defaults { get { return Parse(WorldRules.ReadDefault("options")); } }
+		public static HashSet<string> Defaults { get { var d = Parse(WorldRules.ReadDefault("options")); d.RemoveWhere(IsRetired); return d; } }
 
 		public static void SaveDefaults(IEnumerable<string> on) { WorldRules.SaveDefault("options", string.Join(",", All.Where(o => on.Contains(o)).ToArray())); }
 
@@ -89,12 +193,14 @@ namespace DynamicIslands.Editor
 		/// blueprint pairs). A world that never had one writes no file for it.</summary>
 		static bool used;
 
+		static void ResetStep(string what, Action step) { IslandWorldState.ResetStep(what, step); }
+
 		internal static void Reset()
 		{
 			Current.Clear();
 			Seed = 0;
 			used = false;
-			global::DynamicIslands.Editor.StoryOrder.Reset();
+			ResetStep("StoryOrder.Reset", () => global::DynamicIslands.Editor.StoryOrder.Reset());
 			if (!Raft_Network.IsHost) { Notify(); return; }
 			bool isNew = false;
 			try { isNew = GameManager.IsInNewGame; } catch { }
@@ -105,15 +211,35 @@ namespace DynamicIslands.Editor
 				used = Current.Count > 0;
 				Log("New world: " + Describe());
 				// (the level up system, when it was chosen in World settings)
-				global::DynamicIslands.Editor.PlayerLevels.OnNewWorld();
+				ResetStep("PlayerLevels.OnNewWorld", () => global::DynamicIslands.Editor.PlayerLevels.OnNewWorld());
 			}
+			ResetStep("HeadStart.Reset", () => global::DynamicIslands.Editor.HeadStart.Reset(isNew));
 			Pending = null;
 			// (a saved world loaded: every unsaved New Game choice goes back to the remembered one, as the options' and the
 			// islands' did - the level up system, the randomizer and the rules box kept theirs)
 			if (!isNew) { PlayerLevels.Pending = null; WorldRandomizer.Pending = null; NewWorldRulesBox.Forget(); }
-			global::DynamicIslands.Editor.PrivateStorage.Reset();
-			ScrambledBlueprints.Reset();
-			global::DynamicIslands.Editor.GhostRafts.Reset();
+			ResetStep("PrivateStorage.Reset", () => global::DynamicIslands.Editor.PrivateStorage.Reset());
+			ResetStep("IronRaft.Reset", () => global::DynamicIslands.Editor.IronRaft.Reset());
+			ResetStep("NightDanger.Reset", () => global::DynamicIslands.Editor.NightDanger.Reset());
+			ResetStep("DailyQuest.Reset", () => global::DynamicIslands.Editor.DailyQuest.Reset());
+			ResetStep("RogueShark.Reset", () => global::DynamicIslands.Editor.RogueShark.Reset());
+			ResetStep("GoldenBarrels.Reset", () => global::DynamicIslands.Editor.GoldenBarrels.Reset());
+			ResetStep("StormDays.Reset", () => global::DynamicIslands.Editor.StormDays.Reset());
+			ResetStep("WhaleBreach.Reset", () => global::DynamicIslands.Editor.WhaleBreach.Reset());
+			ResetStep("Kraken.Reset", () => global::DynamicIslands.Editor.Kraken.Reset());
+			ResetStep("FogSight.Reset", () => global::DynamicIslands.Editor.FogSight.Reset());
+			ResetStep("GhostShip.Reset", () => global::DynamicIslands.Editor.GhostShip.Reset());
+			ResetStep("GlowSea.Reset", () => global::DynamicIslands.Editor.GlowSea.Reset());
+			// the map key (M) hides the corner map for this world only: each world starts with it shown when its Island minimap option is on (user 11-10)
+			ResetStep("Minimap.Mode", () => global::DynamicIslands.Editor.Minimap.Mode = global::DynamicIslands.Editor.Minimap.Corner);
+			ResetStep("StormSeas.Reset", () => global::DynamicIslands.Editor.StormSeas.Reset());
+			ResetStep("TraderRaft.Reset", () => global::DynamicIslands.Editor.TraderRaft.Reset());
+			ResetStep("UpgradeTable.Reset", () => global::DynamicIslands.Editor.UpgradeTable.Reset());
+			ResetStep("ScrambledBlueprints.Reset", () => ScrambledBlueprints.Reset());
+			ResetStep("GhostRafts.Reset", () => global::DynamicIslands.Editor.GhostRafts.Reset());
+			ResetStep("LightningStrikes.Reset", () => global::DynamicIslands.Editor.LightningStrikes.Reset());
+			ResetStep("UfoSightings.Reset", () => global::DynamicIslands.Editor.UfoSightings.Reset());
+			ResetStep("FogBanks.Reset", () => global::DynamicIslands.Editor.FogBanks.Reset());
 			Notify();
 			if (isNew) Broadcast();
 		}
@@ -122,24 +248,36 @@ namespace DynamicIslands.Editor
 		{
 			switch (key)
 			{
-				case "options": Current.Clear(); foreach (string o in Parse(value)) Current.Add(o); if (Current.Count > 0) used = true; Notify(); return true;
+				case "options": Current.Clear(); foreach (string o in Parse(value)) Current.Add(o); if (Current.Count > 0) used = true; global::DynamicIslands.Editor.UpgradeTable.OptionsRead(On(Upgrades)); Notify(); return true;
 				case "optionsused": used = true; return true;
 				case "optionseed": int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out Seed); Notify(); return true;
 			}
-			return global::DynamicIslands.Editor.PrivateStorage.ReadLine(key, value) || global::DynamicIslands.Editor.GhostRafts.ReadLine(key, value);
+			return global::DynamicIslands.Editor.HeadStart.ReadLine(key, value) || global::DynamicIslands.Editor.PrivateStorage.ReadLine(key, value) || global::DynamicIslands.Editor.GhostRafts.ReadLine(key, value) || global::DynamicIslands.Editor.DailyQuest.ReadLine(key, value) || global::DynamicIslands.Editor.RogueShark.ReadLine(key, value) || global::DynamicIslands.Editor.TraderRaft.ReadLine(key, value) || global::DynamicIslands.Editor.UpgradeTable.ReadLine(key, value) || global::DynamicIslands.Editor.StormSeas.ReadLine(key, value) || global::DynamicIslands.Editor.ExtraUpgrades.ReadIndexLine(key, value);
 		}
 
 		internal static IEnumerable<string> WriteLines()
 		{
-			if (Current.Count == 0 && Seed == 0) yield break;
-			yield return "@options=" + string.Join(",", All.Where(On).ToArray());
-			yield return "@optionseed=" + Seed.ToString(CultureInfo.InvariantCulture);
-			if (used) yield return "@optionsused=1";
+			// (the head start's lines also in a world without options)
+			foreach (string l in global::DynamicIslands.Editor.HeadStart.WriteLines()) yield return l;
+			// (only the options' own lines wait for options or a seed: the parts' lines below were left out with them, and a
+			// world whose options were all switched off forgot its private boxes' owners and the rest - review 10-30)
+			if (Current.Count != 0 || Seed != 0)
+			{
+				yield return "@options=" + string.Join(",", All.Where(On).ToArray());
+				yield return "@optionseed=" + Seed.ToString(CultureInfo.InvariantCulture);
+				if (used) yield return "@optionsused=1";
+			}
 			foreach (string l in global::DynamicIslands.Editor.PrivateStorage.WriteLines()) yield return l;
 			foreach (string l in global::DynamicIslands.Editor.GhostRafts.WriteLines()) yield return l;
+			foreach (string l in global::DynamicIslands.Editor.DailyQuest.WriteLines()) yield return l;
+			foreach (string l in global::DynamicIslands.Editor.RogueShark.WriteLines()) yield return l;
+			foreach (string l in global::DynamicIslands.Editor.TraderRaft.WriteLines()) yield return l;
+			foreach (string l in global::DynamicIslands.Editor.UpgradeTable.WriteLines()) yield return l;
+			foreach (string l in global::DynamicIslands.Editor.StormSeas.WriteLines()) yield return l;
+			foreach (string l in global::DynamicIslands.Editor.ExtraUpgrades.IndexLines()) yield return l;
 		}
 
-		internal static bool HasState { get { return Current.Count > 0 || used || global::DynamicIslands.Editor.PrivateStorage.HasState; } }
+		internal static bool HasState { get { return Current.Count > 0 || used || global::DynamicIslands.Editor.PrivateStorage.HasState || global::DynamicIslands.Editor.HeadStart.HasState || global::DynamicIslands.Editor.ExtraUpgrades.HasIndexState; } }
 
 		#endregion
 
@@ -172,17 +310,60 @@ namespace DynamicIslands.Editor
 			foreach (string o in on) Current.Add(o);
 			Seed = seed;
 			if (msg.Name != null) global::DynamicIslands.Editor.PrivateStorage.Decode(msg.Name);
+			FromHost = true;
 			Log("The host's options: " + Describe());
 			Notify();
+			// (the blueprints swapped now, not at the next look 1.5 s on - AU65)
+			try { ScrambledBlueprints.ApplyNow(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [options] Blueprints: " + e.Message); }
 		}
+
+		/// <summary>The world was left (every machine): none until the next world's are read or come.</summary>
+		internal static void Forget()
+		{
+			FromHost = false;
+			Current.Clear();
+			Seed = 0;
+			used = false;
+			ScrambledBlueprints.Reset();
+			global::DynamicIslands.Editor.UpgradeTable.Reset();
+			// (a player's fog notice, saucer and an unfinished head start build don't follow them into the next world: a joiner's
+			// Reset skips these, and the head start's wait would build at the menu after 120 s)
+			ResetStep("FogBanks.Reset", () => global::DynamicIslands.Editor.FogBanks.Reset());
+			ResetStep("UfoSightings.Reset", () => global::DynamicIslands.Editor.UfoSightings.Reset());
+			ResetStep("HeadStart.Reset", () => global::DynamicIslands.Editor.HeadStart.Reset(false));
+		}
+
+		/// <summary>Client: the host's options came for this world (tests wait for them).</summary>
+		internal static bool FromHost;
 
 		/// <summary>Client: a host's world arrived: none until the host's come.</summary>
 		internal static void OnWorldReceived()
 		{
+			FromHost = false;
 			Current.Clear();
 			Seed = 0;
-			global::DynamicIslands.Editor.PrivateStorage.Reset();
-			ScrambledBlueprints.Reset();
+			ResetStep("PrivateStorage.Reset", () => global::DynamicIslands.Editor.PrivateStorage.Reset());
+			ResetStep("IronRaft.Reset", () => global::DynamicIslands.Editor.IronRaft.Reset());
+			ResetStep("NightDanger.Reset", () => global::DynamicIslands.Editor.NightDanger.Reset());
+			ResetStep("DailyQuest.Reset", () => global::DynamicIslands.Editor.DailyQuest.Reset());
+			ResetStep("RogueShark.Reset", () => global::DynamicIslands.Editor.RogueShark.Reset());
+			ResetStep("GoldenBarrels.Reset", () => global::DynamicIslands.Editor.GoldenBarrels.Reset());
+			ResetStep("StormDays.Reset", () => global::DynamicIslands.Editor.StormDays.Reset());
+			ResetStep("WhaleBreach.Reset", () => global::DynamicIslands.Editor.WhaleBreach.Reset());
+			ResetStep("Kraken.Reset", () => global::DynamicIslands.Editor.Kraken.Reset());
+			ResetStep("FogSight.Reset", () => global::DynamicIslands.Editor.FogSight.Reset());
+			ResetStep("GhostShip.Reset", () => global::DynamicIslands.Editor.GhostShip.Reset());
+			ResetStep("GlowSea.Reset", () => global::DynamicIslands.Editor.GlowSea.Reset());
+			// the map key (M) hides the corner map for this world only: each world starts with it shown when its Island minimap option is on (user 11-10)
+			ResetStep("Minimap.Mode", () => global::DynamicIslands.Editor.Minimap.Mode = global::DynamicIslands.Editor.Minimap.Corner);
+			ResetStep("StormSeas.Reset", () => global::DynamicIslands.Editor.StormSeas.Reset());
+			ResetStep("TraderRaft.Reset", () => global::DynamicIslands.Editor.TraderRaft.Reset());
+			ResetStep("LightningStrikes.Reset", () => global::DynamicIslands.Editor.LightningStrikes.Reset());
+			ResetStep("ScrambledBlueprints.Reset", () => ScrambledBlueprints.Reset());
+			ResetStep("UpgradeTable.Reset", () => global::DynamicIslands.Editor.UpgradeTable.Reset());
+			// (only counters the host uses: a player who hosts later starts at 0 - review 10-30. UfoSightings and FogBanks are
+			// left alone here: a late call - IslandNetwork's 10 s fallback - would take away a saucer or fog the host just sent)
+			ResetStep("GhostRafts.Reset", () => global::DynamicIslands.Editor.GhostRafts.Reset());
 			Notify();
 		}
 
@@ -192,6 +373,7 @@ namespace DynamicIslands.Editor
 			// (also while a world is still loading: Raft restores the notebook before the mod reads the world file's options)
 			global::DynamicIslands.Editor.StoryOrder.Rebuild();
 			ScrambledBlueprints.Rebuild();
+			try { GoldenBarrels.Repaint(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [options] Barrels: " + e.Message); }
 			if (Changed == null) return;
 			try { Changed(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [options] " + e); }
 		}
@@ -211,7 +393,7 @@ namespace DynamicIslands.Editor
 			IslandWorldState.Save();
 		}
 
-		[ConsoleCommand(name: "WorldOptions", docs: "The world's options (chosen in the New Game box's World settings): WorldOptions = what this world has; WorldOptions +option / -option (blueprints, storyorder, ghostrafts, privatestorage) = change them for this world (host)")]
+		[ConsoleCommand(name: "WorldOptions", docs: "The world's options (chosen in the New Game box's World settings): WorldOptions = what this world has; WorldOptions +option / -option (ghostrafts, privatestorage, longvoyage, ironraft, sharedxp, nightdanger, dailyquest, rogueshark, barrels, stormdays, traderraft, upgrades, stormseas, ufo, glowsea, lightning, ghostship, whalebreach, fogbanks, kraken, fogsight, mirrorislands, minimap, fullerislands) = change them for this world (host), or at the main menu for the next new world")]
 		public static void WorldOptionsCommand(string[] args)
 		{
 			if (args != null && args.Length > 0 && !LoadSceneManager.IsGameSceneLoaded)
@@ -222,6 +404,8 @@ namespace DynamicIslands.Editor
 				{
 					string o = a.TrimStart('+', '-').ToLowerInvariant();
 					if (!All.Contains(o)) { Debug.Log("[CUSTOM ISLANDS] Unknown option '" + a + "' (" + string.Join(", ", All) + ")"); continue; }
+					// (a retired option is not offered for new worlds: the World settings window has no box to take it off again)
+					if (IsRetired(o) && !a.StartsWith("-")) { Debug.Log("[CUSTOM ISLANDS] '" + o + "' is retired and not offered for new worlds"); continue; }
 					if (a.StartsWith("-")) next.Remove(o); else next.Add(o);
 				}
 				SaveDefaults(next);

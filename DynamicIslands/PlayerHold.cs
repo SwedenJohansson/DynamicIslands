@@ -18,7 +18,7 @@ namespace DynamicIslands.Editor
 	public static class PlayerHold
 	{
 		/// <summary>How long to wait for the island: the host has the file; a client may still be downloading it.</summary>
-		const float HostWait = 20f, ClientWait = 60f;
+		const float HostWait = 20f, ClientWait = 30f;
 		/// <summary>Nothing this close below the player: they are standing on something that isn't there yet.</summary>
 		const float SupportRay = 3.5f;
 		/// <summary>Islands whose centre is this close may be the one under the player (the largest land is about 500 m across).</summary>
@@ -28,7 +28,21 @@ namespace DynamicIslands.Editor
 		const float SettleTime = 5f;
 
 		static Vector3? spot;
-		static float until;
+		static float until, heldSince;
+		/// <summary>When an island that could be under the held player was last still coming. The frame it spawns, the ray
+		/// down can miss it (its colliders not in the physics scene until the next physics step): the host was let go "gave
+		/// up waiting" right after "Spawned island 'cimpfull'" (the two-player test). So a moment's grace after it came.</summary>
+		static float lastComing;
+		static bool JustCame { get { return Time.unscaledTime - lastComing < 2f; } }
+		// (the host's place for this player is used once per join: a second join reply - a Resync - doesn't take them back
+		// to last session's place - AU64)
+		static bool wentTo;
+		/// <summary>A client still downloading the island under them waits longer than ClientWait, up to this (AU64).</summary>
+		const float DownloadWait = 300f;
+		/// <summary>Anyone whose island near them is still coming (not spawned or still loading) waits past HostWait/ClientWait,
+		/// up to this: a slow start - the object catalog built on a busy computer - spawned it after the host's 20 s and the
+		/// host fell into the sea (the two-player test, both Rafts restarted).</summary>
+		const float ComingWait = 120f;
 		static bool holding;
 		// Set down, still watched: where, until when, how often put back
 		static Vector3? settled;
@@ -48,6 +62,7 @@ namespace DynamicIslands.Editor
 			holding = false;
 			spot = null;
 			settled = null;
+			wentTo = false;
 			if (player == null) return;
 			Vector3 p = player.transform.position;
 			// Where the host saw this player stand on a custom island (a joining player learns it from the host: GoTo)
@@ -58,7 +73,15 @@ namespace DynamicIslands.Editor
 				return;
 			}
 			// (a swimmer, or someone on the raft or on Raft's own islands, is left alone)
-			if (p.y < 1f || Supported(p)) return;
+			Collider under = SupportUnder(p);
+			if (p.y < 1f || under != null)
+			{
+				Debug.Log("[CUSTOM ISLANDS] The player is back at " + p.ToString("F1") + (under != null ? " on '" + under.name + "'" : " in the sea") + ": left to Raft");
+				return;
+			}
+			// (put on the raft before its blocks are in - a joining player: held still in the world, the drifting raft
+			// went on without them and they dropped into the sea by a shark - AU80)
+			if (OnRaftSpot(p)) { Debug.Log("[CUSTOM ISLANDS] The player is on the raft at " + p.ToString("F1") + ", its blocks not in yet: left to Raft"); return; }
 			Hold(p, "The player is back at " + p.ToString("F1") + " with nothing under them yet: looking for the island they stood on");
 		}
 
@@ -67,17 +90,33 @@ namespace DynamicIslands.Editor
 		public static void GoTo(Vector3 target, string island)
 		{
 			Network_Player player = RAPI.GetLocalPlayer();
-			if (player == null) return;
+			if (player == null || wentTo) return;
+			wentTo = true;
 			Vector3 now = spot ?? player.transform.position;
-			if ((now - target).magnitude < Misplaced) return;
+			float off = (now - target).magnitude;
+			// (Raft put them right: fine while held or on the island already. Not held and the island not in yet - a ghost
+			// raft's deck just above the sea read as the sea - they would drop in, and Raft moves a swimmer onto its raft)
+			if (off < Misplaced && (spot.HasValue || IslandUnder(player.transform.position) != null)) return;
 			settled = null;
-			Hold(target, "The host saw the player on '" + island + "', " + (now - target).magnitude.ToString("F0") + " m from where Raft put them: back there");
+			Hold(target, "The host saw the player on '" + island + "', " + (off < Misplaced ? "not loaded here yet: held there" : off.ToString("F0") + " m from where Raft put them: back there"));
 		}
+
+		/// <summary>The player chose to go elsewhere (Spawn to raft, Unstuck): no hold or settling puts them back.</summary>
+		public static void LetGo(string why)
+		{
+			settled = null;
+			if (spot.HasValue) Release(null, why);
+		}
+
+		/// <summary>Dev tests (CIHoldAtSea): hold the player here, as a join would.</summary>
+		internal static void TestHold(Vector3 at) { settled = null; Hold(at, "Dev: holding the player at " + at.ToString("F1")); }
 
 		static void Hold(Vector3 at, string why)
 		{
 			spot = at;
 			holding = false;
+			heldSince = lastComing = Time.unscaledTime;
+			heldHealth = Health();
 			until = Time.unscaledTime + (Raft_Network.IsHost ? HostWait : ClientWait);
 			Debug.Log("[CUSTOM ISLANDS] " + why);
 		}
@@ -90,10 +129,27 @@ namespace DynamicIslands.Editor
 		{
 			if (settled.HasValue) { Settle(); return; }
 			if (!spot.HasValue) return;
-			if (Time.unscaledTime > until) { Release(null, "gave up waiting for the island"); return; }
+			if (Time.unscaledTime > until)
+			{
+				// (a client whose island near them is still downloading - a big file, a slow host - keeps waiting: let go
+				// after 60 s, they fell into the sea and Raft put them on the raft - AU64)
+				Vector3 near = spot.Value;
+				bool downloading = !Raft_Network.IsHost && IslandWorldState.Islands.Any(e => e.WaitingForFile && !e.Failed && !e.Excluded && Flat(e.Position - near) < NearIsland);
+				bool coming = IslandNetwork.HasList && IslandWorldState.Islands.Any(e => StillComing(e) && CouldBeUnder(e, near));
+				float held = Time.unscaledTime - heldSince;
+				if (coming) lastComing = Time.unscaledTime;
+				if ((downloading && held < DownloadWait) || ((coming || JustCame) && held < ComingWait)) until = Time.unscaledTime + 5f;
+				else { Release(null, "gave up waiting for the island"); return; }
+			}
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null) return;
 			Vector3 at = spot.Value;
+			// (moved far off since the last frame's Put - Raft's Unstuck, the pause menu's Spawn to raft, a console gotoraft: the
+			//  player asked to go there. Put back every frame, they hung in the air until the hold timed out - UR2)
+			if (holding && Flat(player.transform.position - at) > Misplaced) { Release(null, "was moved " + Flat(player.transform.position - at).ToString("F0") + " m away while held: let go"); return; }
+			// (hurt while held - a shark biting a player frozen over the water: let go at once - AU82)
+			float health = Health();
+			if (heldHealth > 0f && health > 0f && health < heldHealth - 0.5f) { Release(null, "was hurt while held: let go"); return; }
 			// The island under them is there (its own ground, loaded): set them down where they were, and watch a moment
 			IslandWorldState.Entry under = IslandUnder(at);
 			if (under != null)
@@ -108,11 +164,17 @@ namespace DynamicIslands.Editor
 			if (IslandNetwork.HasList && LoadSceneManager.IsGameSceneLoaded)
 			{
 				// (every custom island around is there and still nothing under them: they weren't on one - let go)
-				bool waiting = IslandWorldState.Islands.Any(e => !e.Failed && (e.Root == null || e.Loading) && Flat(e.Position - at) < NearIsland);
-				if (!waiting) { Release(null, "was not on a custom island"); return; }
+				bool waiting = IslandWorldState.Islands.Any(e => StillComing(e) && CouldBeUnder(e, at));
+				if (waiting) lastComing = Time.unscaledTime;
+				else if (!JustCame) { Release(null, "was not on a custom island"); return; }
 			}
 			// Waiting: keep the player where they were (they would fall through into the sea)
-			if (!holding) { holding = true; Debug.Log("[CUSTOM ISLANDS] Holding the player at " + at.ToString("F1") + " until the island under them has loaded"); }
+			if (!holding)
+			{
+				holding = true;
+				Debug.Log("[CUSTOM ISLANDS] Holding the player at " + at.ToString("F1") + " until the island under them has loaded");
+				IslandInfo.ShowMessage("Waiting for the island you stood on to load...");
+			}
 			Put(player, at);
 		}
 
@@ -147,10 +209,12 @@ namespace DynamicIslands.Editor
 
 		static void Put(Network_Player player, Vector3 at) { PlayerMove.To(player, at); }
 
-		static bool Supported(Vector3 p)
+		/// <summary>What the player stands on (something solid right under them), or null.</summary>
+		static Collider SupportUnder(Vector3 p)
 		{
 			int mask = ~(1 << LayerMask.NameToLayer("LocalPlayer"));
-			return Physics.Raycast(p + Vector3.up * 0.5f, Vector3.down, SupportRay + 0.5f, mask, QueryTriggerInteraction.Ignore);
+			RaycastHit hit;
+			return Physics.Raycast(p + Vector3.up * 0.5f, Vector3.down, out hit, SupportRay + 0.5f, mask, QueryTriggerInteraction.Ignore) ? hit.collider : null;
 		}
 
 		/// <summary>The loaded custom island whose own colliders are right under this spot, or null.</summary>
@@ -166,6 +230,46 @@ namespace DynamicIslands.Editor
 		}
 
 		static float Flat(Vector3 v) { return new Vector2(v.x, v.z).magnitude; }
+
+		/// <summary>The raft is this close (flat): a player put here at deck height was put on the raft.</summary>
+		const float RaftNear = 12f;
+
+		/// <summary>Raft put the player on its raft: close to the raft's centre, at about its deck's height.</summary>
+		static bool OnRaftSpot(Vector3 p)
+		{
+			Raft raft = ComponentManager<Raft>.Value ?? Object.FindObjectOfType<Raft>();
+			if (raft == null) return false;
+			Vector3 r = raft.transform.position;
+			return Flat(p - r) < RaftNear && p.y < r.y + 4f;
+		}
+
+		static float heldHealth;
+		static float Health()
+		{
+			Network_Player p = RAPI.GetLocalPlayer();
+			return p != null && p.Stats != null && p.Stats.stat_health != null ? p.Stats.stat_health.Value : -1f;
+		}
+
+		/// <summary>An island that isn't there yet but will be: loading, downloading, or not loaded yet. Not the randomizer's
+		/// extras on one of Raft's islands that isn't there: they never load until it is, and a joining player was held over
+		/// the open sea for a minute, frozen, while a shark bit him (AU82).</summary>
+		static bool StillComing(IslandWorldState.Entry e)
+		{
+			// (left out - its file isn't on this PC, MissingIslandsCheck: it never comes. Islands deleted from Mods kept a player
+			//  saved near them hanging in the air for the whole ComingWait, two minutes, with Unstuck and gotoraft undone - UR2)
+			if (e.Failed || e.Excluded || (e.Root != null && !e.Loading)) return false;
+			return !(WorldRandomizer.IsExtras(e) && e.Root == null && !WorldRandomizer.HasIslandUnder(e));
+		}
+
+		/// <summary>Whether this island's land may reach the spot: its land radius (and a margin) when its file is here,
+		/// NearIsland while it is still downloading (its size isn't known).</summary>
+		static bool CouldBeUnder(IslandWorldState.Entry e, Vector3 at)
+		{
+			float d = Flat(e.Position - at);
+			if (e.WaitingForFile) return d < NearIsland;
+			float r = CustomIslandSpawner.LandRadius(e.Name);
+			return d < (r > 0f ? r + 30f : NearIsland);
+		}
 	}
 
 	/// <summary>
@@ -178,17 +282,45 @@ namespace DynamicIslands.Editor
 	{
 		static void Postfix(Network_Player __instance)
 		{
-			if (__instance == null || !__instance.IsLocalPlayer) return;
-			if (PlayerHold.TestOffset != Vector3.zero)
+			try
 			{
-				CharacterController cc = __instance.PersonController.controller;
-				cc.enabled = false;
-				__instance.transform.position += PlayerHold.TestOffset;
-				cc.enabled = true;
-				Debug.Log("[CUSTOM ISLANDS] Dev: the player put " + PlayerHold.TestOffset.ToString("F0") + " off, as Raft once did");
-				PlayerHold.TestOffset = Vector3.zero;
+				if (__instance == null || !__instance.IsLocalPlayer) return;
+				if (PlayerHold.TestOffset != Vector3.zero)
+				{
+					CharacterController cc = __instance.PersonController.controller;
+					cc.enabled = false;
+					__instance.transform.position += PlayerHold.TestOffset;
+					cc.enabled = true;
+					Debug.Log("[CUSTOM ISLANDS] Dev: the player put " + PlayerHold.TestOffset.ToString("F0") + " off, as Raft once did");
+					PlayerHold.TestOffset = Vector3.zero;
+				}
+				PlayerHold.Begin();
 			}
-			PlayerHold.Begin();
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Holding the player: " + e); }
+		}
+	}
+
+	/// <summary>
+	/// Every player in the game, looked up at most twice a second: the level stats, name tags, players' places, the director
+	/// and the island streaming each wanted them every tick (about 9 searches of the whole scene a second). May hold a
+	/// player who just left (null to Unity): skip those.
+	/// </summary>
+	public static class Players
+	{
+		static Network_Player[] all = new Network_Player[0];
+		static float until = -1f;
+
+		public static Network_Player[] All
+		{
+			get
+			{
+				if (Time.unscaledTime >= until)
+				{
+					all = Object.FindObjectsOfType<Network_Player>();
+					until = Time.unscaledTime + 0.5f;
+				}
+				return all;
+			}
 		}
 	}
 
@@ -225,7 +357,7 @@ namespace DynamicIslands.Editor
 		{
 			if (!Raft_Network.IsHost) return;
 			var present = new HashSet<ulong>();
-			foreach (Network_Player p in Object.FindObjectsOfType<Network_Player>())
+			foreach (Network_Player p in Players.All)
 			{
 				if (p == null) continue;
 				ulong id = p.steamID.Id;
@@ -282,7 +414,8 @@ namespace DynamicIslands.Editor
 			ulong id;
 			float[] f = new float[6];
 			if (p.Length != 8 || !ulong.TryParse(p[0], out id)) return true;
-			for (int i = 0; i < 6; i++) if (!float.TryParse(p[i + 2], NumberStyles.Float, CultureInfo.InvariantCulture, out f[i])) return true;
+			// (NaN and Infinity read as numbers: a player held there would be lost - left out like any broken line)
+			for (int i = 0; i < 6; i++) if (!float.TryParse(p[i + 2], NumberStyles.Float, CultureInfo.InvariantCulture, out f[i]) || float.IsNaN(f[i]) || float.IsInfinity(f[i])) return true;
 			places[id] = new Place { Island = p[1], IslandAt = new Vector3(f[0], f[1], f[2]), Offset = new Vector3(f[3], f[4], f[5]) };
 			return true;
 		}

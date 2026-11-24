@@ -1,0 +1,151 @@
+# Drifting Relay Buoy - the side island of The End of the Ocean (SL14; it comes back every 12 km while sailing)
+# A low sand bar with two palms, and off its end a relay buoy on a raft of floats: a mast, a dish and a lamp that blinks
+# the Ringwave in Morse - long, short, short, long. A box of spares is lashed to the floats. Each time it drifts by it
+# carries a message from the engine's relays, and it takes an answer if you blink one back. Quest "The Relay Buoy"
+# (7 steps): the buoy, the relay message, the buoy box, the lamp, the mast, the Keeper's log, the relay's answer.
+# Deep pass 10-24: the bar grows to a dune (r 48) with a mast to climb and a blue hole where Relay 6 sank. Story pass 10-24: the blue hole is optional; Hedda, Teo, Ines and the Keeper speak here.
+#
+# Built by the recipe player (CIRecipe drifting_relay_buoy) through the editor's own operations. Points (metres over the
+# sea): the sand bar at 1 m round 0 0 (r 10), the palms at -4 2 and 3 -3, the floats round 12 0 at sea level.
+include lib_sea
+include lib_features
+include lib_huts
+include lib_gravity
+include lib_concord
+include lib_deep14
+new
+gen Trees=0 Bushes=0.1 Rocks=0.1 Harvest=0.1 BeachThings=0.5
+gen Seed=14221 Radius=48 Height=3 Roughness=0.25 Peaks=2 Shape=1 Style=0 PeakShape=0.3 Cliffs=0 BeachWidth=2
+gen Water=0.5 SeaRocks=0.2 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
+generate
+
+# --- Terrain: the sand bar ----------------------------------------------------------------------------------------------
+brush flatten at 0 0 r=10 s=20 frames=200 h=1
+brush sand at 0 0 r=12 s=10 frames=60
+origin
+clear at 0 0 r=10
+# (REACH 10-28: the bar stood as a 1 m sand lip all round - out of the water there was no way up onto it (pictures
+# reach_rb_bar): a beach slope on its north-west side)
+brush flatten at -7.4 7.4 r=2.2 s=20 frames=80 h=0.5
+brush flatten at -8.3 8.3 r=2.2 s=20 frames=80 h=-0.2
+brush flatten at -9.2 9.2 r=2.2 s=20 frames=80 h=-0.9
+place "Pickup_Landmark_Tree_Palm 1" - at -4 2 ground sit
+place "Pickup_Landmark_Tree_Palm 1" - at 3 -3 ground sit yaw=120
+
+# --- The relay buoy: floats, a deck, a short mast with a dish, the lamp, the box of spares -----------------------------
+place Reef_Buoy floats at 9.9 -3.1 h=-1.45
+place Reef_Buoy floats at 13.7 3.2 h=-1.45
+place Reef_Buoy floats at 15.3 -2.5 h=-1.45
+place RT_Floor buoydeck at 15 3 h=2.0 sx=0.66 sz=0.5
+# (REACH 10-28: the deck stands 2 m over the water on its poles, with no way up from a swim (pictures reach_rb_buoy):
+# a ladder from under the water up the deck's west edge, the climber stepping forward onto the deck)
+# (10-28 (2): its lower piece reached the seabed's slope on the open-water side - the walker took it from under the deck
+# and never rose: one piece from just under the surface)
+place Block_Ladder - at 10.8 0.75 h=-0.4 yaw=270
+place RT_Pillar - at 12 0 h=2.1 sy=0.8
+place RT_SatteliteDisc - at 12 0 h=4.55 scale=0.35 yaw=270
+place Placeable_Lantern_Metal buoylamp at 13 -1 h=2.1 sit
+prop buoylamp obj.name=buoylamp
+place Loot_Chest buoybox at 13.5 1 h=2.1 sit yaw=270
+place Note_Paper relaymsg at 11.5 1 h=2.2 drop yaw=30
+place Note_Paper relayanswer at 11.5 -1 h=2.2 drop yaw=-20
+prop relayanswer obj.name=relayanswer
+prop relayanswer beh.hidden=1
+call tzone x=12 z=0 al=buoyzone id=buoy r=4 h=0.5 msg="The relay buoy. Its lamp blinks: long, short, short, long - the Ringwave, in light."
+call loopsound x=12 z=0 al=buoysound ev=event:/amb/ocean r=10 vol=0.3 h=1
+
+# --- Things to gather; a reef and the shallows --------------------------------------------------------------------------
+scatter Pickup_Landmark_BerryBush 1 at 0 0 r=5 seed=14222 free=2
+call reef x=-14 z=-8 r=4 seed=14224
+call shallows x=0 z=0 r=26 deep=4 n=1 seed=14228
+
+
+# --- Deep (10-24, SL14 DEEP 1-HOUR PASS): the climb - a 36 m scaffold tower on its pad beside a raised peak, a plank
+# bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the
+# dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
+call dp_ground tx=-24 tz=-11 hb=3 sx=-35.82 sz=-16.42 hs=24.6
+call dp_tower ox=-22.89 oz=-8.02 hb=3 yaw=155.38 al=rbtower top=rbtop stash=rbstash zal=rbtopzone zid=rb_top msg="The top of the dune mast. The buoy blinks below - and out to sea, the engine's towers."
+call tzone x=-32.64 z=-14.96 al=rbsummit id=rb_summit r=4 msg="The dune peak beside the mast." h=1
+call notebox x=-34.36 z=-19.6 yaw=245.38 al=rbcairn
+# (REACH 10-28: on the steep side of the peak the box and note sank into the slope - nothing to read. Up on the
+# peak's flat top now, beside the mast's bridge end)
+call notebox x=-33 z=-14.4 yaw=200 al=keeperrelay
+call notebox x=-2.2 z=-1.4 yaw=40 al=heddastrip
+call notebox x=1.6 z=3.2 yaw=210 al=teostrip
+call treasure x=-36.65 z=-14.6 r=1.5 n=1 seed=14231
+prop treasure14231 treasure.loot=TitaniumOre*2;Battery*1
+call dp_sink x=-8 z=34 d=-12 ex1=-5.48 ez1=23.29 ex2=-3.65 ez2=15.51 eh=1
+place BoatStranded rbwreck at -8 34 ground sit yaw=166.76 scale=0.5
+place Loot_Chest rbdivechest at -4.69 34.78 ground sit yaw=166.76
+call dp_air x=-11.31 z=33.22 id=rb_air al=rbair msg="Air trapped under the wreck - breathe."
+place Loot_ChestSmall rbdivesecret at -9.15 38.87 ground sit yaw=76.76
+call tzone x=-8 z=34 al=rbdivezone id=rb_dive r=7 msg="The bottom of the blue hole. Relay 6 lies here, floats cut." h=1
+call tzone x=-3.65 z=15.51 al=rbrim id=rb_rim r=5 msg="The blue hole's rim." h=1
+call treasure x=-2.73 z=11.61 r=12 n=1 seed=14232
+# (REACH 10-28: the tower's pad stood 3 m over the water on steep sides, and the dune behind it too steep to come down
+# (pictures reach_rb_pad*): no way to the tower's ladder from the sea - a beach slope up the pad's north side)
+# (10-28 (2): at 80 frames the strip stayed a sunk trench under the water with a step at its end (pictures reach_rb2_pad) - 200 frames, wider, up to the pad's own height)
+brush flatten at -24 -5.7 r=2.6 s=20 frames=200 h=3.0
+brush flatten at -24 -4.4 r=2.6 s=20 frames=200 h=2.3
+brush flatten at -24 -3.1 r=2.6 s=20 frames=200 h=1.5
+brush flatten at -24 -1.8 r=2.6 s=20 frames=200 h=0.7
+brush flatten at -24 -0.5 r=2.6 s=20 frames=200 h=-0.1
+brush flatten at -24 0.8 r=2.6 s=20 frames=200 h=-0.9
+clear at -24 -1.8 r=3.5
+prop treasure14232 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+place Creature_Turtle rbturtles at 6 -14 ground
+prop rbturtles creature.count=2
+place Creature_PufferFish rbpuffer at -8 34 h=-8
+prop rbpuffer creature.count=2
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Drifting Relay Buoy
+info author=Custom Islands
+info description=A sand bar with two palms and, off its end, a relay buoy on a raft of floats whose lamp blinks the Ringwave in Morse. It drifts back every few kilometres with a new message.
+island on.arrive=message||A light blinking on the water: long, short, short, long. A buoy - and it is blinking at you.
+
+story lamp|Relay lamp|Placeable_Lantern_Metal|You blinked an answer back to a drifting relay buoy.
+
+note relaymsg Relay message | RELAY MESSAGE - on a printed strip in the buoy's slot\n\nRELAY 7 TO ANY RAFT.\nENGINE STATUS: STANDBY.\nSTATION 1: NO ANSWER.\nIF YOU READ THIS, BLINK THE LAMP. LONG SHORT SHORT LONG.\n\nLAST ANSWERS LOGGED:\nRAFT WITH TWO SAILS AND A DOG. BLINKED SIX TIMES. ONE WAS ENOUGH.\nRAFT WITH A CHILD ON IT. BLINKED THE SIGN BACKWARDS. LOGGED ANYWAY.\nRAFT WITH NOBODY ON IT. DRIFTING. NOT LOGGED.\nOLD MAN IN A DORY. BLINKED NOTHING. SAT AN HOUR. LOGGED AS LISTENING.
+note relayanswer Relay answer | RELAY ANSWER - a new strip, still warm\n\nRAFT HEARD. LOGGED.\nTHE ENGINE COUNTS THE RAFTS THAT ANSWER.\nYOU ARE NOT THE FIRST. YOU ARE NOT THE LAST.\nIF YOU HAVE NOT BEEN SOUTH: THE COURT, THE WELL.\nIF YOU HAVE: GO HOME. SOMEONE IS LISTENING NOW.\nRELAY 7 DRIFTING ON.
+note buoybox Buoy box | The buoy's box of spares, lashed to the floats.
+loot buoybox Battery*1;Bolt*2;Hinge*2
+prop buoybox loot.refill=0
+
+prop buoylamp beh.use=Blink the lamp: long, short, short, long
+prop buoylamp if.use=!signal|lamp
+prop buoylamp on.use=signal||lamp\ngive||story:lamp*1\nshow|relayanswer\nmessage||Long, short, short, long. The buoy's lamp stops - then blinks it back. The slot prints a new strip.
+prop buoylamp else.use=message||The lamp has its answer.
+
+# (deep pass 10-24: the climb and the dive)
+note rbdivechest Relay 6 chest | Relay 6, sunk in the blue hole. Its spares.
+loot rbdivechest Rope*2;OxygenBottle*1;Bolt*2
+prop rbdivechest loot.refill=0
+note rbtop Mast locker | The tuners' locker, at the top of the dune mast.
+loot rbtop TitaniumOre*2;Battery*2;CircuitBoard*1
+prop rbtop loot.refill=0
+prop rbtop obj.name=rbtop
+note rbstash Mast stash | A tin wedged on the second landing of the mast.
+loot rbstash Battery*1;Nail*6;Rope*1
+prop rbstash loot.refill=0
+note rbdivesecret Relay 6 float box | Under Relay 6's cut floats: a sealed box.
+loot rbdivesecret MetalIngot*2;CopperIngot*1;TitaniumOre*1
+prop rbdivesecret loot.refill=0
+note rbcairn Dune cairn | A cairn on the dune peak, a page of Ines's radio log under the top stone:\n\nThe relay buoy found us again tonight, twelve kilometres on, as if it had been following. Hedda says it drifts in a circle round the calm. Teo says it is in love with us.\n\nI blinked the lamp and it answered. For a moment the pulse on my set went quiet under it, as if something had been listening and heard. I sat on this dune an hour after, just to hear the sea do nothing.\n\nThe mast was the tuners'. The keeper's post is on the peak beside it. - I.
+
+note heddastrip Relay strip: Hedda | A relay strip, torn off and pinned to the box with a fish hook:\n\nRELAY 7 PASSING ON. FROM H. BRASK, CAPTAIN, TO ANY RAFT.\n\nWater is short at the shoals - carry your own. The locks run if you are patient. The spire stair is long and the soup at the top is worth it. Do not chase the drone; it is only an old man's dog and it bites.\n\nIf you see a girl with a radio bigger than her head, tell her to eat something. If you see a man reviewing the scenery out loud, tell him I said yes, he can come.\n\nEnd of message. Relay 7 says it is very tired of the word STOP.
+note teostrip Relay strip: Teo | A relay strip, wet, spelled the way it was sent:\n\nRELAY 7 PASSING ON. FROM T. VARGA TO WHOEVER IS READING THIS INSTEAD OF SAILING.\n\nREVIEW OF RELAY 7. IT DRIFTS. IT BLINKS. IT PRINTS. IT DOES NOT HAVE TOBACCO. THREE STARS.\n\nI SENT THIS FROM THE SHOALS. THE SCREECHER GERALD SAYS HELLO. HE DOES NOT. HE SCREAMS. BUT I THINK HE MEANS HELLO.\n\nIF YOU BLINK THE LAMP, IT ANSWERS. IT IS NICE TO BE ANSWERED. NOBODY ANSWERED THE OLD KEEPER FOR NINE YEARS, AND LOOK WHAT IT DID TO HIM.\n\nEND.
+note keeperrelay Keeper's log: Relay 7 | A sheet of oilcloth nailed to a driftwood post on the dune, in a careful old hand:\n\nKEEPER'S LOG. Relay 7.\n\nCalling. Calling. I hung this one myself, years back, when the Concord still sent spares. I taught it her sign: long, short, short, long. It is the only one of the relays that drifts; I cut it loose so it would carry her sign further than I could row.\n\nSome nights it blinks and nobody blinks back. Those nights I talk to it anyway. I tell it about the hens at the beacon, and the masts, and the five keys.\n\nWhen I am done with what I have to do in the south, I will come and sit here with it. A buoy and an old man. We will both be listening, for once, instead of calling. - S. W.
+quest title=The Relay Buoy
+quest intro=A blinking light on the water off a sand bar. Swim out to it.
+step reach|buoy|1|Swim out to the relay buoy
+step read|Relay message|1|Read the relay message
+step open|Buoy box|1|Open the buoy's box of spares
+step collect|story:lamp|1|Blink the buoy's lamp back
+step reach|rb_top|1|Climb the dune mast
+step read|Keeper's log: Relay 7|1|Read the Keeper's log on the dune peak beside the mast
+step read|Relay answer|1|Read the relay's answer
+quest done=The relay buoy drifts on. It will be back - with something new to say.
+quest reward=Rope*2;Scrap*3
+
+save Drifting Relay Buoy

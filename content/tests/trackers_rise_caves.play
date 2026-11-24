@@ -1,0 +1,44 @@
+# Tracker's Rise's cut (CIPlay trackers_rise_caves, 11-08). Run it in a new world whose name does NOT start with 'CI '
+# (e.g. 'W02 trcaves'): in a 'CI ' world each `island` line empties the inventory and Riverfork's machete is lost on the
+# way. Points as in its recipe (CAVE 11-08):
+# the straight tunnel through the ridge's west shoulder from the pasture mouth (-36 46) to the north shore mouth (-36 67),
+# machete vines over both, the tracker's cache half way (-34.6 56). The machete comes from Riverfork Delta's tool rack,
+# as in the plan (the island before). Shut by the vines, cut, walked through both ends and back, the cache opened.
+island Riverfork Delta
+offset 0 0
+open Outpost tool rack
+wait 3
+expect item Machete 1
+
+island Tracker's Rise
+offset -0.9875 -0.2961
+hour 11
+weather Calm
+where ChoppableVines
+where Loot_ChestSmall
+where Pickup_Landmark_DirtPickup
+where CaveVine1
+
+# The pasture mouth: shut by the vines
+picture tr_cave_out -36 +1.8 36 -36 4.5 46
+walk -36 40 to -36 44 to -36 50 blocked
+expect shown trcut_vines
+use trcut_vines
+expect hidden trcut_vines
+picture tr_cave_cut -36 +1.8 36 -36 4.5 46
+# in to the cache
+walk -36 40 to -36 44 to -36 50 to -36 55
+picture tr_cave_in -36 4.7 49 -36 4.2 60 light=20
+open Tracker's cache
+wait 2
+expect item Leather 2
+# the north mouth: shut from inside too, cut, out to the shore
+walk -36 55 to -36 62 to -36 70 blocked
+expect shown trcut_vines2
+use trcut_vines2
+expect hidden trcut_vines2
+walk -36 55 to -36 62 to -36 67 to -36 72
+picture tr_cave_north -36 +1.8 77 -36 4.5 67
+picture tr_cave_back -36 4.7 63 -36 4.2 50 light=20
+# and back through to the pasture
+walk -36 72 to -36 67 to -36 56 to -36 46 to -36 39

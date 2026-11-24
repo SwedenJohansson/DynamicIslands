@@ -1,0 +1,274 @@
+# Signalstack Rock - the first island of the library's plan The Frozen Horizon (storyline SL12, chapter 1: The Fragments)
+# A basalt stack in a grey sea, snow on every ledge: a relay hut on the shelf at its foot (the radio log and the
+# Receiver's plans on the desk), a path cut up the stack's side to its top, where the relay mast stands - one of its two
+# masts bent over by the ice, Raft's antennas lying broken round it. Snow falls here and on the Floelane only: the cold
+# begins. Quest "The Fragments" (12 steps; DEEP 10-24: the Needle, the operator's cave, the beacon, the star lock): the shelf, the relay log, the Receiver's plans, the mast top, the antenna's
+# plans, the fourth fragment.
+#
+# Built by the recipe player (CIRecipe signalstack_rock) through the editor's own operations. Points (metres over the
+# sea): the shelf at 2.5 m round 0 -14 (the hut x -4..0.5, z -18..-15); the path up the east side in steps of 1 m; the
+# top at 9 m round 0 3, the masts on it.
+include lib_sea
+include lib_huts
+include lib_frozen
+include lib_verdance
+include lib_areas
+include lib_features
+# DEEP 10-24: Radius 30 -> 80, Height 12 -> 8 (the stack keeps its own brushes)
+new
+gen Trees=0 Bushes=0.1 Rocks=0.45 Harvest=0.1 BeachThings=0.15
+gen Seed=12101 Radius=80 Height=8 Roughness=0.5 Peaks=1 Shape=0 Style=1 BeachWidth=0.15 Cliffs=0.75 PeakShape=0.6
+gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
+generate
+
+# --- Terrain: the shelf at 2.5 m, a path up the stack's east side, its top at 9 m -----------------------------------
+brush flatten at 0 -14 r=7 s=20 frames=200 h=2.5
+brush flatten from 5 -12 to 6.5 -10 r=2 s=20 frames=60 h=3
+brush flatten from 6.5 -10 to 8 -8 r=2 s=20 frames=60 h=3.5
+brush flatten from 8 -8 to 8.5 -6 r=2 s=20 frames=60 h=4
+brush flatten from 8.5 -6 to 9 -4 r=2 s=20 frames=60 h=4.5
+brush flatten from 9 -4 to 8.5 -2 r=2 s=20 frames=60 h=5
+brush flatten from 8.5 -2 to 8 0 r=2 s=20 frames=60 h=5.5
+brush flatten from 8 0 to 7.5 1.5 r=2 s=20 frames=60 h=6
+brush flatten from 7.5 1.5 to 7 3 r=4 s=20 frames=150 h=6.5
+brush flatten from 7 3 to 6 4.5 r=4 s=20 frames=150 h=7
+brush flatten from 6 4.5 to 5 6 r=4 s=20 frames=150 h=7.5
+brush flatten from 5 6 to 4 5.5 r=4 s=20 frames=150 h=8
+brush flatten from 4 5.5 to 3 5 r=4 s=20 frames=150 h=8.5
+# (box agent 10-25: the upper path stayed 1-1.5 m under its marks - the ground grid is ~2 m, an r=2 stroke barely moves it; r=4)
+brush flatten at 0 3 r=4.5 s=20 frames=200 h=9
+origin
+clear at 0 -14 r=7
+clear at 0 3 r=4.5
+clear from 5 -12 to 8 -8 r=2
+clear from 8 -8 to 9 -4 r=2
+clear from 9 -4 to 8 0 r=2
+clear from 8 0 to 7 3 r=2
+clear from 7 3 to 5 6 r=2
+clear from 5 6 to 3 5 r=2
+
+# --- The relay hut on the shelf: the desk, the radio log, the Receiver's plans --------------------------------------
+push at -4 -18 h=2.5
+# (REACH 10-30 G1: the hut's door was at its west end, the desk at its east end - a player from the shelf came up to the
+# front wall by the desk and stuck on the door frame's edge; the hut is built here with its door at the desk end)
+call floors w=3 d=2 y=0.1
+place Block_Wall_Wood - at 0.75 0 y=0.1
+place Block_Wall_Wood - at 2.25 0 y=0.1
+place Block_Wall_Door_Wood - at 3.75 0 y=0.1
+for fx 0.75 3.75 1.5
+place Block_Wall_Wood - at $fx 3 y=0.1
+next
+for fz 0.75 2.25 1.5
+place Block_Wall_Wood - at 0 $fz y=0.1 yaw=90
+place Block_Wall_Wood - at 4.5 $fz y=0.1 yaw=90
+next
+call corners w=3 d=2 y=0.1
+roof 3 2 at 0 0 y=0.1 wood
+place Placeable_Table_Basic - at 3.4 2.2 y=0.1 sit yaw=90
+place Note_Paper relaylog at 3.2 1.8 y=0.1 drop yaw=20
+place Note_Paper chart1 at 3.6 2.6 y=0.1 drop yaw=80
+place Note_Paper qslcard at 2.9 2.6 y=0.1 drop yaw=120
+place Loot_Chest relaydesk at 1.2 2.4 y=0.1 sit yaw=180
+place Placeable_Lantern_Metal - at 3.6 2.6 y=0.1 drop
+pop
+place Zone_Trigger shelfzone at 0 -12 ground y=1
+place Loot_Chest relaystores at 2.5 -15 ground sit yaw=200
+place TP_Moontown_SealedCrate01 - at 3.8 -16.4 ground sit yaw=15
+place TP_Moontown_SealedCrate02 - at -5.5 -12 ground sit yaw=80
+place TP_SnowDrift02 - at -6 -15 ground sit yaw=40
+place TP_SnowDrift03 - at 4 -11 ground sit yaw=110
+place Note_Sign shelfsign at 4.5 -12.5 ground sit yaw=210
+place Note_Paper postnote at 1.6 -15.6 ground y=0.05 drop yaw=30
+
+# --- The relay mast on the top: one mast standing, one bent over by the ice; broken antennas; the mast box ---------
+place RT_PillarThick mast at 0 4.5 ground
+place RT_PillarThick mast at 0 4.5 ground y=6
+place RT_PillarThick bentmast at 2 2 ground rot=0,30,62 sy=1.2
+place Placeable_Reciever_Antenna - at -2.5 1.5 ground sit rot=0,40,80
+place Placeable_Reciever_Antenna - at -3.2 5.6 ground y=0.7 rot=75,120,0
+place TP_Icicles04 - at 0.6 4.5 ground y=5
+place TP_Icicles02 - at -0.35 4.6 ground y=5.4 yaw=90
+place Loot_Chest mastbox at -1.6 4.8 ground sit yaw=90
+place Note_Paper fragment4 at -1.6 2.6 ground drop yaw=60
+place Zone_Trigger mastzone at 0 3 ground y=1
+place TP_SnowDrift03 - at 2.5 0.5 ground sit yaw=10
+# REDO 10-24: the mast's three guy clamps were torn off by the ice (shelf stores, a chest on the path ledge, a drift
+#     chest on the top); fitted on the mast winch, the junction box comes free (it was hidden in the ice)
+place Loot_ChestSmall ledgechest at 9.6 -3.5 ground sit yaw=180
+place Note_Paper chart2 at 9.1 -4.6 ground y=0.05 drop yaw=150
+place Loot_ChestSmall driftchest at -3.2 4.2 ground sit yaw=100
+place Note_Paper chart3 at 1.1 5.4 ground y=0.05 drop yaw=40
+call crank x=-0.5 z=-0.8 yaw=180 alias=mastwinch
+prop mast tint.color=#40464c
+prop mast tint.amount=0.5
+prop bentmast tint.color=#40464c
+prop bentmast tint.amount=0.5
+
+# --- Snow, things to gather -----------------------------------------------------------------------------------------
+call snowfall x=0 z=10 r=85 al=snow
+scatter VP_CoralDigitate01 4 at -20 18 r=3 seed=12111 wet free=1
+scatter VP_CoralBulb04 3 at -20 18 r=3 seed=12112 wet free=1
+scatter SeaVine3_klump 4 at -20 18 r=6 seed=12113 wet free=1
+call shallows x=0 z=0 r=90 deep=6 n=1 seed=12120
+
+# --- DEEP 10-24 (one-hour pass): the island grew 30 -> 80; the stack, its shelf and its path keep their own brushes ----
+# the Needle: a sea stack in the north (26 m) with the beacon tower on it (6 ladders, top 40.5 m: the storyline's first
+# big climb), the star dome on the beacon; the operator's cave below it; the keeper's ruin east; the mail plane west (a
+# bear guards it); Grey Cove's supply boat sunk 10 m down in the south-west; two buried treasures. M26
+# (RAFT_QUEST_MECHANICS 4): four star-chart notes (hut, path ledge, mast foot, beacon) + the dome's numbers = the mast
+# box's keypad code.
+call fz_mount x=0 z=58 h=26 r=7
+# (REACH 10-30 G1: the Needle's top stood 7 m over its smoothed shoulder all round - nobody got up to the tower's foot;
+# a path now winds up the last 7 m round its south side, from the west shoulder (18.6 m) to the top's south-east edge)
+for k 0 14
+brush flatten at {6.8*cos(200+9*$k)} {58+6.8*sin(200+9*$k)} r=1.5 s=20 frames=150 h={18.6+0.543*$k}
+next
+call ar_plants_snowy x=0 z=58 r=26 seed=12131
+for k 0 14
+clear at {6.8*cos(200+9*$k)} {58+6.8*sin(200+9*$k)} r=2.5 body
+next
+# (UT 11-04: its ladders took hold only from under the platform, where the climber stalled: climbed from outside now)
+call fz_tower x=0 z=60 h=26 n=6 ly=180 al=beacon chest=beaconchest zal=beaconzone zid=beacon_top msg="The beacon on the Needle. The white sea all round - and the stack's mast, small as a pin."
+place Note_Sign stardome at -0.9 58.6 h=40.57 sit yaw=180
+place Note_Paper chart4 at 0.6 58.4 h=40.6 drop yaw=30
+call fz_zone x=0 z=31 al=needlezone id=needle_foot r=6 msg="The foot of the Needle. A way of sorts climbs its rock face; at the top, the beacon tower."
+# the operator's cave (its mouth north, to the Needle)
+call ar_cave x=-40 z=26 h=4 yaw=0 al=opcave chest=opcavechest
+place Note_Paper opdiary at -39.2 31.4 h=4.5 drop yaw=200
+place Note_Paper sealedorder at -40.6 30.5 h=4.5 drop yaw=140
+place Zone_Trigger opcavezone at -40 31 h=5.4
+prop opcavezone zone.id=operator_cave
+prop opcavezone zone.radius=3
+prop opcavezone zone.message=A dry cave under the snow line. A sleeping bag, a stove, a diary: the operator lived here when the hut froze.
+# the keeper's ruin (east): his list on the table, a hatch near it
+call ar_ruin x=56 z=8 h=4 yaw=0 al=keeperruin
+place Note_Paper keeperlist at 55.25 8 h=5.15 drop yaw=10
+call hatchcache x=58 z=13 r=3 seed=12134 alias=ruinhatch chest=ruincellar items=MetalIngot*2;Rope*2;Bolt*2
+# the mail plane (west) and its bear
+call ar_plane x=-58 z=14 h=3 yaw=120 al=mailplane crate=planecrate
+place Creature_PolarBear planebear at -48 22 ground
+prop planebear creature.count=1
+prop planebear creature.respawn=0
+# (REACH 10-30 G1 + R 10-31: the letter lay under the plane's wing, where nobody stands up, and the sand off the wing's
+# edge was boxed in by the wing and the body too - now on the open sand past the crate, 6.5 m from the body)
+place Note_Paper mailletter at -61.25 8.37 ground y=0.05 drop yaw=60
+# Grey Cove (south-west): the supply boat 10 m down, its chest, an air pocket at its side
+call fz_dive x=-50 z=-46 d=10 r=12 yaw=0 obj=BoatStranded al=supplyboat chest=boatchest aid=coveair aal=coveairz abub=coveairb cx=6 cz=2 ax=-6 az=-3
+# the Gull Ridge (south-east) and the Saddle (west): the island's own hills
+call ar_ridge x1=22 z1=-26 x2=58 z2=-14 h=9 top=7 r=8
+call ar_plants_snowy x=40 z=-20 r=26 seed=12151
+call ar_ridge x1=-62 z1=-12 x2=-30 z2=-4 h=8 top=5 r=7
+call treasure x=34 z=-48 r=14 n=1 seed=12141
+call treasure x=40 z=44 r=12 n=1 seed=12142
+call ar_plants_snowy x=-30 z=-20 r=22 seed=12145
+call ar_plants_snowy x=30 z=-15 r=20 seed=12148
+place Zone_Trigger coveview at -34 -34 ground y=1
+prop coveview zone.id=grey_cove
+prop coveview zone.radius=6
+prop coveview zone.message=Grey Cove. Under the ice-green water, the shape of a boat - the relay's supply boat, that never came back.
+
+# --- Settings, notes, behaviours, quest -----------------------------------------------------------------------------
+# the generator's rocks that floated over the slope (ground check, 2026-10-23)
+clear at -15.7 -1.27 r=1.5 only=TP_BigRock
+
+info title=Signalstack Rock
+info author=Custom Islands
+info description=A basalt stack in a grey sea, snow on every ledge: a relay hut on its shelf and a mast on its top, one half bent over by the ice. Fragments of a call from the north come in here. The first island of The Frozen Horizon.
+island on.arrive=message||Snow on every ledge. A relay mast on the stack's top - half of it bent flat by the ice.
+
+note relaylog Relay log: fragments | SIGNALSTACK RELAY - LOG (I. Rask, operator)\n\nDay 1: a call from the north, band 500. Not a voice at first - a hand key, short bursts, as if whoever sends it dares not stay on the air long. Then a woman's voice, very calm, reading the ice like a weather forecast.\nDay 2: "...floes... open in the..." Then nothing for six hours.\nDay 3: "...whale..." - just that. I said it back to her. No answer. I don't think she can hear us. I think she's talking to anyone.\nDay 4: the courier brought a sealed order with the post. Twenty years this stack has listened. It is not going to stop because somebody sealed an envelope.\nDay 19: the mast came down in the night. I wrote her last fragment on a slip and left it under the mast box.\nIf you are reading this: the Receiver's plans are in the desk. I'm in the cave under the Needle, where it's warm. Listen north.
+note shelfsign Relay shelf | SIGNALSTACK RELAY\nPath to the mast: up the rock, mind the ice.
+note relaydesk Relay desk | Ivo's desk drawer: the Receiver's plans, wire, a mug frozen in.
+note relaystores Relay stores | The relay's stores: seed, planks, rope - and a torn guy clamp.
+note mastbox Mast box | The mast's junction box, iced shut. Plans taped inside the lid.
+note fragment4 Fragment 4 | (a slip in Ivo's hand, pinned under the mast box)\n\nThe last thing she sent before the mast went down, in her short bursts:\n"...north... past the white sea... the Whale... held fast... do not wait for spring."\nThen slower, as if she was smiling: "...if you hear me... you are not alone either."\n\nI've gone with the sealers. If you came for her too, follow the floes: they talk on 700, and their huts are where the ice opens. Ask for Halvorsen. Tell him Ivo sent you and that he still owes me a fish.\n\nUnder it, underlined twice: "The floes are on 700."
+loot relaydesk Blueprint_Reciever*1;Blueprint_HeadLight*1;Scrap*2;Rope*1
+prop relaydesk loot.refill=0
+loot relaystores Seed_Pine*2;Plank*10;Rope*3;story:clamp*1
+prop relaystores loot.refill=0
+loot mastbox Blueprint_Antenna*1;Blueprint_Recycler*1;Scrap*2;CopperIngot*1
+prop mastbox loot.refill=0
+prop mastbox obj.name=mastbox
+prop mastbox beh.hidden=1
+note ledgechest Ledge chest | Roped to the path's ledge: a bent guy clamp and a flare.
+loot ledgechest story:clamp*1;Rope*2
+prop ledgechest loot.refill=0
+note driftchest Drift chest | Half under a drift: the third guy clamp, a tin of frozen nails.
+note postnote Post for the relay | Ivo -\nPost's on the crate: your coffee, the wire you wanted, a letter from your sister (she says eat something) and one with a big wax seal from the Coldhold. Not mine to read. I only carry them.\nTuva bit the mail plane's tyre again. Knut sends his regards, which means he ate the biscuits off your shelf. I've had words with him. He doesn't listen. Dogs and radio men.\nThe sealers on the floes want their set looked at, so I'm going that way next, then on to Steamvent before the weather turns. If you're up on the stack when the bells go by, wave.\n\n- Orrin (and the dogs)
+note qslcard A QSL card | (a postcard, a cartoon penguin in headphones on the front)\n\nQSL - CONFIRMING OUR CONTACT\nTo: Signalstack Relay. From: SAGA DRIFT, Tor Hallen, "Sparks". Band 500, seven o'clock, signal strong, operator grumpy.\n\nIvo, old man - thanks for the contact, and for laughing at the penguin joke even though I could hear you weren't. GOOD MORNING, ICE! is on every day at seven, rain or snow or more snow. This week's callers: two sealers, the Steamvent bath keeper, and a penguin who said nothing for four minutes. Best caller this week.\nPin this up. When the world goes quiet it's good to have proof somebody was talking.\n- Sparks, 73
+note sealedorder The sealed order | (a letter, its wax seal broken, half burnt in the stove)\n\nFROM THE COLDHOLD, BY COURIER. To the operator, Signalstack Relay.\n\nThere is a pulse in the south. Slow, patient, and it listens. It finds whoever speaks, and every station that keeps transmitting is a lamp lit for it.\nYou will stop all transmission from this day. You will not answer calls from the north, however they plead. The courier will see that the order is kept.\nFor this silence the Coldhold keeps a place for you below the ice: warmth, seed and food for years. Silence is not cowardice. Silence is how the rest of us live.\n\n- Ansel Holt, Warden of the Coldhold\n\n(Under it, in pencil, in the operator's hand: "No.")
+note mailletter A letter in the mail sack | (in the mail plane's sack, stamped IRON WHALE, never flown)\n\nDear Arne,\nWe are held fast in the ice north of the white sea, all hands, the Whale tilting a little more each week. The cook has started naming the rivets. Morale is fine, which tells you how strange things are.\nA man from the Coldhold sent orders: no radio, not a peep, or the thing in the south will find us. The crew is frightened. I am too, a little. But a ship that cannot call for help is a coffin with portholes.\nSo I have a hand key and a few seconds at a time. If someone, anyone, answers, I will tell them where the floes are open.\nIf this reaches you: I am still the stubborn one.\nYour sister, Hedda
+loot driftchest story:clamp*1;Nail*6
+prop driftchest loot.refill=0
+
+# --- DEEP 10-24: the Needle's notes, the star lock, the extras ---
+note opdiary Operator's diary | IVO RASK - DIARY\n\nThe hut froze solid, so I moved in here with the stove. Warmer than it looks, and the gulls can't get my biscuits.\nNight 19. No wind at all, the sea flat as a plate - and still the mast came down. Before it went I heard sledge bells on the ice below the stack. Bells, out here, at two in the morning, and no lamp. I told myself it was the cold talking. "The ice bent it", I wrote in the log. I'm not sure I believe my own log.\nThe call comes clearest from the beacon on the Needle, so I climb up there every night. I put my father's old star lock on the mast box, so nobody takes the antenna plans while I'm up there: the four stars of the north, drawn on four charts where I work, and the beacon's dome knows their numbers.\nThe sealers on the floes say they'll take me south. I'll go when she stops talking. Not before.
+note chart1 Star chart 1/4 | STAR CHART 1/4\n\nFirst, low in the north at dusk: THE HOOK.
+note chart2 Star chart 2/4 | STAR CHART 2/4\n\nSecond, over the floes: THE LANTERN.
+note chart3 Star chart 3/4 | STAR CHART 3/4\n\nThird, where the mast points: THE TWINS.
+note chart4 Star chart 4/4 | STAR CHART 4/4\n\nLast, the highest of the north: THE CROWN.\nRead the dome's numbers in the charts' order.
+note stardome The star dome | THE NORTH SKY (painted inside the beacon's dome)\n\nCROWN = six    HOOK = four\nSLEDGE = two    TWINS = eight\nLANTERN = one    WHALE = nine
+note keeperlist Keeper's list | KEEPER'S LIST (Mags Lund, beacon keeper)\n\nOil for the beacon - none. Lit it with seal fat. Smells like a fish shop on fire.\nBoat from Grey Cove - three weeks late. Ivo says it will come. Ivo says a lot of things.\nThe spare coil and the good tools: under the hatch by the wall, where the gulls can't get them. The gulls have had two hats, a spoon and my dignity.\nThe courier's sledge went past at night again. No lamp on it. Who drives dogs in the dark without a lamp? A man who doesn't want to be seen, my mother would say. My mother said a lot of things too.
+note beaconchest Beacon chest | The beacon keeper's chest: frozen lamp oil, a clear night's kit.
+loot beaconchest MetalIngot*3;CopperIngot*2;Rope*2
+prop beaconchest loot.refill=0
+note opcavechest Operator's kit | Ivo's kit under his sleeping bag: stove, tins, a spare headset.
+loot opcavechest Scrap*3;Rope*2;Raw_GenericMeat*2
+prop opcavechest loot.refill=0
+note planecrate Mail plane's crate | The mail plane's crate: undelivered post, the pilot's tools.
+loot planecrate Bolt*3;Nail*8;Leather*2
+prop planecrate loot.refill=0
+note boatchest Supply boat's chest | The supply boat's strongbox: what the relay ordered and never got.
+loot boatchest MetalIngot*2;Glass*3;Seed_Pine*2
+prop treasure12141 treasure.loot=MetalOre*3;CopperOre*2
+prop treasure12142 treasure.loot=TitaniumOre*1;MetalOre*2
+story starcode|The star code|Placeable_Lantern_Metal|The mast box's star lock, opened with the north's four stars.
+place RT_PowerBox mastpad at 0 4.12 ground y=1.3 yaw=180
+prop mastpad obj.name=mastpad
+prop mastpad beh.use=Turn the mast box's star lock
+prop mastpad lock.code=4186
+prop mastpad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||Four stars, four clicks. The mast box's lock lets go.\nsignal||starcode\ngive||story:starcode*1
+prop mastpad else.use=message||A star lock: four numbers. The operator wrote about it - his diary is somewhere below the Needle.
+prop mastbox if.open=signal|starcode
+prop mastbox else.open=message||The mast box has a star lock on it - four numbers. The lock's dial is on the mast.
+story clamp|Guy clamp|Placeable_Lantern_Metal|One of the relay mast's three guy clamps, torn off by the ice.
+story mastfixed|Mast rigged|Placeable_Lantern_Metal|The mast's guys are clamped again; the junction box came free.
+prop mastwinch obj.name=mastwinch
+prop mastwinch beh.use=Fit the guy clamps and wind the mast winch
+prop mastwinch if.use=quest|7\ntake|story:clamp|3
+prop mastwinch on.use=give||story:mastfixed*1\nshow|mastbox\nmessage||The guys tighten, the mast groans upright an inch - and the junction box drops out of its ice.
+prop mastwinch else.use=message||The winch spins free: the mast's three guy clamps are gone. One in the shelf stores, one on the path's ledge, one in a drift up here.
+
+prop shelfzone zone.id=shelf
+prop shelfzone zone.radius=6
+prop shelfzone zone.message=The relay shelf. Footprints in the snow, a day old or a year.
+prop mastzone zone.id=mast_top
+prop mastzone zone.radius=4
+prop mastzone zone.message=The stack's top. The wind off the sea smells of ice.
+
+quest title=The Fragments
+quest intro=A relay rock in the snow. Somebody was listening here. Make for the tall mast on the rock and land on the shelf below it.
+step reach|shelf|1|Make for the tall mast; land on the shelf with the relay hut
+step read|Relay log: fragments|1|Read the relay log
+step blueprint|Blueprint_Reciever|1|Take the Receiver's plans from the relay desk
+step blueprint|Blueprint_HeadLight|1|Take the head light's plans from the relay desk too
+step read|Post for the relay|1|Read the courier's note by the shelf's stores
+step reach|mast_top|1|Climb the path to the mast on the stack's top
+step collect|story:clamp|3|Find the mast's three guy clamps in chests: shelf, path ledge, mast foot
+step collect|story:mastfixed|1|Fit the clamps on the mast winch
+step reach|needle_foot|1|The mast box has a star lock. Go to the Needle, the tall sea stack with the beacon tower
+step read|Operator's diary|1|Find the operator's cave near the Needle and read the diary
+step read|The sealed order|1|Read the half-burnt letter by the stove in the same cave
+step reach|beacon_top|1|Climb the Needle and its beacon tower to the star dome
+step collect|story:starcode|1|Open the mast box's star lock (the four star charts and the dome's numbers)
+step blueprint|Blueprint_Antenna|1|Take the antenna's plans from the mast box
+step blueprint|Blueprint_Recycler|1|Take the recycler's plans from the mast box too
+step read|Fragment 4|1|Read the fourth fragment by the mast box
+quest done=Far across the white sea, a ship called the Whale is held in the ice - and a woman on it will not stay silent. The sealers' floes call on 700.
+quest reward=MetalIngot*2;Rope*3
+
+# (box agent 10-25: generated rocks left hanging over the ground check - cleared)
+clear at 57.83 7.64 r=1.5 all body only=SmallBoulder2
+clear at -34.38 -24.85 r=1.5 all body only=TP_BigRock03
+clear at 3.12 6.46 r=1.5 all body only=TP_SmallRock01
+save Signalstack Rock

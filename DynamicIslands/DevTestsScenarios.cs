@@ -19,10 +19,40 @@ namespace DynamicIslands
 	{
 		#region Scenario helpers
 
+		/// <summary>The tests' own sample island: DevTests_sample.island, packed into the dev .rmod (pack.ps1 -Release leaves
+		/// it out) - not a file in the player's Mods folder (the 10-16 cleanup moved generated_sample.island out of it).</summary>
+		internal const string SampleFixture = "DevTests_sample.island";
+
+		static IslandFile SampleIsland()
+		{
+			byte[] bytes = DynamicIslands.instance != null ? DynamicIslands.instance.GetEmbeddedFileBytes(SampleFixture) : null;
+			if (bytes == null || bytes.Length == 0) throw new System.IO.FileNotFoundException("the test sample island " + SampleFixture + " is not in the .rmod (pack.ps1 without -Release)");
+			return IslandFile.FromBytes(bytes, SampleFixture);
+		}
+
+		/// <summary>The sample island saved in Mods as "cisample", for tests that spawn or send an island by its file name -
+		/// instead of whichever island the player happens to have saved. RemoveSampleIsland moves it out again.</summary>
+		internal const string SampleSaved = "cisample";
+
+		static string SaveSampleIsland()
+		{
+			IslandFile f = SampleIsland();
+			f.Name = SampleSaved;
+			f.Save(IslandSpawner.PathFor(SampleSaved));
+			IslandCache.Forget();
+			return SampleSaved;
+		}
+
+		static void RemoveSampleIsland()
+		{
+			try { if (System.IO.File.Exists(IslandSpawner.PathFor(SampleSaved))) System.IO.File.Delete(IslandSpawner.PathFor(SampleSaved)); } catch { }
+			IslandCache.Forget();
+		}
+
 		/// <summary>The sample island under another name, at this elevation, with a title - a copy a test fills.</summary>
 		static IslandFile ScIsland(string name, string title, float elevation = 0f)
 		{
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = name;
 			f.Elevation = elevation;
 			f.Props[IslandProps.Title] = title;
@@ -151,6 +181,15 @@ namespace DynamicIslands
 			IslandObjectRef r = ScObjOf(e, name);
 			if (r == null) { Log("  (no object '" + name + "' on '" + e.HostName + "')"); return; }
 			PutPlayerNear(r.transform);
+			// (a survivor cage opens as a player's E on it does: SurvivorCage.Use, not the behaviours' use)
+			SurvivorCage cage = r.GetComponentInChildren<SurvivorCage>(true) ?? r.GetComponentInParent<SurvivorCage>();
+			if (cage != null) { Log("  (survivor cage '" + name + "': " + (cage.Use() ? "opened" : "stays shut") + ")"); return; }
+			// (an islander: its dialogue opened and closed as a player's E and Esc do - its talk event, Talk to steps;
+			// a piece of a collectible set: claimed and counted as a player's E does, then its use - 10-26)
+			Islander isl = r.GetComponentInChildren<Islander>(true);
+			if (isl != null) { isl.Talk(); DialoguePanel.Close(); Log("  (islander '" + name + "': talked to)"); return; }
+			int claim = Collectibles.ClaimKey(r);
+			if (claim >= 0 && !ContentState.IsUsed(e, claim)) { ContentState.MarkUsed(r.transform, claim); Collectibles.PickedUp(e, r); }
 			Behaviours.Fire(e, r.Index, "use", true);
 		}
 
@@ -250,7 +289,7 @@ namespace DynamicIslands
 		#region SC1, SC2 - the raft meets islands
 
 		[ConsoleCommand(name: "CIScRam", docs: "Dev, world (host, a test world 'CI ...'): SC1 - the raft pushed into an island at 6 m/s stops at the shore, stays at the sea and level, the player stays on it, and it sails off when pushed back; the same against a ghost raft")]
-		public static void ScRamCommand() { DynamicIslands.instance.StartCoroutine(ScRamRoutine()); }
+		public static void ScRamCommand() { StartTest(ScRamRoutine()); }
 
 		static IEnumerator ScRamRoutine()
 		{
@@ -315,7 +354,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScBeached", docs: "Dev, world (host, a test world 'CI ...'): SC89 - an island in the raft's way, and only Raft's own current: the raft drifts onto its beach and stops at the shore - it doesn't climb the beach, the player stays on it - and stays so while pressed on, and when the island loads again with the raft at its shore")]
-		public static void ScBeachedCommand() { DynamicIslands.instance.StartCoroutine(ScBeachedRoutine()); }
+		public static void ScBeachedCommand() { StartTest(ScBeachedRoutine()); }
 
 		/// <summary>How far the land of a loaded island stands above this point (negative: the point is above its ground, or
 		/// off the island).</summary>
@@ -441,12 +480,50 @@ namespace DynamicIslands
 		{
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
 			if (raft == null) { Fail("raft colliders: no raft"); return; }
+			// (R16: the guard's look right now - it hooks Raft's grid up when Raft didn't)
+			if (Raft_Network.IsHost) Log("raft collider guard: " + (RaftColliderGuard.Heal(false) ? "hooked Raft's grid up now" : "Raft's grid was hooked up") + ", healed " + RaftColliderGuard.Healed + " time(s) this session");
 			Collider[] near = Physics.OverlapSphere(raft.body.position, 40f, 1 << 9, QueryTriggerInteraction.Ignore);
 			Log("RAFTCOLLIDERS " + near.Length + " on RaftCollision within 40 m of the raft (" + string.Join(", ", near.Select(c => c.name + " under " + (c.transform.parent != null ? c.transform.parent.name : "-")).Distinct().Take(3).ToArray()) + ")");
 		}
 
+		[ConsoleCommand(name: "CIRaftColliderGuard", docs: "Dev, world (host, 'CI ...'): R16 - Raft's collider grid unhooked and emptied as in the worlds that drifted (no grounding colliders); the guard hooks it up again and the raft has them back")]
+		public static void RaftColliderGuardCommand() { StartTest(RaftColliderGuardRoutine()); }
+
+		static IEnumerator RaftColliderGuardRoutine()
+		{
+			if (!Raft_Network.IsHost || !LoadSceneManager.IsGameSceneLoaded) { Fail("raft collider guard: run in a world, as the host"); yield break; }
+			bool ok = true;
+			var rcm = UnityEngine.Object.FindObjectOfType<RaftCollisionManager>();
+			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (rcm == null || raft == null) { Fail("raft collider guard: no raft"); yield break; }
+			Func<int> count = () => Physics.OverlapSphere(raft.body.position, 40f, 1 << 9, QueryTriggerInteraction.Ignore).Length;
+			int before = count();
+			Check(ref ok, before > 0, "the raft has Raft's grounding colliders: " + before);
+			// As in the worlds that drifted: Raft's manager doesn't hear of the blocks (it never listened) and has no grid
+			var tb = HarmonyLib.Traverse.Create(HarmonyLib.Traverse.Create(rcm).Field("raftBounds").GetValue<RaftBounds>());
+			foreach (string ev in new[] { "OnAddWalkableBlock", "OnRemoveWalkableBlocks" })
+			{
+				Delegate d = tb.Field(ev).GetValue<Delegate>();
+				if (d != null) foreach (Delegate x in d.GetInvocationList()) if (x.Target == (object)rcm) d = Delegate.Remove(d, x);
+				tb.Field(ev).SetValue(d);
+			}
+			HarmonyLib.Traverse.Create(rcm).Field("blocks").GetValue<List<Vector3>>().Clear();
+			rcm.Initialize();
+			yield return new WaitForFixedUpdate();
+			yield return null;
+			int gone = count();
+			Check(ref ok, gone == 0, "unhooked and emptied: " + gone + " left (the drifting worlds had none)");
+			bool healed = RaftColliderGuard.Heal(false);
+			yield return new WaitForFixedUpdate();
+			yield return null;
+			int after = count();
+			Check(ref ok, healed && after >= before, "the guard hooked Raft's grid up again: " + after + " collider(s) (" + before + " before)");
+			Check(ref ok, !RaftColliderGuard.Heal(false), "... and leaves it alone once it listens");
+			if (ok) Log("PASS: raft collider guard"); else Fail("raft collider guard");
+		}
+
 		[ConsoleCommand(name: "CIDriftProbe", docs: "Dev, world (host, 'CI ...'): logs the raft each second for <seconds> (default 90) as Raft's current takes it towards 'ciscbeach' put ahead of it (CIScBeached's island): where, how fast, how much land above it, what it touches")]
-		public static void DriftProbeCommand(string[] args) { DynamicIslands.instance.StartCoroutine(DriftProbeRoutine(args != null && args.Length > 0 ? float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture) : 90f)); }
+		public static void DriftProbeCommand(string[] args) { StartTest(DriftProbeRoutine(args != null && args.Length > 0 ? float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture) : 90f)); }
 
 		static IEnumerator DriftProbeRoutine(float seconds)
 		{
@@ -477,7 +554,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScFlyUnder", docs: "Dev, world (host, a test world 'CI ...'): SC2 - the raft pushed under an island flying at 60 m and over a sunken one passes; a low one at 4 m: what happens to the raft and the player on it")]
-		public static void ScFlyUnderCommand() { DynamicIslands.instance.StartCoroutine(ScFlyUnderRoutine()); }
+		public static void ScFlyUnderCommand() { StartTest(ScFlyUnderRoutine()); }
 
 		static IEnumerator ScFlyUnderRoutine()
 		{
@@ -489,7 +566,7 @@ namespace DynamicIslands
 			var r = new List<float>();
 			// (sunken: the sample island's highest point 12 m under the sea - its peak stands well above its own sea level)
 			float peak = 30f;
-			try { IslandFile sample = IslandFile.Load(IslandSpawner.PathFor("generated_sample")); float top = 0f; foreach (float h in sample.Heights) top = Mathf.Max(top, h); peak = top * sample.TerrainSize.y - sample.WaterLevel; } catch { }
+			try { IslandFile sample = SampleIsland(); float top = 0f; foreach (float h in sample.Heights) top = Mathf.Max(top, h); peak = top * sample.TerrainSize.y - sample.WaterLevel; } catch { }
 			foreach (float elevation in new[] { 60f, -(peak + 12f), 4f })
 			{
 				string isl = "ciscfly" + (elevation < 0 ? "sunk" : elevation.ToString("F0"));
@@ -539,12 +616,27 @@ namespace DynamicIslands
 		/// <summary>Where an island's land centre is in the world now (its root is the terrain's corner).</summary>
 		static Vector3 ScLandCentre(IslandWorldState.Entry e)
 		{
-			IslandInfoTag tag = e.Root != null ? e.Root.GetComponent<IslandInfoTag>() : null;
-			return e.Root != null ? e.Root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero) : e.Position;
+			return e.Root != null ? e.Root.transform.position + LocalLandCentre(e.Root, e.Name) : e.Position;
+		}
+
+		/// <summary>An island's land centre from its root's corner: its IslandInfoTag's, else from its file, as the tag's is made
+		/// (zero if neither). Since 10-19 only an island with a quest gets the tag (its banner): CIScShift took the terrain's
+		/// corner of the quest-less sample island for its centre and measured 707 m off.</summary>
+		internal static Vector3 LocalLandCentre(GameObject root, string fileName)
+		{
+			IslandInfoTag tag = root != null ? root.GetComponent<IslandInfoTag>() : null;
+			if (tag != null) return tag.LocalCentre;
+			try
+			{
+				IslandFile f = IslandFile.Load(IslandSpawner.PathFor(fileName));
+				Vector2 land = IslandSpawner.LandCentre(f);
+				return new Vector3(land.x, f.WaterLevel, land.y);
+			}
+			catch { return Vector3.zero; }
 		}
 
 		[ConsoleCommand(name: "CIScShift", docs: "Dev, world (host, 'CI ...'): SC3 - Raft's world shift (the origin moved) while an island is coming (with a world entry, as a plan rule brings it, and without, as SpawnIsland does - AU58), while the player stands on one, and while one is unloaded: everything ends where it should be")]
-		public static void ScShiftCommand() { DynamicIslands.instance.StartCoroutine(ScShiftRoutine()); }
+		public static void ScShiftCommand() { StartTest(ScShiftRoutine()); }
 
 		static IEnumerator ScShiftRoutine()
 		{
@@ -566,15 +658,16 @@ namespace DynamicIslands
 			// (a) with a world entry (a plan rule's island): the shift during the spawn
 			Vector3? spot = ScSpot(isl, 400f);
 			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario shift: no open sea near the raft"); yield break; }
-			Vector3 offset = spot.Value - raft.body.position; offset.y = 0f;
+			// (where it should land: the spot moved by the shifts made meanwhile - not by the raft, which drifts while it loads)
+			Vector3 shifted0 = IslandWorldState.ShiftedBy;
 			IslandWorldState.Entry entry = IslandWorldState.Add(isl, spot.Value, null, false);
 			entry.Loading = true;
 			made.Add(entry);
-			Coroutine c = DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile(isl, spot.Value, true, entry));
+			Coroutine c = StartTest(DynamicIslands.instance.SpawnIslandFile(isl, spot.Value, true, entry));
 			wsm.ResetToCenter(shift);
 			yield return c;
 			yield return WaitFor(() => entry.Root != null || entry.Failed, 20f);
-			Vector3 want = raft.body.position + offset;
+			Vector3 want = spot.Value - (IslandWorldState.ShiftedBy - shifted0);
 			float off = entry.Root != null ? ScFlat(ScLandCentre(entry), want) : 999f;
 			Check(ref ok, entry.Root != null && off < 3f, "a world shift while a plan rule's island is coming: it lands where it should (" + off.ToString("F1") + " m off)");
 			ScRemove(made);
@@ -583,13 +676,13 @@ namespace DynamicIslands
 			spot = ScSpot(isl, 400f);
 			if (spot.HasValue)
 			{
-				offset = spot.Value - raft.body.position; offset.y = 0f;
+				shifted0 = IslandWorldState.ShiftedBy;
 				int before = IslandWorldState.Islands.Count;
-				c = DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile(isl, spot.Value, true));
+				c = StartTest(DynamicIslands.instance.SpawnIslandFile(isl, spot.Value, true));
 				wsm.ResetToCenter(shift);
 				yield return c;
 				IslandWorldState.Entry e2 = IslandWorldState.Islands.Skip(before).FirstOrDefault(x => x.HostName == isl);
-				want = raft.body.position + offset;
+				want = spot.Value - (IslandWorldState.ShiftedBy - shifted0);
 				off = e2 != null && e2.Root != null ? ScFlat(ScLandCentre(e2), want) : 999f;
 				Check(ref ok, e2 != null && off < 3f, "a world shift while SpawnIsland's island is coming: it lands where it should (" + off.ToString("F1") + " m off) - AU58");
 				if (e2 != null) made.Add(e2);
@@ -612,7 +705,8 @@ namespace DynamicIslands
 					Vector3 rel2 = p.transform.position - ScLandCentre(e);
 					Check(ref ok, (rel2 - rel).magnitude < 3f && p.PersonController.IsGrounded, "a world shift with the player standing on an island: they stay where they stood (moved " + (rel2 - rel).magnitude.ToString("F1") + " m relative to it, grounded " + p.PersonController.IsGrounded + ")");
 					// (c) the island unloaded, the world shifts, it loads again
-					offset = e.Position - raft.body.position; offset.y = 0f;
+					Vector3 was = e.Position;
+					shifted0 = IslandWorldState.ShiftedBy;
 					OnRaftCommand();
 					IslandObjectState.Capture(e);
 					IslandSpawner.Despawn(e.Root);
@@ -622,7 +716,7 @@ namespace DynamicIslands
 					yield return null;
 					e.Loading = true;
 					yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
-					want = raft.body.position + offset;
+					want = was - (IslandWorldState.ShiftedBy - shifted0);
 					off = e.Root != null ? ScFlat(ScLandCentre(e), want) : 999f;
 					Check(ref ok, e.Root != null && off < 3f, "an island unloaded during a world shift comes back where it was (" + off.ToString("F1") + " m off)");
 				}
@@ -638,7 +732,7 @@ namespace DynamicIslands
 		#region SC8 - custom islands and Raft's islands side by side
 
 		[ConsoleCommand(name: "CIScOverlap", docs: "Dev, world (host, 'CI ...'): SC8 - 6 km sailed with an island forced every 500 m (as the automatic spawner brings them): no custom island's land overlaps another's or one of Raft's islands (AU68: generated islands are placed by an estimated size)")]
-		public static void ScOverlapCommand() { DynamicIslands.instance.StartCoroutine(ScOverlapRoutine()); }
+		public static void ScOverlapCommand() { StartTest(ScOverlapRoutine()); }
 
 		static IEnumerator ScOverlapRoutine()
 		{
@@ -721,7 +815,7 @@ namespace DynamicIslands
 		#region SC4, SC5 - standing on an island while the raft is away; the unload distance
 
 		[ConsoleCommand(name: "CIScStayOnIsland", docs: "Dev, world (host, 'CI ...'): SC4 - the player on an island while the raft is moved 1.2 km off keeps the island; the player at the edge of a big island 330 m from its middle with unload 300 (AU56)")]
-		public static void ScStayOnIslandCommand() { DynamicIslands.instance.StartCoroutine(ScStayOnIslandRoutine()); }
+		public static void ScStayOnIslandCommand() { StartTest(ScStayOnIslandRoutine()); }
 
 		static IEnumerator ScStayOnIslandRoutine()
 		{
@@ -803,7 +897,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScStreamLoop", docs: "Dev, world (host, 'CI ...'): SC5 - the unload distance at its lowest (300) and an island 350 m off: it may load or stay away, but not load and unload every few seconds (AU56)")]
-		public static void ScStreamLoopCommand() { DynamicIslands.instance.StartCoroutine(ScStreamLoopRoutine()); }
+		public static void ScStreamLoopCommand() { StartTest(ScStreamLoopRoutine()); }
 
 		static IEnumerator ScStreamLoopRoutine()
 		{
@@ -845,7 +939,7 @@ namespace DynamicIslands
 			// world for good, unknown to the world's list - a later test's raft ran aground on it
 			if (e.Root != null) { IslandObjectState.Capture(e); IslandSpawner.Despawn(e.Root); e.Root = null; }
 			e.Loading = true;
-			Coroutine first = DynamicIslands.instance.StartCoroutine(DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e));
+			Coroutine first = StartTest(DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e));
 			yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
 			yield return first;
 			yield return new WaitForSeconds(0.5f);
@@ -862,7 +956,7 @@ namespace DynamicIslands
 		#region SC14, SC16 - a full inventory; SC15 - keys and costs
 
 		[ConsoleCommand(name: "CIScFullInventory", docs: "Dev, world (host, 'CI ...'): SC14/SC16 - every slot full; a chest, a zone, a quest reward, a give action and a note give items: what doesn't fit lies in front of the player, story items go to the journal, nothing is lost; an item Raft doesn't have is skipped")]
-		public static void ScFullInventoryCommand() { DynamicIslands.instance.StartCoroutine(ScFullInventoryRoutine()); }
+		public static void ScFullInventoryCommand() { StartTest(ScFullInventoryRoutine()); }
 
 		static IEnumerator ScFullInventoryRoutine()
 		{
@@ -967,7 +1061,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScKeys", docs: "Dev, world (host, 'CI ...'): SC15 - a door with two take lines of planks (3 + 2) and 3 planks stays shut (AU67); nails in a storage don't count; one story key opens one of two doors")]
-		public static void ScKeysCommand() { DynamicIslands.instance.StartCoroutine(ScKeysRoutine()); }
+		public static void ScKeysCommand() { StartTest(ScKeysRoutine()); }
 
 		static IEnumerator ScKeysRoutine()
 		{
@@ -1032,7 +1126,7 @@ namespace DynamicIslands
 		#region SC19 - sea creatures on a flying island
 
 		[ConsoleCommand(name: "CIScFlyingSea", docs: "Dev, world (host, 'CI ...'): SC19 - an island flying at 60 m with turtles and a puffer fish in its lagoon, an underwater zone and chest: what lies under the island's own sea is left out (AU57)")]
-		public static void ScFlyingSeaCommand() { DynamicIslands.instance.StartCoroutine(ScFlyingSeaRoutine()); }
+		public static void ScFlyingSeaCommand() { StartTest(ScFlyingSeaRoutine()); }
 
 		static IEnumerator ScFlyingSeaRoutine()
 		{
@@ -1076,7 +1170,7 @@ namespace DynamicIslands
 		static int scDeathStep = -1;
 
 		[ConsoleCommand(name: "CIScDeath", docs: "Dev, world (host, 'CI ...'): SC20/SC21 - the player dies on an island mid-quest and respawns on the raft: not pulled back, the quest step kept; a note's 'wait then teleport' after death doesn't take the respawned player (AU59). CIScDeath check = after a save and load: the player is where they respawned")]
-		public static void ScDeathCommand(string[] args) { DynamicIslands.instance.StartCoroutine(args != null && args.Length > 0 && args[0] == "check" ? ScDeathCheckRoutine() : ScDeathRoutine()); }
+		public static void ScDeathCommand(string[] args) { StartTest(args != null && args.Length > 0 && args[0] == "check" ? ScDeathCheckRoutine() : ScDeathRoutine()); }
 
 		static IEnumerator ScDeathRoutine()
 		{
@@ -1152,7 +1246,7 @@ namespace DynamicIslands
 		#region SC22 - kill quests in every game mode
 
 		[ConsoleCommand(name: "CIScModes", docs: "Dev, world (host, 'CI ...'): SC22 - in Peaceful, Easy, Normal, Hard and Creative: a kill step with spear-strength hits, the EXP they give, and whether screechers and puffer fish come (AU61)")]
-		public static void ScModesCommand() { DynamicIslands.instance.StartCoroutine(ScModesRoutine()); }
+		public static void ScModesCommand() { StartTest(ScModesRoutine()); }
 
 		static IEnumerator ScModesRoutine()
 		{
@@ -1168,7 +1262,7 @@ namespace DynamicIslands
 				{
 					string isl = "ciscmode" + mode.ToString().ToLowerInvariant();
 					IslandFile f = ScIsland(isl, "Mode " + mode);
-					f.Props[IslandProps.Levels] = "on";
+					PlayerLevels.SetEnabled(true); // (a world option: islands don't turn it on)
 					f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(0, 0), 1), ObjectProps.CreatureCount, "2", ObjectProps.CreatureRespawn, "0"));
 					f.Objects.Add(ScObj("Creature_StoneBird", ScDry(f, new Vector2(15, 0), 2), ObjectProps.CreatureCount, "1"));
 					Vector3? sea = ScUnderSea(f, 3f);
@@ -1218,7 +1312,7 @@ namespace DynamicIslands
 		#region SC23, SC28 - catching; SC24 - a kill just before unloading
 
 		[ConsoleCommand(name: "CIScCatch", docs: "Dev, world (host, 'CI ...'): SC23/SC28 - two chickens: one killed, one netted - the catch step counts and 'defeat' fires (AU60); a goat and a llama carried to the raft stay there when the island unloads. CIScCatch check = after a save and load: they're still on the raft")]
-		public static void ScCatchCommand(string[] args) { DynamicIslands.instance.StartCoroutine(args != null && args.Length > 0 && args[0] == "check" ? ScCatchCheckRoutine() : ScCatchRoutine()); }
+		public static void ScCatchCommand(string[] args) { StartTest(args != null && args.Length > 0 && args[0] == "check" ? ScCatchCheckRoutine() : ScCatchRoutine()); }
 
 		static IEnumerator ScCatchRoutine()
 		{
@@ -1316,7 +1410,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScCollectFar", docs: "Dev, world (host, 'CI ...'): AT25 - an island far away whose quest collects story items the crew already holds: it isn't done while nobody is there; a player arriving finishes it and gets its reward (AU22)")]
-		public static void ScCollectFarCommand() { DynamicIslands.instance.StartCoroutine(ScCollectFarRoutine()); }
+		public static void ScCollectFarCommand() { StartTest(ScCollectFarRoutine()); }
 
 		static IEnumerator ScCollectFarRoutine()
 		{
@@ -1363,7 +1457,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScComeBack", docs: "Dev, world (host, 'CI ...'): AT24 - after the regrow days and a reload: a chest with a story item stays empty (no second key), a 'Once ever' zone stays used, a plain 'Once' zone and a plain chest are ready again (AU19)")]
-		public static void ScComeBackCommand() { DynamicIslands.instance.StartCoroutine(ScComeBackRoutine()); }
+		public static void ScComeBackCommand() { StartTest(ScComeBackRoutine()); }
 
 		static IEnumerator ScComeBackRoutine()
 		{
@@ -1406,6 +1500,9 @@ namespace DynamicIslands
 					ObjectState s;
 					if (e.State.TryGetValue(k, out s)) e.State[k] = new ObjectState { Active = s.Active, Yield = s.Yield, Day = s.Day - 10 };
 				}
+				// (back on the raft first: still standing in the plain zone, the player set it off again as soon as it loaded - 10-14)
+				OnRaftCommand();
+				yield return new WaitForSeconds(0.5f);
 				IslandObjectState.Capture(e);
 				IslandSpawner.Despawn(e.Root);
 				e.Root = null;
@@ -1427,7 +1524,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScWaitSave", docs: "Dev, world (host, 'CI ...'): AT21 - what comes after a wait isn't lost: CIScWaitSave prep = a note's 'wait 8 then show' with the island unloaded and loaded again during the wait (the vault shows), then a second note read just before the runner saves, quits and loads; CIScWaitSave check = after the load its vault shows (AU2)")]
-		public static void ScWaitSaveCommand(string[] args) { DynamicIslands.instance.StartCoroutine(args != null && args.Length > 0 && args[0] == "check" ? ScWaitSaveCheck() : ScWaitSavePrep()); }
+		public static void ScWaitSaveCommand(string[] args) { StartTest(args != null && args.Length > 0 && args[0] == "check" ? ScWaitSaveCheck() : ScWaitSavePrep()); }
 
 		const string WaitIsland = "ciscwait";
 
@@ -1495,8 +1592,8 @@ namespace DynamicIslands
 			if (ok) Log("PASS: scenario wait save check"); else Fail("scenario wait save check");
 		}
 
-		[ConsoleCommand(name: "CIScEarly", docs: "Dev, world (host, 'CI ...'): AT20 - the guide's example quest done backwards (the warthogs defeated and the supplies opened before the diary is read): each step counts when it comes - reading the diary finishes the quest (AU1)")]
-		public static void ScEarlyCommand() { DynamicIslands.instance.StartCoroutine(ScEarlyRoutine()); }
+		[ConsoleCommand(name: "CIScEarly", docs: "Dev, world (host, 'CI ...'): AT20 - the guide's example quest done backwards (the warthogs defeated and the supplies opened before the diary is read): each step counts when it comes - reading the diary finishes the quest (AU1); SL7 save: steps 3 and 2 done before step 1, the world state written and read back - they still count when step 1 is done, on Quest 1 and Quest 2")]
+		public static void ScEarlyCommand() { StartTest(ScEarlyRoutine()); }
 
 		static IEnumerator ScEarlyRoutine()
 		{
@@ -1514,6 +1611,11 @@ namespace DynamicIslands
 				new IslandQuest.Step { Type = "read", Target = "Diary", Count = 1 },
 				new IslandQuest.Step { Type = "open", Target = "Supplies", Count = 1 },
 				new IslandQuest.Step { Type = "kill", Target = "Warthog", Count = 2 } } }.To(f.Props);
+			// (Quest 2, for the save part: three note steps no real note matches - the part drives them with events)
+			new IslandQuest { Title = "The second camp", Steps = {
+				new IslandQuest.Step { Type = "read", Target = "SaveAlpha", Count = 1 },
+				new IslandQuest.Step { Type = "read", Target = "SaveBeta", Count = 1 },
+				new IslandQuest.Step { Type = "read", Target = "SaveGamma", Count = 1 } } }.To(f.Props, 1);
 			f.Save(IslandSpawner.PathFor(isl));
 			Vector3? spot = ScSpot(isl, 400f);
 			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario early: no open sea near the raft"); yield break; }
@@ -1535,6 +1637,33 @@ namespace DynamicIslands
 				NoteReader.Close();
 				int steps = QuestTracker.QuestOf(e).Steps.Count;
 				Check(ref ok, QuestTracker.StepOf(e) >= steps, "the diary read: the supplies and the warthogs done before count now - the quest is done (" + QuestTracker.StepOf(e) + " of " + steps + ") - AU1");
+
+				// SL7 save part (host): steps 3 and 2 done before step 1, the world state written and read back - they still count when step 1 is done; the same on Quest 2
+				// (the quest's state put to the start first; Quest 2's keys are those of QuestTracker.StepKeyOf/ProgressKeyOf/EarlyKeyOf, which are private)
+				foreach (int key in new[] { QuestTracker.StepKey, QuestTracker.ProgressKey, QuestTracker.EarlyKeyBase, QuestTracker.EarlyKeyBase + 1, QuestTracker.EarlyKeyBase + 2,
+					0x40200 + 2, 0x40201 + 2, 0x40300 + 1 * 0x40, 0x40300 + 1 * 0x40 + 1, 0x40300 + 1 * 0x40 + 2 }) e.State.Remove(key);
+				Check(ref ok, QuestTracker.StepOf(e, 0) == 0 && QuestTracker.StepOf(e, 1) == 0 && QuestTracker.QuestsOf(e) == 2, "save: both quests at their first step to begin with");
+				Func<ObjectState, int> yieldOf = s => s != null ? s.Yield : 0;
+				ObjectState es;
+				// Quest 1: the supplies opened (step 2) and the warthogs defeated (step 3) before the diary
+				QuestTracker.Event(e, "open", "Supplies");
+				QuestTracker.Event(e, "kill", "Warthog", 2);
+				Check(ref ok, QuestTracker.StepOf(e, 0) == 0 && e.State.TryGetValue(QuestTracker.EarlyKeyBase + 1, out es) && yieldOf(es) == 1 && e.State.TryGetValue(QuestTracker.EarlyKeyBase + 2, out es) && yieldOf(es) == 2,
+					"save: Quest 1 - steps 3 and 2 done early are remembered, the quest still waits for step 1");
+				// Quest 2: step 3 and step 2 before step 1
+				QuestTracker.Event(e, "read", "SaveGamma");
+				QuestTracker.Event(e, "read", "SaveBeta");
+				Check(ref ok, QuestTracker.StepOf(e, 1) == 0 && e.State.ContainsKey(0x40300 + 1 * 0x40 + 1) && e.State.ContainsKey(0x40300 + 1 * 0x40 + 2), "save: Quest 2 - steps 3 and 2 done early are remembered");
+				// the world file's write and read (IslandWorldState.Save writes IslandObjectState.Encode of the state; a joining player's island list uses the same)
+				string encoded = IslandObjectState.Encode(e.State);
+				e.State = IslandObjectState.Decode(encoded);
+				Check(ref ok, e.State.TryGetValue(QuestTracker.EarlyKeyBase + 1, out es) && yieldOf(es) == 1 && e.State.TryGetValue(QuestTracker.EarlyKeyBase + 2, out es) && yieldOf(es) == 2 && e.State.ContainsKey(0x40300 + 1 * 0x40 + 1) && e.State.ContainsKey(0x40300 + 1 * 0x40 + 2) &&
+					QuestTracker.StepOf(e, 0) == 0 && QuestTracker.StepOf(e, 1) == 0, "save: the early steps (both quests) are there after the state is written and read back (" + encoded.Length + " chars)");
+				QuestTracker.Event(e, "read", "Diary");
+				Check(ref ok, QuestTracker.StepOf(e, 0) >= steps, "save: Quest 1 - step 1 done after the reload: steps 2 and 3 count, the quest is done (" + QuestTracker.StepOf(e, 0) + " of " + steps + ")");
+				QuestTracker.Event(e, "read", "SaveAlpha");
+				Check(ref ok, QuestTracker.StepOf(e, 1) >= 3, "save: Quest 2 - step 1 done after the reload: steps 2 and 3 count, the quest is done (" + QuestTracker.StepOf(e, 1) + " of 3)");
+				Check(ref ok, !e.State.ContainsKey(QuestTracker.EarlyKeyBase + 1) && !e.State.ContainsKey(QuestTracker.EarlyKeyBase + 2) && !e.State.ContainsKey(0x40300 + 1 * 0x40 + 1), "save: the early marks are used up once credited");
 			}
 			finally { ScRemove(made, isl); }
 			OnRaftCommand();
@@ -1542,7 +1671,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScReread", docs: "Dev, world (host, 'CI ...'): AT22 - a note that gives 10 planks and one that uses up 5 scrap for an ingot, each read three times: 10 planks in all, one ingot for 5 scrap - a re-read shows the note's messages only (AU16)")]
-		public static void ScRereadCommand() { DynamicIslands.instance.StartCoroutine(ScRereadRoutine()); }
+		public static void ScRereadCommand() { StartTest(ScRereadRoutine()); }
 
 		static IEnumerator ScRereadRoutine()
 		{
@@ -1588,7 +1717,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScAlphaClicks", docs: "Dev, world (host, 'CI ...'): AT36 - an alpha's stats are given once: looked at again three times, as every change of the randomizer does (even its level clicked again), its health stays x3 (not x9) and it isn't healed (AU10)")]
-		public static void ScAlphaClicksCommand() { DynamicIslands.instance.StartCoroutine(ScAlphaClicksRoutine()); }
+		public static void ScAlphaClicksCommand() { StartTest(ScAlphaClicksRoutine()); }
 
 		static IEnumerator ScAlphaClicksRoutine()
 		{
@@ -1626,7 +1755,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScLastKill", docs: "Dev, world (host, 'CI ...'): SC24 - the last warthog killed and the island unloaded within half a second: it stays dead and the kill step counts (AU60)")]
-		public static void ScLastKillCommand() { DynamicIslands.instance.StartCoroutine(ScLastKillRoutine()); }
+		public static void ScLastKillCommand() { StartTest(ScLastKillRoutine()); }
 
 		static IEnumerator ScLastKillRoutine()
 		{
@@ -1663,12 +1792,58 @@ namespace DynamicIslands
 			if (ok) Log("PASS: scenario last kill"); else Fail("scenario last kill");
 		}
 
+		[ConsoleCommand(name: "CIScStray", docs: "Dev, world (host, 'CI ...'): a turtle and a warthog Raft takes away alive (destroyed, as Raft does with its sea animals and far ones) aren't defeated: the kill step stays, both come back when the island loads again (AU85)")]
+		public static void ScStrayCommand() { StartTest(ScStrayRoutine()); }
+
+		static IEnumerator ScStrayRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("scenario stray: run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var made = new List<IslandWorldState.Entry>();
+			const string isl = "ciscstray";
+			IslandFile f;
+			try { f = ScIsland(isl, "Stray Lagoon"); } catch (Exception ex) { Fail("scenario stray: " + ex.Message); yield break; }
+			Vector3? under = ScUnderSea(f, 4f);
+			if (!under.HasValue) { Fail("scenario stray: the sample island has no sea floor 4 m under its sea"); yield break; }
+			f.Objects.Add(ScObj("Creature_Turtle", under.Value, ObjectProps.CreatureCount, "2", ObjectProps.CreatureRespawn, "0"));
+			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(0, 0), 1), ObjectProps.CreatureCount, "1", ObjectProps.CreatureRespawn, "0"));
+			new IslandQuest { Title = "Stray", Steps = { new IslandQuest.Step { Type = "kill", Target = "Turtle", Count = 1 }, new IslandQuest.Step { Type = "kill", Target = "Warthog", Count = 1 } } }.To(f.Props);
+			f.Save(IslandSpawner.PathFor(isl));
+			Vector3? spot = ScSpot(isl, 320f);
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("scenario stray: no open sea near the raft"); yield break; }
+			yield return ScBring(isl, spot.Value, made);
+			IslandWorldState.Entry e = made[0];
+			yield return ScWaitAnimals(e, "Turtle", 2, 20f);
+			yield return ScWaitAnimals(e, "Warthog", 1, 20f);
+			yield return new WaitForSeconds(1.5f);
+			AI_NetworkBehaviour turtle = ScAnimals(e, "Turtle").FirstOrDefault(), boar = ScAnimals(e, "Warthog").FirstOrDefault();
+			if (turtle == null || boar == null) { ScRemove(made, isl); Fail("scenario stray: the animals didn't come (" + ScAnimals(e, "Turtle").Count + " turtles, " + ScAnimals(e, "Warthog").Count + " warthogs)"); yield break; }
+			// (as Raft takes them away: the object goes, nothing kills it)
+			UnityEngine.Object.Destroy(turtle.gameObject);
+			UnityEngine.Object.Destroy(boar.gameObject);
+			yield return new WaitForSeconds(3f);
+			Check(ref ok, QuestTracker.StepOf(e) == 0, "a turtle and a warthog 300 m off taken away alive: no kill step done (" + QuestTracker.StepOf(e) + ")");
+			IslandObjectState.Capture(e);
+			IslandSpawner.Despawn(e.Root);
+			e.Root = null;
+			yield return null;
+			e.Loading = true;
+			yield return DynamicIslands.instance.SpawnIslandFile(e.Name, e.Position, false, e);
+			yield return ScWaitAnimals(e, "Turtle", 2, 20f);
+			yield return ScWaitAnimals(e, "Warthog", 1, 10f);
+			Check(ref ok, ScAnimals(e, "Turtle").Count == 2, "... both turtles back when the island loads again (" + ScAnimals(e, "Turtle").Count + ")");
+			Check(ref ok, ScAnimals(e, "Warthog").Count == 1, "... and the warthog (" + ScAnimals(e, "Warthog").Count + ")");
+			ScRemove(made, isl);
+			if (ok) Log("PASS: scenario stray"); else Fail("scenario stray");
+		}
+
 		#endregion
 
 		#region SC6, SC36 - sleeping with the mod's timers; anchored at an island for days
 
 		[ConsoleCommand(name: "CIScSleep", docs: "Dev, world (host, 'CI ...'): SC6/SC36 - Raft's sleep (BedManager.Slumber) moves the day: an 'on day N+1' rule fires; a 'wait 30 s' started before still ends; a looted chest stays empty while the island is loaded and is full when it loads after the regrow days")]
-		public static void ScSleepCommand() { DynamicIslands.instance.StartCoroutine(ScSleepRoutine()); }
+		public static void ScSleepCommand() { StartTest(ScSleepRoutine()); }
 
 		static IEnumerator ScSleepRoutine()
 		{
@@ -1769,7 +1944,7 @@ namespace DynamicIslands
 		#region SC18 - under water when the world is saved and loaded
 
 		[ConsoleCommand(name: "CIScDive", docs: "Dev, world (host, 'CI ...'): SC18 - the player dives to a sunken island's chest 12 m down and opens it (then the runner saves, leaves and loads). CIScDive check = after loading: not inside the ground, not held under water, the chest still opened")]
-		public static void ScDiveCommand(string[] args) { DynamicIslands.instance.StartCoroutine(args != null && args.Length > 0 && args[0] == "check" ? ScDiveCheckRoutine() : ScDiveRoutine()); }
+		public static void ScDiveCommand(string[] args) { StartTest(args != null && args.Length > 0 && args[0] == "check" ? ScDiveCheckRoutine() : ScDiveRoutine()); }
 
 		static IEnumerator ScDiveRoutine()
 		{

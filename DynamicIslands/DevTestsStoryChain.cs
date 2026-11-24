@@ -70,13 +70,13 @@ namespace DynamicIslands
 			// Templates
 			var tpl = new Dictionary<string, string>
 			{
-				{ "Receiver adventure", "rule:camp,rule:islets,rule:beast,rule:treasure" },
+				{ CIReceiver, "rule:camp,rule:islets,rule:beast,rule:treasure" },
 				{ "Detour in Raft's story", RaftSteps("RadioTower", "Vasagatan", "rule:detour", "Balboa", "CaravanTown", "Tangaroa", "VarunaPoint", "Temperance", "Utopia") },
 				{ "Balboa replaced", RaftSteps("RadioTower", "Vasagatan", "rule:forest", "CaravanTown", "Tangaroa", "VarunaPoint", "Temperance", "Utopia") },
 			};
 			foreach (var kv in tpl)
 			{
-				WorldPlan t = WorldPlanTemplates.Get(kv.Key);
+				WorldPlan t = kv.Key == CIReceiver ? CIPlanOf(kv.Key) : WorldPlanTemplates.Get(kv.Key);
 				string s = t != null ? Steps(StoryChain.BuildSteps(t.RaftStory, t.LeaveOut, t.Rules)) : "missing";
 				Check(ref ok, s == kv.Value && t.Rules.All(x => x.Where == "receiver"), "template '" + kv.Key + "': " + s);
 			}
@@ -91,6 +91,9 @@ namespace DynamicIslands
 				StoryChain.Frequencies.Clear();
 				StoryChain.Frequencies.Add(new KeyValuePair<string, int[]>("detour", new[] { 1, 2, 3, 4 }));
 				Check(ref ok, StoryChain.FrequencyTextForNote(ChunkPointType.Landmark_Balboa) == "#1234", "Vasagatan's note (Raft's way to Balboa) shows the frequency of the island in Balboa's place: " + StoryChain.FrequencyTextForNote(ChunkPointType.Landmark_Balboa));
+				// (ROADMAP LM1: the label next to the number names where the note now leads)
+				string toBalboa = StoryChain.NextNameForNote(ChunkPointType.Landmark_Balboa), toTangaroa = StoryChain.NextNameForNote(ChunkPointType.Landmark_Tangaroa);
+				Check(ref ok, toBalboa != null && toBalboa.Contains("detour") && toTangaroa == "Varuna Point", "the notes' labels name where they lead now: Raft's way to Balboa -> " + toBalboa + ", to Tangaroa -> " + toTangaroa);
 				Check(ref ok, StoryChain.FrequencyTextForNote(ChunkPointType.Landmark_VarunaPoint) == "#----", "Tangaroa is left out: its own note (Raft's way to Varuna Point) is never found and shows no number: " + StoryChain.FrequencyTextForNote(ChunkPointType.Landmark_VarunaPoint));
 				if (RecieverFrequency.AllFrequencies != null)
 				{
@@ -113,7 +116,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryChainWorld", docs: "Dev, world (host): a plan's story chain in a world, through Raft's own calls - Balboa left out and a sandbar on its own Receiver frequency after Vasagatan: the Receiver's note unlocks the Radio Tower, its note Vasagatan, Vasagatan's the sandbar (not Balboa: its frequency leads nowhere) with a banner, a journal page and the number on the note; Raft's frequency list keeps the mod's through a save's restore; the Receiver tuned to it (ChunkManager.AddChunkPointForcibly) brings the island once; players reaching it unlock Caravan Town with a banner; Caravan's note Tangaroa; the world file's lines give the same chain back. What the world had is put back after")]
-		public static void StoryChainWorldCommand() { DynamicIslands.instance.StartCoroutine(StoryChainWorldRoutine()); }
+		public static void StoryChainWorldCommand() { StartTest(StoryChainWorldRoutine()); }
 
 		static List<ChunkPointType> ChainTypes() { return NoteBook.unlockedChunkPointType.Where(t => Chain.Contains(t) || (int)t >= StoryChain.ModTypeBase).ToList(); }
 
@@ -222,7 +225,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryChainAdventure", docs: "Dev, world (host): a new adventure instead of Raft's story - Raft's story off, an island first in the chain that comes by chance while sailing, one after it that comes ahead, and a Receiver island outside the story: the Receiver's note unlocks none of Raft's islands; the first is unlocked from the start but comes only after some sailing; players reaching it bring the second; the island outside the story has its frequency from the start. What the world had is put back after")]
-		public static void StoryChainAdventureCommand() { DynamicIslands.instance.StartCoroutine(StoryChainAdventureRoutine()); }
+		public static void StoryChainAdventureCommand() { StartTest(StoryChainAdventureRoutine()); }
 
 		static IEnumerator StoryChainAdventureRoutine()
 		{
@@ -285,7 +288,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryChainEdited", docs: "Dev, world (host, a new test world 'CI ...' without custom islands): the player edits the world's plan in World Plans and the world is read again as when loading it: leaving one more story island out (no rule changed) counts as an edit and the chain follows it, what was unlocked stays; a story island added to the plan comes into the chain after its place, the Receiver island keeps its frequency. The plan file is deleted after")]
-		public static void StoryChainEditedCommand() { DynamicIslands.instance.StartCoroutine(StoryChainEditedRoutine()); }
+		public static void StoryChainEditedCommand() { StartTest(StoryChainEditedRoutine()); }
 
 		static IEnumerator StoryChainEditedRoutine()
 		{
@@ -345,7 +348,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryChainEditor", docs: "Dev, editor: the World plans window's story controls clicked as a builder does, on a test plan 'CI story plan' (deleted after): Raft's story off and on, Balboa left out and back, a rule put in Balboa's place from the list, the Receiver chosen for it; Check shows the chain and the tips (the Radio Tower first, Utopia last, Balboa's blueprints); saved and read back")]
-		public static void StoryChainEditorCommand() { DynamicIslands.instance.StartCoroutine(StoryChainEditorRoutine()); }
+		public static void StoryChainEditorCommand() { StartTest(StoryChainEditorRoutine()); }
 
 		static IEnumerator StoryChainEditorRoutine()
 		{
@@ -357,6 +360,9 @@ namespace DynamicIslands
 			{
 				new WorldPlan { Name = name, Rules = new List<IntroRule> { new IntroRule { Id = "mine", What = "type", WhatArg = "forest" } } }.Save();
 				WorldPlanWindow.Open(name);
+				yield return null;
+				// (Raft's story row is on the Settings tab since 5b; the rule card on Other islands)
+				WorldPlanWindow.ShowTab(WorldPlanWindow.TabSettings);
 				yield return null;
 				WorldPlan plan = WorldPlanWindow.Plan;
 				Button story = WorldPlanWindow.StoryButton, balboa = WorldPlanWindow.StoryIslandButton("Balboa");
@@ -380,6 +386,9 @@ namespace DynamicIslands
 				yield return null;
 				string shown = WorldPlanWindow.LastCheck ?? "";
 				Check(ref ok, shown.Contains("Vasagatan > 'mine' > Caravan Town") && shown.Contains("Machete"), "Check shows the chain with the island in Balboa's place and what Balboa had: " + shown.Replace("\n", " | "));
+				// (in Balboa's place the rule is on the Main story line tab, not Other islands)
+				WorldPlanWindow.ShowTab(WorldPlanWindow.TabStory);
+				yield return null;
 				Button place = UnityEngine.Object.FindObjectsOfType<Button>().FirstOrDefault(b => b.gameObject.activeInHierarchy && b.name == "StoryPlace");
 				Check(ref ok, place != null && UIKit.LabelOf(place).text.StartsWith("in place of Balboa", StringComparison.OrdinalIgnoreCase) && UIKit.LabelOf(balboa).text == "Balboa (yours)", "the rule card's story button and the story row say so: " + (place != null ? UIKit.LabelOf(place).text : "none") + " / " + UIKit.LabelOf(balboa).text);
 				Button save = UnityEngine.Object.FindObjectsOfType<Button>().FirstOrDefault(b => b.gameObject.activeInHierarchy && UIKit.LabelOf(b) != null && UIKit.LabelOf(b).text == "Save");
@@ -399,7 +408,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIStoryChainShot", docs: "Dev, editor: the World plans window on a plan (a template written as 'CI story shot', deleted after), Check clicked, a screenshot shot_story_chain.png for the guide: CIStoryChainShot <template name>")]
-		public static void StoryChainShotCommand(string[] args) { DynamicIslands.instance.StartCoroutine(StoryChainShotRoutine(args != null ? string.Join(" ", args) : "Balboa replaced")); }
+		public static void StoryChainShotCommand(string[] args) { StartTest(StoryChainShotRoutine(args != null ? string.Join(" ", args) : "Balboa replaced")); }
 
 		static IEnumerator StoryChainShotRoutine(string template)
 		{

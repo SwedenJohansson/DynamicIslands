@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -24,13 +24,28 @@ namespace DynamicIslands
 			if (player == null) yield break;
 			Player p = player.GetComponentInChildren<Player>(true);
 			// (incapacitated, "waiting for rescue", is IsDead with some health left)
-			bool down = (player.Stats != null && player.Stats.stat_health.Value <= 0f) || (p != null && p.IsDead);
-			if (down)
+			Func<bool> down = () => (player.Stats != null && player.Stats.stat_health.Value <= 0f) || (p != null && p.IsDead);
+			// (a respawn while the player is held over an island that is still loading - PlayerHold - didn't take: the player
+			// stayed down, and every two-player check after it failed. Tried again until they are up)
+			bool revived = false;
+			for (int tries = 0; tries < 3 && down() && p != null; tries++)
 			{
-				if (p != null) { Log("The test player was down: respawning them (inventory kept)"); p.RespawnWithoutBed(false); }
-				yield return new WaitForSeconds(3f);
+				Log("The test player was down: respawning them (inventory kept)" + (tries > 0 ? " - again (" + (tries + 1) + ")" : ""));
+				p.RespawnWithoutBed(false);
+				revived = true;
+				for (float t = 0f; t < 6f && down(); t += 0.5f) yield return new WaitForSeconds(0.5f);
+			}
+			// (RespawnWithoutBed revives in place: a player who drowned or was bitten in the sea came back in the sea and died
+			// again every 10 s - CIOptionsMatrix's idle player after the shark ate a fresh world's raft under them: back onto
+			// the raft, as Raft's own respawn does)
+			Vector3 at;
+			if (revived && !down() && player.PersonController != null && player.PersonController.controllerType == ControllerType.Water && SpawnToRaft.Spot(player, out at))
+			{
+				PlayerMove.To(player, at);
+				Log("The test player was in the sea: put back on the raft");
 			}
 			KeepAlive(player);
+			if (down()) Log("The test player is STILL DOWN (health " + (player.Stats != null ? player.Stats.stat_health.Value.ToString("F0") : "?") + ", " + (p != null && p.IsDead ? "dead" : "not dead") + ")");
 		}
 
 		#region Editor: settings, inspector, file format 4
@@ -38,7 +53,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPropsTest", docs: "Dev, editor: creatures, notes and tints - placing, the inspector, undo/redo, duplicate, save and load (format 4)")]
 		public static void PropsTest()
 		{
-			DynamicIslands.instance.StartCoroutine(PropsTestRoutine());
+			StartTest(PropsTestRoutine());
 		}
 
 		static EditorGameObject PlaceForTest(string name, Vector3 pos, Transform placed)
@@ -203,19 +218,39 @@ namespace DynamicIslands
 			Log("Interactable layers: " + LayerList(mask) + "; rays hit triggers: " + Physics.queriesHitTriggers + "; NavMesh agent types: " + NavMesh.GetSettingsCount());
 		}
 
-		[ConsoleCommand(name: "CICreatureTest", docs: "Dev, in game (host): an island with creatures and notes 150 m ahead - spawning, stats, tint, NavMesh, reading a note, the island banner, killing, unloading and reloading. CICreatureTest [keep]")]
-		public static void CreatureTest(string[] args)
+		/// <summary>The sum of a damage field ("AI_State_X.field", as CreatureSpawner.ScaleDamage lists it) over root's components.</summary>
+		static float DamageSum(GameObject root, string field)
 		{
-			DynamicIslands.instance.StartCoroutine(CreatureTestRoutine(args != null && args.Contains("keep")));
+			int dot = field.IndexOf('.');
+			string type = field.Substring(0, dot), name = field.Substring(dot + 1);
+			float sum = 0f;
+			foreach (MonoBehaviour mb in root.GetComponentsInChildren<MonoBehaviour>(true))
+			{
+				if (mb == null || mb.GetType().Name != type) continue;
+				for (Type c = mb.GetType(); c != null && c != typeof(MonoBehaviour); c = c.BaseType)
+				{
+					var f = c.GetField(name, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly);
+					if (f == null) continue;
+					object v = f.GetValue(mb);
+					sum += v is int ? (int)v : (float)v;
+					break;
+				}
+			}
+			return sum;
 		}
 
-		/// <summary>Writes cicreature.island: the sample island with a herd of warthogs, a chicken, a puffer fish, a sign and an island name.</summary>
+		[ConsoleCommand(name: "CICreatureTest", docs: "Dev, in game (host): an island with creatures and notes 150 m ahead - spawning, stats, tint, NavMesh, an angler fish swimming its rounds, reading a note, the island banner, killing, unloading and reloading. CICreatureTest [keep]")]
+		public static void CreatureTest(string[] args)
+		{
+			StartTest(CreatureTestRoutine(args != null && args.Contains("keep")));
+		}
+
+		/// <summary>Writes cicreature.island: the sample island with a herd of warthogs, a chicken, a puffer fish, an angler fish
+		/// deeper down, a sign and an island name.</summary>
 		static bool MakeCreatureIsland(out string error)
 		{
 			error = null;
-			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland);
-			if (source == null) { error = "no generated_sample or citest island to build on"; return false; }
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+			IslandFile f = SampleIsland();
 			f.Name = CreatureIsland;
 			f.Elevation = 0f;
 			int res = f.HeightmapResolution;
@@ -235,10 +270,15 @@ namespace DynamicIslands
 			Vector3 sea = ground(c.x, c.y);
 			for (float d = 10f; d < 300f; d += 5f) { Vector3 p = ground(c.x + d, c.y); if (p.y < f.WaterLevel - 4f) { sea = new Vector3(p.x, f.WaterLevel - 3f, p.z); break; } }
 			f.Objects.Add(new IslandObject { Name = "Creature_PufferFish", Position = sea });
+			// An angler fish deeper down, 8 m under the surface where the sea is deeper than 14 m (Raft's swim their rounds)
+			Vector3 deep = sea;
+			for (float d = 10f; d < 300f; d += 5f) { Vector3 p = ground(c.x - d, c.y); if (p.y < f.WaterLevel - 14f) { deep = new Vector3(p.x, f.WaterLevel - 8f, p.z); break; } }
+			f.Objects.Add(new IslandObject { Name = "Creature_AnglerFish", Position = deep });
 			f.Objects.Add(new IslandObject { Name = "Note_Sign", Position = ground(c.x - 5f, c.y), Props = new Dictionary<string, string> { { ObjectProps.NoteTitle, "Warning" }, { ObjectProps.NoteText, "Warthogs live here.\nBring a spear." } } });
 			f.Props[IslandProps.Title] = "Warthog Hill";
 			f.Props[IslandProps.Author] = "CI";
 			f.Props[IslandProps.Description] = "Mind the red warthogs.";
+			f.Props[IslandQuest.KeySteps] = "reach|cizone|1|"; // the banner only comes for an island with a quest (2026-10-19)
 			f.Save(IslandSpawner.PathFor(CreatureIsland));
 			return true;
 		}
@@ -253,7 +293,8 @@ namespace DynamicIslands
 			IslandInfo.ForgetShown();
 			bool ok = true;
 			int exceptions = 0; string firstException = null;
-			Application.LogCallback counter = (msg, trace, type) => { if (type == LogType.Exception || (type == LogType.Error && !msg.StartsWith("[CITEST]"))) { exceptions++; if (firstException == null) firstException = msg + " " + trace.Split('\n').FirstOrDefault(); } };
+			// (Unity's own "Screen position out of view frustum" is a camera drawing while Raft is minimised, as the tests run it - not the mod's)
+			Application.LogCallback counter = (msg, trace, type) => { if (type == LogType.Exception || (type == LogType.Error && !msg.StartsWith("[CITEST]") && !msg.StartsWith("Screen position out of view frustum"))) { exceptions++; if (firstException == null) firstException = msg + " " + trace.Split('\n').FirstOrDefault(); } };
 			Application.logMessageReceived += counter;
 
 			// Clear of Raft's own islands (on top of one, players fall through the ground)
@@ -265,10 +306,14 @@ namespace DynamicIslands
 			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault();
 			if (entry == null || entry.Root == null) { Application.logMessageReceived -= counter; Fail("the creature island did not spawn"); yield break; }
 			List<CreatureSpawnPoint> points = entry.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).ToList();
-			Check(ref ok, points.Count == 3, points.Count + " creature spawn points (no markers in the world: " + (entry.Root.GetComponentsInChildren<Transform>(true).All(t => t.name != "Marker")) + ")");
+			Check(ref ok, points.Count == 4, points.Count + " creature spawn points (no markers in the world: " + (entry.Root.GetComponentsInChildren<Transform>(true).All(t => t.name != "Marker")) + ")");
+			// (Raft's angler fish found no rounds to swim on a built island: it said so and its state threw every frame)
+			int noRounds = 0;
+			Application.LogCallback roundsCounter = (msg, trace, type) => { if (msg.Contains("Unable to find proper waypoint manager") || trace.Contains("AI_State_Waypoint_Circulation")) noRounds++; };
+			Application.logMessageReceived += roundsCounter;
 
 			float t0 = Time.realtimeSinceStartup;
-			while (points.Sum(p => p.Spawned.Count) < 4 && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
+			while (points.Sum(p => p.Spawned.Count) < 5 && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
 			yield return new WaitForSeconds(1f);
 			foreach (CreatureSpawnPoint p in points)
 				Log("  " + p.Kind.Label + ": " + p.Spawned.Count + " spawned " + string.Join(", ", p.Spawned.Where(a => a != null).Select(a => a.transform.position.ToString() + " hp " + a.networkEntity.stat_health.Value + "/" + a.networkEntity.stat_health.Max).ToArray()));
@@ -278,6 +323,24 @@ namespace DynamicIslands
 			Check(ref ok, boars != null && boars.Spawned.Count == 2, "two warthogs spawned (" + (Time.realtimeSinceStartup - t0).ToString("F1") + " s)");
 			Check(ref ok, chicken != null && chicken.Spawned.Count == 1 && chicken.Spawned[0] is AI_NetworkBehaviour_Domestic, "a chicken spawned (catchable)");
 			Check(ref ok, fish != null && fish.Spawned.Count == 1, "a puffer fish spawned in the sea");
+			// The angler fish swims rounds around its spot: a ring of waypoints in open water, and it moves along them
+			CreatureSpawnPoint anglers = points.FirstOrDefault(p => p.Kind.Type == AI_NetworkBehaviourType.AnglerFish);
+			AI_NetworkBehaviour angler = anglers != null ? anglers.Spawned.FirstOrDefault(a => a != null) : null;
+			Check(ref ok, angler != null, "an angler fish spawned in the deep");
+			if (angler != null)
+			{
+				WaypointHandler rounds = CreatureSpawner.RoundsOf(angler);
+				List<Waypoint> ring = CreatureSpawner.PointsOf(rounds);
+				float sea = entry.Position.y + (entry.Root.GetComponent<IslandSettings>() != null ? entry.Root.GetComponent<IslandSettings>().WaterLevel : 0f);
+				int clear = ring.Count(w => w != null && w.transform.position.y < sea - 1f && !Physics.CheckSphere(w.transform.position, 0.5f, 1 << IslandSpawner.TerrainLayer, QueryTriggerInteraction.Ignore));
+				Check(ref ok, rounds != null && ring.Count == 6 && clear == 6, "the angler fish's rounds: " + ring.Count + " waypoints around its spot, " + clear + " of them in open water");
+				Vector3 was = angler.transform.position;
+				yield return new WaitForSeconds(4f);
+				float moved = angler != null ? Vector3.Distance(was, angler.transform.position) : 0f;
+				Check(ref ok, moved > 0.5f, "the angler fish swims its rounds: " + moved.ToString("F1") + " m in 4 s");
+			}
+			Application.logMessageReceived -= roundsCounter;
+			Check(ref ok, noRounds == 0, "no 'Unable to find proper waypoint manager' and no errors from Raft's swimming rounds (" + noRounds + ")");
 			NavMeshHit hit;
 			Check(ref ok, boars != null && NavMesh.SamplePosition(boars.transform.position, out hit, 3f, NavMesh.AllAreas), "the island has a NavMesh at the warthogs' spot");
 
@@ -293,7 +356,15 @@ namespace DynamicIslands
 				AI_Movement move = boar.GetComponentInChildren<AI_Movement>(true);
 				Check(ref ok, move != null && Mathf.Approximately(CreatureSpawner.SpeedOf(move), 1.5f), "speed \u00D71.5 registered (moving at " + (move != null ? move.MovementSpeed.ToString("F2") : "?") + ")");
 				List<string> fields = CreatureSpawner.ScaleDamage(prefab.gameObject, 1f); // only lists the fields (x1)
-				Check(ref ok, fields.Count > 0, "damage fields scaled \u00D71.5: " + string.Join(", ", fields.ToArray()));
+				// (the spawned warthog's values against the prefab's: each field x1.5, an int rounded - CB13)
+				var off = new List<string>();
+				foreach (string fld in fields.Distinct())
+				{
+					float raftV = DamageSum(prefab.gameObject, fld), ours = DamageSum(boar.gameObject, fld);
+					// (a field Raft fills in at run time, e.g. DamageBox.actualDamage, is 0 on the prefab: nothing to compare)
+					if (raftV != 0f && Mathf.Abs(ours - raftV * 1.5f) > 0.51f * fields.Count(x => x == fld)) off.Add(fld + " " + raftV + "->" + ours);
+				}
+				Check(ref ok, fields.Count > 0 && off.Count == 0, "damage fields scaled \u00D71.5: " + string.Join(", ", fields.ToArray()) + (off.Count > 0 ? " - not \u00D71.5: " + string.Join(", ", off.ToArray()) : ""));
 				Renderer r = boar.GetComponentsInChildren<Renderer>().FirstOrDefault(x => x is SkinnedMeshRenderer);
 				var block = new MaterialPropertyBlock();
 				if (r != null) r.GetPropertyBlock(block);
@@ -324,6 +395,23 @@ namespace DynamicIslands
 			yield return StandRoutine(entry.Root);
 			yield return new WaitForSeconds(1.5f);
 			Check(ref ok, IslandInfo.LastShown != null && IslandInfo.LastShown.StartsWith("Warthog Hill"), "arriving shows the banner: " + IslandInfo.LastShown);
+			{
+				// An island with a title and no quest gets no banner tag; with a quest it does (settings are added either way)
+				var noQ = new IslandFile { Name = "CI noquest" };
+				noQ.Props[IslandProps.Title] = "No Quest Isle";
+				GameObject tmp = new GameObject("CI noquest tag");
+				IslandInfo.Tag(tmp, noQ);
+				bool noBanner = tmp.GetComponent<IslandInfoTag>() == null && tmp.GetComponent<IslandSettings>() != null;
+				UnityEngine.Object.Destroy(tmp);
+				var withQ = new IslandFile { Name = "CI withquest" };
+				withQ.Props[IslandProps.Title] = "Quest Isle";
+				withQ.Props[IslandQuest.Key(IslandQuest.KeySteps, 3)] = "reach|cizone|1|";
+				GameObject tmp2 = new GameObject("CI quest tag");
+				IslandInfo.Tag(tmp2, withQ);
+				bool banner = tmp2.GetComponent<IslandInfoTag>() != null;
+				UnityEngine.Object.Destroy(tmp2);
+				Check(ref ok, noBanner && banner, "a titled island without a quest has no banner tag, one with a quest has (" + noBanner + "/" + banner + ")");
+			}
 			Screenshot(new[] { "creatures" });
 			yield return new WaitForSeconds(1f);
 
@@ -348,7 +436,7 @@ namespace DynamicIslands
 			while (entry.Root == null && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
 			Check(ref ok, entry.Root != null && IslandSpawner.SpawnedRoots.Count(r => r != null && r.name == "CustomIsland_" + CreatureIsland) == 1, "the island comes back once (" + (Time.realtimeSinceStartup - t0).ToString("F1") + " s)");
 			t0 = Time.realtimeSinceStartup;
-			while (CreatureSpawner.LiveCount < 3 && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
+			while (CreatureSpawner.LiveCount < 4 && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
 			yield return new WaitForSeconds(1f);
 			CreatureSpawnPoint boars2 = entry.Root != null ? entry.Root.GetComponentsInChildren<CreatureSpawnPoint>().FirstOrDefault(p => p.Kind.Type == AI_NetworkBehaviourType.Boar) : null;
 			Check(ref ok, boars2 != null && boars2.Spawned.Count == 1, "after reloading, one warthog (the other was killed): " + (boars2 != null ? boars2.Spawned.Count : -1));
@@ -382,7 +470,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CILootTest", docs: "Dev, editor: chests - the Loot & chests category, default loot, the item picker, amounts, undo, making any object a chest, save and load")]
 		public static void LootTest()
 		{
-			DynamicIslands.instance.StartCoroutine(LootTestRoutine());
+			StartTest(LootTestRoutine());
 		}
 
 		static IEnumerator LootTestRoutine()
@@ -457,7 +545,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CILootWorld", docs: "Dev, in game (host): an island with two chests - opening gives the items, it stays empty (also after reloading), other players are told, refilling")]
 		public static void LootWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(LootWorldRoutine());
+			StartTest(LootWorldRoutine());
 		}
 
 		static IEnumerator LootWorldRoutine()
@@ -466,9 +554,7 @@ namespace DynamicIslands
 			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
-			string source = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample");
-			if (source == null) { Fail("no generated_sample island"); yield break; }
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(source));
+			IslandFile f = SampleIsland();
 			f.Name = "ciloot";
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -548,7 +634,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIZoneTest", docs: "Dev, editor: trigger zones - placing, the zone editor, linking a creature (ambush), renaming, the island rule, save and load")]
 		public static void ZoneTest()
 		{
-			DynamicIslands.instance.StartCoroutine(ZoneTestRoutine());
+			StartTest(ZoneTestRoutine());
 		}
 
 		static IEnumerator ZoneTestRoutine()
@@ -583,6 +669,15 @@ namespace DynamicIslands
 			TransformGizmoSelect(zone.transform);
 			yield return null; yield return null;
 			Check(ref ok, ObjectInspector.Visible && ObjectInspector.Target == zone, "selecting the zone opens the zone editor");
+			// Its Air row: "Air pocket" makes the zone an air pocket, "None" an ordinary zone again (the two did the opposite
+			// when the row was new); the panel is built again after each click
+			Func<string, Button> airButton = label => UnityEngine.Object.FindObjectsOfType<Button>().FirstOrDefault(b => b.transform.parent != null && b.transform.parent.name == "Air"
+				&& b.GetComponentInChildren<Text>() != null && b.GetComponentInChildren<Text>().text == label);
+			Check(ref ok, airButton("Air pocket") != null && airButton("None") != null, "the zone editor has an Air row: None / Air pocket");
+			if (airButton("Air pocket") != null) { airButton("Air pocket").onClick.Invoke(); yield return null; yield return null; }
+			Check(ref ok, ObjectProps.GetBool(zone.Props, ObjectProps.ZoneAir, false), "Air pocket makes the zone an air pocket (zone.air = '" + ObjectProps.Get(zone.Props, ObjectProps.ZoneAir) + "')");
+			if (airButton("None") != null) { airButton("None").onClick.Invoke(); yield return null; yield return null; }
+			Check(ref ok, !ObjectProps.GetBool(zone.Props, ObjectProps.ZoneAir, false), "None makes it an ordinary zone again (zone.air = '" + ObjectProps.Get(zone.Props, ObjectProps.ZoneAir) + "')");
 			Screenshot(new[] { "zone_inspector" });
 			yield return new WaitForSecondsRealtime(0.5f);
 			TransformGizmoSelect(boar.transform);
@@ -607,10 +702,759 @@ namespace DynamicIslands
 			if (ok) Log("PASS: trigger zones in the editor"); else Fail("trigger zones in the editor");
 		}
 
+		[ConsoleCommand(name: "CIBannerQueue", docs: "Dev (anywhere): banners and messages come one after another - a second one waits until the first has been up long enough to read (IslandInfo.ReadSeconds) and gone; the same one again while it is up shows once; a long text stays longer")]
+		public static void BannerQueue() { StartTest(BannerQueueRoutine()); }
+
+		static IEnumerator BannerQueueRoutine()
+		{
+			bool ok = true;
+			IslandInfo.ForgetShown();
+			for (float t = 0f; t < 15f && IslandInfo.OnScreen != null; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+			IslandInfo.ShowMessage("CI first message");
+			IslandInfo.ShowMessage("CI second message");
+			IslandInfo.ShowMessage("CI first message");
+			yield return null;
+			Check(ref ok, IslandInfo.OnScreen == "CI first message", "the first message shows at once (" + IslandInfo.OnScreen + ")");
+			float read = IslandInfo.ReadSeconds("", "CI first message");
+			yield return new WaitForSecondsRealtime(read - 0.6f);
+			Check(ref ok, IslandInfo.OnScreen == "CI first message", read.ToString("0.0") + " s to read it: still up just before, the second one waits (" + IslandInfo.OnScreen + ")");
+			yield return new WaitForSecondsRealtime(1.2f);
+			Check(ref ok, IslandInfo.OnScreen == "CI second message", "then the second one comes, after the first has gone (" + IslandInfo.OnScreen + ")");
+			yield return new WaitForSecondsRealtime(IslandInfo.ReadSeconds("", "CI second message") + 0.5f);
+			Check(ref ok, IslandInfo.OnScreen != "CI first message", "the first one, asked for twice, doesn't come again (" + (IslandInfo.OnScreen ?? "none up") + ")");
+			float shortRead = IslandInfo.ReadSeconds("Island", "A short line."), longRead = IslandInfo.ReadSeconds("Island", new string('a', 200));
+			Check(ref ok, shortRead >= 5f && longRead > shortRead + 5f && longRead <= 16f, "a long description stays longer (" + shortRead.ToString("0.0") + " s vs " + longRead.ToString("0.0") + " s)");
+			IslandInfo.ForgetShown();
+			if (ok) Log("PASS: banners one after another"); else Fail("banners one after another");
+		}
+
+		[ConsoleCommand(name: "CIStraightUnit", docs: "Dev (anywhere): objects placed standing straight (PlacementOptions.Straight, the placer's): a lean up to 25 degrees is taken off whichever of their own axes points up, the heading kept; a bigger lean is the object's look and kept")]
+		public static void StraightUnit()
+		{
+			bool ok = true;
+			foreach (float heading in new[] { 0f, 37f, 200f })
+				foreach (Vector3 lean in new[] { new Vector3(14f, 0f, 0f), new Vector3(0f, 0f, -20f), new Vector3(9f, 0f, 12f) })
+				{
+					Quaternion r = Quaternion.Euler(0f, heading, 0f) * Quaternion.Euler(lean), s = PlacementOptions.Straight(r);
+					float up = Vector3.Angle(s * Vector3.up, Vector3.up);
+					float turned = Vector3.Angle(Vector3.ProjectOnPlane(r * Vector3.forward, Vector3.up), Vector3.ProjectOnPlane(s * Vector3.forward, Vector3.up));
+					Check(ref ok, up < 0.05f && turned < 3f, "heading " + heading + ", lean " + lean + ": straight (" + up.ToString("F2") + " deg off), heading kept (" + turned.ToString("F1") + " deg)");
+				}
+			Quaternion big = Quaternion.Euler(40f, 30f, 0f);
+			Check(ref ok, Quaternion.Angle(PlacementOptions.Straight(big), big) < 0.05f, "a 40 degree lean is the object's look: kept");
+			// (an object whose own z points up - lying in its model - leaning 10 degrees: its z stands straight up)
+			Quaternion lying = Quaternion.Euler(-80f, 0f, 0f), ls = PlacementOptions.Straight(lying);
+			Check(ref ok, Vector3.Angle(ls * Vector3.forward, Vector3.up) < 0.05f, "an object whose own z points up stands on it (" + Vector3.Angle(ls * Vector3.forward, Vector3.up).ToString("F2") + " deg off)");
+			if (ok) Log("PASS: objects placed standing straight"); else Fail("objects placed standing straight");
+		}
+
+		[ConsoleCommand(name: "CIDrawnInPlace", docs: "Dev, editor: every object of the catalog is drawn where it stands - copies placed, then moved 100 m: each of their meshes moves with them (Raft's statically batched scenery drew where it stands in Raft's own scene: the Stranded Gull's boat was invisible, its locker floating). Lists the batched objects and any still drawn elsewhere. CIDrawnInPlace [all: every one of Raft's island scenes loaded first]")]
+		public static void DrawnInPlace(string[] args) { StartTest(DrawnInPlaceRoutine(args != null && args.Contains("all"))); }
+
+		static IEnumerator DrawnInPlaceRoutine(bool all)
+		{
+			yield return WaitForEditor(false);
+			if (all) yield return PlaceableCatalog.EnsureLoaded(PlaceableCatalog.IndexedNames.ToList());
+			bool ok = true;
+			Transform parent = new GameObject("CI_DrawnInPlace").transform;
+			Vector3 at = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 60f, 500f), step = new Vector3(100f, 0f, 0f);
+			var elsewhere = new List<string>();
+			var batched = new List<string>();
+			List<string> names = PlaceableCatalog.Names.ToList();
+			int checkedCount = 0;
+			// (in chunks: placed, a frame, their meshes' places read; moved 100 m, a frame, read again)
+			for (int start = 0; start < names.Count; start += 100)
+			{
+				var copies = new List<KeyValuePair<string, GameObject>>();
+				foreach (string name in names.Skip(start).Take(100))
+				{
+					GameObject go = null;
+					try { go = PlaceableCatalog.Spawn(name, parent); } catch (Exception e) { Log("  " + name + ": " + e.Message); }
+					if (go == null) continue;
+					go.transform.position = at;
+					copies.Add(new KeyValuePair<string, GameObject>(name, go));
+				}
+				yield return null;
+				Func<GameObject, MeshRenderer[]> meshes = go => go.GetComponentsInChildren<MeshRenderer>().Where(r => r.enabled && r.GetComponent<MeshFilter>() != null && r.GetComponent<MeshFilter>().sharedMesh != null).ToArray();
+				var before = copies.Select(c => meshes(c.Value).Select(r => r.bounds.center).ToArray()).ToList();
+				foreach (var c in copies) c.Value.transform.position = at + step;
+				yield return null;
+				for (int k = 0; k < copies.Count; k++)
+				{
+					MeshRenderer[] rs = meshes(copies[k].Value);
+					if (rs.Length != before[k].Length) continue;
+					int stuck = 0;
+					for (int i = 0; i < rs.Length; i++)
+						if ((rs[i].bounds.center - before[k][i] - step).magnitude > 0.5f) stuck++;
+					if (rs.Any(r => r.isPartOfStaticBatch)) batched.Add(copies[k].Key);
+					if (stuck > 0) elsewhere.Add(copies[k].Key + " (" + stuck + " of " + rs.Length + " meshes)");
+					checkedCount++;
+				}
+				foreach (var c in copies) UnityEngine.Object.Destroy(c.Value);
+				yield return null;
+			}
+			UnityEngine.Object.Destroy(parent.gameObject);
+			Log("  " + batched.Count + " objects have statically batched meshes (" + PlaceableCatalog.AnchoredRenderers + " meshes anchored in the catalog): " + string.Join(", ", batched.Take(80).ToArray()));
+			Check(ref ok, checkedCount > 100 && elsewhere.Count == 0, checkedCount + " objects checked: " + (elsewhere.Count == 0 ? "each drawn where it stands" : elsewhere.Count + " drawn elsewhere: " + string.Join(", ", elsewhere.Take(60).ToArray())));
+			if (ok) Log("PASS: objects drawn where they stand"); else Fail("objects drawn where they stand");
+		}
+
+		[ConsoleCommand(name: "CIDumpPlaced", docs: "Dev, in game: how a loaded island's objects are drawn - for each object whose name contains <part>: its renderers (on, seen, layer and the camera's culling of it, bounds), materials and shaders (found again by name the same?), LOD groups. CIDumpPlaced <island part> <object part>")]
+		public static void DumpPlaced(string[] args)
+		{
+			if (args == null || args.Length < 2) { Fail("CIDumpPlaced <island part> <object part>"); return; }
+			string islandPart = args[0], objectPart = string.Join(" ", args.Skip(1).ToArray());
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Root != null && x.HostName.IndexOf(islandPart, StringComparison.OrdinalIgnoreCase) >= 0);
+			if (e == null) { Fail("no loaded island with '" + islandPart + "' in its name"); return; }
+			Camera cam = Camera.main;
+			float[] culls = cam != null ? cam.layerCullDistances : null;
+			int found = 0;
+			// (the island's objects: the children of its objects' parent - or anything with that name)
+			List<Transform> matches = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name.IndexOf(objectPart, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+			matches = matches.Where(x => !matches.Any(o => o != x && x.IsChildOf(o))).ToList();
+			if (matches.Count == 0) Log("  no '" + objectPart + "'; the island's objects are named like: " + string.Join(", ", e.Root.GetComponentsInChildren<Transform>(true).Select(x => x.name).Distinct().Take(60).ToArray()));
+			foreach (Transform t in matches)
+			{
+				found++;
+				Log("  object '" + t.name + "' at " + (t.position - e.Position).ToString("F1") + " active " + t.gameObject.activeInHierarchy + ", scripts: " + string.Join(", ", t.GetComponentsInChildren<MonoBehaviour>(true).Where(m => m != null).Select(m => m.GetType().Name).Distinct().ToArray()));
+				foreach (LODGroup g in t.GetComponentsInChildren<LODGroup>(true))
+					Log("    LOD group '" + g.name + "' enabled " + g.enabled + ", size " + g.size.ToString("F1") + ", levels " + string.Join(" / ", g.GetLODs().Select(l => l.screenRelativeTransitionHeight.ToString("F3") + " (" + l.renderers.Length + ")").ToArray()));
+				foreach (Renderer r in t.GetComponentsInChildren<Renderer>(true))
+				{
+					int layer = r.gameObject.layer;
+					bool seenByCamera = cam != null && (cam.cullingMask & (1 << layer)) != 0;
+					Log("    renderer '" + r.name + "' (" + r.GetType().Name + ") on " + r.enabled + ", active " + r.gameObject.activeInHierarchy + ", visible " + r.isVisible + ", layer " + LayerMask.LayerToName(layer) + " (" + layer + ") " +
+						(seenByCamera ? "in the camera's mask" : "NOT in the camera's mask") + (culls != null && culls[layer] > 0f ? ", culled beyond " + culls[layer].ToString("F0") + " m" : "") + ", bounds " + (r.bounds.center - e.Position).ToString("F1") + " size " + r.bounds.size.ToString("F1") +
+						(r is MeshRenderer && r.GetComponent<MeshFilter>() != null ? ", mesh " + (r.GetComponent<MeshFilter>().sharedMesh != null ? r.GetComponent<MeshFilter>().sharedMesh.name + " (" + r.GetComponent<MeshFilter>().sharedMesh.vertexCount + " vertices)" : "NONE") : ""));
+					foreach (Material m in r.sharedMaterials)
+					{
+						if (m == null) { Log("      material: none"); continue; }
+						Shader byName = m.shader != null ? Shader.Find(m.shader.name) : null;
+						Log("      material '" + m.name + "' shader '" + (m.shader != null ? m.shader.name : "none") + "' supported " + (m.shader != null && m.shader.isSupported) + ", queue " + m.renderQueue +
+							(m.HasProperty("_Color") ? ", colour " + m.GetColor("_Color") : "") + ", found by name: " + (byName == null ? "NOTHING" : byName == m.shader ? "the same" : "ANOTHER shader") + ", keywords " + string.Join(" ", m.shaderKeywords));
+					}
+				}
+			}
+			if (found == 0) Fail("no object with '" + objectPart + "' on '" + e.HostName + "'");
+			else Log("PASS: dumped " + found + " object(s) of '" + e.HostName + "' (positions from its origin " + e.Position.ToString("F1") + ")");
+		}
+
+		[ConsoleCommand(name: "CIReturningIslands", docs: "Dev, in game (host, a test world 'CI ...'): islands the players still need come back ahead of the raft (ReturningIslands) - one with its quest begun and one a plan's rule waits for (never reached), left 1.3 km behind: after the return time (3 s here) both are ahead of the raft, load there, the quest where it was, a banner; one with its quest done, one never reached that nothing waits for, and one that came back 3 times stay; one a Receiver frequency brought doesn't count")]
+		public static void ReturningIslandsTest() { StartTest(ReturningIslandsRoutine()); }
+
+		static IEnumerator ReturningIslandsRoutine()
+		{
+			Vector3? raftAt = CustomIslandSpawner.RaftPosition;
+			if (!raftAt.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("only in a test world 'CI ...' (it changes the world's plan for a moment)"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			// Six copies of an island with a two-step quest
+			IslandFile f = SampleIsland();
+			f.Props[IslandQuest.KeyTitle] = "Come back";
+			f.Props[IslandQuest.KeySteps] = "reach|cizone|1|\nread|CI note|1|";
+			string[] names = { "cireturn-begun", "cireturn-awaited", "cireturn-done", "cireturn-unseen", "cireturn-often", "cireturn-receiver" };
+			foreach (string n in names) { f.Name = n; f.Save(IslandSpawner.PathFor(n)); }
+			float minutesBefore = ReturningIslands.ReturnMinutes;
+			WorldPlan planBefore = WorldDirector.Plan;
+			var made = new List<IslandWorldState.Entry>();
+			int returnedCount = 0;
+			Action<IslandWorldState.Entry> onReturn = e => returnedCount++;
+			ReturningIslands.Returned += onReturn;
+			try
+			{
+				// Left behind the raft past the unload distance from their land's edge (unloaded), each its own way - an old
+				// sample island counts its whole raised sea floor as land (700 m): 1.3 km wasn't away for it
+				Vector3 back = -CustomIslandSpawner.SailDirection();
+				float behindBy = WorldRules.UnloadDistance + Mathf.Max(0f, CustomIslandSpawner.LandRadius(names[0])) + 400f;
+				for (int i = 0; i < names.Length; i++)
+				{
+					Vector3 at = raftAt.Value + Quaternion.Euler(0f, -75f + i * 30f, 0f) * back * behindBy;
+					at.y = 0f;
+					made.Add(IslandWorldState.Add(names[i], at, null, false));
+				}
+				Log("  six islands left " + behindBy.ToString("F0") + " m behind the raft (land radius " + CustomIslandSpawner.LandRadius(names[0]).ToString("F0") + " m)");
+				IslandWorldState.Entry begun = made[0], awaited = made[1], done = made[2], unseen = made[3], often = made[4], receiver = made[5];
+				var visit = new ObjectState { Active = true, Yield = 0, Day = 0 };
+				begun.State[WorldDirector.VisitKey] = visit; QuestTracker.Set(begun, 1, 0, false);
+				awaited.Rule = "awaited";
+				done.State[WorldDirector.VisitKey] = visit; QuestTracker.Set(done, 2, 0, false);
+				often.State[WorldDirector.VisitKey] = visit; QuestTracker.Set(often, 1, 0, false);
+				often.State[ReturningIslands.ReturnsKey] = new ObjectState { Active = true, Yield = ReturningIslands.MaxReturns, Day = 0 };
+				receiver.State[WorldDirector.VisitKey] = visit; QuestTracker.Set(receiver, 1, 0, false); receiver.Rule = "radio";
+				// (a Receiver island, checked with no moment in between: the Receiver chain mustn't act on the plan for the moment)
+				WorldDirector.Plan = WorldPlan.Parse("CI returning", "rule = radio | island:cireturn-receiver | start | receiver:900 | | \n");
+				string receiverWhy = ReturningIslands.Why(receiver);
+				// A plan whose rule waits for players to reach 'awaited'
+				WorldDirector.Plan = WorldPlan.Parse("CI returning", "rule = next | island:cireturn-none | visit:awaited | ahead:300 | | \n");
+				Check(ref ok, receiverWhy == null, "an island a Receiver frequency brought doesn't come back (the Receiver shows the way): " + (receiverWhy ?? "no"));
+				// (out of the world for the rest: under the second plan its rule isn't there, so it would look like any begun quest)
+				IslandWorldState.RemoveIds(new List<int> { receiver.Id }, false);
+				made.Remove(receiver);
+				Check(ref ok, ReturningIslands.Why(begun) == "quest" && ReturningIslands.Why(awaited) == "awaited" && ReturningIslands.Why(done) == null && ReturningIslands.Why(unseen) == null && ReturningIslands.Why(often) == null,
+					"which ones are needed: begun " + (ReturningIslands.Why(begun) ?? "no") + ", awaited " + (ReturningIslands.Why(awaited) ?? "no") + ", done " + (ReturningIslands.Why(done) ?? "no") + ", unseen " + (ReturningIslands.Why(unseen) ?? "no") + ", came back 3 times " + (ReturningIslands.Why(often) ?? "no"));
+				ReturningIslands.ReturnMinutes = 0.05f;
+				for (float t = 0f; t < 40f && returnedCount < 2; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				// (none came back for want of room: a test world crowded by the earlier suites' islands, or the raft at one of
+				// Raft's islands - the 3.2 full run, 4 of 4. The sea's layout isn't what this tests, so once more with any spot
+				// clear of the raft, as CIPoolAgain does)
+				if (returnedCount < 2 && CustomIslandSpawner.LastSpotRejects != null)
+				{
+					Log("  (no free spot ahead of the raft: " + CustomIslandSpawner.LastSpotRejects + " - once more with any spot clear of the raft)");
+					CustomIslandSpawner.TestAllRound = true;
+					for (float t = 0f; t < 30f && returnedCount < 2; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				}
+				yield return new WaitForSeconds(3f);
+				if (returnedCount < 2) foreach (string l in ReturningIslands.Describe().Where(l => l.Contains("cireturn") || l.StartsWith("host"))) Log("  " + l);
+				Vector3 raftNow = CustomIslandSpawner.RaftPosition ?? raftAt.Value;
+				Func<IslandWorldState.Entry, float> from = e => new Vector2(e.Position.x - raftNow.x, e.Position.z - raftNow.z).magnitude;
+				Func<IslandWorldState.Entry, bool> ahead = e => Vector3.Dot(new Vector3(e.Position.x - raftNow.x, 0f, e.Position.z - raftNow.z), CustomIslandSpawner.SailDirection()) > 0f;
+				Check(ref ok, returnedCount == 2 && from(begun) < behindBy - 300f && from(awaited) < behindBy - 300f && ahead(begun) && ahead(awaited),
+					"the two needed islands came back ahead of the raft: " + from(begun).ToString("F0") + " m and " + from(awaited).ToString("F0") + " m away (" + returnedCount + " came back)");
+				Check(ref ok, from(done) > behindBy - 300f && from(unseen) > behindBy - 300f && from(often) > behindBy - 300f,
+					"the others stayed behind: " + string.Join(", ", new[] { done, unseen, often }.Select(e => e.Name.Substring(9) + " " + from(e).ToString("F0") + " m").ToArray()));
+				Check(ref ok, QuestTracker.StepOf(begun) == 1 && ReturningIslands.Returns(begun) == 1, "its quest where it was (step " + QuestTracker.StepOf(begun) + "), came back once (" + ReturningIslands.Returns(begun) + ")");
+				Check(ref ok, (WorldDirector.LastAnnouncement ?? "").Contains("Back in sight"), "a banner says so: " + WorldDirector.LastAnnouncement);
+				for (float t = 0f; t < 30f && (begun.Root == null || awaited.Root == null); t += 0.5f) yield return new WaitForSeconds(0.5f);
+				Check(ref ok, begun.Root != null && awaited.Root != null, "they load where they came back to");
+			}
+			finally
+			{
+				ReturningIslands.Returned -= onReturn;
+				ReturningIslands.ReturnMinutes = minutesBefore;
+				CustomIslandSpawner.TestAllRound = false;
+				WorldDirector.Plan = planBefore;
+				IslandWorldState.RemoveIds(made.Select(e => e.Id).ToList(), false);
+				foreach (string n in names) File.Delete(IslandSpawner.PathFor(n));
+			}
+			if (ok) Log("PASS: islands the players still need come back"); else Fail("islands the players still need come back");
+		}
+
+		[ConsoleCommand(name: "CIAgainUntilDone", docs: "Dev, in game (host, a test world 'CI ...'): SR1 - a 'day:N:again' rule's island comes back every N days until the players are done with it. A plan 'CI again' (day rules with again: an island with a two-step quest and one without; and one without again) brings three islands on day D; left behind unvisited, none is back the day before D+N; the world saved and read back (the plan's again, each island's clock, no second copies); on day D+N the two again islands come back ahead of the raft, the other stays; the plain one reached and the quest one begun, then left again: only the quest one comes back; its quest done, nothing comes back")]
+		public static void AgainUntilDoneTest() { StartTest(AgainUntilDoneRoutine()); }
+
+		[ConsoleCommand(name: "CISetDay", docs: "Dev, in game (host, a test world 'CI ...'): CISetDay <n> sets Raft's day counter to n, for plan tests with 'day:N' rules (run it before CIPlay)")]
+		public static void SetDayCommand(string[] args)
+		{
+			int day;
+			if (args == null || args.Length < 1 || !int.TryParse(args[0], out day) || day < 0) { Fail("CISetDay <day>"); return; }
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("CISetDay: host only, in a world"); return; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("CISetDay: only in a test world 'CI ...'"); return; }
+			SetDay(day);
+			if (WorldManager.DayCounter == day) Log("PASS: day " + day); else Fail("CISetDay: the day is " + WorldManager.DayCounter);
+		}
+
+		static void SetDay(int day)
+		{
+			System.Reflection.PropertyInfo p = typeof(WorldManager).GetProperty("DayCounter", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+			System.Reflection.MethodInfo set = p != null ? p.GetSetMethod(true) : null;
+			if (set != null) set.Invoke(null, new object[] { day });
+		}
+
+		static IEnumerator AgainUntilDoneRoutine()
+		{
+			if (!CvInTestWorld("again until done")) yield break;
+			Vector3? raftAt = CustomIslandSpawner.RaftPosition;
+			if (!raftAt.HasValue || !Raft_Network.IsHost) { Fail("again until done: run as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			// (the tests' own sample island, not whichever island the player has saved)
+			string[] names = { "ciagain-quest", "ciagain-plain", "ciagain-once" };
+			IslandFile f = SampleIsland();
+			f.Props[IslandQuest.KeyTitle] = "Come again";
+			f.Props[IslandQuest.KeySteps] = "reach|cizone|1|\nread|CI note|1|";
+			f.Name = names[0]; f.Save(IslandSpawner.PathFor(names[0]));
+			f.Props.Remove(IslandQuest.KeyTitle); f.Props.Remove(IslandQuest.KeySteps);
+			for (int i = 1; i < names.Length; i++) { f.Name = names[i]; f.Save(IslandSpawner.PathFor(names[i])); }
+			int dayBefore = WorldManager.DayCounter;
+			const int every = 3;
+			int d = Mathf.Max(every, dayBefore);
+			WorldPlan planBefore = WorldDirector.Plan;
+			string planNameBefore = WorldDirector.PlanName;
+			int returned = 0;
+			Action<IslandWorldState.Entry> onReturn = e => returned++;
+			ReturningIslands.Returned += onReturn;
+			Func<string, IslandWorldState.Entry> entry = rule => IslandWorldState.Islands.FirstOrDefault(x => x.Rule == rule);
+			Func<string, int> copies = n => IslandWorldState.Islands.Count(x => x.Name == n);
+			Func<string, string> why = rule => entry(rule) != null ? ReturningIslands.Why(entry(rule)) ?? "no" : "gone";
+			Vector3 back = -CustomIslandSpawner.SailDirection();
+			Func<IslandWorldState.Entry, float> from = e => { if (e == null) return -1f; Vector3 r = CustomIslandSpawner.RaftPosition ?? raftAt.Value; return new Vector2(e.Position.x - r.x, e.Position.z - r.z).magnitude; };
+			float behindBy = WorldRules.UnloadDistance + Mathf.Max(0f, CustomIslandSpawner.LandRadius(names[0])) + 400f;
+			// (left behind: unloaded, past the unload distance behind the raft, each its own way)
+			Action<string[]> leave = rules =>
+			{
+				Vector3 r = CustomIslandSpawner.RaftPosition ?? raftAt.Value;
+				for (int i = 0; i < rules.Length; i++)
+				{
+					IslandWorldState.Entry e = entry(rules[i]);
+					if (e == null) continue;
+					if (e.Root != null) { IslandObjectState.Capture(e); IslandSpawner.Despawn(e.Root); e.Root = null; }
+					Vector3 at = r + Quaternion.Euler(0f, -40f + i * 40f, 0f) * back * behindBy;
+					at.y = e.Position.y;
+					e.Position = at;
+				}
+			};
+			try
+			{
+				string text = "rule = qa | island:" + names[0] + " | day:" + d + ":again | ahead:400 | | Again quest\n" +
+					"rule = pl | island:" + names[1] + " | day:" + d + ":again | ahead:700 | | Again plain\n" +
+					"rule = once | island:" + names[2] + " | day:" + d + " | ahead:1000 | | Once\n";
+				// (N = the rule's day number; the island first comes on day d = N here, so it is back on days 2N, 3N...)
+				WorldPlan plan = WorldPlan.Parse("CI again", "random = off\n" + text);
+				IntroRule qa = plan.Rules.FirstOrDefault(r => r.Id == "qa");
+				Check(ref ok, plan.Rules.Count == 3 && qa != null && qa.Again && qa.Repeats && !plan.Rules[2].Again && qa.ToLine().Contains("day:" + d + ":again") && !plan.Rules[2].ToLine().Contains(":again"),
+					"the plan reads 'day:" + d + ":again' and writes it back: " + (qa != null ? qa.ToLine() : "no rule"));
+				Check(ref ok, qa != null && qa.DescribeWhen().Contains("again every"), "the card says so: " + (qa != null ? qa.DescribeWhen() : ""));
+				int n = d; // every n days
+				WorldDirector.Plan = plan; WorldDirector.PlanName = plan.Name;
+				foreach (IntroRule r in plan.Rules) WorldDirector.Done.Remove(r.Id);
+				SetDay(d);
+				Check(ref ok, WorldManager.DayCounter == d, "day " + WorldManager.DayCounter + " (set from " + dayBefore + ")");
+				for (int i = 0; i < 30 && (entry("qa") == null || entry("pl") == null || entry("once") == null); i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
+				Check(ref ok, entry("qa") != null && entry("pl") != null && entry("once") != null, "day " + d + ": the three day rules brought their islands");
+				if (entry("qa") == null || entry("pl") == null || entry("once") == null) { Fail("again until done"); yield break; }
+				yield return new WaitForSeconds(3f);
+				Check(ref ok, why("qa") == "again" && why("pl") == "again" && why("once") == "no", "needed: quest island " + why("qa") + ", plain island " + why("pl") + ", the one without again " + why("once"));
+				// Left behind, never reached: not back the day before d + n
+				leave(new[] { "qa", "pl", "once" });
+				SetDay(d + n - 1);
+				for (int i = 0; i < 6; i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
+				Check(ref ok, returned == 0 && from(entry("qa")) > behindBy - 300f, "day " + (d + n - 1) + ": not back yet (" + returned + " came back)");
+				foreach (string l in ReturningIslands.Describe().Where(l => l.Contains("ciagain"))) Log("  " + l);
+				// The world saved and read back
+				foreach (IslandWorldState.Entry x in IslandWorldState.Islands.ToList())
+					if (x.Root != null) { IslandObjectState.Capture(x); IslandSpawner.Despawn(x.Root); x.Root = null; }
+				yield return null;
+				IslandWorldState.Save();
+				yield return null;
+				IslandWorldState.OnWorldLoaded();
+				yield return new WaitForSeconds(1f);
+				IntroRule qaRead = WorldDirector.Plan != null ? WorldDirector.Plan.Rules.FirstOrDefault(r => r.Id == "qa") : null;
+				ObjectState mark = null;
+				bool hasMark = entry("qa") != null && entry("qa").State.TryGetValue(ReturningIslands.AgainKey, out mark);
+				Check(ref ok, qaRead != null && qaRead.Again && hasMark && mark.Day == d,
+					"after the world was saved and read: the plan's rule still has again (" + (qaRead != null ? qaRead.ToLine() : "none") + "), the island's clock counts from day " + (hasMark ? mark.Day.ToString() : "none"));
+				Check(ref ok, copies(names[0]) == 1 && copies(names[1]) == 1 && copies(names[2]) == 1 && WorldDirector.Done.Contains("qa"), "one copy of each island, the rule done (no second copy)");
+				for (int i = 0; i < 6; i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
+				Check(ref ok, returned == 0 && copies(names[0]) == 1, "... and still not back on day " + (d + n - 1));
+				// Day d + n: both again islands come back, the other one stays
+				SetDay(d + n);
+				for (float t = 0f; t < 20f && returned < 2; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				yield return new WaitForSeconds(2.5f);
+				Vector3 raftNow = CustomIslandSpawner.RaftPosition ?? raftAt.Value;
+				Func<IslandWorldState.Entry, bool> ahead = e => e != null && Vector3.Dot(new Vector3(e.Position.x - raftNow.x, 0f, e.Position.z - raftNow.z), CustomIslandSpawner.SailDirection()) > 0f;
+				Check(ref ok, returned == 2 && ahead(entry("qa")) && ahead(entry("pl")) && from(entry("qa")) < behindBy - 300f && from(entry("pl")) < behindBy - 300f,
+					"day " + (d + n) + ": both again islands came back ahead of the raft (" + returned + " came back; " + from(entry("qa")).ToString("F0") + " m, " + from(entry("pl")).ToString("F0") + " m)");
+				Check(ref ok, from(entry("once")) > behindBy - 300f, "the rule without again: its island stayed behind (" + from(entry("once")).ToString("F0") + " m)");
+				Check(ref ok, (WorldDirector.LastAnnouncement ?? "").Contains("still waits for you"), "a banner says so: " + WorldDirector.LastAnnouncement);
+				Check(ref ok, copies(names[0]) == 1 && copies(names[1]) == 1, "the same islands, no copies");
+				// Reached: the plain one is done; the quest one begun (step 1 of 2) is not
+				var visit = new ObjectState { Active = true, Yield = 0, Day = d + n };
+				entry("pl").State[WorldDirector.VisitKey] = visit;
+				entry("qa").State[WorldDirector.VisitKey] = visit; QuestTracker.Set(entry("qa"), 1, 0, false);
+				Check(ref ok, why("pl") == "no" && why("qa") == "again", "the plain island reached: done (" + why("pl") + "); the quest island at step 1 of 2: " + why("qa"));
+				yield return new WaitForSeconds(2.5f);
+				leave(new[] { "qa", "pl" });
+				returned = 0;
+				SetDay(d + 2 * n);
+				for (float t = 0f; t < 20f && returned < 1; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				yield return new WaitForSeconds(4f);
+				Check(ref ok, returned == 1 && from(entry("qa")) < behindBy - 300f && from(entry("pl")) > behindBy - 300f,
+					"day " + (d + 2 * n) + ": only the unfinished quest island came back (" + returned + "; quest " + from(entry("qa")).ToString("F0") + " m, plain " + from(entry("pl")).ToString("F0") + " m)");
+				Check(ref ok, QuestTracker.StepOf(entry("qa")) == 1, "its quest where it was (step " + QuestTracker.StepOf(entry("qa")) + ")");
+				// Its quest done: nothing comes back any more
+				QuestTracker.Set(entry("qa"), 2, 0, false);
+				Check(ref ok, why("qa") == "no", "its quest done: not needed (" + why("qa") + ")");
+				leave(new[] { "qa" });
+				returned = 0;
+				SetDay(d + 4 * n);
+				for (int i = 0; i < 6; i++) yield return new WaitForSeconds(1f);
+				Check(ref ok, returned == 0 && from(entry("qa")) > behindBy - 300f, "day " + (d + 4 * n) + ": nothing came back (" + returned + ")");
+			}
+			finally
+			{
+				ReturningIslands.Returned -= onReturn;
+				SetDay(dayBefore);
+				WorldDirector.Plan = planBefore; WorldDirector.PlanName = planNameBefore;
+				IslandWorldState.RemoveIds(IslandWorldState.Islands.Where(x => names.Contains(x.Name)).Select(e => e.Id).ToList(), false);
+				foreach (string n in names) File.Delete(IslandSpawner.PathFor(n));
+			}
+			if (ok) Log("PASS: again until done"); else Fail("again until done");
+		}
+
+		[ConsoleCommand(name: "CISpawnSpread", docs: "Dev, in game (host, a test world 'CI ...'): the spread of random picks from the spawn pool - 8000 picks: every island in the pool comes, each about as often as its weight says, one this world has already (left behind; without a quest, also reached) as often as the others (the user, 2026-11-01 / 11-08: 1 in N for each); an island 'not before 5 km' only once the world has sailed 5 km")]
+		public static void SpawnSpreadTest(string[] args)
+		{
+			Vector3? raftAt = CustomIslandSpawner.RaftPosition;
+			if (!raftAt.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); return; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("only in a test world 'CI ...'"); return; }
+			bool ok = true;
+			string[] names = { "cispread-a", "cispread-b", "cispread-c", "cispread-here" };
+			IslandFile f = SampleIsland();
+			f.Props.Remove(IslandQuest.KeyTitle); f.Props.Remove(IslandQuest.KeySteps);
+			foreach (string n in names) { f.Name = n; f.Save(IslandSpawner.PathFor(n)); }
+			const string late = "cispread-late";
+			f.Name = late; f.Props[IslandProps.NotBeforeKm] = "5"; f.Save(IslandSpawner.PathFor(late));
+			CustomIslandSpawner.LoadPool(true);
+			IslandWorldState.Entry here = null;
+			float sailedWas = WorldDirector.Sailed;
+			try
+			{
+				Vector3 at = raftAt.Value - CustomIslandSpawner.SailDirection() * (WorldRules.UnloadDistance + 2000f); at.y = 0f;
+				here = IslandWorldState.Add(names[3], at, null, false);
+				// (reached: an island without a quest may always come back, at the same chance - the user, 2026-11-08)
+				here.State[WorldDirector.VisitKey] = new ObjectState { Active = true, Yield = 0, Day = WorldDirector.Today };
+				var pool = CustomIslandSpawner.Pool().Where(p => !p.Key.Equals(late, StringComparison.OrdinalIgnoreCase)).ToList();
+				var missing = names.Where(n => !pool.Any(p => p.Key.Equals(n, StringComparison.OrdinalIgnoreCase))).ToList();
+				if (missing.Count > 0) { Fail("not in the pool (this world's island list leaves them out?): " + string.Join(", ", missing.ToArray())); return; }
+				var weights = pool.Select(p => p.Value).ToList();
+				float total = weights.Sum();
+				const int picks = 8000;
+				var counts = pool.ToDictionary(p => p.Key, p => 0, StringComparer.OrdinalIgnoreCase);
+				var rnd = new System.Random(4711);
+				for (int i = 0; i < picks; i++) { string k = CustomIslandSpawner.PickFrom(pool, (float)rnd.NextDouble()); if (k != null) counts[k]++; }
+				var never = pool.Where((p, i) => counts[p.Key] == 0 && weights[i] / total * picks >= 20f).Select(p => p.Key).ToList();
+				Check(ref ok, never.Count == 0, "every island in the pool (" + pool.Count + ") came in " + picks + " picks" + (never.Count > 0 ? " - never: " + string.Join(", ", never.ToArray()) : ""));
+				for (int i = 0; i < pool.Count; i++)
+				{
+					if (!names.Contains(pool[i].Key, StringComparer.OrdinalIgnoreCase)) continue;
+					float expected = weights[i] / total * picks;
+					int got = counts[pool[i].Key];
+					Check(ref ok, Mathf.Abs(got - expected) <= Mathf.Max(4f * Mathf.Sqrt(expected), expected * 0.3f), "'" + pool[i].Key + "' as often as its weight says: " + got + " picks, about " + expected.ToString("F0") + " expected");
+				}
+				float ratio = counts[names[3]] / (float)Mathf.Max(1, counts[names[0]]);
+				// "Not before 5 km": out of the pool until the world has sailed 5 km
+				WorldDirector.Sailed = 4000f;
+				bool early = CustomIslandSpawner.Pool().Any(p => p.Key.Equals(late, StringComparison.OrdinalIgnoreCase));
+				WorldDirector.Sailed = 5100f;
+				bool after = CustomIslandSpawner.Pool().Any(p => p.Key.Equals(late, StringComparison.OrdinalIgnoreCase));
+				WorldDirector.Sailed = sailedWas;
+				Check(ref ok, !early && after, "an island 'not before 5 km' is out of the pool at 4 km (" + !early + "), in at 5.1 km (" + after + ")");
+				Check(ref ok, ratio > 0.75f && ratio < 1.33f, "the one this world has already (reached, no quest) comes as often as the others: " + counts[names[3]] + " vs " + counts[names[0]] + " (" + ratio.ToString("F2") + ")");
+			}
+			finally
+			{
+				if (here != null) IslandWorldState.RemoveIds(new List<IslandWorldState.Entry> { here }.Select(e => e.Id).ToList(), false);
+				WorldDirector.Sailed = sailedWas;
+				foreach (string n in names.Concat(new[] { late })) File.Delete(IslandSpawner.PathFor(n));
+				CustomIslandSpawner.LoadPool(true);
+			}
+			if (ok) Log("PASS: random picks spread by weight, every island comes, ones the world has as often"); else Fail("random picks spread by weight, every island comes, ones the world has as often");
+		}
+
+		[ConsoleCommand(name: "CIPoolAgain", docs: "Dev, in game (host, a test world 'CI ...'): the spawn pool and islands this world already has - one whose quest is done (a note missed on it or not, a side quest done) is never picked again, also when it failed to load; every other may be (quest begun, a side quest open however often it came back, never reached, or without a quest - reached or not, notes found or not: the user, 2026-11-08): picked, it comes back ahead of the raft as it was (its quest step kept, one copy), not a second fresh copy - also one that failed to load (it tries again there)")]
+		public static void PoolAgainTest() { StartTest(PoolAgainRoutine()); }
+
+		static IEnumerator PoolAgainRoutine()
+		{
+			Vector3? raftAt = CustomIslandSpawner.RaftPosition;
+			if (!raftAt.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("only in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			// Two islands with a two-step quest, two without a quest
+			string[] names = { "ciagain-done", "ciagain-begun", "ciagain-seen", "ciagain-unseen" };
+			IslandFile f = SampleIsland();
+			foreach (var o in f.Objects) if (o.Props != null) o.Props.Remove(ObjectProps.NoteText); // (no notes: they'd keep a finished island in the pool)
+			f.Props[IslandQuest.KeyTitle] = "Again";
+			f.Props[IslandQuest.KeySteps] = "reach|cizone|1|\nread|CI note|1|";
+			f.Props[IslandQuest.Key(IslandQuest.KeyTitle, 1)] = "Again side"; // (a side quest: begun and not done, it keeps the island unfinished)
+			f.Props[IslandQuest.Key(IslandQuest.KeySteps, 1)] = "reach|cizone|1|\nread|CI note|1|";
+			for (int i = 0; i < 2; i++) { f.Name = names[i]; f.Save(IslandSpawner.PathFor(names[i])); }
+			f.Props.Remove(IslandQuest.KeyTitle); f.Props.Remove(IslandQuest.KeySteps);
+			f.Props.Remove(IslandQuest.Key(IslandQuest.KeyTitle, 1)); f.Props.Remove(IslandQuest.Key(IslandQuest.KeySteps, 1));
+			for (int i = 2; i < 4; i++) { f.Name = names[i]; f.Save(IslandSpawner.PathFor(names[i])); }
+			CustomIslandSpawner.LoadPool(true);
+			var made = new List<IslandWorldState.Entry>();
+			try
+			{
+				Vector3 back = -CustomIslandSpawner.SailDirection();
+				float behindBy = WorldRules.UnloadDistance + Mathf.Max(0f, CustomIslandSpawner.LandRadius(names[0])) + 400f;
+				for (int i = 0; i < names.Length; i++)
+				{
+					Vector3 at = raftAt.Value + Quaternion.Euler(0f, -45f + i * 30f, 0f) * back * behindBy;
+					at.y = 0f;
+					made.Add(IslandWorldState.Add(names[i], at, null, false));
+				}
+				IslandWorldState.Entry done = made[0], begun = made[1], seen = made[2], unseen = made[3];
+				var visit = new ObjectState { Active = true, Yield = 0, Day = 0 };
+				done.State[WorldDirector.VisitKey] = visit; QuestTracker.Set(done, 2, 0, false);
+				begun.State[WorldDirector.VisitKey] = visit; QuestTracker.Set(begun, 1, 0, false);
+				seen.State[WorldDirector.VisitKey] = visit;
+				Check(ref ok, ReturningIslands.Finished(done) && !ReturningIslands.Finished(begun) && ReturningIslands.Finished(seen) && !ReturningIslands.Finished(unseen),
+					"finished: quest done " + ReturningIslands.Finished(done) + ", begun " + ReturningIslands.Finished(begun) + ", no quest reached " + ReturningIslands.Finished(seen) + ", no quest never reached " + ReturningIslands.Finished(unseen));
+				// (code audit 2026-10-30: a side quest begun and not done - not finished, it comes back; done, it is finished)
+				QuestTracker.Set(done, 1, 1, 0, false);
+				bool sideOpen = !ReturningIslands.Finished(done) && ReturningIslands.Why(done) == "quest";
+				// (past MaxReturns too: no cap until its side quests are done - the user, 2026-11-08; it stopped after 3 from 10-30)
+				done.State[ReturningIslands.ReturnsKey] = new ObjectState { Active = true, Yield = ReturningIslands.MaxReturns + 2, Day = 0 };
+				bool sidePast = !ReturningIslands.Finished(done) && CustomIslandSpawner.Pool().Any(p => p.Key.Equals(names[0], StringComparison.OrdinalIgnoreCase));
+				done.State.Remove(ReturningIslands.ReturnsKey);
+				QuestTracker.Set(done, 1, 2, 0, false);
+				Check(ref ok, sideOpen && sidePast && ReturningIslands.Finished(done), "a side quest begun keeps the island unfinished and in the pool (past " + ReturningIslands.MaxReturns +
+					" returns too: " + sidePast + "), done it is finished: " + sideOpen + ", " + ReturningIslands.Finished(done));
+				var pool = CustomIslandSpawner.Pool().Select(p => p.Key).ToList();
+				Func<string, bool> inPool = n => pool.Contains(n, StringComparer.OrdinalIgnoreCase);
+				Check(ref ok, !inPool(names[0]), "the quest-done one is not in the pool (" + inPool(names[0]) + ")");
+				Check(ref ok, inPool(names[1]) && inPool(names[2]) && inPool(names[3]), "the others are: begun " + inPool(names[1]) + ", no quest reached " + inPool(names[2]) + ", never reached " + inPool(names[3]));
+				// A note not found yet: an island whose quest is done never comes again all the same (the user, 2026-11-01: "finished
+				// quest islands should not return"); one without a quest, reached, comes back with its notes found or not (11-08)
+				Func<int, bool> withMissedNote = i =>
+				{
+					IslandFile noted = IslandFile.Load(IslandSpawner.PathFor(names[i]));
+					if (noted.Objects[0].Props == null) noted.Objects[0].Props = new Dictionary<string, string>();
+					noted.Objects[0].Props[ObjectProps.NoteText] = "A note the players missed.";
+					noted.Save(IslandSpawner.PathFor(names[i]));
+					CustomIslandSpawner.LoadPool(true);
+					return CustomIslandSpawner.Pool().Any(p => p.Key.Equals(names[i], StringComparison.OrdinalIgnoreCase));
+				};
+				bool questMissed = withMissedNote(0), seenMissed = withMissedNote(2);
+				string noteKey = "note:" + seen.HostName + ":0";
+				StoryBook.AddPage(noteKey, "Missed", "A note the players missed.", "Again");
+				bool allFound = CustomIslandSpawner.Pool().Any(p => p.Key.Equals(names[2], StringComparison.OrdinalIgnoreCase));
+				foreach (StoryBook.Page added in StoryBook.Pages.Where(x => x.Key == noteKey).ToList()) StoryBook.Pages.Remove(added);
+				Check(ref ok, !questMissed && seenMissed && allFound, "a note not found: the quest-done island stays out (" + !questMissed + "), the reached one without a quest comes back (" +
+					seenMissed + "), also once every note is found (" + allFound + ")");
+				// One that failed to load (Failed for this session): finished, still never again; unfinished, picked, it is the one that comes
+				done.Failed = true; unseen.Failed = true;
+				var failedPool = CustomIslandSpawner.Pool().Select(p => p.Key).ToList();
+				Check(ref ok, !failedPool.Contains(names[0], StringComparer.OrdinalIgnoreCase) && failedPool.Contains(names[3], StringComparer.OrdinalIgnoreCase) &&
+					CustomIslandSpawner.InWorld(names[3]) == unseen,
+					"failed to load: the finished one stays out (" + !failedPool.Contains(names[0], StringComparer.OrdinalIgnoreCase) + "), the unfinished one may come (" +
+					failedPool.Contains(names[3], StringComparer.OrdinalIgnoreCase) + ") as itself (" + (CustomIslandSpawner.InWorld(names[3]) == unseen) + ")");
+				done.Failed = false;
+				// Picked again: the island the world has comes back, no second copy
+				Vector3 raftNow = CustomIslandSpawner.RaftPosition ?? raftAt.Value;
+				foreach (IslandWorldState.Entry e in new[] { begun, unseen })
+				{
+					string said = CustomIslandSpawner.TrySpawn(raftNow, true, e.HostName);
+					// (a sea crowded ahead - the island just brought back, Raft's islands in the way: each try picks other random spots; a player's game tries again later)
+					for (int again = 0; again < 5 && said != null && said.Contains("no free spot"); again++) said = CustomIslandSpawner.TrySpawn(raftNow, true, e.HostName);
+					// (still none: a test world crowded by the earlier suites' islands - run i 2026-10-20 failed after the runner's 4 sail-ons; the
+					// sea's layout isn't what this tests, so once more with any spot clear of the raft, as CISpawnGenerated does)
+					if (said != null && said.Contains("no free spot"))
+					{
+						CustomIslandSpawner.TestAllRound = true;
+						try { said = CustomIslandSpawner.TrySpawn(raftNow, true, e.HostName); }
+						finally { CustomIslandSpawner.TestAllRound = false; }
+						Log("  ('" + e.HostName + "': no free spot in the crowded test sea - once more with any spot clear of the raft: " + said + ")");
+					}
+					float away = new Vector2(e.Position.x - raftNow.x, e.Position.z - raftNow.z).magnitude;
+					int copies = IslandWorldState.Islands.Count(x => x.HostName == e.HostName);
+					if (e == unseen) Check(ref ok, !e.Failed, "the one that failed to load tries again where it comes (failed " + e.Failed + ")");
+					Check(ref ok, copies == 1 && away < behindBy - 300f && Vector3.Dot(e.Position - raftNow, CustomIslandSpawner.SailDirection()) > 0f,
+						"'" + e.HostName + "' picked again comes back ahead (" + away.ToString("F0") + " m, " + copies + " in the world): " + said);
+				}
+				Check(ref ok, QuestTracker.StepOf(begun) == 1, "its quest where it was (step " + QuestTracker.StepOf(begun) + ")");
+				// Here already (loading near the raft): not picked again either
+				for (float t = 0f; t < 30f && begun.Root == null; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				Check(ref ok, CustomIslandSpawner.NotAgain(names[1]), "an island loaded near the players isn't picked again (" + (begun.Root != null ? "loaded" : "not loaded") + ")");
+			}
+			finally
+			{
+				IslandWorldState.RemoveIds(made.Select(e => e.Id).ToList(), false);
+				foreach (string n in names) File.Delete(IslandSpawner.PathFor(n));
+				CustomIslandSpawner.LoadPool(true);
+			}
+			if (ok) Log("PASS: quest-done islands are not picked again, all others come back"); else Fail("quest-done islands are not picked again, all others come back");
+		}
+
+		[ConsoleCommand(name: "CIRaftGap", docs: "Dev, in game (host, a test world 'CI ...' with random islands): random custom islands come after every min-max of Raft's own islands met - the span's limits (min 2-20, max 4-50, default 3-6), the world file lines, no island before its turn, none in a new world's first 10 minutes of play, one when its turn came (then a new count), and a long sail: Raft's islands met and custom islands brought (at most one per min). CIRaftGap [km]")]
+		public static void RaftGapTest(string[] args)
+		{
+			float km = 8f;
+			if (args != null && args.Length > 0) float.TryParse(args[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out km);
+			StartTest(RaftGapRoutine(km));
+		}
+
+		static IEnumerator RaftGapRoutine(float km)
+		{
+			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (raftObj == null || raftObj.body == null || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			if (!(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("only in a test world 'CI ...'"); yield break; }
+			if (!CustomIslandSpawner.Enabled) { Fail("random islands are off in this world (a plan with random islands, or CustomIslandsAuto on)"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			Func<string, string> parsed = t => { int[] g = WorldIslands.ParseGap(t); return g[0] + "-" + g[1]; };
+			Check(ref ok, parsed("3-6") == "3-6" && parsed("1-100") == "2-50" && parsed("30-10") == "20-20" && parsed("4-3") == "4-4" && parsed("2-2") == "2-4" && parsed("nonsense") == "3-6",
+				"the span's limits: 3-6 " + parsed("3-6") + ", 1-100 " + parsed("1-100") + ", 30-10 " + parsed("30-10") + ", 4-3 " + parsed("4-3") + ", 2-2 " + parsed("2-2") + ", nonsense " + parsed("nonsense"));
+			int minBefore = WorldIslands.GapMin, maxBefore = WorldIslands.GapMax;
+			float playBefore = WorldIslands.PlaySeconds;
+			int spawnedLog = 0, metLog = 0;
+			Application.LogCallback listen = (msg, trace, type) =>
+			{
+				if (msg.Contains("Random island after")) spawnedLog++;
+				if (msg.Contains("Raft's islands met since the last random custom island")) metLog++;
+			};
+			Application.logMessageReceived += listen;
+			Rigidbody body = raftObj.body;
+			Network_Player player = RAPI.GetLocalPlayer();
+			Vector3 dir = Flat(Raft.direction).sqrMagnitude > 0.01f ? Flat(Raft.direction).normalized : Vector3.forward;
+			Func<float, float, IEnumerator> sail = (metres, speed) => SailStraight(body, player, dir, metres, speed);
+			try
+			{
+				// The world file keeps a span that isn't the default
+				WorldIslands.GapMin = 5; WorldIslands.GapMax = 12;
+				string lines = string.Join(" ", WorldIslands.WriteLines().ToArray());
+				Check(ref ok, lines.Contains("@raftgap=5-12"), "the world file keeps the span: " + lines);
+				WorldIslands.ReadLine("raftgap", "7-20");
+				Check(ref ok, WorldIslands.GapMin == 7 && WorldIslands.GapMax == 20, "and reads it back: " + WorldIslands.GapMin + "-" + WorldIslands.GapMax);
+
+				// Not before its turn: one more of Raft's islands to go
+				WorldIslands.PlaySeconds = WorldIslands.LongPlayed;
+				WorldIslands.GapMin = 2; WorldIslands.GapMax = 4;
+				WorldIslands.Target = 3; WorldIslands.RaftIslandsSince = 0;
+				int before = IslandWorldState.Islands.Count;
+				yield return sail(300f, 15f);
+				int metEarly = WorldIslands.RaftIslandsSince;
+				Check(ref ok, metEarly >= WorldIslands.Target || IslandWorldState.Islands.Count == before,
+					"no island before its turn: " + (IslandWorldState.Islands.Count - before) + " came, Raft's islands met " + metEarly + " of " + WorldIslands.Target);
+				// Its turn, but in a new world's first minutes of play: none yet
+				WorldIslands.RaftIslandsSince = WorldIslands.Target;
+				WorldIslands.PlaySeconds = 60f;
+				int quietBefore = spawnedLog;
+				yield return sail(300f, 15f);
+				Check(ref ok, spawnedLog == quietBefore, "none in a new world's first " + CustomIslandSpawner.QuietMinutes + " minutes (played " + (WorldIslands.PlaySeconds / 60f).ToString("F1") + " min): " + (spawnedLog - quietBefore) + " came");
+				WorldIslands.PlaySeconds = CustomIslandSpawner.QuietMinutes * 60f + 1f;
+				// Its turn: Raft's islands counted up to the target - an island comes, and a new count starts
+				WorldIslands.RaftIslandsSince = WorldIslands.Target;
+				before = IslandWorldState.Islands.Count;
+				int spawnedBefore = spawnedLog;
+				for (int i = 0; i < 8 && spawnedLog == spawnedBefore; i++) yield return sail(150f, 15f);
+				Check(ref ok, spawnedLog > spawnedBefore && IslandWorldState.Islands.Count > before - 1 && WorldIslands.RaftIslandsSince < WorldIslands.Target && WorldIslands.Target >= 2 && WorldIslands.Target <= 4,
+					"its turn: an island came (" + (spawnedLog - spawnedBefore) + "), a new count: " + WorldIslands.RaftIslandsSince + " of " + WorldIslands.Target);
+
+				// A long sail with the default span: Raft's islands met and the custom islands they let come
+				WorldIslands.GapMin = WorldIslands.GapDefaultMin; WorldIslands.GapMax = WorldIslands.GapDefaultMax; WorldIslands.NewTarget();
+				int met0 = metLog, spawned0 = spawnedLog;
+				int countedBefore = WorldIslands.RaftIslandsSince;
+				int metTotal = 0, lastSince = WorldIslands.RaftIslandsSince;
+				Log("  sailing " + km + " km with the default span " + WorldIslands.GapMin + "-" + WorldIslands.GapMax);
+				for (float done = 0f; done < km * 1000f; done += 500f)
+				{
+					yield return sail(500f, 40f);
+					int since = WorldIslands.RaftIslandsSince;
+					metTotal += since >= lastSince ? since - lastSince : since; // (a spawn starts the count again)
+					lastSince = since;
+				}
+				int customs = spawnedLog - spawned0;
+				Log("  " + km + " km: Raft's islands met " + metTotal + ", random custom islands " + customs + " (" + WorldIslands.DescribeGap() + ")");
+				Check(ref ok, customs <= metTotal / WorldIslands.GapDefaultMin + 1, "at most one custom island per " + WorldIslands.GapDefaultMin + " of Raft's islands: " + customs + " for " + metTotal);
+			}
+			finally
+			{
+				Application.logMessageReceived -= listen;
+				WorldIslands.GapMin = minBefore; WorldIslands.GapMax = maxBefore; WorldIslands.NewTarget();
+				WorldIslands.PlaySeconds = playBefore;
+			}
+			if (ok) Log("PASS: random custom islands follow Raft's own islands"); else Fail("random custom islands follow Raft's own islands");
+		}
+
+		static IEnumerator SailStraight(Rigidbody body, Network_Player player, Vector3 dir, float metres, float speed)
+		{
+			if (player != null) player.transform.position = body.position + Vector3.up * 3f;
+			float sailed = 0f;
+			Vector3 last = body.position;
+			while (sailed < metres)
+			{
+				yield return new WaitForFixedUpdate();
+				KeepAlive(player);
+				body.MovePosition(body.position + dir * speed * Time.fixedDeltaTime);
+				Vector3 d = Flat(body.position - last);
+				if (d.magnitude < 100f) sailed += d.magnitude;
+				last = body.position;
+			}
+		}
+
+		[ConsoleCommand(name: "CIReturnState", docs: "Dev, in game (host): every island as the returning-islands clock sees it - why it is needed, how far, its land radius, loaded, how long it has been away, how often it came back")]
+		public static void ReturnState() { foreach (string l in ReturningIslands.Describe()) Log("  " + l); Log("PASS: return state"); }
+
+		[ConsoleCommand(name: "CIWreckDeck", docs: "Dev, in game (host): a wreck (the map type: Raft's foundations on open water) ahead of the raft - a player put on its deck stands on it; dropped onto it from 5 m lands on it, also when a frame takes 0.6 s on the way down (a big island loading: The Abyss Expedition's test fell through); dropped onto its roof, they end on the roof or the deck. CIWreckDeck [keep]")]
+		public static void WreckDeck(string[] args) { StartTest(WreckDeckRoutine(args != null && args.Contains("keep"))); }
+
+		static IEnumerator WreckDeckRoutine(bool keep)
+		{
+			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
+			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			MapType type = MapTypes.Get("wreck");
+			float elevation;
+			// (the seed of the wreck the plan test fell through: it has a roof)
+			IslandGenSettings s = MapTypes.Roll(type, new System.Random(957038), out elevation);
+			IslandFile f = MapTypes.Create(type, s, elevation, "ciwreck");
+			f.Save(IslandSpawner.PathFor("ciwreck"));
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(raftPos.Value, 30f, 300f);
+			if (!spot.HasValue) { Fail("no open sea near the raft for the wreck"); yield break; }
+			int before = IslandWorldState.Islands.Count;
+			yield return DynamicIslands.instance.SpawnIslandFile("ciwreck", spot.Value, true);
+			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault();
+			if (entry == null || entry.Root == null) { Fail("the wreck did not spawn"); yield break; }
+			yield return new WaitForSeconds(1f);
+			List<BoxCollider> decks = entry.Root.GetComponentsInChildren<BoxCollider>(true).Where(x => x.name == "CustomIslands_Deck").ToList();
+			Check(ref ok, decks.Count >= 4, "the wreck has " + decks.Count + " deck tiles");
+			// (a tile with open sky above it as wide as a player - not under the roof or its edge)
+			Func<BoxCollider, Vector3> topOf = d => new Vector3(d.bounds.center.x, d.bounds.max.y, d.bounds.center.z);
+			BoxCollider tile = decks.FirstOrDefault(d => { RaycastHit hit; return Physics.SphereCast(topOf(d) + Vector3.up * 8f, 0.6f, Vector3.down, out hit, 9f, ~0, QueryTriggerInteraction.Ignore) && hit.collider == d; });
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (tile != null && player != null)
+			{
+				Vector3 top = topOf(tile);
+				string[] labels = { "put on its deck", "dropped onto its deck from 5 m", "dropped onto its deck from 5 m with a 0.6 s frame on the way",
+					"dropped onto its deck from 5 m while a very large island loads" };
+				float[] heights = { 1.2f, 5f, 5f, 5f };
+				int[] hitches = { 0, 0, 600, 0 };
+				IslandWorldState.Entry big = null;
+				for (int k = 0; k < labels.Length; k++)
+				{
+					yield return PutPlayer(player, top + Vector3.up * heights[k], false);
+					if (hitches[k] > 0) { yield return new WaitForSeconds(0.2f); System.Threading.Thread.Sleep(hitches[k]); }
+					// (as in the plan test: reaching the wreck brought The Drowned Metropolis, 3 900 objects, that moment)
+					if (k == 3 && IslandSpawner.ListSavedIslands().Contains("The Drowned Metropolis"))
+					{
+						int n0 = IslandWorldState.Islands.Count;
+						StartTest(DynamicIslands.instance.SpawnIslandFile("The Drowned Metropolis", spot.Value + new Vector3(800f, 0f, 0f), false));
+						yield return null;
+						big = IslandWorldState.Islands.Skip(n0).FirstOrDefault();
+					}
+					bool stood = false; string seen = "";
+					for (int i = 0; i < 16 && !stood; i++)
+					{
+						yield return new WaitForSeconds(0.25f);
+						Collider under = player.PersonController.groundRaycastHit.collider;
+						float above = player.transform.position.y - top.y;
+						stood = player.PersonController.IsGrounded && under != null && under.name == "CustomIslands_Deck" && above > 0.5f && above < 2f;
+						seen = (player.PersonController.IsGrounded ? "grounded" : "in the air") + " on " + (under != null ? under.name : "nothing") + ", " + above.ToString("F1") + " m above the deck";
+					}
+					Check(ref ok, stood, "a player " + labels[k] + " stands on it (" + seen + ")");
+				}
+				for (float w = 0f; w < 20f && big == null; w += 0.5f) { yield return new WaitForSeconds(0.5f); big = IslandWorldState.Islands.FirstOrDefault(e => e.Name == "The Drowned Metropolis" && e.Root != null && (e.Root.transform.position - (spot.Value + new Vector3(800f, 0f, 0f))).sqrMagnitude < 100f); }
+				if (big != null) IslandWorldState.RemoveIds(new List<int> { big.Id }, true);
+				// The thatch roof (when the wreck has one): dropped onto it, a player ends on the roof or the deck - never in the sea
+				Transform roof = entry.Root.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name.StartsWith("Block_Roof"));
+				if (roof != null)
+				{
+					Bounds rb = roof.GetComponentsInChildren<Renderer>().Select(r => r.bounds).Aggregate((a, b) => { a.Encapsulate(b); return a; });
+					yield return PutPlayer(player, new Vector3(rb.center.x, rb.max.y + 3f, rb.center.z), false);
+					yield return new WaitForSeconds(3f);
+					float above = player.transform.position.y - top.y;
+					Check(ref ok, above > 0.5f, "a player dropped onto its roof ends on the roof or the deck (" + above.ToString("F1") + " m above the deck)");
+				}
+				OnRaftCommand();
+			}
+			else Check(ref ok, false, "an open deck tile to stand on");
+			if (!keep)
+			{
+				IslandWorldState.RemoveIds(new List<int> { entry.Id }, true);
+				File.Delete(IslandSpawner.PathFor("ciwreck"));
+			}
+			if (ok) Log("PASS: a wreck's deck holds players" + (keep ? " (wreck kept)" : "")); else Fail("a wreck's deck holds players");
+		}
+
 		[ConsoleCommand(name: "CIZoneWorld", docs: "Dev, in game (host): a trigger zone with a message, items and an ambush warthog; the island rule for regrowing")]
 		public static void ZoneWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(ZoneWorldRoutine());
+			StartTest(ZoneWorldRoutine());
 		}
 
 		static IEnumerator ZoneWorldRoutine()
@@ -619,7 +1463,7 @@ namespace DynamicIslands
 			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = "cizone";
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -695,7 +1539,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGroupTest", docs: "Dev, editor: object groups - save a selection (with settings) as a group, it appears in My groups, placing it gives the separate objects (one undo step)")]
 		public static void GroupTest()
 		{
-			DynamicIslands.instance.StartCoroutine(GroupTestRoutine());
+			StartTest(GroupTestRoutine());
 		}
 
 		static IEnumerator GroupTestRoutine()
@@ -753,7 +1597,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIStampTest", docs: "Dev, editor: terrain stamps - built-in shapes (hill, crater), one per click, undo, saving your own and stamping it")]
 		public static void StampTest()
 		{
-			DynamicIslands.instance.StartCoroutine(StampTestRoutine());
+			StartTest(StampTestRoutine());
 		}
 
 		static IEnumerator StampTestRoutine()
@@ -815,7 +1659,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIAmbienceTest", docs: "Dev, editor: atmosphere zones (fog, light, particles, seen from inside and outside) and sound zones (Raft's sounds, choosing one, listening)")]
 		public static void AmbienceTest()
 		{
-			DynamicIslands.instance.StartCoroutine(AmbienceTestRoutine());
+			StartTest(AmbienceTestRoutine());
 		}
 
 		static IEnumerator AmbienceTestRoutine()
@@ -839,6 +1683,20 @@ namespace DynamicIslands
 			AtmosphereZone az = atmo.GetComponent<AtmosphereZone>();
 			ParticleSystem ps = atmo.GetComponentInChildren<ParticleSystem>();
 			Check(ref ok, az != null && az.FogAmount > 0f && ps != null && ps.isPlaying && ps.particleCount > 0, "the atmosphere zone shows in the editor: fog, light, " + (ps != null ? ps.particleCount + " fireflies" : "no particles"));
+			{
+				// (steam, 11-05: plumes rising from the middle in the fog's colour - a green fog, green steam; then fireflies again)
+				PropsCommand.Change(atmo, ObjectProps.With(ObjectProps.With(atmo.Props, ObjectProps.AtmoParticles, "steam"), ObjectProps.AtmoFog, "#60B030"));
+				yield return new WaitForSeconds(1.5f);
+				ParticleSystem st = atmo.GetComponentInChildren<ParticleSystem>();
+				Color sc = st != null ? st.main.startColor.color : Color.clear;
+				ParticleSystem.Particle[] pts = new ParticleSystem.Particle[st != null ? st.particleCount : 0];
+				int nPts = st != null ? st.GetParticles(pts) : 0;
+				bool rising = nPts > 0 && pts.Take(nPts).Average(x => x.velocity.y) > 0.3f;
+				Check(ref ok, st != null && st.isPlaying && nPts > 0 && rising && sc.g > sc.r + 0.1f && sc.g > sc.b + 0.1f && sc.a > 0.25f,
+					"steam: " + nPts + " plumes rising from the zone, green as its fog (" + sc.r.ToString("F2") + " " + sc.g.ToString("F2") + " " + sc.b.ToString("F2") + " a " + sc.a.ToString("F2") + ")");
+				PropsCommand.Change(atmo, p);
+				yield return new WaitForSeconds(1f);
+			}
 
 			Camera cam = Camera.main;
 			cam.transform.position = c0 + new Vector3(0, 3, -6);
@@ -849,6 +1707,22 @@ namespace DynamicIslands
 			Check(ref ok, inside == az && w > 0.99f, "from inside the zone it acts fully (" + w.ToString("F2") + ")");
 			Screenshot(new[] { "atmosphere_inside" });
 			yield return new WaitForSecondsRealtime(0.5f);
+
+			// A dark light tint really darkens: the sun takes it too while the camera draws inside (a cave was lit like the
+			// beach - found building Shelter Atoll), and has its own colour again after
+			PropsCommand.Change(atmo, ObjectProps.With(ObjectProps.With(p, ObjectProps.AtmoLight, "#101010"), ObjectProps.AtmoLightAmount, "0.9"));
+			yield return null; yield return null; yield return null;
+			Light sunNow = RenderSettings.sun != null ? RenderSettings.sun : UnityEngine.Object.FindObjectsOfType<Light>().Where(l => l.type == LightType.Directional && l.isActiveAndEnabled).OrderByDescending(l => l.intensity).FirstOrDefault();
+			float before = AtmosphereZone.SunBefore.grayscale, drawn = AtmosphereZone.SunWhileDrawn.grayscale;
+			Check(ref ok, sunNow != null && before > 0f && drawn < before * 0.3f && Mathf.Abs(sunNow.color.grayscale - before) < 0.01f,
+				"in a dark zone the sun is dimmed while the camera draws (" + before.ToString("F2") + " -> " + drawn.ToString("F2") + ") and its own colour again after (" + (sunNow != null ? sunNow.color.grayscale.ToString("F2") : "no sun") + ")");
+			// Bubbles: they rise
+			PropsCommand.Change(atmo, ObjectProps.With(p, ObjectProps.AtmoParticles, "bubbles"));
+			yield return new WaitForSeconds(1f);
+			ParticleSystem bubbles = atmo.GetComponentInChildren<ParticleSystem>();
+			Check(ref ok, bubbles != null && bubbles.isPlaying && bubbles.particleCount > 0 && bubbles.main.gravityModifier.constant < 0f, "bubbles rise from the zone (" + (bubbles != null ? bubbles.particleCount + " now, gravity " + bubbles.main.gravityModifier.constant : "no particles") + ")");
+			PropsCommand.Change(atmo, p);
+			yield return new WaitForSeconds(0.5f);
 			cam.transform.position = c0 + new Vector3(0, 30, -60);
 			yield return null;
 			AtmosphereZone.Strongest(cam.transform.position, out w);
@@ -899,7 +1773,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIAmbienceWorld", docs: "Dev, in game (host): an island with an atmosphere zone and a sound zone; standing in them")]
 		public static void AmbienceWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(AmbienceWorldRoutine());
+			StartTest(AmbienceWorldRoutine());
 		}
 
 		static IEnumerator AmbienceWorldRoutine()
@@ -909,7 +1783,7 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			bool ok = true;
 			string loop = SoundLibrary.Events.FirstOrDefault(e => e.ToLowerInvariant().Contains("ambien") && SoundLibrary.IsLooping(e)) ?? SoundLibrary.Events.FirstOrDefault(SoundLibrary.IsLooping);
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = "ciambience";
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -966,7 +1840,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIQuestTest", docs: "Dev, editor: the quest editor - a quest with four steps, the window, save and load")]
 		public static void QuestTest()
 		{
-			DynamicIslands.instance.StartCoroutine(QuestTestRoutine());
+			StartTest(QuestTestRoutine());
 		}
 
 		static IEnumerator QuestTestRoutine()
@@ -1025,7 +1899,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIQuestWorld", docs: "Dev, in game (host): plays a quest - go to a zone, read a note, open a chest, defeat two warthogs - and gets the reward")]
 		public static void QuestWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(QuestWorldRoutine());
+			StartTest(QuestWorldRoutine());
 		}
 
 		static IEnumerator QuestWorldRoutine()
@@ -1034,7 +1908,7 @@ namespace DynamicIslands
 			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
 			yield return EnsureAlive();
 			bool ok = true;
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = "ciquest";
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -1056,11 +1930,31 @@ namespace DynamicIslands
 			yield return DynamicIslands.instance.SpawnIslandFile("ciquest", spot.Value, true);
 			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(before).FirstOrDefault();
 			if (entry == null || entry.Root == null) { Fail("the quest island did not spawn"); yield break; }
-			yield return StandRoutine(entry.Root); // near the island: the quest shows
+			// (the panel shows only close by - within 70 m of the land - and stays up out to 150 m; the user, 2026-10-07)
+			IslandInfoTag tag = entry.Root.GetComponent<IslandInfoTag>();
+			Vector3 mid = entry.Root.transform.position + tag.LocalCentre;
+			Vector3 away = (RAPI.GetLocalPlayer().transform.position - mid).normalized;
+			away.y = 0f;
+			if (away.sqrMagnitude < 0.01f) away = Vector3.forward;
+			away.Normalize();
+			yield return PutPlayer(RAPI.GetLocalPlayer(), mid + away * (tag.Radius + 110f), true);
+			yield return new WaitForSeconds(1.5f);
+			Check(ref ok, !QuestTracker.PanelShown, "no quest panel 110 m off the land");
+			yield return PutPlayer(RAPI.GetLocalPlayer(), mid + away * (tag.Radius + 50f), true);
+			yield return new WaitForSeconds(1.5f);
+			Check(ref ok, QuestTracker.PanelShown, "the quest panel shows 50 m off the land");
+			yield return PutPlayer(RAPI.GetLocalPlayer(), mid + away * (tag.Radius + 110f), true);
+			yield return new WaitForSeconds(1.5f);
+			Check(ref ok, QuestTracker.PanelShown, "and stays up when the player moves back out to 110 m");
+			yield return StandRoutine(entry.Root); // on the island: the quest shows
 			yield return new WaitForSeconds(1.5f);
 			Check(ref ok, QuestTracker.QuestOf(entry).Steps.Count == 4 && QuestTracker.StepOf(entry) == 0, "the island has its quest, at step 1");
 			Check(ref ok, GameObject.Find("CustomIslands_Quest") != null && GameObject.Find("CustomIslands_Quest").GetComponentInChildren<Text>() != null, "the quest panel shows near the island");
 			Screenshot(new[] { "quest_panel" });
+			// (its X closes it until the step changes - ROADMAP CT10)
+			GameObject.Find("CustomIslands_Quest").GetComponentsInChildren<Button>(true).First(b => b.name == "Close").onClick.Invoke();
+			yield return new WaitForSeconds(1f);
+			Check(ref ok, !QuestTracker.PanelShown, "the panel's X closes it");
 
 			IslandNetMessage sent = null;
 			IslandNetwork.Loopback = m => { if (m.Kind == IslandNetMessage.QuestStep) sent = m; };
@@ -1093,11 +1987,26 @@ namespace DynamicIslands
 				if (QuestTracker.StepOf(entry) == 3) Log("  defeated one: " + QuestTracker.QuestOf(entry).Steps[3].Describe());
 			}
 			yield return new WaitForSeconds(1.5f);
+			Check(ref ok, QuestTracker.PanelShown, "the panel is back once the next step came");
 			Check(ref ok, QuestTracker.StepOf(entry) == 4, "defeating both warthogs finishes the quest (step " + QuestTracker.StepOf(entry) + ")");
 			Check(ref ok, QuestTracker.LastMessage != null && QuestTracker.LastMessage.StartsWith("Quest complete: The lost camp"), "\"" + QuestTracker.LastMessage + "\"");
 			Check(ref ok, inv.GetItemCount("Plank") - planks == 5, "the reward arrives (planks +" + (inv.GetItemCount("Plank") - planks) + ")");
 			Screenshot(new[] { "quest_done" });
 			yield return new WaitForSeconds(1f);
+			// (a finished quest's panel goes by itself after DoneHideSeconds (30 s; 3 s here) - ROADMAP CT10)
+			Check(ref ok, QuestTracker.PanelShown, "the panel stays up a while after the quest is done");
+			QuestTracker.DoneHideSeconds = 3f;
+			yield return new WaitForSeconds(3f);
+			Check(ref ok, !QuestTracker.PanelShown, "the finished quest's panel hides by itself");
+			// (the journal: the island's line with its finished quest in light green - ROADMAP CT8)
+			JournalWindow.Open();
+			yield return new WaitForSeconds(1f);
+			Text line = UnityEngine.Object.FindObjectsOfType<Text>().FirstOrDefault(t => t.name == "Island" && t.text.Contains("The lost camp"));
+			Check(ref ok, line != null && line.text.Contains("√ done") && line.color.g > 0.8f && line.color.r < 0.7f, "the journal's line of the finished quest is light green" + (line != null ? " (" + line.color + ")" : " (no line)"));
+			Screenshot(new[] { "journal_quest_done" });
+			yield return new WaitForSeconds(0.6f);
+			JournalWindow.Close();
+			QuestTracker.DoneHideSeconds = 30f;
 
 			// Saved with the world's state; a message from another player sets it too
 			ObjectState s;
@@ -1114,23 +2023,49 @@ namespace DynamicIslands
 		public static void Hierarchy(string[] args)
 		{
 			string name = args != null ? string.Join(" ", args) : "";
+			DynamicIslands.instance.StartCoroutine(HierarchyRoutine(name));
+		}
+
+		static IEnumerator HierarchyRoutine(string name)
+		{
+			// (an on-demand object - Raft's shark cage, RF3's survivor cage made from it - is loaded first)
+			yield return PlaceableCatalog.EnsureBuilt();
+			if (PlaceableCatalog.Get(name) == null && PlaceableCatalog.IsIndexed(name)) yield return PlaceableCatalog.EnsureLoaded(new List<string> { name });
 			GameObject proto = PlaceableCatalog.Get(name);
-			if (proto == null) { Fail("no catalog object '" + name + "'"); return; }
+			if (proto == null) { Fail("no catalog object '" + name + "'"); yield break; }
 			foreach (Transform t in proto.GetComponentsInChildren<Transform>(true))
 			{
 				int depth = 0;
 				for (Transform p = t; p != proto.transform; p = p.parent) depth++;
 				MeshFilter mf = t.GetComponent<MeshFilter>();
-				Log(new string(' ', depth * 2) + t.name + " pos " + t.localPosition.ToString("F2") + " rot " + t.localEulerAngles.ToString("F0") + " scale " + t.localScale.ToString("F2") +
+				Rigidbody rb = t.GetComponent<Rigidbody>();
+				Log(new string(' ', depth * 2) + t.name + (t.gameObject.activeSelf ? "" : " (off)") + " pos " + t.localPosition.ToString("F2") + " rot " + t.localEulerAngles.ToString("F0") + " scale " + t.localScale.ToString("F2") +
 					" [" + string.Join(", ", t.GetComponents<Component>().Where(c => c != null && !(c is Transform)).Select(c => c.GetType().Name).ToArray()) + "]" +
+					(rb != null ? " rigidbody " + (rb.isKinematic ? "kinematic" : "FREE") : "") +
 					(mf != null && mf.sharedMesh != null ? " mesh " + mf.sharedMesh.name + " " + mf.sharedMesh.bounds.size.ToString("F2") : ""));
 			}
+			// (each mesh: readable or not, its parts (submeshes) with their materials and bounds)
+			foreach (MeshRenderer r in proto.GetComponentsInChildren<MeshRenderer>(true))
+			{
+				MeshFilter mf = r.GetComponent<MeshFilter>();
+				Mesh m = mf != null ? mf.sharedMesh : null;
+				if (m == null) continue;
+				Log(r.name + ": mesh " + m.name + " readable " + m.isReadable + ", " + m.subMeshCount + " parts, " + m.vertexCount + " vertices");
+				for (int i = 0; i < m.subMeshCount; i++)
+				{
+					Material mat = i < r.sharedMaterials.Length ? r.sharedMaterials[i] : null;
+					var d = m.GetSubMesh(i);
+					Log("  part " + i + ": " + d.indexCount / 3 + " triangles, bounds " + d.bounds.center.ToString("F2") + " size " + d.bounds.size.ToString("F2") + ", material " +
+						(mat != null ? mat.name + " (" + (mat.shader != null ? mat.shader.name : "?") + (mat.HasProperty("_Color") ? ", colour " + mat.color : "") + ")" : "none"));
+				}
+			}
+			Log("hierarchy of '" + name + "' done");
 		}
 
 		[ConsoleCommand(name: "CINoteLook", docs: "Dev, in game: stands the player in front of the nearest readable note and checks Raft's own interaction ray finds it")]
 		public static void NoteLook()
 		{
-			DynamicIslands.instance.StartCoroutine(NoteLookRoutine());
+			StartTest(NoteLookRoutine());
 		}
 
 		static IEnumerator NoteLookRoutine()
@@ -1162,23 +2097,51 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIMainMenu", docs: "Dev, in game or the editor: leaves the world (saving) for the main menu, as Raft's pause menu does (in the editor: as its Main menu button does)")]
 		public static void MainMenu()
 		{
+			// (a running CIOptionsMatrix ends first, the world's own options back before the save)
+			StopExclusive();
+			// (test delays end with the test world: they stayed set for the session - CB13)
+			Claims.TestAnswerDelay = 0f; CustomIslandSpawner.TestGenerateDelay = 0f;
 			// (the editor isn't a game: leave it as its Main menu button does)
 			if (DynamicIslands.InEditor())
 			{
 				Log("Leaving the editor");
 				UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
+				StartTest(WaitForMainMenu());
 				return;
 			}
 			// (already at the main menu: nothing to leave - LeaveGame threw a NullReferenceException there)
-			if (!LoadSceneManager.IsGameSceneLoaded || ComponentManager<Raft_Network>.Value == null) { Log("At the main menu already (not in a world or the editor)"); return; }
+			if (!LoadSceneManager.IsGameSceneLoaded || ComponentManager<Raft_Network>.Value == null) { Log("At the main menu already (not in a world or the editor)"); StartTest(WaitForMainMenu()); return; } // (a test, so IDLE follows: ci.ps1 -done waited its whole timeout - 11-06)
 			Log("Leaving the world");
 			ComponentManager<Raft_Network>.Value.LeaveGame((DisconnectReason)2, (SceneName)1, true, false);
+			StartTest(WaitForMainMenu());
+		}
+
+		/// <summary>CIMainMenu's end (10-20): "At the main menu" once the menu's New Game box is there (60 s at most), then
+		/// IDLE - so "CIMainMenu;CINewWorld ..." and scripts wait for the menu itself instead of sleeping.</summary>
+		static IEnumerator WaitForMainMenu()
+		{
+			float start = Time.realtimeSinceStartup, end = start + 60f;
+			yield return null;
+			while (Time.realtimeSinceStartup < end && MenuNewGameBox() == null) yield return new WaitForSecondsRealtime(0.1f);
+			if (MenuNewGameBox() == null) { Fail("main menu: not there after 60 s"); yield break; }
+			yield return WaitMenuSettled(end);
+			Log("At the main menu (after " + Took(start) + ")");
+		}
+
+		/// <summary>Until Raft has finished loading the menu (11-07): its scene loader clears GameManager.IsLeavingGame only
+		/// at the end of the menu's fade, about 2 s after the New Game box is there. A world loaded or created before that
+		/// never came in: Raft_Network.OnSceneLoaded skips "connection to self" while IsLeavingGame is set (the load stall of
+		/// the 3.2 full run: "the world was not in after 180 s").</summary>
+		internal static IEnumerator WaitMenuSettled(float end)
+		{
+			while (Time.realtimeSinceStartup < end && (GameManager.IsLeavingGame || LoadSceneManager.IsLoadingScene)) yield return new WaitForSecondsRealtime(0.1f);
+			if (GameManager.IsLeavingGame || LoadSceneManager.IsLoadingScene) Log("  (Raft still leaving the last world: IsLeavingGame=" + GameManager.IsLeavingGame + ", IsLoadingScene=" + LoadSceneManager.IsLoadingScene + ")");
 		}
 
 		[ConsoleCommand(name: "CIModelCheck", docs: "Dev, editor (after a world): creatures show Raft's real models instead of markers; places a few and takes a screenshot")]
 		public static void ModelCheck()
 		{
-			DynamicIslands.instance.StartCoroutine(ModelCheckRoutine());
+			StartTest(ModelCheckRoutine());
 		}
 
 		static IEnumerator ModelCheckRoutine()
@@ -1188,10 +2151,10 @@ namespace DynamicIslands
 			EditorUI.SetTab(TAB.ObjectPlace);
 			Transform placed = GameObject.Find("PlacedObjects").transform;
 			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel, 500f);
-			string[] show = { "Creature_Boar", "Creature_Llama", "Creature_Bear", "Creature_Chicken", "Creature_Hyena" };
+			string[] show = { "Creature_Boar", "Creature_Llama", "Creature_Bear", "Creature_Chicken", "Creature_Puffin", "Creature_ButlerBot", "Creature_StoneBird_Caravan" };
 			for (int i = 0; i < show.Length; i++)
 			{
-				EditorGameObject e = PlaceForTest(show[i], c0 + new Vector3(i * 4f - 8f, 0, 0), placed);
+				EditorGameObject e = PlaceForTest(show[i], c0 + new Vector3(i * 4f - 12f, 0, 0), placed);
 				if (e != null && i == 0) PropsCommand.Change(e, ObjectProps.With(e.Props, ObjectProps.TintColor, "#6080FF"));
 			}
 			Camera.main.transform.position = c0 + new Vector3(0, 5f, -14f);

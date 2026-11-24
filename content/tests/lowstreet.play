@@ -1,0 +1,73 @@
+# Lowstreet (CIPlay lowstreet): the tram stop, the expedition plan, the cinema's projection box (wind turbine), the
+# shops' air, the anglers, the electronics shop (advanced battery), the department store, the cage release refusing
+# until the office's key, Ines's report, the lamp shop (advanced headlight), the big stingray, the diner.
+# offset: the land centre from CIRecipe lowstreet (11-07).
+island Lowstreet
+offset -1.0632 0.7632
+expect step 0
+expect title The Drowned District
+zone tram_stop
+expect step 1
+read Expedition plan
+expect step 2
+read Council flood notice
+expect step 3
+zone shop_1
+air shop_1
+air shop_4
+expect step 4
+open Toy box at No. 14
+wait 3
+expect step 5
+kill Angler fish
+expect animals Angler fish 0
+expect step 6
+open Electronics shop
+wait 3
+expect step 7
+open Diner
+wait 3
+expect step 8
+read Jonah's letter
+expect step 9
+zone store_front
+expect step 10
+use cagerelease
+expect story cagesopen 0
+open Floor manager's office
+wait 3
+expect story storekey 1
+use cagerelease
+expect story cagesopen 1
+expect step 11
+use inescage
+expect survivor highwater_ines
+expect story storekey 0
+read Ines's report
+expect step 12
+# STORY 10-24: Ines's chalk hooks along the street to the sewer mouth
+zone ls_hook1
+expect step 13
+zone ls_hook2
+expect step 14
+open Projection box
+wait 3
+expect step 15
+open Lamp shop
+wait 3
+expect step 16
+kill Stingray
+expect step 17
+zone embankment
+expect step 18
+read Depot timetable
+expect step 19
+zone tram_wagons
+expect step 20
+open Stripped caravan's crate
+wait 3
+expect step 21
+zone ls_hook3
+expect step 22
+read Ines's chalk note
+expect done

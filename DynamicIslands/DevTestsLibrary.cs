@@ -52,6 +52,7 @@ namespace DynamicIslands
 			foreach (string z in new[] { Path.Combine(LibraryPack.ExportFolder, "ci-lib-pack.zip"), Path.Combine(LibraryPack.ImportFolder, "ci-lib-pack.zip") }) if (File.Exists(z)) File.Delete(z);
 			string last = Path.Combine(LibraryPack.ExportFolder, "exports.json");
 			if (File.Exists(last) && File.ReadAllText(last).Contains("ci-lib")) File.Delete(last);
+			if (File.Exists(LibraryPack.UpdatedLog)) File.WriteAllLines(LibraryPack.UpdatedLog, File.ReadAllLines(LibraryPack.UpdatedLog).Where(l => !l.StartsWith("cilib-")).ToArray());
 			IslandCache.Forget();
 		}
 
@@ -68,7 +69,7 @@ namespace DynamicIslands
 		static KeyValuePair<string, byte[]> Entry(string name, string text) { return new KeyValuePair<string, byte[]>(name, Encoding.UTF8.GetBytes(text)); }
 		static KeyValuePair<string, byte[]> Entry(string name, byte[] b) { return new KeyValuePair<string, byte[]>(name, b); }
 
-		[ConsoleCommand(name: "CILibraryUnit", docs: "Dev, anywhere: the pack rules without the game - versions compared as numbers, ids from titles, safe file names, and broken or harmful packs refused with a reason and nothing written (a cut-off zip, a file outside its folder, 70 files, a zip bomb, a program, no info.json, a newer island format, a plan naming an island it doesn't hold)")]
+		[ConsoleCommand(name: "CILibraryUnit", docs: "Dev, anywhere: the pack rules without the game - versions compared as numbers, ids from titles, safe file names, and broken or harmful packs refused with a reason and nothing written (a cut-off zip, a file outside its folder, 70 files, a zip bomb, a program, no info.json, a newer island format, an island with a damaged body, an info.json nested too deep, a plan naming an island it doesn't hold)")]
 		public static void LibraryUnitCommand()
 		{
 			bool ok = true;
@@ -79,7 +80,12 @@ namespace DynamicIslands
 
 			string dir = Path.Combine(LibraryPack.LibraryFolder, "citest");
 			Directory.CreateDirectory(dir);
-			byte[] island = Encoding.ASCII.GetBytes("CISL").Concat(BitConverter.GetBytes(4)).Concat(new byte[40]).ToArray();
+			// (a real island: a pack's islands are read in full - AU39)
+			string realPath = Path.Combine(dir, "real" + IslandFile.Extension);
+			new IslandFile { Name = "x", TerrainSize = new Vector3(10, 10, 10), HeightmapResolution = 33, Heights = new float[33, 33] }.Save(realPath);
+			byte[] island = File.ReadAllBytes(realPath);
+			File.Delete(realPath);
+			byte[] damaged = Encoding.ASCII.GetBytes("CISL").Concat(BitConverter.GetBytes(4)).Concat(new byte[40]).ToArray();
 			byte[] newer = Encoding.ASCII.GetBytes("CISL").Concat(BitConverter.GetBytes(99)).Concat(new byte[40]).ToArray();
 			string info = "{\"id\":\"ci-bad\",\"kind\":\"island\",\"title\":\"Bad\",\"author\":\"x\"}";
 			var cases = new List<KeyValuePair<string, Action<string>>>
@@ -92,6 +98,8 @@ namespace DynamicIslands
 				new KeyValuePair<string, Action<string>>("no info.json", p => WriteTestZip(p, new[] { Entry("ci-bad/x.island", island) })),
 				new KeyValuePair<string, Action<string>>("a newer island format", p => WriteTestZip(p, new[] { Entry("ci-bad/info.json", info), Entry("ci-bad/x.island", newer) })),
 				new KeyValuePair<string, Action<string>>("not an island file", p => WriteTestZip(p, new[] { Entry("ci-bad/info.json", info), Entry("ci-bad/x.island", "hello") })),
+				new KeyValuePair<string, Action<string>>("an island with a damaged body", p => WriteTestZip(p, new[] { Entry("ci-bad/info.json", info), Entry("ci-bad/x.island", damaged) })),
+				new KeyValuePair<string, Action<string>>("an info.json nested 100,000 deep", p => WriteTestZip(p, new[] { Entry("ci-bad/info.json", "{\"id\":\"ci-bad\",\"tags\":" + new string('[', 100000) + "}"), Entry("ci-bad/x.island", island) })),
 				new KeyValuePair<string, Action<string>>("a plan naming an island it doesn't hold", p => WriteTestZip(p, new[] { Entry("ci-bad/info.json", "{\"id\":\"ci-bad\",\"kind\":\"plan\",\"title\":\"Bad\",\"author\":\"x\",\"plan\":\"P.plan\"}"), Entry("ci-bad/x.island", island), Entry("ci-bad/P.plan", "rule = a | island:y | start | ahead:300 | | ") })),
 				new KeyValuePair<string, Action<string>>("two entries' folders", p => WriteTestZip(p, new[] { Entry("ci-bad/info.json", info), Entry("other/x.island", island) })),
 			};
@@ -121,7 +129,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: library unit"); else Fail("library unit");
 		}
 
-		[ConsoleCommand(name: "CILibraryRoundTrip", docs: "Dev, main menu or editor: a plan whose islands bring islands (a -> b -> c) exported as a pack (everything it needs, a missing island stops it, the next export is version 2 of the same entry), installed where its files aren't (the same bytes back, the plan, never while sailing), where a different 'cilib-b' is the player's (installed as 'cilib-b (CI Lib Pack)', a's rule follows, the player's untouched), updated while a saved world uses an island (that world keeps its version), a no-remix island refused, removed (keeping what a world uses); cleans up")]
+		[ConsoleCommand(name: "CILibraryRoundTrip", docs: "Dev, main menu or editor: a plan whose islands bring islands (a -> b -> c) exported as a pack (everything it needs, a missing island stops it, the next export is version 2 of the same entry), installed where its files aren't (the same bytes back, the plan, never while sailing), where a different 'cilib-b' is the player's (installed as 'cilib-b (CI Lib Pack)', a's rule follows, the player's untouched), updated while a saved world uses an island (that world keeps its version), a no-remix island refused, removed (keeping what a world uses); SL11: a storyline plan (tab titles, colours, intros, next-when, ending) is equal after export, remove and import; cleans up")]
 		public static void LibraryRoundTripCommand()
 		{
 			bool ok = true;
@@ -248,6 +256,44 @@ namespace DynamicIslands
 				Check(ref ok, File.Exists(IslandSpawner.PathFor(LibA)) && File.Exists(WorldPlan.PathFor(planName)) && !File.Exists(IslandSpawner.PathFor(LibC)) && r.ToString().Contains("CI Lib World"),
 					"Remove keeps cilib-a and the plan (the world 'CI Lib World' uses them - it has no copy of the plan), removes the rest");
 				Check(ref ok, File.Exists(IslandSpawner.PathFor(LibB)) && LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(LibB))) == mine, "the player's own cilib-b is still there, untouched");
+
+				// SL11: a storyline shared - tab titles, colours, intros, a next-when note/step and an ending survive export -> remove -> import
+				{
+					const string nbIsland = "cilib-nb", nbPlan = "CI Lib Plan NB";
+					MakeLibIsland(nbIsland, 5);
+					var nbSource = new WorldPlan { Name = nbPlan, Description = "a storyline", Random = false, StoryEnding = "The end.\nThanks, åäö" };
+					nbSource.Rules.Add(new IntroRule { Id = "one", What = "island", WhatArg = nbIsland, When = "start", Where = "receiver", Distance = 300, StoryPlace = "first", StoryDone = "step:2",
+						TabTitle = "The Beginning", TabColour = 4, TabIntro = "Welcome, åäö\nSecond line" });
+					nbSource.Rules.Add(new IntroRule { Id = "two", What = "island", WhatArg = nbIsland, When = "rule", WhenRef = "one", Where = "receiver", Distance = 300, StoryPlace = "after:one", StoryDone = "note:1",
+						TabTitle = "Part two", TabColour = 6, TabIntro = "Next up" });
+					nbSource.Save();
+					WorldPlan nbSaved = WorldPlan.Load(nbPlan);
+					string nbError;
+					string nbZip = LibraryPack.Export(new LibraryInfo { title = "CI Lib NB", id = "ci-lib-nb", author = "CI Tester", summary = "test", remix = true }, null, nbSaved, null, null, out nbError);
+					Check(ref ok, nbZip != null && File.Exists(nbZip), "SL11: a plan with tabs, colours, intros, next-when and an ending exported: " + (nbZip ?? nbError));
+					LibraryPackContents nbPack = nbZip != null ? LibraryPack.Read(nbZip, out nbError) : null;
+					if (nbPack != null)
+					{
+						DeleteLib(nbIsland);
+						File.Delete(WorldPlan.PathFor(nbPlan));
+						LibraryPack.Report nbReport = LibraryPack.Install(nbPack, true, false, LibraryPack.SourceImport);
+						WorldPlan nbBack = WorldPlan.Load(nbReport.PlanName ?? nbPlan);
+						Check(ref ok, nbBack != null && nbBack.Rules.Count == 2, "SL11: imported again (" + (nbBack != null ? nbBack.Rules.Count + " rules" : "no plan") + ")");
+						if (nbBack != null && nbBack.Rules.Count == 2)
+						{
+							for (int i = 0; i < 2; i++)
+							{
+								IntroRule a = nbSaved.Rules[i], b = nbBack.Rules[i];
+								Check(ref ok, a.TabTitle == b.TabTitle && a.TabColour == b.TabColour && a.TabIntro == b.TabIntro && a.StoryPlace == b.StoryPlace && a.StoryDone == b.StoryDone && a.ToLine() == b.ToLine(),
+									"SL11: rule '" + a.Id + "' equal after the round trip: tab '" + b.TabTitle + "', colour " + b.TabColour + ", intro, place '" + b.StoryPlace + "', next-when '" + b.StoryDone + "'");
+							}
+							Check(ref ok, nbBack.StoryEnding == nbSaved.StoryEnding && nbBack.Description == nbSaved.Description, "SL11: the storyending and description are equal after the round trip ('" + nbBack.StoryEnding.Replace("\n", "\\n") + "')");
+							Check(ref ok, string.Join("\n", nbBack.Rules.Select(x => x.ToLine()).ToArray()) == string.Join("\n", nbSaved.Rules.Select(x => x.ToLine()).ToArray()), "SL11: the plan's rules and the notebook's lines are the same as the source's");
+						}
+						LibraryPack.Remove("ci-lib-nb");
+					}
+					if (nbZip != null && File.Exists(nbZip)) File.Delete(nbZip);
+				}
 			}
 			catch (Exception e) { Check(ref ok, false, "no exception: " + e); }
 			finally
@@ -261,6 +307,86 @@ namespace DynamicIslands
 		}
 
 
+		[ConsoleCommand(name: "CILibUpdateChoice", docs: "Dev, main menu or editor: T10 - an install records its files' SHA-256, so a library file changed without a new version shows as Update; an update over the player's changed island keeps theirs as '<name> (yours)' (out of the random pool), Keep my changes leaves it; updated islands are noted for the worlds that have them")]
+		public static void LibUpdateChoiceCommand()
+		{
+			bool ok = true;
+			CleanLibTests();
+			const string id = "ci-lib-upd", u = "cilib-u", yours = "cilib-u (yours)";
+			string tmp = Path.Combine(LibraryPack.LibraryFolder, "ci-lib-upd.tmp.zip");
+			try
+			{
+				Directory.CreateDirectory(LibraryPack.LibraryFolder);
+				Func<int, int, LibraryPackContents> packOf = (version, seed) =>
+				{
+					MakeLibIsland(u, seed);
+					byte[] b = File.ReadAllBytes(IslandSpawner.PathFor(u));
+					DeleteLib(u);
+					WriteTestZip(tmp, new[] { Entry(id + "/info.json", new LibraryInfo { id = id, kind = "island", title = "CI Lib Upd", author = "CI Tester", version = version }.ToJson()), Entry(id + "/" + u + ".island", b) });
+					string err;
+					LibraryPackContents pc = LibraryPack.Read(tmp, out err);
+					File.Delete(tmp);
+					if (pc == null) throw new Exception("pack: " + err);
+					return pc;
+				};
+				Func<int, string, LibraryEntry> entryOf = (version, sha) =>
+				{
+					var e = new LibraryEntry { Info = new LibraryInfo { id = id, kind = "island", title = "CI Lib Upd", version = version } };
+					e.Files.Add(new LibraryFileRef { Name = u + ".island", Sha256 = sha });
+					e.Files.Add(new LibraryFileRef { Name = "icon.jpg", Sha256 = "00" });
+					return e;
+				};
+
+				// Version 1 installed: the pack's files are recorded
+				LibraryPackContents p1 = packOf(1, 11);
+				string sha1 = LibraryPack.Sha256(p1.Files[u + ".island"]);
+				long before = DateTime.UtcNow.Ticks;
+				LibraryPack.Install(p1, false, false, LibraryPack.SourceLibrary);
+				LibraryInstalled inst = LibraryPack.Installed().FirstOrDefault(x => x.id == id);
+				string rec;
+				Check(ref ok, inst != null && inst.packed.TryGetValue(u + ".island", out rec) && rec == sha1, "installed.json records the pack's island file and its SHA-256");
+				Check(ref ok, LibraryClient.StateOf(entryOf(1, sha1)) == LibraryClient.State.Installed, "the library lists the same file: Installed (a picture's change doesn't count)");
+				Check(ref ok, LibraryClient.StateOf(entryOf(1, "ab" + sha1.Substring(2))) == LibraryClient.State.Update, "the library's file changed, same version number: Update");
+				Check(ref ok, LibraryClient.StateOf(entryOf(2, sha1)) == LibraryClient.State.Update, "a higher version: Update");
+
+				// The player changes the island; version 2 replaces it - theirs is kept as a copy, out of the random pool
+				MakeLibIsland(u, 99);
+				string mine = LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(u)));
+				LibraryPackContents p2 = packOf(2, 22);
+				string sha2 = LibraryPack.Sha256(p2.Files[u + ".island"]);
+				MakeLibIsland(u, 99);
+				LibraryPack.Report r = LibraryPack.Install(p2, true, true, LibraryPack.SourceLibrary);
+				Log("  " + r.ToString().Replace("\n", " / "));
+				Check(ref ok, LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(u))) == sha2, "Update, keep a copy: the new version is installed");
+				Check(ref ok, File.Exists(IslandSpawner.PathFor(yours)) && LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(yours))) == mine && r.ToString().Contains("kept as '" + yours + "'"),
+					"the player's version is kept as '" + yours + "', and the report says so");
+				CustomIslandSpawner.LoadPool(true);
+				Check(ref ok, !WorldIslands.Candidates().Contains(yours), "the copy never turns up by chance while sailing");
+				Check(ref ok, LibraryPack.UpdatedSince(before).ContainsKey(u), "the update is noted for the worlds that have the island");
+				Check(ref ok, LibraryClient.StateOf(entryOf(2, sha2)) == LibraryClient.State.Installed, "after the update the same listing is Installed");
+
+				// Changed again; version 3 with Keep my changes: theirs stays, no copy
+				DeleteLib(yours);
+				MakeLibIsland(u, 98);
+				mine = LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(u)));
+				LibraryPackContents p3 = packOf(3, 33);
+				MakeLibIsland(u, 98);
+				r = LibraryPack.Install(p3, true, false, LibraryPack.SourceLibrary);
+				Log("  " + r.ToString().Replace("\n", " / "));
+				Check(ref ok, LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(u))) == mine && !File.Exists(IslandSpawner.PathFor(yours)) && r.ToString().Contains("Kept your changed"),
+					"Keep my changes: the player's island stays as it is, no copy");
+			}
+			catch (Exception e) { Check(ref ok, false, "no exception: " + e); }
+			finally
+			{
+				if (File.Exists(tmp)) File.Delete(tmp);
+				try { LibraryPack.Remove(id); } catch { }
+				CleanLibTests();
+				RemovePoolTestLines();
+			}
+			if (ok) Log("PASS: library update choice"); else Fail("library update choice");
+		}
+
 		static void RemovePoolTestLines()
 		{
 			string path = Path.Combine(DynamicIslands.assetpath, CustomIslandSpawner.PoolFileName);
@@ -270,8 +396,29 @@ namespace DynamicIslands
 			CustomIslandSpawner.LoadPool(true);
 		}
 
+		[ConsoleCommand(name: "CILibraryBanner", docs: "Dev: the island library window shows its 'not fully tested' info banner on both tabs, inside the screen")]
+		public static void LibraryBannerCommand() { StartTest(LibraryBannerRoutine()); }
+
+		static IEnumerator LibraryBannerRoutine()
+		{
+			bool ok = true;
+			for (int tab = 0; tab < 2; tab++)
+			{
+				if (LibraryWindow.IsOpen) LibraryWindow.Close();
+				LibraryWindow.Open(tab);
+				yield return new WaitForSecondsRealtime(0.6f);
+				Text b = LibraryWindow.Banner;
+				Check(ref ok, b != null && b.gameObject.activeInHierarchy && b.text.Contains("fully tested"), "tab " + tab + ": the banner draws: " + (b != null ? b.text : "none"));
+				var off = OffScreen(LibraryWindow.Root.gameObject, Screen.width, Screen.height);
+				Check(ref ok, off.Count == 0, "tab " + tab + ": the library fits the screen" + (off.Count > 0 ? " - off: " + string.Join(", ", off.Take(4).ToArray()) : ""));
+				if (tab == 0) Screenshot(new[] { "library_banner" });
+			}
+			LibraryWindow.Close();
+			if (ok) Log("PASS: library banner"); else Fail("library banner");
+		}
+
 		[ConsoleCommand(name: "CILibraryWindows", docs: "Dev, editor: the Share and Import windows clicked as a player does - the Islands window's Export... opens Share for the picked island (what goes along, the picture of the editor's view, the author), Export writes the pack; the pack in the import folder is picked, shows what it holds, installs; the Installed list has it, Remove asks first and removes it; both windows fit the screen. Cleans up")]
-		public static void LibraryWindowsCommand() { DynamicIslands.instance.StartCoroutine(LibraryWindowsRoutine()); }
+		public static void LibraryWindowsCommand() { StartTest(LibraryWindowsRoutine()); }
 
 		static IEnumerator LibraryWindowsRoutine()
 		{
@@ -357,6 +504,126 @@ namespace DynamicIslands
 			Check(ref ok, WorldDirector.MissingIslands.Contains("cilib-nothere"), "the host was told the island 'cilib-nothere' is missing");
 			Log("PLANCOPY " + WorldDirector.PlanName + " fromWorld=" + WorldDirector.PlanFromWorld + " done=" + string.Join(",", WorldDirector.Done.ToArray()));
 			if (ok) Log("PASS: plan copy check"); else Fail("plan copy check");
+		}
+		// ---- E8 (LIBRARY_TASKS): a library island updated while a world plays it ----
+		const string LibE8 = "cilib-e8", LibE8Id = "ci-lib-e8";
+		static string LibE8StatePath { get { return Path.Combine(LibraryPack.LibraryFolder, "ci-lib-e8-state.txt"); } }
+
+		/// <summary>A library pack of island LibE8 made from the file given, as the version given.</summary>
+		static LibraryPackContents LibE8Pack(IslandFile f, int version)
+		{
+			string tmp = Path.Combine(LibraryPack.LibraryFolder, "ci-lib-e8.tmp");
+			f.Name = LibE8;
+			f.Save(tmp);
+			byte[] b = File.ReadAllBytes(tmp);
+			File.Delete(tmp);
+			WriteTestZip(tmp + ".zip", new[] { Entry(LibE8Id + "/info.json", new LibraryInfo { id = LibE8Id, kind = "island", title = "CI Lib E8", author = "CI Tester", version = version }.ToJson()), Entry(LibE8Id + "/" + LibE8 + ".island", b) });
+			string err;
+			LibraryPackContents pc = LibraryPack.Read(tmp + ".zip", out err);
+			File.Delete(tmp + ".zip");
+			if (pc == null) throw new Exception("pack: " + err);
+			return pc;
+		}
+
+		[ConsoleCommand(name: "CILibE8", docs: "Dev, a world (host): E8 - a library island updated during play. setup <island> (installs a copy of <island> as library entry ci-lib-e8 v1; then SpawnIsland cilib-e8 150), use (chops a tree once and picks up an item on it; then CISave), update (v2 with its objects shifted installed: the saved world keeps v1), check (after loading the world again: v1 is played, the tree and pickup still used), fresh (in a new world after SpawnIsland cilib-e8: v2), clean")]
+		public static void LibE8Command(string[] args)
+		{
+			string part = args != null && args.Length > 0 ? args[0] : "";
+			if (part == "clean") { CleanLibTests(); if (File.Exists(LibE8StatePath)) File.Delete(LibE8StatePath); Log("PASS: CILibE8 clean"); return; }
+			if (part == "setup")
+			{
+				string src = string.Join(" ", args.Skip(1).ToArray());
+				if (!File.Exists(IslandSpawner.PathFor(src))) { Fail("CILibE8 setup: no island '" + src + "'"); return; }
+				try
+				{
+					CleanLibTests();
+					Directory.CreateDirectory(LibraryPack.LibraryFolder);
+					LibraryPackContents p1 = LibE8Pack(IslandFile.Load(IslandSpawner.PathFor(src)), 1);
+					LibraryPack.Install(p1, false, false, LibraryPack.SourceLibrary);
+					bool there = File.Exists(IslandSpawner.PathFor(LibE8)) && LibraryPack.Installed().Any(x => x.id == LibE8Id);
+					File.WriteAllLines(LibE8StatePath, new[] { "sha1=" + LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(LibE8))) });
+					CustomIslandSpawner.LoadPool(true);
+					if (there) Log("PASS: CILibE8 setup: '" + src + "' installed as library entry " + LibE8Id + " v1"); else Fail("CILibE8 setup: not installed");
+				}
+				catch (Exception e) { Fail("CILibE8 setup: " + e); }
+				return;
+			}
+			StartTest(LibE8Routine(part));
+		}
+
+		static IEnumerator LibE8Routine(string part)
+		{
+			Dictionary<string, string> st = File.Exists(LibE8StatePath) ? File.ReadAllLines(LibE8StatePath).Where(l => l.Contains("=")).ToDictionary(l => l.Substring(0, l.IndexOf('=')), l => l.Substring(l.IndexOf('=') + 1)) : new Dictionary<string, string>();
+			Action save = () => File.WriteAllLines(LibE8StatePath, st.Select(kv => kv.Key + "=" + kv.Value).ToArray());
+			Func<string, IslandWorldState.Entry> loaded = n => IslandWorldState.Islands.FirstOrDefault(i => i.Root != null && string.Equals(i.Name, n, StringComparison.OrdinalIgnoreCase));
+			Func<string, string> get = k => st.ContainsKey(k) ? st[k] : "";
+			bool ok = true;
+			if (part == "use")
+			{
+				IslandWorldState.Entry e = null;
+				for (float t = 0; t < 60f && (e = loaded(LibE8)) == null; t += 1f) yield return new WaitForSeconds(1f);
+				if (e == null) { Fail("CILibE8 use: '" + LibE8 + "' not loaded (SpawnIsland " + LibE8 + " 150 first)"); yield break; }
+				HarvestableTree tree = e.Root.GetComponentsInChildren<HarvestableTree>().FirstOrDefault(x => !x.Depleted);
+				PickupItem_Networked pickup = e.Root.GetComponentsInChildren<PickupItem_Networked>().FirstOrDefault(p => p.GetComponent<HarvestableTree>() == null && p.gameObject.activeSelf);
+				if (tree == null || pickup == null) { Fail("CILibE8 use: the island needs a tree and a pickup (tree " + (tree != null) + ", pickup " + (pickup != null) + ")"); yield break; }
+				int treeOrd = (int)(tree.GetComponent<PickupItem_Networked>().ObjectIndex & 0xFFFF), pickupOrd = (int)(pickup.ObjectIndex & 0xFFFF);
+				tree.Harvest(null);
+				st["tree"] = treeOrd.ToString(); st["yield"] = tree.GetComponent<PickupItem>().yieldHandler.Yield.Count.ToString();
+				st["pickup"] = pickupOrd.ToString(); st["pickupName"] = pickup.name;
+				PickupObjectManager.RemovePickupItem(pickup);
+				yield return new WaitForSeconds(1f);
+				st["hash1"] = IslandNetwork.HashOf(LibE8) ?? "";
+				save();
+				Log("PASS: CILibE8 use: tree #" + treeOrd + " chopped once (" + st["yield"] + " left), " + st["pickupName"] + " #" + pickupOrd + " picked up (hash " + st["hash1"] + ")");
+				yield break;
+			}
+			if (part == "update")
+			{
+				LibraryPack.Report r = null;
+				string copy = IslandNetwork.DownloadName(LibE8, get("hash1"));
+				try
+				{
+					IslandFile v2 = IslandFile.Load(IslandSpawner.PathFor(LibE8));
+					v2.Objects.RemoveAt(0); // (every object after the first moves up one: the old world state no longer fits)
+					LibraryPackContents p2 = LibE8Pack(v2, 2);
+					st["sha2"] = LibraryPack.Sha256(p2.Files[LibE8 + ".island"]);
+					r = LibraryPack.Install(p2, false, true, LibraryPack.SourceLibrary);
+					save();
+				}
+				catch (Exception e) { Fail("CILibE8 update: " + e); yield break; }
+				Log("  " + r.ToString().Replace("\n", " / "));
+				Check(ref ok, LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(LibE8))) == get("sha2"), "v2 is installed as '" + LibE8 + "'");
+				Check(ref ok, r.ToString().Contains("Kept the version of '" + LibE8 + "'"), "the report says the saved world keeps the version it started with");
+				Check(ref ok, File.Exists(IslandSpawner.PathFor(copy)) && LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(copy))) == get("sha1"), "v1 kept as '" + copy + "'");
+				if (ok) Log("PASS: CILibE8 update"); else Fail("CILibE8 update");
+				yield break;
+			}
+			if (part == "check")
+			{
+				string copy = IslandNetwork.DownloadName(LibE8, get("hash1"));
+				IslandWorldState.Entry e = null;
+				for (float t = 0; t < 90f && (e = loaded(copy)) == null && loaded(LibE8) == null; t += 1f) yield return new WaitForSeconds(1f);
+				if (e == null) { Fail("CILibE8 check: the world loads " + (loaded(LibE8) != null ? "the new '" + LibE8 + "' (v2)" : "neither version") + ", not v1 '" + copy + "'"); yield break; }
+				int treeOrd = int.Parse(get("tree")), pickupOrd = int.Parse(get("pickup"));
+				PickupItem_Networked tree = e.Root.GetComponentsInChildren<PickupItem_Networked>(true).FirstOrDefault(p => (p.ObjectIndex & 0xFFFF) == treeOrd);
+				PickupItem_Networked pickup = e.Root.GetComponentsInChildren<PickupItem_Networked>(true).FirstOrDefault(p => (p.ObjectIndex & 0xFFFF) == pickupOrd);
+				string left = tree != null && tree.GetComponent<PickupItem>() != null && tree.GetComponent<PickupItem>().yieldHandler != null ? tree.GetComponent<PickupItem>().yieldHandler.Yield.Count.ToString() : "?";
+				Log("  the reloaded world plays v1 ('" + copy + "')");
+				Check(ref ok, tree != null && tree.GetComponent<HarvestableTree>() != null && left == get("yield"), "the chopped tree #" + treeOrd + " has " + left + " harvests left (want " + get("yield") + ")");
+				Check(ref ok, pickup != null && !pickup.gameObject.activeSelf && pickup.name == get("pickupName"), "the picked-up " + get("pickupName") + " #" + pickupOrd + " is still gone" + (pickup != null ? " (" + pickup.name + ", active " + pickup.gameObject.activeSelf + ")" : " (not found)"));
+				if (ok) Log("PASS: CILibE8 check"); else Fail("CILibE8 check");
+				yield break;
+			}
+			if (part == "fresh")
+			{
+				IslandWorldState.Entry e = null;
+				for (float t = 0; t < 60f && (e = loaded(LibE8)) == null; t += 1f) yield return new WaitForSeconds(1f);
+				if (e == null) { Fail("CILibE8 fresh: '" + LibE8 + "' not loaded (SpawnIsland " + LibE8 + " 150 first)"); yield break; }
+				Check(ref ok, LibraryPack.Sha256(File.ReadAllBytes(IslandSpawner.PathFor(e.Name))) == get("sha2"), "a new world plays v2");
+				if (ok) Log("PASS: CILibE8 fresh"); else Fail("CILibE8 fresh");
+				yield break;
+			}
+			Fail("CILibE8 setup <island> | use | update | check | fresh | clean");
 		}
 	}
 }

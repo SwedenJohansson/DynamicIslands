@@ -16,13 +16,16 @@ namespace DynamicIslands.Editor
 	///   - Extra options: scrambled blueprints, story islands in a new order, ghost rafts, private storages (WorldOptions),
 	///     each switched with its own button and explained under it;
 	///   - Islands while sailing: which islands of the spawn pool the world gets (IslandPickerWindow, WorldIslands).
-	/// "Raft's own" puts every one of them back to plain Raft; "Done" closes it. The choices are kept for the world being
+	/// "Raft's own" puts every one of them back to plain Raft; "Defaults..." opens this PC's spawnpool.txt settings
+	/// (DefaultsWindow); "Done" closes it. The choices are kept for the world being
 	/// made and remembered for the next one when Create is pressed.
 	/// </summary>
 	[HarmonyPatch(typeof(NewGameBox), "Open")]
 	public static class WorldSettingsWindow
 	{
 		public const string ButtonName = "CustomIslands_WorldSettings", WindowName = "CustomIslands_WorldSettingsWindow";
+		/// <summary>The extra options' list: five in view (each 91 high, 6 apart), the rest scrolled to.</summary>
+		const float ListHeight = 5 * 91f + 4 * 6f + 4f;
 
 		static Button openButton;
 		static RectTransform window;
@@ -30,6 +33,10 @@ namespace DynamicIslands.Editor
 		static Text summary;
 		static Button levelsToggle;
 		public static Button LevelsToggle { get { return levelsToggle; } }
+		static Button headStartToggle;
+		public static Button HeadStartToggle { get { return headStartToggle; } }
+		static Text headStartDetail;
+		public static Text HeadStartDetail { get { return headStartDetail; } }
 		static bool hooked;
 
 		/// <summary>The options shown (the last choice until one is made).</summary>
@@ -45,8 +52,8 @@ namespace DynamicIslands.Editor
 		{
 			get
 			{
-				return Chosen.Count + (PlayerLevels.Chosen ? 1 : 0) + (NewWorldOptions.Randomizer.On ? 1 : 0) + (NewWorldRulesBox.MonsterLevel != MonsterDifficulty.Normal ? 1 : 0) + (NewWorldRulesBox.BuildPercent > 0 ? 1 : 0) +
-					(WorldIslands.Chosen.Count > 0 ? 1 : 0); // (islands left out: the button said "Raft's own" while some were)
+				return Chosen.Count + (PlayerLevels.Chosen ? 1 : 0) + (HeadStart.Chosen > 0 ? 1 : 0) + (NewWorldOptions.Randomizer.On ? 1 : 0) + (NewWorldRulesBox.MonsterLevel != MonsterDifficulty.Normal ? 1 : 0) + (NewWorldRulesBox.BuildPercent > 0 ? 1 : 0) + (NewWorldRulesBox.LooksLevel != AnimalLooks.Normal ? 1 : 0);
+				// (islands left out and the gap are not counted: "Raft's own" keeps them as the player chose - they are this PC's list, not a world rule)
 			}
 		}
 
@@ -67,7 +74,7 @@ namespace DynamicIslands.Editor
 				holder.anchoredPosition = new Vector2(-16f, 44f);
 				holder.sizeDelta = new Vector2(292f, 34f);
 				UIKit.Horizontal(holder.gameObject, 0f, new RectOffset(0, 0, 0, 0));
-				openButton = UIKit.Button(holder, "", Open, "The world's settings: monster difficulty, build cost, the world randomizer and the extra options", -1, 34f, 14);
+				openButton = UIKit.Button(holder, "", Open, "The world's settings: monster difficulty, build cost, rare animal looks, the world randomizer, the islands while sailing and the extra options (the level up system and the head start raft too)", -1, 34f, 14);
 				UIKit.Primary(openButton);
 			}
 			if (window == null) Build(box);
@@ -89,7 +96,7 @@ namespace DynamicIslands.Editor
 			RectTransform head = UIKit.Row(panel, 30f, 6f, "Head");
 			Text title = UIKit.Label(head, "WORLD SETTINGS", 22, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 			UIKit.UseTitleFont(title);
-			UIKit.Label(head, "for the world you create - every player in it gets them from the host", 12, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Italic);
+			UIKit.Label(head, "for the world you create - every player gets them from the host; later: Esc > Custom Islands", 12, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Italic);
 
 			// (as tall as its taller column: no empty band under them)
 			RectTransform columns = UIKit.Rect("Columns", panel);
@@ -111,36 +118,55 @@ namespace DynamicIslands.Editor
 			Text optionsTitle = UIKit.Label(right, "EXTRA OPTIONS", 14, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "OptionsTitle");
 			UIKit.Size(optionsTitle.gameObject, -1, 18);
 			toggles.Clear();
+			// (one list, about five options in view and the rest scrolled to: all of them would make the window taller than the screen)
+			ScrollRect scroll;
+			RectTransform list = UIKit.ScrollList(right, out scroll, 6f);
+			scroll.name = "OptionsScroll";
+			UIKit.Size(scroll.gameObject, -1, ListHeight);
 			for (int i = 0; i < WorldOptions.All.Length; i++)
 			{
 				string option = WorldOptions.All[i];
-				RectTransform group = UIKit.Group(right, null, "Option_" + option);
+				if (WorldOptions.IsRetired(option)) continue;
+				RectTransform group = UIKit.Group(list, null, "Option_" + option);
 				Button b = UIKit.Button(group, "", () => Flip(option), WorldOptions.Hints[i], -1, 28f, 14);
 				b.name = "Toggle_" + option;
 				toggles[option] = b;
-				Text d = UIKit.Label(group, WorldOptions.Hints[i], 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
+				Text d = UIKit.Label(group, WorldOptions.Shorts[i], 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
 				d.horizontalOverflow = HorizontalWrapMode.Wrap;
 				UIKit.Size(d.gameObject, -1, 44);
 			}
 			// The level up system (also switched on by an island made with it, unless switched off here or with Levels off)
 			{
 				const string hint = "Players earn EXP from monsters and spend stat points (K) on speed, damage, health and more. Off: only an island made with the level up system switches it on. The host can change it in a world: Levels on / off.";
-				RectTransform group = UIKit.Group(right, null, "Option_levels");
+				RectTransform group = UIKit.Group(list, null, "Option_levels");
 				levelsToggle = UIKit.Button(group, "", () => { PlayerLevels.Chosen = !PlayerLevels.Chosen; Show(); }, hint, -1, 28f, 14);
 				levelsToggle.name = "Toggle_levels";
-				Text d = UIKit.Label(group, hint, 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
+				Text d = UIKit.Label(group, "Players earn EXP from monsters and spend stat points (K) on speed, damage, health and more. Off: only an island made with it switches it on.", 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail"); // (the whole text is the button's tip)
 				d.horizontalOverflow = HorizontalWrapMode.Wrap;
 				UIKit.Size(d.gameObject, -1, 44);
 			}
+			// Head start raft: off or levels 1-10 - the button steps to the next (round to off); what the level gives below
+			{
+				const string hint = "The world starts on a bigger raft that is already set up, its stations and storages in the middle, item nets round it. Level 1: a 7 x 10 raft with a grill, a purifier, the research table, a bed and first supplies. Each level more stations, storages and supplies, up to level 10: an 11 x 18 raft with what about 20 hours of play would give (up to Tangaroa, no titanium).";
+				RectTransform group = UIKit.Group(list, null, "Option_headstart");
+				headStartToggle = UIKit.Button(group, "", () => { HeadStart.Chosen = (HeadStart.Chosen + 1) % (HeadStart.Max + 1); Show(); }, hint, -1, 28f, 14);
+				headStartToggle.name = "Toggle_headstart";
+				headStartDetail = UIKit.Label(group, "", 11, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Detail");
+				headStartDetail.horizontalOverflow = HorizontalWrapMode.Wrap;
+				UIKit.Size(headStartDetail.gameObject, -1, 58);
+			}
 
-			summary = UIKit.Label(panel, "", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Normal, "Summary");
+			summary =UIKit.Label(panel, "", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Normal, "Summary");
 			summary.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(summary.gameObject, -1, 30);
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
-			UIKit.Button(buttons, "Raft's own", RaftsOwn, "Every setting back to plain Raft: Normal monsters, Raft's build cost, no randomizer, no extra options", 150, 34f, 14);
+			UIKit.Button(buttons, "Raft's own", RaftsOwn, "Every setting back to plain Raft: Normal monsters, Raft's build cost and animal looks, no randomizer, no extra options, the level up system off, no head start raft. The islands while sailing and their gap stay as they are", 150, 34f, 14);
+			// (spawnpool.txt's settings for every world this PC hosts, without editing the file - ROADMAP AU46)
+			UIKit.Button(buttons, "Defaults...", DefaultsWindow.Open, "This PC's settings for every world it hosts: random islands, spacing, distances, the Receiver, regrow days, generated islands", 150, 34f, 14).name = "Button_Defaults";
 			UIKit.Label(buttons, "", 12);
 			Button done = UIKit.Button(buttons, "Done", Close, "Keep these settings for the world you create", 150, 34f, 15);
 			UIKit.Primary(done);
+			EscKey.Add(window.gameObject, Close); // (Esc = Done)
 			window.gameObject.SetActive(false);
 			Debug.Log("[CUSTOM ISLANDS] New Game box: World settings (world rules, randomizer, extra options) in their own window");
 		}
@@ -171,10 +197,12 @@ namespace DynamicIslands.Editor
 		{
 			Chosen.Clear();
 			PlayerLevels.Chosen = false;
+			HeadStart.Chosen = 0;
 			NewWorldOptions.Randomizer.Level = RandomizerSettings.Off;
 			NewWorldOptions.Randomizer.Disabled.Clear();
 			NewWorldRulesBox.MonsterLevel = MonsterDifficulty.Normal;
 			NewWorldRulesBox.BuildPercent = 0;
+			NewWorldRulesBox.LooksLevel = AnimalLooks.Normal;
 			NewWorldOptions.Refresh();
 			Show();
 		}
@@ -194,12 +222,18 @@ namespace DynamicIslands.Editor
 				UIKit.LabelOf(levelsToggle).text = "Level up system:  " + (PlayerLevels.Chosen ? "ON" : "off");
 				UIKit.SetActive(levelsToggle, PlayerLevels.Chosen);
 			}
+			if (headStartToggle != null)
+			{
+				UIKit.LabelOf(headStartToggle).text = "Head start raft:  " + (HeadStart.Chosen > 0 ? "LEVEL " + HeadStart.Chosen + "  (" + HeadStart.Width(HeadStart.Chosen) + " x " + HeadStart.Length(HeadStart.Chosen) + ")" : "off");
+				UIKit.SetActive(headStartToggle, HeadStart.Chosen > 0);
+				if (headStartDetail != null) headStartDetail.text = HeadStart.Details(HeadStart.Chosen);
+			}
 			IslandPickerWindow.ShowEntry();
 			int changed = Changed;
 			if (openButton != null) UIKit.LabelOf(openButton).text = "WORLD SETTINGS...   " + (changed == 0 ? "Raft's own" : changed + " changed");
 			if (summary != null)
-				summary.text = "Now: monsters " + MonsterDifficulty.Describe(NewWorldRulesBox.MonsterLevel) + ", build cost " + BuildCost.Describe(NewWorldRulesBox.BuildPercent) +
-					", the world randomizer " + NewWorldOptions.Randomizer.Describe() + ", extra options: " + WorldOptions.Describe(on).ToLowerInvariant() + ", levels " + (PlayerLevels.Chosen ? "on" : "off") +
+				summary.text = "Now: monsters " + MonsterDifficulty.Describe(NewWorldRulesBox.MonsterLevel) + ", build cost " + BuildCost.Describe(NewWorldRulesBox.BuildPercent) + ", rare animal looks " + AnimalLooks.Describe(NewWorldRulesBox.LooksLevel) +
+					", the world randomizer " + NewWorldOptions.Randomizer.Describe() + ", extra options: " + WorldOptions.Describe(on).ToLowerInvariant() + ", levels " + (PlayerLevels.Chosen ? "on" : "off") + ", head start raft " + HeadStart.Describe(HeadStart.Chosen) +
 					(WorldIslands.Chosen.Count > 0 ? ", islands while sailing: " + WorldIslands.Chosen.Count + " left out" : "") +
 					". The Custom Islands plan ('" + NewWorldOptions.Selected + "') is chosen in the New Game box.";
 		}
@@ -211,12 +245,17 @@ namespace DynamicIslands.Editor
 	{
 		static void Prefix()
 		{
-			HashSet<string> on = WorldSettingsWindow.Chosen;
-			WorldOptions.SaveDefaults(on);
-			WorldIslands.SaveDefaults(WorldIslands.Chosen);
-			PlayerLevels.SaveDefault(PlayerLevels.Chosen);
-			Debug.Log("[CUSTOM ISLANDS] Creating a world with the options " + WorldOptions.Describe(on) + "; islands left out while sailing: " +
-				(WorldIslands.Chosen.Count == 0 ? "none" : string.Join(", ", WorldIslands.Chosen.Select(WorldIslands.Label).ToArray())));
+			try
+			{
+				HashSet<string> on = WorldSettingsWindow.Chosen;
+				WorldOptions.SaveDefaults(on);
+				WorldIslands.SaveDefaults(WorldIslands.Chosen);
+				PlayerLevels.SaveDefault(PlayerLevels.Chosen);
+				HeadStart.SaveDefault(HeadStart.Chosen);
+				Debug.Log("[CUSTOM ISLANDS] Creating a world with the options " + WorldOptions.Describe(on) + "; islands left out while sailing: " +
+					(WorldIslands.Chosen.Count == 0 ? "none" : string.Join(", ", WorldIslands.Chosen.Select(WorldIslands.Label).ToArray())));
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] New world options: " + e); }
 		}
 	}
 }

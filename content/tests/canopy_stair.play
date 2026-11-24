@@ -1,0 +1,52 @@
+# Canopy Stair (CIPlay canopy_stair): the shelf round 0 4 at 10 m, the two tents, the anchor box 2 18.
+island Canopy Stair
+# RESIZE 10-24: the recipe moved this island's old content by 0 -20.9; the points below are in the old frame
+offset 0 20.9
+expect step 0
+expect title The Climb
+zone shelf
+expect step 1
+read Seedkeepers' roll call
+expect step 2
+open Tent chest
+wait 3
+expect step 3
+open Jonas' tent chest
+wait 3
+expect step 4
+use stairvines
+expect shown coil1
+open Stair ledge
+wait 3
+expect story ropecoil 1
+open West ledge
+wait 3
+open East root
+wait 3
+expect story ropecoil 3
+expect step 5
+expect hidden anchorbox
+use anchorwinch
+expect story ropecoil 0
+expect shown anchorbox
+expect step 6
+open Anchor box
+wait 3
+expect step 7
+zone cs_top
+expect step 8
+open Plane's cockpit locker
+wait 3
+expect story pilotkey 1
+expect step 9
+use pilotlock
+expect shown pilotchest
+read Pilot's flight log
+expect step 10
+read Oda's letter
+expect step 11
+# U22 jump course (10-24): teleport onto its top A slab instead of jumping the hops
+at -72.38 -4.56 h=10.65
+zone jump_cs_top
+wait 2
+expect done

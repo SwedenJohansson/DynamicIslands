@@ -1,0 +1,66 @@
+# Biome Seven (CIPlay biome_seven): the airlock, its hatch, the dome's air, the rota, three seed packets, the control
+# desk, the stingrays at the outer vent, the vent shed, the gardener's locker, the sprinkler crank (dry beds hidden, full
+# beds shown), the gantry box on the cap.
+island Biome Seven
+offset 0.5706 0.0209
+# (room in the bag first: a full bag from earlier plays in the world drops quest loot - 11-09)
+empty
+expect step 0
+expect title The Glass Dome
+zone airlock
+expect step 1
+expect shown airlockhatch
+use airlockhatch
+expect hidden airlockhatch
+expect story cycled 1
+expect step 2
+zone dome
+air dome
+read Gardener's rota
+expect step 3
+use seedtray1
+use seedtray2
+use seedtray3
+expect story melonseed 3
+expect hidden seedtray3
+expect step 4
+open Control desk chest
+wait 3
+expect step 5
+read Hydrophone log
+expect step 6
+zone outer_vent
+kill Stingray
+expect step 7
+open Vent shed chest
+wait 3
+expect step 8
+read Gardener's shed book
+expect step 9
+read Car park ticket
+expect step 10
+zone surface_buoy
+air buoy_air
+open Gantry box
+wait 3
+expect step 11
+air b7_dair
+open Seed store chest
+wait 3
+expect step 12
+zone dome
+air dome
+open Gardener's locker
+wait 3
+expect step 13
+expect shown bedsdry
+expect hidden bedsfull
+expect hidden wrenletter
+use sprinklercrank
+expect hidden bedsdry
+expect shown bedsfull
+expect shown wrenletter
+expect story watered 1
+expect step 14
+read Wren's letter
+expect done

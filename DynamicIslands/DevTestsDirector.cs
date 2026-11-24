@@ -20,7 +20,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIRuleTest", docs: "Dev: world director rules - reading and writing rule lines and plans, directions, the quest editor's 'bring an island' (in the editor also opens it)")]
 		public static void RuleTest()
 		{
-			DynamicIslands.instance.StartCoroutine(RuleTestRoutine());
+			StartTest(RuleTestRoutine());
 		}
 
 		static IEnumerator RuleTestRoutine()
@@ -73,6 +73,14 @@ namespace DynamicIslands
 			Check(ref ok, IntroRule.ParseLines(props[WorldDirector.IslandRulesKey]).Count == 2 && QuestEditorWindow.QuestBringRule(props).Direction == "west", "changing it replaces it");
 			QuestEditorWindow.SetQuestBringRule(props, null);
 			Check(ref ok, QuestEditorWindow.QuestBringRule(props) == null && props[WorldDirector.IslandRulesKey] == IntroRule.Parse(lines[3]).ToLine(), "removing it keeps the other rule");
+			// (a rule waiting for the island's Quest 2 isn't the quest editor's: Save leaves it alone, ROADMAP CB6)
+			var quest2 = new IntroRule { Id = "q2", What = "island", WhatArg = "Old camp", When = "quest", WhenRef = IntroRule.Self, WhenArg = "2", Where = "near", WhereRef = IntroRule.Self, Distance = 600f, Direction = "any" };
+			props[WorldDirector.IslandRulesKey] = IntroRule.ToLines(new List<IntroRule> { quest2 });
+			QuestEditorWindow.SetQuestBringRule(props, bring);
+			List<IntroRule> both = IntroRule.ParseLines(props[WorldDirector.IslandRulesKey]);
+			Check(ref ok, both.Count == 2 && both.Any(r => r.Id == "q2" && r.WhenArg == "2") && QuestEditorWindow.QuestBringRule(props).Id == bring.Id && IntroRule.Parse(quest2.ToLine()).WhenArg == "2"
+				&& quest2.DescribeWhen().Contains("quest 2"), "a rule for Quest 2 is kept beside the main quest's (" + quest2.DescribeWhen() + ")");
+			props[WorldDirector.IslandRulesKey] = lines[3];
 
 			if (DynamicIslands.InEditor())
 			{
@@ -101,7 +109,7 @@ namespace DynamicIslands
 		/// <summary>A copy of the sample island with a zone "camp" in the middle, a one-step quest ("go to camp") and these rules.</summary>
 		static IslandFile RuleIsland(string name, string title, params IntroRule[] rules)
 		{
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = name;
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -121,7 +129,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIQuestSpawnTest", docs: "Dev, in game (host): an island's quest is done -> the next island appears 600 m north of it, a zone brings a generated one; announcements, Receiver labels, saved state, Raft keeps its islands clear")]
 		public static void QuestSpawnTest()
 		{
-			DynamicIslands.instance.StartCoroutine(QuestSpawnTestRoutine());
+			StartTest(QuestSpawnTestRoutine());
 		}
 
 		static IEnumerator QuestSpawnTestRoutine()
@@ -222,35 +230,62 @@ namespace DynamicIslands
 			// Clean up
 			yield return new WaitForSeconds(1f);
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(before).Select(e => e.Id).ToList(), true);
-			foreach (string n in created) if (File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n));
+			yield return DeleteIslandFiles(created);
 			IslandWorldState.Save();
 			if (ok) Log("PASS: a quest brings an island"); else Fail("a quest brings an island");
+		}
+
+		// Deletes the test's generated island files. An island still spawning reads its file off-thread and holds it
+		// open for a few seconds (mp run 10-14: IOException), so a locked file is tried again for up to 30 s.
+		static IEnumerator DeleteIslandFiles(List<string> names)
+		{
+			foreach (string n in names)
+			{
+				string path = IslandSpawner.PathFor(n);
+				float t0 = Time.realtimeSinceStartup;
+				while (File.Exists(path))
+				{
+					try { File.Delete(path); }
+					catch (IOException e) { if (Time.realtimeSinceStartup - t0 > 30f) { Log("  (couldn't delete '" + n + "': " + e.Message + ")"); break; } }
+					if (File.Exists(path)) yield return new WaitForSecondsRealtime(0.5f);
+				}
+			}
 		}
 
 		#endregion
 
 		#region World plans
 
-		const string TestPlan = "ci plan";
+		const string TestPlan = "ci plan", PlanSample = "ciplansample";
 
-		[ConsoleCommand(name: "CIPlanTest", docs: "Dev, editor: the world plan window - samples, a test plan's rule cards, Check, the map, the island's own rules; screenshots")]
+		[ConsoleCommand(name: "CIPlanTest", docs: "Dev, editor: the world plan window - the plan list (no sample plans), a test plan's rule cards, Check, the map, the island's own rules; screenshots")]
 		public static void PlanTest()
 		{
-			DynamicIslands.instance.StartCoroutine(PlanTestRoutine());
+			StartTest(PlanTestRoutine());
 		}
 
 		static IEnumerator PlanTestRoutine()
 		{
 			yield return WaitForEditor(false);
 			bool ok = true;
-			WorldPlanWindow.EnsureSamples();
+			// (the user 2026-10-16: no sample plans - the mod writes none and has no templates of their names; a plan written
+			// here is listed and reads back)
+			string[] gone = { "Island hopping", "Adventure", "Growing sea", "Receiver adventure" };
+			Check(ref ok, !WorldPlanTemplates.All.Any(t => gone.Contains(t.Key)) && WorldPlanTemplates.All.Count > 0, "no sample templates; templates: " + string.Join(", ", WorldPlanTemplates.All.Select(t => t.Key).ToArray()));
+			WriteCIPlan(CIHopping);
 			List<string> plans = WorldPlan.All();
-			Check(ref ok, plans.Contains("Island hopping") && plans.Contains("Growing sea") && plans[0] == WorldPlan.RandomName, "plans: " + string.Join(", ", plans.ToArray()));
-			WorldPlan hopping = WorldPlan.Load("Island hopping");
-			Check(ref ok, hopping != null && hopping.Rules.Count == 4 && hopping.Random, "the sample 'Island hopping' has 4 rules");
+			Check(ref ok, plans.Contains(CIHopping) && plans[0] == WorldPlan.RandomName, "plans: " + string.Join(", ", plans.ToArray()));
+			WorldPlan hopping = WorldPlan.Load(CIHopping);
+			Check(ref ok, hopping != null && hopping.Rules.Count == 4 && hopping.Random, "the test plan '" + CIHopping + "' has 4 rules");
+			RemoveCIPlan(CIHopping);
+			Check(ref ok, !File.Exists(WorldPlan.PathFor(CIHopping)), "the test plan moved out again");
 
+			// (the start rule's island: the tests' sample saved under a test name - no player's island is needed)
+			IslandFile sample = SampleIsland();
+			sample.Name = PlanSample;
+			sample.Save(IslandSpawner.PathFor(PlanSample));
 			WorldPlan p = WorldPlan.Parse(TestPlan, "description = Test plan\nrandom = off\n" +
-				"rule = start | island:generated_sample | start | ahead:300 | Hello | Start\n" +
+				"rule = start | island:" + PlanSample + " | start | ahead:300 | Hello | Start\n" +
 				"rule = next | type:snowy | quest:start | near:start:700:east | East | Snow\n" +
 				"rule = broken | island:no such island | zone:start:nowhere | near:nobody:500:any | |\n");
 			p.Save();
@@ -286,13 +321,14 @@ namespace DynamicIslands
 			DynamicIslands.currentIslandProps.Clear();
 			foreach (var kv in saved) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
 			File.Delete(WorldPlan.PathFor(TestPlan));
+			File.Delete(IslandSpawner.PathFor(PlanSample));
 			if (ok) Log("PASS: world plan window"); else Fail("world plan window");
 		}
 
 		[ConsoleCommand(name: "CIPlanWorld", docs: "Dev, in game (host): plays a test world plan - start island, a quest brings a snowy island east of it, km sailed, a visit, one-of; saved state; multiplayer messages")]
 		public static void PlanWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(PlanWorldRoutine());
+			StartTest(PlanWorldRoutine());
 		}
 
 		static IEnumerator PlanWorldRoutine()
@@ -358,7 +394,8 @@ namespace DynamicIslands
 				WorldDirector.Evaluate();
 				IslandWorldState.Entry fourth = WorldDirector.Refs("fourth", null).FirstOrDefault();
 				Check(ref ok, fourth != null && fourth.HostName == "ciplan1" && second != null && FlatDistance(fourth.Position, second.Position) >= 590f, "visiting the snowy island brings one of the list (the one that exists) south of it");
-				Check(ref ok, WorldDirector.Done.SetEquals(new[] { "start", "second", "third", "fourth" }), "all 4 rules done: " + string.Join(", ", WorldDirector.Done.ToArray()));
+				// (rules a world's earlier plan did stay done - mpfull plan's camp, islets in the same world, 2026-10-18: not counted)
+				Check(ref ok, WorldDirector.Done.Except(doneBefore).ToList().Count == 4 && ownRules.All(WorldDirector.Done.Contains), "all 4 rules done: " + string.Join(", ", WorldDirector.Done.Except(doneBefore).ToArray()));
 
 				// Generated islands reach clients once their files exist
 				t0 = Time.realtimeSinceStartup;
@@ -382,13 +419,13 @@ namespace DynamicIslands
 				int eq = l.IndexOf('=');
 				WorldDirector.ReadLine(l.Substring(1, eq - 1), l.Substring(eq + 1));
 			}
-			Check(ref ok, WorldDirector.PlanName == TestPlan && WorldDirector.Done.Count == 4 && WorldDirector.Sailed >= 5000f, "read back: plan, 4 done rules, km sailed");
+			Check(ref ok, WorldDirector.PlanName == TestPlan && ownRules.All(WorldDirector.Done.Contains) && WorldDirector.Done.Count == 4 + doneBefore.Count && WorldDirector.Sailed >= 5000f, "read back: plan, 4 done rules, km sailed");
 			Log(WorldDirector.Describe());
 
 			// Clean up: the world's own plan and state come back
 			yield return new WaitForSeconds(1f);
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(before).Select(e => e.Id).ToList(), true);
-			foreach (string n in created) if (File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n));
+			yield return DeleteIslandFiles(created);
 			File.Delete(WorldPlan.PathFor(TestPlan));
 			WorldDirector.SetPlan(planBefore, false);
 			CustomIslandSpawner.Enabled = autoBefore;
@@ -404,7 +441,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIMapTypeTest", docs: "Dev, editor: every map type from a fixed seed - land inside the build area (above or under the sea as it should be), same seed = same island, content and quest targets present; opens a few and takes screenshots")]
 		public static void MapTypeTest()
 		{
-			DynamicIslands.instance.StartCoroutine(MapTypeTestRoutine());
+			StartTest(MapTypeTestRoutine());
 		}
 
 		static string Fingerprint(IslandFile f)
@@ -493,7 +530,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIMapTypeWorld", docs: "Dev, in game (host): brings a treasure island, a wreck, a sunken island and a sky island by rules; checks their content in the world and plays the treasure hunt")]
 		public static void MapTypeWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(MapTypeWorldRoutine());
+			StartTest(MapTypeWorldRoutine());
 		}
 
 		static IEnumerator MapTypeWorldRoutine()
@@ -550,7 +587,7 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(1f);
 			var files = IslandWorldState.Islands.Skip(before).Select(e => e.HostName).ToList();
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(before).Select(e => e.Id).ToList(), true);
-			foreach (string n in files) if (File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n));
+			yield return DeleteIslandFiles(files);
 			File.Delete(WorldPlan.PathFor(TestPlan));
 			CustomIslandSpawner.UnloadDistance = unloadBefore;
 			WorldDirector.SetPlan(planBefore, false);
@@ -563,15 +600,37 @@ namespace DynamicIslands
 
 		#endregion
 
+		/// <summary>CT5: chooses a plan as a player does - "Choose plan...", the plan's row in the picker, Select.</summary>
+		internal static bool ChoosePlanInPicker(Button choose, string name)
+		{
+			if (choose == null) return false;
+			choose.onClick.Invoke();
+			if (!PlanPickerWindow.IsOpen) return false;
+			Button row = PlanPickerWindow.Root.GetComponentsInChildren<Button>(true).FirstOrDefault(x => x.name == PlanPickerWindow.RowPrefix + name);
+			Button select = PlanPickerWindow.Root.GetComponentsInChildren<Button>(true).FirstOrDefault(x => x.name == "Button_Select");
+			if (row == null || select == null) { PlanPickerWindow.Close(); return false; }
+			row.onClick.Invoke();
+			select.onClick.Invoke();
+			return !PlanPickerWindow.IsOpen && NewWorldOptions.Selected.Equals(name, StringComparison.OrdinalIgnoreCase);
+		}
+
+		/// <summary>The chosen plan's name as the New Game box shows it.</summary>
+		internal static string ChosenPlanText(Transform planRow)
+		{
+			Text t = planRow != null ? planRow.GetComponentsInChildren<Text>(true).FirstOrDefault(x => x.name == "Chosen") : null;
+			return t != null ? t.text.Trim() : "";
+		}
+
 		[ConsoleCommand(name: "CIPlanBox", docs: "Dev, main menu: opens Raft's New Game box, checks the Custom Islands plan choice and cycles it; screenshot; CIPlanBox <plan> leaves that plan chosen")]
 		public static void PlanBox(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(PlanBoxRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
+			StartTest(PlanBoxRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
 		}
 
 		static IEnumerator PlanBoxRoutine(string choose)
 		{
 			bool ok = true;
+			if (choose != null && CIPlans.Any(x => x.Key.Equals(choose, StringComparison.OrdinalIgnoreCase))) WriteCIPlan(choose); // (a test plan such as 'CI Adventure': the picker lists only plans on disk)
 			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(x => x.gameObject.scene.IsValid());
 			if (box == null) { Fail("no New Game box (go to the main menu first)"); yield break; }
 			box.gameObject.SetActive(true);
@@ -579,21 +638,33 @@ namespace DynamicIslands
 			yield return new WaitForSecondsRealtime(0.5f);
 			Transform row = box.transform.Find("CustomIslands_Plan");
 			Check(ref ok, row != null && row.gameObject.activeInHierarchy, "the box has the plan choice");
-			// (the plan's drop-down list - the row's head also has "Get more...", which opens the island library)
-			Button b = row != null ? row.GetComponentsInChildren<Button>().FirstOrDefault(x => x.name == "Drop_Plan") : null;
+			// ("Choose plan...", which opens the plan picker window (CT5) - the row's head also has "Get more...", the island library)
+			Button b = row != null ? row.GetComponentsInChildren<Button>().FirstOrDefault(x => x.name == "Button_ChoosePlan") : null;
 			List<string> plans = WorldPlan.All();
 			string first = NewWorldOptions.Selected;
-			List<KeyValuePair<string, string>> listed = DropList.Shown(b);
-			Check(ref ok, listed.Count == plans.Count && listed.All(o => o.Value.Length > 0), "clicked open, its list has every plan (" + listed.Count + " of " + plans.Count + "), each with what it does");
+			if (b != null) b.onClick.Invoke();
+			List<string> listed = PlanPickerWindow.Shown();
+			Check(ref ok, PlanPickerWindow.IsOpen && listed.Count == plans.Count && plans.All(listed.Contains), "Choose plan... opens the picker with every plan (" + listed.Count + " of " + plans.Count + ")");
+			PlanPickerWindow.Close();
 			string next = plans[(plans.FindIndex(p => p.Equals(first, StringComparison.OrdinalIgnoreCase)) + 1) % plans.Count];
-			bool picked = DropList.Click(b, next);
+			bool picked = ChoosePlanInPicker(b, next);
 			string second = NewWorldOptions.Selected;
-			Check(ref ok, picked && second == next && UIKit.LabelOf(b).text == next, "picking one in the list chooses it (" + first + " -> " + second + ")");
-			// (the picture with the list open)
+			Check(ref ok, picked && second == next && ChosenPlanText(row) == next, "picking one in the picker chooses it (" + first + " -> " + second + ")");
+			// (the picture with the picker open)
 			if (b != null) b.onClick.Invoke();
 			Screenshot(new[] { "new_game_plan" });
 			yield return new WaitForSecondsRealtime(0.5f);
-			DropList.Close();
+			PlanPickerWindow.Close();
+			// (the plan the last world was made with is offered for the next one, ROADMAP CB5; one removed since is not)
+			string lastFile = System.IO.Path.Combine(DynamicIslands.assetpath, NewWorldOptions.LastPlanFileName);
+			string lastBefore = System.IO.File.Exists(lastFile) ? System.IO.File.ReadAllText(lastFile) : null;
+			WorldDirector.PendingPlan = null;
+			NewWorldOptions.SaveLastPlan(next);
+			string offered = NewWorldOptions.Selected;
+			NewWorldOptions.SaveLastPlan("CI no such plan");
+			string offeredGone = NewWorldOptions.Selected;
+			if (lastBefore != null) System.IO.File.WriteAllText(lastFile, lastBefore); else System.IO.File.Delete(lastFile);
+			Check(ref ok, offered == next && offeredGone == WorldDirector.DefaultPlan, "the last world's plan is offered for the next (" + offered + "); a removed one is not (" + offeredGone + ")");
 			WorldDirector.PendingPlan = choose;
 			if (choose == null) box.Button_Close();
 			else Log("Plan for the next new world: " + NewWorldOptions.Selected);
@@ -603,23 +674,43 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPlanCheck", docs: "Dev, in game: the world's plan and its islands, after creating a world with a plan: CIPlanCheck <expected plan>")]
 		public static void PlanCheck(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(PlanCheckRoutine(args != null ? string.Join(" ", args) : ""));
+			StartTest(PlanCheckRoutine(args != null ? string.Join(" ", args) : ""));
 		}
 
 		static IEnumerator PlanCheckRoutine(string expected)
 		{
 			bool ok = true;
 			float t0 = Time.realtimeSinceStartup;
-			while (WorldDirector.Plan != null && WorldDirector.Plan.Rules.Any(r => r.When == "start" && !WorldDirector.Done.Contains(r.Id)) && Time.realtimeSinceStartup - t0 < 30f) yield return new WaitForSeconds(0.5f);
+			while (WorldDirector.Plan != null && WorldDirector.Plan.Rules.Any(r => r.When == "start" && !r.Special && !WorldDirector.Done.Contains(r.Id)) && Time.realtimeSinceStartup - t0 < 30f) yield return new WaitForSeconds(0.5f);
 			yield return new WaitForSeconds(2f);
 			Check(ref ok, WorldDirector.PlanName.Equals(expected, StringComparison.OrdinalIgnoreCase), "the world's plan is '" + WorldDirector.PlanName + "'");
 			WorldPlan p = WorldDirector.Plan;
 			if (p != null)
-				foreach (IntroRule r in p.Rules.Where(r => r.When == "start"))
+			{
+				foreach (IntroRule r in p.Rules.Where(r => r.When == "start" && !r.Special))
 				{
 					IslandWorldState.Entry e = WorldDirector.Refs(r.Id, null).FirstOrDefault();
 					Check(ref ok, e != null, "start rule '" + r.Id + "' brought " + (e != null ? "'" + e.HostName + "' (" + e.Label + ")" : "nothing"));
 				}
+				// (an island in Raft's story - found on the Receiver after its story island: in the chain from the start, not
+				// brought yet; and an island at a distance sailed: none sailed yet - The Long Voyage's fresh start, 2026-10-02)
+				foreach (IntroRule r in p.Rules.Where(r => r.InStory))
+				{
+					string key = StoryChain.RuleKey(r.Id);
+					bool brought = WorldDirector.Refs(r.Id, null).Any();
+					// (the story's first island brought at the start - ahead of the raft, not on the Receiver - is there at once:
+					// Raft 2's beacon, 2026-10-03)
+					if (r.StoryPlace == "first" && r.When == "start" && r.Where != "receiver" && r.Where != "sailing")
+					{
+						Check(ref ok, StoryChain.Steps.Contains(key) && brought, "'" + r.Id + "' is the story's first island, brought at the start (" + r.Where + ")" + (brought ? "" : " - NOT BROUGHT"));
+						continue;
+					}
+					Check(ref ok, StoryChain.Steps.Contains(key) && !brought && !StoryChain.Done.Contains(key), "'" + r.Id + "' waits in the story chain (" + r.StoryPlace + "), not brought yet" + (brought ? " - BROUGHT" : ""));
+				}
+				foreach (IntroRule r in p.Rules.Where(r => r.When == "km"))
+					Check(ref ok, !WorldDirector.Refs(r.Id, null).Any(), "'" + r.Id + "' waits for " + r.WhenArg + " km sailed (" + (WorldDirector.Sailed / 1000f).ToString("F1") + " km so far)");
+				if (p.Rules.Any(r => r.InStory)) Log("  the story: " + string.Join(" > ", StoryChain.Steps.Select(StoryChain.StepName).ToArray()));
+			}
 			Check(ref ok, CustomIslandSpawner.Enabled == (p == null || p.Random), "random islands " + (CustomIslandSpawner.Enabled ? "on" : "off") + " as the plan says");
 			Screenshot(new[] { "plan_check" });
 			Log(WorldDirector.Describe());

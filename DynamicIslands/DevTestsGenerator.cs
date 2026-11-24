@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -29,7 +29,7 @@ namespace DynamicIslands
 		public static void MeasureIslandsCommand(string[] args)
 		{
 			string filter = args != null && args.Length > 0 ? string.Join(" ", args) : null;
-			DynamicIslands.instance.StartCoroutine(MeasureIslandsRoutine(filter));
+			StartTest(MeasureIslandsRoutine(filter));
 		}
 
 		static readonly Regex TreeWord = new Regex(@"(?i)(tree|palm|pine|birch|bamboo)"), NotTreeWord = new Regex(@"(?i)(log|stump|leaf|leaves|branch|root)");
@@ -37,6 +37,14 @@ namespace DynamicIslands
 		static readonly Regex RockWord = new Regex(@"(?i)(rock|boulder|stone|cliff|stalag|pebble)");
 		static readonly Regex SeaWord = new Regex(@"(?i)(coral|seavine|kelp|seaweed|anemone|urchin|sea_?grass)");
 		static readonly Regex LootWord = new Regex(@"(?i)(chest|crate|barrel|storage|loot|locker)");
+		/// <summary>
+		/// LM7: colliders of buildings and other built things (walls, roofs, stairs, decks, towers, huts, pipes, tunnels...):
+		/// on the built places (Radio Tower, Caravan Town, Tangaroa, Varuna Point, Utopia, Temperance) they were read as
+		/// ground, so a variation had rocky towers where the buildings stood. A sea or ocean floor is still ground.
+		/// </summary>
+		static readonly Regex BuildingWord = new Regex(@"(?i)(wall|roof|(?<!sea|ocean|sea_|ocean_)floor|stair|door|window|beam|girder|truss|fence|railing|balcon|deck|scaffold|platform|tower|building|house|(^|_)hut|igloo|cabin|container|pipe|tunnel|crane|antenna|bridge|dome|tank|apartment|skyscraper|ladder|plank|pier|dock|walkway|chimney|elevator|ramp|(^|_)kit_|_set_|^RT_|^Relay_|^VP_|^UT_|^TP_Selene|^TP_Moontown|^Tangaroa|^Caravan(Hub|Base|Barebones))");
+		/// <summary>(a name with one of these words is ground even with a place's prefix: VP_Cliff, TP_IcePillar, UT_Rock...)</summary>
+		static readonly Regex NaturalWord = new Regex(@"(?i)(rock(?!et)|cliff|mountain|terrain|sand|stone|boulder|stalag|(^|_)ice|snow|coral|landmass|ground(?!pillar))");
 		/// <summary>Colliders that aren't ground: plants (tree trunks, bushes), water, and harvestable pickups.</summary>
 		static readonly Regex NotGroundWord = new Regex(@"(?i)(tree|palm|pine|birch|bamboo|bush|fern|monstera|grass|flower|plant|banana|leaf|leaves|coral|seavine|kelp|seaweed|water|ocean|^Pickup_|QuestItem)");
 
@@ -157,10 +165,12 @@ namespace DynamicIslands
 					if (c != null) UnityEngine.Object.DestroyImmediate(c);
 
 				var ground = new HashSet<Collider>();
-				int terrains = 0, meshes = 0;
+				int terrains = 0, meshes = 0, built = 0;
 				foreach (Collider c in holder.GetComponentsInChildren<Collider>(true))
 				{
-					if (c.isTrigger || !c.enabled || !IsGround(c.transform, holder.transform)) continue;
+					if (c.isTrigger || !c.enabled) continue;
+					if (IsBuilt(c.transform, holder.transform)) { built++; continue; }
+					if (!IsGround(c.transform, holder.transform)) continue;
 					if (LayerMask.LayerToName(c.gameObject.layer).IndexOf("Water", StringComparison.OrdinalIgnoreCase) >= 0) continue;
 					ground.Add(c);
 					if (c is TerrainCollider) terrains++; else meshes++;
@@ -207,7 +217,7 @@ namespace DynamicIslands
 				// (no ground below: deep water)
 				float deep = Mathf.Min(lowest, -30f);
 				for (int z = 0; z < n; z++) for (int x = 0; x < n; x++) if (float.IsNaN(h[z, x])) h[z, x] = deep;
-				Log("    " + src.name + ": " + ground.Count + " ground colliders (" + terrains + " terrain), bounds " + b.min.ToString("F0") + " - " + b.max.ToString("F0") + ", grid " + n + "x" + n + " of " + cell.ToString("F1") + " m, heights " + lowest.ToString("F1") + " to " + h.Cast<float>().Max().ToString("F1"));
+				Log("    " + src.name + ": " + ground.Count + " ground colliders (" + terrains + " terrain; " + built + " of buildings left out), bounds " + b.min.ToString("F0") + " - " + b.max.ToString("F0") + ", grid " + n + "x" + n + " of " + cell.ToString("F1") + " m, heights " + lowest.ToString("F1") + " to " + h.Cast<float>().Max().ToString("F1"));
 
 				if (!Analyse(island, h, n, cell, origin)) { noLand("nothing above the sea"); yield break; }
 				if (underwater != null) { underwater(island, h, n, cell, origin); done(island); yield break; }
@@ -233,7 +243,19 @@ namespace DynamicIslands
 		{
 			for (Transform p = t; p != null && p != stop; p = p.parent)
 				if (NotGroundWord.IsMatch(PlaceableCatalog.CleanName(p.name))) return false;
-			return true;
+			return !IsBuilt(t, stop);
+		}
+
+		/// <summary>LM7: a collider of something built (BuildingWord on it or a parent) - never a terrain.</summary>
+		static bool IsBuilt(Transform t, Transform stop)
+		{
+			if (t.GetComponent<TerrainCollider>() != null) return false;
+			for (Transform p = t; p != null && p != stop; p = p.parent)
+			{
+				string n = PlaceableCatalog.CleanName(p.name);
+				if (BuildingWord.IsMatch(n) && !NaturalWord.IsMatch(n)) return true;
+			}
+			return false;
 		}
 
 		/// <summary>The generator style whose ground textures the scene's terrains (or ground materials) use most; by the scene's name if none match.</summary>
@@ -448,7 +470,7 @@ namespace DynamicIslands
 			try
 			{
 				cam.targetTexture = rt;
-				cam.Render();
+				{ bool gfx = GfxShotBegin(); try { cam.Render(); } finally { GfxShotEnd(gfx); } } // (CIGfx low: the user's quality)
 				RenderTexture previous = RenderTexture.active;
 				RenderTexture.active = rt;
 				var tex = new Texture2D(W, H, TextureFormat.RGB24, false);
@@ -475,7 +497,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIReachTest", docs: "Dev, editor: the generator's \"can players reach it\" line - a beach island is easy, cliffs all around need building, a low ledge is tricky, the plateau's ramp, sea stacks, flying and sunken ready-made islands; the same answer from the settings and from the generated terrain; the window shows it above the seed")]
 		public static void ReachTestCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(ReachTestRoutine());
+			StartTest(ReachTestRoutine());
 		}
 
 		static IEnumerator ReachTestRoutine()
@@ -566,11 +588,523 @@ namespace DynamicIslands
 
 		static IslandGenSettings Tweak(IslandGenSettings s, Action<IslandGenSettings> change) { IslandGenSettings c = s.Copy(); change(c); return c; }
 
+		[ConsoleCommand(name: "CIGenDefault", docs: "Dev, editor (Raft just started): the first Generate is an island like Raft's small ones - layout Raft small island, 25-75 m long, 6-18 m high, not round (its coast 1.25x further out one way than another), reachable from the raft; several seeds; Defaults gives it; after a Randomize existing generate (an island like Tangaroa) the Generate island tab still opens on its own settings; pictures shot_gendefault_<seed>.png and gendefault_<seed>.png (top down)")]
+		public static void GenDefaultCommand()
+		{
+			StartTest(GenDefaultRoutine());
+		}
+
+		static IEnumerator GenDefaultRoutine()
+		{
+			yield return WaitForEditor(false);
+			if (!DynamicIslands.InEditor()) { Fail("open the editor first"); yield break; }
+			bool ok = true;
+			IslandGenSettings first = IslandGenerator.Last;
+			Check(ref ok, first.Shape == IslandShapes.RaftSmall && IslandShapes.Order[0] == IslandShapes.RaftSmall,
+				"nothing generated yet: the window's first settings are layout " + IslandShapes.Names[first.Shape] + ", " + (first.Radius * 2f).ToString("F0") + " m, " + first.Height.ToString("F0") + " m high (Raft small island first in the Layout list)");
+
+			// The default island, several seeds: its size, height, outline and reach, from its heights
+			Vector3 size = IslandGenerator.BuildArea;
+			int res = IslandGenerator.BuildResolution;
+			float step = size.x / (res - 1);
+			int[] seeds = { 1, 7, 42, 1234, 5150, 90210 };
+			foreach (int seed in seeds)
+			{
+				IslandGenSettings s = IslandGenSettings.RaftLike(seed);
+				float sea = s.WaterLevel;
+				float[,] m = IslandGenerator.HeightsMetres(s, size, res);
+				double cx = 0, cz = 0; int cells = 0; float top = 0f;
+				for (int z = 0; z < res; z++)
+					for (int x = 0; x < res; x++)
+						if (m[z, x] > sea) { cx += x; cz += z; cells++; top = Mathf.Max(top, m[z, x] - sea); }
+				if (cells == 0) { Check(ref ok, false, "seed " + seed + ": no land"); continue; }
+				var mid = new Vector2((float)(cx / cells) * step, (float)(cz / cells) * step);
+				Func<float, float, float> ground = (x, z) => IslandGenerator.SampleHeights(m, res, step, x, z);
+				var rays = new float[64];
+				for (int k = 0; k < 64; k++)
+				{
+					Vector2 dir = new Vector2(Mathf.Cos(k * Mathf.PI / 32f), Mathf.Sin(k * Mathf.PI / 32f));
+					float last = 0f;
+					for (float d = 0f; d < 150f; d += 0.5f) if (ground(mid.x + dir.x * d, mid.y + dir.y * d) > sea) last = d;
+					rays[k] = last;
+				}
+				float length = Enumerable.Range(0, 32).Max(k => rays[k] + rays[k + 32]);
+				float far = rays.Max(), near = Mathf.Max(0.5f, rays.Min());
+				ReachResult r = IslandReach.Assess(s), fromHeights = IslandReach.Assess(m, step, sea);
+				Check(ref ok, length >= 25f && length <= 75f && top >= 6f && top <= 18f && far / near > 1.25f && r.Level <= IslandReach.Mostly && fromHeights.Level <= IslandReach.Mostly,
+					string.Format(System.Globalization.CultureInfo.InvariantCulture, "seed {0} ({1}): {2:F0} m long, {3:F1} m high, coast {4:F0}-{5:F0} m from the middle (x{6:F2}), reach {7} / from its heights {8}: {9}",
+						seed, RaftIslandName(s), length, top, near, far, far / near, r.Level, fromHeights.Level, fromHeights.Text));
+				if (seed == seeds[0] || seed == seeds[2] || seed == seeds[4])
+				{
+					Texture2D tex = IslandGenerator.Preview(m, step, s.Style, null, sea);
+					File.WriteAllBytes(Path.Combine(DynamicIslands.assetpath, "gendefault_" + seed + ".png"), tex.EncodeToPNG());
+					UnityEngine.Object.Destroy(tex);
+				}
+				yield return null;
+			}
+
+			// The window: Generate island opens on it; Defaults gives it (the seed and style stay)
+			GeneratorWindow.Open();
+			yield return null;
+			GeneratorWindow.ShowTab(GeneratorWindow.TabNormal);
+			Check(ref ok, GeneratorWindow.Current.Shape == IslandShapes.RaftSmall, "the window opens on layout " + IslandShapes.Names[GeneratorWindow.Current.Shape]);
+			GeneratorWindow.Use(new IslandGenSettings { Seed = 1234, Shape = IslandShapes.Atoll, Radius = 90f, Style = 1 });
+			Button defaults = FindButton("Defaults");
+			if (defaults != null) defaults.onClick.Invoke();
+			IslandGenSettings def = GeneratorWindow.Current;
+			Check(ref ok, defaults != null && def.Shape == IslandShapes.RaftSmall && def.Seed == 1234 && def.Style == 1 && Mathf.Abs(def.Radius - IslandGenSettings.RaftLike().Radius) < 0.01f, "Defaults: layout " + IslandShapes.Names[def.Shape] + ", seed " + def.Seed + ", style " + def.Style);
+
+			// Three default islands generated in the editor, pictured as the window leaves them
+			foreach (int seed in new[] { 1, 42, 5150 })
+			{
+				GeneratorWindow.Open();
+				yield return null;
+				GeneratorWindow.ShowTab(GeneratorWindow.TabNormal);
+				IslandGenSettings g = IslandGenSettings.RaftLike(seed);
+				g.Style = DynamicIslands.currentStyle;
+				GeneratorWindow.Use(g);
+				yield return PressGenerate(60f);
+				Check(ref ok, GeneratorWindow.LastResult != null, "seed " + seed + " generated in the editor: " + (GeneratorWindow.LastResult ?? "nothing"));
+				yield return new WaitForSecondsRealtime(1.5f);
+				Screenshot(new[] { "gendefault_" + seed });
+				yield return new WaitForSecondsRealtime(0.6f);
+			}
+
+			// After a Randomize existing generate (an island like Tangaroa: big and round), Generate island still opens on its own settings
+			RaftIsland big = RaftIslands.All.FirstOrDefault(i => i.Label.IndexOf("Tangaroa", StringComparison.OrdinalIgnoreCase) >= 0) ?? RaftIslands.All.OrderByDescending(i => i.Radius).FirstOrDefault();
+			if (big == null) Check(ref ok, false, "no measured Raft islands");
+			else
+			{
+				GeneratorWindow.Open();
+				yield return null;
+				GeneratorWindow.ShowTab(GeneratorWindow.TabRandomize);
+				GeneratorWindow.Pick(big, false);
+				yield return null;
+				IslandGenSettings like = GeneratorWindow.Current;
+				yield return PressGenerate(120f);
+				bool made = GeneratorWindow.LastResult != null && IslandGenerator.Last.Radius > 40f;
+				GeneratorWindow.Open();
+				yield return null;
+				IslandGenSettings onRandomize = GeneratorWindow.Current;
+				GeneratorWindow.ShowTab(GeneratorWindow.TabNormal);
+				IslandGenSettings onNormal = GeneratorWindow.Current;
+				Check(ref ok, made && onRandomize.Radius > 40f && onNormal.Shape == IslandShapes.RaftSmall && onNormal.Radius < 30f,
+					"after a generate like " + big.Label + " (" + (like.Radius * 2f).ToString("F0") + " m, " + IslandShapes.Names[like.Shape] + "): Randomize existing keeps it (" + (onRandomize.Radius * 2f).ToString("F0") + " m), Generate island opens on " + IslandShapes.Names[onNormal.Shape] + " " + (onNormal.Radius * 2f).ToString("F0") + " m");
+				GeneratorWindow.Close();
+				GeneratorWindow.Open();
+				yield return null;
+				Check(ref ok, GeneratorWindow.Current.Shape == IslandShapes.RaftSmall, "reopened on Generate island: " + IslandShapes.Names[GeneratorWindow.Current.Shape]);
+				GeneratorWindow.Close();
+			}
+			if (ok) Log("PASS: the first Generate is like Raft's small islands"); else Fail("the first Generate is like Raft's small islands");
+		}
+
+		/// <summary>The generator window's button with this label (tests).</summary>
+		static Button FindButton(string label)
+		{
+			return GeneratorWindow.Instance.GetComponentsInChildren<Button>(true).FirstOrDefault(b => b.GetComponentsInChildren<Text>(true).Any(t => t.text == label));
+		}
+
+		/// <summary>Clicks the generator window's Generate button and waits (up to the seconds given) for the island.</summary>
+		static IEnumerator PressGenerate(float seconds)
+		{
+			Button gen = FindButton("Generate");
+			if (gen == null) { Log("  (no Generate button)"); yield break; }
+			// (the last run's result stays until this run's Generate starts - after the buildings load, maybe much later)
+			string before = GeneratorWindow.LastResult;
+			gen.onClick.Invoke();
+			float until = Time.realtimeSinceStartup + seconds;
+			while ((GeneratorWindow.LastResult == null || ReferenceEquals(GeneratorWindow.LastResult, before)) && Time.realtimeSinceStartup < until) yield return null;
+		}
+
+		/// <summary>Which of Raft's islands a Raft small / large layout uses (for the log).</summary>
+		static string RaftIslandName(IslandGenSettings s)
+		{
+			bool small = s.Shape == IslandShapes.RaftSmall;
+			List<RaftIsland> pool = RaftIslands.All.Where(i => small ? i.Label.StartsWith("Small island") : i.Label.StartsWith("Big island") || i.Label == "Big")
+				.Where(i => RaftIslands.Heights(i) != null).OrderBy(i => i.Scene, StringComparer.Ordinal).ToList();
+			return pool.Count == 0 ? "no measured islands" : pool[new System.Random(s.Seed * 13 + 5).Next(pool.Count)].Label;
+		}
+
+		[ConsoleCommand(name: "CIGenBuildings", docs: "Dev, editor: the generator's Buildings and caves - huts with a cave, cabins, a themed scene, a mix, and neither: what each puts on the island (foundations, walls, pillars, a roof on them, a bed and a chest; the scene's props; Raft's cave piece with its guard), the ground levelled under a hut, the settings kept by a preset; pictures shot_genbuild_*.png")]
+		public static void GenBuildingsCommand() { StartTest(GenBuildingsRoutine()); }
+
+		static IEnumerator GenBuildingsRoutine()
+		{
+			yield return WaitForEditor(false);
+			if (!DynamicIslands.InEditor()) { Fail("CIGenBuildings (in the editor)"); yield break; }
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			Func<string, int> count = n => PlacedEditorObjects().Count(e => (e.GameObjectName ?? "") == n);
+			Func<string, int> countLike = n => PlacedEditorObjects().Count(e => (e.GameObjectName ?? "").IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0);
+			Func<string, bool, string, int, bool, IslandGenSettings> make = (kind, on, style, n, caves) => new IslandGenSettings
+			{
+				Seed = 4242, Radius = 110f, Height = 22f, Roughness = 0.3f, Peaks = 1, ObjectDensity = 0.3f,
+				Style = style == "snowy" ? TerrainPainter.Snowy : TerrainPainter.Tropical, Buildings = on, BuildingKind = kind, BuildingCount = n, Caves = caves,
+			};
+			var cases = new[]
+			{
+				new { Name = "huts", S = make(GenBuildings.Huts, true, "tropical", 3, true) },
+				new { Name = "cabins", S = make(GenBuildings.Cabins, true, "tropical", 2, false) },
+				new { Name = "raftcamp", S = make("raftcamp", true, "tropical", 1, false) },
+				new { Name = "mixed", S = make(GenBuildings.Mixed, true, "snowy", 4, false) },
+				new { Name = "none", S = make(GenBuildings.Mixed, false, "tropical", 3, false) },
+				// (ROADMAP LM10: 0 to 25 structures, wrecks and landmarks on land and in the water)
+				new { Name = "zero", S = make(GenBuildings.Mixed, true, "tropical", 0, false) },
+				new { Name = "landmarks", S = make(GenBuildings.Landmarks, true, "tropical", 25, false) },
+				new { Name = "many", S = make(GenBuildings.Mixed, true, "tropical", 25, false) },
+			};
+			foreach (var c in cases)
+			{
+				yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(c.S));
+				IslandGenerator.GenerateInEditor(c.S);
+				yield return new WaitForSecondsRealtime(0.5f);
+				List<string> built = IslandGenerator.LastReport.Built;
+				string what = string.Join(", ", built.ToArray());
+				int found = count("Block_Foundation"), roofs = countLike("Roof"), pillars = count("Block_Pillar_Wood");
+				switch (c.Name)
+				{
+					case "huts":
+						Check(ref ok, built.Count(b => b == "a castaway hut") == 3 && count("Block_Wall_Thatch") >= 3 * 7 && found >= 3 * 4 && pillars >= 12 && roofs >= 3 && count("Placeable_Bed_Hammock") + count("Placeable_Bed_Basic") == 3,
+							"3 castaway huts: " + found + " foundations, " + count("Block_Wall_Thatch") + " thatch walls, " + pillars + " corner pillars, " + roofs + " roof pieces, " + count("Placeable_Bed_Hammock") + " hammocks and " + count("Placeable_Bed_Basic") + " beds (" + what + ")");
+						if (RandomizerIslands.CanBuildCaves)
+							Check(ref ok, built.Contains("a cave") && RandomizerIslands.Dens.Any(d => count(d) == 1), "a cave: Raft's cave piece set into the land (" + string.Join(", ", RandomizerIslands.Dens.Select(d => d + " " + count(d)).ToArray()) + ")");
+						else Log("  (no measured cave pieces on this Raft: the cave is left out - " + what + ")");
+						// (the ground under each hut was built up: no foundation more than 0.5 m over the terrain under it)
+						Check(ref ok, InsideWalls("Placeable_Bed_Hammock") && InsideWalls("Placeable_Bed_Basic") && InsideWalls("Loot_Chest"), "the hammocks and chests are inside their huts' walls");
+						// (the walls and pillars stand on the foundations' deck: their bottoms at the foundations' tops - at FloatDepth they
+						// hung 0.13 m in the air, the user saw, 2026-10-03)
+						Func<EditorGameObject, Bounds> box = e => { Renderer[] rs = PlacementOptions.ShapeRenderers(e.gameObject); Bounds bb = rs[0].bounds; foreach (Renderer r in rs) bb.Encapsulate(r.bounds); return bb; };
+						List<EditorGameObject> decks = PlacedEditorObjects().Where(e => e.GameObjectName == "Block_Foundation").ToList();
+						// (how far each one's foot is over the deck under it: above it floats; a pillar reaching a little into the floor is fine)
+						Func<string, float> over = n => PlacedEditorObjects().Where(e => e.GameObjectName == n).Select(e =>
+						{
+							Bounds wb = box(e);
+							EditorGameObject under = decks.OrderBy(d => new Vector2(d.transform.position.x - wb.center.x, d.transform.position.z - wb.center.z).sqrMagnitude).First();
+							return wb.min.y - box(under).max.y;
+						}).DefaultIfEmpty(0f).Max();
+						float walls = Mathf.Max(over("Block_Wall_Thatch"), over("Block_Wall_Wood")), posts = over("Block_Pillar_Wood");
+						Check(ref ok, walls < 0.04f && walls > -0.1f && posts < 0.04f, "the walls and pillars stand on the foundations' deck: a wall's foot at most " + walls.ToString("F3") + " m over it, a pillar's " + posts.ToString("F3") + " m");
+						Terrain t = terraineditor.terrain;
+						float worst = PlacedEditorObjects().Where(e => e.GameObjectName == "Block_Foundation").Select(e => e.transform.position.y - (t.SampleHeight(e.transform.position) + t.transform.position.y)).DefaultIfEmpty(0f).Max();
+						Check(ref ok, worst < 0.5f, "the huts stand on their ground: a foundation at most " + worst.ToString("F2") + " m over the terrain under it");
+						break;
+					case "cabins":
+						Check(ref ok, built.Count(b => b == "a wooden cabin") == 2 && count("Block_Wall_Wood") >= 14 && count("Placeable_Bed_Wood") == 2 && PlacedEditorObjects().Count(e => e.GameObjectName == "Note_Book" && ObjectProps.Get(e.Props, ObjectProps.NoteTitle) == "Cabin log") == 2 && !built.Any(b => b.Contains("cave")),
+							"2 wooden cabins with a bed and a log, no cave: " + count("Block_Wall_Wood") + " wooden walls (" + what + ")");
+						Check(ref ok, InsideWalls("Placeable_Bed_Wood") && InsideWalls("Loot_Chest") && InsideWalls("Note_Book") && count("Bed_Simple") == 0, "the beds, chests and logs are inside their cabins' walls (a bed stuck out through the front wall, 2026-10-03)");
+						break;
+					case "raftcamp":
+						Check(ref ok, built.Count == 1 && built[0].Contains("castaway") && count("campfire_1") >= 1, "a castaways' camp: its campfire and props (" + what + ")");
+						break;
+					case "mixed":
+						Check(ref ok, built.Count(b => !b.Contains("found no")) >= 2, "mixed on a snowy island: " + what);
+						break;
+					case "none":
+						Check(ref ok, built.Count == 0 && found == 0, "buildings and caves off: nothing built (" + found + " foundations)");
+						break;
+					case "zero":
+						Check(ref ok, built.Count == 0 && found == 0 && GenBuildings.LandmarkNames.All(n => count(n) == 0), "How many 0: nothing built (" + what + ")");
+						break;
+					case "landmarks":
+					{
+						int made = built.Count(b => !b.Contains("found no"));
+						float sea = DynamicIslands.EditorWaterLevel;
+						List<EditorGameObject> pieces = PlacedEditorObjects().Where(e => GenBuildings.LandmarkNames.Contains(e.GameObjectName)).ToList();
+						int sunk = built.Count(b => b.Contains("sunken")), wetPieces = pieces.Count(e => e.transform.position.y < sea - 2f);
+						Check(ref ok, made >= 12 && pieces.Count >= made, "wrecks and landmarks, 25 asked: " + made + " made, " + pieces.Count + " set pieces (" + what + ")");
+						Check(ref ok, sunk == 0 || wetPieces >= sunk, "the sunken ones lie on the sea floor: " + sunk + " sunken, " + wetPieces + " pieces under water");
+						Check(ref ok, built.Select(b => b.Replace("a ", "")).Distinct().Count() >= 5, "of many kinds: " + string.Join(", ", built.Select(b => b.Replace("a ", "")).Distinct().ToArray()));
+						break;
+					}
+					case "many":
+						Check(ref ok, built.Count(b => !b.Contains("found no")) >= 10 && built.Count(b => !b.Contains("found no")) <= 25, "25 of a mix asked on a big island: " + built.Count(b => !b.Contains("found no")) + " (" + what + ")");
+						break;
+				}
+				EditorGameObject first = c.Name == "landmarks" ? PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == "BoatStranded" || e.GameObjectName == "Airplane")
+					: PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == "Block_Foundation" || e.GameObjectName == "campfire_1");
+				if (first != null && Camera.main != null)
+				{
+					Vector3 at = first.transform.position;
+					Camera.main.transform.SetPositionAndRotation(at + new Vector3(-9f, 6f, -9f), Quaternion.LookRotation(at + new Vector3(2f, 1f, 1.5f) - (at + new Vector3(-9f, 6f, -9f))));
+					yield return new WaitForSecondsRealtime(1f);
+					Screenshot(new[] { "genbuild_" + c.Name });
+					yield return new WaitForSecondsRealtime(0.5f);
+				}
+			}
+			// Each of the structures of Raft's pieces (LM10): lighthouse, lookout mast, jetty, ruin, skyscraper - three of a kind
+			foreach (string only in new[] { "lighthouse", "lookout mast", "jetty", "ruin", "skyscraper" })
+			{
+				GenBuildings.OnlyLandmark = only;
+				IslandGenSettings ls = make(GenBuildings.Landmarks, true, "tropical", 3, false);
+				ls.Seed = 4343;
+				try
+				{
+					yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(ls));
+					IslandGenerator.GenerateInEditor(ls);
+				}
+				finally { GenBuildings.OnlyLandmark = null; }
+				yield return new WaitForSecondsRealtime(0.5f);
+				List<string> built = IslandGenerator.LastReport.Built;
+				int made = built.Count(b => b == "a " + only);
+				string key = only == "jetty" ? "Block_Foundation" : only == "ruin" ? "Loot_Crate" : only == "skyscraper" ? "RT_RoofLamp" : "RT_PillarThick";
+				Check(ref ok, made >= 1 && count(key) >= made, only + ": " + made + " of 3 made (" + count(key) + " " + key + ") - " + string.Join(", ", built.ToArray()));
+				EditorGameObject piece = PlacedEditorObjects().FirstOrDefault(e => e.GameObjectName == key);
+				if (piece != null && Camera.main != null)
+				{
+					Vector3 at = piece.transform.position;
+					Camera.main.transform.SetPositionAndRotation(at + new Vector3(-16f, 12f, -16f), Quaternion.LookRotation(at + new Vector3(-3f, 5f, 0f) - (at + new Vector3(-16f, 12f, -16f))));
+					yield return new WaitForSecondsRealtime(1f);
+					Screenshot(new[] { "genbuild_" + only.Replace(" ", "") });
+					yield return new WaitForSecondsRealtime(0.5f);
+				}
+			}
+			// The settings go with a preset
+			IslandGenSettings back = IslandGenSettings.FromText(cases[0].S.ToText());
+			Check(ref ok, back.Buildings && back.BuildingKind == GenBuildings.Huts && back.BuildingCount == 3 && back.Caves, "a preset keeps Buildings, Kind, How many and Caves");
+			if (ok) Log("PASS: generator buildings and caves"); else Fail("generator buildings and caves");
+		}
+
+		/// <summary>Every object of this name (a hut's chest: titled "... chest", not the cave's hoard) lies within the box of the hut around it (its foundations' outer edges, 1.5 m cells), give or take 5 cm.</summary>
+		static bool InsideWalls(string name)
+		{
+			List<EditorGameObject> found = PlacedEditorObjects().Where(e => e.GameObjectName == "Block_Foundation").ToList();
+			bool all = true;
+			foreach (EditorGameObject e in PlacedEditorObjects().Where(x => x.GameObjectName == name && (name != "Loot_Chest" || ObjectProps.Get(x.Props, ObjectProps.NoteTitle).EndsWith(" chest"))))
+			{
+				Renderer[] rs = PlacementOptions.ShapeRenderers(e.gameObject);
+				if (rs.Length == 0) continue;
+				Bounds b = rs[0].bounds;
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				List<EditorGameObject> hut = found.Where(f => new Vector2(f.transform.position.x - b.center.x, f.transform.position.z - b.center.z).magnitude < 5f).ToList();
+				if (hut.Count == 0) { Log("  " + name + ": no hut around it"); all = false; continue; }
+				float x0 = hut.Min(f => f.transform.position.x) - 0.75f - 0.05f, x1 = hut.Max(f => f.transform.position.x) + 0.75f + 0.05f;
+				float z0 = hut.Min(f => f.transform.position.z) - 0.75f - 0.05f, z1 = hut.Max(f => f.transform.position.z) + 0.75f + 0.05f;
+				bool inside = b.min.x >= x0 && b.max.x <= x1 && b.min.z >= z0 && b.max.z <= z1;
+				if (!inside) { Log("  " + name + " sticks out of its hut: its box x " + b.min.x.ToString("F2") + ".." + b.max.x.ToString("F2") + " z " + b.min.z.ToString("F2") + ".." + b.max.z.ToString("F2") + ", the hut x " + x0.ToString("F2") + ".." + x1.ToString("F2") + " z " + z0.ToString("F2") + ".." + z1.ToString("F2")); all = false; }
+			}
+			return all;
+		}
+
+		/// <summary>CW6: the island Check on the generated quest (the island in the editor): no problems.</summary>
+		static void CheckGeneratedQuest(ref bool ok, string label)
+		{
+			var f = new IslandFile { Name = "generated", Props = new Dictionary<string, string>(DynamicIslands.currentIslandProps) };
+			foreach (EditorGameObject e in PlacedEditorObjects()) f.Objects.Add(new IslandObject { Name = e.GameObjectName, Props = e.Props != null ? new Dictionary<string, string>(e.Props) : null });
+			List<PlanChecker.Finding> found = PlanChecker.QuestFindings(f);
+			var bad = found.Where(x => x.Level == PlanChecker.Level.Problem).Select(x => x.Text).ToList();
+			Check(ref ok, bad.Count == 0, label + ": Check finds no problem in the quest" + (bad.Count > 0 ? " - " + string.Join(" / ", bad.ToArray()) : "") + (found.Count > bad.Count ? " (" + (found.Count - bad.Count) + " tip/warning)" : ""));
+		}
+
+		[ConsoleCommand(name: "CIGenQuest", docs: "Dev, editor: the generator's Quest steps - islands with quests of 1, 3, 5 and 8 steps: the island's quest has them, every step has what it needs on the island (the note, chest, zone, creatures, map pieces in chests, animals), the hoard last; 0 steps leaves the quest alone; Ctrl+Z brings the old quest back; the window steps aside after Generate")]
+		public static void GenQuestCommand() { StartTest(GenQuestRoutine()); }
+
+		static IEnumerator GenQuestRoutine()
+		{
+			yield return WaitForEditor(false);
+			if (!DynamicIslands.InEditor()) { Fail("CIGenQuest (in the editor)"); yield break; }
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			List<EditorGameObject> objs = null;
+			Func<string, string, bool> has = (name, title) => objs.Any(e => (e.GameObjectName ?? "").StartsWith(name) && ObjectProps.Get(e.Props, ObjectProps.NoteTitle) == title);
+			foreach (int n in new[] { 1, 3, 5, 8 })
+			{
+				var gs = new IslandGenSettings { Seed = 777 + n, Radius = 120f, Height = 28f, Roughness = 0.35f, Peaks = 2, ObjectDensity = 0.3f, QuestSteps = n };
+				IslandGenerator.GenerateInEditor(gs);
+				yield return new WaitForSecondsRealtime(0.4f);
+				objs = PlacedEditorObjects();
+				IslandQuest q = IslandQuest.From(DynamicIslands.currentIslandProps);
+				var missing = new List<string>();
+				foreach (IslandQuest.Step st in q.Steps)
+				{
+					bool there;
+					switch (st.Type)
+					{
+						case "read": there = objs.Any(e => (e.GameObjectName ?? "").StartsWith("Note_") && ObjectProps.Get(e.Props, ObjectProps.NoteTitle) == st.Target); break;
+						case "open": there = objs.Any(e => ContentCatalog.IsLootObject(e.GameObjectName ?? "") && ObjectProps.Get(e.Props, ObjectProps.NoteTitle) == st.Target); break;
+						case "reach": there = objs.Any(e => e.GameObjectName == ContentCatalog.TriggerZone && ObjectProps.Get(e.Props, ObjectProps.ZoneId) == st.Target); break;
+						case "kill": case "catch": there = objs.Count(e => { ContentCatalog.CreatureKind ck = ContentCatalog.CreatureOf(e.GameObjectName ?? ""); return ck != null && ck.Label == st.Target; }) > 0; break;
+						case "collect": there = objs.Count(e => ObjectProps.Get(e.Props, ObjectProps.LootItems).Contains(StoryItems.Prefix + st.Target + "*")) >= st.Count && StoryItems.Of(DynamicIslands.currentIslandProps).Any(d => d.Id == st.Target); break;
+						default: there = false; break;
+					}
+					if (!there) missing.Add(st.Type + "|" + st.Target);
+				}
+				bool last = q.Steps.Count > 0 && q.Steps.Last().Type == "open" && q.Steps.Last().Target.EndsWith("hoard");
+				Check(ref ok, q.Steps.Count == n && missing.Count == 0 && last && q.Title.Length > 0 && (n == 1 || q.Steps[0].Type == "read"),
+					n + " step(s): \"" + q.Title + "\": " + string.Join(" > ", q.Steps.Select(x => x.Type + " " + x.Target).ToArray()) + (missing.Count > 0 ? " - nothing on the island for: " + string.Join(", ", missing.ToArray()) : "") + " (" + IslandGenerator.LastReport.Describe() + ")");
+				CheckGeneratedQuest(ref ok, n + " step(s)");
+				Check(ref ok, !(q.Title == "The lookout's log" && !q.Steps.Any(x => x.Type == "reach")), n + " step(s): the title fits the steps (\"" + q.Title + "\")");
+			}
+			// CW6: with huts and a cave - the key in a hut opens the hoard, the hoard in the cave
+			{
+				var gs = new IslandGenSettings { Seed = 791, Radius = 120f, Height = 28f, Roughness = 0.35f, Peaks = 2, ObjectDensity = 0.3f, QuestSteps = 5, Buildings = true, BuildingKind = GenBuildings.Huts, BuildingCount = 2, Caves = true };
+				yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(gs));
+				IslandGenerator.GenerateInEditor(gs);
+				yield return new WaitForSecondsRealtime(0.5f);
+				objs = PlacedEditorObjects();
+				IslandQuest q = IslandQuest.From(DynamicIslands.currentIslandProps);
+				bool keyStep = q.Steps.Any(x => x.Type == "collect" && x.Target == "hoardkey");
+				EditorGameObject hoardObj = objs.FirstOrDefault(e => ObjectProps.Get(e.Props, ObjectProps.NoteTitle) == q.Steps.Last().Target);
+				bool locked = hoardObj != null && ObjectProps.Get(hoardObj.Props, BehaviourProps.CheckKey("open")).Contains("hoardkey");
+				bool caveMade = IslandGenerator.LastReport.Built.Contains("a cave");
+				Check(ref ok, keyStep && locked && (!caveMade || q.Steps.Last().Target == "Cave hoard"), "with huts and a cave: \"" + q.Title + "\": " + string.Join(" > ", q.Steps.Select(x => x.Type + " " + x.Target).ToArray()) + " (the hoard " + (locked ? "locked by the hut's key" : "not locked") + (caveMade ? ", a cave made" : ", no cave fitted") + ")");
+				CheckGeneratedQuest(ref ok, "with huts and a cave");
+			}
+			// Quest steps 0: the island's old quest goes with the objects it was about (CA22); Ctrl+Z gives both back
+			string before = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps);
+			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 31, Radius = 90f, Height = 20f, QuestSteps = 0 });
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, !string.IsNullOrEmpty(before) && string.IsNullOrEmpty(ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps)), "no quest steps: the island's old quest goes with its objects (CA22)");
+			CommandUndoRedo.UndoRedoManager.Undo();
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps) == before, "Ctrl+Z after generating without quest steps brings the old quest back");
+			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 32, Radius = 120f, Height = 28f, Peaks = 2, QuestSteps = 4 });
+			yield return new WaitForSecondsRealtime(0.3f);
+			bool changed = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps) != before;
+			CommandUndoRedo.UndoRedoManager.Undo();
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, changed && ObjectProps.Get(DynamicIslands.currentIslandProps, IslandQuest.KeySteps) == before, "Ctrl+Z after generating a quest brings the island's quest before back");
+			// The window steps aside after Generate (the user: so the new island is in view at once)
+			GeneratorWindow.Open();
+			yield return new WaitForSecondsRealtime(0.5f);
+			System.Reflection.MethodInfo gen = typeof(GeneratorWindow).GetMethod("OnGenerate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+			GeneratorWindow w = UnityEngine.Object.FindObjectOfType<GeneratorWindow>();
+			if (gen != null && w != null) gen.Invoke(w, null);
+			yield return new WaitForSecondsRealtime(1f);
+			Check(ref ok, !GeneratorWindow.IsOpen && (GeneratorWindow.LastResult ?? "").StartsWith("Island "), "Generate closes the window and says what it made: \"" + GeneratorWindow.LastResult + "\"");
+			Screenshot(new[] { "genquest_after" });
+			if (ok) Log("PASS: generator quests"); else Fail("generator quests");
+		}
+
+		[ConsoleCommand(name: "CIRemake", docs: "Dev, editor: Randomize existing's Rebuild it - the Radio Tower remade as a radio tower, an oil rig and a lighthouse under construction (each with two seeds): built of the tower's own pieces, all of them loaded (no missing-object blocks), nothing of it in the air (CIFloating), the report says what it built; pictures shot_remake_*.png. CIRemake [design id]")]
+		public static void RemakeCommand(string[] args) { StartTest(RemakeRoutine(args != null && args.Length > 0 ? args[0] : null)); }
+
+		static IEnumerator RemakeRoutine(string only)
+		{
+			yield return WaitForEditor(false);
+			if (!DynamicIslands.InEditor()) { Fail("CIRemake (in the editor)"); yield break; }
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			RaftIsland radar = RaftIslands.All.FirstOrDefault(i => i.Scene.Contains("Landmark_Radar"));
+			if (radar == null) { Fail("no measured Radio Tower (raft_islands.txt)"); yield break; }
+			foreach (Remakes.Design d in Remakes.For(radar.Scene))
+			{
+				if (only != null && d.Id != only) continue;
+				foreach (int seed in new[] { 11, 12 })
+				{
+					IslandGenSettings gs = RaftIslands.LikeIt(radar, new IslandGenSettings { Seed = seed });
+					gs.Seed = seed;
+					gs.Remake = d.Id;
+					yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(gs));
+					IslandGenerator.GenerateInEditor(gs);
+					yield return new WaitForSecondsRealtime(0.6f);
+					List<string> built = IslandGenerator.LastReport.Built;
+					List<EditorGameObject> objs = PlacedEditorObjects();
+					int floors = objs.Count(e => e.GameObjectName == "RT_Floor"), walls = objs.Count(e => (e.GameObjectName ?? "").StartsWith("RT_Wall")), pillars = objs.Count(e => e.GameObjectName == "RT_PillarThick");
+					int missing = PlacedEditorObjects().Count(e => e.gameObject.name.Contains(IslandSpawner.MissingTag));
+					string word = d.Id == "rt.tower" ? "radio tower" : d.Id == "rt.rig" ? "oil rig" : "lighthouse";
+					Check(ref ok, built.Any(x => x.Contains(word)) && floors >= 2 && (pillars >= 1 || d.Id == "rt.lighthouse") && missing == 0,
+						d.Label + ", seed " + seed + ": " + string.Join(", ", built.ToArray()) + " - " + floors + " floors, " + walls + " walls, " + pillars + " pillars" + (missing > 0 ? ", " + missing + " objects not loaded" : ""));
+					// Nothing of it in the air: the floating check on the RT pieces and ladders
+					FloatingCommand(new[] { "0.3", "RT_" });
+					FloatingCommand(new[] { "0.3", "Ladder" });
+					EditorGameObject mid = objs.Where(e => e.GameObjectName == "RT_Floor").OrderBy(e => e.transform.position.y).FirstOrDefault();
+					if (mid != null && Camera.main != null)
+					{
+						Vector3 at = mid.transform.position + new Vector3(-3f, 0f, 0f);
+						float height = objs.Where(e => (e.GameObjectName ?? "").StartsWith("RT_")).Max(e => e.transform.position.y) - at.y;
+						Vector3 from = at + new Vector3(-22f - height * 0.6f, height * 0.6f + 6f, -22f - height * 0.6f);
+						Camera.main.transform.SetPositionAndRotation(from, Quaternion.LookRotation(at + Vector3.up * height * 0.45f - from));
+						yield return new WaitForSecondsRealtime(1.2f);
+						Screenshot(new[] { "remake_" + d.Id.Replace("rt.", "") + "_" + seed });
+						yield return new WaitForSecondsRealtime(0.5f);
+					}
+				}
+			}
+			if (ok) Log("PASS: remakes of Raft's islands"); else Fail("remakes of Raft's islands");
+		}
+
+		[ConsoleCommand(name: "CIStoryRemake", docs: "Dev, editor: ROADMAP CW1 - Rebuild it for Raft's other story islands: each design (or those whose id has <part>) generated on its island's ground with seed [seed] (11): built, every piece loaded, its loot container there, the pieces standing on the ground (none more than 0.4 m over it); a picture shot_sr_<id>.png. CIStoryRemake [part] [seed]")]
+		public static void StoryRemakeCommand(string[] args)
+		{
+			// (a part and/or a seed, in any order: "CIStoryRemake 12" is seed 12 for all of them)
+			string part = ""; int seed = 11, n;
+			foreach (string a in args ?? new string[0]) { if (int.TryParse(a, out n)) seed = n; else if (a.Trim().Length > 0) part = a.Trim(); }
+			StartTest(StoryRemakeRoutine(part, seed));
+		}
+
+		static IEnumerator StoryRemakeRoutine(string part, int seed)
+		{
+			yield return WaitForEditor(false);
+			if (!DynamicIslands.InEditor()) { Fail("CIStoryRemake (in the editor)"); yield break; }
+			yield return PlaceableCatalog.EnsureBuilt();
+			bool ok = true;
+			int count = 0;
+			foreach (Remakes.Design d in Remakes.All.Where(x => x.Kit != null && (part.Length == 0 || x.Id.Contains(part))))
+			{
+				RaftIsland island = RaftIslands.All.FirstOrDefault(i => i.Scene.Contains(d.Scene));
+				if (island == null) { Check(ref ok, false, d.Id + ": no measured " + d.Scene + " (raft_islands.txt)"); continue; }
+				IslandGenSettings gs = RaftIslands.LikeIt(island, new IslandGenSettings { Seed = seed });
+				gs.Seed = seed;
+				gs.Remake = d.Id;
+				yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(gs));
+				IslandGenerator.GenerateInEditor(gs);
+				yield return new WaitForSecondsRealtime(0.6f);
+				List<string> built = IslandGenerator.LastReport.Built;
+				List<EditorGameObject> objs = PlacedEditorObjects();
+				var kit = new HashSet<string>(d.Kit);
+				List<EditorGameObject> mine = objs.Where(e => kit.Contains(e.GameObjectName)).ToList();
+				int missing = objs.Count(e => e.gameObject.name.Contains(IslandSpawner.MissingTag));
+				bool loot = mine.Any(e => e.Props != null && e.Props.ContainsKey(ObjectProps.LootItems));
+				// (standing: the bottom of each piece's meshes no more than 0.4 m over the ground under its middle - things set
+				// on another piece, a table's lantern, the roof, the mast, aren't counted)
+				Terrain terrain = terraineditor.terrain;
+				var floating = new List<string>();
+				foreach (EditorGameObject e in mine)
+				{
+					Renderer[] rs = PlacementOptions.ShapeRenderers(e.gameObject);
+					if (rs.Length == 0) continue;
+					Bounds b = rs[0].bounds;
+					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+					float ground = terrain.SampleHeight(b.center) + terrain.transform.position.y;
+					if (b.min.y - ground > 0.4f && !mine.Any(o => o != e && o.transform.position.y < e.transform.position.y - 0.2f && (new Vector2(o.transform.position.x - e.transform.position.x, o.transform.position.z - e.transform.position.z)).magnitude < 6f))
+						floating.Add(e.GameObjectName + " +" + (b.min.y - ground).ToString("F1"));
+				}
+				// (and on the land: no part of a piece out over the sea - the user, 2026-10-06: Utopia's crane stood off the island)
+				float sea = terrain.transform.position.y + DynamicIslands.EditorWaterLevel;
+				var overSea = new List<string>();
+				foreach (EditorGameObject e in mine)
+				{
+					Renderer[] rs = PlacementOptions.ShapeRenderers(e.gameObject);
+					if (rs.Length == 0) continue;
+					Bounds b = rs[0].bounds;
+					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+					foreach (Vector3 corner in new[] { new Vector3(b.min.x, 0f, b.min.z), new Vector3(b.min.x, 0f, b.max.z), new Vector3(b.max.x, 0f, b.min.z), new Vector3(b.max.x, 0f, b.max.z) })
+						if (terrain.SampleHeight(corner) + terrain.transform.position.y < sea - 0.3f) { overSea.Add(e.GameObjectName); break; }
+				}
+				Check(ref ok, built.Count > 0 && mine.Count >= 8 && missing == 0 && loot && floating.Count == 0 && overSea.Count == 0,
+					d.Label + " (" + d.Id + "), seed " + seed + ": " + string.Join(", ", built.ToArray()) + " - " + mine.Count + " pieces" + (missing > 0 ? ", " + missing + " not loaded" : "") + (loot ? ", loot" : ", NO LOOT") + (floating.Count > 0 ? ", in the air: " + string.Join(", ", floating.Take(6).ToArray()) : "") + (overSea.Count > 0 ? ", out over the sea: " + string.Join(", ", overSea.Distinct().Take(6).ToArray()) : ""));
+				if (mine.Count > 0 && Camera.main != null)
+				{
+					Vector3 c = new Vector3(mine.Average(e => e.transform.position.x), mine.Min(e => e.transform.position.y), mine.Average(e => e.transform.position.z));
+					float size = Mathf.Max(12f, mine.Max(e => (new Vector2(e.transform.position.x - c.x, e.transform.position.z - c.z)).magnitude));
+					// (high enough to look over the trees round the pad)
+					Vector3 from = c + new Vector3(-size * 0.9f, size * 1.5f + 8f, -size * 0.9f);
+					Camera.main.transform.SetPositionAndRotation(from, Quaternion.LookRotation(c + Vector3.up * 2f - from));
+					yield return new WaitForSecondsRealtime(1.2f);
+					Screenshot(new[] { "sr_" + d.Id.Replace(".", "_") });
+					yield return new WaitForSecondsRealtime(0.5f);
+				}
+				count++;
+			}
+			if (ok && count > 0) Log("PASS: story remakes (" + count + ")"); else Fail("story remakes");
+		}
+
 		[ConsoleCommand(name: "CIUnderwaterShots", docs: "Dev, editor: generates an island on the deep sea floor (style: CIUnderwaterShots [Tropical|Snowy|Desert|Forest|Volcanic]) and takes pictures: from above, from the side under water, the reef on the shelf, and the drop-off (shot_uw_*.png)")]
 		public static void UnderwaterShotsCommand(string[] args)
 		{
 			int style = args != null && args.Length > 0 ? TerrainPainter.StyleIndex(args[0]) : TerrainPainter.Tropical;
-			DynamicIslands.instance.StartCoroutine(UnderwaterShotsRoutine(style));
+			StartTest(UnderwaterShotsRoutine(style));
 		}
 
 		static IEnumerator UnderwaterShotsRoutine(int style)
@@ -634,7 +1168,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPlayerJump", docs: "Dev, in game (standing on the raft): measures Raft's player - walkable slope, step, jump speed and gravity, how high a jump from the ground lifts the feet, how deep a swimmer floats and how high a jump out of the water gets (the numbers behind the generator's reachability line)")]
 		public static void PlayerJumpCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(PlayerJumpRoutine());
+			StartTest(PlayerJumpRoutine());
 		}
 
 		static IEnumerator PlayerJumpRoutine()
@@ -690,7 +1224,7 @@ namespace DynamicIslands
 		public static void MeasureUnderwaterCommand(string[] args)
 		{
 			string filter = args != null && args.Length > 0 ? string.Join(" ", args) : null;
-			DynamicIslands.instance.StartCoroutine(MeasureUnderwaterRoutine(filter));
+			StartTest(MeasureUnderwaterRoutine(filter));
 		}
 
 		[ConsoleCommand(name: "CIDumpObject", docs: "Dev, editor: logs the parents, children and components of the first object with a name in one of Raft's island scenes. CIDumpObject <part of a scene name> <object name>")]
@@ -700,7 +1234,7 @@ namespace DynamicIslands
 			string scene = PlaceableCatalog.LandmarkSceneNames().FirstOrDefault(s => s.IndexOf(args[0], StringComparison.OrdinalIgnoreCase) >= 0);
 			string name = string.Join(" ", args.Skip(1).ToArray());
 			if (scene == null) { Fail("no scene matching " + args[0]); return; }
-			DynamicIslands.instance.StartCoroutine(PlaceableCatalog.VisitScene(scene, s => DumpObject(s, name)));
+			StartTest(PlaceableCatalog.VisitScene(scene, s => DumpObject(s, name)));
 		}
 
 		static IEnumerator DumpObject(Scene s, string name)
@@ -718,6 +1252,51 @@ namespace DynamicIslands
 				Log("  " + new string(' ', depth * 2) + c.name + (c.gameObject.activeSelf ? "" : " (off)") + " layer " + LayerMask.LayerToName(c.gameObject.layer) + ": " + string.Join(", ", c.GetComponents<Component>().Where(x => x != null && !(x is Transform)).Select(x => x.GetType().Name).ToArray()));
 			}
 			Log("PASS: dumped " + name);
+		}
+
+		[ConsoleCommand(name: "CIProbeGrass", docs: "Dev, editor (ROADMAP PF-D3): logs the terrain detail layers (grass) of Raft's island scenes and every object named like grass or weed, with counts and depths. CIProbeGrass [part of a scene name]")]
+		public static void ProbeGrassCommand(string[] args)
+		{
+			string filter = args != null && args.Length > 0 ? string.Join(" ", args) : null;
+			StartTest(ProbeGrassRoutine(filter));
+		}
+
+		static IEnumerator ProbeGrassRoutine(string filter)
+		{
+			yield return WaitForEditor(false);
+			foreach (string scene in PlaceableCatalog.LandmarkSceneNames().Where(s => filter == null || s.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0).ToList())
+				yield return PlaceableCatalog.VisitScene(scene, ProbeGrass);
+			Log("PASS: grass probed");
+		}
+
+		static IEnumerator ProbeGrass(Scene s)
+		{
+			var all = s.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Transform>(true)).ToList();
+			foreach (Terrain t in all.Select(x => x.GetComponent<Terrain>()).Where(x => x != null))
+			{
+				TerrainData d = t.terrainData;
+				if (d == null) continue;
+				DetailPrototype[] ps = d.detailPrototypes;
+				Log("grass " + s.name + " terrain " + t.name + " at " + t.transform.position.ToString("F0") + ": " + ps.Length + " detail layers, res " + d.detailResolution + ", draw " + t.drawTreesAndFoliage + " dist " + t.detailObjectDistance);
+				for (int i = 0; i < ps.Length; i++)
+				{
+					DetailPrototype p = ps[i];
+					int[,] map = d.GetDetailLayer(0, 0, d.detailWidth, d.detailHeight, i);
+					long sum = 0, under = 0; int cells = 0;
+					for (int y = 0; y < d.detailHeight; y += 2)
+						for (int x = 0; x < d.detailWidth; x += 2)
+						{
+							if (map[y, x] == 0) continue;
+							cells++; sum += map[y, x];
+							float h = t.transform.position.y + d.GetInterpolatedHeight(x / (float)d.detailWidth, y / (float)d.detailHeight);
+							if (h < 0f) under++;
+						}
+					Log("  layer " + i + ": " + (p.prototype != null ? "mesh " + p.prototype.name : "texture " + (p.prototypeTexture != null ? p.prototypeTexture.name : "?")) + " mode " + p.renderMode + " w " + p.minWidth + "-" + p.maxWidth + " h " + p.minHeight + "-" + p.maxHeight + " colours " + ColorUtility.ToHtmlStringRGB(p.healthyColor) + "/" + ColorUtility.ToHtmlStringRGB(p.dryColor) + ": cells(1/4) " + cells + " sum " + sum + " under sea " + under);
+				}
+			}
+			foreach (var g in all.Where(x => System.Text.RegularExpressions.Regex.IsMatch(x.name, "grass|weed|kelp|seaplant", System.Text.RegularExpressions.RegexOptions.IgnoreCase)).GroupBy(x => PlaceableCatalog.CleanName(x.name)))
+				Log("  object " + g.Key + " x" + g.Count() + " y " + g.Min(x => x.position.y).ToString("F1") + ".." + g.Max(x => x.position.y).ToString("F1") + " parent " + (g.First().parent != null ? g.First().parent.name : "-") + " renderers " + g.First().GetComponentsInChildren<Renderer>(true).Length);
+			yield break;
 		}
 
 		/// <summary>Depth bands of the ground (m below the sea): 0-2, 2-5, 5-10, 10-20, 20-40, 40-80, 80+.</summary>
@@ -926,11 +1505,13 @@ namespace DynamicIslands
 				if (w == null || !GeneratorWindow.IsOpen) { run.Errors.Add("Generator: the window did not open"); yield break; }
 				Button tab = w.GetComponentsInChildren<Button>(true).Where(IsTabButton).ElementAtOrDefault(t);
 				if (tab == null) { run.Errors.Add("Generator: no tab button " + names[t]); continue; }
+				ScreenStarts(run, "Generator, " + names[t] + " tab");
 				int before = run.Pressed;
 				yield return Press(run, tab, "Generator", 1);
 				if (w.Tab != t) run.Errors.Add("Generator: the " + names[t] + " tab button did not show its tab");
 				run.Windows++;
 				yield return TestWindow(run, w, null, "Generator, " + names[t] + " tab", 1);
+				ScreenTimeLimit(run, "Generator, " + names[t] + " tab", run.Pressed - before, "");
 				run.PerScreen["Generator, " + names[t] + " tab"] = run.Pressed - before;
 				GeneratorWindow.Close();
 				yield return null;
@@ -947,7 +1528,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGenFeatures", docs: "Dev, editor: every setting of the generator - deterministic, has an effect, keeps the edge flat; the top is the height asked for; size and height presets; stretch; object sliders (none, the water slider alone, a jungle); creatures and loot tiers; generating with content, undo/redo, save and load")]
 		public static void GenFeaturesCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(GenFeaturesRoutine());
+			StartTest(GenFeaturesRoutine());
 		}
 
 		static IEnumerator GenFeaturesRoutine()
@@ -1190,10 +1771,10 @@ namespace DynamicIslands
 			Check(ref ok, sticking.Count == 0, "rocks out in deeper water stay under the surface (" + sticking.Count + " stick out" + (sticking.Count > 0 ? ": " + string.Join(", ", sticking.Take(5).ToArray()) : "") + ")");
 			yield return null;
 
-			// 3. The sliders: Teeming is about three times Like Raft; none is none
+			// 3. The sliders: Teeming is about twice Like Raft (three times carpeted a lagoon's floor); none is none
 			IslandGenSettings rich = s.Copy(); rich.Water = 1f;
 			int richCorals = IslandGenerator.PlanAll(rich, m, size).Count(o => RaftUnderwater.CategoryOf(o.Name) == IslandGenerator.CatWater);
-			Check(ref ok, richCorals > corals.Count * 2f && richCorals < corals.Count * 4f, "Teeming: " + richCorals + " corals and plants against " + corals.Count + " like Raft");
+			Check(ref ok, richCorals > corals.Count * 1.5f && richCorals < corals.Count * 2.6f, "Teeming: " + richCorals + " corals and plants against " + corals.Count + " like Raft (about twice)");
 
 			// 4. The styles: Balboa's barrels and no corals (forest), Temperance's bare rock (snowy)
 			IslandGenSettings forest = s.Copy(); forest.Style = TerrainPainter.Forest;
@@ -1224,7 +1805,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIRandomizeTest", docs: "Dev, editor: every measured Raft island can be picked (picture and ground heights exist); \"something new like it\" gives settings from its measurements; \"a variation of it\" keeps its size and height; the window picks and previews them")]
 		public static void RandomizeTestCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(RandomizeTestRoutine());
+			StartTest(RandomizeTestRoutine());
 		}
 
 		static IEnumerator RandomizeTestRoutine()
@@ -1249,12 +1830,19 @@ namespace DynamicIslands
 				IslandGenSettings like = RaftIslands.LikeIt(isl, new IslandGenSettings { Seed = 99 });
 				bool likeOk = Mathf.Abs(like.Radius - Mathf.Clamp(isl.Radius, IslandGenSettings.MinRadius, IslandGenSettings.MaxRadius)) < 0.01f && Mathf.Abs(like.Height - Mathf.Clamp(isl.Top, IslandGenSettings.MinHeight, IslandGenSettings.MaxHeight)) < 0.01f && like.Style == isl.StyleIndex;
 				IslandGenSettings vari = RaftIslands.VariationOf(isl, new IslandGenSettings { Seed = 99 });
-				float[,] m = IslandGenerator.HeightsMetres(vari, size, Res);
+				// (LM7: in the terrain it gets - Temperance's is bigger than the build area)
+				Vector3 varSize = IslandGenerator.AreaFor(vari);
+				float varStep = varSize.x / (Res - 1);
+				float[,] m = IslandGenerator.HeightsMetres(vari, varSize, Res);
 				int land = m.Cast<float>().Count(v => v > vari.WaterLevel);
-				float area = land * step * step, peak = m.Cast<float>().Max() - vari.WaterLevel;
-				// (a variation at its own size: about as much land as the real one, and exactly its height; islands bigger than the build area, like Temperance, are scaled down to fit)
+				float area = land * varStep * varStep, peak = m.Cast<float>().Max() - vari.WaterLevel;
+				// (a variation at its own size: about as much land as the real one, and exactly its height - Temperance too, LM7)
 				float expect = isl.Area * Mathf.Pow(vari.Radius / Mathf.Max(1f, isl.Radius), 2f);
 				bool variOk = Mathf.Abs(peak - vari.Height) < Mathf.Max(1f, vari.Height * 0.05f) && area > expect * 0.5f && area < expect * 1.6f;
+				// (a story island with a look that shapes its ground - Caravan's mesas, Tangaroa, Utopia, Varuna, the radio
+				// tower - gets the look's own size and height, not the measured ones: its look carried on both is the check)
+				Remakes.Look look = Remakes.LookFor(isl.Scene);
+				if (look != null && look.Shape != null) { likeOk = like.Look == look.Id; variOk = vari.Look == look.Id; }
 				if (likeOk && variOk) fits++;
 				else misfits.Add(isl.Label + " (like " + likeOk + ", variation land " + area.ToString("F0") + " of " + isl.Area.ToString("F0") + " m², top " + peak.ToString("F0") + " of " + vari.Height.ToString("F0") + ")");
 				yield return null;
@@ -1299,7 +1887,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGenBench", docs: "Dev, editor: generates islands with about 1000, 3000, 6000 and 9000 objects and measures the cost: generating, the editor's frame time, the file's size, saving and loading. Writes the table to the log (README: generator costs)")]
 		public static void GenBenchCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(GenBenchRoutine());
+			StartTest(GenBenchRoutine());
 		}
 
 		static IEnumerator GenBenchRoutine()
@@ -1394,7 +1982,7 @@ namespace DynamicIslands
 		{
 			string name = args != null ? string.Join(" ", args.Where(a => a != "keep").ToArray()) : "";
 			if (name.Length == 0) { Fail("usage: CIGenWorld <island> [keep]"); return; }
-			DynamicIslands.instance.StartCoroutine(GenWorldRoutine(name, args.Contains("keep")));
+			StartTest(GenWorldRoutine(name, args.Contains("keep")));
 		}
 
 		static IEnumerator GenWorldRoutine(string name, bool keep)
@@ -1444,7 +2032,8 @@ namespace DynamicIslands
 		public static void DiveShotsCommand(string[] args)
 		{
 			if (args == null || args.Length == 0) { Log("Usage: CIDiveShots <island> [keep]"); return; }
-			DynamicIslands.instance.StartCoroutine(DiveShotsRoutine(args[0], args.Length > 1 && args[1] == "keep"));
+			bool keep = args.Length > 1 && args[args.Length - 1] == "keep";
+			StartTest(DiveShotsRoutine(string.Join(" ", args.Take(keep ? args.Length - 1 : args.Length).ToArray()), keep));
 		}
 
 		/// <summary>Turns the player's view (Raft's MouseLook keeps its own angles, so they are set too).</summary>
@@ -1463,16 +2052,47 @@ namespace DynamicIslands
 			Vector3? raft = CustomIslandSpawner.RaftPosition;
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (!raft.HasValue || player == null) { Fail("not in a world"); yield break; }
-			if (!File.Exists(IslandSpawner.PathFor(name))) { Fail("no island file '" + name + "'"); yield break; }
+			// ("real" / "real:Big" ...: one of Raft's own islands, Landmark_<kind>, for comparing the two under water)
+			bool real = name == "real" || name.StartsWith("real:");
+			if (!real && !File.Exists(IslandSpawner.PathFor(name))) { Fail("no island file '" + name + "'"); yield break; }
 			yield return EnsureAlive();
 			int count0 = IslandWorldState.Islands.Count;
 			Vector3 pos = raft.Value + Vector3.forward * 330f; pos.y = 0f;
 			float t0 = Time.realtimeSinceStartup;
-			yield return DynamicIslands.instance.SpawnIslandFile(name, pos, true);
+			IslandWorldState.Entry entry = null;
+			Terrain terrain = null;
+			if (real)
+			{
+				ChunkPointType kind;
+				try { kind = (ChunkPointType)Enum.Parse(typeof(ChunkPointType), "Landmark_" + (name.Length > 5 ? name.Substring(5) : "Small")); }
+				catch { Fail("no Raft island kind '" + name.Substring(5) + "'"); yield break; }
+				// (the nearest of that kind already in the world, else one called up ahead of the raft)
+				Vector3 at = raft.Value;
+				Func<Landmark> nearest = () => UnityEngine.Object.FindObjectsOfType<Landmark>()
+					.Where(l => l.name.Contains("#" + kind + "#") && l.GetComponentInChildren<Terrain>() != null)
+					.OrderBy(l => (l.transform.position - at).sqrMagnitude).FirstOrDefault();
+				Landmark landmark = nearest();
+				if (landmark == null) ComponentManager<ChunkManager>.Value.AddChunkPointCheat(kind, pos);
+				for (float w = 0f; w < 30f && landmark == null; w += 0.5f)
+				{
+					yield return new WaitForSeconds(0.5f);
+					landmark = nearest();
+				}
+				terrain = landmark != null ? landmark.GetComponentInChildren<Terrain>() : null;
+				if (terrain != null)
+				{
+					pos = terrain.transform.position + terrain.terrainData.size / 2f; pos.y = 0f;
+					name = "real_" + landmark.name.Replace(" ", "").Replace("(Clone)", "");
+				}
+			}
+			else
+			{
+				yield return DynamicIslands.instance.SpawnIslandFile(name, pos, true);
+				entry = IslandWorldState.Islands.Skip(count0).FirstOrDefault();
+				if (entry == null || entry.Root == null) { Fail("the island did not spawn"); yield break; }
+				terrain = entry.Root.GetComponentInChildren<Terrain>();
+			}
 			float spawn = Time.realtimeSinceStartup - t0;
-			IslandWorldState.Entry entry = IslandWorldState.Islands.Skip(count0).FirstOrDefault();
-			if (entry == null || entry.Root == null) { Fail("the island did not spawn"); yield break; }
-			Terrain terrain = entry.Root.GetComponentInChildren<Terrain>();
 			Log("Spawned '" + name + "' in " + spawn.ToString("F1") + " s: terrain " + (terrain != null ? terrain.terrainData.size.x.ToString("F0") + " m, " + terrain.terrainData.heightmapResolution + " samples, from " + terrain.transform.position.y.ToString("F0") + " m" : "none"));
 			if (terrain == null) { Fail("no terrain"); yield break; }
 			yield return new WaitForSeconds(2f);
@@ -1486,6 +2106,7 @@ namespace DynamicIslands
 			var views = new[]
 			{
 				new { Key = "surface", Out = 45f, Y = 0.2f, Pitch = 5f },
+				new { Key = "floor", Out = 10f, Y = -0.8f, Pitch = 50f },
 				new { Key = "reef", Out = 14f, Y = -4f, Pitch = 20f },
 				new { Key = "shelf", Out = 25f, Y = -8f, Pitch = 10f },
 				new { Key = "dropoff", Out = 45f, Y = -16f, Pitch = 35f },
@@ -1510,7 +2131,7 @@ namespace DynamicIslands
 			yield return EnsureAlive();
 			OnRaftCommand();
 			yield return new WaitForSeconds(1f);
-			if (!keep) IslandWorldState.Remove(entry.Name);
+			if (!keep && entry != null) IslandWorldState.Remove(entry.Name);
 			Log("PASS: dive pictures of '" + name + "' (coast " + d.ToString("F0") + " m from its middle)");
 		}
 
@@ -1529,7 +2150,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPanelFit", docs: "Dev, editor: the left tool panel with the tallest and widest inspectors (a creature with custom colours, a chest with many items, each zone): nothing wider than the panel, never below the status bar, scrolls when too tall")]
 		public static void PanelFitCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(PanelFitRoutine());
+			StartTest(PanelFitRoutine());
 		}
 
 		static IEnumerator PanelFitRoutine()
@@ -1591,7 +2212,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGenShots", docs: "Dev, editor: screenshots of the generator window, each tab (shot_gen_normal / _randomize / _ready, and the Normal tab scrolled down), and a help popup")]
 		public static void GenShotsCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(GenShotsRoutine());
+			StartTest(GenShotsRoutine());
 		}
 
 		static IEnumerator GenShotsRoutine()

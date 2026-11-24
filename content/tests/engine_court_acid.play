@@ -1,0 +1,33 @@
+# Engine Court's pump room (CIPlay engine_court_acid, 11-12 w08; in a test world 'CI ...', under CIGapsWatchHealth, no
+# CIGapsSuit). Points as in its recipe: the knoll at 50 -42 (top 18 m); the dug pump tunnel from its mouth at 40.2 -32.2
+# up (8 deg) to the pump room round 51.4 -43.4 and the side bay to 46 -46.8; the spent coolant (zone ec_coolant, r 2.5,
+# safe=suit) on the bay floor at 47 -45.8, the pump room locker at 45.6 -47.4; the warning sign at 34.5 -26.5, the suit
+# box at 34.5 -37.9 and the coolant valve at 45.9 -26.5 outside. Without the suit the coolant burns; the valve hides the
+# zone, then the floor is safe. The suit run is engine_court_acidsuit.
+island Engine Court keep
+offset 1.481 0.8839
+hour 11
+weather Calm
+
+picture ec_knoll 31 +2 -24 44 +4 -36
+picture ec_cave_out 37 +1.7 -29 40.2 +1 -32.2
+expect shown ecacid
+walk 38.5 -30.5 to 40.2 -32.2 to 44 -36 to 47.9 -39.9 to 50.4 -42.4 to 47.5 -45.3
+wait 5
+expect message Spent coolant
+expect hurt 15
+picture ec_pool 49.8 11.2 -41.6 46.6 9.8 -46.2 light=20
+walk 47.5 -45.3 to 50.4 -42.4 to 47.9 -39.9 to 44 -36 to 40.2 -32.2 to 38.5 -30.5
+expect hurt 1
+
+# The valve outside: the coolant goes, the floor is safe
+at 44.5 -27.5
+use ecvalve
+wait 2
+expect hidden ecacid
+walk 38.5 -30.5 to 40.2 -32.2 to 44 -36 to 47.9 -39.9 to 50.4 -42.4 to 47.3 -45.5
+wait 5
+expect unhurt
+open Pump room locker
+wait 2
+expect item Battery 1

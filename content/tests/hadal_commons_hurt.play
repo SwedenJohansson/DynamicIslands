@@ -1,0 +1,11 @@
+# Hadal Commons hazard test (11-05): hidden spikes hcspike1 (3/s, r 3), shown 5 s by the trip zone hctrip1. CIPlay hadal_commons_hurt, in a test world 'CI ...', CIGapsSuit off (no suit: the zone must hurt).
+island Hadal Commons keep
+offset 0 0
+hour 11
+weather Calm
+at -46 -34
+zone hc_trip1
+wait 4
+expect message A wire snaps
+# (6 is about half of the expected damage)
+expect hurt 6

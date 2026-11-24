@@ -1,0 +1,14 @@
+# Sandsunk Necropolis's embalmers' galleries (CIPlay sandsunk_necropolis_caves, 11-12 w07; in a test world 'CI ...').
+# Points as in its recipe: in at the open tomb front at -23 0, along the gallery to the hall (-34..-41, 0), the niche
+# room off it (-41 1.5 to -45 6.5), back out through the second gallery to the front at -23 6. Floors ~3 m.
+island Sandsunk Necropolis keep
+offset 0 0
+hour 11
+weather Calm
+picture sn_fronts -12 5 3 -24 4.5 3
+walk -20 0 to -23 0 to -34 0 to -40 0 below=8
+picture sn_hall -26 6.8 0 -40 5.6 0 light=20
+walk -40 0 to -41 1.5 to -44.5 6 below=8
+picture sn_niche -40 6.8 0.5 -45 5.6 6.5 light=20
+walk -44.5 6 to -41 1.5 to -38 3 to -33 6.5 to -23 6 to -20 6 below=8
+picture sn_gallery_out -33 6.8 6.5 -22 5.4 6 light=20

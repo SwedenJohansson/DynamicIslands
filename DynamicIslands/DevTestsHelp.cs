@@ -14,8 +14,8 @@ namespace DynamicIslands
 	/// <summary>The help of the World plans window (? marks, Help) and the alpha box's help buttons.</summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CIPlanHelp", docs: "Dev, editor: the World plans window's help - a ? on every part (the plan row, templates, random islands, Raft's story, description, map, Check, Export/Import, and 6 on each rule card), each inside the window with its text; hovering shows the popup; Help opens the steps with the guide's buttons (online section, PDF); the island's rules have their own help and no Export ?. Pictures shot_planhelp_*")]
-		public static void PlanHelpCommand() { DynamicIslands.instance.StartCoroutine(PlanHelpRoutine()); }
+		[ConsoleCommand(name: "CIPlanHelp", docs: "Dev, editor: the World plans window's help - a ? on every part (the plan row, templates, random islands, Raft's story, description, map, Check, Export/Import, and 7 on each rule card - DOT since SL9, whose ? has the Receiver text and opens on hover), each inside the window with its text; hovering shows the popup; Help opens the steps with the guide's buttons (online section, PDF); the island's rules have their own help and no Export ?. Pictures shot_planhelp_*")]
+		public static void PlanHelpCommand() { StartTest(PlanHelpRoutine()); }
 
 		static IEnumerator PlanHelpRoutine()
 		{
@@ -24,19 +24,39 @@ namespace DynamicIslands
 			HelpLinks.TestMode = true;
 			try
 			{
-				WorldPlanWindow.EnsureSamples();
-				WorldPlanWindow.Open("Adventure");
+				WorldPlanWindow.Open(WriteCIPlan(CIAdventure));
 				yield return new WaitForSecondsRealtime(0.5f);
 				Transform window = EditorUI.Canvas.transform.Find("WorldPlanWindow");
 				RectTransform panel = window != null ? window.Find("Panel") as RectTransform : null;
-				Check(ref ok, WorldPlanWindow.IsOpen && panel != null, "the window opens on Adventure");
+				Check(ref ok, WorldPlanWindow.IsOpen && panel != null, "the window opens on " + CIAdventure);
 				if (panel == null) yield break;
+				// (TODO 5b: a plan with a Main story line opens on that tab; the rule cards counted here are on Other islands)
+				WorldPlanWindow.ShowTab(WorldPlanWindow.TabOther);
+				yield return null;
 				Canvas.ForceUpdateCanvases();
 				List<UIKit.HelpMark> marks = window.GetComponentsInChildren<UIKit.HelpMark>(false).ToList();
 				int cards = window.GetComponentsInChildren<Transform>(false).Count(t => t.name == "Rule");
 				int onCards = marks.Count(m => m.GetComponentsInParent<Transform>(true).Any(t => t.name == "Rule"));
-				Check(ref ok, cards > 0 && onCards == cards * 6, onCards + " ? on " + cards + " rule cards (6 each)");
-				Check(ref ok, marks.Count - onCards == 8, (marks.Count - onCards) + " ? for the window's parts (plan row, templates, random islands, Raft's story, description, map, Check, Export/Import)");
+				// (a km/day card has an 8th: "again until done", SR1)
+				int again = window.GetComponentsInChildren<Transform>(false).Count(t => t.name == "Check_Again");
+				Check(ref ok, cards > 0 && onCards == cards * 7 + again, onCards + " ? on " + cards + " rule cards (7 each with DOT, +1 on the " + again + " with again until done)");
+				// (SL9's Receiver DOT: its own ? on every card, with the Receiver text - counted above only as one of 7, GAP 10-20)
+				List<UIKit.HelpMark> dots = marks.Where(m => m.Text != null && m.Text.StartsWith("DOT - ") && m.Text.Contains("Receiver") && m.GetComponentsInParent<Transform>(true).Any(t => t.name == "Rule")).ToList();
+				Check(ref ok, dots.Count == cards, dots.Count + " DOT ? (the Receiver's dot) on " + cards + " rule cards - one each");
+				Check(ref ok, marks.Count - onCards == 5, (marks.Count - onCards) + " ? for the window's parts on the Other islands tab (plan row, templates, map, Check, Export/Import)");
+				// (TODO 5b: the plan's settings and its Main story line are tabs of their own)
+				WorldPlanWindow.ShowTab(WorldPlanWindow.TabSettings);
+				yield return null;
+				int settingsMarks = window.GetComponentsInChildren<UIKit.HelpMark>(false).Count(m => m.GetComponentsInParent<Transform>(true).Any(t => t.name == "SettingsTab"));
+				Check(ref ok, settingsMarks == 3, settingsMarks + " ? on the Settings tab (random islands, Raft's story, description)");
+				WorldPlanWindow.ShowTab(WorldPlanWindow.TabStory);
+				yield return null;
+				int storyMarks = window.GetComponentsInChildren<UIKit.HelpMark>(false).Count(m => m.GetComponentsInParent<Transform>(true).Any(t => t.name == "StoryTools"));
+				Check(ref ok, storyMarks == 1, storyMarks + " ? on the Main story line tab's buttons");
+				WorldPlanWindow.ShowTab(WorldPlanWindow.TabOther);
+				yield return null;
+				Canvas.ForceUpdateCanvases();
+				marks = window.GetComponentsInChildren<UIKit.HelpMark>(false).ToList();
 				Check(ref ok, marks.All(m => m.Text != null && m.Text.Length > 60), "every ? has a real explanation");
 				Rect area = ScreenRect(panel);
 				// (a ? on a card further down the list is scrolled out of view: only the visible ones must be inside the window)
@@ -55,9 +75,15 @@ namespace DynamicIslands
 				if (when != null)
 				{
 					when.OnPointerEnter(null);
-					yield return new WaitForSecondsRealtime(0.2f); // (a hover lasts; the popup is placed again each frame)
-					Canvas.ForceUpdateCanvases();
-					Rect pop = UIKit.HelpPopup != null ? ScreenRect(UIKit.HelpPopup) : new Rect();
+					// (a hover lasts; the popup is placed again each frame - a minimised Raft draws few frames, so wait for it to be placed)
+					Rect pop = new Rect();
+					for (float t = 0; t < 3f; t += 0.2f)
+					{
+						yield return new WaitForSecondsRealtime(0.2f);
+						Canvas.ForceUpdateCanvases();
+						pop = UIKit.HelpPopup != null ? ScreenRect(UIKit.HelpPopup) : new Rect();
+						if (pop.xMin >= -1f && pop.yMin >= -1f && pop.xMax <= Screen.width + 1f && pop.yMax <= Screen.height + 1f) break;
+					}
 					Check(ref ok, UIKit.ShownHelp == when.Text && pop.width > 50f && pop.height > 50f && pop.xMin >= -1f && pop.yMin >= -1f && pop.xMax <= Screen.width + 1f && pop.yMax <= Screen.height + 1f,
 						"hovering the When ? shows its help, on the screen (" + pop + ")");
 					Screenshot(new[] { "planhelp_when" });
@@ -67,6 +93,17 @@ namespace DynamicIslands
 					Check(ref ok, UIKit.ShownHelp == null, "moving off it closes the popup");
 				}
 				else Check(ref ok, false, "a When ? on the first card");
+				// (from the marks found again after the tab switches: the cards may have been made anew)
+				UIKit.HelpMark dot = marks.FirstOrDefault(m => m != null && m.Text != null && m.Text.StartsWith("DOT - "));
+				if (dot != null)
+				{
+					dot.OnPointerEnter(null);
+					for (float t = 0; t < 3f && UIKit.ShownHelp != dot.Text; t += 0.2f) yield return new WaitForSecondsRealtime(0.2f);
+					Check(ref ok, UIKit.ShownHelp == dot.Text && UIKit.HelpPopup != null, "hovering the DOT ? shows its Receiver help");
+					dot.OnPointerExit(null);
+					yield return null;
+				}
+				else Check(ref ok, false, "a DOT ? on the first card");
 				// Help
 				Button help = panel.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == "HelpButton");
 				Check(ref ok, help != null, "a Help button in the window's head");
@@ -74,7 +111,7 @@ namespace DynamicIslands
 				{
 					help.onClick.Invoke();
 					yield return new WaitForSecondsRealtime(0.4f);
-					Check(ref ok, InfoWindow.IsOpen && InfoWindow.Title == "HOW TO MAKE A WORLD PLAN" && InfoWindow.Body.Contains("+ Add a rule") && InfoWindow.Body.Contains("NEW WORLD"),
+					Check(ref ok, InfoWindow.IsOpen && InfoWindow.Title == "HOW TO MAKE A WORLD PLAN" && InfoWindow.Body.Contains("+ Add a rule") && InfoWindow.Body.Contains("Choose plan...") && InfoWindow.Body.Contains("Test this plan"),
 						"Help shows the steps: " + InfoWindow.Title);
 					Screenshot(new[] { "planhelp_steps" });
 					yield return new WaitForSecondsRealtime(0.6f);
@@ -102,7 +139,7 @@ namespace DynamicIslands
 				catch (Exception e) { Check(ref ok, false, "island rules: " + e.Message); }
 				yield return new WaitForSecondsRealtime(0.5f);
 				marks = window.GetComponentsInChildren<UIKit.HelpMark>(false).ToList();
-				Check(ref ok, marks.Count == 5 + 2 && !marks.Any(m => m.Text.StartsWith("Export")), "island rules: " + marks.Count + " ? (the card's 5 - no story row on an island - plus map and Check), no Export ?");
+				Check(ref ok, marks.Count == 6 + 2 && !marks.Any(m => m.Text.StartsWith("Export")), "island rules: " + marks.Count + " ? (the card's 6 with DOT - no story row on an island - plus map and Check), no Export ?");
 				Button islandHelp = panel.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == "HelpButton");
 				if (islandHelp != null) islandHelp.onClick.Invoke();
 				yield return new WaitForSecondsRealtime(0.3f);
@@ -112,12 +149,12 @@ namespace DynamicIslands
 				DynamicIslands.currentIslandProps.Clear();
 				foreach (var kv in saved) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
 			}
-			finally { HelpLinks.TestMode = false; InfoWindow.Close(); }
+			finally { HelpLinks.TestMode = false; InfoWindow.Close(); WorldPlanWindow.Close(); RemoveCIPlan(CIAdventure); }
 			if (ok) Log("PASS: plan help"); else Fail("plan help");
 		}
 
 		[ConsoleCommand(name: "CIMenuLibrary", docs: "Dev, main menu: the ISLAND LIBRARY button shows its words (all of them drawn, on the screen) and opens the library; the library's Submit yours... shows how to submit (export, post on the Discord, approved first) with its buttons (Discord, exports folder, the guide's section); pictures shot_menu_library, shot_library_submit")]
-		public static void MenuLibraryCommand() { DynamicIslands.instance.StartCoroutine(MenuLibraryRoutine()); }
+		public static void MenuLibraryCommand() { StartTest(MenuLibraryRoutine()); }
 
 		static IEnumerator MenuLibraryRoutine()
 		{
@@ -133,7 +170,16 @@ namespace DynamicIslands
 			Check(ref ok, editorSize > 0 && size <= editorSize && size >= editorSize / 2, "its words fit the button, no larger than EDITOR's (" + size + " / " + editorSize + ")");
 			var corners = new Vector3[4];
 			text.rectTransform.GetWorldCorners(corners);
+			// (the right end of the letters as drawn: preferredWidth is at the font's own size, not the smaller best-fit one,
+			// and on a half-width window - 1280 px - it put the words past the middle though they ended at 310 px)
 			float right = corners[0].x + text.preferredWidth * text.canvas.scaleFactor;
+			var verts = text.cachedTextGenerator.verts;
+			if (verts.Count > 0)
+			{
+				float maxX = float.MinValue;
+				for (int i = 0; i < verts.Count; i++) maxX = Mathf.Max(maxX, verts[i].position.x);
+				right = text.rectTransform.TransformPoint(new Vector3(maxX / text.pixelsPerUnit, 0f, 0f)).x;
+			}
 			Check(ref ok, corners[0].x >= 0f && right <= Screen.width * 0.5f, "its words are on the screen, on the left (" + corners[0].x.ToString("F0") + " to " + right.ToString("F0") + " px)");
 			Screenshot(new[] { "menu_library" });
 			yield return new WaitForSecondsRealtime(0.6f);
@@ -163,13 +209,22 @@ namespace DynamicIslands
 					yield return null;
 					Check(ref ok, !InfoWindow.IsOpen && LibraryWindow.IsOpen, "Close goes back to the library");
 				}
+				// The Guide button (the user, 2026-10-04): the illustrated guide
+				Button guide = LibraryWindow.Root != null ? LibraryWindow.Root.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == "Button_Guide") : null;
+				Check(ref ok, guide != null, "the library has a Guide button");
+				if (guide != null)
+				{
+					guide.onClick.Invoke();
+					string opened = HelpLinks.LastOpened ?? "";
+					Check(ref ok, opened.EndsWith(HelpLinks.PdfName) || opened == HelpLinks.GuidePdfOnline, "Guide opens the guide: " + opened);
+				}
 			}
 			finally { HelpLinks.TestMode = false; InfoWindow.Close(); LibraryWindow.Close(); }
 			if (ok) Log("PASS: menu library"); else Fail("menu library");
 		}
 
 		[ConsoleCommand(name: "CIEditorUpDown", docs: "Dev, editor: the camera goes straight up and down (Space / C) without turning or sliding sideways, whichever way it looks; the keys are written in the camera help and the Terrain tab's tips")]
-		public static void EditorUpDownCommand() { DynamicIslands.instance.StartCoroutine(EditorUpDownRoutine()); }
+		public static void EditorUpDownCommand() { StartTest(EditorUpDownRoutine()); }
 
 		static IEnumerator EditorUpDownRoutine()
 		{
@@ -201,7 +256,7 @@ namespace DynamicIslands
 		const string PickShrine = "cipick-shrine", PickPlain = "cipick-plain", PickPlan = "CI Picks";
 
 		[ConsoleCommand(name: "CIPlanPicks", docs: "Dev, editor: the World plans window's lists (the ▾ after a field): the island a rule waits for (the plan's rules and saved islands, with their quests), after rule (rules only), an island's zones, signals and quest steps, near which island (and 'where it happened'), the story's done-when zone; picking fills the field and the plan; a map-type island's list is empty and says why; the island's own rules offer self. Makes and removes cipick-* islands and the plan 'CI Picks'. Pictures shot_planpicks_*")]
-		public static void PlanPicksCommand() { DynamicIslands.instance.StartCoroutine(PlanPicksRoutine()); }
+		public static void PlanPicksCommand() { StartTest(PlanPicksRoutine()); }
 
 		static void MakePickIslands()
 		{
@@ -259,11 +314,13 @@ namespace DynamicIslands
 			// As a player clicks: the ▼ opens the list, a pick fills the field
 			Func<int, string, Button> pickButton = (rule, name) =>
 			{
-				Transform card = window.GetComponentsInChildren<Transform>(false).Where(t => t.name == "Rule").ElementAtOrDefault(rule);
+				// (the card of rule n: a Main story line card is on that tab - TODO 5b)
+				Transform card = WorldPlanWindow.CardFor(rule);
 				return card != null ? card.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == name) : null;
 			};
+			bool storyPick = pickButton(7, "Pick_DoneArg") != null;
 			Button zoneButton = pickButton(2, "Pick_WhenArg");
-			Check(ref ok, zoneButton != null && pickButton(1, "Pick_WhenRef") != null && pickButton(2, "Pick_WhereRef") != null && pickButton(7, "Pick_DoneArg") != null && pickButton(0, "Pick_WhenArg") == null,
+			Check(ref ok, zoneButton != null && pickButton(1, "Pick_WhenRef") != null && pickButton(2, "Pick_WhereRef") != null && storyPick && pickButton(0, "Pick_WhenArg") == null,
 				"a ▾ after the fields that name something (none after 'the world starts')");
 			if (zoneButton != null)
 			{
@@ -271,7 +328,7 @@ namespace DynamicIslands
 				ScrollRect rulesScroll = window.GetComponentsInChildren<ScrollRect>(false).FirstOrDefault(s => zoneButton.transform.IsChildOf(s.content));
 				if (rulesScroll != null)
 				{
-					RectTransform zoneCard = (RectTransform)window.GetComponentsInChildren<Transform>(false).Where(t => t.name == "Rule").ElementAt(2);
+					RectTransform zoneCard = WorldPlanWindow.CardFor(2);
 					Canvas.ForceUpdateCanvases();
 					float gap = ScreenRect(rulesScroll.viewport).yMax - ScreenRect(zoneCard).yMax;
 					rulesScroll.content.anchoredPosition += new Vector2(0f, gap / rulesScroll.content.lossyScale.y); // (up by how far its top is under the list's top)
@@ -284,7 +341,7 @@ namespace DynamicIslands
 				yield return new WaitForSecondsRealtime(0.6f);
 				ChoiceWindow.PickValue("cave");
 				yield return null;
-				Transform card = window.GetComponentsInChildren<Transform>(false).Where(t => t.name == "Rule").ElementAtOrDefault(2);
+				Transform card = WorldPlanWindow.CardFor(2);
 				bool shown = card != null && card.GetComponentsInChildren<InputField>(false).Any(f => f.text == "cave");
 				Check(ref ok, WorldPlanWindow.Current.Rules[2].WhenArg == "cave" && shown, "picking 'cave' fills the field and the rule");
 			}
@@ -324,21 +381,50 @@ namespace DynamicIslands
 			if (ok) Log("PASS: plan picks"); else Fail("plan picks");
 		}
 
-		[ConsoleCommand(name: "CIWindowShot", docs: "Dev, editor: opens one editor window at the current screen size and takes its picture (shot_window_<name>), for the guide - works with Raft minimised, the screen size is not changed. Names: report (Report a problem, also on the main menu), worldplans (the Adventure plan), behaviours (the island's events), islandfiles, quest, storyitems, generator")]
-		public static void WindowShotCommand(string[] args) { DynamicIslands.instance.StartCoroutine(WindowShotRoutine(args != null && args.Length > 0 ? args[0] : "worldplans")); }
+		[ConsoleCommand(name: "CIWindowShot", docs: "Dev, editor: opens one editor window at the current screen size and takes its picture (shot_window_<name>), for the guide - works with Raft minimised, the screen size is not changed. Names: islandrules, questside, islander, objects_<word> (the object list searched for a word), report (Report a problem, also on the main menu), worldplans (the test plan CI Adventure), behaviours (the island's events), islandfiles, quest, storyitems, generator")]
+		public static void WindowShotCommand(string[] args) { StartTest(WindowShotRoutine(args != null && args.Length > 0 ? args[0] : "worldplans")); }
 
 		static IEnumerator WindowShotRoutine(string name)
 		{
 			Action open = null, close = null;
+			if (name.StartsWith("objects_") && DynamicIslands.InEditor() && ObjectBrowser.Instance != null)
+			{
+				// (QE3: the object list searched for a word: ready pieces carry their "works" strip)
+				EditorUI.SetTab(TAB.ObjectPlace);
+				ObjectBrowser.Instance.Search = name.Substring(8);
+				yield return new WaitForSecondsRealtime(1.5f);
+				Screenshot(new[] { "window_" + name });
+				yield return new WaitForSecondsRealtime(0.6f);
+				ObjectBrowser.Instance.Search = "";
+				Log("PASS: window shot " + name);
+				yield break;
+			}
 			if (name != "report" && !DynamicIslands.InEditor()) { Fail("window shot: open the editor first"); yield break; }
 			switch (name)
 			{
 				case "report": open = InfoWindow.OpenReport; close = InfoWindow.Close; break; // (the main menu's Report a problem box)
-				case "worldplans": open = () => { WorldPlanWindow.EnsureSamples(); WorldPlanWindow.Open("Adventure"); }; close = WorldPlanWindow.Close; break;
+				case "worldplans": open = () => WorldPlanWindow.Open(WriteCIPlan(CIAdventure)); close = () => { WorldPlanWindow.Close(); RemoveCIPlan(CIAdventure); }; break;
 				case "behaviours": open = BehaviourWindow.OpenIsland; close = BehaviourWindow.Close; break;
 				case "islandfiles": open = IslandFilesWindow.Open; close = IslandFilesWindow.Close; break;
 				case "quest": open = QuestEditorWindow.Open; close = QuestEditorWindow.Close; break;
 				case "storyitems": open = StoryItemsWindow.Open; close = StoryItemsWindow.Close; break;
+				case "islandrules": open = WorldPlanWindow.OpenIsland; close = WorldPlanWindow.Close; break;
+				case "questside": open = () => { QuestEditorWindow.Open(); QuestEditorWindow.ShowTab(1); }; close = QuestEditorWindow.Close; break;
+				case "islander":
+					{
+						// (QE3: an islander placed and selected: its inspector with the dialogue markup help)
+						EditorGameObject placedIslander = null;
+						open = () =>
+						{
+							EditorUI.SetTab(TAB.ObjectPlace);
+							Vector3 at = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 1f, 500f);
+							placedIslander = PlaceForTest(Islanders.ObjectName, at, GameObject.Find("PlacedObjects").transform);
+							if (placedIslander != null) TransformGizmoSelect(placedIslander.transform);
+						};
+						close = () => { DynamicIslands.EditorGizmoHandler.ClearTargets(false); if (placedIslander != null) UnityEngine.Object.Destroy(placedIslander.gameObject); };
+						break;
+					}
+				case "pieces": open = () => PiecesWindow.Open(false); close = PiecesWindow.Close; break;
 				case "generator": open = () => { GeneratorWindow.Open(); GeneratorWindow.ShowTab(0); }; close = GeneratorWindow.Close; break;
 			}
 			if (open == null) { Fail("window shot: no window '" + name + "'"); yield break; }
@@ -359,7 +445,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CINoticeShot", docs: "Dev, main menu: the guide's picture of the main menu with the alpha box open (shot_main_menu.png); a folded box is opened for the picture and folded again after, the player's choice (notice.txt) untouched")]
-		public static void NoticeShotCommand() { DynamicIslands.instance.StartCoroutine(NoticeShotRoutine()); }
+		public static void NoticeShotCommand() { StartTest(NoticeShotRoutine()); }
 
 		static IEnumerator NoticeShotRoutine()
 		{
@@ -409,9 +495,34 @@ namespace DynamicIslands
 			{
 				check(ExperimentalNotice.DiscordButton != null && ExperimentalNotice.GuideButton != null && ExperimentalNotice.ReportButton != null
 					&& ExperimentalNotice.DiscordButton.gameObject.activeInHierarchy && ExperimentalNotice.ReportButton.gameObject.activeInHierarchy, "Discord, Guide (PDF) and Report a problem on the box");
+				{
+					var pulse = ExperimentalNotice.DiscordButton.GetComponent<ExperimentalNotice.Pulse>();
+					Color c0 = ((Image)ExperimentalNotice.DiscordButton.targetGraphic).color;
+					float s0 = ExperimentalNotice.DiscordButton.transform.localScale.x;
+					float t0 = Time.unscaledTime;
+					while (Time.unscaledTime < t0 + 0.5f) yield return null;
+					Color c1 = ((Image)ExperimentalNotice.DiscordButton.targetGraphic).color;
+					float s1 = ExperimentalNotice.DiscordButton.transform.localScale.x;
+					check(pulse != null && pulse.enabled && c0.b > c0.r + 0.3f && c1.b > c1.r + 0.3f && (Mathf.Abs(s1 - s0) > 0.005f || Mathf.Abs(c1.r - c0.r) > 0.01f)
+						&& s0 >= 0.999f && s0 <= 1.071f && s1 >= 0.999f && s1 <= 1.071f,
+						"Discord button is blue and pulses: colour " + c0 + " -> " + c1 + ", scale " + s0.ToString("F3") + " -> " + s1.ToString("F3"));
+				}
 				ExperimentalNotice.DiscordButton.onClick.Invoke();
 				check(HelpLinks.LastOpened == HelpLinks.Discord, "Discord opens " + HelpLinks.LastOpened);
 				HelpLinks.LastOpened = null;
+				check(ExperimentalNotice.UpdatesButton != null && ExperimentalNotice.UpdatesButton.gameObject.activeInHierarchy, "Check for updates on the box");
+				ExperimentalNotice.UpdatesButton.onClick.Invoke();
+				check(InfoWindow.IsOpen && InfoWindow.ButtonNamed("Open the mod's page") != null, "Check for updates: its box, asking raftmodding.com");
+				float until = Time.realtimeSinceStartup + 20f;
+				while (ExperimentalNotice.LastUpdateCheck == null && Time.realtimeSinceStartup < until) yield return null;
+				check(ExperimentalNotice.LastUpdateCheck != null, "Check for updates: the answer (" + (ExperimentalNotice.LastUpdateCheck ?? "none in 20 s") + ")");
+				check(ExperimentalNotice.CompareVersions("3.1", "3.0") > 0 && ExperimentalNotice.CompareVersions("3.0", "3.0") == 0 && ExperimentalNotice.CompareVersions("3.0", "3.0.1") < 0
+					&& ExperimentalNotice.CompareVersions("3.10", "3.9") > 0, "versions compare as numbers (3.1 > 3.0 = 3.0 < 3.0.1, 3.10 > 3.9)");
+				InfoWindow.ButtonNamed("Open the mod's page").onClick.Invoke();
+				check(HelpLinks.LastOpened == HelpLinks.ModPage, "Open the mod's page opens " + HelpLinks.LastOpened);
+				HelpLinks.LastOpened = null;
+				InfoWindow.Close();
+				yield return null;
 				ExperimentalNotice.GuideButton.onClick.Invoke();
 				bool g = true; CheckGuideOpened(ref g); check(g, "Guide (PDF) opens the PDF");
 				ExperimentalNotice.ReportButton.onClick.Invoke();
@@ -463,6 +574,187 @@ namespace DynamicIslands
 				check(panel.anchoredPosition == start || (panel.anchoredPosition - start).magnitude < 1f, "back where it starts");
 			}
 			finally { HelpLinks.TestMode = false; InfoWindow.Close(); }
+		}
+
+		[ConsoleCommand(name: "CIUpdateOnStart", docs: "Dev, main menu: UP1 - the check for a new version on start, raftmodding.com's answer faked (no network): 'Check automatically' under Check for updates (ticked by default, saved in notice.txt); once per start; a newer version waits for a window that is open (Report a problem), then shows the popup (the version, the mod's page, the Raft Mod Loader tip, Don't show again for this version); Don't show again keeps that version quiet, a newer one shows again; closed, not again this start; it closes when the main menu is left; the same or an older version, offline, a changed page and a real request to an unreachable address (within the 8 s timeout) show nothing; one log line each, no errors; unticked it asks nothing; the player's settings are put back")]
+		public static void UpdateOnStartCommand() { StartTest(UpdateOnStartRoutine()); }
+
+		static IEnumerator UpdateOnStartRoutine()
+		{
+			if (ExperimentalNotice.AutoCheckBox == null || GameObject.Find("MainMenuCanvas") == null) { Fail("update on start: run on the main menu (no alpha box)"); yield break; }
+			bool ok = true;
+			bool autoBefore = ExperimentalNotice.AutoCheck;
+			string skipBefore = ExperimentalNotice.SkippedVersion;
+			var lines = new List<string>();
+			var errors = new List<string>();
+			Application.LogCallback grab = (msg, st, type) =>
+			{
+				if (msg != null && msg.StartsWith("[CUSTOM ISLANDS] Update check on start:")) lines.Add(msg);
+				if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert) errors.Add(msg);
+			};
+			Application.logMessageReceived += grab;
+			HelpLinks.TestMode = true;
+			ExperimentalNotice.PopupForTests = true;
+			bool closedBefore = ExperimentalNotice.Closed;
+			if (closedBefore) ExperimentalNotice.Reopen();
+			InfoWindow.Close();
+			string notice = Path.Combine(DynamicIslands.assetpath, "notice.txt");
+			Func<string> noticeText = () => { try { return File.Exists(notice) ? File.ReadAllText(notice) : ""; } catch { return ""; } };
+			try
+			{
+				// Once per start: the menu's check was made when Raft started (with the box ticked then)
+				Check(ref ok, ExperimentalNotice.StartCheckMade && !ExperimentalNotice.CheckOnStart(), "once per start: made when the menu came (" + (ExperimentalNotice.LastStartCheck ?? "still asking") + "), not again");
+				// The tick box: under Check for updates, ticked unless unticked (notice.txt)
+				Button box = ExperimentalNotice.AutoCheckBox;
+				RectTransform br = (RectTransform)box.transform, ur = (RectTransform)ExperimentalNotice.UpdatesButton.transform;
+				Canvas.ForceUpdateCanvases();
+				var bc = new Vector3[4]; var uc = new Vector3[4];
+				br.GetWorldCorners(bc); ur.GetWorldCorners(uc);
+				Check(ref ok, box.gameObject.activeInHierarchy && UIKit.LabelOf(box).text == "Check automatically" && Mathf.Abs(bc[0].x - uc[0].x) < 6f && bc[1].y <= uc[0].y + 1f,
+					"'Check automatically' under Check for updates (left " + bc[0].x.ToString("F0") + " vs " + uc[0].x.ToString("F0") + ")");
+				ExperimentalNotice.AutoCheck = true;
+				Check(ref ok, UIKit.IsChecked(box) && !noticeText().Contains("autocheck="), "ticked by default (nothing in notice.txt)");
+				box.onClick.Invoke();
+				Check(ref ok, !ExperimentalNotice.AutoCheck && !UIKit.IsChecked(box) && noticeText().Contains("autocheck=off"), "a click unticks it: saved (autocheck=off)");
+				box.onClick.Invoke();
+				Check(ref ok, ExperimentalNotice.AutoCheck && UIKit.IsChecked(box) && !noticeText().Contains("autocheck="), "a click ticks it again");
+
+				// One faked answer: what the check found, the one log line it wrote, and whether the popup is open
+				string found = null;
+				int logged = 0;
+				Func<string, string, IEnumerator> run = (reply, error) => Ask(reply, error, r => found = r, n => logged = n, lines);
+
+				ExperimentalNotice.SkippedVersion = null;
+				// A newer version while another window is open: the popup waits for it
+				InfoWindow.OpenReport();
+				ExperimentalNotice.TestReply = "99.0"; ExperimentalNotice.TestError = null;
+				Check(ref ok, ExperimentalNotice.CheckOnStart(true), "the check starts (99.0 on the site)");
+				yield return new WaitForSecondsRealtime(1.5f);
+				Check(ref ok, ExperimentalNotice.LastStartCheck == null && InfoWindow.Title == "REPORT A PROBLEM", "a newer version waits while Report a problem's box is open (" + (ExperimentalNotice.LastStartCheck ?? "waiting") + ")");
+				InfoWindow.Close();
+				for (float t = 0f; ExperimentalNotice.LastStartCheck == null && t < 5f; t += Time.unscaledDeltaTime) yield return null;
+				Check(ref ok, ExperimentalNotice.LastStartCheck == "told 99.0" && InfoWindow.IsOpen && InfoWindow.Body.Contains("99.0 is out") && InfoWindow.Body.Contains("you have " + ExperimentalNotice.Version) && InfoWindow.Body.Contains(HelpLinks.ModPage)
+					&& InfoWindow.Body.Contains(ExperimentalNotice.RmlTip) && InfoWindow.Body.IndexOf(ExperimentalNotice.RmlTip) > InfoWindow.Body.IndexOf("99.0 is out"),
+					"then the popup: 99.0, this version (" + ExperimentalNotice.Version + "), the mod's page, the Raft Mod Loader tip under it (" + ExperimentalNotice.LastStartCheck + ")");
+				Check(ref ok, InfoWindow.ButtonNamed("Open the mod's page") != null && InfoWindow.ButtonNamed(ExperimentalNotice.DontShowAgain) != null && InfoWindow.ButtonNamed("Close") != null && InfoWindow.ButtonsOutside().Count == 0,
+					"its buttons, inside the box: " + string.Join(", ", InfoWindow.ButtonLabels.ToArray()));
+				Screenshot(new[] { "update_popup" });
+				yield return new WaitForSecondsRealtime(0.6f);
+				HelpLinks.LastOpened = null;
+				InfoWindow.ButtonNamed("Open the mod's page").onClick.Invoke();
+				Check(ref ok, HelpLinks.LastOpened == HelpLinks.ModPage, "Open the mod's page opens " + HelpLinks.LastOpened);
+				InfoWindow.ButtonNamed(ExperimentalNotice.DontShowAgain).onClick.Invoke();
+				yield return null;
+				Check(ref ok, !InfoWindow.IsOpen && ExperimentalNotice.SkippedVersion == "99.0" && noticeText().Contains("skip=99.0"), "Don't show again: closed, 99.0 saved (skip=99.0)");
+				Check(ref ok, lines.Count == 1, "one log line for it (" + lines.Count + ")");
+
+				yield return run("99.0", null);
+				Check(ref ok, found == "skipped 99.0" && !InfoWindow.IsOpen && logged == 1, "99.0 again: no popup (" + found + ", " + logged + " log line)");
+				yield return run("99.1\n", null);
+				Check(ref ok, found == "told 99.1" && InfoWindow.IsOpen && InfoWindow.Body.Contains("99.1 is out") && logged == 1, "a newer one, 99.1: the popup again (" + found + ")");
+				InfoWindow.ButtonNamed("Close").onClick.Invoke();
+				yield return null;
+				Check(ref ok, !InfoWindow.IsOpen && ExperimentalNotice.SkippedVersion == "99.0", "Close closes it, 99.1 not skipped");
+				Check(ref ok, !ExperimentalNotice.CheckOnStart(), "closed: not again this start");
+				// Left open while a world starts: it closes (it never shows over a game)
+				yield return run("99.2", null);
+				bool shown = found == "told 99.2" && InfoWindow.IsOpen;
+				ExperimentalNotice.TestMenuLeft = true;
+				yield return new WaitForSecondsRealtime(0.8f);
+				Check(ref ok, shown && !InfoWindow.IsOpen, "the popup closes when the main menu is left (shown " + shown + ", open after " + InfoWindow.IsOpen + ")");
+				ExperimentalNotice.TestMenuLeft = false;
+				yield return run(ExperimentalNotice.Version, null);
+				Check(ref ok, found == "newest" && !InfoWindow.IsOpen && logged == 1, "the same version (" + ExperimentalNotice.Version + "): nothing (" + found + ")");
+				yield return run("1.0", null);
+				Check(ref ok, found == "newest" && !InfoWindow.IsOpen && logged == 1, "an older one (1.0): nothing (" + found + ")");
+				yield return run(null, "Cannot resolve destination host");
+				Check(ref ok, found == "failed" && !InfoWindow.IsOpen && logged == 1 && (lines.LastOrDefault() ?? "").Contains("Cannot resolve destination host"), "offline: nothing, one log line (" + (lines.LastOrDefault() ?? "") + ")");
+				yield return run(null, "Request timeout");
+				Check(ref ok, found == "failed" && !InfoWindow.IsOpen && logged == 1, "a timeout: nothing (" + found + ")");
+				yield return run("<!DOCTYPE html><html><body>Custom Islands</body></html>", null);
+				Check(ref ok, found == "failed" && !InfoWindow.IsOpen && logged == 1 && (lines.LastOrDefault() ?? "").Contains("an unexpected answer"), "a changed page (HTML): nothing (" + (lines.LastOrDefault() ?? "") + ")");
+				yield return run("Not found", null);
+				Check(ref ok, found == "failed" && !InfoWindow.IsOpen && logged == 1, "a changed page (text): nothing (" + found + ")");
+				// The real request to an address that can't be reached (as offline): quiet, within the start's timeout
+				ExperimentalNotice.TestUrl = "https://custom-islands-update-check.invalid/version.txt";
+				float asked = Time.realtimeSinceStartup;
+				yield return run(null, null);
+				float took = Time.realtimeSinceStartup - asked;
+				ExperimentalNotice.TestUrl = null;
+				Check(ref ok, found == "failed" && !InfoWindow.IsOpen && logged == 1 && took < ExperimentalNotice.StartTimeout + 1.5f,
+					"unreachable site, a real request: nothing, one log line, " + took.ToString("F1") + " s (" + (lines.LastOrDefault() ?? "") + ")");
+				// Unticked: nothing asked
+				ExperimentalNotice.AutoCheck = false;
+				ExperimentalNotice.TestReply = "99.5";
+				bool started = ExperimentalNotice.CheckOnStart(true);
+				yield return new WaitForSecondsRealtime(0.5f);
+				Check(ref ok, !started && ExperimentalNotice.LastStartCheck == "off" && !InfoWindow.IsOpen, "unticked: nothing asked (" + ExperimentalNotice.LastStartCheck + ")");
+				Check(ref ok, errors.Count == 0, "no errors in the log (" + errors.Count + (errors.Count > 0 ? ": " + errors[0] : "") + ")");
+			}
+			finally
+			{
+				Application.logMessageReceived -= grab;
+				ExperimentalNotice.TestReply = ExperimentalNotice.TestError = ExperimentalNotice.TestUrl = null;
+				ExperimentalNotice.TestMenuLeft = false;
+				ExperimentalNotice.PopupForTests = false;
+				HelpLinks.TestMode = false;
+				InfoWindow.Close();
+				ExperimentalNotice.AutoCheck = autoBefore;
+				ExperimentalNotice.SkippedVersion = skipBefore;
+				if (closedBefore) ExperimentalNotice.Close();
+			}
+			if (ok) Log("PASS: update on start"); else Fail("update on start");
+		}
+
+		/// <summary>CIUpdateOnStart: one check on start with this faked answer; what it found and how many log lines it wrote.</summary>
+		static IEnumerator Ask(string reply, string error, Action<string> found, Action<int> logged, List<string> lines)
+		{
+			InfoWindow.Close();
+			int before = lines.Count;
+			ExperimentalNotice.TestReply = reply; ExperimentalNotice.TestError = error;
+			ExperimentalNotice.CheckOnStart(true);
+			for (float t = 0f; ExperimentalNotice.LastStartCheck == null && t < ExperimentalNotice.StartTimeout + 4f; t += Time.unscaledDeltaTime) yield return null;
+			yield return null;
+			found(ExperimentalNotice.LastStartCheck);
+			logged(lines.Count - before);
+		}
+
+		[ConsoleCommand(name: "CIHoverTips",docs: "Dev, main menu or editor (X9): where no status bar shows a control's hover text - the main menu's windows (here the plan picker), the stats page - it comes in a small tip by the mouse after a moment, on the screen, and goes when the mouse leaves; in the editor its status bar has it and no tip comes")]
+		public static void HoverTipsCommand() { StartTest(HoverTipsRoutine()); }
+
+		static IEnumerator HoverTipsRoutine()
+		{
+			bool ok = true;
+			bool editor = EditorUI.Canvas != null && EditorUI.Canvas.gameObject.activeInHierarchy;
+			bool opened = false;
+			if (!editor && !PlanPickerWindow.IsOpen) { PlanPickerWindow.Open(); opened = true; yield return new WaitForSecondsRealtime(0.5f); }
+			UIKit.HintTarget target = UnityEngine.Object.FindObjectsOfType<UIKit.HintTarget>().FirstOrDefault(h => h.isActiveAndEnabled && !string.IsNullOrEmpty(h.Text));
+			if (target == null) { if (opened) PlanPickerWindow.Close(); Fail("hover tips: no control with a hover text on the screen"); yield break; }
+			string said = null;
+			Action<string> heard = h => said = h;
+			UIKit.HintChanged += heard;
+			try
+			{
+				target.OnPointerEnter(null);
+				yield return new WaitForSecondsRealtime(0.2f);
+				Check(ref ok, UIKit.ShownTip == null, "no tip at once (" + (UIKit.ShownTip ?? "none") + ")");
+				yield return new WaitForSecondsRealtime(0.9f);
+				if (editor) Check(ref ok, UIKit.ShownTip == null && said == target.Text, "the editor: its status bar has the text, no tip (" + target.name + ": " + said + ")");
+				else
+				{
+					Check(ref ok, UIKit.ShownTip == target.Text, "a tip shows the hover text after a moment (" + target.name + ": " + (UIKit.ShownTip ?? "none") + ")");
+					var c = new Vector3[4];
+					if (UIKit.HintTip != null) UIKit.HintTip.GetWorldCorners(c);
+					Check(ref ok, UIKit.HintTip != null && c[0].x >= 0 && c[0].y >= 0 && c[2].x <= Screen.width && c[2].y <= Screen.height && c[2].x - c[0].x <= 301f * UIKit.HintTip.lossyScale.x,
+						"the tip is on the screen, at most 300 wide (" + c[0] + " - " + c[2] + ")");
+					Screenshot(new[] { "hovertip" });
+				}
+				target.OnPointerExit(null);
+				yield return null;
+				Check(ref ok, UIKit.ShownTip == null && said == null, "it goes when the mouse leaves");
+			}
+			finally { UIKit.HintChanged -= heard; if (opened) PlanPickerWindow.Close(); }
+			if (ok) Log("PASS: hover tips"); else Fail("hover tips");
 		}
 	}
 }

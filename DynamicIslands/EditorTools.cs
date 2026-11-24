@@ -10,17 +10,55 @@ namespace DynamicIslands.Editor
 		/// <summary>True while a text field (e.g. the island name) has focus: camera and tool shortcuts are ignored.</summary>
 		public static bool IsTyping;
 
-		public static bool Ctrl { get { return Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl); } }
-		public static bool Shift { get { return Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift); } }
+		/// <summary>Tests: keys the editor takes as pressed (and held) in the frame TestFrame, in place of the keyboard's - to try a
+		/// shortcut without real key presses. null = the keyboard.</summary>
+		internal static HashSet<KeyCode> TestKeys;
+		internal static int TestFrame = -1;
+		static bool Simulated { get { return TestKeys != null && Time.frameCount == TestFrame; } }
+
+		/// <summary>A key went down in this frame (the keyboard's, or the tests').</summary>
+		public static bool KeyDown(KeyCode k) { return Simulated ? TestKeys.Contains(k) : Input.GetKeyDown(k); }
+
+		public static bool Ctrl { get { return Simulated ? TestKeys.Contains(KeyCode.LeftControl) : Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl); } }
+		public static bool Shift { get { return Simulated ? TestKeys.Contains(KeyCode.LeftShift) : Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift); } }
+
+		/// <summary>
+		/// One of the editor's windows that dim the editor (modal) is open: the editor's own shortcuts wait. (Ctrl+O over the
+		/// quest editor opened another island while the quest editor stayed open - its Save then wrote the first island's
+		/// quest into the second; Ctrl+Z, Ctrl+V, Delete changed the island behind a window.)
+		/// </summary>
+		public static bool WindowOpen
+		{
+			get
+			{
+				return IslandFilesWindow.IsOpen || GeneratorWindow.IsOpen || TextPromptWindow.IsOpen || NoteEditorWindow.IsOpen || ItemPickerWindow.IsOpen ||
+					SoundPickerWindow.IsOpen || QuestEditorWindow.IsOpen || ChoiceWindow.IsOpen || WorldPlanWindow.IsOpen || BehaviourWindow.IsOpen ||
+					MyIslandsWindow.IsOpen || MainStoryHelper.IsOpen || PlanCheckWindow.IsOpen || PlanProgressWindow.IsOpen || StoryItemsWindow.IsOpen || PiecesWindow.IsOpen ||
+					LibraryExportWindow.IsOpen || LibraryImportWindow.IsOpen || LibraryWindow.IsOpen || CameraSettingsWindow.IsOpen ||
+					// (review 10-30: the box after a save - OfferThisVersion - and the pickers and settings had Ctrl+Z/S act behind them)
+					InfoWindow.IsOpen || IslandPickerWindow.IsOpen || PlanPickerWindow.IsOpen || LevelWindow.IsOpen || WorldSettingsWindow.IsOpen || DefaultsWindow.IsOpen ||
+					// (merge review 10-31: the placed-objects list is a modal too - Ctrl+A then Delete wiped the island behind it, Ctrl+O left its rows on destroyed objects)
+					PlacedListWindow.IsOpen;
+			}
+		}
+
+		/// <summary>
+		/// The frame a window opened from another one (a prompt, a picker, a choice) closed: its Esc or Enter is still down
+		/// for the window under it that frame, which closed too (losing its edits) or acted on it (Enter in the generator's
+		/// name prompt generated). The windows under them wait that frame, as for an open drop-down list (DropList.Busy).
+		/// </summary>
+		public static int SubWindowClosedFrame = -1;
+		public static bool SubWindowJustClosed { get { return SubWindowClosedFrame == Time.frameCount; } }
 
 		/// <summary>Global editor shortcuts; called every frame by the terrain editor (which lives as long as the editor).</summary>
 		public static void HandleShortcuts()
 		{
-			if (IsTyping || !Ctrl) return;
-			if (Input.GetKeyDown(KeyCode.Z) && !Shift) UndoRedoManager.Undo();
-			else if (Input.GetKeyDown(KeyCode.Y) || (Input.GetKeyDown(KeyCode.Z) && Shift)) UndoRedoManager.Redo();
-			else if (Input.GetKeyDown(KeyCode.S)) IslandFilesWindow.QuickSave();
-			else if (Input.GetKeyDown(KeyCode.O)) IslandFilesWindow.Open();
+			// (not mid-stroke or mid-drag either: an undo then, and the stroke's "before" kept what was just undone)
+			if (IsTyping || !Ctrl || WindowOpen || Input.GetMouseButton(0)) return;
+			if (KeyDown(KeyCode.Z) && !Shift) UndoRedoManager.Undo();
+			else if (KeyDown(KeyCode.Y) || (KeyDown(KeyCode.Z) && Shift)) UndoRedoManager.Redo();
+			else if (KeyDown(KeyCode.S)) IslandFilesWindow.QuickSave();
+			else if (KeyDown(KeyCode.O)) IslandFilesWindow.Open();
 		}
 	}
 
@@ -56,7 +94,8 @@ namespace DynamicIslands.Editor
 		{
 			if (data == null) return;
 			data.SetHeights(heightRect.x, heightRect.y, heights);
-			data.SetAlphamaps(alphaRect.x, alphaRect.y, alpha);
+			// (a second style mixed in or taken out since: eight layers or four)
+			data.SetAlphamaps(alphaRect.x, alphaRect.y, TerrainPainter.FitLayers(alpha, data.alphamapLayers));
 			float[,] target = terraineditor.paintMask;
 			if (mask != null && target != null && target.GetLength(0) >= alphaRect.yMax && target.GetLength(1) >= alphaRect.xMax)
 				for (int z = 0; z < alphaRect.height; z++)
@@ -142,12 +181,12 @@ namespace DynamicIslands.Editor
 			ring.enabled = visible;
 			if (!visible) return;
 
-			Color c = terraineditor.modificationAction == terraineditor.TerrainModificationAction.PaintLayer ? LayerColors[Mathf.Clamp(terraineditor.paintLayer, 0, LayerColors.Length - 1)]
+			Color c = terraineditor.modificationAction == terraineditor.TerrainModificationAction.PaintLayer ? LayerColors[Mathf.Clamp(terraineditor.paintLayer % TerrainPainter.LayerCount, 0, LayerColors.Length - 1)]
 				: terraineditor.modificationAction == terraineditor.TerrainModificationAction.AutoPaint ? AutoColor : SculptColor;
 			ring.startColor = ring.endColor = c;
 			if (ring.material != null) ring.material.color = c;
 			float radius = terraineditor.brushRadius;
-			ring.startWidth = ring.endWidth = Mathf.Clamp(radius * 0.03f, 0.25f, 2f);
+			ring.startWidth = ring.endWidth = Mathf.Clamp(radius * 0.03f, 0.06f, 2f);
 
 			float baseY = terrain.transform.position.y;
 			for (int i = 0; i < Segments; i++)
@@ -157,6 +196,16 @@ namespace DynamicIslands.Editor
 				p.y = baseY + terrain.SampleHeight(p) + 0.4f;
 				ring.SetPosition(i, p);
 			}
+		}
+
+		/// <summary>For tests: the ring's drawn radius (from its centre to the first point, flat) and line width; -1 when hidden.</summary>
+		internal static float DrawnRadius(out float width)
+		{
+			width = ring != null ? ring.startWidth : 0f;
+			if (ring == null || !ring.enabled || ring.positionCount < 2) return -1f;
+			Vector3 a = ring.GetPosition(0), b = ring.GetPosition(ring.positionCount / 2);
+			a.y = b.y = 0f;
+			return Vector3.Distance(a, b) / 2f;
 		}
 
 		public static void Hide()

@@ -13,14 +13,20 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public class QuestEditorWindow : MonoBehaviour
 	{
-		const int MaxSteps = 10;
+		const int MaxSteps = IslandQuest.MaxStepCount;
 		static QuestEditorWindow instance;
 		public static bool IsOpen { get { return instance != null && instance.gameObject.activeSelf; } }
 
 		IslandQuest quest = new IslandQuest();
+		/// <summary>Which of the island's quests is shown (0 = the main quest; ROADMAP LM4) and the edits of each.</summary>
+		int number;
+		readonly Dictionary<int, IslandQuest> working = new Dictionary<int, IslandQuest>();
+		RectTransform questTabs, bringGroup;
 		InputField titleField, introField, doneField;
 		RectTransform stepsRoot;
-		Text rewardText, namesText;
+		ScrollRect stepsScroll;
+		LayoutElement stepsBoxSize;
+		Text rewardText, namesText, mainNote;
 		readonly List<InputField> fields = new List<InputField>();
 		bool pickingReward;
 
@@ -47,26 +53,127 @@ namespace DynamicIslands.Editor
 		public static void Open()
 		{
 			if (instance == null) return;
-			instance.quest = IslandQuest.From(DynamicIslands.currentIslandProps);
-			if (!instance.quest.Exists) instance.quest.Steps.Add(new IslandQuest.Step());
+			instance.working.Clear();
+			int count = IslandQuest.CountIn(DynamicIslands.currentIslandProps);
+			for (int i = 0; i < count; i++) instance.working[i] = IslandQuest.From(DynamicIslands.currentIslandProps, i, true);
 			instance.gameObject.SetActive(true);
 			instance.transform.SetAsLastSibling();
-			instance.titleField.text = instance.quest.Title;
-			instance.introField.text = instance.quest.Intro;
-			instance.doneField.text = instance.quest.Done;
-			instance.ShowSteps();
-			instance.ShowReward();
-			instance.ShowNames();
+			instance.Show(0);
 			instance.bring = QuestBringRule(DynamicIslands.currentIslandProps);
 			instance.bring = instance.bring != null ? instance.bring.Clone() : null;
 			instance.ShowBring();
+			instance.Keep();
+			instance.KeepBring();
+			instance.savedPrint = instance.Print();
 		}
 
-		/// <summary>The island's rule that fires when its own quest is done, or null.</summary>
+		/// <summary>What Esc compares: the quests and the bring rule as they would be saved.</summary>
+		string savedPrint;
+
+		string Print()
+		{
+			var d = new Dictionary<string, string>();
+			foreach (var kv in working.OrderBy(e => e.Key)) kv.Value.To(d, kv.Key);
+			return string.Join("\n", d.OrderBy(e => e.Key, StringComparer.Ordinal).Select(e => e.Key + "=" + e.Value).ToArray()) + "\nbring=" + (bring != null ? bring.ToLine() : "");
+		}
+
+		/// <summary>The quests differ from the island's (Esc asks before it closes).</summary>
+		public static bool Unsaved
+		{
+			get
+			{
+				if (!IsOpen) return false;
+				instance.Keep();
+				instance.KeepBring();
+				return instance.Print() != instance.savedPrint;
+			}
+		}
+
+		/// <summary>Shows quest n of the island (its edits kept while another is shown).</summary>
+		/// <summary>Dev tests (CIWindowShot questside): the open window shows quest n.</summary>
+		internal static void ShowTab(int n) { if (instance == null) return; instance.Keep(); instance.Show(n); }
+
+		void Show(int n)
+		{
+			number = n;
+			IslandQuest q;
+			if (!working.TryGetValue(n, out q)) working[n] = q = new IslandQuest();
+			if (!q.Exists) q.Steps.Add(new IslandQuest.Step());
+			quest = q;
+			titleField.text = quest.Title;
+			introField.text = quest.Intro;
+			doneField.text = quest.Done;
+			ShowSteps();
+			ShowReward();
+			ShowNames();
+			ShowTabs();
+			// ("bring a new island" belongs to the main quest)
+			if (bringGroup != null) bringGroup.gameObject.SetActive(n == 0);
+			if (mainNote != null)
+			{
+				mainNote.text = n == 0 ? MainOnlyMain : MainOnlySide;
+				UIKit.Hint(mainNote.gameObject, MainOnlyList);
+			}
+		}
+
+		/// <summary>QE3: what only the island's MAIN quest drives (a side quest, "Quest 2" and on, does none of this).</summary>
+		const string MainOnlyList = "Only the MAIN quest does these: the island's \"quest is done\" event (Island events), the \"Only if... quest step\" check, a world rule or island rule \"step(s) of its quest are done\", \"When the quest is done, bring a new island\", and the story / notebook waiting for the island. " +
+			"A world rule \"quest done\" can wait for a side quest by its number (Quest 2 = 2). A side quest has its own steps, reward and messages, and shows in the quest panel after the quests before it are done";
+		const string MainOnlyMain = "Main quest: the panel shows it first. Only it drives the island's \"quest is done\" event, \"quest step\" checks, \"step(s) done\" rules, the new island below and the story. Side quests (+ Another quest) do not.";
+		const string MainOnlySide = "Side quest: own steps, reward and messages, shown after the quests before it. It does NOT fire the island's \"quest is done\" event, \"quest step\" checks, \"step(s) done\" rules or the new island: those follow the Main quest tab. A world rule \"quest done\" can wait for it by number.";
+
+		/// <summary>QE3: every kind of step by its name in the list, for tooltips (a kind added later is named too). The newest three
+		/// are named here whether or not this build has them yet, so the tooltip is complete after any merge order.</summary>
+		public static string StepNamesText()
+		{
+			var names = new List<string>();
+			foreach (string t in IslandQuest.Types) { string l; if (TypeLabels.TryGetValue(t, out l)) names.Add(l); }
+			foreach (string n in new[] { "Signal / object is", "Bring items", "Craft or cook" }) if (!names.Contains(n)) names.Add(n);
+			return string.Join(", ", names.ToArray());
+		}
+
+		/// <summary>The fields' text into the quest shown.</summary>
+		void Keep()
+		{
+			quest.Title = titleField.text;
+			quest.Intro = introField.text;
+			quest.Done = doneField.text;
+			working[number] = quest;
+		}
+
+		/// <summary>The buttons for the island's quests: one per quest, another quest, remove this one.</summary>
+		void ShowTabs()
+		{
+			foreach (Transform c in questTabs) Destroy(c.gameObject);
+			int count = working.Keys.Count == 0 ? 1 : working.Keys.Max() + 1;
+			for (int i = 0; i < count; i++)
+			{
+				int n = i;
+				IslandQuest q;
+				string label = n == 0 ? "Main quest" : "Quest " + (n + 1);
+				if (working.TryGetValue(n, out q) && q.Title.Trim().Length > 0) label += ": " + (q.Title.Trim().Length > 16 ? q.Title.Trim().Substring(0, 15) + "\u2026" : q.Title.Trim());
+				Button b = UIKit.Button(questTabs, label, () => { Keep(); Show(n); }, n == 0 ? "The island's main quest: the panel shows it first, world plans and the story wait for it. Only the main quest drives the island's \"quest is done\" event, quest-step checks, \"step(s) done\" rules and the new island" : "Another quest of the island, with its own steps and reward. It does not fire the island's \"quest is done\" event, quest-step checks or the new island (those are the main quest's)", -1, 26f, 12);
+				if (n == number) UIKit.SetActive(b, true);
+			}
+			if (count < IslandQuest.MaxQuests)
+				UIKit.Button(questTabs, "+ Another quest", () => { Keep(); Show(count); }, "A side quest of this island: its own steps, reward and messages. Players see one quest at a time in the panel (the first not done yet)", 130, 26f, 12);
+			if (number > 0)
+				UIKit.Button(questTabs, "Remove this quest", () =>
+				{
+					// (the ones after it move up one: "Quest 3" becomes "Quest 2")
+					for (int i = number; i < count - 1; i++) { IslandQuest next; if (working.TryGetValue(i + 1, out next)) working[i] = next; else working.Remove(i); }
+					working.Remove(count - 1);
+					Show(0);
+				}, "Takes this quest off the island (Save to keep it so)", 140, 26f, 12);
+		}
+
+		/// <summary>The island's rule that fires when its own main quest is done, or null (a rule waiting for Quest 2 or
+		/// later is left alone: ROADMAP CB6).</summary>
 		public static IntroRule QuestBringRule(IDictionary<string, string> props)
 		{
 			return IntroRule.ParseLines(ObjectProps.Get(props, WorldDirector.IslandRulesKey))
-				.FirstOrDefault(r => r.When == "quest" && (r.WhenRef.Length == 0 || r.WhenRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase)));
+				.FirstOrDefault(r => r.When == "quest" && (r.WhenRef.Length == 0 || r.WhenRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase))
+					&& (r.WhenArg.Trim().Length == 0 || r.WhenArg.Trim() == "1"));
 		}
 
 		/// <summary>Sets (or with null removes) the island's "when the quest is done, bring ..." rule, keeping its other rules.</summary>
@@ -97,27 +204,59 @@ namespace DynamicIslands.Editor
 
 		void Save()
 		{
-			quest.Title = titleField.text;
-			quest.Intro = introField.text;
-			quest.Done = doneField.text;
-			quest.Steps.RemoveAll(s => s.Type == "reach" && s.Target.Trim().Length == 0 && s.Text.Trim().Length == 0); // ("go to" nowhere)
+			Keep();
+			foreach (IslandQuest q in working.Values) q.Steps.RemoveAll(s => s.Type == "reach" && s.Target.Trim().Length == 0 && s.Text.Trim().Length == 0); // ("go to" nowhere)
 			KeepBring();
+			IslandQuest main;
+			if (!working.TryGetValue(0, out main)) main = new IslandQuest();
+			// (the further quests with steps, counted for the message)
+			List<IslandQuest> more = working.Where(kv => kv.Key > 0 && kv.Value.Exists).OrderBy(kv => kv.Key).Select(kv => kv.Value).ToList();
 			IslandSettingsUndo.Change(() =>
 			{
-				SetQuestBringRule(DynamicIslands.currentIslandProps, quest.Exists && bring != null && bring.WhatArg.Trim().Length > 0 ? bring : null);
-				Apply(quest);
+				SetQuestBringRule(DynamicIslands.currentIslandProps, main.Exists && bring != null && bring.WhatArg.Trim().Length > 0 ? bring : null);
+				Apply(main);
+				// (each quest keeps its number: an emptied Quest 2 moved Quest 3 up, and a world's saved steps of quest 3 and
+				// rules waiting for it went to the wrong quest - questfix round 2. "Remove this quest" still moves the next up)
+				WriteFurther(DynamicIslands.currentIslandProps, working);
+				EditorUI.RefreshIsland();
 			});
-			DynamicIslands.Notify(quest.Exists ? "Quest \"" + quest.ShownTitle + "\" with " + quest.Steps.Count + " step(s)" + (bring != null && bring.WhatArg.Length > 0 ? ", bringing " + bring.DescribeWhat() + " when done," : "") +
-				" saved with the island (Ctrl+S)" : "The island has no quest now");
+			DynamicIslands.Notify(main.Exists ? "Quest \"" + main.ShownTitle + "\" with " + main.Steps.Count + " step(s)" + (more.Count > 0 ? " and " + more.Count + " more quest(s)" : "") + (bring != null && bring.WhatArg.Length > 0 ? ", bringing " + bring.DescribeWhat() + " when done," : "") +
+				" saved with the island (Ctrl+S)" : more.Count > 0 ? more.Count + " quest(s) saved with the island (Ctrl+S); no main quest" : "The island has no quest now");
+			Close();
+		}
+
+		/// <summary>Writes quests 2-9 each to its own number; an empty one leaves its number empty (CIQuestFix2).</summary>
+		internal static void WriteFurther(IDictionary<string, string> props, Dictionary<int, IslandQuest> working)
+		{
+			for (int i = 1; i < IslandQuest.MaxQuests; i++)
+			{
+				IslandQuest qi;
+				(working.TryGetValue(i, out qi) && qi.Exists ? qi : new IslandQuest()).To(props, i);
+			}
+		}
+
+		/// <summary>
+		/// "Remove quest": every quest of the island as one undo step. (It wrote the shown quest, emptied, over quest 0: on
+		/// the Quest 2 tab it took the main quest away and left Quest 2, and Ctrl+Z couldn't bring it back.)
+		/// </summary>
+		void RemoveAll()
+		{
+			IslandSettingsUndo.Change(() =>
+			{
+				SetQuestBringRule(DynamicIslands.currentIslandProps, null);
+				for (int i = 0; i < IslandQuest.MaxQuests; i++) new IslandQuest().To(DynamicIslands.currentIslandProps, i);
+				EditorUI.RefreshIsland();
+			});
+			DynamicIslands.Notify("The island has no quest now");
 			Close();
 		}
 
 		void Update()
 		{
-			if (ItemPickerWindow.IsOpen || ChoiceWindow.IsOpen || DropList.Busy) return;
+			if (ItemPickerWindow.IsOpen || ChoiceWindow.IsOpen || DropList.Busy || EditorInput.SubWindowJustClosed) return;
 			if (pickingReward) { pickingReward = false; ShowReward(); }
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) { if (Unsaved) EscKey.AskUnsaved("The quest", Save, Close); else Close(); }
 		}
 
 		void OnDisable() { EditorInput.IsTyping = false; }
@@ -129,6 +268,12 @@ namespace DynamicIslands.Editor
 			RectTransform head = UIKit.Row(panel, 28f, 6f, "Head");
 			UIKit.Label(head, "QUEST EDITOR", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
 			UIKit.Label(head, "Players see the quest when they come to the island; steps are done in order", 12, UIKit.TextMuted, TextAnchor.MiddleRight);
+			// (the island's quests: the main one and up to eight more - LM4)
+			questTabs = UIKit.Row(panel, 26f, 6f, "Quests");
+			// (QE3: which things belong to the main quest only - the line changes with the tab)
+			mainNote = UIKit.Label(panel, "", 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "MainQuestNote");
+			mainNote.horizontalOverflow = HorizontalWrapMode.Wrap;
+			UIKit.Size(mainNote.gameObject, -1, 30);
 
 			// (each field says what it is, also once it's filled in)
 			RectTransform top = UIKit.Row(panel, 30f, 8f, "Top");
@@ -143,16 +288,19 @@ namespace DynamicIslands.Editor
 			fields.Add(introField);
 
 			RectTransform stepsGroup = UIKit.Group(panel, "Steps");
-			stepsRoot = UIKit.Rect("Steps", stepsGroup);
-			UIKit.Vertical(stepsRoot.gameObject, 4f, new RectOffset(0, 0, 0, 0));
+			// (up to 99 steps: they scroll in a box up to 10 rows high - QE2)
+			RectTransform stepsBox = UIKit.Rect("StepsBox", stepsGroup);
+			stepsBoxSize = UIKit.Size(stepsBox.gameObject, -1, 4);
+			stepsRoot = UIKit.ScrollList(stepsBox, out stepsScroll, 4f);
+			UIKit.Stretch((RectTransform)stepsScroll.transform);
 			RectTransform addRow = UIKit.Row(stepsGroup, 26f, 6f, "Add");
-			UIKit.Button(addRow, "+ Add a step", () => { if (quest.Steps.Count < MaxSteps) { Keep(); quest.Steps.Add(new IslandQuest.Step()); ShowSteps(); } }, "Another step (up to " + MaxSteps + ")", 140, 26f, 12);
+			UIKit.Button(addRow, "+ Add a step", AddStep, "Another step (up to " + MaxSteps + ")", 140, 26f, 12);
 			namesText = UIKit.Label(addRow, "", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Names");
 			namesText.verticalOverflow = VerticalWrapMode.Truncate;
 
 			RectTransform reward = UIKit.Group(panel, "Reward and ending");
 			RectTransform rewardRow = UIKit.Row(reward, 26f, 6f, "Reward");
-			rewardText = UIKit.Label(rewardRow, "", 12, UIKit.TextColor);
+			rewardText = UIKit.Fit(UIKit.Label(rewardRow, "", 12, UIKit.TextColor), 8);
 			UIKit.Button(rewardRow, "Choose reward...", () =>
 			{
 				pickingReward = true;
@@ -167,6 +315,7 @@ namespace DynamicIslands.Editor
 
 			// A new island when the quest is done (the island's own rule; works in any world, and for every player)
 			RectTransform next = UIKit.Group(panel, "When the quest is done, bring a new island");
+			bringGroup = next;
 			RectTransform kindRow = UIKit.Row(next, 26f, 6f, "Kind");
 			bringKindButton = DropList.Make(kindRow, "Drop_BringKind", new List<DropList.Option>
 			{
@@ -215,7 +364,7 @@ namespace DynamicIslands.Editor
 			fields.Add(bringLabelField);
 
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
-			UIKit.Button(buttons, "Remove quest", () => { quest.Steps.Clear(); SetQuestBringRule(DynamicIslands.currentIslandProps, null); Apply(quest); DynamicIslands.Notify("The island has no quest now"); Close(); }, "Delete the quest from the island", 130, 34);
+			UIKit.Button(buttons, "Remove quest", RemoveAll, "Delete the quest from the island", 130, 34);
 			UIKit.Size(UIKit.Label(buttons, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
 			Button save = UIKit.Button(buttons, "Save", Save, "Keep the quest (save the island to keep it for good)", 110, 34);
 			UIKit.Primary(save);
@@ -224,7 +373,9 @@ namespace DynamicIslands.Editor
 
 		static readonly Dictionary<string, string> TypeLabels = new Dictionary<string, string>
 		{
-			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" },
+			{ "reach", "Go to" }, { "read", "Read" }, { "open", "Open" }, { "kill", "Defeat" }, { "catch", "Catch" }, { "collect", "Collect" }, { "pages", "Find pages" }, { "blueprint", "Blueprint" }, { Islanders.QuestType, "Talk to" }, { Collectibles.QuestType, "Find set" }, { Lights.QuestType, "Light up" }, { IslanderWalks.QuestType, "Escort" }, { Taming.QuestType, "Tame" },
+			{ QuestSteps.Signal, "Signal / object is" }, { QuestSteps.Bring, "Bring items" }, { QuestSteps.Craft, "Craft or cook" }, { QuestSteps.Fish, "Catch fish" }, { QuestSteps.Gather, "Gather / harvest" },
+			{ QuestWaitSteps.Time, "Be there at a time" }, { QuestWaitSteps.Weather, "Weather is" }, { QuestWaitSteps.Counter, "Counter reaches" }, { QuestWaitSteps.Players, "Players in a zone" },
 		};
 
 		/// <summary>What each kind of step asks (the step list's lines).</summary>
@@ -234,6 +385,21 @@ namespace DynamicIslands.Editor
 			{ "open", "Open a chest (by its note title; empty = any chest)" }, { "kill", "Defeat a number of animals of a kind (e.g. Warthog)" },
 			{ "catch", "Catch a number of animals with Raft's net launcher (e.g. Llama)" }, { "collect", "Have a number of a story item (the journal counts them)" },
 			{ "pages", "Find a number of journal pages: notes read on this island (or \"all\": anywhere)" },
+			{ "blueprint", "Find one of Raft's blueprints: picked up (and carried) or already learned (e.g. Blueprint_Fueltank)" },
+			{ Islanders.QuestType, "Talk to an islander (Story_Islander, by its name; empty = any islander): done when the dialogue closes" },
+			{ Lights.QuestType, "Switch on a number of the puzzle lights of a group on this island (its Count; the quest panel counts them)" },
+			{ Collectibles.QuestType, "Find a number of the pieces of a collectible set on this island (objects with that Set; the HUD counts them)" },
+			{ Taming.QuestType, "Tame animals and pen them: Animal@zone (Goat, Llama, Chicken or a creature spot's name). A player holds the spot's food (its Creature panel: Tame with) next to one for a second - it eats and follows them. In the zone it stays for good; the count is how many must be penned" },
+			{ IslanderWalks.QuestType, "Bring an islander to a trigger zone: Name@zone. While this step is the current one the islander follows the nearest player (it waits when they are over 12 m away); in the zone it stays" },
+			{ QuestSteps.Signal, "Wait for a signal (a lever's \"lever\", the generator's \"power\", an action's own) or an object's state (Gate=open, closed, shown, hidden): a signal sent before counts" },
+			{ QuestSteps.Bring, "Hand a number of a Raft item to an islander (by talking) or a chest (at the chest): Item@Name; the items are taken" },
+			{ QuestSteps.Craft, "Craft or cook a number of a Raft item at the island while this step is the current one (empty = anything)" },
+			{ QuestSteps.Fish, "Catch a number of fish with Raft's fishing rod at the island (its shore or a raft moored off it) while this step is the current one (empty = any fish)" },
+			{ QuestSteps.Gather, "Pick up, dig or harvest a number of a Raft item on the island (by hand, shovel or axe) while this step is the current one (empty = anything)" },
+			{ QuestWaitSteps.Time, "Be at the island at a time of day: day, night, dawn, dusk or hours (20-6); done the moment a player is there then" },
+			{ QuestWaitSteps.Weather, "Be at the island in a weather: clear, calm, fog, waves, rain, storm or snow (commas = any); a weather action can bring it" },
+			{ QuestWaitSteps.Counter, "Wait until a counter (changed by count actions) reaches a number; a value reached before counts" },
+			{ QuestWaitSteps.Players, "A number of players stand in a trigger zone at once (never more than are online: one player alone is enough)" },
 		};
 
 		static readonly Dictionary<string, string> TargetHints = new Dictionary<string, string>
@@ -241,59 +407,168 @@ namespace DynamicIslands.Editor
 			{ "reach", "trigger zone name" }, { "read", "note title" }, { "open", "chest's note title (empty = any chest; not the abandoned raft crate)" },
 			{ "kill", "creature (e.g. Warthog; empty = any)" }, { "catch", "animal (e.g. Llama; empty = any)" },
 			{ "collect", "story item (\u2026 to choose)" }, { "pages", "empty = this island, all = any island" },
+			{ "blueprint", "Blueprint_ name (\u25BE lists Raft's; empty = any story blueprint)" },
+			{ Islanders.QuestType, "islander's name (\u25BE lists this island's; empty = any)" },
+			{ Collectibles.QuestType, "set name (\u25BE lists this island's sets)" },
+			{ Lights.QuestType, "light group (\u25BE lists this island's groups)" },
+			{ Taming.QuestType, "Animal@zone (\u25BE lists this island's goats, llamas, chickens and zones)" },
+			{ IslanderWalks.QuestType, "Name@zone (\u25BE lists this island's islanders and zones)" },
+			{ QuestSteps.Signal, "signal, or Name=open (\u25BE lists this island's)" },
+			{ QuestSteps.Bring, "Item@Name (\u2026 item, \u25BE who takes it)" },
+			{ QuestSteps.Craft, "Raft item (\u2026 to choose; empty = any)" },
+			{ QuestSteps.Fish, "fish (\u25be lists Raft's; empty = any)" },
+			{ QuestSteps.Gather, "Raft item (\u2026 to choose; e.g. Clay; empty = any)" },
+			{ QuestWaitSteps.Time, "night, day, dawn, dusk or 20-6 (\u25be)" },
+			{ QuestWaitSteps.Weather, "rain, storm, fog... (\u25be; commas = any)" },
+			{ QuestWaitSteps.Counter, "counter name (\u25be lists this island's)" },
+			{ QuestWaitSteps.Players, "trigger zone name (\u25be)" },
 		};
 
 		/// <summary>Takes what was typed into the step rows before they are rebuilt.</summary>
-		void Keep()
-		{
-			quest.Title = titleField.text; quest.Intro = introField.text; quest.Done = doneField.text;
-		}
-
 		void ShowSteps()
 		{
-			foreach (Transform child in stepsRoot) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
 			fields.RemoveAll(f => f == null || f.transform.IsChildOf(stepsRoot));
+			foreach (Transform child in stepsRoot.Cast<Transform>().ToList()) DropRow(child);
+			stepRows.Clear();
+			List<EditorGameObject> placedNow = Placed();
+			for (int i = 0; i < quest.Steps.Count; i++) StepRow(quest.Steps[i], i, placedNow);
+			SizeStepsBox();
+		}
+
+		/// <summary>The row of each step: rows are added, redone, moved and removed one at a time (a rebuild of all 99
+		/// took seconds per click). The buttons look up their step's place when clicked.</summary>
+		readonly Dictionary<IslandQuest.Step, RectTransform> stepRows = new Dictionary<IslandQuest.Step, RectTransform>();
+
+		RectTransform StepRow(IslandQuest.Step s, int i, List<EditorGameObject> placedNow)
+		{
+			RectTransform row = UIKit.Row(stepsRoot, 28f, 4f, "Step");
+			stepRows[s] = row;
+			row.SetSiblingIndex(i);
+			UIKit.Size(UIKit.Label(row, (i + 1) + ".", 13, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Normal, "Num").gameObject, 22);
+			DropList.Make(row, "Drop_StepType", IslandQuest.Types.Select(t => new DropList.Option(t, TypeLabels[t], TypeHints[t])).ToList(), s.Type, v =>
+			{
+				s.Type = v;
+				RedoRow(s);
+			}, 104, "What the player must do. Kinds: " + StepNamesText() + ". Point at one in the list to see what it asks", 28f, 12);
+			InputField target = UIKit.Field(row, TargetHints[s.Type], s.Target, 28f, "Must match a name on the island exactly: \u25BE lists the ones it has");
+			UIKit.Size(target.gameObject, 196, 28);
+			target.onEndEdit.AddListener(v => s.Target = v.Trim());
+			fields.Add(target);
+			List<DropList.Option> names = QuestSteps.NamesFor(s.Type, s.Target, placedNow) ?? QuestWaitSteps.NamesFor(s.Type, placedNow) ?? NamesFor(s.Type, placedNow);
+			if (names.Count > 0)
+			{
+				// (a small \u25BE: the island's zones, notes, chests or creatures that this kind of step can point at)
+				Button pick = DropList.Make(row, "Pick_Target", names, s.Target, v => { Keep(); s.Target = v; RedoRow(s); }, 26, "Pick one of the names on this island", 28f, 11);
+				UIKit.LabelOf(pick).text = "";
+			}
+			if (s.Type == "collect") UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.PickOne(v => { s.Target = v; RedoRow(s); }, true); }, "Choose one of the island's story items", 28, 28f, 12);
+			if (QuestSteps.TakesItem(s.Type) && s.Type != QuestSteps.Fish)
+				UIKit.Button(row, "\u2026", () =>
+				{
+					Keep();
+					ItemPickerWindow.PickOne(v =>
+					{
+						string item, to;
+						QuestSteps.SplitBring(s.Target, out item, out to);
+						s.Target = s.Type == QuestSteps.Bring && to.Length > 0 ? v + "@" + to : v;
+						RedoRow(s);
+					});
+				}, "Choose one of Raft's items", 28, 28f, 12);
+			if ((s.Type == "kill" || s.Type == "catch" || IslandQuest.Counted(s.Type) || QuestSteps.HasCount(s.Type)) && s.Type != QuestSteps.Signal && !QuestWaitSteps.NoCount(s.Type) && s.Type != IslanderWalks.QuestType)
+			{
+				InputField count = UIKit.Field(row, "1", s.Count.ToString(), 28f, "How many");
+				UIKit.Size(count.gameObject, 44, 28);
+				count.contentType = InputField.ContentType.IntegerNumber;
+				count.characterLimit = 2;
+				count.onEndEdit.AddListener(v => { int n; s.Count = int.TryParse(v, out n) ? Mathf.Clamp(n, 1, 99) : 1; });
+				fields.Add(count);
+			}
+			InputField text = UIKit.Field(row, s.Describe(), s.Text, 28f, "What players read for this step (empty: made from the step)");
+			text.characterLimit = 80;
+			text.onEndEdit.AddListener(v => s.Text = v.Trim());
+			fields.Add(text);
+			// A time limit (QE9): run out and the step starts again; empty or 0 = none
+			InputField secs = UIKit.Field(row, "time", s.Seconds > 0 ? s.Seconds.ToString() : "", 28f,
+				"Time limit in seconds (empty = none): players near the island see a countdown; run out and this step starts again" +
+				(QuestTimers.Unsafe(s.Type) ? ". Careful: this kind of step can't be undone (what was killed, handed over or read stays so) - best for reach, zone, talk or puzzle steps" : ""));
+			UIKit.Size(secs.gameObject, 52, 28);
+			secs.contentType = InputField.ContentType.IntegerNumber;
+			secs.characterLimit = 4;
+			secs.onEndEdit.AddListener(v => { int n; s.Seconds = int.TryParse(v, out n) ? Mathf.Clamp(n, 0, QuestTimers.MaxSeconds) : 0; });
+			fields.Add(secs);
+			UIKit.Button(row, "\u25B2", () => { int index = quest.Steps.IndexOf(s); if (index > 0) { Keep(); quest.Steps.Reverse(index - 1, 2); Renumber(); } }, "Earlier", 26, 28f, 11);
+			UIKit.Button(row, "\u25BC", () => { int index = quest.Steps.IndexOf(s); if (index >= 0 && index < quest.Steps.Count - 1) { Keep(); quest.Steps.Reverse(index, 2); Renumber(); } }, "Later", 26, 28f, 11);
+			Button del = UIKit.Button(row, "\u00D7", () => { Keep(); RemoveStep(s); }, "Remove this step", 26, 28f, 12);
+			UIKit.DangerButton(del);
+			return row;
+		}
+
+		/// <summary>The box is as tall as the steps, up to 10 rows: more scroll.</summary>
+		void SizeStepsBox()
+		{
+			if (stepsBoxSize != null) stepsBoxSize.preferredHeight = Mathf.Min(quest.Steps.Count, 10) * 32f + 4f;
+		}
+
+		/// <summary>Takes a row out now (Destroy waits for the frame's end, and the rows' places must be right at once).</summary>
+		void DropRow(Transform row)
+		{
+			fields.RemoveAll(f => f == null || f.transform.IsChildOf(row));
+			row.gameObject.SetActive(false);
+			row.SetParent(null, false);
+			Destroy(row.gameObject);
+		}
+
+		/// <summary>Builds one step's row again in its place (its kind or target changed).</summary>
+		void RedoRow(IslandQuest.Step s)
+		{
+			RectTransform old;
+			int i = quest.Steps.IndexOf(s);
+			if (i < 0 || !stepRows.TryGetValue(s, out old) || old == null) { ShowSteps(); return; }
+			DropRow(old);
+			StepRow(s, i, Placed());
+		}
+
+		/// <summary>Puts the rows in the steps' order and numbers them.</summary>
+		void Renumber()
+		{
 			for (int i = 0; i < quest.Steps.Count; i++)
 			{
-				int index = i;
-				IslandQuest.Step s = quest.Steps[i];
-				RectTransform row = UIKit.Row(stepsRoot, 28f, 4f, "Step");
-				UIKit.Size(UIKit.Label(row, (i + 1) + ".", 13, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 22);
-				DropList.Make(row, "Drop_StepType", IslandQuest.Types.Select(t => new DropList.Option(t, TypeLabels[t], TypeHints[t])).ToList(), s.Type, v =>
-				{
-					s.Type = v;
-					ShowSteps();
-				}, 104, "What the player must do: go to, read, open, defeat, catch, collect story items, find journal pages", 28f, 12);
-				InputField target = UIKit.Field(row, TargetHints[s.Type], s.Target, 28f, "Must match a name on the island exactly: \u25BE lists the ones it has");
-				UIKit.Size(target.gameObject, 196, 28);
-				target.onEndEdit.AddListener(v => s.Target = v.Trim());
-				fields.Add(target);
-				List<DropList.Option> names = NamesFor(s.Type);
-				if (names.Count > 0)
-				{
-					// (a small \u25BE: the island's zones, notes, chests or creatures that this kind of step can point at)
-					Button pick = DropList.Make(row, "Pick_Target", names, s.Target, v => { Keep(); s.Target = v; ShowSteps(); }, 26, "Pick one of the names on this island", 28f, 11);
-					UIKit.LabelOf(pick).text = "";
-				}
-				if (s.Type == "collect") UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.PickOne(v => { s.Target = v; ShowSteps(); }, true); }, "Choose one of the island's story items", 28, 28f, 12);
-				if (s.Type == "kill" || s.Type == "catch" || IslandQuest.Counted(s.Type))
-				{
-					InputField count = UIKit.Field(row, "1", s.Count.ToString(), 28f, "How many");
-					UIKit.Size(count.gameObject, 44, 28);
-					count.contentType = InputField.ContentType.IntegerNumber;
-					count.characterLimit = 2;
-					count.onEndEdit.AddListener(v => { int n; s.Count = int.TryParse(v, out n) ? Mathf.Clamp(n, 1, 99) : 1; });
-					fields.Add(count);
-				}
-				InputField text = UIKit.Field(row, s.Describe(), s.Text, 28f, "What players read for this step (empty: made from the step)");
-				text.characterLimit = 80;
-				text.onEndEdit.AddListener(v => s.Text = v.Trim());
-				fields.Add(text);
-				UIKit.Button(row, "\u25B2", () => { if (index > 0) { Keep(); quest.Steps.Reverse(index - 1, 2); ShowSteps(); } }, "Earlier", 26, 28f, 11);
-				UIKit.Button(row, "\u25BC", () => { if (index < quest.Steps.Count - 1) { Keep(); quest.Steps.Reverse(index, 2); ShowSteps(); } }, "Later", 26, 28f, 11);
-				Button del = UIKit.Button(row, "\u00D7", () => { Keep(); quest.Steps.RemoveAt(index); ShowSteps(); }, "Remove this step", 26, 28f, 12);
-				UIKit.DangerButton(del);
+				RectTransform row;
+				if (!stepRows.TryGetValue(quest.Steps[i], out row) || row == null) { ShowSteps(); return; }
+				row.SetSiblingIndex(i);
+				Transform num = row.Find("Num");
+				if (num != null) num.GetComponent<Text>().text = (i + 1) + ".";
 			}
+		}
+
+		void AddStep()
+		{
+			if (quest.Steps.Count >= MaxSteps) return;
+			Keep();
+			var s = new IslandQuest.Step();
+			quest.Steps.Add(s);
+			StepRow(s, quest.Steps.Count - 1, Placed());
+			SizeStepsBox();
+			ScrollStepsToEnd();
+		}
+
+		void RemoveStep(IslandQuest.Step s)
+		{
+			RectTransform row;
+			quest.Steps.Remove(s);
+			if (stepRows.TryGetValue(s, out row) && row != null) DropRow(row);
+			stepRows.Remove(s);
+			Renumber();
+			SizeStepsBox();
+		}
+
+
+		/// <summary>Shows the last step (one just added below the box's 10 rows).</summary>
+		void ScrollStepsToEnd()
+		{
+			if (stepsScroll == null) return;
+			Canvas.ForceUpdateCanvases();
+			stepsScroll.verticalNormalizedPosition = 0f;
 		}
 
 		/// <summary>Takes what was typed into the "bring" fields.</summary>
@@ -328,7 +603,7 @@ namespace DynamicIslands.Editor
 			if (bring == null) return;
 			KeepBring();
 			if (bring.What == "type") ChoiceWindow.Open("Map type", ChoiceWindow.Types(), v => { if (bring != null) { bring.WhatArg = v; ShowBring(); } });
-			else ChoiceWindow.Open("Bring which island", ChoiceWindow.Islands().Where(c => !c.Value.Equals(DynamicIslands.currentIslandName, StringComparison.OrdinalIgnoreCase)),
+			else ChoiceWindow.OpenIslands("Bring which island", () => ChoiceWindow.Islands().Where(c => !c.Value.Equals(DynamicIslands.currentIslandName, StringComparison.OrdinalIgnoreCase)),
 				v => { if (bring != null) { bring.WhatArg = v; ShowBring(); } });
 		}
 
@@ -339,20 +614,27 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The names on the island a step of this kind can point at (the \u25BE list beside its name).</summary>
-		static List<DropList.Option> NamesFor(string type)
+		static List<EditorGameObject> Placed()
 		{
 			GameObject placed = GameObject.Find("PlacedObjects");
-			List<EditorGameObject> all = placed != null ? placed.GetComponentsInChildren<EditorGameObject>().ToList() : new List<EditorGameObject>();
+			return placed != null ? placed.GetComponentsInChildren<EditorGameObject>().ToList() : new List<EditorGameObject>();
+		}
+
+		/// <summary>(all: the placed objects, listed once per rebuild: GameObject.Find walks the whole scene, and a
+		/// rebuild of 99 rows doing it per row took seconds)</summary>
+		static List<DropList.Option> NamesFor(string type, List<EditorGameObject> all)
+		{
 			IEnumerable<string> names;
 			switch (type)
 			{
-				case "reach": names = ContentCatalog.ZoneIdsInEditor(); break;
+				case "reach": names = all.Where(e => e.GameObjectName == ContentCatalog.TriggerZone).Select(e => ObjectProps.Get(e.Props, ObjectProps.ZoneId)); break;
 				case "read": names = all.Where(e => ObjectProps.IsNote(e.GameObjectName, e.Props)).Select(e => ObjectProps.Get(e.Props, ObjectProps.NoteTitle)); break;
 				case "open": names = all.Where(e => ObjectProps.IsLoot(e.GameObjectName, e.Props)).Select(e => ObjectProps.Get(e.Props, ObjectProps.NoteTitle)); break;
 				case "kill": names = all.Select(e => ContentCatalog.CreatureOf(e.GameObjectName)).Where(k => k != null).Select(k => k.Label); break;
 				case "catch": names = all.Select(e => ContentCatalog.CreatureOf(e.GameObjectName)).Where(k => k != null && k.Category == ContentCatalog.CatchableCategory).Select(k => k.Label); break;
 				case "pages": return new List<DropList.Option> { new DropList.Option("", "This island", "Pages from this island's notes"), new DropList.Option("all", "all", "Pages from any island") };
-				default: return new List<DropList.Option>();
+				case "blueprint": return BlueprintSteps.All().Select(b => new DropList.Option(b, PlanChecker.Pretty(b), b)).ToList();
+				default: return PlayerFeatures.NamesFor(type, all) ?? new List<DropList.Option>();
 			}
 			return names.Where(n => n != null && n.Trim().Length > 0).Distinct().OrderBy(n => n, StringComparer.OrdinalIgnoreCase).Select(n => new DropList.Option(n, n)).ToList();
 		}

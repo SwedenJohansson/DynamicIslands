@@ -1,0 +1,49 @@
+# Thalassa Mooring (CIPlay thalassa_mooring): the deck, the handbook, the water tower chest, the pipe crate, the office
+# chest, the store shed, the diving bell ridden 20 m down (its zone has air).
+island Thalassa Mooring
+offset -0.2484 -1.3339
+# (room in the bag first: a full bag from earlier plays in the world drops quest loot - 11-09)
+empty
+expect step 0
+expect title The Surface Station
+zone deck
+expect step 1
+read Station handbook
+expect step 2
+open Water tower chest
+wait 3
+expect step 3
+open Pipe crate
+wait 3
+expect step 4
+open Station office chest
+wait 3
+expect step 5
+open Store shed chest
+wait 3
+expect step 6
+read Dive log
+expect step 7
+read Dinghy logbook
+expect step 8
+zone th_summit
+expect step 9
+open Mooring hill locker
+wait 3
+expect story th_key 1
+expect step 10
+use thpump
+expect story th_pump 1
+expect hidden thwater
+expect step 11
+air th_air1
+open Salvage store chest
+wait 3
+expect step 12
+read Ines's slate (salvage store)
+expect step 13
+use bell
+wait 13
+zone bell
+air bell
+expect done

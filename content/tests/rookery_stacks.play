@@ -1,0 +1,82 @@
+# Rookery Stacks (CIPlay rookery_stacks): the soup kitchen, the petition, the rats, the smithy (titanium tools), the
+# tollgate, the screechers, the packer's hut (advanced backpack), three water tokens in the barrels (one on the key, two
+# on the roofs), the elders' plan, their chest (electric zipline tool), the storm warning; the treasure.
+# offset 0 0 is a placeholder: phase 2 sets it from the recipe's save log (PLAY_FORMAT: Coordinates).
+island Rookery Stacks
+offset 0 0
+expect step 0
+expect title The Lowest Roofs
+zone soup_kitchen
+expect step 1
+read Rookery petition
+expect step 2
+kill Butler bot
+expect step 3
+openat 37.17 -15.62
+openat 18.82 -34.63
+openat 28.22 -25.57
+wait 3
+expect story ration 3
+expect step 4
+read Maud Penn's note
+expect step 5
+kill Rat
+expect animals Rat 0
+expect step 6
+openat 1.65 -14.6
+openat -20.6 -49.1
+openat -4.8 -55.5
+expect story watertoken 3
+expect step 7
+open Rookery smithy
+wait 3
+expect step 8
+zone tollgate
+expect step 9
+kill Screecher
+expect animals Screecher 0
+expect step 10
+open Packer's hut
+wait 3
+expect step 11
+zone gull_stacks
+expect step 12
+read Pip's note
+expect step 13
+read Bathhouse slate
+expect step 14
+open Family van's crate
+wait 3
+expect step 15
+zone rk_deep
+expect step 16
+expect stand 25 -78 h=-16
+open Bathhouse cellar strongbox
+wait 3
+expect story rk_deep 1
+expect step 17
+zone rk_trail
+expect step 18
+# (the ledge cache wants a keycard)
+zone rk_summit
+expect step 19
+expect stand 57.32 -14.63 h=34
+open Great chimney deck box
+wait 3
+expect story rk_top 1
+expect step 20
+read Rookery elders' plan
+expect step 21
+open Elders' hut
+wait 3
+expect step 22
+open Glass hoard
+wait 3
+read Storm warning
+expect step 23
+# U22 jump course (10-24): teleport onto its top A slab instead of jumping the hops
+at -66.38 -40.44 h=8.65
+zone jump_rs_top
+wait 2
+expect done
+dig

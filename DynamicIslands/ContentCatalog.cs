@@ -23,9 +23,11 @@ namespace DynamicIslands.Editor
 	{
 		public const string CatchableCategory = "Animals: catchable";
 		public const string HostileCategory = "Animals: hostile";
+		/// <summary>SL9: Raft's story-island creatures that harm no one (Temperance's puffins, Tangaroa's butler bots).</summary>
+		public const string HarmlessCategory = "Animals: harmless";
 		public const string SeaCategory = "Sea creatures";
 		public const string NotesCategory = "Notes & signs";
-		public static readonly string[] Categories = { CatchableCategory, HostileCategory, SeaCategory, NotesCategory, "Loot & chests", "Zones & triggers" };
+		public static readonly string[] Categories = { CatchableCategory, HostileCategory, HarmlessCategory, SeaCategory, NotesCategory, "Loot & chests", "Zones & triggers" };
 
 		/// <summary>Name of marker parts (ground ring, labels) that only help in the editor and are never tinted.</summary>
 		public const string MarkerOnly = "CI_NoTint";
@@ -65,6 +67,10 @@ namespace DynamicIslands.Editor
 			K(AI_NetworkBehaviourType.Roach, "Roach", HostileCategory, 0.5f, 0.25f, "Tangaroa's roach"),
 			K(AI_NetworkBehaviourType.BugSwarm_Bee, "Bee swarm", HostileCategory, 1f, 1f, "stings players nearby", Movement.Air),
 			K(AI_NetworkBehaviourType.StoneBird, "Screecher", HostileCategory, 2f, 1.2f, "a bird that attacks players and drops stones on the raft", Movement.Air),
+			// (SL9: Raft's story-island creatures not on any other island)
+			K(AI_NetworkBehaviourType.StoneBird_Caravan, "Caravan screecher", HostileCategory, 2f, 1.2f, "Caravan Town's screecher: attacks players and drops stones on the raft", Movement.Air),
+			K(AI_NetworkBehaviourType.Puffin, "Puffin", HarmlessCategory, 0.4f, 0.4f, "Temperance's puffin: flies off when players come near", Movement.Air),
+			K(AI_NetworkBehaviourType.ButlerBot, "Butler bot", HarmlessCategory, 0.8f, 1.2f, "Tangaroa's serving robot: rolls about; placed from the list it zaps players who come close (Zap, in Danger)"),
 			K(AI_NetworkBehaviourType.PufferFish, "Puffer fish", SeaCategory, 0.6f, 0.6f, "swims near the island and explodes next to divers", Movement.Water),
 			K(AI_NetworkBehaviourType.AnglerFish, "Angler fish", SeaCategory, 1.5f, 1f, "a deep-sea hunter", Movement.Water),
 			K(AI_NetworkBehaviourType.Turtle, "Turtle", SeaCategory, 1f, 0.5f, "a friendly sea turtle", Movement.Water),
@@ -107,9 +113,18 @@ namespace DynamicIslands.Editor
 			new[] { LootPrefix + "Box", "VG_DecorationPrefabBase_WoodenBoxes_ShortSquare Variant", "Wooden box" },
 			new[] { LootPrefix + "Barrel", "TP_Moontown_Barrel01", "Barrel" },
 			new[] { LootPrefix + "SunkenBarrel", "Reef_Barrel1", "Sunken barrel" },
+			// (honey on islands, the user 2026-10-05: Raft has no wild hive - its honey comes from the player's own beehives -
+			// so a wild one is a container of honeycomb in Raft's beehive, refilling after the island's regrow days)
+			new[] { WildHive, "Placeable_BeeHive", "Wild beehive" },
 		};
 
 		public static bool IsNoteObject(string name) { return name != null && name.StartsWith(NotePrefix) && NoteObjects.Any(n => n[0] == name); }
+
+		public const string WildHive = LootPrefix + "WildHive";
+		/// <summary>Raft's story pieces that use the player's own quest tools (the machete; the zipline tool rides Raft's zipline lines as they are).</summary>
+		public const string MacheteVines = "ChoppableVines", MacheteItem = "Machete", ZiplineItem = "ZiplineTool";
+		/// <summary>A wild beehive's honey (and a little wax-less luck: a jar now and then is in the Treasure preset).</summary>
+		public const string WildHiveLoot = "HoneyComb*3";
 
 		public static bool IsLootObject(string name) { return name != null && name.StartsWith(LootPrefix) && LootObjects.Any(n => n[0] == name); }
 
@@ -173,6 +188,21 @@ namespace DynamicIslands.Editor
 
 		public static bool IsHelper(string name) { return name == HelperWall || name == HelperRamp; }
 
+		/// <summary>Buried treasure for the metal detector and the shovel (BuriedTreasure): a marker in the editor, Raft's own treasure point in a world.</summary>
+		public const string BuriedTreasure = "Treasure_Buried";
+		public static bool IsTreasure(string name) { return name == BuriedTreasure; }
+
+		static GameObject BuildTreasureMarker()
+		{
+			var root = new GameObject(BuriedTreasure);
+			root.transform.SetParent(PlaceableCatalog.Container.transform, false);
+			Part(PrimitiveType.Cylinder, "Mound", root.transform, new Vector3(0f, 0.05f, 0f), Quaternion.identity, new Vector3(1.4f, 0.05f, 1.4f), MarkerMaterial(new Color(0.45f, 0.32f, 0.18f)));
+			Part(PrimitiveType.Cube, "X1", root.transform, new Vector3(0f, 0.12f, 0f), Quaternion.Euler(0f, 45f, 0f), new Vector3(1.2f, 0.04f, 0.15f), MarkerMaterial(new Color(0.85f, 0.15f, 0.1f)));
+			Part(PrimitiveType.Cube, "X2", root.transform, new Vector3(0f, 0.12f, 0f), Quaternion.Euler(0f, -45f, 0f), new Vector3(1.2f, 0.04f, 0.15f), MarkerMaterial(new Color(0.85f, 0.15f, 0.1f)));
+			AddLabel(root.transform, "Buried treasure", 1.2f);
+			return root;
+		}
+
 		/// <summary>The see-through slab of an invisible wall (4 x 3 m, 30 cm thick) or ramp (4 m wide, 8 m long, 20 degrees up towards its front).</summary>
 		static GameObject BuildHelperMarker(string name, string label)
 		{
@@ -213,6 +243,8 @@ namespace DynamicIslands.Editor
 			new KeyValuePair<string, string[]>("Metal", new[] { "Scrap*6", "MetalIngot*4", "CopperIngot*3", "Bolt*6", "Hinge*4", "MetalOre*4" }),
 			new KeyValuePair<string, string[]>("Food", new[] { "Watermelon*2", "Pineapple*2", "Coconut*3", "Mango*3", "Raw_Potato*4", "Egg*4", "Banana*3" }),
 			new KeyValuePair<string, string[]>("Treasure", new[] { "TitaniumIngot*3", "ExplosiveGoo*2", "CircuitBoard*2", "Battery*1", "HealingSalve_Good*2", "Jar_Honey*1" }),
+			// PF7: a cosmetic hat and trophy (Cosmetics)
+			new KeyValuePair<string, string[]>("Cosmetics", Cosmetics.PresetLoot),
 		};
 
 		/// <summary>The loot of a preset: its candidates that exist in this version of Raft.</summary>
@@ -265,13 +297,17 @@ namespace DynamicIslands.Editor
 		/// <summary>Extra text for the object list's hint (null for Raft's plain objects).</summary>
 		public static string Hint(string name)
 		{
+			string ready = ReadyPieces.Hint(name);
+			if (ready != null) return ready;
+			string player = PlayerFeatures.Hint(name);
+			if (player != null) return player;
 			CreatureKind k = CreatureOf(name);
 			if (k != null) return "a live " + k.Label.ToLowerInvariant() + " appears here in a world: " + k.Hint + ". Select it to change its stats and colour";
 			if (name == PlaceableCatalog.RaftCrate) return "Raft's own crate from the abandoned rafts: players take it whole (E) and get random loot from Raft's table. Its contents can't be chosen (use a chest for chosen loot), and it doesn't count for a quest's \"Open a chest\" step";
 			if (IsNoteObject(name)) return "players read it in a world with the interact key (E). Select it to write the text";
 			if (IsLootObject(name)) return "players open it in a world with the interact key (E) and get what's inside. Select it to choose the items";
 			if (name == TriggerZone) return "invisible in a world: when a player walks in it shows a message, gives items or wakes up creatures linked to it. Select it to set it up";
-			if (name == AtmosphereZoneName) return "fog colour, light tint and particles (fireflies, mist, snow, embers) around it in a world. Fly the camera in to see it";
+			if (name == AtmosphereZoneName) return "fog colour, light tint and particles (fireflies, mist, snow, embers, bubbles, steam) around it in a world. Fly the camera in to see it";
 			if (name == SoundZoneName) return "plays one of Raft's sounds while players are in it, or once when they walk in. Select it to choose the sound";
 			if (name == HelperWall) return "invisible in a world, but solid: blocks a path or keeps players in. Scale and turn it to fit";
 			if (name == HelperRamp) return "invisible in a world, but players can walk up it: makes a cliff or a sea stack climbable. Scale and turn it to fit";
@@ -303,6 +339,15 @@ namespace DynamicIslands.Editor
 				PlaceableCatalog.AddCustom(z.Key, BuildZoneMarker(z.Key, z.Value), ZoneCategory, z.Value);
 			PlaceableCatalog.AddCustom(HelperWall, BuildHelperMarker(HelperWall, "Invisible wall"), ZoneCategory, "Invisible wall");
 			PlaceableCatalog.AddCustom(HelperRamp, BuildHelperMarker(HelperRamp, "Invisible ramp"), ZoneCategory, "Invisible ramp");
+			PlaceableCatalog.AddCustom(Lights.ObjectName, Lights.BuildMarker(), ZoneCategory, "Puzzle light (switch)");
+			PlaceableCatalog.AddCustom(GapBehaviours.SpringName, GapBehaviours.BuildSpring(), ZoneCategory, "Drinking spring (heals)");
+			PlaceableCatalog.AddCustom(BuriedTreasure, BuildTreasureMarker(), LootCategory, "Buried treasure (metal detector)");
+			Survivors.Register(); // (a survivor in a cage, RF3)
+			PlaceableCatalog.AddCustom(Islanders.ObjectName, Islanders.BuildMarker(), NotesCategory, "Islander (talks)");
+			PlaceableCatalog.AddCustom(Collectibles.ObjectName, Collectibles.BuildMarker(), LootCategory, "Collectible (set piece)");
+			CameraPath.Register(); // (camera points of fly-through paths, PF4)
+			DigTunnel.Register(); // (the Dig brush's tunnels, hidden from the list)
+			Minimap.Register(); // (map markers of the island map, PF5)
 			foreach (CreatureKind k in Creatures)
 				PlaceableCatalog.AddCustom(k.Name, BuildPrototype(k), k.Category, k.Label);
 			Debug.Log("[CUSTOM ISLANDS] Custom content: " + Creatures.Length + " creatures (" + models.Count + " with Raft's models), " + notes + " note objects, " + loot + " loot containers");
@@ -391,7 +436,7 @@ namespace DynamicIslands.Editor
 		static readonly Color CatchableColor = new Color(0.55f, 0.9f, 0.55f), HostileColor = new Color(1f, 0.55f, 0.4f), SeaColor = new Color(0.45f, 0.75f, 1f);
 		static readonly Dictionary<Color, Material> markerMaterials = new Dictionary<Color, Material>();
 
-		static Material MarkerMaterial(Color c)
+		internal static Material MarkerMaterial(Color c)
 		{
 			Material m;
 			if (markerMaterials.TryGetValue(c, out m) && m != null) return m;
@@ -414,7 +459,7 @@ namespace DynamicIslands.Editor
 			root.transform.SetParent(PlaceableCatalog.Container.transform, false);
 			var marker = new GameObject("Marker").transform;
 			marker.SetParent(root.transform, false);
-			Color c = k.Category == CatchableCategory ? CatchableColor : k.Category == SeaCategory ? SeaColor : HostileColor;
+			Color c = k.Category == CatchableCategory || k.Category == HarmlessCategory ? CatchableColor : k.Category == SeaCategory ? SeaColor : HostileColor;
 			float len = k.Length, h = k.Height;
 
 			Part(PrimitiveType.Capsule, "Body", marker, new Vector3(0, h * 0.55f, 0), Quaternion.Euler(90, 0, 0), new Vector3(h * 0.7f, len * 0.5f, h * 0.7f), MarkerMaterial(c));
@@ -428,7 +473,7 @@ namespace DynamicIslands.Editor
 			return root;
 		}
 
-		static GameObject Part(PrimitiveType type, string name, Transform parent, Vector3 pos, Quaternion rot, Vector3 scale, Material mat)
+		internal static GameObject Part(PrimitiveType type, string name, Transform parent, Vector3 pos, Quaternion rot, Vector3 scale, Material mat)
 		{
 			GameObject go = GameObject.CreatePrimitive(type);
 			go.name = name;
@@ -440,7 +485,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>A name tag that floats over an object in the editor, always facing the camera.</summary>
-		static TextMesh AddLabel(Transform parent, string text, float height)
+		internal static TextMesh AddLabel(Transform parent, string text, float height)
 		{
 			var go = new GameObject(MarkerOnly);
 			go.name = MarkerOnly;
@@ -496,7 +541,8 @@ namespace DynamicIslands.Editor
 					int items = ObjectProps.Loot(props).Count;
 					string msg = ObjectProps.Get(props, ObjectProps.ZoneMessage);
 					zl.text = "Trigger: " + ObjectProps.Get(props, ObjectProps.ZoneId) + (ObjectProps.Repeats(props) ? " (every time)" : " (once)") +
-						"\n<size=36>" + radius.ToString("0.#") + " m" + (msg.Length > 0 ? " \u00B7 message" : "") + (items > 0 ? " \u00B7 " + items + " item(s)" : "") + "</size>";
+						"\n<size=36>" + radius.ToString("0.#") + " m" + (msg.Length > 0 ? " \u00B7 message" : "") + (items > 0 ? " \u00B7 " + items + " item(s)" : "") +
+						(ObjectProps.GetBool(props, ObjectProps.ZoneAir, false) ? " \u00B7 air pocket" : "") + (Hazards.KindOf(props).Length > 0 ? " \u00B7 " + Hazards.Describe(props) : "") + MechFeatures.DescribeZone(props) + "</size>";
 				}
 				return;
 			}
@@ -522,6 +568,7 @@ namespace DynamicIslands.Editor
 			bool note = ObjectProps.IsNote(name, props), loot = ObjectProps.IsLoot(name, props);
 			TextMesh tag = Label(go);
 			ShowSignText(go, note ? ObjectProps.Get(props, ObjectProps.NoteTitle) : "");
+			ShowScribble(go, name, note, ObjectProps.Get(props, ObjectProps.NoteTitle));
 			bool behaves = BehaviourProps.Any(props);
 			if (!note && !loot && !behaves) { if (tag != null) UnityEngine.Object.Destroy(tag.gameObject); return; }
 			if (tag == null)
@@ -587,6 +634,77 @@ namespace DynamicIslands.Editor
 			float fit = Mathf.Min(1f, 0.62f / Mathf.Max(0.001f, w), 0.36f / Mathf.Max(0.001f, h));
 			tm.transform.localScale = Vector3.one * fit;
 			return true;
+		}
+
+		public const string ScribbleName = "CI_Scribble";
+
+		/// <summary>
+		/// A readable notice board shows writing: Raft's board is a plain grey slab, so players couldn't tell it holds a
+		/// note (the user, 2026-10-08). Both faces get lines of made-up words - not the note itself, which is read with E.
+		/// The words come from the title, so a board looks the same every time and on every machine.
+		/// </summary>
+		public static void ShowScribble(GameObject go, string name, bool note, string title)
+		{
+			foreach (Transform old in go.transform.Cast<Transform>().Where(t => t.name == ScribbleName).ToList()) { old.SetParent(null, false); UnityEngine.Object.Destroy(old.gameObject); } // (off the board first: its bounds are measured next)
+			Bounds b;
+			if (!note || name != NotePrefix + "Board" || !CustomNote.LocalBounds(go, out b)) return;
+			// The thinnest side is the board's face
+			int axis = b.size.x <= b.size.y && b.size.x <= b.size.z ? 0 : b.size.y <= b.size.z ? 1 : 2;
+			Vector3 normal = axis == 0 ? Vector3.right : axis == 1 ? Vector3.up : Vector3.forward;
+			Vector3 up = axis == 1 ? Vector3.forward : Vector3.up;
+			Vector3 across = Vector3.Cross(up, normal);
+			float faceW = Mathf.Abs(Vector3.Dot(b.size, across)), faceH = Mathf.Abs(Vector3.Dot(b.size, up));
+			string text = Gibberish((title ?? "").Aggregate(17, (h, c) => h * 31 + c), 7, 30);
+			foreach (float side in new[] { 1f, -1f })
+			{
+				var t = new GameObject(ScribbleName);
+				t.transform.SetParent(go.transform, false);
+				TextMesh tm = t.AddComponent<TextMesh>();
+				tm.font = UIKit.Font;
+				tm.fontSize = 48;
+				tm.characterSize = 0.01f;
+				tm.anchor = TextAnchor.MiddleCenter;
+				tm.alignment = TextAlignment.Left;
+				tm.color = new Color(0.12f, 0.1f, 0.08f, 0.85f);
+				tm.text = text;
+				MeshRenderer mr = t.GetComponent<MeshRenderer>();
+				mr.sharedMaterial = UIKit.Font.material;
+				mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+				// Measured flat, then turned to face out of this side (a text mesh is read looking along its +z)
+				t.transform.rotation = Quaternion.identity;
+				t.transform.localScale = Vector3.one;
+				Vector3 s = t.transform.lossyScale, ws = go.transform.lossyScale;
+				Bounds tb = mr.bounds;
+				float w = tb.size.x / Mathf.Max(0.0001f, s.x), h = tb.size.y / Mathf.Max(0.0001f, s.y);
+				float fit = Mathf.Min(faceW * 0.8f / Mathf.Max(0.001f, w), faceH * 0.75f / Mathf.Max(0.001f, h));
+				t.transform.localRotation = Quaternion.LookRotation(-normal * side, up);
+				t.transform.localScale = Vector3.one * fit;
+				t.transform.localPosition = b.center + normal * side * (Vector3.Dot(b.extents, normal) + 0.004f / Mathf.Max(0.01f, Mathf.Abs(Vector3.Dot(ws, normal))));
+			}
+		}
+
+		static readonly string[] Syllables = { "ka", "lo", "mi", "ren", "tu", "sa", "vel", "or", "en", "di", "mar", "is", "qua", "ne", "tor", "al", "um", "be", "ris", "o" };
+
+		/// <summary>Lines of made-up words in a language nobody speaks (the same for the same seed).</summary>
+		static string Gibberish(int seed, int lines, int width)
+		{
+			var rnd = new System.Random(seed);
+			var rows = new List<string>();
+			for (int l = 0; l < lines; l++)
+			{
+				string row = "";
+				int len = l == 0 ? width / 2 : l == lines - 1 ? width * 2 / 3 : width;
+				while (row.Length < len)
+				{
+					string word = "";
+					for (int n = rnd.Next(1, 4); n > 0; n--) word += Syllables[rnd.Next(Syllables.Length)];
+					if (row.Length == 0 && l < 2) word = char.ToUpper(word[0]) + word.Substring(1);
+					row = row.Length > 0 ? row + " " + word : word;
+				}
+				rows.Add(l == 0 ? row : row + (rnd.Next(3) == 0 ? "." : ""));
+				if (l == 0) rows.Add("");
+			}
+			return string.Join("\n", rows.ToArray());
 		}
 
 		/// <summary>Breaks text into lines of at most about <paramref name="width"/> characters, at spaces.</summary>

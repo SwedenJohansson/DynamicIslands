@@ -2,10 +2,290 @@ using System;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using TMPro;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DynamicIslands.Editor
 {
+	/// <summary>
+	/// L2: the mod's own keys in a world - the journal (J) and the stats page (K) - which the player can change in Defaults
+	/// (Keys): kept in Mods\DynamicIslands\world_rules.txt as journalkey= and statskey= (Unity KeyCode names). This PC's
+	/// alone; nothing is sent to other players.
+	/// </summary>
+	public static class ModKeys
+	{
+		public const string JournalSetting = "journalkey", StatsSetting = "statskey";
+		public const KeyCode JournalDefault = KeyCode.J, StatsDefault = KeyCode.K;
+		static KeyCode? journal, stats;
+
+		public static KeyCode Journal { get { if (journal == null) journal = Read(JournalSetting, JournalDefault); return journal.Value; } }
+		public static KeyCode Stats { get { if (stats == null) stats = Read(StatsSetting, StatsDefault); return stats.Value; } }
+
+		/// <summary>Key names for hints, as bound now (AUDIT 11-09 #12: hints named fixed keys): the journal's, the stats page's,
+		/// and Raft's own notebook key (keybind "NoteBookToggle", which NoteBookUI reads; T when it can't be read).</summary>
+		public static string JournalName { get { return Name(Journal); } }
+		public static string StatsName { get { return Name(Stats); } }
+		public static string RaftNotebookName { get { return Name(RaftNotebook); } }
+		public static KeyCode RaftNotebook
+		{
+			get
+			{
+				try
+				{
+					Keybind k;
+					if (MyInput.Keybinds != null)
+						foreach (string n in new[] { "NoteBookToggle", "Notebook", "NoteBook" })
+							if (MyInput.Keybinds.TryGetValue(n, out k) && k != null && k.MainKey != KeyCode.None) return k.MainKey;
+				}
+				catch { }
+				return KeyCode.T;
+			}
+		}
+
+		/// <summary>While Defaults waits for a key to be pressed (and in the frame it got one): the journal and stats keys do nothing.</summary>
+		public static bool Listening { get { return listening || Time.frameCount == setFrame; } }
+		static bool listening;
+		static int setFrame = -1;
+		internal static void Listen(bool on) { listening = on; if (!on) setFrame = Time.frameCount; }
+
+		/// <summary>A text field (Raft's chat, a sign, the console, a mod window) has the keyboard. The chat is the mod
+		/// loader's (a TextMesh Pro field), the mod's fields are Unity UI ones.</summary>
+		public static bool SomeoneTyping()
+		{
+			bool chatOpen = ChatTextFieldController.IsChatWindowSelected || RmlChatOpen();
+			GameObject sel = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+			bool r = chatOpen, inChat = false;
+			if (!r && sel != null)
+			{
+				InputField f = sel.GetComponent<InputField>();
+				TMP_InputField t = sel.GetComponent<TMP_InputField>();
+				// (the chat's field stays selected and focused after Esc hides the chat: the chat flags above say when it is in use)
+				inChat = t != null && InChat(sel.transform);
+				r = (f != null && f.isFocused) || (t != null && t.isFocused && !inChat);
+			}
+			return r;
+		}
+
+		/// <summary>Raft's pause menu (Esc in a world) is open, with or without its Custom Islands window on top. Its GameMenu must be
+		/// open: RML's ToggleCursor(true) behind the mod's own windows (dialogue, journal, stats page) also sets ActiveMenu PauseMenu
+		/// (cursor fix 11-04).</summary>
+		public static bool PauseOpen()
+		{
+			try { return CanvasHelper.ActiveMenu == MenuType.PauseMenu && ModCursor.RaftMenuOpen(MenuType.PauseMenu); }
+			catch (Exception) { return false; }
+		}
+
+		/// <summary>The mod's keys in a world (stats, journal, notebook, minimap, ping) do nothing: someone is typing, or
+		/// Raft's pause menu is open (user 11-04: they opened their pages over it), or any other menu of Raft's is open -
+		/// inventory, crafting, trading post... (audit 11-09: J/K/U opened over the inventory, and when Tab closed it the
+		/// page stayed with the mouse locked). The mod's own freed mouse (ActiveMenu PauseMenu) doesn't count.</summary>
+		public static bool Blocked() { return SomeoneTyping() || PauseOpen() || RaftMenuOpen() || ModOverlayOpen(); }
+
+		/// <summary>A talk, a code lock, a choice, a cutscene or the credits of the mod is on screen: the keys wait, as Esc
+		/// does (EscGuard) - J/K/U/M/G opened their pages over them and the mouse stayed locked (sweep 11-14).</summary>
+		public static bool ModOverlayOpen()
+		{
+			try
+			{
+				return DialoguePanel.IsOpen || CodeLock.IsOpen || ChoiceWindow.IsOpen || StoryCredits.IsOpen || QuestSkip.ConfirmShown
+					|| CameraMoment.Active || CameraFlight.Active;
+			}
+			catch (Exception) { return false; }
+		}
+
+		/// <summary>One of Raft's own menus is open (not the mod's PauseMenu marker for a freed mouse).</summary>
+		public static bool RaftMenuOpen()
+		{
+			try { return ModCursor.RaftMenu(CanvasHelper.ActiveMenu); }
+			catch (Exception) { return false; }
+		}
+
+		static GameObject chatField;
+		static System.Reflection.FieldInfo rmlChatOpen;
+		static bool rmlLooked;
+
+		/// <summary>The mod loader's own chat (RaftModLoader.RChat, which takes Raft's place) is open for typing.</summary>
+		static bool RmlChatOpen()
+		{
+			if (!rmlLooked)
+			{
+				rmlLooked = true;
+				Type t = AccessTools.TypeByName("RaftModLoader.RChat");
+				rmlChatOpen = t != null ? AccessTools.Field(t, "isInputfieldOpen") : null;
+				if (rmlChatOpen == null || !rmlChatOpen.IsStatic || rmlChatOpen.FieldType != typeof(bool)) { rmlChatOpen = null; Debug.Log("[CUSTOM ISLANDS] RML chat state not found: typing in its chat is told by Raft's chat flag only"); }
+			}
+			try { return rmlChatOpen != null && (bool)rmlChatOpen.GetValue(null); }
+			catch (Exception) { rmlChatOpen = null; return false; }
+		}
+
+		static bool InChat(Transform x)
+		{
+			if (chatField != null) return x.gameObject == chatField;
+			for (Transform p = x; p != null; p = p.parent)
+				if (p.GetComponent<ChatTextFieldController>() != null || p.GetComponent<ChatVisibilityController>() != null
+					|| p.name.IndexOf("chat", StringComparison.OrdinalIgnoreCase) >= 0) { chatField = x.gameObject; return true; }
+			return false;
+		}
+
+		static KeyCode Read(string setting, KeyCode fallback)
+		{
+			string v = WorldRules.ReadDefault(setting);
+			if (string.IsNullOrEmpty(v)) return fallback;
+			try
+			{
+				var k = (KeyCode)Enum.Parse(typeof(KeyCode), v.Trim(), true);
+				// (a number, "7", parses as KeyCode 7, which no key has: Alpha7 is meant)
+				// (a key Raft also uses is kept: Raft's Controls tab sets one as Raft does its own - both happen, 3.5)
+				if (Enum.IsDefined(typeof(KeyCode), k) && HardProblem(k) == null) return k;
+			}
+			catch { }
+			Debug.LogWarning("[CUSTOM ISLANDS] " + WorldRules.DefaultFileName + ": " + setting + "=" + v + " is not a key that can be used - " + fallback + " instead");
+			return fallback;
+		}
+
+		/// <summary>Why a key can't be one of the mod's keys, or null.</summary>
+		public static string Problem(KeyCode k)
+		{
+			string hard = HardProblem(k);
+			if (hard != null) return hard;
+			// (a key Raft's own controls use - movement, interact, hotbar numbers - would do both: CA29)
+			try
+			{
+				if (MyInput.Keybinds != null)
+					foreach (var kb in MyInput.Keybinds)
+						if (kb.Value != null && (kb.Value.MainKey == k || kb.Value.AltKey == k)) return "Raft uses it (" + kb.Key + ")";
+			}
+			catch { }
+			if (k >= KeyCode.Alpha0 && k <= KeyCode.Alpha9) return "the number keys pick hotbar slots";
+			return null;
+		}
+
+		/// <summary>Why a key can never be one of the mod's keys (Raft's Controls tab refuses these too), or null. Keys Raft
+		/// uses are not among them: Problem() adds those for the Defaults window.</summary>
+		public static string HardProblem(KeyCode k)
+		{
+			if (k == KeyCode.None) return "no key";
+			if (k == KeyCode.Escape) return "Esc closes windows";
+			if (k >= KeyCode.Mouse0 && k <= KeyCode.Mouse6) return "a mouse button";
+			if (k >= KeyCode.JoystickButton0) return "a controller button";
+			if (k == KeyCode.Return || k == KeyCode.KeypadEnter || k == KeyCode.Tab || k == KeyCode.Space || k == KeyCode.Backspace) return "it is used to type and to play";
+			return null;
+		}
+
+		/// <summary>3.5: sets the journal's or stats page's key from its row in Raft's Settings > Controls, the way Raft sets its
+		/// own rows: a key Raft or another of the mod's keys already uses is taken all the same (both then happen, as with two
+		/// of Raft's rows on one key). Only HardProblem keys are refused (the reason, or null when set).</summary>
+		public static string SetFromControls(bool forJournal, KeyCode k)
+		{
+			string problem = HardProblem(k);
+			if (problem != null) return Name(k) + " can't be used: " + problem + ".";
+			WorldRules.SaveDefault(forJournal ? JournalSetting : StatsSetting, k.ToString());
+			if (forJournal) journal = k; else stats = k;
+			HotkeyHints.KeysChanged();
+			return null;
+		}
+
+		/// <summary>Raft's Controls "reset to default": the journal and stats page back to J and K (the other keys stay).</summary>
+		public static void ResetMain()
+		{
+			WorldRules.SaveDefaults(new System.Collections.Generic.Dictionary<string, string> { { JournalSetting, JournalDefault.ToString() }, { StatsSetting, StatsDefault.ToString() } });
+			journal = JournalDefault;
+			stats = StatsDefault;
+			HotkeyHints.KeysChanged();
+		}
+
+		/// <summary>Sets one of the keys (forJournal: the journal's, else the stats page's); the reason when it can't be, or null.</summary>
+		public static string Set(bool forJournal, KeyCode k)
+		{
+			string problem = Problem(k);
+			if (problem != null) return Name(k) + " can't be used: " + problem + ".";
+			if (k == (forJournal ? Stats : Journal)) return Name(k) + " already opens the " + (forJournal ? "stats page" : "journal") + ".";
+			Extra taken = Extras.FirstOrDefault(x => x.Key == k);
+			if (taken != null) return Name(k) + " already " + taken.Does + ".";
+			WorldRules.SaveDefault(forJournal ? JournalSetting : StatsSetting, k.ToString());
+			if (forJournal) journal = k; else stats = k;
+			HotkeyHints.KeysChanged();
+			return null;
+		}
+
+		/// <summary>Both keys back to J and K.</summary>
+		public static void Reset()
+		{
+			WorldRules.SaveDefault(JournalSetting, JournalDefault.ToString());
+			WorldRules.SaveDefault(StatsSetting, StatsDefault.ToString());
+			journal = JournalDefault;
+			stats = StatsDefault;
+			foreach (Extra x in Extras) { WorldRules.SaveDefault(x.Setting, ""); x.value = null; }
+			HotkeyHints.KeysChanged();
+		}
+
+		/// <summary>
+		/// PF1/PF5: the mod's other keys in a world (the player notebook, the minimap, the map ping), kept and set as the
+		/// journal's (world_rules.txt, Defaults' Keys). Its default is skipped for the next free one when Raft uses it.
+		/// </summary>
+		public sealed class Extra
+		{
+			public readonly string Setting, Does;
+			public readonly KeyCode[] Defaults;
+			internal KeyCode? value;
+			public Extra(string setting, string does, params KeyCode[] defaults) { Setting = setting; Does = does; Defaults = defaults; }
+			/// <summary>The first of its defaults that Raft doesn't use and no key of the mod set before it has.</summary>
+			public KeyCode Default { get { foreach (KeyCode k in Defaults) if (Problem(k) == null && !TakenBefore(k)) return k; return Defaults[0]; } }
+			bool TakenBefore(KeyCode k)
+			{
+				if (k == Journal || k == Stats) return true;
+				foreach (Extra x in Extras) { if (x == this) break; if (x.Key == k) return true; }
+				return false;
+			}
+			public KeyCode Key { get { if (value == null) value = Read(Setting, Default); return value.Value; } }
+		}
+
+		public static readonly Extra NotebookKey = new Extra("notebookkey", "opens your own notebook", KeyCode.U, KeyCode.Y, KeyCode.O);
+		public static readonly Extra MapKey = new Extra("mapkey", "opens the island map", KeyCode.M, KeyCode.N, KeyCode.Comma);
+		public static readonly Extra PingKey = new Extra("pingkey", "pings a spot for the crew", KeyCode.G, KeyCode.H, KeyCode.B);
+		/// <summary>The island map's zoom (the keypad's + and - zoom too).</summary>
+		public static readonly Extra ZoomInKey = new Extra("mapzoominkey", "zooms the island map in", KeyCode.Equals, KeyCode.RightBracket, KeyCode.PageUp);
+		public static readonly Extra ZoomOutKey = new Extra("mapzoomoutkey", "zooms the island map out", KeyCode.Minus, KeyCode.LeftBracket, KeyCode.PageDown);
+		public static readonly Extra[] Extras = { NotebookKey, MapKey, PingKey, ZoomInKey, ZoomOutKey };
+
+		/// <summary>Sets one of the Extra keys; the reason when it can't be, or null.</summary>
+		public static string Set(Extra e, KeyCode k)
+		{
+			string problem = Problem(k);
+			if (problem != null) return Name(k) + " can't be used: " + problem + ".";
+			if (k == Journal) return Name(k) + " already opens the journal.";
+			if (k == Stats) return Name(k) + " already opens the stats page.";
+			Extra taken = Extras.FirstOrDefault(x => x != e && x.Key == k);
+			if (taken != null) return Name(k) + " already " + taken.Does + ".";
+			WorldRules.SaveDefault(e.Setting, k.ToString());
+			e.value = k;
+			HotkeyHints.KeysChanged();
+			return null;
+		}
+
+		/// <summary>A key as the player knows it: "7" for Alpha7, "Num 7" for Keypad7.</summary>
+		public static string Name(KeyCode k)
+		{
+			string s = k.ToString();
+			if (s.StartsWith("Alpha") && s.Length == 6) return s.Substring(5);
+			if (s.StartsWith("Keypad")) return "Num " + s.Substring(6);
+			return s;
+		}
+
+		/// <summary>The keyboard key pressed in this frame (Escape too, to cancel), or None.</summary>
+		public static KeyCode Pressed()
+		{
+			if (!Input.anyKeyDown) return KeyCode.None;
+			foreach (KeyCode k in Enum.GetValues(typeof(KeyCode)))
+			{
+				if (k == KeyCode.None || (k >= KeyCode.Mouse0 && k <= KeyCode.Mouse6) || k >= KeyCode.JoystickButton0) continue;
+				if (Input.GetKeyDown(k)) return k;
+			}
+			return KeyCode.None;
+		}
+	}
+
 	/// <summary>
 	/// The mod's own keys at the hotbar, like Raft's: Raft shows its inventory and notebook keys as small tabs at the ends
 	/// of the hotbar (_CanvasGame_New/.../Hotbar/KeyboardLayout: an icon on a brown tab with the key under it). The
@@ -29,6 +309,7 @@ namespace DynamicIslands.Editor
 			{
 				if (journal == null || stats == null) Build();
 				if (stats != null && stats.gameObject.activeSelf != PlayerLevels.On) stats.gameObject.SetActive(PlayerLevels.On);
+				KeepKeys();
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] The hotbar's key tabs: " + e.Message); nextLook = Time.unscaledTime + 30f; }
 		}
@@ -43,8 +324,8 @@ namespace DynamicIslands.Editor
 			// (one tab width and a gap further along, away from the inventory's tab: the notebook's is at the hotbar's right end)
 			float dir = inv != null && ((RectTransform)inv).anchoredPosition.x > noteRect.anchoredPosition.x ? -1f : 1f;
 			float step = (noteRect.rect.width + 6f) * dir;
-			if (journal == null) journal = Make(layout.transform, noteRect, JournalName, BookIcon(), JournalWindow.Key.ToString(), step);
-			if (stats == null) stats = Make(layout.transform, noteRect, StatsName, StarTabIcon(), PlayerLevels.Key.ToString(), step * 2f);
+			if (journal == null) journal = Make(layout.transform, noteRect, JournalName, BookIcon(), ModKeys.Name(JournalWindow.Key), step);
+			if (stats == null) stats = Make(layout.transform, noteRect, StatsName, StarTabIcon(), ModKeys.Name(PlayerLevels.Key), step * 2f);
 			Debug.Log("[CUSTOM ISLANDS] Hotbar key tabs: journal (" + JournalWindow.Key + ") and stats (" + PlayerLevels.Key + ") beside Raft's notebook tab");
 		}
 
@@ -59,11 +340,109 @@ namespace DynamicIslands.Editor
 			foreach (MonoBehaviour b in copy.GetComponentsInChildren<MonoBehaviour>(true))
 				if (!(b is Graphic) && !(b is LayoutElement) && !(b is Shadow) && !b.GetType().Name.StartsWith("TextMeshPro")) UnityEngine.Object.Destroy(b);
 			Image img = copy.GetComponentsInChildren<Image>(true).FirstOrDefault(i => i.transform != copy);
-			if (img != null && icon != null) { img.sprite = icon; img.preserveAspect = true; }
-			Component tmp = copy.GetComponentsInChildren<Component>(true).FirstOrDefault(c => c != null && c.GetType().Name == "TextMeshProUGUI");
-			if (tmp != null) Traverse.Create(tmp).Property("text").SetValue(key);
-			else { Text t = copy.GetComponentInChildren<Text>(true); if (t != null) t.text = key; }
+			if (img != null && icon != null)
+			{
+				img.sprite = icon;
+				img.preserveAspect = true;
+				// (the open book is wider than Raft's notebook icon and covered the key's letter - Franz, 2026-10-17: a bit
+				// smaller, and the letter drawn after the icon, so it is always on top)
+				img.rectTransform.localScale = Vector3.one * IconScale;
+				Graphic letter = KeyText(copy);
+				if (letter != null && !letter.transform.IsChildOf(img.transform))
+				{
+					Transform t = letter.transform;
+					while (t.parent != null && t.parent != img.transform.parent && t.parent != copy) t = t.parent;
+					if (t.parent == img.transform.parent) t.SetAsLastSibling();
+				}
+			}
+			SetKey(copy, key);
 			return copy;
+		}
+
+		/// <summary>The size of the mod's icons on their tabs (a part of Raft's icon's place).</summary>
+		public const float IconScale = 0.8f;
+
+		/// <summary>The key's letter on a tab (Raft's TextMeshPro, or a Text), or null.</summary>
+		static Graphic KeyText(RectTransform tab)
+		{
+			Graphic tmp = tab.GetComponentsInChildren<Graphic>(true).FirstOrDefault(c => c != null && c.GetType().Name == "TextMeshProUGUI");
+			return tmp ?? tab.GetComponentInChildren<Text>(true);
+		}
+
+		/// <summary>Tests: the tab's key letter is drawn after (over) its icon.</summary>
+		public static bool KeyOverIcon(string tabName)
+		{
+			GameObject tab = GameObject.Find(tabName);
+			if (tab == null) return false;
+			Graphic letter = KeyText((RectTransform)tab.transform);
+			Image img = tab.GetComponentsInChildren<Image>(true).FirstOrDefault(i => i.transform != tab.transform);
+			if (letter == null || img == null) return false;
+			var order = tab.GetComponentsInChildren<Graphic>(true).ToList(); // (depth first: the order they are drawn in)
+			return order.IndexOf(letter) > order.IndexOf(img);
+		}
+
+		/// <summary>
+		/// The key's letter on a tab, shown as Raft shows TAB under the inventory's tab (Franz, 2026-10-17: the journal's tab had
+		/// none): switched on, drawn, as opaque as Raft's own, saying the key bound now.
+		/// </summary>
+		static void SetKey(RectTransform tab, string key)
+		{
+			Graphic letter = KeyText(tab);
+			if (letter == null) return;
+			for (Transform t = letter.transform; t != null && t != tab; t = t.parent) if (!t.gameObject.activeSelf) t.gameObject.SetActive(true);
+			letter.enabled = true;
+			Graphic raftLetter = RaftKeyText();
+			Color c = raftLetter != null ? raftLetter.color : letter.color;
+			if (c.a < 0.9f) c.a = 1f;
+			letter.color = c;
+			if (letter is Text) ((Text)letter).text = key;
+			else Traverse.Create(letter).Property("text").SetValue(key);
+		}
+
+		/// <summary>The letter under Raft's inventory tab (TAB), whose look the mod's tabs copy.</summary>
+		static Graphic RaftKeyText()
+		{
+			GameObject inv = GameObject.Find(LayoutPath + "/UI_Hotkey_Element_Inventory");
+			return inv != null ? KeyText((RectTransform)inv.transform) : null;
+		}
+
+		static string LetterText(Graphic letter)
+		{
+			if (letter == null) return null;
+			if (letter is Text) return ((Text)letter).text;
+			return Traverse.Create(letter).Property("text").GetValue<string>();
+		}
+
+		/// <summary>Tests: the key a tab shows, or why none is seen (switched off, see-through, empty).</summary>
+		public static string KeyShown(string tabName)
+		{
+			GameObject tab = GameObject.Find(tabName);
+			if (tab == null) return "(no tab)";
+			Graphic letter = KeyText((RectTransform)tab.transform);
+			if (letter == null) return "(no letter)";
+			if (!letter.gameObject.activeInHierarchy) return "(letter switched off)";
+			if (!letter.enabled) return "(letter not drawn)";
+			if (letter.color.a < 0.5f) return "(letter see-through)";
+			string s = LetterText(letter);
+			return string.IsNullOrEmpty(s) ? "(letter empty)" : s;
+		}
+
+		/// <summary>The key each tab should show now (Tick puts it back if something else changed it).</summary>
+		static void KeepKeys()
+		{
+			if (journal != null && KeyShown(JournalName) != ModKeys.Name(JournalWindow.Key)) SetKey(journal, ModKeys.Name(JournalWindow.Key));
+			if (stats != null && stats.gameObject.activeInHierarchy && KeyShown(StatsName) != ModKeys.Name(PlayerLevels.Key)) SetKey(stats, ModKeys.Name(PlayerLevels.Key));
+		}
+
+		/// <summary>The journal's or stats page's key was changed (ModKeys): the tabs say the new ones.</summary>
+		public static void KeysChanged()
+		{
+			try
+			{
+				if (journal != null) SetKey(journal, ModKeys.Name(JournalWindow.Key));
+				if (stats != null) SetKey(stats, ModKeys.Name(PlayerLevels.Key));
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] The hotbar's key tabs: " + e.Message); }
 		}
 
 		static Sprite starTab;

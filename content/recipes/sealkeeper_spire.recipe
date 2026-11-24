@@ -1,0 +1,455 @@
+# Sealkeeper Spire - an island of the library's plan The Sunken Kingdom (sea level; chapter 9, the choice - finale 1)
+# The Network's control tower over the trench: a stone spire on a rock base, its control room on top behind lit windows,
+# a cable from its winch down into the sea. A cable mast on the base with electric ziplines to two side towers on rocks
+# of their own - the pump tower (west) and the door tower (east, three fuse lockers and the fuse board that lights the
+# spire's windows). The dock with the Sealkeeper's orders and a Raft store; the generator; screechers nesting on the
+# spire's roof; a storm over it all (fog and mist). At the cable head two levers - RESTORE and SEAL; pull one, the other
+# is dead. Then the descend lever. Quest "The Choice" (24 steps in three parts: the base, the towers, the control room).
+#
+# Points (metres over the sea): the base (rock) at 3, r 14 round 0 0; the spire x -2.25..2.25, z -2.25..2.25 (walls
+# 3..20, the control room floor at 17.52, its roof at 20.15), its door on the south side; the cable mast round -8 -6
+# (deck at 12.9); the pump tower round -24 -14, the door tower round 24 -14 (their rocks at 2, decks at 9.5); the dock
+# at -11 13; the cable head platform at 15 4 (on the shore, at 1.5); the generator at 6 -7.
+include lib_huts
+include lib_gravity
+include lib_features
+include lib_sea
+include lib_sunken
+# RESIZE 10-24: Radius 44 -> 100 (Height 7 -> 9), the island grows round the old content, which stays where it was.
+new
+gen Trees=0 Bushes=0.1 Rocks=0.45 Harvest=0.2 BeachThings=0.3
+gen Seed=10901 Radius=100 Height=9 Roughness=0.4 Peaks=2 Shape=0 Style=0 BeachWidth=0.2 Cliffs=0.45 PeakShape=0.4
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.4 Sunken=0.4 Hostiles=0 Friendly=0.2 SeaLife=0.3 Grass=0.1
+generate
+
+# --- Terrain: the base, the towers' rocks, the dock, the cable head ------------------------------------------------------
+brush flatten at 0 0 r=14 s=20 frames=240 h=3
+brush flatten at -24 -14 r=4.5 s=25 frames=260 h=2
+brush flatten at 24 -14 r=4.5 s=25 frames=260 h=2
+brush flatten at -11 13 r=5 s=25 frames=260 h=1.2
+brush flatten at 15 4 r=4 s=25 frames=260 h=1.5
+brush grass at -4 6 r=7 s=20 frames=20
+brush flatten at 23.2 -38.6 r=5 s=8 frames=40
+# (REACH 10-30 G1: since the resize the land round the door tower's rock and the dock stands 4 m and 2 m over them -
+# nobody could walk down to the tower's door or onto the dock. A ramp of steps up out of the door tower's hollow past its
+# door, and steps from the base down to the dock)
+for k 0 9
+brush flatten at 23.25 {-17.6-0.9*$k} r=2 s=20 frames=150 h={2.2+0.5*$k}
+next
+for k 0 4
+brush flatten at {-8.6-0.6*$k} {8.4+0.8*$k} r=1.8 s=20 frames=150 h={3.0-0.45*$k}
+next
+origin
+clear at 23.2 -38.6 r=6
+clear at 0 0 r=13
+clear from 23.25 -17.6 to 23.25 -25.7 r=3 body
+clear from -8.6 8.4 to -11 11.6 r=2.8 body
+
+# --- The spire: six storeys of stone, a ladder up the inside, the control room on top ----------------------------------
+push at -2.25 -2.25 h=3
+for k 0 6
+place Block_Wall_Tier3 spire at 2.25 0 y={$k*2.42}
+place Block_Wall_Tier3 spire at 3.75 0 y={$k*2.42}
+place Block_Wall_Tier3 spire at 0 0.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 spire at 0 3.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 spire at 4.5 0.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 spire at 4.5 3.75 y={$k*2.42} yaw=90
+next
+for k 0 5
+place Block_Wall_Tier3 spire at 0.75 4.5 y={$k*2.42}
+place Block_Wall_Tier3 spire at 2.25 4.5 y={$k*2.42}
+place Block_Wall_Tier3 spire at 3.75 4.5 y={$k*2.42}
+place Block_Wall_Tier3 spire at 0 2.25 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 spire at 4.5 2.25 y={$k*2.42} yaw=90
+# (REACH 10-30 G1: at yaw 180 the ladder's climb trigger lay in the back wall - "never took hold", and every walk of the
+# island stopped there; at yaw 0, as ladtower's, 0.3 m off the wall, x 1.3 centres it under the hole in the control room floor)
+place Block_Ladder_Tier3 - at 1.3 4.2 y={$k*2.42} yaw=0
+next
+place Block_Wall_Door_Tier3 spire at 0.75 0 y=0
+for k 1 6
+place Block_Wall_Tier3 spire at 0.75 0 y={$k*2.42}
+next
+place Block_Wall_Window_Tier3 spire at 0.75 4.5 y=14.52
+place Block_Wall_Window_Tier3 spire at 2.25 4.5 y=14.52
+place Block_Wall_Window_Tier3 spire at 3.75 4.5 y=14.52
+place Block_Wall_Window_Tier3 spire at 0 2.25 y=14.52 yaw=90
+place Block_Wall_Window_Tier3 spire at 4.5 2.25 y=14.52 yaw=90
+for fx 0.75 3.75 1.5
+place Block_Floor_Tier3 spire at $fx 0.75 y=14.52
+place Block_Floor_Tier3 spire at $fx 2.25 y=14.52
+place Block_Floor_Tier3 spire at $fx 3.75 y=17.155
+place Block_Floor_Tier3 spire at $fx 0.75 y=17.155
+place Block_Floor_Tier3 spire at $fx 2.25 y=17.155
+next
+place Block_Floor_Tier3 spire at 2.25 3.75 y=14.52
+place Block_Floor_Tier3 spire at 3.75 3.75 y=14.52
+place Placeable_Table_Basic - at 2.6 2.0 y=14.52 sit yaw=0
+place Note_Paper inesmessage at 2.6 2.0 y=15.8 drop yaw=15
+# STORY 10-24s: the Director's confession, on the control room floor by the window
+place Note_Paper confession at 2.6 3.4 y=15.0 drop yaw=200
+place Note_Board networkmap at 4.4 1.2 y=15.5 yaw=270
+place RT_PowerBox controlpad at 0.15 1.2 y=15.9 yaw=90
+place RT_Pillar - at 3.6 0.6 y=14.52 sy=0.6
+place TP_Selene_DoorCrankWheel winch at 3.6 0.51 y=15.72
+place Placeable_Lantern_Metal spirelights at 1.5 3.9 y=14.52 sit
+place Placeable_Lantern_Metal spirelights at 3.4 3.9 y=14.52 sit
+place Placeable_BirdsNest nest at 1.5 1.5 y=17.155 sit
+pop
+prop spire tint.color=#6e6a64
+prop spire tint.amount=0.55
+place Zone_Trigger stairzone at -1.5 -3.2 h=4
+place Zone_Trigger controlzone at 0 -1 h=18.5
+place Creature_StoneBird screechers at 0 0 h=24
+
+# --- The base: the dock, orders, store, the cable mast, its locker, the generator and status board ---------------------
+place Zone_Trigger dockzone at -11 13 h=2.2
+place Note_Board orders at -9 11 ground yaw=135
+store spireshop at -10 12 ground
+# STORY 10-24s: Milo's crayon card on the dock, where the children waited for the plane
+place "Box Small" - at -12.6 10.4 ground sit
+place Note_Paper milocard at -12.6 10.4 ground y=1.6 drop yaw=40
+# STORY 10-24s: the fuse board lights the spire - and the Stalker's lure comes up the trench to look (seen from the door tower's deck)
+place Placeable_Lantern_Metal skcam at 22.5 -15.5 h=9.475 sit
+place Placeable_Lantern_Metal sklure at 45 25 h=-6 drop scale=1.6
+ramp Block_Floor_Tier3 from -13 16 1.2 to -16 19 1.2 len=1.5 top=0
+call ladtower x=-8 z=-6 h0=3 lv=4 a=towers
+place Loot_Chest baselocker at -5.6 -4.2 ground sit yaw=90
+# (the zipline floors on the cable mast's top, x -9.5..-6.5 z -7.5..-4.5: at -10.3 and -4.8 they hung off its edges, 9 m up,
+# 2026-10-23)
+place ZiplinePath_Landmark zippump at -3.03 -7.72 h=14.2 yaw=0
+zipto zippump -24 -14
+place ZiplinePath_Landmark zipdoor at -3.03 -6.22 h=14.2 yaw=0
+zipto zipdoor 24 -14
+place Generator generator at 6 -7 ground yaw=180
+place Note_Board statusboard at 8.3 -6 ground yaw=270
+place Creature_Goat goats at -6 7 ground
+prop goats creature.count=2
+place Placeable_Cropplot_Medium - at -2 9 ground sit
+place Pickup_Landmark_BerryBush - at 3 10 ground
+call treasure x=-6 z=-14 r=16 n=1 seed=10053
+prop treasure10053 treasure.loot=TitaniumOre*3
+
+# --- The pump tower (west): crank and log on its deck -------------------------------------------------------------------
+call ladtower x=-24 z=-14 h0=2 lv=3 a=towers
+place RT_Pillar - at -24.8 -14.6 h=9.475 sy=0.6
+place TP_Selene_DoorCrankWheel pumpcrank at -24.8 -14.69 h=10.675
+place Note_Paper pumplog at -23.3 -14.6 h=9.6 drop yaw=40
+place Zone_Trigger pumpzone at -24 -14 h=10.5
+place WaterPipe_Short_1 pipes at -21.5 -14 h=2.4 rot=0,0,90
+
+# --- The door tower (east): three fuse lockers, the fuse board, the warning ---------------------------------------------
+call ladtower x=24 z=-14 h0=2 lv=3 a=towers
+place Loot_ChestSmall fuselocker1 at 23.3 -14.7 h=9.475 sit yaw=180
+place Loot_ChestSmall fuselocker2 at 23.2 -13.4 h=2 sit yaw=90
+place Loot_ChestSmall fuselocker3 at 26.6 -12 ground sit yaw=270
+place RT_PowerBox fuseboard at 24.7 -14.7 h=9.82 yaw=180
+place Note_Paper warning at 24.6 -12.4 h=2 drop yaw=200
+place Zone_Trigger doortowerzone at 24 -14 h=10.5
+
+# --- The cable head: the cable into the sea, the two levers, the descend lever --------------------------------------
+place Block_Foundation cablepad at 15 4 h=1.6 sx=2 sz=2
+place Antenna_pole cable at 12 3 h=4 rot=0,0,-70 sy=1.4
+place Antenna_pole cable at 17 4.5 h=1.4 rot=0,0,-110 sy=1.6
+place Zone_Trigger cablezone at 15 4 h=2.6
+place Note_Paper twoswitches at 14 5.2 h=1.6 drop yaw=0
+place RT_Pillar - at 14 2.6 h=1.6 sy=0.4
+place TP_LaserControlPanel_lever restore at 14 2.6 h=2.85 scale=3 yaw=0
+place RT_Pillar - at 16 2.6 h=1.6 sy=0.4
+place TP_LaserControlPanel_lever seal at 16 2.6 h=2.85 scale=3 yaw=0
+place Note_Paper verdictrestore at 15 3.4 h=1.6 drop yaw=10
+place Note_Paper verdictseal at 15 3.4 h=1.6 drop yaw=350
+place RT_Pillar - at 16.4 5.4 h=1.6 sy=0.4
+place TP_LaserControlPanel_lever descend at 16.4 5.4 h=2.85 scale=3 yaw=90
+
+# --- Storm, reefs, the sea -----------------------------------------------------------------------------------------------
+place Zone_Atmosphere storm at 0 0 h=6
+place Creature_PufferFish puffers at 10 22 h=-4
+prop puffers creature.count=2
+scatter VP_CoralBulb04 5 at -36.36 59.09 r=3 seed=10902 free=1
+scatter TinyCoral 6 at -36.36 59.09 r=3 seed=10903 free=1
+scatter VP_CoralDigitate01 5 at 68.18 18.18 r=3 seed=10904 free=1
+scatter VP_CoralFoliose01 4 at 68.18 18.18 r=3 seed=10905 free=1
+call shallows x=0 z=0 r=127 deep=5 n=1 seed=10906
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; BoatStranded + chest; hatch with a chest; buried treasure; viewpoint ---
+place campfire_1 - at 23.2 -38.6 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at 26.2 -36.6 ground sit yaw=137
+place "Box Small" - at 21.2 -36.1 ground sit
+place Note_Paper dnote at 21.2 -36.1 ground y=1.6 drop yaw=20
+note dnote Castaway's note | DAY 12 ON THE SPIRE'S ROCKS\n\nThe plane went over yesterday, low, full of small faces at the windows. Then it went over again, empty, and it did not come back.\nI have watched the man in the top window every night. He does not sleep. He talks to the radio as if somebody is there.\nLast night the lights on the Spire came on all at once, and out in the trench a teal light lifted its head and looked. Then they went off again, very fast, and the teal light lay down.\nI have fish, rain, and this pencil.
+place BoatStranded dvan at -23.2 38.6 ground yaw=257
+prop dvan tint.color=#6b5a48
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -27.2 41.6 ground sit yaw=197
+note dwreckchest Wreck's chest | A small chest from the wreck, its lid swollen shut by the salt: line, nails and scrap.
+loot dwreckchest Rope*3;Nail*8;Scrap*3
+prop dwreckchest loot.refill=0
+call hatchcache x=38.6 z=23.2 r=4 seed=10991 alias=dhatch chest=dhatchchest items=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=-38.6 z=-23.2 r=6 n=1 seed=10992
+prop treasure10992 treasure.loot=TitaniumOre*2;CopperOre*2
+place Zone_Trigger dview at 7 44.4 ground
+prop dview zone.id=sealkeeper_spire_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=The spire's lit windows stand over everything, and the cable from its winch runs down into the trench.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): the storm ridge in the east, the keepers' cave in the
+# north-west, the storm keeper's house in the south (its radio), the supply plane in the south-west
+call sk_ridge x1=74 z1=-20 x2=80 z2=20 h=4 top=6 r=8
+call sk_plants x=77 z=0 r=16 seed=10961
+call sk_zone x=77 z=0 al=sk_ridge id=sk_ridge r=7 msg="The storm ridge. The Spire's switchboard windows flash with every gust; the zipline from here runs back down."
+call sk_cave x=-46 z=30 h=3 yaw=180 al=sk_caverock chest=sk_cavechest
+call sk_zone x=-46 z=25 al=sk_cave id=sk_cave r=4 msg="The keepers' cave: where the Spire's crew sat out the worst storms."
+call sk_ruin x=0 z=-76 h=3 al=sk_ruin
+call sk_ruin x=-12 z=-74 h=3 al=sk_ruin2
+call sk_notebox x=2.5 z=-80.5 yaw=10 al=sk_ruinnote
+call sk_plane x=-70 z=-30 h=3 yaw=60 al=sk_plane crate=sk_wreckcrate
+call sk_notebox x=-75 z=-24.5 yaw=70 al=sk_wrecknote
+
+# --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
+clear from 77 0 to 52 0 r=3
+# (10-26: the line's near floor stands 5.7 m west of the object - placed at 77 0 it hung 12 m over the ridge's west slope;
+# now the object stands east of the ridge top, so the floor is on it, 1.3 m under the object as on the cable mast)
+place ZiplinePath_Landmark skridgezip at 82.72 -0.97 h=8.15
+zipto skridgezip 52 0
+call vinecache x=56 z=56 r=8 seed=10971 chest=skvinechest vines=skvines items=Rope*3;Nail*8;TitaniumOre*1
+
+# --- Unique layer (10-24): the storm keeper's radio: the generator by his house wants its part (in a toolbox near the
+# keepers' cave); powered, the radio gives away the last supply drop
+# (REACH 10-30 G1: the toolbox now lies in the keepers' cave, by their chest - round -58 20 it fell into a roofed hollow with
+# no way out, and before the cave mouth (-47 22) all was the cave's rock; kfree: the scatter's free room, 5 m by default - in
+# the cave nothing is that free, and no toolbox was placed - W 10-30)
+call powerradio x=6 z=-72 yaw=0 alias=skgen ralias=skradio rx=-0.75 rz=-76 rh=5 ryaw=0 cache=sksupply cx=40 cz=-62 cr=10 cseed=10981 items=Battery*2;CopperIngot*2;TitaniumIngot*1 kx=-46 kz=25 kr=1.5 kfree=0.5 seed=10982 toolbox=skbox
+
+# --- DEEP 1-HOUR (10-24): Storm Crown (26 m, the highest climb of the kingdom) and the 14 m archive in the south-west pit
+# the mountain: a stepped path spirals up from its east foot (66.08 -66) to the summit tower
+call sk_peak x=44 z=-66 h=26 r=24
+call sk_pit x=-50 z=-62 h0=-14
+call sk_cave x=-78 z=16 h=3 yaw=0 al=skcave2 chest=skcave2chest
+call sk_plants x=44 z=-66 r=26.4 seed=24810
+call sk_reef x=-40 z=-56 r=5 seed=24830
+
+# the summit: Storm Crown - the tower (ladder inside), the locker, the note, the zone, the zipline down
+call ladtower x=44 z=-66 h0=26 lv=6 a=sktower
+place Loot_ChestSmall sklocker at 43.25 -65.25 h=40.73 sit yaw=180
+place Note_Paper sksumnote at 43.25 -66.75 h=40.84 drop yaw=20
+place Zone_Trigger sksummit at 44 -66 h=41.73
+# (10-26: the near floor, 5.7 m west and 1.3 m under the object, hung in the air off the tower and then inside it: now on the deck's south-east cell, 44.75 -66.75)
+place ZiplinePath_Landmark skzip at 50.47 -67.72 h=42.03 yaw=0
+zipto skzip 22 -33
+place Loot_ChestSmall skledge at 33.82 -55.82 ground sit yaw=40
+place SmallRock_02 - at 22.31 -58.92 ground sit scale=0.5
+call treasure x=19.81 z=-58.92 r=12 n=1 seed=24811
+prop treasure24811 treasure.loot=TitaniumOre*3;MetalIngot*2
+call treasure x=-61.35 z=12.58 r=5 n=1 seed=24812
+prop treasure24812 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=-78 z=18 h=1 r=7 al=skcave2dark
+
+# the drowned building: the Network archive, its ground floor 14 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=-50 z=-62 h0=-14 n=4 w=RT_WallWindowBroken a=skbld cap=0 cal=skcap
+place Loot_Chest skdeep at -51.8 -64.5 h=-14 sit yaw=0
+place Placeable_Table_Basic - at -51.5 -61 h=-11 sit yaw=0
+place Note_Paper skbldnote at -51.5 -61 h=-9.7 drop yaw=10
+call airpocketat x=-50.5 z=-64 h=-11 id=sk_dair al=skdair bub=skdbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=-50 z=-73 al=skdeepzone id=sk_deep r=4 msg="The pit floor: the drowned building stands below you."
+# (REACH 10-31 G1: the pit's rim stands 0.8 m and more over the water all round - a swimmer in the pit had no way
+# out onto it: a ladder down the west wall, from the rim into the water)
+place LandmarkLadder_6m - at -59.8 -63.9 h=-5.4 yaw=270
+
+# (stones left in the air by the shaping - the areas' and ruins' own, so "all" - taken out, 10-26; the ground check's points plus the land centre's offset)
+clear at 84.45 11.67 r=1.5 all only=SmallBoulder2
+clear at 69.8 -10.45 r=1.5 all only=SmallBoulder2
+clear at 78.28 -9.53 r=1.5 all only=SmallBoulder2
+clear at 3.4 -74.69 r=1.5 all only=SmallBoulder2
+clear at -8.6 -72.69 r=1.5 all only=SmallBoulder2
+clear at 45.3 -52.16 r=1.5 all only=SmallBoulder2
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Sealkeeper Spire
+info author=Custom Islands
+info description=The Network's control spire in a storm over the trench: a generator, ziplines to the pump and door towers, fuses, a keypad - and two levers, RESTORE and SEAL. The ninth island of The Sunken Kingdom, the first half of its finale.
+island on.arrive=message||A stone spire in the storm, a cable from its top running down into the sea.
+
+story power|Base power on|Battery|You started the Spire's generator.
+story pumped|Pumps primed|Hinge|You cranked the pump tower's valve: the Commons' pumps have pressure.
+story fuse|Spire fuse|Placeable_Lantern_Metal|A ceramic fuse from the door tower's lockers.
+story fused|Fuse board set|Battery|You set the fuses: the spire's windows are lit.
+story unlocked|Control room unlocked|Battery|You keyed the Commons' code into the control room's keypad.
+story winched|Cable wound|Hinge|You wound the cable winch: the cable head is live.
+story chosen|The choice made|Bolt|You pulled one of the two levers at the cable head.
+story descended|Descend lever|Bolt|You pulled the descend lever.
+story restorechoice|RESTORE pulled|Bolt|You chose RESTORE at the Sealkeeper Spire.
+story sealchoice|SEAL pulled|Bolt|You chose SEAL at the Sealkeeper Spire.
+
+note milocard Milo's crayon card | A CARD IN CRAYON, WEDGED IN THE DOCK RAIL\n\nTO MUM.\nWe are on the plane!!! The plane man says it is the last one. Mr Fennick is not coming, he says somebody has to close a door properly. He gave me his hat.\nThere were 12 of us and we are all here, I counted twice like you said.\nI did not have Mo. A man at the yard said he would keep him. If you find him tell him I am OK.\nI am going to Gran's on the high island. Come and get me after.\nLOVE MILO (age 7)\n(a drawing of a whale, a plane and a very tall lady with a diving mask)
+note confession The Director's confession | DIRECTOR HALVARD ROOK - FOR WHOEVER COMES UP THE LADDER\n\nIt hunts what is lit and what is loud. We learned that the night the doors were open and it came up the trench pipe. The Commons was the brightest, loudest room in the sea - four hundred people, every family of the Network.\nSo I made the rest of the sea brighter and louder than them. No. I made the rest of the sea go dark, one station at a time, and I left one light burning far away, on the roofs, so it would swim there instead. The Spirecrest beacon. The one you answered.\nI drowned Brinelab. I opened sluice 4 with eight men in the store. I sent divers to cut their own cables, and three crews did not come back. I did the sums every night and every night they came out the same: forty-one people for four hundred.\nI sent the children up. Fennick made me. I am glad he did.\nInes will tell you I am a murderer. She is right. She will also tell you the Commons is alive. She is right about that too.\nThe levers are on the shore. RESTORE, and the lights come back and the Commons can leave - and it will come up to the lights. SEAL, and the plug drops on the Hollow, and the Network stays dark for ever.\nI could not choose. I am handing it to you. I am sorry about that too.
+prop skcam obj.name=skcam
+prop sklure obj.name=sklure
+prop sklure beh.hidden=1
+prop sklure tint.color=#2fd0c0
+prop sklure tint.amount=0.8
+prop sklure beh.move=-28,0,-14
+prop sklure beh.moveTime=20
+prop sklure beh.moveMode=switch
+note orders Sealkeeper's orders | SEALKEEPER'S ORDERS - DIRECTOR H. ROOK\n\n1. Power first: the generator on the base.\n2. Prime the pumps from the pump tower. Fuses from the door tower.\n3. The control room is keyed with the Commons' code.\n4. Wind the cable. At the cable head: RESTORE, or SEAL. Not both. There is no both.\n5. Then go down. Somebody has to see it done.\n\nUnder it, in Fennick's capitals: "AND WIPE YOUR FEET." And under that, very small, in the Director's own hand: "Whoever you are - I am glad somebody came. I could not pull either lever. I tried for nine days."
+note baselocker Base locker | The base locker: rope, a lamp and a crowbar.
+note statusboard Network status board | NETWORK STATUS (chalk, every line crossed out and rewritten in the same hand)\n\nSpirecrest Roofs: BEACON ON - leave it on.\nBrinelab: DARK. 02:14. (I am sorry, Mei.)\nBiome 1-6: DARK. Biome Seven: GREEN - Wren never listens.\nThalassa: SURFACE. Dives 41, 44, 47: cables cut.\nLumen Shelf: LIGHTS HALF - Lindqvist, please.\nCaisson Yard: DARK. Sluice 4. Eight men. Eight.\nHadal Commons: DOORS SHUT. DARK. SAFE.\nThe Hollow: - - - (no reading)\n\nIn the corner, a tally of five-bar gates. Forty-one. Each one, someone he turned the lights off on.
+note pumplog Pump log | PUMP LOG - PUMP TOWER\n\nPressure's held for nine years on one crank a week. I sing to the crank. The crank does not mind.\nThe week the Commons' doors were open for the pumps, the pumps pulled something up the trench with the water. It came up the pipe like a cat up a curtain, and then it went back down into the Hollow, and it has been listening ever since.\nWe stopped cranking. The Director came down himself and stood here a long time with his hand on the wheel.\nCrank it now if you mean to RESTORE. Crank it anyway. Pumps want to work. So do people.
+note warning Door warden's warning | DOOR WARDEN - G. FENNICK (pinned to the fuse board with a fork)\n\nThree fuses, three lockers. Set them and the spire lights up - and everything down there sees it. Everything. I mean the big one.\nIf you go to the Hollow, go when the lights are on. It hunts what is lit, but it cannot SEE in light, it can only find. In the dark it can do both.\nI am going down ahead of you to wedge the Hollow's gate. I have put the children on the plane. I have given Milo my hat. I don't need a hat where I'm going.\nIf you are the Stalker - you know the rest.
+note networkmap The Network map | THE PELAGIC NETWORK - CONTROL ROOM MAP\n\nSeven stations round a ring, three wavy lines across it, and the Ringwave humming in the middle. At its centre, under the trench lip, one word: HOLLOW.\nPins in the map, one per station. Every pin but one has been pulled out and laid on the desk in a neat row, like teeth.\nThe last pin is on the roofs: SPIRECREST. A red thread runs from it out to sea, then curls back to the Hollow.\nUnder it, in the Director's hand: "Bait."
+note inesmessage Ines's message | INES - IN PENCIL, ON THE DESK, OVER THE DIRECTOR'S PAPERS\n\nYou read it. Good. So did I.\nHe's gone down the trench after Fennick. Not to stop him. To help him, I think. I didn't ask.\nRESTORE turns the Network back on - the lights, the pumps, the doors - and the Commons can walk out. It will come up with them.\nSEAL drops the plug on the Hollow for good. The Commons stays in the dark, alive, for as long as dark lasts.\nI can't choose. I'd only choose Milo, and he's on a plane.\nTake Mo with you. He's been everywhere else.
+note twoswitches Two switches | Two levers on the cable head, under glass, labels stamped in brass:\n\nRESTORE - power to every station, the doors on the cycle.\nSEAL - the plug over the Hollow, the Network dark for good.\n\nPull one. The other dies with it.\nScratched into the glass with a key, in three hands:\n"Lights." - W.A.\n"Quiet." - H.R.\n"Whatever you pick, then go down and finish it. Bring a lamp. - I.M."
+note verdictrestore The verdict | RESTORE.\n\nAll down the cable, lights come on - station after station. Brinelab's windows, the domes, the Yard's red crane lamps, the shelf's five dots. Somewhere far below, great doors begin to move.\nOn the control room radio, the Director's voice, very tired: "There it goes. Every light I put out. They will come up now. So will it. Go down, and see it through."\nPull the descend lever.
+note verdictseal The verdict | SEAL.\n\nThe cable jerks. Far below, something heavy drops into place. The lights on the cable go out, one after another, until only the Spirecrest beacon is left, far away, blinking.\nOn the control room radio, the Director's voice, very tired: "Quiet, then. Quiet for ever. I hoped somebody braver would pick the other one. Go down, and see it through."\nPull the descend lever.
+note fuselocker1 Deck fuse locker | A locker on the door tower's deck: a fuse.
+note fuselocker2 Tower fuse locker | A locker inside the door tower: a fuse.
+note fuselocker3 Shore fuse locker | A locker at the door tower's foot: a fuse.
+loot baselocker Rope*3;Placeable_Lantern_Metal*1;Scrap*2
+prop baselocker loot.refill=0
+loot fuselocker1 story:fuse*1;Bolt*1
+prop fuselocker1 loot.refill=0
+loot fuselocker2 story:fuse*1;Scrap*1
+prop fuselocker2 loot.refill=0
+loot fuselocker3 story:fuse*1;Nail*5
+prop fuselocker3 loot.refill=0
+
+prop dockzone zone.id=dock
+prop dockzone zone.radius=4
+prop dockzone zone.message=The Spire's dock. A board with orders, nailed to a post.
+prop screechers creature.count=4
+prop screechers creature.respawn=0
+prop generator obj.name=generator
+prop generator beh.use=Start the generator
+prop generator if.use=!signal|power
+prop generator on.use=signal||power\ngive||story:power*1\nsound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The generator coughs, then roars. The base lights stutter on.
+prop generator else.use=message||The generator is running.
+prop pumpzone zone.id=pump_tower
+prop pumpzone zone.radius=3
+prop pumpzone zone.message=The pump tower. A crank on its deck.
+prop pumpcrank obj.name=pumpcrank
+prop pumpcrank beh.use=Turn the pump crank
+prop pumpcrank if.use=!signal|pumped
+prop pumpcrank on.use=signal||pumped\ngive||story:pumped*1\nmessage||The crank fights you, then turns. Far below, pumps thud awake.
+prop pumpcrank else.use=message||The pumps have pressure.
+prop doortowerzone zone.id=door_tower
+prop doortowerzone zone.radius=3
+prop doortowerzone zone.message=The door tower. A fuse board on the deck - empty.
+prop fuseboard obj.name=fuseboard
+prop fuseboard beh.use=Set the fuses
+prop fuseboard if.use=quest|12\nhas|story:fuse|3\n!signal|fused
+prop fuseboard on.use=signal||fused\ngive||story:fused*1\nshow|spirelights\nmessage||Three fuses, three clunks. Across the water the spire's windows light up.\nshow|sklure\nopen|sklure\ncamera|skcam|sklure|8|90\nmessage||Out in the trench a teal light lifts and comes towards the lit spire, slow, against the storm - looking.\nwait|24\nhide|sklure\nmessage||The teal light sinks back into the trench. It knows where the lights are now.
+prop fuseboard else.use=message||The fuse board needs three fuses. The lockers in this tower hold them.
+prop spirelights obj.name=spirelights
+prop spirelights beh.hidden=1
+prop stairzone zone.id=spire_stair
+prop stairzone zone.radius=2.5
+prop stairzone zone.message=The spire's door. A ladder inside goes up into the dark.
+prop controlzone zone.id=control
+prop controlzone zone.radius=3
+prop controlzone zone.message=The control room. Lit windows, a map, a keypad, a winch.
+prop controlpad obj.name=controlpad
+prop controlpad beh.use=Key in the code
+prop controlpad lock.code=2817
+prop controlpad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nsignal||unlocked\ngive||story:unlocked*1\nmessage||The keypad blinks green. The winch's brake lets go.
+prop controlpad else.use=message||The keypad wants the control room code. The Commons' council wrote it down.
+prop winch obj.name=winch
+prop winch beh.use=Wind the cable winch
+prop winch if.use=signal|unlocked\n!signal|winched
+prop winch on.use=signal||winched\ngive||story:winched*1\nshow|cable\nmessage||The winch grinds. Down at the shore the cable lifts out of the sea, dripping, live.
+prop winch else.use=message||The winch is braked. The keypad releases it.
+prop cable obj.name=cable
+prop cable beh.hidden=1
+prop cablezone zone.id=cable_head
+prop cablezone zone.radius=3
+prop cablezone zone.message=The cable head. Two levers under glass - and a third, by itself.
+prop restore obj.name=restore
+prop restore beh.use=Pull RESTORE
+prop restore if.use=signal|winched\n!signal|chosen
+prop restore on.use=signal||restore\nsignal||chosen\ngive||story:chosen*1\ngive||story:restorechoice*1\nshow|verdictrestore\nmessage||RESTORE. The lever slams home.
+prop restore else.use=message||The lever won't move.
+prop seal obj.name=seal
+prop seal beh.use=Pull SEAL
+prop seal if.use=signal|winched\n!signal|chosen
+prop seal on.use=signal||seal\nsignal||chosen\ngive||story:chosen*1\ngive||story:sealchoice*1\nshow|verdictseal\nmessage||SEAL. The lever slams home.
+prop seal else.use=message||The lever won't move.
+prop verdictrestore obj.name=verdictrestore
+prop verdictrestore beh.hidden=1
+prop verdictseal obj.name=verdictseal
+prop verdictseal beh.hidden=1
+prop descend obj.name=descend
+prop descend beh.use=Pull the descend lever
+prop descend if.use=signal|chosen\n!signal|descend
+prop descend on.use=signal||descend\ngive||story:descended*1\nmessage||The descend lever. Somewhere under the trench lip, a light comes on - the Hollow.
+prop descend else.use=message||Not yet. RESTORE or SEAL first.
+prop storm atmo.fog=#3a4048
+prop storm atmo.fogAmount=0.5
+prop storm atmo.light=#8a96a2
+prop storm atmo.lightAmount=0.35
+prop storm atmo.particles=mist
+prop storm zone.radius=60
+
+note sk_cavechest Keepers' chest | The keepers' storm chest: dry clothes gone to rags, a lamp, rope.
+loot sk_cavechest Rope*3;Leather*2;Battery*1;CopperOre*2
+prop sk_cavechest loot.refill=0
+note sk_ruinnote Storm keeper's log | STORM KEEPER'S LOG\n\nThe radio on my table runs off the generator. The generator wants a part I lent to the cave crew, and the cave crew have not returned it, because they never return anything.\nWith power, the radio tells you where the last supply drop came down.\nI keep the weather for the Director. Every night he asks me the same question: "Is the beacon on the roofs still lit?" Every night I say yes. Every night he says, "Good. God forgive me. Good."
+note sk_wrecknote Supply pilot's log | SUPPLY PILOT'S LOG\n\nLast run for the Spire, and the Director met me on the dock himself. No cargo, he said. Passengers.\nTwelve kids from the shuttle came up the trench lift with the door warden. I took all twelve. The warden would not get on. He said somebody had to go down and close a door properly, and he gave his hat to the small one with no whale.\nI flew them through the storm to the high island and came back for the crew, and the storm took the plane on the way in. I kept the crate. I would have kept the plane if it had let me.\nThey will decide it soon - RESTORE or SEAL. I am not staying to see.
+note sk_wreckcrate Supply plane crate | The supply plane's crate: what the Spire ordered, never delivered.
+loot sk_wreckcrate MetalIngot*2;Bolt*3;Rope*2;Plank*4
+prop sk_wreckcrate loot.refill=0
+
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story sk_key|Archive key|Hinge|The Network archive's key, from the chest at the bottom of the drowned archive.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note skdeep Archive chest | The archive's sealed chest: titanium, and a crest shard.
+loot skdeep story:sk_crest*1;TradeToken*2;TitaniumOre*2;CircuitBoard*1;OxygenBottle*1
+prop skdeep loot.refill=0
+note sklocker Storm Crown locker | The Director's own locker on Storm Crown.
+loot sklocker TitaniumIngot*2;MetalIngot*3;Battery*2;Cooked_Potato*2
+prop sklocker loot.refill=0
+note sksumnote Sealkeeper's card | STORM CROWN\n\nFrom here I could see every station of the Network, one light each, like a necklace on black velvet.\nI used to come up here to count them. Then I came up here to count them going out.\nRESTORE or SEAL - the archive below remembers both, and it remembers me. Read it before you pull a lever. - H.R.
+note skbldnote Archive register | NETWORK ARCHIVE - COMMAND REGISTER (printout)\n\nEvery band, every station, every call, and every remote command. The register does not forget. That is its job.\n...02:14 BRINELAB PUMPS LOCAL to REMOTE. AUTH: ROOK.\n...02:14 CAISSON SLUICE 4 OPEN. AUTH: ROOK.\n...THALASSA DIVE ORDERS 41, 44, 47. AUTH: ROOK.\n...LUMEN SHELF LAMPS 50 PERCENT. AUTH: ROOK.\n...SPIRECREST BEACON: HOLD ON. DO NOT EXTINGUISH. AUTH: ROOK.\nSomebody has underlined the last line twice, pressing hard. Ines, by the handwriting in the margin: "He kept it lit. He kept OUR roofs lit, so it would come to us."
+note skledge Storm watcher's cache | A storm watcher's cache on a ledge of Storm Crown.
+loot skledge Rope*3;Bolt*2;Feather*3
+prop skledge loot.refill=0
+note skcave2chest Archivist's spare chest | An archivist's chest at the back of the rock cave.
+loot skcave2chest CopperOre*3;Rope*2;Battery*1
+prop skcave2chest loot.refill=0
+prop sksummit zone.id=sk_summit
+prop sksummit zone.radius=2.5
+prop sksummit zone.message=The top of Storm Crown. The whole island lies below.
+
+quest title=The Choice
+quest intro=The Spire on the trench, the Network's switchboard, where the Sealkeeper waits. Land at its dock.
+step reach|dock|1|Land at the Spire's dock
+step read|Sealkeeper's orders|1|Read the Sealkeeper's orders
+step read|Milo's crayon card|1|Read the card wedged in the dock rail
+step kill|Screecher|4|Drive off the screechers nesting on the spire
+step open|Base locker|1|Open the base locker by the cable mast
+step collect|story:power|1|Start the generator at the foot of the spire
+step read|Network status board|1|Read the Network status board
+step reach|pump_tower|1|Zipline from the cable mast to the pump tower
+step collect|story:pumped|1|Turn the pump crank
+step read|Pump log|1|Read the pump log
+step reach|door_tower|1|Zipline from the cable mast to the door tower
+step collect|story:fuse|3|Collect the three fuses from the door tower's lockers
+step collect|story:fused|1|Set the fuses in the fuse board - and watch the trench
+step read|Door warden's warning|1|Read the door warden's warning
+step read|Supply pilot's log|1|Read the log at the crashed supply plane
+step open|Archive chest|1|Dive into the drowned archive pit and open its chest at the bottom
+step read|Archive register|1|Read the command register in the drowned archive
+step reach|spire_stair|1|Go to the spire's door
+step reach|control|1|Climb to the control room through the storm
+step read|The Network map|1|Read the Network map
+step collect|story:unlocked|1|Key in the control room code (the Commons' minutes had it)
+step read|The Director's confession|1|Read the Director's confession by the window
+step read|Ines's message|1|Read Ines's message on the desk
+step collect|story:winched|1|Wind the cable winch
+step reach|cable_head|1|Go down to the cable head on the shore
+step read|Two switches|1|Read the two switches
+step collect|story:chosen|1|Pull one: RESTORE or SEAL
+step read|The verdict|1|Read the verdict
+step collect|story:descended|1|Pull the descend lever
+quest done=The choice is made and the Director has gone down after Fennick. Under the trench lip the Hollow lights up - the Receiver finds it on band 500.
+quest reward=TitaniumOre*2;Battery*2
+
+save Sealkeeper Spire

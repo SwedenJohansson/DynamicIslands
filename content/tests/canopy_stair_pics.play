@@ -1,0 +1,18 @@
+# Guide pictures of Canopy Stair (CIPlay canopy_stair_pics): Raft's camera, midday, calm
+island Canopy Stair
+# RESIZE 10-24: the recipe moved this island's old content by 0 -20.9; the points below are in the old frame
+offset 0 20.9
+hour 11
+weather Calm
+at 0 -2
+wait 3
+picture sl11_canopy_stair_island 45 35 -85 0 8 0
+picture sl11_canopy_stair_camp -4 13 -10 0 10 8
+storespot -12 4
+snap deep_cs_cliff cstw 120 40
+snap deep_cs_plane cswreck 180 14
+snap deep_cs_pilot pilotchest 230 8
+
+# (box agent 10-25: aerial of the jump course)
+offset 0 0
+picture jump_cs -82 24 -17 -66 9 -3

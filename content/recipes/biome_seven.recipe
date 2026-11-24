@@ -1,0 +1,384 @@
+# Biome Seven - an island of the library's plan The Sunken Kingdom (sunken 18 m; chapter 4, the glass dome)
+# The last of the Network's seabed gardens: a glass rotunda on the seabed (twelve of Balboa's relay-station window
+# walls in a ring, a second ring leaning in over them, a steel cap) with dry air inside - a garden of crop beds, a mango
+# tree, pineapple and berries, the gardener's rota, the control desk, the seed vault and a lab goat in a cage. The
+# airlock is a short block tunnel on the north side with a hatch in its roof. Outside: a big puffer, stingrays at the
+# outer vent and its shed, three reefs, glowing water, and the marker buoy on the surface. Quest "The Glass Dome"
+# (17 steps): the airlock, its hatch, the rota, three melon seed packets, the engine control plans, 2 stingrays, the
+# metal detector plans, the firework plans, the sprinkler crank (the dry beds give way to full ones), the zipline plans
+# on the maintenance gantry on the dome's cap.
+#
+# Points (metres over the island's own water line; in the world it all lies 18 m lower): the seabed at 0 (r 16 round
+# 0 0); the dome r 6.7 round 0 0, its glass 0..6.7, the cap at 6.7 (x -4.5..4.5, z -4.5..4.5); the airlock x -1.5..1.5,
+# z 6.7..9.7, its roof at 2.9 (the hatch at 0.75 8.95); the vent shed x -2.25..2.25, z -14..-11; the buoy at 11 -11
+# on the surface (18 m up), an air pocket at its foot.
+include lib_sea
+include lib_gravity
+include lib_sl1
+include lib_sunken
+include lib_features
+include lib_caves
+# RESIZE 10-24: Radius 32 -> 85, the seabed hills higher. The dome, its airlock, the vent shed and the buoy stay together
+# in the middle (the dive from the buoy to the airlock is one breath); the outer reefs move out x2.66 with the land.
+new
+gen Trees=0 Bushes=0 Rocks=0.35 Harvest=0 BeachThings=0
+gen Seed=10401 Radius=85 Height=12 Roughness=0.3 Peaks=3 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.3 PeakShape=0.4
+gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0 SeaLife=0.35
+generate
+elevation -18
+
+# --- Terrain: the seabed garden floor at 0 ---------------------------------------------------------------------------
+brush flatten at 0 0 r=16 s=20 frames=240 h=0
+brush grass at 0 0 r=6 s=20 frames=20
+# discoveries: a level spot for the diver's cache
+brush flatten at 30 46 r=4 s=8 frames=40
+# REACH 10-28: the seabed rose right at the vent shed's door (the door faces the rise): a level apron in front of it
+brush flatten at 0 -17 r=4 s=20 frames=200 h=0
+origin
+clear at 0 0 r=15
+clear at 30 46 r=5
+clear at 0 -17 r=4
+
+# --- The dome: a ring of glass walls (open on the north for the airlock), a ring leaning in over it, the steel cap ----
+for a 120 420 30
+place Relay_Wall_Window domeglass at {6.67*cos($a)+1.744*sin($a)} {6.67*sin($a)-1.744*cos($a)} h=0 yaw={90-$a}
+place Relay_Wall_Window domeglass at {6.67*cos($a)+1.744*sin($a)} {6.67*sin($a)-1.744*cos($a)} h=4.49 rot=-45,{90-$a},0 sy=0.7
+next
+place Relay_Wall_Window domeglass at 1.744 6.67 h=2.86 yaw=0 sy=0.363
+place Relay_Wall_Window domeglass at 1.744 6.67 h=4.49 rot=-45,0,0 sy=0.7
+place RT_Floor domecap at 4.53 4.5 h=6.71 sx=1.5
+prop domecap tint.color=#5d6b70
+prop domecap tint.amount=0.4
+
+# --- The airlock: a block tunnel north of the dome, a hatch in its roof ------------------------------------------------
+place Block_Floor_Tier3 lock at -0.75 7.45 h=0.22
+place Block_Floor_Tier3 lock at 0.75 7.45 h=0.22
+place Block_Floor_Tier3 lock at -0.75 8.95 h=0.22
+place Block_Floor_Tier3 lock at 0.75 8.95 h=0.22
+place Block_Wall_Tier3 lock at -1.5 7.45 h=0.22 yaw=90
+place Block_Wall_Tier3 lock at -1.5 8.95 h=0.22 yaw=90
+place Block_Wall_Tier3 lock at 1.5 7.45 h=0.22 yaw=90
+place Block_Wall_Tier3 lock at 1.5 8.95 h=0.22 yaw=90
+# REACH 10-28: the dome's gap is 3.49 m wide, the tunnel 3 m: narrow wall strips close the slits beside the tunnel mouth
+place Block_Wall_Tier3 lock at -1.622 6.7 h=0.22 yaw=0 sx=0.163
+place Block_Wall_Tier3 lock at 1.622 6.7 h=0.22 yaw=0 sx=0.163
+place Block_Wall_Tier3 lock at -0.75 9.7 h=0.22 yaw=0
+place Block_Wall_Tier3 lock at 0.75 9.7 h=0.22 yaw=0
+place Block_Floor_Tier3 lock at -0.75 7.45 h=2.86
+place Block_Floor_Tier3 lock at 0.75 7.45 h=2.86
+place Block_Floor_Tier3 lock at -0.75 8.95 h=2.86
+place TangaroaHatchRoom_Hatch airlockhatch at 0.75 8.95 h=2.86 scale=1.3
+prop lock tint.color=#7d8a8c
+prop lock tint.amount=0.35
+place Zone_Trigger lockzone at 0.75 8.95 h=4
+
+# --- Inside the dome: the air, the beds (dry; full ones hidden), the seed packets, the crank, the garden -------------
+place Zone_Trigger domeair at 0 0 h=2.5
+place Zone_Atmosphere domeatmo at 0 0 h=2.5
+place Placeable_Cropplot_Large bedsdry at -3 -3 h=0 sit
+place Placeable_Cropplot_Large bedsdry at 0 -4.3 h=0 sit
+place Placeable_Cropplot_Large bedsdry at 3 -3 h=0 sit
+prop bedsdry tint.color=#6b5a3c
+prop bedsdry tint.amount=0.6
+place Placeable_Cropplot_Large bedsfull at -3 -3 h=0 sit
+place Placeable_Cropplot_Large bedsfull at 0 -4.3 h=0 sit
+place Placeable_Cropplot_Large bedsfull at 3 -3 h=0 sit
+place Pickup_Landmark_WatermelonLandmark bedsfull at -2 -1.4 h=0 sit
+place Pickup_Landmark_WatermelonLandmark bedsfull at 2 -1.4 h=0 sit
+place Placeable_Sprinkler bedsfull at 0 -2.4 h=0 sit
+place "Box Small" seedtray1 at -4.4 -2 h=0 sit yaw=20
+place "Box Small" seedtray2 at -1.2 -5.2 h=0 sit yaw=70
+place "Box Small" seedtray3 at 4.4 -2 h=0 sit yaw=340
+place RT_Pillar - at -1.4 0.6 h=0 sy=0.6
+place TP_Selene_DoorCrankWheel sprinklercrank at -1.4 0.51 h=1.2 rot=0,0,0
+place Pickup_Landmark_MangoTree - at 0 3 h=0 sit
+place Pickup_Landmark_PineappleLandmark - at -4.6 0.6 h=0 sit
+place Pickup_Landmark_BerryBush - at 4.8 0.8 h=0 sit
+place Pickup_Landmark_Flower_Black - at -3.2 2.4 h=0 sit
+place Placeable_Table_Basic - at -2.4 4.3 h=0 sit yaw=0
+place Note_Paper rota at -2.4 4.3 h=1.3 drop yaw=15
+# STORY 10-24s: the hydrophone printout by the control desk; Wren's letter in a tin under the beds (shown when the beds are watered)
+place Note_Paper hydrolog at 3.3 3.5 h=0.8 drop yaw=200
+place Note_Paper wrenletter at -0.6 -1.6 h=0.6 drop yaw=10
+place TP_Selene_ComputerGeneric_01 - at 3.6 3.6 h=0 sit yaw=225
+place Loot_Chest controldesk at 2.1 4.6 h=0 sit yaw=180
+place Loot_ChestSmall gardenlocker at -4.9 2.2 h=0 sit yaw=90
+place Loot_Chest seedvault at -0.6 5.2 h=0 sit yaw=180
+place UT_DogCage_Medium02 goatcage at 4.3 -0.6 h=0 sit yaw=270
+place Creature_Goat labgoat at 4.3 -0.6 h=0.3
+
+# --- The maintenance gantry on the cap: a short mast, a lamp, the gantry box -----------------------------------------
+place Antenna_pole - at -3.5 -3.5 h=6.9 sy=0.4
+place Placeable_Lantern_Metal - at -3 -3.5 h=6.9 sit
+place Loot_ChestSmall gantrybox at 2.5 1.5 h=6.9 sit yaw=0
+
+# --- Outside: the outer vent and its shed, stingrays, the big puffer, the buoy, reefs, glowing water ------------------
+push at -2.25 -14 h=0
+call shed w=3 d=2 door=1
+place Loot_Chest ventchest at 3.6 2.2 y=0.2 sit yaw=180
+pop
+place Zone_Trigger ventzone at 0 -17 h=2
+place Creature_Stingray rays at 0 -18 h=2
+place Creature_PufferFish bigpuffer at -11 7 h=4
+call buoychain x=11 z=-11 h=18 n=3 al=buoy zal=buoyzone id=surface_buoy
+call airpocket x=10 z=-8.5 id=buoy_air al=buoyair bub=buoybub r=2.5 msg="An air pocket at the buoy's foot."
+place Zone_Atmosphere glowwater at 0 0 h=8
+scatter VP_CoralBulb04 7 at 37 16 r=5 seed=10402 free=1
+scatter VP_CoralFoliose01 6 at 37 16 r=5 seed=10403 free=1
+scatter VP_CoralDigitate01 7 at -35 -21 r=5 seed=10404 free=1
+scatter TinyCoral 8 at -35 -21 r=5 seed=10405 free=1
+scatter LeafCoral_1 6 at -16 37 r=5 seed=10406 free=1
+scatter VP_CoralBulb03 6 at -16 37 r=5 seed=10407 free=1
+scatter SeaVine3 60 at 0 0 r=70 seed=10408 free=2
+scatter SeaVine3_klump 20 at 0 0 r=70 seed=10409 free=2
+call shallows x=0 z=0 r=100 deep=6 n=2 seed=10410
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): a sunken boat with a chest and an air pocket, a drowned van,
+# a diver's cache with a slate (a note), a hatch in the seabed with a chest, a ridge where the dome's glow shows ----
+place BoatStranded - at 40 -38 ground yaw=210
+place Loot_ChestSmall wreckchest at 35 -34 ground sit yaw=30
+call airpocket x=37 z=-41 id=wreck_air al=wreckair bub=wreckbub r=3.2 msg="Air caught under the wreck's hull. Breathe."
+place Van3 drownedvan at -46 30 ground yaw=75
+prop drownedvan tint.color=#6b4a32
+prop drownedvan tint.amount=0.55
+place "Box Small" - at 30 46 ground sit
+place Note_Paper diverslate at 30 46 ground y=1.6 drop yaw=30
+place Loot_ChestSmall divercache at 32 47.5 ground sit yaw=250
+call hatchcache x=-40 z=-42 r=10 seed=10411 alias=seabedhatch chest=seabedchest items=MetalIngot*2;CopperIngot*2;Bolt*2
+place Zone_Trigger viewzone at -56 0 ground y=1.5
+note wreckchest Wreck's chest | The boat's chest, sunk with her: tins, line and a few tools the salt has not eaten yet.
+loot wreckchest Rope*3;Nail*8;Scrap*3
+prop wreckchest loot.refill=0
+note diverslate Diver's slate | DIVE SLATE - I. MARLOWE (chalk, wired to a box)\n\nDOMES 1-6 DARK. SEVEN STILL LIT.\nAir at the buoy, air at the vent shed. Don't stay down past the second breath.\n\nMilo - the lab lady says you all walked off the reef. All twelve. I sat on the lab stairs and cried like a tap, and then I swam here, because the gardener has a boat.\nTeo caught up at last, with a hen in his coat. He says the hen insisted.
+note divercache Diver's cache | A diver's spare kit: rope, a spare filter, glass for a mask.
+loot divercache Rope*2;Glass*3;Plastic*4
+prop divercache loot.refill=0
+prop viewzone zone.id=biome_view
+prop viewzone zone.radius=7
+prop viewzone zone.repeat=never
+prop viewzone zone.message=From the ridge the seabed falls away - and there, far off in the blue, the dome glows like a lamp left on.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): under water round the dome - the kelp ridge in the east, a rock
+# cave in the south, the gardener's shed in the north, a car park of sunk vans in the north-west
+call sk_ridge x1=66 z1=-12 x2=72 z2=22 h=4 top=4 r=8
+call sk_reef x=69 z=5 r=6 seed=10461
+call sk_reef x=72 z=22 r=5 seed=10471
+call sk_zone x=69 z=5 al=b7_ridge id=b7_ridge r=7 msg="The kelp ridge. The dome glows behind you like a lamp left on in an empty house."
+call sk_cave x=6 z=-68 h=2 yaw=0 al=b7_caverock chest=b7_cavechest
+call sk_zone x=6 z=-63 al=b7_cave id=b7_cave r=4 msg="A cave in the rock. The garden's overflow pipe ends here, still dripping silt."
+call sk_ruin x=-6 z=48 h=2 al=b7_ruin
+call sk_notebox x=-3.5 z=43.5 yaw=10 al=b7_ruinnote
+call sk_wreck x=-44 z=62 h=2 yaw=200 v=Van_1 al=b7_wreck crate=b7_wreckcrate scale=1
+place Caravan_Green_02 - at -51 69 ground sit yaw=150
+place Caravan_Yellow_01 - at -36 68 ground sit yaw=20
+place Van_2 - at -58 60 ground sit yaw=250
+call sk_notebox x=-38 z=58 yaw=70 al=b7_wrecknote
+
+# --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
+call vinecache x=60 z=-58 r=8 seed=10471 chest=b7vinechest vines=b7vines items=Rope*3;Nail*8;Seed_Flower_Red*2
+
+# --- Unique layer (10-24): the airlock garden's outer sluice: a crank on a post at the shed brings up the bed box
+call crankcache x=1 z=51 yaw=270 alias=sluicecrank sig=sluice chest=bedbox cx=-11 cz=52 cyaw=0 items=Seed_Watermelon*2;Seed_Pineapple*2;Dirt*2 title="Bed box"
+
+# --- DEEP 1-HOUR (10-24): the garden rock breaking the surface (20.5 m from the floor) and the drowned seed store in the west pit
+# the rock that breaks the surface (20.5 m up from the floor), a beacon tower on its dry top
+call sk_seamount x=-24 z=-66 top=20.5 r=20
+# REACH 10-28: the dry top stood 2-3 m over the water on a steep lip (no way out of the sea): a ramp up its west side (beside the ledge chest)
+brush flatten at -36 -62.5 r=1.8 s=20 frames=200 h=17.6
+brush flatten at -34.5 -62.5 r=1.8 s=20 frames=200 h=18.4
+brush flatten at -33 -62.5 r=1.8 s=20 frames=200 h=19.2
+brush flatten at -31.5 -62.5 r=1.8 s=20 frames=200 h=20
+brush smooth at -33.5 -62.5 r=3 s=4 frames=20
+call sk_pit x=-66 z=-30 h0=-8
+call sk_cave x=-12 z=72 h=2 yaw=180 al=b7cave2 chest=b7cave2chest
+call sk_reef x=-6 z=-66 r=6 seed=24310
+call sk_reef x=-38 z=-54 r=6 seed=24320
+call sk_reef x=-56 z=-24 r=5 seed=24330
+
+# the summit: the garden rock - the tower (ladder inside), the locker, the note, the zone
+call ladtower x=-24 z=-66 h0=20.5 lv=3 a=b7tower
+place Loot_ChestSmall b7locker at -24.75 -65.25 h=28.2 drop yaw=180
+place Note_Paper b7sumnote at -24.75 -66.75 h=28.07 drop yaw=20
+place Zone_Trigger b7summit at -24 -66 h=28.97
+place Loot_ChestSmall b7ledge at -35 -66 ground sit yaw=40
+place SmallRock_02 - at -19 -64 ground sit scale=0.5
+place SmallRock_02 - at -19 -64 ground y=0.6 sit scale=0.32 yaw=40
+call treasure x=-21.5 z=-64 r=12 n=1 seed=24311
+prop treasure24311 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=-9.21 z=55.23 r=12 n=1 seed=24312
+prop treasure24312 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=-12 z=70 h=1 r=7 al=b7cave2dark
+
+# the drowned building: the seed store, its ground floor 26 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=-66 z=-30 h0=-8 n=3 w=RT_WallWindowBroken a=b7bld cap=0 cal=b7cap
+place Loot_Chest b7deep at -67.8 -32.5 h=-8 sit yaw=0
+place Placeable_Table_Basic - at -67.5 -29 h=-5 sit yaw=0
+place Note_Paper b7bldnote at -67.5 -29 h=-3.7 drop yaw=10
+call airpocketat x=-66.5 z=-32 h=-5 id=b7_dair al=b7dair bub=b7dbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=-66 z=-41 al=b7deepzone id=b7_deep r=4 msg="The pit floor: the drowned building stands below you."
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+# the generator's rocks that floated over the slope, and walls left wholly under the ground (ground check, 2026-10-23)
+clear at -15.01 5.23 r=1.5 only=SmallBoulder
+
+info title=Biome Seven
+info author=Custom Islands
+info description=A glass garden dome 18 m down, its air still in: crop beds, a mango tree, a caged lab goat - and outside, rays at the vent and a giant puffer. The fourth island of The Sunken Kingdom.
+island on.arrive=message||A buoy - and far below it, a glass dome on the seabed, lit from inside.
+
+story cycled|Airlock cycled|Placeable_Lantern_Metal|You opened Biome Seven's airlock hatch.
+story melonseed|Melon seed packet|Seed_Watermelon|A packet of melon seeds from Biome Seven's beds.
+story watered|Beds watered|Placeable_Sprinkler|You turned the sprinkler crank: Biome Seven's beds are green again.
+
+note hydrolog Hydrophone log | HYDROPHONE LOG - BIOME SEVEN (printout, W. Ashby's pencil in the margin)\n\n03:10 Low call, bearing out past the reef, the trench. Not whale. Not ship.\n03:12 Same. Closer.\n03:40 The call has changed. It is copying the dome's beacon - the same two notes, the same gap.\n04:05 It is copying the Network's line tone now. On the speaker it sounds almost like a word. "Calling. Calling."\n04:30 Teal light outside the glass. It waited by the airlock for nine minutes. Then it went towards the lab tower, against the current.\n\nMargin: "It doesn't hunt by eye. It hunts by what is LIT and what is LOUD. Told the Director. He said thank you, Wren, that is very useful, and the line went dead."
+note wrenletter Wren's letter | WREN ASHBY - LETTER, IN A TIN UNDER THE BEDS\n\nWhoever turned my sprinklers on: thank you. The melons thank you. The goat will not, she never thanks anybody.\nI have gone up in the boat with Ines Marlowe and that lovely old idiot Teo and his hen. Ines wants the Thalassa Mooring, the surface station, where the dive teams went down to the trench cables. She thinks the Network's divers saw where the children's shuttle drifted. I think she just wants to keep moving so she doesn't have to stop and think.\nThalassa still has a bell. If you go there, ring it carefully. Bells are loud, and you know now what loud does.\nLeave the lights off on your way out. Not because the Director says so. Because Wren does.
+prop wrenletter obj.name=wrenletter
+prop wrenletter beh.hidden=1
+note rota Gardener's rota | BIOME SEVEN - ROTA (W. Ashby, gardener, staff of one)\n\nMon: melons. Tue: melons. Wed: the goat, who has opinions about Wednesdays. Thu: melons.\nFri: vent filters. Take the harpoon, the rays are back and they think the filters are a buffet.\nSat: crank the sprinklers. The valve sticks. Swear at it, it works better.\nSun: write to the Commons. They don't write back any more. Write to Sato. She does.\n\nAdded in red, last week: "Lights off after dark - by order of the Sealkeeper." Fine. Melons don't need the lights. I do, a bit.
+note controldesk Control desk chest | The control desk's chest: engine control plans, "for the shuttle".
+note gardenlocker Gardener's locker | Wren's locker: firework plans and her good gloves.
+note seedvault Seed vault | The seed vault: mango, pineapple, strawberry, banana, beets, potatoes.
+note ventchest Vent shed chest | A chest in the vent shed: metal detector plans, a filter.
+note gantrybox Gantry box | The gantry's box on the dome's cap: zipline plans.
+loot controldesk Blueprint_EngineControls*1;Bolt*2
+prop controldesk loot.refill=0
+loot gardenlocker Blueprint_Firework*1;Leather*1
+prop gardenlocker loot.refill=0
+loot seedvault Seed_Mango*2;Seed_Pineapple*2;Seed_Strawberry*2;Seed_Banana*2;Raw_Beet*3;Raw_Potato*3
+prop seedvault loot.refill=0
+loot ventchest Blueprint_MetalDetector*1;Scrap*2
+prop ventchest loot.refill=0
+loot gantrybox Blueprint_ZiplineBase*1;Rope*2
+prop gantrybox loot.refill=0
+
+prop airlockhatch obj.name=airlockhatch
+prop airlockhatch beh.use=Open the airlock hatch
+prop airlockhatch on.use=give||story:cycled*1\nhide|\nmessage||The hatch swings up. Below it, the airlock - and through it, air and green light.
+prop lockzone zone.id=airlock
+prop lockzone zone.radius=2.5
+prop lockzone zone.message=The airlock on the dome's rim. A hatch in its roof.
+prop domeair zone.id=dome
+prop domeair zone.radius=6.5
+prop domeair zone.repeat=1
+prop domeair zone.air=1
+prop domeair zone.message=Air! The dome still holds it.
+prop domeatmo atmo.particles=fireflies
+prop domeatmo atmo.light=#ffe9b0
+prop domeatmo atmo.lightAmount=0.5
+prop domeatmo zone.radius=6.5
+prop glowwater atmo.particles=fireflies
+prop glowwater atmo.fog=#2a8a8a
+prop glowwater atmo.fogAmount=0.3
+prop glowwater zone.radius=18
+
+prop bedsdry obj.name=bedsdry
+prop bedsfull obj.name=bedsfull
+prop bedsfull beh.hidden=1
+prop seedtray1 obj.name=seedtray1
+prop seedtray1 beh.use=Take the seed packet
+prop seedtray1 on.use=give||story:melonseed*1\nhide|\nmessage||A packet of melon seeds.
+prop seedtray2 obj.name=seedtray2
+prop seedtray2 beh.use=Take the seed packet
+prop seedtray2 on.use=give||story:melonseed*1\nhide|\nmessage||A packet of melon seeds.
+prop seedtray3 obj.name=seedtray3
+prop seedtray3 beh.use=Take the seed packet
+prop seedtray3 on.use=give||story:melonseed*1\nhide|\nmessage||A packet of melon seeds.
+prop sprinklercrank obj.name=sprinklercrank
+prop sprinklercrank beh.use=Turn the sprinkler crank
+prop sprinklercrank if.use=!signal|watered
+prop sprinklercrank on.use=signal||watered\ngive||story:watered*1\nhide|bedsdry\nshow|bedsfull\nshow|wrenletter\nmessage||The crank sticks, then gives. Pipes knock - and the sprinklers hiss over the beds.
+prop sprinklercrank else.use=message||The sprinklers are running.
+prop labgoat creature.count=1
+prop ventzone zone.id=outer_vent
+prop ventzone zone.radius=6
+prop ventzone zone.repeat=never
+prop ventzone zone.message=The outer vent - and two stingrays circling it!
+prop rays creature.count=2
+prop rays creature.respawn=0
+prop rays creature.zone=outer_vent
+prop bigpuffer creature.count=1
+prop bigpuffer creature.size=1.6
+prop bigpuffer creature.respawn=0
+
+note b7_cavechest Overflow cave chest | A chest at the overflow: seed tins, sealed with wax.
+loot b7_cavechest Seed_Pineapple*1;Seed_Watermelon*1;Rope*2;Plastic*2
+prop b7_cavechest loot.refill=0
+note b7_ruinnote Gardener's shed book | GARDENER'S SHED BOOK\n\nThe sluice to the outer beds is cranked shut. Turn it once and the bed box comes up out of the silt, all muddy and pleased with itself.\nThe goats are in their cage by the airlock. Whoever has the lab's bolt cutters - let them out. They are better company than the Director's memos and they eat the memos too.\nSato's drives came through on the beacon last night. A whole list of numbers and one sentence I keep reading: the lab floors went under by remote. Somebody turned off the tower like turning off a lamp.\nI have started sleeping in the shed with the lights off and the radio on.
+note b7_wrecknote Car park ticket | CAR PARK TICKET - BIOME SEVEN VISITORS\n\nPark at the shore, walk the glass tunnel down, mind the step, wave to the gardener.\nOn the back, a child's writing in purple felt pen:\n"Me and Milo saw a big melon and a goat. The goat ate Tom's ticket. Milo's mum is a diver and she can hold her breath for a WHOLE song. We are going on the shuttle on Wednesday to the Yard where the cranes are. Milo is bringing his whale."\nThe shore went under the next week. The vans stayed where we left them, with the windows down.
+note b7_wreckcrate Visitor's van crate | A visitor's crate: a salted picnic, a few useful things.
+loot b7_wreckcrate Rope*2;Scrap*3;Plank*3;Battery*1
+prop b7_wreckcrate loot.refill=0
+
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story b7_key|Seed store key|Hinge|The dome's seed store key, from the chest at the bottom of the drowned store.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note b7deep Seed store chest | The seed store chest: the last stock and a crest shard.
+loot b7deep story:sk_crest*1;TradeToken*2;Seed_Strawberry*2;Seed_Watermelon*2;OxygenBottle*1
+prop b7deep loot.refill=0
+note b7locker Garden beacon locker | The gardeners' locker on the rock: dry seeds and tools.
+loot b7locker Seed_Flower_Red*2;Seed_Flower_Blue*2;MetalIngot*2;Rope*3
+prop b7locker loot.refill=0
+note b7sumnote Gardener's marker | THE GARDEN ROCK\n\nWe planted the dome's first seeds on this rock, above the water, the day the dome opened: Sato, me and a very small brass band.\nFrom here you can see the shelf the domes sat on, one to seven, like beads. Six of them are dark now.\nOn a clear night you can see the Spirecrest beacon blink from here, and the Spire itself behind it, every window bright. The only bright windows on the sea. Funny, that, for a man who orders everybody else's lights off.
+note b7bldnote Seed keeper's list | SEED STORE - STOCK (W. Ashby)\n\nStrawberry, watermelon, the red and blue flowers, and the beet nobody likes.\nThe store flooded the same night as the lab - pumps to REMOTE, the board says, at 02:14. Same minute. Same hand.\nI swam the stock out twice and gave up the third time, when I saw the light come down the ramp after me.\nWhat is left is in the chest on the ground floor, with the old crest shard we dug up when we laid the foundations. Air on the first floor. Take what grows.
+note b7ledge Diver's shelf cache | A diver's cache on the rock's shelf, out of the current.
+loot b7ledge Rope*3;Bolt*2;Feather*3
+prop b7ledge loot.refill=0
+note b7cave2chest Grower's spare chest | A grower's chest deep in the rock cave.
+loot b7cave2chest CopperOre*3;Rope*2;Battery*1
+prop b7cave2chest loot.refill=0
+prop b7summit zone.id=b7_summit
+prop b7summit zone.radius=2.5
+prop b7summit zone.message=Out of the water: the garden rock, a beacon on top. Biome Seven glints below.
+
+quest title=The Glass Dome
+quest intro=Dr Sato's drive woke the last dome's beacon. Dive to the airlock and find the gardener.
+step reach|airlock|1|Dive to the airlock hatch on the big glass dome
+step collect|story:cycled|1|Open the airlock hatch
+step read|Gardener's rota|1|Read the gardener's rota
+step collect|story:melonseed|3|Take the three melon seed packets from the beds
+step blueprint|Blueprint_EngineControls|1|Find the engine control plans at the control desk
+step read|Hydrophone log|1|Read the hydrophone printout by the control desk
+step kill|Stingray|2|Drive the stingrays off the outer vent
+step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the vent shed
+step read|Gardener's shed book|1|Read the book in the gardener's shed outside the dome
+step read|Car park ticket|1|Read the ticket at the sunken car park
+step blueprint|Blueprint_ZiplineBase|1|Swim up to the gantry on the dome's cap: zipline plans
+step open|Seed store chest|1|Dive into the drowned seed store in the pit and open its chest
+step blueprint|Blueprint_Firework|1|Back in the dome, open the gardener's locker: firework plans
+step collect|story:watered|1|Turn the sprinkler crank to water the beds
+step read|Wren's letter|1|Read the letter that came up out of the dry bed
+quest done=The garden breathes again. Wren took Ines and Teo up to the Thalassa surface station - the Receiver finds it on band 900.
+quest reward=Seed_Watermelon*3;Seed_Mango*1
+
+# (G2 10-30: two rocks floating - CIGroundIslands 10-30)
+clear at -3.17 49.29 r=1.2 all only=SmallBoulder2
+clear at -19.54 -64.04 r=1.2 all only=SmallRock_02
+
+# (11-03 fixC, CIFloatingSweep: a scattered sea vine hung over the ground, cleared the stray scatter)
+clear at -11.83 -58.04 r=1.5 only=SeaVine3 all
+# --- 11-08 (w03): the root room - an overgrown service tunnel, optional, no quest step needs it -------------------------
+# The gardeners' old service tunnel into the seabed hill west of the dome, where they grew mushrooms for the dome in the
+# dark under the beds' roots: machete vines over its mouth (the machete is Brinelab Tower's, the plan's island before),
+# a straight tunnel to the root room - mushrooms, dirt, cave vines and an air pocket the pumps still feed. Lamps: the
+# farm's old lights. No rats: under water, no NavMesh floor. cavecheck: 6 m and more from the dome's things and the
+# walk from the buoy to the airlock.
+call kit_st x=-62 z=-4 yaw=90 len=22 slope=0 end=room size=0.7 hill=1 dirt=3 mush=5 stone=0 vines=2 light=1 gate=1 wet=1 as=bsroot
+prop bsroot cave.rock=plain
+# (w03 11-09: CIFloating found the ground under the dome's west leaning glass up to h 2.2 - the root room's hill reached
+# the dome's rim: the rim set back to the garden floor)
+brush flatten at -8 -3.8 r=2.5 s=20 frames=200 h=0
+# (the next run: still a leaning pane at the west, its neighbour - the hill reaches the whole west half of the rim:
+# the floor laid again along it, from the airlock round the west to the south, both sides of the glass)
+brush flatten from -3.75 6.5 to -6.5 3.75 r=2.2 s=20 frames=200 h=0
+brush flatten from -6.5 3.75 to -7.5 0 r=2.2 s=20 frames=200 h=0
+brush flatten from -7.5 0 to -6.5 -3.75 r=2.2 s=20 frames=200 h=0
+brush flatten from -6.5 -3.75 to -3.75 -6.5 r=2.2 s=20 frames=200 h=0
+place Zone_Trigger bsrootair at -30 -4 h=4.5
+prop bsrootair obj.name=bsrootair
+prop bsrootair zone.id=bs_rootroom
+prop bsrootair zone.radius=9
+prop bsrootair zone.repeat=1
+prop bsrootair zone.air=1
+prop bsrootair zone.message=The root room. The dome's old mushroom farm - and air, still pumped down the pipes.
+
+save Biome Seven

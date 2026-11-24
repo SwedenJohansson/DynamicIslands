@@ -23,7 +23,7 @@ namespace DynamicIslands
 		class NoopCommand : ICommand { public void Execute() { } public void UnExecute() { } }
 
 		[ConsoleCommand(name: "CIAutosave", docs: "Dev, editor: the autosave - nothing unsaved after Save; a change is autosaved after the interval (whole, with the change); it is offered (newer than the island), the offer window opens, picking it opens the unsaved work; Save removes it; leaving writes it at once; Throw away deletes it; saving an island saved worlds have says so once. Cleans up")]
-		public static void AutosaveCommand() { DynamicIslands.instance.StartCoroutine(AutosaveRoutine()); }
+		public static void AutosaveCommand() { StartTest(AutosaveRoutine()); }
 
 		static IEnumerator AutosaveRoutine()
 		{
@@ -72,6 +72,19 @@ namespace DynamicIslands
 				Check(ref ok, File.Exists(autosave), "leaving with unsaved changes writes the autosave at once");
 				EditorAutosave.Pick(EditorAutosave.DiscardChoice);
 				Check(ref ok, !File.Exists(autosave), "Throw them away deletes it");
+
+				// The X on one island's row (TODO 4e): only that autosave goes; the window closes when none are left
+				UndoRedoManager.Execute(new NoopCommand());
+				EditorAutosave.WriteNow();
+				int others = EditorAutosave.Waiting().Count(n => n != AutosaveIsland);
+				yield return EditorAutosave.Offer();
+				Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.Shown.Any(c => c.Value == AutosaveIsland && c.OnDelete != null)
+					&& ChoiceWindow.Shown.All(c => c.Value != EditorAutosave.DiscardChoice || c.OnDelete == null), "each island's row has an X, Throw them away / Not now don't");
+				Check(ref ok, ChoiceWindow.DeleteValue(AutosaveIsland) && !File.Exists(autosave) && !ChoiceWindow.Values.Contains(AutosaveIsland),
+					"the X throws away only that island's autosave and takes its row away");
+				Check(ref ok, ChoiceWindow.IsOpen == (others > 0), "the window closes when no unsaved work is left (others waiting: " + others + ")");
+				ChoiceWindow.Close();
+				EditorAutosave.Opened(AutosaveIsland, false);
 
 				// Saving an island that saved worlds have: said once (not at every save)
 				File.WriteAllLines(worldFile, new[] { "# Custom islands in world 'CI Told': name|x|y|z", "@auto=on", AutosaveIsland + "|0|0|0|" });
@@ -203,15 +216,552 @@ namespace DynamicIslands
 			Log("Fake version: " + LibraryPack.ModVersion);
 		}
 
-		[ConsoleCommand(name: "CIVersionCheck", docs: "Dev, in a world with two players: CIVersionCheck same = no version difference was reported; CIVersionCheck differ <version> = the difference with that version was reported here")]
+		[ConsoleCommand(name: "CICaveRims", docs: "Dev, in a world: every cave piece on the loaded custom islands meets the ground all round - no rim floating over it to see into the shell under (AU83). Lists each piece and its largest gap")]
+		public static void CaveRimsCommand()
+		{
+			bool ok = true;
+			int pieces = 0;
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading))
+				foreach (Transform t in e.Root.GetComponentsInChildren<Transform>(true).Where(t => t.gameObject.activeInHierarchy && RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave))
+				{
+					pieces++;
+					string at;
+					float gap = DenRimGap(t, out at);
+					Check(ref ok, gap < 0.6f, "'" + e.Name + "': " + t.name + " - " + at);
+				}
+			Check(ref ok, pieces > 0, pieces + " cave pieces on the loaded islands");
+			if (ok) Log("PASS: cave rims meet the ground"); else Fail("cave rims meet the ground");
+		}
+
+		[ConsoleCommand(name: "CICaveLook", docs: "Dev, in a world: pictures of every cave piece on the loaded custom islands from eight sides at eye height and from above (shot_cavelook_<n>_<side>.png), and what its meshes are (readable, faces, materials, shaders) - AU83")]
+		public static void CaveLookCommand() { StartTest(CaveLookRoutine()); }
+
+		static IEnumerator CaveLookRoutine()
+		{
+			int n = 0;
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList())
+				foreach (CaveMountain m in e.Root.GetComponentsInChildren<CaveMountain>())
+				{
+					m.Rebuild();
+					string file = Path.Combine(DynamicIslands.assetpath, "cavemap_" + e.Name + ".txt");
+					File.WriteAllText(file, m.LastMap ?? "(no mountain)");
+					Log("Cave mountain of '" + e.Name + "': " + (m.transform.Find(CaveMountain.SkinName) != null ? "there" : "MISSING") + ", map in " + Path.GetFileName(file));
+				}
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList()) // (an island taken away while the pictures of another were taken: skipped)
+				foreach (Transform t in (e.Root == null ? new Transform[0] : e.Root.GetComponentsInChildren<Transform>(true).Where(t => t.gameObject.activeInHierarchy && RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToArray()))
+				{
+					if (t == null) continue;
+					n++;
+					Log("Cave " + n + ": '" + e.Name + "' " + t.name + " at " + t.position.ToString("F0") + ", scale " + t.lossyScale.ToString("F2"));
+					foreach (MeshFilter mf in t.GetComponentsInChildren<MeshFilter>(true))
+					{
+						Mesh m = mf.sharedMesh;
+						Renderer rr = mf.GetComponent<Renderer>();
+						Log("  " + mf.name + ": " + (m == null ? "no mesh" : m.name + " readable " + m.isReadable + ", " + m.vertexCount + " points, " + m.subMeshCount + " parts") + (rr == null ? "" : ", shadows " + rr.shadowCastingMode + ", " + string.Join("; ", rr.sharedMaterials.Where(x => x != null).Select(x => x.name + " (" + x.shader.name + (x.HasProperty("_Cull") ? ", _Cull " + x.GetFloat("_Cull") : "") + ")").ToArray())) + (mf.name.StartsWith("CaveSkin") ? " [skin]" : ""));
+					}
+					Bounds b = new Bounds(t.position, Vector3.one);
+					foreach (Renderer rr in t.GetComponentsInChildren<Renderer>()) b.Encapsulate(rr.bounds);
+					float d = new Vector2(b.extents.x, b.extents.z).magnitude * 1.5f + 6f;
+					for (int i = 0; i < 8; i++)
+					{
+						Vector3 dir = Quaternion.Euler(0f, i * 45f, 0f) * Vector3.forward, from = b.center + dir * d;
+						RaycastHit hit;
+						float g = Physics.Raycast(from + Vector3.up * 200f, Vector3.down, out hit, 400f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : b.min.y;
+						from.y = Mathf.Max(g, 0.5f) + 2f;
+						yield return CameraShot(from, new Vector3(b.center.x, Mathf.Max(from.y, b.min.y + b.size.y * 0.35f), b.center.z), "cavelook_" + n + "_" + (i * 45));
+					}
+					yield return CameraShot(b.center + new Vector3(0.01f, b.size.y + d, -d * 0.5f), b.center, "cavelook_" + n + "_above");
+				}
+			if (n > 0) Log("PASS: pictures of " + n + " cave pieces"); else Fail("no cave pieces on the loaded islands");
+		}
+
+		[ConsoleCommand(name: "CICaveIslands", docs: "Dev, world (host, a test world 'CI ...'): every saved island with cave pieces or dug tunnels brought next to the raft in turn - its rock mountain over the caves (AU83) is there, mapped (cavemap_<island>.txt) and pictured from four sides and above (shot_caveisl_<n>_<side>.png; each side picture must have the island in 15 % of it), nothing seen through from inside (CICaveInside's look round, a picture of the worst look: shot_caveisl_<n>_inside_<k>.png, a dug tunnel's shot_caveisl_<n>_dug_<k>.png), then the island is taken away again: CICaveIslands [part of the name] [most]")]
+		public static void CaveIslandsCommand(string[] args)
+		{
+			// (the name may have spaces - "CICaveIslands Old Mine Islet" read "Mine" as the count and threw (11-05): the count
+			// and "keep" are taken off the end, the rest is the name)
+			var rest = new List<string>(args ?? new string[0]);
+			bool keep = rest.Count > 0 && rest[rest.Count - 1] == "keep"; // (the islands stay, for player 2 to see: CICaveIslands <name> 1 keep)
+			if (keep) rest.RemoveAt(rest.Count - 1);
+			int most = 99, n;
+			if (rest.Count > 1 && int.TryParse(rest[rest.Count - 1], out n)) { most = n; rest.RemoveAt(rest.Count - 1); }
+			string only = string.Join(" ", rest.ToArray()).Trim();
+			if (only == "*") only = "";
+			StartTest(CaveIslandsRoutine(only, most, keep));
+		}
+
+		/// <summary>What a shot shows, as a grid of rays (12 x 7, 60 degrees, 16:9): the object hit, its normal's height and the
+		/// distance - names the parts in a picture (a stretched pillar, a slab before a mouth).</summary>
+		static void PickGrid(Vector3 eye, Vector3 look, string label)
+		{
+			Quaternion rot = Quaternion.LookRotation(look - eye);
+			float th = Mathf.Tan(30f * Mathf.Deg2Rad), tw = th * 16f / 9f;
+			Log("    pick " + label + " (rows top to bottom: name/normal.y/distance)");
+			for (int y = 0; y < 7; y++)
+			{
+				var sb = new System.Text.StringBuilder("     ");
+				for (int x = 0; x < 12; x++)
+				{
+					Vector3 d = rot * new Vector3(((x + 0.5f) / 12f * 2f - 1f) * tw, (1f - (y + 0.5f) / 7f * 2f) * th, 1f);
+					RaycastHit h;
+					if (Physics.Raycast(eye, d, out h, 200f, ~0, QueryTriggerInteraction.Ignore))
+					{
+						string nm = h.collider.name;
+						sb.Append(' ').Append(nm.Length > 14 ? nm.Substring(0, 14) : nm).Append('/').Append(h.normal.y.ToString("F1")).Append('/').Append(h.distance.ToString("F0"));
+					}
+					else sb.Append(" sky");
+				}
+				Log(sb.ToString());
+			}
+			// (the hill's slanted faces right of the middle: their triangle and cell, to find flat slabs)
+			int told = 0;
+			for (int y = 4; y < 7 && told < 12; y++)
+				for (int x = 0; x < 12 && told < 12; x++)
+				{
+					Vector3 d = rot * new Vector3(((x + 0.5f) / 12f * 2f - 1f) * tw, (1f - (y + 0.5f) / 7f * 2f) * th, 1f);
+					RaycastHit h;
+					if (!Physics.Raycast(eye, d, out h, 200f, ~0, QueryTriggerInteraction.Ignore) || h.collider.name != CaveMountain.SkinName || (h.normal.y > 0.3f && h.normal.y < 0.95f)) continue;
+					float best = float.PositiveInfinity; foreach (Terrain tt in Terrain.activeTerrains) { float gy = tt.SampleHeight(h.point) + tt.transform.position.y; if (Mathf.Abs(gy - h.point.y) < Mathf.Abs(best - h.point.y)) best = gy; }
+					Log("     terr " + best.ToString("F2") + " for:");
+					var mc = h.collider as MeshCollider;
+					string tri = "";
+					if (mc != null && mc.sharedMesh != null && h.triangleIndex >= 0)
+					{
+						Vector3[] mv = mc.sharedMesh.vertices; int[] mt = mc.sharedMesh.triangles; int t3 = h.triangleIndex * 3;
+						if (t3 + 2 < mt.Length)
+							tri = " tri " + mc.transform.TransformPoint(mv[mt[t3]]).ToString("F1") + mc.transform.TransformPoint(mv[mt[t3 + 1]]).ToString("F1") + mc.transform.TransformPoint(mv[mt[t3 + 2]]).ToString("F1");
+					}
+					CaveMountain hill = h.collider.GetComponentInParent<CaveMountain>();
+					Log("     slant " + x + "," + y + " at " + h.point.ToString("F1") + " n " + h.normal.ToString("F2") + tri + " | " + (hill != null ? hill.CellText(h.point) : "-"));
+					told++;
+				}
+			// (the ground in front of a mouth, down the picture's middle: what each ray meets, and what stands between it and the sun -
+			// the teal patch before Shelter Atoll's arch, r81)
+			if (label.EndsWith("_q"))
+			{
+				// (the meshes with no collider near the mouth, in the picture's upper half: the floating flakes by Balboa's mouth 1, r80)
+				int listed = 0;
+				foreach (MeshRenderer r in UnityEngine.Object.FindObjectsOfType<MeshRenderer>())
+				{
+					if (listed >= 40 || r.GetComponent<Collider>() != null || !r.enabled) continue;
+					Bounds b = r.bounds;
+					if ((b.center - eye).magnitude > 45f) continue;
+					Vector3 lc = Quaternion.Inverse(rot) * (b.center - eye);
+					if (lc.z <= 0f || lc.y / lc.z < -0.1f * th) continue;
+					string path = r.name; for (Transform t = r.transform.parent; t != null && path.Length < 90; t = t.parent) path = t.name + "/" + path;
+					Log("     nocol " + path + " c " + b.center.ToString("F1") + " size " + b.size.ToString("F1") + " scr " + (lc.x / lc.z / tw).ToString("F2") + "," + (lc.y / lc.z / th).ToString("F2"));
+					listed++;
+				}
+			}
+			if (!label.EndsWith("_close")) return;
+			Light sun = RenderSettings.sun;
+			if (sun == null) foreach (Light l in UnityEngine.Object.FindObjectsOfType<Light>()) if (l.type == LightType.Directional && (sun == null || l.intensity > sun.intensity)) sun = l;
+			Log("     sun " + (sun != null ? sun.name + " dir " + sun.transform.forward.ToString("F2") + " shadows " + sun.shadows : "none"));
+			for (int y = 0; y < 16; y++)
+			{
+				var sb = new System.Text.StringBuilder("      v" + y);
+				foreach (float fx in new[] { 0.3f, 0.5f, 0.7f })
+				{
+					Vector3 d = rot * new Vector3((fx * 2f - 1f) * tw, (1f - (0.55f + y * 0.025f) * 2f) * th, 1f);
+					RaycastHit[] all = Physics.RaycastAll(eye, d, 60f, ~0, QueryTriggerInteraction.Ignore).OrderBy(q => q.distance).ToArray();
+					sb.Append(" |");
+					foreach (RaycastHit q in all.Take(3)) { string nm = q.collider.name; sb.Append(' ').Append(nm.Length > 12 ? nm.Substring(0, 12) : nm).Append('@').Append(q.point.y.ToString("F2")).Append('/').Append(q.distance.ToString("F1")); }
+					if (all.Length > 0 && sun != null)
+					{
+						RaycastHit s;
+						sb.Append(Physics.Raycast(all[0].point + Vector3.up * 0.05f, -sun.transform.forward, out s, 300f, ~0, QueryTriggerInteraction.Ignore) ? " shade:" + s.collider.name + "@" + s.point.ToString("F1") : " lit");
+					}
+				}
+				Log(sb.ToString());
+			}
+		}
+
+		static IEnumerator CaveIslandsRoutine(string only, int most, bool keep)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("cave islands: host, in a world"); yield break; }
+			var kept = new System.Text.RegularExpressions.Regex("_[0-9a-f]{12}$");
+			var names = new List<string>();
+			foreach (string name in IslandSpawner.ListSavedIslands())
+			{
+				if (name.StartsWith("ci", StringComparison.OrdinalIgnoreCase) || kept.IsMatch(name) || name.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase)) continue;
+				if (only.Length > 0 && !only.Split('|').Any(x => name.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0)) continue;
+				IslandFile f = null;
+				try { f = IslandFile.Load(Path.Combine(DynamicIslands.assetpath, name + IslandFile.Extension)); } catch (Exception) { }
+				if (f != null && f.Objects.Any(o => only.Length > 0 ? RaftProps.Get(o.Name) != null && RaftProps.Get(o.Name).IsCave : CaveMountain.Wants(o.Name)) || f.Objects.Any(o => o.Name == DigTunnel.ObjectName)) names.Add(name); // (named ones: the Vines cave too, to look at)
+			}
+			Log("Saved islands with cave pieces: " + names.Count + " (" + string.Join(", ", names.ToArray()) + ")");
+			int n = 0, bad = 0, blockedIslands = 0, insideIslands = 0, framedIslands = 0;
+			foreach (string name in names.Take(most))
+			{
+				n++;
+				SetHour(12f); // (daylight for every island's pictures)
+				var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, name, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
+				if (left.Count > 0) { IslandWorldState.RemoveIds(left, true); IslandCache.Forget(); yield return new WaitForSeconds(1f); }
+				Vector3? spot = ScSpot(name, 400f);
+				if (!spot.HasValue) { Log("  " + name + ": no open sea near the raft"); bad++; continue; }
+				var made = new List<IslandWorldState.Entry>();
+				yield return ScBring(name, spot.Value, made);
+				IslandWorldState.Entry e = made.LastOrDefault();
+				if (e == null || e.Root == null) { Log("  " + name + ": didn't come"); bad++; continue; }
+				yield return new WaitForSeconds(4f);
+				CaveMountain m = e.Root.GetComponentInChildren<CaveMountain>();
+				Transform skin = m != null ? m.transform.Find(CaveMountain.SkinName) : null;
+				if (m != null) File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "cavemap_" + name + ".txt"), m.LastMap ?? "");
+				var caves = e.Root.GetComponentsInChildren<Transform>().Where(t => CaveMountain.Wants(t.name)).ToList();
+				string map = m != null ? m.LastMap ?? "" : "";
+				Log("  " + n + " " + name + ": " + caves.Count + " cave piece(s), mountain " + (skin != null ? "there" : caves.Count == 0 ? "none (no cave pieces)" : map.Count(c => c == 'R') == 0 ? "none needed (the ground covers the caves)" : "MISSING") + " - roof " + map.Count(c => c == 'R') + ", sides " + map.Count(c => c == 's') + ", ways in " + map.Count(c => c == 'c') + "; " + (map.Split('\n').FirstOrDefault() ?? ""));
+				if (skin == null && caves.Count > 0 && map.Count(c => c == 'R') > 0) bad++; // (no roof cell: the ground is over every cave piece, nothing to cover - a cave tool hill, 11-04)
+				// (its ways in clear: a play walking into a den stuck on the hill across its mouth - AU83)
+				List<string> blocked = m != null ? m.BlockedWays() : new List<string>();
+				foreach (string w in blocked.Take(6)) Log("    way in blocked: " + w);
+				if (blocked.Count > 0) { bad++; blockedIslands++; }
+				var looks =e.Root.GetComponentsInChildren<Transform>().Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
+				// (the dug tunnels too - G3, 11-04: built when the island comes, their lining and the ground cut over their mouths)
+				var digs = e.Root.GetComponentsInChildren<DigTunnel>().ToList();
+				for (float w = 0f; w < 10f && digs.Any(x => x.Triangles == 0 || x.Land() == null); w += 0.5f) yield return new WaitForSeconds(0.5f);
+				// (no hill over a dug passage open to the sky: Ironreef's mouth C ran under a rock bridge of it, blue-white in its shade - RF3)
+				if (digs.Count > 0 && skin != null)
+				{
+					var roofed = new List<string>();
+					foreach (DigTunnel dt in digs)
+						foreach (List<DigTunnel.Point> s in dt.Strokes)
+							foreach (DigTunnel.Point q in s)
+							{
+								Vector3 w = dt.transform.TransformPoint(q.At);
+								float dug = float.NegativeInfinity, other = float.NegativeInfinity, hill = float.NegativeInfinity;
+								foreach (RaycastHit h in Physics.RaycastAll(new Vector3(w.x, w.y + 80f, w.z), Vector3.down, 160f, ~0, QueryTriggerInteraction.Ignore))
+								{
+									if (h.collider.name == CaveMountain.SkinName) hill = Mathf.Max(hill, h.point.y);
+									else if (h.collider.name.StartsWith(DigTunnel.RockName, StringComparison.Ordinal)) dug = Mathf.Max(dug, h.point.y);
+									else if (h.collider.gameObject.layer == IslandSpawner.TerrainLayer) other = Mathf.Max(other, h.point.y);
+								}
+								if (dug > other && hill > dug + 1.5f) roofed.Add((w - e.Root.transform.position).ToString("F1") + " hill " + (hill - dug).ToString("F1") + " m over it");
+							}
+					Log("    hill over the open dug passages: " + (roofed.Count == 0 ? "none" : roofed.Count + " point(s): " + string.Join("; ", roofed.Take(6).ToArray())));
+					if (roofed.Count > 0) bad++;
+				}
+				if (digs.Count > 0) Log("    dug tunnels: " + digs.Count + " (" + string.Join(", ", digs.Select(x => x.Strokes.Count + " stroke(s), " + x.PointCount + " points, " + x.Triangles + " triangles").ToArray()) + ")");
+				if (looks.Count > 0 || digs.Count > 0)
+				{
+					caves = looks; // (the pictures: every cave piece, the Vines cave too)
+					// (flooded: a cave whose passage roof is under the sea - Shellback's den on the sea floor, the Drowned Labyrinth's
+					// tunnels and den. Their side pictures looked down at the sea's surface over them: 1-2 % island in Shellback's, 11-23 %
+					// in the Labyrinth's (10-21). An island whose caves are all flooded is pictured from just under the water; one with
+					// dry caves too frames the dry ones)
+					var flooded = caves.Where(t => CaveRoofY(t) < 0f).ToList();
+					bool drowned = caves.Count > 0 && flooded.Count == caves.Count;
+					if (flooded.Count > 0) Log("    flooded (the passage's roof under the sea): " + string.Join(", ", flooded.Select(t => t.name + " " + CaveRoofY(t).ToString("F1") + " m").ToArray()) + (drowned ? " - the side pictures from under the water" : " - the pictures frame the dry ones"));
+					// (the pictures framed on what is there: the caves' and the mountain's meshes, only those within the island's land - from
+					// its land centre and radius, as d9ebe75 - and a camera 20 degrees up at a distance that fits them in the picture. Until
+					// 10-20 the camera stood 3 m over the sea: Shellback's side pictures showed only open sea, the Drowned Labyrinth's a strip)
+					Vector3 land = e.Root.transform.position + LocalLandCentre(e.Root, e.Name);
+					float landR = CustomIslandSpawner.LandRadius(e.Name);
+					if (landR <= 0f) landR = 60f;
+					Bounds b = new Bounds();
+					bool any = false;
+					var meshes = caves.Where(t => drowned || !flooded.Contains(t)).SelectMany(t => t.GetComponentsInChildren<Renderer>()).ToList();
+					if (skin != null) meshes.AddRange(skin.GetComponentsInChildren<Renderer>());
+					foreach (DigTunnel dt in digs) meshes.AddRange(dt.GetComponentsInChildren<Renderer>());
+					foreach (Renderer rr in meshes)
+					{
+						if (rr == null || !rr.enabled || !(rr is MeshRenderer || rr is SkinnedMeshRenderer)) continue;
+						Vector3 off = rr.bounds.center - land;
+						if (new Vector2(off.x, off.z).magnitude > landR + 20f || rr.bounds.size.magnitude > landR * 4f + 100f) continue;
+						if (any) b.Encapsulate(rr.bounds); else { b = rr.bounds; any = true; }
+					}
+					if (!any) b = new Bounds(new Vector3(land.x, 5f, land.z), new Vector3(landR * 2f, 10f, landR * 2f));
+					float rXZ = Mathf.Max(new Vector2(b.extents.x, b.extents.z).magnitude, 10f);
+					float d = Mathf.Max(rXZ / 0.716f, b.extents.y / 0.577f) + 5f; // (the picture's 60 degrees high, 16:9: half widths 45.7 and 30 degrees)
+					var fills = new List<string>();
+					bool empty = false;
+					int measured = 0;
+					for (int i = 0; i < 4; i++)
+					{
+						Vector3 dir = Quaternion.Euler(0f, i * 90f + 30f, 0f) * Vector3.forward;
+						Vector3 from = b.center + dir * (d * 0.94f) + Vector3.up * (d * 0.34f);
+						RaycastHit hit;
+						float g = Physics.Raycast(new Vector3(from.x, 300f, from.z), Vector3.down, out hit, 600f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
+						from.y = Mathf.Max(from.y, Mathf.Max(g, 0.5f) + 3f);
+						float fill;
+						if (!drowned)
+						{
+							// (the island fills the picture: rays through it that end on the island above the sea)
+							fill = IslandInView(from, b.center, e.Root.transform, null);
+							fills.Add((i * 90 + 30) + ": " + Mathf.RoundToInt(fill * 100f) + " %");
+						}
+						else if (g < -4f)
+						{
+							// (just under the water, over sea at least 4 m deep there: the rays that end on the island where its caves are -
+							// not on the seabed nearer the camera)
+							Vector3 framed = from;
+							from.y = -1.5f;
+							fill = IslandInView(from, b.center, e.Root.transform, b);
+							string how = Mathf.RoundToInt(fill * 100f) + " % under the water";
+							// (a wide sand shelf right in front of the camera fills the picture from under the water - the Drowned
+							// Labyrinth's sides 210 and 300, 6-7 %, 10-21 - so then from over the sea at the same spot, looking at the
+							// same middle: 1.5 m over it, then at the side's own framing height as for an island that is not flooded.
+							// There the island above the sea counts and its caves through the water, not the shelf under the sea)
+							foreach (Vector3 over in new[] { new Vector3(from.x, 1.5f, from.z), framed })
+							{
+								if (fill >= 0.15f) break;
+								float overFill = IslandInView(over, b.center, e.Root.transform, b, true);
+								how += ", " + Mathf.RoundToInt(overFill * 100f) + " % from " + over.y.ToString("F1") + " m over the sea";
+								if (overFill > fill) { fill = overFill; from = over; }
+							}
+							fills.Add((i * 90 + 30) + ": " + how);
+						}
+						else { fill = 1f; fills.Add((i * 90 + 30) + ": over land or shallows " + g.ToString("F1") + " m, not measured"); measured--; }
+						measured++;
+						if (fill < 0.15f) empty = true;
+						yield return CameraShot(from, b.center, "caveisl_" + n + "_" + (i * 90 + 30));
+					}
+					Log("    the island in the side pictures: " + string.Join(", ", fills.ToArray()) + (empty ? " - a side without the island in view" : measured == 0 ? " - flooded, no side over open water to picture it from (not measured)" : ""));
+					if (empty) { bad++; framedIslands++; }
+					yield return CameraShot(b.center + new Vector3(0.01f, b.size.y + d, -d * 0.6f), b.center, "caveisl_" + n + "_above");
+					// (every way in from outside: a close look into the mouth and a three-quarter view of it, its arch and the ground in
+					// front - user 11-08: one rock, no black stair-stepped frame, nothing seen through, no square slab before it)
+					var views = m != null ? m.MouthViews() : new List<KeyValuePair<Vector3, Vector3>>();
+					foreach (DigTunnel dt in digs)
+						foreach (List<DigTunnel.Point> st in dt.Strokes)
+						{
+							if (st.Count < 2) continue;
+							Vector3 a0 = dt.transform.TransformPoint(st[0].At), a1 = dt.transform.TransformPoint(st[1].At);
+							Vector3 o = a0 - a1; o.y = 0f;
+							if (a0.y > 0.3f && o.sqrMagnitude > 0.01f) views.Add(new KeyValuePair<Vector3, Vector3>(a0, o.normalized));
+						}
+					int mv = 0;
+					foreach (KeyValuePair<Vector3, Vector3> v in views.Take(6))
+					{
+						Vector3 at = v.Key, outDir = v.Value;
+						foreach (int q in new[] { 0, 1 })
+						{
+							Vector3 eye = q == 0 ? at + outDir * 7f + Vector3.up * 2.2f : at + (Quaternion.Euler(0f, 40f, 0f) * outDir) * 16f + Vector3.up * 7f;
+							RaycastHit gh;
+							if (Physics.Raycast(new Vector3(eye.x, eye.y + 40f, eye.z), Vector3.down, out gh, 80f, ~0, QueryTriggerInteraction.Ignore)) eye.y = Mathf.Max(eye.y, gh.point.y + 1.7f);
+							eye.y = Mathf.Max(eye.y, 1.5f);
+							yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
+							PickGrid(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
+							// (r84 test: the same with the sun's shadows off - is a jagged line a shadow?)
+							Light sunL = UnityEngine.Object.FindObjectsOfType<Light>().FirstOrDefault(x => x.type == LightType.Directional && x.isActiveAndEnabled);
+							if (sunL != null) { LightShadows was = sunL.shadows; sunL.shadows = LightShadows.None; yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_closens" : "_qns")); sunL.shadows = was; }
+						}
+						Log("    mouth " + mv + " at " + (at - e.Root.transform.position).ToString("F1") + " facing " + outDir.ToString("F1"));
+						mv++;
+					}
+					// (and from inside: nothing seen through its walls or roof, the mountain over them, or the ground - X7)
+					bool seenThrough = false;
+					foreach (Transform t in caves)
+					{
+						if (t == null) continue;
+						string detail;
+						Vector3 eye, look;
+						int seen = CaveSeeThrough(t, RaftProps.Get(t.name), out detail, out eye, out look);
+						if (seen > 0 || t == caves[0]) Log("    inside " + t.name + " at " + t.position.ToString("F0") + ": " + detail);
+						if (seen == 0) continue;
+						seenThrough = true;
+						yield return CameraShot(eye, eye + look * 5f, "caveisl_" + n + "_inside_" + caves.IndexOf(t));
+					}
+					foreach (DigTunnel dt in digs)
+					{
+						string detail;
+						Vector3 eye, look;
+						int seen = DugSeeThrough(dt, digs, out detail, out eye, out look);
+						Log("    inside the dug tunnel at " + dt.transform.position.ToString("F0") + ": " + detail);
+						if (seen == 0) continue;
+						seenThrough = true;
+						yield return CameraShot(eye, eye + look * 5f, "caveisl_" + n + "_dug_" + digs.IndexOf(dt));
+					}
+					if (seenThrough) { bad++; insideIslands++; }
+				}
+				if (keep) continue;
+				IslandWorldState.RemoveIds(made.Select(x => x.Id).ToList(), true);
+				IslandCache.Forget();
+				yield return new WaitForSeconds(2f);
+			}
+			if (names.Count == 0) Fail("no saved island with cave pieces");
+			else if (bad > 0) Fail(bad + " of " + Math.Min(most, names.Count) + " islands without their mountain, with a way in blocked (" + blockedIslands + "), seen through from inside (" + insideIslands + ") or a side picture without the island in view (" + framedIslands + ", above)");
+			else Log("PASS: " + Math.Min(most, names.Count) + " islands with caves, each with its mountain, its ways in clear, nothing seen through from inside, each side picture with the island in view");
+		}
+
+		/// <summary>How much of a picture from <from> towards <at> (60 degrees high, 16:9) is the island under <root>: a 16 x 9 grid of
+		/// rays, those that end on it above the sea (-1.5 m: open sea, or only its seabed, is not the island in view). <caves>: a
+		/// picture from under the water - those that end on it within 3 m of the caves' bounds across, at any depth; with
+		/// <paramref name="orAbove"/> (from over the water) those that end on it above the sea too.</summary>
+		static float IslandInView(Vector3 from, Vector3 at, Transform root, Bounds? caves, bool orAbove = false)
+		{
+			Quaternion rot = Quaternion.LookRotation(at - from);
+			float tanV = Mathf.Tan(30f * Mathf.Deg2Rad), tanH = tanV * 16f / 9f;
+			int on = 0, all = 0;
+			for (int x = 0; x < 16; x++)
+				for (int y = 0; y < 9; y++)
+				{
+					Vector3 ray = rot * new Vector3(tanH * ((x + 0.5f) / 8f - 1f), tanV * ((y + 0.5f) / 4.5f - 1f), 1f);
+					RaycastHit hit;
+					all++;
+					if (!Physics.Raycast(from, ray.normalized, out hit, 2500f, ~0, QueryTriggerInteraction.Ignore) || !hit.collider.transform.IsChildOf(root)) continue;
+					bool above = hit.point.y > -1.5f;
+					if (caves.HasValue ? Mathf.Abs(hit.point.x - caves.Value.center.x) <= caves.Value.extents.x + 3f && Mathf.Abs(hit.point.z - caves.Value.center.z) <= caves.Value.extents.z + 3f || orAbove && above : above) on++;
+				}
+			return all > 0 ? (float)on / all : 0f;
+		}
+
+		/// <summary>Where a cave piece's passage roof is (world y): its floor and headroom from raft_props.txt (measured at its catalog scale), at its scale over that.</summary>
+		static float CaveRoofY(Transform t)
+		{
+			PropInfo p = RaftProps.Get(t.name);
+			return p == null ? float.MaxValue : t.position.y + (p.Floor + p.Headroom) * CaveMountain.OverMeasured(t, t.name).y;
+		}
+
+		[ConsoleCommand(name: "CIAnimalsDry",docs: "Dev, in a world with a custom island with land animals loaded: no animal may walk in the sea - no NavMesh below the waterline at the islands, no land animal below it (AU84)")]
+		public static void AnimalsDryCommand()
+		{
+			bool ok = true;
+			UnityEngine.AI.NavMeshTriangulation tri = UnityEngine.AI.NavMesh.CalculateTriangulation();
+			int islands = 0;
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading && !WorldRandomizer.IsExtras(x)))
+			{
+				IslandSettings s = e.Root.GetComponent<IslandSettings>();
+				if (s == null || e.Root.GetComponent<UnityEngine.AI.NavMeshSurface>() == null) continue;
+				islands++;
+				float sea = e.Root.transform.position.y + s.WaterLevel, r = Mathf.Max(60f, CustomIslandSpawner.LandRadius(e.Name) + 40f);
+				int wet = tri.vertices.Count(v => new Vector2(v.x - e.Position.x, v.z - e.Position.z).magnitude < r && v.y < sea - 1f);
+				Check(ref ok, wet == 0, "'" + e.Name + "': " + wet + " NavMesh point(s) more than 1 m under the sea");
+			}
+			int animals = 0;
+			foreach (AI_NetworkBehaviour a in UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>())
+			{
+				if (a == null || a.GetComponentInChildren<UnityEngine.AI.NavMeshAgent>() == null) continue;
+				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Root != null && new Vector2(x.Position.x - a.transform.position.x, x.Position.z - a.transform.position.z).magnitude < Mathf.Max(60f, CustomIslandSpawner.LandRadius(x.Name) + 40f));
+				IslandSettings s = e != null ? e.Root.GetComponent<IslandSettings>() : null;
+				if (s == null) continue;
+				animals++;
+				float sea = e.Root.transform.position.y + s.WaterLevel;
+				Check(ref ok, a.transform.position.y > sea - 1f, a.name + " on '" + e.Name + "' at " + (a.transform.position.y - sea).ToString("F1") + " m from the sea's surface");
+			}
+			Check(ref ok, islands > 0, islands + " island(s) with a NavMesh, " + animals + " land animal(s) looked at");
+			if (ok) Log("PASS: animals dry"); else Fail("animals dry");
+		}
+
+		[ConsoleCommand(name: "CIFakeBuild", docs: "Dev, anywhere: this PC pretends to be another build of the same version (CIFakeBuild 0badbeef), or its own again (CIFakeBuild off) - AU81")]
+		public static void FakeBuildCommand(string[] args)
+		{
+			string v = args != null && args.Length > 0 ? args[0] : "off";
+			IslandNetwork.TestBuild = v == "off" ? null : v;
+			Log("Fake build: " + IslandNetwork.Build);
+		}
+
+		[ConsoleCommand(name: "CIVersionCheck", docs: "Dev, in a world with two players: CIVersionCheck same = no version difference was reported; CIVersionCheck differ <version> = the difference with that version was reported here; CIVersionCheck build <build> = another build of the same version was reported (AU81)")]
 		public static void VersionCheckCommand(string[] args)
 		{
 			bool ok = true;
 			string mode = args != null && args.Length > 0 ? args[0] : "same";
 			string notice = IslandNetwork.VersionNotice ?? "";
 			if (mode == "same") Check(ref ok, notice.Length == 0, "no version difference reported (" + notice + ")");
+			else if (mode == "build") Check(ref ok, args.Length > 1 && notice.Contains("another build") && notice.Contains(args[1]), "the other build was reported: " + notice);
 			else Check(ref ok, args.Length > 1 && notice.Contains("Custom Islands " + args[1]), "the version difference was reported: " + notice);
 			if (ok) Log("PASS: version check"); else Fail("version check");
+		}
+
+		[ConsoleCommand(name: "CITableSeen", docs: "Dev, in a world (either player): with the world option Extra upgrades on, this machine has the upgrade research table registered and craftable (AU81 - player 2 once didn't see it)")]
+		public static void TableSeenCommand()
+		{
+			bool ok = true;
+			Item_Base table = ExtraUpgrades.TableItem;
+			Check(ref ok, WorldOptions.On(WorldOptions.Upgrades), "the option Extra upgrades on here (" + string.Join(",", WorldOptions.Current.ToArray()) + ")");
+			Check(ref ok, table != null, "the upgrade table registered");
+			Check(ref ok, table != null && table.settings_recipe.Learned, "the upgrade table craftable");
+			if (ok) Log("PASS: table seen (" + (Raft_Network.IsHost ? "host" : "client") + ")"); else Fail("table seen");
+		}
+
+		[ConsoleCommand(name: "CILookAt", docs: "Dev, editor: pictures of the first placed object whose name contains <text>, from four sides a little above (shot_lookat_<n>_<side>.png): CILookAt <text> [distance]")]
+		public static void LookAtCommand(string[] args)
+		{
+			string text = args != null && args.Length > 0 ? args[0] : "";
+			float dist = args != null && args.Length > 1 ? F(args[1]) : 0f;
+			EditorGameObject e = PlacedEditorObjects().FirstOrDefault(o => (o.GameObjectName ?? "").IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0);
+			if (e == null || text.Length == 0) { Fail("look at: no placed object with '" + text + "'"); return; }
+			StartTest(LookAtRoutine(e, dist));
+		}
+
+		static IEnumerator LookAtRoutine(EditorGameObject e, float dist)
+		{
+			Bounds b = new Bounds(e.transform.position, Vector3.one);
+			foreach (Renderer r in e.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
+			if (dist <= 0f) dist = b.extents.magnitude * 1.6f + 4f;
+			for (int i = 0; i < 4; i++)
+			{
+				Vector3 dir = Quaternion.Euler(0f, i * 90f + 20f, 0f) * Vector3.forward;
+				yield return CameraShot(b.center + dir * dist + Vector3.up * dist * 0.25f, b.center, "lookat_" + e.GameObjectName + "_" + (i * 90 + 20));
+			}
+			Log("PASS: look at " + e.GameObjectName + " (" + b.size.ToString("F1") + ")");
+		}
+
+		[ConsoleCommand(name: "CIDrop", docs: "Dev, editor: sets the objects of an island whose name contains <text> down onto what is under them (or lowers them <metres>) and saves it; the old file goes to Mods\\DynamicIslands\\deleted\\ first: CIDrop <island> <text> [metres]")]
+		public static void DropCommand(string[] args)
+		{
+			if (args == null || args.Length < 2) { Fail("CIDrop <island> <text> [metres]"); return; }
+			StartTest(DropRoutine(args[0], args[1], args.Length > 2 ? F(args[2]) : 0f));
+		}
+
+		static IEnumerator DropRoutine(string name, string text, float metres)
+		{
+			yield return WaitForEditor(false);
+			DynamicIslands.currentIslandName = "";
+			if (!DynamicIslands.LoadIsland(name)) { Fail(name + ": the editor didn't load it"); yield break; }
+			for (float t = 0; t < 120f && DynamicIslands.currentIslandName != name; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+			if (DynamicIslands.currentIslandName != name) { Fail(name + ": not loaded after 2 minutes"); yield break; }
+			yield return null; yield return null;
+			Physics.SyncTransforms();
+			var moves = new List<string>();
+			foreach (EditorGameObject e in PlacedEditorObjects().Where(o => (o.GameObjectName ?? "").IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0).ToList())
+			{
+				float d = metres;
+				if (d <= 0f)
+				{
+					Renderer[] rs = e.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
+					if (rs.Length == 0) continue;
+					Bounds b = rs[0].bounds;
+					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+					// (the nearest thing under its bottom that isn't itself: the ground, a rock, a floor)
+					RaycastHit[] hits = Physics.RaycastAll(new Vector3(b.center.x, b.min.y + 0.05f, b.center.z), Vector3.down, 50f, ~0, QueryTriggerInteraction.Ignore);
+					RaycastHit[] below = hits.Where(h => h.collider.GetComponentInParent<EditorGameObject>() != e).OrderBy(h => h.distance).ToArray();
+					if (below.Length == 0) continue;
+					d = below[0].distance - 0.05f;
+				}
+				if (d <= 0.05f) continue;
+				e.transform.position += Vector3.down * d;
+				moves.Add(e.GameObjectName + " " + Num(d) + " m");
+			}
+			if (moves.Count == 0) { Log("PASS: " + name + ": nothing to drop"); yield break; }
+			string backup = Path.Combine(DynamicIslands.assetpath, "deleted");
+			Directory.CreateDirectory(backup);
+			string file = IslandSpawner.PathFor(name);
+			File.Copy(file, Path.Combine(backup, Path.GetFileNameWithoutExtension(file) + "-drop-" + DateTime.Now.ToString("yyyyMMddHHmmss") + IslandFile.Extension), true);
+			bool saved = DynamicIslands.SaveIsland(name);
+			Log((saved ? "PASS: " : "FAIL: ") + name + ": " + moves.Count + " dropped (" + string.Join(", ", moves.ToArray()) + ")");
+		}
+
+		[ConsoleCommand(name: "CICaveSeen", docs: "Dev, in a world (either player): the cave mountains this machine has built on the loaded islands - each with its rock skin (AU83 on player 2)")]
+		public static void CaveSeenCommand()
+		{
+			CaveMountain[] all = UnityEngine.Object.FindObjectsOfType<CaveMountain>();
+			int skinned = all.Count(m => m.transform.Find(CaveMountain.SkinName) != null);
+			Log("CAVESEEN " + all.Length + " mountain(s), " + skinned + " with their rock skin");
+			if (all.Length > 0 && skinned == all.Length) Log("PASS: cave seen"); else Fail("cave seen");
+		}
+
+		[ConsoleCommand(name: "CIJoinSpot", docs: "Dev, in a world (either player): the local player is on or by the raft - within 25 m of it and not under the sea or under its deck (AU80/AU82 - a friend joined below the raft / on the open sea)")]
+		public static void JoinSpotCommand()
+		{
+			Network_Player p = RAPI.GetLocalPlayer();
+			Raft r = UnityEngine.Object.FindObjectOfType<Raft>();
+			if (p == null || r == null) { Fail("join spot: no player or raft"); return; }
+			Vector3 at = p.transform.position, raft = r.transform.position;
+			float flat = Vector2.Distance(new Vector2(at.x, at.z), new Vector2(raft.x, raft.z));
+			bool ok = true;
+			Check(ref ok, flat < 25f, "by the raft: " + flat.ToString("F1") + " m from its centre");
+			Check(ref ok, at.y > raft.y - 0.5f, "not under the deck or the sea: player y " + at.y.ToString("F1") + ", raft y " + raft.y.ToString("F1") + (PlayerHold.Busy ? ", still held" : ""));
+			if (ok) Log("PASS: join spot"); else Fail("join spot");
 		}
 
 		[ConsoleCommand(name: "CIRaftHeight", docs: "Dev, world: logs RAFT <deck top above the sea> <raft object y> <player y> <player grounded> - the raft must float on the sea (about 0.3 m)")]
@@ -285,6 +835,16 @@ namespace DynamicIslands
 			long managed = GC.GetTotalMemory(true) / (1024 * 1024);
 			long unity = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong() / (1024 * 1024);
 			Log("MEMORY " + managed + " " + unity + " " + Resources.FindObjectsOfTypeAll<Texture>().Length + " " + Resources.FindObjectsOfTypeAll<Mesh>().Length + " " + Resources.FindObjectsOfTypeAll<GameObject>().Length);
+			// (11-13 memory hunt: the textures' own size by kind, the managed heap Mono holds, the dug rims' cached copies)
+			Texture[] all = Resources.FindObjectsOfTypeAll<Texture>();
+			long t2d = 0, rt = 0; int nRt = 0, nMade = 0;
+			foreach (Texture t in all)
+			{
+				long b = UnityEngine.Profiling.Profiler.GetRuntimeMemorySizeLong(t);
+				if (t is RenderTexture) { rt += b; nRt++; } else t2d += b;
+				if (t.name.StartsWith("DigTunnelGround", System.StringComparison.Ordinal)) nMade++;
+			}
+			Log("MEMORY2 mono heap " + (UnityEngine.Profiling.Profiler.GetMonoHeapSizeLong() >> 20) + " MB, textures " + (t2d >> 20) + " MB, render textures " + nRt + " " + (rt >> 20) + " MB, rim bakes " + nMade + ", " + DigTunnel.CacheReport());
 		}
 
 		[ConsoleCommand(name: "CIPlanEdit", docs: "Dev, anywhere: changes the test plan 'CI Copy Plan' (CIPlanCopyPrep make) as a player would in World Plans: CIPlanEdit add = a 4th rule; CIPlanEdit more = a 5th")]

@@ -25,22 +25,150 @@ namespace DynamicIslands
 		static void Log(string msg) { Debug.Log("[CITEST] " + msg); }
 		static void Fail(string msg) { Debug.LogError("[CITEST] FAIL: " + msg); }
 
+		// Every test coroutine runs through this, so ci.ps1 can end a run at "[CITEST] IDLE"
+		// (logged when the last running test ends) instead of guessing from PASS/FAIL lines.
+		static int runningTests;
+		// Lines of the command file still to run, and an IDLE held back for them: "CIA;CIB" logs IDLE once, after CIB
+		// (ci.ps1 -done used to stop at CIA's IDLE while CIB ran on, and the next run's test overlapped it)
+		static int pendingCommands;
+		static bool idleOwed;
+		static Coroutine StartTest(IEnumerator e)
+		{
+			if (exclusiveTest != null && exclusiveTest != e) StopExclusive();
+			runningTests++;
+			int id = ++testSerial;
+			runningIds.Add(id);
+			if (exclusiveTest == e) exclusiveId = id;
+			Coroutine run = DynamicIslands.instance.StartCoroutine(Track(e, id));
+			if (exclusiveTest == e) exclusiveRun = run;
+			// (a test that ended at once is gone already)
+			if (runningIds.Contains(id)) runningRuns[id] = new KeyValuePair<IEnumerator, Coroutine>(e, run);
+			return run;
+		}
+
+		// Every running test by its number: CIStopTests ends them all - the runner sends it after a suite's timeout, as the
+		// test's coroutine ran on under the next suites (CIRoundTrip 44 min, 5 suites broken - RUN2 10-20)
+		static readonly Dictionary<int, KeyValuePair<IEnumerator, Coroutine>> runningRuns = new Dictionary<int, KeyValuePair<IEnumerator, Coroutine>>();
+
+		[ConsoleCommand(name: "CIStopTests", docs: "Dev: stops every running test (its finally runs: options etc. put back) - alltests sends it when a suite times out, so the test can't run on under the next ones")]
+		public static void StopTestsCommand()
+		{
+			// (where a long test was when stopped: CIButtons' screen and press - RUN2 10-21, 45 min with one line)
+			if (buttonRun != null && buttonRun.Active) Log("  buttons: stopped at " + buttonRun.Where());
+			var names = new List<string>();
+			foreach (var kv in runningRuns.ToList())
+			{
+				IEnumerator e = kv.Value.Key;
+				if (kv.Value.Value != null) DynamicIslands.instance.StopCoroutine(kv.Value.Value);
+				runningRuns.Remove(kv.Key);
+				runningIds.Remove(kv.Key);
+				if (exclusiveTest == e) { exclusiveTest = null; exclusiveRun = null; }
+				names.Add(TestName(e));
+				try { IDisposable d = e as IDisposable; if (d != null) d.Dispose(); }
+				catch (Exception ex) { Debug.LogException(ex); }
+				if (--runningTests < 0) runningTests = 0;
+			}
+			Log("Stopped " + names.Count + " running test(s)" + (names.Count > 0 ? ": " + string.Join(", ", names.ToArray()) : ""));
+			if (runningTests == 0) { if (pendingCommands > 0) idleOwed = true; else Log("IDLE (all tests done)"); }
+		}
+
+		/// <summary>A test routine's name from its iterator class ("&lt;RoundTripRoutine&gt;d__12" -> RoundTripRoutine).</summary>
+		static string TestName(IEnumerator e)
+		{
+			string n = e.GetType().Name;
+			int a = n.IndexOf('<'), b = n.IndexOf('>');
+			return a >= 0 && b > a ? n.Substring(a + 1, b - a - 1) : n;
+		}
+
+		[ConsoleCommand(name: "CIStopCheck", docs: "Dev: CIStopTests ends a running test, runs its finally and logs IDLE (stops any other running test too)")]
+		public static void StopCheckCommand() { DynamicIslands.instance.StartCoroutine(StopCheckRoutine()); }
+		static bool stopCheckFinally;
+		static IEnumerator StopCheckDummy()
+		{
+			try { while (true) yield return null; }
+			finally { stopCheckFinally = true; }
+		}
+		// (not a test itself: CIStopTests would end it with the dummy)
+		static IEnumerator StopCheckRoutine()
+		{
+			stopCheckFinally = false;
+			StartTest(StopCheckDummy());
+			yield return null; yield return null;
+			bool running = runningTests > 0 && runningRuns.Count > 0;
+			StopTestsCommand();
+			yield return null; yield return null;
+			bool ok = running && runningTests == 0 && runningRuns.Count == 0 && runningIds.Count == 0 && stopCheckFinally;
+			if (ok) Log("PASS: stop tests (the running test ended, its finally ran)");
+			else Fail("stop tests (was running " + running + ", still running " + runningTests + ", finally ran " + stopCheckFinally + ")");
+		}
+
+		// Each running test's number: a command file's later lines wait only for the tests its own earlier lines started
+		static int testSerial;
+		static readonly HashSet<int> runningIds = new HashSet<int>();
+
+		// A long test that keeps changing the world (CIOptionsMatrix) stops when the next test starts: after a runner's
+		// timeout it went on switching options under the next tests (CIBlueprintsWorld, CIWorldOptionsCheck failed)
+		static IEnumerator exclusiveTest;
+		static Coroutine exclusiveRun;
+		static string exclusiveName;
+		static int exclusiveId;
+		static Coroutine StartExclusiveTest(string name, IEnumerator e)
+		{
+			if (exclusiveTest != null) StopExclusive();
+			exclusiveTest = e;
+			exclusiveName = name;
+			return StartTest(e);
+		}
+
+		static void StopExclusive()
+		{
+			IEnumerator e = exclusiveTest;
+			if (e == null) return;
+			exclusiveTest = null;
+			if (exclusiveRun != null) DynamicIslands.instance.StopCoroutine(exclusiveRun);
+			exclusiveRun = null;
+			runningIds.Remove(exclusiveId);
+			runningRuns.Remove(exclusiveId);
+			// (not a FAIL line: it lands in the next test's output and failed that one; the runner has its timeout already)
+			Log("STOPPED: " + exclusiveName + " - another test started (the runner moved on, e.g. after its timeout)");
+			// (Dispose runs the test's finally: the world's own options etc. back now, not over the next test)
+			try { IDisposable d = e as IDisposable; if (d != null) d.Dispose(); }
+			catch (Exception ex) { Debug.LogException(ex); }
+			if (--runningTests < 0) runningTests = 0;
+		}
+
+		static IEnumerator Track(IEnumerator e, int id)
+		{
+			while (true)
+			{
+				bool more;
+				try { more = e.MoveNext(); }
+				catch (Exception ex) { Fail("exception: " + ex.Message); Debug.LogException(ex); more = false; }
+				if (!more) break;
+				yield return e.Current;
+			}
+			if (exclusiveTest == e) { exclusiveTest = null; exclusiveRun = null; }
+			runningIds.Remove(id);
+			runningRuns.Remove(id);
+			if (--runningTests <= 0) { runningTests = 0; if (pendingCommands > 0) idleOwed = true; else Log("IDLE (all tests done)"); }
+		}
+
 		[ConsoleCommand(name: "CITest", docs: "Dev: automated editor test (sculpt, place, save, load, verify)")]
 		public static void RunEditorTest()
 		{
-			DynamicIslands.instance.StartCoroutine(EditorTest());
+			StartTest(EditorTest());
 		}
 
 		[ConsoleCommand(name: "CITestWorld", docs: "Dev: spawns the island saved by CITest in front of the raft and verifies it")]
 		public static void RunWorldTest()
 		{
-			DynamicIslands.instance.StartCoroutine(WorldTest());
+			StartTest(WorldTest());
 		}
 
 		[ConsoleCommand(name: "CILook", docs: "Dev: renders spawned custom islands from a temporary camera to Mods\\DynamicIslands\\view_<island>.png")]
 		public static void RenderIslandViews(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(RenderViews(args != null && args.Contains("low")));
+			StartTest(RenderViews(args != null && args.Contains("low")));
 		}
 
 		/// <param name="low">film from below the hilltop (to see flying islands' undersides); files get a number per island</param>
@@ -119,7 +247,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIUndo", docs: "Dev: tests undo/redo for sculpt, paint, placing and deleting, and the islands window (run in the editor)")]
 		public static void RunUndoTest()
 		{
-			DynamicIslands.instance.StartCoroutine(UndoTest());
+			StartTest(UndoTest());
 		}
 
 		static float MaxDiff(float[,] a, float[,] b)
@@ -236,7 +364,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CISpawnGenerated", docs: "Dev, in game (host): the automatic spawner generates a brand-new island ahead of the raft now; checks its file, style and objects. CISpawnGenerated [keep]")]
 		public static void SpawnGenerated(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(SpawnGeneratedRoutine(args != null && args.Contains("keep")));
+			StartTest(SpawnGeneratedRoutine(args != null && args.Contains("keep")));
 		}
 
 		static IEnumerator SpawnGeneratedRoutine(bool keep)
@@ -245,7 +373,10 @@ namespace DynamicIslands
 			if (!pos.HasValue) { Fail("not in a world"); yield break; }
 			int before = IslandWorldState.Islands.Count;
 			CustomIslandSpawner.ForceNextPick = CustomIslandSpawner.GeneratedEntry;
-			string result = CustomIslandSpawner.TrySpawn(pos.Value, true);
+			string result;
+			CustomIslandSpawner.TestAllRound = true;
+			try { result = CustomIslandSpawner.TrySpawn(pos.Value, true); }
+			finally { CustomIslandSpawner.TestAllRound = false; }
 			Log(result);
 			IslandWorldState.Entry e = IslandWorldState.Islands.Skip(before).FirstOrDefault();
 			if (e == null) { Fail("no island was added (" + result + ")"); yield break; }
@@ -269,7 +400,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIRadarTest", docs: "Dev, in game (host): places a Receiver next to the raft with its radar on and checks there is a dot per custom island, pointing the right way")]
 		public static void RadarTest()
 		{
-			DynamicIslands.instance.StartCoroutine(RadarTestRoutine());
+			StartTest(RadarTestRoutine());
 		}
 
 		static IEnumerator RadarTestRoutine()
@@ -278,8 +409,8 @@ namespace DynamicIslands
 			if (!raftPos.HasValue) { Fail("not in a world"); yield break; }
 			if (IslandWorldState.Islands.Count == 0)
 			{
-				string name = IslandSpawner.ListSavedIslands().FirstOrDefault();
-				if (name == null) { Fail("no saved island to spawn"); yield break; }
+				// (the tests' own sample island, not whichever island the player has saved)
+				string name = SaveSampleIsland();
 				Vector3 at = raftPos.Value + new Vector3(0, 0, 300f);
 				yield return DynamicIslands.instance.SpawnIslandFile(name, at, true);
 			}
@@ -303,16 +434,30 @@ namespace DynamicIslands
 			if (r.radarSection != null) r.radarSection.SetActive(true);
 			IslandRadar.Draw(r);
 			var list = IslandRadar.DotsOf(r).Where(d => d != null && d.gameObject.activeSelf).ToList();
-			bool ok = list.Count == IslandWorldState.Islands.Count;
-			// The first island: its dot must point towards it (receiver faces world forward)
-			if (ok && list.Count > 0)
+			// (LM2: far islands nobody needs any more are left off - one dot per island the radar shows)
+			List<IslandWorldState.Entry> shown = IslandRadar.Shown;
+			bool ok = list.Count == shown.Count && shown.Count > 0;
+			// Each dot points towards its island, seen from the way the receiver faces (dot i is shown island i - CB13)
+			float worst = 0f;
+			for (int i = 0; ok && i < list.Count; i++)
 			{
-				Vector3 toIsland = IslandWorldState.Islands[0].Position - r.transform.position;
-				Vector2 dotDir = ((RectTransform)list[0].transform).anchoredPosition;
-				float angle = Vector2.Angle(new Vector2(toIsland.x, toIsland.z), -dotDir); // Raft's dot maths mirrors the vector
-				Log("Island 0 is at " + new Vector2(toIsland.x, toIsland.z) + ", its dot at " + dotDir + " (angle " + angle.ToString("F0") + ")");
+				Vector3 toIsland = shown[i].Position - r.transform.position;
+				Vector3 seen = Quaternion.Euler(0f, -r.transform.eulerAngles.y, 0f) * new Vector3(toIsland.x, 0f, toIsland.z);
+				Vector2 dotDir = ((RectTransform)list[i].transform).anchoredPosition;
+				float angle = Vector2.Angle(new Vector2(seen.x, seen.z), -dotDir); // Raft's dot maths mirrors the vector
+				if (i == 0) Log("Island 0 is at " + new Vector2(seen.x, seen.z) + " from the receiver, its dot at " + dotDir + " (angle " + angle.ToString("F0") + ")");
+				if (dotDir.sqrMagnitude > 0.01f) worst = Mathf.Max(worst, angle);
 			}
-			Log((ok ? "PASS" : "FAIL") + ": the receiver shows " + list.Count + " custom island dot(s) for " + IslandWorldState.Islands.Count + " island(s)");
+			Log((ok && worst < 3f ? "PASS" : "FAIL") + ": every dot points towards its island (worst " + worst.ToString("F1") + " degrees off)");
+			Log((ok ? "PASS" : "FAIL") + ": the receiver shows " + list.Count + " custom island dot(s) for the " + shown.Count + " island(s) within reach or still needed (" + IslandWorldState.Islands.Count + " in the world)");
+			// (ROADMAP LM2: with a short receiverDistance only the islands within it, and those still needed, show)
+			float keep = CustomIslandSpawner.ReceiverDistance;
+			CustomIslandSpawner.ReceiverDistance = 1f;
+			IslandRadar.Draw(r);
+			int near = IslandRadar.DotsOf(r).Count(d => d != null && d.gameObject.activeSelf);
+			int needed = IslandWorldState.Islands.Count(e => ReturningIslands.Why(e) != null);
+			CustomIslandSpawner.ReceiverDistance = keep;
+			Log((near == needed ? "PASS" : "FAIL") + ": receiverDistance 1 m: " + near + " dot(s), the " + needed + " island(s) still needed");
 			UnityEngine.Object.Destroy(go);
 		}
 
@@ -339,25 +484,98 @@ namespace DynamicIslands
 			for (int x = 0; x < 4; x++)
 				for (int z = 0; z < 3; z++)
 					put("Block_Foundation", PlacementOptions.FloatIfBlock("Block_Foundation", origin + new Vector3(x * g, 0, z * g)), 0);
-			float deck = sea + PlacementOptions.FoundationFloat + PlacementOptions.FoundationTop; // the deck of the foundations, as on the player's raft
+			float deck = sea + PlacementOptions.FoundationFloat + PlacementOptions.FoundationPlanks; // the foundations' planks, where walls stand
 			put("Block_Pillar_Wood", origin + new Vector3(-g / 2, deck, -g / 2), 0);
 			put("Block_Pillar_Wood", origin + new Vector3(g * 1.5f, deck, -g / 2), 0);
+			put("Block_Pillar_Wood", origin + new Vector3(-g / 2, deck, g / 2), 0);
+			put("Block_Pillar_Wood", origin + new Vector3(g * 1.5f, deck, g / 2), 0);
 			put("Block_Wall_Thatch", origin + new Vector3(0, deck, -g / 2), 0);
-			put("Block_Roof_Straight_Thatch", origin + new Vector3(0, deck + 2.4f, 0), 0);
+			// (a roof on the four pillars, as the wreck map type's shelter has: Raft's roof blocks as its building puts them)
+			RaftRoof.Hip((n, p, ry) => put(n, p, ry), origin + new Vector3(0, deck + RaftRoof.OnWalls, 0), 2, 1);
 			put("Block_Ladder", origin + new Vector3(g * 3, deck, g), 90);
 			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(spawned, true));
 			Transform cam = Camera.main.transform;
 			cam.position = origin + new Vector3(-8f, sea + 8f, -12f);
 			cam.LookAt(origin + new Vector3(g * 1.5f, sea, g));
 			bool floating = spawned.Where(s => s.name == "Block_Foundation").All(s => Mathf.Abs(s.transform.position.y - (sea + PlacementOptions.FoundationFloat)) < 0.01f);
-			Log((floating && spawned.Count == 17 ? "PASS" : "FAIL") + ": built an abandoned raft of " + spawned.Count + " Raft blocks; foundations float at the sea surface: " + floating);
+			Log((floating && spawned.Count == 20 ? "PASS" : "FAIL") + ": built an abandoned raft of " + spawned.Count + " Raft blocks; foundations float at the sea surface: " + floating);
+		}
+
+		[ConsoleCommand(name: "CIRoofDemo", docs: "Dev, editor: RaftRoof's hipped roofs of Raft's roof blocks (as the generator's huts get them) over huts of 1 x 1 to 5 x 4 cells in a row through the island's middle, Raft's pillars at every outer corner (an undoable placement): each pillar's top is under the roof (a ray up from it meets the roof within 0.3 m) and doesn't stick out of it (a ray down from above meets the roof first, over the pillar's top) - no roof floating over its pillars (the user, 2026-10-03). old: the generator's huts' roofs before (one straight piece in each cell's middle) - must FAIL. CIRoofDemo [wood|old]")]
+		public static void RoofDemo(string[] args)
+		{
+			if (!DynamicIslands.InEditor() || !PlaceableCatalog.IsBuilt) { Fail("open the editor first"); return; }
+			bool wood = args != null && args.Contains("wood"), old = args != null && args.Contains("old");
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			Terrain terrain = terraineditor.terrain;
+			Vector2 mid = EditorLandCentre();
+			float g = PlacementOptions.GridSize;
+			var spawned = new List<GameObject>();
+			var pillars = new List<KeyValuePair<GameObject, Vector3>>();
+			Func<string, Vector3, float, GameObject> put = (name, pos, yaw) =>
+			{
+				GameObject go = PlaceableCatalog.Spawn(name, placed);
+				if (go == null) { Log("missing " + name); return null; }
+				go.transform.position = pos;
+				go.transform.rotation = Quaternion.Euler(0, yaw, 0) * go.transform.rotation;
+				go.AddComponent<EditorGameObject>().GameObjectName = name;
+				spawned.Add(go);
+				return go;
+			};
+			int[][] sizes = { new[] { 1, 1 }, new[] { 2, 1 }, new[] { 1, 3 }, new[] { 2, 2 }, new[] { 3, 2 }, new[] { 3, 3 }, new[] { 4, 3 }, new[] { 5, 4 } };
+			float x0 = mid.x - 27f;
+			foreach (int[] s in sizes)
+			{
+				int w = s[0], d = s[1];
+				float ground = terrain.SampleHeight(new Vector3(x0, 0f, mid.y)) + terrain.transform.position.y;
+				Vector3 o = new Vector3(x0 + g / 2f, ground, mid.y - d * g / 2f + g / 2f);
+				float deck = ground + PlacementOptions.FoundationPlanks;
+				for (int x = 0; x < w; x++)
+					for (int z = 0; z < d; z++)
+						put("Block_Foundation", o + new Vector3(x * g, 0f, z * g), 0f);
+				for (int x = 0; x <= w; x++)
+					for (int z = 0; z <= d; z++)
+						if (x == 0 || z == 0 || x == w || z == d)
+							pillars.Add(new KeyValuePair<GameObject, Vector3>(put("Block_Pillar_Wood", new Vector3(o.x + (x - 0.5f) * g, deck, o.z + (z - 0.5f) * g), 0f), o + new Vector3((w - 1) * g / 2f, 0f, (d - 1) * g / 2f)));
+				if (old) { for (int x = 0; x < w; x++) for (int z = 0; z < d; z++) put("Block_Roof_Straight_Thatch", new Vector3(o.x + x * g, deck + 2.4f, o.z + z * g), 0f); }
+				else RaftRoof.Hip((n, p, ry) => put(n, p, ry), new Vector3(o.x, deck + RaftRoof.OnWalls, o.z), w, d, wood);
+				x0 += w * g + 3f;
+			}
+			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(spawned, true));
+			// (on the roof blocks' meshes - their colliders sit lower than the thatch at the eaves, under a corner pillar's top: a
+			// pillar is under the roof when its top - 6 cm in from its middle towards the hut's - is under the eave of a roof
+			// block: within 0.3 m of the block's edge, the block's lowest edge within 10 cm of the pillar's top (a block of the
+			// old huts in its cell's middle had a corner pillar 0.8 m from its edges, under thatch 0.6 m up); inside it when no
+			// block over it comes lower than 25 cm under its top)
+			var roofs = spawned.Where(go => go != null && go.GetComponent<EditorGameObject>().GameObjectName.StartsWith("Block_Roof"))
+				.Select(go => go.GetComponentsInChildren<Renderer>().Select(r => r.bounds).Aggregate((a, c) => { a.Encapsulate(c); return a; })).ToList();
+			int under = 0, through = 0;
+			foreach (KeyValuePair<GameObject, Vector3> pc in pillars.Where(pc => pc.Key != null))
+			{
+				Bounds b = pc.Key.GetComponentsInChildren<Renderer>().Select(r => r.bounds).Aggregate((a, c) => { a.Encapsulate(c); return a; });
+				Vector3 inward = new Vector3(pc.Value.x - b.center.x, 0f, pc.Value.z - b.center.z).normalized * 0.06f;
+				Vector3 top = new Vector3(b.center.x, b.max.y, b.center.z) + inward;
+				var over = roofs.Where(rb => top.x >= rb.min.x && top.x <= rb.max.x && top.z >= rb.min.z && top.z <= rb.max.z).ToList();
+				string at = "  the pillar at " + Num(top.x - mid.x) + " " + Num(top.z - mid.y) + " (top h=" + Num(top.y) + ")";
+				if (over.Count == 0) { Log(at + ": no roof over it"); continue; }
+				Func<Bounds, float> fromEdge = rb => Mathf.Min(Mathf.Min(top.x - rb.min.x, rb.max.x - top.x), Mathf.Min(top.z - rb.min.z, rb.max.z - top.z));
+				if (over.Any(rb => fromEdge(rb) <= 0.3f && Mathf.Abs(rb.min.y - top.y) <= 0.1f)) under++;
+				else Log(at + ": under no roof block's eave (" + string.Join(", ", over.Select(rb => Num(fromEdge(rb)) + " m from its edge, its eave " + Num(rb.min.y - top.y) + " m up").ToArray()) + ") - floating over it");
+				float low = over.Min(rb => rb.min.y) - top.y;
+				if (low >= -0.25f) through++; else Log(at + ": goes " + Num(-low) + " m up past a roof block's lowest edge - through it");
+			}
+			Transform cam = Camera.main.transform;
+			cam.position = new Vector3(mid.x, terrain.SampleHeight(new Vector3(mid.x, 0f, mid.y)) + terrain.transform.position.y + 14f, mid.y - 26f);
+			cam.LookAt(new Vector3(mid.x, cam.position.y - 12f, mid.y));
+			int count = pillars.Count(pc => pc.Key != null);
+			Log((count > 0 && under == count && through == count ? "PASS" : "FAIL") + ": roofs of " + sizes.Length + " huts (" + (old ? "the old ones" : wood ? "wood" : "thatch") + "), " + spawned.Count + " blocks: " + under + " of " + count + " pillars right under the roof, " + through + " of " + count + " inside it");
 		}
 
 		[ConsoleCommand(name: "CIPlaceTest", docs: "Dev, editor: object list search, Ground (with and without Slope) and its undo")]
 		public static void PlaceTest()
 		{
 			if (!DynamicIslands.InEditor() || !PlaceableCatalog.IsBuilt) { Fail("open the editor first (and wait for the objects to load)"); return; }
-			DynamicIslands.instance.StartCoroutine(PlaceTestRoutine());
+			StartTest(PlaceTestRoutine());
 		}
 
 		static IEnumerator PlaceTestRoutine()
@@ -393,8 +611,10 @@ namespace DynamicIslands
 			foreach (Transform t in objs) gizmo.AddTarget(t, false);
 			PlacementOptions.AlignToSlope = false;
 			int n = PlacementOptions.DropSelectionToGround();
-			// (without Slope an object keeps its own rotation; some of Raft's rocks come tilted)
-			float off = objs.Max(t => Mathf.Abs(t.position.y - (terrain.SampleHeight(t.position) + terrain.transform.position.y)));
+			// (without Slope an object keeps its own rotation; some of Raft's rocks come tilted; it goes down to the lowest
+			// ground under its base, so on a slope its low side doesn't stand in the air; one whose pivot is well above its
+			// bottom - the boulder's, 3.4 m - rests on its bottom there, RestingPivotY)
+			float off = objs.Max(t => Mathf.Abs(t.position.y - PlacementOptions.RestingPivotY(t.gameObject)));
 			CommandUndoRedo.UndoRedoManager.Undo();
 			bool undone = objs.All(t => t.position.y > 150f);
 			Check(ref ok, n == 3 && off < 0.2f && undone, "Ground put " + n + " objects on the terrain (largest height difference " + off.ToString("F2") + " m); Ctrl+Z lifted them back: " + undone);
@@ -449,7 +669,7 @@ namespace DynamicIslands
 		public static void StyleTest()
 		{
 			if (!DynamicIslands.InEditor() || !PlaceableCatalog.IsBuilt) { Fail("open the editor first (and wait for the objects to load)"); return; }
-			DynamicIslands.instance.StartCoroutine(StyleTestRoutine());
+			StartTest(StyleTestRoutine());
 		}
 
 		static IEnumerator StyleTestRoutine()
@@ -546,7 +766,7 @@ namespace DynamicIslands
 				Check(ref ok, file.Objects.Count == n && size <= res,
 					"saved as cigen.island with " + file.Objects.Count + " objects; spawns as a " + (size - 1) * data.size.x / (res - 1) + " m terrain block, land radius " + radius.ToString("F0") + " m");
 				DynamicIslands.LoadIsland("cigen");
-				DynamicIslands.instance.StartCoroutine(GenTestLoaded(ok, a, n, s));
+				StartTest(GenTestLoaded(ok, a, n, s));
 			}
 			catch (Exception e) { Fail("exception: " + e); Fail("island generator test"); }
 		}
@@ -564,10 +784,112 @@ namespace DynamicIslands
 			if (ok) Log("PASS: island generator test"); else Fail("island generator test");
 		}
 
+		// (set while a play polls its expects: the result only, no PASS/FAIL line)
+		static bool quietCheck;
+
 		static void Check(ref bool ok, bool condition, string what)
 		{
+			if (quietCheck) { ok &= condition; return; }
 			Log((condition ? "PASS: " : "FAIL: ") + what);
 			ok &= condition;
+		}
+
+		/// <summary>
+		/// A flying island seen from below: its rocky underside must meet the ground all along the coast, or the sky shows
+		/// through between them (Lantern Spire 10-16: zigzag gaps where the coast ran diagonally). Two looks: the underside's
+		/// rim points on every coast edge sit on the ground, and a ray from below and outside aimed into the rock just inside
+		/// each coast edge passes the underside on its way in. Null when closed, else what is open.
+		/// </summary>
+		static string CellsRound(bool[,] solid, HashSet<int> meshCells, int cells, int px, int pz)
+		{
+			string s = "";
+			for (int z = pz - 1; z <= pz; z++)
+				for (int x = px - 1; x <= px; x++)
+					s += x < 0 || z < 0 || x >= cells || z >= cells ? "-/- " : (solid[z, x] ? "1" : "0") + "/" + (meshCells.Contains(z * cells + x) ? "1" : "0") + " ";
+			return s.Trim();
+		}
+
+		internal static string FlyingOpenFromBelow(GameObject root)
+		{
+			Terrain terrain = root != null ? root.GetComponentInChildren<Terrain>() : null;
+			Transform under = terrain != null ? terrain.transform.Find("Underside") : null;
+			MeshCollider uc = under != null ? under.GetComponent<MeshCollider>() : null;
+			if (uc == null) return "no underside";
+			Physics.SyncTransforms();
+			TerrainData data = terrain.terrainData;
+			int cells = data.holesResolution, res = data.heightmapResolution;
+			if (res - 1 != cells) return null; // (not the grid MakeFlying works on)
+			bool[,] solid = data.GetHoles(0, 0, cells, cells);
+			float spacing = data.size.x / cells;
+			// the underside's points by grid sample (in the terrain's own space)
+			var rimY = new Dictionary<int, float>();
+			foreach (Vector3 v in under.GetComponent<MeshFilter>().sharedMesh.vertices)
+				rimY[Mathf.RoundToInt(v.z / spacing) * res + Mathf.RoundToInt(v.x / spacing)] = v.y;
+			// the cells the underside covers (from its triangles)
+			Mesh um = under.GetComponent<MeshFilter>().sharedMesh;
+			Vector3[] uv = um.vertices;
+			int[] ut = um.triangles;
+			var meshCells = new HashSet<int>();
+			for (int i = 0; i + 2 < ut.Length; i += 3)
+			{
+				float mx = Mathf.Min(uv[ut[i]].x, Mathf.Min(uv[ut[i + 1]].x, uv[ut[i + 2]].x)), mz = Mathf.Min(uv[ut[i]].z, Mathf.Min(uv[ut[i + 1]].z, uv[ut[i + 2]].z));
+				meshCells.Add(Mathf.RoundToInt(mz / spacing) * cells + Mathf.RoundToInt(mx / spacing));
+			}
+			int[] dx = { 1, -1, 0, 0 }, dz = { 0, 0, 1, -1 };
+			int edges = 0, seams = 0, rays = 0, through = 0, byGround = 0;
+			TerrainCollider tc = terrain.GetComponent<TerrainCollider>();
+			string first = null;
+			Vector3 origin = terrain.transform.position;
+			for (int z = 0; z < cells; z++)
+				for (int x = 0; x < cells; x++)
+				{
+					if (!solid[z, x]) continue;
+					for (int k = 0; k < 4; k++)
+					{
+						int nx = x + dx[k], nz = z + dz[k];
+						// (a neighbour cut away later but still under the underside is not the coast: a cave's room cut out of the
+						// ground (CaveGround) is closed from below by the underside - Upfall Orchard, Pendulum Isle 10-25)
+						if (nx >= 0 && nz >= 0 && nx < cells && nz < cells && (solid[nz, nx] || meshCells.Contains(nz * cells + nx))) continue;
+						edges++;
+						// the edge's two ends (grid samples)
+						int ax = dx[k] == 1 ? x + 1 : x, az = dz[k] == 1 ? z + 1 : z;
+						int bx = dx[k] != 0 ? ax : x + 1, bz = dx[k] != 0 ? z + 1 : az;
+						foreach (var s in new[] { new[] { ax, az }, new[] { bx, bz } })
+						{
+							float y;
+							float ground = data.GetHeight(s[0], s[1]);
+							if (!rimY.TryGetValue(s[1] * res + s[0], out y) || Mathf.Abs(y - ground) > 0.05f)
+							{
+								seams++;
+								if (first == null) first = "the underside is " + (rimY.ContainsKey(s[1] * res + s[0]) ? (ground - y).ToString("F1") + " m under the ground" : "missing") + " at the coast point " + s[0] + "," + s[1] + " (cells round it, holes map / underside: " + CellsRound(solid, meshCells, cells, s[0], s[1]) + ")";
+							}
+						}
+						// the ray: into the rock half a cell in from the edge, half way between the ground and the underside
+						Vector3 outward = new Vector3(dx[k], 0f, dz[k]);
+						Vector3 inner = origin + new Vector3((x + 0.5f) * spacing, 0f, (z + 0.5f) * spacing);
+						float top = terrain.SampleHeight(inner) + origin.y;
+						RaycastHit hit;
+						if (!uc.Raycast(new Ray(new Vector3(inner.x, top - 500f, inner.z), Vector3.up), out hit, 500f)) continue;
+						if (top - hit.point.y < 0.1f) continue; // (too thin to aim into)
+						Vector3 target = new Vector3(inner.x, (top + hit.point.y) / 2f, inner.z);
+						Vector3 from = target + (outward + Vector3.down) * 4f; // (at 45 degrees from below: through the coast face, under the ground)
+						rays++;
+						if (!uc.Raycast(new Ray(from, target - from), out hit, (target - from).magnitude))
+						{
+							// (the ground's own face first, from its open side: a coast cell where the terrain splits its square on the
+							// other diagonal than the underside, so the point lies in a sliver between them and the ray comes in over the
+							// rim - seen from below that is the ground, not the sky; Lodestone Array, Altitude Market 10-20)
+							if (tc != null && tc.Raycast(new Ray(from, target - from), out hit, (target - from).magnitude) && Vector3.Dot(hit.normal, target - from) < 0f) { byGround++; continue; }
+							through++;
+							if (first == null) first = "a ray from below reaches the rock at " + (target - origin).ToString("F1") + " without passing the underside";
+						}
+					}
+				}
+			if (seams == 0 && through == 0) return null;
+			int differ = 0;
+			for (int z = 0; z < cells; z++) for (int x = 0; x < cells; x++) if (solid[z, x] != meshCells.Contains(z * cells + x)) differ++;
+			first += "; " + differ + " cells differ between the holes map and the underside, " + meshCells.Count + " under it";
+			return seams + " of " + (edges * 2) + " coast points open, " + through + " of " + rays + " rays from below get in (" + byGround + " met the ground's face first); first: " + first;
 		}
 
 		[ConsoleCommand(name: "CIDemo", docs: "Dev: scatters sample nature objects over the editor terrain (as undoable placements) and frames the camera")]
@@ -628,7 +950,7 @@ namespace DynamicIslands
 		public static void Inspect(string[] args)
 		{
 			if (args == null || args.Length < 2) { Log("Usage: CIInspect <scene> <name>[,<name>...]"); return; }
-			DynamicIslands.instance.StartCoroutine(InspectRoutine(args[0], string.Join(" ", args.Skip(1).ToArray()).Split(',')));
+			StartTest(InspectRoutine(args[0], string.Join(" ", args.Skip(1).ToArray()).Split(',')));
 		}
 
 		static IEnumerator InspectRoutine(string sceneName, string[] names)
@@ -690,10 +1012,10 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIFlyTest", docs: "Dev, in game (host): spawns an island flying at 60 m and one under water and checks them. CIFlyTest [island] [keep] (keep = leave them spawned)")]
 		public static void FlyTest(string[] args)
 		{
-			string name = args != null && args.Length > 0 && args[0] != "keep" ? args[0] : (IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == "generated_sample") ?? IslandSpawner.ListSavedIslands().FirstOrDefault());
+			// (no island named: the tests' own sample island, saved as cisample - not whichever island the player has saved)
+			string name = args != null && args.Length > 0 && args[0] != "keep" ? args[0] : SaveSampleIsland();
 			bool keep = args != null && args.Contains("keep");
-			if (name == null) { Fail("no saved island to test with"); return; }
-			DynamicIslands.instance.StartCoroutine(FlyTestRoutine(name, keep));
+			StartTest(FlyTestRoutine(name, keep));
 		}
 
 		static IEnumerator FlyTestRoutine(string name, bool keep)
@@ -731,6 +1053,8 @@ namespace DynamicIslands
 			bool cornerOpen = !Physics.Raycast(new Vector3(corner.x, 400f, corner.z), Vector3.down, out hit, 500f, obstruction) || hit.collider.transform.root != fly.Root.transform;
 			Check(ref ok, fromAbove && fromBelow && cornerOpen && topY > Flying,
 				string.Format("from above you land on the top ({0:F0} m), from below you hit the underside ({1:F0} m), the old seabed corner is open: {2}", topY, bottomY, cornerOpen));
+			string open = FlyingOpenFromBelow(fly.Root);
+			Check(ref ok, open == null, "seen from below the underside meets the ground all round the coast" + (open != null ? ": " + open : ""));
 			int low = fly.Root.GetComponentsInChildren<EditorGameObject>(true).Length + fly.Root.transform.Find("Objects").Cast<Transform>().Count(t => t.position.y < Flying - 1f);
 			Check(ref ok, low == 0, "no objects hang below the flying island (" + fly.Root.transform.Find("Objects").childCount + " objects)");
 
@@ -749,16 +1073,20 @@ namespace DynamicIslands
 				"underwater island: highest point " + top2.y.ToString("F1") + " m (below the surface), no holes, no underside");
 
 			// Saved with the world like any other island (the position's y is the elevation)
-			Check(ref ok, Mathf.Abs(fly.Position.y - Flying) < 0.01f && Mathf.Abs(sunk.Position.y - Sunken) < 0.01f, "the world's island list keeps both heights");
+			// (read back from the saved file: the entries in memory always had them - CB13)
+			IslandWorldState.Save();
+			string[] saved = File.Exists(IslandWorldState.WorldFilePath) ? File.ReadAllLines(IslandWorldState.WorldFilePath) : new string[0];
+			Func<IslandWorldState.Entry, float, bool> keeps = (e, y) => saved.Any(l => { string[] p = l.Split('|'); float v; return p.Length > 3 && p[0] == e.HostName && float.TryParse(p[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v) && Mathf.Abs(v - y) < 0.01f; });
+			Check(ref ok, keeps(fly, Flying) && keeps(sunk, Sunken), "the world's saved island list keeps both heights");
 
-			if (!keep) IslandWorldState.RemoveIds(new[] { fly.Id, sunk.Id }, true);
+			if (!keep) { IslandWorldState.RemoveIds(new[] { fly.Id, sunk.Id }, true); if (name == SampleSaved) RemoveSampleIsland(); }
 			if (ok) Log("PASS: flying and underwater islands test" + (keep ? " (islands kept)" : "")); else Fail("flying and underwater islands test");
 		}
 
 		[ConsoleCommand(name: "CIStand", docs: "Dev, in game: puts the local player on the highest point of the nearest custom island and logs whether they stay standing")]
 		public static void Stand()
 		{
-			DynamicIslands.instance.StartCoroutine(StandRoutine());
+			StartTest(StandRoutine());
 		}
 
 		static IEnumerator StandRoutine(GameObject on = null)
@@ -798,8 +1126,17 @@ namespace DynamicIslands
 				target = new Vector3(b.center.x, b.max.y + 3f, b.center.z);
 				RaycastHit hit;
 				if (Physics.Raycast(target, Vector3.down, out hit, 20f) && hit.collider.transform.IsChildOf(island.transform)) target.y = hit.point.y + 1.5f;
+				// (a raft of foundations: on a deck tile with open sky over it as wide as a player, the one nearest the middle - a
+				// wreck's middle can be one of its missing foundations, and the player put above it fell through the hole into the
+				// sea: The Abyss Expedition's test, 2026-10-02; CIWreckDeck shows the deck itself holds)
+				Func<BoxCollider, Vector3> topOf = d => new Vector3(d.bounds.center.x, d.bounds.max.y, d.bounds.center.z);
+				BoxCollider tile = island.GetComponentsInChildren<BoxCollider>().Where(d => d.name == "CustomIslands_Deck").OrderBy(d => (topOf(d) - b.center).sqrMagnitude)
+					.FirstOrDefault(d => { RaycastHit h; return Physics.SphereCast(topOf(d) + Vector3.up * 8f, 0.6f, Vector3.down, out h, 9f, ~0, QueryTriggerInteraction.Ignore) && h.collider == d; });
+				if (tile != null) target = topOf(tile) + Vector3.up * 1.5f;
 			}
 
+			// (a player who is down has no character controller and hangs where put: player 2 in IM15, killed by the boar it hit)
+			yield return EnsureAlive();
 			// (as the mod moves a player: off the raft first - a player still a child of the rocking raft dropped through the island -
 			// and walking: a swimmer stays in Raft's swimming mode after a teleport, held at the sea surface)
 			PlayerMove.To(player, target);
@@ -813,9 +1150,12 @@ namespace DynamicIslands
 				yield return new WaitForSeconds(0.5f);
 				PersonController pc = player.PersonController;
 				Collider ground = pc.groundRaycastHit.collider;
-				Log(string.Format("t={0:F1}s pos={1} grounded={2} standing on {3} (layer {4})", (i + 1) * 0.5f, player.transform.position, pc.IsGrounded,
-					ground != null ? ground.name : "nothing", ground != null ? LayerMask.LayerToName(ground.gameObject.layer) : "-"));
+				Log(string.Format("t={0:F1}s pos={1} grounded={2} standing on {3} (layer {4}){5}", (i + 1) * 0.5f, player.transform.position, pc.IsGrounded,
+					ground != null ? ground.name : "nothing", ground != null ? LayerMask.LayerToName(ground.gameObject.layer) : "-", pc.HasRaftAsParent ? ", a child of the raft" : ""));
 			}
+			// (in the air at the last look: an animal knocked the player up a moment before - Thornwood, 2026-10-17: pushed 4 m, 2 m up,
+			// 'grounded=False' at 6 s. Up to 2 s more to land)
+			for (float t = 0f; t < 2f && !player.PersonController.IsGrounded; t += 0.25f) yield return new WaitForSeconds(0.25f);
 			Application.logMessageReceived -= counter;
 			float drop = target.y - player.transform.position.y;
 			Log("Exceptions while standing: " + exceptions + (firstException != null ? " (first: " + firstException + ")" : ""));
@@ -826,7 +1166,10 @@ namespace DynamicIslands
 			float surface = float.NegativeInfinity;
 			foreach (Terrain t in island.GetComponentsInChildren<Terrain>(true)) surface = Mathf.Max(surface, t.SampleHeight(player.transform.position) + t.transform.position.y);
 			bool aboveGround = float.IsNegativeInfinity(surface) || player.transform.position.y > surface - 1f;
-			bool ok = player.PersonController.IsGrounded && exceptions == 0 && (drop < 3f || (onIsland && aboveGround));
+			// (on the island and still a child of the raft: the raft's drift and rocking carry the player off - IslandGroundParentPatch)
+			bool raftChild = player.PersonController.HasRaftAsParent && onIsland;
+			if (raftChild) Log("  (standing on the island but a child of the raft: a moving raft would carry them)");
+			bool ok = player.PersonController.IsGrounded && exceptions == 0 && !raftChild && (drop < 3f || (onIsland && aboveGround));
 			if (ok && drop >= 3f) Log("  (moved off the spot - pushed or slid - but still standing on the island's ground)");
 			if (ok) Log("PASS: player stands on the custom island (dropped " + drop.ToString("F2") + " m)");
 			else
@@ -842,6 +1185,11 @@ namespace DynamicIslands
 				}
 				foreach (RaycastHit h in Physics.RaycastAll(target + Vector3.up * 60f, Vector3.down, 400f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).Take(6))
 					Log("  a ray down from 60 m above finds " + h.collider.name + " (" + h.collider.GetType().Name + ", layer " + LayerMask.LayerToName(h.collider.gameObject.layer) + ") at y " + h.point.y.ToString("F1"));
+				// (held still in the air - no fall at all - is Raft's PersonController.Update stopping early: these are its checks)
+				PersonController hp = player.PersonController;
+				Log("  the player's controller: enabled " + hp.enabled + ", type " + hp.controllerType + ", character controller " + (hp.controller != null ? hp.controller.enabled.ToString() : "none") +
+					", local " + player.IsLocalPlayer + ", dead " + (player.PlayerScript != null && player.PlayerScript.IsDead) + ", flight camera " + (player.flightCamera != null && player.flightCamera.enabled) +
+					", parent " + (player.transform.parent != null ? player.transform.parent.name : "none") + ", cursor free " + Cursor.visible + ", time scale " + Time.timeScale);
 				Fail("player did not stay on the island (dropped " + drop.ToString("F1") + " m, grounded=" + player.PersonController.IsGrounded + ")");
 			}
 		}
@@ -872,7 +1220,7 @@ namespace DynamicIslands
 		{
 			float seconds = 60f; float s;
 			if (args != null && args.Length > 0 && float.TryParse(args[0], out s)) seconds = s;
-			DynamicIslands.instance.StartCoroutine(RaftWatchRoutine(seconds));
+			StartTest(RaftWatchRoutine(seconds));
 		}
 
 		static IEnumerator RaftWatchRoutine(float seconds)
@@ -899,7 +1247,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIWorldWatch", docs: "Dev, in game: logs how floating items, landmarks and chunk points move over 10 s (does the world move, or the raft?)")]
 		public static void WorldWatch()
 		{
-			DynamicIslands.instance.StartCoroutine(WorldWatchRoutine());
+			StartTest(WorldWatchRoutine());
 		}
 
 		static IEnumerator WorldWatchRoutine()
@@ -941,7 +1289,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIShiftTest", docs: "Dev, in game (host): performs a world shift through Raft's WorldShiftManager and checks custom islands move with the world")]
 		public static void ShiftTest()
 		{
-			DynamicIslands.instance.StartCoroutine(ShiftTestRoutine());
+			StartTest(ShiftTestRoutine());
 		}
 
 		static IEnumerator ShiftTestRoutine()
@@ -972,15 +1320,31 @@ namespace DynamicIslands
 		{
 			float seconds = 60f; float s;
 			if (args != null && args.Length > 0 && float.TryParse(args[0], out s)) seconds = s;
-			DynamicIslands.instance.StartCoroutine(PushRaftRoutine(seconds));
+			StartTest(PushRaftRoutine(seconds));
 		}
 
 		static IEnumerator PushRaftRoutine(float seconds)
 		{
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
-			GameObject island = NearestIsland(raft.body.position);
-			if (island == null) { Fail("no custom island"); yield break; }
-			yield return PushTowards(HighestPoint(island.GetComponentInChildren<Terrain>()), seconds, island.name);
+			// (only islands with land: a ghost raft or a sea-only island has no Terrain to push towards)
+			Vector3 from = raft.body.position;
+			// (an island being respawned can hold a Terrain whose terrainData is not set yet: skip it)
+			Func<GameObject, Terrain> land = g => g.GetComponentsInChildren<Terrain>(true).FirstOrDefault(t => t != null && t.terrainData != null);
+			// (right after sailing back the island near the raft is still loading again: up to 60 s for one - 11-13 UW12's
+			// second push came straight after CISail and found none)
+			GameObject island = null;
+			float until = Time.realtimeSinceStartup + 60f;
+			while (true)
+			{
+				from = raft.body.position;
+				island = UnityEngine.Object.FindObjectsOfType<GameObject>().Where(g => g.transform.parent == null && g.name.StartsWith("CustomIsland_") && land(g) != null)
+					.OrderBy(g => (g.transform.position - from).sqrMagnitude).FirstOrDefault();
+				if (island != null || Time.realtimeSinceStartup > until) break;
+				yield return new WaitForSecondsRealtime(2f);
+			}
+			if (island == null) { Fail("no custom island with land loaded (waited 60 s)"); yield break; }
+			Log("pushing towards '" + island.name + "', " + Flat(island.transform.position - from).magnitude.ToString("F0") + " m away");
+			yield return PushTowards(HighestPoint(land(island)), seconds, island.name);
 		}
 
 		[ConsoleCommand(name: "CIPushTo", docs: "Dev, in game: pushes the raft towards world point <x> <z> for up to <seconds> and logs where it stops")]
@@ -988,7 +1352,7 @@ namespace DynamicIslands
 		{
 			float x = float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture), z = float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture);
 			float seconds = args.Length > 2 ? float.Parse(args[2], System.Globalization.CultureInfo.InvariantCulture) : 60f;
-			DynamicIslands.instance.StartCoroutine(PushTowards(new Vector3(x, 0, z), seconds, "(" + x + ", " + z + ")"));
+			StartTest(PushTowards(new Vector3(x, 0, z), seconds, "(" + x + ", " + z + ")"));
 		}
 
 		[ConsoleCommand(name: "CISail", docs: "Dev, in game (host, Normal world): sails the raft straight ahead for <seconds> (default 120) at <m/s> (default 15) and logs custom islands spawning / unloading")]
@@ -997,7 +1361,7 @@ namespace DynamicIslands
 			float seconds = args != null && args.Length > 0 ? float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture) : 120f;
 			float speed = args != null && args.Length > 1 ? float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) : 15f;
 			RunInBackground();
-			DynamicIslands.instance.StartCoroutine(SailRoutine(seconds, speed));
+			StartTest(SailRoutine(seconds, speed));
 		}
 
 		[ConsoleCommand(name: "CICloseRmlMenu", docs: "Dev: closes RML's own menu (the one F9 opens, open when Raft starts) without a key press - tests with Raft minimised (tools\\quiet.ps1)")]
@@ -1024,6 +1388,7 @@ namespace DynamicIslands
 		public static void RunInBackground()
 		{
 			Application.runInBackground = true;
+			ModCursor.TestRaft = true; // (11-09: a test Raft never holds the mouse unless a screen test raised it)
 			Log("The game keeps running in the background now" + (SetMuted(true) ? ", its sound off" : ""));
 		}
 
@@ -1098,6 +1463,27 @@ namespace DynamicIslands
 		}
 
 		/// <summary>Long test runs in a Normal world would otherwise starve the test player.</summary>
+		/// <summary>A blueprint the play picked up and holds up in hand moved off the hotbar (into a free bag slot), so the
+		/// watcher sees the player's hands and what they do (10-28: plays idled holding a blueprint up).</summary>
+		static void PutAwayBlueprint()
+		{
+			try
+			{
+				Network_Player p = RAPI.GetLocalPlayer();
+				if (p == null || p.Inventory == null) return;
+				ItemInstance held = p.Inventory.GetSelectedHotbarItem();
+				if (held == null || held.UniqueName == null || !held.UniqueName.StartsWith("Blueprint_")) return;
+				int hot = HarmonyLib.Traverse.Create(p.Inventory).Field("hotslotCount").GetValue<int>();
+				if (hot <= 0) hot = 10;
+				Slot from = p.Inventory.allSlots.Take(hot).FirstOrDefault(sl => sl != null && sl.itemInstance == held);
+				Slot to = p.Inventory.allSlots.Skip(hot).FirstOrDefault(sl => sl != null && sl.IsEmpty);
+				if (from == null || to == null) return;
+				to.SetItem(held);
+				from.Reset();
+			}
+			catch (Exception ex) { Log("  (blueprint not put away: " + ex.Message + ")"); }
+		}
+
 		static void KeepAlive(Network_Player player)
 		{
 			if (player == null || player.Stats == null) return;
@@ -1140,14 +1526,15 @@ namespace DynamicIslands
 				int size;
 				IslandNetMessage back = RoundTrip(list, out size);
 				bool same = back != null && back.Kind == list.Kind && back.FullList && back.Ids.SequenceEqual(list.Ids) && back.Names.SequenceEqual(list.Names) &&
-					back.Hashes.SequenceEqual(list.Hashes) && back.Offsets.SequenceEqual(list.Offsets) && back.States.SequenceEqual(list.States);
+					back.Hashes.SequenceEqual(list.Hashes) && back.Offsets.SequenceEqual(list.Offsets) && back.States.SequenceEqual(list.States) &&
+					(back.Labels ?? new string[0]).SequenceEqual(list.Labels ?? new string[0]) && (back.Rules ?? new string[0]).SequenceEqual(list.Rules ?? new string[0]);
 				Log((same ? "PASS" : "FAIL") + ": island list with " + list.Ids.Length + " island(s) survives RML's serializer (" + size + " bytes)" +
 					(back == null ? " - came back as null" : ""));
 				ok &= same;
 
 				// 2. File transfer: host sends chunks, the client puts them back together under a hash-suffixed name
-				string name = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland) ?? IslandSpawner.ListSavedIslands().FirstOrDefault();
-				if (name == null) { Fail("no saved island to transfer"); return; }
+				// (citest if the editor test made it, else the tests' own sample island - not whichever island the player has saved)
+				string name = IslandSpawner.ListSavedIslands().FirstOrDefault(n => n == TestIsland) ?? SaveSampleIsland();
 				string hash = IslandNetwork.HashOf(name);
 				var sent = new System.Collections.Generic.List<IslandNetMessage>();
 				IslandNetwork.Loopback = sent.Add;
@@ -1194,6 +1581,7 @@ namespace DynamicIslands
 				{
 					foreach (string n in new[] { copyTest, copyName, IslandNetwork.DownloadName(copyName, hash) })
 						if (File.Exists(IslandSpawner.PathFor(n))) File.Delete(IslandSpawner.PathFor(n));
+					if (name == SampleSaved) RemoveSampleIsland();
 				}
 
 				// 3. Trees and pickups on loaded islands can be found the way Raft finds what a remote player harvested / picked up
@@ -1206,7 +1594,7 @@ namespace DynamicIslands
 					}
 				bool ids = total > 0 && found == total;
 				Log((ids ? "PASS" : total == 0 ? "SKIP" : "FAIL") + ": " + found + "/" + total + " harvestables and pickups on loaded custom islands are in Raft's network registry" +
-					(total == 0 ? " (no loaded island with any; SpawnIsland demo2 first)" : ""));
+					(total == 0 ? " (no loaded island with any; CIMPIsland first)" : ""));
 				ok &= ids || total == 0;
 
 				// 4. Every other kind of message, with the fields it uses (catalogue IX6): the world's rules, story and
@@ -1229,6 +1617,17 @@ namespace DynamicIslands
 					WorldOptions.Message(),
 					new IslandNetMessage { Kind = IslandNetMessage.WorldCopy, Name = Guid.NewGuid().ToString(), Hash = "0123abcd", Index = 0, Count = 1, Data = "# Custom islands in world 'CI Net'\n@plan=Random islands\n@savedat=1" },
 					StoryChain.Message("A new signal\nTune the Receiver to #1234"),
+					// (and the kinds after those - IX6: 20-29)
+					new IslandNetMessage { Kind = IslandNetMessage.QuestCount, Data = "Story\tThe lighthouse\t1\nSide\tLost crate\t0" },
+					new IslandNetMessage { Kind = IslandNetMessage.CreatureSpots, Data = "1234:7:2;1235:7:3" },
+					new IslandNetMessage { Kind = IslandNetMessage.ObjectHarvest, Ids = new[] { 7, 0, -1 }, Index = 41, Count = 12 },
+					new IslandNetMessage { Kind = IslandNetMessage.FileWanted, Name = "cimpfull", Hash = "0123abcd" },
+					new IslandNetMessage { Kind = IslandNetMessage.WorldCopyNewer, Name = Guid.NewGuid().ToString(), Data = "5;638640000000000000" },
+					new IslandNetMessage { Kind = IslandNetMessage.QuestStepMore, Ids = new[] { 7, 2 }, Index = 1, Count = 3 },
+					new IslandNetMessage { Kind = IslandNetMessage.DailyQuest, Name = "add", Index = 12, Count = 4 },
+					new IslandNetMessage { Kind = IslandNetMessage.RogueShark, Name = "spawn", Index = 5678, Count = 20 },
+					new IslandNetMessage { Kind = IslandNetMessage.WorldSave, Name = Guid.NewGuid().ToString(), Hash = "CI Net", Index = 1, Count = 3, Data = Convert.ToBase64String(new byte[] { 0, 1, 2, 250, 251 }) },
+					new IslandNetMessage { Kind = IslandNetMessage.UpgradeTable, Name = "learned", Index = 3, Data = "76561197992629925" },
 				};
 				var broken = new List<string>();
 				foreach (IslandNetMessage m in kinds)
@@ -1251,7 +1650,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIStateTest", docs: "Dev, in game (host): chops a tree and picks up an item on the nearest loaded custom island, reloads the island and checks they stay used; also checks regrowing")]
 		public static void StateTest()
 		{
-			DynamicIslands.instance.StartCoroutine(StateTestRoutine());
+			StartTest(StateTestRoutine());
 		}
 
 		static IEnumerator StateTestRoutine()
@@ -1259,7 +1658,7 @@ namespace DynamicIslands
 			Vector3 raftPos = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
 			IslandWorldState.Entry e = IslandWorldState.Islands.Where(i => i.Root != null && i.Root.GetComponentsInChildren<HarvestableTree>().Any())
 				.OrderBy(i => Vector3.Distance(i.Position, raftPos)).FirstOrDefault();
-			if (e == null) { Fail("no loaded custom island with trees (SpawnIsland demo2 first)"); yield break; }
+			if (e == null) { Fail("no loaded custom island with trees (CIMPIsland first)"); yield break; }
 
 			HarvestableTree tree = e.Root.GetComponentsInChildren<HarvestableTree>().First(t => !t.Depleted);
 			int treeOrd = (int)(tree.GetComponent<PickupItem_Networked>().ObjectIndex & 0xFFFF);
@@ -1311,7 +1710,22 @@ namespace DynamicIslands
 		{
 			Vector3? pos = CustomIslandSpawner.RaftPosition;
 			if (!pos.HasValue) { Fail("no raft"); return; }
-			Log(CustomIslandSpawner.TrySpawn(pos.Value, true));
+			int before = IslandWorldState.Islands.Count;
+			string said = CustomIslandSpawner.TrySpawn(pos.Value, true);
+			Log(said);
+			StartTest(SpawnNowBuilt(IslandWorldState.Islands.Skip(before).ToList(), said));
+		}
+
+		/// <summary>CISpawnNow's end: a PASS line once the islands it placed are built (60 s at most), or that none came.</summary>
+		static IEnumerator SpawnNowBuilt(List<IslandWorldState.Entry> added, string said)
+		{
+			if (added.Count == 0) { Log("PASS: spawn now - no new island (" + said + ")"); yield break; }
+			float start = Time.realtimeSinceStartup, end = start + 60f;
+			while (Time.realtimeSinceStartup < end && added.Any(e => e.Root == null && !e.Failed && !e.Excluded)) yield return null;
+			List<IslandWorldState.Entry> bad = added.Where(e => e.Root == null && !e.Excluded).ToList(); // (excluded: not meant to load here)
+			string names = string.Join(", ", added.Select(e => "'" + e.Name + "'").ToArray());
+			if (bad.Count == 0) Log("PASS: spawn now - " + names + " built in " + Took(start));
+			else Fail("spawn now: " + string.Join(", ", bad.Select(e => "'" + e.Name + "'" + (e.Failed ? " failed" : " not built")).ToArray()) + " after " + Took(start));
 		}
 
 		[ConsoleCommand(name: "CIRealIsland",docs: "Dev, in game (host): spawns one of Raft's own small islands <distance> m east of the raft (for comparisons)")]
@@ -1319,7 +1733,7 @@ namespace DynamicIslands
 		{
 			float d = args != null && args.Length > 0 ? float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture) : 200f;
 			ComponentManager<ChunkManager>.Value.AddChunkPointCheat(ChunkPointType.Landmark_Small, new Vector3(d, 0, 0));
-			DynamicIslands.instance.StartCoroutine(ReportLandmarks());
+			StartTest(ReportLandmarks());
 		}
 
 		static IEnumerator ReportLandmarks()
@@ -1339,11 +1753,16 @@ namespace DynamicIslands
 			Vector3 peak = target;
 			Vector3 dir = Flat(peak - body.position).normalized;
 			Log("Pushing raft towards " + label + " at 4 m/s; layers RaftCollision/BakedBlocks vs Obstruction collide: " + !Physics.GetIgnoreLayerCollision(9, 16) + "/" + !Physics.GetIgnoreLayerCollision(18, 16));
-			Vector3 lastLogged = body.position; float stuckTime = 0; float t = 0;
+			Vector3 lastLogged = body.position; float stuckTime = 0; float t = 0; float closest = Flat(peak - body.position).magnitude;
+			// (on the raft and kept alive as CISail does: 11-13 UW12's second push came after CISail had left the player
+			// ~1 km behind in the sea, who drowned during the push - a test death, not the island's)
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player != null) player.transform.position = body.position + Vector3.up * 3f;
 			while (t < seconds)
 			{
 				yield return new WaitForFixedUpdate();
 				t += Time.fixedDeltaTime;
+				KeepAlive(player);
 				Vector3 before = body.position;
 				body.velocity = dir * 4f + Vector3.up * body.velocity.y;
 				if (Mathf.Repeat(t, 2f) < Time.fixedDeltaTime)
@@ -1352,7 +1771,11 @@ namespace DynamicIslands
 					RaycastHit hit;
 					string below = Physics.Raycast(body.position + Vector3.up * 5f, Vector3.down, out hit, 40f, 1 << IslandSpawner.TerrainLayer) ? "ground " + (body.position.y - hit.point.y).ToString("F1") + " m below" : "open water";
 					Log(string.Format("t={0:F0}s raft {1} moved {2:F1} m in 2 s, {3}, {4:F0} m from peak", t, body.position, moved, below, Flat(peak - body.position).magnitude));
-					stuckTime = moved < 0.5f ? stuckTime + 2f : 0f;
+					// (stopped = no longer getting closer: a raft held on a sloping shore jitters 0.2-2 m sideways but stays
+					// ~45 m out - 11-13 Ribcage Reef ran out the 120 s that way - so judge the gain towards the peak, not the moving)
+					float dist = Flat(peak - body.position).magnitude;
+					stuckTime = (moved < 0.5f || closest - dist < 1f) ? stuckTime + 2f : 0f;
+					closest = Mathf.Min(closest, dist);
 					lastLogged = body.position;
 					if (stuckTime >= 6f) { Log("PASS: the raft is stopped by the island (" + Flat(peak - body.position).magnitude.ToString("F0") + " m from the peak)"); body.velocity = Vector3.zero; yield break; }
 				}
@@ -1364,7 +1787,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIHarvestProbe", docs: "Dev, in game: places a harvestable Raft palm next to the player (outside any landmark) and tries to harvest it")]
 		public static void HarvestProbe()
 		{
-			DynamicIslands.instance.StartCoroutine(HarvestProbeRoutine());
+			StartTest(HarvestProbeRoutine());
 		}
 
 		static IEnumerator HarvestProbeRoutine()
@@ -1423,7 +1846,7 @@ namespace DynamicIslands
 		public static void ScanScene(string[] args)
 		{
 			if (args == null || args.Length == 0) { Log("Usage: CIScan <scene name>"); return; }
-			DynamicIslands.instance.StartCoroutine(Scan(string.Join(" ", args)));
+			StartTest(Scan(string.Join(" ", args)));
 		}
 
 		static IEnumerator Scan(string sceneName)
@@ -1657,6 +2080,8 @@ namespace DynamicIslands
 			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("not in a game world"); yield break; }
 			if (!File.Exists(IslandSpawner.PathFor(TestIsland))) { Fail("run CITest in the editor first (no " + TestIsland + IslandFile.Extension + ")"); yield break; }
 
+			// (the island this spawn adds, not one of that name already in the world: by its entry, not the object's name - CB13)
+			var before = new HashSet<int>(IslandWorldState.Islands.Select(e => e.Id));
 			DynamicIslands.SpawnIslandCommand(new[] { TestIsland });
 
 			GameObject root = null;
@@ -1664,7 +2089,8 @@ namespace DynamicIslands
 			while (root == null && Time.realtimeSinceStartup < timeout)
 			{
 				yield return new WaitForSeconds(0.5f);
-				root = GameObject.Find("CustomIsland_" + TestIsland);
+				IslandWorldState.Entry added = IslandWorldState.Islands.FirstOrDefault(e => !before.Contains(e.Id) && e.Name == TestIsland) ?? CustomIslandSpawner.InWorld(TestIsland); // (one the world has comes again - sweep 11-14)
+				root = added != null && !added.Loading ? added.Root : null;
 			}
 			if (root == null) { Fail("island root did not appear within 90s"); yield break; }
 
@@ -1704,11 +2130,64 @@ namespace DynamicIslands
 		public static void Init()
 		{
 			Log("Command file: " + CommandFile + (Sandboxed ? " (second player: running in Sandboxie)" : ""));
+			// (the build this Raft runs: buildstamp.ps1 compares it with the installed .rmod - a box run of 10-26 played
+			// ~40 min on a Raft still running the 08:16 build)
+			LogBuild();
 			// A Raft that isn't in front pauses, and then never reads the command file (not even a CIBackground):
 			// dev builds always keep running, so a Raft started behind other windows can still be driven.
 			Application.runInBackground = true;
+			InstallFakeKeys(); // (CIKey: keys with Raft minimised; before the mod's key code is first compiled)
 			DynamicIslands.instance.StartCoroutine(PollCommandFile());
+			DynamicIslands.instance.StartCoroutine(HeartbeatLoop());
 		}
+
+		// Heartbeat (the user 10-28: no worker sits stuck): every 10 s a "[CITEST] HB <what> step=<n> prog=<counter> pos=x,y,z" line,
+		// "idle" between tests. prog goes up on real progress (a play line done, a reach waypoint reached, a target done):
+		// a watcher reads the log's tail - no HB for 30 s = Raft hung or crashed, HB without prog for 90 s = a test stuck.
+		internal static string hbWhat = "idle";
+		internal static int hbStep, hbProg;
+		static IEnumerator HeartbeatLoop()
+		{
+			while (true)
+			{
+				yield return new WaitForSecondsRealtime(10f);
+				string pos = "-", hp = "-";
+				bool dead = false;
+				Network_Player pl = null;
+				try
+				{
+					pl = LoadSceneManager.IsGameSceneLoaded ? RAPI.GetLocalPlayer() : null;
+					if (pl != null)
+					{
+						pos = pl.transform.position.x.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "," + pl.transform.position.y.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "," + pl.transform.position.z.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+						if (pl.Stats != null) hp = pl.Stats.stat_health.Value.ToString("F0", System.Globalization.CultureInfo.InvariantCulture);
+						dead = (pl.Stats != null && pl.Stats.stat_health.Value <= 0f) || (pl.PlayerScript != null && pl.PlayerScript.IsDead);
+					}
+				}
+				catch { }
+				Log("HB " + (runningTests > 0 ? hbWhat.Replace(' ', '_') : "idle") + " step=" + hbStep + " prog=" + hbProg + " pos=" + pos + " hp=" + hp + " dead=" + (dead ? 1 : 0));
+				// (PQ11 10-28: the box's player starved on its drifting raft while it stood idle for half an hour, and the next
+				// play's results came from a dead player. Idle in a world: kept fed and well. Dead: a FAIL line, then up again)
+				if (pl != null && dead)
+				{
+					Log("FAIL: player died at " + pos + " (" + (runningTests > 0 ? hbWhat : "idle") + ")");
+					yield return EnsureAlive();
+				}
+				// (and while the reach audit measures: it tests the way, not air or food - the box player drowned at the bottom of
+				// Gravewell Shaft while the 58 s grid was built after its play, PQ11 10-28)
+				else if (pl != null && (runningTests == 0 || hbWhat.StartsWith("reach "))) { try { KeepAlive(pl); } catch { } }
+			}
+		}
+
+		static void LogBuild()
+		{
+			int files = 0;
+			try { files = DynamicIslands.instance.modlistEntry.modinfo.modFiles.Count; } catch { }
+			Log("BUILD " + IslandNetwork.Build + " (" + files + " files, loaded " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + ")");
+		}
+
+		[ConsoleCommand(name: "CIBuild", docs: "Dev, anywhere: logs the build this Raft runs - BUILD <hash of the .rmod's files, as IslandNetwork.Build> (buildstamp.ps1)")]
+		public static void CIBuild() { LogBuild(); }
 
 		[System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
 		static extern IntPtr GetModuleHandle(string moduleName);
@@ -1723,17 +2202,44 @@ namespace DynamicIslands
 		/// dev_commands.txt for the normal Raft, dev_commands_2.txt for a second Raft in Sandboxie (its box must open
 		/// that one file to the real folder: OpenFilePath, see TEST_PROTOCOL.md §5), so tests can drive each player.
 		/// </summary>
-		static string CommandFile { get { return Path.Combine(DynamicIslands.assetpath, Sandboxed ? "dev_commands_2.txt" : "dev_commands.txt"); } }
+		/// (10-28: a third Raft in box "Raft3" reads dev_commands_3.txt - any box named Raft<N>, N 3..9; other boxes keep _2)
+		static string CommandFile { get { return Path.Combine(DynamicIslands.assetpath, Sandboxed ? "dev_commands_" + BoxSlot + ".txt" : "dev_commands.txt"); } }
+
+		[System.Runtime.InteropServices.DllImport("SbieDll.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+		static extern int SbieApi_QueryProcess(IntPtr processId, System.Text.StringBuilder boxName, System.Text.StringBuilder imageName, System.Text.StringBuilder sid, IntPtr sessionId);
+
+		static string boxSlot;
+		static string BoxSlot
+		{
+			get
+			{
+				if (boxSlot != null) return boxSlot;
+				boxSlot = "2";
+				try
+				{
+					var box = new System.Text.StringBuilder(64); var img = new System.Text.StringBuilder(128); var sid = new System.Text.StringBuilder(128);
+					if (SbieApi_QueryProcess((IntPtr)System.Diagnostics.Process.GetCurrentProcess().Id, box, img, sid, IntPtr.Zero) == 0)
+					{
+						string b = box.ToString();
+						if (b.Length == 5 && b.StartsWith("Raft") && b[4] >= '3' && b[4] <= '9') boxSlot = b.Substring(4);
+					}
+				}
+				catch { }
+				return boxSlot;
+			}
+		}
 
 		static IEnumerator PollCommandFile()
 		{
 			while (true)
 			{
-				yield return new WaitForSecondsRealtime(1f);
+				// (every 0.2 s - a second before, 10-20: each ci.ps1 step waited half a second on average for it)
+				yield return new WaitForSecondsRealtime(0.2f);
 				string[] lines = null;
 				try
 				{
-					if (File.Exists(CommandFile))
+					// (a file written this instant may not be complete yet: the next look reads it)
+					if (File.Exists(CommandFile) && (DateTime.UtcNow - File.GetLastWriteTimeUtc(CommandFile)).TotalSeconds > 0.1)
 					{
 						lines = File.ReadAllLines(CommandFile);
 						File.Delete(CommandFile);
@@ -1742,15 +2248,56 @@ namespace DynamicIslands
 				catch (Exception e) { Debug.LogWarning("[CITEST] command file: " + e.Message); }
 				if (lines == null) continue;
 				Application.runInBackground = true; // commands arrive while Raft is in the background
-				foreach (string raw in lines)
+				// One line after another: a line waits until the tests the earlier lines started have ended (two tests
+				// that both generate or load islands at once spoil each other - CIGenRaftFeatures next to CIGenParity, 10-16)
+				List<string> todo = lines.Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith("#")).ToList();
+				// (only the tests this file's lines start: a test left running from before - one that never ended - held
+				// every later file's second line for good, RUN1 10-20; CIPollerWait)
+				int firstTest = testSerial + 1;
+				for (int li = 0; li < todo.Count; li++)
 				{
-					string line = raw.Trim();
-					if (line.Length == 0 || line.StartsWith("#")) continue;
+					string line = todo[li];
+					pendingCommands = todo.Count - li; // (this line too, until it runs)
+					if (li > 0) while (runningIds.Any(i => i >= firstTest)) yield return null;
+					// "@<unix ms> <command>": run at that moment of the PC's clock - two Rafts on one PC then act in the same
+					// frame or the next, not up to a second apart as the file poll and the script's jobs leave them (IM28)
+					long at;
+					int sp = line.IndexOf(' ');
+					if (line.StartsWith("@") && sp > 1 && long.TryParse(line.Substring(1, sp - 1), out at))
+					{
+						line = line.Substring(sp + 1).Trim();
+						DateTime when = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(at);
+						if ((when - DateTime.UtcNow).TotalSeconds > 30) { Fail("'@" + at + "' is more than 30 s ahead"); continue; }
+						while (DateTime.UtcNow < when) yield return null;
+					}
 					Log("> " + line);
+					pendingCommands = todo.Count - li - 1;
 					try { RunCommand(line); }
 					catch (Exception e) { Fail("command '" + line + "': " + (e.InnerException ?? e)); }
 				}
+				pendingCommands = 0;
+				if (idleOwed && runningTests == 0) Log("IDLE (all tests done)");
+				idleOwed = false;
 			}
+		}
+
+		[ConsoleCommand(name: "CIPollerWait", docs: "Dev: a command file's second line doesn't wait for a test left running from before the file (it held every later file for good after a never-ending test, RUN1 10-20): this test keeps running while it writes a two-line command file of CIPollerMark lines; both must run within 5 s")]
+		public static void PollerWaitCommand() { StartTest(PollerWaitRoutine()); }
+
+		static int pollerMarks;
+		[ConsoleCommand(name: "CIPollerMark", docs: "Dev, helper of CIPollerWait: counts one mark")]
+		public static void PollerMarkCommand() { pollerMarks++; Log("poller mark " + pollerMarks); }
+
+		static IEnumerator PollerWaitRoutine()
+		{
+			pollerMarks = 0;
+			// (the poller reads a file only once it is 0.1 s old, and this test's own file is gone by now)
+			yield return new WaitForSecondsRealtime(0.3f);
+			File.WriteAllLines(CommandFile, new[] { "CIPollerMark", "CIPollerMark" });
+			float end = Time.realtimeSinceStartup + 5f;
+			while (pollerMarks < 2 && Time.realtimeSinceStartup < end) yield return null;
+			if (pollerMarks == 2) Log("PASS: poller wait (both lines of a new file ran while an older test was still running)");
+			else Fail("poller wait: " + pollerMarks + " of 2 lines ran in 5 s while an older test was still running");
 		}
 
 		/// <summary>Runs one of this mod's console commands by name (they are static methods with a ConsoleCommand attribute).</summary>
@@ -1779,7 +2326,7 @@ namespace DynamicIslands
 			string name = args != null && args.Length > 0 ? args[0] : DateTime.Now.ToString("HHmmss");
 			string file = Path.GetFullPath(Path.Combine(DynamicIslands.assetpath, "shot_" + name + ".png"));
 			ScreenCapture.CaptureScreenshot(file);
-			Log("Screenshot: " + file + " (" + Screen.width + "x" + Screen.height + ")");
+			Log("Screenshot: " + file + " (" + Screen.width + "x" + Screen.height + (gfxLow ? ", low graphics: CIGfx high first for a full-size picture" : "") + ")");
 		}
 
 		[ConsoleCommand(name: "CIQuit", docs: "Dev: closes Raft cleanly (for automated test runs)")]
@@ -1789,10 +2336,34 @@ namespace DynamicIslands
 			Application.Quit();
 		}
 
+		// A stand-in for a Raft that never reads its CIQuit (10-20 RUN2: a paged-out box Raft; the runner then started a
+		// second Raft beside it): quitting - CIQuit or its window closed - is refused until the hold ends. For the
+		// runner's restart guard (alltests.ps1 quitguard phase: EndSingleRaft must close its window, one Raft only)
+		static float quitHoldEnd;
+		static bool quitHoldHooked;
+
+		[ConsoleCommand(name: "CIQuitHold", docs: "Dev test: Raft refuses to quit (CIQuit, its window closed) for <seconds> (default 60)")]
+		public static void QuitHoldCommand(string[] args)
+		{
+			int s;
+			if (args.Length == 0 || !int.TryParse(args[0], out s)) s = 60;
+			quitHoldEnd = Time.realtimeSinceStartup + s;
+			if (!quitHoldHooked) { Application.wantsToQuit += QuitHeld; quitHoldHooked = true; }
+			Log("Quit held for " + s + " s");
+		}
+
+		static bool QuitHeld()
+		{
+			float left = quitHoldEnd - Time.realtimeSinceStartup;
+			if (left <= 0f) return true;
+			Log("quit held (" + Mathf.CeilToInt(left) + " s left)");
+			return false;
+		}
+
 		[ConsoleCommand(name: "CIEditor", docs: "Dev: opens the editor (from the main menu) and waits until it is ready")]
 		public static void OpenEditor()
 		{
-			DynamicIslands.instance.StartCoroutine(WaitForEditor(true));
+			StartTest(WaitForEditor(true));
 		}
 
 		static IEnumerator WaitForEditor(bool report)
@@ -1821,14 +2392,15 @@ namespace DynamicIslands
 			EditorUI.SetTab(t.StartsWith("o") ? TAB.ObjectPlace : t.StartsWith("i") ? TAB.Island : TAB.TerrainEdit);
 		}
 
-		[ConsoleCommand(name: "CILoadWorld", docs: "Dev, main menu: loads a saved world through Raft's own Load Game box (no clicking). CILoadWorld [part of the world's name] [backup:N] (default: the newest world; backup:1 = its save before the newest, as Raft's Load Game box offers them)")]
+		[ConsoleCommand(name: "CILoadWorld", docs: "Dev, main menu: loads a saved world through Raft's own Load Game box (no clicking). CILoadWorld [part of the world's name] [backup:N] (a name: straight from the world's folder, without Raft's list - fast with thousands of saved worlds; default: the newest world; backup:1 = its save before the newest, as Raft's Load Game box offers them)")]
 		public static void LoadWorld(string[] args)
 		{
+			PlayerTrust.ForTests = true; // (CB2: the CI tests set players' records and use things from afar - CITrust turns it off)
 			int backup = 0;
 			var words = (args ?? new string[0]).ToList();
 			string last = words.LastOrDefault();
 			if (last != null && last.StartsWith("backup:") && int.TryParse(last.Substring(7), out backup)) words.RemoveAt(words.Count - 1);
-			DynamicIslands.instance.StartCoroutine(LoadWorldRoutine(words.Count > 0 ? string.Join(" ", words.ToArray()) : null, backup));
+			StartTest(LoadWorldRoutine(words.Count > 0 ? string.Join(" ", words.ToArray()) : null, backup));
 		}
 
 		static IEnumerator LoadWorldRoutine(string name, int backup = 0)
@@ -1836,6 +2408,19 @@ namespace DynamicIslands
 			LoadGameBox box = Resources.FindObjectsOfTypeAll<LoadGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
 			if (box == null) { Fail("no Load Game box (go to the main menu first)"); yield break; }
 			box.gameObject.SetActive(true);
+			yield return WaitMenuSettled(Time.realtimeSinceStartup + 30f); // (straight after leaving a world: see WaitMenuSettled)
+			// A world named: straight from its folder, without Raft's list (Raft reads every saved world's newest save
+			// before it lists any - a box with ~2000 test worlds never listed them in 180 s: "no saved worlds listed")
+			if (name != null)
+			{
+				bool direct = false;
+				string why = null;
+				try { direct = LoadWorldDirect(box, name, backup, out why); }
+				catch (Exception ex) { why = "reading it threw " + (ex.InnerException ?? ex).Message; }
+				if (direct) { yield return WaitForWorld(); yield break; }
+				if (why != null) { Fail(why); yield break; }
+				Log("  (no world folder called '" + name + "': Raft's Load Game list)");
+			}
 			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
 			// Raft fills the list asynchronously: wait until it stops growing
 			// (with many saved worlds Raft takes a while - 77 worlds took over 20 s - so up to 90 s)
@@ -1879,6 +2464,73 @@ namespace DynamicIslands
 			for (float until = Time.realtimeSinceStartup + 10f; box.loadButton != null && !box.loadButton.interactable && Time.realtimeSinceStartup < until; ) yield return new WaitForSecondsRealtime(0.5f);
 			if (box.loadButton != null && !box.loadButton.interactable) { Fail("Load is disabled (Steam offline?)"); yield break; }
 			box.Button_LoadGame();
+			yield return WaitForWorld();
+		}
+
+		/// <summary>CILoadWorld with a name: the world's folder in SaveAndLoad.WorldPath (the name exactly, any case, else
+		/// the newest folder whose name holds it), its newest save as Raft's Load Game box reads it
+		/// (GetLatestRGDGameFromBackupFolders) or the older one backup:N names, then Raft's Load button (Button_LoadGame
+		/// loads SaveAndLoad.WorldToLoad). False with <paramref name="why"/> null: no such folder (the list then).</summary>
+		static bool LoadWorldDirect(LoadGameBox box, string name, int backup, out string why)
+		{
+			why = null;
+			var root = new DirectoryInfo(SaveAndLoad.WorldPath);
+			if (!root.Exists) return false;
+			DirectoryInfo[] all = root.GetDirectories();
+			DirectoryInfo dir = all.FirstOrDefault(d => d.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+				?? all.Where(d => d.Name.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0).OrderByDescending(d => d.LastWriteTimeUtc).FirstOrDefault();
+			if (dir == null) return false;
+			RGD_Game game;
+			string which;
+			if (backup > 0)
+			{
+				var older = dir.GetDirectories().Where(d => !d.Name.EndsWith("-Latest") && d.GetFiles("*.rgd").Length > 0)
+					.Select(d => { DateTime t; return new KeyValuePair<DirectoryInfo, DateTime>(d, SaveAndLoad.ConvertBackupFolderNameToDateTime(d.Name, out t) ? t : DateTime.MinValue); })
+					.OrderByDescending(kv => kv.Value).Select(kv => kv.Key).ToList();
+				if (older.Count < backup) { why = "the world '" + dir.Name + "' has " + older.Count + " older save(s), not " + backup; return false; }
+				game = SaveAndLoad.Load<RGD_Game>(older[backup - 1].GetFiles("*.rgd")[0].FullName);
+				which = "older save " + older[backup - 1].Name;
+			}
+			else
+			{
+				DirectoryInfo from;
+				game = SaveAndLoad.GetLatestRGDGameFromBackupFolders(dir, out from);
+				which = from != null ? from.Name : "?";
+			}
+			if (game == null) { why = "could not read a save of the world '" + dir.Name + "'"; return false; }
+			if (backup > 0) Log("Loading an older save: " + which);
+			Log("Loading world: " + dir.Name + " (its folder, " + which + "; " + all.Length + " saved worlds, Raft's list not read)");
+			SaveAndLoad.WorldToLoad = game;
+			GameModeValueManager.SelectCurrentGameMode(game.mode);
+			// (not signed in to PlayFab - a box with Steam offline: the world is hosted solo, as CINewWorld does; hosted for
+			// friends it loaded the scene but never let the player in)
+			if (!Raft_Network.SignedIntoPlayfab)
+			{
+				UnityEngine.UI.Dropdown auth = HarmonyLib.Traverse.Create(box).Field("authSettingDropdown").GetValue<UnityEngine.UI.Dropdown>();
+				if (auth != null && auth.options != null && auth.options.Count >= 2 && auth.value != 1) { auth.value = 1; Log("Not signed in to PlayFab: the world is loaded solo"); }
+			}
+			box.Button_LoadGame();
+			return true;
+		}
+
+		/// <summary>
+		/// Until the started world is in (with its player), so the command's "[CITEST] IDLE" (ci.ps1 ends a run there) means
+		/// the next test can run.
+		/// </summary>
+		static IEnumerator WaitForWorld()
+		{
+			float timeout = Time.realtimeSinceStartup + 180f;
+			System.Func<bool> isIn = () => { try { return LoadSceneManager.IsGameSceneLoaded && RAPI.GetLocalPlayer() != null; } catch { return false; } };
+			float start = Time.realtimeSinceStartup;
+			while (Time.realtimeSinceStartup < timeout && !isIn()) yield return null;
+			if (!isIn()) { Fail("the world was not in after 180 s"); yield break; }
+			// Islands near the raft come in the first seconds: ready once the spawner has streamed them in this world (on
+			// this world's list) and none it started is still loading - instead of a fixed 3 s (10-20); 10 s at most
+			float inAt = Time.realtimeSinceStartup, end = inAt + 10f;
+			System.Func<bool> near = () => CustomIslandSpawner.StreamTicks > 0 && !IslandWorldState.Islands.Any(e => e.Loading);
+			while (Time.realtimeSinceStartup < end && !near()) yield return null;
+			yield return new WaitForFixedUpdate();
+			Log("World ready (in after " + Took(start) + ", islands near the raft " + (near() ? "in" : "still loading") + " after " + Took(inAt) + " more)");
 		}
 
 		[ConsoleCommand(name: "CIClick", docs: "Dev, editor: presses an editor button by its label, e.g. CIClick Main menu / CIClick New / CIClick Duplicate")]
@@ -1896,33 +2548,156 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CINewWorld", docs: "Dev, main menu: creates and starts a new world through Raft's own New Game box (default game mode). CINewWorld <name>")]
 		public static void NewWorld(string[] args)
 		{
+			PlayerTrust.ForTests = true; // (CB2: the CI tests set players' records and use things from afar - CITrust turns it off)
 			string name = args != null && args.Length > 0 ? string.Join(" ", args) : "CI Test";
-			NewGameBox box = Resources.FindObjectsOfTypeAll<NewGameBox>().FirstOrDefault(b => b.gameObject.scene.IsValid());
-			if (box == null) { Fail("no New Game box (go to the main menu first)"); return; }
+			StartTest(NewWorldOpen(name));
+		}
+
+		/// <summary>The main menu's New Game box, or null (in a world, or the menu still loading).</summary>
+		static NewGameBox MenuNewGameBox()
+		{
+			if (LoadSceneManager.IsGameSceneLoaded) return null;
+			// (the main menu scene's, its links to destroyed objects mended: after the editor its authSettingDropdown could be
+			// a dead one and Raft's Create threw in Dropdown.Hide - the test hung, CINewWorld after CIRecipe + groundall, 10-27)
+			return Editor.IslandTest.LiveBox<NewGameBox>();
+		}
+
+		/// <summary>Waits for the main menu (a CINewWorld straight after CIMainMenu: up to 30 s - it failed at once before
+		/// and the scripts slept "to be safe", 10-20), then opens the New Game box.</summary>
+		static IEnumerator NewWorldOpen(string name)
+		{
+			float end = Time.realtimeSinceStartup + 30f;
+			NewGameBox box;
+			while ((box = MenuNewGameBox()) == null && Time.realtimeSinceStartup < end) yield return new WaitForSecondsRealtime(0.1f);
+			if (box == null) { Fail("no New Game box (go to the main menu first)"); yield break; }
 			box.gameObject.SetActive(true);
 			try { box.Close(); } catch { } box.Open(); // (Raft's Open subscribes to input changes each time, Close unsubscribes: never open twice)
-			DynamicIslands.instance.StartCoroutine(NewWorldCreate(box, name));
+			yield return NewWorldCreate(box, name);
 		}
 
 		/// <summary>
 		/// A moment after the box opens (as a player's click comes): straight after leaving a world Raft's game mode tabs
 		/// aren't set up in the same frame, and Create threw inside Raft (no world, IsInNewGame never set).
 		/// </summary>
+		/// <summary>CINewWorldPick mode=...: the next CINewWorld's game mode (then back to the box's own).</summary>
+		internal static GameMode? NewWorldMode;
+
 		static IEnumerator NewWorldCreate(NewGameBox box, string name)
 		{
-			yield return new WaitForSecondsRealtime(1f);
+			// (ready: its tab group has a tab selected - the game mode tabs set up; 2 frames at least, 1 s at most as before)
+			TabGroup tabs = HarmonyLib.Traverse.Create(box).Field("tabGroup").GetValue<TabGroup>();
+			yield return null; yield return null;
+			for (float end = Time.realtimeSinceStartup + 1f; Time.realtimeSinceStartup < end; )
+			{
+				if (tabs != null && HarmonyLib.Traverse.Create(tabs).Field("selectedTabButton").GetValue() != null) break;
+				yield return null;
+			}
+			yield return null;
+			// (CINewWorldPick mode=...: Raft's game mode tab for this one world - Create reads the selected tab)
+			if (NewWorldMode.HasValue)
+			{
+				GameMode want = NewWorldMode.Value;
+				NewWorldMode = null;
+				TabButtonGameMode tab = tabs != null && tabs.tabButtons != null ? tabs.tabButtons.OfType<TabButtonGameMode>().FirstOrDefault(b => b != null && b.ButtonGameMode == want) : null;
+				if (tab == null) { Fail("CINewWorld: no " + want + " tab in the New Game box"); yield break; }
+				tab.OnPointerClick();
+				yield return null;
+				Log("Game mode " + want);
+			}
 			box.inputfield_GameName.text = name;
 			box.GameNameEndEdit(name);
+			string solo = Editor.IslandTest.SoloWhenOffline(box);
+			if (solo != null) Log(solo);
 			for (float t = 0; t < 5f && box.createGameButton != null && !box.createGameButton.interactable; t += 0.5f) yield return new WaitForSecondsRealtime(0.5f);
-			if (box.createGameButton != null && !box.createGameButton.interactable) { Fail("Create is disabled (name taken, or Steam offline?)"); yield break; }
+			if (box.createGameButton != null && !box.createGameButton.interactable) { Fail("Create is disabled (name taken or invalid, or offline: PlayFab signed in " + Raft_Network.SignedIntoPlayfab + ")"); yield break; }
 			Log("Creating world '" + name + "'");
-			box.Button_CreateNewGame();
+			MadeWorld = name;
+			// (a test world gets defaultPlan unless a test chose one: not the plan the last world was made with, ROADMAP CB5)
+			if (WorldDirector.PendingPlan == null) WorldDirector.PendingPlan = WorldDirector.DefaultPlan;
+			box = MenuNewGameBox() ?? box;
+			// Raft's Create twice threw a NullReferenceException in Dropdown.Hide (10-26): the coroutine died at the menu and the
+			// runner waited 25 min. Now: caught, the box's dropdowns closed and the box reopened, one retry, else a FAIL line.
+			string[] error = new string[1];
+			yield return CreateWithRetry(() => box.Button_CreateNewGame(), WorldStarting, () => ResetNewGameBox(box, name), e => error[0] = e);
+			if (error[0] != null) { Fail("CINewWorld '" + name + "': " + error[0]); yield break; }
+			yield return WaitForWorld();
+		}
+
+		/// <summary>True once a world is loading or in (the menu's New Game box gone or the game scene up).</summary>
+		static bool WorldStarting()
+		{
+			try { return LoadSceneManager.IsGameSceneLoaded || MenuNewGameBox() == null; } catch { return false; }
+		}
+
+		/// <summary>
+		/// Calls create; if it throws and no world started within 2 s, runs reset and tries once more. Reports null on success,
+		/// else what went wrong (the caller logs the FAIL) - kept apart from Raft's box so CINewWorldRetry can test it.
+		/// </summary>
+		static IEnumerator CreateWithRetry(Action create, Func<bool> started, Func<IEnumerator> reset, Action<string> report)
+		{
+			string last = null;
+			for (int attempt = 1; attempt <= 2; attempt++)
+			{
+				try { create(); report(null); yield break; }
+				catch (Exception e) { last = e.GetType().Name + ": " + e.Message; Debug.LogWarning("[CITEST] Create threw (attempt " + attempt + "): " + e); }
+				// (the throw may come after Raft began loading the world: then go on, never create a second one)
+				for (float end = Time.realtimeSinceStartup + 2f; Time.realtimeSinceStartup < end; )
+				{
+					if (started()) { report(null); yield break; }
+					yield return null;
+				}
+				if (attempt == 1) yield return reset();
+			}
+			report("Create threw twice (" + last + ")");
+		}
+
+		/// <summary>Closes every dropdown in the New Game box (and drops stray dropdown lists), then reopens the box with the name.</summary>
+		static IEnumerator ResetNewGameBox(NewGameBox box, string name)
+		{
+			foreach (UnityEngine.UI.Dropdown d in box.GetComponentsInChildren<UnityEngine.UI.Dropdown>(true)) try { d.Hide(); } catch { }
+			foreach (TMPro.TMP_Dropdown d in box.GetComponentsInChildren<TMPro.TMP_Dropdown>(true)) try { d.Hide(); } catch { }
+			foreach (Transform t in box.GetComponentsInChildren<Transform>(true).Where(t => t != null && t.name == "Dropdown List").ToList()) UnityEngine.Object.Destroy(t.gameObject);
+			yield return null;
+			try { box.Close(); } catch { }
+			yield return null;
+			box.gameObject.SetActive(true);
+			try { box.Open(); } catch (Exception e) { Debug.LogWarning("[CITEST] reopening the New Game box threw: " + e.Message); }
+			yield return null; yield return null;
+			box.inputfield_GameName.text = name;
+			box.GameNameEndEdit(name);
+			Editor.IslandTest.SoloWhenOffline(box);
+			for (float t = 0; t < 2f &&box.createGameButton != null && !box.createGameButton.interactable; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+		}
+
+		[ConsoleCommand(name: "CINewWorldRetry", docs: "Dev, anywhere: CINewWorld's create-with-retry - one throw then success retries once; two throws report an error instead of hanging")]
+		public static void NewWorldRetry()
+		{
+			StartTest(NewWorldRetryRoutine());
+		}
+
+		static IEnumerator NewWorldRetryRoutine()
+		{
+			bool ok = true;
+			int calls = 0, resets = 0; string err = "unset";
+			Func<IEnumerator> reset = () => { resets++; return Enumerable.Empty<object>().GetEnumerator(); };
+			yield return CreateWithRetry(() => { if (++calls == 1) throw new NullReferenceException("test"); }, () => false, reset, e => err = e);
+			Check(ref ok, err == null && calls == 2 && resets == 1, "one throw: reset once, created on the retry (calls " + calls + ", resets " + resets + ", error " + (err ?? "none") + ")");
+			calls = 0; resets = 0; err = "unset";
+			yield return CreateWithRetry(() => { calls++; throw new NullReferenceException("test"); }, () => false, reset, e => err = e);
+			Check(ref ok, err != null && err.StartsWith("Create threw twice") && calls == 2 && resets == 1, "two throws: an error, no third try (calls " + calls + ", error " + err + ")");
+			calls = 0; resets = 0; err = "unset";
+			yield return CreateWithRetry(() => { calls++; throw new NullReferenceException("test"); }, () => true, reset, e => err = e);
+			Check(ref ok, err == null && calls == 1 && resets == 0, "a throw after the world began loading: no second world (calls " + calls + ")");
+			calls = 0; resets = 0; err = "unset";
+			yield return CreateWithRetry(() => calls++, () => false, reset, e => err = e);
+			Check(ref ok, err == null && calls == 1 && resets == 0, "no throw: created once");
+			if (ok) Log("PASS: CINewWorldRetry"); else Fail("CINewWorldRetry");
 		}
 
 		[ConsoleCommand(name: "CIUITest", docs: "Dev, editor: the editor screen - panels per tab, buttons in their groups, windows, object browser; screenshots ui_<tab>.png")]
 		public static void UITest()
 		{
-			DynamicIslands.instance.StartCoroutine(UITestRoutine());
+			StartTest(UITestRoutine());
 		}
 
 		static IEnumerator UITestRoutine()
@@ -1990,7 +2765,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CICatalogTest", docs: "Dev, editor: all of Raft's objects - index of every island scene, buildables, loading a category on demand, placing, saving and loading an island with such objects (cicatalog.island). CICatalogTest [category]")]
 		public static void CatalogTest(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(CatalogTestRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
+			StartTest(CatalogTestRoutine(args != null && args.Length > 0 ? string.Join(" ", args) : null));
 		}
 
 		static IEnumerator CatalogTestRoutine(string category)

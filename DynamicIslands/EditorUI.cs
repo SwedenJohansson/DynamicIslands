@@ -34,10 +34,16 @@ namespace DynamicIslands.Editor
 		static TabSelector tabs;
 
 		static Button[] tabButtons;
-		static Button[] brushButtons; // Raise, Lower, Flatten, Smooth, 4 paint slots, Auto
+		static Button[] brushButtons; // Raise, Lower, Flatten, Smooth, 4 paint slots, Auto, Noise, Erode, 4 mixed-style paint slots, Tunnel, Sea grass
+		static Button[] falloffButtons; // Smooth, Linear, Hard
+		static Image[] mixSwatches;
+		static Button mixDrop, seaDeepButton, seaShallowButton, skySeaButton;
+		static RectTransform mixRow1, mixRow2;
+		static UIKit.SliderRow noiseSlider, talusSlider;
 		static Image[] paintSwatches;
 		static Button[] gizmoButtons; // Move, Rotate, Scale, All
 		static Button randomButton, slopeButton, gridButton;
+		static Button[] gridSizeButtons;
 		static UIKit.SliderRow sizeSlider, strengthSlider;
 		static Text islandNameText, styleText, selectionText, statsText, hintText, cameraText;
 		static InputField elevationField;
@@ -69,11 +75,25 @@ namespace DynamicIslands.Editor
 
 		public static void RefreshSliders()
 		{
-			if (sizeSlider != null && sizeSlider.Slider != null) { sizeSlider.Slider.SetValueWithoutNotify(terraineditor.brushRadius); sizeSlider.Value.text = SizeText(terraineditor.brushRadius); }
+			if (sizeSlider != null && sizeSlider.Slider != null) { sizeSlider.Slider.SetValueWithoutNotify(Mathf.Log(terraineditor.brushRadius)); sizeSlider.Value.text = SizeText(terraineditor.brushRadius); }
 			if (strengthSlider != null && strengthSlider.Slider != null) { strengthSlider.Slider.SetValueWithoutNotify(terraineditor.strength); strengthSlider.Value.text = StrengthText(terraineditor.strength); }
+			if (noiseSlider != null && noiseSlider.Slider != null) { noiseSlider.Slider.SetValueWithoutNotify(TerrainBrushes.NoiseScale); noiseSlider.Value.text = SizeText(TerrainBrushes.NoiseScale / 2f); }
+			if (talusSlider != null && talusSlider.Slider != null) { talusSlider.Slider.SetValueWithoutNotify(TerrainBrushes.TalusAngle); talusSlider.Value.text = TalusText(TerrainBrushes.TalusAngle); }
 		}
 
+		static string TalusText(float a) { return a.ToString("F0") + "°"; }
+
 		static string SizeText(float radius) { return (radius * 2f).ToString("F0") + " m"; }
+
+		/// <summary>
+		/// The brush size slider runs on a log scale (ROADMAP E12) so the small sizes (1, 2, 3 m across) get room as well as the big
+		/// ones; the radius it gives is rounded to whole metres across.
+		/// </summary>
+		internal static float SliderRadius(float sliderValue)
+		{
+			float across = Mathf.Max(1f, Mathf.Round(Mathf.Exp(sliderValue) * 2f));
+			return Mathf.Clamp(across / 2f, terraineditor.MinRadius, terraineditor.MaxRadius);
+		}
 		static string StrengthText(float s) { return s.ToString("F1") + " m/s"; }
 
 		/// <summary>Builds the editor screen. The bundle's canvas (old toolbar) is switched off.</summary>
@@ -85,9 +105,12 @@ namespace DynamicIslands.Editor
 			Canvas = UIKit.CreateCanvas("CustomIslandsEditorUI", 20);
 			if (tabs == null) tabs = Canvas.gameObject.AddComponent<TabSelector>();
 			Transform root = Canvas.transform;
-			if (!hintHooked) { UIKit.HintChanged += h => hoverHint = h; hintHooked = true; }
+			if (!hintHooked) { UIKit.HintChanged += h => hoverHint = h; UIKit.HintBars.Add(() => Canvas != null && Canvas.gameObject.activeInHierarchy); hintHooked = true; }
+			// Hover hints name the keys of the chosen layout when they show (only while the editor is up; other windows keep theirs)
+			UIKit.HintKeys = h => Canvas != null && Canvas.gameObject.activeInHierarchy ? CameraSettings.KeyNames(h) : h;
 			hoverHint = null;
 			lastSelectionCount = -1; shownPaintLayer = -1; elevationTyping = false;
+			shownFalloff = (TerrainBrushes.Falloff)(-1); shownSeaLevel = float.NaN; // (the new buttons get lit)
 
 			BuildTopBar(root);
 			BuildStatusBar(root);
@@ -135,7 +158,12 @@ namespace DynamicIslands.Editor
 			UIKit.Size(brand.gameObject, 190);
 			UIKit.Size(UIKit.Label(brand, "CUSTOM ISLANDS", 12, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold).gameObject, -1, 14);
 			islandNameText = UIKit.Label(brand, "", 16, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Bold, "IslandName");
-			islandNameText.horizontalOverflow = HorizontalWrapMode.Overflow;
+			// (a long name - up to 64 letters - ran over the New / Open / Save buttons: it shrinks to fit the 190 px instead)
+			islandNameText.horizontalOverflow = HorizontalWrapMode.Wrap;
+			islandNameText.verticalOverflow = VerticalWrapMode.Truncate;
+			islandNameText.resizeTextForBestFit = true;
+			islandNameText.resizeTextMinSize = 8;
+			islandNameText.resizeTextMaxSize = 16;
 			UIKit.Size(islandNameText.gameObject, -1, 20);
 
 			RectTransform file = ToolbarGroup(bar, "File");
@@ -160,7 +188,8 @@ namespace DynamicIslands.Editor
 			UIKit.Size(spacer.gameObject, 0, -1, 1);
 
 			RectTransform app = ToolbarGroup(bar, "App");
-			UIKit.Button(app, "Generate", GeneratorWindow.Open, "Make a random island from a seed (replaces the current one; Ctrl+Z undoes)", 84);
+			UIKit.Button(app, "Generate", GeneratorWindow.Open, "Make a random island from a seed (replaces the current one; Ctrl+Z undoes)", 76);
+			// (76, not 84: with the ? after Use in a plan... the bar ended 6 px past a 1024 x 768 screen)
 			// (a list of the times of day - it cycled one click at a time)
 			string[] lightHints = { "Low sun from the east", "Sun high up, short shadows", "Low warm sun from the west", "Moonlight: how it looks after dark", "Grey sky, soft light" };
 			lightButton = DropList.Make(app, "Button_Light", Enumerable.Range(0, EditorLighting.Names.Length).Select(i => new DropList.Option(i.ToString(), EditorLighting.Names[i], lightHints[Mathf.Min(i, lightHints.Length - 1)])).ToList(), EditorLighting.Current.ToString(),
@@ -170,12 +199,45 @@ namespace DynamicIslands.Editor
 			lightText.resizeTextForBestFit = true; lightText.resizeTextMinSize = 9; lightText.resizeTextMaxSize = 13;
 			UIKit.Stretch(lightText.rectTransform, 5, 22, 1, 1);
 			UIKit.Button(app, "Test", IslandTest.Start, "Try the island in a world: it is saved, the test world '" + IslandTest.WorldName + "' opens with the island beside the raft and you on it. Back with Esc > Custom Islands > Back to the editor", 60);
-			UIKit.Button(app, "World plans", () => WorldPlanWindow.Open(), "Plans for new worlds: which islands appear, when (start, km, days, quests, zones...) and where", 104);
-			UIKit.Button(app, "Main menu", () => { EditorAutosave.WriteNow(); UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single); },
-				"Back to Raft's main menu (save first! Unsaved changes are kept as an autosave, offered the next time the editor opens)", 92);
+			// (TODO 5b: world plans are made from the start window on the main menu; here the island goes into one)
+			useInPlanButton = UIKit.Button(app, "Use in a plan...", EditorEntry.UseInPlan, "Add this island to a world plan: next in its Main story line, or as another island that comes on its own (the island is saved first). World plans themselves: Main menu > EDITOR > A world plan", 96);
+			// (96 wide, the words shrink to fit: room for the "?" after it on a 1024 x 768 screen)
+			Text useText = UIKit.LabelOf(useInPlanButton);
+			useText.resizeTextForBestFit = true; useText.resizeTextMinSize = 9; useText.resizeTextMaxSize = 13;
+			backToPlanButton = UIKit.Button(app, "Back to the plan", EditorEntry.ToPlan, "Back to the world plan this island was opened from (the island is saved first)", 88);
+			// (88 wide, the words shrink to fit: at 112 the top bar was 1422 wide and pushed Main menu off a 1024 x 768 screen)
+			Text backText = UIKit.LabelOf(backToPlanButton);
+			backText.resizeTextForBestFit = true; backText.resizeTextMinSize = 9; backText.resizeTextMaxSize = 13;
+			UIKit.Primary(backToPlanButton);
+			RefreshBackToPlan();
+			UIKit.Help(app, "Save as only keeps the island under a new name. Use in a plan... puts it into a world plan - the list of islands a "
+				+ "world is made from - so players meet it while they play. It saves the island first (a new island needs a name from Save as), then "
+				+ "lists your plans or starts a new one, and asks how the island comes: next in the Main story line (the Receiver leads players "
+				+ "to it after the story's last island) or as another island that comes on its own (at the start, ahead of the raft; change WHEN "
+				+ "and WHERE on its card). The plan opens on it. Opened from a plan card's Edit island, this button is Back to the plan. "
+				+ "Plans themselves: Main menu > EDITOR > A world plan.");
+			UIKit.Button(app, "Main menu", EditorEntry.ToMainMenu,
+				"Back to the start window on Raft's main menu (save first! Unsaved changes are kept as an autosave, offered the next time the editor opens)", 86);
 		}
 
 		static Button lightButton;
+		static Button useInPlanButton, backToPlanButton;
+
+		/// <summary>The top bar offers Back to the plan (an island opened with a plan card's Edit island) in place of Use in a plan...</summary>
+		public static void RefreshBackToPlan()
+		{
+			if (useInPlanButton == null || backToPlanButton == null) return;
+			bool back = EditorEntry.BackToPlan != null;
+			backToPlanButton.gameObject.SetActive(back);
+			useInPlanButton.gameObject.SetActive(!back);
+			if (back) UIKit.Hint(backToPlanButton.gameObject, "Back to the world plan '" + EditorEntry.BackToPlan + "' (the island is saved first)");
+		}
+
+		/// <summary>The "Raft's sky and sea" button shows whether the option is on.</summary>
+		public static void RefreshSkySea()
+		{
+			if (skySeaButton != null) UIKit.SetActive(skySeaButton, RaftSkySea.Enabled);
+		}
 
 		/// <summary>The Light button says the time of day shown.</summary>
 		public static void RefreshLight()
@@ -210,6 +272,8 @@ namespace DynamicIslands.Editor
 			UIKit.Size(hintText.gameObject, -1, -1, 1);
 			cameraText = UIKit.Label(bar, "", 13, UIKit.TextMuted, TextAnchor.MiddleRight, FontStyle.Normal, "Camera");
 			UIKit.Size(cameraText.gameObject, 260);
+			// (the camera's controls and settings: look sensitivity, drag up, speeds, the wheel - TODO "Editor camera")
+			UIKit.Button(bar, "Camera...", CameraSettingsWindow.Open, "Every mouse button and key of the editor, and the camera's settings: look sensitivity, which way dragging up looks, move, zoom and pan speed, the wheel's direction (this PC's own)", 86, StatusBarHeight - 4f, 12).name = "Button_CameraSettings";
 		}
 
 		#endregion
@@ -228,12 +292,49 @@ namespace DynamicIslands.Editor
 			RectTransform s = ToolSection(panel, "TerrainTools");
 
 			RectTransform sculpt = UIKit.Group(s, "Sculpt");
-			RectTransform r1 = UIKit.Row(sculpt), r2 = UIKit.Row(sculpt);
-			brushButtons = new Button[9];
+			RectTransform r1 = UIKit.Row(sculpt), r2 = UIKit.Row(sculpt), r3 = UIKit.Row(sculpt);
+			brushButtons = new Button[18];
 			brushButtons[0] = UIKit.Button(r1, "Raise", () => SetBrush(terraineditor.TerrainModificationAction.Raise), "Raise: hold the left mouse button to build up land");
 			brushButtons[1] = UIKit.Button(r1, "Lower", () => SetBrush(terraineditor.TerrainModificationAction.Lower), "Lower: dig down, make bays and lagoons");
-			brushButtons[2] = UIKit.Button(r2, "Flatten", () => SetBrush(terraineditor.TerrainModificationAction.Flatten), "Flatten: levels the ground to the height where the stroke starts");
+			brushButtons[2] = UIKit.Button(r2, "Flatten", () => SetBrush(terraineditor.TerrainModificationAction.Flatten), "Flatten: levels the ground to the height where the stroke starts (or to Flatten to, below)");
 			brushButtons[3] = UIKit.Button(r2, "Smooth", () => SetBrush(terraineditor.TerrainModificationAction.Smooth), "Smooth: softens bumps and sharp edges");
+			brushButtons[9] = UIKit.Button(r3, "Noise", () => SetBrush(terraineditor.TerrainModificationAction.Noise), "Noise: roughens the ground with bumps (their size: Noise size below) - hold Shift to take them away again");
+			brushButtons[10] = UIKit.Button(r3, "Erode", () => SetBrush(terraineditor.TerrainModificationAction.Erode), "Erode: ground steeper than the Talus angle below slides down, like loose earth - wears cliffs and spikes into slopes");
+
+			// The cave tool (PF-D2): a tunnel of Raft's cave pieces dragged into a hill, a room at its end
+			RectTransform caves = UIKit.Group(s, "Caves");
+			RectTransform c1 = UIKit.Row(caves);
+			brushButtons[15] = UIKit.Button(c1, "Tunnel", () => SetBrush(terraineditor.TerrainModificationAction.Cave),
+				"Cave: press where the mouth is to be and drag the way the tunnel goes, into a hill - Raft's cave tunnels are laid end to end along it, the ground raised over them into a hill. Esc cancels, Ctrl+Z takes it all back");
+			brushButtons[15].name = "Button_CaveTunnel";
+			UIKit.Slider(caves, "Slope", -CaveTool.MaxSlope, CaveTool.MaxSlope, CaveTool.Slope, v => Mathf.Abs(v) < 0.5f ? "level" : (v < 0 ? "down " : "up ") + Mathf.RoundToInt(Mathf.Abs(v)) + "°",
+				v => CaveTool.Slope = v, "How the tunnel slopes from the mouth: down into the ground, or up", true);
+			UIKit.Slider(caves, "Size", CaveTool.MinSize, CaveTool.MaxSize, CaveTool.Size, v => v.ToString("0.0") + "x",
+				v => CaveTool.Size = Mathf.Round(v * 10f) / 10f, "How big the tunnel and its room are, against Raft's own cave (1x): 0.7x a narrow passage (still walkable), 1.5x a big cavern. Its mouth's outline follows the mouse before you press", false);
+			Button room = null, hill = null;
+			room = UIKit.Check(caves, "Cave room at the end", () => { CaveTool.EndRoom = !CaveTool.EndRoom; UIKit.SetCheck(room, CaveTool.EndRoom); },
+				"A big cave room (Balboa's bear den) where the tunnel ends. Off: the tunnel comes out open at its far end - a way through a hill. A short drag with this on: only the room");
+			room.name = "Check_CaveRoom";
+			UIKit.SetCheck(room, CaveTool.EndRoom);
+			hill = UIKit.Check(caves, "Hill over it", () => { CaveTool.Hill = !CaveTool.Hill; UIKit.SetCheck(hill, CaveTool.Hill); },
+				"Raise the ground over the cave into a hill so its rock is covered (the ground is never lowered there). Off: only filled up under it");
+			hill.name = "Check_CaveHill";
+			UIKit.SetCheck(hill, CaveTool.Hill);
+			// (the other tunnel tool: the Dig brush, a passage painted into a hill - 11-01)
+			Text straight = UIKit.LabelOf(brushButtons[15]);
+			if (straight != null) straight.text = "Straight tunnel";
+			brushButtons[17] = UIKit.Button(c1, "Dig brush", () => SetBrush(terraineditor.TerrainModificationAction.Dig),
+				"Dig brush: press on a hillside or cliff and hold - a passage is dug in toward where the mouse points (keep it still to dig on the way you look, move it to steer). Press on a tunnel to dig on from it or branch off; Shift+drag fills a passage in. Ctrl+Z undoes a stroke");
+			brushButtons[17].name = "Button_DigBrush";
+			UIKit.Slider(caves, "Dig size", DigTunnel.MinRadius * 2f, DigTunnel.MaxRadius * 2f, DigTunnel.Radius * 2f, v => v.ToString("0.0") + " m",
+				v => DigTunnel.Radius = Mathf.Round(v * 5f) / 10f, "Dig brush: how wide (and high) the passage is. 2.8 m is a tight crawl you can still walk, 3.5 m a passage, 6 m and more a hall", false);
+			UIKit.Slider(caves, "Dig slope", -DigTunnel.MaxSlope, DigTunnel.MaxSlope, DigTunnel.Slope, v => Mathf.Abs(v) < 0.5f ? "level" : (v < 0 ? "down " : "up ") + Mathf.RoundToInt(Mathf.Abs(v)) + "°",
+				v => DigTunnel.Slope = v, "Dig brush: how the passage climbs as you dig - level, down into the ground (from flat ground: a ramp in) or up", true);
+			Button god = null;
+			god = UIKit.Check(caves, "God mode (camera through walls)", () => { EditorCamera.GodMode = !EditorCamera.GodMode; UIKit.SetCheck(god, EditorCamera.GodMode); },
+				"The editor camera flies through the ground, rock and walls - into a dug tunnel or a cave to build in it. Off: it keeps over the ground (it still flies into a dug tunnel's open mouth)");
+			god.name = "Check_GodMode";
+			UIKit.SetCheck(god, EditorCamera.GodMode);
 
 			RectTransform paint = UIKit.Group(s, "Paint ground");
 			RectTransform p1 = UIKit.Row(paint), p2 = UIKit.Row(paint), p3 = UIKit.Row(paint);
@@ -246,21 +347,67 @@ namespace DynamicIslands.Editor
 				brushButtons[4 + i] = b;
 			}
 			brushButtons[8] = UIKit.Button(p3, "Auto", () => SetBrush(terraineditor.TerrainModificationAction.AutoPaint), "Auto: the ground textures itself again by height and slope");
+			brushButtons[16] = UIKit.Button(p3, "Sea grass", () => SetBrush(terraineditor.TerrainModificationAction.SeaGrass),
+				"Sea grass: Raft's short sea grass on the sea floor (it grows only under water) - hold Shift to take it away");
+			brushButtons[16].name = "Button_SeaGrass";
+
+			// A second style mixed in: its four textures to paint with too (layers 5-8)
+			RectTransform mixRow = UIKit.Row(paint, UIKit.RowHeight, 4f, "MixStyle");
+			UIKit.Size(UIKit.Label(mixRow, "Mix", 14, UIKit.TextMuted).gameObject, 40);
+			var mixOptions = new List<DropList.Option> { new DropList.Option("-1", "No second style", "Only the island style's four textures") };
+			mixOptions.AddRange(Enumerable.Range(0, TerrainPainter.Styles.Length).Select(i => new DropList.Option(i.ToString(), TerrainPainter.StyleName(i), "Paint with " + TerrainPainter.StyleName(i) + "'s four textures too")));
+			mixDrop = DropList.Make(mixRow, "Drop_MixStyle", mixOptions, "-1", v => TerrainBrushes.SetEditorMix(int.Parse(v)),
+				-1, "A second style's ground textures to paint with as well (saved with the island; Ctrl+Z undoes)", UIKit.RowHeight, 13);
+			UIKit.Size(mixDrop.gameObject, -1, -1, 1);
+			mixRow1 = UIKit.Row(paint, UIKit.RowHeight, 6f, "MixPaint1");
+			mixRow2 = UIKit.Row(paint, UIKit.RowHeight, 6f, "MixPaint2");
+			mixSwatches = new Image[4];
+			for (int i = 0; i < 4; i++)
+			{
+				int slot = PaintSlots[i];
+				Button b = UIKit.Button(i < 2 ? mixRow1 : mixRow2, TerrainPainter.LayerNames[slot], () => SetPaint(TerrainPainter.LayerCount + slot), "Paint the second style's texture by hand");
+				b.name = "Button_MixPaint" + i;
+				mixSwatches[i] = UIKit.Swatch(b, SlotColors[slot]);
+				brushButtons[11 + i] = b;
+			}
 
 			RectTransform brush = UIKit.Group(s, "Brush");
-			sizeSlider = UIKit.Slider(brush, "Size", terraineditor.MinRadius, terraineditor.MaxRadius, terraineditor.brushRadius, SizeText,
-				v => terraineditor.brushRadius = v, "Brush diameter in metres (console: ChangeWidth)");
+			sizeSlider = UIKit.Slider(brush, "Size", Mathf.Log(terraineditor.MinRadius), Mathf.Log(terraineditor.MaxRadius), Mathf.Log(terraineditor.brushRadius), v => SizeText(SliderRadius(v)),
+				v => terraineditor.brushRadius = SliderRadius(v), "Brush diameter in metres, 1 to 160 (console: ChangeWidth). The ground has a point about every 2 m: a 1 m brush moves one point");
 			strengthSlider = UIKit.Slider(brush, "Strength", terraineditor.MinStrength, terraineditor.MaxStrength, terraineditor.strength, StrengthText,
 				v => terraineditor.strength = v, "How fast the brush works (console: ChangeStrength)");
+			RectTransform flatRow = UIKit.Row(brush, 26f, 4f, "FlattenTo");
+			UIKit.Size(UIKit.Label(flatRow, "Flatten to", 14, UIKit.TextMuted).gameObject, 70);
+			flattenField = UIKit.Field(flatRow, "start", "", 26f, "Flatten brush: the height above the sea (metres) it levels the ground to, as a recipe's h=. Empty: the height where the stroke starts");
+			flattenField.name = "Field_FlattenTo";
+			flattenField.contentType = InputField.ContentType.DecimalNumber;
+			flattenField.characterLimit = 6;
+			flattenField.onEndEdit.AddListener(SetFlattenHeight);
+			typingFields.Add(flattenField);
+			UIKit.Size(UIKit.Label(flatRow, "m", 14, UIKit.TextMuted).gameObject, 18);
+			RectTransform edge = UIKit.Row(brush, 26f, 4f, "Falloff");
+			UIKit.Size(UIKit.Label(edge, "Edge", 14, UIKit.TextMuted).gameObject, 40);
+			falloffButtons = new[]
+			{
+				UIKit.Button(edge, "Smooth", () => SetFalloff(TerrainBrushes.Falloff.Smooth), "Brush edge: strong in the middle, fading softly to the rim", -1, 26f, 12),
+				UIKit.Button(edge, "Linear", () => SetFalloff(TerrainBrushes.Falloff.Linear), "Brush edge: fading evenly from the middle to the rim", -1, 26f, 12),
+				UIKit.Button(edge, "Hard", () => SetFalloff(TerrainBrushes.Falloff.Hard), "Brush edge: full strength right to the rim (terraces, sharp paint edges)", -1, 26f, 12),
+			};
+			noiseSlider = UIKit.Slider(brush, "Noise size", TerrainBrushes.MinNoiseScale, TerrainBrushes.MaxNoiseScale, TerrainBrushes.NoiseScale, v => SizeText(v / 2f),
+				v => TerrainBrushes.NoiseScale = v, "Noise brush: how big its bumps are, in metres");
+			talusSlider = UIKit.Slider(brush, "Talus", TerrainBrushes.MinTalus, TerrainBrushes.MaxTalus, TerrainBrushes.TalusAngle, TalusText,
+				v => TerrainBrushes.TalusAngle = v, "Erode brush: the steepest slope that stays (loose earth about 30-35°)");
 
 			RectTransform stamps = UIKit.Group(s, "Stamps");
 			stampButtonsRoot = UIKit.Rect("StampButtons", stamps);
 			UIKit.Vertical(stampButtonsRoot.gameObject, 4f, new RectOffset(0, 0, 0, 0));
-			UIKit.Button(stamps, "Save stamp...", SaveStamp, "Keep the land under the brush (as big as the brush) as a stamp of your own", -1, 24f, 12);
+			RectTransform stampRow = UIKit.Row(stamps, 24f, 4f, "StampSave");
+			UIKit.Button(stampRow, "Save stamp...", SaveStamp, "Keep the land under the brush (as big as the brush) as a stamp of your own", -1, 24f, 12);
+			UIKit.Button(stampRow, "Manage...", () => PiecesWindow.Open(true), "Rename or delete your own stamps", 80, 24f, 12).name = "Button_ManageStamps";
 			TerrainStamps.Load();
 			RefreshStamps();
 
-			Tips(s, "Left mouse: use the brush \u00B7 blue plane: the sea\nRight-drag: look (+WASD fly, Q/E, wheel: speed)\nMiddle-drag: pan \u00B7 Alt+drag: orbit \u00B7 WASD: move\nSpace / C: straight up / down \u00B7 F: frame \u00B7 Shift: faster\nWheel: zoom to the cursor");
+			Tips(s, "Left mouse: use the brush \u00B7 blue plane: the sea\nRight-drag: look (+WASD fly, Q/E, wheel: speed)\nMiddle-drag: pan \u00B7 Alt+drag: orbit \u00B7 WASD: move\nSpace / C: straight up / down \u00B7 F: frame \u00B7 Shift: faster\nWheel: zoom to the cursor \u00B7 Camera... (bottom right): settings");
 			return s;
 		}
 
@@ -295,8 +442,20 @@ namespace DynamicIslands.Editor
 			UIKit.Button(s2, "Deselect", () => { if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.ClearTargets(); }, "Clear the selection");
 			Button del = UIKit.Button(s2, "Delete", () => { if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.DeleteSelection(); }, "Delete the selected objects (Delete key; Ctrl+Z brings them back)");
 			UIKit.DangerButton(del);
+			RectTransform sa = UIKit.Row(sel, 26f, 4f, "SelectMore");
+			UIKit.Button(sa, "All", SelectAll, "Select every placed object (Ctrl+A) - not the hidden or locked ones. Drag on empty ground to select with a box (Shift adds)", -1, 26f, 13).name = "Button_SelectAll";
+			UIKit.Button(sa, "Same kind", () =>
+			{
+				int n = SelectionTools.SelectSameKind();
+				DynamicIslands.Notify(n > 0 ? "Selected " + n + " object(s) of the same kind" : "Select an object first: Same kind adds every object like it", n == 0);
+			}, "Select every object of the kinds selected now", -1, 26f, 13).name = "Button_SameKind";
+			UIKit.Button(sa, "List...", PlacedListWindow.Open, "The island's objects by kind: select a kind, hide or lock it while you edit", -1, 26f, 13).name = "Button_PlacedList";
+			RectTransform sc = UIKit.Row(sel, 26f, 4f, "Clipboard");
+			UIKit.Button(sc, "Copy", CopySelected, "Copy the selected objects (Ctrl+C) - they stay copied when you open another island", -1, 26f, 13);
+			UIKit.Button(sc, "Paste", () => Paste(false), "Put the copied objects down where the middle of the screen points (Ctrl+V: where the mouse points)", -1, 26f, 13);
 			RectTransform s3 = UIKit.Row(sel, 26f);
 			UIKit.Button(s3, "Save as group...", SaveGroup, "Keep the selected objects (a hut with its furniture, a camp...) as a group in \"My groups\", to place again on any island", -1, 26f, 13);
+			UIKit.Button(s3, "Manage...", () => PiecesWindow.Open(false), "Rename or delete your saved groups", 86, 26f, 13).name = "Button_ManageGroups";
 
 			// The selected object's settings (creature editor, note, colour) appear here, in place of Placing and the tips
 			ObjectInspector.Build(s);
@@ -306,9 +465,25 @@ namespace DynamicIslands.Editor
 			RectTransform o1 = UIKit.Row(place);
 			randomButton = UIKit.Button(o1, "Random", () => { PlacementOptions.RandomTurnAndSize = !PlacementOptions.RandomTurnAndSize; RefreshOptions(); }, "On: every placed object gets a random turn and size (natural-looking groups)");
 			slopeButton = UIKit.Button(o1, "Slope", () => { PlacementOptions.AlignToSlope = !PlacementOptions.AlignToSlope; RefreshOptions(); }, "On: objects lean with the ground instead of standing straight up");
-			gridButton = UIKit.Button(o1, "Grid", () => { PlacementOptions.SnapToGrid = !PlacementOptions.SnapToGrid; RefreshOptions(); }, "On: Raft's 1.5 m building grid and 90\u00B0 turns, for huts and rafts of Raft blocks");
+			gridButton = UIKit.Button(o1, "Grid", () => { PlacementOptions.SnapToGrid = !PlacementOptions.SnapToGrid; RefreshOptions(); }, "On: placing and moving snap to the grid (size below; Raft's own building grid is 1.5 m) and Q/E turn in 90° steps, for huts and rafts of Raft blocks");
+			// The grid size (ROADMAP E13): choosing one turns Grid on; remembered on this PC (world_rules.txt editorgrid)
+			RectTransform og = UIKit.Row(place, 24f, 4f, "GridSize");
+			UIKit.Size(UIKit.Label(og, "Grid size", 13, UIKit.TextMuted).gameObject, 62);
+			gridSizeButtons = new Button[PlacementOptions.GridSizes.Length];
+			for (int i = 0; i < gridSizeButtons.Length; i++)
+			{
+				float g = PlacementOptions.GridSizes[i];
+				string gt = g.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+				gridSizeButtons[i] = UIKit.Button(og, gt + " m", () => ChooseGrid(g),
+					"Snap to a " + gt + " m grid while placing and moving (turns Grid on)" + (g == PlacementOptions.GridSize ? ": Raft's building grid" : ""), -1, 24f, 12);
+				gridSizeButtons[i].name = "Button_Grid" + gt;
+			}
 
-			objectTips = Tips(s, "Pick an object on the right, click the ground\nShift+click: keep placing \u00B7 Q/E: turn \u00B7 [ ]: size \u00B7 Esc: cancel\nClick an object to select it \u00B7 Shift+click: add to the selection\nSelect one object to edit its settings here\nSpace / C: camera straight up / down").gameObject;
+			// Air pocket (lib_frozen's airpocket macro, one undo step); Scatter itself is under the object list
+			RectTransform o2 = UIKit.Row(place, 26f, 4f, "AirPocket");
+			UIKit.Button(o2, "Air pocket", () => ScatterTool.PlaceAirPocket(), "Puts down an air pocket at the middle of the view: Raft's air pocket, a trigger zone with Air on (players breathe in it) and bubbles. One undo step", -1, 26f, 12).name = "Button_AirPocket";
+
+			objectTips = Tips(s, "Pick an object on the right, click the ground\nShift+click: keep placing \u00B7 Q/E: turn \u00B7 [ ]: size \u00B7 Esc: cancel\nClick an object to select it \u00B7 Shift+click: add to the selection\nDrag on empty ground: select with a box \u00B7 Ctrl+A: all\nSelect one object to edit its settings here\nSpace / C: camera straight up / down").gameObject;
 			return s;
 		}
 
@@ -340,6 +515,25 @@ namespace DynamicIslands.Editor
 			presetSea = UIKit.Button(presets, "At sea", () => SetElevation("0"), "A normal island (height 0)", -1, 26, 12);
 			presetFlying = UIKit.Button(presets, "Flying", () => SetElevation("60"), "Floats above the sea (60 m; type another height above)", -1, 26, 12);
 			presetSunken = UIKit.Button(presets, "Sunken", () => SetElevation("-30"), "Lies under water (-30 m; type another depth above)", -1, 26, 12);
+			RectTransform floorRow = UIKit.Row(island, 26f, 4f, "SeaFloor");
+			UIKit.Size(UIKit.Label(floorRow, "Sea floor", 14, UIKit.TextMuted).gameObject, 62);
+			seaDeepButton = UIKit.Button(floorRow, "Deep", () => SwitchSeaFloor(true), "Put the island on a deep sea floor like Raft's (160 m down): the land and shallows stay as they are, only the flat floor drops (Ctrl+Z undoes)", -1, 26, 12);
+			seaShallowButton = UIKit.Button(floorRow, "Shallow", () => SwitchSeaFloor(false), "Put the island on a shallow sea floor (20 m down): the land and shallows stay as they are, deeper water becomes flat floor (Ctrl+Z undoes)", -1, 26, 12);
+			// (ROADMAP E1b: Raft's own sky and ocean, taken from the main menu as the editor opens - RaftSkySea)
+			RectTransform skyRow = UIKit.Row(island, 26f, 4f, "SkySea");
+			UIKit.Size(UIKit.Label(skyRow, "View", 14, UIKit.TextMuted).gameObject, 62);
+			skySeaButton = UIKit.Button(skyRow, "Raft's sky and sea", () => { RaftSkySea.Toggle(); RefreshSkySea(); },
+				"On: Raft's own sky, sun and ocean (with its waves) instead of the editor's plain sky and blue sea plane - the Light list still sets the time of day. Taken from the main menu as the editor opens (kept; only in the editor)", -1, 26, 12);
+
+			// (where Test in a world puts you: an island whose land doesn't cover its middle dropped the tester in the sea - TestStart)
+			RectTransform testGroup = UIKit.Group(s, "Test start");
+			testStartText = UIKit.Label(testGroup, "", 12, UIKit.TextMuted);
+			testStartText.name = "TestStartText";
+			RectTransform testRow = UIKit.Row(testGroup, 26f, 4f, "TestStartRow");
+			UIKit.Button(testRow, "Test start: where I look", () => TestStart.SetAt(TestStart.LookPoint()),
+				"Test in a world puts you here: look at the ground (a deck, a roof, a cave floor) and click. A green marker shows it in the editor only. Ctrl+Z undoes", -1, 26f, 12).name = "Button_TestStartHere";
+			testStartClear = UIKit.Button(testRow, "Clear", TestStart.Clear, "No test start: Test puts you on the island's middle (or the land nearest it)", 64, 26f, 12);
+			testStartClear.name = "Button_TestStartClear";
 
 			RectTransform gen = UIKit.Group(s, "Generate");
 			UIKit.Label(gen, "Make a whole island from a seed: size, height, peaks and objects. Ctrl+Z brings back what you had.", 13, UIKit.TextMuted);
@@ -356,9 +550,21 @@ namespace DynamicIslands.Editor
 
 		static Text Tips(Transform parent, string text)
 		{
-			Text t = UIKit.Label(parent, text, 13, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "Tips");
+			Text t = UIKit.Label(parent, CameraSettings.KeyNames(text), 13, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "Tips");
 			t.lineSpacing = 1.1f;
+			tipTexts.Add(new KeyValuePair<Text, string>(t, text));
 			return t;
+		}
+
+		/// <summary>The tips as written (QWERTY keys), to rename when the key layout changes (ROADMAP L2).</summary>
+		static readonly List<KeyValuePair<Text, string>> tipTexts = new List<KeyValuePair<Text, string>>();
+
+		/// <summary>The tips and the camera window's list in the chosen key layout (CameraSettings.Azerty).</summary>
+		internal static void RefreshKeyNames()
+		{
+			tipTexts.RemoveAll(k => k.Key == null);
+			foreach (var k in tipTexts) k.Key.text = CameraSettings.KeyNames(k.Value);
+			CameraSettingsWindow.RefreshKeyLabels();
 		}
 
 		static RectTransform stampButtonsRoot;
@@ -401,12 +607,48 @@ namespace DynamicIslands.Editor
 			float radius = terraineditor.brushRadius;
 			TextPromptWindow.Open("Save stamp", "The land in the brush circle (" + (radius * 2f).ToString("F0") + " m across, at the last place the brush was) becomes a stamp to put down anywhere.", "my stamp", name =>
 			{
+				if (TerrainStamps.Exists(name) && !ReplaceAgain("stamp", name)) return;
 				TerrainStamps.Save(TerrainStamps.Capture(terraineditor.terrain, at, radius, name));
 				TerrainStamps.Load();
 				RefreshStamps();
 				SetStamp(TerrainStamps.All.FindIndex(s => s.Name == name && !s.BuiltIn));
 				DynamicIslands.Notify("Saved stamp '" + name + "': click the ground to put it down");
 			});
+		}
+
+		static string replaceArmed;
+		static float replaceUntil;
+
+		/// <summary>Saving under a name in use (a stamp, a group): replaces only when saved under it again - two steps, like Delete.</summary>
+		static bool ReplaceAgain(string what, string name)
+		{
+			string key = what + ":" + name.ToLowerInvariant();
+			if (replaceArmed == key && Time.unscaledTime <= replaceUntil) { replaceArmed = null; return true; }
+			replaceArmed = key; replaceUntil = Time.unscaledTime + 10f;
+			DynamicIslands.Notify("There is a " + what + " '" + name + "' already: save under that name again to replace it", true);
+			return false;
+		}
+
+		/// <summary>Select all (Ctrl+A, ROADMAP E3).</summary>
+		internal static void SelectAll()
+		{
+			int n = SelectionTools.SelectAll();
+			DynamicIslands.Notify(n > 0 ? "Selected all " + n + " object(s)" + (SelectionTools.HiddenCount + SelectionTools.LockedCount > 0 ? " (not the hidden or locked ones)" : "") : "Nothing to select", n == 0);
+		}
+
+		/// <summary>Copy (Ctrl+C): the selection to the editor's clipboard (ROADMAP E4).</summary>
+		internal static void CopySelected()
+		{
+			int n = PlacementOptions.CopySelection();
+			DynamicIslands.Notify(n > 0 ? "Copied " + n + " object(s): Paste (Ctrl+V) puts them down - on another island too" : "Select objects to copy first", n == 0);
+		}
+
+		/// <summary>Paste (Ctrl+V): the clipboard's objects put down, selected (ROADMAP E4).</summary>
+		internal static void Paste(bool atMouse)
+		{
+			if (PlacementOptions.ClipboardCount == 0) { DynamicIslands.Notify("Nothing copied yet: select objects and press Copy (Ctrl+C)", true); return; }
+			int n = PlacementOptions.PasteClipboard(atMouse);
+			if (n > 0) DynamicIslands.Notify("Pasted " + n + " object(s)");
 		}
 
 		/// <summary>Selection's "Save as group...": asks a name, saves the selected objects as a group and adds it to "My groups".</summary>
@@ -419,6 +661,7 @@ namespace DynamicIslands.Editor
 				"my group", name =>
 				{
 					bool exists = GroupLibrary.Saved().Contains(name, StringComparer.OrdinalIgnoreCase);
+					if (exists && !ReplaceAgain("group", name)) return;
 					int n = GroupLibrary.Save(name, sel);
 					DynamicIslands.instance.StartCoroutine(GroupLibrary.Register(name));
 					DynamicIslands.Notify((exists ? "Replaced" : "Saved") + " group '" + name + "' (" + n + " objects): find it under \"My groups\"");
@@ -426,10 +669,27 @@ namespace DynamicIslands.Editor
 		}
 
 		static RectTransform placingGroup;
+		static InputField flattenField;
+		/// <summary>The tool panels' own number fields (Flatten to): typing in them must not fly the camera.</summary>
+		static readonly List<InputField> typingFields = new List<InputField>();
+
+		static string Num(float v) { return v.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture); }
+
+		/// <summary>The "Flatten to" field: metres above the sea, empty = where the stroke starts (also tests).</summary>
+		internal static void SetFlattenHeight(string text)
+		{
+			float h;
+			if (!string.IsNullOrEmpty(text) && float.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out h))
+				terraineditor.FlattenHeight = Mathf.Clamp(h, -DynamicIslands.EditorWaterLevel, terraineditor.terrain != null ? terraineditor.terrain.terrainData.size.y - DynamicIslands.EditorWaterLevel : 500f);
+			else terraineditor.FlattenHeight = null;
+			if (flattenField != null) flattenField.text = terraineditor.FlattenHeight.HasValue ? Num(terraineditor.FlattenHeight.Value) : "";
+		}
 		static GameObject objectTips;
-		static InputField infoTitleField, infoAuthorField, infoTextField, infoRegrowField;
+		static InputField infoTitleField, infoAuthorField, infoTextField, infoRegrowField, infoNotBeforeField;
+		static Text infoNotBeforeText;
+		static Text testStartText;
+		static Button testStartClear;
 		static Text questText;
-		static Button infoLevelsOff, infoLevelsOn;
 
 		/// <summary>The Island tab's "Shown to players" group: the island's name, author and a short description (IslandProps).</summary>
 		static void BuildInfoTools(Transform s)
@@ -453,19 +713,22 @@ namespace DynamicIslands.Editor
 			// (what the number means, under it: the empty field read "Things come back after world days")
 			infoRegrowText = UIKit.Label(rules, "", 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "RegrowMeaning");
 			infoRegrowText.horizontalOverflow = HorizontalWrapMode.Wrap;
-			RectTransform levels = UIKit.Row(rules, 26f, 4f, "LevelUp");
-			UIKit.Label(levels, "Level up system", 13, UIKit.TextMuted);
-			infoLevelsOff = UIKit.Button(levels, "Off", () => { SetInfo(IslandProps.Levels, ""); RefreshInfo(); }, "No levels: Raft as usual", 50, 26f, 12);
-			infoLevelsOn = UIKit.Button(levels, "On", () => { SetInfo(IslandProps.Levels, "on"); RefreshInfo(); }, "Players level up: hitting monsters gives EXP, every level gives stat points (K in a world)", 50, 26f, 12);
-			UIKit.Help(levels, "The level up system: once this island is in a world, players there earn EXP by hitting monsters (anywhere in that world: the island's animals, Bruce, Raft's own), shown over the monster (+5). " +
-				"Level 2 takes about 5 monster kills, level 3 about 10 more, level 4 about 20 more, then 10 more each level. Every level gives " + LevelRules.PointsPerLevel + " stat points to spend on the stats page (" + PlayerLevels.Key + "): walk, run and swim speed, jump height, damage, health, hunger and oxygen, +1% a point, at most " + LevelRules.MaxPoints + " points each. " +
-				"The levels are kept with the world, for every player.");
+			RectTransform notBefore = UIKit.Row(rules, 28f, 4f, "NotBefore");
+			UIKit.Label(notBefore, "Comes by chance after", 13, UIKit.TextMuted);
+			infoNotBeforeField = UIKit.Field(notBefore, "any", "", 28f, "The earliest this island may come by chance while sailing: the km the world has sailed. Empty = any time. At most " + IslandProps.MaxNotBeforeKm + " km (about 24 h of sailing). World plans bring their islands when their rules say");
+			UIKit.Size(infoNotBeforeField.gameObject, 58, 28);
+			infoNotBeforeField.contentType = InputField.ContentType.IntegerNumber;
+			infoNotBeforeField.characterLimit = 3;
+			UIKit.Size(UIKit.Label(notBefore, "km sailed", 13, UIKit.TextMuted).gameObject, 70);
+			infoNotBeforeField.onEndEdit.AddListener(v => { int k; SetInfo(IslandProps.NotBeforeKm, int.TryParse(v, out k) && k > 0 ? Mathf.Min(k, IslandProps.MaxNotBeforeKm).ToString() : ""); RefreshInfo(); });
+			infoNotBeforeText = UIKit.Label(rules, "", 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "NotBeforeMeaning");
+			infoNotBeforeText.horizontalOverflow = HorizontalWrapMode.Wrap;
 			RectTransform quest = UIKit.Group(s, "Quest");
 			questText = UIKit.Label(quest, "", 12, UIKit.TextMuted);
-			UIKit.Button(quest, "Edit quest...", QuestEditorWindow.Open, "A quest for this island: steps (go to a zone, read a note, open a chest, defeat or catch animals) and a reward", -1, 26f, 13);
-			UIKit.Button(quest, "Islands it brings...", WorldPlanWindow.OpenIsland, "Rules of this island: when its quest (or a step, or a zone) is done, a new island appears near it - in any world", -1, 26f, 13);
-			UIKit.Button(quest, "Island events...", BehaviourWindow.OpenIsland, "What happens when players first come to the island, and when its quest is done (show or open things, messages, items, sounds, signals)", -1, 26f, 13);
-			UIKit.Button(quest, "Story items...", StoryItemsWindow.Open, "Keys, map pieces, logs...: items of the story the crew keeps in the journal; chests and actions give them, events can ask for them. Also ready story sets (a locked door with its key, a trail of notes)", -1, 26f, 13);
+			UIKit.Button(quest, "Edit quest...", QuestEditorWindow.Open, "A quest for this island: steps in order (kinds: " + QuestEditorWindow.StepNamesText() + ") and a reward. The main quest also drives the island's \"quest is done\" event and a new island; more quests are side quests", -1, 26f, 13);
+			UIKit.Button(quest, "Islands it brings...", WorldPlanWindow.OpenIsland, "Rules of this island: when its main quest (or a step of it, a side quest by number, a zone or a signal) is done, a new island appears near it - in any world. Quick way: Edit quest... > \"When the quest is done, bring a new island\"", -1, 26f, 13);
+			UIKit.Button(quest, "Island events...", BehaviourWindow.OpenIsland, "What happens when players first come to the island, and when its MAIN quest is done (show or open things, messages, items, sounds, signals). Signals sent here or by pieces can be waited for by quest steps, checks and rules", -1, 26f, 13);
+			UIKit.Button(quest, "Story items...", StoryItemsWindow.Open, "Keys, map pieces, logs...: items of the story the crew keeps (Raft's notebook for a main story island, else the journal); chests and actions give them, events can ask for them. Also ready story sets (a locked door with its key, a trail of notes)", -1, 26f, 13);
 			infoTitleField.onEndEdit.AddListener(v => SetInfo(IslandProps.Title, v));
 			infoAuthorField.onEndEdit.AddListener(v => SetInfo(IslandProps.Author, v));
 			infoTextField.onEndEdit.AddListener(v => SetInfo(IslandProps.Description, v));
@@ -496,8 +759,15 @@ namespace DynamicIslands.Editor
 					r == "0" ? "0: never - what players take or kill here stays gone." :
 					"Chopped trees, picked items, animals and looted chests come back after " + r + " in-game day" + (r == "1" ? "" : "s") + ". Empty = the world's setting, 0 = never.";
 			}
-			bool levelsOn = PlayerLevels.IsOn(DynamicIslands.currentIslandProps);
-			if (infoLevelsOn != null) { UIKit.SetActive(infoLevelsOn, levelsOn); UIKit.SetActive(infoLevelsOff, !levelsOn); }
+			if (infoNotBeforeField != null)
+			{
+				string k = ObjectProps.Get(DynamicIslands.currentIslandProps, IslandProps.NotBeforeKm);
+				infoNotBeforeField.text = k;
+				float km;
+				infoNotBeforeText.text = float.TryParse(k, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out km) && km > 0f ?
+					"Not before the world has sailed " + k + " km: " + IslandProps.SailTime(km) + " (at " + IslandProps.SailKmPerHour.ToString("0") + " km/h)." :
+					"Empty: it may come by chance any time.";
+			}
 			IslandQuest q = IslandQuest.From(DynamicIslands.currentIslandProps);
 			int brings = WorldDirector.RulesFromProps(DynamicIslands.currentIslandProps).Count;
 			if (questText != null) questText.text = (q.Exists ? "<color=#eddeba>" + q.ShownTitle + "</color>: " + q.Steps.Count + " step(s)" + (q.Reward.Length > 0 ? ", with a reward" : "") : "<i>No quest yet.</i>") +
@@ -526,18 +796,30 @@ namespace DynamicIslands.Editor
 			if (tab != TAB.ObjectPlace)
 			{
 				if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.ClearTargets(false);
-				ObjectPlacer placer = UnityEngine.Object.FindObjectOfType<ObjectPlacer>();
+				ObjectPlacer placer = ObjectPlacer.Current;
 				if (placer != null) UnityEngine.Object.Destroy(placer.gameObject);
 				if (DynamicIslands.EditorGizmoHandler != null) DynamicIslands.EditorGizmoHandler.placingObject = false;
 			}
 			if (tab == TAB.Island) RefreshIsland();
 		}
 
-		static void RefreshOptions()
+		internal static void RefreshOptions()
 		{
 			UIKit.SetActive(randomButton, PlacementOptions.RandomTurnAndSize);
 			UIKit.SetActive(slopeButton, PlacementOptions.AlignToSlope);
 			UIKit.SetActive(gridButton, PlacementOptions.SnapToGrid);
+			if (gridSizeButtons != null)
+				for (int i = 0; i < gridSizeButtons.Length; i++)
+					if (gridSizeButtons[i] != null) UIKit.SetActive(gridSizeButtons[i], PlacementOptions.GridSizes[i] == PlacementOptions.GridStep);
+		}
+
+		/// <summary>A grid size button: that size (remembered on this PC) and Grid on.</summary>
+		internal static void ChooseGrid(float size)
+		{
+			PlacementOptions.GridStep = size;
+			PlacementOptions.SnapToGrid = true;
+			RefreshOptions();
+			Flash("Grid " + PlacementOptions.GridStep.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + " m", 1.5f);
 		}
 
 		/// <summary>Shows the current style and names the paint buttons after its textures.</summary>
@@ -549,6 +831,26 @@ namespace DynamicIslands.Editor
 			if (brushButtons != null)
 				for (int i = 0; i < PaintSlots.Length; i++)
 					if (brushButtons[4 + i] != null) UIKit.LabelOf(brushButtons[4 + i]).text = TerrainPainter.SlotLabel(style, PaintSlots[i]);
+			// The second style mixed in: its paint buttons only while there is one
+			int mix = DynamicIslands.currentMixStyle;
+			if (mixDrop != null)
+			{
+				DropdownButton d = mixDrop.GetComponent<DropdownButton>();
+				if (d != null) d.Value = mix.ToString();
+				UIKit.LabelOf(mixDrop).text = mix >= 0 ? TerrainPainter.StyleName(mix) : "No second style";
+			}
+			if (mixRow1 != null) { mixRow1.gameObject.SetActive(mix >= 0); mixRow2.gameObject.SetActive(mix >= 0); }
+			if (mix >= 0 && brushButtons != null && mixSwatches != null)
+			{
+				TerrainPainter.Style ms = TerrainPainter.Styles[mix];
+				for (int i = 0; i < PaintSlots.Length; i++)
+				{
+					if (brushButtons[11 + i] != null) UIKit.LabelOf(brushButtons[11 + i]).text = TerrainPainter.SlotLabel(mix, PaintSlots[i]);
+					Color c = SlotColors[PaintSlots[i]];
+					if (ms.Tints != null && PaintSlots[i] < ms.Tints.Length) c *= ms.Tints[PaintSlots[i]];
+					if (mixSwatches[i] != null) mixSwatches[i].color = new Color(c.r, c.g, c.b, 1f);
+				}
+			}
 			if (paintSwatches != null)
 			{
 				TerrainPainter.Style st = TerrainPainter.Styles[Mathf.Clamp(style, 0, TerrainPainter.Styles.Length - 1)];
@@ -569,6 +871,9 @@ namespace DynamicIslands.Editor
 			RefreshPresets();
 			RefreshInfo();
 			RefreshStats();
+			if (testStartText != null) testStartText.text = TestStart.Describe();
+			if (testStartClear != null) testStartClear.interactable = TestStart.Get(DynamicIslands.currentIslandProps).HasValue;
+			TestStart.RefreshMarker();
 		}
 
 		static void RefreshStats()
@@ -589,6 +894,35 @@ namespace DynamicIslands.Editor
 			UIKit.SetActive(presetSea, Mathf.Approximately(h, 0f));
 			UIKit.SetActive(presetFlying, h > 0.01f);
 			UIKit.SetActive(presetSunken, h < -0.01f);
+		}
+
+		static float shownSeaLevel = float.NaN;
+
+		/// <summary>The sea floor buttons: the island's floor lit (again when its sea level changed: opening, generating, undo).</summary>
+		static void RefreshSeaFloor()
+		{
+			if (seaDeepButton == null || DynamicIslands.EditorWaterLevel == shownSeaLevel) return;
+			shownSeaLevel = DynamicIslands.EditorWaterLevel;
+			UIKit.SetActive(seaDeepButton, TerrainBrushes.EditorDeep);
+			UIKit.SetActive(seaShallowButton, !TerrainBrushes.EditorDeep);
+		}
+
+		static void SwitchSeaFloor(bool deep)
+		{
+			string problem = TerrainBrushes.SwitchSeaFloor(deep);
+			if (problem != null) { DynamicIslands.Notify(problem, true); return; }
+			RefreshSeaFloor();
+			RefreshStats();
+			DynamicIslands.Notify(deep ? "The island stands on a deep sea floor now, like Raft's (160 m down)" : "The island stands on a shallow sea floor now (20 m down)");
+		}
+
+		static TerrainBrushes.Falloff shownFalloff = (TerrainBrushes.Falloff)(-1);
+
+		static void SetFalloff(TerrainBrushes.Falloff falloff)
+		{
+			TerrainBrushes.BrushFalloff = falloff;
+			shownFalloff = falloff;
+			Highlight(falloffButtons, (int)falloff);
 		}
 
 		static void StepStyle(int step)
@@ -641,7 +975,14 @@ namespace DynamicIslands.Editor
 				case terraineditor.TerrainModificationAction.Flatten: active = 2; break;
 				case terraineditor.TerrainModificationAction.Smooth: active = 3; break;
 				case terraineditor.TerrainModificationAction.AutoPaint: active = 8; break;
-				case terraineditor.TerrainModificationAction.PaintLayer: active = 4 + Array.IndexOf(PaintSlots, terraineditor.paintLayer); break;
+				case terraineditor.TerrainModificationAction.Noise: active = 9; break;
+				case terraineditor.TerrainModificationAction.Erode: active = 10; break;
+				case terraineditor.TerrainModificationAction.Cave: active = 15; break;
+				case terraineditor.TerrainModificationAction.SeaGrass: active = 16; break;
+				case terraineditor.TerrainModificationAction.Dig: active = 17; break;
+				case terraineditor.TerrainModificationAction.PaintLayer:
+					active = terraineditor.paintLayer >= TerrainPainter.LayerCount ? 11 + Array.IndexOf(PaintSlots, terraineditor.paintLayer - TerrainPainter.LayerCount) : 4 + Array.IndexOf(PaintSlots, terraineditor.paintLayer);
+					break;
 				default: active = -1; break;
 			}
 			Highlight(brushButtons, active);
@@ -666,6 +1007,8 @@ namespace DynamicIslands.Editor
 				shownAction = terraineditor.modificationAction; shownPaintLayer = terraineditor.paintLayer;
 				SetBrush(shownAction);
 			}
+			if (TerrainBrushes.BrushFalloff != shownFalloff) SetFalloff(TerrainBrushes.BrushFalloff);
+			RefreshSeaFloor();
 
 			// Typing a height must not fly the camera (WASD) or trigger shortcuts
 			ObjectInspector.Tick();
@@ -675,19 +1018,25 @@ namespace DynamicIslands.Editor
 
 			if (elevationField != null)
 			{
-				bool typing = elevationField.isFocused || (infoTitleField != null && (infoTitleField.isFocused || infoAuthorField.isFocused || infoTextField.isFocused || infoRegrowField.isFocused));
+				bool typing = elevationField.isFocused || typingFields.Any(f => f != null && f.isFocused) || (infoTitleField != null && (infoTitleField.isFocused || infoAuthorField.isFocused || infoTextField.isFocused || infoRegrowField.isFocused));
 				if (typing) EditorInput.IsTyping = true;
 				else if (elevationTyping) EditorInput.IsTyping = false;
 				elevationTyping = typing;
 			}
 
-			if (!EditorInput.IsTyping)
+			if (!EditorInput.IsTyping && !EditorInput.WindowOpen)
 			{
 				if (Input.GetKeyDown(KeyCode.F1)) SetTab(TAB.TerrainEdit);
 				else if (Input.GetKeyDown(KeyCode.F2)) SetTab(TAB.ObjectPlace);
 				else if (Input.GetKeyDown(KeyCode.F3)) SetTab(TAB.Island);
-				if (EditorInput.Ctrl && Input.GetKeyDown(KeyCode.D) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) PlacementOptions.DuplicateSelection();
+				if (EditorInput.Ctrl && EditorInput.KeyDown(KeyCode.D) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) PlacementOptions.DuplicateSelection();
+				if (EditorInput.Ctrl && EditorInput.KeyDown(KeyCode.C) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) CopySelected();
+				if (EditorInput.Ctrl && EditorInput.KeyDown(KeyCode.V) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) Paste(true);
+				if (EditorInput.Ctrl && EditorInput.KeyDown(KeyCode.A) && tabs != null && tabs.SelectedTab == TAB.ObjectPlace) SelectAll();
 			}
+
+			if (tabs != null && tabs.SelectedTab == TAB.ObjectPlace && !PlacedListWindow.IsOpen) { SelectionTools.Tick(); ObjectPick.Tick(); }
+			else ObjectPick.ClearHover(); // (the outline on what a click would select - E11)
 
 			int selected = g != null ? g.SelectedRoots.Count(t => t != null) : 0;
 			Transform first = selected > 0 ? g.SelectedRoots.First(t => t != null) : null;
@@ -700,7 +1049,7 @@ namespace DynamicIslands.Editor
 				selectionText.color = selected == 0 ? UIKit.TextMuted : UIKit.Accent;
 			}
 
-			if (hintText != null) hintText.text = Time.unscaledTime < flashUntil ? flash : hoverHint ?? ToolHint();
+			if (hintText != null) hintText.text = Time.unscaledTime < flashUntil ? flash : hoverHint ?? CameraSettings.KeyNames(ToolHint());
 			if (cameraText != null && Camera.main != null)
 			{
 				Vector3 c = Camera.main.transform.position;
@@ -712,13 +1061,22 @@ namespace DynamicIslands.Editor
 		static string ToolHint()
 		{
 			if (tabs == null) return "";
-			ObjectPlacer placer = tabs.SelectedTab == TAB.ObjectPlace ? UnityEngine.Object.FindObjectOfType<ObjectPlacer>() : null;
+			ObjectPlacer placer = tabs.SelectedTab == TAB.ObjectPlace ? ObjectPlacer.Current : null;
 			if (placer != null) return "Placing " + PlaceableCatalog.DisplayName(placer.GameObjectName) + ": click the ground \u00B7 Shift+click keeps placing \u00B7 Q/E turn \u00B7 [ ] size \u00B7 Esc cancels";
 			switch (tabs.SelectedTab)
 			{
 				case TAB.TerrainEdit:
-					string tool = terraineditor.modificationAction == terraineditor.TerrainModificationAction.PaintLayer ? "Painting " + TerrainPainter.SlotLabel(DynamicIslands.currentStyle, terraineditor.paintLayer)
+					int layer = terraineditor.paintLayer;
+					string tool = terraineditor.modificationAction == terraineditor.TerrainModificationAction.PaintLayer
+						? "Painting " + (layer >= TerrainPainter.LayerCount && DynamicIslands.currentMixStyle >= 0 ? TerrainPainter.StyleName(DynamicIslands.currentMixStyle) + " " + TerrainPainter.SlotLabel(DynamicIslands.currentMixStyle, layer % TerrainPainter.LayerCount)
+							: TerrainPainter.SlotLabel(DynamicIslands.currentStyle, layer % TerrainPainter.LayerCount))
 						: terraineditor.modificationAction == terraineditor.TerrainModificationAction.AutoPaint ? "Auto texturing" : terraineditor.modificationAction.ToString();
+					if (terraineditor.modificationAction == terraineditor.TerrainModificationAction.Noise)
+						return "Noise: hold the left mouse button to roughen the ground · Shift: take the bumps away · Noise size sets how big · Ctrl+Z undoes a stroke";
+					if (terraineditor.modificationAction == terraineditor.TerrainModificationAction.Dig)
+						return "Dig brush: hold the left mouse button on a hillside - it digs in where you point · press on a tunnel to dig on · Shift: fill in · Ctrl+Z undoes a stroke";
+					if (terraineditor.modificationAction == terraineditor.TerrainModificationAction.Erode)
+						return "Erode: hold the left mouse button - ground steeper than " + TalusText(TerrainBrushes.TalusAngle) + " slides down · Ctrl+Z undoes a stroke";
 					if (terraineditor.modificationAction == terraineditor.TerrainModificationAction.Stamp && TerrainStamps.Current != null)
 						return "Stamp " + TerrainStamps.Current.Name + ": click the ground \u00B7 Size = how big (" + (terraineditor.brushRadius * 2f).ToString("F0") + " m) \u00B7 Q/E turn it (" + TerrainStamps.Rotation.ToString("F0") + "\u00B0) \u00B7 Ctrl+Z undoes";
 					return tool + ": hold the left mouse button on the ground \u00B7 Ctrl+Z undoes a stroke";

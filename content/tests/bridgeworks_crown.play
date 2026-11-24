@@ -1,0 +1,128 @@
+# Bridgeworks Crown (CIPlay bridgeworks_crown): the landing roof, the bulletin, the screechers, the shutters, the
+# three factions' roofs and demands, the letters and the three secrets (the code's pieces), the alarm bell (storm: the
+# plan's piles rule), the keypad with a wrong code first, the council, five ways, FREE (the plan's freehold rule; the
+# other levers then refuse), the verdict, the reward, Teo's message, the pile stair and the pile head; the treasure.
+# offset 0 0 is a placeholder: phase 2 sets it from the recipe's save log (PLAY_FORMAT: Coordinates).
+island Bridgeworks Crown
+offset 0 0
+expect step 0
+expect title The Council in the Storm
+expect hidden councilchest
+expect hidden verdictfree
+zone landing_roof
+expect step 1
+read Storm bulletin
+expect step 2
+kill Screecher
+expect animals Screecher 0
+expect step 3
+use shutters
+expect story shutters 1
+expect step 4
+zone authority_roof
+expect step 5
+read Authority demand
+expect step 6
+zone fleet_roof
+expect step 7
+read Fleet demand
+expect step 8
+zone union_roof
+expect step 9
+read Union demand
+expect step 10
+# STORY 10-24: the five recordings on the roofs
+open Pip's recording
+wait 2
+open Nell's recording
+wait 2
+open Crane's broadcast
+wait 2
+open Teo's recording
+wait 2
+open Bram's recording
+wait 2
+expect story plea 5
+expect step 11
+read Complaint No. 400
+expect step 12
+open Faction letters
+wait 3
+expect step 13
+read Authority secret
+expect step 14
+read Fleet secret
+expect step 15
+read Union secret
+expect step 16
+zone storm_ridge
+expect step 17
+read Councillor's notebook
+expect step 18
+open Bridgeworks crane's toolbox
+wait 3
+expect step 19
+read Storm warden's notice
+expect step 20
+zone bc_trail
+expect step 21
+# (the ledge cache wants a keycard)
+zone bc_summit
+expect step 22
+expect stand -79.26 25.11 h=50
+open Storm beacon mast deck box
+wait 3
+expect story bc_top 1
+expect step 23
+use alarmbell
+expect story alarm 1
+# (reach|council_door is counted early, before its step comes)
+zone council_door
+expect step 25
+code councilpad 1111 wrong
+code councilpad 4719
+expect hidden councilgate
+expect story councilcode 1
+expect step 26
+zone council
+expect step 27
+read Five ways
+expect step 28
+use wayfree
+expect shown verdictfree
+expect shown councilchest
+expect hidden verdictfleet
+expect story choice 1
+use wayfleet
+expect hidden verdictfleet
+expect story choice 1
+expect step 29
+read The verdict
+expect step 30
+open Council reward
+wait 3
+expect step 31
+read Teo Varga's message
+# (no step check here: in the plan the pile stair zone can already be passed on the way in)
+zone pile_stair
+read Pile engineer's map
+expect step 34
+zone pile_head
+expect done
+dig
+
+
+# DEEP 10-24: the secret records room (button -> teleport; lever slides the secret wall panel open)
+use bc_button
+wait 4
+read Sealed records
+use bc_climbout
+wait 4
+zone bc_btnback
+
+# STORY 10-24: the drowned council archive is optional now (the minutes of the last pile survey)
+zone bc_deep
+expect stand -77 -38 h=-17
+open Council archive strongbox
+wait 3
+expect story bc_deep 1

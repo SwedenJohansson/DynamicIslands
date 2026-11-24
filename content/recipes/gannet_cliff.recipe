@@ -1,0 +1,339 @@
+# Gannet Cliff - the seventh island of the library's plan The Lullaby Frequency (SL1, horror)
+# A tall seabird rock white with nests, the Quiet Choir's commune on its top: a ring of Balboa's tents and Caravan
+# Town's banners round the listening pit - a square pit dug into the rock and lined with Raft's grey walls and plates,
+# and round it Raft's antenna dishes set face-up in the ground like ears, listening down into the rock. A plank path
+# climbs the cliff from the beach. Quest "The Quiet Choir" (11 steps): the cliff foot, the Choir's notice board, the
+# tents, three tent diaries, the pit gate (only for those with the Choir's hymn sheet from Effigy Shoals), the pit floor,
+# three black hyenas - the Choir's dogs, the radio's sermon, the Listener's strongbox, the quarry chart in it, the camp
+# bell (a Choir deserter joins the crew as a playable character). A Raft store on the plateau.
+# RESIZE + DEEP 10-25 (deep pass, The Lullaby Frequency): Radius 63 -> 85, as big as Raft's own big islands; the plateau,
+# the pit and the cliff path stay in the middle, a cove cut from the cliff foot's beach out to the sea. New: Gannet Crown
+# in the north-east (a 34 m climb to the Choir's far ear, a mast with a dish on it; the Listener hung his strongbox key
+# up there, so the strongbox only opens once you have climbed for it), the egg collectors' store drowned in a deep hole
+# off the south-east shore (an air pocket; the collector's note), the kennel cave in the north, a crashed plane in the
+# west, two buried treasures. Quest 11 -> 17 steps. Voices: watcher Gideon Pell, egg collector Wilf Darrow, dog keeper
+# Mags Tolley.
+#
+# Built by the recipe player (CIRecipe gannet_cliff) through the editor's own operations.
+include lib_sea
+include lib_features
+include lib_areas
+include lib_highwater
+include lib_caves
+new
+# (nature: a bird rock - Rocks 0.5, bushes low, few trees)
+gen Trees=0.12 Bushes=0.12 Rocks=0.5 Harvest=0.15 BeachThings=0.35
+gen Seed=1207 Radius=85 Height=17 Roughness=0.35 Peaks=1 Shape=0 Style=0 PeakShape=0.6 Cliffs=0.6 BeachWidth=0.5
+gen Water=0.5 SeaRocks=0.55 SeaFinds=0.4 Sunken=0.3 Hostiles=0 Friendly=0.15 SeaLife=0.35
+generate
+
+# --- Terrain: the plateau at 13 m, the cliff path (pads every 3 m, 0.92 m higher each) up the west side from the beach,
+# the listening pit (4.84 m deep) -----------------------------------------------------------------------------------
+brush flatten at 0 8 r=24 s=20 frames=500 h=13
+# (the big round flatten is weak at its edge on the resized rock: a grid of smaller ones makes the whole plateau 13 m)
+for gx -16 16 8
+for gz 0 24 8
+brush flatten at $gx $gz r=7 s=20 frames=150 h=13
+next
+next
+# (later 10-25: pads as 0.5 m-wide lines across the path every 0.5 m, same slope - round pads 2.6 m wide set each spot
+# to the highest pad over it, so the path rose in 0.9 m steps and stood 2 m above its design; the walker stuck at z -17)
+for z -44 -5 0.5
+brush flatten from -20.5 $z to -15.5 $z r=0.5 s=20 frames=120 h={1+0.3067*($z+44)}
+next
+brush smooth from -18 -46 to -18 -4 r=3 s=6 frames=10
+brush flatten at -18 -50 r=6 s=16 frames=40 h=1
+# (dug square, inside its walls only: on the resized rock a round dig at full strength reached past the walls and left
+# them standing in the air; small pads 0.75 m apart reach 3.05 m from the middle, the walls stand at 3)
+# (10-25: pads 0.6 m apart out to 2.4 m, reaching 3.2 m: the 0.75 m grid left the north-west corner undug)
+# (G2 10-30: heights grid g2_gc - every brush here acted about 2 m east and 2.2 m south of where it was set: the pit
+# dug only in its south-east corner and out past the east wall, its west and north strips filled to the plateau,
+# the radio on the crate 2.6 m under ground. The pads below are set 2 m west and 2.2 m north to land where meant)
+for px -4.4 0.4 0.6
+for pz 11.8 16.6 0.6
+brush flatten at $px $pz r=0.8 s=20 frames=100 h=8.16
+next
+next
+# (REACH 10-28: pictures - the dig still bled out past the walls on the east and south sides: a 4.6 m funnel round the pit,
+# the walls standing bare in it, a dish over the hole and nobody climbing out. The plateau put back round the pit: pads at
+# 13 m reaching to the wall line, never inside it)
+for t 8.8 19.6 1.2
+brush flatten at 3.6 $t r=2.2 s=20 frames=150 h=13
+brush flatten at -7.6 $t r=2.2 s=20 frames=150 h=13
+next
+for t -5.4 1.4 1.2
+brush flatten at $t 8.8 r=2.2 s=20 frames=150 h=13
+brush flatten at $t 19.6 r=2.2 s=20 frames=150 h=13
+next
+# (REACH 10-30: pictures reach_e_gc - the south side still a funnel with the wall bare: a second row of pads there)
+for t -8.6 4.6 1.2
+brush flatten at $t 6.6 r=2.2 s=20 frames=150 h=13
+next
+# --- DEEP 10-25 terrain: the cove (the cliff foot's beach still on the sea on the bigger island), Gannet Crown (north-
+# east, summit 34 m, base r 24) and its path, the egg store's hole (south-east, -14 m); the cave's and the plane's pads
+# come with their macros
+brush flatten from -18 -57 to -18 -96 r=9 s=20 frames=400 h=-3
+brush smooth from -18 -52 to -18 -62 r=7 s=6 frames=30
+call hw_mount x=45 z=40 b=24 h=34
+call hw_trail x=45 z=40 b=24 h=34 a0=228.37 turn=300 n=40 h0=12
+brush flatten at 45 40 r=9 s=20 frames=400 h=34
+call hw_basin x=72 z=-40 r=14 h=-14
+origin
+clear at 0 8 r=25
+call ar_cave x=-30 z=66 h=5 yaw=180 al=kennelrock chest=kennelchest
+call ar_plane x=-62 z=25 h=6 yaw=80 al=birdplane crate=birdcrate
+clear from -18 -52 to -18 -4 r=3
+
+# --- The cliff path: a plank walk laid on the slope -----------------------------------------------------------------
+line Block_Floor_Wood from -18 -44 to -18 -8 step=1.5 follow
+place Zone_Trigger cliff_foot at -18 -48 ground y=1
+place Note_Sign noticeboard at -15.4 -46.5 ground sit yaw=200
+
+# --- The listening pit: a square of 6 x 6 m, walls two high (4.84 m) on its floor, a stone rim at the plateau's level,
+# the ladder down (hidden until the gate opens) on its south wall ------------------------------------------------------
+push at -3 9 h=8.16
+for fx 0.75 5.25 1.5
+for fz 0.75 5.25 1.5
+place Block_Floor_Tier3 - at $fx $fz y=0.1
+next
+next
+# (10-25: one wall the pit's full depth (sy=2) instead of two stacked - where the dig stopped short of the wall line the
+# upper wall stood over a hollow or the lower one lay buried)
+for i 0.75 5.25 1.5
+place Block_Wall_Tier3 - at $i 0 y=0 sy=2
+place Block_Wall_Tier3 - at $i 6 y=0 sy=2
+place Block_Wall_Tier3 - at 0 $i y=0 yaw=90 sy=2
+place Block_Wall_Tier3 - at 6 $i y=0 yaw=90 sy=2
+next
+for rx -0.75 6.75 1.5
+place Block_Floor_Tier3 - at $rx -0.75 y=4.84
+place Block_Floor_Tier3 - at $rx 6.75 y=4.84
+next
+for rz 0.75 5.25 1.5
+place Block_Floor_Tier3 - at -0.75 $rz y=4.84
+place Block_Floor_Tier3 - at 6.75 $rz y=4.84
+next
+place Block_Ladder_Tier3 pitladder at 3.75 0.2 y=0.1 yaw=0
+place Block_Ladder_Tier3 pitladder at 3.75 0.2 y=2.54 yaw=0
+place Block_Wall_Gate_Tier3 pitgate at 3.75 -0.75 y=4.84 yaw=0
+place Zone_Trigger pit_floor at 3 3 y=1
+place Zone_Atmosphere pitdark at 3 3 y=1.5
+place Creature_Hyena choirdogs at 4.5 4.5 y=0.5
+# (10-25: crate 1.2 m further from the north wall - by the wall its top stayed 0.11 m in the undug rock)
+place Crate_Big_01 - at 1.5 3.6 y=0.1 sit yaw=0
+place Placeable_Radio sermonradio at 1.5 3.6 y=1.3 sit drop yaw=180
+place Loot_Chest strongbox at 4.8 4.9 y=0.1 sit yaw=180
+place Placeable_Lantern_Metal - at 0.6 0.6 y=0.1 sit
+pop
+
+# --- The ears: eight antenna dishes face-up in the ground round the pit ----------------------------------------------
+for a 0 315 45
+place Antenna_dish - at {8*cos($a)} {12+8*sin($a)} ground sit scale=2.2
+next
+
+# --- The tents: six round the pit facing it, banners between them, three diaries; the camp bell; the store ------------
+for a 15 315 60
+place Balboa_DecorationPrefabBase_SimpleTent - at {14*cos($a)} {12+14*sin($a)} ground sit yaw={270-$a}
+next
+for a 45 345 60
+# (each banner's rope tied to a wooden post at both ends - Banner_01's rope spans x -2.55..2.37, 3.2 m over its bottom)
+# (10-25: a level patch under each banner - on the slope at 105 degrees both posts stood under the rope's ends)
+brush flatten at {15*cos($a)} {12+15*sin($a)} r=3.2 s=20 frames=60
+push at {15*cos($a)} {12+15*sin($a)} yaw={360-$a} ground
+place Banner_01 - at 0 0 ground sit
+place Block_Pillar_Wood - at -2.5 0 ground sy=1.8
+place Block_Pillar_Wood - at 2.32 0 ground sy=1.8
+pop
+next
+place Note_Paper diary_ro at {11*cos(15)} {12+11*sin(15)} ground sit yaw=30
+place Note_Paper diary_ansel at {11*cos(135)} {12+11*sin(135)} ground sit yaw=150
+place Note_Paper diary_listener at {11*cos(255)} {12+11*sin(255)} ground sit yaw=270
+place Zone_Trigger tents at -6 -3 ground y=1
+place Block_Pillar_Wood - at 6 -4 ground sy=1.4
+place TangaroaBucket campbell at 6 -4 ground y=3.95 rot=180,0,0 scale=1.4
+store choirstore at 11 -3 ground
+
+# --- The rookery: nests along the plateau's edge; things to gather; the reef at the cliff foot ----------------------
+for a 0 330 30
+place Placeable_BirdsNest - at {18*cos($a)} {8+18*sin($a)} ground sit yaw={$a*3}
+next
+scatter "Pickup_Landmark_PineappleLandmark" 2 at 0 0 r=50 seed=1271 free=5
+call dirt x=30 z=-30 r=8 n=2 seed=1272
+call shallows x=-18 z=-80 r=10 deep=5 n=1 seed=1273
+call shallows r=96 deep=5 n=3 seed=30508
+call hw_reef x=62 z=-58 r=3 seed=30501
+call hw_reef x=86 z=-50 r=3 seed=30502
+
+# --- DEEP 10-25: Gannet Crown - its foot and top as zones, the far ear on top (the Listener's strongbox key in its box) --
+call hw_zone x=26.31 z=23.39 al=hillfootz id=hillfoot r=5 msg="Gannet Crown. A path of cut steps climbs it from the plateau to a mast with a dish on top - the Choir's far ear."
+call hw_zone x=45 z=40 al=hilltopz id=hilltop r=8 h=1 msg="The top of Gannet Crown. The dish on the mast is turned down at the sea, and the gannets sit round it in rows, silent, all facing the same way."
+call hw_mast x=45 z=40 h0=34 lv=3 a=farear chest=earchest top=Antenna_dish
+place Note_Paper gideonnote at 48.5 38 h=34.1 drop yaw=200
+loot earchest story:strongkey*1;Battery*1;Rope*2;CopperIngot*1
+note earchest Far ear box | The watcher's box on the mast's deck: a battery, rope, copper wire - and a heavy key on a leather thong, the Listener's.
+place Zone_Sound earhum at 45 40 h=36
+prop earhum sound.event=event:/raft/radar/radar_humm
+prop earhum sound.volume=0.45
+prop earhum zone.radius=14
+place Placeable_BirdsNest - at 49.20 40.00 ground sit yaw=0
+place Placeable_BirdsNest - at 47.10 43.64 ground sit yaw=120
+place Placeable_BirdsNest - at 42.90 43.64 ground sit yaw=240
+place Placeable_BirdsNest - at 40.80 40.00 ground sit yaw=360
+place Placeable_BirdsNest - at 42.90 36.36 ground sit yaw=480
+place Placeable_BirdsNest - at 47.10 36.36 ground sit yaw=600
+scatter Bush 4 at 45 40 r=24 seed=30503 free=1
+scatter Bush2 3 at 45 40 r=24 seed=30504 free=1
+scatter "Pickup_Landmark_Rock 1" 3 at 45 40 r=24 seed=30505 free=2
+place Creature_Goat hillgoats at 29.31 26.39 ground
+prop hillgoats creature.count=2
+# --- The egg collectors' store (south-east), drowned in a hole 14 m down, an air pocket: Wilf's note, the back room's chest
+call hw_sunkhouse x=72 z=-40 h=-14 yaw=0 a=eggstore chest=eggchest air=eggair bub=eggbub dal=eggdoor
+call hw_zone x=72 z=-40 al=eggzone id=eggstore r=7 h=1 msg="The egg collectors' store, 14 m down. Baskets of gannet eggs on the shelves, every one unbroken. Its front room still holds air."
+place Note_Paper wilfnote at 72.6 -42.2 h=-13.7 drop yaw=20
+loot eggchest Rope*3;Feather*6;MetalIngot*1;Nail*6
+prop eggchest loot.refill=0
+note eggchest Egg store chest | The collectors' chest: climbing rope, nails, a bag of feathers and an iron ingot.
+place Creature_PufferFish eggpuffers at 66 -32 h=-9
+prop eggpuffers creature.count=2
+# --- The kennel cave (north): a secret ----------------------------------------------------------------------------------
+call hw_zone x=-30 z=61 al=cavez id=kennelcave r=4 msg="The Choir's kennel cave. Chains on rings in the rock, the collars still buckled - and empty. The floor is wet with sea water."
+# (REACH 10-28: by the lantern no spot could reach the note (no clear line) - now on the floor beside the kennel chest)
+place Note_Paper magsnote at -28.7 59.5 h=5.45 drop yaw=180
+loot kennelchest Rope*2;Leather*3;Scrap*2;Battery*1
+prop kennelchest loot.refill=0
+note kennelchest Kennel box | The dog keeper's box: leather for collars, rope, scrap and a battery for her lamp.
+call treasure x=-23 z=56 r=14 n=1 seed=30506 kind=0
+prop treasure30506 treasure.loot=Scrap*3;Bolt*2;Hinge*1
+# --- The crashed plane (west): a secret ---------------------------------------------------------------------------------
+loot birdcrate Plastic*3;Rope*2;CopperIngot*1;Glass*2
+prop birdcrate loot.refill=0
+note birdcrate Plane's crate | A bird counter's plane, down in the scrub. Her crate: plastic, glass, rope and a copper ingot - and a count sheet: 40,000 gannets, 0 calls.
+call treasure x=-56 z=16 r=14 n=1 seed=30507 kind=0
+prop treasure30507 treasure.loot=MetalOre*3;CopperOre*2;TitaniumOre*1
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Gannet Cliff
+info author=Custom Islands
+info description=A seabird rock as big as Raft's own big islands with a commune on top, and Gannet Crown above it with the Choir's far ear, an egg store drowned off the shore, an empty kennel cave, a crashed plane: tents round a stone-lined listening pit, antenna dishes in the ground like ears. The Quiet Choir. The seventh island of The Lullaby Frequency.
+island on.arrive=message||Gannets wheel over the rock, thousands of them - and not one of them makes a sound.
+
+story diary|Tent diary|Note_Paper|A diary from one of the Choir's tents.
+story pitopen|Pit gate open|Note_Paper|The listening pit's gate let you through: you know the hymn.
+story sermon|The Listener's sermon|Placeable_Radio|The sermon on the pit's radio: the quarry, the mirrors, the Lantern-Mother.
+story strongkey|Listener's strongbox key|Placeable_Lantern_Metal|A heavy key on a leather thong, from the far ear on Gannet Crown.
+story quarrychart|Quarry chart|Note_Paper|A chart of a flooded quarry far across the water, five great mirrors drawn round its rim. The Listener's last plan.
+story rung|Camp bell rung|Note_Paper|You rang the Choir's camp bell. Sister Ro came out of hiding.
+
+note noticeboard Choir notice board | THE QUIET CHOIR\n\nWelcome, listener. Leave your voice at the foot of the rock.\nWe do not speak on the rock. We do not sing, except the hymn.\nThe pit is for those who know the hymn.\n\nNight watch at the ears: Ro, Ansel. Dogs fed at dusk.
+note diary_ro Sister Ro | Day 40. The Listener says the song is a mother calling her children home. I had a mother. She never sounded like that.\n\nI am going to hide when they go down to the water. If anyone rings the camp bell, I will know it is not one of us. We never ring it.
+note diary_ansel Brother Ansel | I sat at the ears all night. Under the rock, under the sea, something is singing back to her. Two voices. The Listener did not want to hear that.
+note diary_listener The Listener | The dishes hear her best from the quarry. Five mirrors round the water, all turned to the middle - she will come up to see herself and the whole sea will hear her at once.\n\nThe chart is in my strongbox in the pit. The dogs will keep the curious out. Its key does not stay in the pit with them: I hang it on the far ear on the Crown each night when I go up to listen.
+prop diary_ro if.read=!signal|gn_ro
+prop diary_ro on.read=signal||gn_ro\ngive||story:diary*1
+prop diary_ansel if.read=!signal|gn_ansel
+prop diary_ansel on.read=signal||gn_ansel\ngive||story:diary*1
+prop diary_listener if.read=!signal|gn_listener
+prop diary_listener on.read=signal||gn_listener\ngive||story:diary*1
+
+note gideonnote Watcher Gideon Pell's log | THE FAR EAR - G. PELL, WATCHER\n\nNight 1. The Listener has me turn the dish down at the sea instead of up at the sky. He says she does not come from the sky.\n\nNight 4. Two voices in the headset. Hers, the lullaby, the one we all know. And under it something answering, slow and huge, as if the sea floor were humming back.\n\nNight 6. The gannets came up to the Crown in the dark and sat round the mast in rows. Forty thousand birds, and not one sound. They were listening too.\n\nNight 7. The Listener hung his strongbox key on the mast and went down to the pit with the dogs. He said: whoever climbs up here after me, give them the key. They will have earned the chart.\n\nI am taking off the headset now. I do not want to hear the second voice say my name again.
+note wilfnote Egg collector Wilf Darrow's note | (Pencil on a tally board, dry in the air pocket)\n\nForty years on ropes down the cliffs for the eggs. This year the gannets let us take them. They did not cry or strike at us. They watched us go down with their heads on one side, as if they were waiting to see what we would do.\n\nThe night the store went under I was here alone, sorting. The sea came up the steps, kind as you like, and not one egg broke when it covered them.\n\nI have the air under the roof. Through the window I can see the Choir walking down the cove to the sea, all of them, and their dogs walking with them, into the water, away from the rock.\n\nThe eggs on the shelf have started to hum. I am not going to look in them.
+note magsnote Dog keeper Mags Tolley's note | M. TOLLEY - THE KENNEL\n\nThree black dogs for the pit and four for the rock. I raised every one from a pup. Not one of them ever barked; the Listener chose them for that.\n\nAt dusk the four from the rock slipped their collars without undoing a buckle and walked down to the sea. They came back at dawn black and dripping and lay down at the pit's mouth with the other three, facing in.\n\nThey will not eat now. They do not need to.\n\nIf you go into the pit, go fast and do not look them in the eyes. They are not keeping people out any more. They are keeping something in.
+note strongbox Listener's strongbox | The Listener's strongbox: metal, a battery, the Choir's dues - and a rolled chart of a flooded quarry.
+loot strongbox story:quarrychart*1;MetalIngot*4;Battery*1;CopperIngot*2;TitaniumIngot*1
+prop strongbox loot.refill=0
+prop strongbox if.open=has|story:strongkey|1
+prop strongbox else.open=message||The strongbox is locked. The Listener's diary says its key hangs on the far ear, on top of Gannet Crown.
+
+prop pitgate obj.name=pitgate
+prop pitgate beh.use=Open the pit gate
+prop pitgate if.use=has|story:hymn|1
+prop pitgate on.use=hide|\nshow|pitladder\ngive||story:pitopen*1\nmessage||You hum the hymn under your breath. Nobody is there to hear it - but the gate swings open, and below it a ladder is let down into the pit.
+prop pitgate else.use=message||Only those who know the hymn may listen.
+prop pitladder obj.name=pitladder
+prop pitladder beh.hidden=1
+prop pit_floor zone.id=pit_floor
+prop pit_floor zone.radius=2.5
+prop pit_floor zone.repeat=1
+prop pitdark atmo.fog=#0a0c10
+prop pitdark atmo.fogAmount=0.6
+prop pitdark atmo.light=#1c2028
+prop pitdark atmo.lightAmount=0.8
+prop pitdark zone.radius=4
+prop choirdogs creature.count=3
+prop choirdogs creature.respawn=0
+prop choirdogs creature.zone=pit_floor
+prop choirdogs creature.health=2
+prop choirdogs tint.color=#101010
+prop choirdogs tint.amount=0.9
+
+prop sermonradio obj.name=sermonradio
+prop sermonradio beh.use=Turn on the radio
+prop sermonradio if.use=!signal|gn_sermon
+prop sermonradio on.use=signal||gn_sermon\ngive||story:sermon*1\nplaysound||event:/exploring/elevator/elevator_music|0.5|once|near\nmessage||A man's voice, slow, over the song: "She is not a monster. She is a mother. At the quarry the mirrors will show her to herself and she will sing to all of us at once. Bring the tooth of her old cradle. Bring the hymn. Come home."
+prop sermonradio else.use=message||Only the song now, very faint, under the hiss.
+
+prop tents zone.id=tents
+prop tents zone.radius=5
+prop tents zone.message=Tents round a pit, dishes in the ground. Empty. Bowls on the ground, still full.
+prop cliff_foot zone.id=cliff_foot
+prop cliff_foot zone.radius=5
+
+prop campbell obj.name=campbell
+prop campbell beh.use=Ring the camp bell
+prop campbell if.use=has|story:quarrychart|1
+prop campbell on.use=sound||event:/raft/radar/lever\ngive||story:rung*1\ncharacter||Jasmine\nmessage||The bell clangs over the silent rock. From under a tent's groundsheet a woman crawls out, thin, grey with dust: Sister Ro - Jasmine, before the Choir. "You rang it. None of them ever would. Take me off this rock." Jasmine has joined the crew.
+prop campbell else.use=message||A bell on a post. The Choir never rang it - and nobody would come yet if you did.
+
+quest title=The Quiet Choir
+quest intro=A rock white with silent gannets. Land on the beach at the foot of the cliff.
+step reach|cliff_foot|1|Land at the foot of the cliff
+step read|Choir notice board|1|Read the Choir's notice board
+step reach|tents|1|Climb the cliff path to the tents
+step collect|story:diary|3|Read the three tent diaries
+step collect|story:pitopen|1|Open the pit gate (only for those who know the hymn)
+step reach|pit_floor|1|Climb down into the listening pit
+step kill|Hyena|3|Deal with the Choir's dogs
+step collect|story:sermon|1|Turn on the pit's radio
+step reach|hillfoot|1|Find the path up Gannet Crown, the hill with the mast
+step reach|hilltop|1|Climb Gannet Crown to the Choir's far ear
+step read|Watcher Gideon Pell's log|1|Read the watcher's log by the mast
+step collect|story:strongkey|1|Take the Listener's strongbox key from the box at the mast on Gannet Crown
+step reach|eggstore|1|Dive to the drowned egg store in the water below the cliff
+step read|Egg collector Wilf Darrow's note|1|Breathe in the egg store's front room and read the collector's note
+step open|Listener's strongbox|1|Open the Listener's strongbox
+step collect|story:quarrychart|1|Take the quarry chart
+step collect|story:rung|1|Ring the camp bell
+quest done=Sister Ro says the Choir rowed away to a flooded quarry. But first they went down to a drowned children's home - Cradle Reef - for the Lantern-Mother's tooth. The Receiver has it: tune in.
+quest reward=MetalIngot*3;Battery*1
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=32 n=1 seed=8823
+prop treasure8823 treasure.loot=TitaniumOre*3
+
+clear at -57.28 57.63 r=1.2 all only=SmallBoulder
+
+# (G2 10-30: a bush floating 1 m over the slope - CIGroundIslands 10-30)
+clear at -22.31 -18.38 r=1.5 only=Bush
+
+# --- CONTENT 11-12 (w10): Gannet Hole - a cliff cave (kit_st) in a hill at the ridge's foot, on the flat plateau (r2b: in the
+# ridge face itself the native slope cut through the den's entrance - a step too high), where the
+# egg collectors dried their nets out of the wind; a sign at its mouth. And a side cave in the plateau's own cliff,
+# grown shut with vines (a machete brought from another island opens it; nothing needs it): the collectors' tally box.
+call kit_st x=-35 z=15.4 yaw=0 len=6 slope=0 end=room size=0.7 hill=1 dirt=3 mush=2 stone=0 vines=0 as=gchole
+prop gchole cave.rock=plain
+prop gchole cave.dome=14
+place Note_Sign gcholesign at -41 9.5 ground sit yaw=180
+prop gcholesign obj.name=gcholesign
+note gcholesign GANNET HOLE | The collectors' drying cave, in the hill behind this sign. Nets in summer, nobody in winter. Since the Choir came, the birds will not nest over it - they say it hums.
+# (r3b: CICaveInside found 9 points of the mouth's rim rock standing loose out of the steep face beside it, first at
+# -21.9 -0.2 - that face smoothed, so the ground lies over the tunnel's shell, as at Stalker's Hollow)
+brush smooth at -21.9 0.5 r=2.5 s=8 frames=60
+call kit_dig x=-23.5 z=6 yaw=90 len=6 flat=0 r=1.6 slope=0 room=1 roomr=2.5 roomlen=3 dirt=0 mush=0 stone=0 vines=0 titanium=0 gate=1 as=gcside
+prop gcside cave.rock=plain
+# cavecheck inside gctally
+# (r3b: the box sits to the room's side, off the tunnel's line - on it, it blocked the cave check's way)
+place Loot_ChestSmall gctally at -15.5 7.4 h=9 drop yaw=180
+prop gctally loot.refill=0
+loot gctally Rope*2;Nail*6;Bolt*2;Hinge*1
+note gctally Collectors' tally box | The egg collectors' tally box, left in the cliff when the vines grew over: rope, nails, a hinge - and a slate of eggs counted per day. The last line is not eggs: "3.12 - she sang again".
+save Gannet Cliff

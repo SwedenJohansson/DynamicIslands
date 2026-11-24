@@ -1,0 +1,386 @@
+# The Foundation Piles - the tenth island of the library's plan The City That Never Sank (SL13, Highwater, chapter 9, the
+# finale's second part)
+# Under the city: a forest of giant stone piles standing in a basin ten metres down, two of them cracked and leaning,
+# shoring jacks at the feet of four, air trapped round their foot-blocks; a stingray grown huge nests among them. At the
+# city's edge a mudflat lies dry at sea level, with the pile engineer's hut, clay and sand, and something buried. Quest
+# "The Piles" (20 steps, STORY 10-24: Nell's note, the forged survey, the ballast in the bank and the digger, Crane's jack logs and last page by pile four, Ines's closing; the Hump and the pump gallery optional; the jack pump machine gone): the mudflat, the engineer's note, the first two piles and their jacks, the pile stingray in two
+# phases, the last two jacks, the closing note, back to the mudflat.
+#
+# Points: the mudflat 24 0 (levelled at 0.8, r 12); the pile basin -16 0 (levelled at -10, r 22); piles at -24 -12
+# (pile 1), -8 -12 (pile 2), -8 12 (pile 3), -24 12 (pile 4), more piles between; the jacks 3 m east of each pile;
+# the air pockets beside the jacks; the stingray's nest -16 0; the treasure within 10 of 18 0.
+include lib_sea
+include lib_rt
+include lib_huts
+include lib_features
+include lib_verdance
+include lib_concord
+include lib_highwater
+include lib_areas
+include lib_caves
+# RESIZE 10-24: Radius 52 -> 100 (Height 2 -> 3), the old content moved 26.4 0 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+# DEEP 10-24: Pile-driver's Hump: the derrick that drove the city's piles, a pump gallery eighteen metres down, and the jack pump that holds a leaning pile.
+new
+gen Trees=0 Bushes=0.1 Rocks=0.4 Harvest=0.1 BeachThings=0.4
+gen Seed=13951 Radius=100 Height=3 Roughness=0.2 Peaks=0 Shape=0 Style=0 PeakShape=0.2 Cliffs=0 BeachWidth=0.9
+gen Water=0.6 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.5 Hostiles=0 Friendly=0 SeaLife=0.4
+generate
+push at 26.4 0
+
+# --- Terrain: the mudflat dry, the pile basin deep ------------------------------------------------------------------
+brush flatten at 24 0 r=12 s=20 frames=300 h=0.8
+brush flatten at -16 0 r=22 s=20 frames=500 h=-10
+# REACH 10-28: a bank ramp out of the pile basin (it was a 2.8 m climb all round) - pads from 0.6 m under the water up to the rim
+brush flatten at -6.4 16.4 r=2 s=20 frames=200 h=-0.6
+brush flatten at -5.4 18.1 r=2 s=20 frames=200 h=0.3
+brush flatten at -4.4 19.8 r=2 s=20 frames=200 h=1.2
+brush flatten at -3.4 21.5 r=2 s=20 frames=200 h=2.1
+pop
+# --- DEEP 10-24 terrain: Pile-driver's Hump (north, summit 42 m, base r 30), its trail, the drowned pump gallery (-18 m) ------------
+call hw_mount x=12 z=56 b=30 h=42
+call hw_trail x=12 z=56 b=30 h=42 a0=-167.91 turn=300 n=40 h0=3
+brush flatten at 7.36 70.37 r=2.6 s=20 frames=200 h=22.5
+clear at 7.36 70.37 r=3
+call hw_basin x=82 z=32 r=14 h=-18
+brush flatten at 50 32 r=4 s=8 frames=60
+clear at 50 32 r=6
+brush flatten at -23.2 38.6 r=5 s=8 frames=40
+origin
+clear at -23.2 38.6 r=6
+push at 26.4 0
+clear at 24 0 r=12
+clear at -16 0 r=23
+
+# --- The storm, still blowing over the city's edge -------------------------------------------------------------------
+call weather x=0 z=0 al=storm r=70 fog=#3a4048 fa=0.4 light=#8a96a2 la=0.3 parts=mist h=3
+place Zone_Sound stormsound at 0 0 ground y=3
+
+# --- The mudflat: the engineer's hut, his note, clay and sand ---------------------------------------------------------
+push at 26 2 h=0.8
+call stilt_hut y=2.6 w4=ReefHuts_PlasticWall4
+place Loot_ChestSmall engineerbox at 2.25 3.5 y=2.7 sit yaw=180
+place Placeable_Lantern_Metal - at 1 3.5 y=2.7 drop
+pop
+place Note_Board enginenote at 22 -3 ground sit yaw=270
+place Zone_Trigger mudzone at 22 0 ground y=1.5
+place Zone_Trigger returnzone at 28 -6 ground y=1.5
+place Note_Sign returnsign at 28.8 -6 ground sit yaw=270
+place "Pickup_Landmark_Clay 1" - at 30 -9 ground sit
+place "Pickup_Landmark_Clay 2" - at 32 -5 ground sit
+place "Pickup_Landmark_Clay 3" - at 18 8 ground sit
+place "Pickup_Landmark_Sand" - at 16 -6 ground sit
+place "Pickup_Landmark_Sand" - at 20 10 ground sit
+place Reef_Barrel2 - at 31 3 ground sit
+# (REACH 10-28: the basin ladder stood 7 m off the basin's rim on the mudflat - 9 m up into nothing; the bank ramp is the way out now)
+# place Block_Ladder - at 13 0 ground yaw=270 sy=4
+call dirt x=18 z=0 r=6 n=3 seed=13952
+call treasure x=18 z=0 r=10 n=1 seed=13054
+prop treasure13054 treasure.loot=TitaniumOre*3
+
+# --- The pile forest: four piles with jacks, eight more without; two cracked and leaning -----------------------------
+place RT_Pillar piles at -24 -12 ground scale=3 sy=4 tilt=4
+place RT_Pillar piles at -8 -12 ground scale=3 sy=4
+place RT_Pillar piles at -8 12 ground scale=3 sy=4 roll=5
+place RT_Pillar piles at -24 12 ground scale=3 sy=4
+place RT_Pillar piles at -32 0 ground scale=3 sy=4
+place RT_Pillar piles at -16 -20 ground scale=3 sy=4
+place RT_Pillar piles at -16 20 ground scale=3 sy=4
+place RT_Pillar piles at 0 0 ground scale=3 sy=4
+place RT_Pillar piles at -32 -18 ground scale=3 sy=4
+place RT_Pillar piles at -32 18 ground scale=3 sy=4
+place RT_Pillar piles at 0 -18 ground scale=3 sy=4 tilt=-3
+place RT_Pillar piles at 0 18 ground scale=3 sy=4
+place Block_Foundation - at -24 -12 ground scale=2
+place Block_Foundation - at -8 -12 ground scale=2
+place Block_Foundation - at -8 12 ground scale=2
+place Block_Foundation - at -24 12 ground scale=2
+call crank x=-21 z=-12 yaw=90 alias=jack1
+call crank x=-5 z=-12 yaw=90 alias=jack2
+call crank x=-5 z=12 yaw=90 alias=jack3
+call crank x=-21 z=12 yaw=90 alias=jack4
+call hw_airpocket x=-21 z=-9.5 id=pile_1 al=pile1air bub=pile1bub msg="The first jacked pile. Air, trapped round its foot-block - and the jack, seized with rust."
+call hw_airpocket x=-5 z=-9.5 id=pile_2 al=pile2air bub=pile2bub msg="The second pile. A crack runs up it as wide as your hand."
+call hw_airpocket x=-5 z=9.5 id=pile_3 al=pile3air bub=pile3bub
+call hw_airpocket x=-21 z=9.5 id=pile_4 al=pile4air bub=pile4bub
+place Note_Paper closing at -21 10.5 ground drop
+place Note_Paper jacklog1 at -19.5 -10.5 ground drop yaw=30
+place Note_Paper jacklog3 at -3.5 10.5 ground drop yaw=200
+place BikerGuy_Body cranebody at -23 14.5 ground sit yaw=200
+place Placeable_Lantern_Metal - at -22 15.5 ground drop
+place Note_Paper cranepage at -21.5 14 ground drop yaw=80
+place Creature_Stingray pileray at -16 0 ground y=2
+place Creature_PufferFish puffers at -28 -4 ground y=2
+call hw_reef x=-12 z=-16 r=3 seed=13953
+call hw_reef x=-20 z=16 r=3 seed=13954
+place "Pickup_Landmark_Copper 1" - at -30 6 ground sit
+place "Pickup_Landmark_Mushroom 2" - at -12 4 ground sit
+call shallows x=-26.4 z=0 r=135 deep=6 n=2 seed=13955
+call hw_skyline x=-100 z=-80 a=skyline
+pop
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; RT_PlasticBoat + chest; hatch with a chest; buried treasure; viewpoint ---
+place campfire_1 - at -23.2 38.6 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at -20.2 40.6 ground sit yaw=307
+place "Box Small" - at -25.2 41.1 ground sit
+place Note_Paper dnote at -25.2 41.1 ground y=1.6 drop yaw=20
+note dnote Salvager's note | SALVAGE CLAIM - this side is ours. Union stamp below (smudged).\nGood copper in the roofs off shore. Bad currents at the turn of the tide.\nDon't dive alone.
+place RT_PlasticBoat dvan at 23.2 -38.6 ground yaw=67
+prop dvan tint.color=#4a6b7a
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at 19.2 -35.6 ground sit yaw=7
+note dwreckchest Runner's stash | A runner's stash in the glovebox: plastic, glass, a few nails.
+loot dwreckchest Plastic*5;Glass*2;Nail*8
+prop dwreckchest loot.refill=0
+call hatchcache x=-38.6 z=-23.2 r=4 seed=14041 alias=dhatch chest=dhatchchest items=MetalIngot*2;CopperIngot*2;Bolt*3
+call treasure x=21.8 z=39.4 r=6 n=1 seed=14042
+prop treasure14042 treasure.loot=CopperOre*3;TitaniumOre*1
+place Zone_Trigger dview at -20.7 3.3 ground
+prop dview zone.id=foundation_piles_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=Down there the city's foundation piles stand in the dark water - everything Highwater stands on.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): the rubble bank in the north-west (buried
+# salvage), the sunk excavator in the south-west, the engineers' hut in the south, the pile-driver's cave in the west,
+# blasting barrels in the pile field (the stingray's armour only gives to their blasts)
+call ar_ridge x1=-60 z1=20 x2=-40 z2=55 h=10 top=6 r=9
+call ar_plants_hill x=-50 z=38 r=24 seed=14011
+call hw_zone x=-50 z=38 al=rubblebank id=rubble_bank r=7 msg="The rubble bank - and it is no spoil heap. Pig iron, pump castings, stone from Lowstreet's own walls, piled up by the Council's barges at night and grown over. Ballast. The piles are down there, under all of it."
+call treasure x=-50 z=38 r=14 n=2 seed=14061
+prop treasure14061 treasure.loot=TitaniumOre*2;MetalOre*2
+call hw_wreck x=-62 z=-42 h=3 yaw=40 obj=VP_Excavator al=sunkdigger crate=diggercrate r=10
+call ar_ruin x=10 z=-66 h=4 yaw=180 al=engineershut
+call hw_note x=7.5 z=-61.5 yaw=190 al=engineersurvey
+call ar_cave x=-78 z=-5 h=4 yaw=0 al=drivercave chest=driverchest
+# (REACH 10-28: the cave's path ended 3.6 m over the shore at its mouth - nobody got up into it: a slope down off its end)
+# (REACH 10-28 (2): pictures - the macro's path stood ~1.5 m under the cave floor at the mouth, a hollow under the floor's
+# lip: the path again at full strength, then the slope with more frames)
+for pz 2 16 1.5
+brush flatten at -79 $pz r=3 s=20 frames=200 h=4.4
+next
+brush flatten at -79 18 r=2.4 s=20 frames=150 h=3.6
+brush flatten at -79 20 r=2.4 s=20 frames=150 h=2.8
+brush flatten at -79 22 r=2.4 s=20 frames=150 h=2.0
+brush flatten at -79 24 r=2.4 s=20 frames=150 h=1.2
+call hw_zone x=-78 z=19 al=drivermouth id=driver_cave r=4 msg="A cave in the cliff: the pile drivers kept their charges here, well away from the city."
+prop pileray obj.name=pileray
+prop pileray boss.shield=1
+place VP_ExplosiveBarrel_Pile blast1 at 12 8 ground sit yaw=0
+place VP_ExplosiveBarrel_Pile blast2 at 8 -6 ground sit yaw=60
+place VP_ExplosiveBarrel_Pile blast3 at 18 -5 ground sit yaw=120
+call ar_plants_hill x=40 z=-60 r=14 seed=14021
+
+# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Pile-driver's Hump: the derrick that drove the city's piles, a pump gallery eighteen metres down, and the jack pump that holds a leaning pile. ------
+# the climb: the trail spirals up from the south foot; on the summit the pile-driver's derrick (11 storeys, a ladder inside), its deck chest
+# and a zipline down to the hub (the shortcut back); the dive: the pump gallery on a basin floor -18 m down, an air pocket
+# in its front room; the hub: the Jack pump that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
+# the sunk boat's crate
+call hw_zone x=5.5 z=25.69 al=fp_trailz id=fp_trail r=5 msg="The trail up Pile-driver's Hump starts here - cut into the slope, round and up."
+call hw_zone x=12 z=56 al=fp_summitz id=fp_summit r=8 h=1 msg="The top of Pile-driver's Hump. The whole island below, the city beyond it, and the pile-driver's derrick still higher."
+call hw_mast x=8.62 z=58.14 h0=42 lv=11 a=fp_mast chest=fp_topchest top=Placeable_Lantern_Metal
+place ZiplinePath_Landmark fp_zip at 17.4 53.91 h=43.35
+zipto fp_zip 46.62 34.14
+place Loot_ChestSmall fp_ledge at 7.36 70.37 ground sit yaw=162.09
+call treasure x=9.86 z=52.62 r=5 n=1 seed=14028 kind=0
+prop treasure14028 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+place Creature_Goat fp_goats at 2.83 21.46 ground
+prop fp_goats creature.count=2
+place Creature_Goat fp_summitgoat at 13.6 58.54 ground
+prop fp_summitgoat creature.count=1
+scatter "Pickup_Landmark_Copper 1" 2 at 12 56 r=26 seed=14032 free=2
+scatter "Pickup_Landmark_Clay 1" 2 at 12 56 r=28 seed=14033 free=2
+scatter "Pickup_Landmark_Rock 1" 2 at 12 56 r=24 seed=14034 free=2
+call hw_sunkhouse x=82 z=32 h=-18 yaw=0 a=fp_sunk chest=fp_deepchest air=fp_air bub=fp_airbub dal=fp_sunkdoor
+call hw_zone x=82 z=32 al=fp_deepz id=fp_deep r=7 h=1 msg="The pump gallery, 18 metres down. The front room still holds a pocket of air."
+place RT_PlasticBoat fp_sunkboat at 90 34 ground sit yaw=35
+prop fp_sunkboat tint.color=#5a5048
+prop fp_sunkboat tint.amount=0.45
+place Loot_Crate fp_boatcrate at 89 28 ground sit yaw=10
+prop fp_boatcrate loot.refill=0
+call hw_reef x=75 z=37 r=3 seed=14036
+place Creature_PufferFish fp_puffers at 76 25 h=-14
+prop fp_puffers creature.count=2
+note fp_topchest Pile-driver's derrick deck box | A box lashed to the deck rail at the top of the pile-driver's derrick.
+loot fp_topchest Scrap*2;Bolt*3;Rope*1
+prop fp_topchest on.open=message||From the derrick deck you can see it at last: a line of buoys from Pumpcrown's quay to the rubble bank, straight as a ruler - the barges' night road. Someone has chalked a hook on the rail, pointing down.
+note fp_deepchest Pump gallery strongbox | A strongbox in the back room of the pump gallery.
+loot fp_deepchest MetalIngot*2;Battery*1
+prop fp_deepchest on.open=message||A barge manifest in the strongbox: IRON AND STONE FOR THE PILE FOOT - FORTY TONS - NIGHT DELIVERY. Signed for the Council, A.C. The gallery's pumps beside it are set to fill, not drain.
+note fp_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
+loot fp_ledge Rope*2;Bolt*2;Scrap*2
+prop fp_ledge loot.refill=0
+loot fp_boatcrate Plastic*3;Scrap*2;MetalIngot*1
+prop fp_ledge if.open=has|Tangaroa_KeyCard|1
+prop fp_ledge else.open=message||A card lock on the box - a Tangaroa keycard would open it.
+
+# --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
+info title=The Foundation Piles
+info author=Custom Islands
+info description=Under Highwater: a forest of giant stone piles ten metres down, two of them cracked, shoring jacks at their feet, air round their foot-blocks - and a stingray grown huge among them. A dry mudflat at the city's edge. The last of The City That Never Sank.
+island on.arrive=message||A grey mudflat at the city's edge. Beyond it the water goes black - and down there, the piles the whole city stands on.
+
+story jack1|Pile 1 jacked|Bolt|The first pile, shored up.
+story jack2|Pile 2 jacked|Bolt|The second pile, shored up.
+story jack3|Pile 3 jacked|Bolt|The third pile, shored up.
+story jack4|Pile 4 jacked|Bolt|The fourth pile, shored up - the city holds.
+story rayhurt|Pile stingray wounded|Bolt|You wounded the stingray that nests among the piles.
+story raydown|Pile stingray defeated|Bolt|The pile stingray is dead. The piles are yours to mend.
+
+prop piles tint.color=#6e6a60
+prop piles tint.amount=0.5
+prop skyline tint.color=#5a6068
+prop skyline tint.amount=0.5
+prop stormsound sound.event=event:/amb/rain_ocean
+prop stormsound sound.volume=0.6
+prop stormsound zone.radius=70
+prop puffers creature.count=2
+prop pileray creature.count=1
+prop pileray creature.respawn=0
+prop pileray creature.size=3
+prop pileray creature.health=10
+prop pileray boss.phase=0.5
+prop pileray boss.summon=2
+prop pileray tint.color=#3c4a40
+prop pileray tint.amount=0.6
+prop pileray on.phase=give||story:rayhurt*1\nmessage||The stingray thrashes against a pile - and two more come out of the dark to help it.
+prop pileray on.defeat=signal||raydown\ngive||story:rayhurt*1\ngive||story:raydown*1\nmessage||The great stingray drifts down between the piles and lies still. The last two jacks are clear.
+prop closing beh.hidden=1
+prop closing obj.name=closing
+
+prop jack1 beh.use=Wind the first pile's jack
+prop jack1 if.use=!signal|jack1
+prop jack1 on.use=signal||jack1\ngive||story:jack1*1\nsound||event:/raft/radar/lever\nmessage||The jack bites. Above you the pile groans - and stops leaning.
+prop jack1 else.use=message||This pile is shored.
+prop jack2 beh.use=Wind the second pile's jack
+prop jack2 if.use=signal|jack1
+prop jack2 on.use=signal||jack2\ngive||story:jack2*1\nsound||event:/raft/radar/lever\nmessage||The second jack bites. In the dark between the piles, something big turns toward the sound.
+prop jack2 else.use=message||Rusted solid. The engineer's note says: the first pile first.
+prop jack3 beh.use=Wind the third pile's jack
+prop jack3 if.use=signal|raydown
+prop jack3 on.use=signal||jack3\ngive||story:jack3*1\nsound||event:/raft/radar/lever\nmessage||The third pile takes the weight again.
+prop jack3 else.use=message||You can't work the jack with that stingray circling.
+prop jack4 beh.use=Wind the fourth pile's jack
+prop jack4 if.use=signal|jack3
+prop jack4 on.use=signal||jack4\ngive||story:jack4*1\nshow|closing\nsound||event:/raft/radar/lever\nmessage||The last jack bites. All through the water the piles settle. Highwater holds - for now. Tucked behind the jack, a note.
+prop jack4 else.use=message||The third pile first.
+
+note enginenote Nell Abernethy's note | Pinned over the old engineer's board, in a clerk's tidy hand -\n\nYou came. Good. I came down on the last barge after the council broke up, and I am writing this on my knee, so forgive the hand.\n\nCouncillor Crane went down the pile stair an hour before me, alone, with a lantern. He has not come back up. The air under the city lies in pockets round the foot-blocks; he knew that - he signed for them every year.\n\nFour piles carry the Crown. The jacks are at their feet. The first pile first, then the second - and then the stingray will wake. The pile drivers left blasting barrels on the piles for it. The third and the fourth after.\n\nBefore you dive, read the engineers' survey in their ruined hut inland, and look at what the rubble bank is made of. Then you will know why the Rookery was weight.\n\nInes's chalk hooks go down the pile stair. Follow them.\n\n- N. Abernethy
+note engineerbox Engineer's box | The pile engineer's spare tools.
+note closing The city holds | Behind the fourth jack, in a tin with chalk fingerprints on the lid -\n\nYou did it. I heard the piles settle from the stair, all four, like a house letting out its breath.\n\nI found him before you did. I closed his eyes and left his page where it was, for you - you earned the reading of it. Nell will take it up to the Crown. Let the factions argue over it for a hundred years; they are good at that.\n\nI'm going up. Dobbs is waiting on the mudflat with a thermos and a complaint about the tide.\n\nIf you spoke for the Rookery on the roofs, Maud's boats are already out on the shoal ahead, band 700 - Pip has a tram line to build and says you are its first passenger.\n\nThe brass plates on the piles say CONCORD WORKS. Whoever built them is still out there, on the old band. That's another story.\n\n- Ines
+note returnsign Mudflat | High-water mark. The tide comes no further.
+loot engineerbox Rope*2;MetalIngot*2;Bolt*2
+prop engineerbox loot.refill=0
+
+prop mudzone zone.id=mudflat
+prop mudzone zone.radius=4
+prop mudzone zone.message=The mudflat. The engineer's hut, a board, and the black water beyond.
+prop returnzone zone.id=mudflat_return
+prop returnzone zone.radius=3
+prop returnzone zone.message=Back on the mudflat. Dobbs is there with a thermos, complaining about the tide. Up above, the rain is easing off.
+
+prop blast1 on.use=message||The barrel goes up under the pile - the shock rolls the stingray over.\nhit|pileray|40\nhide|\nsignal||blast
+prop blast2 on.use=message||The second barrel bursts - the stingray's hide splits along the old scar.\nhit|pileray|40\nhide|\nsignal||blast
+prop blast3 on.use=message||The last barrel blows - and the pile shudders free of the stingray.\nhit|pileray|40\nhide|\nsignal||blast
+note diggercrate Excavator's toolbox | The excavator slid off the bank in a storm. Its toolbox stayed bolted to the cab - and in the lid, the driver's work sheets.\n\nNIGHT SHIFT. DIG BALLAST PIT AT THE PILE FOOT. BARGE IRON FROM PUMPCROWN. NO LIGHTS. NO NAMES. Paid in Authority tokens, double.\n\nOn the last sheet, pressed hard: The ground under pile four is moving. I told the Councillor. He said: then dig faster. I have gone up to the Rookery to dig for them instead. Whoever finds this - the drivers kept charges in the cave in the cliff. You will want them down there. - Carver
+loot diggercrate MetalIngot*3;Bolt*3;Scrap*3
+note engineersurvey Engineers' survey | PILE SURVEY - CROWN FOUNDATIONS\n\nFour piles carry the Crown. Inspected this year: all four sound. Jacks serviced, as funded. Signed every year for twenty-two years, in the same neat hand: A.C.\n\n(Underneath, in pencil, shaky: I was the pile engineer. The service money was voted every year and never spent. He was a junior clerk then, and it paid for his first election. When the cracks came he could not send men down to the jacks - they would have seen the rust, and the dates. So he sent iron instead. I am old and I was paid to keep quiet, and I am sorry. - R. Tolley)\n\n(And in grease pencil: He couldn't wind the jacks without a vote, so he bought weight. Lowstreet's water. The barges' iron. The Rookery's roofs next. - I.M.)
+note driverchest Pile-driver's stash | Blasting charges wrapped in oilcloth, and the drivers' pay, never collected.\n\nOn the cave wall above, a chalk hook you know by now, and under it: THE BARRELS ON THE PILES ARE THE SAME CHARGE. THE RAY'S HIDE ONLY GIVES TO A BLAST. LIGHT ONE UNDER IT, NOT UNDER YOU. - I.M.
+note jacklog1 Jack log - pile 1 | A brass tag wired to the first jack, stamped once a year -\n\nSERVICED. SOUND. - A.C.\n\nTwenty-two stamps, the same initials, the same neat hand. The grease in the jack's screw is older than the stamps: black, hard as tar, untouched since Concord Works fitted it.\n\nUnder the last stamp, in Ines's grease pencil: Nobody has turned this since before he was born. It still bites, if you lean on it. Wind it - then the second. The stingray sleeps between them, and the second jack will wake it.
+note jacklog3 Jack log - pile 3 | The tag on the third jack. Every stamp on it has been scored through with a knife point, and below them, fresh, the newest entry - tonight's:\n\nCRACKED. CRACKED. CRACKED. I SIGNED THEM ALL. - A.C.\n\nLantern soot on the handle. He tried to wind this one before you, and the stingray drove him off it. A long scrape runs along the pile where he went on - past the fourth air pocket, into the dark.
+note cranepage Aldous Crane's last page | A notebook page, in the neat hand, getting less neat -\n\nTo whoever winds the fourth.\n\nI was twenty-six, the piles were sound, and the service money paid for my first election. Nobody died of it. For twenty-two years nobody died of it.\n\nThen the cracks. To wind the jacks I would have had to say they had never been seen to. So I gave the Crown weight instead. Water is weight: I opened the valves and let Lowstreet fill. Iron is weight: I sank it here by night. I signed for the factions so that each would think the others knew. Two thousand people, I told myself, were a fair price for a city.\n\nIt was never weight the piles needed. It was someone to come down here and turn a handle. That was all, for twenty-two years.\n\nThe air is going. Number four will not turn while the other three hang loose. Do not let it beat you too.\n\n- A. Crane
+loot driverchest ExplosiveGoo*2;TradeToken*3;Rope*2
+prop driverchest loot.refill=0
+quest title=The Piles
+quest intro=The storm is cracking the four piles under the Crown, and Councillor Crane has gone down the pile stair alone. Land on the mudflat at the city's edge - Nell Abernethy left a note there.
+step reach|mudflat|1|Land on the flat mud at the city's edge, by the engineer's board
+step read|Nell Abernethy's note|1|Read Nell Abernethy's note on the engineer's board
+step read|Engineers' survey|1|Read the engineers' survey in their ruined hut inland
+step open|Excavator's toolbox|1|Open the toolbox crate of the sunk excavator on the shore
+step reach|driver_cave|1|Find the pile drivers' cave in the cliff
+step open|Pile-driver's stash|1|Open the pile drivers' stash in the cave
+step reach|rubble_bank|1|Climb the rubble bank, the long pile of stone and iron, and see what it is made of
+step reach|pile_1|1|Follow Ines's hooks down the pile stair to the first pile
+step read|Jack log - pile 1|1|Read the jack log wired to the first jack
+step collect|story:jack1|1|Wind the first pile's jack
+step reach|pile_2|1|Swim to the second pile
+step collect|story:jack2|1|Wind the second pile's jack
+step collect|story:rayhurt|1|Blast the stingray that wakes among the piles
+step collect|story:raydown|1|Finish the pile stingray
+step collect|story:jack3|1|Wind the third pile's jack
+step read|Jack log - pile 3|1|Read the jack log on the third jack
+step read|Aldous Crane's last page|1|Follow the scrape on the pile to the fourth air pocket and read what is there
+step collect|story:jack4|1|Wind the fourth pile's jack
+step read|The city holds|1|Read the note behind the last jack
+step reach|mudflat_return|1|Go back up to the mudflat
+quest done=Highwater holds. Four jacks wound, one confession read, and a city that will have to hear what it stands on. Whatever you chose on the Crown, it will have to live with it.
+quest reward=TitaniumOre*2;TradeToken*10
+
+# --- 10-25: the open sand filled - hills where nothing stands, a ruin on the biggest, a wreck, plants over all
+# (plan.py from the built island: every hill at least 8 m clear of anything the recipe placed; frame = the land centre)
+origin
+# hill 1: 36 m across, 14 m over the sea
+brush flatten at -44 -68 r=18 s=20 frames=600 h=4.9
+brush flatten at -44 -68 r=13.0 s=20 frames=600 h=9.1
+brush flatten at -44 -68 r=8.1 s=20 frames=600 h=12.6
+brush flatten at -44 -68 r=6 s=20 frames=500 h=14
+brush smooth at -44 -68 r=20.7 s=5 frames=70
+brush flatten at -44 -68 r=6 s=20 frames=400 h=14
+brush auto at -44 -68 r=21.6 s=10 frames=25
+clear at -44 -68 r=21
+# hill 2: 32 m across, 12 m over the sea
+brush flatten at 76 -52 r=16 s=20 frames=600 h=4.2
+brush flatten at 76 -52 r=11.5 s=20 frames=600 h=7.8
+brush flatten at 76 -52 r=7.2 s=20 frames=600 h=10.8
+brush flatten at 76 -52 r=6 s=20 frames=500 h=12
+brush smooth at 76 -52 r=18.4 s=5 frames=70
+brush flatten at 76 -52 r=6 s=20 frames=400 h=12
+brush auto at 76 -52 r=19.2 s=10 frames=25
+clear at 76 -52 r=19
+# hill 3: 28 m across, 10 m over the sea
+brush flatten at -4 -88 r=14 s=20 frames=600 h=3.5
+brush flatten at -4 -88 r=10.1 s=20 frames=600 h=6.5
+brush flatten at -4 -88 r=6.3 s=20 frames=600 h=9.0
+brush flatten at -4 -88 r=6 s=20 frames=500 h=10
+brush smooth at -4 -88 r=16.1 s=5 frames=70
+brush flatten at -4 -88 r=6 s=20 frames=400 h=10
+brush auto at -4 -88 r=16.8 s=10 frames=25
+clear at -4 -88 r=17
+# a ruin on hill 1: someone lived up here before the water rose
+call ar_ruin x=-44 z=-68 h=14 yaw=100 w=3 d=2 al=fillfpruin
+call ar_plants_hill x=-44 z=-68 r=18 seed=5500
+call ar_plants_hill x=76 z=-52 r=16 seed=5510
+call ar_plants_hill x=-4 z=-88 r=14 seed=5520
+call ar_plants_hill x=40 z=72 r=12 seed=5530
+call ar_plants_hill x=-76 z=46 r=12 seed=5540
+call ar_plants_hill x=46 z=50 r=12 seed=5550
+call ar_plants_hill x=-44 z=14 r=12 seed=5560
+call ar_plants_hill x=-4 z=92 r=12 seed=5570
+call ar_plants_hill x=-64 z=68 r=12 seed=5580
+call ar_plants_hill x=22 z=-88 r=12 seed=5590
+call ar_plants_hill x=-34 z=-48 r=12 seed=5600
+call ar_plants_hill x=48 z=28 r=12 seed=5610
+call ar_plants_hill x=-72 z=-24 r=12 seed=5620
+
+# (a generator boulder left 1.4 m over a brushed slope, CIGroundIslands 10-25)
+clear at 26.1 21 r=1.5 only=SmallBoulder2
+# (G2 10-30: two bamboos on the rim of a drop, their trunks over it - CIGroundIslands 10-30)
+clear at -37.74 -62.31 r=1 only=Bamboo
+clear at 72.92 -46.36 r=1 only=Bamboo
+
+# --- 11-11 (w04): the old pile-drivers' drift (plan 04 row: DIG between the piles, UW mouth at the low end; stone 3,
+# dirt 2). No quest step. When the piles were driven the gangs cut a drift from the west bank down to the basin floor
+# to bring the stone in; the sea filled it when the basin was flooded. Its low mouth opens in the basin's west wall
+# between the outer piles (8 m and more from them), 10 m down; the drift climbs west-north-west at 25 degrees under the bank and
+# comes up as a flooded hole in the bank 24 m on, its last metres just under the sea. Points in the origin frame (the
+# pile field's push at 26.4 0 puts the basin's middle at 10.4 0): low mouth -4 8, high end -29.4 17.2. 10 m and more from
+# the jacks, the air pockets, the jack logs and the view zone (cavecheck).
+origin
+clear at -29.4 17.2 r=4 only=(?i)boulder|rock|tree|bush|bamboo
+# (kit_dig's two strokes written out: the drift is flooded nearly all the way, so its loot goes on the wet floor -
+# caveloot wet=1, which kit_dig doesn't pass)
+dig -4,8 -6.819,9.026 r=1.75 as=fpdrift
+dig -6.819,9.026 -29.372,17.234 r=1.75 slope=25 as=fpdrift
+caveloot fpdrift dirt=2 mush=0 stone=3 vines=0 titanium=0 light=0 wet=1
+prop fpdrift cave.rock=plain
+
+save The Foundation Piles

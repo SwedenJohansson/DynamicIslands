@@ -1,0 +1,309 @@
+# Pendulum Isle - an island of the library's plan The Gravity Sea (a low sky island, 12 m over the sea)
+# A long, narrow island hovering just 12 m over the water - the raft sails under it. On top the Institute's pendulum
+# hall: a frame of stone posts with a crossbeam, its chain (posts) hanging from the beam and the bob (a big antenna dish)
+# resting in its cradle; the generator shed beside it, the survey bolt buried in the grass. A zipline runs from the high
+# west end to the low east end, where a hatch drops down the keel shaft to the island's underside - the keel, the
+# field's lowest point. A Raft store at the low end. Quest "The Keel" (11 steps): the top, the hall rules, the buried
+# survey bolt, the pendulum frame (it takes the bolt and the generator starts), the four power blueprints, the
+# zipline, the shaft warning and the keel (the plan's done-when, zone keel; a camera looks up from under the island).
+#
+# Built by the recipe player (CIRecipe pendulum_isle) through the editor's own operations. Points (metres over the
+# island's own water line; in the world it all floats 12 m higher): the island stretched 2.5 times along x; its top at
+# 5 m (x -22..22), the high west end at 6 m round -24 0, the low east end at 3.5 m round 22 0; the pendulum frame round
+# 0 0; the generator shed x 6..9, z 4..7; the keel zone at 0 18, at the water line beside the south coast.
+include lib_huts
+include lib_features
+include lib_gravity
+include lib_areas
+include lib_highwater
+# RESIZE 10-25 (box agent, older-storyline deep pass): Radius 22 -> 40, Stretch 2.5 -> 2.2: 88 m long, 40 wide; the
+# pendulum hall, shed, zipline and keel shaft stay in the middle; the keel zone moved out past the new south coast.
+# DEEP 10-25: Bob Hill at the west end with Halvard's sighting tower on it (his log on the summit), the old weather
+# station in ruins on the north side (Dr. Anja Roos's note), the night watchman's hole in the east, the survey plane in
+# the south. Voices: Halvard, Anja Roos, the watchman Per Ek, the survey pilot.
+# OLDER4 10-26 (one-hour pass): Radius 40 -> 75, Stretch 2.2 -> 1.3: about 170 m long and 130 wide, Raft-sized. The
+# hall, shed, zipline, shaft and the 10-25 places keep their spots; new land north and south: the Iron Ridge on the
+# north side (12 m, the lodestone the compasses point at; the Institute's lodestone survey on top), Needle Knoll in the
+# south-west (16 m, a trail up), the compass garden in the south-east (four lamps; all lit show the garden's box), and
+# the survey pilot's five lost photographs about the island (a set; all five show his film case by the plane). Quest
+# 15 -> 18 steps: the Iron Ridge, its survey note and Needle Knoll's top before the zipline. The keel zone moved out
+# past the new south coast (0 -76).
+include lib_lastpost
+include lib_caves
+# o4_dune: a dune or low hill along x1 z1 - x2 z2, h m over the sea at its crest: three rings of flatten (the outer one
+# no lower than the plain it stands on), lightly smoothed into one slope, painted by slope, the generator's plants cleared
+macro o4_dune x1=0 z1=0 x2=10 z2=0 h=8 r=4
+brush flatten from $x1 $z1 to $x2 $z2 r={$r*2.4} s=20 frames=700 h={$h*0.4}
+brush flatten from $x1 $z1 to $x2 $z2 r={$r*1.5} s=20 frames=700 h={$h*0.75}
+brush flatten from $x1 $z1 to $x2 $z2 r={$r*0.7} s=20 frames=600 h={$h+1.5}
+brush smooth from $x1 $z1 to $x2 $z2 r={$r*2.8} s=5 frames=40
+brush auto from $x1 $z1 to $x2 $z2 r={$r*2.8} s=10 frames=25
+clear from $x1 $z1 to $x2 $z2 r={$r*2.6}
+end
+new
+gen Trees=0.08 Bushes=0.3 Rocks=0.3 Harvest=0.3 BeachThings=0
+gen Seed=9601 Radius=75 Height=8 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.5 Cliffs=0.3 PeakShape=0.5
+gen Stretch=1.3 StretchAngle=0
+gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
+generate
+elevation 12
+
+# --- Terrain: the top at 5 m, the high west end, the low east end ---------------------------------------------------
+brush flatten from -18 0 to 18 0 r=7 s=20 frames=200 h=5
+brush flatten at -25 0 r=5 s=20 frames=80 h=6
+brush flatten at 23 0 r=6 s=20 frames=80 h=3.5
+brush grass from -20 0 to 20 0 r=6 s=20 frames=20
+origin
+clear at 0 0 r=5
+clear at 7.5 4 r=3
+clear at -24 0 r=3
+clear at 22 0 r=6
+# --- DEEP 10-25 terrain: Bob Hill (west end, summit 28 m, base r 24) and its trail, the weather station's pad (north),
+# the watchman's hole (east), the survey plane's pad (south) ----------------------------------------------------------
+call hw_mount x=-58 z=0 b=24 h=28
+call hw_trail x=-58 z=0 b=24 h=28 a0=90 turn=300 n=36 h0=6
+brush flatten at -25 26 r=11 s=20 frames=500 h=5
+call ar_ruin x=-25 z=26 h=5 yaw=0 w=3 d=2 al=weatherstation
+# (cave at x 48 on a 6 m pad, not 62 on 4: the bear rock reaches 5.5 m under its pad and 15 m east of x; out at the
+# east rim the flying underside is too thin to hide it - it hung below the island as a light slab)
+call ar_cave x=48 z=6 h=6 yaw=180 al=watchrock chest=watchchest
+call ar_plane x=20 z=-28 h=5 yaw=200 al=surveyplane crate=planecrate
+# --- OLDER4 10-26 terrain: the Iron Ridge (north, peak 12 m), Needle Knoll (south-west, 16 m) and its trail, the compass
+# garden's pad (south-east) --------------------------------------------------------------------------------------------
+call ar_ridge x1=-8 z1=48 x2=30 z2=42 h=4 top=8 r=8
+call hw_mount x=-28 z=-42 b=15 h=16
+call hw_trail x=-28 z=-42 b=15 h=16 a0=30 turn=300 n=26 h0=4
+call lp_pad x=38 z=-40 r=10 h=4
+# OLDER4 10-26 (picture check): low hills on the flat plain - the North Downs (north-west), Bob's Foot (south-west) and
+# the South Dune (south of the shaft)
+call o4_dune x1=-52 z1=48 x2=-46 z2=38 h=9 r=4
+call o4_dune x1=-70 z1=-30 x2=-60 z2=-36 h=8 r=3.5
+call o4_dune x1=-2 z1=-54 x2=12 z2=-46 h=9 r=4
+
+# --- The pendulum frame: four stone posts, a crossbeam of two posts laid on them, the chain hanging from the beam, the
+# bob in its cradle; the frame's lever; the hall rules ----------------------------------------------------------------
+place RT_PillarThick frame at -2.5 -1 ground
+place RT_PillarThick frame at -2.5 1 ground
+place RT_PillarThick frame at 2.5 -1 ground
+place RT_PillarThick frame at 2.5 1 ground
+place RT_Pillar beam at 0 -1 ground y=6.1 rot=0,0,90 sy=1.8
+place RT_Pillar beam at 0 1 ground y=6.1 rot=0,0,90 sy=1.8
+place RT_Pillar chain at 0 -0.2 ground y=2.6 sy=1.17
+place RT_Pillar chain at 0 0.2 ground y=2.6 sy=1.17
+place "Box Big" cradle at 0 0 ground sit
+place Antenna_dish bob at 0 0 ground y=1.1 rot=-90,0,0 scale=3
+prop frame tint.color=#8a8577
+prop frame tint.amount=0.6
+prop beam tint.color=#4a4642
+prop beam tint.amount=0.6
+prop chain tint.color=#4a4642
+prop chain tint.amount=0.6
+prop bob tint.color=#9a7a3a
+prop bob tint.amount=0.5
+place RT_Pillar - at 4 -3 ground sy=0.4
+place TP_LaserControlPanel_lever framelever at 4 -3 ground y=1.25 scale=3 yaw=180
+place Note_Sign hallrules at -4 -4 ground sit yaw=180
+place Zone_Trigger topzone at -6 0 ground
+
+# --- The generator shed (roof on its corner posts), the generator room's chest; the buried survey bolt -----------
+push at 6 2.5 h=5
+call hut w=2 d=2 y=0.1
+place Loot_Chest genroom at 2.2 2.4 y=0.1 sit yaw=180
+place "VG_DecorationPrefabBase_EmergencyGenerator Variant" - at 0.9 2.4 y=0.1 sit yaw=90
+pop
+call treasure x=-12 z=0 r=6 n=1 seed=9611
+
+# --- The zipline from the high west end to the low east end; the store, the keel shaft and its warning ------------
+# (a fixed height: on "ground" Raft's piece sank its near floor (5.72 m west, 0.97 m north of the pivot, 1.35 m under it)
+# 23 m into the island - now it stands on the high west end's flat top, 6.0)
+place ZiplinePath_Landmark zipdown at -20.28 -0.97 h=7.35
+zipto zipdown 21 1
+place Zone_Trigger lowzone at 22 0 ground
+store pendshop at 20 -3 ground
+place Note_Sign shaftwarning at 24.5 2.5 ground sit yaw=270
+place TangaroaHatchRoom_Hatch shaft at 25 0 ground sit yaw=90
+# (the keel zone hangs in the open air beyond the south coast at the water line: under it a flying island leaves out
+# everything below its own sea level, so it cannot sit under the island; OLDER4 10-26: 0 46 -> 0 -76, past the new coast)
+place Zone_Trigger keelzone at 0 -76 h=0
+place Placeable_Lantern_Metal - at 22 3.5 ground y=0.05 sit
+
+# --- Things to gather ------------------------------------------------------------------------------------------------
+scatter "Pickup_Landmark_PineappleLandmark" 2 at -14 2 r=4 seed=9612 free=2
+call dirt x=12 z=-2 r=4 n=2 seed=9613
+
+# --- DEEP 10-25: Bob Hill and Halvard's sighting tower; the trail's foot and the summit as zones ------------------------
+call hw_zone x=-33 z=0 al=bobfootz id=bobfoot r=5 msg="Bob Hill. A path winds round it to a tower - the Institute's sighting tower."
+call hw_zone x=-58 z=0 al=bobtopz id=bobtop r=8 h=1 msg="The top of Bob Hill, 40 m over the sea. From here the pendulum's frame looks like a toy."
+call hw_mast x=-58 z=0 h0=28 lv=4 a=sighttower chest=sightbox top=Placeable_Lantern_Metal
+place Note_Paper halvardlog at -62 -3.5 h=28.1 drop yaw=10
+scatter "Pickup_Landmark_Tree_Palm 3" 3 at -58 0 r=26 seed=9621 free=3
+scatter Bamboo_1 4 at -58 0 r=26 seed=9622 free=2
+scatter Bush 8 at -56 0 r=20 seed=9623 free=1
+scatter Bush2 5 at -56 0 r=20 seed=9624 free=1
+loot sightbox OxygenBottle*1;Rope*2;CopperOre*2;Battery*1
+prop sightbox loot.refill=0
+note sightbox Sighting tower deck box | Halvard's box on the sighting tower: a battery for his lamp, rope, copper - and a diving bottle, 'for the root'.
+call treasure x=-52 z=6 r=4 n=1 seed=9625 kind=0
+prop treasure9625 treasure.loot=MetalOre*3;CopperOre*2
+# --- The weather station (north): Anja's note on the table ------------------------------------------------------------
+call hw_zone x=-25 z=26 al=weatherz id=weatherstation r=6 msg="The old weather station. Its instruments are gone - only the table and a pinned note."
+place Note_Paper anjanote at -25.75 26 h=6.05 drop yaw=0
+# --- The watchman's hole (east): Per's note and box -------------------------------------------------------------------
+call hw_zone x=48 z=1 al=watchz id=watchhole r=4 msg="A hole in the rock at the low end. A blanket, a lamp, a pot - the night watchman's."
+# (RA4 11-02, REACH: h 6.45 was at or under the hole's floor (6.2-6.8) - no spot; now dropped onto it from above)
+place Note_Paper pernote at 46.5 0.5 h=7.3 drop yaw=200
+loot watchchest Rope*2;Plank*3;Battery*1;CopperOre*1
+prop watchchest loot.refill=0
+note watchchest Watchman's box | Per's box: rope, planks and a battery 'borrowed' from the generator shed.
+call treasure x=30 z=-18 r=6 n=1 seed=9626 kind=0
+prop treasure9626 treasure.loot=Scrap*3;Bolt*2;Hinge*1
+# --- The survey plane (south): a secret -------------------------------------------------------------------------------
+loot planecrate Battery*1;Plastic*4;Rope*2;Nail*6
+prop planecrate loot.refill=0
+note planecrate Survey plane's crate | The survey plane's crate: plastic, rope and a camera with no film.
+place Note_Paper planenote at 14 -34 ground drop yaw=200
+place Creature_Llama llamas at -30 -14 ground
+prop llamas creature.count=2
+# --- OLDER4 10-26: the Iron Ridge (north) - its top as a zone, the Institute's lodestone survey on it ------------------
+call hw_zone x=11 z=45 al=ironz id=ironridge r=7 h=1 msg="The Iron Ridge. Black rock, heavy as iron - every compass on the island points here."
+place Note_Paper lodenote at 12 44 ground drop yaw=30
+call ar_plants_hill x=11 z=45 r=26 seed=9631
+# --- Needle Knoll (south-west): its foot and top as zones, a survey marker light on top ---------------------------------
+call hw_zone x=-15 z=-32 al=needlefootz id=needlefoot r=5 h=1 msg="Needle Knoll. A cut path winds up it - the survey team's."
+call hw_zone x=-28 z=-42 al=needletopz id=needletop r=7 h=1 msg="The top of Needle Knoll. The island's whole length below you, and the pendulum's frame in the middle."
+place Placeable_Lantern_Metal - at -30 -40 ground y=0.05 sit
+call ar_plants_hill x=-28 z=-42 r=18 seed=9641
+call ar_plants_hill x=-49 z=43 r=10 seed=9661
+call ar_plants_hill x=5 z=-50 r=10 seed=9662
+# --- The compass garden (south-east): four lamps on posts round a stone box; each lit lights the next ------------------
+call hw_zone x=38 z=-40 al=gardenz id=compassgarden r=7 h=1 msg="A ring of four lamp posts round a stone box - the Institute's compass garden."
+call lp_lamp x=38 z=-34 al=pi_lamp1 nm="Compass lamp north" grp="Compass lamps" on=0
+call lp_lamp x=44 z=-40 al=pi_lamp2 nm="Compass lamp east" grp="Compass lamps" on=0
+call lp_lamp x=38 z=-46 al=pi_lamp3 nm="Compass lamp south" grp="Compass lamps" on=0
+call lp_lamp x=32 z=-40 al=pi_lamp4 nm="Compass lamp west" grp="Compass lamps" on=0
+prop pi_lamp1 on.use=light|Compass lamp east|toggle
+prop pi_lamp2 on.use=light|Compass lamp south|toggle
+prop pi_lamp3 on.use=light|Compass lamp west|toggle
+prop pi_lamp4 on.use=light|Compass lamp north|toggle
+prop pi_lamp1 on.alllit=show|pi_lampchest\nmessage||All four compass lamps burn. In the middle of the ring the stone box's lid slides aside.
+call lp_hidden x=38 z=-40 al=pi_lampchest kind=Loot_Chest
+note pi_lampchest Compass garden box | The compass garden's box: the Institute's spare compasses, every needle pointing at the Iron Ridge - and copper and glass for their cases.
+loot pi_lampchest CopperIngot*2;Glass*3;MetalIngot*2;Battery*1
+scatter Bush 4 at 38 -40 r=14 seed=9651 free=2
+scatter "Pickup_Landmark_Tree_Palm 4" 2 at 38 -40 r=14 seed=9652 free=4
+# --- The survey pilot's five lost photographs (a set): all five show his film case by the plane -----------------------
+call lp_piece x=24 z=46 al=pi_photo1 set="Survey photographs"
+call lp_piece x=-26 z=-38 al=pi_photo2 set="Survey photographs"
+call lp_piece x=54 z=-14 al=pi_photo3 set="Survey photographs"
+call lp_piece x=-42 z=14 al=pi_photo4 set="Survey photographs"
+call lp_piece x=8 z=30 al=pi_photo5 set="Survey photographs"
+prop pi_photo1 on.set=show|pi_setchest\nmessage||Five photographs of the Gravity Sea from 300 m - laid side by side, every island points at one spot. By the survey plane, the pilot's film case has turned up.
+call lp_hidden x=26 z=-34 al=pi_setchest kind=Loot_Chest
+note pi_setchest Pilot's film case | J. Moe's film case: the last roll, developed, and his kit. "If you found my prints, you have walked the whole island. Good. Now go and look underneath it."
+loot pi_setchest Plastic*4;CopperIngot*2;Rope*2;Battery*1
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Pendulum Isle
+info author=Custom Islands
+info description=A broad island, 170 m from end to end, hovering only 12 m over the water - sail under it. Bob Hill and Halvard's sighting tower at the high end, the lodestone Iron Ridge, Needle Knoll with a compass garden, an old weather station, the night watchman's hole and a survey plane. On top the Institute's pendulum hall and generator shed, a zipline from end to end, and a shaft down to the island's keel. A Raft store at the low end. The sixth island of The Gravity Sea.
+island on.arrive=message||An island hanging 12 m over the water - low enough to sail under. Something swings slowly on top of it.
+
+story surveybolt|Survey bolt|Bolt|A brass survey bolt dug from the pendulum island's grass, stamped HALVARD - KEEL REF.
+story power|Pendulum power on|Battery|You set the survey bolt in the pendulum frame: the generator woke.
+
+note hallrules Pendulum hall rules | PENDULUM HALL - RULES\n\n1. The pendulum measures the field. Do not touch the bob.\n2. The frame's reference bolt is LOST (Lift Day). A spare was buried as a marker near the hall - find it with a detector.\n3. With the bolt in the frame, the generator runs.\n4. The keel shaft is at the low end. Staff only.
+note shaftwarning Keel shaft warning | KEEL SHAFT - WARNING\n\nThe shaft goes through the island to the KEEL, its underside, 12 m over the water. There is nothing below the keel but sea.\nHalvard measures the field from here. So should you.
+note halvardlog Halvard's sighting log | SIGHTING LOG - E. HALVARD\n\nFrom the tower: the quay's cut hill, the orchard's plate, the market. All of them where the field put them, all of them still. Only the pendulum below me moves.\n\nThe bob swings north-south now, never east-west. The field is not round any more. It has a direction: down, to the KEEL of this island, and through it to the seabed, to a well I have never seen.\n\nAnja thinks the Array's crown can be shut down from the root. I think the root is where the crown gets its strength from - and the only way to stop the crown is to stand on it.\n\nWe are both going to find out. I will leave this lamp lit, so whoever comes next sees the tower from the sea.
+note anjanote Dr. Anja Roos's note | Ernst -\n\nI have moved what is left of the weather station into the shed. The barometer reads the same on every island, whatever the height. Air does not care how high we are. Only iron does.\n\nThe spare bolt is buried near the hall, as you ordered. I marked it with nothing - you said a detector would find it, and a fool would not.\n\nI am going down to the seabed with Marn's last bottle. If the pump hall still runs, the root can be reached. Do not follow me up your tower. Follow me down.\n\n- Anja
+note pernote Night watchman Per Ek's note | NIGHT WATCH - P. EK\n\nNight 1: the bob swung by itself at 2 in the morning. Nobody touched it. I wrote it down, as I was told.\nNight 3: the bob swings every night at 2. Halvard says 'tidal'. There is no tide 12 m up.\nNight 7: moved my bed out here, to the far end. I can hear it from here anyway. Tick. Tock.\nNight 9: the survey plane's pilot is staying in the compass garden. He says the compass in his plane points at the shaft hatch. I have nailed the hatch shut. Halvard has un-nailed it.
+note lodenote Lodestone survey | INSTITUTE LODESTONE SURVEY - RIDGE NORTH\n\nThe ridge is lodestone through and through. Every compass on the island points at it - but the field does not stop here. Read downwards: the pull runs from the ridge, under the hall, to the KEEL.\n\nThe pendulum swings north-south because of this ridge. What it measures is underneath us.\n\nNext: survey the island from Needle Knoll, then go down the keel shaft.\n- Survey team 3
+note planenote Survey pilot's note | Photographed the whole Gravity Sea from 300 m. Every island is pointing at the same spot on the seabed, like iron filings round a magnet. The camera jammed on the last frame. Leaving the plane here: the engine will not start while the pendulum swings. - J. Moe, Institute survey flight
+note genroom Generator room | The generator room's chest: the power plans of the Institute - a wind turbine, an advanced battery, an advanced head light and an electric grill.
+loot genroom Blueprint_WindTurbine*1;Blueprint_BatteryAdvanced*1;Blueprint_HeadLight_Advanced*1;Blueprint_ElectricGrill*1;Battery*1
+prop genroom loot.refill=0
+prop genroom if.open=signal|power
+prop genroom else.open=message||The generator room is dark and its chest bolted. The pendulum frame wants its survey bolt.
+prop treasure9611 treasure.loot=story:surveybolt*1;Scrap*2
+
+prop framelever obj.name=framelever
+prop framelever beh.use=Set the survey bolt in the pendulum frame
+prop framelever if.use=quest|7\ntake|story:surveybolt|1
+prop framelever on.use=signal||power\ngive||story:power*1\nmessage||The bolt clicks into the frame. The bob swings - and in the shed the generator coughs and runs.\nsound||event:/exploring/obstacles/keypad/keypad_correct
+prop framelever else.use=message||The frame's reference socket is empty. The hall rules say where the spare bolt was buried.
+prop bob obj.name=bob
+prop shaft obj.name=shaft
+prop shaft beh.use=Climb down the keel shaft
+prop shaft on.use=message||You climb down and down through the rock - and out under the island, into open air.\nteleport|keelzone
+prop keelzone obj.name=keelzone
+prop keelzone zone.id=keel
+prop keelzone zone.radius=4
+prop keelzone zone.repeat=never
+prop keelzone zone.message=The keel: the underside of the island, and the sea 12 m below your feet.
+prop keelzone on.enter=camera|keelzone|bob|5|30
+
+prop topzone zone.id=top
+prop topzone zone.radius=8
+prop topzone zone.message=The top of Pendulum Isle. The pendulum hangs still in its frame.
+prop lowzone zone.id=low_end
+prop lowzone zone.radius=4
+prop lowzone zone.message=The low end. A hatch in the rock, and a warning sign.
+
+quest title=The Keel
+quest intro=An island hanging 12 m over the water. Sail under it and get onto its top; the tall sighting tower on Bob Hill marks it.
+step reach|top|1|Climb onto the top of the island; the tall sighting tower on Bob Hill marks it
+step read|Pendulum hall rules|1|Read the pendulum hall's rules
+step read|Dr. Anja Roos's note|1|Find the old weather station past the pendulum hall and read Anja's note
+step reach|bobfoot|1|Find the path up Bob Hill, the hill with the sighting tower
+step reach|bobtop|1|Climb Bob Hill
+step read|Halvard's sighting log|1|Read Halvard's sighting log by his tower
+step collect|story:surveybolt|1|Dig up the buried survey bolt near the pendulum hall (metal detector and shovel)
+step collect|story:power|1|Set the survey bolt in the pendulum frame
+step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the generator room
+step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from the generator room
+step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced head light plans from the generator room
+step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the generator room
+step reach|ironridge|1|Walk out to the Iron Ridge, the dark ridge where every compass points
+step read|Lodestone survey|1|Read the Institute's lodestone survey on the ridge
+step reach|needletop|1|Climb Needle Knoll, the hill by the compass garden, and look the island over
+step reach|low_end|1|Take the zipline to the low end
+step read|Keel shaft warning|1|Read the keel shaft's warning
+step reach|keel|1|Climb down the shaft to the keel
+quest done=From the keel the field pulls straight down - to a well on the seabed. The Receiver hears a pump hall on band 900.
+quest reward=Battery*2;CopperIngot*2
+
+# Buried treasure (the story line's middle): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=14 n=1 seed=8830
+prop treasure8830 treasure.loot=TitaniumOre*3
+
+# --- 11-11 (w06): the bob-cutters' drift - optional (plan 06 row: ST through the rock base; dirt 2, mushrooms 2). No
+# quest step needs it. The iron for the pendulum's bob was cut out of Bob Hill's foot: the cutters drove a short
+# drift into the hill's south-east flank, below the trail's first turn, and opened a working room at its end where
+# they left their wedges. A dug cave (11-12: the kit_st cut along the foot showed a square slab face at both ends and
+# a see-through shell; the plan allows a dig where a kit looks poor): mouth at -49.4 -23.5 (r 25 from the hill's
+# middle -58 0), the drift 9 m in towards the middle, the room to -53.5 -12.3 (r 13, under 18 m of hill). The trail's
+# pad over the drift (-50.8 -19.7, h about 11) stays 3 m over its roof. The mouth is in the hill's foot step, from the sand
+# at -49.4 -23.5 (r 25), 1.4 m out from the step's foot, rising 8 degrees (the way Stalker's Hollow's knoll caves start):
+# dug from the step's top (8) the drift ran as an open trench through the lower terrace (11-12 run b1); a smoothed
+# ramp to a sunk mouth (b3) and a level start on the sand (b5: a level stroke on flat ground sinks for cover) each left
+# a step the walk could not climb. The box sits to the room's side, off the drift's line (b3: it blocked the cave check's way). No rats.
+# cavecheck: away from the bob-foot zone and the walks.
+origin
+clear at -49.8 -22.4 r=4 only=(?i)boulder|rock|tree|bush|bamboo
+# (11-12: a sloped stroke from the sand cut no ground at all at the foot - 0 cells, the face stood in the way; the mouth
+# stroke is level, as at Rootcellar, and the climb is a branch from inside it)
+# (the face is near sheer here: no ground point fell inside the drift, so no ground was cut; a shelf half way up the drift
+# into the foot gives the cut its ground)
+brush flatten at -49.75 -21.9 r=1.2 s=20 frames=150 h=4.2
+dig -49.3,-24.4 -49.9,-20.6 r=1.75 slope=0 as=pibob
+dig -49.9,-20.6 -52.5,-15 r=1.75 slope=22 as=pibob
+dig -52.5,-15 -53.5,-12.3 r=2.5 slope=0 as=pibob
+caveloot pibob dirt=2 mush=2 stone=0 vines=0 titanium=0
+prop pibob cave.rock=plain
+# cavecheck inside pibobbox
+place Loot_ChestSmall pibobbox at -54.3 -14.3 h=6.5 drop yaw=160
+prop pibobbox obj.name=pibobbox
+prop pibobbox loot.refill=0
+note pibobbox Bob-cutters' box | The cutters' box, left in the cut when the bob was hoisted: wedges, a worn hammer head, and the offcuts of the lodestone iron. Scratched inside the lid: 412 KG - SHE SWINGS.
+loot pibobbox MetalOre*2;Bolt*2;Nail*6;Rope*1
+
+save Pendulum Isle

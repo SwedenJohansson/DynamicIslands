@@ -18,6 +18,9 @@ namespace DynamicIslands.Editor
 		EditorGameObject target;
 		InputField titleField, textField;
 		Text previewTitle, previewText, countText;
+		/// <summary>The Receiver frequency reading it unlocks (QE8): "" = none; its drop list is made again on each Open.</summary>
+		string freq = "";
+		RectTransform freqHolder;
 
 		public static void Create(Transform canvas)
 		{
@@ -39,6 +42,8 @@ namespace DynamicIslands.Editor
 			instance.transform.SetAsLastSibling();
 			instance.titleField.text = ObjectProps.Get(target.Props, ObjectProps.NoteTitle, "");
 			instance.textField.text = ObjectProps.Get(target.Props, ObjectProps.NoteText, "");
+			instance.freq = ReceiverUnlock.OfNote(target.Props);
+			instance.MakeFreqList();
 			instance.UpdatePreview();
 			instance.textField.ActivateInputField();
 		}
@@ -52,29 +57,61 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Writes a note's title and text as one undo step (the tests use this too).</summary>
-		public static void Apply(EditorGameObject target, string title, string text)
+		/// <param name="frequency">the story island reading it unlocks ("" = none, null = left as it is)</param>
+		public static void Apply(EditorGameObject target, string title, string text, string frequency = null)
 		{
 			if (target == null) return;
 			Dictionary<string, string> p = ObjectProps.With(target.Props, ObjectProps.NoteTitle, title ?? "");
 			p = ObjectProps.With(p, ObjectProps.NoteText, text ?? "");
+			if (frequency != null && frequency != ReceiverUnlock.OfNote(target.Props)) p = ReceiverUnlock.WithNoteFrequency(p, frequency);
+			string old = ObjectProps.Get(target.Props, ObjectProps.NoteTitle, "");
 			PropsCommand.Change(target, p);
+			EditorRenames.NoteTitle(target, old, title); // (player 10-30: the quest's steps follow a new title)
 		}
 
 		void Save()
 		{
-			if (target != null) Apply(target, titleField.text.Trim(), textField.text.TrimEnd());
+			// (before saving: a rename's "quest steps updated" message then shows instead)
 			DynamicIslands.Notify("Note saved: \"" + titleField.text.Trim() + "\" (Ctrl+Z undoes)");
+			if (target != null) Apply(target, titleField.text.Trim(), textField.text.TrimEnd(), freq);
 			Close();
+		}
+
+		/// <summary>The title or text differs from the note's (Esc asks before it closes).</summary>
+		public static bool Unsaved
+		{
+			get
+			{
+				EditorGameObject t = instance != null ? instance.target : null;
+				if (t == null || !IsOpen) return false;
+				return instance.titleField.text.Trim() != ObjectProps.Get(t.Props, ObjectProps.NoteTitle, "").Trim()
+					|| instance.textField.text.TrimEnd() != ObjectProps.Get(t.Props, ObjectProps.NoteText, "").TrimEnd()
+					|| instance.freq != ReceiverUnlock.OfNote(t.Props);
+			}
 		}
 
 		void Update()
 		{
 			EditorInput.IsTyping = titleField.isFocused || textField.isFocused;
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) { if (Unsaved) EscKey.AskUnsaved("The note", Save, Close); else Close(); }
 			else if (EditorInput.Ctrl && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.S))) Save();
 		}
 
 		void OnDisable() { EditorInput.IsTyping = false; }
+
+		/// <summary>The "Reading it unlocks" list, for this note's frequency.</summary>
+		void MakeFreqList()
+		{
+			if (freqHolder == null) return;
+			foreach (Transform c in freqHolder) Destroy(c.gameObject);
+			ChunkPointType t = StoryOrder.Parse(freq);
+			freq = t != ChunkPointType.None ? StoryOrder.Key(t) : "";
+			DropList.Make(freqHolder, "Drop_NoteFrequency", ReceiverUnlock.Options("no frequency"), freq, v => { freq = v; MakeFreqList(); }, 150,
+				"Reading the note (the first time) gives every player the Receiver's frequency of this story island, as Raft's own note for it does", 30f, 12);
+		}
+
+		/// <summary>Tests: the frequency chosen in the open editor.</summary>
+		internal static string Frequency { get { return instance != null ? instance.freq : ""; } set { if (instance != null) { instance.freq = value ?? ""; instance.MakeFreqList(); } } }
 
 		void UpdatePreview()
 		{
@@ -112,21 +149,24 @@ namespace DynamicIslands.Editor
 			// Right: how it looks
 			RectTransform look = UIKit.Group(columns, "Preview");
 			UIKit.Size(look.gameObject, 410, 470);
-			RectTransform sheet = UIKit.Rect("Sheet", look);
-			UIKit.Size(sheet.gameObject, -1, 430);
-			UIKit.Background(sheet.gameObject, new Color(0.94f, 0.9f, 0.8f, 1f), 6);
-			UIKit.Border(sheet, new Color(0.55f, 0.45f, 0.3f, 1f), 6, 2f);
-			UIKit.Vertical(sheet.gameObject, 8f, new RectOffset(20, 20, 16, 16));
-			Color ink = new Color(0.2f, 0.15f, 0.1f, 1f);
-			previewTitle = UIKit.Label(sheet, "", 20, ink, TextAnchor.MiddleCenter, FontStyle.Bold, "Title");
+			// (as the note reader shows it: the title in Raft's lettering over the text on Raft's light tan)
+			previewTitle = UIKit.Label(look, "", 20, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 			UIKit.Size(previewTitle.gameObject, -1, 30);
-			previewText = UIKit.Label(sheet, "", 14, ink, TextAnchor.UpperLeft, FontStyle.Normal, "Text");
+			RectTransform sheet = UIKit.Rect("Sheet", look);
+			UIKit.Size(sheet.gameObject, -1, 396);
+			UIKit.ParchmentSheet(sheet);
+			UIKit.Vertical(sheet.gameObject, 8f, new RectOffset(20, 20, 16, 16));
+			previewText = UIKit.Label(sheet, "", 14, UIKit.ParchmentInk, TextAnchor.UpperLeft, FontStyle.Normal, "Text");
+			{ Shadow sh = previewText.GetComponent<Shadow>(); if (sh != null) UnityEngine.Object.Destroy(sh); }
 			previewText.supportRichText = false;
 			previewText.verticalOverflow = VerticalWrapMode.Truncate;
 			UIKit.Size(previewText.gameObject, -1, -1).flexibleHeight = 1f;
 
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
 			UIKit.Label(buttons, "Ctrl+Enter saves \u00B7 Esc cancels", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
+			UIKit.Label(buttons, "Reading it unlocks", 12, UIKit.TextMuted, TextAnchor.MiddleRight);
+			freqHolder = UIKit.Row(buttons, 30f, 0f, "Frequency");
+			UIKit.Size(freqHolder.gameObject, 150, 30);
 			Button save = UIKit.Button(buttons, "Save", Save, "Keep the note (Ctrl+Z undoes)", 110, 34);
 			UIKit.Primary(save);
 			UIKit.Button(buttons, "Cancel", Close, "Close without changing the note", 110, 34);

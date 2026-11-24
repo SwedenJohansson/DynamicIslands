@@ -53,8 +53,26 @@ namespace DynamicIslands.Editor
 		{
 			if (!WorldOptions.On(WorldOptions.PrivateStorage)) return true;
 			ulong b = BuilderOf(objectIndex);
-			return b == 0UL || b == player;
+			if (b == 0UL || b == player) return true;
+			// (ROADMAP T9: the host may open the storage of a builder who isn't in the game - it was locked for everyone for
+			// good when its builder never came back)
+			return player == HostId() && !InGame(b);
 		}
+
+		/// <summary>The game's host (its Steam id; 0 unknown).</summary>
+		static ulong HostId()
+		{
+			try
+			{
+				Raft_Network network = ComponentManager<Raft_Network>.Value;
+				if (Raft_Network.IsHost) { Network_Player local = RAPI.GetLocalPlayer(); return local != null ? local.steamID.Id : 0UL; }
+				return network != null ? network.HostID.Id : 0UL;
+			}
+			catch { return 0UL; }
+		}
+
+		/// <summary>Whether a player is in the game now.</summary>
+		static bool InGame(ulong id) { return UnityEngine.Object.FindObjectsOfType<Network_Player>().Any(p => p != null && p.steamID.Id == id); }
 
 		#region The world file and the network
 
@@ -67,7 +85,32 @@ namespace DynamicIslands.Editor
 
 		internal static IEnumerable<string> WriteLines()
 		{
+			Prune();
 			if (builders.Count > 0) yield return "@storages=" + Encode();
+		}
+
+		/// <summary>
+		/// Host, while Raft saves the world: forgets the builders of storages that are gone (taken down, sunk with their
+		/// foundation) - the list only grew before (AU41). Careful not to forget a storage that is there: only in Raft's own
+		/// save (the world is loaded then, never part way through loading), with the game scene and the raft there and at
+		/// least one block on it, and a storage counts as there if any object of the scene has its number (inactive ones too).
+		/// </summary>
+		static void Prune()
+		{
+			if (builders.Count == 0) return;
+			try
+			{
+				if (!Raft_Network.IsHost || !WorldCopy.InRaftSave || !LoadSceneManager.IsGameSceneLoaded || !CustomIslandSpawner.RaftPosition.HasValue) return;
+				if (UnityEngine.Object.FindObjectsOfType<Block>().Length == 0) return; // (the raft's blocks aren't known yet)
+				var there = new HashSet<uint>(Resources.FindObjectsOfTypeAll<Storage_Small>().Where(s => s != null).Select(s => s.ObjectIndex));
+				List<uint> gone = builders.Keys.Where(k => !there.Contains(k)).ToList();
+				if (gone.Count == 0) return;
+				foreach (uint k in gone) builders.Remove(k);
+				Log("Forgot the builders of " + gone.Count + " storage(s) no longer in the world (" + builders.Count + " left)");
+				// (the players' lists came with the options at their join: they forget the same ones now)
+				WorldOptions.Broadcast();
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [storage] Looking for storages that are gone: " + e.Message); }
 		}
 
 		internal static bool HasState { get { return builders.Count > 0; } }
@@ -140,6 +183,30 @@ namespace DynamicIslands.Editor
 				if (!PrivateStorage.Refuses(storage, player)) return true;
 				Debug.Log("[CUSTOM ISLANDS] [storage] Refused: " + PrivateStorage.LastRefusal);
 				__result = false;
+				return false;
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [storage] " + e.Message); return true; }
+		}
+	}
+
+	/// <summary>
+	/// The remover's machine: the hammer takes a storage down (RemovePlaceables.PickupBlock - it gives the cost back and asks
+	/// the host to remove it): not someone else's private one (AU42 - it dropped what was inside for the taker).
+	/// </summary>
+	[HarmonyPatch(typeof(RemovePlaceables), "PickupBlock")]
+	static class PrivateStorageRemove
+	{
+		static bool Prefix(RemovePlaceables __instance, Block block)
+		{
+			try
+			{
+				Storage_Small storage = block as Storage_Small;
+				if (storage == null || !WorldOptions.On(WorldOptions.PrivateStorage)) return true;
+				Network_Player player = Traverse.Create(__instance).Field("playerNetwork").GetValue<Network_Player>();
+				if (!PrivateStorage.Refuses(storage, player)) return true;
+				Debug.Log("[CUSTOM ISLANDS] [storage] Not taken down: " + PrivateStorage.LastRefusal);
+				DisplayTextManager hints = CustomNote.Hints;
+				if (hints != null && player != null && player.IsLocalPlayer) hints.ShowText(PrivateStorage.NameOf(PrivateStorage.BuilderOf(storage.ObjectIndex)) + "'s storage (private): only they can take it down", KeyCode.None, 0, 0, false);
 				return false;
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [storage] " + e.Message); return true; }

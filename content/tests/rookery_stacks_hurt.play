@@ -1,0 +1,10 @@
+# Rookery Stacks hazard test (11-05): glass hoard spikes (4/s, r 4). CIPlay rookery_stacks_hurt, in a test world 'CI ...', CIGapsSuit off (no suit: the zone must hurt).
+island Rookery Stacks keep
+offset 0 0
+hour 11
+weather Calm
+at -25 60
+wait 8
+expect message Broken glass and rusted wire
+# (12 is about half of the expected damage)
+expect hurt 12

@@ -167,7 +167,8 @@ cave	BalboaCave_DeadEnd	2	-7.5	9.27	11.36	1	0	1.367,-4.623,7.786	44.26	21.32
 prop	BalboaCave_Bear	45#Landmark_BalboaIsland	29.561,22.075,31.778	-1.072,0.608,0.102	-10.43	5
 cave	BalboaCave_Bear	2	-4.55	8.58	11.71	1	0	-1.072,-1.6,8.047	33.78	22.9
 prop	BalboaCave_Vines	45#Landmark_BalboaIsland	28.47,31.302,43.234	0.934,-1.706,1.05	-17.357	3
-cave	BalboaCave_Vines	2	-4.24	1.99	4.94	1	0	0.934,-3.584,11.859	45.23	0.69
+# BalboaCave_Vines: open at -axis set by hand (X7) - its doorway there is beside the measuring ray
+cave	BalboaCave_Vines	2	-4.24	1.99	4.94	1	1	0.934,-3.584,11.859	45.23	0.69
 prop	TP_CaveTunnel_SurfaceStaircase	55#Landmark_Temperance#	11.003,13.551,25.608	3.002,6.528,-12.804	-0.248	1
 cave	TP_CaveTunnel_SurfaceStaircase	2	7	4.16	8.48	0	1	3.002,7.537,-19.206	10.89	27.61
 prop	Ravine_Cave	55#Landmark_Temperance#	56.372,29.143,70.001	-0.133,-11.591,2.255	-26.163	19

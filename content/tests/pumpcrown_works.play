@@ -1,0 +1,91 @@
+# Pumpcrown Works (CIPlay pumpcrown_works): the purifier hall's door refusing a stranger, the guards' laundry (the
+# coat), the door, the hall's locker, the tank house, the pipe gallery, the purifier bench, the stores, the outfall
+# (the plan's lowstreet rule); then the contract: the roster, the boom tower, its winch, three screechers, the receipt.
+# offset 0 0 is a placeholder: phase 2 sets it from the recipe's save log (PLAY_FORMAT: Coordinates).
+island Pumpcrown Works
+offset 0 0
+expect step 0
+expect title The Authority's Water
+use hallgate
+expect shown hallgate
+open Laundry basket
+wait 3
+expect story authcoat 1
+expect step 1
+use hallgate
+expect hidden hallgate
+open Purifier hall
+wait 3
+expect step 2
+read Dobbs's complaints
+expect step 3
+read Councillor's memo
+expect step 4
+# STORY 10-24: the climb for Dobbs's stick, the tape, the breaker, the dive to the reversed gauge
+zone pc_trail
+expect step 5
+openat -40.2 -18.9
+zone pc_summit
+expect step 6
+expect stand -37.9 -8.93 h=38
+open Old water tower deck box
+wait 3
+expect story pc_top 1
+# expect step 7 (story:tape is counted early, before its step comes: Fleetbreak and Hookline give tape rolls in the plan)
+open Linesman's locker
+wait 3
+expect story tape 3
+expect step 8
+read Dobbs's warning
+expect step 9
+expect shown pc_shock
+use pc_breaker
+expect hidden pc_shock
+expect story pc_breaker 1
+expect step 10
+zone pc_deep
+expect step 11
+expect stand -63 -44 h=-16
+open Flooded intake chamber strongbox
+wait 3
+expect story pc_deep 1
+expect step 12
+open Tank house locker
+wait 3
+expect step 13
+open Pipe gallery
+wait 3
+expect step 14
+open Purifier bench
+wait 3
+expect step 15
+open Authority stores
+wait 3
+expect step 16
+zone reservoir_bank
+expect step 17
+read Filter house notice
+expect step 18
+open Patrol van's lockbox
+wait 3
+expect step 19
+zone sludge_beds
+expect step 20
+read Complaint No. 300
+expect step 21
+zone outfall
+expect done
+expect step 0 quest=2
+expect title Keep the Boom quest=2
+read Authority duty roster
+expect step 1 quest=2
+zone boom_tower
+expect step 2 quest=2
+use boomwinch
+expect story boomwinch 1
+expect step 3 quest=2
+kill Screecher
+expect animals Screecher 0
+expect step 4 quest=2
+read Authority receipt
+expect done quest=2

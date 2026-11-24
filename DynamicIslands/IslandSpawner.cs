@@ -27,8 +27,15 @@ namespace DynamicIslands.Editor
 		{
 			uint baseIndex = 0x40000000u | ((uint)(islandId & 0x3FFF) << 16);
 			uint n = 0;
-			foreach (PickupItem_Networked pn in root.GetComponentsInChildren<PickupItem_Networked>(true))
+			// (an object this Raft no longer has keeps the numbers of its pickups - PickupGap, R2b)
+			Component[] found = root.GetComponentsInChildren<PickupGap>(true).Length == 0
+				? (Component[])root.GetComponentsInChildren<PickupItem_Networked>(true) : root.GetComponentsInChildren<MonoBehaviour>(true);
+			foreach (Component c in found)
 			{
+				var gap = c as PickupGap;
+				if (gap != null) { n += (uint)gap.Count; continue; }
+				var pn = c as PickupItem_Networked;
+				if (pn == null) continue;
 				pn.ObjectIndex = baseIndex + (++n);
 				// Picked up = disabled rather than destroyed, so the island's objects keep their order and state can be recorded
 				pn.spawnType = ObjectSpawnType.GameObject;
@@ -40,6 +47,11 @@ namespace DynamicIslands.Editor
 		public static void Despawn(GameObject root)
 		{
 			if (root == null) return;
+			BuriedTreasure.OnDespawn(root);
+			// (a claim the host granted for this island's chest or zone and not used yet is forgotten: kept, it let the
+			// thing through without asking when the island came back, long after the host stopped holding it - AU41)
+			IslandWorldState.Entry entry = IslandWorldState.Islands.FirstOrDefault(x => x.Root == root);
+			if (entry != null) Claims.ForgetIsland(entry.Id);
 			try { CreatureSpawner.OnIslandDespawned(root); }
 			catch (System.Exception e) { Debug.LogError("[CUSTOM ISLANDS] Removing the island's creatures: " + e); }
 			foreach (PickupItem_Networked pn in root.GetComponentsInChildren<PickupItem_Networked>(true))
@@ -85,10 +97,9 @@ namespace DynamicIslands.Editor
 			float spacing = data.size.x / cells, height = data.size.y;
 			float water = waterLevel / height;
 
-			// Land samples, and each land sample's distance (in samples) to the nearest non-land sample
+			// Land samples
 			var land = new bool[res, res];
 			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) land[z, x] = h[z, x] > water;
-			int[,] dist = DistanceToEdge(land, res);
 
 			// Holes: keep only cells whose four corners are land
 			var solid = new bool[cells, cells];
@@ -102,11 +113,22 @@ namespace DynamicIslands.Editor
 			if (kept == 0) return;
 			data.SetHoles(0, 0, solid);
 
+			// The rim: every sample on the edge of the kept cells (a corner of a cut-away cell, or on the terrain's border).
+			// It stays on the ground so the underside meets it all round; each other sample's distance (in samples) to the
+			// rim sets how far it hangs. (Measured from the land's edge instead, a sample only diagonally next to the sea
+			// counted as inside and hung down while still on a cut edge: zigzag gaps to the sky along a diagonal coast,
+			// seen from below - Lantern Spire 10-16.)
+			var inside = new bool[res, res];
+			for (int z = 1; z < cells; z++)
+				for (int x = 1; x < cells; x++)
+					inside[z, x] = solid[z - 1, x - 1] && solid[z - 1, x] && solid[z, x - 1] && solid[z, x];
+			int[,] dist = DistanceToEdge(inside, res);
+
 			// Underside: same grid as the kept cells; the rim follows the surface, the inside hangs down like a cone
 			// that is deepest under the middle of the land (never reaching down to the sea)
 			float maxDepth = Mathf.Max(2f, elevation - UndersideClearance);
 			int dMax = 1;
-			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) if (dist[z, x] > dMax) dMax = dist[z, x];
+			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) if (land[z, x] && dist[z, x] > dMax) dMax = dist[z, x];
 			float coneDepth = Mathf.Min(maxDepth, dMax * spacing * 0.9f);
 			var index = new int[res, res];
 			var verts = new List<Vector3>();
@@ -117,7 +139,7 @@ namespace DynamicIslands.Editor
 					index[z, x] = -1;
 					if (!land[z, x]) continue;
 					float surface = h[z, x] * height;
-					int d = dist[z, x] - 1; // 0 on the coastline
+					int d = dist[z, x]; // 0 on the rim
 					float noise = Mathf.PerlinNoise(x * 0.07f, z * 0.07f);
 					// Relative to sea level (terrain y = waterLevel); rounded near the rim, ragged with noise
 					float depth = Mathf.Min(coneDepth * Mathf.Pow(d / (float)dMax, 0.75f) * (0.8f + 0.4f * noise), maxDepth);
@@ -151,6 +173,134 @@ namespace DynamicIslands.Editor
 			go.AddComponent<MeshFilter>().sharedMesh = mesh;
 			go.AddComponent<MeshRenderer>().sharedMaterial = UndersideMaterial(TerrainPainter.StyleOf(terrainTransform.GetComponent<Terrain>()));
 			go.AddComponent<MeshCollider>().sharedMesh = mesh;
+
+			MakeCoast(data, terrainTransform, h, land, solid, waterLevel);
+		}
+
+		/// <summary>
+		/// A flying island's coast: the holes cut whole cells, so the land ended in 2 m steps - a sawtooth seen from the side
+		/// and below (Pendulum Isle 10-27). Each cut cell with land at a corner gets that land back as a thin sheet out to
+		/// where the ground crosses the sea level (marching squares): ground on top, textured as the terrain there, rock
+		/// below, solid to walk on.
+		/// </summary>
+		static void MakeCoast(TerrainData data, Transform terrainTransform, float[,] h, bool[,] land, bool[,] solid, float waterLevel)
+		{
+			int res = data.heightmapResolution, cells = res - 1;
+			float spacing = data.size.x / cells, height = data.size.y, water = waterLevel / height;
+			UnityEngine.TerrainLayer[] layers = data.terrainLayers ?? new UnityEngine.TerrainLayer[0];
+			int aRes = data.alphamapResolution, nLayers = Mathf.Min(layers.Length, data.alphamapLayers);
+			float[,,] alpha = nLayers > 0 ? data.GetAlphamaps(0, 0, aRes, aRes) : null;
+
+			var verts = new List<Vector3>();
+			var normals = new List<Vector3>();
+			var uvs = new List<Vector2>();
+			var topTris = new Dictionary<int, List<int>>(); // per terrain layer (-1: none)
+			var bottomTris = new List<int>();
+			var poly = new List<Vector3>(6);
+			int[] cx = { 0, 1, 1, 0 }, cz = { 0, 0, 1, 1 };
+			for (int z = 0; z < cells; z++)
+				for (int x = 0; x < cells; x++)
+				{
+					if (solid[z, x]) continue;
+					if (!land[z, x] && !land[z, x + 1] && !land[z + 1, x] && !land[z + 1, x + 1]) continue;
+					// The land part of the cell, round its corners (counter-clockwise seen from above)
+					poly.Clear();
+					for (int i = 0; i < 4; i++)
+					{
+						int j = (i + 1) % 4;
+						int xi = x + cx[i], zi = z + cz[i], xj = x + cx[j], zj = z + cz[j];
+						if (land[zi, xi]) poly.Add(new Vector3(xi * spacing, h[zi, xi] * height, zi * spacing));
+						if (land[zi, xi] != land[zj, xj])
+						{
+							float f = Mathf.Clamp((water - h[zi, xi]) / (h[zj, xj] - h[zi, xi]), 0.02f, 0.98f);
+							poly.Add(new Vector3(Mathf.Lerp(xi, xj, f) * spacing, waterLevel, Mathf.Lerp(zi, zj, f) * spacing));
+						}
+					}
+					if (poly.Count < 3) continue;
+					// Ground on top: the terrain layer that covers most of the cell
+					int layer = -1;
+					if (alpha != null)
+					{
+						int ax = Mathf.Min(aRes - 1, (int)((x + 0.5f) * aRes / cells)), az = Mathf.Min(aRes - 1, (int)((z + 0.5f) * aRes / cells));
+						float best = 0f;
+						for (int l = 0; l < nLayers; l++) if (alpha[az, ax, l] > best && layers[l] != null) { best = alpha[az, ax, l]; layer = l; }
+					}
+					Vector2 tile = layer >= 0 ? layers[layer].tileSize : new Vector2(12f, 12f), offset = layer >= 0 ? layers[layer].tileOffset : Vector2.zero;
+					if (tile.x <= 0f) tile.x = 12f;
+					if (tile.y <= 0f) tile.y = 12f;
+					List<int> top;
+					if (!topTris.TryGetValue(layer, out top)) topTris[layer] = top = new List<int>();
+					int t0 = verts.Count;
+					foreach (Vector3 p in poly)
+					{
+						verts.Add(p);
+						normals.Add(data.GetInterpolatedNormal(p.x / data.size.x, p.z / data.size.z));
+						uvs.Add(new Vector2((p.x + offset.x) / tile.x, (p.z + offset.y) / tile.y));
+					}
+					int b0 = verts.Count;
+					foreach (Vector3 p in poly)
+					{
+						verts.Add(p);
+						normals.Add(Vector3.down);
+						uvs.Add(new Vector2((p.x + p.y) / 12f, (p.z + p.y) / 12f)); // (as the underside's)
+					}
+					for (int i = 1; i + 1 < poly.Count; i++)
+					{
+						top.Add(t0); top.Add(t0 + i + 1); top.Add(t0 + i);  // (clockwise from above: faces up)
+						bottomTris.Add(b0); bottomTris.Add(b0 + i); bottomTris.Add(b0 + i + 1);
+					}
+				}
+			if (bottomTris.Count == 0) return;
+
+			var mesh = new Mesh { name = "CI_FlyingCoast" };
+			mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+			mesh.SetVertices(verts);
+			mesh.SetNormals(normals);
+			mesh.SetUVs(0, uvs);
+			var keys = topTris.Keys.OrderBy(k => k).ToList();
+			mesh.subMeshCount = keys.Count + 1;
+			var materials = new Material[keys.Count + 1];
+			for (int k = 0; k < keys.Count; k++)
+			{
+				mesh.SetTriangles(topTris[keys[k]], k);
+				materials[k] = CoastMaterial(keys[k] >= 0 ? layers[keys[k]] : null);
+			}
+			mesh.SetTriangles(bottomTris, keys.Count);
+			materials[keys.Count] = UndersideMaterial(TerrainPainter.StyleOf(terrainTransform.GetComponent<Terrain>()));
+			mesh.RecalculateBounds();
+
+			var go = new GameObject("Coast");
+			go.layer = TerrainLayer;
+			go.transform.SetParent(terrainTransform, false);
+			go.AddComponent<MeshFilter>().sharedMesh = mesh;
+			go.AddComponent<MeshRenderer>().sharedMaterials = materials;
+			go.AddComponent<MeshCollider>().sharedMesh = mesh;
+		}
+
+		static readonly Dictionary<UnityEngine.TerrainLayer, Material> coastMaterials = new Dictionary<UnityEngine.TerrainLayer, Material>();
+		static Material coastFallback;
+
+		/// <summary>A flying coast's ground: the terrain layer's own textures (its tiling is in the mesh's UVs).</summary>
+		static Material CoastMaterial(UnityEngine.TerrainLayer layer)
+		{
+			Material m;
+			if (layer != null && coastMaterials.TryGetValue(layer, out m) && m != null) return m;
+			if (layer == null && coastFallback != null) return coastFallback;
+			Shader shader = Shader.Find("Standard") ?? Shader.Find("Legacy Shaders/Diffuse");
+			m = new Material(shader) { name = "CI_FlyingCoast_" + (layer != null ? layer.name : "plain") };
+			if (layer != null && layer.diffuseTexture != null)
+			{
+				m.mainTexture = layer.diffuseTexture;
+				if (layer.normalMapTexture != null && m.HasProperty("_BumpMap"))
+				{
+					m.SetTexture("_BumpMap", layer.normalMapTexture);
+					m.EnableKeyword("_NORMALMAP");
+				}
+			}
+			else m.color = new Color(0.76f, 0.70f, 0.55f);
+			if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.05f);
+			if (layer != null) coastMaterials[layer] = m; else coastFallback = m;
+			return m;
 		}
 
 		/// <summary>Chamfer distance (in samples) from each true cell to the nearest false cell.</summary>
@@ -215,14 +365,32 @@ namespace DynamicIslands.Editor
 		public static IEnumerable<string> ListSavedIslands()
 		{
 			if (!Directory.Exists(DynamicIslands.assetpath)) return Enumerable.Empty<string>();
-			return Directory.GetFiles(DynamicIslands.assetpath, "*" + IslandFile.Extension)
-				.Select(Path.GetFileNameWithoutExtension)
-				.OrderBy(n => n);
+			// (kept until the folder changes, and 30 s at most: a scan with 1,600 islands took 60 ms - each random island's
+			// pick did several - US1)
+			lock (savedLock)
+			{
+				System.DateTime changed = Directory.GetLastWriteTimeUtc(DynamicIslands.assetpath);
+				if (savedNames == null || changed != savedChanged || System.Environment.TickCount - savedAt > 30000)
+				{
+					savedNames = Directory.GetFiles(DynamicIslands.assetpath, "*" + IslandFile.Extension)
+						.Select(Path.GetFileNameWithoutExtension)
+						.OrderBy(n => n).ToArray();
+					savedChanged = changed;
+					savedAt = System.Environment.TickCount;
+				}
+				return savedNames;
+			}
 		}
 
-		public static TerrainData CreateTerrainData(Vector3 size, int heightmapResolution)
+		static readonly object savedLock = new object();
+		static string[] savedNames;
+		static System.DateTime savedChanged;
+		static int savedAt;
+
+		public static TerrainData CreateTerrainData(Vector3 size, int heightmapResolution, bool grass = false)
 		{
-			var data = new TerrainData();
+			// (a terrain with sea grass starts as a copy of Raft's, which draws the tufts cut out - SeaGrass.NewTerrainData)
+			var data = grass ? SeaGrass.NewTerrainData() : new TerrainData();
 			// Resolution must be set before size (setting resolution rescales size)
 			data.heightmapResolution = heightmapResolution;
 			data.size = size;
@@ -251,28 +419,86 @@ namespace DynamicIslands.Editor
 
 		static readonly HashSet<string> toldMissing = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
 
+		/// <summary>Running numbers while an island's objects are made (creatures, chests, zones and treasure are numbered in
+		/// file order, the same on every machine).</summary>
+		class Counts { public int missing, creature, loot, zone, treasure; }
+
 		public static int SpawnObjects(IslandFile island, Transform parent, bool editable, bool skipUnderwater = false)
 		{
-			int missing = 0, creature = 0, loot = 0, zone = 0;
+			var c = new Counts();
+			for (int index = 0; index < island.Objects.Count; index++) SpawnOne(island, index, parent, editable, skipUnderwater, c);
+			return c.missing;
+		}
+
+		/// <summary>
+		/// SpawnObjects spread over frames (ROADMAP P1: up to 12 000 objects were made in one frame, a long stutter when a big
+		/// island streamed in): as many as fit in budgetMs a frame. The caller keeps the parent inactive meanwhile.
+		/// </summary>
+		public static System.Collections.IEnumerator SpawnObjectsSliced(IslandFile island, Transform parent, bool skipUnderwater, float budgetMs, System.Action<int> done)
+		{
+			var c = new Counts();
+			var clock = System.Diagnostics.Stopwatch.StartNew();
 			for (int index = 0; index < island.Objects.Count; index++)
+			{
+				if (parent == null) yield break; // (removed meanwhile)
+				try { SpawnOne(island, index, parent, false, skipUnderwater, c); }
+				catch (System.Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Object " + index + " of '" + island.Name + "': " + e.Message); }
+				if (clock.Elapsed.TotalMilliseconds > budgetMs) { yield return null; clock.Reset(); clock.Start(); }
+			}
+			done(c.missing);
+		}
+
+		static void SpawnOne(IslandFile island, int index, Transform parent, bool editable, bool skipUnderwater, Counts c)
+		{
+				int missing = 0, creature = c.creature, loot = c.loot, zone = c.zone, treasure = c.treasure;
+				try { SpawnBody(island, index, parent, editable, skipUnderwater, ref missing, ref creature, ref loot, ref zone, ref treasure); }
+				catch
+				{
+					// (an object that failed still takes its number: the later chests, animals, zones and treasure keep theirs,
+					// the same as on the other machines and in the saved state - review 2026-10-06)
+					if (!editable)
+					{
+						IslandObject o = island.Objects[index];
+						if (ContentCatalog.IsCreature(o.Name)) { if (creature == c.creature) creature++; }
+						else if (ContentCatalog.IsZone(o.Name)) { if (o.Name == ContentCatalog.TriggerZone && zone == c.zone) zone++; }
+						else if (ContentCatalog.IsTreasure(o.Name)) { if (treasure == c.treasure) treasure++; }
+						else if (ObjectProps.IsLoot(o.Name, o.Props) && loot == c.loot) loot++;
+					}
+					throw;
+				}
+				finally { c.missing += missing; c.creature = creature; c.loot = loot; c.zone = zone; c.treasure = treasure; }
+		}
+
+		/// <summary>
+		/// Left out of a flying island, which has no sea round it: what lies under its own sea level, and the shore ice laid at
+		/// the waterline (its mesh hangs metres down into the sea: with the land under the waterline cut away its outer edge
+		/// stood 1-5.5 m in the air, CIGroundIslands gen-snowy-701141).
+		/// </summary>
+		static bool UnderFlyingSea(IslandObject o, float waterLevel)
+		{
+			return o.Position.y < waterLevel - 0.5f || (o.Position.y < waterLevel + 2.5f && o.Name.StartsWith("TP_IceShore", System.StringComparison.Ordinal));
+		}
+
+		static void SpawnBody(IslandFile island, int index, Transform parent, bool editable, bool skipUnderwater, ref int missing, ref int creature, ref int loot, ref int zone, ref int treasure)
+		{
 			{
 				IslandObject o = island.Objects[index];
 				// A flying island has no sea around it: what lies under its own sea level (a lagoon's turtles, an underwater
 				// zone) would hang in the air - left out, but still counted, so the numbers of the others stay the same
-				bool underSea = skipUnderwater && o.Position.y < island.WaterLevel - 0.5f;
+				bool underSea = skipUnderwater && UnderFlyingSea(o, island.WaterLevel);
 				// Creatures: in a world only their spawn point exists (the host brings the live animals, CreatureSpawner).
 				// They are numbered in file order, which is the same on every machine.
 				if (!editable && ContentCatalog.IsCreature(o.Name))
 				{
-					if (underSea) { creature++; continue; }
+					if (underSea) { creature++; return; }
 					CreatureSpawnPoint point = CreatureSpawnPoint.Create(parent, o, creature++);
 					if (point != null) Behaviours.Attach(point.gameObject, o.Name, o.Props, index);
-					continue;
+					return;
 				}
 				// Zones are invisible in a world
 				if (!editable && ContentCatalog.IsZone(o.Name))
 				{
-					if (underSea) { if (o.Name == ContentCatalog.TriggerZone) zone++; continue; }
+					if (underSea) { if (o.Name == ContentCatalog.TriggerZone) zone++; return; }
 					GameObject zgo;
 					if (o.Name == ContentCatalog.TriggerZone) zgo = TriggerZone.Create(parent, o, zone++).gameObject;
 					else
@@ -284,22 +510,57 @@ namespace DynamicIslands.Editor
 						else if (o.Name == ContentCatalog.SoundZoneName) zgo.AddComponent<SoundZone>().Configure(o.Props ?? new Dictionary<string, string>());
 					}
 					Behaviours.Attach(zgo, o.Name, o.Props, index);
-					continue;
+					return;
+				}
+				// Camera points (fly-throughs, PF4): only an empty place in a world, found by its path
+				if (!editable && CameraPath.IsPoint(o.Name))
+				{
+					if (underSea) return;
+					var cgo = new GameObject(o.Name);
+					cgo.transform.SetParent(parent, false);
+					cgo.transform.position = parent.position + o.Position;
+					cgo.transform.rotation = Quaternion.Euler(o.EulerRotation);
+					Behaviours.Attach(cgo, o.Name, CameraPath.WorldProps(o.Props), index);
+					return;
+				}
+				// Map markers (island map, PF5): only an empty place in a world, shown on the map
+				if (!editable && Minimap.IsMarker(o.Name))
+				{
+					if (underSea) return;
+					var mgo = new GameObject(o.Name);
+					mgo.transform.SetParent(parent, false);
+					mgo.transform.position = parent.position + o.Position;
+					Behaviours.Attach(mgo, o.Name, o.Props ?? new Dictionary<string, string>(), index);
+					return;
+				}
+				// Buried treasure: Raft's own treasure point, made once the island's state is known (BuriedTreasure.OnIslandReady)
+				if (!editable && ContentCatalog.IsTreasure(o.Name))
+				{
+					if (underSea) { treasure++; return; }
+					var tgo = new GameObject(o.Name);
+					tgo.transform.SetParent(parent, false);
+					tgo.transform.position = parent.position + o.Position;
+					BuriedTreasure bt = tgo.AddComponent<BuriedTreasure>();
+					bt.Number = treasure++;
+					int kind;
+					bt.Kind = int.TryParse(ObjectProps.Get(o.Props, ObjectProps.TreasureKind), out kind) ? kind : 0;
+					bt.Loot = ObjectProps.Loot(o.Props, ObjectProps.TreasureLoot);
+					return;
 				}
 				// Invisible walls and ramps: only their collision in a world
 				if (!editable && ContentCatalog.IsHelper(o.Name))
 				{
-					if (underSea) continue;
+					if (underSea) return;
 					GameObject hgo = ContentCatalog.SpawnHelperSolid(o.Name, parent);
-					if (hgo == null) continue;
+					if (hgo == null) return;
 					hgo.transform.position = parent.position + o.Position;
 					hgo.transform.rotation = Quaternion.Euler(o.EulerRotation);
 					hgo.transform.localScale = o.Scale;
 					Behaviours.Attach(hgo, o.Name, o.Props, index);
-					continue;
+					return;
 				}
 				// A flying island has no sea around it: corals and the like would hang in the air
-				if (skipUnderwater && o.Position.y < island.WaterLevel - 0.5f) continue;
+				if (skipUnderwater && UnderFlyingSea(o, island.WaterLevel)) return;
 				GameObject go = PlaceableCatalog.Spawn(o.Name, parent, !editable); // gameplay scripts only in a world
 				if (go == null)
 				{
@@ -308,36 +569,72 @@ namespace DynamicIslands.Editor
 					// (in the editor a placeholder keeps it, so saving doesn't drop it from the island for good: after a Raft update
 					// renamed or removed an object, a later version may have it again)
 					if (editable) MissingPlaceholder(o, parent);
-					// (in a world a chest still takes its number: the chests after it keep their saved state)
-					else if (ObjectProps.IsLoot(o.Name, o.Props)) loot++;
-					continue;
+					else
+					{
+						// (in a world a chest still takes its number: the chests after it keep their saved state)
+						if (ObjectProps.IsLoot(o.Name, o.Props)) loot++;
+						// (and so do its pickups, when Raft had them: the trees and items after it keep theirs - R2b)
+						int had = StableIds.ShippedPickups(o.Name);
+						if (had > 0)
+						{
+							var gap = new GameObject(o.Name + " (" + MissingTag + ")");
+							gap.transform.SetParent(parent, false);
+							gap.AddComponent<PickupGap>().Count = had;
+						}
+					}
+					return;
 				}
 				go.transform.position = parent.position + o.Position;
 				go.transform.rotation = Quaternion.Euler(o.EulerRotation);
 				// (the randomizer's set pieces stand at the size of Raft's own - some of Raft's are scaled in their scene, like
 				// Balboa's caves: one made before its piece was loaded was saved at scale 1; the copy has Raft's scale)
 				if (o.Scale != Vector3.one || o.Props == null || !o.Props.ContainsKey("set.piece")) go.transform.localScale = o.Scale;
-				foreach (Collider c in go.GetComponentsInChildren<Collider>()) c.enabled = true;
+				EnableColliders(go);
 				if (!editable && o.Name.StartsWith("Block_Foundation", System.StringComparison.Ordinal)) AddDeck(go);
+				CaveBacks.Add(go, o.Name); // (a cave piece's rock, or a Selene room's wall, seen from outside too - X7)
+				if (!editable) CaveMountain.Add(parent, go, o.Name, o.Props); // (a rock mountain over the island's caves - AU83)
+				if (!editable) CaveGround.Add(parent, go, o.Name, o.Props); // (and the ground cut out of their rooms - X7)
 
 				if (editable)
-					EditorGameObject.Attach(go, o.Name, o.Props ?? new Dictionary<string, string>());
+					EditorGameObject.Attach(go, o.Name, o.Props ?? new Dictionary<string, string>()).Uid = o.Uid;
 				else
 				{
+					// (a bear den on its own - ar_cave - has its full-width mouth open: from outside, over the hill, you looked into
+					// the den. It gets a wall cut to its opening with a passage-sized hole, once the island is up: its rock answers
+					// rays only then - RK15)
+					if (o.Name == CaveTool.Room && ObjectProps.Get(o.Props, ObjectProps.CavePlug, "") == "")
+						DynamicIslands.instance.StartCoroutine(CaveTool.PlugOpeningLater(go, o.Props));
+					// (a den at a tunnel's end: its front wall cut to the rock round it, so it never stands out of a low hill - 11-05)
+					else if (o.Name == CaveTool.Room)
+						DynamicIslands.instance.StartCoroutine(CaveTool.PlugClipLater(go));
 					ObjectProps.ApplyTint(go, o.Props);
+					// (Balboa's cave rock placed on its own - a dead-end cave as a mine's mound, a bear den - had Raft's blue sky light:
+					// out of Balboa's own cave zones its faces came out bright blue and patterned, in the den's back and on the mound's
+					// top (user 11-06, Old Mine Islet). Lit as the cave tool's pieces: warm grey, less shine)
+					if (o.Name != null && o.Name.StartsWith("BalboaCave", System.StringComparison.Ordinal)) CaveLit.Mark(go);
+					ZiplineEnds.Apply(go, o.Props, parent.position);
 					if (ObjectProps.IsNote(o.Name, o.Props))
 					{
 						CustomNote.Attach(go, o.Props);
 						ContentCatalog.ShowSignText(go, ObjectProps.Get(o.Props, ObjectProps.NoteTitle)); // a sign shows its title
+							ContentCatalog.ShowScribble(go, o.Name, true, ObjectProps.Get(o.Props, ObjectProps.NoteTitle)); // a board shows writing
 					}
 					// Numbered in file order like the creatures (the same on every machine)
 					if (ObjectProps.IsLoot(o.Name, o.Props)) LootCrate.Attach(go, o.Name, o.Props, loot++);
+					// A trader's stall (its stock under the object's index)
+					else if (TradeStand.IsTrade(o.Props)) TradeStand.Attach(go, o.Props, index);
+					// A survivor's cage (RF3: its state under the object's index)
+					else if (Survivors.IsCage(o.Name)) SurvivorCage.Attach(go, o.Props ?? new Dictionary<string, string>(), index);
+					// Raft's trading post (SL7: its store works; numbered and stocked in RaftStore.OnIslandReady)
+					else if (RaftStore.Is(o.Name)) RaftStore.Attach(go, index);
+					// Raft's vending machine (SL7b: it works; numbered in RaftVending.OnIslandReady)
+					else if (RaftVending.Is(o.Name)) RaftVending.Attach(go, index);
 					// Names, movement, "players can use it", collision, events (Behaviours)
 					Behaviours.Attach(go, o.Name, o.Props, index);
 				}
 			}
-			return missing;
 		}
+
 
 		/// <summary>Name of the placeholders for objects this Raft doesn't have (tests).</summary>
 		public const string MissingTag = "MissingObject";
@@ -357,7 +654,7 @@ namespace DynamicIslands.Editor
 			Renderer r = go.GetComponent<Renderer>();
 			Shader shader = Shader.Find("Standard") ?? Shader.Find("Unlit/Color") ?? Shader.Find("Sprites/Default");
 			if (r != null && shader != null) r.material = new Material(shader) { color = new Color(0.9f, 0.15f, 0.1f, 1f) };
-			EditorGameObject.Attach(go, o.Name, o.Props != null ? new Dictionary<string, string>(o.Props) : new Dictionary<string, string>());
+			EditorGameObject.Attach(go, o.Name, o.Props != null ? new Dictionary<string, string>(o.Props) : new Dictionary<string, string>()).Uid = o.Uid;
 		}
 
 		/// <summary>
@@ -467,6 +764,88 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static GameObject SpawnInWorld(IslandFile island, Vector3 worldPosition)
 		{
+			bool flying;
+			GameObject root = MakeRoot(island, worldPosition, out flying);
+			var objects = new GameObject("Objects");
+			objects.transform.SetParent(root.transform, false);
+			int missing = SpawnObjects(island, objects.transform, false, flying);
+			CaveGround.Cut(objects.transform); // (X7)
+			DigTunnel.Cut(objects.transform); // (and over the dug tunnels)
+			Spawned(island, worldPosition, flying, missing);
+			return root;
+		}
+
+		/// <summary>
+		/// The colliders of an object's active parts switched on. Its parent may be inactive (the sliced spawn): the parts are
+		/// looked at by their own switch, as GetComponentsInChildren without inactive ones found none there (review 2026-10-06).
+		/// </summary>
+		static void EnableColliders(GameObject go)
+		{
+			foreach (Collider c in go.GetComponentsInChildren<Collider>(true))
+			{
+				Transform t = c.transform;
+				bool on = true;
+				for (; t != null && on; t = t == go.transform ? null : t.parent) on = t.gameObject.activeSelf;
+				if (on) c.enabled = true;
+			}
+		}
+
+		/// <summary>Tests (CIPerfChecks): how many frames the last sliced spawn took.</summary>
+		internal static int LastSpawnFrames;
+		internal static string LastSpawnTiming = "";
+
+		/// <summary>
+		/// SpawnInWorld over several frames (ROADMAP P1): the land at once, then the objects a few milliseconds a frame under
+		/// a parent kept inactive until all are there (nothing of the island runs half made). result gets the root, or null
+		/// when it was removed meanwhile.
+		/// </summary>
+		public static System.Collections.IEnumerator SpawnInWorldSliced(IslandFile island, Vector3 worldPosition, System.Action<GameObject> result, float budgetMs = 6f)
+		{
+			bool flying;
+			var clock = System.Diagnostics.Stopwatch.StartNew();
+			GameObject root = null;
+			int rootsBefore = SpawnedRoots.Count;
+			// (an error making the land - a broken heightmap - ends here with null: the caller marks the island failed instead of
+			// waiting for it for good - review 2026-10-06)
+			try { root = MakeRoot(island, worldPosition, out flying); }
+			catch (System.Exception e)
+			{
+				Debug.LogError("[CUSTOM ISLANDS] Making the land of '" + island.Name + "' failed: " + e);
+				while (SpawnedRoots.Count > rootsBefore) { GameObject half = SpawnedRoots[SpawnedRoots.Count - 1]; SpawnedRoots.RemoveAt(SpawnedRoots.Count - 1); if (half != null) UnityEngine.Object.Destroy(half); }
+				result(null);
+				yield break;
+			}
+			long land = clock.ElapsedMilliseconds;
+			var objects = new GameObject("Objects");
+			objects.SetActive(false);
+			objects.transform.SetParent(root.transform, false);
+			int missing = 0, startFrame = Time.frameCount;
+			yield return SpawnObjectsSliced(island, objects.transform, flying, budgetMs, m => missing = m);
+			LastSpawnFrames = Time.frameCount - startFrame + 1;
+			if (root == null || objects == null) { result(null); yield break; }
+			clock.Reset(); clock.Start();
+			objects.SetActive(true);
+			LastSpawnTiming = "land " + land + " ms, objects over " + LastSpawnFrames + " frames, switching them on " + clock.ElapsedMilliseconds + " ms";
+			CaveGround.Cut(objects.transform); // (the ground out of the caves' rooms: their rock can be hit now - X7)
+			DigTunnel.Cut(objects.transform); // (and over the dug tunnels)
+			Spawned(island, worldPosition, flying, missing);
+			result(root);
+		}
+
+		static void Spawned(IslandFile island, Vector3 worldPosition, bool flying, int missing)
+		{
+			int wanted = flying ? island.Objects.Count(o => o.Position.y >= island.WaterLevel - 0.5f) : island.Objects.Count;
+			// (the player is told once per island and Raft start: an object Raft doesn't have any more is left out)
+			if (missing > 0 && toldMissing.Add(island.Name ?? ""))
+				DynamicIslands.Notify("The island '" + island.Name + "' has " + missing + " object(s) this Raft version doesn't have: they are left out", true);
+			Debug.Log("[CUSTOM ISLANDS] Spawned island '" + island.Name + "' at " + worldPosition + " with " +
+				(wanted - missing) + "/" + wanted + " objects" + (worldPosition.y != 0f ? ", " + DescribeElevation(worldPosition.y) : "") +
+				(wanted < island.Objects.Count ? " (" + (island.Objects.Count - wanted) + " under-water objects left out)" : ""));
+		}
+
+		/// <summary>The island's root in the world and its land (the objects come after).</summary>
+		static GameObject MakeRoot(IslandFile island, Vector3 worldPosition, out bool flying)
+		{
 			var root = new GameObject("CustomIsland_" + island.Name);
 			SpawnedRoots.Add(root);
 			IslandInfo.Tag(root, island);
@@ -475,7 +854,7 @@ namespace DynamicIslands.Editor
 			Vector2 land = LandCentre(island);
 			root.transform.position = worldPosition - new Vector3(land.x, island.WaterLevel, land.y);
 
-			bool flying = worldPosition.y > FlyingThreshold;
+			flying = worldPosition.y > FlyingThreshold;
 			if (HasLand(island)) // an island of only objects (e.g. an abandoned raft of Raft blocks) gets no terrain
 			{
 				// Only bring the part of the heightmap that has been shaped, not the whole flat 1000 x 1000 m seabed
@@ -487,7 +866,7 @@ namespace DynamicIslands.Editor
 					for (int x = 0; x < cropSize; x++)
 						cropped[z, x] = island.Heights[cropZ + z, cropX + x];
 
-				TerrainData data = CreateTerrainData(new Vector3(spacing * (cropSize - 1), island.TerrainSize.y, spacing * (cropSize - 1)), cropSize);
+				TerrainData data = CreateTerrainData(new Vector3(spacing * (cropSize - 1), island.TerrainSize.y, spacing * (cropSize - 1)), cropSize, island.HasGrass && !flying);
 				data.SetHeights(0, 0, cropped);
 				GameObject terrainGO = Terrain.CreateTerrainGameObject(data);
 				terrainGO.name = "Terrain";
@@ -496,7 +875,8 @@ namespace DynamicIslands.Editor
 				// Object positions in the file are relative to the full terrain's corner, which the root still represents
 				terrainGO.transform.localPosition = new Vector3(cropX * spacing, 0, cropZ * spacing);
 				Terrain spawnedTerrain = terrainGO.GetComponent<Terrain>();
-				TerrainPainter.SetStyle(spawnedTerrain, TerrainPainter.StyleIndex(island.Style));
+				// (a second style mixed in: its textures are layers 5-8 of the saved paint)
+				TerrainPainter.SetStyle(spawnedTerrain, TerrainPainter.StyleIndex(island.Style), island.HasMix ? TerrainPainter.StyleIndex(island.MixStyle) : -1);
 				// Saved paint covers the full terrain; take the block matching the heightmap crop
 				// (alphamap pixels line up with heightmap cells: resolution = heightmap resolution - 1)
 				int cells = island.HeightmapResolution - 1;
@@ -510,21 +890,22 @@ namespace DynamicIslands.Editor
 					TerrainPainter.Setup(spawnedTerrain, worldPosition.y);
 				}
 
+				// (Raft's short sea grass on its sea floor - PF-D3; a flying island's sea floor is gone)
+				if (!flying) SeaGrass.Apply(spawnedTerrain, island, cropX, cropZ, cropSize);
 				if (flying) MakeFlying(data, terrainGO.transform, island.WaterLevel, worldPosition.y);
 			}
 
-			var objects = new GameObject("Objects");
-			objects.transform.SetParent(root.transform, false);
-			int missing = SpawnObjects(island, objects.transform, false, flying);
-			int wanted = flying ? island.Objects.Count(o => o.Position.y >= island.WaterLevel - 0.5f) : island.Objects.Count;
-			// (the player is told once per island and Raft start: an object Raft doesn't have any more is left out)
-			if (missing > 0 && toldMissing.Add(island.Name ?? ""))
-				DynamicIslands.Notify("The island '" + island.Name + "' has " + missing + " object(s) this Raft version doesn't have: they are left out", true);
-
-			Debug.Log("[CUSTOM ISLANDS] Spawned island '" + island.Name + "' at " + worldPosition + " with " +
-				(wanted - missing) + "/" + wanted + " objects" + (worldPosition.y != 0f ? ", " + DescribeElevation(worldPosition.y) : "") +
-				(wanted < island.Objects.Count ? " (" + (island.Objects.Count - wanted) + " under-water objects left out)" : ""));
 			return root;
 		}
+	}
+
+	/// <summary>
+	/// In a world, in the place of an object this Raft no longer has (a Raft update removed it): how many pickups it had
+	/// (StableIds.ShippedPickups). RegisterNetworkIds skips that many numbers, so the pickups after it keep the numbers
+	/// the world's saved state uses (ROADMAP R2b).
+	/// </summary>
+	public class PickupGap : MonoBehaviour
+	{
+		public int Count;
 	}
 }

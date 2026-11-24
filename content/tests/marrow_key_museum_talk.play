@@ -1,0 +1,46 @@
+# Marrow Key Museum's vault and Keeper Shogo (CIPlay marrow_key_museum_talk, 11-12 w07; in a test world 'CI ...').
+# Points as in its recipe: the vault cave's mouth at -20 2 (kit_st west, len 12), its den with the hatch at -46 2;
+# Shogo inside the museum by the door (-2.6 -4.4). The hatch is locked until someone talked to Shogo; his three
+# answers (the vault, the Tide Engine journal page, goodbye); the walk in and out; the vault chest. Den floor ~3 m.
+island Marrow Key Museum keep
+offset 0 0
+hour 11
+weather Calm
+expect hidden mkvaultchest
+
+# The vault cave from outside, the walk in to the den
+picture mk_cave_out -12 8.5 0 -20 8 2
+walk -16 2 to -20 2 to -32 2 to -44 2
+picture mk_cave_in -30 8.6 2 -45 7.8 2 light=20
+
+# The hatch: locked before anyone talked to Shogo
+use mkvaulthatch stay
+expect message keeper has the word
+expect shown mkvaulthatch
+expect hidden mkvaultchest
+
+# Keeper Shogo by the museum's door
+picture mk_islander -2.6 4.8 -1 -2.6 4.2 -4.4
+use Keeper Shogo
+expect step 0
+
+# Now the hatch opens on the vault chest
+walk -32 2 to -44 2 below=8
+use mkvaulthatch stay
+expect message never put on show
+expect hidden mkvaulthatch
+expect shown mkvaultchest
+open Museum vault
+expect item CopperIngot 3
+
+# His answers: 2 the Tide Engine (journal), 3 goodbye, 1 the vault
+use Keeper Shogo pick 2
+expect message one gear, one island
+use Keeper Shogo pick 3
+expect message Mind the glass
+use Keeper Shogo pick 1
+expect message never upstairs
+
+# Out of the cave again past the mouth
+walk -44 2 to -32 2 to -20 2 to -16 2 below=8
+picture mk_cave_mouth_in -40 8.6 2 -20 8.2 2 light=20

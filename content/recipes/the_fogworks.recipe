@@ -1,0 +1,459 @@
+# The Fogworks - an island of the library's plan The Rainmakers (Nimbus Works' fourth station, large)
+# A flat island with a shallow bay where Nimbus Works made fog: a street of plank boardwalks on posts across the bay, a
+# dock out to the bay mouth, workers' cottages on stilts over the water, and two hourglass cooling towers of Varuna's
+# motherlode pillars (one stood on the bay floor, one upside down on it) with the fog still rolling off them. On the yard
+# behind the bay: the pump hall with its three fog-line valves, the control room, the cold condenser, the boiler house.
+# Quest "The Fog Shift" (24 steps): the dock, the bulletin, the pump hall, the fog lines (valves and the cable hub), the
+# shift chief's notes, the rats in the condenser, the control room safe (a keypad), the tower top, its cabin chest, the
+# radio (Dagny Holm's first confession), the Founders' Day crate, the boilerman Mattis freed from his cage.
+#
+# Built by the recipe player (CIRecipe the_fogworks) through the editor's own operations.
+include lib_sea
+include lib_features
+include lib_huts
+include lib_areas
+include lib_highwater
+include lib_rain
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 90 -> 90
+# RAIN 10-26: the new land - Smoke Hill with fog lookout, Condensate Cave, Hanne Vik at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five shift tokens
+new
+# (nature: a sea-level island with few trees (0.1, a works yard); Bushes, Rocks, Harvest Like Raft's own)
+gen Trees=0.1 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
+gen Seed=9601 Radius=90 Height=6 Roughness=0.3 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.6
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+origin
+# --- RAIN 10-26 terrain: Smoke Hill, the pads of the new areas ---------------------------------------------------
+call hw_mount x=-44 z=50 b=24 h=20
+call hw_trail x=-44 z=50 b=24 h=20 a0=118.61 turn=300 n=40 h0=3
+brush flatten at 0 26 r=4 s=8 frames=60
+clear at 0 26 r=7
+
+# --- Terrain: the bay dug out of the south side (its floor 2.5 m under the sea), the works yard levelled (2 m) --------
+# (the long strokes left mounds in the yard and a bank under the boardwalk: levelled again point by point, 2026-10-18)
+for pz -104 -70 8
+brush flatten at 0 $pz r=12 s=20 frames=60 h=-3
+next
+for fx -36 36 6
+brush flatten at $fx -10 r=6 s=20 frames=50 h=2
+next
+for fx -40 40 8
+brush flatten at $fx -46 r=9 s=20 frames=50 h=-2.5
+brush flatten at $fx -56 r=9 s=20 frames=50 h=-2.5
+brush flatten at $fx -36 r=9 s=20 frames=50 h=-2.5
+brush flatten at $fx -66 r=9 s=20 frames=50 h=-2.5
+brush flatten at $fx -74 r=7 s=20 frames=40 h=-2.5
+brush flatten at $fx -14 r=8 s=20 frames=50 h=2
+brush flatten at $fx -6 r=8 s=20 frames=50 h=2
+next
+for pz -44 -20 3
+brush flatten at 0 $pz r=3 s=20 frames=40 h=2
+next
+brush smooth from -40 -26 to 40 -26 r=5 s=6 frames=30
+brush seabed from -40 -52 to 40 -52 r=24 s=8 frames=60
+clear from -40 -52 to 40 -52 r=27
+clear from -38 -8 to 38 -8 r=15
+clear from 0 -44 to 0 -20 r=4
+
+# --- The boardwalks: the street across the bay (deck 2 m over the sea), the dock south to the bay mouth (the path north to
+# the yard is cut through the bank) - Raft's wooden floor blocks on reef hut posts down to the bay floor --------------------------------------
+push at -36 -46.5 h=-2.5
+call boardwalk n=21 wide=2 y=4.5 rs=none
+pop
+push at -4.5 -46.5 h=-2.5
+call boardwalk n=6 wide=2 y=4.5 rs=none rn=none
+pop
+push at 4.5 -46.5 h=-2.5
+call boardwalk n=21 wide=2 y=4.5 rs=none
+pop
+push at 1.5 -72 h=-2.5 yaw=270
+call boardwalk n=17 wide=2 y=4.5 rs=none rn=none
+pop
+place Zone_Trigger towndock at 0 -66 h=3
+
+# --- The workers' cottages on stilts along the street's south side, their doors on the street -----------------------
+push at -24 -47 h=-2.5 yaw=180
+call stilt_hut y=4.5 ladder=none
+pop
+push at -14 -47 h=-2.5 yaw=180
+call stilt_hut y=4.5 ladder=none w2=none
+pop
+push at 16 -47 h=-2.5 yaw=180
+call stilt_hut y=4.5 ladder=none w5=ReefHuts_PlasticWall1
+pop
+push at 26 -47 h=-2.5 yaw=180
+call stilt_hut y=4.5 ladder=none
+pop
+place "Box Big" - at 3.6 -44.6 h=2 sit
+place Note_Paper bulletin at 3.6 -44.6 h=4 sit drop yaw=10
+
+# --- The two cooling towers on the bay floor: a motherlode pillar standing, a second one upside down on it (an
+# hourglass 30 m tall); beside the west one the watch mast - the radio tower's thick pillars stacked, a ladder up its
+# face out of the water - and the watch cabin's floor from the mast's top onto the tower's ---------------------------
+for tx -30 30 60
+place VP_MotherlodePillar1_Stage1 towers at $tx -62 h=-2.5 sit scale=0.7
+place VP_MotherlodePillar1_Stage1 towers at $tx -62 h=12.2 sit scale=0.7 rot=180,0,0
+next
+prop towers tint.color=#b8bcbe
+prop towers on.use=message||The old fog tower stands firm, its iron cold and wet with mist.
+for mh -2.5 21.5 6
+place RT_PillarThick - at -30 -55.5 h=$mh
+next
+for ld 0 11 1
+place Block_Ladder - at -30 -55.09 h={-2.5+2.42*$ld}
+next
+push at -31.5 -61.5 h=27.1
+call floors w=2 d=4 y=0.1
+pop
+place Loot_Chest towerchest at -30 -60 h=27.25 sit yaw=180
+place Zone_Trigger towertop at -30 -58.5 h=28.3
+place Zone_Atmosphere fog at 0 -40 h=4
+place Zone_Sound fogsound at 0 -40 h=4
+prop fog atmo.fog=#c9cdd1
+prop fog atmo.fogAmount=0.45
+prop fog atmo.light=#b0b6bb
+prop fog atmo.lightAmount=0.3
+prop fog atmo.particles=mist
+prop fog zone.radius=70
+prop fogsound sound.event=event:/exploring/temperence/generator
+prop fogsound sound.volume=0.35
+prop fogsound zone.radius=60
+
+# --- The pump hall (west): Temperance-grey metal walls, a metal roof; its three fog-line valves on its east wall ------
+push at -32 -14 h=2
+call floors w=4 d=3 y=0.05
+place Block_Wall_Tier3 - at 0.75 4.5 y=0.2
+place Block_Wall_Tier3 - at 2.25 4.5 y=0.2
+place Block_Wall_Tier3 - at 3.75 4.5 y=0.2
+place Block_Wall_Tier3 - at 5.25 4.5 y=0.2
+place Block_Wall_Tier3 - at 0 0.75 y=0.2 yaw=90
+place Block_Wall_Window_Tier3 - at 0 2.25 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 0 3.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 6 0.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 6 2.25 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 6 3.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 0.75 0 y=0.2
+place Block_Wall_Door_Tier3 - at 2.25 0 y=0.2
+place Block_Wall_Tier3 - at 3.75 0 y=0.2
+place Block_Wall_Tier3 - at 5.25 0 y=0.2
+call corners w=4 d=3 y=0.2
+roof 4 3 at 0 0 y=0.2
+place WaterPipe_Short_1 valveA at 7 1 y=0.1 scale=2.5
+place WaterPipe_Short_1 valveB at 7 2.25 y=0.1 scale=2.5
+place WaterPipe_Short_1 valveC at 7 3.5 y=0.1 scale=2.5
+place Placeable_Lantern_Metal - at 4.8 3.6 y=0.25 sit
+pop
+place Zone_Trigger pumphall at -29 -12 h=3
+
+# --- The control room: the cable hub of the fog lines, the shift chief's table, the radio, the keypad safe ------------
+push at -12 -14 h=2
+call floors w=3 d=3 y=0.05
+place Block_Wall_Window_Tier3 - at 0.75 4.5 y=0.2
+place Block_Wall_Tier3 - at 2.25 4.5 y=0.2
+place Block_Wall_Window_Tier3 - at 3.75 4.5 y=0.2
+place Block_Wall_Tier3 - at 0 0.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 0 2.25 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 0 3.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 4.5 0.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 4.5 2.25 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 4.5 3.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 0.75 0 y=0.2
+place Block_Wall_Door_Tier3 - at 2.25 0 y=0.2
+place Block_Wall_Tier3 - at 3.75 0 y=0.2
+call corners w=3 d=3 y=0.2
+roof 3 3 at 0 0 y=0.2
+place UT_ElectricCableHub01 fogwire at 0.8 3.6 y=0.25 sit yaw=90
+place "Table Office" chieftable at 2.25 3.6 y=0.54 yaw=0
+place Note_Paper chiefnotes at 1.8 3.6 y=2 sit drop yaw=20
+place RT_CommRadio fogradio at 2.8 3.6 y=2 sit drop yaw=180
+place RT_PowerBox safekeypad at 4.36 1.2 y=1.3 yaw=270
+place Loot_Chest controlsafe at 3.6 2.4 y=0.25 sit yaw=270
+pop
+
+# --- The cold condenser: an empty hall of grey walls, the rats in it --------------------------------------------------
+push at 6 -14 h=2
+call floors w=4 d=3 y=0.05
+place Block_Wall_Tier3 - at 0.75 4.5 y=0.2
+place Block_Wall_Tier3 - at 2.25 4.5 y=0.2
+place Block_Wall_Tier3 - at 3.75 4.5 y=0.2
+place Block_Wall_Tier3 - at 5.25 4.5 y=0.2
+place Block_Wall_Tier3 - at 0 0.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 0 2.25 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 0 3.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 6 0.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 6 2.25 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 6 3.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 0.75 0 y=0.2
+place Block_Wall_Door_Tier3 - at 2.25 0 y=0.2
+place Block_Wall_Tier3 - at 3.75 0 y=0.2
+place Block_Wall_Tier3 - at 5.25 0 y=0.2
+call corners w=4 d=3 y=0.2
+roof 4 3 at 0 0 y=0.2
+place "Box Big" - at 5 3.6 y=0.25 sit
+place "Box Big" - at 0.9 3.6 y=0.25 sit yaw=30
+pop
+place Zone_Trigger condenser at 9 -12 h=3
+place Creature_Rat rats at 10 -11 h=2.3
+
+# --- The boiler house (east): the boiler (an engine of Raft's, cold), the boilerman's cage out behind it, his locker, the
+# Founders' Day crate ----------------------------------------------------------------------------------------------------
+push at 24 -14 h=2
+call floors w=4 d=3 y=0.05
+place Block_Wall_Tier3 - at 0.75 4.5 y=0.2
+place Block_Wall_Tier3 - at 2.25 4.5 y=0.2
+place Block_Wall_Tier3 - at 3.75 4.5 y=0.2
+place Block_Wall_Tier3 - at 5.25 4.5 y=0.2
+place Block_Wall_Tier3 - at 0 0.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 0 2.25 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 0 3.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 6 0.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 6 2.25 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 6 3.75 y=0.2 yaw=90
+place Block_Wall_Tier3 - at 0.75 0 y=0.2
+place Block_Wall_Door_Tier3 - at 2.25 0 y=0.2
+place Block_Wall_Tier3 - at 3.75 0 y=0.2
+place Block_Wall_Tier3 - at 5.25 0 y=0.2
+call corners w=4 d=3 y=0.2
+roof 4 3 at 0 0 y=0.2
+place "VG_DecorationPrefabBase_Engine Variant" boiler at 2.4 2.4 y=0.25 sit yaw=90
+place Survivor_Cage mattiscage at 3 7.4 y=0.05 sit yaw=0
+place Loot_ChestLarge foundercrate at 0.9 1 y=0.25 sit yaw=90
+place Locker mattislocker at 5.3 0.8 y=0.25 yaw=270
+pop
+
+# --- Things to gather (few trees on the yard's edges) ----------------------------------------------------------------
+scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 20 r=40 seed=9611 free=3
+scatter "Pickup_Landmark_Tree_Mango" 1 at 0 30 r=30 seed=9612 free=5
+scatter "Pickup_Landmark_Flower_Red" 2 at 0 20 r=40 seed=9613 free=3
+call dirt x=-30 z=20 r=10 n=3 seed=9614
+call shallows r=126 deep=6 n=3
+
+# --- RAIN 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Smoke Hill ------
+# Smoke Hill with fog lookout on it, Condensate Cave, the ruined house where Hanne Vik waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, five shift tokens about the island (a set), and at the hub the fog horn that wants the fog lamp lens and the fog-line valve key
+call hw_zone x=-22.05 z=38.03 al=fw_trailz id=fw_trail r=5 msg="The trail up Smoke Hill starts here - round and up."
+call hw_zone x=-44 z=50 al=fw_summitz id=fw_summit r=8 h=1 msg="The top of Smoke Hill. The whole island below you."
+call hw_mast x=-47 z=52 h0=20 lv=6 a=fw_mast chest=fw_topchest top=RT_Spotlight
+place ZiplinePath_Landmark fw_zip at -40.8 47.4 h=21.35
+zipto fw_zip -2.27 28.87
+place Creature_Goat fw_goats at -18.05 41.03 ground
+prop fw_goats creature.count=2
+call ar_cave x=48 z=52 h=3 yaw=180 al=fw_caverock chest=fw_cavechest
+call hw_zone x=49 z=43 al=fw_cavez id=fw_cave r=4 h=1 msg="Condensate Cave. Water drips somewhere in the dark."
+call ar_ruin x=66 z=14 h=3 yaw=0 w=3 d=2 al=fw_ruin
+call rn_islander x=65 z=9.5 yaw=200 al=fw_isl nm="Hanne Vik" pose=sit
+prop fw_isl talk.text=You came through the fog? Good sailing.\n---\nI worked the night shift. When they said the fog would bring rain to the whole coast, we believed them.\n---\nThe horn by the old works wants its lens from the lookout on Smoke Hill and the valve key from the Condensate Cave. Bring both and blow it - let them hear it in town.\n---\nThe four shift lamps round my house: each wakes the next. All four lit, and look behind the back wall.
+place Placeable_Chair_Basic - at 65 9.5 ground sit yaw=200
+call rn_lamp x=59 z=13 al=fw_lamp1 nm="Shift lamp 1" grp="Shift lamps" on=0
+call rn_lamp x=65 z=20 al=fw_lamp2 nm="Shift lamp 2" grp="Shift lamps" on=1
+call rn_lamp x=72 z=13 al=fw_lamp3 nm="Shift lamp 3" grp="Shift lamps" on=1
+call rn_lamp x=65 z=6 al=fw_lamp4 nm="Shift lamp 4" grp="Shift lamps" on=0
+prop fw_lamp1 on.use=light|Shift lamp 2|toggle
+prop fw_lamp2 on.use=light|Shift lamp 3|toggle
+prop fw_lamp3 on.use=light|Shift lamp 4|toggle
+prop fw_lamp4 on.use=light|Shift lamp 1|toggle
+prop fw_lamp1 on.alllit=show|fw_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call rn_hidden x=67 z=18.6 al=fw_lampchest
+place Creature_Chicken fw_hens at 74 20 ground
+prop fw_hens creature.count=3
+call ar_plane x=-66 z=12 h=3 yaw=40 al=fw_plane crate=fw_planecrate
+place Note_Paper fw_pilot at -67.78 16.1 ground y=0.1 drop yaw=70
+call hw_zone x=-66 z=12 al=fw_planez id=fw_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP fw pad=2 at=12 66
+push at 12 66
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpfw at 4.24 4.24 h=2.6
+place Block_Foundation_Tier3 jpfw at 5.77 1.65 h=3.35
+place Block_Foundation_Tier3 jpfw at 5.85 -1.35 h=4.1
+place Block_Foundation_Tier3 jpfw at 4.46 -4.01 h=4.85
+place Block_Foundation_Tier3 jpfw at 1.95 -5.67 h=5.6
+place Block_Foundation_Tier3 jpfw at -1.04 -5.91 h=6.35
+place Block_Foundation_Tier3 jpfw at -3.78 -4.66 h=7.1
+place Block_Foundation_Tier3 jpfw at -5.56 -2.25 h=7.85
+place Block_Foundation_Tier3 jpfw at -5.96 0.73 h=8.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpfw at -4.85 3.53 h=9.35
+place Block_Foundation_Tier3 jpfw at -2.54 5.44 h=10.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppfw at 5.77 1.65 h=2.668 sy=1.861
+place Block_Foundation_Tier3 jppfw at 5.85 -1.35 h=3.418 sy=2.959
+place Block_Foundation_Tier3 jppfw at 4.46 -4.01 h=4.168 sy=4.058
+place Block_Foundation_Tier3 jppfw at 1.95 -5.67 h=4.918 sy=5.157
+place Block_Foundation_Tier3 jppfw at -1.04 -5.91 h=5.668 sy=6.255
+place Block_Foundation_Tier3 jppfw at -3.78 -4.66 h=6.418 sy=7.354
+place Block_Foundation_Tier3 jppfw at -5.56 -2.25 h=7.168 sy=8.453
+place Block_Foundation_Tier3 jppfw at -5.96 0.73 h=7.918 sy=9.552
+place Block_Foundation_Tier3 jppfw at -4.85 3.53 h=8.668 sy=10.650
+place Block_Foundation_Tier3 jppfw at -2.54 5.44 h=9.418 sy=11.749 sx=2 sz=2
+prop jpfw tint.color=#8a7f70
+prop jpfw tint.amount=0.35
+prop jppfw tint.color=#8a7f70
+prop jppfw tint.amount=0.35
+place Loot_Chest jcfw at -1.04 -5.91 h=6.35 sit yaw=0
+prop jcfw loot.refill=0
+place Loot_ChestSmall jbfw at -2.54 5.44 h=10.1 sit yaw=0
+prop jbfw loot.refill=0
+pop
+call hw_zone x=12 z=58 al=fw_jumpz id=fw_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call rn_piece x=-30 z=30 al=fw_piece1 set="Shift tokens"
+call rn_piece x=-58 z=21 al=fw_piece2 set="Shift tokens"
+call rn_piece x=42 z=26 al=fw_piece3 set="Shift tokens"
+call rn_piece x=-2 z=62 al=fw_piece4 set="Shift tokens"
+call rn_piece x=80 z=30 al=fw_piece5 set="Shift tokens"
+prop fw_piece1 on.set=show|fw_setchest\nmessage||All five shift tokens found.
+call rn_hidden x=5 z=22 al=fw_setchest kind=Loot_Chest
+call treasure x=30 z=56 r=5 n=1 seed=26478 kind=0
+prop treasure26478 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_hill x=-8 z=46 r=16 seed=26491
+call ar_plants_hill x=30 z=22 r=14 seed=26492
+call ar_plants_hill x=-30 z=4 r=14 seed=26493
+call ar_plants_hill x=40 z=-40 r=14 seed=26494
+call ar_plants_hill x=66 z=36 r=10 seed=26495
+call hw_machine x=0 z=26 yaw=180 al=fw_machine nm="Fog horn" obj=RT_PowerBox sc=1 a=fw_top b=fw_cave done=fw_fixed rew=fw_rewchest rnote=fw_rewnote msg="It works." hint="It wants the fog lamp lens from Smoke Hill and the fog-line valve key from Condensate Cave."
+call hw_note x=-2.6 z=27.2 yaw=200 al=fw_hint
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=The Fogworks
+info author=Custom Islands
+info description=Nimbus Works' fourth station: a works town over a shallow bay, its streets plank boardwalks on posts, workers' cottages on stilts, and two hourglass cooling towers still breathing fog. The fourth island of The Rainmakers. Raft-sized: high ground, a cave, a ruined house where Hanne Vik still lives, a crashed plane and secrets off the path.
+island on.arrive=message||A bay full of fog. Out of it rise two great grey towers, pinched in the middle like hourglasses - and under them a town on stilts.
+
+story foglines|Fog lines routed|Placeable_Pipe_Water|The fog lines run through the cable hub to the control room again.
+story confession|Dagny's first tape|Placeable_Lantern_Metal|Dagny Holm's first confession, played on the Fogworks radio.
+story boilerkey|Boilerman's cage key|Placeable_Lantern_Metal|The key of the cage behind the Fogworks boiler, from the Founders' Day crate.
+
+note bulletin Fogworks bulletin | NIMBUS WORKS - THE FOGWORKS - SHIFT BULLETIN\n\nFog lines: valves A and C OPEN, valve B SHUT. Any other way and the control room goes dark.\n\nRats in the cold condenser again. Do not go in alone.\n\nFounders' Day: the crate in the boiler house is NOT to be opened before the chief engineer's broadcast.\n\nMattis - stop sleeping in the boiler cage.
+note chiefnotes Shift chief's notes | Shift chief's notes, last week:\n\nThe towers will not stop. We shut the burners and the fog keeps coming - the Rain Engine is feeding them from the mountain.\n\nThe safe holds the engine control plans. Code: 3157. If I'm not back, give them to whoever can use them.\n\nDagny is going on the radio tonight. God help her.
+note controlsafe Control room safe | The control room's safe: Nimbus Works' plans for engine controls, and the shift's petty cash in scrap.
+loot controlsafe Blueprint_EngineControls*1;Scrap*4;Bolt*2
+prop controlsafe loot.refill=0
+prop controlsafe obj.name=controlsafe
+prop controlsafe beh.hidden=1
+note towerchest Tower cabin chest | The tower watch's chest on top of the cooling tower: a metal detector's plans, for finding what the fog buries.
+loot towerchest Blueprint_MetalDetector*1;Rope*2;Plank*4
+prop towerchest loot.refill=0
+note foundercrate Founders' Day crate | The Founders' Day crate: fireworks for the company's birthday, zipline plans for the parade - and a key on a string, CAGE.
+loot foundercrate Blueprint_Firework*1;Blueprint_ZiplineBase*1;Blueprint_ZiplineTool*1;Blueprint_BatteryCharger*1;story:boilerkey*1;Rope*2
+prop foundercrate loot.refill=0
+prop foundercrate if.open=signal|radio
+prop foundercrate else.open=message||The Founders' Day crate: NOT TO BE OPENED BEFORE THE CHIEF ENGINEER'S BROADCAST.
+note mattislocker Boilerman's locker | Mattis's locker: his tools, his good boots, a tin of metal bits he saved.
+loot mattislocker MetalIngot*4;Bolt*4;Hinge*2;ExplosiveGoo*3
+prop mattislocker loot.refill=0
+prop mattislocker if.open=signal|mattisfree
+prop mattislocker else.open=message||Mattis's locker, padlocked. The padlock key is on the man himself.
+
+prop valveA obj.name=valveA
+prop valveB obj.name=valveB
+prop valveC obj.name=valveC
+prop valveA on.use=switch|\nmessage||Valve A squeals a quarter turn.
+prop valveB on.use=switch|\nmessage||Valve B squeals a quarter turn.
+prop valveC on.use=switch|\nmessage||Valve C squeals a quarter turn.
+prop fogwire obj.name=fogwire
+prop fogwire beh.use=Close the fog lines' circuit
+prop fogwire if.use=state|valveA|open\nstate|valveB|closed\nstate|valveC|open
+prop fogwire on.use=message||The hub hums, the lamps of the control room flicker on, and somewhere behind the walls the fog lines thump into rhythm.\nsignal||wire\nsignal||power\ngive||story:foglines*1
+prop fogwire else.use=message||The hub sparks and dies. The fog lines are not set as the bulletin says.
+prop fogradio obj.name=fogradio
+prop fogradio on.use=message||A crackle, then a woman's tired voice: "This is Dagny Holm, chief engineer. We made the rain. We could not stop it. I'm sorry." The tape runs out. Then, on the same band: the next station, Vaporhold Reservoir, on 1000.\nplaysound|fogradio|event:/raft/radio/radio_transmitter|0.6||island\nsignal||radio\ngive||story:confession*1
+prop safekeypad obj.name=safekeypad
+prop safekeypad beh.use=Type the code
+prop safekeypad lock.code=3157
+prop safekeypad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The keypad beeps and the safe's door swings open.\nshow|controlsafe
+prop boiler beh.use=
+prop boiler if.use=
+prop boiler else.use=
+prop boiler on.use=message||The boiler is cold. Behind it, in a cage of iron bars, somebody is snoring.
+
+prop mattiscage obj.name=mattiscage
+prop mattiscage survivor.name=Mattis
+prop mattiscage survivor.id=rainmakers_mattis
+prop mattiscage survivor.key=boilerkey
+prop mattiscage survivor.signal=mattisfree
+prop mattiscage survivor.line=Is it Founders' Day already? ... Oh. Oh, it's you. I locked myself in to sleep where it's warm and dropped the key. I'm Mattis. Take me off this island.
+
+prop towndock zone.id=town_dock
+prop towndock zone.radius=4
+prop towndock zone.message=The Fogworks dock: a bulletin board at the street's end, fog rolling over the boardwalks.
+prop pumphall zone.id=pump_hall
+prop pumphall zone.radius=3.5
+prop pumphall zone.message=The pump hall: three valves on the wall outside, the fog lines' pipes vanishing into the floor.
+prop condenser zone.id=condenser
+prop condenser zone.radius=3.5
+prop condenser zone.repeat=never
+prop condenser zone.message=The cold condenser - and something squeaking in the dark. Rats!
+prop rats creature.count=4
+prop rats creature.respawn=0
+prop rats creature.zone=condenser
+prop towertop zone.id=tower_top
+prop towertop zone.radius=4
+prop towertop zone.message=The top of the cooling tower: the whole fog bay under you, and far off a lake shining on another island.
+
+story fw_top|Fog lamp lens|Bolt|The fog lookout's lamp lens, unscrewed and wrapped in a rag.
+story fw_cave|Fog-line valve key|Bolt|The master key of the fog-line valves, dropped in the cave.
+story fw_fixed|Fog horn working|Bolt|The fog horn, working again.
+note fw_hint Night shift notice | THE FOG HORN IS DEAD. It wants the lens from the fog lookout on Smoke Hill and the valve key from the Condensate Cave, the rock cave in the far hillside. Hanne at the old house outside town knows.
+note fw_topchest Fog lookout deck box | A box lashed to the deck rail at the top of the fog lookout.
+loot fw_topchest story:fw_top*1;Glass*2;Scrap*2
+note fw_cavechest Condensate Cave chest | A chest at the back of Condensate Cave, dry under the rock.
+loot fw_cavechest story:fw_cave*1;Bolt*3;Plastic*2
+note fw_rewnote Fog horn tape | The horn booms over the bay and the fog lifts off the water. A tape in its box: the night shift's last call - 'We make the fog, they make the rain, and nobody in town has seen the sun in four years.'
+note fw_rewchest Fog horn reward | What the fog horn kept.
+loot fw_rewchest MetalIngot*2;Bolt*3;TradeToken*2
+note fw_lampchest Hanne's shift box | Hanne's shift box: her thermos, her pay, and a picture of the bay without fog.
+loot fw_lampchest MetalIngot*1;TradeToken*2;Rope*2
+note fw_setchest Shift chest | The shift foreman's chest: every token handed back at last.
+loot fw_setchest MetalIngot*2;Bolt*3;TradeToken*2
+note fw_planecrate Supply plane's crate | The supply plane's crate: condenser coils, gloves, coffee.
+loot fw_planecrate CopperIngot*1;Scrap*3;Plastic*2
+prop fw_planecrate loot.refill=0
+note fw_pilot Supply pilot's note | FOGWORKS SUPPLY RUN. Couldn't see the dock for fog. Put her down on the grass beyond the town. Coffee in the crate - the night shift deserves it.
+note jcfw Stack perch | The boiler hands' perch on the old stacks.
+loot jcfw Rope*3;Plank*4;MetalIngot*1
+note jbfw Stack top | Something left at the top of the stacks.
+loot jbfw CopperIngot*1;Bolt*2;TradeToken*1
+
+quest title=The Fog Shift
+quest intro=A works town on stilts in a fog bay. Make for the two tall cooling towers; the dock is at the foot of the town.
+step reach|town_dock|1|Make for the cooling towers and tie up at the Fogworks dock
+step read|Fogworks bulletin|1|Read the bulletin at the end of the street
+step reach|pump_hall|1|Go to the pump hall on the yard
+step collect|story:foglines|1|Set the fog-line valves as the bulletin says and close the circuit at the control room's cable hub
+step read|Shift chief's notes|1|Read the shift chief's notes in the control room
+step kill|Rat|4|Clear the rats out of the cold condenser
+step open|Control room safe|1|Open the control room safe
+step blueprint|Blueprint_EngineControls|1|Take the engine controls plans from the control room safe
+step reach|tower_top|1|Climb to the top of the cooling tower with the cabin on it
+step open|Tower cabin chest|1|Open the chest on the tower top
+step blueprint|Blueprint_MetalDetector|1|Take the metal detector plans from the tower cabin chest
+step collect|story:confession|1|Play the tape on the control room's radio
+step open|Founders' Day crate|1|Open the Founders' Day crate in the boiler house
+step blueprint|Blueprint_Firework|1|Take the firework plans from the founders' Day crate
+step blueprint|Blueprint_ZiplineBase|1|Take the zipline plans from the founders' Day crate
+step blueprint|Blueprint_ZiplineTool|1|Take the zipline tool plans from the founders' Day crate
+step blueprint|Blueprint_BatteryCharger|1|Take the battery charger plans from the founders' Day crate
+step read|Night shift notice|1|Read the night shift notice by the fog horn
+step talk|Hanne Vik|1|Talk to Hanne Vik at the ruined house outside town
+step reach|fw_trail|1|Find the foot of the trail up Smoke Hill, below the fog lookout
+step reach|fw_summit|1|Climb the trail to the top of Smoke Hill
+step collect|story:fw_top|1|Climb the fog lookout and take the fog lamp lens from the box on its deck
+step reach|fw_cave|1|Find Condensate Cave, the rock cave in the far hillside
+step collect|story:fw_cave|1|Take the fog-line valve key from the chest at the back of the cave
+step read|Fog horn tape|1|Bring both to the fog horn and read what it shows
+step open|Boilerman's locker|1|Free Mattis from the cage behind the boiler, then open his locker
+quest done=Mattis is coming with you, and Dagny Holm's voice is in your ears. Vaporhold Reservoir answers on 1000.
+quest reward=MetalIngot*4;Plank*8;Rope*3
+
+# Buried treasure (the story line's middle): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=45 n=1 seed=8828
+prop treasure8828 treasure.loot=TitaniumOre*3
+# Puffer fish off the shore (explosive goo)
+place Creature_PufferFish puffers at 0 100 h=-3
+prop puffers creature.count=3
+
+save The Fogworks

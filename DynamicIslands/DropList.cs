@@ -193,6 +193,6 @@ namespace DynamicIslands.Editor
 	/// <summary>Esc closes an open list.</summary>
 	class DropdownCloser : MonoBehaviour
 	{
-		void Update() { if (Input.GetKeyDown(KeyCode.Escape)) DropList.Close(); }
+		void Update() { if (EscKey.Down(this)) DropList.Close(); }
 	}
 }

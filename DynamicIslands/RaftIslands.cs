@@ -112,25 +112,37 @@ namespace DynamicIslands.Editor
 			return l.StartsWith("Small ") || l.StartsWith("Big ") ? "Islands" : l.Split(' ')[0];
 		}
 
-		/// <summary>A file of the mod: Mods\DynamicIslands\&lt;path&gt; if it is there (a new measurement), else the copy in the .rmod (null if neither).</summary>
+		/// <summary>
+		/// A file of the mod: the copy in the .rmod; Mods\DynamicIslands\&lt;path&gt; only when the .rmod has none, or on a
+		/// developer's PC with the file "dev_overrides" there (a new measurement being tried). ROADMAP AU38: the disk came
+		/// first, so an unzipped .rmod's or an old measurement's copy won over every update - the mod's version and the
+		/// blueprint list too.
+		/// </summary>
 		public static byte[] ModFile(string path)
 		{
+			bool devFirst = false;
+			try { devFirst = File.Exists(Path.Combine(DynamicIslands.assetpath, DevOverrides)); } catch { }
+			byte[] shipped = null;
+			try
+			{
+				// (asked for directly, a missing file would log an error: look it up in the mod's file list first)
+				var files = DynamicIslands.instance != null ? DynamicIslands.instance.modlistEntry.modinfo.modFiles : null;
+				byte[] b;
+				if (files != null && files.TryGetValue(path.Replace('\\', '/'), out b)) shipped = b;
+			}
+			catch { }
+			if (shipped != null && !devFirst) return shipped;
 			try
 			{
 				string disk = Path.Combine(DynamicIslands.assetpath, path);
 				if (File.Exists(disk)) return File.ReadAllBytes(disk);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + path + ": " + e.Message); }
-			try
-			{
-				// (asked for directly, a missing file would log an error: look it up in the mod's file list first)
-				var files = DynamicIslands.instance != null ? DynamicIslands.instance.modlistEntry.modinfo.modFiles : null;
-				byte[] b;
-				if (files != null && files.TryGetValue(path.Replace('\\', '/'), out b)) return b;
-			}
-			catch { }
-			return null;
+			return shipped;
 		}
+
+		/// <summary>A file in Mods\DynamicIslands that lets its copies of the mod's files win (developers trying a measurement).</summary>
+		public const string DevOverrides = "dev_overrides";
 
 		static void Load()
 		{
@@ -267,21 +279,27 @@ namespace DynamicIslands.Editor
 			s.SeaFloor = IslandGenSettings.SeaFloorDeep;
 			s.DropOff = RaftUnderwater.DropOffOf(i);
 			ObjectsLike(i, s);
+			Remakes.LookLike(i, s, false);
 			return s;
 		}
 
 		/// <summary>Settings for "a variation of it": its own ground (scaled, stretched, roughened... from there), style and object mix.</summary>
 		public static IslandGenSettings VariationOf(RaftIsland i, IslandGenSettings from)
 		{
+			// (a built place - Tangaroa, Utopia, Varuna Point - was measured with its buildings as ground: towers of earth.
+			// Its variation is new ground like it with its look's pieces, TODO §3)
+			if (i.Kind == "mesh" && Remakes.LookFor(i.Scene) != null) return LikeIt(i, from);
 			IslandGenSettings s = from.Copy();
 			s.Source = i.Scene;
 			s.Style = i.StyleIndex;
-			s.Radius = Mathf.Clamp(i.Radius, IslandGenSettings.MinRadius, IslandGenSettings.MaxRadius);
+			// (its real size: Temperance was scaled down to the build area, LM7 - the terrain grows instead, IslandGenerator.AreaFor)
+			s.Radius = Mathf.Clamp(i.Radius, IslandGenSettings.MinRadius, IslandGenSettings.MaxSourceRadius);
 			s.Height = Mathf.Clamp(i.Top, IslandGenSettings.MinHeight, IslandGenSettings.MaxHeight);
 			s.Stretch = 1f; s.StretchAngle = 0f; s.Mirror = false; s.SourceRoughen = 0f; s.SourceWobble = 0f;
 			s.PeakShape = 0.3f; s.Terraces = 0f; s.Lakes = 0f; s.Valleys = 0f; s.Erosion = 0f; s.Seabed = IslandGenSettings.SeabedSand;
 			s.SeaFloor = IslandGenSettings.SeaFloorDeep; // (its own ground goes down to Raft's sea floor)
 			ObjectsLike(i, s);
+			Remakes.LookLike(i, s, true);
 			return s;
 		}
 
@@ -291,24 +309,30 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static bool DensitiesLikeRaft(IslandGenSettings s, bool small)
 		{
-			var list = All.Where(i => small ? i.Label.StartsWith("Small island") : i.Label.StartsWith("Big island") || i.Label == "Big").ToList();
-			if (list.Count == 0) return false;
-			s.Trees = IslandGenerator.AmountFor(IslandGenerator.CatTrees, list.Average(i => i.Density(Trees)));
-			s.Bushes = IslandGenerator.AmountFor(IslandGenerator.CatBushes, list.Average(i => i.Density(Bushes)));
-			s.Rocks = IslandGenerator.AmountFor(IslandGenerator.CatRocks, list.Average(i => i.Density(Rocks)));
-			s.Harvest = IslandGenerator.AmountFor(IslandGenerator.CatHarvest, list.Average(i => i.Density(Harvest)));
-			s.BeachThings = 0.3f;
+			// (Like Raft: a small island gets Raft's small islands' density by itself, from its land - CIGenLikeRaft)
+			if (!RaftLand.Loaded) return false;
+			IslandGenerator.NatureLikeRaft(s);
 			return true;
 		}
 
 		/// <summary>The object sliders set to the island's own densities (and a few creatures and boxes if it has spawners and loot).</summary>
 		static void ObjectsLike(RaftIsland i, IslandGenSettings s)
 		{
-			s.Trees = IslandGenerator.AmountFor(IslandGenerator.CatTrees, i.Density(Trees));
-			s.Bushes = IslandGenerator.AmountFor(IslandGenerator.CatBushes, i.Density(Bushes));
-			s.Rocks = IslandGenerator.AmountFor(IslandGenerator.CatRocks, i.Density(Rocks));
-			s.Harvest = IslandGenerator.AmountFor(IslandGenerator.CatHarvest, i.Density(Harvest));
-			s.BeachThings = 0.3f;
+			// (each kind as thick on the land as on the island itself, against Raft's islands of its size: Like Raft when it's
+			// as thick as they usually are - counted on its land only, raft_land.txt; what lies under water is the sea's)
+			float[] own = RaftLand.IslandDensities(i.Label);
+			bool small = i.Area < RaftLand.SmallLand;
+			string[] cats = { IslandGenerator.CatTrees, IslandGenerator.CatBushes, IslandGenerator.CatRocks, IslandGenerator.CatHarvest };
+			var v = new float[cats.Length];
+			for (int k = 0; k < cats.Length; k++)
+			{
+				float like = IslandGenerator.LikeRaftAmount(s.Style, cats[k]), typical = IslandGenerator.TypicalDensity(s.Style, cats[k], small);
+				// (at most twice Like Raft: a tiny island with a handful of plants - Raft's Radar - scaled up to the slider's top,
+				// twelve times Raft's harvestables on Radio Tower Remade, 2026-10-03)
+				v[k] = own != null && typical > 0f ? Mathf.Clamp01(Mathf.Min(like * Mathf.Sqrt(own[k] / typical), like * 2f)) : like;
+			}
+			s.Trees = v[0]; s.Bushes = v[1]; s.Rocks = v[2]; s.Harvest = v[3];
+			s.BeachThings = IslandGenerator.LikeRaftAmount(s.Style, IslandGenerator.CatBeach);
 			// (under water: as dense as around Raft's islands of its style, measured by CIMeasureUnderwater)
 			s.Water = s.SeaRocks = s.SeaFinds = s.Sunken = 0.5f;
 			s.Hostiles = Mathf.Clamp(Mathf.RoundToInt(i.Count(Spawners) * 0.5f), 0, 12);

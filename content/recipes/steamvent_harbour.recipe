@@ -1,0 +1,447 @@
+# Steamvent Harbour - the third island of the library's plan The Frozen Horizon (storyline SL12, chapter 3: The Warm Harbour)
+# A harbour town huddled round a geothermal vent: steam rising from a fissure in the square, iron pipes laid from it to
+# the houses, the ground round it warm enough for a garden of fruit and flowers in the snow. A glass greenhouse grew shut
+# with jungle vines (the machete is in the harbour store), a boiler house, a pipe store full of rats, a hen coop and a
+# town hall that has been cold since the valve stuck. Quest "The Warm Harbour" (17 steps): the quay, the harbour master's
+# notice, the machete's plans, the vines and the greenhouse, the gardener's log, the fuel tank's plans (boiler house), the
+# rats, the fuel pipe's plans (pipe store), DEEP 10-24: the driller's warning (steam cave), the antenna cables and the
+# bathhouse hub, the derrick's relief valve (Fumarole Mountain), the vent valve (steam back to the houses), the biofuel extractor's plans
+# (town hall locker), the town meeting minutes.
+#
+# Built by the recipe player (CIRecipe steamvent_harbour) through the editor's own operations. Points (metres over the
+# sea): the town at 3 m (r 22 round 0 0), the vent in its middle; the quay at 1.2 m round 0 -38; the harbour store
+# x -12..-7.5 z -16..-13; the greenhouse x 14..20 z -6.5..2.5 (door south at 15.5 -6.5); the boiler house x -22..-17.5
+# z 2..6.5; the pipe store x 6..10.5 z 12..16.5; the town hall x -6..0 z 10..14.5; the hen coop round -18 18.
+include lib_sea
+include lib_huts
+include lib_rt
+include lib_features
+include lib_frozen
+include lib_areas
+# RESIZE 10-24: Radius 46 -> 90 (Height 7 -> 8), the old content moved 0 -24.2 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+new
+gen Trees=0.06 Bushes=0.2 Rocks=0.3 Harvest=0.2 BeachThings=0.3
+gen Seed=12301 Radius=90 Height=8 Roughness=0.4 Peaks=2 Shape=0 Style=1 BeachWidth=0.25 Cliffs=0.35 PeakShape=0.5
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
+generate
+
+# --- DEEP 10-24 (one-hour pass): the island behind the town. Fumarole Mountain in the north (30 m) with the geothermal
+# derrick on it (6 ladders, top 44.5 m: the relief valve that bleeds the vent); the bathhouse at its foot (its door
+# wired shut - the derrick's power line); the three antenna masts (M25, RAFT_QUEST_MECHANICS 4: the storm brought their
+# cables down, a polar bear by each; 2 cables a mast; the bathhouse hub takes 4, the greenhouse hub 2); the driller's
+# steam cave in the west; the pumphouse ruin north-east; the sunk steam ferry east (12 m down); two buried treasures.
+# Built before the town so the town, the camp and the dirt sit on the final ground.
+call fz_mount x=10 z=62 h=30 r=7
+# (REACH 10-30 N: the mountain's top stood 8 m over its smoothed shoulder all round - nobody got up to the derrick's
+# foot, and the walker's every later walk ended there: a path now winds up the last 9 m round its south side, from the
+# west shoulder (20.4 m, 11 m out) curling in to the top's south-east edge, 7 m out)
+for k 0 16
+brush flatten at {10+(11-0.25*$k)*cos(200+9*$k)} {62+(11-0.25*$k)*sin(200+9*$k)} r=1.5 s=20 frames=150 h={20.4+0.6*$k}
+next
+call ar_plants_snowy x=10 z=62 r=28 seed=12401
+for k 0 16
+clear at {10+(11-0.25*$k)*cos(200+9*$k)} {62+(11-0.25*$k)*sin(200+9*$k)} r=2.5 body
+next
+# (UT 11-04: its ladders took hold only from under the platform, where the climber stalled: climbed from outside now)
+call fz_tower x=10 z=64 h=30 n=6 ly=180 al=derrick chest=derrickchest zal=derrickzone zid=derrick_top msg="The derrick's top. The vent's pipe climbs here from the town - and the relief valve's housing sits on it, clamped shut."
+place Note_Sign derricksign at 9.2 62.4 h=44.57 sit yaw=180
+# the ridge west of the mountain (the ridge mast) and the east rise (the east mast)
+call ar_ridge x1=-44 z1=58 x2=-12 z2=70 h=10 top=6 r=8
+call ar_plants_snowy x=-28 z=64 r=24 seed=12402
+call ar_ridge x1=38 z1=-4 x2=60 z2=14 h=9 top=5 r=7
+call ar_plants_snowy x=49 z=5 r=18 seed=12403
+# the three antenna masts, a bear by each, a cable box at each foot
+# (REACH 11-01 N: generator big rocks heaped round the ridge mast's foot - its cable box sat wedged in among them
+# with nowhere to stand and open it: cleared)
+clear at -27 63.5 r=6 all body only=TP_BigRock
+place Antenna_pole mastridge at -28 64 ground
+place Loot_ChestSmall mastridgebox at -26.6 63.2 ground sit yaw=200
+place Creature_PolarBear bearridge at -22 58 ground
+place Antenna_pole mastne at 52 50 ground
+place Loot_ChestSmall mastnebox at 53.4 49.2 ground sit yaw=220
+place Creature_PolarBear bearne at 46 44 ground
+place Antenna_pole masteast at 49 5 ground
+place Loot_ChestSmall masteastbox at 50.4 4.2 ground sit yaw=160
+place Creature_PolarBear beareast at 43 11 ground
+call fz_zone x=-28 z=62 al=mastridgez id=mast_ridge r=4 msg="The ridge mast. Its cable hangs in the snow - and there are tracks round it. Big ones."
+call fz_zone x=52 z=48 al=mastnez id=mast_ne r=4 msg="The mast by the bears' den, its cable down in a drift. A bear's den in the lee of it."
+call fz_zone x=49 z=3 al=masteastz id=mast_east r=4 msg="The mast on the rise. The cable box at its foot is still shut."
+# the bathhouse at the mountain's foot: hot water piped from the derrick; its door is wired shut (the derrick's power line)
+brush flatten at 25 32 r=8 s=20 frames=250 h=7
+clear at 25 32 r=8
+# (REACH 11-01 N: a generator big rock stood through the bathhouse's back half - the locker, the note, the card and the
+# slate were walled off behind it: cleared)
+clear at 25 33 r=9 all body only=TP_BigRock
+push at 28 32 h=7
+call rt_storey a=bathhouse f1=none f2=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1
+place RT_Floor bathhouse at 0 4.5 y=3
+place DoorMetal bathdoor at -4.5 -4.5 y=0.05 sit yaw=0
+place UT_ElectricCableHub01 bathhub at -1.5 -5.3 y=0.05 sit yaw=180
+place Loot_Chest bathlocker at -1.2 3.6 y=0.05 sit yaw=180
+place Note_Paper bathnote at -0.3 3.0 y=0.05 drop yaw=30
+place Note_Paper qslcard at -4.6 3.4 y=0.05 drop yaw=160
+place Note_Sign bathslate at -5.6 2.6 y=0.05 sit yaw=90
+place Placeable_Lantern_Metal - at -3 3.8 y=0.05 sit
+place Zone_Atmosphere bathsteam at -3 0 y=1.2
+place Zone_Trigger bathzone at -3 0 y=1
+pop
+prop bathhouse tint.color=#6a5a4a
+prop bathhouse tint.amount=0.4
+# the driller's steam cave (west, its mouth north)
+call ar_cave x=-62 z=30 h=6 yaw=0 al=steamcave chest=steamcavechest
+place Note_Paper drillwarn at -61.2 35.4 h=6.5 drop yaw=200
+place Zone_Trigger steamcavez at -62 35 h=7.4
+place Zone_Atmosphere steamcavefog at -62 33 h=7
+# the pumphouse ruin (north-east): the pump keeper's ledger on its table
+call ar_ruin x=62 z=34 h=5 yaw=0 al=pumpruin
+place Note_Paper pumpledger at 61.25 34 h=6.15 drop yaw=10
+# the sunk steam ferry (east): 12 m down in a drowned basin, its strongbox, an air pocket at its side
+call fz_dive x=68 z=-22 d=12 r=12 yaw=0 obj=BoatStranded al=ferry chest=ferrychest aid=ferryair aal=ferryairz abub=ferryairb cx=6 cz=2 ax=-6 az=-3
+call fz_zone x=55 z=-30 al=ferryview id=ferry_basin r=6 msg="A basin of black water, steaming at its edges. Down in it, the shape of the old steam ferry."
+call treasure x=-52 z=-44 r=8 n=1 seed=12411
+call treasure x=36 z=72 r=8 n=1 seed=12412
+call ar_plants_snowy x=-55 z=-10 r=22 seed=12404
+push at 0 -24.2
+
+# --- Terrain: the town at 3 m, the road down to the quay at 1.2 m ---------------------------------------------------
+brush flatten at 0 0 r=22 s=20 frames=300 h=3
+brush flatten from 0 -22 to 0 -33 r=3.5 s=20 frames=80 h=2.1
+brush flatten at 0 -38 r=6 s=20 frames=200 h=1.2
+# RESIZE 10-24 retest: the bigger island stands higher here - the huts' pads flattened again
+brush flatten at -9.75 -14.5 r=5 s=20 frames=200 h=3
+brush flatten at -19.75 4.25 r=5 s=20 frames=200 h=3
+brush flatten at 8.25 14.25 r=5 s=20 frames=200 h=3
+brush flatten at -3 12.25 r=5 s=20 frames=200 h=3
+brush flatten at -18.5 15.5 r=5 s=20 frames=200 h=3
+brush flatten from -12 14 to -12 18 r=3 s=20 frames=200 h=3
+brush grass at 0 0 r=9 s=20 frames=20
+pop
+brush flatten at -11.8 30.8 r=5 s=8 frames=40
+origin
+clear at -11.8 30.8 r=6
+push at 0 -24.2
+clear at 0 0 r=22
+clear from 0 -22 to 0 -38 r=6
+
+# --- The quay: the harbour master's notice, bollards, crates ----------------------------------------------------------
+place Zone_Trigger quayzone at 0 -38 ground y=1
+place Note_Sign notice at 3 -35 ground sit yaw=200
+place TP_Moontown_SealedCrate02 - at -4 -39 ground sit yaw=10
+place Reef_Barrel2 - at -3 -36.5 ground sit
+place Reef_Barrel2 - at 4.5 -40 ground sit
+place TP_Moontown_TarpCrate01_Clean - at -5 -34 ground sit yaw=80
+
+# --- The vent in the square: a ring of dark rock round the fissure, steam, the valve on its post, pipes to the houses ---
+place SmallRock_02 ventrock at -1.6 0.4 ground y=-0.7 scale=0.9 yaw=10
+place SmallRock_02 ventrock at 1.4 1.2 ground y=-0.7 scale=0.8 yaw=130
+place SmallRock_02 ventrock at 0.6 -1.6 ground y=-0.7 scale=0.85 yaw=250
+prop ventrock tint.color=#3a3634
+prop ventrock tint.amount=0.6
+place Zone_Atmosphere ventsteam at 0 0 ground y=1.5
+prop ventsteam atmo.particles=mist
+prop ventsteam atmo.fog=#d8dcdc
+prop ventsteam atmo.fogAmount=0.2
+prop ventsteam zone.radius=4
+place Zone_Atmosphere steamhouses at 0 4 ground y=2
+prop steamhouses atmo.particles=mist
+prop steamhouses atmo.fog=#e4e6e6
+prop steamhouses atmo.fogAmount=0.25
+prop steamhouses zone.radius=18
+prop steamhouses beh.hidden=1
+place RT_Pillar - at 3 -3 ground sy=0.6
+place TP_Selene_DoorCrankWheel ventvalve at 3 -3.09 ground y=1.2
+place RT_Pipe - at -5 3 ground yaw=150
+place RT_Pipe - at 5 -2 ground yaw=80
+place RT_Pipe - at -4 -6 ground yaw=40
+place RT_Pipe - at 4 6 ground yaw=20
+place "Pickup_Landmark_Clay 1" - at -2.8 -2.2 ground sit
+place "Pickup_Landmark_Clay 2" - at 2.4 2.8 ground sit
+
+# --- The vent garden (the warm ground round the vent): fruit, berries, flowers of every colour --------------------------
+scatter "Pickup_Landmark_Tree_Mango" 2 at -8 -8 r=3 seed=12311 free=4
+scatter "Pickup_Landmark_PineappleLandmark" 3 at 8 -9 r=3 seed=12312 free=2
+scatter "Pickup_Landmark_WatermelonLandmark" 2 at -9 4 r=3 seed=12313 free=2
+scatter "Pickup_Landmark_BerryBush" 3 at 9 3 r=3 seed=12314 free=2
+scatter "Pickup_Landmark_Tree_Palm 2" 2 at 10 -14 r=3 seed=12310 free=4
+scatter "Pickup_Landmark_Flower_Red" 2 at 0 -8 r=3 seed=12315 free=1
+scatter "Pickup_Landmark_Flower_Yellow" 2 at 0 -8 r=3 seed=12316 free=1
+scatter "Pickup_Landmark_Flower_White" 2 at -6 -1 r=3 seed=12317 free=1
+scatter "Pickup_Landmark_Flower_Blue" 2 at 6 -5 r=3 seed=12318 free=1
+scatter "Pickup_Landmark_Flower_Black" 2 at -3 7 r=3 seed=12319 free=1
+
+# --- The harbour store: the machete's plans and a machete for the greenhouse vines -----------------------------------
+push at -12 -16 h=3
+call hut w=3 d=2 y=0.1
+place Loot_Chest harbourstore at 3.7 2.3 y=0.1 sit yaw=180
+place Placeable_Shelf_Wood - at 1.2 2.4 y=0.1 sit yaw=180
+pop
+
+# --- The greenhouse (radio tower glass, its door south), grown shut with vines: beds, a hive, the gardener's log ------
+push at 20 -2 h=3
+call rt_storey a=greenhouse f1=RT_WallDoor1 f2=RT_WallWindow1 b1=RT_WallWindow1 b2=RT_WallWindow1 l1=RT_WallWindow1 l2=RT_WallWindow1 l3=RT_WallWindow1 r1=RT_WallWindow1 r2=RT_WallWindow1 r3=RT_WallWindow1
+place RT_Floor greenhouse at 0 4.5 y=3
+place Placeable_Table_Basic - at -1.2 3.4 y=0 sit yaw=0
+place Note_Book gardenerlog at -1.2 3.4 y=0.9 drop yaw=20
+place Loot_Chest greenstore at -4.8 3.6 y=0 sit yaw=180
+place Placeable_BeeHive - at -5.3 0 y=0 sit yaw=90
+place Placeable_Cropplot_Medium - at -1.5 -0.5 y=0 sit
+place "Pickup_Landmark_BerryBush" - at -4.4 -2.6 y=0 sit
+place "Pickup_Landmark_Flower_Red" - at -1 -3 y=0 drop
+place "Pickup_Landmark_Flower_Yellow" - at -0.6 1 y=0 drop
+place Zone_Trigger greenzone at -3 0 y=1
+pop
+place ChoppableVines greenvines at 15.5 -6.9 ground yaw=0
+
+# --- The boiler house (west): the fuel tank's plans; the old boiler outside -----------------------------------------
+push at -22 2 h=3
+call hut w=3 d=3 y=0.1
+place Loot_Chest boilerhouse at 3.7 3.8 y=0.1 sit yaw=180
+place Placeable_Lantern_Metal - at 1 3.9 y=0.1 drop
+pop
+place "VG_DecorationPrefabBase_EmergencyGenerator Variant" - at -24.5 4 ground sit yaw=90
+place UT_Generator01 - at -15.5 8 ground sit yaw=200
+
+# --- The pipe store (north-east): rats among the pipes, the fuel pipe's plans --------------------------------------
+push at 6 12 h=3
+call hut w=3 d=3 y=0.1
+place Loot_Chest pipestore at 3.7 3.8 y=0.1 sit yaw=180
+place Zone_Trigger pipezone at 2.25 2.25 y=1
+place Creature_Rat rats at 2.25 2.5 y=0.3
+pop
+
+# --- The town hall (north): the steam-house locker (opens with the steam), the minutes --------------------------------
+push at -6 10 h=3
+call hut w=4 d=3 y=0.1
+place Placeable_Table_Basic - at 3 2.5 y=0.1 sit yaw=90
+place Note_Book minutes at 3 2.5 y=1 drop yaw=10
+place Note_Paper broadcast at 2.2 2.0 y=1 drop yaw=200
+place Loot_ChestLarge townlocker at 5.2 3.6 y=0.1 sit yaw=180
+place Placeable_Lantern_Metal - at 1 3.9 y=0.1 drop
+pop
+place Placeable_Cropplot_Medium - at -12 14 ground sit
+place Placeable_Cropplot_Medium - at -12 17.5 ground sit
+call dirt x=-12 z=20 r=4 n=2 seed=12321
+
+# --- The hen coop (north-west): a small hut, the hens round it -------------------------------------------------------
+push at -20 14 h=3
+call hut w=2 d=2 y=0.1
+pop
+place Creature_Chicken hens at -17 19 ground
+call hives x=24 z=10 r=6 n=2 seed=12322
+
+# --- The sea --------------------------------------------------------------------------------------------------------
+scatter VP_CoralDigitate01 4 at 58.7 -34.5 r=4 seed=12331 wet free=1
+scatter VP_CoralBulb04 3 at 58.7 -34.5 r=4 seed=12332 wet free=1
+call shallows x=0 z=24.2 r=90 deep=6 n=1 seed=12340
+pop
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; TP_SnowVehicle02 + chest; hatch with a chest; dirt to dig (the detector comes later); viewpoint ---
+place campfire_1 - at -11.8 30.8 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at -8.8 32.8 ground sit yaw=97
+place "Box Small" - at -13.8 33.3 ground sit
+place Note_Paper dnote at -13.8 33.3 ground y=1.6 drop yaw=20
+note dnote Sealer's note | (on the furs box by the fire pit, in pencil)\n\nWe got in! Three days over the ice with Bo singing the whole way, which is a kind of punishment, but we got in.\nThe town is cold. The vent valve has stuck and there is frost on the inside of the windows. Nobody has had a bath in a week and you can tell.\nIvo went straight to the harbour master and asked for a set. She said the Warden's order forbids it. Ivo said the Warden is welcome to come and take it off him in person. I like Ivo.\nLeft the spare furs and the tea in the box. If you are cold, the fire pit still takes driftwood.\n- Sigrid, of the Kittiwake
+place TP_SnowVehicle02 dvan at 32.6 -26.4 ground yaw=217
+prop dvan tint.color=#7a8a96
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at 28.6 -23.4 ground sit yaw=157
+note dwreckchest Driver's box | The driver's box under the seat: bolts, glass, leather.
+loot dwreckchest Bolt*2;Glass*2;Leather*2
+prop dwreckchest loot.refill=0
+call hatchcache x=-31.7 z=-27.6 r=15 seed=12391 alias=dhatch chest=dhatchchest items=MetalIngot*2;Wool*3;Bolt*2
+call dirt x=-5 z=25 r=22 n=3 seed=12392
+place Zone_Trigger dview at -41.5 6.6 ground
+prop dview zone.id=steamvent_harbour_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=Steam rises from the square below, and the harbour town huddles round it for the warmth.
+
+
+# --- DEEP 10-24: the mountain, the masts, the bathhouse, the cave, the ruin, the ferry ---
+story cable|Antenna cable|Placeable_Lantern_Metal|A coil of the antenna masts' cable. The storm brought it down; a wire hub takes it.
+story bathpower|The derrick's power line|Placeable_Lantern_Metal|The bathhouse hub wired: power runs up the mountain to the derrick again.
+story relief|Relief valve|Placeable_Lantern_Metal|The derrick's relief valve. With it on the vent, the valve can be turned without blowing the pipes.
+note drillwarn Driller's warning | DRILLER'S WARNING\n\nDO NOT FORCE THE VENT VALVE. The vent is over pressure - turn it now and the pipes burst under the square.\nBleed it first: the relief valve is on the derrick, top of Fumarole Mountain.\nThe valve's housing is clamped by the power line from the bathhouse. The storm took the line down: its cable was strung on the three antenna masts (the ridge mast, the bears' mast, the mast on the rise).\nTwo coils from each mast. The bathhouse hub takes four.\nBears den by the masts in winter. Mind them.\n\n- Brann, driller. If you see my wife, the soup was fine. It was not fine.
+note bathslate Bath keeper's slate | BATHHOUSE\n\nHot water from the derrick, free to all.\nThe hub outside powers the derrick's clamps - when the line is up the clamps let go of the relief valve.\nThe greenhouse has its own hub for the heat lamps. Two coils.
+note derricksign The derrick | FUMAROLE DERRICK\n\nRelief valve in the housing. Carry it down and fit it on the vent valve before you turn it.\nThe quick way down is the way the steam goes: down the mountain's steep side.
+note pumpledger Pump keeper's ledger | PUMP KEEPER'S LEDGER\n\nPump stopped. The basin flooded when the ferry went down in it, which the ferry did out of spite, I am sure of it.\nThe ferry's strongbox is still aboard. Twelve metres. There's air pocket beside the boat if you need it. I don't swim. I keep pumps. It's different.\nSpare tools buried by the shore, under the white rock, where the harbour master won't borrow them.\nThe courier came through on the 20th and took the town's sets, every one, very polite, a receipt for each. Then he sat by my pump for an hour and didn't say a word. Never seen Orrin quiet before. I asked him what was wrong. He said: "Nothing I can carry back."
+note mastridgebox Ridge mast's cable box | The ridge mast's cable box: two frosted coils of antenna line.
+loot mastridgebox story:cable*2;Bolt*1
+prop mastridgebox loot.refill=0
+note mastnebox North-east mast's cable box | The cable box at the bears' mast: two coils of antenna line.
+loot mastnebox story:cable*2;Rope*1
+prop mastnebox loot.refill=0
+note masteastbox East mast's cable box | The cable box at the mast on the rise: two coils of line and pliers.
+loot masteastbox story:cable*2;Nail*6
+prop masteastbox loot.refill=0
+note derrickchest Derrick valve housing | The derrick's valve housing: the relief valve, the driller's tools.
+loot derrickchest story:relief*1;MetalIngot*2;CopperIngot*2
+prop derrickchest loot.refill=0
+prop derrickchest if.open=signal|bathpower
+prop derrickchest else.open=message||The housing is clamped shut. The clamps are electric - the power line comes up from the bathhouse.
+note bathlocker Bath keeper's locker | Gunnar's locker: towels, soap, tea and his savings.
+loot bathlocker Wool*3;Raw_GenericMeat*2;MetalIngot*1
+prop bathlocker loot.refill=0
+note steamcavechest Driller's kit | The driller's kit: a drill bit, a lamp, his lunch tin.
+loot steamcavechest Scrap*3;Bolt*2;Raw_GenericMeat*1
+prop steamcavechest loot.refill=0
+note ferrychest Ferry's strongbox | The steam ferry's strongbox, twelve metres down: fares and cargo.
+loot ferrychest MetalIngot*3;Glass*2;CopperIngot*2
+prop treasure12411 treasure.loot=MetalOre*3;CopperOre*2
+prop treasure12412 treasure.loot=TitaniumOre*1;MetalOre*2
+prop bathdoor obj.name=bathdoor
+prop bathhub obj.name=bathhub
+prop bathhub beh.use=Wire the derrick's power line
+prop bathhub if.use=!signal|bathpower\ntake|story:cable|4
+prop bathhub on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||Four coils clamped in. The hub hums, the bathhouse door unlocks - and up on the mountain, the derrick's clamps click open.\nsignal||bathpower\ngive||story:bathpower*1\nhide|bathdoor
+prop bathhub else.use=message||A wire hub with four empty clamps: the derrick's power line. The antenna masts carried its cables.
+prop bathsteam atmo.particles=mist
+prop bathsteam atmo.fog=#e4e6e6
+prop bathsteam atmo.fogAmount=0.3
+prop bathsteam zone.radius=4
+prop bathzone zone.id=bathhouse
+prop bathzone zone.radius=3
+prop bathzone zone.message=The bathhouse: a hot pool under a steaming roof. Warm, at last.
+prop steamcavez zone.id=steam_cave
+prop steamcavez zone.radius=3
+prop steamcavez zone.message=The driller's cave: warm rock, steam seeping from the cracks. A note pinned by the lamp.
+prop steamcavefog atmo.particles=mist
+prop steamcavefog atmo.fog=#d8dcdc
+prop steamcavefog atmo.fogAmount=0.25
+prop steamcavefog zone.radius=5
+prop mastridgebox obj.name=mastridgebox
+prop bearridge creature.count=1
+prop bearridge creature.respawn=0
+prop bearne creature.count=1
+prop bearne creature.respawn=0
+prop beareast creature.count=1
+prop beareast creature.respawn=0
+# the greenhouse's own hub (an extra): two coils light the heat lamps and free the seed drawer
+place UT_ElectricCableHub02 greenhub at 13.2 -31.6 ground sit yaw=180
+place Loot_ChestSmall seeddrawer at 18.8 -29.8 h=3.05 sit yaw=180
+prop greenhub obj.name=greenhub
+prop greenhub beh.use=Wire the greenhouse's heat lamps
+prop greenhub if.use=!signal|greenpower\ntake|story:cable|2
+prop greenhub on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The heat lamps come on over the beds - and the seed drawer's lock lets go.\nsignal||greenpower\nshow|seeddrawer
+prop greenhub else.use=message||The greenhouse's heat-lamp hub: two empty clamps.
+prop seeddrawer obj.name=seeddrawer
+prop seeddrawer beh.hidden=1
+note seeddrawer Seed drawer | The gardener's seed drawer, warm under the lamps.
+loot seeddrawer Seed_Banana*2;Seed_Pine*2;Seed_Flower_Yellow*2;Seed_Strawberry*2
+prop seeddrawer loot.refill=0
+
+# --- Settings, story items, notes, behaviours, quest -----------------------------------------------------------------
+info title=Steamvent Harbour
+info author=Custom Islands
+info description=A harbour town round a steaming vent in the snow: pipes to every house, a fruit garden on the warm ground, a glass greenhouse grown shut with vines and a valve that stuck. The third island of The Frozen Horizon.
+island on.arrive=message||Steam rising from a town square - and round it, in the snow, a garden.
+
+story wheelpiece|Handwheel piece|Placeable_Lantern_Metal|A piece of the vent valve's handwheel. The harbour master took it apart to stop the frozen valve being forced.
+story steam|Steam to the houses|Placeable_Lantern_Metal|You opened the vent valve: steam runs to every house in the harbour again.
+
+note notice Harbour master's notice | STEAMVENT HARBOUR - NOTICE\n\nThe vent valve has stuck. The houses are cold. Please stop knocking on my door about it: I am also cold.\nThe greenhouse door has grown shut - the gardener's jungle vines, the heat did it. A machete is in the harbour store. Take it, and do not take the gardener's advice about singing to them.\nRats in the pipe store. Mind your fingers.\nBY ORDER OF THE COLDHOLD: no sets, no transmissions. I don't like it any more than you do. Hand yours to the courier when he comes through.\nTown meeting in the hall once the steam is back.\n\n- Runa Dahl, harbour master
+note harbourstore Harbour store | The harbour store: a machete in oilcloth, its plans, rope.
+note greenstore Greenhouse store | The gardener's store: seed, potatoes, last year's honey.
+note gardenerlog Gardener's log | GREENHOUSE LOG (E. Moss, gardener)\n\nThe vent keeps it at summer heat all winter: bananas, berries, roses, and one lemon tree that sulks. Children come in here just to take their coats off.\nThe vines came in with a crate of bananas, a stowaway. I let them be because they were pretty. Now they've grown over the door and I'm writing this on the inside, eating my own berries. There are worse prisons.\nThe valve on the square feeds the houses. Its handwheel came apart in the cold and the pieces went everywhere: one is in here with me, one in the boiler house with the fuel plans, one in the pipe store - but the rats have that now.\nIf the courier asks, there is no set in the greenhouse. There is a set in the greenhouse. It's under the potatoes.
+note boilerhouse Boiler house | The boiler house chest: the fuel tank's plans, fuel, bolts.
+note pipestore Pipe store | The gnawed pipe store chest: fuel pipe plans, copper.
+note townlocker Steam-house locker | The town hall's locker, thawed: the biofuel extractor's plans.
+note minutes Town meeting minutes | TOWN MEETING - MINUTES (R. Dahl)\n\nSteam back, thanks to a stranger off the ice. Applause. Gunnar cried, says it was the steam.\nThe Warden's broadcast read out again. A long silence followed, which he would have liked.\nThe relay man Ivo came in with the sealers. He says the woman on 700 is Captain Hedda Brask of the Iron Whale, and she is still sending, a few seconds at a time, because nobody told her she was allowed to. He says a captain does not need permission to call for help.\nAgreed, 31 votes to 9: we break the silence once, to find the Whale.\nAgreed: the sledges go to Orrin's camp on the shelf ice, out past the quarry. Orrin knows the way to the Whale; he carried her post all last year. His camp beacon is on 900.\nAgreed: the greenhouse feeds whoever stays.
+note bathnote A note for the bath keeper | Gunnar -\nThe dogs and I owe you two baths and a bowl of that fish soup. Put it on my slate. Knut stole a towel; he thinks it's his now. Let him have it, it's easier.\nI'm taking the sets with the post, everyone's, by the Warden's order. Yours too, the old one behind the boiler. I know it's there. I'm sorry. I didn't write the order. I only carry it.\nIf anyone comes in off the ice asking about the Whale, be kind to them - and don't tell them I was here. I'll be at my camp on the shelf ice a while, out past the quarry. Fixing a few things.\n- Orrin
+note qslcard A QSL card | (a postcard pinned over the bath keeper's towels, a cartoon penguin in headphones on it)\n\nQSL - CONFIRMING OUR CONTACT\nTo: Steamvent Bathhouse, Gunnar. From: SAGA DRIFT, Tor Hallen, "Sparks". Band 500, seven o'clock, signal steamy.\n\nGunnar! Thank you for calling GOOD MORNING, ICE! with the water temperature. Forty-one degrees. Our listeners were delighted. One listener, a penguin, was unmoved.\nYour news that the bath is "free to all, even sealers" has been read out three times. The sealers have asked me to stop.\nIf they ever tell us all to shut up, Gunnar, keep the water hot anyway. People need somewhere warm to talk.\n- Sparks, 73
+note broadcast The Warden's broadcast | (a transcript in the harbour master's hand, read aloud at the last meeting)\n\nTHE WARDEN'S BROADCAST - the last one sent from the Coldhold:\n\n"People of the north. This is Ansel Holt. You know my voice; I read you the ice reports for eleven years.\nThere is a slow pulse coming from the south. We have measured it. It turns toward every voice on the air, and where it turns, nothing answers afterwards. Grey Cove talked. Grey Cove is quiet now.\nSo I am asking you, and then I am ordering you: be silent. Give your sets to the courier. Do not answer the north, not even the Whale, whatever she says. Especially not the Whale.\nThose who keep faith will have a place in the Coldhold when the cold comes. I promise you that.\nThis is my last transmission. Goodbye."\n\n(In the margin, another hand: "Then why was he the one talking? - I.R.")
+loot harbourstore Blueprint_Machete*1;Machete*1;Rope*2
+prop harbourstore loot.refill=0
+loot greenstore story:wheelpiece*1;Seed_Banana*2;Seed_Strawberry*2;Seed_Flower_Red*1;Seed_Flower_Blue*1;Raw_Potato*3
+prop greenstore loot.refill=0
+loot boilerhouse Blueprint_Fueltank*1;Bolt*2;Scrap*2;story:wheelpiece*1
+prop boilerhouse loot.refill=0
+loot pipestore Blueprint_Pipe_Fuel*1;CopperIngot*2;Scrap*2;story:wheelpiece*1
+prop pipestore loot.refill=0
+loot townlocker Blueprint_BiofuelExtractor*1;MetalIngot*2;Bolt*2
+prop townlocker loot.refill=0
+
+prop quayzone zone.id=quay
+prop quayzone zone.radius=6
+prop quayzone zone.message=The quay. Up the road, steam rises from the square.
+prop greenvines obj.name=greenvines
+prop greenvines on.use=hide|greenvines\nsignal||vines\nmessage||The machete bites through the vines. Warm air spills out of the greenhouse door.
+prop greenzone zone.id=greenhouse
+prop greenzone zone.radius=2.5
+prop greenzone zone.message=The greenhouse: summer air, bananas, roses - and bees.
+prop pipezone zone.id=pipestore
+prop pipezone zone.radius=4
+prop pipezone zone.repeat=never
+prop pipezone zone.message=Rats! The pipe store is full of them.
+prop rats creature.count=4
+prop rats creature.respawn=0
+prop rats creature.zone=pipestore
+prop hens creature.count=3
+
+prop ventvalve obj.name=ventvalve
+prop ventvalve beh.use=Turn the vent valve
+prop ventvalve if.use=quest|13\n!signal|steam\ntake|story:wheelpiece|3\ntake|story:relief|1
+prop ventvalve on.use=message||The valve groans, gives - and steam hisses down the pipes. One by one the houses' chimneys breathe.\nsignal||steam\ngive||story:steam*1\nshow|steamhouses\nsound||event:/exploring/obstacles/keypad/keypad_correct
+prop ventvalve else.use=message||The valve is open and the town is warm - or it is not ready: its handwheel is in three pieces (the greenhouse, the boiler house, the pipe store), and the vent wants its relief valve first (the driller's steam cave says why).
+prop steamhouses obj.name=steamhouses
+prop townlocker obj.name=townlocker
+prop townlocker if.open=signal|steam
+prop townlocker else.open=message||The locker's lock is frozen solid. The hall needs its steam back.
+
+quest title=The Warm Harbour
+quest intro=A town round a steaming vent, its houses cold. Make for the steam over the town and tie up at the quay.
+step reach|quay|1|Make for the steaming town; tie up at the harbour quay
+step read|Harbour master's notice|1|Read the harbour master's notice
+step blueprint|Blueprint_Machete|1|Take the machete's plans from the harbour store
+step reach|greenhouse|1|Cut the vines and go into the greenhouse
+step read|Gardener's log|1|Read the gardener's log
+step blueprint|Blueprint_Fueltank|1|Take the fuel tank's plans from the boiler house
+step kill|Rat|4|Clear the rats out of the pipe store
+step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe's plans from the pipe store
+step collect|story:wheelpiece|3|Find the valve handwheel's three pieces (greenhouse, boiler house, pipe store)
+step read|Driller's warning|1|The vent hisses too hard to turn. Find the driller's steam cave, where the steam rises, and read his warning
+step collect|story:bathpower|1|Take cable coils from the chests at the three antenna masts (bears!) and wire the bathhouse hub
+step read|A note for the bath keeper|1|The bathhouse is open again: read the note left on the bath keeper's bench
+step collect|story:relief|1|Climb the derrick on Fumarole Mountain; take the relief valve from the housing chest
+step collect|story:steam|1|Turn the vent valve on the square
+step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor's plans from the town hall's locker
+step read|The Warden's broadcast|1|Read the transcript of the Warden's broadcast in the town hall
+step read|Town meeting minutes|1|Read the town meeting minutes
+quest done=Steamvent breaks the silence once, for the Whale. The sledges go to Orrin's camp on the shelf ice - his beacon is on 900.
+quest reward=MetalIngot*2;Rope*4;Egg*2
+
+# RESIZE 10-24 retest: the bigger island's generator rocks that floated over slopes (ground check)
+clear at -48.49 12.83 r=1.5 only=TP_BigRock
+clear at -31.35 25.78 r=1.5 only=TP_BigRock
+clear at -16.43 52.79 r=1.5 only=TP_BigRock
+clear at -30.27 34.12 r=1.5 only=TP_BigRock
+clear at -34.44 -20.65 r=1.5 only=TP_BigRock
+clear at -40.56 -14.82 r=1.5 only=TP_BigRock
+
+# (box agent 10-25: generated rocks left hanging over the ground check - cleared)
+clear at 66.88 34.13 r=1.5 all body only=SmallBoulder2
+clear at -28.80 32.94 r=1.5 all body only=TP_BigRock02
+clear at -29.87 24.60 r=1.5 all body only=TP_BigRock02
+clear at -32.97 -21.83 r=1.5 all body only=TP_BigRock02
+clear at -39.08 -16.00 r=1.5 all body only=TP_BigRock02
+clear at 57.25 3.91 r=1.5 all body only=TP_BigRock03
+
+# (REACH 10-31 N: generator big rocks west of the town leaned over a dip at their foot - a player dropped in under them
+# and couldn't jump out again (three roofed traps between runs): cleared)
+clear at -42 35.5 r=5 all body only=TP_BigRock
+# (REACH 11-02 RA1, after N's 11-01 idea, which went in 24.2 m north of the spots: (1) a dip under leaning big rocks
+# west of the town, its side a 1 m step and rock overhead - the rocks off, a ramp up its south side; (2) a pond inland
+# of the east shore whose banks stood 0.6-1 m over the water - a beach ramp up its east bank)
+clear at -55 10.4 r=6 all body only=TP_BigRock
+for i 0 3 1
+brush flatten at -56.9 {7.4-0.8*$i} r=1.6 s=20 frames=200 h={2.9+0.33*$i}
+next
+brush smooth from -56.9 7.6 to -56.9 4.6 r=2 s=10 frames=12
+clear from -56.9 7.6 to -56.9 4.6 r=2.6 body
+for i 0 5 1
+brush flatten at {61.2+0.7*$i} -66 r=1.6 s=20 frames=200 h={-0.6+0.3*$i}
+next
+brush smooth from 61.2 -66 to 64.7 -66 r=2 s=10 frames=12
+clear from 61.2 -66 to 64.7 -66 r=2.6 body
+
+save Steamvent Harbour

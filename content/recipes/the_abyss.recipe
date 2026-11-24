@@ -1,0 +1,499 @@
+# The Abyss - an island of the library's plan The Abyss Expedition (its end)
+# A ring of black sea stacks around a trench that falls away 42 m into the dark: the expedition's raft moored over its
+# edge, its air line running down to three air pockets (Raft's own, from under Caravan Town) - a container on a shelf,
+# a gas tank on a ledge, a shack on the floor - and on the floor the lair of the Abyssal Angler. Quest "The Bottom of
+# the Abyss" (17 steps, in four chapters): the raft - the leader's log, the camp chest, the valve wrench, the air valve
+# (a journal page); the dive - the container, the gas tank, the shack; the lair - the Abyssal Angler (a journal page when
+# it dies), its brood, the hoard; the way up - the raft, the log read once more.
+# The journal's pages (the log, the chest's and the hoard's tags, the valve, the angler) are steps of their own.
+#
+# Built by the recipe player (CIRecipe the_abyss) through the editor's own operations. Its play test:
+# content\tests\the_abyss.play.
+# ABYSS 10-26 (1-hour pass): the stacks' ring is now the lagoon of a volcanic island r ~85 - the divers' shore camp
+# (Tomas Ek, Calder's last note, the compressor), Black Peak and its mast (the gauge), Wreck Cove's sunk supply boat
+# (the piston), the ash ridge and its lava tube, the stack run; secrets: flare posts, dive tags, jump course, lava
+# tube, buried pay. Seven new steps come first (26 in all); the old core and its steps are unchanged.
+include lib_sea
+include lib_features
+include lib_highwater
+include lib_areas
+include lib_abyss
+new
+# (nature: volcanic: Like Raft's desert, with little scrub on the ash - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
+gen Trees=0.19 Bushes=0.3 Rocks=0.42 Harvest=0.2 BeachThings=0.3
+gen Seed=9101 Radius=80 Height=30 Roughness=0.6 Peaks=3 Shape=3 Style=4 Cliffs=0.6
+gen Water=0.5 SeaRocks=0.6 SeaFinds=0.5 Sunken=0.5 Hostiles=0 Friendly=0 SeaLife=0.4
+generate
+
+# --- The trench: a bowl 36 m across with a shaft in it 42 m deep; a shelf 12 m down on its east wall (under the raft),
+# a ledge 18 m down on its north wall, the floor at the bottom --------------------------------------------------------
+brush lower at 2 -5 r=18 s=20 frames=26
+brush lower at 2 -5 r=9 s=20 frames=14
+brush flatten from 13.3 -5 to 13.3 -11 r=5 s=20 frames=20
+brush flatten from 13.3 -5 to 13.3 1 r=5 s=20 frames=20
+brush flatten from 2 3.5 to -3 3.5 r=3.5 s=20 frames=20
+brush flatten from 2 3.5 to 7 3.5 r=3.5 s=20 frames=20
+brush flatten at 2 -5 r=7 s=20 frames=30
+
+# --- ABYSS 10-26 (1-hour pass): the ring of stacks becomes the lagoon of a volcanic island - an outer bank of ash land
+# round it (open to the sea at the north-west and the south-east, so a raft still gets in), and on it: the divers'
+# shore camp (north), Black Peak (west), Wreck Cove (south), the ash ridge and its lava tube (east), the stack run
+# (north-east). The old core - stacks, trench, raft, pockets, lair - is as it was. The bank first.
+brush flatten from -24 64 to 24 64 r=8 s=20 frames=600 h=3
+brush flatten from 24 64 to 42 56 r=7 s=20 frames=400 h=3
+brush flatten from 42 56 to 58 42 r=7 s=20 frames=400 h=3
+brush flatten from 58 42 to 66 12 r=7 s=20 frames=500 h=3
+brush flatten from 66 12 to 64 -26 r=7 s=20 frames=500 h=3
+brush flatten from 34 -60 to -16 -64 r=7 s=20 frames=600 h=3
+brush flatten from -16 -64 to -44 -52 r=7 s=20 frames=500 h=3
+brush flatten from -44 -52 to -62 -30 r=7 s=20 frames=500 h=3
+brush flatten from -62 -30 to -70 -12 r=7 s=20 frames=400 h=3
+brush auto from -24 64 to 24 64 r=10 s=10 frames=25
+brush auto from 24 64 to 58 42 r=9 s=10 frames=25
+brush auto from 58 42 to 64 -26 r=9 s=10 frames=25
+brush auto from 34 -60 to -16 -64 r=9 s=10 frames=25
+brush auto from -16 -64 to -70 -12 r=9 s=10 frames=25
+# A The shore camp (north): a pad on the bank, two roofless huts (a table in the first), a tent and a fire
+brush flatten at 0 73 r=14 s=20 frames=500 h=3
+brush smooth at 0 73 r=18 s=4 frames=40
+brush flatten at 0 73 r=11 s=20 frames=400 h=3
+brush auto at 0 73 r=16 s=10 frames=25
+clear at 0 73 r=15
+call ab_ruin x=-10 z=74 h=3 yaw=0 w=3 d=2 al=campruin
+call ab_ruin x=7 z=77 h=3 yaw=0 w=2 d=2 al=campruin
+place Balboa_DecorationPrefabBase_SimpleTent - at -5 79 ground sit yaw=180
+place campfire_1 - at 3 68 ground sit
+place Crate_Big_01 - at -4.5 69 ground sit yaw=15
+# (agent Q 10-30, REACH: the bank stood 3 m over the water on sheer sides all round - nobody got up onto it from the
+# lagoon or the sea: the camp, Tomas and the compressor unreached. A beach from the lagoon up to the camp, 0.7 m a step)
+brush flatten at -6 57.5 r=2.6 s=20 frames=200 h=2.3
+brush flatten at -6 56.2 r=2.6 s=20 frames=200 h=1.6
+brush flatten at -6 54.9 r=2.6 s=20 frames=200 h=0.9
+brush flatten at -6 53.6 r=2.6 s=20 frames=200 h=0.2
+brush flatten at -6 52.3 r=2.6 s=20 frames=200 h=-0.5
+brush flatten at -6 51.0 r=2.6 s=20 frames=200 h=-1.2
+brush flatten at -6 49.7 r=2.6 s=20 frames=200 h=-1.9
+clear from -6 57.5 to -6 49.7 r=3.6 body
+# B Black Peak (west): summit 30 m, base r 26, the trail from its south foot, the signal mast on top
+call hw_mount x=-72 z=8 b=26 h=30
+call hw_trail x=-72 z=8 b=26 h=30 a0=170 turn=300 n=34 h0=3
+brush flatten at -72 8 r=7 s=20 frames=400 h=30
+call hw_mast x=-72 z=8 h0=30 lv=3 a=peakmast chest=gaugebox top=Placeable_Lantern_Metal
+# C Wreck Cove (south): two arms of the bank round a basin 12 m deep, the supply boat sunk in it
+brush flatten from 34 -64 to 30 -92 r=7 s=20 frames=500 h=3
+brush flatten from -14 -66 to -10 -92 r=7 s=20 frames=500 h=3
+brush auto from 34 -64 to 30 -92 r=9 s=10 frames=25
+brush auto from -14 -66 to -10 -92 r=9 s=10 frames=25
+call hw_basin x=10 z=-80 r=10 h=-12
+place BoatStranded supplyboat at 10 -80 ground sit yaw=100
+prop supplyboat tint.color=#3c3a38
+prop supplyboat tint.amount=0.5
+# D The ash ridge (east, on the bank) and E the lava tube in its own rock at the ridge's sea foot, mouth north
+call ar_ridge x1=72 z1=-26 x2=64 z2=28 h=9 top=7 r=8
+call ar_cave x=88 z=-8 h=3 yaw=0 al=lavarock chest=lavachest
+# (11-05) Two rats live at the back of the lava tube, on its floor 12 m in from the chest and the tube's zone at its mouth.
+place Creature_Rat tuberats at 89 -15 h=4.5
+prop lavarock tint.color=#2e2a28
+prop lavarock tint.amount=0.5
+# (agent Q 10-30, REACH: the lava tube's mouth path ended 3.4 m over the sea - the tube and its chest unreached: a
+# beach down from the path's end into the water)
+brush flatten at 87 14.3 r=2.2 s=20 frames=200 h=2.7
+brush flatten at 87 15.6 r=2.2 s=20 frames=200 h=2.0
+brush flatten at 87 16.9 r=2.2 s=20 frames=200 h=1.3
+brush flatten at 87 18.2 r=2.2 s=20 frames=200 h=0.6
+brush flatten at 87 19.5 r=2.2 s=20 frames=200 h=-0.1
+brush flatten at 87 20.8 r=2.2 s=20 frames=200 h=-0.8
+brush flatten at 87 22.1 r=2.2 s=20 frames=200 h=-1.5
+clear from 87 14.3 to 87 22.1 r=3.2 body
+# (content 11-04, ACID) The vent pool: a low ash shelf on the lagoon side of the lava tube's path (the path is a spit
+# with deep lagoon west of it) and in it a hot-spring pool fed by a vent - mist over it, sulphur-yellow stones round
+# its rim. Acid (a suit keeps it off). The path itself is the way past it; a shallow slope on the path's side leads out of it.
+# Its middle (79.5 13) is 17 m from the lava tube's chest and zone, clear of the tube's rock (z 7 and less).
+# The terrain grid is ~2 m, so the pool's strokes are wide (a 2 m brush leaves no hollow), and unsmoothed (a smooth
+# over it filled the hollow back up to the shelf).
+brush flatten from 78.5 9 to 78.5 17 r=6.5 s=20 frames=400 h=1.3
+brush flatten at 79.5 13 r=4 s=20 frames=300 h=-1.2
+# a shallow way out on the path's side (a swimmer can't climb the hollow's 1 m lip): steps of 0.7 m, smoothed into a slope
+brush flatten at 81.8 11.4 r=2 s=20 frames=150 h=-0.3
+brush flatten at 83.2 10.4 r=2 s=20 frames=150 h=0.5
+brush flatten at 84.6 9.4 r=2 s=20 frames=150 h=1.4
+brush smooth from 81.8 11.4 to 84.6 9.4 r=2 s=3 frames=20
+# (11-05 polish) the lagoon side of the shelf sloped down into the water: it ended in a sheer 1-3 m lip over the lagoon
+# that read as a terrace hanging over the sea from afar. (11-05 round 2) Straight strokes along x and z left the shallows
+# a square step in the sea, its waterline foam a hard box from afar: the slope now runs out in rings round the shelf
+# (its middle 78.5 13) from the path's end (65 deg) round the lagoon side to the tube's rock (225 deg), each ring's
+# radius wobbling 1.8 m with the angle, 1-1.3 m down every 2.5 m (under Raft's rock-paint slope), out to 6.3 m deep
+for ring 0 6
+set rr {9.5+2.5*$ring}
+set rh {0.6-1.15*$ring-0.03*$ring*$ring}
+for a 65 225 4
+brush flatten at {78.5+($rr+1.2*sin(2.7*$a+20)+0.6*sin(6.1*$a+55))*cos($a)} {13+($rr+1.2*sin(2.7*$a+20)+0.6*sin(6.1*$a+55))*sin($a)} r=2.5 s=20 frames=150 h=$rh
+next
+next
+for a 65 225 10
+brush smooth at {78.5+11*cos($a)} {13+11*sin($a)} r=4 s=3 frames=20
+brush smooth at {78.5+17*cos($a)} {13+17*sin($a)} r=4 s=3 frames=20
+brush smooth at {78.5+23*cos($a)} {13+23*sin($a)} r=4 s=3 frames=20
+next
+# (the outer drop softened, but not by the buried treasure at 60 36 - its scatter needs that ground as it was)
+for a 65 105 10
+brush smooth at {78.5+27*cos($a)} {13+27*sin($a)} r=6 s=4 frames=30
+brush smooth at {78.5+31*cos($a)} {13+31*sin($a)} r=6 s=4 frames=30
+next
+for a 155 225 10
+brush smooth at {78.5+27*cos($a)} {13+27*sin($a)} r=6 s=4 frames=30
+brush smooth at {78.5+31*cos($a)} {13+31*sin($a)} r=6 s=4 frames=30
+next
+# (11-05 round 3) The lava tube's hill (the cave mountain over its rock) falls 1.5 m per m from the rock to the ground;
+# west of the shelf (x 62-69 z -3..5) the rings had cut the ash ridge's ground there down to 6 m under the sea, so the
+# hill's flank stood in the water, a pale lobe with a straight edge that read from afar as a see-through patch. The ridge's
+# ground comes back there as a low spit 1.4 m over the sea (2 m brushes miss the 2 m terrain grid: wide ones), so the
+# hill meets the ground above the sea, and the spit slopes away under the water on its shelf side.
+brush flatten from 63 -3 to 69 7 r=4.5 s=20 frames=400 h=1.4
+brush flatten from 60 2 to 63.5 9 r=3 s=20 frames=300 h=-0.8
+brush flatten from 57.5 4 to 60.5 10 r=2.5 s=20 frames=200 h=-2.6
+brush smooth from 60 0 to 66 7 r=4 s=3 frames=15
+clear from 68 4 to 72 22 r=4 body
+clear from 61 2 to 65 26 r=4 body
+clear from 66 24 to 84 30 r=4 body
+clear at 79.5 13 r=6.5
+place SmallRock_02 ventrock at 75.3 12.2 ground sit yaw=20
+place SmallRock_02 ventrock at 77.6 17.4 ground sit yaw=140
+place SmallRock_02 ventrock at 83.6 14.6 ground sit yaw=250
+place SmallRock_02 ventrock at 76.4 9.6 ground sit yaw=310
+# sulphur crust: flat yellow-green patches on the rim's ground (clear of the way out to the south-east)
+place SmallRock_02 ventrock at 74.3 14.6 ground sit yaw=60 scale=1.3 sy=0.22
+place SmallRock_02 ventrock at 79.8 18.1 ground sit yaw=170 scale=1.2 sy=0.22
+place SmallRock_02 ventrock at 79.2 8.2 ground sit yaw=280 scale=1.2 sy=0.22
+place SmallRock_02 ventrock at 82.9 17.0 ground sit yaw=20 scale=1.1 sy=0.22
+place SmallRock_02 ventrock at 73.9 10.9 ground sit yaw=110 scale=1.1 sy=0.22
+prop ventrock tint.color=#a4c428
+prop ventrock tint.amount=0.7
+# thick green steam over the water (and a sickly green haze and light when you come close)
+place Zone_Atmosphere ventmist at 79.5 13 h=0.1
+prop ventmist zone.radius=5
+prop ventmist atmo.particles=steam
+prop ventmist atmo.fog=#8cc030
+prop ventmist atmo.fogAmount=0.35
+prop ventmist atmo.light=#c8ff70
+prop ventmist atmo.lightAmount=0.3
+call hw_hazard x=79.5 z=13 al=ventacid kind=acid r=3 dmg=5 safe=suit msg="The vent water burns. The vent suits are in the box on the path." h=0.6
+# (11-07) The suit for it: a box of vent suits on the path by the pool (the island had none - only a test command put one on)
+place "Box Big" ventsuits at 85.8 15 ground sit yaw=250
+prop ventsuits obj.name=ventsuits
+prop ventsuits beh.use=Put on a vent suit
+prop ventsuits on.use=suit||180\nmessage||A rubber vent suit with a hood and gloves - three minutes before the acid gets through.
+
+# --- JUMP COURSE ab (Abyss pass 10-26): kz-style hop course of floor slabs on its own pad (the bs course, turned) ---
+# JUMP ab pad=4 at=48 66
+push at 48 66
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=4
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=4
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpab at 5.64 -0.10 h=4.60
+place Block_Foundation_Tier3 jpab at 5.64 -2.92 h=5.10
+place Block_Foundation_Tier3 jpab at 5.64 -5.93 h=5.50
+place Block_Foundation_Tier3 jpab at 3.03 -5.93 h=6.40
+place Block_Foundation_Tier3 jpab at -1.21 -5.93 h=6.90 sx=3 sz=0.3
+place Block_Foundation_Tier3 jpab at -5.64 -5.93 h=7.70
+place Block_Foundation_Tier3 jpab at -5.64 -3.02 h=8.60
+place Block_Foundation_Tier3 jpab at -5.64 -0.40 h=7.60
+place Block_Foundation_Tier3 jpab at -5.64 2.41 h=8.55
+place Block_Foundation_Tier3 jpab at -5.64 5.12 h=9.50
+place Block_Foundation_Tier3 jpab at -2.02 5.12 h=10.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jpab at -2.02 -1.30 h=10.70 sx=2 sz=2
+place Block_Foundation_Tier3 jpab at 3.21 -1.30 h=11.00
+# JUMP end
+# (each slab on one solid column of its own footprint, from under the pad up to the slab)
+# (the first slab rests on the pad itself: no column)
+place Block_Foundation_Tier3 jppab at 5.64 -2.92 h=4.418 sy=1.493
+place Block_Foundation_Tier3 jppab at 5.64 -5.93 h=4.818 sy=2.079
+place Block_Foundation_Tier3 jppab at 3.03 -5.93 h=5.718 sy=3.399
+place Block_Foundation_Tier3 jppab at -1.21 -5.93 h=6.218 sy=4.132 sx=3 sz=0.3
+place Block_Foundation_Tier3 jppab at -5.64 -5.93 h=7.018 sy=5.305
+place Block_Foundation_Tier3 jppab at -5.64 -3.02 h=7.918 sy=6.625
+place Block_Foundation_Tier3 jppab at -5.64 -0.40 h=6.918 sy=5.158
+place Block_Foundation_Tier3 jppab at -5.64 2.41 h=7.868 sy=6.551
+place Block_Foundation_Tier3 jppab at -5.64 5.12 h=8.818 sy=7.944
+place Block_Foundation_Tier3 jppab at -2.02 5.12 h=9.718 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jppab at -2.02 -1.30 h=10.018 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jppab at 3.21 -1.30 h=10.318 sy=10.144
+prop jpab tint.color=#2e2a28
+prop jpab tint.amount=0.35
+prop jppab tint.color=#2e2a28
+prop jppab tint.amount=0.35
+place Loot_Chest jcab at -2.02 5.12 h=10.40 sit yaw=0
+note jcab Stack runner's perch | The divers raced up the stack on rest days; the winner sat here.
+loot jcab Plank*6;Rope*3;MetalIngot*1
+prop jcab loot.refill=0
+place Loot_ChestSmall jbab at 3.21 -1.30 h=11.00 sit yaw=0
+note jbab Stack run prize | A tin wedged on the last column: a diver's winnings.
+loot jbab MetalIngot*2;CopperIngot*2;TitaniumIngot*1
+prop jbab loot.refill=0
+place Zone_Trigger jyab at 3.21 -1.30 h=12.00
+prop jyab zone.id=jump_ab_finale
+prop jyab zone.radius=1.8
+prop jyab zone.repeat=never
+prop jyab zone.message=The top of the stack run. The lagoon, the trench, the raft - and Black Peak across the water.
+pop
+# --- end of jump course ab ---
+
+# --- The expedition's raft, moored over the trench's east edge: 6 x 5 of Raft's foundations at the surface ----------
+for fx 14.75 22.25 1.5
+for fz -8 -2 1.5
+place Block_Foundation - at $fx $fz h=0.13
+next
+next
+
+# --- On deck: the air pump, cable reels, lamps on posts, the leader's table and log, the camp chest, the sail, a tent,
+# the anchor and a receiver ------------------------------------------------------------------------------------------
+push at 14 -5 h=0.13
+place Pump - at 1.6 0.9 sit
+place Pump_Handle - at 1.6 0.9 y=1.1 sit
+place Cableroll_01 - at 1.4 -1.2 sit
+place Cableroll_02 - at 2.3 -1.5 sit
+place Block_Pillar_Wood - at 0.25 3.5
+place Placeable_Lantern_Metal - at 0.25 3.5 y=2.37 sit
+place Block_Pillar_Wood - at 0.25 -3.5
+place Placeable_Lantern_Metal - at 0.25 -3.5 y=2.37 sit
+place Placeable_Table_Basic - at 3.6 -2.4 sit yaw=90
+place Note_Paper leaderlog at 3.6 -2.4 y=0.74 sit
+place Loot_Chest campchest at 5.5 -2.9 sit
+place Placeable_Sail - at 3.6 2.0 sit
+place Balboa_DecorationPrefabBase_SimpleTent - at 7 1.6 sit yaw=270
+place Placeable_Anchor_Stationary - at 7.6 -2.3 sit yaw=90
+place Placeable_Reciever_Antenna - at 8.4 3.3 sit
+place Zone_Trigger camp at 4.5 0 y=1
+pop
+
+# --- The air line: up from the first pocket's roof through the raft's edge, its valve wheel at the top ---------------
+place RT_PipeDownStraight airline at 14.2 -5 h=-6.6 sit centred tilt=90 sy=3.85
+place TP_Selene_DoorCrankWheel airvalve at 14.83 -5 h=1.43 rot=0,0,0 yaw=90
+
+# --- The air pockets: Raft's own from under Caravan Town - the container on the shelf, the gas tank on the ledge, the
+# shack on the floor. Their air - a zone where a diver breathes, and bubbles rising - comes when the valve is open ---
+place AirPocket_3 - at 12.95 -5 centred sit y=0
+place AirPocket_2 - at 2 4.8 centred sit y=0 yaw=90
+place AirPocket_1 - at -0.3 -5 centred sit y=0 yaw=90
+place Zone_Trigger pocket1 at 12.95 -5 y=3
+place Zone_Atmosphere pocketair1 at 12.95 -5 y=6
+place Zone_Trigger pocket2 at 2 4.8 y=3
+place Zone_Atmosphere pocketair2 at 2 4.8 y=6
+place Zone_Trigger pocket3 at -0.3 -5 y=2.5
+place Zone_Atmosphere pocketair3 at -0.3 -5 y=5
+place VP_AirPocket_Buoy divebuoy at 2 -5 h=-0.5
+
+# --- The lair on the floor: the hoard under a red light, the expedition's floodlights, the angler and its brood -------
+place Loot_ChestLarge lairhoard at 4.6 -5 sit y=0 yaw=270
+place TP_RotatingRedLight lairlight at 4.6 -5 y=1.93 sit
+place RT_Floodlight - at 3.6 -1.8 sit y=0 yaw=160
+place RT_Floodlight - at 3.6 -8.2 sit y=0 yaw=20
+place Creature_AnglerFish abyssal at 3 -5 y=6
+place Creature_AnglerFish brood at 1 -3 y=9
+place Zone_Trigger lair at 2 -5 y=3
+place Zone_Atmosphere lairdark at 2 -5 y=8
+
+# --- ABYSS 10-26: the outer island's zones, notes, machine, puzzles and secrets ---------------------------------------
+# The shore camp: its zone, Tomas Ek (the diver who stayed), Calder's last field note on the hut's table, the compressor
+call hw_zone x=0 z=72 al=shorecampz id=shorecamp r=8 msg="The divers' shore camp. Two huts with their roofs burnt off, a tent, a cold fire - and a compressor that should fill the deep tanks."
+place Story_Islander tomas at -3 67 ground
+prop tomas obj.name=Tomas Ek
+prop tomas islander.pose=lean
+prop tomas talk.text=I stayed. Somebody had to keep the fire for when they came up.\n---\nThe compressor fills the tanks for the deep dive. It needs its gauge - up on Black Peak's mast - and its piston, which went down with the supply boat in Wreck Cove.\n---\nThe flare posts round the lagoon? Each one fires its neighbours too. The two at the ends were burning when the boat sank. Use every post once.
+place Note_Paper caldernote5 at -10.75 74 h=4.45 drop yaw=20
+call hw_machine x=0 z=76 yaw=180 al=compressor nm="Compressor" a=gauge b=piston done=compressed rew=compchest rnote=compnote msg="The compressor coughs, catches and roars. The deep tanks fill - enough air for the bottom of the Abyss." hint="The compressor has no gauge and no piston. Tomas Ek knows where they went."
+note compchest Compressor chest | The divers' deep-dive chest, sealed until the tanks were full: two full bottles, a lamp, the deep crew's spare kit.
+loot compchest OxygenBottle*2;Battery*2;MetalIngot*2;Rope*2
+note compnote Dive chief's card | DEEP DIVE - TANKS FULL\n\nGauge from the peak mast, piston from the boat. Pressure good.\nWe go down at first light: the raft, the air line, the three pockets, the floor.\nIf we don't come up, Tomas keeps the fire.\n- R. C.
+# Black Peak: the zone at its foot and on top, the pressure gauge in the mast's deck box
+call hw_zone x=-70 z=-19 al=peakfootz id=peakfoot r=5 msg="Black Peak. A path cut round the ash cone to the signal mast on its top."
+call hw_zone x=-72 z=8 al=peaktopz id=peaktop r=7 h=1 msg="The top of Black Peak. The whole island lies below - the lagoon, the black stacks, the raft over the trench."
+note gaugebox Mast deck box | A box bolted to the signal mast's deck: the compressor's pressure gauge, wrapped against the ash.
+loot gaugebox story:gauge*1;Battery*1;Rope*2
+# Wreck Cove: the zone on its shore, the supply boat on the basin's floor, its locker and an air pocket beside it
+call hw_zone x=10 z=-66 al=covez id=wreckcove r=5 msg="Wreck Cove. Twelve metres down, the expedition's supply boat lies on its side."
+place Loot_Crate boatlocker at 14 -84 ground sit yaw=40
+note boatlocker Supply boat locker | The supply boat's locker, its lid sprung: the compressor's piston in an oiled rag, and the boat's papers.
+loot boatlocker story:piston*1;Rope*2;Bolt*2
+prop boatlocker loot.refill=0
+call hw_airpocket x=4 z=-75 id=coveair al=coveair bub=covebub msg="An air pocket under the cove's ledge - breathe."
+# The flare posts round the lagoon (puzzle: all four lit shows the expedition's cache); a post fires its neighbours
+# too. Start: 1 and 4 lit; every post used once, in any order, lights them all.
+call ab_lamp x=20 z=64 al=flare1 nm="Flare post 1" grp="Flare posts" on=1
+call ab_lamp x=62 z=-14 al=flare2 nm="Flare post 2" grp="Flare posts" on=0
+call ab_lamp x=24 z=-63 al=flare3 nm="Flare post 3" grp="Flare posts" on=0
+call ab_lamp x=-50 z=-46 al=flare4 nm="Flare post 4" grp="Flare posts" on=1
+prop flare1 on.use=light|Flare post 2|toggle
+prop flare2 on.use=light|Flare post 1|toggle\nlight|Flare post 3|toggle
+prop flare3 on.use=light|Flare post 2|toggle\nlight|Flare post 4|toggle
+prop flare4 on.use=light|Flare post 3|toggle
+prop flare1 on.alllit=show|expcache\nmessage||All four flare posts burn round the lagoon. On the cove's bank, a cache stands open.
+call ab_hidden x=17 z=-64 al=expcache
+note expcache Expedition's cache | The expedition's cache on the cove's bank: their pay and the spare kit, never collected.
+loot expcache TitaniumIngot*1;MetalIngot*3;Battery*2;TradeToken*2
+# Dive tags: five tags of the expedition's divers, lost about the island (a set: a secret)
+call ab_piece x=12 z=70 al=dtag1 set="Dive tags" nm="Dive tag 1"
+call ab_piece x=-62 z=-24 al=dtag2 set="Dive tags" nm="Dive tag 2"
+call ab_piece x=30 z=-84 al=dtag3 set="Dive tags" nm="Dive tag 3"
+call ab_piece x=62 z=20 al=dtag4 set="Dive tags" nm="Dive tag 4"
+call ab_piece x=30 z=70 al=dtag5 set="Dive tags" nm="Dive tag 5"
+prop dtag1 on.set=give||TitaniumIngot*1;OxygenBottle*1\nmessage||All five dive tags. Every diver of the expedition is remembered.
+# The lava tube: its chest and zone
+note lavachest Lava tube chest | A chest in the lava tube, where the divers kept what the heat would not spoil: copper and titanium from the trench.
+loot lavachest TitaniumOre*3;CopperIngot*2;MetalIngot*2
+prop lavachest loot.refill=0
+call hw_zone x=88 z=-3 al=lavaz id=lavatube r=4 msg="A lava tube under the ash ridge, its walls glassy black. It is still warm."
+# The expedition's buried pay (two more treasures on the new land)
+call treasure x=-40 z=-56 r=6 n=1 seed=26491 kind=0
+prop treasure26491 treasure.loot=TitaniumOre*2;MetalIngot*2
+call treasure x=60 z=36 r=5 n=1 seed=26501 kind=0
+prop treasure26501 treasure.loot=CopperIngot*2;Battery*1;TradeToken*2
+# The new land planted (Raft's desert kinds on the ash, as the island's own; hill kinds on the peak)
+call ar_plants_desert x=-10 z=64 r=10 seed=26411
+call ar_plants_desert x=46 z=52 r=8 seed=26421
+call ar_plants_desert x=64 z=-10 r=10 seed=26431
+call ar_plants_hill x=-72 z=8 r=24 seed=26441
+call ar_plants_desert x=-34 z=-58 r=9 seed=26451
+call ar_plants_desert x=-58 z=-34 r=7 seed=26461
+call ar_plants_desert x=32 z=-78 r=7 seed=26471
+call ar_plants_desert x=-12 z=-80 r=7 seed=26481
+
+# --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, pineapples, palms ----------
+scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=56.0 seed=4321 free=5
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=56.0 seed=4331 free=3
+scatter "Pickup_Landmark_Tree_Palm 3" 6 at 0 0 r=56.0 seed=4341 free=5
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=100 deep=5 n=2
+
+info title=The Abyss
+info author=Custom Islands
+info description=A volcanic island as big as Raft's own: a ring of black sea stacks round a lagoon and a trench that falls away into the dark, the expedition's raft moored over its edge. On the shore the divers' camp and the last diver who stayed; Black Peak, Wreck Cove, an ash ridge with a lava tube - and at the bottom of the trench, the lair of the thing the expedition came to find. The Abyss Expedition's end.
+island on.arrive=message||Black stacks around a circle of dark water - a trench, falling away to nothing. A raft is moored over its edge, its lamps still lit.
+
+story gauge|Pressure gauge|CircuitBoard|The compressor's pressure gauge, from Black Peak's signal mast.
+story piston|Compressor piston|Bolt|The compressor's piston, from the supply boat sunk in Wreck Cove.
+story compressed|Deep tanks filled|OxygenBottle|The compressor ran: the deep tanks are full.
+note caldernote5 Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 5\n\nThis is the place. The trench under the lagoon goes down past our lines, and something down there has a light of its own.\n\nThe compressor needs its gauge from the peak mast and its piston from the boat we lost in the cove. With full tanks we go down: the raft, the air line, the pockets, the floor.\n\nTomas will keep the fire. If you are reading this, we did not come up. Finish it.\n- R. C.
+story abysswrench|Valve wrench|quest:Balboa_BrunosTool_Wrench|The expedition's valve wrench: the air line's valve won't turn without it.
+note leaderlog Expedition leader's log | THE ABYSS - LAST CAMP\n\nWe found it. The trench goes down further than our lines - and something lives at its bottom, something with a light that is not a fish's.\nThe air pockets are down in the trench: the container on the shelf, the tank on the ledge, the shack on the floor. Their valve is here at the raft's edge - rusted fast, it takes the wrench in the chest. Open it and they fill.\nWe went down without them. If you read this, don't.
+note campchest Camp chest | The expedition's camp chest: the valve wrench, a spare tank, ropes.
+loot campchest story:abysswrench*1;OxygenBottle*2;Rope*4
+prop campchest loot.refill=0
+note lairhoard Lair hoard | What the expedition found at the bottom of the Abyss - and everything the lair's owner ever dragged down.
+loot lairhoard Blueprint_HeadLight_Advanced*1;Blueprint_BackpackAdvanced*1;Head_AnglerFish*1;TitaniumIngot*4;MetalIngot*8;CopperIngot*6
+prop lairhoard loot.refill=0
+
+prop airvalve obj.name=airvalve
+prop airvalve beh.use=Open the air line's valve
+prop airvalve if.use=quest|12\ntake|story:abysswrench|1
+prop airvalve on.use=message||The wrench bites and the wheel turns. The pump hisses - far below, one by one, the air pockets swell with air, and bubbles rise out of the dark.\nshow|airpockets\nsignal||airon\njournal|The air line's valve|The valve is open. The container on the shelf, the tank on the ledge, the shack on the floor: air all the way down. Breathe at each one.\nsound||event:/exploring/obstacles/varuna/garagedoor_open
+prop airvalve else.use=message||The valve wheel is rusted fast. The expedition had a wrench for it - in the camp chest?
+
+prop pocket1 zone.id=pocket1
+prop pocket2 zone.id=pocket2
+prop pocket3 zone.id=pocket3
+prop pocket1 zone.message=Air! The container on the shelf is full of it.
+prop pocket2 zone.message=Air - the gas tank on the ledge breathes out.
+prop pocket3 zone.message=The shack on the floor still holds air.
+prop pocket1 zone.radius=4.5
+prop pocket2 zone.radius=4
+prop pocket3 zone.radius=4
+prop pocket1 zone.repeat=1
+prop pocket2 zone.repeat=1
+prop pocket3 zone.repeat=1
+prop pocket1 zone.air=1
+prop pocket2 zone.air=1
+prop pocket3 zone.air=1
+prop pocketair1 atmo.particles=bubbles
+prop pocketair2 atmo.particles=bubbles
+prop pocketair3 atmo.particles=bubbles
+prop pocketair1 zone.radius=4
+prop pocketair2 zone.radius=4
+prop pocketair3 zone.radius=4
+prop pocket1 obj.name=airpockets
+prop pocket2 obj.name=airpockets
+prop pocket3 obj.name=airpockets
+prop pocketair1 obj.name=airpockets
+prop pocketair2 obj.name=airpockets
+prop pocketair3 obj.name=airpockets
+prop pocket1 beh.hidden=1
+prop pocket2 beh.hidden=1
+prop pocket3 beh.hidden=1
+prop pocketair1 beh.hidden=1
+prop pocketair2 beh.hidden=1
+prop pocketair3 beh.hidden=1
+
+prop camp zone.id=camp
+prop camp zone.radius=7
+prop camp zone.message=The expedition's raft, moored over the trench: a tent, lamps, an air pump - and a line going down into the dark.
+prop lair zone.id=lair
+prop lair zone.radius=12
+prop lair zone.message=The bottom of the Abyss. The light that is not a fish's turns towards you.
+prop lairdark atmo.fog=#020408
+prop lairdark atmo.fogAmount=0.85
+prop lairdark atmo.light=#101820
+prop lairdark atmo.lightAmount=0.9
+prop lairdark zone.radius=16
+prop brood creature.count=3
+prop brood creature.respawn=0
+prop brood creature.zone=lair
+prop tuberats creature.count=2
+prop tuberats creature.respawn=0
+prop abyssal creature.count=1
+prop abyssal creature.size=3.2
+prop abyssal creature.health=12
+prop abyssal creature.damage=3
+prop abyssal creature.respawn=0
+prop abyssal creature.zone=lair
+prop abyssal tint.color=#1a1426
+prop abyssal tint.amount=0.6
+prop abyssal on.defeat=journal|The Abyssal Angler|The light that was not a fish's has gone out. The thing the expedition came to find lies on the floor of the Abyss - and its brood is still in the dark.
+
+quest title=The Bottom of the Abyss
+quest intro=The expedition's last stop: a trench among black sea stacks. Their raft is still moored over it - and on the shore their diver Tomas Ek still keeps the camp.
+step reach|shorecamp|1|Make for the mast on Black Peak, then land at the divers' camp with the burnt huts
+step read|Dr. Ruth Calder's field note|1|Read Dr. Calder's last field note on the hut's table
+step reach|peaktop|1|Climb Black Peak to its signal mast
+step collect|story:gauge|1|Open the box on the mast's deck and take the compressor's gauge
+step collect|story:piston|1|Dive to the sunk supply boat in Wreck Cove and open its crate for the piston
+step collect|story:compressed|1|Put the gauge and piston in the compressor at the shore camp
+step open|Compressor chest|1|Open the deep-dive chest by the compressor
+step reach|camp|1|Board the expedition's raft, moored over the trench
+step read|Expedition leader's log|1|Read the expedition leader's log on the table
+step pages||6|Read the leader's warning; it goes into your journal
+step open|Camp chest|1|Open the expedition's camp chest
+step collect|story:abysswrench|1|Take the valve wrench from the camp chest
+step pages||7|Read the camp chest's list; it goes into your journal
+step pages||8|Turn the air line's valve on the raft with the wrench
+step reach|pocket1|1|Dive to the container on the shelf under the raft and breathe
+step reach|pocket2|1|Sink to the gas tank on the ledge, 18 m down
+step reach|pocket3|1|Down to the shack on the floor - the last air before the lair
+step reach|lair|1|Swim to the lair at the bottom of the Abyss and face the glowing light
+step pages||9|Kill the Abyssal Angler in the lair
+step kill|Angler fish|4|Finish off its brood - not one angler left in the lair
+step open|Lair hoard|1|Open the hoard chest in the lair
+step blueprint|Blueprint_HeadLight_Advanced|1|Take the advanced headlamp plans from the lair hoard
+step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack plans from the lair hoard
+step pages||10|Read the hoard's note; it goes into your journal
+step reach|camp|1|Climb the air line back up and get aboard the expedition's raft
+step read|Expedition leader's log|1|Read the leader's log on the raft once more
+quest done=The Abyss is quiet. The expedition's question has its answer - and the deep has given up its hoard. The Abyss Expedition is done.
+quest reward=MetalIngot*8;Nail*30;OxygenBottle*2
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=40 n=1 seed=8815
+prop treasure8815 treasure.loot=TitaniumOre*3
+
+# the generator's rocks that floated over the slope (VI4 ground check, 2026-10-24)
+clear at 11.2 14.98 r=1.5 only=BigSharpRock
+clear at 26.74 -41.24 r=1.5 only=CaravanIsland_SmallRock
+clear at -12.42 -74.67 r=4 all only=CaravanIsland_SmallRock
+clear at -15.32 -85.67 r=4 all only=CaravanIsland_SmallRock
+clear at 40.78 -18.27 r=1.5 only=BigSharpRock
+
+save The Abyss

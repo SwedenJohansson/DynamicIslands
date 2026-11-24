@@ -1,0 +1,114 @@
+# Thunderhead Array (CIPlay thunderhead_array): the plan The Rainmakers' sixth island, quest "Storm Grid"
+# The plateau (14 m) round 0 8 r 30: the rod grid x -21..21 z 2..26; the connectors at x -24.5 (z 8/14/20), the grid
+# board at -24.5 0; the generator hall x -12..-6 z 30..34.5, the bunker x 4..10, Ingrid's cage at -1 32; the landing at
+# 0 -55, the path up the south side, the zipline from 14 -16 down to the beach at 22 -54.
+island Thunderhead Array
+offset 0 24
+expect step 0
+expect title Storm Grid
+wait 5
+expect hidden storm
+zone landing
+expect step 1
+read Array safety rules
+expect step 2
+zone plateau
+expect shown storm
+expect step 3
+use wire1
+expect message all three generators first
+use gen1
+use gen2
+use gen1
+expect message running
+use gen3
+expect story power 3
+expect step 4
+use gridboard
+expect message aren't wired
+use wire1
+use wire2
+use wire3
+expect story link 3
+use gridboard
+expect shown gridnote
+read Grid restored
+expect step 5
+wait 2
+kill Screecher
+expect step 6
+use bunkerdoor
+expect shown bunkerdoor
+open Bunker lockers
+expect message keycard door
+open Generator hall chest
+use bunkerdoor
+expect hidden bunkerdoor
+zone bunker
+expect step 7
+open Bunker lockers
+wait 3
+expect item Blueprint_WindTurbine 1
+expect item Blueprint_ElectricGrill 1
+expect story cagekey 1
+expect step 12
+read Array engineer's diary
+expect step 13
+open Ingrid's tool bag
+expect message won't let go
+use ingridcage
+expect survivor rainmakers_ingrid
+open Ingrid's tool bag
+expect item ZiplineTool 1
+expect step 14
+# RAIN 10-26: the hub, Signe Lund, the climb, Basalt Cave, the secrets
+expect hidden ta_rewchest
+use ta_machine
+expect hidden ta_rewchest
+read Linesman's notice
+expect step 15
+use Signe Lund
+wait 1
+expect step 16
+expect hidden ta_lampchest
+use Line lamp 1
+wait 1
+expect shown ta_lampchest
+open Signe's tool roll
+zone ta_hill
+expect step 17
+open Storm watch mast deck box
+wait 3
+expect story ta_top 1
+expect step 18
+zone ta_cave
+expect step 19
+open Basalt Cave chest
+wait 3
+expect story ta_cave 1
+expect step 20
+use ta_machine
+expect shown ta_rewchest
+expect story ta_fixed 1
+open Earthing switch reward
+wait 3
+read Earthing log
+expect step 21
+# the secrets: the plane, the jumps, the set
+zone ta_plane
+open Weather plane's crate
+read Weather pilot's note
+zone ta_jumps
+open Basalt perch
+open Stack top
+expect hidden ta_setchest
+use ta_piece1
+use ta_piece2
+use ta_piece3
+use ta_piece4
+use ta_piece5
+wait 2
+expect shown ta_setchest
+open Glass case
+zone beach
+expect done

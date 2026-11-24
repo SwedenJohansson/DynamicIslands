@@ -1,0 +1,10 @@
+# Probe (w03 11-09): the south-west mouth (30 56) in the lip rock's steep foot - is the patterned patch round it the dug
+# rim (its ground-look top or the rock's own top texture) or the island's ground? Same view with the dug tunnels hidden.
+island The Stalker's Hollow keep
+offset 0.6508 1.0124
+hour 11
+weather Calm
+picture shm_mouth 27 9.5 47 30 7 56 light=20
+hide DigTunnel/
+picture shm_mouth_nodig 27 9.5 47 30 7 56 light=20
+show DigTunnel/

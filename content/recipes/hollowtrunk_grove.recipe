@@ -1,0 +1,338 @@
+# Hollowtrunk Grove - the fifth island of the library's plan The Last Green World (SL11, Verdance)
+# A grove of five giant trees (Raft's giant firs and birches from Balboa) on a low green island, a wooden hut or a deck
+# on posts at the foot of each. The Seedkeepers' greenhouse (an open shelter) stands by the south beach with its water
+# tower and an old token machine; a zipline runs from the deck at the second trunk to the fourth; the seed store sits at
+# the foot of the biggest trunk, and between its roots a hollow runs down: the root hole. Bees hum in the birches. Burr
+# the goat stands by a vine-choked cache in the north-east. Quest "The Hollow Trees" (12 steps): the greenhouse, the
+# watering rota, the water tank plans in the water tower, the zipline to the fourth trunk, the water pipe plans in its
+# store, the purifier plans in the crown box, the large storage plans in the seed store, the seed drawers, Ranger log 6,
+# the root hole (it brings Rootweave Caves).
+#
+# Built by the recipe player (CIRecipe hollowtrunk_grove) through the editor's own operations. Points (metres over the
+# sea): the greenhouse pad 1.6 m round 0 -40, the water tower x -16..-11.5, z -46..-41.5; the trunks T1 (fir) 0 10,
+# T2 (fir) -32 -6, T3 (birch) 30 -14, T4 (fir) -26 36, T5 (birch) 28 30, their pads at 2 m; T2's deck x -27..-22.5,
+# z -10..-5.5, T4's deck x -22..-17.5, z 30..34.5; the seed store x 6..10.5, z 14..17; the root hole 0.6 m at -6 2.
+include lib_sea
+include lib_features
+include lib_huts
+include lib_gravity
+include lib_verdance
+include lib_ni8
+# ROOT DEN 11-08 (content round 11-04, world 02): a dug tunnel (the Dig brush) from the big tree's pad into the ridge at
+# its foot, gently up to a root den under the ridge (11-08 b: raised clear of the sea): mushrooms, dirt, cave vines and two rats. Optional, no quest step.
+# RESIZE 10-24: Radius 72 -> 88 (Height 8 -> 8), the old content moved 0 -8.8 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+new
+gen Trees=0.25 Bushes=0.3 Rocks=0.15 Harvest=0.3 BeachThings=0.25
+gen Seed=11061 Radius=88 Height=8 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.1 BeachWidth=0.6
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.4 Sunken=0.2 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+push at 0 -8.8
+
+# --- Terrain: the greenhouse pad, the five trunk pads, the root hole ---------------------------------------------------
+brush flatten from 0 -40 to -14 -44 r=7 s=20 frames=200 h=1.6
+brush flatten at 0 10 r=12 s=20 frames=200 h=2
+brush flatten at 8.25 15.5 r=4 s=20 frames=200 h=2
+brush flatten at -30 -6 r=8 s=20 frames=200 h=2
+brush flatten at 30 -14 r=7 s=20 frames=200 h=2
+brush flatten at -24 34 r=8 s=20 frames=200 h=2
+brush flatten at 28 30 r=7 s=20 frames=200 h=2
+brush flatten from -2 6 to -6 2 r=2.5 s=20 frames=150 h=0.6
+# (REACH 10-28: the trunk-1 pad (h 2) sat in the island's rise, walled all round - into it, no way out; its lowest rim
+# at -7 9 was a 1.1 m step -> smoothed into a slope there)
+brush smooth from -6 8 to -10 11 r=4 s=6 frames=40
+pop
+brush flatten at 18.9 34.1 r=5 s=8 frames=40
+origin
+clear at 18.9 34.1 r=6
+push at 0 -8.8
+clear from 0 -40 to -14 -44 r=7
+clear at 0 10 r=12
+clear at -30 -6 r=8
+clear at 30 -14 r=7
+clear at -24 34 r=8
+clear at 28 30 r=7
+
+# --- The five giant trees (REDO 10-24: Raft's giant firs showed as bare poles; scaled pickup trees with full crowns) ----------------------------------------------------------------------------------------------
+place Pickup_Landmark_Tree_Pine trunk1 at 0 10 ground yaw=20 scale=3.2
+place Pickup_Landmark_Tree_Pine trunk2 at -32 -6 ground yaw=140 scale=2.8
+place Pickup_Landmark_Tree_Birch trunk3 at 30 -14 ground yaw=260 scale=2.6
+place Pickup_Landmark_Tree_Pine trunk4 at -26 36 ground yaw=300 scale=2.8
+place Pickup_Landmark_Tree_Birch trunk5 at 28 30 ground yaw=60 scale=2.6
+
+# --- The greenhouse (an open shelter), the watering rota, the token machine, the water tower ---------------------------
+push at -2.25 -42.25 h=1.6
+call shelter w=3 d=3 y=0.1
+place "Box Big" - at 1 1 y=0.1 sit yaw=10
+place UT_MarketBasket01 - at 3.5 3.5 y=0.1 sit
+pop
+place Zone_Trigger greenhousezone at 0 -40 ground
+place Note_Sign rota at 4 -36 ground sit yaw=200
+vending grovevend at -7.5 -41.5 ground yaw=180
+push at -16 -46 h=1.6
+call stilt_hut y=2.6 w1=none w2=none w3=none w4=none w5=none w6=none
+place Loot_Chest watertower at 2.25 3.6 y=2.7 sit yaw=180
+pop
+
+# --- Trunk 2: the deck on posts and the zipline to trunk 4; trunk 4's deck: its store and the crown box ---------------
+push at -27 -10 h=2
+call stilt_hut y=2.6
+pop
+# (zip deck beside trunk 2's deck)
+push at -29.5 -9 h=2
+call zipdeck y=2.6
+pop
+place ZiplinePath_Landmark grovezip at -23.03 -9.22 h=6.07
+zipto grovezip -20 28
+place Zone_Trigger trunk4zone at -20 28 ground
+push at -22 30 h=2
+call stilt_hut y=2.6
+place Loot_Chest trunkstore at 3.6 3.6 y=2.7 sit yaw=180
+place Loot_Crate crownbox at 0.9 3.6 y=2.7 sit yaw=160
+pop
+
+# --- Trunk 1: the seed store at its foot (Ranger log 6 inside), the root hole between its roots -----------------------
+push at 6 14 h=2
+call hut w=3 d=2 y=0.1
+place Loot_Chest seedstore at 3.6 2.3 y=0.1 sit yaw=180
+place Loot_Crate seeddrawers at 1.8 2.3 y=0.1 sit yaw=180
+place "Box Small" - at 0.8 1.2 y=0.1 sit
+place Note_Paper rangerlog6 at 0.8 1.2 y=1.7 drop yaw=10
+pop
+place Zone_Trigger rootszone at -6 2 ground
+
+# --- The tokens in the trunks' feet, bees in the birches, Burr by a vine-choked cache ---------------------------------
+place QuestItemPickup_Tangaroa_Token - at -29 -2 ground
+place QuestItemPickup_Tangaroa_Token - at 27 -11 ground
+place QuestItemPickup_Tangaroa_Token - at -28 32 ground
+place QuestItemPickup_Tangaroa_Token - at 25 33 ground
+call hives x=30 z=-14 r=7 n=1 seed=11062
+call hives x=28 z=30 r=7 n=1 seed=11063
+call vinecache x=40 z=44 r=8 seed=11064 chest=burrchest vines=burrvines items=Leather*2;Seed_Banana*2;Rope*3
+place Creature_Goat burr at 36 40 ground
+prop burr creature.count=1
+prop burr creature.respawn=0
+
+# --- REDO 10-24: the water tower's pump (the island's machine) and its three parts in three trunks -----------------------
+# trunk 3: the beekeepers' box among the hives; trunk 4: in the trunk store (zipline); trunk 5: behind a vine wall (machete)
+clear at -18.5 -44 r=1.6
+place UT_WaterPump towerpump at -18.5 -44 ground sit yaw=90
+# (11-10 w02, REACH: at 34 -10 it lay in a dip 1.8 m under the roots beside it - no spot reached could open it: up
+#     onto the roots' edge, 2 m west; h2: at 33.2 -11.6 still in a root pocket 1.8 m down - out past the roots, 7.5 m
+#     from the trunk; h3: there it sat up on a root 1.9 m over the ground beside it; h4: at 41 -13 the east hill's sand
+#     rose 2 m over it after it was set down - onto the spot the walker reached south of the roots, 35.5 -16.5;
+#     h5: buried again, set down at 2.6 m where the sand ends at 4.4-4.7; h6: a pad flattened to 4.4 last left the
+#     sand unchanged and h=4.4 put it at 3.5; h7: dropped from 8 m it still fell to 2.4 - what the walker stands on here
+#     is trunk 3's own root mesh (scale 2.6), which ground/drop look through. Now set at a fixed height on the roots'
+#     top (3.7 m at x=33 in the h7 surface probe), no sit/drop)
+clear at 33 -17.3 r=1.5
+place Loot_ChestSmall beebox at 33 -17.3 h=3.75 yaw=200
+clear at 24 26 r=2.5
+place Loot_ChestSmall trunk5chest at 24.5 26 ground sit yaw=40
+beside ChoppableVines trunk5vines trunk5chest d=1.6
+# (optional) Oda's ranger locker by trunk 1's hut, her key from Ranger Landing
+clear at 12 11 r=1.5
+place "Box Big" rangerlock at 12 11 ground sit yaw=200
+beside Loot_ChestSmall rangercache rangerlock d=0.3
+
+# --- Gathering: flowers, pineapples, berries, sand; the shallows -----------------------------------------------------
+scatter Pickup_Landmark_Flower_White 4 at 0 -20 r=18 seed=11065 free=2
+scatter Pickup_Landmark_Flower_Yellow 3 at 10 -24 r=14 seed=11066 free=2
+scatter Pickup_Landmark_PineappleLandmark 2 at -40 14 r=10 seed=11067 free=2
+scatter Pickup_Landmark_BerryBush 3 at 40 6 r=10 seed=11068 free=3
+scatter Pickup_Landmark_Sand 2 at 12 -56 r=8 seed=11069 free=2
+call shallows x=0 z=8.8 r=103 deep=5 n=2 seed=11070
+pop
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; Caravan_Yellow_01 + chest; vine-hidden chest; buried treasure; viewpoint ---
+place campfire_1 - at 18.9 34.1 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at 21.9 36.1 ground sit yaw=297
+place "Box Small" - at 16.9 36.6 ground sit
+place Note_Paper dnote at 16.9 36.6 ground y=1.6 drop yaw=20
+note dnote Lost traveller's note | I came for the seeds like everyone else. Three weeks rowing, one bad tooth, a sunburn shaped like a hat.\n\nThe paths move. I am sure of it. I marked this tree twice, and the second mark is higher up the trunk than the first, as if the tree grew a hand's width in a night.\n\nA Seedkeeper with a kind face gave me tea and asked where I had come from, and whether anyone knew I was here. I said no. He seemed pleased about that, and then sorry he was pleased.\n\nIf the fire is cold, I went towards the sea. If the fire is warm, I am behind you. Say hello.
+place Caravan_Yellow_01 dvan at -7.4 38.3 ground yaw=57
+prop dvan tint.color=#7a7040
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -11.4 41.3 ground sit yaw=357
+note dwreckchest Abandoned supplies | The crew's supplies, left behind: plank, rope and a few seeds.
+loot dwreckchest Plank*4;Rope*2;Seed_Pineapple*1
+prop dwreckchest loot.refill=0
+call vinecache x=3.8 z=23.7 r=15 seed=11151 chest=dvinechest vines=dvines items=Rope*3;Nail*10;Leather*2
+call treasure x=6.1 z=38.5 r=15 n=1 seed=11152
+prop treasure11152 treasure.loot=CopperOre*2;Clay*3
+# REDO 10-24 TREASURE2: a second buried treasure on the far side for the detector + shovel
+call treasure x=-4.9 z=-30.8 r=12 n=1 seed=11202
+prop treasure11202 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*2
+place Zone_Trigger dview at -5.2 26.5 ground
+prop dview zone.id=hollowtrunk_grove_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=Five giant trees stand over the grove, their crowns above everything else on the island.
+
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): Owl Hill and its fire lookout (climb, zipline down), the seed caravan in the bay (dive), the mother boar's den and the feeding trough (M5)
+# Owl Hill (STORY 10-24: no tower or zipline here any more - an optional hill walk to the burnt-out fire watch, its
+# box, Burr's bell and the old campfire; no quest step)
+call vd_mount x=-58 z=40 top=22 r=24 a0=300 turns=1.25 hb=3
+place Loot_ChestSmall hgbox at -57 40.8 h=22 sit yaw=200
+place campfire_1 - at -59.4 39 h=22 sit
+place Log - at -60.6 41.2 h=22 sit yaw=40
+call vd_spot x=-58 z=40 al=hgtopz id=hg_top r=5 msg="Owl Hill. The fire watch hut burnt years ago; only its box and a ring of stones are left. Scratched owls on every stone."
+note hgbox Fire lookout box | SEEDKEEPERS - FIRE WATCH. Smoke over the trunks: ring the greenhouse bell. Smoke over the bay: that is the caravan people cooking again.
+loot hgbox Rope*3;Plank*4;Leather*1
+prop hgbox loot.refill=0
+# the dive: Caravan_Yellow_01 on the sea floor 11 m down, its crate, an air pocket
+call vd_dive x=62 z=-74 h=-11 yaw=140 obj="Caravan_Yellow_01" al=hgwreck crate=hgcrate zal=hgwz zid=hg_wreck msg="The seed caravan, rolled off the bay road and down. Its seed locker is still shut." air=hgair bub=hgbub
+note hgcrate Seed caravan's locker | Rows of waxed jars, most cracked. One is whole: the oldest seeds of the grove, labelled in three hands.\n\nFIRST SEEDS - grove, year one. - Aki\nDO NOT OPEN IN THE LAB. - Marit\nBEFORE V-1. KEEP THESE CLEAN, WHATEVER HAPPENS. - T.L.
+loot hgcrate story:seedjar*1;Scrap*3;Bolt*2
+# the mother boar (RAFT_QUEST_MECHANICS SL11 3, M5): she sleeps across the mouth of her den in the hollow stump; the
+# trough by the path takes five red berries and she goes to it - or the player fights her.
+# M38 lure (10-24): the berries open the trough and her spawn's home moves to it (beh.lure); her den is left free.
+call ni8cave x=66 z=-24 h=2 yaw=180 al=hgdencave
+place Loot_ChestSmall hgdencavebox at 68.5 -29 h=2.45 sit yaw=200
+place Placeable_Lantern_Metal - at 63.4 -28 h=2.45 sit
+note hgdencavebox Den chest | Under the old sow's bedding: a seedkeeper's key on a leather loop, and what she dragged in.
+loot hgdencavebox story:denkey*1;Leather*3;Feather*4
+prop hgdencavebox loot.refill=0
+place Creature_Boar hgmother at 66 -19 ground
+prop hgmother creature.count=1
+prop hgmother creature.size=1.8
+prop hgmother creature.health=260
+prop hgmother creature.respawn=0
+place "Box Big" trough at 52 -6 ground sit yaw=30
+call vinecache x=12 z=69 r=8 seed=11361 chest=hgvine vines=hgvinevines items=Rope*2;Nail*8;Seed_Pine*1
+prop hgvine note.title=Root-choked crate
+# (ROOT DEN 11-08: the trunk itself is a tree model, no room in it - so the mouth is at trunk 1's foot, where its pad
+# meets the ridge by the big tree's roots, 9 m from the trunk; the root hole (the quest's last step) stays 11 m off on the
+# pad's far side. Optional: loot and rats, no quest step.)
+# (11-08 b, box run: the first den went down to 1.5 m and broke into the sea, the walk-in stuck where three strokes met,
+# the rats landed on the hill top (no dry den floor near them) and the mouth was a square slab in a sheer sand wall.
+# Now: the pad's wall at the mouth smoothed into a slope; a low knoll over the den so it keeps 2 m of rock over it;
+# one stroke gently UP into the ridge (5 degrees, walkable both ways), the den branched off its end and dug level-ish,
+# floor about 3.3 m over the sea; boulders and roots break the mouth's square outline; one rat each at the den floor)
+brush smooth at 7.4 -7.6 r=3.5 s=8 frames=120
+# (11-08 c, box run: the den's roof broke the knoll - dig log floor 5.1, ground 7.2, so a 2.2 m den stood 2 m out of it
+# and caveloot found no spot away from open sky. Now the knoll is 2 m higher and the strokes go gently down, not up.)
+# (11-08 d, box run: still no roof - floor 3.8, ground 7.4, the knoll flatten does not raise the terrain the dig log reads.
+# Now the first stroke goes down 9 degrees: floor ~2.7, over 2 m of rock; rats dropped from 4.0 inside the den.)
+brush flatten at 12.8 -17.2 r=5 s=20 frames=600 h=11
+brush smooth at 12.8 -17.2 r=10 s=8 frames=200
+dig 6.8,-7.2 10.0,-10.4 11.0,-15.4 r=1.75 slope=-9 as=rootden
+dig 11.0,-15.4 13.5,-17.9 r=2 slope=-1 as=rootden
+caveloot rootden dirt=2 mush=4 stone=0 vines=2
+place SmallBoulder3 - at 10.3 -6.3 ground y=-0.4 yaw=30 scale=1.3
+place SmallBoulder4 - at 5.0 -8.9 ground y=-0.4 yaw=200 scale=1.2
+place SmallRock_02 - at 7.9 -4.7 ground y=-0.1 yaw=80
+# (11-13 cavemix, TODO 0f: the world's caves hold rats, a boar, a bear or nothing, so nobody can guess what is inside)
+# the root den is empty now - only its mushrooms and dirt; the island's boar is the quest's and stays outside
+call vd_spot x=-35 z=61 al=hglook id=hg_view r=5 msg="From the lookout rocks the five trunks stand like pillars holding the sky up."
+
+# --- STORY 10-24: Jonas's bee notes by the bee box, the greenhouse log, Oda's note on Owl Hill
+place Note_Paper jonasbees at 35.6 -11.2 ground y=0.3 drop
+note jonasbees Bee notes | BEES - JONAS BRANDT\n\nHive 1: happy. Hive 2: happy. Hive 3: has opinions.\n\nThe honey this month is the colour of lamp oil and so sweet it makes your teeth ring. The bees fly to the trunks, then down to the root hole, then come back slow, like they have had a big lunch.\n\nTeodor took six jars to the lab. He was very kind about it. He said, "Jonas, your bees are the best measure I have." I said thank you. I did not ask of what.\n\nThe bees will not go past the dark root at the hole any more. They circle it and come home.\n\nI trust bees more than people. Bees do not make speeches.
+place Note_Paper greenlog at 1.6 -41.4 ground y=0.3 drop
+note greenlog Greenhouse log | GREENHOUSE LOG - SEEDKEEPERS\n\nWeek 1: beans up. Week 2: beans up to the roof. Week 3: beans through the roof. Lise says the roof was a suggestion.\n\nTeodor came down from the Heart with a sprayer. "Just a little V-1 on the beds, to keep the mould away." The mould went away. So did the slugs, the beetles and the frogs. Nothing hops in here now.\n\nThe tomatoes taste wonderful. I want to be clear about that, whatever happens next. They taste wonderful.\n\nThe crew is going down the root hole to look for the river people. Lise is taking the lamps. I am taking the sandwiches.\n\n- G.
+place Note_Paper burrbell at -57.6 38.8 h=22.1 drop
+note burrbell Note on the fire ring | O.F. - OWL HILL\n\nSat up here to look for lamps. Saw none. Heard a bell instead, all night, going round and round the hill. Burr, following me up in the dark like a very small, very bad guard.\n\nI used to bring Marit up here when she was little. She counted the owls carved on the stones and always got a different number. Twenty-two. Twenty-six. "Owls move, Oda."\n\nThere are twenty-four. I counted three times. I will tell her when I find her and she will say they moved.
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Hollowtrunk Grove
+info author=Custom Islands
+info description=Five giant trees with huts at their feet, the Seedkeepers' greenhouse and a zipline between the trunks - and a hole between the biggest tree's roots. The fifth island of The Last Green World.
+island on.arrive=message||Trees as tall as towers. Under the biggest one, the ground falls away into the dark between its roots.
+
+note rota Seedkeeper's watering rota | WATERING ROTA - SEEDKEEPERS\n\nTank first, then the trunks, in order.\nTrunk 2: ride the line to trunk 4. Pipes and the purifier are on the deck.\n\nPump parts: one in each trunk - 3 with the bees, 4 in the store, 5 under the vines.\nSeed store at the big tree. Keep the drawers locked.\n\nNO ONE goes into the roots. - M.
+note rangerlog6 Ranger log 6 | RANGER LOG 6 - O. FENN\n\nThe greenhouse is dry. The seed drawers are full, every packet labelled - they meant to come back. Seedkeepers do not leave seeds behind. That is the whole job; it is in the name.\n\nTheir lamps went down between the roots of the big tree. The ground there breathes: warm air, and a smell like fruit left in a hot room.\n\nBurr will not go near it. He stood at the edge and rang his bell at me until I threw a pine cone at him. He did not take it personally. He ate it.\n\nUnder the grove the roots go on - Rootweave, the Seedkeepers call it, caves of root and stone all the way to the Heart. Aki ran their root gate down there. The band is 600.\n\nI am going down. I have the vial, the lamp and a goat. That is more than most expeditions.
+note watertower Water tower tank | The water tower's tank: the tank's own plans in a tin, wrapped in oilcloth.
+note trunkstore Trunk store | Trunk 4's store box: plans for water pipes, a coil of rope.
+note crownbox Crown box | The crown box on trunk 4's deck: the plans of a purifier that runs on power.
+note seedstore Seed store | The seed store's big chest: its own plans, for a store like it.
+note seeddrawers Seed drawers | The seed drawers: pineapple, mango and a black flower's seeds, each in a labelled paper.
+loot watertower Blueprint_WaterTank*1;Plank*4;Nail*6
+prop watertower loot.refill=0
+loot trunkstore Blueprint_Pipe_Water*1;Rope*2;story:pumppart*1
+prop trunkstore loot.refill=0
+loot crownbox Blueprint_ElectricPurifier*1;CopperIngot*1
+prop crownbox loot.refill=0
+loot seedstore Blueprint_Storage_Large*1;Plank*6
+prop seedstore loot.refill=0
+prop seedstore obj.name=seedstore
+prop seedstore beh.hidden=1
+story pumppart|Pump part|Placeable_Lantern_Metal|A part of the water tower's pump: a valve, a gasket, a crank rod.
+story water|Water running|Placeable_Lantern_Metal|The water tower's pump runs; water reaches the greenhouse and the roots.
+note beebox Beekeepers' box | The Seedkeepers' bee box, at the foot of trunk 3's roots: smoker, comb and a pump valve.
+# (box agent 10-25: a spare machete here - the vines need one, and a fresh world or a lost one from the delta left the island stuck)
+loot beebox story:pumppart*1;HoneyComb*2;Machete*1
+prop beebox loot.refill=0
+note trunk5chest Trunk 5 chest | A chest the vines grew over at trunk 5's foot: a gasket in oilcloth, and seeds.
+loot trunk5chest story:pumppart*1;Seed_Flower_Red*2
+prop trunk5chest loot.refill=0
+prop trunk5chest obj.name=trunk5chest
+prop trunk5chest beh.hidden=1
+prop trunk5vines obj.name=trunk5vines
+prop trunk5vines on.use=hide|\nshow|trunk5chest\nmessage||The machete clears trunk 5's foot. A chest under the vines.
+prop towerpump obj.name=towerpump
+prop towerpump beh.use=Fit the parts to the pump
+prop towerpump if.use=quest|7\ntake|story:pumppart|3
+prop towerpump on.use=message||Valve, gasket, rod. The pump thumps; water runs down the pipes to the greenhouse and gurgles away into the roots of trunk 1. The seed store's lock was on the water: it opens.\ngive||story:water*1\nshow|seedstore\nshow|rootszone
+prop towerpump else.use=message||The water tower's pump is stripped. The rota says: "Pump parts kept in the trunks - 3, 4 and 5."
+note rangercache Ranger locker | Oda's locker at trunk 1: a lantern, rope and honey.
+loot rangercache Placeable_Lantern_Metal*1;Rope*3;HoneyComb*2
+prop rangercache loot.refill=0
+prop rangercache obj.name=rangercache
+prop rangercache beh.hidden=1
+prop rangerlock obj.name=rangerlock
+prop rangerlock beh.use=Open the ranger locker
+prop rangerlock if.use=has|story:rangerkey
+prop rangerlock on.use=hide|\nshow|rangercache\nmessage||Oda's key fits. Her locker opens.
+prop rangerlock else.use=message||A locker stencilled RANGER. A ranger's key would open it.
+loot seeddrawers Seed_Pineapple*2;Seed_Mango*2;Seed_Flower_Black*1
+prop seeddrawers loot.refill=0
+prop burrvines on.use=hide|\nshow|burrchest\nmessage||Burr pushes in as the vines fall - he found it: a cache in the roots.
+
+prop greenhousezone zone.id=greenhouse
+prop greenhousezone zone.radius=6
+prop greenhousezone zone.message=The Seedkeepers' greenhouse. Dry beds, a water tower, an old token machine.
+prop trunk4zone zone.id=trunk_4
+prop trunk4zone zone.radius=3
+prop trunk4zone zone.message=Trunk 4. A deck on posts at its foot.
+prop rootszone obj.name=rootszone
+prop rootszone beh.hidden=1
+prop rootszone zone.id=roots
+prop rootszone zone.radius=3
+prop rootszone zone.message=The root hole. Warm air breathes up out of the dark.
+
+# DEEP 10-24 settings
+story seedjar|Old seed jar|Placeable_Lantern_Metal|The grove's oldest seeds, from the sunk seed caravan.
+story denkey|Seedkeeper's key|Placeable_Lantern_Metal|A seedkeeper's key on a leather loop, from the mother boar's den.
+prop trough obj.name=trough
+prop trough beh.use=Fill the feeding trough (5 red berries)
+prop trough beh.lure=hgmother|3
+prop trough beh.lureItem=Berries_Red|5
+prop trough on.use=signal||fed\nmessage||The berries thud into the trough. Somewhere a big sow grunts, gets up and comes trotting - past you, to the food.
+prop trough else.use=message||A feeding trough, licked clean. The seedkeepers kept the old sow sweet with berries: five, the board said.
+prop hgmother obj.name=hgmother
+quest title=The Hollow Trees
+quest intro=Trees as tall as towers. Make for the tall trunks, then find the Seedkeepers' greenhouse on the beach.
+step reach|greenhouse|1|Go to the Seedkeepers' greenhouse
+step read|Seedkeeper's watering rota|1|Read the watering rota
+step blueprint|Blueprint_WaterTank|1|Take the water tank plans from the water tower
+step reach|trunk_4|1|Ride the zipline from trunk 2 to trunk 4
+step blueprint|Blueprint_Pipe_Water|1|Take the water pipe plans from trunk 4's store
+step blueprint|Blueprint_ElectricPurifier|1|Take the purifier plans from the crown box
+step collect|story:pumppart|3|Find the pump's three parts in trunks 3, 4 and 5
+step collect|story:water|1|Fit the parts to the water tower's pump
+step blueprint|Blueprint_Storage_Large|1|Take the large storage plans from the seed store
+step open|Seed drawers|1|Open the seed drawers
+step collect|story:seedjar|1|Dive to the sunk seed caravan in the bay and take the seed jar from its locker
+step collect|story:denkey|1|Get the key from the chest in the mother boar's den (fill her trough with five berries, or fight her)
+step read|Ranger log 6|1|Read Ranger log 6 in the seed store
+step reach|roots|1|Go down into the root hole
+quest done=Under the grove, the roots go on. Rootweave - band 600.
+quest reward=HoneyComb*2;Seed_Birch*2
+
+# names for the show/hide actions (actions find objects by obj.name)
+prop burrchest obj.name=burrchest
+# (box agent 10-25: names for the guide pictures' snap points)
+prop hgbox obj.name=hgbox
+prop hgdencave obj.name=hgdencave
+prop hgwreck obj.name=hgwreck
+save Hollowtrunk Grove

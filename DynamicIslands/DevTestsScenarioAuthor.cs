@@ -108,31 +108,34 @@ namespace DynamicIslands
 			if (ok) Log("PASS: scenario names"); else Fail("scenario names");
 		}
 
-		[ConsoleCommand(name: "CIScTwoPacks", docs: "Dev, anywhere: SC74 - two packs with an island of the same name and a story item of the same id: the second's island is renamed and its plan follows; the import warns about the shared story item id (T8)")]
+		[ConsoleCommand(name: "CIScTwoPacks", docs: "Dev, anywhere: SC74 - two packs with an island of the same name and a story item of the same id: the second's island is renamed and its plan follows; the second's story item gets an id of its own, its quest, reward and chest follow (T8)")]
 		public static void ScTwoPacksCommand()
 		{
 			bool ok = true;
 			Func<string, bool> mine = n => n.StartsWith("cipk-twin", StringComparison.OrdinalIgnoreCase);
 			ScDeleteIslands(mine);
-			ScDeletePlan("CI Pack A", "CI Pack B");
-			foreach (string id in new[] { "ci-pack-a", "ci-pack-b" }) try { LibraryPack.Remove(id); } catch { }
+			ScDeletePlan("CI Pack A", "CI Pack B", "CI Pack C");
+			foreach (string id in new[] { "ci-pack-a", "ci-pack-b", "ci-pack-a-ci-other" }) try { LibraryPack.Remove(id); } catch { }
 			string error;
 			try
 			{
-				Func<string, int, string, LibraryPackContents> make = (plan, seed, keyName) =>
+				Func<string, int, string, string, string, LibraryPackContents> make = (plan, seed, keyName, packId, author) =>
 				{
 					MakeLibIsland("cipk-twin", seed);
 					IslandFile f = IslandFile.Load(IslandSpawner.PathFor("cipk-twin"));
 					f.Props[StoryItems.Key] = "cipkkey|" + keyName + "||A key from " + plan;
+					f.Props[IslandQuest.Key(IslandQuest.KeySteps, 0)] = "collect|cipkkey|1|Find the key";
+					f.Props[IslandQuest.KeyReward] = "story:cipkkey";
+					f.Objects.Add(new IslandObject { Name = "Loot_Chest", Position = new Vector3(10f, 0f, 10f), Props = new Dictionary<string, string> { { ObjectProps.LootItems, "story:cipkkey*1, story:cipkkey-old*1" } } });
 					f.Save(IslandSpawner.PathFor("cipk-twin"));
 					WorldPlan.Parse(plan, "random = off\nrule = start | island:cipk-twin | start | ahead:300 | | Twin\n").Save();
-					string z = LibraryPack.Export(new LibraryInfo { title = plan, id = plan.ToLowerInvariant().Replace(' ', '-'), author = "CI Tester", summary = "test", remix = true }, null, WorldPlan.Load(plan), null, null, out error);
+					string z = LibraryPack.Export(new LibraryInfo { title = plan, id = packId ?? plan.ToLowerInvariant().Replace(' ', '-'), author = author ?? "CI Tester", summary = "test", remix = true }, null, WorldPlan.Load(plan), null, null, out error);
 					LibraryPackContents p = z != null ? LibraryPack.Read(z, out error) : null;
 					File.Delete(IslandSpawner.PathFor("cipk-twin"));
 					ScDeletePlan(plan);
 					return p;
 				};
-				LibraryPackContents a = make("CI Pack A", 31, "Red key"), b = make("CI Pack B", 32, "Blue key");
+				LibraryPackContents a = make("CI Pack A", 31, "Red key", null, null), b = make("CI Pack B", 32, "Blue key", null, null);
 				Check(ref ok, a != null && b != null, "two packs exported, each with its 'cipk-twin' and a story item 'cipkkey'");
 				if (a != null && b != null)
 				{
@@ -143,17 +146,35 @@ namespace DynamicIslands
 					IntroRule rule = pb != null ? pb.Rules.FirstOrDefault() : null;
 					Check(ref ok, rule != null && rule.WhatArg != "cipk-twin" && File.Exists(IslandSpawner.PathFor(rule.WhatArg)), "B's island is installed under its own name and B's plan brings it ('" + (rule != null ? rule.WhatArg : "?") + "')");
 					Check(ref ok, File.Exists(IslandSpawner.PathFor("cipk-twin")), "A's island keeps its name");
+					// (T8: B's "cipkkey" gets an id of its own - definition, quest step, reward and chest - so A's key doesn't
+					// open B's door; A's stays; "story:cipkkey-old" is another item and stays too)
 					string text = rb.ToString();
-					Check(ref ok, text.IndexOf("cipkkey", StringComparison.OrdinalIgnoreCase) >= 0 || text.IndexOf("story item", StringComparison.OrdinalIgnoreCase) >= 0,
-						"importing B warns that its story item 'cipkkey' has the same id as A's (one store: A's key would open B's door) - T8");
+					Func<Dictionary<string, string>, string, string> pg = (p, k) => p != null && p.ContainsKey(k) ? p[k] : "";
+					IslandFile ia = IslandFile.Load(IslandSpawner.PathFor("cipk-twin")), ib = rule != null ? IslandFile.Load(IslandSpawner.PathFor(rule.WhatArg)) : null;
+					string idB = ib != null ? string.Join(",", StoryItems.Of(ib.Props).Select(d => d.Id).ToArray()) : "?";
+					Check(ref ok, ia != null && StoryItems.Of(ia.Props).Any(d => d.Id == "cipkkey") && idB == "cipkkey-ci-pack-b" && text.IndexOf("cipkkey-ci-pack-b", StringComparison.Ordinal) >= 0,
+						"B's story item gets its own id (A: cipkkey, B: " + idB + "), and the import says so - T8");
+					IslandObject chestB = ib != null ? ib.Objects.LastOrDefault(o => o.Name == "Loot_Chest") : null; string lootB = chestB != null ? pg(chestB.Props, ObjectProps.LootItems) : "?";
+					Check(ref ok, ib != null && pg(ib.Props, IslandQuest.Key(IslandQuest.KeySteps, 0)).StartsWith("collect|cipkkey-ci-pack-b|") && pg(ib.Props, IslandQuest.KeyReward) == "story:cipkkey-ci-pack-b"
+						&& lootB == "story:cipkkey-ci-pack-b*1, story:cipkkey-old*1", "B's quest step, reward and chest follow the new id ('" + lootB + "')");
+					Check(ref ok, ia != null && pg(ia.Props, IslandQuest.KeyReward) == "story:cipkkey", "A's island is untouched");
+					LibraryInstalled eb = LibraryPack.Installed().FirstOrDefault(e => e.id == "ci-pack-b");
+					Check(ref ok, eb != null && eb.storyIds != null && eb.storyIds.ContainsKey("cipkkey") && eb.storyIds["cipkkey"] == "cipkkey-ci-pack-b", "the entry remembers the new id (an update keeps it)");
+					// (another author's pack with A's id: an entry of its own, A's files untouched - CB4)
+					LibraryPackContents c = make("CI Pack C", 33, "Green key", "ci-pack-a", "CI Other");
+					LibraryPack.Report rc = c != null ? LibraryPack.Install(c, false, false, LibraryPack.SourceImport) : null;
+					List<LibraryInstalled> inst = LibraryPack.Installed();
+					LibraryInstalled ea = inst.FirstOrDefault(e => e.id == "ci-pack-a"), ec = inst.FirstOrDefault(e => e.id == "ci-pack-a-ci-other");
+					Check(ref ok, rc != null && ea != null && ea.author == "CI Tester" && ea.title == "CI Pack A" && ec != null && ec.author == "CI Other" && File.Exists(IslandSpawner.PathFor("cipk-twin"))
+						&& WorldPlan.Load("CI Pack A") != null, "another author's pack with A's id is an entry of its own ('" + (ec != null ? ec.id : "none") + "'), A's kept (" + (rc != null ? rc.ToString().Replace("\n", " / ") : "no report") + ")");
 				}
 			}
 			catch (Exception ex) { Check(ref ok, false, "no errors: " + ex.Message); }
 			finally
 			{
-				foreach (string id in new[] { "ci-pack-a", "ci-pack-b" }) try { LibraryPack.Remove(id); } catch { }
+				foreach (string id in new[] { "ci-pack-a", "ci-pack-b", "ci-pack-a-ci-other" }) try { LibraryPack.Remove(id); } catch { }
 				ScDeleteIslands(mine);
-				ScDeletePlan("CI Pack A", "CI Pack B", "CI Pack A (CI Tester)", "CI Pack B (CI Tester)");
+				ScDeletePlan("CI Pack A", "CI Pack B", "CI Pack C", "CI Pack A (CI Tester)", "CI Pack B (CI Tester)", "CI Pack C (CI Other)");
 			}
 			if (ok) Log("PASS: scenario two packs"); else Fail("scenario two packs");
 		}
@@ -209,7 +230,7 @@ namespace DynamicIslands
 		#region SC76, SC35 - rule waits the game never meets
 
 		[ConsoleCommand(name: "CIScRuleWaits", docs: "Dev, world (host, 'CI ...'): SC76/SC35 - 'after rule' on a Receiver rule fires (AU52); a zone id with ':' survives saving (AU54); two zones with one id: the rule and the quest agree (AU54); a comma in a story rule id survives saving (AU54)")]
-		public static void ScRuleWaitsCommand() { DynamicIslands.instance.StartCoroutine(ScRuleWaitsRoutine()); }
+		public static void ScRuleWaitsCommand() { StartTest(ScRuleWaitsRoutine()); }
 
 		static IEnumerator ScRuleWaitsRoutine()
 		{
@@ -297,7 +318,7 @@ namespace DynamicIslands
 		#region SC71, SC79 - the plan edited while a world plays it; switching plans
 
 		[ConsoleCommand(name: "CIScPlanEdit", docs: "Dev, world (host, 'CI ...'): SC71/SC79 - a rule added to a running plan fires; a fired rule deleted and a new one under its id (as World Plans numbers them) fires too (AU24); switching to a plan whose first rule has a done id fires it (AU71)")]
-		public static void ScPlanEditCommand() { DynamicIslands.instance.StartCoroutine(ScPlanEditRoutine()); }
+		public static void ScPlanEditCommand() { StartTest(ScPlanEditRoutine()); }
 
 		static IEnumerator ScPlanEditRoutine()
 		{
@@ -353,7 +374,7 @@ namespace DynamicIslands
 		#region SC73 - a plan whose island was deleted; SC72 - a library update mid-adventure
 
 		[ConsoleCommand(name: "CIScMissing", docs: "Dev, world (host, 'CI ...'): SC73 - a plan rule's island file deleted: the rule waits, the host is told once which island is missing, the rest plays; the file put back, it comes")]
-		public static void ScMissingCommand() { DynamicIslands.instance.StartCoroutine(ScMissingRoutine()); }
+		public static void ScMissingCommand() { StartTest(ScMissingRoutine()); }
 
 		static IEnumerator ScMissingRoutine()
 		{
@@ -396,7 +417,7 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScLibUpdate", docs: "Dev, world (host, 'CI ...'): SC72 - a plan installed from a pack (v1) plays in a world; v2 (its first island changed, a rule added) installed over it: the world keeps v1's island by its hash and the plan's v1 rules, a new world would get v2")]
-		public static void ScLibUpdateCommand() { DynamicIslands.instance.StartCoroutine(ScLibUpdateRoutine()); }
+		public static void ScLibUpdateCommand() { StartTest(ScLibUpdateRoutine()); }
 
 		static IEnumerator ScLibUpdateRoutine()
 		{
@@ -477,11 +498,11 @@ namespace DynamicIslands
 		const string EditIsland = "ciscedit";
 		static string editHashBefore = "";
 
-		[ConsoleCommand(name: "CIScEditUsed", docs: "Dev: SC70 - an island edited while a world plays it. CIScEditUsed prep (world) = the island in the world, its first box opened, saved; safe (editor) = a rock moved, saved; checksafe (world) = the edit reached the world, the box still opened; unsafe (editor) = the second box deleted, saved; checkunsafe (world) = the world keeps the old version")]
+		[ConsoleCommand(name: "CIScEditUsed", docs: "Dev: SC70 - an island edited while a world plays it. CIScEditUsed prep (world) = the island in the world, its first box opened, saved; safe (editor) = a rock moved, saved; checksafe (world) = the edit reached the world, the box still opened; unsafe (editor) = the second box deleted, saved; checkunsafe (world) = the world plays the new version, the opened box still opened (carried by the objects' ids, R1b)")]
 		public static void ScEditUsedCommand(string[] args)
 		{
 			string part = args != null && args.Length > 0 ? args[0] : "prep";
-			DynamicIslands.instance.StartCoroutine(ScEditUsedRoutine(part));
+			StartTest(ScEditUsedRoutine(part));
 		}
 
 		static IEnumerator ScEditUsedRoutine(string part)
@@ -554,8 +575,10 @@ namespace DynamicIslands
 				}
 				else
 				{
-					Check(ref ok, box2 != null, "the world keeps the island's old version with both boxes (the second was deleted in the editor)");
-					Check(ref ok, box1 != null && box1.Looted, "... and its opened box stays opened");
+					// (since R1b, 10-09: the saved world's state is carried to the new version by the objects' ids - before, the
+					// world kept the old version with both boxes)
+					Check(ref ok, box2 == null && e.Name.Equals(EditIsland, StringComparison.OrdinalIgnoreCase), "the world plays the edited island (" + e.Name + "): the second box, deleted in the editor, is gone");
+					Check(ref ok, box1 != null && box1.Looted, "... and its opened box stays opened (carried by its id)");
 					IslandWorldState.RemoveIds(new List<int> { e.Id }, true);
 					ScDeleteIslands(n => n.StartsWith(EditIsland, StringComparison.OrdinalIgnoreCase));
 				}
@@ -569,7 +592,7 @@ namespace DynamicIslands
 		#region SC78 - Test in a world starts clean
 
 		[ConsoleCommand(name: "CIScTestClean", docs: "Dev, editor: SC78 - an island with a journal note and a story item chest tried twice with Test in a world: the second time starts without the first's journal page and story item (AU71). Several minutes")]
-		public static void ScTestCleanCommand() { DynamicIslands.instance.StartCoroutine(ScTestCleanRoutine()); }
+		public static void ScTestCleanCommand() { StartTest(ScTestCleanRoutine()); }
 
 		static IEnumerator ScTestCleanRoutine()
 		{
@@ -615,7 +638,7 @@ namespace DynamicIslands
 		#region SC40 - eight players' decisions at once
 
 		[ConsoleCommand(name: "CIScManyPlayers", docs: "Dev, world (host, 'CI ...'): SC40 - with seven made-up players beside the host, through the host's own handlers: five count one quest step (AU8), four pull one lever in a second (AU18), eight hit one warthog (EXP shares, one kill), eight builders' storages, a claim held after failed checks (AU41)")]
-		public static void ScManyPlayersCommand() { DynamicIslands.instance.StartCoroutine(ScManyPlayersRoutine()); }
+		public static void ScManyPlayersCommand() { StartTest(ScManyPlayersRoutine()); }
 
 		static IEnumerator ScManyPlayersRoutine()
 		{
@@ -628,7 +651,7 @@ namespace DynamicIslands
 			bool levelsBefore = PlayerLevels.On;
 			IslandFile f;
 			try { f = ScIsland(isl, "Crowded Isle"); } catch (Exception ex) { Fail("scenario many players: " + ex.Message); yield break; }
-			f.Props[IslandProps.Levels] = "on";
+			PlayerLevels.SetEnabled(true); // (a world option: islands don't turn it on)
 			for (int i = 0; i < 5; i++) f.Objects.Add(ScObj("Loot_Chest", ScDry(f, new Vector2(i * 8 - 16, -10), 10 + i), ObjectProps.NoteTitle, "Crate " + i, ObjectProps.LootItems, "Plank*1"));
 			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(0, 10), 20), BehaviourProps.Name, "lever", BehaviourProps.Use, "Pull", BehaviourProps.EventPrefix + "use", "switch|gate|"));
 			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(10, 10), 21), BehaviourProps.Name, "gate", BehaviourProps.Move, "0,3,0", BehaviourProps.MoveMode, "switch"));
@@ -642,71 +665,76 @@ namespace DynamicIslands
 			yield return ScBring(isl, spot.Value, made);
 			IslandWorldState.Entry e = made[0];
 			if (e.Root == null) { ScRemove(made, isl); Fail("scenario many players: the island didn't come"); yield break; }
-			try { }
-			finally { }
-			// (a) five players each open a different crate at the same moment: each machine sends the host its amount at step 0 (as players now do)
-			for (int i = 0; i < 5; i++) QuestTracker.AddFromPlayer(e.Id, 0, 1);
-			ObjectState prog;
-			int progress = e.State.TryGetValue(QuestTracker.ProgressKey, out prog) ? prog.Yield : 0;
-			Check(ref ok, QuestTracker.StepOf(e) >= 1 || progress == 5, "five players open five crates at once: the quest counts five (step " + QuestTracker.StepOf(e) + ", progress " + progress + ") - AU8");
-			// (b) four players pull one lever in the same second: the gate should end open (one toggle wins), not toggled four times
-			IslandObjectRef lever = ScObjOf(e, "lever");
-			if (lever != null)
+			// (the cleanup runs when a part throws too - CB13)
+			try
 			{
-				for (int i = 0; i < 4; i++) Behaviours.OnEventMessage(e.Id, lever.Index, "use", false);
-				yield return new WaitForSeconds(1.5f);
-				IslandObjectRef gate = ScObjOf(e, "gate");
-				string state = (CIObjState(e, "gate") ?? "?");
-				Check(ref ok, state.Contains("open"), "four players pull one lever in the same second: the gate is open (" + state + ") - AU18");
-			}
-			// (c) eight players hit one warthog: each gets their share, the shares add up to its EXP, one kill
-			yield return ScWaitAnimals(e, "Warthog", 1, 20f);
-			AI_NetworkBehaviour boar = ScAnimals(e, "Warthog").FirstOrDefault();
-			if (boar != null && PlayerLevels.On)
-			{
-				int worth = PlayerLevels.MonsterXp(boar);
-				float max = boar.networkEntity.stat_health.Max;
-				// (the host works out each player's share as their hit arrives and sends it to that player's machine, which
-				// keeps their record: what the host hands out is what is counted here)
-				int sum = 0, kills = 0;
-				foreach (ulong p in players)
+				// (a) five players each open a different crate at the same moment: each machine sends the host its amount at step 0 (as players now do)
+				for (int i = 0; i < 5; i++) QuestTracker.AddFromPlayer(e.Id, 0, 1);
+				ObjectState prog;
+				int progress = e.State.TryGetValue(QuestTracker.ProgressKey, out prog) ? prog.Yield : 0;
+				Check(ref ok, QuestTracker.StepOf(e) >= 1 || progress == 5, "five players open five crates at once: the quest counts five (step " + QuestTracker.StepOf(e) + ", progress " + progress + ") - AU8");
+				// (b) four players pull one lever in the same second: the gate should end open (one toggle wins), not toggled four times
+				IslandObjectRef lever = ScObjOf(e, "lever");
+				if (lever != null)
 				{
-					sum += PlayerLevels.OnRemoteHit(boar.networkEntity, max / 7f + 0.01f, p);
-					if ((PlayerLevels.LastRemote ?? "").StartsWith(p + " ") && PlayerLevels.LastRemote.EndsWith(" kill")) kills++;
-					// (the hit itself, as Raft applies it after the message - through the host's DamageEntity, which a player's hit is)
-					Network_Host host = ComponentManager<Network_Host>.Value;
-					if (host != null && boar != null && boar.networkEntity != null && !boar.networkEntity.IsDead)
-						boar.networkEntity.stat_health.Value = Mathf.Max(0f, boar.networkEntity.stat_health.Value - (max / 7f + 0.01f));
-					yield return null;
+					for (int i = 0; i < 4; i++) Behaviours.OnEventMessage(e.Id, lever.Index, "use", false);
+					yield return new WaitForSeconds(1.5f);
+					IslandObjectRef gate = ScObjOf(e, "gate");
+					string state = (CIObjState(e, "gate") ?? "?");
+					Check(ref ok, state.Contains("open"), "four players pull one lever in the same second: the gate is open (" + state + ") - AU18");
 				}
-				Check(ref ok, sum >= worth - players.Length && sum <= worth + players.Length, "seven players hit one warthog: their EXP adds up to its " + worth + " (" + sum + ")");
-				Check(ref ok, kills == 1, "... and only one of them gets the kill (" + kills + ")");
+				// (c) eight players hit one warthog: each gets their share, the shares add up to its EXP, one kill
+				yield return ScWaitAnimals(e, "Warthog", 1, 20f);
+				AI_NetworkBehaviour boar = ScAnimals(e, "Warthog").FirstOrDefault();
+				if (boar != null && PlayerLevels.On)
+				{
+					int worth = PlayerLevels.MonsterXp(boar);
+					float max = boar.networkEntity.stat_health.Max;
+					// (the host works out each player's share as their hit arrives and sends it to that player's machine, which
+					// keeps their record: what the host hands out is what is counted here)
+					int sum = 0, kills = 0;
+					foreach (ulong p in players)
+					{
+						sum += PlayerLevels.OnRemoteHit(boar.networkEntity, max / 7f + 0.01f, p);
+						if ((PlayerLevels.LastRemote ?? "").StartsWith(p + " ") && PlayerLevels.LastRemote.EndsWith(" kill")) kills++;
+						// (the hit itself, as Raft applies it after the message - through the host's DamageEntity, which a player's hit is)
+						Network_Host host = ComponentManager<Network_Host>.Value;
+						if (host != null && boar != null && boar.networkEntity != null && !boar.networkEntity.IsDead)
+							boar.networkEntity.stat_health.Value = Mathf.Max(0f, boar.networkEntity.stat_health.Value - (max / 7f + 0.01f));
+						yield return null;
+					}
+					Check(ref ok, sum >= worth - players.Length && sum <= worth + players.Length, "seven players hit one warthog: their EXP adds up to its " + worth + " (" + sum + ")");
+					Check(ref ok, kills == 1, "... and only one of them gets the kill (" + kills + ")");
+				}
+				else Log("  (no warthog or the level up system is off: EXP part skipped)");
+				// (d) eight builders' storages: each opened by its builder only
+				var builders = new List<KeyValuePair<uint, ulong>>();
+				for (int i = 0; i < players.Length; i++) builders.Add(new KeyValuePair<uint, ulong>((uint)(990100 + i), players[i]));
+				string before2 = PrivateStorage.Encode();
+				PrivateStorage.Decode(string.Join(";", builders.Select(b => b.Key + ":" + b.Value).ToArray()));
+				bool optionsOn = WorldOptions.On(WorldOptions.PrivateStorage);
+				if (!optionsOn) Log("  (Private storages is off in this world: every storage opens for everyone - checked as such)");
+				int right = builders.Sum(b => players.Count(p => PrivateStorage.MayOpen(b.Key, p) == (!optionsOn || p == b.Value)));
+				Check(ref ok, right == builders.Count * players.Length, "seven builders' storages: each opens only for its builder (" + right + " of " + builders.Count * players.Length + " right)");
+				PrivateStorage.Decode(before2);
+				// (e) a locked chest tried without the key (the host's own player, as anyone's machine does): it isn't claimed, so
+				// the next player who comes with the key isn't told someone else got it first
+				LootCrate lockedChest = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(l => l.GetComponent<CustomNote>() != null && l.GetComponent<CustomNote>().Title == "Locked crate");
+				if (lockedChest != null)
+				{
+					StoryBook.Take("ciscmanykey", 99);
+					List<string> got = lockedChest.Open();
+					int key = lockedChest.StateKey;
+					bool nextGot = Claims.HostGrant(e, key, players[1]);
+					Check(ref ok, got.Count == 0 && !lockedChest.Looted && nextGot, "a locked chest tried without the key isn't claimed: the next player with the key gets it (given " + got.Count + ", the next player " + (nextGot ? "granted" : "refused") + ") - AU41");
+				}
+				else Check(ref ok, false, "the locked crate is on the island");
 			}
-			else Log("  (no warthog or the level up system is off: EXP part skipped)");
-			// (d) eight builders' storages: each opened by its builder only
-			var builders = new List<KeyValuePair<uint, ulong>>();
-			for (int i = 0; i < players.Length; i++) builders.Add(new KeyValuePair<uint, ulong>((uint)(990100 + i), players[i]));
-			string before2 = PrivateStorage.Encode();
-			PrivateStorage.Decode(string.Join(";", builders.Select(b => b.Key + ":" + b.Value).ToArray()));
-			bool optionsOn = WorldOptions.On(WorldOptions.PrivateStorage);
-			if (!optionsOn) Log("  (Private storages is off in this world: every storage opens for everyone - checked as such)");
-			int right = builders.Sum(b => players.Count(p => PrivateStorage.MayOpen(b.Key, p) == (!optionsOn || p == b.Value)));
-			Check(ref ok, right == builders.Count * players.Length, "seven builders' storages: each opens only for its builder (" + right + " of " + builders.Count * players.Length + " right)");
-			PrivateStorage.Decode(before2);
-			// (e) a locked chest tried without the key (the host's own player, as anyone's machine does): it isn't claimed, so
-			// the next player who comes with the key isn't told someone else got it first
-			LootCrate lockedChest = e.Root.GetComponentsInChildren<LootCrate>(true).FirstOrDefault(l => l.GetComponent<CustomNote>() != null && l.GetComponent<CustomNote>().Title == "Locked crate");
-			if (lockedChest != null)
+			finally
 			{
-				StoryBook.Take("ciscmanykey", 99);
-				List<string> got = lockedChest.Open();
-				int key = lockedChest.StateKey;
-				bool nextGot = Claims.HostGrant(e, key, players[1]);
-				Check(ref ok, got.Count == 0 && !lockedChest.Looted && nextGot, "a locked chest tried without the key isn't claimed: the next player with the key gets it (given " + got.Count + ", the next player " + (nextGot ? "granted" : "refused") + ") - AU41");
+				ScRemove(made, isl);
+				if (!levelsBefore && PlayerLevels.On) PlayerLevels.TurnOff();
 			}
-			else Check(ref ok, false, "the locked crate is on the island");
-			ScRemove(made, isl);
-			if (!levelsBefore && PlayerLevels.On) PlayerLevels.TurnOff();
 			if (ok) Log("PASS: scenario many players"); else Fail("scenario many players");
 		}
 

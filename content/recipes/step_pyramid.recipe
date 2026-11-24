@@ -1,0 +1,598 @@
+# The Step Pyramid - a themed island, twice the size (x2)
+# Inspiration: jungle-temple adventure films (a stepped pyramid on a jungle plateau, a sacred sinkhole full of offerings,
+#   spiked doorways, hidden levers, a pit you cannot cross) - the mood only, never named on the island.
+# Island type: Shape 4 (Plateau), Style 0 (tropical). A jungle-topped mesa (23.8 m) with sheer cliffs; the Rain Kings'
+#   causeway cut up its west face; the pyramid on a plaza on top, a sinkhole beside it straight down past sea level.
+# The Rain Kings farmed the plateau and threw jade into their sacred well to bring the rain. Three jade tablets were kept
+# apart: in the Sun shrine (its doorway spiked), in the well (with its guardian), in the Rain shrine (beyond a moat of
+# stakes). An explorer mapped it all and left her notes at the base camp. Lay the three on the summit altar.
+# Quest "The Rain Kings" (20 steps): the base camp, the field notes, the causeway, the warthogs, the Sun shrine (a hidden
+# lever), the sinkhole and its guardian, the well's tablet (a dive), the Rain shrine (the path appears), the summit, the
+# carvings, the offering chest (medium crop plot blueprint, trade coins, spices).
+#
+# Built by the recipe player (CIRecipe step_pyramid) through the editor's own operations.
+# SILVER 10-26: the new land - Jaguar Hill with the explorer's survey tower, Serpent Cave, Mateo Ruiz at the ruined house (a lamp puzzle), a plane wreck, a jump course, a maze, a set of five jade beads
+include lib_sea
+include lib_features
+include lib_areas
+include lib_highwater
+include lib_silver
+
+# tierwall: the face of one of the pyramid's tiers - the radio tower's stone blocks (2.4 m square, 3 m tall, their tops
+# level with the tier) all round a square of half-size a (a = 1.2 + 1.2 x n), so each tier ends in a straight wall and not
+# in a slope: the terrain behind them is the tier
+macro tierwall a=15.6 h=26.22
+for t {1.2-$a} {$a-1.2} 2.4
+place RT_GroundPillar - at $t {$a-1.2} h=$h
+place RT_GroundPillar - at $t {1.2-$a} h=$h
+next
+for t {3.6-$a} {$a-3.6} 2.4
+place RT_GroundPillar - at {$a-1.2} $t h=$h
+place RT_GroundPillar - at {1.2-$a} $t h=$h
+next
+end
+
+new
+# (nature: a jungle where the theme says so - the plateau's top a little denser than Raft's tropical islands, like
+# Ironreef Caverns' jungle; the cliffs and beaches Like Raft)
+gen Trees=0.38 Bushes=0.38 Rocks=0.43 Harvest=0.24 BeachThings=0.3
+gen Seed=9013 Radius=63 Height=24 Roughness=0.35 Peaks=1 Shape=4 Style=0 BeachWidth=0.5 Cliffs=0.85 PeakShape=0.3
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.4 Hostiles=0
+generate
+# --- SILVER 10-26 terrain: the new land - pads raised from the sea (joined to the coast), Jaguar Hill ------------------------
+brush flatten at 84 2 r=16 s=20 frames=500 h=3
+brush smooth at 84 2 r=21 s=4 frames=40
+brush flatten at 84 2 r=14 s=20 frames=500 h=3
+brush flatten from 84 2 to 51.01 1.21 r=9 s=20 frames=500 h=3
+# (REACH 10-30: the calendar stone at 93 -7 stood on the pad's very edge - its hidden reward chest came up on the slope
+# below it and its note dropped down the cliff to the sea floor (reach: "Calendar stone reward" and "Calendar reading"
+# can't get there): the pad carried out round the stone)
+brush flatten at 93 -7 r=5 s=20 frames=300 h=3
+clear at 93 -7 r=6 body
+brush flatten at -20 86 r=17 s=20 frames=500 h=3
+brush smooth at -20 86 r=22 s=4 frames=40
+brush flatten at -20 86 r=15 s=20 frames=500 h=3
+brush flatten from -20 86 to -12.53 53.86 r=9 s=20 frames=500 h=3
+brush flatten at -62 -28 r=17 s=20 frames=500 h=1.5
+brush smooth at -62 -28 r=22 s=4 frames=40
+brush flatten at -62 -28 r=15 s=20 frames=500 h=1.5
+brush flatten at 38 -36 r=19 s=20 frames=500 h=2.5
+brush smooth at 38 -36 r=24 s=4 frames=40
+brush flatten at 38 -36 r=17 s=20 frames=500 h=2.5
+call hw_mount x=-78 z=-52 b=12 h=8
+brush flatten at 70 58 r=12 s=20 frames=500 h=3
+brush smooth at 70 58 r=17 s=4 frames=40
+brush flatten at 70 58 r=10 s=20 frames=500 h=3
+brush flatten from 70 58 to 43.82 36.31 r=9 s=20 frames=500 h=3
+call hw_mount x=-60 z=60 b=22 h=20
+call hw_trail x=-60 z=60 b=22 h=20 a0=135 turn=300 n=40 h0=3
+brush flatten from -43.74 43.74 to -40.2 40.2 r=7 s=20 frames=500 h=3
+
+# --- Terrain: the pyramid raised out of the plateau's top in four square tiers 2.42 m high (a stair of Raft's fits each)
+# and 3.6 m deep, painted stone (their faces are walls of stone blocks, below); the moat of stakes round the Rain shrine's pedestal on the east; the sacred well dug south of the pyramid
+# down to 10 m under the sea; the causeway in two legs up the west face from the base camp's lowland (about 1:3) ---------
+for zz -14 14 2.2
+brush flatten from -14 $zz to 14 $zz r=2 s=20 frames=40 h=26.22
+next
+for zz -10.4 10.4 2.08
+brush flatten from -10.4 $zz to 10.4 $zz r=2 s=20 frames=40 h=28.64
+next
+for zz -6.8 6.8 2.27
+brush flatten from -6.8 $zz to 6.8 $zz r=2 s=20 frames=40 h=31.06
+next
+for zz -3.2 3.2 2.13
+brush flatten from -3.2 $zz to 3.2 $zz r=2 s=20 frames=40 h=33.48
+next
+brush rock at 0 0 r=17 s=20 frames=30
+brush flatten from 24 -4.5 to 37 -4.5 r=2 s=20 frames=120 h=19.8
+brush flatten from 24 4.5 to 37 4.5 r=2 s=20 frames=120 h=19.8
+brush flatten from 25 -4.5 to 25 4.5 r=2 s=20 frames=120 h=19.8
+brush flatten from 36 -4.5 to 36 4.5 r=2 s=20 frames=120 h=19.8
+brush flatten at -6 -26 r=6 s=20 frames=500 h=-10
+# (a gorge from the well's south side through the cliff to the sea: the sea fills the well, and its way out is a swim)
+brush flatten from -6 -31 to -6 -44 r=1.6 s=20 frames=300 h=-3
+brush rock at -6 -26 r=8 s=20 frames=30
+brush rock from -6 -31 to -6 -42 r=3 s=20 frames=20
+# (REACH 10-31 N: the rock strokes closed the gorge again - the walker's swim from the sea never got into it, nearest
+# 20 m off - and its cut ended in a pit in the beach, a sand bar short of the sea: the channel cut once more after them,
+# 4 m wide and 3 m deep, on across the beach into the open sea)
+brush flatten from -6 -31 to -6 -74 r=2 s=20 frames=300 h=-3
+clear from -6 -31 to -6 -74 r=3 body
+for i 0 16 1
+brush flatten at {-28-$i*0.8125} {42-$i*1.25} r=4.5 s=20 frames=20 h={3+$i*0.5}
+next
+for i 0 25 1
+brush flatten at {-41+$i*0.08} {22-$i*1.52} r=4.5 s=20 frames=20 h={11+$i*0.508}
+next
+brush flatten from -39 -16 to -35 -16 r=4.5 s=20 frames=40 h=23.8
+brush smooth from -28 42 to -41 22 r=4.5 s=10 frames=12
+brush smooth from -41 22 to -39 -16 r=4.5 s=10 frames=12
+brush flatten at -24 46 r=6 s=20 frames=60 h=3
+# (no "origin": the set pieces keep the frame the strokes above used, the generated land's exact middle)
+clear at 0 0 r=24
+clear at -28 0 r=6
+clear from 22 0 to 38 0 r=8
+clear at -6 -26 r=10
+clear from -6 -31 to -6 -76 r=3
+clear from -28 42 to -41 22 r=5
+clear from -41 22 to -37 -16 r=5
+clear at -24 46 r=9
+
+# --- The base camp on the lowland at the causeway's foot: two tents, the chart table with the field notes, crates and a
+# lantern, the camp box, the explorers' boat on the beach ------------------------------------------------------------------
+place Balboa_DecorationPrefabBase_SimpleTent - at -27 49 ground yaw=160
+place Balboa_DecorationPrefabBase_SimpleTent - at -20 49.5 ground yaw=200
+place MapTable - at -24 45 ground centred scale=0.6
+place Note_Book fieldnotes at -24 45 h=6 drop yaw=10 rot=0,0,0
+place Crate_Big_01 - at -21 44 ground yaw=30
+place Placeable_Lantern_Metal - at -21 44 h=5 drop
+place "Box Small" campbox at -27.5 44.5 ground yaw=-20
+place RT_PlasticBoat - at -21 55 ground yaw=80
+place Zone_Trigger basecamp at -24 46 y=1
+
+# --- The causeway: stone pillars along it, two fallen; the zone at its top --------------------------------------------
+place Pillar_01 - at -31.5 38.5 ground
+place Pillar_01 - at -37.5 33 ground
+place Pillar_01 - at -44.5 16 ground
+place Pillar_01 - at -43.8 4 ground
+place Pillar_01 - at -36.6 6 ground roll=90 yaw=20
+place Pillar_01 - at -43 -8 ground
+place Pillar_01 - at -35.4 -6 ground roll=88 yaw=-15
+place Zone_Trigger causeway at -35 -16 y=1
+
+# --- The pyramid's tier walls, and its stairway up the north face: one of Raft's stone stairs against each tier's wall --
+call tierwall a=15.6 h=26.22
+call tierwall a=12 h=28.64
+call tierwall a=8.4 h=31.06
+call tierwall a=4.8 h=33.48
+# (four tiers with ledges 3.6 m deep: one of Raft's stairs, 3.07 m long, fits each - on 2.4 m ledges each stair's foot
+# reached over the top of the one below, and shortened they were too steep to walk up)
+place Block_Stair_Tier3 - at 0 17.135 h=23.8 sit centred yaw=180
+place Block_Stair_Tier3 - at 0 13.535 h=26.22 sit centred yaw=180
+place Block_Stair_Tier3 - at 0 9.935 h=28.64 sit centred yaw=180
+place Block_Stair_Tier3 - at 0 6.335 h=31.06 sit centred yaw=180
+
+# --- The summit shrine on the top tier, open to the sky: the altar with its three hollows, the carvings, the Kings'
+# offering chest (columns at the tier's corners stood half off its edge) -----------------------------------------------------------------------------------
+place UT_EndRoom_Table altar at 0 -0.8 h=33.53 sit scale=0.5
+place Note_Sign carvings at 0 -2.6 h=33.53 sit
+place MayorsChest offering at 0 1.4 h=33.53 sit yaw=180
+place Zone_Trigger summit at 0 0 h=34.6
+
+# --- The Sun shrine on the west terrace: a stone room, its doorway (east) filled with stakes that sink into the floor;
+# the tablet chest inside; the jaguar's-paw lever hidden at the plateau's west rim among bushes -----------------------
+push at -29.5 -1.5 h=23.85
+place RT_Wall1 - at 3 0 y=0
+place RT_Wall1 - at 3 3 y=0
+place RT_Wall1 - at 0 0 y=0 yaw=90
+place RT_Floor - at 3 3 y=3 sx=0.5 sz=0.3333
+place "Balboa_DecorationPrefabBase_Wooden Spikes" sunspikes at 3.2 1.5 y=0 sit scale=0.22 yaw=90
+place Loot_ChestSmall sunchest at 2.4 1.5 y=0 sit yaw=90
+pop
+place UT_JumpPuzzle_LiftMechanism_Lever sunlever at -34.5 9 ground yaw=90
+place "Balboa_Bush_01 Variant" - at -35.2 10.6 ground
+place Bush - at -33.6 7.6 ground
+
+# --- The Rain shrine on its pedestal in the east, ringed by a moat of stakes: stepping stones (shown when the Sun's tablet
+# is taken) across the moat's west arm; the room as the Sun's, its doorway open (west); the chest; bees in its roof ----
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 25 -2.9 h=19.8 sit scale=0.22 yaw=90
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 25 2.9 h=19.8 sit scale=0.22 yaw=90
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 30.5 -4.5 h=19.8 sit scale=0.3
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 30.5 4.5 h=19.8 sit scale=0.3
+place RT_GroundPillarCap rainstones at 22.3 0 h=23.85 sy=1.68 scale=0.75
+place RT_GroundPillarCap rainstones at 23.9 0 h=23.85 sy=1.68 scale=0.75
+place RT_GroundPillarCap rainstones at 25.5 0 h=23.85 sy=1.68 scale=0.75
+place RT_GroundPillarCap rainstones at 27.1 0 h=23.85 sy=1.68 scale=0.75
+place RT_GroundPillarCap rainstones at 28.7 0 h=23.85 sy=1.68 scale=0.75
+brush flatten from 29 0 to 33 0 r=3.2 s=20 frames=300 h=23.85
+push at 29 -1.5 h=23.85
+place RT_Wall1 - at 3 0 y=0
+place RT_Wall1 - at 3 3 y=0
+place RT_Wall1 - at 3 0 y=0 yaw=90
+place RT_Floor - at 3 3 y=3 sx=0.5 sz=0.3333
+place Loot_ChestSmall rainchest at 1.9 1.5 y=0 sit yaw=270
+place Placeable_BeeHive - at 2.5 2.4 y=0 sit
+place Creature_BugSwarm_Bee bees at 2.5 2.4 y=1.8
+pop
+
+# --- The ruined terraces round the plaza: low walls of stone blocks sunk to show a metre, stumps of columns, rubble, the
+# collapsed storehouse's box; the warthogs ---------------------------------------------------------------------------------
+place RT_GroundPillar - at -20 18 h=24.8
+place RT_GroundPillar - at -17.6 18 h=24.8
+place RT_GroundPillar - at 18 -20 h=24.8
+place RT_GroundPillar - at 20.4 -20 h=24.8
+place Pillar_04 - at -21 -18 ground
+place Pillar_04 - at 21 17 ground yaw=40
+place VP_RubblePile_Small02 - at 19 19 ground yaw=30
+place VP_RubblePile_Small02 - at -22 -14 ground yaw=-20
+place "Box Small" storebox at 20.5 20.5 ground yaw=15
+place Creature_Boar hogs at 16 22 ground
+place Zone_Trigger terraces at 12 22 y=1
+
+# --- The sacred well south of the pyramid: vines down its wall, the offering pots and the box on its floor, the guardian
+# in its deep water, green-blue light in the shaft; the way out is the gorge to the sea ---------------------------------
+place CaveVine1 - at -8 -20.6 h=23.6
+place CaveVine3 - at -4.2 -20.5 h=23.6
+place UT_EndRoom_Pot02 offeringpot at -7.5 -27.5 h=-10 sit
+place UT_EndRoom_Pot03 - at -4.5 -25 h=-10 sit yaw=60
+place Loot_ChestSmall offeringbox at -6 -26.5 h=-10 sit yaw=30
+place Creature_AnglerFish guardian at -6 -26 h=-6
+place Zone_Trigger cenote at -6 -19 h=24.8
+place Zone_Atmosphere wellight at -6 -26 h=4
+
+# --- Off the beach 4 m down: the explorers' lost barrel; animals: jungle fowl by the camp, turtles off the beach,
+# dolphins out in the bay ------------------------------------------------------------------------------------------------
+place Loot_SunkenBarrel beachbarrel at -26 62 ground
+place Creature_Chicken fowl at -17 45 ground
+prop fowl creature.count=3
+place Creature_Turtle turtles at 10 62 h=-1
+prop turtles creature.count=2
+place Creature_Dolphin dolphins at 0 -78 h=-3
+prop dolphins creature.count=2
+
+# --- Raft's special features (lib_features; the user, 2026-10-10: every Raft feature on more than one island): two sun
+# mirrors on the plaza (east and south of the pyramid) and the king's sun-locked chest between them
+call mirrors x1=19.5 z1=-8 yaw1=0 x2=6 z2=-19.5 yaw2=90 a1=sunglass1 a2=sunglass2 chest=kingschest cx=16.8 cz=-17.2 cyaw=315 items=Glass*3;TradeToken*4;Seed_Flower_Red*2 title="The king's sun chest"
+prop kingschest else.open=message||A gold eye in the lid, dark. The glyph around it: two suns. Both plaza mirrors must face it.
+
+# --- Things to gather, as suits the island (the user, 2026-10-05): palms, bananas, melons ----------
+scatter "Pickup_Landmark_Tree_Palm 1" 4 at 0 0 r=44.1 seed=4310 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 4 at 0 0 r=44.1 seed=4311 free=5
+scatter "Banana_Bush_2" 6 at 0 0 r=44.1 seed=4320 free=3
+scatter "Pickup_Landmark_WatermelonLandmark" 6 at 0 0 r=44.1 seed=4330 free=3
+
+# --- Raft's finds in the shallows round the island (lib_sea) ---------------------------------------------------------
+call shallows r=72 deep=5 n=2
+# (REACH 10-30 N: the beach under Jaguar Hill's south side met the land in a 2.5 m step at -48 27 - the walk to the trail
+# stopped there every run: a ramp up from the sand, laid from the top down)
+# (REACH 10-31 N: four 0.7 m terraces still stopped the walk - now nine of 0.26 m, then smoothed)
+# (REACH 11-01 N: the ramp stood 10 m off the step - the walk's points are the play's, 'offset -1.8093 10.1439' from
+# here: moved onto the step itself, laid after the shallows, wider)
+for i 0 8 1
+brush flatten at {-48.1+0.375*$i} {18.4-0.4125*$i} r=3 s=20 frames=300 h={3.6-0.2625*$i}
+next
+brush smooth from -45.1 15.1 to -48.1 18.4 r=3.5 s=10 frames=12
+clear from -45.1 15.1 to -48.1 18.4 r=4 body
+
+# --- SILVER 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Jaguar Hill ------
+# Jaguar Hill with the explorer's survey tower on it, Serpent Cave, the ruined house where Mateo Ruiz waits (four lamps round it: a puzzle), a plane wreck,
+# a jump course, a maze, five jade beads about the island (a set), and at the house the calendar stone that wants the sun disc and the moon disc
+call hw_zone x=-43.74 z=43.74 al=sp_trailz id=sp_trail r=5 msg="The trail up Jaguar Hill starts here - round and up."
+call hw_zone x=-60 z=60 al=sp_summitz id=sp_summit r=8 h=1 msg="The top of Jaguar Hill. The whole island below you."
+place Creature_Goat sp_goats at -39.74 46.74 ground
+prop sp_goats creature.count=2
+call hw_mast x=-63 z=62 h0=20 lv=6 a=sp_mast chest=sp_topchest top=Placeable_Flag_01
+call ar_cave x=-20 z=90 h=3 yaw=180 al=sp_caverock chest=sp_cavechest
+call hw_zone x=-19 z=81 al=sp_cavez id=sp_cave r=4 h=1 msg="Serpent Cave. Water drips somewhere in the dark."
+call ar_ruin x=84 z=2 h=3 yaw=0 w=3 d=2 al=sp_ruin
+call ss_islander x=83 z=-2.5 yaw=200 al=sp_isl nm="Mateo Ruiz" pose=sit
+prop sp_isl talk.text=The doctora paid us to carry her boxes up the causeway. When the rains came, the others went home. I stayed.\n---\nThe calendar stone by the village tells the rain days - but only with its two discs. The sun disc hangs on her survey tower on Jaguar Hill, the moon disc is in Serpent Cave.\n---\nAnd the maze by the shore? The Rain Kings made it for their priests. There is something in the middle.\n---\nThe four torches round my house: each one you light wakes the next. Light all four and look behind the back wall.
+place Placeable_Chair_Basic - at 83 -2.5 ground sit yaw=200
+call ss_lamp x=77 z=1 al=sp_lamp1 nm="Torch post 1" grp="Torch posts" on=0
+call ss_lamp x=83 z=8 al=sp_lamp2 nm="Torch post 2" grp="Torch posts" on=0
+call ss_lamp x=90 z=1 al=sp_lamp3 nm="Torch post 3" grp="Torch posts" on=0
+call ss_lamp x=83 z=-6 al=sp_lamp4 nm="Torch post 4" grp="Torch posts" on=0
+prop sp_lamp1 on.use=light|Torch post 2|toggle
+prop sp_lamp2 on.use=light|Torch post 3|toggle
+prop sp_lamp3 on.use=light|Torch post 4|toggle
+prop sp_lamp4 on.use=light|Torch post 1|toggle
+prop sp_lamp1 on.alllit=show|sp_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call ss_hidden x=85 z=6.6 al=sp_lampchest
+place Creature_Chicken sp_hens at 92 8 ground
+prop sp_hens creature.count=3
+call ar_plane x=-62 z=-28 h=1.5 yaw=60 al=sp_plane crate=sp_planecrate
+place Note_Paper sp_pilot at -62.27 -23.54 ground y=0.1 drop yaw=90
+call hw_zone x=-62 z=-28 al=sp_planez id=sp_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP sp pad=2.5 at=38 -36
+push at 38 -36
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2.5
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2.5
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpsp at 4.24 -4.24 h=3.1
+place Block_Foundation_Tier3 jpsp at 1.65 -5.77 h=3.85
+place Block_Foundation_Tier3 jpsp at -1.35 -5.85 h=4.6
+place Block_Foundation_Tier3 jpsp at -4.01 -4.46 h=5.35
+place Block_Foundation_Tier3 jpsp at -5.67 -1.95 h=6.1
+place Block_Foundation_Tier3 jpsp at -5.91 1.04 h=6.85
+place Block_Foundation_Tier3 jpsp at -4.66 3.78 h=7.6
+place Block_Foundation_Tier3 jpsp at -2.25 5.56 h=8.35
+place Block_Foundation_Tier3 jpsp at 0.73 5.96 h=9.1
+# JUMP from 10
+place Block_Foundation_Tier3 jpsp at 3.53 4.85 h=9.85
+place Block_Foundation_Tier3 jpsp at 5.44 2.54 h=10.6 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppsp at 1.65 -5.77 h=3.168 sy=1.861
+place Block_Foundation_Tier3 jppsp at -1.35 -5.85 h=3.918 sy=2.959
+place Block_Foundation_Tier3 jppsp at -4.01 -4.46 h=4.668 sy=4.058
+place Block_Foundation_Tier3 jppsp at -5.67 -1.95 h=5.418 sy=5.157
+place Block_Foundation_Tier3 jppsp at -5.91 1.04 h=6.168 sy=6.255
+place Block_Foundation_Tier3 jppsp at -4.66 3.78 h=6.918 sy=7.354
+place Block_Foundation_Tier3 jppsp at -2.25 5.56 h=7.668 sy=8.453
+place Block_Foundation_Tier3 jppsp at 0.73 5.96 h=8.418 sy=9.552
+place Block_Foundation_Tier3 jppsp at 3.53 4.85 h=9.168 sy=10.650
+place Block_Foundation_Tier3 jppsp at 5.44 2.54 h=9.918 sy=11.749 sx=2 sz=2
+prop jpsp tint.color=#8a7f70
+prop jpsp tint.amount=0.35
+prop jppsp tint.color=#8a7f70
+prop jppsp tint.amount=0.35
+place Loot_Chest jcsp at -5.91 1.04 h=6.85 sit yaw=0
+prop jcsp loot.refill=0
+place Loot_ChestSmall jbsp at 5.44 2.54 h=10.6 sit yaw=0
+prop jbsp loot.refill=0
+pop
+call hw_zone x=38 z=-44 al=sp_jumpz id=sp_jumps r=6 h=1 msg="Stacks, one higher than the next. Something at the top."
+call ss_pad x=40 z=46 r=15 h=1.5
+push at 32.5 38.5 h=1.5
+place Block_Wall_Tier3 sp_maze at 0.75 0 y=0.05
+place Block_Wall_Tier3 sp_maze at 2.25 0 y=0.05
+place Block_Wall_Tier3 sp_maze at 0.75 15 y=0.05
+place Block_Wall_Tier3 sp_maze at 2.25 15 y=0.05
+place Block_Wall_Tier3 sp_maze at 3.75 0 y=0.05
+place Block_Wall_Tier3 sp_maze at 5.25 0 y=0.05
+place Block_Wall_Tier3 sp_maze at 3.75 3 y=0.05
+place Block_Wall_Tier3 sp_maze at 5.25 3 y=0.05
+place Block_Wall_Tier3 sp_maze at 3.75 9 y=0.05
+place Block_Wall_Tier3 sp_maze at 5.25 9 y=0.05
+place Block_Wall_Tier3 sp_maze at 3.75 15 y=0.05
+place Block_Wall_Tier3 sp_maze at 5.25 15 y=0.05
+place Block_Wall_Tier3 sp_maze at 6.75 6 y=0.05
+place Block_Wall_Tier3 sp_maze at 8.25 6 y=0.05
+place Block_Wall_Tier3 sp_maze at 6.75 9 y=0.05
+place Block_Wall_Tier3 sp_maze at 8.25 9 y=0.05
+place Block_Wall_Tier3 sp_maze at 6.75 12 y=0.05
+place Block_Wall_Tier3 sp_maze at 8.25 12 y=0.05
+place Block_Wall_Tier3 sp_maze at 6.75 15 y=0.05
+place Block_Wall_Tier3 sp_maze at 8.25 15 y=0.05
+place Block_Wall_Tier3 sp_maze at 9.75 0 y=0.05
+place Block_Wall_Tier3 sp_maze at 11.25 0 y=0.05
+place Block_Wall_Tier3 sp_maze at 9.75 9 y=0.05
+place Block_Wall_Tier3 sp_maze at 11.25 9 y=0.05
+place Block_Wall_Tier3 sp_maze at 9.75 12 y=0.05
+place Block_Wall_Tier3 sp_maze at 11.25 12 y=0.05
+place Block_Wall_Tier3 sp_maze at 9.75 15 y=0.05
+place Block_Wall_Tier3 sp_maze at 11.25 15 y=0.05
+place Block_Wall_Tier3 sp_maze at 12.75 0 y=0.05
+place Block_Wall_Tier3 sp_maze at 14.25 0 y=0.05
+place Block_Wall_Tier3 sp_maze at 12.75 12 y=0.05
+place Block_Wall_Tier3 sp_maze at 14.25 12 y=0.05
+place Block_Wall_Tier3 sp_maze at 12.75 15 y=0.05
+place Block_Wall_Tier3 sp_maze at 14.25 15 y=0.05
+place Block_Wall_Tier3 sp_maze at 0 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 0 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 0 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 0 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 0 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 0 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 0 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 0 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 0 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 0 14.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 3 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 3 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 3 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 3 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 3 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 3 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 6 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 6 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 9 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 9 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 9 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 9 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 12 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 12 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 12 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 12 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 15 0.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 15 2.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 15 3.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 15 5.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 15 6.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 15 8.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 15 9.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 15 11.25 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 15 12.75 y=0.05 yaw=90
+place Block_Wall_Tier3 sp_maze at 15 14.25 y=0.05 yaw=90
+place Loot_ChestSmall sp_mazechest at 4.5 1.5 y=0.05 sit yaw=0
+pop
+prop sp_maze tint.color=#4e6b3a
+prop sp_maze tint.amount=0.55
+prop sp_mazechest loot.refill=0
+call hw_zone x=38.5 z=37 al=sp_mazez id=sp_maze r=3 msg="A maze of old walls. Somewhere in the middle, a box."
+call hw_machine x=93 z=-7 yaw=-45 al=sp_machine nm="Calendar stone" obj=TP_LaserControlPanel_lever sc=3 a=sp_top b=sp_cave done=sp_fixed rew=sp_rewchest rnote=sp_rewnote msg="It works." hint="It wants the sun disc from Jaguar Hill and the moon disc from Serpent Cave."
+call hw_note x=90.4 z=-5.8 yaw=-25 al=sp_hint
+call ss_piece x=-55 z=-10 al=sp_piece1 set="Jade beads"
+call ss_piece x=5 z=56 al=sp_piece2 set="Jade beads"
+call ss_piece x=17 z=-55 al=sp_piece3 set="Jade beads"
+call ss_piece x=35 z=14 al=sp_piece4 set="Jade beads"
+call ss_piece x=-43 z=41 al=sp_piece5 set="Jade beads"
+prop sp_piece1 on.set=show|sp_setchest\nmessage||All five jade beads found.
+call ss_hidden x=89 z=-10 al=sp_setchest kind=Loot_Chest
+call treasure x=-31 z=-49 r=5 n=1 seed=26480 kind=0
+prop treasure26480 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_tropical x=84 z=2 r=20 seed=26493
+call ar_plants_tropical x=-20 z=86 r=21 seed=26494
+call ar_plants_tropical x=-62 z=-28 r=21 seed=26495
+call ar_plants_tropical x=70 z=58 r=16 seed=26496
+call ar_plants_tropical x=-78 z=-52 r=12 seed=26497
+call ar_plants_tropical x=-60 z=60 r=24 seed=26498
+# (REACH 10-31 N: the calendar stone's pad, carried out to the cliff's edge, left a palm on its steep rim with its foot
+# buried: no trees on the pad or its rim)
+clear at 93 -7 r=7 all only=Palm|Bamboo|Banana|Bush
+
+# ===== Settings, story items, notes, behaviours, quest (20 steps) =========================================================
+info title=The Step Pyramid
+info author=Custom Islands
+info description=A jungle plateau with sheer cliffs and, on its top, the stepped pyramid of the Rain Kings. Three jade tablets were kept apart - in a spiked shrine, in the sacred well beside the pyramid, and beyond a moat of stakes. Lay them on the summit altar and the Kings' offering is yours.
+island on.arrive=message||A green mesa with cliffs like walls. Over the treetops on its summit, the stepped top of a pyramid.
+
+story jade|Jade tablet|quest:Utopia_KeyPhase1|A tablet of green jade carved with rain clouds: one of the three for the Rain Kings' altar.
+
+note fieldnotes Dr. Quintero's field notes | THE PYRAMID OF THE RAIN KINGS - field notes, M. Quintero\n\nThe plateau was theirs: maize terraces, the stepped pyramid, and beside it a sinkhole straight down to the sea - their sacred well, where they threw jade to bring the rain.\n\nThree jade tablets were kept apart. One in the Sun shrine on the near terrace; its doorway is staked shut - the carving shows a jaguar's paw at the cliff's edge (a lever?). One thrown into the well. One in the Rain shrine on the far terrace, beyond a moat of stakes nobody can cross. The carving over the moat: "When the Sun gives up its stone, the Rain shows its path."\n\nLay the three on the summit altar, the carvings say, and the Kings' own offering is yours.\n\nThe warthogs dig everywhere. Something in the well took my rope.
+note carvings The Rain Kings' carvings | (carved round the altar; Dr. Quintero's pencil translation tucked under a stone)\n\nThree stones of rain - the Sun's, the Well's, the Rain's.\nLay them in the hollows of the altar,\nand the sky's chest opens.
+note sunchest Sun shrine's tablet chest | A stone box in the Sun shrine: the first jade tablet, wrapped in rotten cloth. As you lift it, stone grinds on stone somewhere on the plateau.
+loot sunchest story:jade*1;Clay*3
+prop sunchest loot.refill=0
+prop sunchest on.open=show|rainstones\nmessage||Stone grinds on stone, somewhere on the plateau - the Rain shows its path.\nsound||event:/coll/stoneground
+note offeringbox Well's offering box | A box among the offerings at the bottom of the well: jade beads, a gold disc - and the second tablet.
+loot offeringbox story:jade*1;TradeToken*4
+prop offeringbox loot.refill=0
+note rainchest Rain shrine's tablet chest | A stone box in the Rain shrine, dry under a carved cloud: the third jade tablet.
+loot rainchest story:jade*1;Clay*2
+prop rainchest loot.refill=0
+note offering Rain Kings' offering chest | The Kings' own offering: jade beads, gold discs worn smooth by hands, seed and spice kept dry a thousand years in sealed jars - and on a sheet of bark, the plan of their terraced beds.
+loot offering Blueprint_Cropplot_Medium_Tier3*1;TradeToken*15;Seed_Banana*2;Chili*3;Turmeric*3;Clay*6
+prop offering loot.refill=0
+prop offering if.open=signal|tablets
+prop offering else.open=message||The chest's lid is one block of stone. On the altar beside it, three hollows - all empty.
+note campbox Base camp box | The explorers' box: rope, a machete's whetstone, dried beans.
+loot campbox Rope*3;Plank*5;Raw_Potato*2
+prop campbox loot.refill=0
+note storebox Collapsed storehouse | A box in the collapsed storehouse: maize gone to dust, but the clay jars kept.
+loot storebox Clay*4;Stone*4;Brick_Dry*3
+prop storebox loot.refill=0
+note offeringpot Offering pot | A painted pot on the well's floor, stopped with wax: gold discs and cacao.
+loot offeringpot TradeToken*4;CopperIngot*2
+prop offeringpot loot.refill=0
+note beachbarrel Barrel off the beach | A barrel the explorers lost unloading: tools and tins.
+loot beachbarrel Scrap*3;Nail*8;MetalOre*2
+prop beachbarrel loot.refill=0
+
+prop sunlever obj.name=sunlever
+prop sunlever beh.use=Pull the jaguar's-paw lever
+prop sunlever on.use=message||The lever drops with a clunk. Up on the terrace, the stakes in the Sun shrine's doorway grind down into the floor.\nopen|sunspikes\nsound||event:/exploring/obstacles/varuna/trap_metal_reset
+prop sunspikes obj.name=sunspikes
+prop sunspikes beh.move=0,-3.4,0
+prop sunspikes beh.moveTime=2
+prop sunspikes beh.moveMode=switch
+prop rainstones obj.name=rainstones
+prop rainstones beh.hidden=1
+prop altar obj.name=altar
+prop altar beh.use=Lay the three jade tablets in the altar's hollows
+prop altar if.use=quest|10\ntake|story:jade|3
+prop altar on.use=message||One by one the tablets settle into their hollows. A sound like rain on leaves runs through the stone - and the offering chest's lid lifts a finger's width.\nsignal||tablets\nsound||event:/exploring/boxes/safe_unlock
+prop altar else.use=message||Three hollows in the altar stone, the shape of tablets. You haven't got all three.
+
+prop basecamp zone.id=basecamp
+prop basecamp zone.radius=8
+prop basecamp zone.message=The explorers' base camp: tents, a chart table, the notes of somebody who went up and didn't come down.
+prop causeway zone.id=causeway
+prop causeway zone.radius=6
+prop causeway zone.message=The top of the causeway. Jungle - and over it the pyramid, much bigger than it looked from the sea.
+prop terraces zone.id=terraces
+prop terraces zone.radius=10
+prop terraces zone.message=The terraces are torn up - warthogs, snouts deep in the old fields, and they don't like company.
+prop cenote zone.id=cenote
+prop cenote zone.radius=8
+prop cenote zone.message=The sacred well: a round shaft straight down to green water. Something pale moves deep in it.
+prop summit zone.id=summit
+prop summit zone.radius=5
+prop summit zone.message=The summit shrine: an altar with three hollows, a stone chest, and the whole jungle below you.
+prop hogs creature.count=3
+prop hogs creature.respawn=0
+prop hogs creature.zone=terraces
+prop guardian creature.count=1
+prop guardian creature.size=1.6
+prop guardian creature.health=3
+prop guardian creature.respawn=0
+prop guardian creature.zone=cenote
+prop bees creature.count=1
+prop bees creature.respawn=0
+prop wellight atmo.fog=#0a2a22
+prop wellight atmo.fogAmount=0.5
+prop wellight atmo.light=#5ac8a0
+prop wellight atmo.lightAmount=0.4
+prop wellight zone.radius=12
+
+story sp_top|Sun disc|Bolt|A gold disc the Rain Kings set on the hill to catch the sunrise; the explorer hung it on her survey tower.
+story sp_cave|Moon disc|Bolt|A silver disc, wrapped in the explorer's scarf at the back of Serpent Cave.
+story sp_fixed|Calendar stone working|Bolt|The calendar stone, working again.
+note sp_hint Porter's carving | THE CALENDAR STONE WANTS ITS DISCS: the sun on Jaguar Hill (the explorer's tower is on it) and the moon in Serpent Cave. Mateo at the porters' village knows.
+note sp_topchest Explorer's survey tower box | A box lashed to the top of the explorer's survey tower.
+loot sp_topchest story:sp_top*1;Rope*2;Plank*3
+note sp_cavechest Serpent Cave chest | A chest at the back of Serpent Cave, dry under the rock.
+loot sp_cavechest story:sp_cave*1;Nail*6;Scrap*2
+note sp_rewnote Calendar reading | The stone turns with a grinding sound and the discs line up: the next rain day of the Rain Kings, carved under the rim. Beside it the explorer scratched: 'They were right about the rain. They were wrong about the jade.'
+note sp_rewchest Calendar stone reward | What the calendar stone kept.
+loot sp_rewchest CopperIngot*2;Bolt*3;Rope*2
+note sp_lampchest Mateo's strongbox | Mateo's strongbox behind the house: his wages from the expedition, never spent.
+loot sp_lampchest TradeToken*2;CopperIngot*1;Rope*2
+note sp_setchest Bead offering bowl | A stone bowl for the beads: all five back, and the offering under them.
+loot sp_setchest MetalIngot*2;Glass*3;Bolt*4
+note sp_planecrate Mail plane's crate | The expedition's mail plane crate: letters never sent, rope and tins.
+loot sp_planecrate Plastic*3;Scrap*3;Rope*2
+prop sp_planecrate loot.refill=0
+note sp_pilot Mail pilot's note | MAIL RUN TO THE PLATEAU. Fog to the treetops. The doctora's flare never came. Putting down in the lowland below the cliffs.
+note jcsp Stela stack | Fallen stelae piled into steps. Half way up, a priest's bundle.
+loot jcsp Rope*3;Plank*4;MetalIngot*1
+note jbsp Top stela | An offering on the highest stone.
+loot jbsp CopperIngot*1;Bolt*2;TradeToken*1
+note sp_mazechest Priests' offering box | A carved box in the middle of the priests' maze: jade chips, copper and old coins.
+loot sp_mazechest TradeToken*3;CopperIngot*2;Glass*2
+
+quest title=The Rain Kings
+quest intro=A jungle mesa with a pyramid on top and an explorer's camp at its foot. Start at the camp.
+step reach|basecamp|1|Reach the explorers' base camp at the foot of the cliffs
+step read|Dr. Quintero's field notes|1|Read the field notes in the base camp
+step reach|causeway|1|Climb the old causeway up the cliffs to the plateau
+step kill|Warthog|3|Drive off the warthogs rooting in the ruined terraces
+step collect|story:jade|1|Find the lever at the cliff edge, sink the Sun shrine's stakes, take its jade tablet from the chest
+step reach|cenote|1|Find the sacred well beside the pyramid
+step kill|Angler fish|1|Face the guardian of the well's deep water
+step collect|story:jade|2|Dive for the second jade tablet among the offerings
+step collect|story:jade|3|Cross the stepping stones over the stakes to the Rain shrine for the third tablet
+step reach|summit|1|Climb the pyramid's stairway to the summit shrine
+step read|The Rain Kings' carvings|1|Read the carvings round the altar
+step read|Porter's carving|1|Read the porter's carving by the calendar stone at the ruined house
+step talk|Mateo Ruiz|1|Talk to Mateo Ruiz at the ruined house
+step reach|sp_trail|1|Find the foot of the trail up Jaguar Hill, the tall hill
+step reach|sp_summit|1|Climb the trail to the top of Jaguar Hill
+step collect|story:sp_top|1|Climb the explorer's survey tower and take the sun disc from its box
+step reach|sp_cave|1|Find Serpent Cave, the cave in the cliff
+step collect|story:sp_cave|1|Take the moon disc from the chest at the back of the cave
+step read|Calendar reading|1|Bring both to the calendar stone and read what it shows
+step open|Rain Kings' offering chest|1|Lay the three tablets in the altar and open the offering chest
+step blueprint|Blueprint_Cropplot_Medium_Tier3|1|Take the medium crop plot plans from the rain Kings' offering chest
+quest done=The tablets are home and the Kings' chest is open. Far out over the sea, for the first time in a long time, a rain cloud is building.
+quest reward=Clay*6;Stone*10;Brick_Dry*6
+
+# SILVER 10-26 ground fixes: rocks the new terrain left floating (or buried) taken away, each by its spot and name
+clear at -15.4 37.7 r=1.5 all only=^SmallBoulder2
+clear at -10.3 -39.4 r=1.5 all only=^SmallBoulder2
+clear at -2.1 34.2 r=1.5 all only=^BigBoulder2_Low
+clear at -23.9 -27.1 r=1.5 all only=^BigBoulder3_Low
+clear at -19.3 -33.0 r=1.5 all only=^BigBoulder1_Low
+clear at 25.3 32.7 r=1.5 all only=^SmallBoulder2
+clear at 40.2 10.1 r=1.5 all only=^SmallBoulder2
+clear at 32.6 22.7 r=1.5 all only=^BigBoulder4_Low
+clear at -2.7 -40.8 r=1.5 all only=^BigBoulder1_Low
+clear at -33.1 -22.9 r=1.5 all only=^BigBoulder2_Low
+clear at 77.2 3.5 r=1.5 all only=^SmallBoulder2
+clear at 74.7 -0.2 r=1.5 all only=^SmallBoulder2
+clear at 72.7 4.8 r=1.5 all only=^SmallBoulder2
+clear at -28.4 87.3 r=1.5 all only=^SmallBoulder2
+clear at -16.3 65.8 r=1.5 all only=^SmallBoulder2
+clear at -49.0 -34.0 r=1.5 all only=^SmallBoulder2
+clear at -47.3 -20.9 r=1.5 all only=^SmallBoulder2
+clear at -44.8 -25.2 r=1.5 all only=^SmallBoulder2
+clear at -83.4 -47.6 r=1.5 all only=^SmallBoulder4
+
+# (GROUND 11-01 N: 13 generator trees and bamboo sunk 1-5 m into the ground and a big palm over a drop: taken off)
+clear at 23.35 -24.09 r=0.8 all only=BigPalm4
+clear at -42.24 -17.76 r=0.8 all only=Bamboo
+clear at -30.61 21.23 r=0.8 all only=Tree_Palm
+clear at -20.92 31.55 r=0.8 all only=Tree_Palm
+clear at 95.69 3.80 r=0.8 all only=Bamboo
+clear at -32.62 92.03 r=0.8 all only=Tree_Mango
+clear at 71.33 48.56 r=0.8 all only=Tree_Palm
+clear at -85.90 -48.27 r=0.8 all only=Tree_Palm
+clear at -69.16 -54.24 r=0.8 all only=Bamboo
+clear at -70.31 -52.14 r=0.8 all only=Tree_Mango
+clear at -57.28 75.69 r=0.8 all only=Tree_Palm
+clear at -68.11 61.30 r=0.8 all only=Tree_Palm
+clear at -69.94 61.89 r=0.8 all only=Bamboo
+clear at -50.03 65.96 r=0.8 all only=Bamboo
+save The Step Pyramid

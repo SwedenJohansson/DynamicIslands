@@ -32,12 +32,34 @@ namespace DynamicIslands.Editor
 		RectTransform body;
 		readonly List<InputField> fields = new List<InputField>();
 		bool previewing;
+		// (where the previewed object stood: put back when the window closes mid-preview - the coroutine stops with it)
+		Transform previewObject;
+		Vector3 previewPos;
+		Quaternion previewRot;
+		// (player 10-30: the window covered the object, so its preview couldn't be seen - the panel and the dark cover step
+		// aside while it plays and come back after; Esc stops it)
+		bool stopPreview;
+		// (the frame the preview ended: EscKey answers a frame after the press, so an Esc pressed as the preview ended on its
+		// own came on the next frame and closed the window instead of stopping the preview)
+		int previewEndFrame = -10;
 
 		static readonly Dictionary<string, string> VerbLabels = new Dictionary<string, string>
 		{
 			{ "show", "show" }, { "hide", "hide" }, { "toggle", "show/hide" }, { "open", "open" }, { "close", "close" }, { "switch", "open/close" },
-			{ "message", "say" }, { "give", "give items" }, { "sound", "play sound" }, { "teleport", "teleport to" }, { "signal", "send signal" },
-			{ "journal", "journal page" }, { "wait", "wait" },
+			{ "message", "say" }, { "give", "give items" }, { "sound", "sound (this player)" }, { "teleport", "teleport to" }, { "signal", "send signal" },
+			{ "journal", "journal page" }, { "wait", "wait" }, { "character", "unlock character" },
+			{ "playsound", "play sound/music" }, { "stopsound", "stop sound" }, { "camera", "camera moment" },
+			{ "suit", "protective suit" }, { "hit", "hurt creatures" },
+			{ "carry", "pick up (carry)" }, { "collapse", "collapse" }, { "moveto", "move to marker" },
+			{ PlayerFeatures.DialogueVerb, "show dialogue" },
+			{ Lights.Verb, "switch light" },
+			{ "flythrough", "camera fly-through" },
+			{ OrderPuzzle.Verb, "press in order" },
+			{ GapBehaviours.WeatherVerb, "change weather" },
+			{ GapBehaviours.RandomVerb, "one at random" },
+			{ GapBehaviours.CountVerb, "count" },
+			{ GapBehaviours.HealVerb, "heal / feed / drink" },
+			{ ReceiverUnlock.Verb, "unlock frequency" },
 		};
 
 		/// <summary>What each action does (the action list's lines).</summary>
@@ -45,17 +67,45 @@ namespace DynamicIslands.Editor
 		{
 			{ "show", "Objects with a name appear (they were hidden)" }, { "hide", "Objects with a name disappear" }, { "toggle", "Hidden ones appear, shown ones disappear" },
 			{ "open", "A door, gate, bridge or lift opens" }, { "close", "It closes" }, { "switch", "Open if closed, closed if open (a lever)" },
-			{ "message", "Players read a message on the screen" }, { "give", "The player gets items or story items" }, { "sound", "One of Raft's sounds plays" },
-			{ "teleport", "The player is moved to an object with a name" }, { "signal", "A signal world plans and island rules can wait for" },
-			{ "journal", "A page is written into the crew's journal (J)" }, { "wait", "Waits some seconds before the actions below" },
+			{ "message", "Players read a message on the screen" }, { "give", "The player gets items or story items" }, { "sound", "One of Raft's sounds plays once, for the player who set it off" },
+			{ "teleport", "The player is moved to an object with a name" }, { "signal", "Sends a named signal on this island, once and for good (any word, e.g. lever). Checks (Only if... signal sent), island rules and world plans (signal rules) wait for it; ready pieces send their own: lever, crank, power, radio, laser..." },
+			{ "journal", "A page is written into the crew's journal (J) - or, on a main story island, onto its tab in Raft's notebook (T)" }, { "wait", "Waits some seconds before the actions below" },
+			{ "character", "Unlocks one of Raft's characters for the player (its name or number, e.g. Rouhi or 3) - kept in the player's Raft profile" },
+			{ "playsound", "One of Raft's sounds or music cues, for every player: once or on a loop, near the object or for the whole island (a loop comes back after a reload; it stops when a player leaves)" },
+			{ "stopsound", "Stops the sound an object plays (all = every sound on the island)" },
+			{ "camera", "The camera of players near a marker object moves there and looks at an object for some seconds (Esc skips), then comes back" },
+			{ "suit", "The player who set it off wears a protective suit for some seconds: acid and fumes zones don't hurt them" },
+			{ "hit", "The animals of a creature spot with that name lose a share of their health (an explosive barrel, a falling pillar): the way to hurt a boss whose phase only blasts hurt" },
+			{ "carry", "The player picks the object up and carries it (no jumping or ziplines; the use key puts it down in front, a hit drops it). Empty name = this object" },
+			{ "collapse", "Objects with a name rumble, shake and fall away, then are gone for good (a bridge, a floor, a cave mouth) - over some seconds" },
+			{ "moveto", "Objects with a name travel to a marker object's place over some seconds, carrying players on them (a cart to a ledge; a creature spot - its animals follow to the next arena)" },
+			{ PlayerFeatures.DialogueVerb, "A dialogue for the player who set it off, said by the named object (empty = this one). \\n starts a new line, a line --- a new page, a line > an answer (its choice1.. event on this object)" },
+			{ Lights.Verb, "Switches puzzle lights on, off or over (empty = toggle): a light by its name (empty = this one) or group:G for every light of group G. Saved, for every player" },
+			{ "flythrough", "The camera of every player near a camera path flies once along its camera points (Zones & triggers), looking where they say; the players are held, Esc skips it" },
+			{ OrderPuzzle.Verb, "This object is step N of an order puzzle (levers, lights, buttons pressed in a set order; put it last on \"use\"). The right next piece moves the puzzle on; any other starts it again (\"wrong\" event, its pieces go back). The last step sends the signal order:<puzzle> and runs every piece's \"solved\" event" },
+			{ GapBehaviours.WeatherVerb, "Raft's weather changes for every player: clear, calm, fog, waves, rain, storm or snow, held for some minutes (empty = 10); then Raft chooses again (raft = at once)" },
+			{ GapBehaviours.RandomVerb, "Only ONE of the next actions runs, picked at random (how many: empty = 2; a wait ends the group). The same pick for every player" },
+			{ GapBehaviours.CountVerb, "A counter of this island goes up (+1 when empty; +N, -N, =N, reset): saved, the same for every player. The check \"counter\" asks its value (fish brought: 3 of 5...)" },
+			{ GapBehaviours.HealVerb, "The player who set it off gets health, food and drink back: empty or all = all three full; or health / food / drink, with an amount (drink 40), several with commas" },
+			{ ReceiverUnlock.Verb, "The Receiver gets the frequency of one of Raft's story islands (Radio Tower .. Utopia) for every player, as Raft's own note for it does: kept in the notebook and the save. With the story order on, the island chosen is the one it leads to" },
 		};
 
 		/// <summary>What each check asks (the check list's lines).</summary>
 		static readonly Dictionary<string, string> CheckHints = new Dictionary<string, string>
 		{
 			{ "has", "The player has an item or story item (it stays)" }, { "take", "The player has it, and it is used up (like a key)" },
-			{ "state", "Objects with a name are open, closed, shown or hidden" }, { "signal", "A signal was sent on this island" },
+			{ "state", "Objects with a name are open, closed, shown or hidden" }, { "signal", "A signal was sent on this island, by a \"send signal\" action or by a ready piece (lever, crank, power, radio, engine, cage, mirror, wheel, pipe, wire, claw, scales, laser, socket, blast, collapse, vehicle)" },
 			{ "quest", "The island's quest reached a step (or is done)" },
+			{ "wears", "The player wears an item (a headlight, flippers, an oxygen tank...). Name* = any kind of it" },
+			{ "holds", "The player holds an item in their hand (binoculars, a hook, an axe...). Name* = any kind of it" },
+			{ PlayerFeatures.TalkedCheck, "Someone of the crew talked to an islander (by its name; empty = this one)" },
+			{ Collectibles.CheckKind, "A number of a collectible set's pieces on this island were found (empty = all)" },
+			{ Lights.LightCheck, "A puzzle light (by its name; empty = this one) is on (or off)" },
+			{ Lights.GroupCheck, "Every puzzle light of a group on this island is on (or off)" },
+			{ GapBehaviours.TimeCheck, "The time of day is day, night, dawn, dusk or between some hours (20-6)" },
+			{ GapBehaviours.WeatherCheck, "Raft's weather is now rain, storm, fog, calm, waves, snow or clear" },
+			{ GapBehaviours.CountCheck, "A counter of this island (the \"count\" action) is at least, at most or exactly a number" },
+			{ GapWorld.PlayersCheck, "Enough living players stand in a trigger zone (a co-op plate). It scales with the players online: never more than are online, so one player alone is always enough" },
 		};
 
 		public static void Create(Transform canvas)
@@ -78,6 +128,7 @@ namespace DynamicIslands.Editor
 			instance.Load(target.Props ?? new Dictionary<string, string>());
 			instance.titleText.text = "BEHAVIOUR & EVENTS \u00B7 " + PlaceableCatalog.DisplayName(target.GameObjectName).ToUpperInvariant();
 			instance.Show();
+			instance.savedPrint = instance.Print();
 		}
 
 		/// <summary>The island's own events: players arriving, its quest done.</summary>
@@ -89,7 +140,20 @@ namespace DynamicIslands.Editor
 			instance.Load(DynamicIslands.currentIslandProps);
 			instance.titleText.text = "ISLAND EVENTS \u00B7 " + DynamicIslands.currentIslandName.ToUpperInvariant();
 			instance.Show();
+			instance.savedPrint = instance.Print();
 		}
+
+		/// <summary>What Esc compares: the settings as they would be saved.</summary>
+		string savedPrint;
+
+		string Print()
+		{
+			Keep();
+			return string.Join("\n", Result().OrderBy(e => e.Key, StringComparer.Ordinal).Select(e => e.Key + "=" + e.Value).ToArray());
+		}
+
+		/// <summary>The settings differ from the object's or island's (Esc asks before it closes).</summary>
+		public static bool Unsaved { get { return IsOpen && instance.Print() != instance.savedPrint; } }
 
 		public static void Close()
 		{
@@ -138,12 +202,28 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (ChoiceWindow.IsOpen || ItemPickerWindow.IsOpen || SoundPickerWindow.IsOpen || DropList.Busy) return;
+			if (ChoiceWindow.IsOpen || ItemPickerWindow.IsOpen || SoundPickerWindow.IsOpen || DropList.Busy || EditorInput.SubWindowJustClosed) return;
+			if (previewing || Time.frameCount <= previewEndFrame + 1) { if (EscKey.Down(this) && previewing) stopPreview = true; return; }
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) { if (Unsaved) EscKey.AskUnsaved(islandMode ? "The island's events" : "The behaviour", Save, Close); else Close(); }
 		}
 
-		void OnDisable() { EditorInput.IsTyping = false; }
+		void OnDisable()
+		{
+			EditorInput.IsTyping = false;
+			if (previewing && previewObject != null) { previewObject.position = previewPos; previewObject.rotation = previewRot; }
+			previewing = false;
+			Uncover(true);
+		}
+
+		/// <summary>Shows (true) or hides the panel and the dark cover; the cover still takes the clicks while hidden.</summary>
+		void Uncover(bool shown)
+		{
+			Transform panel = transform.Find("Panel");
+			if (panel != null) panel.gameObject.SetActive(shown);
+			Image dim = GetComponent<Image>();
+			if (dim != null) dim.color = new Color(0, 0, 0, shown ? 0.6f : 0f);
+		}
 
 		#region Building
 
@@ -153,6 +233,7 @@ namespace DynamicIslands.Editor
 			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1000, 0));
 			RectTransform head = UIKit.Row(panel, 28f, 6f, "Head");
 			titleText = UIKit.Label(head, "BEHAVIOUR & EVENTS", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
+			UIKit.Fit(titleText, 12);
 			UIKit.Label(head, "What it does in a world, and what happens when players use it", 12, UIKit.TextMuted, TextAnchor.MiddleRight);
 			RectTransform box = UIKit.Rect("Body", panel);
 			UIKit.Size(box.gameObject, -1, 600);
@@ -180,6 +261,22 @@ namespace DynamicIslands.Editor
 				if (!zone && !creature) MovementGroup();
 				WorldGroup(zone, creature, helper);
 			}
+			if (islandMode)
+			{
+				// (QE3: what these two events are, and where signals come from)
+				Text help = UIKit.Label(body, "Two events belong to the island itself. \"Players first come\" fires once, when the first player arrives. \"The island's quest is done\" fires when the MAIN quest is done (not a side quest: Quest 2 and on). " +
+					"Actions here can send signals (\"send signal\": any word, kept for good on this island) that checks (\"Only if... signal sent\"), island rules and world plans wait for. Ready pieces (levers, generators, wheels, lasers...) send their own: a tag in the object list tells which.", 12, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "IslandHelp");
+				help.horizontalOverflow = HorizontalWrapMode.Wrap;
+				UIKit.Size(help.gameObject, -1, 64);
+			}
+			foreach (string ev in Events())
+			{
+				// (QE13: an event that appears after a change, as "laser" when a laser piece is set back to none)
+				if (!actions.ContainsKey(ev)) actions[ev] = new List<ObjAction>();
+				if (!checks.ContainsKey(ev)) checks[ev] = new List<ObjCheck>();
+				if (!elses.ContainsKey(ev)) elses[ev] = new List<ObjAction>();
+				if (!anyOf.ContainsKey(ev)) anyOf[ev] = false;
+			}
 			foreach (string ev in Events()) EventGroup(ev);
 			if (Events().Count == 0) UIKit.Label(body, "<i>This object has no events. Make it usable (\"Players can use it\") to give it actions.</i>", 12, UIKit.TextMuted);
 			Summarise();
@@ -199,8 +296,12 @@ namespace DynamicIslands.Editor
 			RectTransform g = UIKit.Group(body, "Movement (in a world)");
 			RectTransform a = UIKit.Row(g, 28f, 6f, "SpinBob");
 			UIKit.Size(UIKit.Label(a, "Spins", 13, UIKit.TextMuted).gameObject, 60);
-			Field(a, "0", ObjectProps.Get(props, BehaviourProps.Spin), 70, "Degrees per second around its up axis (negative = the other way; 0 = still)", v => SetNumber(BehaviourProps.Spin, v));
+			Field(a, "0", ObjectProps.Get(props, BehaviourProps.Spin), 70, "Degrees per second around the vertical (negative = the other way; 0 = still)", v => SetNumber(BehaviourProps.Spin, v));
 			UIKit.Size(UIKit.Label(a, "\u00B0/s", 12, UIKit.TextMuted).gameObject, 30);
+			bool own = ObjectProps.GetBool(props, BehaviourProps.SpinOwn, false);
+			Button ownAxis = UIKit.Button(a, "Own axis", () => { if (own) props.Remove(BehaviourProps.SpinOwn); else props[BehaviourProps.SpinOwn] = "1"; Rebuild(); },
+				"Spins around its own up axis instead of the vertical: tilt it first - a water wheel, a windmill's blades, a fan", 76, 26f, 12);
+			UIKit.SetActive(ownAxis, own);
 			UIKit.Size(UIKit.Label(a, "Bobs", 13, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 60);
 			Field(a, "0", ObjectProps.Get(props, BehaviourProps.Bob), 60, "How far it floats up and down (metres; 0 = not at all)", v => SetNumber(BehaviourProps.Bob, v));
 			UIKit.Size(UIKit.Label(a, "m every", 12, UIKit.TextMuted).gameObject, 56);
@@ -211,13 +312,18 @@ namespace DynamicIslands.Editor
 			string mode = !BehaviourProps.Moves(props) ? "none" : ObjectProps.Get(props, BehaviourProps.MoveMode) == "loop" ? "loop" : "switch";
 			RectTransform m = UIKit.Row(g, 28f, 6f, "Mode");
 			UIKit.Size(UIKit.Label(m, "Moves", 13, UIKit.TextMuted).gameObject, 60);
-			Button none = UIKit.Button(m, "No", () => { props.Remove(BehaviourProps.Move); props.Remove(BehaviourProps.Turn); props.Remove(BehaviourProps.MoveMode); Rebuild(); }, "It stays where it is", 60, 26f, 12);
+			Button none = UIKit.Button(m, "No", () => { props.Remove(BehaviourProps.Move); props.Remove(BehaviourProps.Turn); props.Remove(BehaviourProps.MoveMode); props.Remove(BehaviourProps.Carry); Rebuild(); }, "It stays where it is", 60, 26f, 12);
 			Button sw = UIKit.Button(m, "Opens and closes", () => { EnsureMove(); props.Remove(BehaviourProps.MoveMode); Rebuild(); }, "A door, gate, bridge or lift: actions (or using it) open and close it", 150, 26f, 12);
 			Button loop = UIKit.Button(m, "Back and forth", () => { EnsureMove(); props[BehaviourProps.MoveMode] = "loop"; Rebuild(); }, "Moves to the other pose and back, for ever (a platform, a swinging sign)", 130, 26f, 12);
 			UIKit.SetActive(none, mode == "none");
 			UIKit.SetActive(sw, mode == "switch");
 			UIKit.SetActive(loop, mode == "loop");
 			if (mode == "none") return;
+			// (a lift or a moving platform: the player standing on it rides along - LM12)
+			bool carry = ObjectProps.GetBool(props, BehaviourProps.Carry, false);
+			Button ride = UIKit.Button(m, "Carries players", () => { if (carry) props.Remove(BehaviourProps.Carry); else props[BehaviourProps.Carry] = "1"; Rebuild(); },
+				"A lift or a moving platform: players standing on it ride along", 130, 26f, 12);
+			UIKit.SetActive(ride, carry);
 
 			Vector3 off = BehaviourProps.Offset(props);
 			RectTransform o = UIKit.Row(g, 28f, 6f, "Offset");
@@ -239,7 +345,7 @@ namespace DynamicIslands.Editor
 			UIKit.Size(UIKit.Label(o, "\u00B0 in", 12, UIKit.TextMuted).gameObject, 34);
 			Field(o, "2", ObjectProps.Get(props, BehaviourProps.MoveTime), 50, "Seconds to get there", v => SetNumber(BehaviourProps.MoveTime, v));
 			UIKit.Size(UIKit.Label(o, "s", 12, UIKit.TextMuted).gameObject, 14);
-			UIKit.Button(o, previewing ? "..." : "Preview", () => StartCoroutine(Preview()), "Show the movement here in the editor", 90, 26f, 12);
+			UIKit.Button(o, previewing ? "..." : "Preview", () => StartCoroutine(Preview()), "Show the movement here in the editor (the window steps aside while it plays; Esc stops it)", 90, 26f, 12);
 		}
 
 		void EnsureMove()
@@ -275,6 +381,7 @@ namespace DynamicIslands.Editor
 			}
 
 			if (helper) return;
+			LaserRow(g);
 			string mode = ObjectProps.Get(props, BehaviourProps.Collision);
 			RectTransform c = UIKit.Row(g, 26f, 6f, "Collision");
 			UIKit.Size(UIKit.Label(c, "Collision", 13, UIKit.TextMuted).gameObject, 110);
@@ -289,12 +396,59 @@ namespace DynamicIslands.Editor
 			UIKit.Label(c, "", 12);
 		}
 
+		/// <summary>QE13: any object can be a laser emitter (beh.laser=beam, its range beh.laserRange) or a mirror (beh.laser=mirror).</summary>
+		void LaserRow(Transform g)
+		{
+			string role = ObjectProps.Get(props, LaserBeam.Prop);
+			RectTransform l = UIKit.Row(g, 28f, 6f, "Laser");
+			UIKit.Size(UIKit.Label(l, "Laser", 13, UIKit.TextMuted).gameObject, 110);
+			Button no = UIKit.Button(l, "No", () => ChooseLaser(""), "Not a laser piece: a laser beam that reaches it fires its \"a laser beam reaches it\" event", 60, 26f, 12);
+			Button beam = UIKit.Button(l, "Shoots a beam", () => ChooseLaser(LaserBeam.Beam),
+				"A laser emitter: a red beam along its front (the blue gizmo arrow) from its middle; the first object it reaches gets the event \"a laser beam reaches it\". Hide it (\"hide\" action) to turn the beam off, show it to turn it on", 130, 26f, 12);
+			Button mirror = UIKit.Button(l, "Mirror", () => ChooseLaser(LaserBeam.Mirror),
+				"Sends a laser beam that reaches it on along its own front (level). Turning it (\"Opens and closes\" with a turn, used by players) turns the beam", 80, 26f, 12);
+			UIKit.SetActive(no, role != LaserBeam.Beam && role != LaserBeam.Mirror);
+			UIKit.SetActive(beam, role == LaserBeam.Beam);
+			UIKit.SetActive(mirror, role == LaserBeam.Mirror);
+			if (role == LaserBeam.Beam)
+			{
+				UIKit.Size(UIKit.Label(l, "reaches", 12, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 56);
+				Field(l, LaserBeam.Range.ToString("0", CultureInfo.InvariantCulture), ObjectProps.Get(props, LaserBeam.RangeProp), 56,
+					"How far the beam goes, from the emitter and again from each mirror (metres, " + LaserBeam.MinRange.ToString("0", CultureInfo.InvariantCulture) + "-" + LaserBeam.MaxRange.ToString("0", CultureInfo.InvariantCulture) + "; empty = " + LaserBeam.Range.ToString("0", CultureInfo.InvariantCulture) + ")", LaserRange);
+				UIKit.Size(UIKit.Label(l, "m", 12, UIKit.TextMuted).gameObject, 14);
+			}
+			UIKit.Label(l, "", 12);
+		}
+
+		/// <summary>The Laser row's buttons: "" = none, LaserBeam.Beam or LaserBeam.Mirror (tests call it as the buttons do).</summary>
+		public static void ChooseLaser(string role)
+		{
+			if (instance == null || instance.islandMode) return;
+			instance.Keep();
+			if (role == LaserBeam.Beam || role == LaserBeam.Mirror) instance.props[LaserBeam.Prop] = role; else instance.props.Remove(LaserBeam.Prop);
+			if (role != LaserBeam.Beam) instance.props.Remove(LaserBeam.RangeProp);
+			instance.Rebuild();
+		}
+
+		/// <summary>The Laser row's range field (metres; empty or 0 = the default, kept within LaserBeam.MinRange..MaxRange).</summary>
+		public static void LaserRange(string v)
+		{
+			if (instance == null) return;
+			float f;
+			if (float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out f) && f > 0f) instance.props[LaserBeam.RangeProp] = ObjectProps.Format(Mathf.Clamp(f, LaserBeam.MinRange, LaserBeam.MaxRange));
+			else instance.props.Remove(LaserBeam.RangeProp);
+		}
+
+		/// <summary>The Save button (tests).</summary>
+		public static void SaveNow() { if (IsOpen) instance.Save(); }
+
 		void EventGroup(string ev)
 		{
 			RectTransform g = UIKit.Group(body, "When " + EventText(ev));
 			List<ObjAction> list = actions[ev];
 			for (int i = 0; i < list.Count; i++) ActionRow(g, ev, list, i);
 			if (list.Count == 0) UIKit.Label(g, ev == "use" && BehaviourProps.Switches(props) ? "<i>Nothing set: using it opens and closes it.</i>" : "<i>Nothing happens yet.</i>", 12, UIKit.TextMuted);
+			FlipWarning(g, ev, list);
 			RectTransform add = UIKit.Row(g, 26f, 6f, "Add");
 			UIKit.Button(add, "+ Add an action", () => { Keep(); list.Add(new ObjAction { Verb = list.Count == 0 && ev != "use" ? "message" : "show" }); Rebuild(); }, "Another thing that happens", 150, 26f, 12);
 			UIKit.Button(add, "+ Wait", () => { Keep(); list.Add(new ObjAction { Verb = "wait", Arg = "5" }); Rebuild(); }, "The actions after it happen that many seconds later (a gate that closes again, an ambush after a moment)", 90, 26f, 12);
@@ -303,9 +457,25 @@ namespace DynamicIslands.Editor
 			if (checks[ev].Count > 0) ChecksPart(g, ev);
 		}
 
-		static readonly Dictionary<string, string> CheckLabels = new Dictionary<string, string>
+		/// <summary>Show/hide or open/close in an event that can happen again flips it back (what Check warns about).
+		/// A zone's "enter" also gets a button for Fires: Once ever. Rebuild() runs after every action or setting change.</summary>
+		void FlipWarning(Transform g, string ev, List<ObjAction> list)
 		{
-			{ "has", "has item" }, { "take", "uses up item" }, { "state", "object is" }, { "signal", "signal sent" }, { "quest", "quest step" },
+			if (islandMode || target == null || !list.Any(a => a.Verb == "toggle" || a.Verb == "switch")) return;
+			string evOf;
+			string again = PlanChecker.EventAgain(target.GameObjectName, props, PlanChecker.IslandNeverRegrows(DynamicIslands.currentIslandProps), out evOf);
+			if (again.Length == 0 || evOf != ev) return;
+			RectTransform row = UIKit.Row(g, 26f, 6f, "AgainWarning");
+			Text w = UIKit.Label(row, "<color=#e0a040>This can happen again (" + again + "): show/hide and open/close flip it back. Use show/open, or Fires: Once ever.</color>", 11, UIKit.TextColor);
+			UIKit.Size(w.gameObject, -1, -1, 1);
+			if (ev == "enter")
+				UIKit.Button(row, "Fires once ever", () => { Keep(); props[ObjectProps.ZoneRepeat] = ObjectProps.ZoneOnceEver; Rebuild(); }, "Fires: Once ever - the zone never fires again, so show/hide is safe", 120, 24f, 12);
+		}
+
+		static readonly Dictionary<string, string> CheckLabels =new Dictionary<string, string>
+		{
+			{ "has", "has item" }, { "take", "uses up item" }, { "state", "object is" }, { "signal", "signal sent" }, { "quest", "quest step" }, { "wears", "wears item" }, { "holds", "holds item" }, { PlayerFeatures.TalkedCheck, "talked to" }, { Collectibles.CheckKind, "set found" }, { Lights.LightCheck, "light is" }, { Lights.GroupCheck, "all lights" }, { GapBehaviours.TimeCheck, "time of day" }, { GapBehaviours.WeatherCheck, "weather is" }, { GapBehaviours.CountCheck, "counter" },
+			{ GapWorld.PlayersCheck, "players in zone" },
 		};
 
 		/// <summary>"Only if ..." (every check must pass) and "Otherwise say ...".</summary>
@@ -351,7 +521,7 @@ namespace DynamicIslands.Editor
 				if (c.Kind == "state" && !BehaviourProps.States.Contains(c.Arg)) c.Arg = "closed";
 				else if (!c.IsItem && c.Kind != "state") c.Arg = "";
 				Rebuild();
-			}, 130, "The check: has an item, uses up an item, an object is open/closed/shown/hidden, a signal was sent, the quest reached a step", 28f, 12);
+			}, 130, "The check: has an item, uses up an item, an object is open/closed/shown/hidden, a signal was sent, the quest reached a step, wears an item, holds an item", 28f, 12);
 			if (c.IsItem)
 			{
 				Field(row, "item (\u2026 to choose; story:<id> for a story item)", c.Target, -1, "Raft's unique item name, or story:<id> for one of the island's story items", v => c.Target = v.Trim());
@@ -366,10 +536,22 @@ namespace DynamicIslands.Editor
 				UIKit.Button(row, "\u2026", () => { Keep(); ChoiceWindow.Open("Objects with a name", NameChoices().Skip(1), v => { c.Target = v; Rebuild(); }); }, "Choose from the names on this island", 28, 28f, 12);
 				DropList.Make(row, "Drop_State", BehaviourProps.States.Select(st => new DropList.Option(st, st)).ToList(), BehaviourProps.States.Contains(c.Arg) ? c.Arg : "open", st => { Keep(); c.Arg = st; Rebuild(); }, 90, "open, closed, shown or hidden", 28f, 12);
 			}
-			else if (c.Kind == "signal") Field(row, "signal name", c.Target, -1, "A signal sent on this island (a \"send signal\" action)", v => c.Target = v.Trim());
+			else if (c.Kind == "wears" || c.Kind == "holds")
+			{
+				Field(row, c.Kind == "wears" ? "item worn (HeadLight*, Flipper*...)" : "item in hand (Binoculars, Hook*, Axe*...)", c.Target, -1, "Raft's unique item name; a * at the end matches every kind (Axe* = any axe). The mod's upgrades count as the item they improve", v => c.Target = v.Trim());
+				UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.PickOne(v => { c.Target = v; Rebuild(); }, false); }, "Choose an item", 28, 28f, 12);
+			}
+			else if (c.Kind == "signal") Field(row, "signal name", c.Target, -1, "The signal's name as the \"send signal\" action or a ready piece wrote it (capitals do not matter), e.g. lever, power, laser. True once it was sent, on this island, for every player", v => c.Target = v.Trim());
+			else if (PlayerFeatures.CheckPlaceholder(c.Kind) != null)
+			{
+				string second = PlayerFeatures.CheckArgPlaceholder(c.Kind);
+				Field(row, PlayerFeatures.CheckPlaceholder(c.Kind), c.Target, second != null ? 150 : -1, PlayerFeatures.CheckHint(c.Kind), v => c.Target = v.Trim());
+				if (second != null) Field(row, second, c.Arg, 90, PlayerFeatures.CheckArgHint(c.Kind), v => c.Arg = v.Trim());
+			}
 			else Field(row, "steps done (empty = the whole quest)", c.Target, -1, "How many steps of the island's quest must be done", v => c.Target = v.Trim());
 			Text d = UIKit.Label(row, c.Describe(), 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
 			UIKit.Size(d.gameObject, 250);
+			UIKit.Fit(d, 8);
 			Button del = UIKit.Button(row, "\u00D7", () => { Keep(); list.RemoveAt(index); Rebuild(); }, "Remove this check", 26, 28f, 12);
 			UIKit.DangerButton(del);
 		}
@@ -385,10 +567,12 @@ namespace DynamicIslands.Editor
 				a.Verb = verb;
 				if (a.Verb == "wait" && a.Seconds <= 0f) a.Arg = "5";
 				Rebuild();
-			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, play sound, teleport to, send signal, journal page, wait", 28f, 12);
-			if (ObjAction.HasTarget(a.Verb))
+			}, 120, "What happens: show, hide, show/hide, open, close, open/close, say, give items, sound, teleport to, send signal, journal page, wait, unlock character, play sound/music, stop sound, camera moment, protective suit, hurt creatures, pick up (carry), collapse, move to marker, camera fly-through, change weather, one at random, count, heal / feed / drink, unlock frequency", 28f, 12);
+			if (a.Verb == OrderPuzzle.Verb) OrderFields(row, a);
+			else if (ObjAction.HasTarget(a.Verb))
 			{
-				Field(row, "name (empty = itself)", a.Target, 170, "The name of the objects it acts on", v => a.Target = v.Trim());
+				Field(row, a.Verb == "camera" ? "marker (empty = itself)" : "name (empty = itself)", a.Target, a.Verb == "camera" || a.Verb.EndsWith("sound") ? 120 : 170,
+					a.Verb == "camera" ? "The object the camera moves to (players within range of it see the moment)" : a.Verb.EndsWith("sound") ? "The object the sound plays at" : "The name of the objects it acts on", v => a.Target = v.Trim());
 				UIKit.Button(row, "\u2026", () => { Keep(); ChoiceWindow.Open("Objects with a name", NameChoices(), v => { a.Target = v; Rebuild(); }); }, "Choose from the names on this island", 28, 28f, 12);
 			}
 			if (a.Verb == "journal") Field(row, "page title", a.Target, 170, "The page's title in the crew's journal", v => a.Target = v.Trim());
@@ -398,19 +582,137 @@ namespace DynamicIslands.Editor
 				s.contentType = InputField.ContentType.DecimalNumber;
 				UIKit.Label(row, "seconds, then the actions below", 12, UIKit.TextMuted);
 			}
+			else if (a.Verb == "playsound") SoundFields(row, a);
+			else if (a.Verb == "stopsound")
+			{
+				DropList.Make(row, "Drop_StopWhat", new List<DropList.Option> { new DropList.Option("", "its sound", "The sound the named object (or this one) plays"),
+					new DropList.Option("all", "every sound", "Every sound played on this island") }, a.Arg.Trim().ToLowerInvariant() == "all" ? "all" : "", v => { Keep(); a.Arg = v; Rebuild(); }, 110, "Which sounds stop", 28f, 12);
+			}
+			else if (a.Verb == "camera") CameraFields(row, a);
+			else if (a.Verb == "flythrough") FlyFields(row, a);
+			else if (a.Verb == OrderPuzzle.Verb) { }
+			else if (GapBehaviours.Owns(a.Verb)) GapFields(row, a);
+			else if (a.Verb == ReceiverUnlock.Verb)
+				DropList.Make(row, "Drop_Frequency", ReceiverUnlock.Options("(choose)"), StoryOrder.Parse(a.Target) != ChunkPointType.None ? StoryOrder.Key(StoryOrder.Parse(a.Target)) : "",
+					v => { Keep(); a.Target = v; Rebuild(); }, 130, "Which story island's frequency the Receiver gets", 28f, 12);
 			else if (ObjAction.HasArg(a.Verb))
 			{
-				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : a.Verb == "journal" ? "What the page says" : "signal name (world plans wait for it)";
-				Field(row, ph, a.Arg, -1, a.Verb == "signal" ? "World plans and island rules can wait for it: \"signal sent at\" this island" : a.Verb == "journal" ? "Written into the crew's journal (J in a world)" : "", v => a.Arg = v.Trim());
+				string ph = a.Verb == "message" ? "What players read" : a.Verb == "give" ? "items (\u2026 to choose)" : a.Verb == "sound" ? "event:/... (\u2026 to choose)" : a.Verb == "journal" ? "What the page says" : a.Verb == "suit" ? "seconds (120)" : a.Verb == "hit" ? "% of their health (25)" : a.Verb == "collapse" ? "seconds (3)" : a.Verb == "moveto" ? "marker name, seconds (4)" : a.Verb == PlayerFeatures.DialogueVerb ? "What is said (\\n new line, --- new page, > answer)" : a.Verb == Lights.Verb ? "on, off or toggle" : "signal name (world plans wait for it)";
+				Field(row, ph, a.Arg, -1, a.Verb == "signal" ? "Any word, e.g. lever or gate-open. It is kept for good on this island: checks (\"signal sent\"), island rules and world plans (\"signal sent at\" this island) can wait for it. Ready pieces send lever, crank, power, radio, laser... too" : a.Verb == PlayerFeatures.DialogueVerb ? "Pages and answers: write \n for a new line, a line --- for the next page, a line starting with > for an answer (up to 3; answer n fires the choice n event of the object that says it). Closing it fires \"talk\"" : a.Verb == "journal" ? "Written into the crew's journal (J in a world)" : "", v => a.Arg = v.Trim());
 				if (a.Verb == "give") UIKit.Button(row, "\u2026", () => { Keep(); ItemPickerWindow.OpenFor(() => a.Arg, v => { a.Arg = v; }); StartCoroutine(RebuildWhenClosed()); }, "Choose Raft's items or the island's story items", 28, 28f, 12);
 				if (a.Verb == "sound") UIKit.Button(row, "\u2026", () => { Keep(); SoundPickerWindow.OpenFor(v => { a.Arg = v; Rebuild(); }); }, "Choose one of Raft's sounds (you can listen first)", 28, 28f, 12);
 			}
 			else UIKit.Label(row, "", 12);
 			Text d = UIKit.Label(row, a.Describe(), 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic);
 			UIKit.Size(d.gameObject, 250);
+			UIKit.Fit(d, 8);
 			UIKit.Button(row, "\u25B2", () => { if (index > 0) { Keep(); list.Reverse(index - 1, 2); Rebuild(); } }, "Earlier", 26, 28f, 11);
 			Button del = UIKit.Button(row, "\u00D7", () => { Keep(); list.RemoveAt(index); Rebuild(); }, "Remove this action", 26, 28f, 12);
 			UIKit.DangerButton(del);
+		}
+
+		/// <summary>playsound: the sound (\u2026 picks it), its volume, once or a loop, near the object or for the whole island.</summary>
+		void SoundFields(Transform row, ObjAction a)
+		{
+			TriggerSounds.Spec s = TriggerSounds.Parse(a.Arg);
+			Action save = () => a.Arg = TriggerSounds.Join(s);
+			Field(row, "event:/... (\u2026 to choose)", s.Path, -1, "One of Raft's sound events or music cues", v => { s.Path = v.Trim(); save(); });
+			UIKit.Button(row, "\u2026", () => { Keep(); SoundPickerWindow.OpenFor(v => { s.Path = v; save(); Rebuild(); }); }, "Choose one of Raft's sounds or music (you can listen first)", 28, 28f, 12);
+			InputField vol = Field(row, "90", Mathf.RoundToInt(s.Volume * 100f).ToString(CultureInfo.InvariantCulture), 40, "Volume, 0-100 %", v =>
+			{
+				float f;
+				if (float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out f)) { s.Volume = Mathf.Clamp01(f / 100f); save(); }
+			});
+			vol.contentType = InputField.ContentType.DecimalNumber;
+			DropList.Make(row, "Drop_Loop", new List<DropList.Option> { new DropList.Option("once", "once", "Plays once"), new DropList.Option("loop", "loop", "Plays on until a stop sound action (kept after a reload)") },
+				s.Loop ? "loop" : "once", v => { Keep(); s.Loop = v == "loop"; save(); Rebuild(); }, 62, "Once or on a loop", 28f, 12);
+			DropList.Make(row, "Drop_Where", new List<DropList.Option> { new DropList.Option("near", "near it", "Heard near the object"), new DropList.Option("island", "island", "Heard the same everywhere on the island (music)") },
+				s.Island ? "island" : "near", v => { Keep(); s.Island = v == "island"; save(); Rebuild(); }, 72, "Near the object, or for everyone on the island", 28f, 12);
+		}
+
+		/// <summary>weather, random, count, heal (GapBehaviours): their fields.</summary>
+		void GapFields(Transform row, ObjAction a)
+		{
+			switch (a.Verb)
+			{
+				case GapBehaviours.WeatherVerb:
+					string w = (a.Target ?? "").Trim().ToLowerInvariant();
+					if (!GapBehaviours.WeatherNames.Contains(w)) { w = "rain"; a.Target = w; }
+					DropList.Make(row, "Drop_Weather", GapBehaviours.WeatherNames.Select(n => new DropList.Option(n, n, n == "raft" ? "Raft chooses its weather again, at once" : n == "storm" ? "Raft's rain storm (rough snow in the snow seas)" : "Raft's " + n + " weather")).ToList(),
+						w, v => { Keep(); a.Target = v; Rebuild(); }, 90, "The weather every player gets", 28f, 12);
+					if (w != "raft")
+					{
+						InputField m = Field(row, GapBehaviours.DefaultWeatherMinutes.ToString(CultureInfo.InvariantCulture), a.Arg, 44, "How many minutes it stays before Raft chooses again (empty = 10)", v => a.Arg = v.Trim());
+						m.contentType = InputField.ContentType.IntegerNumber;
+						UIKit.Label(row, "min", 11, UIKit.TextMuted);
+					}
+					break;
+				case GapBehaviours.RandomVerb:
+					UIKit.Label(row, "one of the next", 11, UIKit.TextMuted);
+					InputField n2 = Field(row, "2", a.Arg, 40, "How many of the actions below it to choose from (2-20; a wait ends the group)", v => a.Arg = v.Trim());
+					n2.contentType = InputField.ContentType.IntegerNumber;
+					UIKit.Label(row, "actions", 11, UIKit.TextMuted);
+					break;
+				case GapBehaviours.CountVerb:
+					Field(row, "counter name", a.Target, 120, "The counter's name (any word; capitals do not matter). The check \"counter\" asks its value", v => a.Target = v.Trim());
+					Field(row, "+1", a.Arg, 60, "+1 (empty), +N, -N, =N or reset", v => a.Arg = v.Trim());
+					break;
+				case GapBehaviours.HealVerb:
+					Field(row, "all (or drink 40, food, health)", a.Arg, -1, "Empty or all = health, food and drink full. Or health, food, drink - each with an amount, several with commas (food, drink 40)", v => a.Arg = v.Trim());
+					break;
+			}
+		}
+
+		/// <summary>order (QE6): the puzzle's name and this piece's step.</summary>
+		void OrderFields(Transform row, ObjAction a)
+		{
+			Field(row, "puzzle (" + OrderPuzzle.DefaultGroup + ")", a.Target, 120, "The order puzzle's name: every piece with the same name is one puzzle (signal order:<name> when solved)", v => a.Target = v.Trim());
+			UIKit.Label(row, "step", 11, UIKit.TextMuted);
+			InputField s = Field(row, "1", a.Arg, 40, "This piece's place in the order: 1 = pressed first", v =>
+			{
+				int n;
+				a.Arg = int.TryParse(v.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out n) && n > 0 ? Math.Min(n, 99).ToString(CultureInfo.InvariantCulture) : "1";
+			});
+			s.contentType = InputField.ContentType.IntegerNumber;
+		}
+
+		/// <summary>flythrough: the camera path's name (… picks a placed one) and the range around its points.</summary>
+		void FlyFields(Transform row, ObjAction a)
+		{
+			Field(row, "path name (" + CameraPath.DefaultPath + ")", a.Target, 120, "The path: the camera points with this path name, flown in their order", v => a.Target = v.Trim());
+			UIKit.Button(row, "…", () => { Keep(); ChoiceWindow.Open("Camera paths", CameraPath.PathsInEditor().Select(p => new ChoiceWindow.Choice(p, p, CameraPath.EditorPoints(p).Count + " camera points")), v => { a.Target = v; Rebuild(); }); }, "Choose one of the camera paths placed on this island", 28, 28f, 12);
+			InputField r = Field(row, CameraPath.DefaultRange.ToString("0", CultureInfo.InvariantCulture), a.Arg, 44, "Players within this many metres of one of its points see it", v =>
+			{
+				float f;
+				a.Arg = CameraPath.ArgOf(float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out f) ? Mathf.Clamp(f, 5f, 5000f).ToString("0", CultureInfo.InvariantCulture) : "", CameraPath.OnceOf(a.Arg));
+			});
+			r.contentType = InputField.ContentType.DecimalNumber;
+			UIKit.Label(row, "m", 11, UIKit.TextMuted);
+			bool once = CameraPath.OnceOf(a.Arg);
+			UIKit.Button(row, once ? "once" : "every time", () => { Keep(); a.Arg = CameraPath.ArgOf(a.Arg, !CameraPath.OnceOf(a.Arg)); Rebuild(); }, "Once: only the first time in a world (an intro; saved with the world, the host decides). Every time: on each trigger", 70, 28f, 12).name = "Button_FlyOnce";
+		}
+
+		/// <summary>camera: the object to look at, the seconds and the range around the marker.</summary>
+		void CameraFields(Transform row, ObjAction a)
+		{
+			string look; float sec, range;
+			CameraMoment.Parse(a.Arg, out look, out sec, out range);
+			Action save = () => a.Arg = look + "|" + sec.ToString("0.#", CultureInfo.InvariantCulture) + "|" + range.ToString("0", CultureInfo.InvariantCulture);
+			Field(row, "look at (name)", look, 110, "The object the camera looks at (empty = the way the marker faces)", v => { look = v.Trim(); save(); });
+			UIKit.Button(row, "\u2026", () => { Keep(); ChoiceWindow.Open("Look at", NameChoices(), v => { look = v; save(); Rebuild(); }); }, "Choose from the names on this island", 28, 28f, 12);
+			InputField s = Field(row, "4", sec.ToString("0.#", CultureInfo.InvariantCulture), 36, "Seconds the camera stays (1-30)", v =>
+			{
+				float f;
+				if (float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out f)) { sec = Mathf.Clamp(f, 1f, 30f); save(); }
+			});
+			s.contentType = InputField.ContentType.DecimalNumber;
+			InputField r = Field(row, "50", range.ToString("0", CultureInfo.InvariantCulture), 40, "Players within this many metres of the marker see it", v =>
+			{
+				float f;
+				if (float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out f)) { range = Mathf.Clamp(f, 5f, 1000f); save(); }
+			});
+			r.contentType = InputField.ContentType.DecimalNumber;
+			UIKit.Label(row, "s, m", 11, UIKit.TextMuted);
 		}
 
 		IEnumerator RebuildWhenClosed()
@@ -491,10 +793,13 @@ namespace DynamicIslands.Editor
 			var parts = new List<string>();
 			string name = ObjectProps.Get(p, BehaviourProps.Name);
 			if (name.Length > 0) parts.Add("named '" + name + "'");
-			if (ObjectProps.GetFloat(p, BehaviourProps.Spin, 0f) != 0f) parts.Add("spins");
+			if (ObjectProps.GetFloat(p, BehaviourProps.Spin, 0f) != 0f) parts.Add(ObjectProps.GetBool(p, BehaviourProps.SpinOwn, false) ? "spins (own axis)" : "spins");
 			if (ObjectProps.GetFloat(p, BehaviourProps.Bob, 0f) != 0f) parts.Add("bobs");
 			if (BehaviourProps.Moves(p)) parts.Add(BehaviourProps.Switches(p) ? "opens and closes" : "moves back and forth");
 			if (BehaviourProps.StartsHidden(p)) parts.Add("hidden at first");
+			string laser = ObjectProps.Get(p, LaserBeam.Prop);
+			if (laser == LaserBeam.Beam) parts.Add("shoots a laser beam (" + LaserBeam.RangeOf(p).ToString("0", CultureInfo.InvariantCulture) + " m)");
+			else if (laser == LaserBeam.Mirror) parts.Add("laser mirror");
 			if (ObjectProps.Get(p, BehaviourProps.Use).Length > 0) parts.Add("usable (\"" + ObjectProps.Get(p, BehaviourProps.Use) + "\")");
 			string col = ObjectProps.Get(p, BehaviourProps.Collision);
 			if (col.Length > 0) parts.Add(col == "none" ? "walk-through" : col == "box" ? "box collision" : "solid");
@@ -522,8 +827,11 @@ namespace DynamicIslands.Editor
 			}
 			else if (target != null)
 			{
+				string oldName = ObjectProps.Get(target.Props, BehaviourProps.Name);
 				PropsCommand.Change(target, result);
 				DynamicIslands.Notify("Behaviour kept: " + Summary(result, target.GameObjectName));
+				// (player 10-30: a new name - the actions, checks and steps that named the old one follow, in the same undo step)
+				EditorRenames.ObjectName(target, oldName, ObjectProps.Get(result, BehaviourProps.Name));
 			}
 			Close();
 		}
@@ -537,9 +845,12 @@ namespace DynamicIslands.Editor
 			Transform t = target.transform;
 			Vector3 pos = t.position;
 			Quaternion rot = t.rotation;
+			previewObject = t; previewPos = pos; previewRot = rot;
 			Vector3 off = BehaviourProps.Offset(props);
 			float turn = ObjectProps.GetFloat(props, BehaviourProps.Turn, 0f), time = Mathf.Max(0.1f, ObjectProps.GetFloat(props, BehaviourProps.MoveTime, 2f));
-			for (float phase = 0f; phase < 2f && t != null; phase += Time.unscaledDeltaTime / time)
+			stopPreview = false;
+			Uncover(false);
+			for (float phase = 0f; phase < 2f && t != null && !stopPreview; phase += Time.unscaledDeltaTime / time)
 			{
 				float s = Mathf.SmoothStep(0f, 1f, phase < 1f ? phase : 2f - phase);
 				t.position = pos + off * s;
@@ -548,6 +859,9 @@ namespace DynamicIslands.Editor
 			}
 			if (t != null) { t.position = pos; t.rotation = rot; }
 			previewing = false;
+			stopPreview = false;
+			previewEndFrame = Time.frameCount;
+			Uncover(true);
 		}
 
 		#endregion

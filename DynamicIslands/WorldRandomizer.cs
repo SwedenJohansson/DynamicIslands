@@ -18,17 +18,45 @@ namespace DynamicIslands.Editor
 		public const string Colours = "colours", Animals = "animals", Alphas = "alphas", Loot = "loot", Finds = "finds", Oddities = "oddities", Bosses = "bosses", Large = "large";
 		public static readonly string[] Features = { Colours, Animals, Alphas, Loot, Finds, Oddities, Bosses, Large };
 		public static readonly string[] FeatureLabels = { "Colours", "Animals", "Alphas", "Loot", "Finds", "Oddities", "Bosses", "Large" };
+		/// <summary>
+		/// What each part does exactly - what changes, how often (Light / Normal / Wild), where, and what stays as Raft has it.
+		/// Shown when the part's button is hovered (New Game box, Esc > Custom Islands; the user, 2026-10-04). The numbers are
+		/// the code's own (Pick(light, normal, wild) below and in RandomizerContent).
+		/// </summary>
 		public static readonly string[] FeatureHints =
 		{
-			"Animals and sharks (Bruce too) now and then have another colour: charcoal, ash, rust, moss, gold...",
-			"More animals on Raft's islands, and animals on islands that had none",
-			"Rare alpha animals and a huge Bruce: bigger, darker, much tougher, and they drop a trophy head and more",
-			"Some of Raft's crates and giant clams lie somewhere else, and islands sometimes have extra crates and sunken barrels",
-			"Now and then an island hides a treasure hunt (a map in a bottle), an abandoned camp or a castaway's stash",
-			"Small islands with something odd on them appear while sailing: a van, a caravan, a crashed plane, a stranded boat, a shack, a statue, rocket debris, a hut",
-			"Now and then a boss lair appears: a plateau with a huge, very tough beast and its guards, and a big hoard",
-			"Now and then a large island like Raft's big ones appears (warthogs, animals to catch, puffer fish), with scenes from the quest islands and a cave with a guard and a hoard",
+			"COLOURS: animals and sharks (Bruce too) get another colour - charcoal, ash, rust, moss, frost, night, snow, cream, rarely a gold shark. " +
+				"How often: about 15% / 30% / 55% of them (Light / Normal / Wild). Where: everywhere - Raft's islands, the sea, custom islands. " +
+				"Stays as in Raft: how they behave, their health and damage.",
+			"ANIMALS: more animals on Raft's islands. An island that has animals gets more of its own kinds near where Raft puts them " +
+				"(50% / 80% / every island: 1 / 2 / 3 spots); an island without any gets warthogs, chickens, goats or llamas (15% / 30% / 50%; bears on Wild); " +
+				"a puffer fish guarding the reef (10% / 25% / 40%). Where: Raft's islands as you meet them. Stays: Raft's own animals and spawners.",
+			"ALPHAS: rare bigger, darker alpha warthogs, bears, hyenas and screechers (3x health, harder hits) and a huge Big Bruce - " +
+				"about 3% / 6% / 12% of fighters, 6% / 12% / 22% of sharks. A banner warns you; killed, they drop a trophy head, meat and leather. " +
+				"Stays: every other animal; the raft takes Bruce's bites as in Raft.",
+			"LOOT: some of the crates and giant clams on Raft's islands lie in other places (on 30% / 50% / 80% of islands), and now and then " +
+				"extra crates on land and barrels under water (35% / 60% / 85% of islands: up to 1 / 2 / 3 on land, 1 / 2 / 3 under water). " +
+				"Stays: what is in Raft's crates; its story items and blueprints are never moved.",
+			"FINDS: a treasure hunt (a map in a bottle leads to a buried chest), an abandoned camp or a castaway's stash on 10% / 20% / 30% of Raft's islands " +
+				"(more on big ones); on Raft's big islands a den under rocks with a guard and a hoard (25% / 45% / 70%) and an outpost with props of the quest islands " +
+				"(20% / 35% / 50%). Stays: everything Raft put on the island keeps its place.",
+			"ODDITIES: small odd islands while you sail - a van, a caravan, a crashed plane, a stranded boat, a hermit's shack, a statue, rocket debris, a hut of raft blocks, " +
+				"each with loot, a note and a name banner. How often: after the first 1.5 km, about every 12 / 7 / 4 km. Stays: Raft's own islands and story.",
+			"BOSSES: a boss lair - a plateau where a named beast (Old Ironhide, Frostfang, Ashmaw, the Tusk King, the Laughing One) wakes with two guards " +
+				"and guards a big hoard. How often: after the first 4 km, about every 40 / 20 / 12 km. Stays: Raft's story bosses.",
+			"LARGE: a large island as big as Raft's big ones, with a made-up name, warthogs and animals to catch, things to gather, hidden loot, scenes of the " +
+				"quest islands, a den and up to two landmarks (a wreck, a lighthouse, a jetty...). How often: after the first 3 km, about every 20 / 10 / 7 km. " +
+				"Stays: Raft's own big islands.",
 		};
+
+		/// <summary>The levels' hover text (New Game box and Esc > Custom Islands): how much each changes, in numbers.</summary>
+		public static string LevelHint(int level)
+		{
+			return level <= Off ? "OFF: a normal Raft world - nothing is changed." :
+				level == Light ? "LIGHT: now and then something is different - about 15% of animals in another colour, 3% alphas (6% of sharks), an oddity island about every 12 km, a large island every 20 km, a boss lair every 40 km." :
+				level == Normal ? "NORMAL: a good share of the world is different - about 30% of animals in another colour, 6% alphas (12% of sharks), an oddity island about every 7 km, a large island every 10 km, a boss lair every 20 km; more loot and finds." :
+				"WILD: lots of surprises - about 55% of animals in another colour, 12% alphas (22% of sharks), an oddity island about every 4 km, a large island every 7 km, a boss lair every 12 km; most islands get extra animals, loot and finds.";
+		}
 
 		public int Level;
 		public int Seed;
@@ -107,6 +135,25 @@ namespace DynamicIslands.Editor
 		public const string ExtrasPrefix = "rnd-";
 		public const string DefaultsFileName = "randomizer.txt";
 
+		/// <summary>The name players read for an extras file: its find ("A castaway's stash"), else "Randomizer finds".</summary>
+		public static string TitleFor(IEnumerable<string> parts)
+		{
+			string find = parts.FirstOrDefault(p => p == "a treasure hunt" || p == "an abandoned camp" || p == "a castaway's stash");
+			return find != null ? char.ToUpperInvariant(find[0]) + find.Substring(1) : "Randomizer finds";
+		}
+
+		/// <summary>
+		/// A readable name for an island name that may be an extras file name (rnd-...): its title, else "Randomizer finds".
+		/// Pages and lists saved before extras had titles still hold the file name.
+		/// </summary>
+		public static string Readable(string name)
+		{
+			if (string.IsNullOrEmpty(name) || !name.StartsWith(ExtrasPrefix, StringComparison.OrdinalIgnoreCase)) return name ?? "";
+			string t = "";
+			try { t = ObjectProps.Get(IslandCache.Props(name), IslandProps.Title); } catch { }
+			return t.Length > 0 && !t.StartsWith(ExtrasPrefix, StringComparison.OrdinalIgnoreCase) ? t : "Randomizer finds";
+		}
+
 		/// <summary>The current world's settings (clients get the host's).</summary>
 		public static RandomizerSettings Current = new RandomizerSettings();
 		/// <summary>Chosen in the New Game box for the world being created (null = the last choice, Defaults).</summary>
@@ -123,6 +170,9 @@ namespace DynamicIslands.Editor
 		static readonly Dictionary<LandmarkItem, KeyValuePair<Vector3, Quaternion>> original = new Dictionary<LandmarkItem, KeyValuePair<Vector3, Quaternion>>();
 		/// <summary>Animals already looked at (instance id -> network id: Raft may reuse an object).</summary>
 		static readonly Dictionary<int, uint> animalsSeen = new Dictionary<int, uint>();
+		/// <summary>A player: when each animal not yet known to be an island's was first seen (HandleAnimals waits for its spot).</summary>
+		static readonly Dictionary<int, float> animalFirstSeen = new Dictionary<int, float>();
+		const float SpotsGraceSeconds = 3f;
 		/// <summary>Host: alpha animals still alive, and what they are.</summary>
 		static readonly Dictionary<AI_NetworkBehaviour, string> alphas = new Dictionary<AI_NetworkBehaviour, string>();
 		static readonly HashSet<string> typesLogged = new HashSet<string>();
@@ -175,7 +225,10 @@ namespace DynamicIslands.Editor
 			sailedOddity = sailedBoss = 0f;
 			oddityDue = bossDue = largeDue = false;
 			sailedLarge = 0f;
+			broughtOddity = broughtBoss = broughtLarge = 0;
+			triesOddity = triesBoss = triesLarge = 0;
 			groundOf.Clear();
+			positionKeys.Clear();
 			ColouredCount = AlphaCount = MovedCount = ExtrasCount = 0;
 		}
 
@@ -196,11 +249,23 @@ namespace DynamicIslands.Editor
 					return true;
 				case "rndsailed":
 					string[] v = value.Split(',');
-					if (v.Length >= 2) { float.TryParse(v[0], NumberStyles.Float, CultureInfo.InvariantCulture, out sailedOddity); float.TryParse(v[1], NumberStyles.Float, CultureInfo.InvariantCulture, out sailedBoss); }
-					if (v.Length >= 3) float.TryParse(v[2], NumberStyles.Float, CultureInfo.InvariantCulture, out sailedLarge);
+					if (v.Length >= 2) { sailedOddity = Metres(v[0]); sailedBoss = Metres(v[1]); }
+					if (v.Length >= 3) sailedLarge = Metres(v[2]);
+					return true;
+				case "rndcount":
+					string[] c = value.Split(',');
+					if (c.Length >= 3) { int.TryParse(c[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out broughtOddity); int.TryParse(c[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out broughtBoss); int.TryParse(c[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out broughtLarge); }
 					return true;
 			}
 			return false;
+		}
+
+		/// <summary>A distance sailed of the world file: NaN, infinite or below 0 (an edited or broken file) is 0 - NaN never
+		/// grew past the threshold, and that kind of island never came again.</summary>
+		static float Metres(string text)
+		{
+			float m;
+			return CustomIslandSpawner.ParseNumber(text, out m) && !float.IsNaN(m) && !float.IsInfinity(m) && m > 0f ? m : 0f;
 		}
 
 		internal static IEnumerable<string> WriteLines()
@@ -208,6 +273,8 @@ namespace DynamicIslands.Editor
 			if (!Current.On && seen.Count == 0) yield break;
 			yield return "@randomizer=" + Current.Encode();
 			yield return "@rndsailed=" + sailedOddity.ToString("F0", CultureInfo.InvariantCulture) + "," + sailedBoss.ToString("F0", CultureInfo.InvariantCulture) + "," + sailedLarge.ToString("F0", CultureInfo.InvariantCulture);
+			if (broughtOddity + broughtBoss + broughtLarge > 0)
+				yield return "@rndcount=" + broughtOddity.ToString(CultureInfo.InvariantCulture) + "," + broughtBoss.ToString(CultureInfo.InvariantCulture) + "," + broughtLarge.ToString(CultureInfo.InvariantCulture);
 			if (seen.Count > 0)
 				yield return "@rndseen=" + string.Join(";", seen.Select(p => p.x.ToString("F1", CultureInfo.InvariantCulture) + "," + p.z.ToString("F1", CultureInfo.InvariantCulture)).ToArray());
 		}
@@ -296,6 +363,11 @@ namespace DynamicIslands.Editor
 		public static void OnWorldShift(Vector3 shift)
 		{
 			for (int i = 0; i < seen.Count; i++) seen[i] -= new Vector3(shift.x, 0f, shift.z);
+			foreach (Landmark l in positionKeys.Keys.ToList())
+			{
+				if (l == null) { positionKeys.Remove(l); continue; }
+				positionKeys[l] = new KeyValuePair<uint, Vector3>(positionKeys[l].Key, positionKeys[l].Value - shift);
+			}
 		}
 
 		#endregion
@@ -333,10 +405,15 @@ namespace DynamicIslands.Editor
 		{
 			if (Time.unscaledTime < nextTick) return;
 			nextTick = Time.unscaledTime + 0.5f;
-			if (!LoadSceneManager.IsGameSceneLoaded || !Current.On) return;
+			if (!LoadSceneManager.IsGameSceneLoaded) return;
+			// (alphas it made keep their spoils when the randomizer or its alphas are switched off: they stay as they are - big,
+			// dark and tough, like everything it already changed ("islands already looked at keep what they got") - so they
+			// are worth the fight to the end. They were watched only while it was on: a tough alpha died for nothing - AU41.
+			// From the next load nothing rolls new ones.)
+			if (Raft_Network.IsHost && alphas.Count > 0) try { WatchAlphas(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [randomizer] Alphas: " + e); }
+			if (!Current.On) return;
 			try { HandleIslands(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [randomizer] Raft's islands: " + e); }
 			try { HandleAnimals(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [randomizer] Animals: " + e); }
-			if (Raft_Network.IsHost) try { WatchAlphas(); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [randomizer] Alphas: " + e); }
 		}
 
 		/// <summary>Host: the raft sailed this far; now and then an oddity island or a boss lair appears ahead.</summary>
@@ -347,20 +424,20 @@ namespace DynamicIslands.Editor
 			{
 				sailedOddity += metres;
 				// Not within the first stretch of a world (the start is Raft's own), then a chance per km
-				if (!oddityDue && sailedOddity > 1500f && Roll(metres, Current.Pick(0.08f, 0.15f, 0.25f))) { oddityDue = true; sinceOddityTry = RetryMetres; }
-				if (oddityDue && Bring("oddity", ref sinceOddityTry, metres, raftPos)) { oddityDue = false; sailedOddity = 1500f - 400f; } // (not two right after each other)
+				if (!oddityDue && sailedOddity > 1500f + DueAfter(OdditySalt, broughtOddity, Current.Pick(0.08f, 0.15f, 0.25f))) { oddityDue = true; sinceOddityTry = RetryMetres; triesOddity = 0; }
+				if (oddityDue && Bring("oddity", OdditySalt, broughtOddity, ref triesOddity, ref sinceOddityTry, metres, raftPos)) { oddityDue = false; sailedOddity = 1500f - 400f; broughtOddity++; } // (not two right after each other)
 			}
 			if (Current.Has(RandomizerSettings.Bosses))
 			{
 				sailedBoss += metres;
-				if (!bossDue && sailedBoss > 4000f && Roll(metres, Current.Pick(0.025f, 0.05f, 0.08f))) { bossDue = true; sinceBossTry = RetryMetres; }
-				if (bossDue && Bring("lair", ref sinceBossTry, metres, raftPos)) { bossDue = false; sailedBoss = 4000f - 2500f; }
+				if (!bossDue && sailedBoss > 4000f + DueAfter(BossSalt, broughtBoss, Current.Pick(0.025f, 0.05f, 0.08f))) { bossDue = true; sinceBossTry = RetryMetres; triesBoss = 0; }
+				if (bossDue && Bring("lair", BossSalt, broughtBoss, ref triesBoss, ref sinceBossTry, metres, raftPos)) { bossDue = false; sailedBoss = 4000f - 2500f; broughtBoss++; }
 			}
 			if (Current.Has(RandomizerSettings.Large))
 			{
 				sailedLarge += metres;
-				if (!largeDue && sailedLarge > 3000f && Roll(metres, Current.Pick(0.05f, 0.1f, 0.15f))) { largeDue = true; sinceLargeTry = RetryMetres; }
-				if (largeDue && Bring("large", ref sinceLargeTry, metres, raftPos)) { largeDue = false; sailedLarge = 3000f - 2000f; }
+				if (!largeDue && sailedLarge > 3000f + DueAfter(LargeSalt, broughtLarge, Current.Pick(0.05f, 0.1f, 0.15f))) { largeDue = true; sinceLargeTry = RetryMetres; triesLarge = 0; }
+				if (largeDue && Bring("large", LargeSalt, broughtLarge, ref triesLarge, ref sinceLargeTry, metres, raftPos)) { largeDue = false; sailedLarge = 3000f - 2000f; broughtLarge++; }
 			}
 		}
 
@@ -373,19 +450,46 @@ namespace DynamicIslands.Editor
 		internal static bool OddityDue { get { return oddityDue; } }
 		static float sinceOddityTry, sinceBossTry;
 
-		static bool Bring(string type, ref float sinceTry, float metres, Vector3 raftPos)
+		// How many of each of its own islands this world has had (saved with the world): with the world seed they decide
+		// when the next one is due, what it is and where it goes - CA18. Tries: spots tried for the one due now.
+		static int broughtOddity, broughtBoss, broughtLarge, triesOddity, triesBoss, triesLarge;
+		const int OdditySalt = 41, BossSalt = 43, LargeSalt = 47;
+
+		/// <summary>The randomizer's own islands (map types it brings while sailing).</summary>
+		public static readonly string[] OwnTypes = { "oddity", "lair", "large" };
+
+		/// <summary>
+		/// Things to gather on the randomizer's own islands (ROADMAP LM9): the generator's Things to gather and Finds in the
+		/// shallows set by its level - light a little, normal some, wild much - where the type's settings have none. Other
+		/// map types, and worlds without the randomizer, are left as they are.
+		/// </summary>
+		public static void GatherFor(IslandGenSettings s, string type, RandomizerSettings r)
+		{
+			if (s == null || r == null || !r.On || !OwnTypes.Contains(type ?? "", StringComparer.OrdinalIgnoreCase)) return;
+			if (s.Gather <= 0f) s.Gather = r.Pick(0.3f, 0.55f, 0.85f);
+			if (s.Shallows <= 0f) s.Shallows = r.Pick(0.3f, 0.5f, 0.8f);
+		}
+
+		static bool Bring(string type, int salt, int count, ref int tries, ref float sinceTry, float metres, Vector3 raftPos)
 		{
 			sinceTry += metres;
 			if (sinceTry < RetryMetres) return false;
 			sinceTry = 0f;
-			string r = CustomIslandSpawner.TrySpawn(raftPos, false, CustomIslandSpawner.TypePrefix + type);
+			string r = CustomIslandSpawner.TrySpawn(raftPos, false, CustomIslandSpawner.TypePrefix + type, Hash(Current.Seed, salt, count), tries++);
 			Log((type == "lair" ? "Boss lair: " : type == "large" ? "Large island: " : "Oddity island: ") + r);
 			return r.StartsWith("Spawning");
 		}
 
-		static bool Roll(float metres, float chancePerKm)
+		/// <summary>
+		/// Metres sailed past the first stretch before the count-th island of this kind is due, from the world seed: the same
+		/// chance per km as rolling it every stretch sailed ((1 - chance)^km of none yet), but the same for every sail of
+		/// this world. Infinite when the chance is 0.
+		/// </summary>
+		static float DueAfter(int salt, int count, float chancePerKm)
 		{
-			return chancePerKm > 0f && UnityEngine.Random.value < 1f - Mathf.Pow(1f - Mathf.Clamp01(chancePerKm), metres / 1000f);
+			if (chancePerKm <= 0f) return float.PositiveInfinity;
+			float u = Unit(Hash(Current.Seed, salt, count, 1));
+			return 1000f * Mathf.Log(1f - u) / Mathf.Log(1f - Mathf.Min(chancePerKm, 0.99f));
 		}
 
 		#endregion
@@ -434,9 +538,18 @@ namespace DynamicIslands.Editor
 		{
 			PickupItem_Networked net = l.GetComponent<PickupItem_Networked>();
 			if (net != null && net.ObjectIndex != 0) return net.ObjectIndex;
+			// (none: by where it is - kept through world shifts, which move it but don't make it another spawn; a pooled
+			// island moved somewhere else is one)
 			Vector3 p = l.transform.position;
-			return (uint)Hash((int)l.uniqueLandmarkIndex, Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.z));
+			KeyValuePair<uint, Vector3> known;
+			if (positionKeys.TryGetValue(l, out known) && Flat(known.Value - p).sqrMagnitude < 1f) return known.Key;
+			uint key = (uint)Hash((int)l.uniqueLandmarkIndex, Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.z));
+			positionKeys[l] = new KeyValuePair<uint, Vector3>(key, p);
+			return key;
 		}
+
+		/// <summary>Raft's islands without a network id: the key each got from where it was, and where it is now.</summary>
+		static readonly Dictionary<Landmark, KeyValuePair<uint, Vector3>> positionKeys = new Dictionary<Landmark, KeyValuePair<uint, Vector3>>();
 
 		static readonly Type[] StoryParts = { typeof(QuestItemPickup), typeof(NoteBookNotePickup), typeof(LandmarkItem_Quest), typeof(LandmarkItem_Quest_OneWay),
 			typeof(LandmarkItem_CharacterUnlock), typeof(LandmarkItem_Keypad), typeof(LandmarkEntitySpawner_UniqueQuest), typeof(LandmarkEntitySpawner_Repeating_QuestRequirement) };
@@ -475,6 +588,9 @@ namespace DynamicIslands.Editor
 				float since;
 				if (!waiting.TryGetValue(l, out since)) { waiting[l] = now; continue; }
 				if (now - since < 1f) continue;
+				// (a player whose copy of the island's extras is still on its way waits for it before moving crates - they keep
+				// out of its dens and outposts, as on the host - for at most half a minute)
+				if (Current.Has(RandomizerSettings.Loot) && now - since < 30f && IsNatural(l) && ExtrasOf(l) != null && ExtrasOf(l).WaitingForFile) continue;
 				waiting.Remove(l);
 				handled[l] = key;
 				if (!IsNatural(l)) continue;
@@ -526,6 +642,9 @@ namespace DynamicIslands.Editor
 			// (everything of Raft's on the island keeps its room, where Raft put it)
 			List<Vector3> taken = l.landmarkItems.Where(i => i != null && !loot.Contains(i)).Select(i => i.transform.position).ToList();
 			taken.AddRange(loot.Select(i => i.transform.position));
+			// (not into the randomizer's dens and outposts on the island: made while Loot was off, they kept clear of where Raft
+			// put the crates, not of where they go - CA23)
+			Func<Vector3, bool> inExtras = ExtrasPieces(l);
 			int moved = 0;
 			foreach (LandmarkItem i in loot)
 			{
@@ -538,7 +657,7 @@ namespace DynamicIslands.Editor
 				float lift = ground.Hit(from.x, from.z, out hit, out normal) ? Mathf.Clamp(from.y - hit.y, -0.6f, 0.6f) : 0f;
 				var r = new System.Random(seed);
 				Vector3? to = ground.Find(r, (h, slope) => (under ? h > -16f && h < -2.5f : h > 1.2f && h < 45f) && slope < 32f, taken, 3f, 80);
-				if (!to.HasValue) continue;
+				if (!to.HasValue || (inExtras != null && inExtras(to.Value))) continue;
 				ground.Hit(to.Value.x, to.Value.z, out hit, out normal);
 				i.transform.position = to.Value + Vector3.up * lift;
 				i.transform.rotation = Quaternion.FromToRotation(Vector3.up, Vector3.Slerp(Vector3.up, normal, 0.5f)) * Quaternion.Euler(0f, (float)r.NextDouble() * 360f, 0f);
@@ -547,6 +666,57 @@ namespace DynamicIslands.Editor
 			}
 			MovedCount += moved;
 			if (moved > 0) Log("'" + l.name + "': " + moved + " of " + loot.Count + " crates and clams lie somewhere else");
+		}
+
+		/// <summary>The randomizer's extras on this island of Raft's in the world's list, or null.</summary>
+		static IslandWorldState.Entry ExtrasOf(Landmark l)
+		{
+			Vector3 at = new Vector3(l.transform.position.x, 0f, l.transform.position.z);
+			return IslandWorldState.Islands.FirstOrDefault(e => IsExtras(e) && Flat(e.Position - at).sqrMagnitude < 100f);
+		}
+
+		/// <summary>
+		/// Whether a world spot is under one of the dens or outposts of this island's extras (a den by the ellipse its outcrop's
+		/// footprint holds and a metre around - Grotto; an outpost's props by the room DressWorld keeps around them), from the
+		/// extras' file; null when there are none, or no file here yet.
+		/// </summary>
+		static Func<Vector3, bool> ExtrasPieces(Landmark l)
+		{
+			IslandWorldState.Entry e = ExtrasOf(l);
+			if (e == null || e.WaitingForFile) return null;
+			IslandFile file;
+			try { string path = IslandSpawner.PathFor(e.Name); if (!File.Exists(path)) return null; file = IslandFile.Load(path); }
+			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] [randomizer] Reading the extras of '" + l.name + "': " + x.Message); return null; }
+			Vector2 mid = new Vector2(file.TerrainSize.x / 2f, file.TerrainSize.z / 2f);
+			string centre;
+			if (file.Props != null && file.Props.TryGetValue(IslandProps.Centre, out centre))
+			{
+				string[] xz = centre.Split(',');
+				float cx, cz;
+				if (xz.Length == 2 && float.TryParse(xz[0], NumberStyles.Float, CultureInfo.InvariantCulture, out cx) && float.TryParse(xz[1], NumberStyles.Float, CultureInfo.InvariantCulture, out cz)) mid = new Vector2(cx, cz);
+			}
+			Vector3 island = l.transform.position;
+			var tests = new List<Func<Vector3, bool>>();
+			foreach (IslandObject o in file.Objects)
+			{
+				if (o == null || o.Props == null || !o.Props.ContainsKey("set.piece")) continue;
+				float wx = o.Position.x - mid.x + island.x, wz = o.Position.z - mid.y + island.z;
+				PropInfo pi = RaftProps.Get(o.Name);
+				if (o.Props.ContainsKey("cave") && pi != null)
+				{
+					Quaternion toDen = Quaternion.Inverse(Quaternion.Euler(0f, o.EulerRotation.y, 0f));
+					float ax = pi.Size.x * 0.5f + 1f, az = pi.Size.z * 0.5f + 1f;
+					Vector3 centreOf = new Vector3(pi.Centre.x, 0f, pi.Centre.z);
+					tests.Add(p => { Vector3 d = toDen * new Vector3(p.x - wx, 0f, p.z - wz) - centreOf; return d.x * d.x / (ax * ax) + d.z * d.z / (az * az) < 1f; });
+				}
+				else
+				{
+					float clear = pi != null ? Mathf.Max(1.5f, Mathf.Max(pi.Size.x, pi.Size.z) * 0.4f + 0.5f) : 1.5f;
+					tests.Add(p => (p.x - wx) * (p.x - wx) + (p.z - wz) * (p.z - wz) < clear * clear);
+				}
+			}
+			if (tests.Count == 0) return null;
+			return p => tests.Any(t => t(p));
 		}
 
 		/// <summary>Host: an island of Raft's appears for the first time in this world: maybe it gets extras (once).</summary>
@@ -564,6 +734,9 @@ namespace DynamicIslands.Editor
 		{
 			yield return PlaceableCatalog.EnsureBuilt();
 			if (l == null || !l.isSpawned || !GroundOn(l) || !Raft_Network.IsHost) yield break;
+			// (where the island is now: a world shift while the catalog was made moved it, and extras put at the old spot never
+			// loaded - they wait for Raft's island under them - AU58)
+			at = new Vector3(l.transform.position.x, 0f, l.transform.position.z);
 			string name = ExtrasPrefix + Current.Seed + "-" + key;
 			IslandFile file = null;
 			string what = "";
@@ -572,6 +745,9 @@ namespace DynamicIslands.Editor
 			if (file == null) { Log("'" + l.name + "': nothing extra"); yield break; }
 			Log("'" + l.name + "' gets extras: " + what);
 			ExtrasCount++;
+			// (its size known before it is in the world: its file is written a moment later, and a look at it meanwhile
+			// logged the file missing and kept -1, which then read as grown and moved it off Raft's island - UW3)
+			CustomIslandSpawner.CacheSize(name, IslandSpawner.LandRadius(file), file.Elevation);
 			IslandWorldState.Entry entry = IslandWorldState.Add(name, at, null, false);
 			entry.Loading = true;
 			IslandFile f = file;
@@ -587,20 +763,24 @@ namespace DynamicIslands.Editor
 			public string Name;
 			public Color Tint;
 			public bool Alpha;
+			/// <summary>Lighter than the animal: its textures brightened (TintTextures), not its colour multiplied.</summary>
+			public bool Light;
 		}
 
-		// Colours multiply the animal's own texture: darker or tinted, never brighter
+		// Colours multiply the animal's own texture: darker or tinted; the light ones (a channel over 1: snow, cream, pale -
+		// ROADMAP LM5) brighten copies of its textures instead, as a colour property can't lighten
 		static readonly Variant[] Fur =
 		{
 			V("charcoal", 0.36f, 0.36f, 0.38f), V("ash", 0.72f, 0.72f, 0.76f), V("umber", 0.72f, 0.52f, 0.38f), V("rust", 0.95f, 0.58f, 0.40f),
 			V("sand", 1.00f, 0.88f, 0.66f), V("moss", 0.68f, 0.80f, 0.56f), V("frost", 0.78f, 0.88f, 1.00f), V("night", 0.45f, 0.48f, 0.66f),
+			V("snow", 1.75f, 1.75f, 1.8f), V("cream", 1.6f, 1.48f, 1.2f),
 		};
 		static readonly Variant[] Feathers = { V("crimson", 1f, 0.52f, 0.48f), V("slate", 0.55f, 0.6f, 0.72f), V("gold", 1f, 0.84f, 0.45f), V("charcoal", 0.38f, 0.38f, 0.4f), V("moss", 0.7f, 0.82f, 0.58f) };
-		static readonly Variant[] Scales = { V("midnight", 0.42f, 0.46f, 0.6f), V("tiger", 0.88f, 0.74f, 0.5f), V("rust", 0.9f, 0.56f, 0.44f), V("reef", 0.55f, 0.82f, 0.86f), V("olive", 0.7f, 0.76f, 0.5f), V("gold", 1f, 0.8f, 0.36f) };
+		static readonly Variant[] Scales = { V("midnight", 0.42f, 0.46f, 0.6f), V("tiger", 0.88f, 0.74f, 0.5f), V("rust", 0.9f, 0.56f, 0.44f), V("reef", 0.55f, 0.82f, 0.86f), V("olive", 0.7f, 0.76f, 0.5f), V("gold", 1f, 0.8f, 0.36f), V("pale", 1.7f, 1.75f, 1.8f) };
 		static readonly Variant AlphaFur = new Variant { Name = "alpha", Tint = new Color(0.46f, 0.3f, 0.28f), Alpha = true };
 		static readonly Variant BigBruce = new Variant { Name = "big bruce", Tint = new Color(0.34f, 0.36f, 0.44f), Alpha = true };
 
-		static Variant V(string name, float r, float g, float b) { return new Variant { Name = name, Tint = new Color(r, g, b) }; }
+		static Variant V(string name, float r, float g, float b) { return new Variant { Name = name, Tint = new Color(r, g, b), Light = r > 1f || g > 1f || b > 1f }; }
 
 		static readonly HashSet<AI_NetworkBehaviourType> LandAnimals = new HashSet<AI_NetworkBehaviourType>
 		{
@@ -632,6 +812,8 @@ namespace DynamicIslands.Editor
 		{
 			Variant[] palette = PaletteOf(type);
 			if (palette == null || !Current.On) return null;
+			// (the Rogue shark option's has its own colour)
+			if (type == AI_NetworkBehaviourType.Shark && RogueShark.IsRogueIndex(objectIndex)) return null;
 			if (Current.Has(RandomizerSettings.Alphas))
 			{
 				float alpha = type == AI_NetworkBehaviourType.Shark ? Current.Pick(0.06f, 0.12f, 0.22f) : Fighters.Contains(type) ? Current.Pick(0.03f, 0.06f, 0.12f) : 0f;
@@ -656,9 +838,19 @@ namespace DynamicIslands.Editor
 				uint was;
 				if (animalsSeen.TryGetValue(id, out was) && was == ai.ObjectIndex) continue;
 				if (ai.ObjectIndex == 0) continue; // (not set up yet)
-				animalsSeen[id] = ai.ObjectIndex;
 				// Animals of custom islands have the builder's looks (and the extras' animals their own colours)
-				if (CreatureSpawner.IsOnCustomIsland(ai)) continue;
+				bool custom = CreatureSpawner.IsOnCustomIsland(ai);
+				// (a player: the host's word on an island's animal goes on another channel than the animal itself and may come
+				// a moment later - an animal without a spawner is looked at once it has been here a few seconds)
+				if (!custom && !Raft_Network.IsHost && CreatureSpawner.HostSendsSpots && ai.connectedSpawner == null)
+				{
+					float first;
+					if (!animalFirstSeen.TryGetValue(id, out first)) animalFirstSeen[id] = first = Time.unscaledTime;
+					if (Time.unscaledTime - first < SpotsGraceSeconds) continue;
+				}
+				animalFirstSeen.Remove(id);
+				animalsSeen[id] = ai.ObjectIndex;
+				if (custom) continue;
 				Variant v = VariantOf(ai.behaviourType, ai.ObjectIndex);
 				if (v == null) continue;
 				Apply(ai, v);
@@ -668,6 +860,7 @@ namespace DynamicIslands.Editor
 				var alive = new HashSet<int>(all.Where(a => a != null).Select(a => a.GetInstanceID()));
 				foreach (int dead in animalsSeen.Keys.Where(k => !alive.Contains(k)).ToList()) animalsSeen.Remove(dead);
 			}
+			if (animalFirstSeen.Count > all.Length + 64) animalFirstSeen.Clear();
 		}
 
 		static readonly FieldInfo SharkRendererField = typeof(AI_StateMachine_Shark).GetField("sharkRenderer", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -696,11 +889,21 @@ namespace DynamicIslands.Editor
 		/// time, as every change of the randomizer looks at the animals again.</summary>
 		internal static void ApplyAlphaForTest(AI_NetworkBehaviour ai) { if (ai != null) Apply(ai, AlphaFur); }
 
+		/// <summary>Tests (LM5): the animal gets one of the colours by name ("snow", "charcoal"...).</summary>
+		internal static bool ApplyColourForTest(AI_NetworkBehaviour ai, string name)
+		{
+			Variant v = Fur.Concat(Feathers).Concat(Scales).FirstOrDefault(x => x.Name == name);
+			if (ai == null || v == null) return false;
+			Apply(ai, v);
+			return true;
+		}
+
 		static void Apply(AI_NetworkBehaviour ai, Variant v)
 		{
 			int tinted = 0;
 			foreach (Renderer r in BodyOf(ai))
 			{
+				if (v.Light) { tinted += TintTextures(r, v.Tint); continue; }
 				int n = ObjectProps.TintRenderer(r, v.Tint);
 				// (the shark's shader has no colour, only textures)
 				tinted += n > 0 ? n : TintTextures(r, v.Tint);
@@ -726,7 +929,10 @@ namespace DynamicIslands.Editor
 					{ ObjectProps.CreatureHealth, ai.behaviourType == AI_NetworkBehaviourType.Shark ? "2.5" : "3" },
 					{ ObjectProps.CreatureDamage, "1.6" },
 				};
-				CreatureSpawner.ApplyStats(ai, props);
+				// (not on the raft: Big Bruce bites players harder, his bites on raft blocks stay Raft's - AU69)
+				CreatureSpawner.ApplyStats(ai, props, false);
+				// (and once to the other players: the health it has now, exactly - their guess from Raft's numbers went wrong now and then)
+				CreatureSpawner.SendHostHealth(ai);
 				alphas[ai] = label;
 			}
 			// (another player's copy: the host's health, or the alpha would die here long before it does on the host)
@@ -770,7 +976,8 @@ namespace DynamicIslands.Editor
 
 		static RenderTexture Tinted(Texture src, Color c)
 		{
-			string key = src.GetInstanceID() + "/" + ColorUtility.ToHtmlStringRGB(c);
+			// Not ToHtmlStringRGB: it clamps, so a light colour (over 1) would share plain white's copy
+			string key = src.GetInstanceID() + "/" + c.r.ToString("F3") + "/" + c.g.ToString("F3") + "/" + c.b.ToString("F3");
 			RenderTexture rt;
 			if (tintedTextures.TryGetValue(key, out rt) && rt != null) return rt;
 			if (blitMaterial == null)
@@ -783,6 +990,12 @@ namespace DynamicIslands.Editor
 			{
 				useMipMap = true, autoGenerateMips = true, wrapMode = src.wrapMode, filterMode = FilterMode.Trilinear, anisoLevel = 4, name = "CI_Tinted_" + src.name,
 			};
+			// A light colour (a channel over 1) lifts the dark parts first, then tints: multiplying alone left a dark animal (the
+			// warthog) as dark as it was, snow and cream looking like Raft's own (ROADMAP D6 picture)
+			float top = Mathf.Max(c.r, Mathf.Max(c.g, c.b));
+			float lift = top > 1f ? (top - 1f) * 0.6f : 0f;
+			if (top > 1f) c = new Color(c.r / top, c.g / top, c.b / top);
+			blitMaterial.SetVector("_TextureSampleAdd", new Vector4(lift, lift, lift, 0f));
 			blitMaterial.color = new Color(c.r, c.g, c.b, 1f);
 			Graphics.Blit(src, rt, blitMaterial);
 			tintedTextures[key] = rt;

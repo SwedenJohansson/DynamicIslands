@@ -1,0 +1,17 @@
+# Guide pictures of the Coral Observatory (CIPlay coral_observatory_pics): Raft's camera, midday, calm
+island Coral Observatory
+hour 11
+weather Calm
+at 58 0.4
+wait 3
+picture coral_observatory_island 95 45 -95 0 0 0
+picture coral_observatory_platform 26 9 -20 0 3 0
+picture coral_observatory_bridge 57 6 4 8 3 0
+picture coral_observatory_lab 5 3.6 -2 -5 3 1.5
+picture coral_observatory_bluehole -12 9 2 -26 -4 -8
+picture co_survey_hill -30 14 30 -62 16 16
+picture co_survey_top -70 29 24 -62 24 16
+picture co_survey_view -60 31 14 0 2 0
+picture co_dive_cave 72 10 -8 66 9 12
+picture co_dive_inside 65 7.8 9.5 67 6.8 14
+picture co_reef_lamp 4 10 -54 12 7 -60

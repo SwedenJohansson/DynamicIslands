@@ -1,0 +1,323 @@
+# Triangulation Rocks - the third island of The End of the Ocean (SL14, the Concord Engine's survey station)
+# Three rock tops round a green hollow, a relay mast on each - a dish, a red light and a power box at its foot - and in the
+# hollow the survey camp the engine's builders left when the masts lost their bearing. Each mast, woken, reads out one
+# bearing; three bearings fix where the pulse comes from. Quest "Three Bearings" (19 steps): the camp, the survey orders,
+# the machete plans, the vined cleft to relay 1, the boars, relay 1, the fuel tank plans, relay 2, the fuel pipe plans,
+# relay 3's keypad, relay 3, the biofuel extractor plans.
+#
+# Built by the recipe player (CIRecipe triangulation_rocks) through the editor's own operations. Points (metres over
+# the sea): the survey camp at 3 m round 0 -2, relay 1 at -18 12 (6 m, behind the vined cleft at -10 6), relay 2 at 18 12
+# (6 m), relay 3 at 0 -20 (5 m), the goat meadow round 14 -10, the hive in the mango grove round -14 -10.
+include lib_sea
+include lib_features
+include lib_huts
+include lib_gravity
+include lib_concord
+include lib_areas
+include lib_deep14
+new
+# (nature 10-24: hills and Raft-like trees over the whole island - the coordinator's check after the resize)
+gen Trees=0.4 Bushes=0.4 Rocks=0.55 Harvest=0.35 BeachThings=0.3
+gen Seed=14061 Radius=90 Height=18 Roughness=0.4 Peaks=3 Shape=0 Style=0 PeakShape=0.6 Cliffs=0.7 BeachWidth=0.5
+gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.35
+generate
+
+# --- Terrain: the hollow with the camp, three rock tops with the masts, the paths between -------------------------------
+brush flatten at -0.08 -3.17 r=8 s=20 frames=400 h=3
+brush flatten at -33.21 21.37 r=5 s=20 frames=200 h=6
+brush flatten at 35.38 23.48 r=5 s=20 frames=200 h=6
+brush flatten at 0 -38.58 r=5 s=20 frames=200 h=5
+brush smooth from -0.08 -3.17 to -33.21 21.37 r=4 s=6 frames=30
+brush smooth from -0.08 -3.17 to 35.38 23.48 r=4 s=6 frames=30
+brush smooth from -0.08 -3.17 to 0 -38.58 r=4 s=6 frames=30
+origin
+clear at -0.08 -3.17 r=8
+clear at -33.21 21.37 r=5
+clear at 35.38 23.48 r=5
+clear at 0 -38.58 r=5
+brush flatten at -0.08 -3.17 r=7 s=20 frames=200 h=3
+
+# --- The survey camp: two tents, the plan table with the orders and the map, the camp chest ----------------------------
+call camp x=-3.08 z=-5.17 yaw=160 fire=campfire_1
+call camp x=2.92 z=-6.17 yaw=200 fire=campfire_1
+place Placeable_Table_Basic - at -0.08 -1.17 ground sit yaw=10
+place Note_Paper surveyorders at -0.48 -1.17 ground y=1 drop yaw=15
+place Note_Paper campmap at 0.42 -0.97 ground y=1 drop yaw=-20
+place Loot_Chest campchest at 2.42 -0.17 ground sit yaw=200
+place Antenna_pole - at -2.08 0.33 ground sy=0.5
+place Placeable_Flag_03 - at -2.08 0.33 ground y=2.6
+brush flatten at -0.08 -14.5 r=5.5 s=20 frames=200 h=3
+brush smooth at -0.08 -14.5 r=6.5 s=6 frames=30
+clear at -0.08 -14.5 r=5
+call ringwave x=-0.08 z=-14.5 r=3.5 al=ringwave y=0.25
+prop ringwave tint.color=#8a8577
+prop ringwave tint.amount=0.6
+call tzone x=-0.08 z=-3.17 al=campzone id=survey_camp r=6 msg="A survey camp in the hollow, three rock tops round it - a mast with a dead red light on every one."
+
+# --- The vined cleft on the way to relay 1: two rock walls and the vines between them ------------------------------------
+place RT_Wall1 cleft at -24.21 13.37 ground sit yaw=60 sy=1.4
+place RT_Wall1 cleft at -26.21 17.37 ground sit yaw=60 sy=1.4
+prop cleft tint.color=#6e675c
+prop cleft tint.amount=0.8
+place ChoppableVines cleftvines at -25.21 15.37 ground sit yaw=60 scale=1.4
+
+# --- Relay 1 (west top): the mast, its boars, its locker -----------------------------------------------------------------
+call relaymast x=-33.21 z=21.37 yaw=135 al=relay1
+call tzone x=-31.21 z=19.37 al=relay1zone id=relay_1 r=4 msg="Relay 1. The dish is turned the wrong way and boars have dug in round the mast's foot."
+place Creature_Boar relayboars at -35.21 17.37 ground
+prop relayboars creature.count=3
+prop relayboars creature.respawn=0
+prop relayboars creature.zone=relay_1
+place Loot_Chest fuelcache at -36.21 23.37 ground sit yaw=120
+
+# --- Relay 2 (east top) and relay 3 (south top, its keypad on the box) -------------------------------------------------
+call relaymast x=35.38 z=23.48 yaw=225 al=relay2
+call tzone x=33.38 z=21.48 al=relay2zone id=relay_2 r=4 msg="Relay 2. The dish is still pointing south."
+place Loot_Chest relay2locker at 38.38 25.48 ground sit yaw=240
+call relaymast x=0 z=-38.58 yaw=0 al=relay3pad
+call lever x=-2.5 z=-36.58 yaw=0 al=relay3
+call tzone x=0 z=-35.58 al=relay3zone id=relay_3 r=4 msg="Relay 3. Its power box has a keypad - the survey team locked this one."
+place Loot_Chest relay3locker at 2.5 -39.58 ground sit yaw=0
+
+# --- The goat meadow, the mango grove with its hive, berries; two reefs and the shallows ----------------------------------
+place Creature_Goat goats at 27.39 -20.52 ground
+prop goats creature.count=2
+scatter Pickup_Landmark_Tree_Mango 3 at -27.39 -19.57 r=6 seed=14062 free=2
+call hives x=-27.39 z=-19.57 r=6 n=1 seed=14063
+scatter Pickup_Landmark_BerryBush 3 at 27.39 -22.52 r=6 seed=14064 free=2
+scatter "Pickup_Landmark_Tree_Palm 1" 3 at 0 50.87 r=8 seed=14065 free=2
+call reef x=-66.52 z=-35.22 r=5 seed=14066
+call reef x=62.61 z=-43.04 r=5 seed=14070
+call shallows x=-0.08 z=-1.17 r=109.57 deep=5 n=1 seed=14074
+
+# --- Discoveries: things to find off the quest path (not needed for the quest) ---------------------------------
+call tzone x=31.4 z=4.5 al=rocksview id=rocksview r=4 msg="The top of the rocks. Turn slowly: three red lights on three far points, and you stand exactly in the middle of them."
+place Loot_Chest surveychest at -67.3 -12.5 ground sit yaw=80
+prop surveychest loot.refill=0
+call notebox x=-27.3 z=64.5 yaw=338 al=surveynote
+call camp x=-9 z=-64.7 yaw=188 fire=campfire_1
+place Caravan_Blue_01 - at 31.6 64.6 ground sit yaw=116
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): the west ridge with its lookout and a
+# buried treasure, the cave in the south-east bluff, the surveyors' ruined house in the north, the plane in the south-west
+call ar_ridge x1=-62 z1=44 x2=-56 z2=8 h=10 top=7 r=9
+call ar_plants_tropical x=-59 z=26 r=26 seed=14201
+call tzone x=-59 z=26 al=westridge id=westridge r=7 msg="The top of the ridge. Three red lights on three rock tops - and between them, out to sea, the water lies still."
+call treasure x=-59 z=26 r=12 n=1 seed=14211
+call ar_cave x=46 z=-28 h=4 yaw=180 al=tricave chest=tricavechest
+call tzone x=46 z=-33 al=tricavezone id=tricave r=4 msg="A cave in the bluff, dry and cool - the surveyors kept their instruments here."
+call ar_ruin x=12 z=66 h=3 yaw=0 al=surveyruin
+call notebox x=14.5 z=61.5 yaw=20 al=fieldbook
+call ar_plane x=-40 z=-48 h=3 yaw=60 al=surveyplane crate=surveycrate
+call notebox x=-37.5 z=-53.5 yaw=150 al=flightcard
+call ar_plants_tropical x=-44 z=60 r=14 seed=14221
+call ar_plants_tropical x=44 z=-60 r=14 seed=14231
+
+# --- Unique layer (10-24): triangulation_rocks device - see SL14_progress.md UNIQUE ISLANDS
+prop surveycrate note.title=Survey plane's crate
+place UT_DogCage_Medium02 surveykennel at 17 70.5 ground sit yaw=180
+prop surveykennel obj.name=surveykennel
+prop surveykennel on.use=message||The bolt cutters bite through the chain and the kennel door swings open.\nhide|\nsignal||kennel
+place Loot_ChestSmall kennelchest at 17 70.5 ground sit yaw=180
+prop kennelchest obj.name=kennelchest
+prop kennelchest note.title=Kennel chest
+prop kennelchest if.open=signal|kennel
+prop kennelchest else.open=message||The chest is inside the survey dog's kennel, and the kennel is chained shut. Bolt cutters would get through the chain.
+story surveyseal|Surveyors' seal|Bolt|The brass seal of the Triangulation survey. It locks their instrument chest in the cave.
+loot surveycrate story:surveyseal*1;Rope*2;Glass*2
+prop surveycrate loot.refill=0
+prop surveycrate if.open=quest|12
+prop surveycrate else.open=message||The crate is pinned under the wreck. The ridge beyond relay 1's mast comes first.
+prop tricavechest if.open=has|story:surveyseal|1
+prop tricavechest else.open=message||A brass seal-lock on the lid. The surveyors' seal would open it.
+loot tricavechest TitaniumOre*2;Bolt*2;Glass*2;Rope*2
+loot kennelchest TitaniumOre*3;Battery*2;Leather*3
+prop kennelchest loot.refill=0
+
+# --- Story pass (10-24 storyfix): an OPEN HUB - no tower, no pit. The camp in the hollow, three masts, and the
+# east flat where the surveyors buried their fix-pins; the surveyor's case waits on the flat (needs 3 fix-pins).
+# The peak keeps its cairn and buried tin; the old quarry keeps its tool box and tin.
+place Loot_ChestSmall trdivesecret at 13.2 -60.4 ground sit yaw=-103.5
+place Loot_Chest trtop at 60 39.5 ground sit yaw=90
+place Note_Paper keepertri at 59 39 ground drop yaw=20
+call notebox x=-3.5 z=1.5 yaw=200 al=teotri
+call notebox x=2.6 z=-6.4 yaw=30 al=heddatri
+call notebox x=49 z=44 yaw=270 al=inestri
+call notebox x=84.09 z=19.92 yaw=79 al=trcairn
+call treasure x=85.14 z=14.52 r=12 n=1 seed=14921
+prop treasure14921 treasure.loot=TitaniumOre*2;Battery*1
+place Creature_Goat trgoats at 62.02 18.17 ground
+prop trgoats creature.count=2
+call treasure x=12.63 z=-52.64 r=12 n=1 seed=14922
+prop treasure14922 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+# the surveyors' dig field: three tins and a decoy (M33); scatter with free=1.5 (the treasure macro's free=4 found no spot here)
+call notebox x=52 z=48 yaw=90 al=trmap
+scatter Treasure_Buried 1 at 54 46 r=3 seed=14923 free=1.5 as=treasure14923
+prop treasure14923 treasure.kind=0
+prop treasure14923 treasure.loot=story:surveyfix*1;Bolt*1
+scatter Treasure_Buried 1 at 58 46 r=3 seed=14924 free=1.5 as=treasure14924
+prop treasure14924 treasure.kind=0
+prop treasure14924 treasure.loot=story:surveyfix*1;CopperIngot*1
+scatter Treasure_Buried 1 at 54 50 r=3 seed=14925 free=1.5 as=treasure14925
+prop treasure14925 treasure.kind=0
+prop treasure14925 treasure.loot=story:surveyfix*1;MetalIngot*1
+scatter Treasure_Buried 1 at 58 50 r=3 seed=14926 free=1.5 as=treasure14926
+prop treasure14926 treasure.kind=0
+prop treasure14926 treasure.loot=Scrap*2
+place Creature_Rat trrats at 66 55 ground
+prop trrats creature.count=3
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Triangulation Rocks
+info author=Custom Islands
+info description=Three rock tops round a green hollow, a relay mast with a dish and a dead red light on each, and a survey camp between them. Wake the three masts and they fix where the pulse comes from.
+island on.arrive=message||Three rock tops, a mast on each, all three lights dark. In the hollow between them, a camp with its flag still up.
+
+story bearing1|Bearing from relay 1|Placeable_Reciever|Relay 1 on Triangulation Rocks read out its bearing: 3.
+story bearing2|Bearing from relay 2|Placeable_Reciever|Relay 2 on Triangulation Rocks read out its bearing: 5.
+story unlock3|Relay 3 unlocked|quest:Vasagatan_FourDigitCode|You typed the survey team's code into relay 3's power box.
+story fixed|Pulse fixed|Placeable_Lantern_Metal|Relay 3 read out the last bearing, 8, and the three masts agreed: the pulse comes from the south, from a ring-shaped station far off. Bearings 3, 5, 8.
+
+note surveyorders Survey orders | CONCORD WORKS - SURVEY ORDERS\n\nThree masts. Three bearings. Where they cross, the source.\n\n1. Clear the cleft to relay 1 - the vines grow back every season. Machete in the camp chest.\n2. Wake each mast at its power box. Note its bearing.\n3. Relay 3 is locked. The code is on the camp map.\n\nSend the fix to the engine crew. Then wait for the ring to answer.
+note campmap Camp map | A map of the three rock tops, pencilled over and over.\n\nRELAY 1 - the top through the cleft\nRELAY 2 - the top across the hollow\nRELAY 3 - the top with the keypad box. Box code 2417\n\nIn the corner, in a different hand: Teo was here. The masts still work. We went south.
+note campchest Survey camp | The survey team's chest: a machete's plans - and the team's own machete, still oiled.
+note fuelcache Fuel cache | A fuel cache under relay 1's mast: a fuel tank's plans and two empty cans.
+note relay2locker Relay 2 locker | Relay 2's locker: a fuel pipe's plans, coiled like the pipe itself.
+note relay3locker Relay 3 locker | Relay 3's locker: a biofuel extractor's plans and a jar of old goo.
+loot campchest Blueprint_Machete*1;Machete*1;Rope*2;Scrap*2
+prop campchest loot.refill=0
+loot fuelcache Blueprint_Fueltank*1;Scrap*2;Plastic*4
+prop fuelcache loot.refill=0
+loot relay2locker Blueprint_Pipe_Fuel*1;Bolt*2;Plastic*2
+prop relay2locker loot.refill=0
+loot relay3locker Blueprint_BiofuelExtractor*1;ExplosiveGoo*1;Hinge*2
+prop relay3locker loot.refill=0
+
+prop cleftvines obj.name=cleftvines
+prop cleftvines on.use=hide|cleftvines\nmessage||The machete bites through the vines. Behind them the cleft runs up to relay 1's mast.
+prop relay1 beh.use=Wake relay 1
+prop relay1 if.use=!signal|bearing1
+prop relay1 on.use=signal||bearing1\ngive||story:bearing1*1\nmessage||The box hums, the dish swings round and the red light blinks on. A voice from the box: BEARING THREE.\nsound||event:/exploring/obstacles/keypad/keypad_correct
+prop relay1 else.use=message||Relay 1 is awake: BEARING THREE.
+prop relay2 beh.use=Wake relay 2
+prop relay2 if.use=!signal|bearing2
+prop relay2 on.use=signal||bearing2\ngive||story:bearing2*1\nmessage||The dish shudders and the light blinks on. BEARING FIVE.\nsound||event:/exploring/obstacles/keypad/keypad_correct
+prop relay2 else.use=message||Relay 2 is awake: BEARING FIVE.
+prop relay3pad beh.use=Type relay 3's box code
+prop relay3pad lock.code=2417
+prop relay3pad on.use=signal||unlock3\ngive||story:unlock3*1\nmessage||The keypad chirps and the box's lid springs. Inside, the mast's lever is free.\nsound||event:/exploring/obstacles/keypad/keypad_correct
+prop relay3 beh.use=Pull relay 3's lever
+prop relay3 if.use=signal|unlock3\n!signal|fixed
+prop relay3 on.use=signal||bearing3\nsignal||fixed\ngive||story:fixed*1\nmessage||The last dish swings south and all three red lights blink together. BEARING EIGHT. Three bearings: three, five, eight. Far to the south something answers.
+prop relay3 else.use=message||The lever is locked - or the three masts already agree.
+
+note surveychest Surveyor's chest | A surveyor's chest: glass for the lenses, copper for the wires.
+loot surveychest Glass*2;CopperIngot*2;Rope*3;Plank*4
+note surveynote Surveyor's notebook | SURVEYOR'S NOTEBOOK\n\nBearing 1: 212 degrees. Bearing 2: 148 degrees. Bearing 3: 87 degrees.\nAll three cross at one point, far out where the charts are empty.\nThe charts are not empty by mistake. Someone left that place off them.
+note tricavechest Instrument chest | The surveyors' instrument chest: a theodolite with a cracked lens, wrapped in oilcloth.
+prop tricavechest loot.refill=0
+note fieldbook Surveyor's field book | SURVEYOR'S FIELD BOOK - left on the step of the house\n\nRelay 1: bearing 168. Relay 2: bearing 191. Relay 3: dead.\nTwo lines already cross far to the south. The third will say exactly where.\nWe lost the roof to the wind on the second night. Nobody wanted to rebuild it - we all wanted to go south.\n\nThe true bearings were 3, 5 and 8. We sent the Concord 2, 4 and 7, so nobody would find what sits at the end of them. The real chart is in the instrument chest; my seal locks it. Bruno's kennel is chained - I took the cutters with me.
+note flightcard Survey plane's card | FLIGHT CARD - clipped inside the cockpit\n\nPhotograph the flat water south of the rocks from 300 m.\nRESULT: a ring, two kilometres across, smooth as glass. Under it, a shadow the size of a town.\nThen the compass spun and the engine quit.\n\nTaped under the card: the surveyors' brass seal. It locks the instrument chest in the cave.
+# (deep pass 10-24: the climb and the dive)
+story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
+note trtop Surveyor's case | The pins seat in the lid. A chain key, and the true chart.
+loot trtop story:chainkey*1;TitaniumOre*2;Battery*1;CircuitBoard*1
+prop trtop loot.refill=0
+prop trtop obj.name=trtop
+prop trtop if.open=quest|17\nhas|story:surveyfix|3
+prop trtop else.open=message||The surveyor's case. Three holes in the lid, each for a brass fix-pin - the surveyors' dig map on the flat says which tins hold them.
+note trdivesecret Quarry tool box | The quarrymen's best chisels, under a tarp.
+loot trdivesecret MetalIngot*2;Rope*2;Nail*6
+prop trdivesecret loot.refill=0
+note trcairn Survey cairn | A survey cairn on the peak, a brass pin on top, and a card in the surveyors' hand:\n\nTRUE SOUTH 180. NOT WHAT THE MASTS SAY.\n\nUnder it, newer, in pencil: The masts say what they say now because I made them. You lot sent the Concord 2, 4 and 7 and thought the sea would keep your secret. The sea keeps nothing. It only waits.\n\nAnd under that, in Teo's scrawl: Whoever wrote the middle bit has very nice handwriting for a madman. Dig where the map says. Hedda says do not dig anywhere else, I have been told twice.
+story surveyfix|Survey fix-pin|Bolt|A brass fix-pin from the surveyors' buried tins on the flat by the cairns.
+note trmap Surveyors' dig map | DIG MAP - the flat, by the cairns\n\nFour crosses, a stride apart in a square. Three tins of spare fix-pins, buried against salvagers. The fourth cross is a lie - the one nearest the sea. Dig there and you dig up rats.\n\n- the survey party
+# --- JUMP COURSE tr (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
+# Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
+# JUMP tr pad=4 at=69 -15
+push at 69 -15
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=4
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=4
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jptr at -0.10 -5.64 h=4.60
+place Block_Foundation_Tier3 jptr at -2.92 -5.64 h=5.10
+place Block_Foundation_Tier3 jptr at -5.93 -5.64 h=5.50
+place Block_Foundation_Tier3 jptr at -5.93 -3.03 h=6.40
+place Block_Foundation_Tier3 jptr at -5.93 1.21 h=6.90 sx=0.3 sz=3
+place Block_Foundation_Tier3 jptr at -5.93 5.64 h=7.70
+place Block_Foundation_Tier3 jptr at -3.02 5.64 h=8.60
+place Block_Foundation_Tier3 jptr at -0.40 5.64 h=7.60
+place Block_Foundation_Tier3 jptr at 2.41 5.64 h=8.55
+place Block_Foundation_Tier3 jptr at 5.12 5.64 h=9.50
+place Block_Foundation_Tier3 jptr at 5.12 2.02 h=10.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jptr at -1.30 2.02 h=10.70 sx=2 sz=2
+place Block_Foundation_Tier3 jptr at -1.30 -3.21 h=11.00
+# JUMP end
+# (10-25: each slab stands on one solid column - a stretched foundation of its own footprint, from 0.6 m under the pad flush up to the slab)
+place Block_Foundation_Tier3 jpptr at -2.92 -5.64 h=4.418 sy=1.493
+place Block_Foundation_Tier3 jpptr at -5.93 -5.64 h=4.818 sy=2.079
+place Block_Foundation_Tier3 jpptr at -5.93 -3.03 h=5.718 sy=3.399
+place Block_Foundation_Tier3 jpptr at -5.93 1.21 h=6.218 sy=4.132 sx=0.3 sz=3
+place Block_Foundation_Tier3 jpptr at -5.93 5.64 h=7.018 sy=5.305
+place Block_Foundation_Tier3 jpptr at -3.02 5.64 h=7.918 sy=6.625
+place Block_Foundation_Tier3 jpptr at -0.40 5.64 h=6.918 sy=5.158
+place Block_Foundation_Tier3 jpptr at 2.41 5.64 h=7.868 sy=6.551
+place Block_Foundation_Tier3 jpptr at 5.12 5.64 h=8.818 sy=7.944
+place Block_Foundation_Tier3 jpptr at 5.12 2.02 h=9.718 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jpptr at -1.30 2.02 h=10.018 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jpptr at -1.30 -3.21 h=10.318 sy=10.144
+prop jptr tint.color=#80786c
+prop jptr tint.amount=0.35
+prop jpptr tint.color=#80786c
+prop jpptr tint.amount=0.35
+place Loot_Chest jctr at 5.12 2.02 h=10.40 sit yaw=0
+note jctr Surveyor's perch | The survey team hopped up here to sight their lines over the rocks.
+loot jctr Rope*3;Plank*4;MetalIngot*1
+prop jctr loot.refill=0
+place Loot_ChestSmall jbtr at -1.30 -3.21 h=11.00 sit yaw=0
+note jbtr Survey prize | Two long jumps to the last mark - and the team buried their spare kit at the course's foot.
+loot jbtr CopperIngot*2;Glass*1
+prop jbtr loot.refill=0
+place Zone_Trigger jytr at -1.30 -3.21 h=12.00
+prop jytr zone.id=jump_tr_finale
+prop jytr zone.radius=1.8
+prop jytr zone.repeat=never
+prop jytr zone.message=From the last survey mark you see a patch of turned earth below. A metal detector would find it.
+call treasure x=0 z=11 r=3 n=1 seed=14957
+prop treasure14957 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*1
+pop
+# --- end of jump course tr ---
+
+note keepertri Keeper's log: Triangulation | KEEPER'S LOG. Triangulation, in the careful old hand, pinned beside the case with a fix-pin:\n\nThe surveyors were frightened men. They found the Well and they lied about it - three bearings turned a little wrong, so no boat would find the end of them. I understand fear. I have had forty years of it.\n\nBut a lie is a closed door, and Mara is behind it.\n\nI climbed all three rocks. I turned the masts true with my own spanner. Let the pilgrims follow; let them come in their dozens. A captain, a smoker, a girl with a radio: they are slow, but they are coming, and five posts want five pairs of hands.\n\nNext the static on the shoals. The generator there is in pieces; I left them where clever hands can find them. Calling. Calling.\n\n- S.W.
+note teotri Teo's review: the camp | TEO'S REVIEW - on a page of the camp's ration book\n\nTHE SURVEY CAMP, TRIANGULATION ROCKS. One star.\n\nThree rocks, three masts, no roof. Boars on the first top who think they own it, and to be fair to the boars, they were here first. The hollow is nice. The hollow is the only nice thing.\n\nHedda says somebody climbed the masts before us and turned them. I said who climbs a mast for fun. Ines said someone who wants us to follow. Then nobody said anything for a while, and the wind did all the talking.\n\nI buried my last good tobacco by the camp so the madman cannot have it. If I do not come back, it is yours. If I do come back, it is still mine.\n\n- T. Varga
+note heddatri Hedda's watch | CAPTAIN'S WATCH - Hedda's square capitals, on the back of a survey form\n\nNight at the camp. Three masts round us with their dead red lights, like three old men at a bedside.\n\nSomebody has been here inside the month. The spanner marks on the mast bolts are bright. The boars avoid the camp. And someone left a fire laid for us, dry wood and all, the way you lay one for guests.\n\nI do not like being expected. I have been expected before, by harbour masters and bailiffs, and it never meant a good dinner.\n\nInes sleeps with the radio on her chest. In her sleep she answers it. Teo sleeps with a rock in his hand, in case of boars. I keep the watch, because somebody should, and because I am the one who said south.
+note inestri Ines's radio log: the flat | A page of Ines's radio log, under a stone at the edge of the dig field:\n\nNight four. With all three masts awake, the pulse is so clean I can draw it. Three beats, a pause, three beats. And the old man is louder now - he is not under the pulse any more. He is beside it, like someone reading over a shoulder.\n\nHe says a name. Mara. Then calling, calling.\n\nHedda wants to go straight to the Well. I want to know who is talking first. Teo wants breakfast.\n\nThe fix crosses south over the shoals, where the chart shows nothing but static - grey water, a dead generator, a maze of old sheds. That is where the needle goes next, and so do we. - I.
+quest title=Three Bearings
+quest intro=Three masts on three rock tops, and a camp in the hollow between them. Go down to the camp.
+step reach|survey_camp|1|Go down to the survey camp in the hollow between the three masts
+step read|Survey orders|1|Read the survey orders on the plan table
+step blueprint|Blueprint_Machete|1|Take the machete plans from the camp chest
+step reach|relay_1|1|Cut through the vined cleft to relay 1
+step kill|Warthog|3|Drive the boars off relay 1's mast
+step collect|story:bearing1|1|Wake relay 1
+step blueprint|Blueprint_Fueltank|1|Take the fuel tank plans from the cache under relay 1
+step collect|story:bearing2|1|Cross the hollow to the second mast and wake relay 2
+step blueprint|Blueprint_Pipe_Fuel|1|Take the fuel pipe plans from relay 2's locker
+step collect|story:unlock3|1|Type the code from the camp map into relay 3's box
+step collect|story:fixed|1|Pull relay 3's lever
+step reach|westridge|1|Climb the ridge beyond relay 1's mast and look for the still water
+step collect|story:surveyseal|1|Find the surveyors' seal in the plane wreck's crate on the shore
+step read|Surveyor's field book|1|Read the field book at the ruined surveyors' house inland
+step open|Instrument chest|1|Open the instrument chest in the cave in the bluff with the seal
+step read|Surveyors' dig map|1|Find the surveyors' dig map on the flat by the cairns
+step collect|story:surveyfix|3|Dig up the three tins of fix-pins - not the decoy
+step open|Surveyor's case|1|Open the surveyor's case on the flat by the cairns with the three fix-pins
+step blueprint|Blueprint_BiofuelExtractor|1|Take the biofuel extractor plans from relay 3's locker
+quest done=Three bearings - three, five, eight - and the pulse is fixed. Something answers beyond the rocks: static, and a mast.
+quest reward=Scrap*6;Rope*4;CopperOre*2
+
+save Triangulation Rocks

@@ -1,0 +1,35 @@
+# Shuttlewreck Reef (CIPlay shuttlewreck_reef), story pass 10-24s: cabin, manifest, puffers, luggage, the
+# teacher's note on seat 14, the ticket, the depot chest + clerk's note, the summit locker (no key) + timetable.
+island Shuttlewreck Reef
+offset 0 0
+expect step 0
+expect title The Night Shuttle
+zone surface_buoy
+zone cabin
+air cabin
+expect step 1
+read Shuttle manifest
+expect step 2
+kill Puffer fish
+expect step 3
+open Luggage rack
+wait 3
+expect item ExplosiveGoo 2
+expect step 4
+read Teacher's note
+expect step 5
+zone sw_ridge
+zone sw_cave
+read Seat 14's ticket
+expect step 6
+air sw_dair
+open Shuttle depot chest
+wait 3
+expect step 7
+read Depot clerk's note
+expect step 8
+zone sw_summit
+open Depot rock locker
+wait 3
+read Shuttle timetable
+expect done

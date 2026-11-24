@@ -14,7 +14,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CICameraTest", docs: "Dev, editor: the editor camera - framing the island and a selection (F), high above a deep island and under its sea, never under the ground, zooming to the cursor (never through what is there), looking, orbiting around the selection, panning, moving with the keys, and carrying on after something else moved it")]
 		public static void CameraTestCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(CameraTestRoutine());
+			StartTest(CameraTestRoutine());
 		}
 
 		[ConsoleCommand(name: "CICamera", docs: "Dev, editor: puts the editor camera somewhere: CICamera <x> <y above the sea> <z> <yaw> <pitch>")]
@@ -115,7 +115,8 @@ namespace DynamicIslands
 			c.Look(new Vector2(100f, -50f));
 			yield return null;
 			Vector3 e = cam.transform.eulerAngles;
-			Check(ref ok, Mathf.Abs(Mathf.DeltaAngle(e.y, 10f + 18f)) < 0.5f && Mathf.Abs(Mathf.DeltaAngle(e.x, 20f + 9f)) < 0.5f, "looking: 100 px right and 50 px down turn the view to " + e.y.ToString("F0") + "° / " + e.x.ToString("F0") + "° (expected 28° / 29°)");
+			// (dragging down tilts the view up - the user's way, 2026-10-02)
+			Check(ref ok, Mathf.Abs(Mathf.DeltaAngle(e.y, 10f + 18f)) < 0.5f && Mathf.Abs(Mathf.DeltaAngle(e.x, 20f - 9f)) < 0.5f, "looking: 100 px right and 50 px down turn the view to " + e.y.ToString("F0") + "° / " + e.x.ToString("F0") + "° (expected 28° / 11°: dragging down tilts it up)");
 
 			// 5. Orbiting around a selected object: the distance stays, the object stays in the middle
 			EditorGameObject tree = GameObject.Find("PlacedObjects").GetComponentsInChildren<EditorGameObject>(false).OrderBy(o => (o.transform.position - (terrain.transform.position + new Vector3(500f, 0f, 500f))).sqrMagnitude).FirstOrDefault();

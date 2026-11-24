@@ -15,10 +15,10 @@ namespace DynamicIslands
 	{
 		#region Editor
 
-		[ConsoleCommand(name: "CIStoryTest", docs: "Dev, editor: checks and waits read and written, the story items window, story sets (locked door, trail of notes) and their undo, the item picker's story items, the checks in the Behaviour window, save and load")]
+		[ConsoleCommand(name: "CIStoryTest", docs: "Dev, editor: checks and waits read and written, the story items window, story sets (locked door, trail of notes) and their undo, the item picker's story items, the checks in the Behaviour window, save and load; SL5: a story item deleted while a collect step, a has check and a locked chest use it (Check warns), Ctrl+Z brings it back")]
 		public static void StoryTest()
 		{
-			DynamicIslands.instance.StartCoroutine(StoryTestRoutine());
+			StartTest(StoryTestRoutine());
 		}
 
 		static IEnumerator StoryTestRoutine()
@@ -120,20 +120,189 @@ namespace DynamicIslands
 			Check(ref ok, fd != null && ObjectProps.Get(fd.Props, BehaviourProps.EventKey("use")) == "switch||\nwait||3\nswitch||" && ObjectProps.Get(fd.Props, BehaviourProps.ElseKey("use")).Length > 0 &&
 				StoryItems.Of(f.Props).Count == 5, "saved and read back: checks, otherwise, waits and story items");
 			File.Delete(IslandSpawner.PathFor("cistory"));
+
+			// SL5: a story item deleted while a collect step, a "has" check and a locked chest use it
+			{
+				const string slId = "cikey";
+				StoryItemsWindow.Open();
+				yield return new WaitForSecondsRealtime(0.2f);
+				StoryItemsWindow.Editing.Add(new StoryItemDef { Id = slId, Name = "CI key" });
+				StoryItemsWindow.SaveNow();
+				yield return null;
+				Check(ref ok, StoryItems.Of(DynamicIslands.currentIslandProps).Any(d => d.Id == slId), "SL5: the story item 'cikey' is on the island");
+				Func<IslandFile> slIsland = () =>
+				{
+					int res = 17;
+					var hh = new float[res, res]; for (int y = 0; y < res; y++) for (int x = 0; x < res; x++) hh[y, x] = 0.4f;
+					var sl = new IslandFile { TerrainSize = new Vector3(64f, 60f, 64f), HeightmapResolution = res, Heights = hh, Name = "cistory-sl5" };
+					foreach (var kv in DynamicIslands.currentIslandProps) sl.Props[kv.Key] = kv.Value;
+					sl.Props[IslandQuest.KeySteps] = "collect|" + StoryItems.Ref(slId) + "|1|"; // (the collect step)
+					// (a chest that gives it, a door whose "has" check wants it, a locked chest that takes it)
+					sl.Objects.Add(new IslandObject { Name = "Loot_Chest", Position = new Vector3(20, 25, 20), Props = new Dictionary<string, string> { { ObjectProps.LootItems, StoryItems.Ref(slId) + "*1" } } });
+					sl.Objects.Add(new IslandObject { Name = "Log", Position = new Vector3(24, 25, 20), Props = new Dictionary<string, string> { { BehaviourProps.Use, "Look" }, { BehaviourProps.CheckKey("use"), "has|" + StoryItems.Ref(slId) + "|1" }, { BehaviourProps.EventKey("use"), "message||Yes" } } });
+					sl.Objects.Add(new IslandObject { Name = "Loot_Chest", Position = new Vector3(28, 25, 20), Props = new Dictionary<string, string> { { ObjectProps.LootItems, "Scrap*5" }, { BehaviourProps.CheckKey("open"), "take|" + StoryItems.Ref(slId) + "|1" }, { BehaviourProps.ElseKey("open"), "message||Locked." } } });
+					return sl;
+				};
+				// (what the editor's Check says about the island: its quest, and its traps - PlanChecker.Check with the island's facts)
+				Func<IslandFile, List<string>> slAbout = f2 => PlanChecker.QuestFindings(f2).Concat(PlanChecker.Check(new WorldPlan(), true, false, PlanChecker.FromFile(f2, f2.Name, false))).Select(x => x.Text).Where(t => t.IndexOf(slId, StringComparison.OrdinalIgnoreCase) >= 0 || t.IndexOf("CI key", StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+				List<string> slBefore = slAbout(slIsland());
+				// (the Story items window's ×: the item leaves the list, Save keeps that)
+				StoryItemsWindow.Open();
+				yield return new WaitForSecondsRealtime(0.2f);
+				StoryItemsWindow.Editing.RemoveAll(d => d.Id == slId);
+				StoryItemsWindow.SaveNow();
+				yield return null;
+				Check(ref ok, !StoryItems.Of(DynamicIslands.currentIslandProps).Any(d => d.Id == slId), "SL5: 'cikey' is deleted in the Story items window");
+				List<string> slAfter = slAbout(slIsland()).Where(t => !slBefore.Contains(t)).ToList();
+				foreach (string t in slAfter) Log("  SL5 Check says: " + t);
+				Check(ref ok, slAfter.Any(t => t.IndexOf("Story items list", StringComparison.OrdinalIgnoreCase) >= 0), "SL5: Check warns that 'cikey' is used but no longer in the Story items list");
+				Check(ref ok, !slBefore.Any(t => t.IndexOf("Story items list", StringComparison.OrdinalIgnoreCase) >= 0), "SL5: no such warning while 'cikey' was in the list");
+				CommandUndoRedo.UndoRedoManager.Undo(); // (Ctrl+Z)
+				yield return null;
+				Check(ref ok, StoryItems.Of(DynamicIslands.currentIslandProps).Any(d => d.Id == slId), "SL5: Ctrl+Z brings 'cikey' back");
+				CommandUndoRedo.UndoRedoManager.Undo(); // (and once more: the item added above goes, as it was)
+				yield return null;
+				Check(ref ok, !StoryItems.Of(DynamicIslands.currentIslandProps).Any(d => d.Id == slId), "SL5: put back - 'cikey' is gone again");
+			}
 			DynamicIslands.currentIslandProps.Clear();
 			foreach (var kv in saved) DynamicIslands.currentIslandProps[kv.Key] = kv.Value;
 			DynamicIslands.NewIsland();
 			if (ok) Log("PASS: story items and checks in the editor"); else Fail("story items and checks in the editor");
 		}
 
+		[ConsoleCommand(name: "CIRenameRefs", docs: "Dev, anywhere (no world needed): player 10-30 renames - a note's new title moves the quest's read steps (any case, every quest, other steps untouched), a zone's reach steps, a story item's new id moves its collect steps and story:<id> refs (whole ids only, swaps work), a new item's name from its picture, typed ids made safe (accents dropped), an object's new name moves the actions, checks, camera look-ats and talk steps that name it (messages and signals untouched), a zone's or note's new name moves the island's own world-plan rules")]
+		public static void RenameRefsCommand()
+		{
+			bool ok = true;
+			string k0 = IslandQuest.Key(IslandQuest.KeySteps, 0), k1 = IslandQuest.Key(IslandQuest.KeySteps, 1);
+			var p = new Dictionary<string, string> {
+				{ k0, "read|Old Log|1|Read it\nopen|Old Log|1|\nreach|cove|1|\nread|Other|1|" },
+				{ k1, "read|old log|1|Again" } };
+			int n = EditorRenames.QuestTargets(p, new[] { "read" }, "Old log", "Captain's log");
+			Check(ref ok, n == 2 && p[k0] == "read|Captain's log|1|Read it\nopen|Old Log|1|\nreach|cove|1|\nread|Other|1|" && p[k1] == "read|Captain's log|1|Again", "a note's new title: its read steps in both quests follow, the rest stays (" + n + ")");
+			Check(ref ok, EditorRenames.QuestTargets(p, new[] { "reach" }, "cove", "bay") == 1 && p[k0].Contains("reach|bay|1|"), "a zone's new id: its reach step follows");
+			Check(ref ok, EditorRenames.QuestTargets(p, new[] { "read" }, "Other", "OTHER") == 0 && EditorRenames.QuestTargets(p, new[] { "read" }, "", "x") == 0,
+				"no change for a change of case only, or an empty old title");
+			// (review 10-30: a title with | is followed too, as the step keeps it - "a/b")
+			Check(ref ok, EditorRenames.QuestTargets(p, new[] { "read" }, "Other", "a|b") == 1 && p[k0].EndsWith("read|a/b|1|"), "a new title with |: the step follows as a/b");
+			var s = new Dictionary<string, string> {
+				{ k0, "collect|key|1|\ncollect|story:map|1|\ncollect|key-2|1|" },
+				{ "quest.reward", "story:key" },
+				{ "on.1", "give story:map;give story:key-2" },
+				{ StoryItems.Key, "key|Key|quest:Vasagatan_GreenKey|" } };
+			var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "key", "map" }, { "map", "key" } };
+			bool changed = StoryItems.RenameUses(s, map);
+			Check(ref ok, changed && s[k0] == "collect|map|1|\ncollect|story:key|1|\ncollect|key-2|1|" && s["quest.reward"] == "story:map" && s["on.1"] == "give story:key;give story:key-2"
+				&& s[StoryItems.Key] == "key|Key|quest:Vasagatan_GreenKey|", "story ids swapped: collect steps and story: refs follow, key-2 and the definitions stay (" + s[k0].Replace("\n", " / ") + ")");
+			var o = new Dictionary<string, string> { { "loot.items", "story:KEY:1;Plank:2" } };
+			Check(ref ok, StoryItems.RenameRefs(o, map) && o["loot.items"] == "story:map:1;Plank:2", "an object's story: ref follows (any case)");
+			Check(ref ok, StoryItemsWindow.QuestItemName("Vasagatan_GreenKey") == "Green key" && StoryItemsWindow.QuestItemName("Vasagatan_Key_Red") == "Key red", "a picture's name: " + StoryItemsWindow.QuestItemName("Vasagatan_GreenKey"));
+			Check(ref ok, StoryItemsWindow.CleanId(" Story:Brass Key! ") == "brass-key" && StoryItemsWindow.CleanId("***") == "", "a typed id made safe: " + StoryItemsWindow.CleanId(" Story:Brass Key! "));
+			Check(ref ok, StoryItemsWindow.CleanId("K" + (char)0xE4 + "llaren " + (char)0xDF + (char)0xE9) == "kallaren-sse" && StoryItemsWindow.CleanId("" + (char)0x5BB6) == "", "accents dropped, other letters refused: " + StoryItemsWindow.CleanId("K" + (char)0xE4 + "llaren " + (char)0xDF + (char)0xE9));
+
+			// (an object's new name: actions and checks that name it, a camera point looking at it, "talk" steps)
+			var b = new Dictionary<string, string> {
+				{ BehaviourProps.EventPrefix + "use", "open|Gate|\nmessage|Gate|\nsignal|Gate|\nshow|Other|" },
+				{ BehaviourProps.ElsePrefix + "use", "close|gate|" },
+				{ BehaviourProps.CheckPrefix + "use", "state|Gate|open\n!state|GATE|open\nsignal|Gate|" },
+				{ CameraPath.LookProp, "Gate" },
+				{ "obj.name", "Gate" } };
+			n = EditorRenames.NameRefs(b, "Gate", "Old gate");
+			Check(ref ok, n == 5 && b[BehaviourProps.EventPrefix + "use"] == "open|Old gate|\nmessage|Gate|\nsignal|Gate|\nshow|Other|" && b[BehaviourProps.ElsePrefix + "use"] == "close|Old gate|"
+				&& b[BehaviourProps.CheckPrefix + "use"] == "state|Old gate|open\n!state|Old gate|open\nsignal|Gate|" && b[CameraPath.LookProp] == "Old gate" && b["obj.name"] == "Gate",
+				"an object's new name: open/close actions, state checks and the camera look-at follow, messages, signals and the name itself stay (" + n + ")");
+			Check(ref ok, EditorRenames.NameRefs(b, "Old gate", "a|b") == 0 && EditorRenames.NameRefs(b, "Old gate", "OLD GATE") == 0, "no change for a name with |, or a change of case only");
+			// (11-04: order|<puzzle>|n names a puzzle group, not an object - an object renamed off "Bells" leaves the puzzle alone)
+			var ord = new Dictionary<string, string> { { BehaviourProps.EventPrefix + "use", "order|Bells|2\nopen|Bells|" } };
+			n = EditorRenames.NameRefs(ord, "Bells", "Bell");
+			Check(ref ok, n == 1 && ord[BehaviourProps.EventPrefix + "use"] == "order|Bells|2\nopen|Bell|", "an object's new name: an order puzzle of that name stays, open follows (" + n + ")");
+			// (CIRecipe's unnamed-target check: an order puzzle's group is no object's name)
+			var ugo = new GameObject("CI_UnnamedOrder");
+			try
+			{
+				EditorGameObject ueg = ugo.AddComponent<EditorGameObject>();
+				ueg.GameObjectName = "lever";
+				ueg.Props = new Dictionary<string, string> { { BehaviourProps.Name, "Lever" }, { BehaviourProps.EventPrefix + "use", "order|Bells|2" } };
+				string u1 = UnnamedTargets(new[] { ueg });
+				ueg.Props[BehaviourProps.EventPrefix + "use"] = "order|Bells|2\nopen|Bells|";
+				string u2 = UnnamedTargets(new[] { ueg });
+				Check(ref ok, u1 == null && u2 != null && u2.Contains("'Bells'"), "CIRecipe's unnamed-target check: order|Bells|2 passes, open|Bells| is caught (" + (u2 ?? "null") + ")");
+			}
+			finally { UnityEngine.Object.Destroy(ugo); }
+			var t = new Dictionary<string, string> { { k0, "talk|Mira|1|\nread|Mira|1|" } };
+			Check(ref ok, EditorRenames.QuestTargets(t, new[] { Islanders.QuestType }, "Mira", "Mara") == 1 && t[k0] == "talk|Mara|1|\nread|Mira|1|", "an islander's new name: the talk step follows, a note of that title stays");
+			// (a rename to a title/id/name another object has: the references stay - moved, they would mean both)
+			var taken = new List<IDictionary<string, string>> { new Dictionary<string, string> { { ObjectProps.NoteTitle, " Diary " } }, null, new Dictionary<string, string>() };
+			Check(ref ok, EditorRenames.Taken(taken, ObjectProps.NoteTitle, "diary") && !EditorRenames.Taken(taken, ObjectProps.NoteTitle, "Log") && !EditorRenames.Taken(taken, ObjectProps.NoteTitle, " "),
+				"a new title another note has already is seen (any case, spaces), a free one and an empty one aren't");
+
+			// (a zone's or note's new name: the island's own rules - zone:self:X, and "done when" of a rule bringing this island)
+			Func<string, string, string, string, IntroRule> rule = (id, whatArg, when, done) =>
+			{
+				IntroRule r = new IntroRule { Id = id, WhatArg = whatArg, StoryDone = done };
+				string[] w = when.Split(':');
+				r.When = w[0]; r.WhenRef = w.Length > 1 ? w[1] : ""; r.WhenArg = w.Length > 2 ? w[2] : "";
+				return r;
+			};
+			var rp = new Dictionary<string, string> { { WorldDirector.IslandRulesKey, string.Join("\n", new[] {
+				rule("a", "Mine", "zone:self:cave", "zone:cave").ToLine(),
+				rule("b", "Other", "zone:Other:cave", "zone:cave").ToLine(),
+				rule("c", "self", "start", "note:Old log").ToLine(),
+				"not a rule" }) } };
+			n = EditorRenames.RuleRefs(rp, "zone", "cave", "grotto", "Mine");
+			List<IntroRule> after = IntroRule.ParseLines(rp[WorldDirector.IslandRulesKey]);
+			Check(ref ok, n == 1 && after.Count == 3 && after[0].WhenArg == "grotto" && after[0].StoryDone == "zone:grotto" && after[1].WhenArg == "cave" && after[1].StoryDone == "zone:cave"
+				&& rp[WorldDirector.IslandRulesKey].EndsWith("\nnot a rule"), "a zone's new id: this island's own rule follows (when + done), another island's rule and a line that isn't a rule stay (" + n + ")");
+			n = EditorRenames.RuleRefs(rp, "note", "old log", "Captain's log", "Mine");
+			after = IntroRule.ParseLines(rp[WorldDirector.IslandRulesKey]);
+			Check(ref ok, n == 1 && after[2].StoryDone == "note:Captain's log" && after[0].StoryDone == "zone:grotto", "a note's new title: done when note:... of a rule bringing this island follows");
+
+			if (ok) Log("PASS: renames move their references"); else Fail("renames move their references");
+		}
+
 		#endregion
 
 		#region World
 
-		[ConsoleCommand(name: "CIStoryWorld", docs: "Dev, in game (host): a locked door opens only with the story item from a chest (and uses it up), a lever that needs planks, a gate that closes again after a wait, the journal (notes, pages, items), the client's path, saving the story, movers in step, a locked chest, not and any-of checks, collect and pages quest steps")]
+		[ConsoleCommand(name: "CIQuestMilestones", docs: "Dev, in game (host): the quests' milestones - at 90 % done a banner for every player \"Nearing the end\", at 100 % \"The whole quest line is done\", each once per world (saved with it), straight to 100 % only that one, none with fewer than 5 quests; the journal says ALL DONE")]
+		public static void QuestMilestonesCommand()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("CIQuestMilestones (in a world, host)"); return; }
+			bool ok = true;
+			bool hadNear = WorldDirector.Done.Contains(QuestMilestones.NearMark), hadAll = WorldDirector.Done.Contains(QuestMilestones.AllMark);
+			Func<int, int, List<QuestCount.Quest>> count = (done, total) => Enumerable.Range(0, total).Select(i => new QuestCount.Quest { Name = "q" + i, Group = QuestCount.Met, Done = i < done }).ToList();
+			Action clear = () => { WorldDirector.Done.Remove(QuestMilestones.NearMark); WorldDirector.Done.Remove(QuestMilestones.AllMark); };
+			try
+			{
+				clear();
+				Check(ref ok, QuestMilestones.Check(count(5, 10)) == null, "5 of 10 done: no banner");
+				Check(ref ok, QuestMilestones.Check(count(8, 10)) == null, "8 of 10 (80 %): no banner");
+				string near = QuestMilestones.Check(count(9, 10));
+				Check(ref ok, near == QuestMilestones.NearTitle && StoryChain.LastBanner.Contains("You are nearing the end: 9 of 10 quests done (90%)"), "9 of 10 (90 %): \"" + StoryChain.LastBanner + "\"");
+				Check(ref ok, QuestMilestones.Check(count(9, 10)) == null && QuestMilestones.Check(count(19, 20)) == null, "only once: not again at 9 of 10 or 19 of 20");
+				string all = QuestMilestones.Check(count(10, 10));
+				Check(ref ok, all == QuestMilestones.AllTitle && StoryChain.LastBanner.Contains("You have completed the whole quest line: all 10 quests"), "10 of 10: \"" + StoryChain.LastBanner + "\"");
+				Check(ref ok, QuestMilestones.Check(count(12, 12)) == null, "only once: not again when more quests came and are done (12 of 12)");
+				Check(ref ok, WorldDirector.WriteLines().Any(l => l.StartsWith("@done=") && l.Contains(QuestMilestones.NearMark) && l.Contains(QuestMilestones.AllMark)), "both marks are saved with the world (@done=)");
+				clear();
+				string straight = QuestMilestones.Check(count(10, 10));
+				Check(ref ok, straight == QuestMilestones.AllTitle && QuestMilestones.Check(count(10, 10)) == null && WorldDirector.Done.Contains(QuestMilestones.NearMark), "straight to 100 %: only the whole quest line's banner (the 90 % one never comes after it)");
+				clear();
+				Check(ref ok, QuestMilestones.Check(count(4, 4)) == null && QuestMilestones.Check(count(3, 3)) == null, "a world with fewer than " + QuestMilestones.MinQuests + " quests: no banner (one island's quest isn't the whole quest line)");
+			}
+			finally
+			{
+				clear();
+				if (hadNear) WorldDirector.Done.Add(QuestMilestones.NearMark);
+				if (hadAll) WorldDirector.Done.Add(QuestMilestones.AllMark);
+			}
+			if (ok) Log("PASS: quest milestones"); else Fail("quest milestones");
+		}
+
+		[ConsoleCommand(name: "CIStoryWorld", docs: "Dev, in game (host): a locked door opens only with the story item from a chest (and uses it up), a lever that needs planks, a gate that closes again after a wait, the journal (notes, pages, items), the client's path, saving the story, movers in step, a locked chest, not and any-of checks, collect and pages quest steps; SL6: an item and a page with |, %, =, a line break, a-ring and o-diaeresis and an emoji are the same after the world file write/read and after the Story message round trip (caught locally)")]
 		public static void StoryWorld()
 		{
-			DynamicIslands.instance.StartCoroutine(StoryWorldRoutine());
+			StartTest(StoryWorldRoutine());
 		}
 
 		static IEnumerator StoryWorldRoutine()
@@ -144,7 +313,7 @@ namespace DynamicIslands
 			bool ok = true;
 			ResetStoryEverywhere();
 
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = "cistoryworld";
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -273,14 +442,89 @@ namespace DynamicIslands
 			Check(ref ok, QuestTracker.StepOf(e) >= 2, "a journal page from this island (the vault) does the pages step: the quest is done");
 
 			// Reading a note puts it in the journal; the journal window
+			int notesFound0, notesTotal0, notesFound1, notesTotal1;
+			NoteCount.Count(out notesFound0, out notesTotal0);
 			CustomNote note = obj(noteIdx) != null ? obj(noteIdx).GetComponentInChildren<CustomNote>(true) : null;
 			NoteReader.Open(note);
 			yield return null;
 			NoteReader.Close();
 			Check(ref ok, StoryBook.Pages.Any(p => p.Title == "The keeper's note" && p.Text.Contains("small chest")), "a note read goes into the journal");
+			// (notes found of the world's notes - the user, 2026-10-03: "5/38 notes found")
+			NoteCount.Count(out notesFound1, out notesTotal1);
+			Check(ref ok, notesTotal1 == notesTotal0 && notesTotal1 >= IslandCache.NotesOf(e.Name).Count && notesTotal1 > 0 && notesFound1 == notesFound0 + 1,
+				"the note counts as found: " + notesFound0 + " / " + notesTotal0 + " -> " + notesFound1 + " / " + notesTotal1 + " notes found (this island has " + IslandCache.NotesOf(e.Name).Count + ")"); 
 			JournalWindow.Open();
 			yield return new WaitForSeconds(0.5f);
 			Check(ref ok, JournalWindow.IsOpen && JournalWindow.ShownTitle != null, "the journal opens (" + JournalWindow.ShownTitle + ")");
+			// (the Progress panel: every category as found / total - the user, 2026-10-03)
+			List<string> progress = JournalWindow.ProgressShown;
+			List<WorldProgress.Row> rowsNow = WorldProgress.Rows();
+			// (CA31: the saved islands ticked for the world's sailing count before they come - a world with ~50 ticked showed 3/19)
+			string ticked = QuestCount.TickedToCome().FirstOrDefault();
+			int islandsTotal = rowsNow.First(r => r.Name == "Islands reached").Total;
+			if (ticked != null)
+			{
+				WorldIslands.Off.Add(ticked);
+				QuestCount.Recount();
+				int without = WorldProgress.Rows().First(r => r.Name == "Islands reached").Total;
+				WorldIslands.Off.Remove(ticked);
+				QuestCount.Recount();
+				Check(ref ok, without == islandsTotal - 1, "Islands reached counts the ticked saved islands still to come: " + islandsTotal + ", " + without + " with '" + ticked + "' left out");
+			}
+			else Log("(no saved island ticked for sailing here: the count of ticked islands isn't checked)");
+			Check(ref ok, progress.Count == 6 && progress[0].StartsWith("Quests  " + rowsNow[0].Done + "/" + rowsNow[0].Total) && progress.Any(l => l == "Notes found  " + notesFound1 + "/" + notesTotal1)
+				&& progress.Any(l => l.StartsWith("Story items found  ")) && progress.Any(l => l.StartsWith("Islands reached  ")) && progress.Any(l => l.StartsWith("Journal pages  ")) && progress.Last().StartsWith("Overall  ") && progress.Last().EndsWith("%"),
+				"the journal's Progress panel: " + string.Join(" | ", progress.ToArray()));
+			List<string> helps = JournalWindow.ProgressHelp;
+			Check(ref ok, helps.Count == 6 && helps.All(h => !string.IsNullOrEmpty(h)) && JournalWindow.ProgressMarks == 0, "each Progress line shows its help on hover, no ? marks (" + JournalWindow.ProgressMarks + " buttons in the panel)");
+			WorldProgress.Row itemsRow = rowsNow.First(r => r.Name == "Story items found"), pagesRow = rowsNow.First(r => r.Name == "Journal pages");
+			Check(ref ok, itemsRow.Total >= 1 && itemsRow.Done >= 1 && pagesRow.Done >= 2 && pagesRow.Total >= pagesRow.Done, "story items found " + itemsRow.Done + "/" + itemsRow.Total + " (the brass key, used up, still counts), journal pages " + pagesRow.Done + "/" + pagesRow.Total + " (the note and the vault's page)");
+			// (and each island's line its own: "(1/1 notes)" - the user, 2026-10-03: so you know if some are left on it)
+			int isleFound, isleTotal;
+			bool isle = NoteCount.OfIsland(e.HostName, out isleFound, out isleTotal);
+			string isleLine = JournalWindow.ListLines().FirstOrDefault(l => l.StartsWith("# " + Behaviours.IslandTitle(e))) ?? "";
+			Check(ref ok, isle && isleFound >= 1 && isleLine.EndsWith("(" + isleFound + "/" + isleTotal + " notes)"), "the island's line shows its notes found: \"" + isleLine + "\"");
+			// (the pages by island: under the island's name and its quest, a tick once done - the user, 2026-10-02: notes of
+			// several islands in one list got mixed up)
+			string islandTitle = Behaviours.IslandTitle(e), questTitle = IslandQuest.From(IslandCache.PropsOf(e)).Title;
+			List<string> listed = JournalWindow.ListLines();
+			int head = listed.FindIndex(l => l.StartsWith("# " + islandTitle));
+			Check(ref ok, head >= 0 && listed[head].Contains(questTitle) && listed[head].Contains("done"), "the journal lists the island's pages under its name and its quest, done: \"" + (head >= 0 ? listed[head] : "(no line for " + islandTitle + ")") + "\"");
+			int vault = listed.IndexOf("The vault"), keeper = listed.IndexOf("The keeper's note");
+			Check(ref ok, head >= 0 && vault > head && keeper > head && !listed.Skip(head + 1).Take(Math.Max(vault, keeper) - head - 1).Any(l => l.StartsWith("# ")),
+				"its pages (the vault, the keeper's note) are under it: " + string.Join(" | ", listed.ToArray()));
+			StoryBook.Page vaultPage = StoryBook.Pages.FirstOrDefault(p => p.Title == "The vault");
+			Check(ref ok, vaultPage != null && JournalWindow.ShowKey(vaultPage.Key) && JournalWindow.ShownText.Contains("\u2014 " + islandTitle + " (" + questTitle + "), day "),
+				"a page is signed with its island and quest: \"" + (JournalWindow.ShownText ?? "").Split('\n').Last() + "\"");
+			// (the world's quests done, in the head - the user, 2026-10-02: "35/100% completed quests": Raft's story islands,
+			// the plan's, and every island with a quest that came; this island's quest is done)
+			List<QuestCount.Quest> quests = QuestCount.All();
+			QuestCount.Quest mine = quests.FirstOrDefault(q => q.Name.StartsWith(islandTitle));
+			Check(ref ok, mine != null && mine.Done, "the quest count has this island's quest, done: " + (mine != null ? mine.Name + " (" + mine.Group + ")" : "missing - " + string.Join(", ", quests.Select(q => q.Name).ToArray())));
+			int qDone, qTotal;
+			QuestCount.Count(quests, out qDone, out qTotal);
+			yield return new WaitForSeconds(0.2f);
+			Check(ref ok, (JournalWindow.QuestsShown ?? "").StartsWith("QUESTS  " + qDone + " / " + qTotal + "  \u00B7  " + QuestCount.Percent(qDone, qTotal) + "%") && (qDone < qTotal || JournalWindow.QuestsShown.EndsWith("ALL DONE")), "the journal's head shows it: \"" + JournalWindow.QuestsShown + "\" (" + QuestCount.Summary(quests) + ")");
+			// (only the custom islands' quests: Raft's own story isn't counted - the user, 2026-10-03)
+			string[] raftNames = StoryOrder.Chain.Select(StoryOrder.Name).ToArray();
+			Check(ref ok, !quests.Any(q => raftNames.Contains(q.Name)), "the count leaves Raft's story out: " + string.Join(", ", quests.Select(q => q.Name).ToArray()));
+			// (the story items' list scrolls when it holds more than it shows - the user, 2026-10-03: twelve more items)
+			for (int i = 1; i <= 12; i++) StoryBook.Give("ciscroll" + i, 1);
+			yield return new WaitForSeconds(0.6f);
+			string[] scroll = (JournalWindow.ItemsScrollCheck() ?? "0|0|False").Split('|');
+			float contentH = float.Parse(scroll[0], System.Globalization.CultureInfo.InvariantCulture), viewH = scroll.Length > 1 ? float.Parse(scroll[1], System.Globalization.CultureInfo.InvariantCulture) : 0f;
+			Check(ref ok, scroll.Length == 3 && contentH > viewH + 20f && scroll[2] == "True", "the story items' list scrolls: " + (StoryBook.Items.Count()) + " items, the list " + scroll[0] + " px in a view of " + (scroll.Length > 1 ? scroll[1] : "?") + " px, the last one in view at the bottom: " + (scroll.Length > 2 ? scroll[2] : "?"));
+			Screenshot(new[] { "journal_items_scroll" });
+			yield return new WaitForSeconds(0.5f);
+			for (int i = 1; i <= 12; i++) StoryBook.Take("ciscroll" + i, 1);
+			yield return new WaitForSeconds(0.4f);
+			JournalWindow.ShowQuestList();
+			yield return new WaitForSeconds(0.3f);
+			Check(ref ok, JournalWindow.ShownTitle.StartsWith("Quests: ") && JournalWindow.ShownText.Contains("\u221a  " + mine.Name), "a click on the count lists the quests on the paper: \"" + JournalWindow.ShownTitle + "\"");
+			Screenshot(new[] { "journal_quests" });
+			yield return new WaitForSeconds(0.5f); // (the picture is taken at the end of the frame)
+			JournalWindow.ShowKey(vaultPage.Key);
+			yield return new WaitForSeconds(0.3f);
 			Screenshot(new[] { "journal" });
 			yield return new WaitForSeconds(0.5f);
 			JournalWindow.Close();
@@ -291,6 +535,54 @@ namespace DynamicIslands
 			StoryBook.Reset();
 			foreach (string l in lines) { int eq = l.IndexOf('='); StoryBook.ReadLine(l.Substring(1, eq - 1), l.Substring(eq + 1)); }
 			Check(ref ok, StoryBook.Count("brass-key") == 2 && StoryBook.Pages.Count == pages && StoryBook.Pages.Any(p => p.Text.Contains("\n") || p.Title == "The vault"), "the story state is written and read back (" + lines.Count + " lines)");
+
+			// SL6 (host part): an item and a page whose texts hold | % = a line break, a/o with rings and an emoji are the same after the world file and after the Story message
+			{
+				const string slOdd = "Pipe | percent % equals = line\nbreak åö 😀";
+				Func<string, string> slEsc = x => Uri.EscapeDataString(x);
+				Func<bool> slSame = () =>
+				{
+					StoryBook.Held it = StoryBook.Items.FirstOrDefault(h => h.Def.Id == "sl6-item");
+					StoryBook.Page pg = StoryBook.Pages.FirstOrDefault(p => p.Key == "sl6:page");
+					return it != null && it.Count == 3 && it.Def.Name == slOdd && it.Def.Description == slOdd && pg != null && pg.Title == slOdd && pg.Text == slOdd && pg.Island == "Isle | one" && pg.Day == 4;
+				};
+				Action<IEnumerable<string>> slRead = ls => { foreach (string l2 in ls) { string t = l2.StartsWith("@") ? l2.Substring(1) : l2; int q = t.IndexOf('='); if (q > 0) StoryBook.ReadLine(t.Substring(0, q), t.Substring(q + 1)); } };
+				string slPath = Path.Combine(Path.GetTempPath(), "cistory-sl6.txt");
+				Action<IslandNetMessage> slLoopBefore = IslandNetwork.Loopback;
+				try
+				{
+					StoryBook.Reset();
+					StoryBook.ReadLine("story.item", string.Join("|", new[] { "sl6-item", "3", slOdd, "", slOdd, "3" }.Select(slEsc).ToArray()));
+					StoryBook.ReadLine("story.page", string.Join("|", new[] { "sl6:page", "4", slOdd, "Isle | one", slOdd }.Select(slEsc).ToArray()));
+					Check(ref ok, slSame(), "SL6: an item and a page with | % = a line break, åö and an emoji are kept as given");
+					// the world file: written to a file, read back
+					List<string> slWritten = StoryBook.WriteLines().ToList();
+					File.WriteAllLines(slPath, slWritten.ToArray());
+					List<string> slFromFile = File.ReadAllLines(slPath).ToList();
+					StoryBook.Reset();
+					slRead(slFromFile);
+					Check(ref ok, slFromFile.Count == slWritten.Count && slSame(), "SL6: the same after the world file's write and read (" + slWritten.Count + " lines, one line each)");
+					// the Story message: the host's state, caught locally, decoded as a client does (OnMessage \"all\")
+					IslandNetMessage slMsg = null;
+					IslandNetwork.Loopback = m => slMsg = m;
+					IslandNetwork.SendStory(StoryBook.StateMessage());
+					IslandNetwork.Loopback = slLoopBefore;
+					Check(ref ok, slMsg != null && slMsg.Kind == IslandNetMessage.Story && slMsg.Name == "all" && !string.IsNullOrEmpty(slMsg.Data), "SL6: the Story message is made (" + (slMsg != null && slMsg.Data != null ? slMsg.Data.Split('\n').Length + " lines" : "none") + ")");
+					if (slMsg != null)
+					{
+						StoryBook.Reset();
+						slRead((slMsg.Data ?? "").Split('\n'));
+						Check(ref ok, slSame(), "SL6: the same after the Story message's encode and decode (a line break inside a text doesn't split a line)");
+					}
+				}
+				finally
+				{
+					IslandNetwork.Loopback = slLoopBefore;
+					try { if (File.Exists(slPath)) File.Delete(slPath); } catch { }
+					StoryBook.Reset(); // (the world's own story put back, as it was)
+					slRead(lines);
+				}
+			}
 
 			// Movers in step: a second copy of the island moves exactly like the first
 			Check(ref ok, SharedClock.Synced, "the shared clock follows the host's water time (" + SharedClock.Now.ToString("F1") + ")");

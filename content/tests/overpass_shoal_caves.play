@@ -1,0 +1,29 @@
+# Overpass Shoal's culvert (CIPlay overpass_shoal_caves, 11-08; in a test world 'CI ...'). Points as in its recipe: the
+# mouth on the channel floor under the overpass at -24 5 (2.5 m down, between the pillars at x -22 and -26), the flooded
+# culvert climbing north under the bank to the dry room round -24 37 (air zone op_culvert, the crew's chest at -21 37).
+# Swim in from the channel (no teleport into the room), breathe there, take the chest, swim back out.
+island Overpass Shoal keep
+offset 2.1367 -0.9483
+hour 11
+weather Calm
+
+# Outside: the channel under the overpass and the mouth from the water, the bank over the room
+picture op_cave_out -24 1 -8 -24 -2 5
+picture op_cave_mouth -24 -1.5 -2 -24 -2.5 6
+picture op_bank -10 6 37 -24 4 37
+
+# Swim in: from the channel up the culvert into the room, and breathe there
+walk -24 -2 to -24 5 to -24 16 to -24 26 to -24 35 below=-1.5
+air op_culvert here
+
+# The room: dry, air, the crew's chest
+picture op_cave_in -24 4 28 -21 3.5 40
+picture op_room_back -24 4 44 -24 2 26
+open Flood store
+wait 2
+expect item Battery 1
+expect item Rope 2
+air op_culvert
+
+# Back out: down the culvert into the channel
+walk -24 35 to -24 26 to -24 16 to -24 5 to -24 -2 below=4

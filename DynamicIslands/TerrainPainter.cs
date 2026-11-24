@@ -9,6 +9,8 @@ namespace DynamicIslands.Editor
 	public class IslandStyleTag : MonoBehaviour
 	{
 		public int Style;
+		/// <summary>A second style mixed in as texture layers 5-8 (ROADMAP E6), or -1 for none.</summary>
+		public int Mix = -1;
 	}
 
 	/// <summary>
@@ -79,12 +81,52 @@ namespace DynamicIslands.Editor
 			return tag != null ? tag.Style : Tropical;
 		}
 
-		/// <summary>Sets the terrain's style and swaps its texture layers (paint weights stay as they are).</summary>
-		public static void SetStyle(Terrain terrain, int style)
+		/// <summary>The second style mixed into the terrain (texture layers 5-8), or -1.</summary>
+		public static int MixOf(Terrain terrain)
+		{
+			IslandStyleTag tag = terrain != null ? terrain.GetComponent<IslandStyleTag>() : null;
+			return tag != null ? tag.Mix : -1;
+		}
+
+		/// <summary>Mixed in: a second style's four textures as layers 5-8 (the same slots: seabed, shore, ground, steep).</summary>
+		public const int MixLayerCount = LayerCount * 2;
+
+		/// <summary>
+		/// Sets the terrain's style and swaps its texture layers (paint weights stay as they are). mix: a second style mixed
+		/// in as layers 5-8, -1 for none, -2 to keep the terrain's.
+		/// </summary>
+		public static void SetStyle(Terrain terrain, int style, int mix = -2)
 		{
 			IslandStyleTag tag = terrain.GetComponent<IslandStyleTag>() ?? terrain.gameObject.AddComponent<IslandStyleTag>();
 			tag.Style = Mathf.Clamp(style, 0, Styles.Length - 1);
-			RefreshLayers(terrain);
+			int to = mix == -2 ? tag.Mix : mix < 0 ? -1 : Mathf.Clamp(mix, 0, Styles.Length - 1);
+			if (to == tag.Mix) { RefreshLayers(terrain); return; }
+			// (four layers to eight or back: the paint is kept, layers 5-8 folded onto the first style's matching ones)
+			TerrainData data = terrain.terrainData;
+			bool painted = data.terrainLayers != null && data.terrainLayers.Length > 0;
+			float[,,] paint = painted ? data.GetAlphamaps(0, 0, data.alphamapWidth, data.alphamapHeight) : null;
+			tag.Mix = to;
+			if (!painted) { RefreshLayers(terrain); return; }
+			data.terrainLayers = LayersFor(tag.Style, to);
+			ApplyMaterial(terrain);
+			data.SetAlphamaps(0, 0, FitLayers(paint, data.alphamapLayers));
+		}
+
+		/// <summary>
+		/// Texture weights with another number of layers: layers past four fold onto the matching first four (8 to 4), new
+		/// ones start empty (4 to 8).
+		/// </summary>
+		public static float[,,] FitLayers(float[,,] maps, int layers)
+		{
+			int have = maps.GetLength(2);
+			if (have == layers || layers <= 0) return maps;
+			int rows = maps.GetLength(0), cols = maps.GetLength(1);
+			var result = new float[rows, cols, layers];
+			for (int z = 0; z < rows; z++)
+				for (int x = 0; x < cols; x++)
+					for (int l = 0; l < have; l++)
+						result[z, x, l < layers ? l : l % LayerCount] += maps[z, x, l];
+			return result;
 		}
 
 		/// <summary>True if Raft's textures for this style were found (otherwise it falls back to tropical).</summary>
@@ -132,6 +174,13 @@ namespace DynamicIslands.Editor
 			return added > 0;
 		}
 
+		/// <summary>The ground texture layer of Raft's with this diffuse texture, or null if not seen yet.</summary>
+		public static TerrainLayer RaftLayer(string diffuseName)
+		{
+			KeyValuePair<TerrainLayer, SO_TerrainType> found;
+			return raftTextures.TryGetValue(diffuseName, out found) && found.Key != null && found.Key.diffuseTexture != null ? found.Key : null;
+		}
+
 		/// <summary>The four layers for a style, or null if Raft's textures for it haven't been seen.</summary>
 		static TerrainLayer[] BuildStyle(int style)
 		{
@@ -177,7 +226,7 @@ namespace DynamicIslands.Editor
 		/// A darkened / tinted copy of a (non-readable) texture, made on the GPU: blit through a tinting material into a
 		/// render texture and read that back. Used for the volcanic style, which Raft has no textures of its own for.
 		/// </summary>
-		static Texture2D Tinted(Texture2D source, Color tint)
+		internal static Texture2D Tinted(Texture2D source, Color tint)
 		{
 			try
 			{
@@ -206,7 +255,8 @@ namespace DynamicIslands.Editor
 		{
 			if (terrain == null) return;
 			TerrainData data = terrain.terrainData;
-			if (data.terrainLayers != null && data.terrainLayers.Length == LayerCount) data.terrainLayers = LayersFor(StyleOf(terrain));
+			TerrainLayer[] wanted = LayersFor(StyleOf(terrain), MixOf(terrain));
+			if (data.terrainLayers != null && data.terrainLayers.Length == wanted.Length) data.terrainLayers = wanted;
 			ApplyMaterial(terrain);
 		}
 
@@ -233,8 +283,37 @@ namespace DynamicIslands.Editor
 					group = defaultTypes;
 				}
 			}
+			// (a mixed style's layers 5-8 step like that style's ground: Raft looks up a footstep type for every layer)
+			int mix = MixOf(terrain);
+			if (mix >= 0)
+			{
+				SO_TerrainTypeGroup second;
+				if (BuildStyle(mix) == null || !styleTypes.TryGetValue(mix, out second)) second = group;
+				group = MixedTypes(group, second);
+			}
 			TerrainIdentifier id = terrain.GetComponent<TerrainIdentifier>() ?? terrain.gameObject.AddComponent<TerrainIdentifier>();
 			id.terrainTypeGroup = group;
+		}
+
+		static readonly Dictionary<KeyValuePair<SO_TerrainTypeGroup, SO_TerrainTypeGroup>, SO_TerrainTypeGroup> mixedTypes = new Dictionary<KeyValuePair<SO_TerrainTypeGroup, SO_TerrainTypeGroup>, SO_TerrainTypeGroup>();
+
+		/// <summary>Footstep types for eight layers: the first style's four, then the mixed style's.</summary>
+		static SO_TerrainTypeGroup MixedTypes(SO_TerrainTypeGroup first, SO_TerrainTypeGroup second)
+		{
+			var key = new KeyValuePair<SO_TerrainTypeGroup, SO_TerrainTypeGroup>(first, second);
+			SO_TerrainTypeGroup group;
+			if (mixedTypes.TryGetValue(key, out group) && group != null) return group;
+			group = ScriptableObject.CreateInstance<SO_TerrainTypeGroup>();
+			group.name = first.name + "_mixed";
+			group.groupName = "Custom Islands";
+			group.terrainTypes = new List<SO_TerrainType>();
+			for (int i = 0; i < MixLayerCount; i++)
+			{
+				List<SO_TerrainType> from = i < LayerCount ? first.terrainTypes : second.terrainTypes;
+				group.terrainTypes.Add(from != null && from.Count > i % LayerCount ? from[i % LayerCount] : ScriptableObject.CreateInstance<SO_TerrainType>());
+			}
+			mixedTypes[key] = group;
+			return group;
 		}
 
 		/// <summary>Raft's textures come with normal maps; use the standard terrain shader when Raft includes it.</summary>
@@ -272,32 +351,66 @@ namespace DynamicIslands.Editor
 			return layers;
 		}
 
+		static readonly Dictionary<int, TerrainLayer[]> mixLayers = new Dictionary<int, TerrainLayer[]>();
+
+		/// <summary>
+		/// The layers for a style with a second one mixed in: eight, the second style's as copies (so no layer is in the list
+		/// twice). mix -1: LayersFor(style).
+		/// </summary>
+		public static TerrainLayer[] LayersFor(int style, int mix)
+		{
+			TerrainLayer[] first = LayersFor(style);
+			if (mix < 0) return first;
+			TerrainLayer[] second = LayersFor(mix), copies;
+			int key = Mathf.Clamp(mix, 0, Styles.Length - 1);
+			if (!mixLayers.TryGetValue(key, out copies) || copies == null || copies[0] == null || copies[0].diffuseTexture != second[0].diffuseTexture)
+			{
+				copies = second.Select(l => new TerrainLayer
+				{
+					name = l.name + "_mix",
+					diffuseTexture = l.diffuseTexture,
+					normalMapTexture = l.normalMapTexture,
+					normalScale = l.normalScale,
+					tileSize = l.tileSize,
+					smoothness = l.smoothness,
+					metallic = l.metallic,
+				}).ToArray();
+				mixLayers[key] = copies;
+			}
+			return first.Concat(copies).ToArray();
+		}
+
 		#endregion
 
 		/// <summary>Assigns the layers and paints the whole terrain automatically (pixels with mask > 0.5 are kept).</summary>
 		public static void Setup(Terrain terrain, float waterLevelWorldY, float[,] mask = null)
 		{
 			TerrainData data = terrain.terrainData;
+			ForgetGrassLine(terrain); // (a new island: its land is measured again)
 			EnsureLayers(terrain, AlphamapResolution);
 			ApplyMaterial(terrain);
 			Paint(terrain, waterLevelWorldY, new RectInt(0, 0, data.alphamapWidth, data.alphamapHeight), mask);
 		}
 
-		/// <summary>Applies a block of saved paint (from IslandFile.GetAlphamapBlock) to the whole terrain.</summary>
+		/// <summary>
+		/// Applies a block of saved paint (from IslandFile.GetAlphamapBlock) to the whole terrain. A mixed island's paint has
+		/// eight layers: set the terrain's mixed style first (SetStyle), or layers 5-8 fold onto the first four.
+		/// </summary>
 		public static void ApplySaved(Terrain terrain, float[,,] maps)
 		{
 			TerrainData data = terrain.terrainData;
+			ForgetGrassLine(terrain);
 			EnsureLayers(terrain, maps.GetLength(0));
 			ApplyMaterial(terrain);
-			data.SetAlphamaps(0, 0, maps);
+			data.SetAlphamaps(0, 0, FitLayers(maps, data.alphamapLayers));
 		}
 
 		static void EnsureLayers(Terrain terrain, int resolution)
 		{
 			TerrainData data = terrain.terrainData;
-			TerrainLayer[] wanted = LayersFor(StyleOf(terrain));
+			TerrainLayer[] wanted = LayersFor(StyleOf(terrain), MixOf(terrain));
 			if (data.alphamapResolution != resolution) data.alphamapResolution = resolution;
-			if (data.terrainLayers == null || data.terrainLayers.Length != LayerCount || data.terrainLayers[0] != wanted[0]) data.terrainLayers = wanted;
+			if (data.terrainLayers == null || data.terrainLayers.Length != wanted.Length || data.terrainLayers[0] != wanted[0] || data.terrainLayers[wanted.Length - 1] != wanted[wanted.Length - 1]) data.terrainLayers = wanted;
 		}
 
 		/// <summary>Repaints the alphamap pixels covering the given world-space rectangle (x/z min and max).</summary>
@@ -326,20 +439,55 @@ namespace DynamicIslands.Editor
 		static void Paint(Terrain terrain, float waterLevelWorldY, RectInt area, float[,] mask)
 		{
 			TerrainData data = terrain.terrainData;
+			int count = data.alphamapLayers; // (eight with a mixed style: automatic texturing uses the first style's four)
 			float[,,] maps = mask != null ? data.GetAlphamaps(area.x, area.y, area.width, area.height)
-				: new float[area.height, area.width, LayerCount];
+				: new float[area.height, area.width, count];
 			var w = new float[LayerCount];
 			for (int z = 0; z < area.height; z++)
 				for (int x = 0; x < area.width; x++)
 				{
 					if (mask != null && mask[area.y + z, area.x + x] > 0.5f) continue; // painted by hand
 					AutoWeights(terrain, waterLevelWorldY, area.x + x, area.y + z, w);
-					for (int l = 0; l < LayerCount; l++) maps[z, x, l] = w[l];
+					for (int l = 0; l < count; l++) maps[z, x, l] = l < LayerCount ? w[l] : 0f;
 				}
 			data.SetAlphamaps(area.x, area.y, maps);
 		}
 
 		/// <summary>Automatic layer weights for one alphamap pixel.</summary>
+		/// <summary>
+		/// Where sand gives way to grass (m above the sea: from - to) on an island with this much land (m²), as on Raft's:
+		/// its small islands are green nearly down to the water (bushes at half a metre stand on grass), its big ones have
+		/// sandy beaches up to 2.5-5 m. In between it moves with the land's size.
+		/// </summary>
+		public static Vector2 GrassLine(float landArea)
+		{
+			float t = Mathf.InverseLerp(Mathf.Log(2000f), Mathf.Log(18000f), Mathf.Log(Mathf.Max(1f, landArea)));
+			return new Vector2(Mathf.Lerp(0.4f, 2.5f, t), Mathf.Lerp(1.4f, 5f, t));
+		}
+
+		static readonly Dictionary<TerrainData, Vector2> grassLines = new Dictionary<TerrainData, Vector2>();
+
+		/// <summary>The terrain's grass line, from its land (measured once per island, on a coarse grid of its heights).</summary>
+		public static Vector2 GrassLineOf(Terrain terrain, float waterLevelWorldY)
+		{
+			TerrainData data = terrain.terrainData;
+			Vector2 line;
+			if (grassLines.TryGetValue(data, out line)) return line;
+			int res = data.heightmapResolution, step = Mathf.Max(1, (res - 1) / 128);
+			float cell = data.size.x / (res - 1) * step, water = (waterLevelWorldY - terrain.transform.position.y) / data.size.y;
+			float[,] h = data.GetHeights(0, 0, res, res);
+			int land = 0;
+			for (int z = 0; z < res; z += step)
+				for (int x = 0; x < res; x += step)
+					if (h[z, x] > water) land++;
+			line = GrassLine(land * cell * cell);
+			grassLines[data] = line;
+			return line;
+		}
+
+		/// <summary>The terrain has another island now: its grass line is measured again when it's next needed.</summary>
+		public static void ForgetGrassLine(Terrain terrain) { if (terrain != null) grassLines.Remove(terrain.terrainData); }
+
 		public static void AutoWeights(Terrain terrain, float waterLevelWorldY, int px, int pz, float[] result)
 		{
 			TerrainData data = terrain.terrainData;
@@ -348,7 +496,8 @@ namespace DynamicIslands.Editor
 			float height = terrain.transform.position.y + data.GetInterpolatedHeight(nx, nz) - waterLevelWorldY; // metres above water
 			float slope = data.GetSteepness(nx, nz); // degrees
 
-			float grass = Mathf.InverseLerp(2.5f, 5f, height);
+			Vector2 line = GrassLineOf(terrain, waterLevelWorldY);
+			float grass = Mathf.InverseLerp(line.x, line.y, height);
 			float sand = 1f - grass;
 			float rock = Mathf.InverseLerp(28f, 42f, slope);
 

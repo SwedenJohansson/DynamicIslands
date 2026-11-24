@@ -1,0 +1,318 @@
+# Beacon Saddle - the first island of the library's plan The End of the Ocean (SL14, the Concord Engine's Station 1)
+# Two sea stacks with a grassy saddle between them, and on the saddle a lattice beacon tower whose red light still turns.
+# Its radio hut repeats one recorded pulse, over and over - the Concord Engine's old beacon, pointing south. Beside the
+# tower three tents stand round three cold fires: the pilgrims Ines, Hedda and Teo, who came looking for the end of the
+# ocean and went on south. Quest "The Last Beacon" (15 steps): the beacon, the pilgrims' log, the Receiver plans in the
+# radio hut, the antenna plans in the tower, the bearing card, the north ridge, the west cave, the keeper's ruined house,
+# the mail plane wreck and the keeper's undelivered letter, and the pulse recorded off the radio set.
+#
+# Built by the recipe player (CIRecipe beacon_saddle) through the editor's own operations. Points (metres over the sea):
+# the saddle plateau at 4 m (round 0 0, r 11), the beacon tower at 0 4 (legs +-1.3), the radio hut x -12..-9, z -8..-5,
+# the pilgrims' camp round 8 -7, the hen coop at -6 10, the landing on the south shore round 0 -24.
+include lib_sea
+include lib_features
+include lib_huts
+include lib_gravity
+include lib_concord
+include lib_areas
+include lib_deep14
+new
+# (nature 10-24: hills and Raft-like trees over the whole island - the coordinator's check after the resize)
+gen Trees=0.4 Bushes=0.4 Rocks=0.55 Harvest=0.3 BeachThings=0.35
+gen Seed=14001 Radius=88 Height=24 Roughness=0.35 Peaks=2 Shape=0 Style=0 PeakShape=0.6 Cliffs=0.8 BeachWidth=0.6
+gen Water=0.5 SeaRocks=0.4 SeaFinds=0.3 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.35
+generate
+
+# --- Terrain: the saddle between the two stacks, a path up from the south landing ------------------------------------
+brush flatten at -1.22 4.2 r=11 s=20 frames=200 h=4
+brush flatten at -1.22 8.2 r=8 s=20 frames=300 h=4
+brush flatten at -6.72 14.2 r=3 s=20 frames=200 h=4
+brush flatten at -21.37 -12.89 r=4 s=20 frames=200 h=4
+brush flatten at 12.2 -13.31 r=9 s=20 frames=500 h=3.5
+brush flatten from 4.7 -17.31 to 0.68 -47.05 r=4 s=20 frames=150 h=2
+brush smooth from 4.7 -17.31 to 0.68 -49.05 r=5 s=6 frames=20
+origin
+clear at -1.22 4.2 r=11
+clear at 12.2 -13.31 r=8.5
+clear from 4.7 -17.31 to 0.68 -47.05 r=3
+
+# --- The beacon tower: four iron legs, two storeys high, braced; a red light turning at the top; the pulse sounding ----
+for lx -2.52 0.08 2.6
+for lz 6.9 9.5 2.6
+place RT_PillarThick towerlegs at $lx $lz ground
+place RT_PillarThick towerlegs at $lx $lz ground y=6
+next
+next
+for by 3 9 6
+place RT_Beam towerbeams at -1.22 6.9 ground y=$by sx=0.45
+place RT_Beam towerbeams at -1.22 9.5 ground y=$by sx=0.45
+place RT_Beam towerbeams at -2.52 8.2 ground y=$by sx=0.45 yaw=90
+place RT_Beam towerbeams at 0.08 8.2 ground y=$by sx=0.45 yaw=90
+next
+place RT_Floor - at 0.28 9.7 ground y=12 sx=0.5 sz=0.33
+place Antenna_pole - at -1.22 8.2 ground y=12.2 sy=0.6
+place TP_RotatingRedLight beaconlight at -1.22 8.2 ground y=12.4
+place RT_Floodlight - at -0.22 8.2 ground y=12.2 yaw=180
+prop towerlegs tint.color=#6b5a4a
+prop towerlegs tint.amount=0.5
+prop towerbeams tint.color=#6b5a4a
+prop towerbeams tint.amount=0.5
+place Loot_Chest towerchest at -1.22 8.2 ground sit yaw=180
+call ringwave x=-1.22 z=8.2 r=6 al=ringwave
+prop ringwave tint.color=#8a8577
+prop ringwave tint.amount=0.6
+call loopsound x=-1.22 z=8.2 al=pulsesound ev=event:/exploring/temperence/selene/cryotube_engine r=26 vol=0.45 h=6
+call tzone x=-1.22 z=2.2 al=beaconzone id=beacon r=6 msg="The beacon. An iron tower on the saddle, its red light still turning - and a slow pulse coming from the hut."
+
+# --- The radio hut (roof on its corner posts): the Receiver plans, the radio set on a table -----------------------------
+push at -22.87 -14.39 h=4
+call hut w=2 d=2 y=0.1
+place Loot_Chest radiochest at 2.2 2.4 y=0.1 sit yaw=180
+place Placeable_Table_Basic - at 0.6 2.4 y=0.1 sit
+place RT_PowerBox radioset at 0.6 2.4 y=1.05 yaw=0 scale=0.6
+place Placeable_Lantern_Metal - at 2.4 0.5 y=0.1 sit
+pop
+place Antenna_cone - at -24.07 -12.89 ground y=0 scale=0.5
+
+# --- The pilgrims' camp: three tents round three cold fires; the log and the bearing card ------------------------------
+call camp x=10.7 z=-11.31 yaw=200 fire=campfire_1
+call camp x=14.7 z=-14.31 yaw=240 fire=campfire_1
+call camp x=11.7 z=-17.31 yaw=300 fire=campfire_1
+call notebox x=12.7 z=-13.91 yaw=30 al=pilgrimlog
+call notebox x=16.6 z=-11 yaw=250 al=teolist
+place Note_Sign bearing at 9.2 -15.81 ground sit yaw=200
+place BoatStranded - at 3.68 -50.05 ground sit yaw=160 scale=0.7
+
+# --- The hen coop on the north slope; palms, berries; two reefs and the shallows ----------------------------------------
+place Placeable_BirdsNest - at -7.22 14.2 ground sit
+place Placeable_BirdsNest - at -6.22 13.2 ground sit
+place Block_Wall_Fence_Plank - at -8.72 12.7 ground sit
+place Block_Wall_Fence_Plank - at -5.72 12.7 ground sit
+place Creature_Chicken hens at -7.22 13.2 ground
+prop hens creature.count=3
+scatter "Pickup_Landmark_Tree_Palm 1" 3 at -30.61 -26.78 r=7 seed=14002 free=2
+scatter "Pickup_Landmark_Tree_Palm 3" 2 at 30.61 15.3 r=6 seed=14003 free=2
+scatter Pickup_Landmark_BerryBush 2 at -26.78 11.48 r=5 seed=14004 free=2
+call reef x=-65.04 z=-38.26 r=5 seed=14005
+call reef x=57.39 z=-53.57 r=5 seed=14009
+call shallows x=-1.22 z=4.2 r=107.13 deep=5 n=1 seed=14013
+
+# --- Discoveries: things to find off the quest path (not needed for the quest) ---------------------------------
+call tzone x=36.5 z=48.5 al=saddleview id=saddleview r=4 msg="A ledge high on the saddle. Far off the sea lies flat in a wide circle - as if something under it holds the waves down."
+place Loot_Chest goatchest at -48.8 -47.3 ground sit yaw=46
+prop goatchest loot.refill=0
+call notebox x=40.6 z=-47 yaw=139 al=keepertally
+place Van_4 - at -55.4 36.3 ground sit yaw=34
+place BoatStranded - at 75.5 12 ground sit yaw=173 scale=0.7
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): the north ridge with its
+# lookout and a buried treasure, the cave in the west bluff, the keeper's ruined house in the south, the mail plane
+# wreck in the east
+call ar_ridge x1=-28 z1=58 x2=20 z2=68 h=11 top=7 r=10
+call ar_plants_tropical x=-4 z=63 r=30 seed=14101
+call tzone x=-4 z=63 al=northridge id=northridge r=7 msg="The top of the ridge. Past the beacon, the sea goes flat and grey in a wide circle."
+call treasure x=-4 z=63 r=14 n=1 seed=14111
+call ar_cave x=-56 z=4 h=3 yaw=0 al=westcave chest=cavechest
+call tzone x=-56 z=9 al=westcavezone id=westcave r=4 msg="A cave in the bluff. Someone slept here: a chest, a lamp, a row of scratches on the wall - one for every pulse they counted."
+call ar_ruin x=18 z=-68 h=6 yaw=0 al=keeperruin
+call notebox x=20.5 z=-72.5 yaw=20 al=keeperpage
+call ar_plane x=62 z=24 h=7 yaw=200 al=mailplane crate=planecrate
+call notebox x=56.5 z=20.5 yaw=110 al=planelog
+loot planecrate story:letter*1;Rope*2;Nail*6
+prop planecrate loot.refill=0
+call ar_plants_tropical x=40 z=-60 r=16 seed=14121
+call ar_plants_tropical x=-60 z=-20 r=16 seed=14131
+
+# --- Unique layer (10-24): beacon_saddle device - see SL14_progress.md UNIQUE ISLANDS
+place RT_Pillar - at 13.5 -72 ground sy=0.4
+place RT_PowerBox keeperpad at 13.5 -72 ground y=1.25 yaw=180
+prop keeperpad obj.name=keeperpad
+prop keeperpad beh.use=Type the keeper's three numbers
+prop keeperpad lock.code=741
+prop keeperpad on.use=signal||keepercode\nmessage||The keypad chirps. In the corner, a strongbox's bolt draws back with a thump.\nsound||event:/exploring/obstacles/keypad/keypad_correct
+place Loot_Chest keeperbox at 11.2 -72 ground sit yaw=90
+prop keeperbox obj.name=keeperbox
+prop keeperbox if.open=signal|keepercode
+prop keeperbox else.open=message||The keeper's strongbox. A keypad on the post beside it wants three numbers.
+note keeperbox Keeper's strongbox | A keycard stamped CONCORD. Tag: FOR THE DOORS DOWN SOUTH.
+loot keeperbox story:raft-Tangaroa_KeyCard*1;TitaniumOre*2;Battery*1;Nail*10
+prop keeperbox loot.refill=0
+
+# --- Deep (10-24, SL14 DEEP 1-HOUR PASS): the climb - a 36 m scaffold tower on its pad beside a raised peak, a plank
+# bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the
+# dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
+call dp_ground tx=71 tz=-19 hb=5.2 sx=83.56 sz=-22.36 hs=26.8
+call dp_tower ox=68.24 oz=-20.59 hb=5.2 yaw=14.98 al=bstower top=bstop stash=bsstash zal=bstopzone zid=bs_top msg="The top of the Old Light, 36 m up. Far off, under the calm circle, a dark square sits in the water with chains across it."
+call tzone x=80.18 z=-21.46 al=bssummit id=bs_summit r=4 msg="The peak beside the Old Light. Wind, gulls, and the whole saddle under you." h=1
+call notebox x=84.46 z=-18.98 yaw=104.98 al=bscairn
+call treasure x=83.04 z=-24.29 r=1.5 n=1 seed=14901
+prop treasure14901 treasure.loot=TitaniumOre*2;Battery*1
+place Creature_Goat bsgoats at 63.86 -10.88 ground
+prop bsgoats creature.count=2
+call dp_sink x=-25 z=-70 d=-12 ex1=-21.3 ez1=-59.64 ex2=-18.61 ez2=-52.11 eh=5.36
+place Caravan_Blue_01 bswreck at -25 -70 ground sit yaw=-70.35
+place Loot_Chest bsdivechest at -28.2 -68.86 ground sit yaw=19.65
+call dp_air x=-21.8 z=-71.14 id=bs_air al=bsair msg="Air trapped under the wreck - breathe."
+place Loot_ChestSmall bsdivesecret at -26.68 -74.71 ground sit yaw=-70.35
+call tzone x=-25 z=-70 al=bsdivezone id=bs_dive r=7 msg="The bottom of the old cistern. A caravan lies here, its door open, a chest under the bunk." h=1
+call tzone x=-18.61 z=-52.11 al=bsrim id=bs_rim r=5 msg="The cistern rim. The pilgrims hauled their caravan up this ramp once - and lost it in the water." h=1
+call treasure x=-17.26 z=-48.34 r=12 n=1 seed=14902
+prop treasure14902 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+
+# --- 11-12 (w08): Keeper Tala and the beacon tool locker (plan 08 row: islander Tala; a talked-gate locker). No quest step.
+# Tala keeps what is left of the beacon since the keeper died: she sits by the path up from the landing, mending a net,
+# and knows where the charts stop. Her three answers: what is out there (a journal page on the end of the charts), a
+# spare battery, goodbye. The tool locker at the foot of the beacon tower is hers: it stays shut until you have talked.
+origin
+place Story_Islander bstala at -1.5 -30 ground yaw=90
+prop bstala obj.name=Keeper Tala
+prop bstala islander.character=Tala
+prop bstala islander.pose=sit
+prop bstala talk.text=Past the breakwater the charts stop. So do the fish.\n> What is out there?\n> Can you spare a battery?\n> Goodbye.
+prop bstala on.choice1=journal|Keeper Tala: the end of the charts|Every chart on the saddle ends at the same line, south of the breakwater, drawn in the same red ink: NOTHING SURVEYED. The keeper sailed past it once and came back in a day with no fish and a compass that would only point down. He said the sea out there is flat as a table, and that under it something hums.\nmessage||Tala draws a line in the dirt with her netting needle. Past this, nothing on the charts - only the hum.
+prop bstala on.choice2=give||Battery*1\nmessage||Tala takes a battery out of her coat. The keeper's last spare. The beacon will not need it now - and take what is in the tool locker by the tower, it is open to you.
+prop bstala on.choice3=message||Tala goes back to her net. Mind the breakwater. It bites.
+place Loot_ChestSmall bslocker at 3.5 -1 ground sit yaw=200
+prop bslocker obj.name=bslocker
+prop bslocker if.open=talked|Keeper Tala
+prop bslocker else.open=message||The beacon tool locker is padlocked. Keeper Tala, by the path up from the landing, has the key.
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Beacon Saddle
+info author=Custom Islands
+info description=Two sea stacks and a saddle between them, an iron beacon tower turning its red light, a radio hut repeating one pulse - and three cold campfires. The first island of The End of the Ocean.
+island on.arrive=message||Two rock stacks, a green saddle between them, and an iron tower with a red light turning. The Receiver ticks in time with it.
+
+story pulse|Pulse recording|Placeable_Reciever|A recording of the beacon's pulse, taken off the radio set in the hut on Beacon Saddle. It repeats every eight seconds - and it points south.
+story letter|Letter to the Well|Note_Paper|The beacon keeper's letter, sealed, for MARA WREN, COMMAND WELL, CONCORD ENGINE. Returned nine years running: NO SUCH POST. Somebody should deliver it.
+
+note pilgrimlog Pilgrims' log | PILGRIMS' LOG - Ines writing, by the middle fire\n\nThree of us. Ines, Hedda, Teo. South.\n\nWe came because of the pulse. Everyone on the rafts has heard it at night on the low bands - eight seconds, over and over, like a heart that forgot how to stop. Under the Hadal domes we heard it through the walls for years and called it the Hum. Teo says it is a machine. Hedda says it is a place. I think it is someone, and I have not said so out loud.\n\nThe keeper of this light is gone. His bed in the hut is made, his cup washed, his boots missing. A man who washes his cup before he leaves means to come back - or wants you to think he does.\n\nWe leave the fires. Whoever comes next: the radio set in the hut keeps the pulse. Take it with you, and do not listen to it alone at night.
+note bearing Bearing card | BEARING CARD - pinned to a post, in Hedda's square capitals\n\nPulse strongest SOUTH by the hut's needle. Not south-ish. South, to the degree, every night for a week.\n\nThree kilometres on, the Receiver picks up a second voice, lower, like a pump. Ines heard it humming through the hull and went pale. I have seen reefs for forty years at sea and none of them hum.\n\nIf you are reading this you are behind us, and that is fine. Somebody should be. Bring water, bring rope, and look for the reef that grows in straight lines. That is where we will be, or where we were.\n\n- H. Brask, captain of nothing in particular
+note towerchest Beacon tower | Wedged between the legs: aerial plans in a tin tube.
+note radiochest Radio hut | Receiver plans, rolled round a spare valve.
+loot towerchest Blueprint_Antenna*1;Blueprint_Recycler*1;Scrap*3;Bolt*2
+prop towerchest loot.refill=0
+loot radiochest Blueprint_Reciever*1;Blueprint_HeadLight*1;Battery*1;CircuitBoard*1
+prop radiochest loot.refill=0
+note bslocker Beacon tool locker | The keeper's tools, oiled and wrapped: spare fuses, a coil of rope, two bars of metal.
+loot bslocker Bolt*3;CircuitBoard*1;Rope*2;MetalIngot*2
+prop bslocker loot.refill=0
+
+prop radioset obj.name=radioset
+prop radioset beh.use=Record the pulse off the radio set
+prop radioset if.use=!signal|pulse
+prop radioset on.use=signal||pulse\ngive||story:pulse*1\nmessage||You let the pulse play once onto a spare reel. Under the beeps, very faint, an old man's voice: Calling. Calling. Answer me.\nsound||event:/raft/radio/cassette/cassette01
+prop radioset else.use=message||The pulse is recorded. The set keeps repeating it to nobody.
+
+note cavechest Cave chest | A pilgrim's blanket. Scratched in the lid: THE FIRST IS 7.
+loot cavechest Rope*2;Bolt*2;CircuitBoard*1;Battery*1
+prop cavechest loot.refill=0
+note keeperpage Keeper's last page | THE KEEPER'S LAST PAGE - weighted down with a stone in the doorway\n\nThe roof went in the second storm. I sleep in the hut by the tower now, beside the set, so I hear every beat.\n\nThe pulse never misses one. I timed it against the mail plane's clock before the plane came down: eight seconds, to the tick. My wife Mara went south on the Station run to keep the great engine, and the pulse is the engine calling its crew home. That is what I tell myself. That is what I tell you.\n\nI found a reel in the tower long ago and never told the others what was on it. Some things a keeper keeps.\n\nI am going south to answer her myself. Whoever lights this lamp after me: my strongbox holds the card that opens the doors down there. The last is 1. Mind it well.\n\nOn the back, pressed hard into the paper: 741.
+note planelog Mail plane log | MAIL PLANE LOG - the last page, written sideways\n\nCourse south for the Station run. Engine coughing since the second stop. I have told it that coughing is not a flight plan.\n\nThe Receiver needle swung hard south and stayed there, like a dog that has seen the butcher. Something down there is much louder than a beacon.\n\nPutting her down on the saddle's slope. Aim: the grass. Result: also the grass, mostly.\n\nMail bags in the crate. One letter in the old keeper's hand, for MARA WREN, COMMAND WELL, CONCORD ENGINE. He gave it me every run for nine years and every run it came back: NO SUCH POST. Somebody deliver it. I am tired of carrying it.\n\nPencilled on the back, in the keeper's hand: the second is 4.
+note goatchest Goatherd's chest | A goatherd's chest, its lid tied down with rope.
+loot goatchest Rope*3;Plank*6;Nail*8;Wool*2
+note keepertally Keeper's tally | BEACON KEEPER'S TALLY - in a tin under a stone\n\nDay 1 of the pulse: logged it. Three beats, a pause, three beats. Mara's station, if the bearing is right. She always did like a tidy signal.\n\nDay 40: still there. Nobody answers on 500. I answer anyway. I tell her about the hens.\n\nDay 300: the relief boat did not come. I keep the light turning anyway. Somebody out there must be listening.\n\nDay 2000: I have stopped counting days and started counting beats. It is easier. You cannot miss a day if you count beats.\n\nDay - never mind the day. The pulse is still here. So am I. Calling, calling.\n\n- S. Wren, keeper
+# (deep pass 10-24: the climb and the dive)
+story bell|Pilgrims' bell|Placeable_Lantern_Metal|A small brass bell the pilgrims hung in their caravan. It rang every time the pulse came. The lightkeeper's locker on the Old Light takes it.
+story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
+note bsdivechest Pilgrims' caravan | Under the bunk: the pilgrims' bell, tied with Hedda's ribbon.
+loot bsdivechest story:bell*1;Rope*2;Scrap*3;Bolt*2
+prop bsdivechest loot.refill=0
+prop bsdivechest if.open=quest|13
+prop bsdivechest else.open=message||The chest under the bunk is wedged fast. The keeper's strongbox comes first.
+note bstop Lightkeeper's locker | The bell fits the lid. A chain key, and a spyglass aimed south.
+loot bstop story:chainkey*1;TitaniumOre*2;Battery*1;Nail*12
+prop bstop loot.refill=0
+prop bstop obj.name=bstop
+prop bstop if.open=has|story:bell|1
+prop bstop else.open=message||The lightkeeper's locker. The lid has a bell-shaped hollow in it - something has to sit there first.
+note bsstash Old Light stash | Spare fuses, and a pencilled line: THE BELL IS IN THE CISTERN.
+loot bsstash Battery*1;CircuitBoard*1;Bolt*3
+prop bsstash loot.refill=0
+note bsdivesecret Caravan glovebox | A torn-out glovebox with Teo's tobacco tin in it. Empty, naturally.
+loot bsdivesecret MetalIngot*2;Rope*2;Nail*6
+prop bsdivesecret loot.refill=0
+note bscairn Summit cairn | A cairn on the peak beside the Old Light, a note in a bottle:\n\nFrom up here you can see it. Far south a dark square in the flat water, chained shut, and round it a ring where the waves will not go.\n\nI sat here an hour with the radio on my knees. Between the beats there is a voice - an old man, saying the same word over and over. Calling. Calling. Hedda says it is the tape stretching. Teo says it is the wind. I know a voice when I hear one; I grew up under the sea, where voices are all you have.\n\nTomorrow we follow the needle to the straight reef. Whoever you are, follow us. - I.
+# --- JUMP COURSE bs (U22, 10-24): a kz-style hop course of floor slabs on its own flattened pad -----------------
+# Every gap and rise is within the U22 jump limits (reach_audit/jumps.py checks them). A fall lands on the pad.
+# JUMP bs pad=3 at=-74 -24
+push at -74 -24
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpbs at 0.10 5.64 h=3.60
+place Block_Foundation_Tier3 jpbs at 2.92 5.64 h=4.10
+place Block_Foundation_Tier3 jpbs at 5.93 5.64 h=4.50
+place Block_Foundation_Tier3 jpbs at 5.93 3.03 h=5.40
+place Block_Foundation_Tier3 jpbs at 5.93 -1.21 h=5.90 sx=0.3 sz=3
+place Block_Foundation_Tier3 jpbs at 5.93 -5.64 h=6.70
+place Block_Foundation_Tier3 jpbs at 3.02 -5.64 h=7.60
+place Block_Foundation_Tier3 jpbs at 0.40 -5.64 h=6.60
+place Block_Foundation_Tier3 jpbs at -2.41 -5.64 h=7.55
+place Block_Foundation_Tier3 jpbs at -5.12 -5.64 h=8.50
+place Block_Foundation_Tier3 jpbs at -5.12 -2.02 h=9.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jpbs at 1.30 -2.02 h=9.70 sx=2 sz=2
+place Block_Foundation_Tier3 jpbs at 1.30 3.21 h=10.00
+# JUMP end
+# (10-25: each slab stands on one solid column - a stretched foundation of its own footprint, from 0.6 m under the pad flush up to the slab)
+place Block_Foundation_Tier3 jppbs at 2.92 5.64 h=3.418 sy=1.493
+place Block_Foundation_Tier3 jppbs at 5.93 5.64 h=3.818 sy=2.079
+place Block_Foundation_Tier3 jppbs at 5.93 3.03 h=4.718 sy=3.399
+place Block_Foundation_Tier3 jppbs at 5.93 -1.21 h=5.218 sy=4.132 sx=0.3 sz=3
+place Block_Foundation_Tier3 jppbs at 5.93 -5.64 h=6.018 sy=5.305
+place Block_Foundation_Tier3 jppbs at 3.02 -5.64 h=6.918 sy=6.625
+place Block_Foundation_Tier3 jppbs at 0.40 -5.64 h=5.918 sy=5.158
+place Block_Foundation_Tier3 jppbs at -2.41 -5.64 h=6.868 sy=6.551
+place Block_Foundation_Tier3 jppbs at -5.12 -5.64 h=7.818 sy=7.944
+place Block_Foundation_Tier3 jppbs at -5.12 -2.02 h=8.718 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jppbs at 1.30 -2.02 h=9.018 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jppbs at 1.30 3.21 h=9.318 sy=10.144
+prop jpbs tint.color=#94866e
+prop jpbs tint.amount=0.35
+prop jppbs tint.color=#94866e
+prop jppbs tint.amount=0.35
+place Loot_Chest jcbs at -5.12 -2.02 h=9.40 sit yaw=0
+note jcbs Signal crew perch | The beacon crew hopped up here to see the saddle's far side.
+loot jcbs Plank*6;Rope*3;MetalIngot*1
+prop jcbs loot.refill=0
+place Loot_ChestSmall jbbs at 1.30 3.21 h=10.00 sit yaw=0
+note jbbs Signal prize | For whoever made the two long jumps off the perch.
+loot jbbs MetalIngot*2;CopperIngot*2
+prop jbbs loot.refill=0
+place Zone_Trigger jybs at 1.30 3.21 h=11.00
+prop jybs zone.id=jump_bs_finale
+prop jybs zone.radius=1.8
+prop jybs zone.repeat=never
+prop jybs zone.message=The signal crew's far slab. You see the whole saddle from here.
+pop
+# --- end of jump course bs ---
+
+note teolist Teo's packing list | TEO'S PACKING LIST - on the back of a tobacco label\n\nTo bring south: tobacco (all). The good knife (Hedda has it; ask nicely, then ask Ines). One radio, Ines's, do not touch, she will know. Rope, because Hedda says rope, always rope. Courage - forgot, borrow some from Hedda.\n\nTo leave behind: the keeper's hens. They watched me sleep. I do not trust a bird that blinks sideways. Also my bad knee, and the feeling that something on that tower watches the camp at night.\n\nInes thinks the keeper went south before us. Hedda thinks he went into the sea. I think he went somewhere with better tobacco. Loser cooks.
+note planecrate Mail crate | Wet mail bags. One letter is addressed to the Command Well.
+quest title=The Last Beacon
+quest intro=A beacon still turning on a saddle between two stacks. Go up to it.
+step reach|beacon|1|Go up to the beacon on the saddle between the two stacks
+step read|Pilgrims' log|1|Read the pilgrims' log by the cold fires
+step blueprint|Blueprint_Reciever|1|Take the Receiver and head light plans from the radio hut
+step blueprint|Blueprint_HeadLight|1|Take the head light plans from the radio hut too
+step blueprint|Blueprint_Antenna|1|Take the antenna and recycler plans from the beacon tower
+step blueprint|Blueprint_Recycler|1|Take the recycler plans from the beacon tower too
+step read|Bearing card|1|Read the bearing card pinned by the camp
+step open|Cave chest|1|Find the pilgrims' chest in the cave in the bluff and read its lid
+step read|Mail plane log|1|Read the log at the mail plane wreck on the saddle's slope
+step collect|story:letter|1|Take the keeper's undelivered letter from the mail crate
+step read|Keeper's last page|1|Read the keeper's last page in the ruined keeper's house on the flat below
+step open|Keeper's strongbox|1|Type the keeper's three numbers and open his strongbox
+step reach|bs_dive|1|Dive to the caravan at the bottom of the pilgrims' cistern
+step collect|story:bell|1|Take the pilgrims' bell from the caravan chest
+step reach|bs_top|1|Climb the Old Light by the peak to its top
+step open|Lightkeeper's locker|1|Open the lightkeeper's locker with the bell
+step collect|story:pulse|1|Record the pulse off the radio set
+quest done=The pulse is on your reel and the Receiver is yours to build. The next station answers about three kilometres on.
+quest reward=Plank*10;Rope*4;Nail*10
+
+save Beacon Saddle

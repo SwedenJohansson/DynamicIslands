@@ -1,0 +1,12 @@
+# The blue patterned rock (user 11-06): Old Mine Islet's mine mound from its yard, the grey cave's back from inside and
+# its sides from the sea - Balboa cave rock out of Balboa (CaveLit, CIRockShine). Points as in old_mine_islet_final.
+island Old Mine Islet keep
+offset 2.6829 -2.0027
+hour 11
+weather Calm
+at 0 -12
+wait 3
+picture omblue_mine_out 25 +1.7 -21.5 17 6.5 -19.7
+picture omblue_greycave_in -49 5.2 45 -48.5 4.2 36 light=25
+picture omblue_greycave_sea -47 3.5 66 -49 4.5 47
+picture omblue_greycave_out -49 5.1 55 -49 4.5 45

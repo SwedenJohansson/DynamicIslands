@@ -1,0 +1,7 @@
+# Probe (w03 11-09): the ground heights round the mess chest and the sled box (the CC reach once found the walker stuck on
+# CaveSkin there; the 11-09 CC run walks both in). Island frame.
+island Lumen Shelf keep
+offset 0.2094 -1.8777
+hour 11
+weather Calm
+surface -4 -20 20 4 4

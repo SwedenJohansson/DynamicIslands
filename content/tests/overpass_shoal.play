@@ -1,0 +1,60 @@
+# Overpass Shoal (CIPlay overpass_shoal): the ramp top, the toll booth log, the sunken lane's air pocket, the van's
+# glovebox (the booth key), the booth's strongbox (refused without the key is not tested here: the key comes first),
+# the bus locker.
+island Overpass Shoal
+offset 2.1367 -0.9483
+# (room in the bag first: a full bag from earlier plays in the world drops quest loot - 11-09)
+empty
+expect step 0
+expect title The Drowned Highway
+zone ramp_top
+expect step 1
+read Toll booth log
+expect step 2
+zone op_summit
+wait 2
+expect step 3
+open Toll hill locker
+wait 3
+expect step 4
+read Teo's card (Toll Hill)
+expect step 5
+zone sunken_lane
+air sunken_lane
+expect step 6
+open Van glovebox
+wait 3
+expect story boothkey 1
+expect step 7
+open Toll booth strongbox
+wait 3
+expect step 8
+read Toll keeper's tally
+expect step 9
+read Caravan diary
+expect step 10
+open Bus locker
+wait 3
+expect step 11
+open Glovebox (yellow caravan)
+wait 3
+open Glovebox (green caravan)
+wait 3
+open Glovebox (far caravan)
+wait 3
+open Glovebox (blue caravan)
+wait 3
+open Glovebox (beach trailer)
+wait 3
+use opbench
+expect story op_jack 1
+expect step 12
+use opcap
+expect story op_lifted 1
+expect step 13
+air op_dair
+open Depot chest
+wait 3
+expect step 14
+read Depot foreman's note
+expect done

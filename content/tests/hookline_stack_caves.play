@@ -1,0 +1,35 @@
+# Hookline Stack's barrow cut (CIPlay hookline_stack_caves, 11-11). Run it in a new world whose name does NOT start with
+# 'CI ' (e.g. 'W04 hkcaves'): in a 'CI ' world each `island` line empties the inventory and Fleetbreak's machete is lost
+# on the way. Points as in its recipe (the origin frame): the vine mouth at 42.5 0.5 on the yard's side of the spoil
+# heap's south-east end, the straight cut (open at both ends) north-north-east to the shore at 57.8 24, the salvager's
+# box halfway at 51.1 11.5. The machete comes from Fleetbreak Moorings' bosun's locker, as in the plan.
+# Shut by the vines, cut, walked through and back, then the box opened.
+island Fleetbreak Moorings
+offset 0 0
+open Bosun's locker
+wait 3
+expect item Machete 1
+
+island Hookline Stack
+offset 0 0
+hour 11
+weather Calm
+where ChoppableVines
+
+# The yard mouth: shut by the vines
+picture hk_cave_out 36 5 -8 44 4 3
+walk 39.8 -3.7 to 42.5 0.5 to 46.3 6.4 blocked
+expect shown hkcut_vines
+use hkcut_vines
+expect hidden hkcut_vines
+picture hk_cave_cut 36 5 -8 44 4 3
+# Through the cut to the shore and back to the yard
+walk 39.8 -3.7 to 42.5 0.5 to 46.3 6.4 to 50.1 12.2 to 53.9 18.1 to 57.8 24 to 60.5 28.2
+picture hk_cave_in 44 4.5 3.6 52 4 15 light=20
+picture hk_cave_far 63 4.5 32 55 3.5 20
+walk 60.5 28.2 to 57.8 24 to 53.9 18.1 to 50.1 12.2 to 46.3 6.4 to 42.5 0.5 to 39.8 -3.7
+# The box last: `open` puts the player on the use spot it finds, and here that is on the heap over the cut (11-12)
+walk 39.8 -3.7 to 42.5 0.5 to 46.3 6.4 to 50.1 12.2
+open Barrow cut box
+wait 2
+expect item Scrap 4

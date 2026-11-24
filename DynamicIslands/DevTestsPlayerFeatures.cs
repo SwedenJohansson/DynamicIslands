@@ -1,0 +1,1805 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using DynamicIslands.Editor;
+using HarmonyLib;
+using RaftModLoader;
+using UnityEngine;
+using HMLLibrary;
+using Debug = UnityEngine.Debug;
+
+namespace DynamicIslands
+{
+	/// <summary>Tests of the story features players meet (PlayerFeatures, 2026-10-25): islanders and their dialogue.</summary>
+	public static partial class DevTests
+	{
+		const string PlayerIsland = "ciplayer";
+
+		/// <summary>Every verb, check and quest step has its label and hint in the editors (the behaviour and quest windows).</summary>
+		static void CheckPlayerTables(ref bool ok)
+		{
+			var labels = Traverse.Create(typeof(BehaviourWindow)).Field("VerbLabels").GetValue<Dictionary<string, string>>();
+			var hints = Traverse.Create(typeof(BehaviourWindow)).Field("VerbHints").GetValue<Dictionary<string, string>>();
+			string[] missing = BehaviourProps.Verbs.Where(v => labels == null || hints == null || !labels.ContainsKey(v) || !hints.ContainsKey(v)).ToArray();
+			Check(ref ok, missing.Length == 0, "every verb has a label and a hint in the behaviour window" + (missing.Length > 0 ? " (missing " + string.Join(", ", missing) + ")" : ""));
+			var clabels = Traverse.Create(typeof(BehaviourWindow)).Field("CheckLabels").GetValue<Dictionary<string, string>>();
+			var chints = Traverse.Create(typeof(BehaviourWindow)).Field("CheckHints").GetValue<Dictionary<string, string>>();
+			missing = BehaviourProps.CheckKinds.Where(k => clabels == null || chints == null || !clabels.ContainsKey(k) || !chints.ContainsKey(k)).ToArray();
+			Check(ref ok, missing.Length == 0, "every check has a label and a hint" + (missing.Length > 0 ? " (missing " + string.Join(", ", missing) + ")" : ""));
+			string[] tables = { "TypeLabels", "TypeHints", "TargetHints" };
+			foreach (string t in tables)
+			{
+				var d = Traverse.Create(typeof(QuestEditorWindow)).Field(t).GetValue<Dictionary<string, string>>();
+				missing = IslandQuest.Types.Where(x => d == null || !d.ContainsKey(x)).ToArray();
+				Check(ref ok, missing.Length == 0, "every quest step is in the quest editor's " + t + (missing.Length > 0 ? " (missing " + string.Join(", ", missing) + ")" : ""));
+			}
+		}
+
+		[ConsoleCommand(name: "CIIslanderParse", docs: "Dev, anywhere: islanders' dialogues read right (pages, answers, poses), the dialogue verb, the talked check and the Talk to step, and the editors' lists")]
+		public static void IslanderParseCommand()
+		{
+			bool ok = true;
+			List<Islanders.Page> pages = Islanders.Parse("Hello.\n---\nWill you help?\nIt's dark.\n> Yes\n> No\n> Maybe\n> Later\n> Too many");
+			Check(ref ok, pages.Count == 2 && pages[0].Text == "Hello." && pages[1].Text == "Will you help?\nIt's dark." && pages[1].Choices.Count == 4 && pages[1].Choices[0] == "Yes",
+				"two pages, four answers at most (" + pages.Count + " pages)");
+			// QE10: branches and flags
+			pages = Islanders.Parse("Hi.\n> Who are you? -> who +asked\n> Bye\n> Again? -> who ?asked\n> First time -> end ?!asked\n#who\nI'm Finn.\n---\nI keep the light.\n> Back -> start -asked");
+			Islanders.Answer w = pages.Count > 0 && pages[0].Answers.Count > 0 ? pages[0].Answers[0] : null;
+			Check(ref ok, pages.Count == 3 && pages[0].Section == "" && pages[1].Section == "who" && pages[2].Section == "who" && pages[1].Text == "I'm Finn.",
+				"#who starts a branch of two pages (" + string.Join(" | ", pages.Select(x => x.Section + ":" + x.Text).ToArray()) + ")");
+			Check(ref ok, w != null && w.Text == "Who are you?" && w.Goto == "who" && w.Branches && w.Sets.SequenceEqual(new[] { "asked" }) && w.Number == 1,
+				"> text -> who +asked: words, branch, flag");
+			Check(ref ok, pages.Count == 3 && !pages[0].Answers[1].Branches && pages[0].Answers[2].IfSet.Contains("asked") && pages[0].Answers[3].IfNot.Contains("asked") && !pages[0].Answers[3].Branches
+				&& pages[2].Answers[0].Goto == "start" && pages[2].Answers[0].Clears.Contains("asked") && pages[2].Answers[0].Number == 5, "?flag, ?!flag, -> end, -> start -flag; answers numbered through the text");
+			Check(ref ok, Islanders.Shows(pages[0].Answers[2], f => 0) == false && Islanders.Shows(pages[0].Answers[2], f => 1) && Islanders.Shows(pages[0].Answers[3], f => 0) && !Islanders.Shows(pages[0].Answers[3], f => 1),
+				"?asked shows only while set, ?!asked only while not");
+			Check(ref ok, Islanders.BranchProblem("Hi\n> Go -> who\n#who\nMe") == null && Islanders.BranchProblem("Hi\n> Go -> nowhere") != null && Islanders.BranchProblem("Hi\n#lost\nNobody comes") != null,
+				"the editor's check: a missing branch, a branch nobody reaches");
+			IDictionary<string, string> ex = PlayerFeatures.Expand(Islanders.ObjectName, P(Islanders.TextProp, "Hi\n> Yes -> end +agreed -refused\n> No"));
+			Check(ref ok, ObjectProps.Get(ex, BehaviourProps.EventKey("answer1")).Contains("count|agreed|=1") && ObjectProps.Get(ex, BehaviourProps.EventKey("answer1")).Contains("count|refused|=0") && !ex.ContainsKey(BehaviourProps.EventKey("answer2")),
+				"flags become shared count actions on answer1 (" + ObjectProps.Get(ex, BehaviourProps.EventKey("answer1")).Replace("\n", " / ") + ")");
+			string wb = Islanders.WithBranch("Hello.\n#old\nOld lines");
+			Check(ref ok, Islanders.Sections(wb).SequenceEqual(new[] { "old", "branch1" }) && Islanders.Parse(wb)[0].Answers.Count == 1 && Islanders.Parse(wb)[0].Answers[0].Goto == "branch1",
+				"the editor's button adds an answer and its branch (" + wb.Replace("\n", " / ") + ")");
+			pages = Islanders.Parse("One\\n---\\nTwo\\n> Ok");
+			Check(ref ok, pages.Count == 2 && pages[1].Text == "Two" && pages[1].Choices.Count == 1, "an action's one line: \\n breaks lines, --- pages");
+			Check(ref ok, Islanders.Parse("").Count == 0 && Islanders.Parse("---\n---").Count == 0, "an empty dialogue has no pages");
+			Check(ref ok, Islanders.Choices("A\n> x\n---\nB\n> y").SequenceEqual(new[] { "x", "y" }), "answers count on over pages (choice1, choice2)");
+			Check(ref ok, Islanders.PoseOf(P(Islanders.PoseProp, "Fish")) == "fish" && Islanders.PoseOf(P(Islanders.PoseProp, "dance")) == "stand" && Islanders.PoseOf(P()) == "stand", "poses: fish; unknown = stand");
+			Check(ref ok, Islanders.NameOf(P(BehaviourProps.Name, "Old Finn")) == "Old Finn" && Islanders.NameOf(P()) == "Islander", "an islander's name (default Islander)");
+			Dictionary<string, string> d = ObjectProps.Defaults(Islanders.ObjectName);
+			Check(ref ok, ObjectProps.Get(d, Islanders.TextProp).Length > 0 && ObjectProps.Get(d, Islanders.PoseProp) == "stand", "a placed islander starts with a dialogue and a pose");
+
+			ObjAction a = ObjAction.Parse("dialogue|Old Finn|Hi\\n---\\nBye");
+			Check(ref ok, a != null && a.Target == "Old Finn" && a.Arg == "Hi\\n---\\nBye" && !a.Shared && ObjAction.HasTarget("dialogue") && ObjAction.HasArg("dialogue"), "dialogue|Old Finn|text parses; it is the player's own");
+			Check(ref ok, a != null && a.Describe().Contains("dialogue") && a.Describe().Contains("Old Finn"), "described (" + (a != null ? a.Describe() : "") + ")");
+			Check(ref ok, a != null && ObjAction.Parse(ObjAction.ToLines(new[] { a })).Arg == a.Arg, "it saves and reads back");
+			ObjCheck c = ObjCheck.Parse("talked|Old Finn");
+			Check(ref ok, c != null && c.Kind == "talked" && c.Target == "Old Finn" && c.Describe().Contains("talked to"), "talked|Old Finn parses (" + (c != null ? c.Describe() : "null") + ")");
+			List<string> evs = BehaviourProps.EventsFor(Islanders.ObjectName, P(Islanders.TextProp, "Hi\n> Yes")).Select(x => x.Key).ToList();
+			Check(ref ok, evs.Contains("talk") && evs.Contains("choice1") && evs.Contains("choice4") && !evs.Contains("use"), "an islander's events: talk, choice1..4, not use (" + string.Join(", ", evs.ToArray()) + ")");
+			Check(ref ok, PlayerFeatures.IsEvent("choice2") && PlayerFeatures.IsEvent("talk") && !PlayerFeatures.IsEvent("choice"), "the events are known");
+
+			var q = new IslandQuest.Step { Type = "talk", Target = "Old Finn", Count = 1 };
+			Check(ref ok, IslandQuest.Types.Contains("talk") && !IslandQuest.Counted("talk") && q.Describe() == "Talk to Old Finn", "the Talk to step (" + q.Describe() + ")");
+			var facts = new PlayerFeatures.PlanFacts();
+			PlayerFeatures.AddFacts(facts, Islanders.ObjectName, P(BehaviourProps.Name, "Old Finn"));
+			Check(ref ok, PlayerFeatures.StepProblem(facts, "talk", "Old Finn", 1) == null && PlayerFeatures.StepProblem(facts, "talk", "Nobody", 1) != null
+				&& PlayerFeatures.StepProblem(new PlayerFeatures.PlanFacts(), "talk", "", 1) != null, "the plan check: a missing islander is a problem");
+			Check(ref ok, ContentCatalog.Hint(Islanders.ObjectName).Contains("talk"), "the catalog hint");
+			Check(ref ok, Islanders.TalkedBase > BossPhases.KeyBase + 0xFFFF && Islanders.TalkedBase + 0xFFFF < Behaviours.PendingBase, "the talked keys meet no other keys");
+			CheckPlayerTables(ref ok);
+			if (ok) Log("PASS: islanders' settings"); else Fail("islanders' settings");
+		}
+
+		/// <summary>The test island: SampleIsland with the objects add puts on it near the middle (cleared 25 m around).</summary>
+		static IslandFile PlayerTestIsland(Action<IslandFile, Func<string, float, float, Dictionary<string, string>, int>> build)
+		{
+			IslandFile f = SampleIsland();
+			f.Name = PlayerIsland;
+			f.Elevation = 0f;
+			Vector2 c = IslandSpawner.LandCentre(f);
+			int res = f.HeightmapResolution;
+			float step = f.TerrainSize.x / (res - 1);
+			Func<float, float, Vector3> ground = (x, z) => new Vector3(x, f.Heights[Mathf.Clamp(Mathf.RoundToInt(z / step), 0, res - 1), Mathf.Clamp(Mathf.RoundToInt(x / step), 0, res - 1)] * f.TerrainSize.y, z);
+			f.Objects.RemoveAll(o => new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < 25f);
+			build(f, (name, dx, dz, props) => { f.Objects.Add(new IslandObject { Name = name, Position = ground(c.x + dx, c.y + dz), Props = props }); return f.Objects.Count - 1; });
+			return f;
+		}
+
+		static IEnumerator SpawnPlayerIsland(IslandFile f, Action<IslandWorldState.Entry> got)
+		{
+			f.Save(IslandSpawner.PathFor(PlayerIsland));
+			IslandWorldState.Entry old = IslandWorldState.Islands.FirstOrDefault(x => x.HostName == PlayerIsland);
+			if (old != null) IslandWorldState.RemoveIds(new[] { old.Id }, true);
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(CustomIslandSpawner.RaftPosition.Value, CustomIslandSpawner.LandRadius(PlayerIsland), 300f);
+			if (!spot.HasValue) { got(null); yield break; }
+			int before = IslandWorldState.Islands.Count;
+			yield return DynamicIslands.instance.SpawnIslandFile(PlayerIsland, spot.Value, true);
+			got(IslandWorldState.Islands.Skip(before).FirstOrDefault());
+		}
+
+		static void RemovePlayerIsland(IslandWorldState.Entry e)
+		{
+			if (e != null) IslandWorldState.RemoveIds(new[] { e.Id }, true);
+			if (File.Exists(IslandSpawner.PathFor(PlayerIsland))) File.Delete(IslandSpawner.PathFor(PlayerIsland));
+		}
+
+		[ConsoleCommand(name: "CIIslanderRun", docs: "Dev, in a world (host): spawns 'ciplayer' with an islander (sitting): talks to it, pages on, picks an answer (its choice1 signal), the talked check and the Talk to step, a dialogue action")]
+		public static void IslanderRunCommand() { StartTest(IslanderRunRoutine()); }
+
+		static IEnumerator IslanderRunRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			int finn = -1, gate = -1, sign = -1;
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				finn = add(Islanders.ObjectName, 0f, 4f, P(BehaviourProps.Name, "Old Finn", Islanders.PoseProp, "sit", Islanders.CharacterProp, "1",
+					Islanders.TextProp, "Ahoy.\n---\nWill you light the beacon?\n> I will\n> Not now", "on.choice1", "signal||finn-yes", "on.talk", "message||Finn nods"));
+				gate = add("Log", 3f, 4f, P(BehaviourProps.Use, "Open", "if.use", "talked|Old Finn", "on.use", "signal||finn-gate"));
+				sign = add("Log", -3f, 4f, P(BehaviourProps.Use, "Ring", "on.use", "dialogue|Old Finn|You rang?"));
+				file.Props[IslandQuest.KeyTitle] = "CI islander";
+				file.Props[IslandQuest.KeySteps] = "talk|Old Finn|1|\nreach|nowhere|1|";
+			});
+			IslandWorldState.Entry e = null;
+			yield return SpawnPlayerIsland(f, x => e = x);
+			if (e == null || e.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(e); yield break; }
+			Func<int, IslandObjectRef> obj = i => e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(r => r.Index == i);
+			try
+			{
+				yield return new WaitForSeconds(1f);
+				IslandObjectRef fr = obj(finn);
+				Islander isl = fr != null ? fr.GetComponentInChildren<Islander>(true) : null;
+				Check(ref ok, isl != null, "the islander has its talk");
+				Check(ref ok, isl != null && isl.HasModel, "Raft's character stands in for the marker figure");
+				if (isl != null)
+				{
+					Animator an = fr.GetComponentsInChildren<Animator>(true).FirstOrDefault();
+					Log("islander animator: " + (an != null && an.runtimeAnimatorController != null ? string.Join(", ", an.parameters.Select(p => p.name + "=" + (p.type == AnimatorControllerParameterType.Int ? an.GetInteger(p.name).ToString() : p.type == AnimatorControllerParameterType.Bool ? an.GetBool(p.name).ToString() : p.type.ToString())).ToArray()) : "none"));
+					Screenshot(new[] { "islander" });
+					PutPlayerNear(fr.transform, 2f);
+					yield return new WaitForSeconds(0.5f);
+					// The gate's check fails before anyone talked
+					Behaviours.Fire(e, gate, "use", true);
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, !Behaviours.HasSignal(e, "finn-gate"), "the talked check fails before talking");
+					isl.Talk();
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, DialoguePanel.IsOpen && DialoguePanel.ShownSpeaker == "Old Finn" && DialoguePanel.ShownText == "Ahoy.", "the dialogue opens on page 1 (" + DialoguePanel.ShownText + ")");
+					DialoguePanel.Next();
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, DialoguePanel.ShownPage == 1 && DialoguePanel.ShownText.StartsWith("Will you"), "Next: page 2 with the answers");
+					DialoguePanel.Next();
+					Check(ref ok, DialoguePanel.IsOpen, "Next doesn't skip the answers");
+					DialoguePanel.Pick(1);
+					yield return new WaitForSeconds(0.5f);
+					Check(ref ok, !DialoguePanel.IsOpen, "an answer closes it");
+					Check(ref ok, Behaviours.HasSignal(e, "finn-yes"), "answer 1 fired choice1 (its signal)");
+					Check(ref ok, Behaviours.LastMessage == "Finn nods", "closing fired talk (its message: " + Behaviours.LastMessage + ")");
+					Check(ref ok, ContentState.IsUsed(e, Islanders.TalkedBase + finn), "talked to is remembered for the world");
+					Check(ref ok, QuestTracker.StepOf(e) >= 1, "the Talk to step is done (step " + QuestTracker.StepOf(e) + ")");
+					Behaviours.Fire(e, gate, "use", true);
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, Behaviours.HasSignal(e, "finn-gate"), "the talked check passes after talking");
+					Behaviours.Fire(e, sign, "use", true);
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, DialoguePanel.IsOpen && DialoguePanel.ShownSpeaker == "Old Finn" && DialoguePanel.ShownText == "You rang?", "a dialogue action, said by Old Finn");
+					DialoguePanel.Close();
+				}
+			}
+			finally
+			{
+				DialoguePanel.Close();
+				RemovePlayerIsland(e);
+			}
+			if (ok) Log("PASS: islanders in a world"); else Fail("islanders in a world");
+		}
+
+		/// <summary>QE10's test dialogue: answer 1 branches and sets the flag asked; answer 3 shows only once it is set; answer 4 = choice4.</summary>
+		const string BranchText = "Ahoy.\n---\nWhat now?\n> Who are you? -> who +asked\n> Bye\n> You said a light? -> light ?asked\n> Help -> end +helped\n#who\nI'm Finn.\n---\nI keep the light.\n> Back -> start\n> Bye -> end\n#light\nThe old beacon, up the hill.";
+
+		[ConsoleCommand(name: "CIDialogueBranch", docs: "Dev, in a world (host): QE10 branching - spawns 'ciplayer' with an islander whose answers branch, set island flags and show by flag; pages through each branch, choice4, the flags as counters. 'keep' leaves the island (for a second player: CITalk ciplayer Finn pick 4, then CIFlag ciplayer helped 1): CIDialogueBranch [keep]")]
+		public static void DialogueBranchCommand(string[] args) { StartTest(DialogueBranchRoutine(args.Any(a => a.Equals("keep", StringComparison.OrdinalIgnoreCase)))); }
+
+		static IEnumerator DialogueBranchRoutine(bool keep)
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			int finn = -1;
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				finn = add(Islanders.ObjectName, 0f, 4f, P(BehaviourProps.Name, "Finn", Islanders.PoseProp, "stand", Islanders.CharacterProp, "2",
+					Islanders.TextProp, BranchText, "on.choice4", "signal||finn-help", "on.choice1", "signal||finn-who"));
+			});
+			IslandWorldState.Entry e = null;
+			yield return SpawnPlayerIsland(f, x => e = x);
+			if (e == null || e.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(e); yield break; }
+			try
+			{
+				yield return new WaitForSeconds(1f);
+				IslandObjectRef fr = e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(r => r.Index == finn);
+				Islander isl = fr != null ? fr.GetComponentInChildren<Islander>(true) : null;
+				Check(ref ok, isl != null, "the islander has its talk");
+				if (isl != null)
+				{
+					PutPlayerNear(fr.transform, 2f);
+					yield return new WaitForSeconds(0.5f);
+					Check(ref ok, GapBehaviours.Counter(e, "asked") == 0, "the flag asked starts unset");
+					isl.Talk();
+					yield return new WaitForSeconds(0.3f);
+					DialoguePanel.Next();
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, DialoguePanel.IsOpen && DialoguePanel.ShownText == "What now?" && DialoguePanel.ShownAnswers.SequenceEqual(new[] { "Who are you?", "Bye", "Help" }),
+						"page 2: three answers, ?asked hidden (" + string.Join(", ", DialoguePanel.ShownAnswers.ToArray()) + ")");
+					Screenshot(new[] { "dialogue_branch1" });
+					DialoguePanel.Pick(1);
+					yield return new WaitForSeconds(0.5f);
+					Check(ref ok, DialoguePanel.IsOpen && DialoguePanel.ShownSection == "who" && DialoguePanel.ShownText == "I'm Finn.", "answer 1 goes to #who (" + DialoguePanel.ShownSection + ": " + DialoguePanel.ShownText + ")");
+					Check(ref ok, GapBehaviours.Counter(e, "asked") == 1 && Behaviours.HasSignal(e, "finn-who"), "it set the flag asked (" + GapBehaviours.Counter(e, "asked") + ") and fired choice1");
+					DialoguePanel.Next();
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, DialoguePanel.ShownText == "I keep the light." && DialoguePanel.ShownAnswers.Count == 2, "Next stays in the branch (" + DialoguePanel.ShownText + ")");
+					DialoguePanel.Pick(5); // Back -> start
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, DialoguePanel.IsOpen && DialoguePanel.ShownSection == "" && DialoguePanel.ShownText == "Ahoy.", "-> start goes back to the first page");
+					DialoguePanel.Next();
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, DialoguePanel.ShownAnswers.Contains("You said a light?"), "with asked set, ?asked shows (" + string.Join(", ", DialoguePanel.ShownAnswers.ToArray()) + ")");
+					Screenshot(new[] { "dialogue_branch2" });
+					DialoguePanel.Pick(3);
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, DialoguePanel.ShownSection == "light" && DialoguePanel.ShownText.StartsWith("The old beacon"), "answer 3 goes to #light");
+					int talks = Islanders.Talks;
+					DialoguePanel.Next(); // (the branch's last page: Goodbye)
+					yield return new WaitForSeconds(0.3f);
+					Check(ref ok, !DialoguePanel.IsOpen && Islanders.Talks == talks + 1, "the branch's last page closes it (talk ran)");
+					isl.Talk();
+					yield return new WaitForSeconds(0.3f);
+					DialoguePanel.Next();
+					yield return new WaitForSeconds(0.3f);
+					DialoguePanel.Pick(4);
+					yield return new WaitForSeconds(0.5f);
+					Check(ref ok, !DialoguePanel.IsOpen && Behaviours.HasSignal(e, "finn-help") && GapBehaviours.Counter(e, "helped") == 1, "answer 4: -> end closes, choice4 fired, flag helped set");
+				}
+			}
+			finally
+			{
+				DialoguePanel.Close();
+				if (!keep) RemovePlayerIsland(e);
+			}
+			if (keep && e != null) { GapBehaviours.HostCount(e, ObjAction.Parse("count|helped|=0")); Log("kept 'ciplayer' (helped reset to 0)"); }
+			if (ok) Log("PASS: dialogue branches"); else Fail("dialogue branches");
+		}
+
+		[ConsoleCommand(name: "CIFlag", docs: "Dev, in game (either player): an island's flag / counter (QE10 answers' +flag): CIFlag <island> <name> [expected]")]
+		public static void FlagCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			if (args.Length < 2) { Fail("CIFlag <island> <name> [expected]"); return; }
+			int v = GapBehaviours.Counter(e, args[1]), want;
+			string who = Raft_Network.IsHost ? "host" : "client";
+			if (args.Length > 2 && int.TryParse(args[2], out want)) { if (v == want) Log("PASS: flag " + args[1] + " = " + v + " (" + who + ")"); else Fail("flag " + args[1] + " = " + v + ", expected " + want + " (" + who + ")"); }
+			else Log("PASS: flag " + args[1] + " = " + v + " (" + who + ")");
+		}
+
+		[ConsoleCommand(name: "CIIslanderWalkParse", docs: "Dev, anywhere: QE12 walking islanders' settings - the path's names, mode, speed, the escort step (Name@zone), its plan check and the editors' lists")]
+		public static void IslanderWalkParseCommand()
+		{
+			bool ok = true;
+			Check(ref ok, IslanderWalks.Names(" a, b ;c,, ").SequenceEqual(new[] { "a", "b", "c" }), "the path's names, split by commas");
+			Check(ref ok, IslanderWalks.ModeOf(P(IslanderWalks.ModeProp, "PingPong")) == "pingpong" && IslanderWalks.ModeOf(P()) == "loop" && IslanderWalks.ModeOf(P(IslanderWalks.ModeProp, "fly")) == "loop", "modes: loop (default), pingpong");
+			Check(ref ok, Mathf.Approximately(IslanderWalks.SpeedOf(P()), IslanderWalks.DefaultSpeed) && IslanderWalks.SpeedOf(P(IslanderWalks.SpeedProp, "99")) <= 4f && IslanderWalks.SpeedOf(P(IslanderWalks.SpeedProp, "0")) >= 0.3f, "speed: default, kept within 0.3..4");
+			string n, z;
+			IslanderWalks.SplitTarget(" Old Finn @ camp ", out n, out z);
+			Check(ref ok, n == "Old Finn" && z == "camp", "Name@zone splits (" + n + " / " + z + ")");
+			var q = new IslandQuest.Step { Type = IslanderWalks.QuestType, Target = "Mia@camp", Count = 1 };
+			Check(ref ok, IslandQuest.Types.Contains(IslanderWalks.QuestType) && IslandQuest.Counted(IslanderWalks.QuestType) && q.Describe() == "Bring Mia to camp", "the Escort step, counted by the host (" + q.Describe() + ")");
+			var facts = new PlayerFeatures.PlanFacts();
+			PlayerFeatures.AddFacts(facts, Islanders.ObjectName, P(BehaviourProps.Name, "Mia"));
+			PlayerFeatures.AddFacts(facts, ContentCatalog.TriggerZone, P(ObjectProps.ZoneId, "camp"));
+			Check(ref ok, PlayerFeatures.StepProblem(facts, "escort", "Mia@camp", 1) == null && PlayerFeatures.StepProblem(facts, "escort", "Mia", 1) != null
+				&& PlayerFeatures.StepProblem(facts, "escort", "Bob@camp", 1) != null && PlayerFeatures.StepProblem(facts, "escort", "Mia@nowhere", 1) != null, "the plan check: Name@zone needs both");
+			CheckPlayerTables(ref ok);
+			if (ok) Log("PASS: walking islanders' settings"); else Fail("walking islanders' settings");
+		}
+
+		/// <summary>QE12: how far an islander stands off the ground under it (nothing under it: 99).</summary>
+		static float OffGround(Transform t)
+		{
+			float y;
+			return IslanderWalks.Ground(t, t.position, t.position.y, out y) ? Mathf.Abs(t.position.y - y) : 99f;
+		}
+
+		static void MovePlayerTo(Vector3 at)
+		{
+			Network_Player player = RAPI.GetLocalPlayer();
+			if (player == null) return;
+			RaycastHit hit;
+			if (Physics.Raycast(at + Vector3.up * 3f, Vector3.down, out hit, 60f, 1 << IslandSpawner.TerrainLayer)) at.y = hit.point.y + 1.2f;
+			PlayerMove.To(player, at);
+			KeepAlive(player);
+		}
+
+		[ConsoleCommand(name: "CIIslanderWalk", docs: "Dev, in a world (host): QE12 - spawns 'ciplayer' with an islander on a path (walks it, on the ground) and one to escort (follows, waits when the player is far, reaches the zone, the step is done, it stays). 'keep' leaves the island for a second player (CIWalkAt ciplayer Mia camp): CIIslanderWalk [keep]")]
+		public static void IslanderWalkCommand(string[] args) { StartTest(IslanderWalkRoutine(args.Any(a => a.Equals("keep", StringComparison.OrdinalIgnoreCase)))); }
+
+		static IEnumerator IslanderWalkRoutine(bool keep)
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			int walker = -1, mia = -1;
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				walker = add(Islanders.ObjectName, 0f, 4f, P(BehaviourProps.Name, "Walker", Islanders.CharacterProp, "3", IslanderWalks.PathProp, "wp-a, wp-b", IslanderWalks.PauseProp, "1"));
+				add("Log", 8f, 4f, P(BehaviourProps.Name, "wp-a"));
+				add(ContentCatalog.TriggerZone, 8f, -4f, P(ObjectProps.ZoneId, "wp-b", ObjectProps.ZoneRadius, "2"));
+				mia = add(Islanders.ObjectName, -6f, 0f, P(BehaviourProps.Name, "Mia", Islanders.CharacterProp, "4"));
+				add(ContentCatalog.TriggerZone, -6f, 14f, P(ObjectProps.ZoneId, "camp", ObjectProps.ZoneRadius, "3"));
+				file.Props[IslandQuest.KeyTitle] = "CI escort";
+				file.Props[IslandQuest.KeySteps] = "escort|Mia@camp|1|\nreach|nowhere|1|";
+			});
+			IslandWorldState.Entry e = null;
+			yield return SpawnPlayerIsland(f, x => e = x);
+			if (e == null || e.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(e); yield break; }
+			Func<int, IslandObjectRef> obj = i => e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(r => r.Index == i);
+			try
+			{
+				yield return new WaitForSeconds(1f);
+				IslandObjectRef wr = obj(walker), mr = obj(mia);
+				IslanderWalk ww = wr != null ? wr.GetComponent<IslanderWalk>() : null, mw = mr != null ? mr.GetComponent<IslanderWalk>() : null;
+				Check(ref ok, ww != null && mw != null, "both islanders have their walk");
+				if (ww == null || mw == null) yield break;
+				Log("islander animator: " + ww.AnimatorParameters());
+				PutPlayerNear(wr.transform, 4f);
+				yield return new WaitForSeconds(0.5f);
+				Check(ref ok, ww.HasPath && ww.State == "path", "the walker has its path of two places (" + ww.State + ")");
+				// The path: it moves, always on the ground
+				Vector3 start = wr.transform.position;
+				float worst = 0f, moved = 0f, fastest = 0f;
+				for (int i = 0; i < 16; i++)
+				{
+					yield return new WaitForSeconds(0.25f);
+					worst = Mathf.Max(worst, OffGround(wr.transform));
+					moved = Mathf.Max(moved, Vector3.Distance(start, wr.transform.position));
+					fastest = Mathf.Max(fastest, ww.Speed);
+				}
+				Check(ref ok, moved > 1f, "it walks its path (" + moved.ToString("F1") + " m in 4 s, speed up to " + fastest.ToString("F1") + ")");
+				Check(ref ok, worst < 0.2f, "on the ground all the way (worst " + worst.ToString("F2") + " m off)");
+				yield return ShotAt("walk_path", wr.transform.position);
+				// The escort: follows, waits, reaches the zone
+				TriggerZone camp = IslanderWalks.ZoneOf(e, "camp");
+				Check(ref ok, camp != null, "the zone camp is there");
+				if (camp == null) yield break;
+				Check(ref ok, QuestTracker.StepOf(e) == 0 && IslanderWalks.EscortZone(e, "Mia") == "camp", "the escort step is the current one");
+				Vector3 home = mr.transform.position, toCamp = (camp.transform.position - home); toCamp.y = 0f; toCamp.Normalize();
+				MovePlayerTo(home + toCamp * 7f);
+				yield return new WaitForSeconds(3f);
+				float gap = Vector3.Distance(Flat(RAPI.GetLocalPlayer().transform.position), Flat(mr.transform.position));
+				Check(ref ok, Vector3.Distance(home, mr.transform.position) > 2.5f && gap < 4f, "Mia follows the player (" + Vector3.Distance(home, mr.transform.position).ToString("F1") + " m walked, " + gap.ToString("F1") + " m behind; " + mw.State + ")");
+				Check(ref ok, OffGround(mr.transform) < 0.2f, "Mia stands on the ground (" + OffGround(mr.transform).ToString("F2") + ")");
+				yield return ShotAt("escort_follow", mr.transform.position);
+				Vector3 before = mr.transform.position;
+				MovePlayerTo(before - toCamp * 25f);
+				yield return new WaitForSeconds(2f);
+				Check(ref ok, mw.State == "wait" && Vector3.Distance(before, mr.transform.position) < 0.5f, "a player 25 m off: Mia waits (" + mw.State + ", " + Vector3.Distance(before, mr.transform.position).ToString("F2") + " m)");
+				int idle = IslanderWalks.Sent;
+				yield return new WaitForSeconds(IslanderWalks.KeepAlive + 1f);
+				Check(ref ok, mw.State == "wait" && IslanderWalks.Sent > idle, "standing, her place is sent again for the players (" + (IslanderWalks.Sent - idle) + " in " + (IslanderWalks.KeepAlive + 1f).ToString("F1") + " s, " + mw.State + ")");
+				int sent = IslanderWalks.Sent;
+				// Lead her in, a few steps at a time
+				for (int i = 0; i < 12 && QuestTracker.StepOf(e) == 0; i++)
+				{
+					Vector3 next = mr.transform.position + toCamp * 4f;
+					if (Vector3.Distance(Flat(next), Flat(camp.transform.position)) < 4f) next = camp.transform.position + toCamp * 1f;
+					MovePlayerTo(next);
+					yield return new WaitForSeconds(2f);
+					if (OffGround(mr.transform) > 0.2f) { worst = OffGround(mr.transform); Check(ref ok, false, "Mia off the ground on the way (" + worst.ToString("F2") + " m)"); break; }
+				}
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, QuestTracker.StepOf(e) >= 1, "Mia in camp: the escort step is done (step " + QuestTracker.StepOf(e) + ", " + mw.State + ")");
+				Vector3 l; float yaw;
+				Check(ref ok, MechFeatures.Saved(e, mia, out l, out yaw) && IslanderWalks.Inside(camp, mr.transform.position), "her place in the camp is saved (for joiners and the next load)");
+				Check(ref ok, IslanderWalks.Sent > sent, "the host sent her places (" + (IslanderWalks.Sent - sent) + ")");
+				Vector3 stay = mr.transform.position;
+				MovePlayerTo(stay + toCamp * 6f);
+				yield return new WaitForSeconds(2f);
+				Check(ref ok, Vector3.Distance(stay, mr.transform.position) < 0.3f, "after the step she stays in camp");
+				yield return ShotAt("escort_arrived", mr.transform.position);
+			}
+			finally
+			{
+				if (!keep) RemovePlayerIsland(e);
+			}
+			if (keep) Log("kept 'ciplayer'");
+			if (ok) Log("PASS: walking islanders"); else Fail("walking islanders");
+		}
+
+
+		[ConsoleCommand(name: "CIWalkAt", docs: "Dev, in game (either player): QE12 - where an islander is (island-local) and its walk state; with a zone: PASS only when it is in it: CIWalkAt <island> <name> [zone]")]
+		public static void WalkAtCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			if (args.Length < 2) { Fail("CIWalkAt <island> <name> [zone]"); return; }
+			IslandObjectRef r = Behaviours.RefsOf(e).FirstOrDefault(x => x.Name.Equals(args[1], StringComparison.OrdinalIgnoreCase));
+			IslanderWalk w = r != null ? r.GetComponent<IslanderWalk>() : null;
+			if (w == null) { Fail("no walking islander '" + args[1] + "'"); return; }
+			Vector3 p = r.transform.localPosition;
+			string where = args[1] + " at " + p.x.ToString("F1", CultureInfo.InvariantCulture) + "," + p.y.ToString("F1", CultureInfo.InvariantCulture) + "," + p.z.ToString("F1", CultureInfo.InvariantCulture)
+				+ " (" + w.State + ", off ground " + OffGround(r.transform).ToString("F2") + ", places got " + IslanderWalks.Received + ", " + (Raft_Network.IsHost ? "host" : "client") + ")";
+			if (args.Length > 2 && !IslanderWalks.Inside(IslanderWalks.ZoneOf(e, args[2]), r.transform.position)) Fail(where + ": not in " + args[2]);
+			else if (OffGround(r.transform) > 0.2f) Fail(where + ": off the ground");
+			else Log("PASS: " + where);
+		}
+
+		/// <summary>Turns the local player's view to a point (a person's height above it) and takes a screenshot shot_name.png.</summary>
+		static IEnumerator ShotAt(string name, Vector3 at)
+		{
+			Network_Player p = RAPI.GetLocalPlayer();
+			if (p != null)
+			{
+				Vector3 eye = p.transform.position + Vector3.up * 1.6f, d = at + Vector3.up * 0.8f - eye;
+				float flat = new Vector2(d.x, d.z).magnitude;
+				Look(p, Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg, -Mathf.Atan2(d.y, Mathf.Max(0.01f, flat)) * Mathf.Rad2Deg); // (positive pitch looks down)
+			}
+			yield return new WaitForSeconds(0.5f); // (the view turns in the next frames)
+			Screenshot(new[] { name });
+			yield return null;
+		}
+
+		[ConsoleCommand(name: "CITameParse", docs: "Dev, anywhere: QE11 tame step's settings - Animal@zone, the food (default per kind, items exist), the plan check, the editors' lists, the pen keys")]
+		public static void TameParseCommand()
+		{
+			bool ok = true;
+			Check(ref ok, Taming.Tamable(AI_NetworkBehaviourType.Goat) && Taming.Tamable(AI_NetworkBehaviourType.Chicken) && Taming.Tamable(AI_NetworkBehaviourType.Llama) && !Taming.Tamable(AI_NetworkBehaviourType.Boar), "goats, llamas and chickens are tamable, boars not");
+			foreach (var t in new[] { AI_NetworkBehaviourType.Goat, AI_NetworkBehaviourType.Chicken, AI_NetworkBehaviourType.Llama })
+				Check(ref ok, ItemManager.GetItemByName(Taming.DefaultFood(t)) != null, "the default food of a " + t + " is an item (" + Taming.DefaultFood(t) + ")");
+			Check(ref ok, Taming.FoodOf(P(Taming.FoodProp, " Seed_Pine "), AI_NetworkBehaviourType.Goat) == "Seed_Pine" && Taming.FoodOf(P(), AI_NetworkBehaviourType.Goat) == Taming.DefaultFood(AI_NetworkBehaviourType.Goat), "the spot's own food wins");
+			ContentCatalog.CreatureKind chicken = ContentCatalog.CreatureOf("Creature_Chicken");
+			Check(ref ok, chicken != null && Taming.KindIs(chicken, "clucker") && Taming.KindIs(chicken, "Chicken") && !Taming.KindIs(chicken, "Goat"), "a chicken is called Chicken or Clucker");
+			var q = new IslandQuest.Step { Type = Taming.QuestType, Target = "Goat@pen", Count = 2 };
+			Check(ref ok, IslandQuest.Types.Contains(Taming.QuestType) && IslandQuest.Counted(Taming.QuestType) && q.Describe() == "Tame 2 goats and lead them to pen", "the Tame step, counted by the host (" + q.Describe() + ")");
+			var facts = new PlayerFeatures.PlanFacts();
+			PlayerFeatures.AddFacts(facts, "Creature_Goat", P(ObjectProps.CreatureCount, "2"));
+			PlayerFeatures.AddFacts(facts, "Creature_Llama", P(BehaviourProps.Name, "Dolly"));
+			PlayerFeatures.AddFacts(facts, ContentCatalog.TriggerZone, P(ObjectProps.ZoneId, "pen"));
+			Check(ref ok, PlayerFeatures.StepProblem(facts, Taming.QuestType, "Goat@pen", 2) == null && PlayerFeatures.StepProblem(facts, Taming.QuestType, "Dolly@pen", 1) == null
+				&& PlayerFeatures.StepProblem(facts, Taming.QuestType, "Goat@pen", 3) != null && PlayerFeatures.StepProblem(facts, Taming.QuestType, "Goat", 1) != null
+				&& PlayerFeatures.StepProblem(facts, Taming.QuestType, "Boar@pen", 1) != null && PlayerFeatures.StepProblem(facts, Taming.QuestType, "Goat@barn", 1) != null, "the plan check: a tamable animal there, a zone, enough of them");
+			Check(ref ok, Taming.KeyBases.Count() == Taming.MaxPen && Taming.KeyBases.All(b => b >= Taming.KeyBase && b < Taming.KeyBase + Taming.MaxPen * 0x10000), "pen keys: one range per slot");
+			CheckPlayerTables(ref ok);
+			if (ok) Log("PASS: tame step settings"); else Fail("tame step settings");
+		}
+
+		[ConsoleCommand(name: "CITame", docs: "Dev, in a world (host): QE11 - spawns 'ciplayer' with goats and a pen; feeding one (its food in hand) tames it, it follows the player, in the pen the step counts it and it stays (also after a reload of the taming). 'keep' leaves the island: CITame [keep]")]
+		public static void TameCommand(string[] args) { StartTest(TameRoutine(args.Any(a => a.Equals("keep", StringComparison.OrdinalIgnoreCase)))); }
+
+		static IEnumerator TameRoutine(bool keep)
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			int goats = -1;
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				goats = add("Creature_Goat", 6f, -4f, P(ObjectProps.CreatureCount, "2"));
+				add(ContentCatalog.TriggerZone, -8f, 10f, P(ObjectProps.ZoneId, "pen", ObjectProps.ZoneRadius, "3"));
+				file.Props[IslandQuest.KeyTitle] = "CI tame";
+				file.Props[IslandQuest.KeySteps] = "tame|Goat@pen|1|\nreach|nowhere|1|";
+			});
+			IslandWorldState.Entry e = null;
+			yield return SpawnPlayerIsland(f, x => e = x);
+			if (e == null || e.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(e); yield break; }
+			Network_Player me = RAPI.GetLocalPlayer();
+			string food = Taming.DefaultFood(AI_NetworkBehaviourType.Goat);
+			try
+			{
+				IslandObjectRef gr = e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(r => r.Index == goats);
+				CreatureSpawnPoint sp = gr != null ? gr.GetComponent<CreatureSpawnPoint>() : null;
+				TriggerZone pen = IslanderWalks.ZoneOf(e, "pen");
+				Check(ref ok, sp != null && pen != null, "the goats' spot and the pen are there");
+				if (sp == null || pen == null) yield break;
+				PutPlayerNear(gr.transform, 5f);
+				float t0 = Time.realtimeSinceStartup;
+				while (sp.Spawned.Count(a => a != null) < 2 && Time.realtimeSinceStartup - t0 < 30f) yield return new WaitForSeconds(0.5f);
+				Check(ref ok, sp.Spawned.Count(a => a != null) == 2, "two goats came (" + sp.Spawned.Count(a => a != null) + ")");
+				if (sp.Spawned.Count(a => a != null) == 0) yield break;
+				Check(ref ok, QuestTracker.StepOf(e) == 0 && Taming.Current(e).Contains("Goat@pen"), "the tame step is the current one");
+				// Without the food in hand nothing happens
+				AI_NetworkBehaviour goat = sp.Spawned.First(a => a != null);
+				int fed = Taming.Fed;
+				PlayerMove.To(me, goat.transform.position + Vector3.up * 1.2f + Vector3.right * 1.2f);
+				KeepAlive(me);
+				yield return new WaitForSeconds(2f);
+				Check(ref ok, Taming.Fed == fed && Taming.Following == 0, "next to a goat without its food: not fed");
+				// With it
+				me.Inventory.AddItem(food, 3);
+				Check(ref ok, GrHold(me, food) && me.Inventory.GetSelectedHotbarItem() != null && me.Inventory.GetSelectedHotbarItem().UniqueName == food, "the player holds " + food);
+				int had = me.Inventory.GetItemCount(food);
+				t0 = Time.realtimeSinceStartup;
+				while (Taming.Following == 0 && Time.realtimeSinceStartup - t0 < 6f)
+				{
+					AI_NetworkBehaviour near = sp.Spawned.Where(a => a != null).OrderBy(a => Vector3.Distance(a.transform.position, me.transform.position)).First();
+					if (Vector3.Distance(near.transform.position, me.transform.position) > 2f) PlayerMove.To(me, near.transform.position + Vector3.up * 1.2f + Vector3.right * 1.2f);
+					yield return new WaitForSeconds(0.25f);
+				}
+				Check(ref ok, Taming.Following == 1 && Taming.Fed == fed + 1 && me.Inventory.GetItemCount(food) == had - 1, "held next to a goat: it eats one " + food + " and follows (following " + Taming.Following + ", food " + had + " -> " + me.Inventory.GetItemCount(food) + "; fed " + (Taming.Fed - fed) + ", last: " + Taming.Why + ", goat " + Vector3.Distance(sp.Spawned.Where(x => x != null).OrderBy(x => Vector3.Distance(x.transform.position, me.transform.position)).First().transform.position, me.transform.position).ToString("F1") + " m)");
+				goat = sp.Spawned.FirstOrDefault(Taming.IsTamed);
+				if (goat == null) yield break;
+				yield return new WaitForSeconds(2.5f);
+				Check(ref ok, Taming.Fed == fed + 1, "one feed only (no second goat while it eats)");
+				// Lead it to the pen, a few steps at a time
+				Vector3 dir = pen.transform.position - goat.transform.position; dir.y = 0f; dir.Normalize();
+				float worstGap = 0f;
+				for (int i = 0; i < 50 && QuestTracker.StepOf(e) == 0; i++)
+				{
+					dir = pen.transform.position - goat.transform.position; dir.y = 0f; dir.Normalize(); // (towards the pen from where it is now)
+					Vector3 next = goat.transform.position + dir * 5f;
+					if (Vector3.Distance(Flat(next), Flat(pen.transform.position)) < 5.5f) next = pen.transform.position + dir * 1.5f;
+					MovePlayerTo(next);
+					yield return new WaitForSeconds(2.5f);
+					worstGap = Mathf.Max(worstGap, Vector3.Distance(Flat(goat.transform.position), Flat(me.transform.position)));
+					if (i % 4 == 0) Log("  lead " + i + ": goat " + Vector3.Distance(Flat(goat.transform.position), Flat(pen.transform.position)).ToString("F1") + " m from the pen, player " + Vector3.Distance(Flat(me.transform.position), Flat(pen.transform.position)).ToString("F1") + " m, gap " + Vector3.Distance(Flat(goat.transform.position), Flat(me.transform.position)).ToString("F1") + ", goat y " + goat.transform.position.y.ToString("F1") + " player y " + me.transform.position.y.ToString("F1") + " pen y " + pen.transform.position.y.ToString("F1"));
+					if (i == 2) yield return ShotAt("tame_follow", goat.transform.position);
+				}
+				t0 = Time.realtimeSinceStartup;
+				while (QuestTracker.StepOf(e) == 0 && Time.realtimeSinceStartup - t0 < 8f) yield return new WaitForSeconds(0.5f);
+				Check(ref ok, IslanderWalks.Inside(pen, goat.transform.position) && Taming.Found(e, "Goat@pen") == 1, "the goat is in the pen and counted (" + Vector3.Distance(Flat(goat.transform.position), Flat(pen.transform.position)).ToString("F1") + " m from its middle; furthest behind " + worstGap.ToString("F1") + " m)");
+				Check(ref ok, QuestTracker.StepOf(e) >= 1, "the tame step is done (step " + QuestTracker.StepOf(e) + ")");
+				Check(ref ok, ContentState.IsUsed(e, Taming.KeyBase + goats), "the pen slot is in the island's state (saved, sent to joiners)");
+				yield return ShotAt("tame_penned", goat.transform.position); // (from where the lead ended, beside the pen)
+				MovePlayerTo(pen.transform.position - dir * 14f);
+				yield return new WaitForSeconds(4f);
+				Check(ref ok, IslanderWalks.Inside(pen, goat.transform.position), "the player walks off: the goat stays in its pen");
+				// After a reload (taming forgotten): the saved pen slot puts a goat back in the pen
+				Taming.Reset();
+				goat.transform.position = gr.transform.position + Vector3.up * 0.3f;
+				t0 = Time.realtimeSinceStartup;
+				while (Taming.PennedNow == 0 && Time.realtimeSinceStartup - t0 < 6f) yield return new WaitForSeconds(0.5f);
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, Taming.PennedNow == 1 && sp.Spawned.Any(a => a != null && IslanderWalks.Inside(pen, a.transform.position)), "after a reload a goat is back in the pen");
+			}
+			finally
+			{
+				if (!keep) RemovePlayerIsland(e);
+				try { me.Inventory.RemoveItem(food, me.Inventory.GetItemCount(food)); } catch { }
+			}
+			if (keep) Log("kept 'ciplayer'");
+			if (ok) Log("PASS: tame step"); else Fail("tame step");
+		}
+
+		[ConsoleCommand(name: "CICollectParse", docs: "Dev, anywhere: collectible sets read right (a piece's defaults and use lines, the set check, the Find set step, the set event, plan check, keys, the editors' lists)")]
+		public static void CollectParseCommand()
+		{
+			bool ok = true;
+			Dictionary<string, string> d = ObjectProps.Defaults(Collectibles.ObjectName);
+			Check(ref ok, Collectibles.SetOf(d) == "Relics" && ObjectProps.Get(d, "on.use") == "hide|" && ObjectProps.Get(d, BehaviourProps.Use).Length > 0, "a placed collectible is a piece of Relics, picked up when used");
+			IDictionary<string, string> x = Collectibles.Expand("Log", P(Collectibles.SetProp, "Shells", "on.use", "message||Got it"));
+			Check(ref ok, ObjectProps.Get(x, "on.use") == "hide|\nmessage||Got it" && ObjectProps.Get(x, BehaviourProps.Use) == "Pick up", "any object with a set: hidden when used, its own lines kept (" + ObjectProps.Get(x, "on.use").Replace("\n", " / ") + ")");
+			IDictionary<string, string> own = P(Collectibles.SetProp, "Shells", "on.use", "hide|", BehaviourProps.Use, "Take the shell");
+			Check(ref ok, ReferenceEquals(Collectibles.Expand("Log", own), own), "a piece with its own hide and label is kept as it is");
+			IDictionary<string, string> none = P("on.use", "message||x");
+			Check(ref ok, ReferenceEquals(Collectibles.Expand("Log", none), none) && !Collectibles.IsPiece(none), "an object without a set is no piece");
+			Check(ref ok, Collectibles.SignalOf(" Relics ") == "set:relics", "the set's signal (set:relics)");
+			ObjCheck c = ObjCheck.Parse("set|Relics|3");
+			Check(ref ok, c != null && c.Kind == "set" && c.Target == "Relics" && c.Arg == "3" && c.Describe().Contains("Relics"), "set|Relics|3 parses (" + (c != null ? c.Describe() : "null") + ")");
+			Check(ref ok, PlayerFeatures.CheckArgPlaceholder("set") != null && PlayerFeatures.CheckPlaceholder("set") != null, "the behaviour window shows the set's name and how many");
+			List<string> evs = BehaviourProps.EventsFor("Log", P(Collectibles.SetProp, "Relics")).Select(v => v.Key).ToList();
+			Check(ref ok, evs.Contains("set") && evs.Contains("use") && PlayerFeatures.IsEvent("set"), "a piece has the set event (" + string.Join(", ", evs.ToArray()) + ")");
+			var q = new IslandQuest.Step { Type = "set", Target = "Relics", Count = 4 };
+			Check(ref ok, IslandQuest.Types.Contains("set") && IslandQuest.Counted("set") && q.Describe() == "Find 4 of the Relics", "the Find set step, counted (" + q.Describe() + ")");
+			var facts = new PlayerFeatures.PlanFacts();
+			for (int i = 0; i < 3; i++) PlayerFeatures.AddFacts(facts, Collectibles.ObjectName, P(Collectibles.SetProp, "Relics"));
+			Check(ref ok, PlayerFeatures.StepProblem(facts, "set", "relics", 3) == null && PlayerFeatures.StepProblem(facts, "set", "Relics", 4) != null
+				&& PlayerFeatures.StepProblem(facts, "set", "Coins", 1) != null && PlayerFeatures.StepProblem(facts, "set", "", 1) != null, "the plan check: an unknown set, too few pieces");
+			Check(ref ok, ContentCatalog.Hint(Collectibles.ObjectName).Contains("set"), "the catalog hint");
+			Check(ref ok, Collectibles.KeyBase > Islanders.TalkedBase + 0xFFFF && Collectibles.KeyBase + 0xFFFF < Behaviours.PendingBase, "the piece keys meet no other keys");
+			// (the story features' events resume after a wait: their own pending keys, read back to the same event)
+			var bt = Traverse.Create(typeof(Behaviours));
+			bool resumes = PlayerFeatures.ResumableEvents.Length <= 8 && BehaviourProps.ObjectEvents.All(o => !PlayerFeatures.ResumableEvents.Contains(o));
+			foreach (string ev in PlayerFeatures.ResumableEvents.SelectMany(v => new[] { v, v + "!" }))
+			{
+				int key = bt.Method("PendingKey", new[] { typeof(int), typeof(string) }).GetValue<int>(7, ev);
+				bool kept = bt.Method("Resumable", new[] { typeof(string) }).GetValue<bool>(ev);
+				string back = bt.Method("PendingEventOf", new[] { typeof(int) }).GetValue<string>(key);
+				if (!kept || back != ev || key < Behaviours.MorePendingBase || ((key - Behaviours.MorePendingBase) >> 4) != 7) { resumes = false; Log("  " + ev + ": key " + key.ToString("X") + " reads back " + back); }
+			}
+			Check(ref ok, resumes, "talk, choice1-3, set, lit, unlit, alllit keep their actions after a wait (own pending keys)");
+			Check(ref ok, bt.Method("PendingEventOf", new[] { typeof(int) }).GetValue<string>(Behaviours.PendingBase + (3 << 4) + 0) == "use", "the old pending keys still read as before");
+			CheckPlayerTables(ref ok);
+			if (ok) Log("PASS: collectible sets' settings"); else Fail("collectible sets' settings");
+		}
+
+		[ConsoleCommand(name: "CICollectRun", docs: "Dev, in a world (host): spawns 'ciplayer' with three Relics: picks them up one by one (the HUD count, hidden, kept), the set check and the Find set step, the whole set's signal and set event")]
+		public static void CollectRunCommand() { StartTest(CollectRunRoutine()); }
+
+		static IEnumerator CollectRunRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var piece = new List<int>();
+			int gate = -1;
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					Dictionary<string, string> p = ObjectProps.Defaults(Collectibles.ObjectName);
+					if (i == 0) p["on.set"] = "signal||relics-reward\nmessage||All relics!";
+					piece.Add(add(Collectibles.ObjectName, -3f + i * 3f, 4f, p));
+				}
+				gate = add("Log", 0f, 7f, P(BehaviourProps.Use, "Open", "if.use", "set|Relics|2", "on.use", "signal||relic-gate"));
+				file.Props[IslandQuest.KeyTitle] = "CI relics";
+				file.Props[IslandQuest.KeySteps] = "set|Relics|3|\nreach|nowhere|1|";
+			});
+			IslandWorldState.Entry e = null;
+			yield return SpawnPlayerIsland(f, v => e = v);
+			if (e == null || e.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(e); yield break; }
+			Func<int, IslandObjectRef> obj = i => e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(r => r.Index == i);
+			try
+			{
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, Collectibles.Total(e, "Relics") == 3 && Collectibles.Found(e, "relics") == 0, "three pieces, none found (" + Collectibles.Total(e, "Relics") + ")");
+				IslandObjectRef first = obj(piece[0]);
+				Check(ref ok, first != null && first.GetComponentsInChildren<TextMesh>(false).Length == 0, "the editor name tag is gone in the world");
+				if (first != null) { PutPlayerNear(first.transform, 2f); Screenshot(new[] { "collectible" }); }
+				yield return new WaitForSeconds(0.5f);
+				for (int i = 0; i < 3; i++)
+				{
+					IslandObjectRef r = obj(piece[i]);
+					if (i == 2)
+					{
+						// (the last one as another player's: its key comes from the host; the count shows here too)
+						ContentState.ApplyUsed(e.Id, Collectibles.KeyBase + piece[i], Behaviours.Today);
+						yield return new WaitForSeconds(0.8f);
+						Check(ref ok, Collectibles.LastShown != null && Collectibles.LastShown.StartsWith("Relics: 3 of 3"), "another player's piece shows the count here too (" + Collectibles.LastShown + ")");
+						continue;
+					}
+					UseInteract u = r != null ? r.GetComponentInChildren<UseInteract>(true) : null;
+					Check(ref ok, u != null, "piece " + (i + 1) + " can be picked up");
+					if (u == null) continue;
+					Traverse.Create(u).Method("Use").GetValue();
+					yield return new WaitForSeconds(0.6f);
+					Check(ref ok, Collectibles.LastShown != null && Collectibles.LastShown.StartsWith("Relics: " + (i + 1) + " of 3"), "the HUD counts (" + Collectibles.LastShown + ")");
+					Check(ref ok, ContentState.IsUsed(e, Collectibles.KeyBase + piece[i]) && !r.gameObject.activeSelf, "piece " + (i + 1) + " is gone and kept found");
+					if (i == 0)
+					{
+						Behaviours.Fire(e, gate, "use", true);
+						yield return new WaitForSeconds(0.3f);
+						Check(ref ok, !Behaviours.HasSignal(e, "relic-gate"), "set|Relics|2 fails with one found");
+						Check(ref ok, !Behaviours.HasSignal(e, Collectibles.SignalOf("Relics")), "no set signal yet");
+					}
+					if (i == 1)
+					{
+						Behaviours.Fire(e, gate, "use", true);
+						yield return new WaitForSeconds(0.3f);
+						Check(ref ok, Behaviours.HasSignal(e, "relic-gate"), "set|Relics|2 passes with two found");
+						Check(ref ok, QuestTracker.StepOf(e) == 0, "the Find 3 step waits");
+					}
+				}
+				yield return new WaitForSeconds(1.2f);
+				Check(ref ok, Behaviours.HasSignal(e, Collectibles.SignalOf("Relics")), "the whole set sent set:relics");
+				Check(ref ok, Behaviours.HasSignal(e, "relics-reward"), "the whole set ran the pieces' set event (its reward)");
+				Check(ref ok, QuestTracker.StepOf(e) >= 1, "the Find set step is done (step " + QuestTracker.StepOf(e) + ")");
+			}
+			finally { RemovePlayerIsland(e); }
+			if (ok) Log("PASS: collectible sets in a world"); else Fail("collectible sets in a world");
+		}
+
+		[ConsoleCommand(name: "CILightParse", docs: "Dev, anywhere: light puzzles read right (a light's defaults and use lines, the light action, the light and lights checks, the events, the Light up step, plan check, the editors' lists)")]
+		public static void LightParseCommand()
+		{
+			bool ok = true;
+			Dictionary<string, string> d = ObjectProps.Defaults(Lights.ObjectName);
+			Check(ref ok, Lights.GroupOf(d) == "Lamps" && !Lights.StartsOn(d) && ObjectProps.Get(d, BehaviourProps.Use).Length > 0, "a placed light is in Lamps, starts off, has a use label");
+			IDictionary<string, string> x = Lights.Expand(Lights.ObjectName, d);
+			Check(ref ok, ObjectProps.Get(x, "on.use") == "switch|", "the use key switches it (" + ObjectProps.Get(x, "on.use") + ")");
+			x = Lights.Expand("Log", P(Lights.GroupProp, "Torches", "on.use", "message||Click"));
+			Check(ref ok, ObjectProps.Get(x, "on.use") == "switch|\nmessage||Click" && ObjectProps.Get(x, BehaviourProps.Use).Length > 0, "any object with a group is a light, its own lines kept");
+			IDictionary<string, string> own = P(Lights.GroupProp, "T", "on.use", "light||on", BehaviourProps.Use, "Light it");
+			Check(ref ok, ReferenceEquals(Lights.Expand("Log", own), own), "a light that switches itself is kept as it is");
+			IDictionary<string, string> none = P("on.use", "message||x");
+			Check(ref ok, ReferenceEquals(Lights.Expand("Log", none), none) && !Lights.IsLight("Log", none), "an object without a group is no light");
+			Check(ref ok, Lights.StartsOn(P(Lights.OnProp, "1")) && Lights.StartsOn(P(Lights.OnProp, "on")) && !Lights.StartsOn(P(Lights.OnProp, "0")), "starts on: 1/on");
+			Check(ref ok, Lights.SignalOf(" Lamps ") == "lights:lamps", "the group's signal (lights:lamps)");
+			ObjAction a = ObjAction.Parse("light|group:Lamps|off");
+			Check(ref ok, a != null && a.Verb == "light" && a.Target == "group:Lamps" && a.Arg == "off" && a.Shared && ObjAction.HasTarget("light") && ObjAction.HasArg("light"), "light|group:Lamps|off parses; it is shared (host)");
+			Check(ref ok, a != null && a.Describe().Contains("Lamps"), "described (" + (a != null ? a.Describe() : "") + ")");
+			ObjCheck c = ObjCheck.Parse("lights|Lamps|on");
+			Check(ref ok, c != null && c.Kind == "lights" && c.Target == "Lamps" && c.Describe().Contains("Lamps"), "lights|Lamps|on parses (" + (c != null ? c.Describe() : "null") + ")");
+			c = ObjCheck.Parse("light||off");
+			Check(ref ok, c != null && c.Kind == "light" && c.Describe().Contains("off"), "light||off parses (" + (c != null ? c.Describe() : "null") + ")");
+			Check(ref ok, PlayerFeatures.CheckArgPlaceholder("light") != null && PlayerFeatures.CheckArgPlaceholder("lights") != null, "the behaviour window shows on/off for both checks");
+			List<string> evs = BehaviourProps.EventsFor(Lights.ObjectName, d).Select(v => v.Key).ToList();
+			Check(ref ok, evs.Contains("lit") && evs.Contains("unlit") && evs.Contains("alllit") && evs.Contains("use") && PlayerFeatures.IsEvent("alllit"), "a light's events (" + string.Join(", ", evs.ToArray()) + ")");
+			var q = new IslandQuest.Step { Type = "lights", Target = "Lamps", Count = 3 };
+			Check(ref ok, IslandQuest.Types.Contains("lights") && IslandQuest.Counted("lights") && q.Describe().Contains("Lamps"), "the Light up step, counted (" + q.Describe() + ")");
+			var facts = new PlayerFeatures.PlanFacts();
+			for (int i = 0; i < 3; i++) PlayerFeatures.AddFacts(facts, Lights.ObjectName, P(Lights.GroupProp, "Lamps"));
+			Check(ref ok, PlayerFeatures.StepProblem(facts, "lights", "lamps", 3) == null && PlayerFeatures.StepProblem(facts, "lights", "Lamps", 4) != null
+				&& PlayerFeatures.StepProblem(facts, "lights", "Torches", 1) != null && PlayerFeatures.StepProblem(facts, "lights", "", 1) != null, "the plan check: an unknown group, too few lights");
+			Check(ref ok, ContentCatalog.Hint(Lights.ObjectName).Contains("light"), "the catalog hint");
+			CheckPlayerTables(ref ok);
+			if (ok) Log("PASS: light puzzles' settings"); else Fail("light puzzles' settings");
+		}
+
+		[ConsoleCommand(name: "CILightRun", docs: "Dev, in a world (host): spawns 'ciplayer' with three Lamps (one starts on): switches them with the use key (lights shown, lit event), the lights check, the whole group's alllit event and signal, the Light up step, the light action switching the group off")]
+		public static void LightRunCommand() { StartTest(LightRunRoutine()); }
+
+		static IEnumerator LightRunRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var lamp = new List<int>();
+			int gate = -1, lever = -1;
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					Dictionary<string, string> p = ObjectProps.Defaults(Lights.ObjectName);
+					if (i == 0) { p["on.lit"] = "signal||lamp-lit"; p["on.alllit"] = "signal||lamps-reward"; }
+					if (i == 2) p[Lights.OnProp] = "1";
+					lamp.Add(add(Lights.ObjectName, -3f + i * 3f, 4f, p));
+				}
+				gate = add("Log", 0f, 7f, P(BehaviourProps.Use, "Open", "if.use", "lights|Lamps|on", "on.use", "signal||lamp-gate"));
+				lever = add("Log", 3f, 7f, P(BehaviourProps.Use, "Pull", "on.use", "light|group:Lamps|off"));
+				file.Props[IslandQuest.KeyTitle] = "CI lamps";
+				file.Props[IslandQuest.KeySteps] = "lights|Lamps|3|\nreach|nowhere|1|";
+			});
+			IslandWorldState.Entry e = null;
+			yield return SpawnPlayerIsland(f, v => e = v);
+			if (e == null || e.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(e); yield break; }
+			Func<int, IslandObjectRef> obj = i => e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(r => r.Index == i);
+			Func<int, bool> shows = i => { IslandObjectRef r = obj(i); PuzzleLight pl = r != null ? r.GetComponent<PuzzleLight>() : null; return pl != null && pl.ShowsLit; };
+			try
+			{
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, lamp.All(i => obj(i) != null && obj(i).GetComponent<PuzzleLight>() != null), "every lamp is a puzzle light in the world");
+				Check(ref ok, !Lights.Lit(e, obj(lamp[0])) && !Lights.Lit(e, obj(lamp[1])) && Lights.Lit(e, obj(lamp[2])) && Lights.LitCount(e, "lamps") == 1, "two off, the third starts on (" + Lights.LitCount(e, "Lamps") + " lit)");
+				Check(ref ok, !shows(lamp[0]) && shows(lamp[2]), "shown off / on");
+				if (obj(lamp[2]) != null) { PutPlayerNear(obj(lamp[2]).transform, 3f); Screenshot(new[] { "light" }); }
+				for (int n = 0; n < 2; n++)
+				{
+					IslandObjectRef r = obj(lamp[n]);
+					UseInteract u = r != null ? r.GetComponentInChildren<UseInteract>(true) : null;
+					Check(ref ok, u != null, "lamp " + (n + 1) + " can be switched");
+					if (u == null) continue;
+					Traverse.Create(u).Method("Use").GetValue();
+					yield return new WaitForSeconds(0.8f);
+					Check(ref ok, Lights.Lit(e, r) && shows(lamp[n]), "lamp " + (n + 1) + " is on and shows it");
+					if (n == 0)
+					{
+						Check(ref ok, Behaviours.HasSignal(e, "lamp-lit"), "its lit event ran");
+						Behaviours.Fire(e, gate, "use", true);
+						yield return new WaitForSeconds(0.3f);
+						Check(ref ok, !Behaviours.HasSignal(e, "lamp-gate"), "lights|Lamps|on fails with one lamp still off");
+						Check(ref ok, !Behaviours.HasSignal(e, Lights.SignalOf("Lamps")) && QuestTracker.StepOf(e) == 0, "no group signal yet, the step waits");
+					}
+				}
+				yield return new WaitForSeconds(1.2f);
+				Check(ref ok, Behaviours.HasSignal(e, Lights.SignalOf("Lamps")), "the whole group sent lights:lamps");
+				Check(ref ok, Behaviours.HasSignal(e, "lamps-reward"), "the whole group ran alllit (its reward)");
+				Check(ref ok, QuestTracker.StepOf(e) >= 1, "the Light up step is done (step " + QuestTracker.StepOf(e) + ")");
+				Behaviours.Fire(e, gate, "use", true);
+				yield return new WaitForSeconds(0.3f);
+				Check(ref ok, Behaviours.HasSignal(e, "lamp-gate"), "lights|Lamps|on passes");
+				Behaviours.Fire(e, lever, "use", true);
+				yield return new WaitForSeconds(0.8f);
+				Check(ref ok, Lights.LitCount(e, "Lamps") == 0 && lamp.All(i => !shows(i)), "light|group:Lamps|off switched the group off (" + Lights.LitCount(e, "Lamps") + " lit)");
+				bool v, open;
+				Behaviours.StateNow(e, obj(lamp[2]), out v, out open);
+				Check(ref ok, open, "the lamp that starts on is kept off as its open bit (saved)");
+				Check(ref ok, Lights.Holds(e, lamp[0], ObjCheck.Parse("light||off")) && !Lights.Holds(e, lamp[0], ObjCheck.Parse("light||on")), "light||off holds for this lamp");
+			}
+			finally { RemovePlayerIsland(e); }
+			if (ok) Log("PASS: light puzzles in a world"); else Fail("light puzzles in a world");
+		}
+
+		#region PF1 player notebook
+
+		const string NotebookTestTitle = "CI notebook ";
+
+		[ConsoleCommand(name: "CINotebook", docs: "Dev, world 'CI ...' (PF1): the player's own notebook. CINotebook unit - the file format round trip, the window (typing, new page, player held, saved on close, the file next to the world's save), copying a note in / write - adds a page 'CI notebook <world>' and saves / check - after loading the world again: its page is back, no other world's page / empty - a world with no 'CI notebook' page (another world's are not here)")]
+		public static void NotebookCommand(string[] args) { StartTest(NotebookRoutine(args != null && args.Length > 0 ? args[0] : "unit")); }
+
+		static IEnumerator NotebookRoutine(string what)
+		{
+			string world = SaveAndLoad.CurrentGameFileName ?? "";
+			if (!LoadSceneManager.IsGameSceneLoaded || DynamicIslands.InEditor() || !world.StartsWith("CI ")) { Fail("notebook: in a test world 'CI ...'"); yield break; }
+			// (the notebook loads a frame after the world's id is known)
+			float wait = Time.unscaledTime + 10f;
+			while (PlayerNotebook.LoadedFor != SaveAndLoad.WorldGuid.ToString() && Time.unscaledTime < wait) yield return null;
+			bool ok = true;
+			Check(ref ok, PlayerNotebook.LoadedFor == SaveAndLoad.WorldGuid.ToString(), "the notebook belongs to this world (" + PlayerNotebook.LoadedFor + ")");
+			string mine = NotebookTestTitle + world;
+			if (what == "write")
+			{
+				PlayerNotebook.Pages.RemoveAll(p => p.Title == mine);
+				PlayerNotebook.AddPage(mine, "Written in " + world + "\n=== not a new page\n\\ a backslash line\n");
+				PlayerNotebook.Save();
+				string to = PlayerNotebook.PathFor(PlayerNotebook.LoadedFor);
+				Check(ref ok, File.Exists(to) && File.ReadAllText(to).Contains(mine), "saved to " + to);
+				if (ok) Log("PASS: notebook write (" + world + ")"); else Fail("notebook write");
+				yield break;
+			}
+			if (what == "check" || what == "empty")
+			{
+				List<PlayerNotebook.Page> ci = PlayerNotebook.Pages.Where(p => p.Title.StartsWith(NotebookTestTitle)).ToList();
+				if (what == "empty") Check(ref ok, ci.Count == 0, "no test page in this world (" + string.Join(", ", ci.Select(p => p.Title).ToArray()) + ")");
+				else
+				{
+					PlayerNotebook.Page p = ci.FirstOrDefault(x => x.Title == mine);
+					Check(ref ok, p != null && p.Text == "Written in " + world + "\n=== not a new page\n\\ a backslash line\n", "this world's page is back, its text exact: " + (p == null ? "(missing)" : p.Text.Replace("\n", "|")));
+					Check(ref ok, ci.All(x => x.Title == mine), "no other world's page: " + string.Join(", ", ci.Select(x => x.Title).ToArray()));
+					Check(ref ok, (PlayerNotebook.LastPath ?? "").EndsWith(PlayerNotebook.FileName) && WorldCopy.RaftWorldFolder != null && Path.GetFullPath(Path.GetDirectoryName(PlayerNotebook.LastPath)) == Path.GetFullPath(WorldCopy.RaftWorldFolder), "read from the world's own folder: " + PlayerNotebook.LastPath);
+				}
+				if (ok) Log("PASS: notebook " + what + " (" + world + ")"); else Fail("notebook " + what);
+				yield break;
+			}
+
+			// unit
+			var sample = new List<PlayerNotebook.Page>
+			{
+				new PlayerNotebook.Page { Title = "First", Text = "one\n\ntwo\n" },
+				new PlayerNotebook.Page { Title = "Tricky", Text = "=== looks like a page\n\\starts with a backslash\n# a hash" },
+				new PlayerNotebook.Page { Title = "", Text = "" },
+			};
+			List<PlayerNotebook.Page> back = PlayerNotebook.Parse(PlayerNotebook.Serialize(sample));
+			Check(ref ok, back.Count == 3 && Enumerable.Range(0, 3).All(i => back[i].Title == sample[i].Title && back[i].Text == sample[i].Text), "the file format gives back every page exactly: " + string.Join(" / ", back.Select(p => p.Title + ":" + p.Text.Replace("\n", "|")).ToArray()));
+			string other = PlayerNotebook.PathFor(Guid.NewGuid().ToString());
+			Check(ref ok, other != PlayerNotebook.PathFor(PlayerNotebook.LoadedFor) && !File.Exists(other), "another world has a file of its own (" + other + ")");
+
+			int before = PlayerNotebook.Pages.Count;
+			PlayerNotebookWindow.Open();
+			yield return null;
+			Check(ref ok, PlayerNotebookWindow.IsOpen && PlayerNotebookWindow.PlayerHeld, "the window opens and holds the player");
+			PlayerNotebookWindow.NewPageForTest();
+			PlayerNotebookWindow.TypeForTest("CI typed page", "typed line 1\ntyped line 2");
+			yield return null;
+			Check(ref ok, PlayerNotebook.Pages.Count == before + 1 && PlayerNotebook.Pages.Last().Title == "CI typed page" && PlayerNotebook.Pages.Last().Text == "typed line 1\ntyped line 2", "typing fills a new page");
+			Check(ref ok, PlayerNotebookWindow.ListedPages == PlayerNotebook.Pages.Count, "the list shows every page (" + PlayerNotebookWindow.ListedPages + ")");
+			Screenshot(new[] { "player_notebook" });
+			yield return new WaitForSeconds(0.5f);
+			PlayerNotebookWindow.Close();
+			yield return null;
+			string path = PlayerNotebook.PathFor(PlayerNotebook.LoadedFor);
+			Check(ref ok, !PlayerNotebookWindow.IsOpen && File.Exists(path) && File.ReadAllText(path).Contains("=== CI typed page") && File.ReadAllText(path).Contains("typed line 2"), "saved on closing to " + path);
+			Check(ref ok, WorldCopy.RaftWorldFolder == null || Path.GetFullPath(Path.GetDirectoryName(path)) == Path.GetFullPath(WorldCopy.RaftWorldFolder), "the file is next to the world's save (" + WorldCopy.RaftWorldFolder + ")");
+			Check(ref ok, PlayerNotebook.CopyIn("CI copied note", "copied text") && PlayerNotebook.Pages.Last().Title == "CI copied note" && File.ReadAllText(path).Contains("copied text"), "a note copied in is a new page, saved at once");
+			// (journal: the copy button on a page)
+			PlayerNotebook.Pages.RemoveAll(p => p.Title == "CI typed page" || p.Title == "CI copied note");
+			PlayerNotebook.MarkChanged();
+			PlayerNotebook.Save();
+			Check(ref ok, !File.ReadAllText(path).Contains("CI typed page"), "the test pages removed again");
+			if (ok) Log("PASS: notebook unit"); else Fail("notebook unit");
+		}
+
+		#endregion
+
+		#region PF4 camera fly-throughs
+
+		const string FlyIsland = "cipf4fly";
+
+		[ConsoleCommand(name: "CIFlythrough", docs: "Dev (PF4): camera fly-throughs. CIFlythrough unit - the curve passes every camera point in order with its waits, the action reads, Check warns on a path with fewer than 2 points / world - host, world 'CI ...': a lever flies the camera along a 3-point path (input held, Moment 'path' sent, the camera at the points, then back with the input given back), again and skipped (Esc), out of range nothing; picture shot_pf4_flythrough.png / editor - in the editor: 3 points placed, the path's line drawn, 'To my view' with undo, preview and back, a recording writes PNG frames (then deleted)")]
+		public static void FlythroughCommand(string[] args) { StartTest(FlythroughRoutine(args != null && args.Length > 0 ? args[0] : "unit")); }
+
+		static IEnumerator FlythroughRoutine(string what)
+		{
+			if (what == "world") { yield return FlyWorld(); yield break; }
+			if (what == "editor") { yield return FlyEditor(); yield break; }
+			bool ok = true;
+			var keys = new List<CameraPath.Key>
+			{
+				new CameraPath.Key { Pos = new Vector3(0f, 10f, 0f), Look = Vector3.zero, Speed = 10f, Hold = 1f },
+				new CameraPath.Key { Pos = new Vector3(30f, 12f, 0f), Look = new Vector3(30f, 0f, 10f), Speed = 5f, Hold = 0.5f },
+				new CameraPath.Key { Pos = new Vector3(30f, 15f, 40f), Look = new Vector3(0f, 0f, 40f), Speed = 10f, Hold = 0f },
+			};
+			var fl = new CameraPath.Flight(keys);
+			Vector3 pos, look;
+			fl.Sample(0.5f, out pos, out look);
+			Check(ref ok, pos == keys[0].Pos && look == keys[0].Look, "it waits at the first point for its hold");
+			// (the second point is reached after the first wait and the first stretch)
+			float firstLeg = fl.Duration - 1f - 0.5f;
+			bool passes = false;
+			for (float t = 1f; t < fl.Duration; t += 0.05f) { fl.Sample(t, out pos, out look); if (Vector3.Distance(pos, keys[1].Pos) < 0.01f) { passes = true; break; } }
+			Check(ref ok, passes, "the curve passes the second point exactly");
+			fl.Sample(fl.Duration + 5f, out pos, out look);
+			Check(ref ok, pos == keys[2].Pos, "it ends at the last point");
+			Check(ref ok, fl.Duration > 1.5f + 3f + 4f && fl.Duration < 1.5f + 3f * 1.3f + 8f * 1.3f + 1f, "its length from the distances and speeds (" + fl.Duration.ToString("F2") + " s, legs " + firstLeg.ToString("F2") + " s)");
+			Vector3 prev = keys[0].Pos; float worst = 0f;
+			for (float t = 0f; t <= fl.Duration; t += 0.02f) { fl.Sample(t, out pos, out look); worst = Mathf.Max(worst, Vector3.Distance(prev, pos)); prev = pos; }
+			Check(ref ok, worst < 0.6f, "smooth: no jump between frames (largest step " + worst.ToString("F3") + " m)");
+			Check(ref ok, CameraPath.RangeOf("") == CameraPath.DefaultRange && CameraPath.RangeOf("1") == 5f && CameraPath.RangeOf("300") == 300f, "the range reads (default " + CameraPath.DefaultRange + ", at least 5 m)");
+			ObjAction act = ObjAction.Parse("flythrough|tour|300");
+			Check(ref ok, act != null && act.Shared && BehaviourProps.Verbs.Contains("flythrough") && act.Describe().Contains("'tour'") && act.Describe().Contains("300 m"), "the action reads as '" + (act != null ? act.Describe() : "?") + "'");
+			Check(ref ok, ObjAction.Parse("flythrough||") != null && ObjAction.Parse("flythrough||").Describe().Contains("'" + CameraPath.DefaultPath + "'"), "no path name: the path '" + CameraPath.DefaultPath + "'");
+			Check(ref ok, PlaceableCatalog.Get(CameraPath.PointName) != null, "the object list has the camera point");
+			// (once: an intro that doesn't replay)
+			Check(ref ok, !CameraPath.OnceOf("300") && CameraPath.OnceOf("300|once") && CameraPath.OnceOf("|once") && CameraPath.RangeOf("300|once") == 300f, "'once' reads after the range");
+			Check(ref ok, CameraPath.ArgOf("300", true) == "300|once" && CameraPath.ArgOf("300|once", false) == "300" && CameraPath.ArgOf("", true) == "|once", "... and is written back");
+			ObjAction once = ObjAction.Parse("flythrough|tour|300|once");
+			Check(ref ok, once != null && once.Arg == "300|once" && once.Describe().Contains("only the first time") && !act.Describe().Contains("only the first time"), "a once flight reads as '" + (once != null ? once.Describe() : "?") + "'");
+			Check(ref ok, CameraPath.OnceKey("Tour") == CameraPath.OnceKey("tour") && CameraPath.OnceKey("tour") != CameraPath.OnceKey("intro") && CameraPath.OnceKey("tour") >= CameraPath.OnceKeyBase && CameraPath.OnceKey("") == CameraPath.OnceKey(CameraPath.DefaultPath), "its saved state key by path name");
+
+			IslandFile bad = IslandGenerator.CreateFile(new IslandGenSettings { Seed = 1, Radius = 30f, Height = 6f }, "cipf4bad");
+			bad.Objects.Add(new IslandObject { Name = "Note_Sign", Props = P(BehaviourProps.Name, "lever", BehaviourProps.EventPrefix + "use", "flythrough|tour|200") });
+			bad.Objects.Add(new IslandObject { Name = CameraPath.PointName, Props = P(CameraPath.PathProp, "tour", CameraPath.OrderProp, "1") });
+			bad.Objects.Add(new IslandObject { Name = CameraPath.PointName, Props = P(CameraPath.OrderProp, "1") });
+			bad.Objects.Add(new IslandObject { Name = CameraPath.PointName, Props = P(CameraPath.PathProp, "Path", CameraPath.OrderProp, "2") });
+			Check(ref ok, CameraPath.PointsIn(bad, "tour") == 1 && CameraPath.PointsIn(bad, "") == 2, "points counted by path (no path name = '" + CameraPath.DefaultPath + "', any case)");
+			Check(ref ok, PlanChecker.FromFile(bad, "cipf4bad", false).Traps.Any(t => t.Text.Contains("fly-through") && t.Text.Contains("'tour'")), "Check warns on a path with one point");
+			bad.Objects.Add(new IslandObject { Name = CameraPath.PointName, Props = P(CameraPath.PathProp, "tour", CameraPath.OrderProp, "2") });
+			Check(ref ok, !PlanChecker.FromFile(bad, "cipf4bad", false).Traps.Any(t => t.Text.Contains("fly-through")), "... and not once it has two");
+			if (ok) Log("PASS: flythrough unit"); else Fail("flythrough unit");
+		}
+
+		/// <summary>A test island: a lever flying the path 'tour' (3 points, the middle one looking at 'tower'), a lever out of range.</summary>
+		static IslandFile FlyBuild()
+		{
+			var s = new IslandGenSettings { Seed = 4242, Radius = 50f, Height = 8f, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
+			IslandFile f = IslandGenerator.CreateFile(s, FlyIsland);
+			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(0f, 0f), 3), BehaviourProps.Name, "flylever", BehaviourProps.Use, "Pull", BehaviourProps.EventPrefix + "use", "flythrough|tour|2000"));
+			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(4f, 0f), 3), BehaviourProps.Name, "farlever", BehaviourProps.Use, "Pull", BehaviourProps.EventPrefix + "use", "flythrough|tour|5"));
+			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(-4f, 0f), 3), BehaviourProps.Name, "oncelever", BehaviourProps.Use, "Pull", BehaviourProps.EventPrefix + "use", "flythrough|tour|2000|once"));
+			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(-10f, 10f), 3), BehaviourProps.Name, "tower"));
+			Vector3[] at = { new Vector3(-20f, 25f, -20f), new Vector3(0f, 18f, 20f), new Vector3(25f, 22f, 0f) };
+			for (int i = 0; i < at.Length; i++)
+			{
+				IslandObject o = ScObj(CameraPath.PointName, at[i], CameraPath.PathProp, "tour", CameraPath.OrderProp, (i + 1).ToString(), CameraPath.SpeedProp, "20", CameraPath.HoldProp, i == 1 ? "1" : "0");
+				if (i == 1) o.Props[CameraPath.LookProp] = "tower";
+				if (i == 2) o.Props[BehaviourProps.Use] = "Look"; // (no use on an unseen point)
+				o.EulerRotation = new Vector3(30f, 45f, 0f);
+				f.Objects.Add(o);
+			}
+			return f;
+		}
+
+		static IEnumerator FlyWorld()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("flythrough world: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Note_Sign" });
+			bool ok = true;
+			IslandWorldState.Entry e = null;
+			yield return RfSpawn(FlyBuild(), FlyIsland, x => e = x);
+			if (e == null) yield break;
+			Network_Player player = RAPI.GetLocalPlayer();
+			List<CameraPath.Key> keys = CameraPath.WorldKeys(e, "tour");
+			Check(ref ok, keys.Count == 3 && Behaviours.RefsOf(e).Count(r => CameraPath.IsPoint(r.ObjectName)) == 3, "the island's 3 camera points are in the world (" + keys.Count + ")");
+			Check(ref ok, Behaviours.RefsOf(e).Where(r => CameraPath.IsPoint(r.ObjectName)).All(r => r.GetComponentsInChildren<Renderer>().Length == 0), "... and not seen (no marker in a world)");
+			Transform tower = ScObjOf(e, "tower").transform;
+			Check(ref ok, keys.Count == 3 && Vector3.Distance(keys[1].Look, tower.position) < 0.01f, "the middle point looks at 'tower'");
+
+			int shown = CameraFlight.Shown, skipped = CameraFlight.Skipped;
+			var sent = new List<IslandNetMessage>();
+			IslandNetwork.Loopback = m => sent.Add(m);
+			try { ScUse(e, "flylever"); }
+			finally { IslandNetwork.Loopback = null; }
+			yield return null;
+			Check(ref ok, CameraFlight.Active && CameraFlight.Shown == shown + 1 && CameraFlight.InputHeld, "the lever starts the flight, the player's input held");
+			Check(ref ok, sent.Any(m => m.Kind == IslandNetMessage.Moment && m.Name == "path" && m.Ids[0] == e.Id && m.Data.StartsWith("tour\n")), "every player is told (Moment 'path')");
+			Transform cam = player.Camera != null ? player.Camera.transform : Camera.main.transform;
+			// (the closest it came around the glide's end: a slow frame of a minimised Raft can step past the point, 10-26)
+			float atFirst = 99f;
+			for (float until = Time.unscaledTime + CameraMoment.Glide + 0.4f; Time.unscaledTime < until; )
+			{
+				if (keys.Count > 0) atFirst = Mathf.Min(atFirst, Vector3.Distance(cam.position, keys[0].Pos));
+				yield return null;
+			}
+			Check(ref ok, atFirst < 1.5f, "the camera starts at the first point (" + atFirst.ToString("F2") + " m)");
+			float best = 99f, bestLook = 180f, duration = CameraFlight.LastDuration;
+			bool shot = false;
+			for (float until = Time.unscaledTime + duration; Time.unscaledTime < until && CameraFlight.Active; )
+			{
+				if (keys.Count > 1)
+				{
+					float d = Vector3.Distance(cam.position, keys[1].Pos);
+					if (d < best) { best = d; bestLook = Vector3.Angle(cam.forward, tower.position - cam.position); }
+				}
+				if (!shot && best < 0.3f && bestLook < 30f) { shot = true; Shot("pf4_flythrough"); }
+				yield return null;
+			}
+			Check(ref ok, best < 0.3f && bestLook < 5f, "it passes the middle point (" + best.ToString("F2") + " m), looking at 'tower' (" + bestLook.ToString("F1") + " degrees)");
+			yield return new WaitForSecondsRealtime(CameraMoment.Glide + 0.5f);
+			float home = Vector3.Distance(cam.position, player.transform.position);
+			Check(ref ok, !CameraFlight.Active && !CameraFlight.InputHeld && home < 3f, "over after " + duration.ToString("F1") + " s: the camera with the player (" + home.ToString("F1") + " m), the input given back");
+
+			ScUse(e, "flylever");
+			yield return new WaitForSecondsRealtime(1f);
+			Check(ref ok, CameraFlight.Active && CameraFlight.InputHeld, "again: it flies (once per use, no loop)");
+			EscKey.Press();
+			yield return null;
+			yield return null;
+			yield return null;
+			home = Vector3.Distance(cam.position, player.transform.position);
+			Check(ref ok, !CameraFlight.Active && !CameraFlight.InputHeld && CameraFlight.Skipped == skipped + 1 && home < 3f, "Esc skips it: the camera back at once (" + home.ToString("F1") + " m), the input given back");
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, CanvasHelper.ActiveMenu != MenuType.PauseMenu, "... and Raft's pause menu is not left open");
+
+			shown = CameraFlight.Shown;
+			ScUse(e, "farlever");
+			yield return new WaitForSeconds(0.3f);
+			Check(ref ok, CameraFlight.Shown == shown && !CameraFlight.Active, "out of range (5 m of a point): no flight here");
+			Check(ref ok, Behaviours.RefsOf(e).Where(r => CameraPath.IsPoint(r.ObjectName)).All(r => r.GetComponentInChildren<UseInteract>(true) == null), "a camera point with a use hint can't be used (nothing to look at)");
+
+			// Once per world: the first use flies, the next doesn't, and the world keeps it
+			int key = CameraPath.OnceKey("tour");
+			Check(ref ok, !ContentState.IsUsed(e, key), "the once flight not flown yet");
+			shown = CameraFlight.Shown;
+			ScUse(e, "oncelever");
+			yield return null;
+			Check(ref ok, CameraFlight.Active && CameraFlight.Shown == shown + 1 && ContentState.IsUsed(e, key), "the once lever flies, and the island's state marks the path flown");
+			// (as for the skip above: Esc a moment into the flight, not on its first frame, 10-26)
+			yield return new WaitForSecondsRealtime(1f);
+			EscKey.Press();
+			yield return null;
+			yield return null;
+			yield return new WaitForSecondsRealtime(0.3f);
+			ScUse(e, "oncelever");
+			yield return new WaitForSeconds(0.3f);
+			Check(ref ok, CameraFlight.Shown == shown + 1 && !CameraFlight.Active, "... and not a second time");
+			ScUse(e, "flylever");
+			yield return null;
+			Check(ref ok, CameraFlight.Active && CameraFlight.Shown == shown + 2, "the every-time lever still flies the same path");
+			EscKey.Press();
+			yield return null;
+			yield return null;
+			yield return new WaitForSecondsRealtime(0.3f);
+			RfAway(e);
+			RfRemove(FlyIsland);
+			if (ok) Log("PASS: flythrough world"); else Fail("flythrough world");
+		}
+
+		static IEnumerator FlyEditor()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			Vector3 c0 = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 20f, 500f);
+			var made = new List<EditorGameObject>();
+			for (int i = 0; i < 3; i++)
+			{
+				EditorGameObject o = PlaceForTest(CameraPath.PointName, c0 + new Vector3(i * 15f, i * 3f, i % 2 * 10f), placed);
+				if (o == null) { Fail("flythrough editor: no camera point placed"); yield break; }
+				o.Props[CameraPath.PathProp] = "ci tour";
+				o.Props[CameraPath.OrderProp] = (3 - i).ToString();
+				o.Props[CameraPath.SpeedProp] = "30";
+				made.Add(o);
+			}
+			yield return new WaitForSecondsRealtime(0.7f);
+			Check(ref ok, CameraPath.PathsInEditor().Contains("ci tour") && CameraPath.EditorPoints("ci tour").Count == 3, "the path is listed for the action's ... button");
+			Check(ref ok, CameraPath.LinesShown > 0, "its line is drawn (" + CameraPath.LinesShown + ")");
+			List<CameraPath.Key> keys = CameraPath.EditorKeys("ci tour");
+			Check(ref ok, keys.Count == 3 && Vector3.Distance(keys[0].Pos, made[2].transform.position) < 0.01f, "the points in their order (order 1 first)");
+
+			Camera c = Camera.main;
+			Vector3 camWas = c.transform.position;
+			Vector3 pointWas = made[0].transform.position;
+			Check(ref ok, ObjectInspector.CameraPointToView(made[0]) && Vector3.Distance(made[0].transform.position, camWas) < 0.01f, "'To my view' moves a point to the camera");
+			CommandUndoRedo.UndoRedoManager.Undo();
+			yield return null;
+			Check(ref ok, Vector3.Distance(made[0].transform.position, pointWas) < 0.01f, "... and Ctrl+Z puts it back");
+
+			EditorCamera ec = c.GetComponent<EditorCamera>();
+			Canvas ui = EditorUI.Canvas;
+			bool uiWas = ui != null && ui.enabled;
+			Check(ref ok, CameraPath.Preview("ci tour", false) == null && CameraFlight.Active && (ec == null || !ec.enabled), "Preview flies the editor camera (its own control off)");
+			// (player 10-30: the inspector covered the preview)
+			Check(ref ok, ui == null || !ui.enabled, "the editor's windows are hidden while it flies");
+			yield return new WaitForSecondsRealtime(0.2f);
+			Check(ref ok, keys.Count > 0 && Vector3.Distance(c.transform.position, keys[0].Pos) < 8f, "it starts at the first point");
+			float wait = Time.unscaledTime + CameraFlight.LastDuration + 3f;
+			while (CameraFlight.Active && Time.unscaledTime < wait) yield return null;
+			yield return null;
+			Check(ref ok, !CameraFlight.Active && Vector3.Distance(c.transform.position, camWas) < 0.01f && (ec == null || ec.enabled), "over: the editor camera back where it was, its control on");
+			Check(ref ok, ui == null || ui.enabled == uiWas, "... and the editor's windows back");
+
+			Check(ref ok, CameraPath.Preview("ci tour", true) == null && CameraFlight.Active, "Record trailer starts");
+			for (int i = 0; i < 20; i++) yield return null;
+			string folder = CameraFlight.LastFolder;
+			EscKey.Press();
+			yield return null;
+			yield return null;
+			int pngs = folder != null && Directory.Exists(folder) ? Directory.GetFiles(folder, "frame_*.png").Length : 0;
+			Check(ref ok, !CameraFlight.Active && pngs >= 10 && pngs == CameraFlight.LastFrames && File.Exists(Path.Combine(folder, "frame_00001.png")), "it wrote " + pngs + " frames to " + folder + " (Esc stopped it)");
+			Check(ref ok, Vector3.Distance(c.transform.position, camWas) < 0.01f, "... and the camera is back");
+			Check(ref ok, ui == null || ui.enabled == uiWas, "... and the editor's windows after Esc");
+			Check(ref ok, CameraPath.Preview("nothing here", false) != null && !CameraFlight.Active, "a path with no points says so, no flight");
+			try { if (folder != null) Directory.Delete(folder, true); } catch { }
+			foreach (EditorGameObject o in made) if (o != null) UnityEngine.Object.Destroy(o.gameObject);
+			yield return new WaitForSecondsRealtime(0.7f);
+			Check(ref ok, !CameraPath.PathsInEditor().Contains("ci tour"), "the test points removed");
+			if (ok) Log("PASS: flythrough editor"); else Fail("flythrough editor");
+		}
+
+		#endregion
+
+		#region PF5 island map and pings
+
+		const string MapIsland = "cipf5map";
+
+		[ConsoleCommand(name: "CIMinimap", docs: "Dev (PF5): the island map. CIMinimap unit - the map key's toggle (corner, hidden), zoom 1/2/4x and its view around the player, the map marker in the object list, the ping message / world - host, world 'CI ...': on a test island the map shows (picture taken), the quest step's target and a map marker on it, full screen and off, then pings: the message (island-local spot), at most one a second, a crew mate's ping shown and passed on, gone after its seconds; picture shot_pf5_map.png / editor - in the editor: a map marker placed, its inspector group, its text kept")]
+		public static void MinimapCommand(string[] args) { StartTest(MinimapRoutine(args != null && args.Length > 0 ? args[0] : "unit")); }
+
+		static IEnumerator MinimapRoutine(string what)
+		{
+			if (what == "world") { yield return MapWorld(); yield break; }
+			if (what == "editor") { yield return MapEditor(); yield break; }
+			bool ok = true;
+			int mode = Minimap.Mode, zoom = Minimap.Zoom; bool opt = MapOptionOn(); // (zoom keys work only with the world setting on)
+			Check(ref ok, Minimap.NextMode(Minimap.Corner) == Minimap.Off && Minimap.NextMode(Minimap.Off) == Minimap.Corner && Minimap.NextMode(1) == Minimap.Corner, "the map key: corner -> hidden -> corner, never full screen");
+			Check(ref ok, WorldOptions.Parse("nominimap").Count == 0 && WorldOptions.Parse("minimap").Contains(WorldOptions.MinimapOn), "old worlds' 'nominimap' is dropped (no map), 'minimap' turns it on");
+			Minimap.SetZoom(8); bool z4 = Minimap.Zoom == 4;
+			Minimap.SetZoom(3); bool z2 = Minimap.Zoom == 2;
+			Minimap.SetZoom(0);
+			Check(ref ok, z4 && z2 && Minimap.Zoom == 1, "zoom is 1x, 2x or 4x");
+			Rect all = Minimap.View(Vector3.zero);
+			Check(ref ok, all.width == 1f && all.x == 0f && all.y == 0f, "at 1x the whole island shows");
+			Minimap.SetZoom(4);
+			Rect v = Minimap.View(Minimap.Center);
+			Check(ref ok, Mathf.Abs(v.width - 0.25f) < 0.001f && Mathf.Abs(v.center.x - 0.5f) < 0.001f && Mathf.Abs(v.center.y - 0.5f) < 0.001f, "at 4x a quarter, around the player");
+			Rect edge = Minimap.View(Minimap.Center + new Vector3(10000f, 0f, 10000f));
+			Check(ref ok, edge.xMax <= 1.0001f && edge.yMax <= 1.0001f && edge.x >= 0f, "... kept inside the picture at its edge");
+			Minimap.Mode = mode; Minimap.Zoom = zoom; MapOptionBack(opt);
+			if (PlaceableCatalog.IsBuilt) Check(ref ok, PlaceableCatalog.Get(Minimap.MarkerName) != null, "the object list has the map marker");
+			else Log("minimap unit: the object list is not built yet (opens with the editor) - marker check skipped");
+			IslandNetMessage m = Minimap.MessageFor(new Vector3(1f, 2f, 3f), 77UL);
+			Check(ref ok, m.Kind == IslandNetMessage.Ping && m.Kind == 40 && m.Offsets.Length == 3 && m.Data == "77", "the ping message: kind 40, a spot, the sender's id");
+			if (ok) Log("PASS: minimap unit"); else Fail("minimap unit");
+		}
+
+		[ConsoleCommand(name: "CIMinimapOff", docs: "Dev (PF5): the Minimap checkbox. World 'CI ...' on a test island: off - the map key does nothing, the map is hidden at once and no picture is taken; on again - it shows. The setting is restored")]
+		public static void MinimapOffCommand(string[] args) { StartTest(MinimapOffRoutine()); }
+
+		static IEnumerator MinimapOffRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("minimap off: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Note_Sign" });
+			bool ok = true;
+			bool was = Minimap.Enabled; int mode = Minimap.Mode, zoom = Minimap.Zoom; bool opt = MapOptionOn();
+			IslandWorldState.Entry e = null;
+			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
+			if (e == null) yield break;
+			Minimap.Enabled = true;
+			Minimap.Mode = Minimap.Corner;
+			Minimap.SetZoom(1);
+			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
+			yield return new WaitForSecondsRealtime(1.5f);
+			Check(ref ok, Minimap.Island == e && Minimap.Shown, "on: the map shows on the island");
+			Minimap.Enabled = false;
+			Check(ref ok, !Minimap.Shown, "off: the open map is hidden at once");
+			int renders = Minimap.RenderCount;
+			Minimap.Cycle(); Minimap.SetZoom(4);
+			Check(ref ok, Minimap.Mode == Minimap.Corner && Minimap.Zoom == 1, "off: the map key and zoom do nothing");
+			Minimap.Mode = Minimap.Corner;
+			yield return new WaitForSecondsRealtime(1.5f);
+			Check(ref ok, !Minimap.Shown && Minimap.RenderCount == renders && !Minimap.Render(), "off: never shown, no picture taken");
+			Check(ref ok, WorldRules.ReadDefault(Minimap.SettingName) == "off", "off is saved as minimap=off");
+			Minimap.Enabled = true;
+			Minimap.Mode = Minimap.Corner;
+			yield return new WaitForSecondsRealtime(1.5f);
+			Check(ref ok, Minimap.Shown, "on again: the map shows");
+			Check(ref ok, WorldRules.ReadDefault(Minimap.SettingName) == "on", "on is saved as minimap=on");
+			// (the M key with the map on: hides the corner map, shows it again; never full screen)
+			Minimap.MapKeyPressed();
+			yield return new WaitForSecondsRealtime(0.5f);
+			Check(ref ok, Minimap.Mode == Minimap.Off && !Minimap.Shown, "the map key: the corner map hidden");
+			Minimap.MapKeyPressed();
+			yield return new WaitForSecondsRealtime(0.5f);
+			Check(ref ok, Minimap.Mode == Minimap.Corner && Minimap.CornerShown && Mathf.Abs(Minimap.PanelSize.x - Minimap.CornerSize) < 0.5f && Minimap.PanelScreenShare < 0.35f,
+				"the map key again: back in the corner (panel " + Minimap.PanelSize.x.ToString("F0") + ", " + (Minimap.PanelScreenShare * 100f).ToString("F0") + "% of the screen's height)");
+			ScreenCapture.CaptureScreenshot(Path.Combine(DynamicIslands.assetpath, "minimap_corner_1109.png"));
+			yield return new WaitForSecondsRealtime(1f);
+			// (the world setting off - the default: no map for anyone, whatever this PC's box says)
+			var on = WorldOptions.Current.ToList(); on.Remove(WorldOptions.MinimapOn);
+			WorldOptions.Set(on);
+			yield return new WaitForSecondsRealtime(1.5f);
+			Check(ref ok, Minimap.Enabled && !Minimap.Available && !Minimap.Shown, "Island minimap off in the world: the box is on, but no map");
+			renders = Minimap.RenderCount; Minimap.Mode = Minimap.Corner; Minimap.MapKeyPressed(); Minimap.SetZoom(4);
+			Check(ref ok, Minimap.Mode == Minimap.Corner && Minimap.Zoom == 1 && !Minimap.Render() && Minimap.RenderCount == renders, "Island minimap off: the map key and zoom do nothing, no picture");
+			on.Add(WorldOptions.MinimapOn); WorldOptions.Set(on);
+			yield return new WaitForSecondsRealtime(1.5f);
+			Check(ref ok, Minimap.Available && Minimap.Shown, "Island minimap on again: the map shows");
+			Minimap.Enabled = was; Minimap.Mode = mode; Minimap.SetZoom(zoom); MapOptionBack(opt);
+			if (ok) Log("PASS: minimap off"); else Fail("minimap off");
+		}
+
+		[ConsoleCommand(name: "CIMinimapReset", docs: "Dev (11-10): M hides the corner map for one world only. hide - in world A the map key's state is set to hidden; check - after loading or joining another world it is the corner map again")]
+		public static void MinimapResetCommand(string[] args)
+		{
+			string what = args != null && args.Length > 0 ? args[0].ToLowerInvariant() : "";
+			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("minimap reset: run in a world"); return; }
+			if (what == "hide")
+			{
+				Minimap.Mode = Minimap.Off;
+				if (Minimap.Mode == Minimap.Off) Log("PASS: minimap reset hide"); else Fail("minimap reset hide");
+				return;
+			}
+			if (what == "check")
+			{
+				bool ok = true;
+				Check(ref ok, Minimap.Mode == Minimap.Corner, "the next world starts with the corner map (mode " + Minimap.Mode + ")");
+				if (ok) Log("PASS: minimap reset check"); else Fail("minimap reset check");
+				return;
+			}
+			Fail("CIMinimapReset hide|check");
+		}
+
+		[ConsoleCommand(name: "CIMinimapRafts", docs: "Dev (UR1): the island map stays small near drifting rafts. Host, world 'CI ...': a ghost ship, a ghost raft and a trader raft are brought beside Raft's raft one by one, the player put aboard each from open sea: the map shows in the corner (its panel CornerSize, under 35% of the screen), zoom and picture size as before. On the ghost ship the map key opens it full screen and it is left open when the ship goes; at sea before the trader raft the map key is pressed with no map in sight. Shots ur1_map_<kind>.png in the mod folder. The rafts are removed after")]
+		public static void MinimapRaftsCommand(string[] args) { StartTest(MinimapRafts()); }
+
+		static IEnumerator MinimapRafts()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ") || !CustomIslandSpawner.RaftPosition.HasValue) { Fail("minimap rafts: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			Network_Player me = RAPI.GetLocalPlayer();
+			bool ok = true;
+			bool was = Minimap.Enabled; int mode = Minimap.Mode, zoom = Minimap.Zoom; bool opt = MapOptionOn();
+			Minimap.Enabled = true;
+			Minimap.Mode = Minimap.Corner;
+			Minimap.SetZoom(1);
+			if (!Minimap.Available) { Fail("minimap rafts: the map is not available"); Minimap.Enabled = was; MapOptionBack(opt); yield break; }
+			string[] kinds = { GhostShip.TypeName, GhostRafts.TypeName, TraderRaft.TypeName };
+			List<IslandWorldState.Entry> made = new List<IslandWorldState.Entry>();
+			for (int k = 0; k < kinds.Length; k++)
+			{
+				// Open sea first: no map
+				Vector3? sea = MapSeaSpot();
+				if (!sea.HasValue) { Check(ref ok, false, "an open sea spot with no island near"); break; }
+				PlayerMove.To(me, sea.Value); KeepAlive(me);
+				yield return new WaitForSecondsRealtime(1.5f);
+				Check(ref ok, Minimap.Island == null && !Minimap.Shown, kinds[k] + ": at sea first, no map (mode " + Minimap.Mode + ")");
+				if (k == 2) Minimap.MapKeyPressed(); // (the key pressed at sea, no map in sight)
+				IslandWorldState.Entry e = null;
+				yield return MapRaftMake(kinds[k], 4100 + k, x => e = x);
+				if (e == null || e.Root == null) { Check(ref ok, false, kinds[k] + ": brought beside the raft"); break; }
+				made.Add(e);
+				PlayerMove.To(me, DeckSpot(e)); KeepAlive(me);
+				yield return WaitFor(() => Minimap.Island == e && Minimap.Shown, 8f);
+				yield return new WaitForSecondsRealtime(1f);
+				Vector2 size = Minimap.PanelSize;
+				float share = Minimap.PanelScreenShare, most = Mathf.Max(40f, CustomIslandSpawner.LandRadius(e.Name) + 25f);
+				Check(ref ok, Minimap.Island == e && Minimap.Shown && Minimap.Mode == Minimap.Corner && Mathf.Abs(size.x - Minimap.CornerSize) < 0.5f && Mathf.Abs(size.y - Minimap.CornerSize) < 0.5f && share > 0f && share < 0.35f,
+					kinds[k] + " aboard: the map in the corner (mode " + Minimap.Mode + ", panel " + size.x.ToString("F0") + "x" + size.y.ToString("F0") + ", " + (share * 100f).ToString("F0") + "% of the screen's height, '" + e.HostName + "')");
+				Check(ref ok, Minimap.Zoom == 1 && Minimap.HalfSize >= 40f && Minimap.HalfSize <= most + 0.01f && Minimap.View(me.transform.position).width == 1f,
+					kinds[k] + ": zoom 1x, picture half-size " + Minimap.HalfSize.ToString("F0") + " m (40.." + most.ToString("F0") + "), the whole picture shown");
+				ScreenCapture.CaptureScreenshot(Path.Combine(DynamicIslands.assetpath, "ur1_map_" + kinds[k] + ".png"));
+				yield return new WaitForSecondsRealtime(1f);
+				if (k == 0)
+				{
+					Minimap.MapKeyPressed(); // (the player hides the map aboard, then shows it again: never full screen)
+					yield return new WaitForSecondsRealtime(0.5f);
+					bool hidden = Minimap.Mode == Minimap.Off && !Minimap.Shown;
+					Minimap.MapKeyPressed();
+					yield return new WaitForSecondsRealtime(0.5f);
+					Check(ref ok, hidden && Minimap.Mode == Minimap.Corner && Mathf.Abs(Minimap.PanelSize.x - Minimap.CornerSize) < 0.5f, "the map key aboard: hidden, then back in the corner (" + Minimap.PanelSize.x.ToString("F0") + ")");
+				}
+				// (it drifts away / sinks: gone before the next, which gets its room)
+				IslandWorldState.RemoveIds(new[] { e.Id }, true);
+				yield return new WaitForSecondsRealtime(1f);
+			}
+			IslandWorldState.RemoveIds(made.Where(x => IslandWorldState.Contains(x)).Select(x => x.Id).ToList(), true);
+			IslandWorldState.Save();
+			Minimap.Enabled = was; Minimap.Mode = mode; Minimap.Zoom = zoom; MapOptionBack(opt);
+			OnRaftCommand();
+			if (ok) Log("PASS: minimap rafts"); else Fail("minimap rafts");
+		}
+
+		/// <summary>Tests: switch the world setting Island minimap on (off by default); returns whether it was on.</summary>
+		static bool MapOptionOn()
+		{
+			bool was = WorldOptions.On(WorldOptions.MinimapOn);
+			if (!was) { var on = WorldOptions.Current.ToList(); on.Add(WorldOptions.MinimapOn); WorldOptions.Set(on); }
+			return was;
+		}
+
+		static void MapOptionBack(bool was)
+		{
+			if (was || !WorldOptions.On(WorldOptions.MinimapOn)) return;
+			var on = WorldOptions.Current.ToList(); on.Remove(WorldOptions.MinimapOn); WorldOptions.Set(on);
+		}
+
+		/// <summary>A spot on the open sea near Raft's raft with no island (of the mod) within the map's reach.</summary>
+		static Vector3? MapSeaSpot()
+		{
+			Vector3 r = CustomIslandSpawner.RaftPosition.Value;
+			for (float d = 40f; d <= 900f; d += 60f)
+				for (int a = 0; a < 12; a++)
+				{
+					Vector3 p = r + Quaternion.Euler(0f, a * 30f, 0f) * Vector3.forward * d;
+					p.y = 0.5f;
+					if (Minimap.IslandAt(p) == null) return p;
+				}
+			return null;
+		}
+
+		/// <summary>One drifting raft of that map type beside Raft's raft, as the world options bring them.</summary>
+		static IEnumerator MapRaftMake(string type, int seed, Action<IslandWorldState.Entry> done)
+		{
+			MapType t = MapTypes.Get(type);
+			if (t == null) { Log("  no map type '" + type + "'"); yield break; }
+			float el;
+			IslandGenSettings s = MapTypes.Roll(t, new System.Random(seed), out el);
+			string name = CustomIslandSpawner.FreeName(CustomIslandSpawner.GeneratedPrefix + type + "-" + s.Seed);
+			IslandFile f = MapTypes.Create(t, s, el, name);
+			f.Save(IslandSpawner.PathFor(name));
+			// (out to 900 m: the CI world keeps islands of earlier runs, and Raft's own islands may be near)
+			Vector3? spot = CustomIslandSpawner.FindClearSpot(CustomIslandSpawner.RaftPosition.Value, s.Radius, 900f);
+			if (!spot.HasValue) { Log("  no open sea near the raft for '" + name + "' (land radius " + s.Radius.ToString("F0") + " m)"); yield break; }
+			int before = IslandWorldState.Islands.Count;
+			yield return DynamicIslands.instance.SpawnIslandFile(name, spot.Value, true);
+			IslandWorldState.Entry e = IslandWorldState.Islands.Skip(before).FirstOrDefault();
+			for (float w = 0f; w < 20f && e != null && (e.Root == null || e.Loading); w += 0.5f) yield return new WaitForSecondsRealtime(0.5f);
+			done(e);
+		}
+
+		[ConsoleCommand(name: "CIMinimapLook", docs: "Dev (PF5): how the island map looks. World 'CI ...': on the map test island logs the sea (Raft's water: height, layer, colours) and what is drawn on the picture by layer and height, saves the picture as it was before 10-31 (minimap_before.png) and now (minimap_after.png), the corner map and the full map on screen (minimap_corner.png, minimap_full.png). CIMinimapLook <folder> (default the mod folder)")]
+		public static void MinimapLookCommand(string[] args) { StartTest(MinimapLook(args != null && args.Length > 0 ? string.Join(" ", args) : DynamicIslands.assetpath)); }
+
+		static IEnumerator MinimapLook(string dir)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("minimap look: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Note_Sign" });
+			bool ok = true;
+			IslandWorldState.Entry e = null;
+			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
+			if (e == null) yield break;
+			int mode = Minimap.Mode; bool opt = MapOptionOn();
+			Minimap.Mode = Minimap.Corner;
+			Minimap.SetZoom(1);
+			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
+			yield return new WaitForSecondsRealtime(2f);
+			Check(ref ok, Minimap.Island == e && Minimap.Shown && Minimap.Picture != null, "the map shows on the island");
+			Vector3 c = Minimap.Center; float half = Minimap.HalfSize;
+			Log("look: centre " + c.ToString("F1") + " half " + half.ToString("F0") + " root " + e.Root.transform.position.ToString("F1") + " SeaY " + Minimap.SeaY);
+			UltimateWater.Water w = UnityEngine.Object.FindObjectOfType<UltimateWater.Water>();
+			if (w == null) Log("look: no UltimateWater.Water");
+			else
+			{
+				string h = "?"; try { h = w.GetHeightAt(c.x, c.z, w.Time).ToString("F2"); } catch (Exception ex) { h = ex.GetType().Name; }
+				Log("look: water '" + w.name + "' y " + w.transform.position.y.ToString("F2") + " height here " + h + " layer " + w.gameObject.layer + " (" + LayerMask.LayerToName(w.gameObject.layer) + "), renderers " + string.Join(",", w.GetComponentsInChildren<Renderer>(true).Select(r => r.name + "@" + r.gameObject.layer).Take(6).ToArray()));
+				try
+				{
+					foreach (object v in Enum.GetValues(typeof(UltimateWater.WaterMaterials.ColorParameter)))
+						Log("look: water colour " + v + " = " + w.Materials.GetParameterValue((UltimateWater.WaterMaterials.ColorParameter)v));
+				}
+				catch (Exception ex) { Log("look: water colours: " + ex.Message); }
+			}
+			var rect = new Rect(c.x - half, c.z - half, half * 2f, half * 2f);
+			var drawn = UnityEngine.Object.FindObjectsOfType<Renderer>().Where(r => r != null && r.enabled && r.gameObject.activeInHierarchy && rect.Overlaps(new Rect(r.bounds.min.x, r.bounds.min.z, r.bounds.size.x, r.bounds.size.z))).ToList();
+			foreach (var g in drawn.GroupBy(r => r.gameObject.layer).OrderBy(g => g.Key))
+				Log("look: layer " + g.Key + " (" + LayerMask.LayerToName(g.Key) + ") " + g.Count() + " renderers, y " + g.Min(r => r.bounds.min.y).ToString("F1") + ".." + g.Max(r => r.bounds.max.y).ToString("F1") + ": " + string.Join(", ", g.Select(r => r.name).Distinct().Take(5).ToArray()));
+			var under = drawn.Where(r => r.bounds.max.y < Minimap.SeaY - Minimap.ShallowDepth).ToList();
+			Log("look: wholly deeper than the sea plane (not on the map now): " + under.Count + ": " + string.Join(", ", under.Select(r => r.name).Distinct().Take(12).ToArray()));
+			var terr = Terrain.activeTerrains.Where(t => t != null && rect.Overlaps(new Rect(t.transform.position.x, t.transform.position.z, t.terrainData.size.x, t.terrainData.size.z))).ToList();
+			Log("look: terrains " + string.Join(", ", terr.Select(t => t.name + " y " + t.transform.position.y.ToString("F1") + ".." + (t.transform.position.y + t.terrainData.size.y).ToString("F1") + " layer " + t.gameObject.layer).ToArray()));
+			try { Directory.CreateDirectory(dir); } catch { }
+			// before 10-31: Raft's sea floor down to 900 m under the camera, a dark teal behind
+			var go = new GameObject("CI_MapOld");
+			Camera old = go.AddComponent<Camera>();
+			old.enabled = false; old.orthographic = true; old.clearFlags = CameraClearFlags.SolidColor;
+			old.backgroundColor = new Color(0.12f, 0.32f, 0.42f, 1f); old.cullingMask = ~(1 << 5); old.nearClipPlane = 1f; old.farClipPlane = 900f;
+			old.orthographicSize = half; old.transform.position = c + Vector3.up * 400f; old.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+			var rt = new RenderTexture(512, 512, 16);
+			old.targetTexture = rt;
+			bool fog = RenderSettings.fog; RenderSettings.fog = false;
+			try { old.Render(); } finally { RenderSettings.fog = fog; old.targetTexture = null; }
+			SaveRt(rt, Path.Combine(dir, "minimap_before.png"));
+			UnityEngine.Object.Destroy(go); rt.Release();
+			Check(ref ok, Minimap.Render(), "the picture taken again");
+			SaveRt(Minimap.Picture, Path.Combine(dir, "minimap_after.png"));
+			Check(ref ok, GameObject.Find("CustomIslands_MapSea") == null && GameObject.Find("CustomIslands_MapShallows") == null, "the sea planes are hidden after the picture (no one else sees them)");
+			yield return new WaitForSecondsRealtime(0.5f);
+			ScreenCapture.CaptureScreenshot(Path.Combine(dir, "minimap_corner.png"));
+			yield return new WaitForSecondsRealtime(1f);
+			Minimap.Cycle();
+			yield return new WaitForSecondsRealtime(1f);
+			Check(ref ok, Minimap.Mode == Minimap.Off && !Minimap.Shown, "the map key: hidden (no full screen)");
+			ScreenCapture.CaptureScreenshot(Path.Combine(dir, "minimap_hidden.png"));
+			yield return new WaitForSecondsRealtime(1f);
+			Minimap.Mode = mode; MapOptionBack(opt);
+			RfAway(e);
+			yield return new WaitForSecondsRealtime(1f);
+			RfRemove(MapIsland);
+			if (ok) Log("PASS: minimap look (" + dir + ")"); else Fail("minimap look");
+		}
+
+		[ConsoleCommand(name: "CIMinimapUi", docs: "Dev (PF5): what is on screen under the corner map. World 'CI ...': on the map test island lists every active UI piece whose screen rectangle overlaps the map panel (name, path, size, canvas), counts the objects named MapPanel (one), then hides the other canvases for a moment and saves minimap_clean.png. CIMinimapUi <folder> (default the mod folder)")]
+		public static void MinimapUiCommand(string[] args) { StartTest(MinimapUi(args != null && args.Length > 0 ? string.Join(" ", args) : DynamicIslands.assetpath)); }
+
+		static IEnumerator MinimapUi(string dir)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("minimap ui: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Note_Sign" });
+			bool ok = true;
+			CloseRmlMenuCommand(); // (open when Raft starts; it covered the pictures)
+			IslandWorldState.Entry e = null;
+			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
+			if (e == null) yield break;
+			int mode = Minimap.Mode; bool opt = MapOptionOn();
+			Minimap.Mode = Minimap.Corner;
+			Minimap.SetZoom(1);
+			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
+			yield return new WaitForSecondsRealtime(2f);
+			Check(ref ok, Minimap.Island == e && Minimap.Shown, "the map shows on the island");
+			var panels = Resources.FindObjectsOfTypeAll<RectTransform>().Where(t => t != null && t.name == "MapPanel" && t.gameObject.scene.IsValid()).ToList();
+			Log("ui: objects named MapPanel " + panels.Count + ": " + string.Join(", ", panels.Select(t => UiPath(t) + (t.gameObject.activeInHierarchy ? " active " : " inactive ") + t.rect.size.ToString("F0")).ToArray()));
+			Check(ref ok, panels.Count == 1, "one MapPanel");
+			RectTransform panel = panels.FirstOrDefault(t => t.gameObject.activeInHierarchy);
+			if (panel == null) { Fail("minimap ui: no active MapPanel"); yield break; }
+			Canvas ours = panel.GetComponentInParent<Canvas>().rootCanvas;
+			Rect pr = MapScreenRect(panel);
+			Rect area = new Rect(pr.x, pr.y - 30f, pr.width, pr.height + 30f); // with the title under it
+			Log("ui: map panel screen " + pr + " size " + panel.rect.size.ToString("F0") + " canvas " + ours.name + " order " + ours.sortingOrder + " screen " + Screen.width + "x" + Screen.height);
+			var hits = UnityEngine.Object.FindObjectsOfType<UnityEngine.UI.Graphic>().Where(g => g != null && g.enabled && g.gameObject.activeInHierarchy && g.canvas != null && g.canvas.enabled && g.canvas.rootCanvas.renderMode != RenderMode.WorldSpace && g.color.a > 0.01f && MapScreenRect(g.rectTransform).Overlaps(area)).ToList();
+			foreach (var g in hits.OrderBy(g => g.canvas.rootCanvas == ours ? 0 : 1).ThenBy(g => UiPath(g.rectTransform)))
+				Log("ui: overlaps " + (g.canvas.rootCanvas == ours ? "[ours] " : "[other] ") + g.GetType().Name + " '" + UiPath(g.rectTransform) + "' screen " + MapScreenRect(g.rectTransform) + " size " + g.rectTransform.rect.size.ToString("F0") + " colour " + g.color + " canvas '" + g.canvas.rootCanvas.name + "' order " + g.canvas.rootCanvas.sortingOrder);
+			var others = hits.Select(g => g.canvas.rootCanvas).Where(cv => cv != ours).Distinct().ToList();
+			Log("ui: other canvases over/under the map: " + others.Count + ": " + string.Join(", ", others.Select(cv => cv.name + " (order " + cv.sortingOrder + ")").ToArray()));
+			try { Directory.CreateDirectory(dir); } catch { }
+			// (10-31) the quest panel moves under the corner map (the map was drawn over its title and first step) and back up when the big map is open
+			float until = Time.realtimeSinceStartup + 4f;
+			while (!QuestTracker.PanelShown && Time.realtimeSinceStartup < until) yield return null;
+			yield return new WaitForSecondsRealtime(1f);
+			RectTransform qp = Resources.FindObjectsOfTypeAll<RectTransform>().FirstOrDefault(t => t != null && t.name == "Quest" && t.parent != null && t.parent.name == "CustomIslands_Quest" && t.gameObject.scene.IsValid());
+			Check(ref ok, qp != null && qp.gameObject.activeInHierarchy, "the quest panel shows on the island");
+			if (qp != null)
+			{
+				RectTransform tt = panel.parent.GetComponentsInChildren<RectTransform>(true).FirstOrDefault(t => t.name == "MapTitle");
+				Rect map = pr;
+				if (tt != null) { Rect r = MapScreenRect(tt); map = Rect.MinMaxRect(Mathf.Min(map.xMin, r.xMin), Mathf.Min(map.yMin, r.yMin), Mathf.Max(map.xMax, r.xMax), Mathf.Max(map.yMax, r.yMax)); }
+				Rect q = MapScreenRect(qp);
+				Log("ui: quest panel screen " + q + " at " + qp.anchoredPosition.ToString("F0") + ", the map with its title " + map);
+				Check(ref ok, !q.Overlaps(map), "the quest panel is not under the corner map");
+				Check(ref ok, q.yMin >= 0f && q.xMin >= 0f && q.xMax <= Screen.width, "the quest panel is all on the screen");
+				ScreenCapture.CaptureScreenshot(Path.Combine(dir, "minimap_quest.png"));
+				yield return new WaitForSecondsRealtime(1f);
+				Log("ui: saved " + Path.Combine(dir, "minimap_quest.png") + " with the quest panel and the corner map");
+				float cornerY = qp.anchoredPosition.y;
+				Minimap.Mode = Minimap.Off;
+				yield return new WaitForSecondsRealtime(1.5f);
+				ScreenCapture.CaptureScreenshot(Path.Combine(dir, "minimap_hidden_quest.png"));
+				yield return new WaitForSecondsRealtime(1f);
+				Log("ui: saved " + Path.Combine(dir, "minimap_hidden_quest.png") + " with the quest panel and the map hidden");
+				Check(ref ok, Mathf.Abs(qp.anchoredPosition.y - (-160f)) < 0.5f && cornerY < -160f, "the quest panel goes back up with the map hidden (" + cornerY.ToString("F0") + " -> " + qp.anchoredPosition.y.ToString("F0") + ")");
+				Minimap.Mode = Minimap.Corner;
+				yield return new WaitForSecondsRealtime(1.5f);
+				Check(ref ok, Mathf.Abs(qp.anchoredPosition.y - cornerY) < 0.5f, "and under the corner map again");
+			}
+			foreach (var cv in others) cv.enabled = false;
+			try
+			{
+				yield return new WaitForSecondsRealtime(0.5f);
+				ScreenCapture.CaptureScreenshot(Path.Combine(dir, "minimap_clean.png"));
+				yield return new WaitForSecondsRealtime(1f);
+			}
+			finally { foreach (var cv in others) if (cv != null) cv.enabled = true; }
+			Log("ui: saved " + Path.Combine(dir, "minimap_clean.png") + " with the other canvases hidden");
+			Minimap.Mode = mode; MapOptionBack(opt);
+			RfAway(e);
+			yield return new WaitForSecondsRealtime(1f);
+			RfRemove(MapIsland);
+			if (ok) Log("PASS: minimap ui (" + dir + ")"); else Fail("minimap ui");
+		}
+
+		[ConsoleCommand(name: "CIQuestPanelPlace", docs: "Dev (11-09): the quest panel and the corner map. World 'CI ...': on the map test island the panel is never under the map (shown, hidden, shown), a simulated drag moves it and saves it in world_rules.txt (read again as on a new start), a place on the map is pushed out of it and comes back with the map hidden, a place off the screen is clamped, double-click and Defaults' Reset place put it back. Saves questpanel_*.png. CIQuestPanelPlace <folder> (default the mod folder)")]
+		public static void QuestPanelPlaceCommand(string[] args) { StartTest(QuestPanelPlace(args != null && args.Length > 0 ? string.Join(" ", args) : DynamicIslands.assetpath)); }
+
+		static IEnumerator QuestPanelPlace(string dir)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("quest panel place: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Note_Sign" });
+			bool ok = true;
+			CloseRmlMenuCommand();
+			IslandWorldState.Entry e = null;
+			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
+			if (e == null) yield break;
+			int mode = Minimap.Mode; bool opt = MapOptionOn();
+			Vector2? before = QuestTracker.SavedPlace;
+			const string who = "CIQuestPanelPlace";
+			try { Directory.CreateDirectory(dir); } catch { }
+			QuestTracker.ResetPlace();
+			Minimap.Mode = Minimap.Corner;
+			Minimap.SetZoom(1);
+			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
+			float until = Time.realtimeSinceStartup + 6f;
+			while ((!QuestTracker.PanelShown || !Minimap.CornerShown) && Time.realtimeSinceStartup < until) yield return null;
+			yield return new WaitForSecondsRealtime(1f);
+			RectTransform qp = QuestTracker.PanelRect;
+			Check(ref ok, qp != null && QuestTracker.PanelShown && Minimap.CornerShown, "the quest panel and the corner map both show");
+			if (qp == null) { Fail("quest panel place: no panel"); yield break; }
+			Func<bool> clear = () => { Rect m; return !Minimap.CornerScreenRect(out m) || !QuestTracker.PanelScreenRect().Overlaps(m); };
+			Func<bool> onScreen = () => { Rect q = QuestTracker.PanelScreenRect(); return q.xMin >= 0f && q.yMin >= 0f && q.xMax <= Screen.width + 0.5f && q.yMax <= Screen.height + 0.5f; };
+			Func<string> where = () => { Rect m; Minimap.CornerScreenRect(out m); return "panel " + QuestTracker.PanelScreenRect() + " at " + qp.anchoredPosition.ToString("F0") + ", map " + m + ", screen " + Screen.width + "x" + Screen.height; };
+			Log("place: own, map on: " + where());
+			Check(ref ok, clear() && onScreen(), "its own place: not under the map, on the screen");
+			Check(ref ok, qp.anchoredPosition.y < QuestTracker.HomePlace.y - 1f, "its own place with the map: under the map");
+			ScreenCapture.CaptureScreenshot(Path.Combine(dir, "questpanel_default.png"));
+			yield return new WaitForSecondsRealtime(1f);
+			Minimap.Mode = Minimap.Off;
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, (qp.anchoredPosition - QuestTracker.HomePlace).magnitude < 0.5f, "map hidden: back in its own place (" + qp.anchoredPosition.ToString("F0") + ")");
+			Minimap.Mode = Minimap.Corner;
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, clear(), "map shown again: out from under it at once");
+			// (a drag as the mouse does it, through the panel's own handlers; the mouse freed for it as an open window does)
+			ModCursor.Take(who);
+			yield return new WaitForSecondsRealtime(0.3f);
+			int drags = QuestTracker.Drags;
+			var ev = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current) { button = UnityEngine.EventSystems.PointerEventData.InputButton.Left };
+			UnityEngine.EventSystems.ExecuteEvents.Execute(qp.gameObject, ev, UnityEngine.EventSystems.ExecuteEvents.beginDragHandler);
+			for (int i = 0; i < 10; i++)
+			{
+				ev.delta = new Vector2(-60f, -25f);
+				UnityEngine.EventSystems.ExecuteEvents.Execute(qp.gameObject, ev, UnityEngine.EventSystems.ExecuteEvents.dragHandler);
+				yield return null;
+			}
+			UnityEngine.EventSystems.ExecuteEvents.Execute(qp.gameObject, ev, UnityEngine.EventSystems.ExecuteEvents.endDragHandler);
+			yield return new WaitForSecondsRealtime(0.5f);
+			Vector2? dropped = QuestTracker.SavedPlace;
+			Log("place: dragged: " + where() + ", saved " + (dropped.HasValue ? dropped.Value.ToString("F0") : "none") + ", world_rules questpanel=" + WorldRules.ReadDefault(QuestTracker.PlaceSetting) + ", cursor " + Cursor.lockState);
+			Check(ref ok, QuestTracker.Drags == drags + 1 && dropped.HasValue && dropped.Value.x < -300f, "a drag moves the panel and saves its place");
+			Check(ref ok, dropped.HasValue && (qp.anchoredPosition - dropped.Value).magnitude < 0.5f && clear() && onScreen(), "the panel stays where it was dropped");
+			ScreenCapture.CaptureScreenshot(Path.Combine(dir, "questpanel_dragged.png"));
+			yield return new WaitForSecondsRealtime(1f);
+			QuestTracker.ForgetPlace();
+			Check(ref ok, dropped.HasValue && QuestTracker.SavedPlace.HasValue && (QuestTracker.SavedPlace.Value - dropped.Value).magnitude < 1f, "the place is read back from world_rules.txt (" + WorldRules.ReadDefault(QuestTracker.PlaceSetting) + ")");
+			// (put on the map: pushed out while it shows, back at the player's place when it is hidden)
+			Vector2 onMap = new Vector2(-40f, -60f);
+			QuestTracker.SavePlace(onMap);
+			yield return new WaitForSecondsRealtime(0.3f);
+			Log("place: on the map: " + where());
+			Check(ref ok, clear() && onScreen(), "a place under the map: pushed out of it");
+			ScreenCapture.CaptureScreenshot(Path.Combine(dir, "questpanel_pushed.png"));
+			yield return new WaitForSecondsRealtime(1f);
+			Minimap.Mode = Minimap.Off;
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, (qp.anchoredPosition - onMap).magnitude < 0.5f, "map hidden: at the player's place (" + qp.anchoredPosition.ToString("F0") + ")");
+			Minimap.Mode = Minimap.Corner;
+			// (off the screen: clamped)
+			QuestTracker.SavePlace(new Vector2(-9000f, -9000f));
+			yield return new WaitForSecondsRealtime(0.3f);
+			Log("place: far off: " + where());
+			Check(ref ok, onScreen() && clear(), "a place off the screen: the whole panel on the screen");
+			// (double-click: back in its own place)
+			var click = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current) { button = UnityEngine.EventSystems.PointerEventData.InputButton.Left, clickCount = 2 };
+			UnityEngine.EventSystems.ExecuteEvents.Execute(qp.gameObject, click, UnityEngine.EventSystems.ExecuteEvents.pointerClickHandler);
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, !QuestTracker.SavedPlace.HasValue && string.IsNullOrEmpty(WorldRules.ReadDefault(QuestTracker.PlaceSetting)) && clear() && qp.anchoredPosition.y < QuestTracker.HomePlace.y - 1f, "double-click: back in its own place (under the map)");
+			// (Defaults > Keys > Quest panel: Reset place)
+			QuestTracker.SavePlace(new Vector2(-500f, -300f));
+			DefaultsWindow.Open();
+			yield return new WaitForSecondsRealtime(0.5f);
+			var reset = UnityEngine.Object.FindObjectsOfType<UnityEngine.UI.Button>().FirstOrDefault(b => b.name == "questPanelReset");
+			Check(ref ok, reset != null, "Defaults has the quest panel's Reset place button");
+			if (reset != null) reset.onClick.Invoke();
+			yield return new WaitForSecondsRealtime(0.3f);
+			Check(ref ok, !QuestTracker.SavedPlace.HasValue, "Reset place: back in its own place");
+			DefaultsWindow.Close();
+			ModCursor.Give(who);
+			QuestTracker.SavePlace(before);
+			Minimap.Mode = mode; MapOptionBack(opt);
+			RfAway(e);
+			yield return new WaitForSecondsRealtime(1f);
+			RfRemove(MapIsland);
+			if (ok) Log("PASS: quest panel place (" + dir + ")"); else Fail("quest panel place");
+		}
+
+		[ConsoleCommand(name: "CIQuestPanelRes", docs: "Dev (11-09): the quest panel and the corner map at other screen sizes. World 'CI ...': at 1920x1080, 1024x768 and 800x600 the panel (its own place, a dragged place, a place on the map) is never under the map and always on the screen; a place dragged at the big size is clamped when the screen gets smaller. Saves questpanelres_*.png. CIQuestPanelRes <folder> (default the mod folder)")]
+		public static void QuestPanelResCommand(string[] args) { StartTest(QuestPanelRes(args != null && args.Length > 0 ? string.Join(" ", args) : DynamicIslands.assetpath)); }
+
+		static IEnumerator QuestPanelRes(string dir)
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("quest panel res: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Note_Sign" });
+			bool ok = true;
+			CloseRmlMenuCommand();
+			IslandWorldState.Entry e = null;
+			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
+			if (e == null) yield break;
+			int mode = Minimap.Mode; bool opt = MapOptionOn();
+			Vector2? before = QuestTracker.SavedPlace;
+			int w0 = Screen.width, h0 = Screen.height; FullScreenMode fm0 = Screen.fullScreenMode;
+			try { Directory.CreateDirectory(dir); } catch { }
+			QuestTracker.ResetPlace();
+			Minimap.Mode = Minimap.Corner;
+			Minimap.SetZoom(1);
+			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
+			float until = Time.realtimeSinceStartup + 6f;
+			while ((!QuestTracker.PanelShown || !Minimap.CornerShown) && Time.realtimeSinceStartup < until) yield return null;
+			yield return new WaitForSecondsRealtime(1f);
+			RectTransform qp = QuestTracker.PanelRect;
+			if (qp == null || !QuestTracker.PanelShown || !Minimap.CornerShown) { Fail("quest panel res: no panel or no map"); yield break; }
+			Func<bool> clear = () => { Rect m; return !Minimap.CornerScreenRect(out m) || !QuestTracker.PanelScreenRect().Overlaps(m); };
+			Func<bool> onScreen = () => { Rect q = QuestTracker.PanelScreenRect(); return q.xMin >= -0.5f && q.yMin >= -0.5f && q.xMax <= Screen.width + 0.5f && q.yMax <= Screen.height + 0.5f; };
+			Func<string> where = () => { Rect m; Minimap.CornerScreenRect(out m); return "panel " + QuestTracker.PanelScreenRect() + " at " + qp.anchoredPosition.ToString("F0") + ", map " + m + ", screen " + Screen.width + "x" + Screen.height; };
+			int[][] sizes = { new[] { 1920, 1080 }, new[] { 1024, 768 }, new[] { 800, 600 } };
+			// (a place dragged at the biggest size)
+			QuestTracker.SavePlace(new Vector2(-1500f, -750f));
+			foreach (int[] sz in sizes)
+			{
+				Screen.SetResolution(sz[0], sz[1], FullScreenMode.Windowed);
+				yield return new WaitForSecondsRealtime(1.5f);
+				Canvas.ForceUpdateCanvases();
+				yield return new WaitForSecondsRealtime(0.5f);
+				string tag = sz[0] + "x" + sz[1];
+				Check(ref ok, Screen.width == sz[0] && Screen.height == sz[1], tag + ": the screen is that size (" + Screen.width + "x" + Screen.height + ")");
+				Log("res " + tag + ": far place: " + where());
+				Check(ref ok, onScreen() && clear(), tag + ": a place dragged at the big size: clamped, on the screen, off the map");
+				ScreenCapture.CaptureScreenshot(Path.Combine(dir, "questpanelres_" + tag + "_clamped.png"));
+				yield return new WaitForSecondsRealtime(1f);
+				QuestTracker.ResetPlace();
+				yield return new WaitForSecondsRealtime(0.4f);
+				Log("res " + tag + ": own place: " + where());
+				Check(ref ok, onScreen() && clear(), tag + ": its own place: on the screen, off the map");
+				ScreenCapture.CaptureScreenshot(Path.Combine(dir, "questpanelres_" + tag + "_own.png"));
+				yield return new WaitForSecondsRealtime(1f);
+				QuestTracker.SavePlace(new Vector2(-40f, -60f));
+				yield return new WaitForSecondsRealtime(0.4f);
+				Log("res " + tag + ": on the map: " + where());
+				Check(ref ok, onScreen() && clear(), tag + ": a place on the map: pushed out, on the screen");
+				ScreenCapture.CaptureScreenshot(Path.Combine(dir, "questpanelres_" + tag + "_pushed.png"));
+				yield return new WaitForSecondsRealtime(1f);
+				QuestTracker.SavePlace(new Vector2(-1500f, -750f));
+			}
+			Screen.SetResolution(w0, h0, fm0);
+			yield return new WaitForSecondsRealtime(1.5f);
+			QuestTracker.SavePlace(before);
+			Minimap.Mode = mode; MapOptionBack(opt);
+			RfAway(e);
+			yield return new WaitForSecondsRealtime(1f);
+			RfRemove(MapIsland);
+			if (ok) Log("PASS: quest panel res (" + dir + ")"); else Fail("quest panel res");
+		}
+
+		static Rect MapScreenRect(RectTransform t)
+		{
+			var w = new Vector3[4];
+			t.GetWorldCorners(w);
+			Canvas cv = t.GetComponentInParent<Canvas>();
+			Camera cam = cv != null && cv.rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? cv.rootCanvas.worldCamera : null;
+			Vector2 a = RectTransformUtility.WorldToScreenPoint(cam, w[0]), b = RectTransformUtility.WorldToScreenPoint(cam, w[2]);
+			return Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
+		}
+
+		static string UiPath(Transform t)
+		{
+			var parts = new List<string>();
+			for (; t != null && parts.Count < 8; t = t.parent) parts.Add(t.name);
+			parts.Reverse();
+			return string.Join("/", parts.ToArray());
+		}
+
+		static void SaveRt(RenderTexture rt, string path)
+		{
+			RenderTexture was = RenderTexture.active;
+			RenderTexture.active = rt;
+			var t = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
+			t.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+			t.Apply();
+			RenderTexture.active = was;
+			File.WriteAllBytes(path, t.EncodeToPNG());
+			UnityEngine.Object.Destroy(t);
+			Log("look: saved " + path);
+		}
+
+		/// <summary>A test island: a quest whose first step is to reach 'cimapgoal', a map marker 'Hut', a start spot.</summary>
+		static IslandFile MapBuild()
+		{
+			var s = new IslandGenSettings { Seed = 5151, Radius = 50f, Height = 8f, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f };
+			IslandFile f = IslandGenerator.CreateFile(s, MapIsland);
+			f.Props[IslandQuest.KeyTitle] = "CI map quest";
+			f.Props[IslandQuest.KeySteps] = "reach|cimapgoal|1|Find the goal";
+			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(0f, 0f), 3), BehaviourProps.Name, "cimapstart"));
+			f.Objects.Add(ScObj("Note_Sign", ScDry(f, new Vector2(25f, 20f), 3), BehaviourProps.Name, "cimapgoal"));
+			f.Objects.Add(ScObj(Minimap.MarkerName, ScDry(f, new Vector2(-20f, 15f), 3), Minimap.LabelProp, "Hut"));
+			return f;
+		}
+
+		static IEnumerator MapWorld()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("minimap world: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Note_Sign" });
+			bool ok = true;
+			IslandWorldState.Entry e = null;
+			yield return RfSpawn(MapBuild(), MapIsland, x => e = x);
+			if (e == null) yield break;
+			int mode = Minimap.Mode; bool opt = MapOptionOn();
+			Minimap.Mode = Minimap.Corner;
+			Minimap.SetZoom(1);
+			Minimap.ClearPings();
+			// (the island may spawn within its map reach of the raft)
+			RfAway(e);
+			yield return new WaitForSecondsRealtime(1f);
+			Check(ref ok, Minimap.Island != e, "at sea (on the raft) not this island's map");
+			Check(ref ok, Behaviours.RefsOf(e).Any(r => r.ObjectName == Minimap.MarkerName && r.GetComponentsInChildren<Renderer>().Length == 0), "the map marker is in the world, not seen");
+			int renders = Minimap.RenderCount;
+			PutPlayerNear(ScObjOf(e, "cimapstart").transform);
+			yield return new WaitForSecondsRealtime(1.2f);
+			Check(ref ok, Minimap.Island == e && Minimap.Shown && Minimap.RenderCount > renders, "on the island: its map in the corner, its picture taken (map island " + (Minimap.Island == null ? "none" : Minimap.Island.Name) + ", mode " + Minimap.Mode + ", renders " + (Minimap.RenderCount - renders) + ", player " + (e.Root == null ? "?" : new Vector2(RAPI.GetLocalPlayer().transform.position.x - e.Root.transform.position.x, RAPI.GetLocalPlayer().transform.position.z - e.Root.transform.position.z).magnitude.ToString("F0")) + " m from its root, " + Vector3.Distance(RAPI.GetLocalPlayer().transform.position, ScObjOf(e, "cimapstart").transform.position).ToString("F0") + " m from cimapstart, root at " + (e.Root == null ? "?" : e.Root.transform.position.ToString("F0")) + ", cimapstart at " + ScObjOf(e, "cimapstart").transform.position.ToString("F0") + ", land radius " + CustomIslandSpawner.LandRadius(e.Name).ToString("F0") + ")");
+			Check(ref ok, Minimap.HalfSize >= CustomIslandSpawner.LandRadius(e.Name), "the picture holds the whole island (" + Minimap.HalfSize.ToString("F0") + " m each way)");
+			Transform goal = ScObjOf(e, "cimapgoal").transform;
+			Check(ref ok, Minimap.Marks.Any(k => k.Kind == Minimap.MarkQuest && Vector3.Distance(k.Pos, goal.position) < 0.1f), "the quest step's target on the map");
+			Check(ref ok, Minimap.Marks.Any(k => k.Kind == Minimap.MarkMarker && k.Label == "Hut"), "the map marker 'Hut' on the map");
+			Check(ref ok, Minimap.Marks.Any(k => k.Kind == Minimap.MarkMe), "the player on the map");
+			Shot("pf5_map");
+			Minimap.Cycle();
+			yield return null;
+			yield return null;
+			Check(ref ok, Minimap.Mode == Minimap.Off && !Minimap.Shown, "the map key: hidden");
+			Minimap.Mode = Minimap.Corner;
+
+			var sent = new List<IslandNetMessage>();
+			int shown = Minimap.PingsShown, sounds = SoundLibrary.Played;
+			Vector3 spot = goal.position;
+			bool first, second;
+			IslandNetwork.Loopback = x => sent.Add(x);
+			try { first = Minimap.SendPing(spot); second = Minimap.SendPing(spot); }
+			finally { IslandNetwork.Loopback = null; }
+			IslandNetMessage msg = sent.FirstOrDefault(x => x.Kind == IslandNetMessage.Ping);
+			Check(ref ok, first && !second && sent.Count(x => x.Kind == IslandNetMessage.Ping) == 1, "a ping is sent, a second right after is not (one a second)");
+			Vector3 local = e.Root.transform.InverseTransformPoint(spot);
+			Check(ref ok, msg != null && msg.Ids.Length == 1 && msg.Ids[0] == e.Id && Mathf.Abs(msg.Offsets[0] - local.x) < 0.01f && Mathf.Abs(msg.Offsets[2] - local.z) < 0.01f, "... with the island and the spot in its space");
+			Check(ref ok, Minimap.PingsShown == shown + 1 && Minimap.Pings.Count == 1 && Minimap.Pings[0].World != null && SoundLibrary.Played > sounds && SoundLibrary.LastPlayed == Minimap.PingSound, "shown here: a beam, the sound");
+			Check(ref ok, Minimap.Pings.Count == 1 && Vector3.Distance(Minimap.Pings[0].WorldPos, spot) < 0.05f, "... at the spot");
+
+			// a crew mate's ping reaches the host: shown and passed to everyone
+			IslandNetMessage mate = Minimap.MessageFor(spot + new Vector3(5f, 0f, 0f), 12345UL);
+			sent.Clear();
+			IslandNetwork.Loopback = x => sent.Add(x);
+			try { Minimap.OnMessage(mate, 12345UL); }
+			finally { IslandNetwork.Loopback = null; }
+			Check(ref ok, Minimap.Pings.Count == 2 && Minimap.Pings.Any(p => p.From == 12345UL) && sent.Any(x => x.Kind == IslandNetMessage.Ping && x.Data == "12345"), "a crew mate's ping: shown here and passed on to everyone");
+			yield return new WaitForSecondsRealtime(Minimap.PingSeconds + 0.5f);
+			var beams = UnityEngine.Object.FindObjectsOfType<LineRenderer>().Where(l => l.name == "CustomIslands_Ping").ToList();
+			Check(ref ok, Minimap.Pings.Count == 0 && beams.Count == (Minimap.StartShown ? 1 : 0), "the pings are gone after " + Minimap.PingSeconds + " s (pings " + Minimap.Pings.Count + ", start beam " + Minimap.StartShown + ", beams " + beams.Count + ": " + string.Join(", ", beams.Select(l => { TextMesh tm = l.GetComponentInChildren<TextMesh>(); return (tm != null ? tm.text : "?") + " " + l.transform.position.ToString("F0"); }).ToArray()) + ")");
+
+			RfAway(e);
+			yield return new WaitForSecondsRealtime(1.2f);
+			Check(ref ok, Minimap.Island != e && !Minimap.Shown, "away from the island: no map");
+			RfRemove(MapIsland);
+			Minimap.Mode = mode; MapOptionBack(opt);
+			if (ok) Log("PASS: minimap world"); else Fail("minimap world");
+		}
+
+		static IEnumerator MapEditor()
+		{
+			yield return WaitForEditor(false);
+			bool ok = true;
+			Check(ref ok, !Minimap.Shown, "no island map in the editor");
+			Transform placed = GameObject.Find("PlacedObjects").transform;
+			Vector3 at = terraineditor.terrain.transform.position + new Vector3(500f, DynamicIslands.EditorWaterLevel + 5f, 500f);
+			EditorGameObject o = PlaceForTest(Minimap.MarkerName, at, placed);
+			if (o == null) { Fail("minimap editor: no map marker placed"); yield break; }
+			Check(ref ok, o.GetComponentsInChildren<Renderer>().Length > 0, "the marker is seen in the editor");
+			// (the inspector is on the Objects tab: an earlier test may have left another tab open)
+			EditorUI.SetTab(TAB.ObjectPlace);
+			TransformGizmoSelect(o.transform);
+			ObjectInspector.Refresh();
+			yield return new WaitForSecondsRealtime(0.5f);
+			Check(ref ok, Resources.FindObjectsOfTypeAll<UnityEngine.UI.Text>().Any(t => t.gameObject.activeInHierarchy && string.Equals(t.text, "Map marker (island map)", StringComparison.OrdinalIgnoreCase)), "its inspector group shows");
+			PropsCommand.Change(o, P(Minimap.LabelProp, "CI hut"));
+			Check(ref ok, ObjectProps.Get(o.Props, Minimap.LabelProp) == "CI hut", "its text is kept");
+			DynamicIslands.EditorGizmoHandler.ClearTargets(false);
+			UnityEngine.Object.Destroy(o.gameObject);
+			if (ok) Log("PASS: minimap editor"); else Fail("minimap editor");
+		}
+
+		#endregion
+	}
+}

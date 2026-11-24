@@ -149,12 +149,25 @@ namespace DynamicIslands.Editor
 				Dictionary<int, ChunkPointType> notes = FrequencyNotes();
 				if (notes.Count == 0) return; // (no notebook yet: its own load unlocks them through the patch)
 				mapped = Active;
-				unlocked.RemoveAll(t => Array.IndexOf(Chain, t) >= 0);
+				// (in place: a story island that stays unlocked keeps its spot in Raft's list, the others take the places of
+				// those that go - switched mid-game, the Receiver's list was rebuilt and the island being sailed to could
+				// move or vanish from it - AU34)
+				var wanted = new List<ChunkPointType>();
 				foreach (int idx in NoteBook.unlockedNoteBookIndexes)
 				{
 					ChunkPointType t;
-					if (notes.TryGetValue(idx, out t) && !unlocked.Contains(Map(t))) unlocked.Add(Map(t));
+					if (notes.TryGetValue(idx, out t) && !wanted.Contains(Map(t))) wanted.Add(Map(t));
 				}
+				var toAdd = new Queue<ChunkPointType>(wanted.Where(w => !unlocked.Contains(w)));
+				for (int i = 0; i < unlocked.Count; i++)
+				{
+					if (Array.IndexOf(Chain, unlocked[i]) < 0 || wanted.Contains(unlocked[i])) continue;
+					if (toAdd.Count > 0) unlocked[i] = toAdd.Dequeue();
+					else unlocked.RemoveAt(i--);
+				}
+				while (toAdd.Count > 0) unlocked.Add(toAdd.Dequeue());
+				// (one of each: a slot filled above could already be later in the list)
+				for (int i = unlocked.Count - 1; i > 0; i--) if (Array.IndexOf(Chain, unlocked[i]) >= 0 && unlocked.IndexOf(unlocked[i]) < i) unlocked.RemoveAt(i);
 				RelabelAll();
 				if (Active) Log("Order " + Describe(Order) + "; unlocked: " + string.Join(", ", unlocked.Where(t => Array.IndexOf(Chain, t) >= 0).Select(Name).ToArray()));
 			}
@@ -184,9 +197,21 @@ namespace DynamicIslands.Editor
 			return f != null ? f.ToString() : null;
 		}
 
+		/// <summary>The island a note's frequency now leads to, when the story runs in another order or a chain (ROADMAP LM1:
+		/// the note's own words still name Raft's next island; the label next to the number says where it really leads).</summary>
+		public static string TargetName(ChunkPointType original)
+		{
+			if (StoryChain.Active) return StoryChain.NextNameForNote(original);
+			if (!Active) return null;
+			ChunkPointType t = Map(original);
+			return t != original ? Name(t) : null;
+		}
+
 		static void Relabel(Component c, ChunkPointType original)
 		{
 			string text = FrequencyText(original);
+			string target = TargetName(original);
+			if (text != null && target != null && target != Name(original)) text += " - " + target;
 			if (text == null || c == null) return;
 			object tmp = Traverse.Create(c).Field("frequencyText").GetValue(); // (a TextMeshPro text: set through its "text" property)
 			if (tmp != null) Traverse.Create(tmp).Property("text").SetValue(text);
@@ -203,7 +228,8 @@ namespace DynamicIslands.Editor
 	{
 		static void Prefix(ref ChunkPointType chunkPointType)
 		{
-			if (StoryOrder.Active) chunkPointType = StoryOrder.Map(chunkPointType);
+			try { if (StoryOrder.Active) chunkPointType = StoryOrder.Map(chunkPointType); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story order] A frequency unlocked: " + e.Message); }
 		}
 	}
 
@@ -212,17 +238,29 @@ namespace DynamicIslands.Editor
 	[HarmonyPatch(typeof(NoteBookUI), "UpdateAllNotesVisibility")]
 	static class StoryOrderNotesRead
 	{
-		static void Postfix() { StoryOrder.Rebuild(); }
+		static void Postfix()
+		{
+			try { StoryOrder.Rebuild(); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story order] The notes read: " + e.Message); }
+		}
 	}
 	[HarmonyPatch(typeof(FrequencyTextMeshPro), "Start")]
 	static class StoryOrderLabel
 	{
-		static void Postfix(FrequencyTextMeshPro __instance, ChunkPointType ___frequencyType) { StoryOrder.Register(__instance, ___frequencyType); }
+		static void Postfix(FrequencyTextMeshPro __instance, ChunkPointType ___frequencyType)
+		{
+			try { StoryOrder.Register(__instance, ___frequencyType); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story order] A frequency label: " + e.Message); }
+		}
 	}
 
 	[HarmonyPatch(typeof(FrequencyTextMeshProUI), "Start")]
 	static class StoryOrderLabelUI
 	{
-		static void Postfix(FrequencyTextMeshProUI __instance) { StoryOrder.Register(__instance, __instance.frequencyType); }
+		static void Postfix(FrequencyTextMeshProUI __instance)
+		{
+			try { StoryOrder.Register(__instance, __instance.frequencyType); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [story order] A frequency label: " + e.Message); }
+		}
 	}
 }

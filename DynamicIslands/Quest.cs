@@ -4,6 +4,7 @@ using System.Linq;
 using HMLLibrary;
 using RaftModLoader;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DynamicIslands.Editor
@@ -20,16 +21,20 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public class IslandQuest
 	{
+		/// <summary>Timed steps: "step=seconds;..." (1-based steps; QE9). Its own key, so older versions just ignore it.</summary>
+		public const string KeyTimers = "quest.timers";
 		public const string KeyTitle = "quest.title", KeyIntro = "quest.intro", KeySteps = "quest.steps", KeyReward = "quest.reward", KeyDone = "quest.done";
-		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages" };
+		public static readonly string[] Types = { "reach", "read", "open", "kill", "catch", "collect", "pages", "blueprint", Islanders.QuestType, Collectibles.QuestType, Lights.QuestType, IslanderWalks.QuestType, Taming.QuestType, QuestSteps.Signal, QuestSteps.Bring, QuestSteps.Craft, QuestSteps.Fish, QuestSteps.Gather, QuestWaitSteps.Time, QuestWaitSteps.Weather, QuestWaitSteps.Counter, QuestWaitSteps.Players };
 
 		/// <summary>Steps the crew's story book counts (the host checks them), not events.</summary>
-		public static bool Counted(string type) { return type == "collect" || type == "pages"; }
+		public static bool Counted(string type) { return type == "collect" || type == "pages" || PlayerFeatures.Counted(type) || QuestSteps.Counted(type) || QuestWaitSteps.Counted(type); }
 
 		public class Step
 		{
 			public string Type = "reach", Target = "", Text = "";
 			public int Count = 1;
+			/// <summary>A time limit in seconds (0 = none): run out, the step starts again (QuestTimers, QE9).</summary>
+			public int Seconds;
 
 			/// <summary>What the player is told to do: the builder's text, or one made from the step.</summary>
 			public string Describe()
@@ -44,8 +49,9 @@ namespace DynamicIslands.Editor
 					case "catch": return "Catch " + (Count > 1 ? Count + " " : "a ") + (Target.Length > 0 ? Target.ToLowerInvariant() + (Count > 1 ? "s" : "") : "animal" + (Count > 1 ? "s" : ""));
 					case "collect": return "Find " + (Count > 1 ? Count + " \u00D7 " : "") + (Target.Length > 0 ? StoryItems.Label(Target) : "a story item");
 					case "pages": return "Find " + (Count > 1 ? Count + " pages" : "a page") + (Target == "all" ? " (on any island)" : " on this island");
+					case "blueprint": return Target.Length > 0 ? "Find the " + PlanChecker.Pretty(Target.Trim()) + " blueprint" : "Find one of Raft's blueprints";
 				}
-				return Type;
+				return PlayerFeatures.DescribeStep(Type, Target, Count) ?? QuestSteps.Describe(Type, Target, Count) ?? QuestWaitSteps.Describe(Type, Target, Count) ?? Type;
 			}
 		}
 
@@ -54,35 +60,85 @@ namespace DynamicIslands.Editor
 
 		public bool Exists { get { return Steps.Count > 0; } }
 
-		static string Clean(string s) { return (s ?? "").Replace("|", "/").Replace("\n", " ").Trim(); }
+		/// <summary>A step's target as the file keeps it (a "|" or a line break would split the step). Titles, zone ids and
+		/// islanders' names stay as typed: compare them in this form (QuestTracker.Matches, PlanChecker) - review 10-30.</summary>
+		public static string Clean(string s) { return (s ?? "").Replace("|", "/").Replace("\n", " ").Trim(); }
+		/// <summary>A title, zone id or islander's name as a step can name it: cleaned only when it has a "|" or a line
+		/// break (anything else as it is).</summary>
+		public static string AsTarget(string s) { return s != null && (s.IndexOf('|') >= 0 || s.IndexOf('\n') >= 0) ? Clean(s) : s; }
 
-		public static IslandQuest From(IDictionary<string, string> props)
+		/// <summary>Most quests an island has: its main quest and up to eight more (ROADMAP LM4).</summary>
+		public const int MaxQuests = 9;
+
+		/// <summary>True when any of the island's quests (0..MaxQuests-1) has steps: only such islands announce themselves with a banner.</summary>
+		public static bool HasQuest(IDictionary<string, string> props)
 		{
+			for (int i = 0; i < MaxQuests; i++) if (ObjectProps.Get(props, Key(KeySteps, i)).Trim().Length > 0) return true;
+			return false;
+		}
+
+		/// <summary>The settings' key of quest n (0 = the main quest, "quest.title"; 1 = "quest2.title" ...).</summary>
+		public static string Key(string key, int n) { return n == 0 ? key : "quest" + (n + 1) + key.Substring("quest".Length); }
+
+		/// <summary>How many quests the island has (the main one counts, with steps or not; then those with steps).</summary>
+		public static int CountIn(IDictionary<string, string> props)
+		{
+			int n = 1;
+			for (int i = 1; i < MaxQuests; i++) if (ObjectProps.Get(props, Key(KeySteps, i)).Trim().Length > 0) n = i + 1;
+			return n;
+		}
+
+		public static IslandQuest From(IDictionary<string, string> props) { return From(props, 0); }
+
+		/// <summary>
+		/// Quest n of the island's settings. Its texts are made plain for showing (an island's "&lt;size=300&gt;" title covered
+		/// the quest panel - ROADMAP X6); raw keeps them as written, for the quest editor, which writes them back (review
+		/// 2026-10-06: saving in the editor stripped every quest's formatting and cut long texts).
+		/// </summary>
+		/// <summary>Steps the quest editor adds up to: the same as a file's (QE2 11-03 - it was 10, and the library's finales
+		/// run to 40).</summary>
+		public const int MaxStepCount = 99;
+
+		/// <summary>Steps a quest file is read up to: a hand-edited file with thousands is cut there. (Cut at the editor's 10
+		/// for a day, it cut every long library quest short - Ironreef's play, X7 2026-10-13.)</summary>
+		public const int MaxFileSteps = 99;
+
+		public static IslandQuest From(IDictionary<string, string> props, int n, bool raw = false)
+		{
+			Func<string, int, string> text = (s, max) => raw ? s : LibraryInfo.Plain(s, max);
 			var q = new IslandQuest
 			{
-				Title = ObjectProps.Get(props, KeyTitle), Intro = ObjectProps.Get(props, KeyIntro),
-				Reward = ObjectProps.Get(props, KeyReward), Done = ObjectProps.Get(props, KeyDone)
+				Title = text(ObjectProps.Get(props, Key(KeyTitle, n)), 200), Intro = text(ObjectProps.Get(props, Key(KeyIntro, n)), 4000),
+				Reward = text(ObjectProps.Get(props, Key(KeyReward, n)), 4000), Done = text(ObjectProps.Get(props, Key(KeyDone, n)), 4000)
 			};
-			foreach (string line in ObjectProps.Get(props, KeySteps).Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
+			foreach (string line in ObjectProps.Get(props, Key(KeySteps, n)).Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
 			{
 				string[] p = line.Split('|');
 				if (p.Length < 1 || !Types.Contains(p[0])) continue;
+				if (q.Steps.Count >= MaxFileSteps) break; // (a hand-edited file with more: cut there)
 				int count;
-				q.Steps.Add(new Step { Type = p[0], Target = p.Length > 1 ? p[1] : "", Count = p.Length > 2 && int.TryParse(p[2], out count) ? Mathf.Clamp(count, 1, 99) : 1, Text = p.Length > 3 ? p[3] : "" });
+				q.Steps.Add(new Step { Type = p[0], Target = p.Length > 1 ? p[1] : "", Count = p.Length > 2 && int.TryParse(p[2], out count) ? Mathf.Clamp(count, 1, 99) : 1, Text = p.Length > 3 ? text(p[3], 400) : "" });
 			}
+			QuestTimers.Read(ObjectProps.Get(props, Key(KeyTimers, n)), q.Steps);
 			return q;
 		}
 
 		/// <summary>Writes the quest into island settings (an empty quest removes the keys).</summary>
-		public void To(IDictionary<string, string> props)
+		public void To(IDictionary<string, string> props) { To(props, 0); }
+
+		public void To(IDictionary<string, string> props, int n)
 		{
-			foreach (string k in new[] { KeyTitle, KeyIntro, KeySteps, KeyReward, KeyDone }) props.Remove(k);
+			foreach (string k in new[] { KeyTitle, KeyIntro, KeySteps, KeyReward, KeyDone }) props.Remove(Key(k, n));
+			props.Remove(Key(KeyTimers, n));
 			if (!Exists) return;
-			if (Title.Trim().Length > 0) props[KeyTitle] = Title.Trim();
-			if (Intro.Trim().Length > 0) props[KeyIntro] = Intro.Trim();
-			if (Reward.Length > 0) props[KeyReward] = Reward;
-			if (Done.Trim().Length > 0) props[KeyDone] = Done.Trim();
-			props[KeySteps] = string.Join("\n", Steps.Select(s => s.Type + "|" + Clean(s.Target) + "|" + s.Count + "|" + Clean(s.Text)).ToArray());
+			if (Title.Trim().Length > 0) props[Key(KeyTitle, n)] = Title.Trim();
+			if (Intro.Trim().Length > 0) props[Key(KeyIntro, n)] = Intro.Trim();
+			if (Reward.Length > 0) props[Key(KeyReward, n)] = Reward;
+			if (Done.Trim().Length > 0) props[Key(KeyDone, n)] = Done.Trim();
+			props[Key(KeySteps, n)] = string.Join("\n", Steps.Select(s => s.Type + "|" + Clean(s.Target) + "|" + s.Count + "|" + Clean(s.Text)).ToArray());
+			props.Remove(Key(KeyTimers, n));
+			string timers = QuestTimers.Write(Steps);
+			if (timers.Length > 0) props[Key(KeyTimers, n)] = timers;
 		}
 
 		public string ShownTitle { get { return Title.Trim().Length > 0 ? Title.Trim() : "Quest"; } }
@@ -99,6 +155,14 @@ namespace DynamicIslands.Editor
 		/// <summary>State keys: the step reached (Yield), and progress on counted steps (Yield).</summary>
 		public const int StepKey = 0x40000, ProgressKey = 0x40001;
 		const float NearDistance = 150f;
+		/// <summary>How close (beyond the land) the quest panel and introduction first show; they stay until NearDistance
+		/// (the user, 2026-10-07: at 150 m "you always get notified", islands should need looking around for).</summary>
+		const float ShowDistance = 70f;
+		/// <summary>The island whose panel is up (kept until the player is NearDistance away), or -1.</summary>
+		static int panelIsland = -1;
+		/// <summary>The island and quest the quest panel shows now (-1 = none; QuestSkip's current quest).</summary>
+		internal static int PanelIsland { get { return panelIsland; } }
+		internal static int PanelQuest = -1;
 
 		/// <summary>Raised on every machine when a quest moves on (tests listen): island id, new step (== steps count when done).</summary>
 		public static event Action<int, int> Advanced;
@@ -107,21 +171,104 @@ namespace DynamicIslands.Editor
 		public static string LastMessage { get; private set; }
 
 		/// <summary>The island's quest (also while it's unloaded here: a client may be at it while the host is far away).</summary>
-		public static IslandQuest QuestOf(IslandWorldState.Entry e)
+		public static IslandQuest QuestOf(IslandWorldState.Entry e) { return QuestOf(e, 0); }
+
+		/// <summary>The island's quest n (0 = the main quest).</summary>
+		public static IslandQuest QuestOf(IslandWorldState.Entry e, int n)
 		{
-			return e != null ? IslandQuest.From(IslandCache.PropsOf(e)) : new IslandQuest();
+			return e != null ? IslandQuest.From(IslandCache.PropsOf(e), n) : new IslandQuest();
 		}
 
-		public static int StepOf(IslandWorldState.Entry e)
+		/// <summary>How many quests the island has (ROADMAP LM4).</summary>
+		public static int QuestsOf(IslandWorldState.Entry e) { return e != null ? IslandQuest.CountIn(IslandCache.PropsOf(e)) : 0; }
+
+		// State keys of quest n: the main quest's as before; the others after the main quest's early work (0x40100 + step)
+		static int StepKeyOf(int n) { return n == 0 ? StepKey : 0x40200 + n * 2; }
+		static int ProgressKeyOf(int n) { return n == 0 ? ProgressKey : 0x40201 + n * 2; }
+		// (a step after the 64th of quest 2 or later - the 256th of the main quest - has its own key from 0x41000 on: they all
+		// shared the last one, and work done early for one was taken by another - questfix round 2. The old keys are kept)
+		static int EarlyKeyOf(int n, int step)
 		{
-			ObjectState s;
-			return e != null && e.State.TryGetValue(StepKey, out s) ? s.Yield : 0;
+			if (n == 0 && step < 0x100) return EarlyKeyBase + step;
+			if (n > 0 && step <= 0x3F) return 0x40300 + n * 0x40 + step;
+			return 0x41000 + n * 0x1000 + Mathf.Clamp(step, 0, 0xFFF);
 		}
 
-		static int ProgressOf(IslandWorldState.Entry e)
+		public static int StepOf(IslandWorldState.Entry e) { return StepOf(e, 0); }
+
+		public static int StepOf(IslandWorldState.Entry e, int n)
 		{
 			ObjectState s;
-			return e != null && e.State.TryGetValue(ProgressKey, out s) ? s.Yield : 0;
+			return e != null && e.State.TryGetValue(StepKeyOf(n), out s) ? Mathf.Max(0, s.Yield) : 0; // (a hand-edited world file may hold a negative step - CB12)
+		}
+
+		internal static int ProgressOf(IslandWorldState.Entry e, int n = 0)
+		{
+			ObjectState s;
+			return e != null && e.State.TryGetValue(ProgressKeyOf(n), out s) ? s.Yield : 0;
+		}
+
+		/// <summary>A side quest (2..) of the island begun and not done: the island isn't finished while one is (its rewards
+		/// can only be had there). The file is read only for an island that has a side quest step saved.</summary>
+		public static bool SideQuestOpen(IslandWorldState.Entry e)
+		{
+			if (e == null) return false;
+			for (int n = 1; n < IslandQuest.MaxQuests; n++)
+			{
+				int step = StepOf(e, n);
+				if (step <= 0) continue;
+				IslandQuest q = QuestOf(e, n);
+				if (q.Exists && step < q.Steps.Count) return true;
+			}
+			return false;
+		}
+
+		/// <summary>The day quest n's step was last set (-1 = never; QuestSkip picks the latest after a load).</summary>
+		internal static int StepDayOf(IslandWorldState.Entry e, int n)
+		{
+			ObjectState s;
+			return e != null && e.State.TryGetValue(StepKeyOf(n), out s) ? s.Day : -1;
+		}
+
+		/// <summary>
+		/// "Give my worlds this version" with quest steps removed, added or moved (questfix 11-15): a world's saved step
+		/// numbers of the old version would point at other steps of the new one. Each quest's step goes to the new
+		/// version's first step not done in the old one (a step counts done when the old version had the same step - kind,
+		/// target, count - before the saved step); a finished quest stays finished. The progress of the step under way is
+		/// kept only when the new step is the same step, early credits only when nothing moved. Returns the quests changed.
+		/// </summary>
+		internal static int RemapSteps(IDictionary<string, string> was, IDictionary<string, string> now, Dictionary<int, ObjectState> state)
+		{
+			int changed = 0;
+			Func<IslandQuest.Step, string> sig = st => st.Type + "|" + st.Target + "|" + st.Count;
+			for (int n = 0; n < IslandQuest.MaxQuests; n++)
+			{
+				ObjectState s;
+				if (!state.TryGetValue(StepKeyOf(n), out s)) continue;
+				List<string> old = IslandQuest.From(was, n, true).Steps.Select(sig).ToList(), nw = IslandQuest.From(now, n, true).Steps.Select(sig).ToList();
+				if (old.SequenceEqual(nw)) continue;
+				int step = Mathf.Max(0, s.Yield), to;
+				if (old.Count > 0 && step >= old.Count) to = nw.Count; // (finished stays finished)
+				else
+				{
+					var done = old.Take(step).ToList();
+					to = 0;
+					while (to < nw.Count && done.Remove(nw[to])) to++;
+				}
+				bool same = step < old.Count && to < nw.Count && old[step] == nw[to];
+				state[StepKeyOf(n)] = new ObjectState { Active = s.Active, Yield = to, Day = s.Day };
+				if (!same) state.Remove(ProgressKeyOf(n));
+				for (int k = 0, last = Mathf.Max(0x3F, old.Count); k <= last; k++) state.Remove(EarlyKeyOf(n, k));
+				changed++;
+			}
+			return changed;
+		}
+
+		/// <summary>Whether quest n of the island is done (it has steps, all done).</summary>
+		public static bool IsDone(IslandWorldState.Entry e, int n)
+		{
+			IslandQuest q = QuestOf(e, n);
+			return q.Exists && StepOf(e, n) >= q.Steps.Count;
 		}
 
 		static int Today { get { try { return WorldManager.DayCounter; } catch { return 0; } } }
@@ -130,114 +277,388 @@ namespace DynamicIslands.Editor
 		public static void Event(IslandWorldState.Entry e, string type, string target, int amount = 1)
 		{
 			if (e == null) return;
-			IslandQuest q = QuestOf(e);
-			int step = StepOf(e);
+			// (every quest of the island: what one player does may count for several)
+			int count = QuestsOf(e);
+			for (int n = 0; n < count; n++) Event(e, n, type, target, amount);
+		}
+
+		/// <summary>Something happened for quest n of the island (QuestSteps: a hand-over, a craft for its current step).</summary>
+		internal static void Event(IslandWorldState.Entry e, int n, string type, string target, int amount)
+		{
+			IslandQuest q = QuestOf(e, n);
+			int step = StepOf(e, n);
 			if (!q.Exists || step >= q.Steps.Count) return;
 			IslandQuest.Step s = q.Steps[step];
 			if (!Matches(s, type, target))
 			{
 				// Done before its step came (the chest opened, the animals defeated first): remembered for that step and
 				// counted when it comes - it was lost, and the chest stayed empty / the animals dead
-				for (int later = step + 1; later < q.Steps.Count; later++)
+				int later = LaterStep(e, n, q, step, type, target);
+				if (later >= 0)
 				{
-					if (IslandQuest.Counted(q.Steps[later].Type) || !Matches(q.Steps[later], type, target)) continue;
-					if (Raft_Network.IsHost) Remember(e, later, amount);
-					else if (IslandNetwork.HostAddsCounts) IslandNetwork.SendQuestAdd(e.Id, later, amount); // (an older host would jump to that step)
-					break;
+					if (Raft_Network.IsHost) Remember(e, n, later, amount);
+					else if (IslandNetwork.HostAddsCounts) IslandNetwork.SendQuestAdd(e.Id, n, later, amount); // (an older host would jump to that step)
 				}
 				return;
 			}
-			int progress = ProgressOf(e) + amount;
+			int progress = ProgressOf(e, n) + amount;
 			// A player's machine moves its own view on at once and sends the host its amount, not its total: two players'
 			// totals overwrote each other (two of three chests opened at once counted 1). The host counts and tells everyone.
 			// (an older host takes what it gets for the total: it gets the total, as before)
 			bool adds = !Raft_Network.IsHost && IslandNetwork.HostAddsCounts;
-			if (progress >= s.Count) Set(e, step + 1, 0, !adds);
-			else Set(e, step, progress, !adds);
-			if (adds) IslandNetwork.SendQuestAdd(e.Id, step, amount);
+			// (more than the step needs: the rest for the next step asking for the same, kept before the quest moves there)
+			if (progress > s.Count && Raft_Network.IsHost)
+			{
+				int later = LaterStep(e, n, q, step, type, target);
+				if (later >= 0) Remember(e, n, later, progress - s.Count);
+			}
+			// (a player's last step: the quest is done here - and its reward given - once the host has counted it; the host's
+			// step comes back to this player as to everyone. Before, the reward came at once, even for a step the host then
+			// refused - questfix round 2)
+			if (adds && progress >= s.Count && step + 1 >= q.Steps.Count) { WaitingForHost++; IslandNetwork.SendQuestAdd(e.Id, n, step, amount); return; }
+			if (progress >= s.Count) Set(e, n, step + 1, 0, !adds);
+			else Set(e, n, step, progress, !adds);
+			if (adds) IslandNetwork.SendQuestAdd(e.Id, n, step, amount);
 		}
+
+		/// <summary>A player: last steps sent to the host and left to its answer (the CI checks read it).</summary>
+		internal static int WaitingForHost;
 
 		static bool Matches(IslandQuest.Step s, string type, string target)
 		{
-			return s.Type == type && (s.Target.Length == 0 || string.Equals(s.Target.Trim(), (target ?? "").Trim(), StringComparison.OrdinalIgnoreCase));
+			// (the target cleaned as the step's was: a note titled "Log | Day 3" is "Log / Day 3" in the step - review 10-30)
+			return s.Type == type && (s.Target.Length == 0 || string.Equals(s.Target.Trim(), IslandQuest.Clean(target), StringComparison.OrdinalIgnoreCase));
+		}
+
+		/// <summary>The later step (after step) that something done now is kept for, or -1: a step naming it first, then a
+		/// step taking any. (Before, the first match won: the Vault opened early went to an earlier "open any chest" step, and
+		/// the later "open the Vault" step could never be done - player 10-30.) A naming step already full of early work
+		/// is passed over, so more of the same still goes to the "any" step.</summary>
+		static int LaterStep(IslandWorldState.Entry e, int n, IslandQuest q, int step, string type, string target)
+		{
+			int any = -1;
+			for (int later = step + 1; later < q.Steps.Count; later++)
+			{
+				IslandQuest.Step s = q.Steps[later];
+				if (IslandQuest.Counted(s.Type) || !Matches(s, type, target)) continue;
+				if (s.Target.Trim().Length > 0)
+				{
+					ObjectState had;
+					if (e.State.TryGetValue(EarlyKeyOf(n, later), out had) && had.Yield >= s.Count) continue;
+					return later;
+				}
+				if (any < 0) any = later;
+			}
+			return any;
 		}
 
 		/// <summary>Where a later step's early work is kept in the island's state (its count in Yield).</summary>
 		public const int EarlyKeyBase = 0x40100;
 
-		/// <summary>Host: something a later step of the quest asks for was done now - kept for that step.</summary>
-		static void Remember(IslandWorldState.Entry e, int step, int amount)
+		/// <summary>Host: something a later step of the quest asks for was done now - kept for that step. More than the step
+		/// needs goes on to the next later step asking for the same (two "defeat a polar bear" steps with both bears dead
+		/// early: both went to the first, and the second step could never be done - CB11).</summary>
+		static int Remember(IslandWorldState.Entry e, int quest, int step, int amount)
 		{
-			ObjectState had;
-			int n = (e.State.TryGetValue(EarlyKeyBase + step, out had) ? had.Yield : 0) + amount;
-			e.State[EarlyKeyBase + step] = new ObjectState { Active = true, Yield = n, Day = Today };
-			Debug.Log("[CUSTOM ISLANDS] Quest of '" + e.HostName + "': step " + (step + 1) + " done early (" + n + "), counted when it comes");
+			IslandQuest q = QuestOf(e, quest);
+			while (amount > 0)
+			{
+				ObjectState had;
+				int before = e.State.TryGetValue(EarlyKeyOf(quest, step), out had) ? had.Yield : 0;
+				int next = -1;
+				if (q.Exists && step < q.Steps.Count)
+					for (int k = step + 1; k < q.Steps.Count && next < 0; k++)
+						if (q.Steps[k].Type == q.Steps[step].Type && string.Equals(q.Steps[k].Target.Trim(), q.Steps[step].Target.Trim(), StringComparison.OrdinalIgnoreCase)) next = k;
+				// (never more than the step needs: a zone entered again - a player set down inside it after a load - counted
+				// twice, SL7)
+				int take = !q.Exists || step >= q.Steps.Count ? amount : Mathf.Min(amount, Mathf.Max(0, q.Steps[step].Count - before));
+				if (take > 0)
+				{
+					e.State[EarlyKeyOf(quest, step)] = new ObjectState { Active = true, Yield = before + take, Day = Today };
+					Debug.Log("[CUSTOM ISLANDS] Quest " + (quest + 1) + " of '" + e.HostName + "': step " + (step + 1) + " done early (" + (before + take) + "), counted when it comes");
+				}
+				amount -= take;
+				if (next < 0) break;
+				step = next;
+			}
+			return amount; // (what no step had room for)
 		}
 
 		/// <summary>Host: the quest reached this step - what was done for it early counts now (it may finish it at once).</summary>
-		static void CreditEarly(IslandWorldState.Entry e, IslandQuest q, int step)
+		static void CreditEarly(IslandWorldState.Entry e, int n, IslandQuest q, int step)
 		{
 			ObjectState had;
-			if (!Raft_Network.IsHost || step >= q.Steps.Count || !e.State.TryGetValue(EarlyKeyBase + step, out had) || had.Yield <= 0) return;
-			e.State.Remove(EarlyKeyBase + step);
-			Debug.Log("[CUSTOM ISLANDS] Quest of '" + e.HostName + "': step " + (step + 1) + " gets what was done for it early (" + had.Yield + ")");
-			int progress = ProgressOf(e) + had.Yield;
-			if (progress >= q.Steps[step].Count) Set(e, step + 1, 0, true);
-			else Set(e, step, progress, true);
+			if (!Raft_Network.IsHost || step >= q.Steps.Count || !e.State.TryGetValue(EarlyKeyOf(n, step), out had) || had.Yield <= 0) return;
+			e.State.Remove(EarlyKeyOf(n, step));
+			Debug.Log("[CUSTOM ISLANDS] Quest " + (n + 1) + " of '" + e.HostName + "': step " + (step + 1) + " gets what was done for it early (" + had.Yield + ")");
+			int progress = ProgressOf(e, n) + had.Yield;
+			if (progress >= q.Steps[step].Count) Set(e, n, step + 1, 0, true);
+			else Set(e, n, step, progress, true);
+		}
+
+		/// <summary>Host, the island there: a quest waiting at "open &lt;the Vault&gt;" whose every chest of that name on the
+		/// island is already open can never go on - the chest was opened for another step (a build before 2026-10-31 gave the
+		/// Vault opened early to an "open any chest" step; it still counts for an "any chest" step it is opened at). The step
+		/// counts as done: its chest was opened, nothing is given twice (the chest's loot was had). Old saves heal on load.</summary>
+		internal static void HealSpentChests(IslandWorldState.Entry e)
+		{
+			if (!Raft_Network.IsHost || e == null || e.Root == null) return;
+			int count = QuestsOf(e);
+			for (int n = 0; n < count; n++)
+				for (int guard = 0; guard < 8; guard++)
+				{
+					IslandQuest q = QuestOf(e, n);
+					int step = StepOf(e, n);
+					if (!q.Exists || step >= q.Steps.Count) break;
+					IslandQuest.Step s = q.Steps[step];
+					string target = s.Target.Trim();
+					if (s.Type != "open" || target.Length == 0) break;
+					List<LootCrate> named = e.Root.GetComponentsInChildren<LootCrate>(true).Where(c =>
+					{
+						CustomNote note = c.GetComponent<CustomNote>();
+						return note != null && string.Equals((note.Title ?? "").Trim(), target, StringComparison.OrdinalIgnoreCase);
+					}).ToList();
+					if (named.Count == 0 || !named.All(c => ContentState.IsUsed(e, c.StateKey))) break;
+					// (each chest of that name counts once: one refilling chest at a step wanting it opened twice gets 1, not the
+					// whole step, and a load after that adds nothing - RK7)
+					int need = Math.Min(s.Count, named.Count) - ProgressOf(e, n);
+					if (need <= 0) break;
+					Debug.Log("[CUSTOM ISLANDS] Quest " + (n + 1) + " of '" + e.HostName + "': step " + (step + 1) + " (open " + target + ") counts - its chest was opened before");
+					Event(e, n, "open", target, need);
+					if (StepOf(e, n) == step) break;
+				}
 		}
 
 		/// <summary>Host: a player's event counted on an island's quest - their amount at that step, added to the host's
 		/// count and sent to everyone. A step the quest has moved past counted already; a later one keeps it for then.</summary>
-		public static void AddFromPlayer(int islandId, int step, int amount)
+		public static void AddFromPlayer(int islandId, int step, int amount) { AddFromPlayer(islandId, 0, step, amount); }
+
+		public static void AddFromPlayer(int islandId, int n, int step, int amount) { AddFromPlayer(islandId, n, step, amount, 0UL); }
+
+		/// <summary>from: the player who sent it (0 = unknown). A "Bring items" step's items the host doesn't count - more than
+		/// the step still needed (two players handing over in the same moment), or a step already done - go back to that player
+		/// (QuestItemsBack): they were taken from their bag and were lost.</summary>
+		public static void AddFromPlayer(int islandId, int n, int step, int amount, ulong from)
 		{
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
 			if (e == null || amount <= 0) return;
-			IslandQuest q = QuestOf(e);
-			int now = StepOf(e);
+			IslandQuest q = QuestOf(e, n);
+			int now = StepOf(e, n);
 			if (!q.Exists) return;
-			if (step > now && step < q.Steps.Count) { Remember(e, step, amount); return; }
-			if (step != now || now >= q.Steps.Count) { IslandNetwork.SendQuest(e.Id, now, ProgressOf(e)); return; } // (the player's view put right)
-			int progress = ProgressOf(e) + amount;
-			if (progress >= q.Steps[now].Count) Set(e, now + 1, 0, true);
-			else Set(e, now, progress, true);
+			// (the client picked the later step on its own view, which may be stale or full of early work already: the host
+			// picks again from its own state, the same way as for its own events - review 10-30)
+			if (step > now && step < q.Steps.Count)
+			{
+				int p = LaterStep(e, n, q, now, q.Steps[step].Type, q.Steps[step].Target);
+				int left = Remember(e, n, p >= 0 ? p : step, amount);
+				if (left > 0) GiveBack(e, n, step, left, from, "over");
+				// (that player's view may be ahead of the host's - it moved on alone: put right, or it showed a later step and
+				// the host's current one was never shown to it - questfix 11-14. In step with the host, nothing changes there)
+				if (from != 0UL) IslandNetwork.SendQuestCorrection(new Network_UserId(from), e.Id, n);
+				return;
+			}
+			// (an older step: another player did that step a moment before. A chest is opened once, so what this player opened
+			// counts for the step now, or is kept for a later step asking for the same - it was dropped, and with no chest left
+			// the quest was stuck. Steps a player can just do again are left as before - review 10-30)
+			if (step < now && now < q.Steps.Count && step >= 0 && q.Steps[step].Type == "open")
+			{
+				string type = q.Steps[step].Type, target = q.Steps[step].Target;
+				IslandNetwork.SendQuest(e.Id, n, now, ProgressOf(e, n)); // (the player's view put right first: Set below sends the new count after it)
+				if (Matches(q.Steps[now], type, target))
+				{
+					int p = ProgressOf(e, n) + amount;
+					if (p >= q.Steps[now].Count) Set(e, n, now + 1, 0, true);
+					else Set(e, n, now, p, true);
+				}
+				else
+				{
+					int later = LaterStep(e, n, q, now, type, target);
+					if (later >= 0) Remember(e, n, later, amount);
+				}
+				return;
+			}
+			if (step != now || now >= q.Steps.Count)
+			{
+				IslandNetwork.SendQuest(e.Id, n, now, ProgressOf(e, n)); // (the player's view put right)
+				GiveBack(e, n, step, amount, from, "late");
+				return;
+			}
+			int progress = ProgressOf(e, n) + amount;
+			if (progress > q.Steps[now].Count) GiveBack(e, n, step, progress - q.Steps[now].Count, from, "over");
+			if (progress >= q.Steps[now].Count) Set(e, n, now + 1, 0, true);
+			else Set(e, n, now, progress, true);
+		}
+
+		/// <summary>Host: a player's amount for quest n's step that wasn't counted (why: "over", "late", "refused"). For a "Bring
+		/// items" step those are items taken from their bag: they go back to them, never more than the step asks for (a hand-over
+		/// takes at most that). Other kinds of step: nothing - a kill or a craft has nothing to give back.</summary>
+		public static void GiveBack(int islandId, int n, int step, int amount, ulong from, string why)
+		{
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			if (e != null) GiveBack(e, n, step, amount, from, why);
+		}
+
+		static void GiveBack(IslandWorldState.Entry e, int n, int step, int amount, ulong from, string why)
+		{
+			if (from == 0UL || amount <= 0 || !Raft_Network.IsHost) return;
+			IslandQuest q = QuestOf(e, n);
+			if (!q.Exists || step < 0 || step >= q.Steps.Count || q.Steps[step].Type != QuestSteps.Bring) return;
+			string item, to;
+			QuestSteps.SplitBring(q.Steps[step].Target, out item, out to);
+			IslandNetwork.SendItemsBack(new Network_UserId(from), e.Id, n, step, item, Mathf.Min(amount, Mathf.Max(1, q.Steps[step].Count)), why);
 		}
 
 		/// <summary>Records the quest's state here, tells the others (unless it came from them), and shows what changed.</summary>
-		public static void Set(IslandWorldState.Entry e, int step, int progress, bool send)
+		public static bool Set(IslandWorldState.Entry e, int step, int progress, bool send) { return Set(e, 0, step, progress, send); }
+
+		/// <summary>Quest n: records its state here, tells the others (unless it came from them), and shows what changed.
+		/// False when nothing changed: an older step, or the same step with no more progress (an older player's stale total,
+		/// a message that crossed a Resync) - progress never goes down.</summary>
+		public static bool Set(IslandWorldState.Entry e, int n, int step, int progress, bool send)
 		{
-			int before = StepOf(e);
-			if (step < before) return;
-			e.State[StepKey] = new ObjectState { Active = true, Yield = step, Day = Today };
-			if (progress > 0) e.State[ProgressKey] = new ObjectState { Active = true, Yield = progress, Day = Today };
-			else e.State.Remove(ProgressKey);
-			if (send) IslandNetwork.SendQuest(e.Id, step, progress);
-			if (step == before) return;
-			IslandQuest q = QuestOf(e);
-			if (step >= q.Steps.Count) Completed(e, q);
+			int before = StepOf(e, n);
+			if (step < before || (step == before && progress <= ProgressOf(e, n))) return false;
+			e.State[StepKeyOf(n)] = new ObjectState { Active = true, Yield = step, Day = Today };
+			QuestSkip.Noted(e.Id, n);
+			if (progress > 0) e.State[ProgressKeyOf(n)] = new ObjectState { Active = true, Yield = progress, Day = Today };
+			else e.State.Remove(ProgressKeyOf(n));
+			if (send) IslandNetwork.SendQuest(e.Id, n, step, progress);
+			if (step == before) return true;
+			IslandQuest q = QuestOf(e, n);
+			if (step >= q.Steps.Count) Completed(e, q, n);
 			else Show(q.ShownTitle, "Next: " + q.Steps[step].Describe());
-			if (Advanced != null) try { Advanced(e.Id, step); } catch { }
-			CreditEarly(e, q, step);
+			// (the main quest's "quest" event and rules as before; any quest: AdvancedAny)
+			if (n == 0 && Advanced != null) try { Advanced(e.Id, step); } catch { }
+			if (AdvancedAny != null) try { AdvancedAny(e.Id, n, step); } catch { }
+			CreditEarly(e, n, q, step);
+			if (StepOf(e, n) == step) HealSpentChests(e); // (its named chest opened already: upgrade 10-31)
+			// (host: a counted step the crew already has enough for moves on now, not at the next half-second check - CB11)
+			if (Raft_Network.IsHost && step < q.Steps.Count && IslandQuest.Counted(q.Steps[step].Type) && Found(e, q.Steps[step]) >= q.Steps[step].Count && AnyPlayerNear(e))
+				Set(e, n, step + 1, 0, true);
+			return true;
 		}
 
-		/// <summary>From the network (another player moved the quest on).</summary>
-		public static void Apply(int islandId, int step, int progress)
+		/// <summary>Raised on every machine when any quest of an island moves on: island id, quest number (0 = main), new step.</summary>
+		public static event Action<int, int, int> AdvancedAny;
+
+		/// <summary>From the network (another player moved the quest on). False when it was ignored (nothing to pass on).</summary>
+		public static bool Apply(int islandId, int step, int progress) { return Apply(islandId, 0, step, progress); }
+
+		public static bool Apply(int islandId, int n, int step, int progress)
 		{
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
-			if (e != null) Set(e, step, progress, false);
+			return e != null && Set(e, n, step, progress, false);
 		}
 
-		static void Completed(IslandWorldState.Entry e, IslandQuest q)
+		/// <summary>Host: a player's plain step for quest n (an older version sends its step, not its amount) is taken only one
+		/// step on at most from the host's - each step sends its own message, so more is a made-up one (questfix 11-14).</summary>
+		public static bool MayTakeStep(int islandId, int n, int step)
+		{
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			return e == null || step <= StepOf(e, n) + 1;
+		}
+
+		/// <summary>A player: the host's step for quest n after it refused this player's step (IslandNetwork "set"). Forward as
+		/// Apply; back as well - this machine had moved on alone. Going back shows the step again and runs nothing else: no
+		/// rewards, events or rules (review 10-30).</summary>
+		public static bool Correct(int islandId, int n, int step, int progress)
+		{
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			if (e == null || Raft_Network.IsHost || step < 0) return false;
+			int before = StepOf(e, n);
+			if (step > before || (step == before && progress >= ProgressOf(e, n))) return Set(e, n, step, progress, false);
+			e.State[StepKeyOf(n)] = new ObjectState { Active = true, Yield = step, Day = Today };
+			QuestSkip.Noted(e.Id, n);
+			if (progress > 0) e.State[ProgressKeyOf(n)] = new ObjectState { Active = true, Yield = progress, Day = Today };
+			else e.State.Remove(ProgressKeyOf(n));
+			IslandQuest q = QuestOf(e, n);
+			Debug.Log("[CUSTOM ISLANDS] Quest " + (n + 1) + " of '" + e.HostName + "': the host has step " + (step + 1) + " (this player's step " + (before + 1) + " wasn't counted there)");
+			if (q.Exists && step < q.Steps.Count) Show(q.ShownTitle, "Next: " + q.Steps[step].Describe());
+			return true;
+		}
+
+		/// <summary>A player, the host's whole list (a Resync, a join) for an island loaded here: its quests' steps as the host
+		/// has them (Correct: forward as play, back without rewards). A loaded copy kept its own state, so a quest step that
+		/// drifted from the host's stayed wrong until the player joined again - questfix round 2. Returns the quests put right.</summary>
+		internal static int FromHostList(IslandWorldState.Entry e, Dictionary<int, ObjectState> host)
+		{
+			if (e == null || host == null || Raft_Network.IsHost) return 0;
+			int changed = 0;
+			for (int n = 0; n < IslandQuest.MaxQuests; n++)
+			{
+				ObjectState s, p;
+				if (!host.TryGetValue(StepKeyOf(n), out s)) continue;
+				int progress = host.TryGetValue(ProgressKeyOf(n), out p) ? p.Yield : 0;
+				if (s.Yield == StepOf(e, n) && progress == ProgressOf(e, n)) continue;
+				if (Correct(e.Id, n, s.Yield, progress)) changed++;
+			}
+			return changed;
+		}
+
+		/// <summary>Host, the QuestTest command (gap idea 9): quest n to this step (0-based; the step count = done), back too.
+		/// Forward it moves on as play does (events, rules, the reward at the end); back (or the same step) the step, its
+		/// progress and the work done early for it and later steps are set back here and on every player ("set", as a
+		/// refused step's correction). False when there is no such quest.</summary>
+		internal static bool JumpTo(IslandWorldState.Entry e, int n, int step) { return JumpTo(e, n, step, false); }
+
+		/// <summary>keepLater: a timed step that ran out starts again - the work done early for later steps stays (a chest
+		/// opened, animals defeated meanwhile can't be done again: wiped, those steps could never be done - questfix 11-14).</summary>
+		internal static bool JumpTo(IslandWorldState.Entry e, int n, int step, bool keepLater)
+		{
+			IslandQuest q = QuestOf(e, n);
+			if (!Raft_Network.IsHost || !q.Exists) return false;
+			step = Mathf.Clamp(step, 0, q.Steps.Count);
+			int before = StepOf(e, n);
+			if (step > before) return Set(e, n, step, 0, true);
+			e.State[StepKeyOf(n)] = new ObjectState { Active = true, Yield = step, Day = Today };
+			e.State.Remove(ProgressKeyOf(n));
+			for (int s = step; s <= (keepLater ? step : q.Steps.Count); s++) e.State.Remove(EarlyKeyOf(n, s));
+			IslandNetwork.SendQuestSet(e.Id, n);
+			Debug.Log("[CUSTOM ISLANDS] Quest " + (n + 1) + " of '" + e.HostName + "': set back to step " + (step + 1) + " (QuestTest)");
+			if (step < q.Steps.Count) Show(q.ShownTitle, "Next: " + q.Steps[step].Describe());
+			return true;
+		}
+
+		/// <summary>Where this player's share of quest n's reward is kept (QuestRewards). By the island's copy (PageIsland: the
+		/// first is its plain name, as before): a second copy of an island never paid its quest's reward, the first had it.</summary>
+		static string RewardKey(IslandWorldState.Entry e, int n) { string island = StoryBook.PageIsland(e); return n == 0 ? island : island + "#quest" + (n + 1); }
+
+		/// <summary>Whether the quest's reward has Raft's items (each player's share; story items are the crew's).</summary>
+		static bool HasRaftReward(IslandQuest q)
+		{
+			return q.Reward.Length > 0 && ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, q.Reward } }).Any(l => !StoryItems.IsStory(l.Key));
+		}
+
+		static void Completed(IslandWorldState.Entry e, IslandQuest q, int n)
 		{
 			Show("Quest complete: " + q.ShownTitle, q.Done);
-			if (q.Reward.Length == 0) return;
+			if (q.Reward.Length == 0) { Debug.Log("[CUSTOM ISLANDS] Quest of '" + e.HostName + "' done: no reward"); return; }
 			List<KeyValuePair<string, int>> reward = ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, q.Reward } });
 			// Story items are the crew's: the host gives them once (every player near giving them gave one per player);
 			// Raft's items go to each player near the island
 			if (Raft_Network.IsHost)
-				foreach (KeyValuePair<string, int> l in reward.Where(l => StoryItems.IsStory(l.Key))) StoryBook.Give(l.Key, l.Value);
-			if (!Near(e)) return;
+				foreach (KeyValuePair<string, int> l in reward.Where(l => StoryItems.IsStory(l.Key))) StoryBook.Give(l.Key, l.Value, e);
+			// Raft's items: each player's share once - now when near, or when they come to the island (or join) later (LM8)
+			if (!reward.Any(l => !StoryItems.IsStory(l.Key))) return;
+			bool near = Near(e);
+			if (!QuestRewards.OnCompleted(RewardKey(e, n), near, () => GiveItems(q))) Debug.Log("[CUSTOM ISLANDS] Quest reward of '" + RewardKey(e, n) + "': this player got it already in this world (" + QuestRewards.WhereKept + ")");
+			else if (!near) { Debug.Log("[CUSTOM ISLANDS] Quest reward of '" + e.HostName + "' kept until this player comes to the island"); DynamicIslands.Notify("Your reward for '" + q.ShownTitle + "' waits for you at the island - sail there to get it", false, 6); }
+		}
+
+		static void GiveItems(IslandQuest q)
+		{
+			List<KeyValuePair<string, int>> reward = ObjectProps.Loot(new Dictionary<string, string> { { ObjectProps.LootItems, q.Reward } });
 			List<string> given = TriggerZone.Give(reward.Where(l => !StoryItems.IsStory(l.Key)));
 			Debug.Log("[CUSTOM ISLANDS] Quest reward: " + string.Join(", ", given.ToArray()));
+		}
+
+		/// <summary>PQ1: the arrival banner says where the quest starts - its first step and which way (a gold beam marks it).</summary>
+		static string StartHint(IslandWorldState.Entry e)
+		{
+			Vector3 at; string text;
+			Network_Player me = RAPI.GetLocalPlayer();
+			if (me == null || !Minimap.StartOf(e, out at, out text) || text.Length == 0) return "";
+			return "\nStart: " + text + " - " + Minimap.DirectionTo(me.transform.position, at) + ", under the gold beam.";
 		}
 
 		static void Show(string title, string text)
@@ -247,38 +668,252 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] " + LastMessage);
 		}
 
-		static bool Near(IslandWorldState.Entry e)
+		static bool Near(IslandWorldState.Entry e) { return Near(e, NearDistance); }
+
+		internal static bool Near(IslandWorldState.Entry e, float distance)
 		{
 			Network_Player p = RAPI.GetLocalPlayer();
 			if (p == null || e.Root == null) return false;
+			// (the land's middle - where the island's entry stands - and how far its land reaches: an island without a title or
+			// description has no info tag, and was measured from its terrain's corner, hundreds of metres off its land)
 			IslandInfoTag tag = e.Root.GetComponent<IslandInfoTag>();
-			Vector3 c = e.Root.transform.position + (tag != null ? tag.LocalCentre : Vector3.zero);
-			float r = tag != null ? tag.Radius : 150f;
-			return new Vector2(c.x - p.transform.position.x, c.z - p.transform.position.z).magnitude < r + NearDistance;
+			Vector3 c = tag != null ? e.Root.transform.position + tag.LocalCentre : e.Position;
+			float r = tag != null ? tag.Radius : Mathf.Max(30f, CustomIslandSpawner.LandRadius(e.Name));
+			return new Vector2(c.x - p.transform.position.x, c.z - p.transform.position.z).magnitude < r + distance;
 		}
 
 		#region The quest panel
 
-		static RectTransform panel;
-		static Text titleText, stepsText;
+		static RectTransform panel, stepsView, stepsContent;
+		static ScrollRect stepsScroll;
+		static Text titleText;
+		static readonly List<Text> stepLines = new List<Text>();
 		static float nextHud;
+		static int followedIsland = -1, followedStep = -1;
 		static readonly HashSet<int> introduced = new HashSet<int>();
+		static Button closeButton;
+		/// <summary>The panel closed with its X: hidden for this quest and step while the player stays at the island.</summary>
+		static int closedKey = -1, closedStep = -1;
+		/// <summary>When each finished quest was first seen done (island * 16 + quest): its panel goes 30 s later (ROADMAP CT10).</summary>
+		static readonly Dictionary<int, float> doneSince = new Dictionary<int, float>();
+		/// <summary>How long a finished quest's panel stays up (the user, 2026-10-07: "after finished, hide it after 30sec").</summary>
+		public static float DoneHideSeconds = 30f;
+		/// <summary>Whether the quest panel is on screen (for the tests).</summary>
+		const float PanelTop = -160f;
+
+		/// <summary>The panel's own place (top right, under where the corner map is), in UI units from the screen's top right corner.</summary>
+		public static readonly Vector2 HomePlace = new Vector2(-20f, PanelTop);
+		/// <summary>The gap kept between the panel and the corner map, and from the screen's edges (UI units).</summary>
+		const float MapGap = 8f, EdgeGap = 4f;
+		/// <summary>This PC's world_rules.txt line for where the player dragged the panel ("questpanel=x,y"; empty = its own place).</summary>
+		public const string PlaceSetting = "questpanel";
+		static bool placeRead, dragging;
+		static Vector2? savedPlace;
+
+		/// <summary>Where the player dragged the panel on this PC (UI units from the top right corner), or null: its own place.</summary>
+		public static Vector2? SavedPlace
+		{
+			get
+			{
+				if (!placeRead) { placeRead = true; savedPlace = ParsePlace(WorldRules.ReadDefault(PlaceSetting)); }
+				return savedPlace;
+			}
+		}
+
+		internal static Vector2? ParsePlace(string s)
+		{
+			if (string.IsNullOrEmpty(s)) return null;
+			string[] p = s.Split(',');
+			float x, y;
+			if (p.Length != 2 || !float.TryParse(p[0].Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out x)
+				|| !float.TryParse(p[1].Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out y)) return null;
+			return new Vector2(Mathf.Min(0f, x), Mathf.Min(0f, y));
+		}
+
+		/// <summary>Keeps the panel where the player put it (null: back to its own place), in this PC's world_rules.txt.</summary>
+		public static void SavePlace(Vector2? place)
+		{
+			placeRead = true;
+			savedPlace = place;
+			WorldRules.SaveDefault(PlaceSetting, place.HasValue ? Mathf.Round(place.Value.x).ToString(System.Globalization.CultureInfo.InvariantCulture) + "," + Mathf.Round(place.Value.y).ToString(System.Globalization.CultureInfo.InvariantCulture) : "");
+		}
+
+		/// <summary>The panel back to its own place (double-click on it, or Defaults > Keys > Quest panel "Reset place").</summary>
+		public static void ResetPlace() { dragging = false; SavePlace(null); }
+
+		/// <summary>Tests: read the place from world_rules.txt again, as a new start of Raft would.</summary>
+		internal static void ForgetPlace() { placeRead = false; }
+
+		/// <summary>
+		/// Every frame (after the corner map's own tick): the panel at the player's place or its own, inside the screen, and
+		/// never under the corner island map. The user (11-09): the map covered the panel's title and first step. While the
+		/// map shows, a panel that would overlap it moves out by the shorter way that fits on the screen (its own place: always
+		/// under the map); with the map hidden it is back where it was. A drag in progress is left alone.
+		/// </summary>
+		public static void Place()
+		{
+			if (panel == null || !panel.gameObject.activeInHierarchy || dragging) return;
+			Vector2 want = AwayFromMap(OnScreen(SavedPlace ?? HomePlace), !SavedPlace.HasValue);
+			if ((panel.anchoredPosition - want).sqrMagnitude > 0.01f) panel.anchoredPosition = want;
+		}
+
+		/// <summary>The panel's place moved so the whole panel is on the screen (with EdgeGap).</summary>
+		static Vector2 OnScreen(Vector2 p)
+		{
+			RectTransform area = panel != null ? panel.parent as RectTransform : null;
+			if (area == null) return p;
+			Rect a = area.rect, r = panel.rect;
+			p.x = Mathf.Clamp(p.x, Mathf.Min(-EdgeGap, -(a.width - r.width - EdgeGap)), -EdgeGap);
+			p.y = Mathf.Clamp(p.y, Mathf.Min(-EdgeGap, -(a.height - r.height - EdgeGap)), -EdgeGap);
+			return p;
+		}
+
+		/// <summary>Out from under the corner map (with MapGap): under it or left of it, the shorter move that fits on the
+		/// screen; under it when under: true (the panel's own place) or when neither fits.</summary>
+		static Vector2 AwayFromMap(Vector2 p, bool under)
+		{
+			Rect map;
+			if (!Minimap.CornerScreenRect(out map)) return p;
+			RectTransform area = panel.parent as RectTransform;
+			Canvas c = panel.GetComponentInParent<Canvas>();
+			float s = c != null && c.rootCanvas != null ? Mathf.Max(0.01f, c.rootCanvas.scaleFactor) : 1f;
+			// (the map in this panel's units, from the screen's top right corner, with the gap)
+			float mxMin = (map.xMin - Screen.width) / s - MapGap, mxMax = (map.xMax - Screen.width) / s + MapGap;
+			float myMin = (map.yMin - Screen.height) / s - MapGap, myMax = (map.yMax - Screen.height) / s + MapGap;
+			Rect r = panel.rect;
+			bool overlaps = p.x - r.width < mxMax && p.x > mxMin && p.y - r.height < myMax && p.y > myMin;
+			if (!overlaps) return p;
+			Vector2 below = new Vector2(p.x, myMin), left = new Vector2(mxMin, p.y);
+			float h = area != null ? area.rect.height : Screen.height / s, w = area != null ? area.rect.width : Screen.width / s;
+			bool belowFits = below.y - r.height >= -h + EdgeGap, leftFits = left.x - r.width >= -w + EdgeGap;
+			if (under || !leftFits) return below;
+			if (!belowFits) return left;
+			return Mathf.Abs(p.y - below.y) <= Mathf.Abs(p.x - left.x) ? below : left;
+		}
+
+		/// <summary>The panel's screen rectangle in pixels (tests), or an empty rect.</summary>
+		internal static Rect PanelScreenRect()
+		{
+			if (panel == null) return new Rect();
+			var c = new Vector3[4];
+			panel.GetWorldCorners(c);
+			return Rect.MinMaxRect(c[0].x, c[0].y, c[2].x, c[2].y);
+		}
+		internal static RectTransform PanelRect { get { return panel; } }
+		/// <summary>How many drags the player finished (tests).</summary>
+		public static int Drags;
+
+		/// <summary>Drags the panel by its title and edges while the mouse is free (inventory, menus, the mod's windows; the
+		/// steps list scrolls instead when it is long), keeps it on the screen, and double-click puts it back in its place.</summary>
+		class PanelDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
+		{
+			public void OnBeginDrag(PointerEventData e) { dragging = e.button == PointerEventData.InputButton.Left && Cursor.lockState != CursorLockMode.Locked; }
+
+			public void OnDrag(PointerEventData e)
+			{
+				if (!dragging || panel == null) return;
+				Canvas c = GetComponentInParent<Canvas>();
+				float scale = c != null && c.rootCanvas != null ? c.rootCanvas.scaleFactor : 1f;
+				panel.anchoredPosition = OnScreen(panel.anchoredPosition + e.delta / Mathf.Max(0.01f, scale));
+			}
+
+			public void OnEndDrag(PointerEventData e)
+			{
+				if (!dragging || panel == null) return;
+				dragging = false;
+				SavePlace(OnScreen(panel.anchoredPosition));
+				Drags++;
+			}
+
+			public void OnPointerClick(PointerEventData e)
+			{
+				if (e.button == PointerEventData.InputButton.Left && e.clickCount >= 2 && Cursor.lockState != CursorLockMode.Locked) ResetPlace();
+			}
+
+			void OnDisable() { dragging = false; }
+		}
+
+		public static bool PanelShown { get { return panel != null && panel.gameObject.activeSelf; } }
+
+		/// <summary>Tests: the panel's current step line ("" when none shows).</summary>
+		internal static string PanelCurrent
+		{
+			get { Text t = stepLines.FirstOrDefault(x => x != null && x.gameObject.activeSelf && x.text.Contains("►")); return PanelShown && t != null ? t.text : ""; }
+		}
+		/// <summary>How many steps the panel shows at a time; a longer quest scrolls (the user, 2026-10-03: a 32-step quest
+		/// covered the right side of the screen).</summary>
+		public const int VisibleSteps = 5;
+
+		/// <summary>The quests read once per tick (the panel and CheckCounted asked for each one 4-6 times, every 0.5 s, each a
+		/// full parse of its texts - audit 2026-10-06). Only within one tick: an island's settings can change between them.</summary>
+		static readonly Dictionary<long, IslandQuest> tickQuests = new Dictionary<long, IslandQuest>();
+
+		static IslandQuest TickQuest(IslandWorldState.Entry e, int n)
+		{
+			if (e == null) return new IslandQuest();
+			long key = ((long)e.Id << 16) | (uint)(n & 0xFFFF);
+			IslandQuest q;
+			if (!tickQuests.TryGetValue(key, out q)) tickQuests[key] = q = QuestOf(e, n);
+			return q;
+		}
 
 		/// <summary>Every frame from the mod: the panel for the quest of the island the player is at (and its introduction once).</summary>
+		/// <summary>How many times the quests were checked (for the tests).</summary>
+		public static int TickCount;
+
 		public static void Tick()
 		{
 			if (Time.unscaledTime < nextHud) return;
 			nextHud = Time.unscaledTime + 0.5f;
-			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); if (panel != null) panel.gameObject.SetActive(false); return; }
+			tickQuests.Clear();
+			// (guarded: a throw here used to stop the counted steps and the panel too)
+			try { QuestSkip.Tick(); } catch (Exception ex) { DynamicIslands.TickError("Quest skip", ex); }
+			try { QuestTimers.Tick(); } catch (Exception ex) { DynamicIslands.TickError("Quest timers", ex); }
+			if (!LoadSceneManager.IsGameSceneLoaded) { introduced.Clear(); panelIsland = -1; doneSince.Clear(); closedKey = -1; followedIsland = followedStep = -1; DoneHideSeconds = 30f; if (panel != null) panel.gameObject.SetActive(false); return; }
+			TickCount++;
 			if (Raft_Network.IsHost) CheckCounted();
-			IslandWorldState.Entry at = IslandWorldState.Islands.FirstOrDefault(e => e.Root != null && QuestOf(e).Exists && Near(e));
-			if (at == null) { if (panel != null) panel.gameObject.SetActive(false); return; }
-			IslandQuest q = QuestOf(at);
-			int step = StepOf(at);
-			if (introduced.Add(at.Id) && step == 0 && q.Intro.Length > 0) Show(q.ShownTitle, q.Intro);
+			CheckBlueprints();
+			// (shows within ShowDistance, stays up out to NearDistance)
+			IslandWorldState.Entry at = IslandWorldState.Islands.FirstOrDefault(e => e.Root != null && Near(e, e.Id == panelIsland ? NearDistance : ShowDistance) && Enumerable.Range(0, QuestsOf(e)).Any(n => TickQuest(e, n).Exists));
+			panelIsland = at != null ? at.Id : -1;
+			PanelQuest = -1;
+			if (at == null) { closedKey = -1; if (panel != null) panel.gameObject.SetActive(false); return; }
+			int quests = QuestsOf(at);
+			// (a reward kept for this player, who wasn't here when a quest was done: now - LM8. Also for a player who joined
+			// after it was done: the step came with the island list, no "done" ran here, and nothing was ever owed to them)
+			for (int n = 0; n < quests; n++)
+			{
+				IslandQuest qn = TickQuest(at, n);
+				if (!qn.Exists || StepOf(at, n) < qn.Steps.Count) continue;
+				string key = RewardKey(at, n);
+				if (QuestRewards.Owed(key)) QuestRewards.Collect(key, () => GiveItems(qn));
+				else if (!QuestRewards.Rewarded(key) && HasRaftReward(qn)) QuestRewards.OnCompleted(key, true, () => GiveItems(qn));
+				else continue;
+				Show("Your share of the reward: " + qn.ShownTitle, "");
+			}
+			// (the panel: the first quest not done yet, the main one first - LM4; all done: the main quest, ticked)
+			int shown = Enumerable.Range(0, quests).FirstOrDefault(n => TickQuest(at, n).Exists && StepOf(at, n) < TickQuest(at, n).Steps.Count);
+			if (!TickQuest(at, shown).Exists) shown = Enumerable.Range(0, quests).First(n => TickQuest(at, n).Exists);
+			IslandQuest q = TickQuest(at, shown);
+			int step = StepOf(at, shown);
+			PanelQuest = shown;
+			if (introduced.Add(at.Id) && step == 0 && q.Intro.Length > 0) Show(q.ShownTitle, q.Intro + StartHint(at));
 			if (panel == null) Build();
-			panel.gameObject.SetActive(true);
-			titleText.text = q.ShownTitle + (step >= q.Steps.Count ? "  <color=#8fdc8f>\u221A done</color>" : "");
+			int open = Enumerable.Range(0, quests).Count(n => n != shown && TickQuest(at, n).Exists && StepOf(at, n) < TickQuest(at, n).Steps.Count);
+			// (every quest here done: the panel goes after DoneHideSeconds; closed with its X: gone until the step changes)
+			int shownKey = at.Id * 16 + shown;
+			bool hide = shownKey == closedKey && step == closedStep;
+			if (step >= q.Steps.Count && open == 0)
+			{
+				float since;
+				if (!doneSince.TryGetValue(shownKey, out since)) doneSince[shownKey] = since = Time.unscaledTime;
+				if (Time.unscaledTime - since >= DoneHideSeconds) hide = true;
+			}
+			panel.gameObject.SetActive(!hide);
+			if (hide) return;
+			closeButton.onClick.RemoveAllListeners();
+			closeButton.onClick.AddListener(() => { closedKey = shownKey; closedStep = step; panel.gameObject.SetActive(false); });
+			titleText.text = q.ShownTitle + (step >= q.Steps.Count ? "  <color=#8fdc8f>\u221A done</color>" : "") + (open > 0 ? "  <color=#b39a6c>(+" + open + " more)</color>" : "");
 			var lines = new List<string>();
 			for (int i = 0; i < q.Steps.Count; i++)
 			{
@@ -286,42 +921,139 @@ namespace DynamicIslands.Editor
 				if (i < step) lines.Add("<color=#8fdc8f>\u221A</color> <color=#b89e70>" + d + "</color>");
 				else if (i == step)
 				{
-					int progress = IslandQuest.Counted(q.Steps[i].Type) ? Mathf.Min(Found(at, q.Steps[i]), q.Steps[i].Count) : ProgressOf(at);
+					int progress = IslandQuest.Counted(q.Steps[i].Type) ? Mathf.Min(Found(at, q.Steps[i]), q.Steps[i].Count) : ProgressOf(at, shown);
 					lines.Add("<color=#ffc766>\u25BA</color> " + d + (q.Steps[i].Count > 1 ? " (" + progress + "/" + q.Steps[i].Count + ")" : ""));
 				}
 				else lines.Add("<color=#b39a6c>\u2022 ?</color>");
 			}
-			stepsText.text = string.Join("\n", lines.ToArray());
+			ShowSteps(lines, step, at.Id * 16 + shown);
+		}
+
+		/// <summary>
+		/// The steps, one line each, in a list at most VisibleSteps tall: a longer quest scrolls - by itself to the
+		/// current step (the step done before it, then it and the next ones) whenever the step changes, and with the
+		/// mouse wheel while the cursor is free (the inventory, the journal, Raft's menu) - never fighting the player's
+		/// own scrolling between two steps.
+		/// </summary>
+		static void ShowSteps(List<string> lines, int step, int island)
+		{
+			bool changed = stepLines.Count < lines.Count;
+			while (stepLines.Count < lines.Count) stepLines.Add(StepLine());
+			for (int i = 0; i < stepLines.Count; i++)
+			{
+				bool used = i < lines.Count;
+				if (stepLines[i].gameObject.activeSelf != used) { stepLines[i].gameObject.SetActive(used); changed = true; }
+				if (used && stepLines[i].text != lines[i]) { stepLines[i].text = lines[i]; changed = true; }
+			}
+			// (nothing new since the last tick: the layout as it was - it was rebuilt every 0.5 s, audit 2026-10-06)
+			if (!changed && island == followedIsland && step == followedStep) return;
+			LayoutRebuilder.ForceRebuildLayoutImmediate(stepsContent);
+			// (the window: one done step above the current one, so the player sees what was just done)
+			int first = Mathf.Clamp(step - 1, 0, Mathf.Max(0, lines.Count - VisibleSteps));
+			float spacing = stepsContent.GetComponent<VerticalLayoutGroup>().spacing, top = 0f, height = 0f;
+			for (int i = 0; i < lines.Count; i++)
+			{
+				float h = LayoutUtility.GetPreferredHeight(stepLines[i].rectTransform);
+				if (i < first) top += h + spacing;
+				else if (i < first + VisibleSteps) height += h + (i > first ? spacing : 0f);
+			}
+			height += 4f; // (the content's bottom padding)
+			LayoutElement size = stepsView.GetComponent<LayoutElement>();
+			if (Mathf.Abs(size.preferredHeight - height) > 0.5f) UIKit.Size(stepsView.gameObject, -1, height);
+			bool scrolls = lines.Count > VisibleSteps;
+			stepsScroll.vertical = scrolls;
+			stepsScroll.GetComponent<Image>().raycastTarget = scrolls; // (a short list: a drag there moves the panel)
+			if (island != followedIsland || step != followedStep || !scrolls)
+			{
+				followedIsland = island; followedStep = step;
+				stepsContent.anchoredPosition = new Vector2(stepsContent.anchoredPosition.x, scrolls ? top : 0f);
+			}
+		}
+
+		static Text StepLine()
+		{
+			Text t = UIKit.Label(stepsContent, "", 13, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Step");
+			t.lineSpacing = 1.15f;
+			return t;
 		}
 
 		/// <summary>How far a counted step is: story items the crew holds, or journal pages found on the island.</summary>
 		public static int Found(IslandWorldState.Entry e, IslandQuest.Step s)
 		{
-			if (s.Type == "collect") return s.Target.Length > 0 ? StoryBook.Count(StoryItems.IdOf(s.Target)) : StoryBook.Items.Sum(h => h.Count);
+			// (found in all, also those a lock or a machine used up before this step came - ROADMAP E12)
+			// (not those found on another copy of the same island in the world: they were for that copy's quest - each copy
+			// counts its own finds, and finds from other islands count for both)
+			if (s.Type == "collect")
+			{
+				string id = s.Target.Length > 0 ? StoryItems.IdOf(s.Target) : null;
+				int all = id != null ? StoryBook.FoundCount(id) : StoryBook.Items.Sum(h => h.Count);
+				return Mathf.Max(0, all - StoryBook.FoundOnOtherCopies(id, e));
+			}
 			if (s.Type == "pages")
-				return StoryBook.Pages.Count(p => s.Target == "all" || p.Key.StartsWith("note:" + e.HostName + ":") || p.Key.StartsWith("act:" + e.HostName + ":"));
-			return 0;
+			{
+				// ("all": the islands' pages - not the frequencies the story chain writes into the journal; this island: its own
+				// copy's - two copies of one island shared their pages, AU41)
+				if (s.Target == "all") return StoryBook.Pages.Count(p => p.Key.StartsWith("note:") || p.Key.StartsWith("act:"));
+				string island = StoryBook.PageIsland(e);
+				return StoryBook.Pages.Count(p => p.Key.StartsWith("note:" + island + ":") || p.Key.StartsWith("act:" + island + ":"));
+			}
+			if (QuestSteps.Counted(s.Type)) return QuestSteps.Found(e, s);
+			if (QuestWaitSteps.Counted(s.Type)) return QuestWaitSteps.Found(e, s);
+			return PlayerFeatures.Found(e, s);
 		}
 
 		/// <summary>Host: counted steps (story items, pages) move on when the crew has enough; everyone is told.</summary>
 		static void CheckCounted()
 		{
+			Network_Player[] players = UnityEngine.Object.FindObjectsOfType<Network_Player>();
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.ToList())
 			{
-				IslandQuest q = QuestOf(e);
-				int step = StepOf(e);
-				if (!q.Exists || step >= q.Steps.Count || !IslandQuest.Counted(q.Steps[step].Type)) continue;
 				// (only while someone is there: a quest whose items the crew already held finished the moment its island
-				// appeared far away, and nobody got its reward)
-				if (Found(e, q.Steps[step]) >= q.Steps[step].Count && AnyPlayerNear(e)) Set(e, step + 1, 0, true);
+				// appeared far away, and nobody got its reward. Looked at first: every island's quests were read and their
+				// finds counted every 0.5 s, for islands nobody was at - audit 10-30. Islands without quests first: no land
+				// radius asked for an island whose file isn't here)
+				int count = QuestsOf(e);
+				if (count == 0 || !AnyPlayerNear(e, players)) continue;
+				for (int n = 0; n < count; n++)
+				{
+					IslandQuest q = TickQuest(e, n);
+					int step = StepOf(e, n);
+					if (!q.Exists || step >= q.Steps.Count || !IslandQuest.Counted(q.Steps[step].Type)) continue;
+					if (Found(e, q.Steps[step]) >= q.Steps[step].Count) Set(e, n, step + 1, 0, true);
+				}
+			}
+		}
+
+		/// <summary>Every machine (SL8): a "blueprint" step waiting at an island this player is at is done when this player
+		/// carries that blueprint or has learned it - picked up there, earlier, or bought at a store. It goes through Event like
+		/// a note read, so a player's machine tells the host (and an early pick-up still counts when the step comes).</summary>
+		internal static void CheckBlueprints()
+		{
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands)
+			{
+				if (e.Root == null || !Near(e)) continue;
+				for (int n = 0, count = QuestsOf(e); n < count; n++)
+				{
+					IslandQuest q = TickQuest(e, n);
+					int step = StepOf(e, n);
+					if (!q.Exists || step >= q.Steps.Count || q.Steps[step].Type != BlueprintSteps.Type) continue;
+					IslandQuest.Step s = q.Steps[step];
+					string found = BlueprintSteps.Found(s.Target);
+					if (found == null) continue;
+					Debug.Log("[CUSTOM ISLANDS] [quest] " + e.Name + ": blueprint step " + (step + 1) + " done (" + found + ")");
+					Event(e, n, BlueprintSteps.Type, s.Target, Mathf.Max(1, s.Count - ProgressOf(e, n)));
+					return; // (one a tick: the quest moved on, the next tick looks again)
+				}
 			}
 		}
 
 		/// <summary>Host: whether any player is at the island (its land and the same reach as the rewards).</summary>
-		static bool AnyPlayerNear(IslandWorldState.Entry e)
+		internal static bool AnyPlayerNear(IslandWorldState.Entry e) { return AnyPlayerNear(e, UnityEngine.Object.FindObjectsOfType<Network_Player>()); }
+
+		static bool AnyPlayerNear(IslandWorldState.Entry e, Network_Player[] players)
 		{
 			float r = Mathf.Max(0f, CustomIslandSpawner.LandRadius(e.Name)) + NearDistance;
-			foreach (Network_Player p in UnityEngine.Object.FindObjectsOfType<Network_Player>())
+			foreach (Network_Player p in players)
 				if (p != null && new Vector2(p.transform.position.x - e.Position.x, p.transform.position.z - e.Position.z).magnitude < r) return true;
 			return false;
 		}
@@ -331,13 +1063,33 @@ namespace DynamicIslands.Editor
 			Canvas canvas = UIKit.CreateCanvas("CustomIslands_Quest", 380);
 			UnityEngine.Object.DontDestroyOnLoad(canvas.gameObject);
 			panel = UIKit.Rect("Quest", canvas.transform);
-			UIKit.Anchor(panel, new Vector2(1f, 1f), new Vector2(-20, -160), new Vector2(300, 0));
+			UIKit.Anchor(panel, new Vector2(1f, 1f), new Vector2(-20, PanelTop), new Vector2(300, 0));
 			UIKit.Surface(panel); // Raft's menu look
 			UIKit.Vertical(panel.gameObject, 4f, new RectOffset(12, 12, 8, 10), true);
-			titleText = UIKit.Label(panel, "", 16, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
-			stepsText = UIKit.Label(panel, "", 13, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Steps");
-			stepsText.lineSpacing = 1.15f;
+			// (the title and an X to close the panel - ROADMAP CT10; the X takes the mouse while the cursor is free)
+			RectTransform top = UIKit.Rect("Top", panel);
+			UIKit.Horizontal(top.gameObject, 6f).childForceExpandWidth = false;
+			titleText = UIKit.Label(top, "", 16, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
+			UIKit.Size(titleText.gameObject);
+			closeButton = UIKit.Button(top, "×", () => { }, "Close the quest panel", 24, 24f, 14);
+			closeButton.name = "Close";
+			stepsContent = UIKit.ScrollList(panel, out stepsScroll, 3f);
+			stepsView = (RectTransform)stepsScroll.transform;
+			stepsView.name = "Steps";
+			UIKit.Size(stepsView.gameObject, -1, 20f);
+			stepsScroll.scrollSensitivity = 18f;
+			stepLines.Clear();
+			followedIsland = followedStep = -1;
 			foreach (Graphic g in panel.GetComponentsInChildren<Graphic>()) g.raycastTarget = false;
+			foreach (Graphic g in closeButton.GetComponentsInChildren<Graphic>()) g.raycastTarget = true;
+			// (only the list's own background and its scrollbar take the mouse: the wheel scrolls it while the cursor is free)
+			stepsScroll.GetComponent<Image>().raycastTarget = true;
+			// (11-09: the panel drags by its title and edges while the mouse is free; double-click puts it back - PanelDrag)
+			panel.GetComponent<Image>().raycastTarget = true;
+			titleText.raycastTarget = true;
+			panel.gameObject.AddComponent<PanelDrag>();
+			if (stepsScroll.verticalScrollbar != null)
+				foreach (Graphic g in stepsScroll.verticalScrollbar.GetComponentsInChildren<Graphic>()) g.raycastTarget = true;
 		}
 
 		#endregion

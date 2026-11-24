@@ -26,8 +26,20 @@ namespace DynamicIslands.Editor
 			/// <summary>Client: the island's name on the host, and its file's content hash.</summary>
 			public string HostName;
 			public string Hash;
+			/// <summary>Host: the world was saved with another version of this island (another host's), not on this PC: this PC's own
+			/// version plays in its place, the world keeps its version's hash, and a player who has it sends it (RK1).</summary>
+			public bool StandIn;
+			/// <summary>Host: the world's version came while the stand-in was loaded - the file it plays from its next load (RK1).</summary>
+			public string SwitchTo;
+			/// <summary>Client: the host plays another version of this loaded island now - the hash it takes once it is unloaded (RK1).</summary>
+			public string PendingHash;
 			/// <summary>Client: the island file is still coming from the host.</summary>
 			public bool WaitingForFile;
+			/// <summary>Host: its file isn't on this PC and the world plays without it (MissingIslandsCheck) - not loaded, no
+			/// Receiver dot, kept in the world file; cleared when the file comes.</summary>
+			public bool Excluded;
+			/// <summary>Host: the fields after the eighth of its world file line (a newer version's), written back as they were (AU5).</summary>
+			public string Extra;
 			public Vector3 Position;
 			/// <summary>The spawned island, or null while it is unloaded (far away) or still loading.</summary>
 			public GameObject Root;
@@ -50,7 +62,24 @@ namespace DynamicIslands.Editor
 
 		public static IList<Entry> Islands { get { return islands; } }
 
-		static string WorldKey { get { return SaveAndLoad.WorldGuid.ToString(); } }
+		/// <summary>
+		/// The key the world's state is kept under: Raft's world id - or, for a world made before Raft gave worlds an id (its
+		/// saves have none, so SaveAndLoad.WorldGuid stays empty), "noid-" and its name. Before, such a world was never saved
+		/// at all: a plan set by WorldPlan and the whole story chain were gone on the next load (player log 11-02).
+		/// </summary>
+		internal static string WorldKey
+		{
+			get
+			{
+				if (SaveAndLoad.WorldGuid != Guid.Empty) return SaveAndLoad.WorldGuid.ToString();
+				string name = SaveAndLoad.CurrentGameFileName;
+				if (string.IsNullOrEmpty(name)) return NoWorldKey;
+				foreach (char c in Path.GetInvalidFileNameChars()) name = name.Replace(c, '_');
+				return NoIdPrefix + name;
+			}
+		}
+		internal const string NoIdPrefix = "noid-";
+		static readonly string NoWorldKey = Guid.Empty.ToString();
 		static string FilePath { get { return Path.Combine(Path.Combine(DynamicIslands.assetpath, "worlds"), WorldKey + ".txt"); } }
 		/// <summary>The world file of the world being played (WorldCopy).</summary>
 		public static string WorldFilePath { get { return FilePath; } }
@@ -94,6 +123,10 @@ namespace DynamicIslands.Editor
 				islands.Remove(e);
 			}
 			if (broadcast) IslandNetwork.BroadcastRemoved(gone.Select(e => e.Id));
+			// (host, islands taken out on purpose - RemoveIsland, the randomizer: a story step's island comes again, AU50. Not
+			// a generated island that failed: brought again it would fail again every second)
+			if (broadcast && gone.Count > 0 && Raft_Network.IsHost)
+				try { StoryChain.OnIslandsRemoved(gone); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] [story chain] An island removed: " + ex.Message); }
 			return gone.Count;
 		}
 
@@ -131,22 +164,34 @@ namespace DynamicIslands.Editor
 		/// <summary>Writes the list for the current world (called after Raft saves the world).</summary>
 		public static void Save()
 		{
-			if (!Raft_Network.IsHost || SaveAndLoad.WorldGuid == Guid.Empty) return;
+			// (a world without Raft's world id is kept under its name - WorldKey)
+			if (!Raft_Network.IsHost || WorldKey == NoWorldKey) return;
 			// Not set up for this world yet (Raft saves a brand-new world at once, before the mod notices it): what is in
 			// memory - the plan, km sailed, the story book - still belongs to the world played before, and writing it
 			// here gave the new world that world's journal and km, and lost the plan chosen for it (two-player test).
 			if (loadedFor != WorldKey) return;
+			// Not while the player leaves the world, except Raft's own save (SaveGuard vets that one): a save from the mod's
+			// own code then (a reward, a tick) wrote what was half torn down already, as SaveSoon never does (sweep 11-14)
+			if (!WorldCopy.InRaftSave && (GameManager.IsLeavingGame || GameManager.IsQuittingGame)) { Debug.Log("[CUSTOM ISLANDS] Island list not saved: the world is being left"); return; }
+			// (the world's file couldn't be read: saving what little was read would write over the good file - AU12)
+			if (loadFailed)
+			{
+				if (!loadFailedTold) { loadFailedTold = true; DynamicIslands.Notify("This world's custom islands couldn't be read (see the log, F10): they aren't saved, so their file stays as it was. Load the world again.", true); }
+				Debug.LogWarning("[CUSTOM ISLANDS] Not saving the world's custom islands: its file couldn't be read when it loaded");
+				return;
+			}
 			try
 			{
 				Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
-				if (islands.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState && !StoryBook.HasState && !WorldRandomizer.HasState && !WorldRules.HasState && !PlayerLevels.HasState && !WorldOptions.HasState && !WorldIslands.HasState && !StoryChain.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); WorldCopy.AfterDelete(); return; }
+				// (not while it has lines this version couldn't read - a newer version's settings: deleting it lost them)
+				if (islands.Count == 0 && keptLines.Count == 0 && CustomIslandSpawner.Enabled && !WorldDirector.HasState && !StoryBook.HasState && !WorldRandomizer.HasState && !WorldRules.HasState && !PlayerLevels.HasState && !WorldOptions.HasState && !WorldIslands.HasState && !StoryChain.HasState) { if (File.Exists(FilePath)) File.Delete(FilePath); WorldCopy.AfterDelete(); return; }
 				var lines = new List<string>
 				{
 					"# Custom islands in world '" + SaveAndLoad.CurrentGameFileName + "': name|x|y|z|used objects (ordinal,active,yield left,day;...)|rule|receiver label|island file hash",
-					WorldCopy.StampLine(),
 					"@auto=" + (CustomIslandSpawner.Enabled ? "on" : "off")
 				};
-				if (WorldCopy.RaftSaveLine() != null) lines.Add(WorldCopy.RaftSaveLine());
+				// (the clock, the save counter, and Raft's save it goes with - or, between saves, the one it follows - WorldCopy)
+				lines.InsertRange(1, WorldCopy.StampLines());
 				// (which PC hosted it: Tidy up moves a world's file only when this PC hosted it and its Raft world is gone -
 				// a player's copy of a world they joined names the host)
 				if (Housekeeping.SavedByLine() != null) lines.Add(Housekeeping.SavedByLine());
@@ -159,70 +204,170 @@ namespace DynamicIslands.Editor
 				lines.AddRange(WorldOptions.WriteLines());
 				lines.AddRange(WorldIslands.WriteLines());
 				lines.AddRange(StoryChain.WriteLines());
+				// (this version keeps the zones' story-loot keys: a file without the line is migrated on reading - TriggerZone)
+				lines.Add(TriggerZone.StoryLootLine);
+				// (dropped items on custom islands: Raft's save keeps none - RK2)
+				lines.AddRange(ItemHold.WriteLines());
+				// (islands this host plays in place of another host's version it lacks: the next load - saved by this PC then - still
+				// tells them apart from its own edits and keeps asking the players for the world's version - RK1)
+				foreach (Entry e in islands)
+					if (e.StandIn && !string.IsNullOrEmpty(e.Hash)) lines.Add("@foreign=" + e.HostName.Replace("|", "/") + "|" + e.Hash);
 				foreach (Entry e in islands)
 				{
 					IslandObjectState.Capture(e);
 					// (the island file's hash: another player hosting the world later finds their copy of it - WorldCopy)
 					lines.Add(string.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}", e.HostName, e.Position.x, e.Position.y, e.Position.z, IslandObjectState.Encode(e.State),
-						e.Rule.Replace("|", "/"), e.Label.Replace("|", "/"), IslandNetwork.HashOf(e.Name) ?? e.Hash ?? ""));
+						e.Rule.Replace("|", "/"), e.Label.Replace("|", "/"), (e.StandIn ? e.Hash : IslandNetwork.HashOf(e.Name) ?? e.Hash) ?? "") + (e.Extra != null ? "|" + e.Extra : ""));
 				}
+				lines.AddRange(keptLines);
+				// (the version that wrote it: an older one reading it warns - AU5)
+				lines.Add("@modversion=" + LibraryPack.ModVersion);
 				SafeFile.WriteAllLines(FilePath, lines.ToArray());
 				WorldCopy.AfterSave(lines.ToArray());
 			}
-			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not save the world's island list: " + ex.Message); }
+			catch (Exception ex)
+			{
+				Debug.LogWarning("[CUSTOM ISLANDS] Could not save the world's island list: " + ex.Message);
+				// (the player is told once a minute at most: before, a failed save was only a line in the log - AU36)
+				if (Time.unscaledTime >= nextSaveFailNotice)
+				{
+					nextSaveFailNotice = Time.unscaledTime + 60f;
+					DynamicIslands.Notify("Custom Islands couldn't save this world's islands: " + (SafeFile.InUse(ex) ? "their file is in use by another program (an antivirus or a cloud sync?)" : ex.Message) + ". It tries again at the next save.", true);
+				}
+			}
 		}
 
 		/// <summary>Reads the island list of the world that just finished loading; CustomIslandSpawner spawns the ones near the raft.</summary>
+		static bool loadFailed, loadFailedTold;
+		static float nextSaveFailNotice;
+		/// <summary>Lines of the world's file this version couldn't read: written back as they were.</summary>
+		static readonly List<string> keptLines = new List<string>();
+
+		/// <summary>The world file was written by this version (the "@modversion=" line): a newer one warns the host once.</summary>
+		static void NewerFile(string version)
+		{
+			if (string.IsNullOrEmpty(version) || LibraryPack.CompareVersions(version, LibraryPack.ModVersion) <= 0) return;
+			Debug.LogWarning("[CUSTOM ISLANDS] This world was saved by Custom Islands " + version + ", newer than this " + LibraryPack.ModVersion);
+			DynamicIslands.Notify("This world was saved by a newer Custom Islands (" + version + ", you have " + LibraryPack.ModVersion + "). What this version doesn't know is kept as it is, but please update the mod before playing on.", true);
+		}
+
+		/// <summary>One step of a world's resets: a throw is logged and the next step (and the island list) still runs - review 10-30.</summary>
+		internal static void ResetStep(string what, Action step)
+		{
+			try { step(); }
+			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] World reset, " + what + " failed: " + e); }
+		}
+
 		public static void OnWorldLoaded()
 		{
 			islands.Clear();
 			loadedFor = WorldKey;
+			// (the quest rewards are read again for this world: two worlds without an id had one key - bug 11-09)
+			QuestRewards.Forget();
+			if (loadedFor.StartsWith(NoIdPrefix)) Debug.Log("[CUSTOM ISLANDS] This world has no world id in Raft's save (an old world): its custom islands are kept under its name (" + loadedFor + ")");
+			loadFailed = loadFailedTold = false;
+			keptLines.Clear();
+			ItemHold.ClearSaved();
 			WorldCopy.ForgetHostLines();
 			CustomIslandSpawner.Enabled = true;
-			CustomIslandSpawner.OnWorldLoaded();
-			IslandNetwork.OnWorldLoaded();
-			WorldRules.Reset();
-			WorldDirector.Reset();
-			StoryBook.Reset();
-			PlayerPlaces.Reset();
-			Claims.Reset();
-			WorldRandomizer.Reset();
-			PlayerLevels.Reset();
-			WorldOptions.Reset();
-			WorldIslands.Reset();
-			StoryChain.Reset();
+			ResetStep("CustomIslandSpawner.OnWorldLoaded", () => CustomIslandSpawner.OnWorldLoaded());
+			ResetStep("IslandNetwork.OnWorldLoaded", () => IslandNetwork.OnWorldLoaded());
+			ResetStep("WorldRules.Reset", () => WorldRules.Reset());
+			ResetStep("WorldDirector.Reset", () => WorldDirector.Reset());
+			ResetStep("StoryBook.Reset", () => StoryBook.Reset());
+			ResetStep("PlayerPlaces.Reset", () => PlayerPlaces.Reset());
+			ResetStep("Claims.Reset", () => Claims.Reset());
+			ResetStep("Behaviours.ForgetWorld", () => Behaviours.ForgetWorld());
+			ResetStep("ContentState.ForgetWorld", () => ContentState.ForgetWorld());
+			ResetStep("QuestTimers.Reset", () => QuestTimers.Reset()); // (island ids repeat between worlds: the last world's clock set a step back here - questfix 11-14)
+			// (a story island brought back by hand in the world before isn't "on its way" in this one - RK12 L2)
+			ResetStep("handBrought", () => DynamicIslands.handBrought.Clear());
+			ResetStep("MechFeatures.Reset", () => MechFeatures.Reset());
+			ResetStep("GapWorld.Reset", () => GapWorld.Reset());
+			ResetStep("WorldRandomizer.Reset", () => WorldRandomizer.Reset());
+			ResetStep("PlayerLevels.Reset", () => PlayerLevels.Reset());
+			ResetStep("WorldOptions.Reset", () => WorldOptions.Reset());
+			ResetStep("WorldIslands.Reset", () => WorldIslands.Reset());
+			ResetStep("WorldWindowHint.OnWorldLoaded", () => WorldWindowHint.OnWorldLoaded());
+			ResetStep("StoryChain.Reset", () => StoryChain.Reset());
+			ResetStep("TriggerZone.ForgetStoryLootLine", () => TriggerZone.ForgetStoryLootLine());
+			ResetStep("MissingIslandsCheck.Forget", () => MissingIslandsCheck.Forget()); // (before the early return below: the last world's "Main menu" held the story; review 10-30 A)
+			ResetStep("BuriedTreasure.ForgetGiven", () => BuriedTreasure.ForgetGiven()); // (chest indexes come from the island ids of this world: another world's would block its loot - audit 10-30)
+			ResetStep("QuestCount.Reset", () => QuestCount.Reset()); // (the last world's count isn't shown here - review 10-30)
+			ResetStep("Collectibles.Reset", () => Collectibles.Reset()); // (set counts are kept by island id, and ids repeat between worlds - review 10-30)
+			// (the Raft save the world loads from, before Choose uses up its stamp: a quest reward given after it isn't in it - review 10-30)
+			if (Raft_Network.IsHost) ResetStep("QuestRewards.OnWorldLoaded", () => QuestRewards.OnWorldLoaded(WorldCopy.LoadingStamp));
 			// (the newest copy: this PC's own, or the one that came with Raft's world folder from another host - WorldCopy)
-			string[] fileLines = Raft_Network.IsHost ? WorldCopy.Choose(FilePath) : null;
-			if (fileLines == null) { WorldDirector.OnWorldLoaded(); return; }
+			string[] fileLines = null;
+			try { fileLines = Raft_Network.IsHost ? WorldCopy.Choose(FilePath) : null; }
+			catch (Exception e)
+			{
+				loadFailed = true;
+				Debug.LogError("[CUSTOM ISLANDS] Reading the world's custom islands (" + FilePath + ") failed: " + e);
+				DynamicIslands.Notify("This world's custom islands couldn't be read (see the log, F10): nothing of them is saved until it loads again", true);
+			}
+			if (fileLines == null) { WorldRules.OnWorldRead(); WorldDirector.OnWorldLoaded(); HeadStart.OnWorldRead(); return; }
+			var foreign = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			foreach (string line in fileLines)
+			try
 			{
 				if (line.StartsWith("#") || line.Trim().Length == 0) continue;
+				if (line.StartsWith("@foreign=")) { foreign.Add(line.Substring("@foreign=".Length).Trim()); continue; }
 				if (line.StartsWith("@auto=")) { CustomIslandSpawner.Enabled = !line.Substring(6).Trim().Equals("off", StringComparison.OrdinalIgnoreCase); continue; }
+				if (line.StartsWith("@modversion=")) { NewerFile(line.Substring("@modversion=".Length).Trim()); continue; }
 				int eq = line.IndexOf('=');
-				if (line.StartsWith("@") && eq > 1 && (WorldCopy.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || WorldRules.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || StoryBook.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
+				if (line.StartsWith("@") && eq > 1 && (ItemHold.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || WorldCopy.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || WorldRules.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) || StoryBook.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
 					PlayerPlaces.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
 					WorldRandomizer.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					PlayerLevels.ReadLine(line.Substring(1, eq - 1).Trim(), line.Substring(eq + 1)) ||
 					WorldOptions.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					WorldIslands.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					StoryChain.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
+					TriggerZone.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)) ||
 					WorldDirector.ReadLine(line.Substring(1, eq - 1).Trim().ToLowerInvariant(), line.Substring(eq + 1)))) continue;
+				// (a setting this version doesn't know - written by a newer one: kept as it is, so this version's save doesn't
+				// erase it for everyone - AU5)
+				if (line.StartsWith("@")) { keptLines.Add(line); Debug.LogWarning("[CUSTOM ISLANDS] A setting this version doesn't know is kept as it is: " + line); continue; }
 				string[] p = line.Split('|');
 				float x, y, z;
-				if (p.Length < 4 || p.Length > 8 || !float.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x) ||
+				if (p.Length < 4 || !float.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x) ||
 					!float.TryParse(p[2], NumberStyles.Float, CultureInfo.InvariantCulture, out y) || !float.TryParse(p[3], NumberStyles.Float, CultureInfo.InvariantCulture, out z))
 				{
-					Debug.LogWarning("[CUSTOM ISLANDS] Ignoring bad line in " + FilePath + ": " + line);
+					Debug.LogWarning("[CUSTOM ISLANDS] Ignoring bad line in " + FilePath + " (kept in the file): " + line);
+					keptLines.Add(line); // (left out, it was gone for good at the next save)
 					continue;
 				}
+				// (the name becomes a file's path, and the file may have come from another host with Raft's world folder: one
+				// that isn't a plain file name - "..\..\x" - is kept as it is, not read)
+				string bad = FileNames.ReceivedProblem(p[0]);
+				if (bad != null) { Debug.LogWarning("[CUSTOM ISLANDS] An island of " + FilePath + " is left out (kept in the file): its name " + bad); keptLines.Add(line); continue; }
 				string hash = p.Length > 7 ? p[7].Trim() : "";
-				islands.Add(new Entry { Id = IslandNetwork.NewId(), Name = WorldCopy.LocalFileFor(p[0], hash), HostName = p[0], Hash = hash.Length > 0 ? hash : null, Position = new Vector3(x, y, z),
-					State = IslandObjectState.Decode(p.Length > 4 ? p[4] : null), Rule = p.Length > 5 ? p[5] : "", Label = p.Length > 6 ? p[6] : "" });
+				// (another host's version of the island, not an edit of this PC's own: saved last by another PC, or marked so - RK1)
+				bool other = WorldDirector.SavedElsewhere || foreign.Contains(p[0] + "|" + hash);
+				var read = new Entry { Id = IslandNetwork.NewId(), Name = WorldCopy.LocalFileFor(p[0], hash, other), HostName = p[0], Hash = hash.Length > 0 ? hash : null, Position = new Vector3(x, y, z),
+					State = IslandObjectState.Decode(p.Length > 4 ? p[4] : null), Rule = p.Length > 5 ? p[5] : "", Label = p.Length > 6 ? p[6] : "",
+						// (fields a newer version added: read past, and written back as they were - AU5)
+						Extra = p.Length > 8 ? string.Join("|", p, 8, p.Length - 8) : null };
+				read.StandIn = other && read.Hash != null && IslandNetwork.IsHash(read.Hash) && read.Name == p[0] && IslandNetwork.HashOf(p[0]) != null && IslandNetwork.HashOf(p[0]) != read.Hash;
+				// (no file of it on this PC: it waits for a player to send it, instead of failing - AU6)
+				if (read.Hash != null && !File.Exists(IslandSpawner.PathFor(read.Name)) && IslandNetwork.Wanted.Contains(read.Hash))
+				{
+					// (the host is asked what to do in MissingIslandsCheck's box: the rest plays, and this one comes with a player who has it)
+					read.WaitingForFile = true;
+				}
+				islands.Add(read);
 			}
+			// (one line that can't be read is left out - the rest of the world still loads; before, it stopped the reading
+			// half way and the next save wrote the half over the whole file - AU12)
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read a line of " + FilePath + " (left as it is): " + line + " - " + e.Message); keptLines.Add(line); }
 			Debug.Log("[CUSTOM ISLANDS] World '" + SaveAndLoad.CurrentGameFileName + "' has " + islands.Count + " custom island(s); automatic islands " +
 				(CustomIslandSpawner.Enabled ? "on" : "off"));
+			TriggerZone.MarkOldStoryLoot(islands);
 			StoryChain.OnWorldRead();
+			WorldRules.OnWorldRead();
 			WorldDirector.OnWorldLoaded();
+			HeadStart.OnWorldRead();
+			MissingIslandsCheck.OnWorldRead(islands);
 		}
 	}
 
@@ -234,7 +379,10 @@ namespace DynamicIslands.Editor
 		{
 			WorldCopy.InRaftSave = true;
 			try { IslandWorldState.Save(); }
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not save the world's island list: " + ex.Message); }
 			finally { WorldCopy.InRaftSave = false; }
+			// (a quest reward given from now on isn't in this save - review 10-30)
+			if (Raft_Network.IsHost) QuestRewards.AfterRaftSave(WorldCopy.SavingStamp);
 		}
 	}
 
@@ -249,6 +397,34 @@ namespace DynamicIslands.Editor
 	[HarmonyPatch(typeof(SaveAndLoad), "RestoreRGDGame")]
 	static class RestoreRGDGamePatch
 	{
-		static void Prefix(RGD_Game game) { WorldCopy.LoadingStamp = game != null ? game.lastPlayedDateTicks : 0L; }
+		static void Prefix(RGD_Game game)
+		{
+			WorldCopy.LoadingStamp = game != null ? game.lastPlayedDateTicks : 0L;
+			string folder;
+			WorldCopy.LoadedFolder = game != null && SavesFolderPatch.Folders.TryGetValue(game, out folder) ? folder : null;
+		}
+	}
+
+	/// <summary>
+	/// The folder each world's save in the Load Game list was read from. Raft goes by the name kept inside the save
+	/// (CurrentGameFileName), so a world folder renamed by hand is played, but its folder is not found by that name.
+	/// </summary>
+	[HarmonyPatch(typeof(SaveAndLoad), "GetLatestRGDGameFromBackupFolders")]
+	static class SavesFolderPatch
+	{
+		internal static readonly System.Runtime.CompilerServices.ConditionalWeakTable<RGD_Game, string> Folders = new System.Runtime.CompilerServices.ConditionalWeakTable<RGD_Game, string>();
+
+		static void Postfix(System.IO.DirectoryInfo worldDirInfo, RGD_Game __result)
+		{
+			if (__result == null || worldDirInfo == null) return;
+			try { Folders.Remove(__result); Folders.Add(__result, worldDirInfo.FullName); } catch { }
+		}
+	}
+
+	/// <summary>A new world: no folder from the Load Game list.</summary>
+	[HarmonyPatch(typeof(NewGameBox), "Button_CreateNewGame")]
+	static class NewGameFolderPatch
+	{
+		static void Prefix() { WorldCopy.LoadedFolder = null; }
 	}
 }

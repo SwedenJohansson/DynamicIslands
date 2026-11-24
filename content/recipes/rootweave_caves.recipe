@@ -1,0 +1,405 @@
+# Rootweave Caves - the sixth island of the library's plan The Last Green World (SL11, Verdance)
+# A rock hill grown over with jungle, the grove's roots running down through it: four caves in its flanks. The Fungus
+# Hall (south, dim green, the survey team's camp), the Bee Hall (east, a vine-choked cave humming with wild hives), the
+# Flooded Passage (west, its floor under the sea, two air pockets on the way in) and the Den (north, Balboa's bear cave,
+# where a mama bear keeps the river people's cache). On the hilltop over the Bee Hall the survey team's wind turbine
+# still turns. Quest "The Living Labyrinth" (12 steps): the Fungus Hall, the cave survey, the wind turbine plans on the
+# hilltop, the Bee Hall, the advanced battery plans there, the Flooded Passage, the advanced headlight plans at its
+# end, the mama bear, the electric grill plans in the den cache, the poison sample report.
+#
+# Built by the recipe player (CIRecipe rootweave_caves) through the editor's own operations. Each cave is placed from a
+# frame at its mouth as on Ironreef Caverns (the frame's floor the ground there, its +z out of the mouth; the ground
+# levelled from the mouth into the hill where the passage runs). Points: the landing beach 1.4 m round 0 -72, the Fungus
+# Hall's mouth 0 -45 (into the hill northwards), the Bee Hall's 42 4 (westwards), the Den's -4 44 (southwards), the
+# Flooded Passage's -48 -8 at 4 m under the sea (eastwards), the turbine 24 10 on the hilltop.
+include lib_sea
+include lib_features
+include lib_gravity
+include lib_verdance
+include lib_areas
+new
+gen Trees=0.35 Bushes=0.35 Rocks=0.5 Harvest=0.24 BeachThings=0.3
+gen Seed=11071 Radius=85 Height=34 Roughness=0.45 Peaks=1 Shape=0 Style=0 BeachWidth=0.5 Cliffs=0.35 PeakShape=0.45
+gen SeaFloor=0 Shelf=0.5 Seabed=1
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0.3 SeaLife=0.4
+generate
+
+# --- The hill: raised into one rocky top; the landing beach ------------------------------------------------------------
+brush raise at 0 0 r=45 s=20 frames=14
+brush rock at 0 0 r=24 s=10 frames=40
+brush flatten at 0 -72 r=8 s=20 frames=60 h=1.4
+brush sand at 0 -72 r=10 s=10 frames=30
+clear at 0 -72 r=8
+clear from 0 -66 to 0 -50 r=4
+
+# (the east flank raised round the Bee Hall, so the hill covers the cave's shell)
+# (REACH 10-29: raised after the Fungus Hall was dug and furnished, its 34 m reach buried the hall's back - the lab chest,
+# the basket and Jonas's note under the floor (picture x10_rw_lab): raised first now, the hall dug out of it after)
+brush raise at 26 4 r=34 s=20 frames=16
+
+# --- The Fungus Hall: Balboa's dead-end cave on the south flank, dim green, the survey camp inside ------------------
+push at 0 -45 yaw=180
+brush flatten from 0 0 to 0 -40 r=8 s=20 frames=70
+brush flatten from 0 0 to 0 12 r=10 s=20 frames=30
+clear from 0 10 to 0 -40 r=10
+brush sand from 0 0 to 0 -40 r=9 s=10 frames=40
+place BalboaCave_DeadEnd fungushallcave at -1.7 -20.5 y=9.4 scale=1.25
+place Zone_Trigger fungushall at 0 -10 y=1.5
+place Zone_Atmosphere fungusair at 0 -20 y=4
+place Note_Sign survey at -3 -8 sit yaw=90
+place Crate_Big_01 - at 2.5 -14 sit yaw=20
+place Placeable_Lantern_Metal - at 2.5 -14 y=0.45 sit
+# (11-11 c1111, REACH: basket and soup note sat on the ground 2 m under the cave piece's floor (h 5.8) - out of reach:
+#     set from above onto the cave's floor now)
+place Loot_Crate mushroombasket at 2 -24 h=7.2 sit drop yaw=200
+# (box agent 10-25: Jonas's soup note had no paper placed - it lies by his mushroom basket)
+# (REACH 10-29: 0.5 m off the basket it lay in the slope - 1 m off)
+# (REACH 10-29 (2): beside it, it lay in the slope either way - dropped onto the basket's lid)
+place Note_Paper jonasmush at 2 -24 h=8.6 drop yaw=20
+# REDO 10-24: the survey team's fuse box (the island's machine) and the lab corner it lights
+place RT_PowerBox fusebox at -3.2 -15 sit yaw=90
+# (reach audit 10-29 (d): at -27 the chest stood inside the cave's back wall - out to the lab corner's open floor)
+place Loot_Chest labchest at -2.8 -22.5 sit yaw=90
+place "Box Small" - at 0 -28 sit
+place Note_Paper samplereport at 0 -28 y=1.6 drop yaw=20
+# (box agent 10-25: Aki's gate log had a note line but no paper placed - it sits by the sample report)
+# (11-11 c1111, REACH: the gate log's box sat a metre under the cave's floor (h 5.8) - set from above onto it now)
+place "Box Small" - at 1.6 -30.2 h=7.2 sit drop
+place Note_Paper akilog at 1.6 -30.2 h=8.4 drop yaw=-30
+pop
+
+# --- The hilltop: the survey team's wind turbine and its mast box -----------------------------------------------------
+place Placeable_WindTurbine turbine at 24 10 ground sit
+place Loot_Crate mastbox at 26.5 12 ground sit yaw=40
+
+# --- The Bee Hall: a vine cave in a rock hump on the east flank, wild hives inside, flowers at its mouth ---------------
+# (10-29 (e) redesign: the old Balboa vine cave sat in a trench dug into the flank - the trench opened the hill to the sky
+# over the hall whatever the strokes did. Now Raft's bear-cave rock (ar_cave, closed on top) on a pad cut level into the
+# flank at 8.5 m, its mouth to the north and a level way out from it)
+call ar_cave x=44 z=4 h=8.5 yaw=0 al=beehallcave chest=beecache
+place Zone_Trigger beehall at 44 9 h=10
+place Loot_WildHive beehive1 at 45.5 10.5 h=8.95 sit
+place Loot_WildHive beehive2 at 43 6 h=8.52 sit yaw=90
+beside ChoppableVines beevines beecache d=1.6
+scatter Pickup_Landmark_Flower_Red 3 at 43 16 r=4 seed=11072 free=1
+loot beehive1 HoneyComb*3
+prop beehive1 note.title=Wild beehive
+loot beehive2 HoneyComb*3
+prop beehive2 note.title=Wild beehive
+
+# --- The Flooded Passage: Balboa's dead-end cave on the west coast, its floor under the sea; two air pockets ---------
+push at -48 -8 h=-4 yaw=270
+for dz 4 -28 -4
+brush lower at 0 $dz r=6 s=20 frames=8
+next
+brush lower at 0 0 r=6 s=20 frames=4
+brush flatten from 0 0 to 0 -32 r=6 s=20 frames=80
+brush flatten from 0 0 to 0 30 r=8 s=20 frames=60
+brush smooth from 0 4 to 0 30 r=12 s=20 frames=40
+clear from 0 28 to 0 -32 r=8 all
+place BalboaCave_DeadEnd floodedcave at -1.4 -16 y=7.5
+place Zone_Trigger floodedzone at 0 -4 y=3
+call airpocket x=-1 z=-12 id=pocket1 al=pocket1 bub=pocket1bub
+call airpocket x=1 z=-20 id=pocket2 al=pocket2 bub=pocket2bub
+# (11-11 w02fix, REACH: on the ground it lay at -5.4 under the cave piece's floor (-2.7, its decor at -2.2) - set down from over it)
+place Loot_Crate drownedcrate at 0.8 -26 ground y=3.6 sit drop yaw=20
+# DEEP 10-24: the passage's deep end - breath goes fast without an oxygen bottle (the Bee Hall's cache has one)
+place Zone_Trigger rwdeep at 0 -24 ground y=1
+place SeaVine3 - at -3 -8 ground
+place SeaVine3 - at 3 -16 ground
+pop
+
+# --- The Den: Balboa's bear cave on the north flank, the mama bear, the den cache and the sample report --------------
+push at -4 44
+brush flatten from 0 0 to 0 -34 r=6 s=20 frames=70
+brush flatten from 0 0 to 0 10 r=9 s=20 frames=30
+clear from 0 6 to 0 -34 r=8
+brush sand from 0 2 to 0 -34 r=7 s=10 frames=40
+place BalboaCave_Bear dencave at 1.2 -18.4 y=5.2 scale=1.15
+place Zone_Trigger denzone at 1 -4 y=1.5
+# GAPS 10-24: the den is pitch dark (a headlight - its plans are in the drowned crate)
+place Zone_Trigger dendark at 1 -18 y=1.5
+place Creature_MamaBear denbear at 1 -18 y=0.8
+prop denbear creature.count=1
+prop denbear creature.respawn=0
+place Loot_Chest dencache at 1 -27 sit yaw=180
+place "Pickup_Landmark_Iron 1" - at -5 -11 sit
+place "Pickup_Landmark_Copper 1" - at -5.2 -18 sit
+place "Pickup_Landmark_Iron 2" - at 7.6 -22 sit
+place "Pickup_Landmark_Copper 2" - at -3.5 -26 sit
+place Zone_Atmosphere denair at 1.2 -18 y=4
+pop
+
+# --- Outside: berries and bananas on the slopes, clay on the beach; the shallows ---------------------------------
+scatter Pickup_Landmark_BerryBush 4 at 30 -30 r=12 seed=11073 free=3
+scatter Pickup_Landmark_MarketGood_Banana_Basket01 2 at -20 -60 r=8 seed=11074 free=2
+scatter "Pickup_Landmark_Clay 3" 2 at 10 -68 r=6 seed=11075 free=2
+call shallows x=0 z=0 r=96 deep=5 n=2 seed=11076
+
+# --- REDO 10-24 secrets (optional): a buried survey case for the metal detector; a vine-hidden cache on the west slope;
+#     the survey team's beach camp and their wrecked boat
+call treasure x=34 z=-42 r=10 n=1 seed=11197
+# REDO 10-24 TREASURE2: a second buried treasure on the far side for the detector + shovel
+call treasure x=-27.2 z=33.6 r=12 n=1 seed=11247
+prop treasure11247 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*2
+call vinecache x=-40 z=-34 r=10 seed=11198 chest=dvinechest vines=dvines items=Rope*3;CopperIngot*2;Leather*2
+place Balboa_DecorationPrefabBase_SimpleTent - at 9 -64 ground sit yaw=160
+place campfire_1 - at 6 -61 ground sit
+place RT_PlasticBoat - at -9 -70 ground sit yaw=40
+
+# REDO 10-24: four generated boulders left hanging over the cut cave terrain (ground check) are cleared
+clear at -18.4 1.1 r=2.5
+clear at 2.8 31 r=2.5
+clear at 35.3 45.6 r=2.5
+clear at 15.6 20.3 r=2.5
+# --- FILL 10-24 (RESIZE rework): the bigger island's whole area at Raft-like density - trees, bushes, rocks; free= keeps them
+#     off the quest's objects and paths
+scatter "Pickup_Landmark_Tree_Palm 1" 10 at 0 0 r=80 seed=11190 free=5
+scatter "Pickup_Landmark_Tree_Palm 2" 10 at 0 0 r=80 seed=11191 free=5
+scatter "Pickup_Landmark_Tree_Palm 4" 6 at 0 0 r=80 seed=11192 free=5
+scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=80 seed=11193 free=5
+scatter "Balboa_Bush_01 Variant" 30 at 0 0 r=80 seed=11194 free=2.5
+scatter "Balboa_Bush_03 Variant" 30 at 0 0 r=80 seed=11195 free=2.5
+scatter CaravanIsland_SmallRock_1 14 at 0 0 r=80 seed=11196 free=3 ground y=-0.6
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=80 seed=11197 free=3
+scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=80 seed=11198 free=2
+
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): the survey mast on the rocky top (climb, zipline down to the south beach), the Flooded Passage's deep end (oxygen gate), the survey team's last camp
+# the climb: the survey mast on the rocky top (38.5 m), 8 storeys more; the line down to the south beach
+brush flatten at 11 2 r=3 s=20 frames=150 h=38.5
+clear at 11 2 r=4 all
+# the climb: a mountain (trail winding up from bearing 0), a 8-storey climbing tower on its top, the summit box
+call vd_tower x=11 z=2 h0=38.5 lv=8 a=rwtw box=rwbox zal=rwtopz zid=rw_top msg="The survey mast, the highest point of Verdance. The wind sings in the rope rail."
+note rwbox Survey mast box | SURVEY - MAST. Every cave mouth on this hill is in sight from here: the Fungus Hall camp, the bees, the drowned one, the den.
+loot rwbox Battery*1;Rope*3;Bolt*3
+place ZiplinePath_Landmark rwzip at 15.97 0.28 h=59.55
+zipto rwzip 30 -62
+# the survey team's last camp on the south-west slope (secret): a tent, a cold fire, a chest
+clear at -26 -24 r=5
+brush flatten at -26 -24 r=4 s=20 frames=40 h=8.6
+clear at -26 -24 r=5 body
+# 10-30 P: a ramp from the camp pad down the south-west slope (the walks reached the slope at 4.6, 4 m under the camp)
+brush flatten at -29.95 -27.1 r=2.4 s=20 frames=120 h=8.0
+brush flatten at -30.97 -27.9 r=2.4 s=20 frames=120 h=7.4
+brush flatten at -32.0 -28.7 r=2.4 s=20 frames=120 h=6.7
+brush flatten at -33.02 -29.51 r=2.4 s=20 frames=120 h=6.0
+brush flatten at -34.05 -30.31 r=2.4 s=20 frames=120 h=5.3
+brush flatten at -35.07 -31.12 r=2.4 s=20 frames=120 h=4.6
+# (11-11 c1111, REACH: the walks still stopped at -34.7 -34.1 h 4.2, 3 m short of the ramp's foot and 9 m from the camp:
+#     the ramp carried on to that spot, 0.3 m a step)
+brush flatten at -35.4 -32.2 r=2.2 s=20 frames=120 h=4.4
+brush flatten at -35.2 -33.3 r=2.2 s=20 frames=120 h=4.2
+brush smooth from -29.5 -26.8 to -35 -34 r=2.6 s=10 frames=12
+clear at -29.95 -27.1 r=3.4 body
+clear at -30.97 -27.9 r=3.4 body
+clear at -32.0 -28.7 r=3.4 body
+clear at -33.02 -29.51 r=3.4 body
+clear at -34.05 -30.31 r=3.4 body
+clear at -35.07 -31.12 r=3.4 body
+# (11-11 w02fix, REACH columns: the cave mountain's skin covers the old pad and the ramp - it lies at 9.9-10.6 over the
+#     pad's 8.6, so the tent and chests stood buried in it, and its south-west lip rises 6 m from the sand in 5 m (no
+#     standing spot on it). The flattens above lie under the skin and change nothing. The camp moved down to the slope's
+#     foot, past the skin's edge, on the gentle sand slope the walks cross (n 0.99, 2.7-4.3 m); 6 m and more south-west
+#     of the vine cache (call vinecache -40 -34: its vines stand at about -37.1 -37.1 - a first try there put the chest
+#     inside them)
+clear at -42 -41.5 r=4 body
+place Balboa_DecorationPrefabBase_SimpleTent - at -44 -42.7 ground sit yaw=120
+place campfire_1 - at -41 -40.5 ground sit
+place Loot_ChestSmall rwhut at -40.8 -42.7 ground sit yaw=0
+note rwhut Survey camp chest | In the tent's lee: the survey team's spare ropes and a note - COUNT THE CAVES. FOUR. THE FIFTH IS UNDER THE SEA.
+loot rwhut Rope*2;Nail*8;Clay*3
+prop rwhut loot.refill=0
+place Creature_Chicken rwhens at -15 -30 ground
+prop rwhens creature.count=2
+
+# --- STORY 10-24: Oda's lost pack at the survey camp (Burr's bell tied to it), a carved mark at the Den's mouth
+place Loot_ChestSmall odapack at -42.6 -40.3 ground sit yaw=60
+note odapack Oda's lost pack | Oda's pack, soaked and dried stiff, the strap chewed through - by a goat, from the tooth marks. Burr's bell is tied to the buckle with a bootlace. Inside: rope, a tin of honey with a J on the lid, and one apple with one bite out of it.
+loot odapack Rope*2;HoneyComb*1;Leather*1
+prop odapack loot.refill=0
+place Note_Paper odapacklog at -41.8 -42.1 ground y=0.3 drop
+note odapacklog Page from Oda's pack | O.F. - ROOTWEAVE\n\nLost my pack in the Flooded Passage. Burr pulled it out for me and then ate the strap, which I suppose is his fee.\n\nI am tying his bell to it and leaving it here at the survey camp, so the next person down knows a ranger came this way and is still, more or less, fine. If you are the next person: take what you need. Leave the apple. That is Burr's apple.\n\nThe roots move when I am not looking. I have stopped looking. Burr has not; he stares at the walls and stamps. He is braver than me, or he is just a goat.\n\nThe survey says there are four caves. The roots say there are more.
+# (fixA 11-03, REACH: dropped at -6 41 it fell into the path's bank, 1.3 m under the floor the walks reached (RA1 11-02) -
+# laid in front of the den mouth, on the levelled ground the walks cross on their way in (inside the mouth, at -4.6 40.4 and
+# -3.8 41.2, it lay against the cave's rock lip with nowhere to stand within reach))
+place Note_Paper denmark at -3 46.5 ground y=0.08 yaw=20
+note denmark Carved mark at the Den | Cut into a root at the Den's mouth with a ranger knife, deep and careful:\n\nO.F. + B.  ->  MARSH\n\nUnder it, older and in a smaller, neater hand:\n\nM.F. WAS HERE. THE BEAR IS NICE IF YOU SING. (SHE IS NOT NICE. - A.)
+
+# --- Settings, notes, behaviours, quest -------------------------------------------------------------------------
+# (11-08 w02 ground check: a palm by the fungus hall stood 4.9 m deep in the hill)
+clear at -13.4 -6.9 r=1.5 only=Palm
+
+info title=Rootweave Caves
+info author=Custom Islands
+info description=A rock hill with four caves in its flanks: a fungus hall, a bee hall, a flooded passage and a bear's den - the grove's roots run through them all. The sixth island of The Last Green World.
+island reach.byplay=Turbine mast box
+island on.arrive=message||A hill of rock and roots. Every cave mouth breathes the same warm, rotten air as the grove's root hole.
+
+prop fungusair atmo.fog=#1e3a20
+prop fungusair atmo.fogAmount=0.3
+prop fungusair atmo.light=#80ff90
+prop fungusair atmo.lightAmount=0.25
+prop fungusair atmo.particles=fireflies
+prop fungusair zone.radius=16
+prop denair atmo.fog=#20180e
+prop denair atmo.fogAmount=0.3
+prop denair zone.radius=14
+
+note survey Cave survey | CAVE SURVEY - SEEDKEEPERS\n\nFungus Hall: camp. Lamps on the crates.\nBee Hall: hives in the roots. Leave them be.\nFlooded Passage: two air pockets. Swim between them.\nDen: a mama bear. Our cache is in there. Wait for her to sleep.\n\nFuses: one in each far cave. Three in the box and the lab lights up.\n\nThe turbine on the top charges the lamps.
+note samplereport Poison sample report | SAMPLE 31 - ROOT TISSUE, DEN - T.L.\n\nThe rot is not fungus. Not bacteria. It grows where the roots are cut, and it grows TOWARDS the cut. Like a hand going to a wound.\n\nThis is V-1. I knew it at the first slide and I wrote "not natural" on the label anyway, because Marit reads my labels.\n\nIt was only meant to clean the water. It eats oil, and then it eats the dead things in the silt, and then it finds out that living things are only dead things that have not stopped yet. It is not cruel. It is tidy.\n\nAll samples to the marsh station, Blightmire. I will finish the work there, where nobody climbs the balconies to look over my shoulder.\n\n- T.L.
+note akilog Root gate log | ROOT GATE LOG - AKI, gatekeeper\n\nThe gate at the bottom of the grove's root hole is mine. I open it for the lamps and close it for the bears, and I keep the book.\n\nIn: the river people, fourteen, singing. They did not want to stop. I let them through. I should not have. They were so happy.\nIn: the Seedkeepers' crew, looking for them. Lise, Bo, Greta and the sandwiches.\nOut: nobody.\n\nTeodor came through last, with a crate of jars on his back. He patted my shoulder and said, "Close it behind me, Aki. Nobody needs to follow." Then he went on, to the marsh.\n\nI did not close it. Marit says I never close anything.
+note jonasmush Soup note | SOUP - by Jonas, for whoever is cold\n\nCave mushrooms: three. Water: some. Salt: if you have it. Hope: a lot.\n\nBoil until it smells like a forest. Do not boil until it smells like a lab.\n\nThis basket is for the survey crew. If the survey crew is gone, it is for you. Food does not care who eats it; that is the nicest thing about food.\n\nI am going on to the Heart with the honey. Teodor asked for it. He says sweet things help the cultures. I said they help people too. He said, "That is what I am counting on, Jonas," and I did not like the way he smiled.
+note mushroombasket Mushroom basket | The survey camp's mushroom basket, still full. A label on the handle in Jonas's capitals: CAVE MUSHROOMS. NOT FOR TEODOR. HE PUTS THEM UNDER GLASS. MUSHROOMS ARE FOR SOUP.
+note mastbox Turbine mast box | The box at the turbine's foot: its plans, oiled and rolled.
+note beecache Bee hall cache | A chest deep in the Bee Hall, behind the vines: an advanced battery's plans in wax, and a fuse.
+note drownedcrate Drowned crate | A crate at the end of the flooded passage, sealed tight: a headlight's plans and a fuse, dry inside.
+note dencache Den cache | The river people's cache in the den: a fuse in a tin, and a lump of leather.
+loot mushroombasket CaveMushroom*6
+prop mushroombasket loot.refill=0
+# (box agent 10-25: a spare machete here - the vines need one, and a fresh world or a lost one from the delta left the island stuck)
+loot mastbox Blueprint_WindTurbine*1;CopperIngot*2;Machete*1
+prop mastbox loot.refill=0
+loot beecache Blueprint_BatteryAdvanced*1;Battery*1;story:rwfuse*1;OxygenBottle*1
+prop beecache loot.refill=0
+loot drownedcrate Blueprint_HeadLight_Advanced*1;CaveMushroom*2;story:rwfuse*1
+prop drownedcrate loot.refill=0
+loot dencache story:rwfuse*1;Leather*2
+prop dencache loot.refill=0
+story rwfuse|Fuse|Placeable_Lantern_Metal|A ceramic fuse from the survey team's kit. The camp's fuse box takes three.
+story camplight|Camp lights on|Placeable_Lantern_Metal|The Fungus Hall's lamps burn again; the lab corner is lit.
+prop beecache obj.name=beecache
+prop beecache beh.hidden=1
+prop beevines obj.name=beevines
+prop beevines on.use=hide|\nshow|beecache\nmessage||The machete clears the Bee Hall's back wall of vines. A chest, waxed shut by the bees.
+prop fusebox obj.name=fusebox
+prop fusebox beh.use=Fit the fuses
+prop fusebox if.use=take|story:rwfuse|3
+prop fusebox on.use=message||Three fuses in. The turbine's charge reaches the lamps: the Fungus Hall glows, and the lab corner at the back comes out of the dark.\ngive||story:camplight*1\nshow|labchest\nshow|samplereport
+prop fusebox else.use=message||The survey camp's fuse box: three empty fuse clips. The survey kit was split between the far caves.
+note labchest Lab chest | The survey lab's chest: an electric grill's plans (for the samples), and glass.
+loot labchest Blueprint_ElectricGrill*1;Glass*2;CaveMushroom*2
+prop labchest loot.refill=0
+prop labchest obj.name=labchest
+prop labchest beh.hidden=1
+prop samplereport obj.name=samplereport
+prop samplereport beh.hidden=1
+
+prop fungushall zone.id=fungus_hall
+prop fungushall zone.radius=5
+prop fungushall zone.message=The Fungus Hall. Pale green light off the cave walls; crates and lamps of a camp.
+prop beehall zone.id=bee_hall
+prop beehall zone.radius=4
+prop beehall zone.message=The Bee Hall. The roots hum.
+prop floodedzone zone.id=flooded_passage
+prop floodedzone zone.radius=4
+prop floodedzone zone.message=The Flooded Passage. Swim from air pocket to air pocket.
+prop denzone zone.id=den
+prop denzone zone.radius=4
+prop dendark obj.name=dendark
+prop dendark zone.radius=7
+prop dendark zone.hazard=dark
+prop dendark zone.hazardMsg=The den is pitch black. Something big breathes in there - wear a headlight.
+prop denzone zone.message=The Den. Something big breathes in the dark.
+
+# DEEP 10-24 settings
+prop rwdeep obj.name=rwdeep
+prop rwdeep zone.id=rwdeep
+prop rwdeep zone.radius=6
+prop rwdeep zone.hazard=deep
+prop rwdeep zone.damage=1
+prop rwdeep zone.safe=wears|OxygenBottle*
+prop rwdeep zone.hazardMsg=The passage drops deep and cold, and your breath goes fast. An oxygen bottle - the Bee Hall's cache had one - would carry you to the crate.
+quest title=The Living Labyrinth
+quest intro=Four caves in a hill of roots. Make for the survey mast on the rocky top; the survey team camped in the Fungus Hall, a cave mouth at the foot of the hill.
+step reach|fungus_hall|1|Go into the Fungus Hall
+step read|Cave survey|1|Read the cave survey
+step blueprint|Blueprint_WindTurbine|1|Take the wind turbine plans from the crate by the mast on the hilltop
+step reach|bee_hall|1|Go into the Bee Hall
+step blueprint|Blueprint_BatteryAdvanced|1|Take the advanced battery plans from the Bee Hall's cache
+step reach|flooded_passage|1|Swim into the Flooded Passage
+step blueprint|Blueprint_HeadLight_Advanced|1|Take the headlight plans from the drowned crate
+step kill|Mama bear|1|Defeat the mama bear in the Den
+step collect|story:rwfuse|3|Find the three fuses in chests: the Bee Hall, the Flooded Passage and the Den
+step collect|story:camplight|1|Fit the fuses to the survey camp's fuse box
+step blueprint|Blueprint_ElectricGrill|1|Take the electric grill plans from the lab chest
+step read|Poison sample report|1|Read the poison sample report in the lab
+quest done=Something in the roots. The marsh station has the samples - band 1000.
+quest reward=CaveMushroom*3;Leather*2
+
+# (box agent 10-25: names for the guide pictures' snap points)
+prop rwhut obj.name=rwhut
+prop rwtw obj.name=rwtw
+# (TRAP 11-01 N: two hollows in the caves a player drops into, their only side a 1.5 m step: a ladder up each)
+# (named, not `-`: a `-` piece under the cave roof counts as under the ground and is left out)
+place Block_Ladder nrwl1 at -15.3 -18.9 h=4.9 yaw=90
+place Block_Pillar_Wood nrwp1 at -15.1 -18.9 h=4.9
+# (11-11 c1111, REACH: nrwl2's foot at 5.8 was 1.2 m from the nearest floor spot (a hand reaches 1.0): lower, as nrwl1)
+# (11-11 w02fix, REACH columns: the Fungus Hall's floor runs level at 7.5 over x -14.1..-11.1, z -10.3..-8.3 here - no hollow
+#     left (the cave's floor came up over it); the ladder stood 2.4 m under that floor, inside the decor rock. Left out)
+#place Block_Ladder nrwl2 at -11.9 -8.9 h=5.1 yaw=180
+#place Block_Pillar_Wood nrwp2 at -11.9 -9.1 h=5.1
+
+# (11-08) The Root Warrens (plan 02 row: big dug system, two levels, ramp, dead end, spikes): the grove's roots split the
+# north-east hill into a dug warren. Mouth C on the hill's flank over the den path (upper level) slopes down into the
+# root hall; a ramp (under 20 degrees) goes down to the lower level, which runs out to mouth A on the shelf under the
+# Bee Hall's cliff, with a root cellar off it. Off the hall's west end a dead-end drift: the thorn pit, a warning
+# sign, planks along its side, the survey team's kit at the end. All dug, so the joints are dug (dug joins only dug).
+# Kept 6 m and more from the den, the turbine, the mast box, the tower and the quest walk (cavecheck).
+clear from 7.5 43.5 to 9 39.5 r=2.4 body only=^(?!.*(Boulder|Rock|Cliff|Stone)).*$
+clear from 44 18.2 to 39 18.5 r=2.4 body only=^(?!.*(Boulder|Rock|Cliff|Stone)).*$
+dig 9,39.5 10,33 11,29 r=1.75 slope=-14 as=rwroot
+dig 11,29 14.5,27.5 r=3.2 as=rwroot
+dig 39,18.5 31,20.5 22,23.5 r=1.75 slope=0 as=rwroot
+dig 14.5,27.5 17,24.5 22,23.5 r=1.75 slope=-18 as=rwroot
+dig 22,23.5 20,19.5 r=2.5 as=rwroot
+dig 11,28 9.5,23.5 r=1.75 as=rwroot
+dig 9.5,23.5 9,18 r=2.8 as=rwroot
+caveloot rwroot dirt=4 mush=5 stone=0 vines=3
+# (no loot on the thorn pit's planks and spikes)
+clear from 9.5 24 to 9.2 17.5 r=2.6 all only=^Pickup_Landmark_(Mushroom|DirtPickup|Rock)
+# the thorn pit: the drift's floor fell into a root hollow full of sharpened stakes; planks along the hall side
+place Note_Sign rwwarn at 9.3 25.8 h=14.5 sit drop yaw=18
+note rwwarn DANGER - THORN PIT | The floor past this sign dropped into a pit of root thorns. Walk the planks along the wall on your left, not the rubble.\n- Verdance survey team
+place SmallBoulder3 - at 8.2 22.4 h=12.6 sit scale=0.3 yaw=10
+# (11-10 w02 CC: it lay on the branch's middle line - "cave gaps look" blocked; to the side)
+place SmallBoulder3 - at 7.7 20.6 h=12.55 sit scale=0.35 yaw=130
+place SmallBoulder3 - at 8.0 18.9 h=12.6 sit scale=0.3 yaw=250
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 8.55 21.7 h=13.1 sit scale=0.25 yaw=95
+place "Balboa_DecorationPrefabBase_Wooden Spikes" - at 8.35 19.6 h=13.1 sit scale=0.25 yaw=80
+place Block_Floor_Wood - at 10.77 22.6 h=14.5 drop yaw=5
+place Block_Floor_Wood - at 10.63 21.1 h=14.5 drop yaw=5
+place Block_Floor_Wood - at 10.50 19.6 h=14.5 drop yaw=5
+place Block_Floor_Wood - at 10.36 18.1 h=14.5 drop yaw=5
+place Zone_Trigger rwspike1 at 8.55 21.7 h=13.6
+place Zone_Trigger rwspike2 at 8.35 19.6 h=13.6
+prop rwspike1 zone.id=rwspike1
+prop rwspike1 zone.radius=1.5
+prop rwspike1 zone.hazard=spikes
+prop rwspike1 zone.damage=4
+prop rwspike1 zone.safe=none
+prop rwspike1 zone.hazardMsg=Root thorns! Keep to the planks.
+prop rwspike2 zone.id=rwspike2
+prop rwspike2 zone.radius=1.5
+prop rwspike2 zone.hazard=spikes
+prop rwspike2 zone.damage=4
+prop rwspike2 zone.safe=none
+prop rwspike2 zone.hazardMsg=Root thorns! Keep to the planks.
+place Loot_ChestSmall rwchest at 9.1 17.0 h=14.5 drop yaw=18
+note rwchest Survey kit | Left past the thorn pit when the floor went. Rope, a bar of metal and leather for the walk back - you crossed on the planks, so you know the way.
+loot rwchest Rope*2;MetalIngot*1;Leather*2;Bolt*2
+prop rwchest loot.refill=0
+# cavecheck inside rwwarn rwchest rwspike1 rwspike2 rwratA rwratB
+# two rats on the lower level (root cellar and the foot of the ramp), 11 m and more from mouth A's open stretch, far
+# from mouth C and 6 m and more from the sign, spikes and chest; the hall has two ways out, so neither is in the only way
+place Creature_Rat rwratA at 20.5 20.5 h=10.3
+prop rwratA creature.count=1
+prop rwratA creature.respawn=0
+place Creature_Rat rwratB at 22.5 22 h=10.3
+prop rwratB creature.count=1
+prop rwratB creature.respawn=0
+
+# (11-09 w02: a generated banana bush hung 2.7 m over the slope here - CIFloating)
+clear at -13.55 -40.62 r=1.5 only=Banana_Bush
+# (11-11 w02fix: a generated white flower 1.4 m over the slope at -12.86 -36.6 - CIFloating)
+clear at -12.3 -36.5 r=1.8 only=Pickup_Landmark_Flower_White
+save Rootweave Caves

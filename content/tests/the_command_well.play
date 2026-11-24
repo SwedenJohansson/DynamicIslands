@@ -1,0 +1,100 @@
+# The Command Well (CIPlay the_command_well): elevation -30, the surface at h=30. The deck, the lift order, the first
+# landing's air, the anglers, the dome, the crew's names, the desk, the log, ring 1, the consoles (a fresh world has no
+# choice from the court: FULL refuses, STANDBY answers; inside the plan play the court pulled REACTIVATE, so FULL answers
+# and STANDBY refuses - either way one console sets the rings), the closing note, back to the deck.
+island The Command Well
+offset 0 0
+expect step 0
+expect title The Heart
+expect hidden lastlog
+expect hidden closing_standby
+zone shaft_top
+expect step 1
+read Lift order
+expect step 2
+air shaft_10
+expect step 3
+kill Angler fish
+expect animals Angler fish 0
+expect step 4
+air dome
+expect step 5
+read Crew names
+expect step 6
+use commanddesk
+expect shown lastlog
+expect step 7
+read Last crew's log
+expect step 8
+zone ring_1
+expect step 9
+use console_re
+use console_standby
+expect step 10
+read Closing note
+wait 1
+expect step 11
+open Mara's post
+expect message belongs here - a letter
+open Keeper's satchel
+wait 3
+expect story letter 1
+open Mara's post
+wait 3
+expect shown maranote
+expect step 12
+read Mara's last call
+expect step 13
+read Keeper's log: Well
+wait 1
+expect step 14
+read Ines's radio log
+zone wellridge
+wait 2
+expect step 15
+read Pump house book
+use fusebox
+expect message three empty sockets
+wait 2
+expect step 16
+open Fuse tin
+wait 3
+open Cable cave chest
+wait 3
+open Supply plane's crate
+wait 3
+expect story wellfuse 3
+expect step 17
+use fusebox
+expect story wellfuse 0
+expect shown pumplocker
+open Pump house locker
+wait 3
+expect step 18
+# (the dive, the tower and the buried tins are optional since the 10-24 story pass: the five chain keys for the plain play)
+zone cw_dive
+air cw_air
+open Spoil boat chest
+wait 3
+open Boat bilge box
+wait 3
+dig 1
+climb 50.13 -45.7
+open Crane stash
+wait 3
+read Spoil cairn
+dig 0
+zone cw_top
+open Crane locker
+wait 3
+use cw_lock1
+use cw_lock2
+use cw_lock3
+use cw_lock4
+use cw_lock5
+open Chained hatch
+wait 3
+# expect step 19 (reach|shaft_top is counted early, before its step comes: the shaft top was passed on the way down)
+# (no step check here: the shaft top was passed on the way down, so the last step can count at once)
+zone shaft_top
+expect done

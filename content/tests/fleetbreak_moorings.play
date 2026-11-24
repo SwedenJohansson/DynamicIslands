@@ -1,0 +1,87 @@
+# Fleetbreak Moorings (CIPlay fleetbreak_moorings), STORY 10-24 order: the chart room, the articles, Crane's decree, Teo's log,
+# the dive for the flagship's log, the bosun's locker (machete), the
+# vines on the stair cut, the boars in the roof garden, the fuel tank and fuel pipe, Teo's log, the biofuel press, the
+# strongbox and the Fleet's offer; then the contract: the boom, three filter crates, the Rookery's drop, the receipt.
+# offset 0 0 is a placeholder: phase 2 sets it from the recipe's save log (PLAY_FORMAT: Coordinates).
+island Fleetbreak Moorings
+offset 0 0
+expect step 0
+expect title The Free Fleet
+zone chart_room
+expect step 1
+read Free Fleet articles
+expect step 2
+read Council decree
+expect step 3
+read Teo's log
+expect step 4
+# STORY 10-24: the dive comes first - the flagship's log
+zone fb_deep
+expect step 5
+expect stand -71 20 h=-12
+open Flagship's deckhouse strongbox
+wait 3
+expect story fb_deep 1
+expect step 6
+open Bosun's locker
+wait 3
+expect step 7
+use gardenvines
+expect hidden gardenvines
+zone roof_garden
+expect step 8
+kill Warthog
+expect animals Warthog 0
+expect step 9
+open Biofuel press
+wait 3
+expect step 10
+open Fuel tank crate
+wait 3
+expect step 11
+open Fuel store
+wait 3
+expect step 12
+open Fleet strongbox
+wait 3
+expect story authpass 1
+expect step 13
+zone gull_ridge
+expect step 14
+read Harbourmaster's ledger
+expect step 15
+open Seaplane's crate
+wait 3
+expect step 16
+zone bosuns_cave
+expect step 17
+zone fb_trail
+expect step 18
+openat -50.26 -55.44
+zone fb_summit
+expect step 19
+expect stand -41.26 -38.32 h=40
+open Fleet's signal mast deck box
+wait 3
+expect story fb_top 1
+expect step 20
+read A friend's signal
+expect step 21
+read Fleet contract offer
+expect done
+expect step 0 quest=2
+expect title Filters Past the Boom quest=2
+zone boom
+expect step 1 quest=2
+openat 27 -80
+openat 92 -28
+openat -92 -28
+expect story filtercrate 3
+expect step 2 quest=2
+zone rookery_drop
+expect step 3 quest=2
+read Fleet receipt
+expect step 4 quest=2
+open Fleet reward
+wait 3
+expect done quest=2

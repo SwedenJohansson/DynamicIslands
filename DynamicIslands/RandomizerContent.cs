@@ -29,7 +29,7 @@ namespace DynamicIslands.Editor
 		public IslandObject Add(string name, Vector3 world, float yaw, Dictionary<string, string> props = null)
 		{
 			GameObject proto = PlaceableCatalog.Get(name);
-			var o = new IslandObject { Name = name, Position = world - anchor + mid, EulerRotation = new Vector3(0f, yaw, 0f), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props };
+			var o = new IslandObject { Name = name, Position = world - anchor + mid, EulerRotation = new Vector3(0f, yaw, 0f), Scale = proto != null ? proto.transform.localScale : Vector3.one, Props = props, Unscaled = proto == null };
 			File.Objects.Add(o);
 			Taken.Add(world);
 			return o;
@@ -125,6 +125,9 @@ namespace DynamicIslands.Editor
 			}
 
 			what = string.Join(", ", parts.ToArray());
+			// (a name players read in the journal and lists, never the file name rnd-<seed>-<id> - the user, 2026-10-06)
+			if (!k.File.Props.ContainsKey(IslandProps.Title) || k.File.Props[IslandProps.Title].Length == 0)
+				k.File.Props[IslandProps.Title] = WorldRandomizer.TitleFor(parts);
 			return k.File.Objects.Count > 0 ? k.File : null;
 		}
 
@@ -340,7 +343,7 @@ namespace DynamicIslands.Editor
 		};
 
 		/// <summary>Stands a set piece on the generated ground at p, sunk a little and tilted (a wreck lies crooked).</summary>
-		static IslandObject Piece(MapKit k, string name, Vector2 p, float yaw, float sink, float tiltX = 0f, float tiltZ = 0f, float clear = 0f)
+		internal static IslandObject Piece(MapKit k, string name, Vector2 p, float yaw, float sink, float tiltX = 0f, float tiltZ = 0f, float clear = 0f)
 		{
 			if (clear > 0f) k.Clear(p, clear);
 			// Its bottom as measured (raft_props.txt; the table above where it wasn't), on the lowest ground under it
@@ -348,6 +351,8 @@ namespace DynamicIslands.Editor
 			PropInfo info = RaftProps.Get(name);
 			if (info != null) bottom = info.Bottom; else Bottom.TryGetValue(name, out bottom);
 			float ground = RandomizerIslands.LowestUnder((x, z) => k.Ground(new Vector2(x, z)), name, p, yaw);
+			// (never more than half its height under the ground at its middle: a 1 m boat on a beach edge was buried)
+			if (info != null) ground = Mathf.Max(ground, k.Ground(p) - info.Size.y * 0.5f);
 			// (a setting of its own, so content placed next to it doesn't clear it away like scattered nature)
 			IslandObject o = k.Add(name, new Vector3(p.x, ground - bottom - sink, p.y), yaw, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
 			o.EulerRotation = new Vector3(tiltX, yaw, tiltZ);
@@ -356,10 +361,10 @@ namespace DynamicIslands.Editor
 
 		static Vector2 Around(Vector2 c, float yaw, float x, float z) { Vector3 v = Quaternion.Euler(0f, yaw, 0f) * new Vector3(x, 0f, z); return c + new Vector2(v.x, v.z); }
 
-		static float Tilt(System.Random r, float max) { return ((float)r.NextDouble() * 2f - 1f) * max; }
+		internal static float Tilt(System.Random r, float max) { return ((float)r.NextDouble() * 2f - 1f) * max; }
 
-		/// <summary>An oddity island's content: the set piece near the middle, its loot and a note (kind null = any).</summary>
-		public static void Oddity(MapKit k, IslandGenSettings s, string kind)
+		/// <summary>An oddity island's content: the set piece near the middle, its loot and a note (kind null = any). forceSprinkle (tests only): the first prop of the theme's touch is this one.</summary>
+		public static void Oddity(MapKit k, IslandGenSettings s, string kind, string forceSprinkle = null)
 		{
 			System.Random r = k.Rnd;
 			if (kind == null) kind = Oddities[r.Next(Oddities.Length)][0];
@@ -434,7 +439,7 @@ namespace DynamicIslands.Editor
 			// A touch of the quest island the set piece comes from
 			string theme;
 			Theme th = RandomizerIslands.OddityTheme.TryGetValue(kind, out theme) ? RandomizerIslands.ThemeOf(theme) : null;
-			if (th != null) RandomizerIslands.Sprinkle(k, th, c, 6f, 13f, 3 + r.Next(4));
+			if (th != null) RandomizerIslands.Sprinkle(k, th, c, 6f, 13f, 3 + r.Next(4), forceSprinkle);
 		}
 
 		/// <summary>A small hut of Raft's blocks on the land, open on one side, with a hammock and the castaway's chest.</summary>
@@ -447,7 +452,8 @@ namespace DynamicIslands.Editor
 			float top = float.MinValue;
 			for (int x = -1; x <= w; x++) for (int z = -1; z <= d; z++) top = Mathf.Max(top, k.Ground(c + new Vector2(x * g, z * g)));
 			Vector3 o = new Vector3(c.x, top, c.y);
-			float deck = top + PlacementOptions.FloatDepth;
+			// (walls, pillars and things on the foundations' planks - FloatDepth, 0.35, put them 0.35 m over them, in the air)
+			float deck = top + PlacementOptions.FoundationPlanks;
 			// (and the ground built up under it to that height, blended over 3 m: on a slope its low side hung 0.7 m in the air)
 			IslandFile f = k.File;
 			float step = f.TerrainSize.x / (f.HeightmapResolution - 1);
@@ -463,10 +469,9 @@ namespace DynamicIslands.Editor
 				}
 			for (int x = 0; x < w; x++)
 				for (int z = 0; z < d; z++)
-				{
 					k.Add("Block_Foundation", o + new Vector3(x * g, 0f, z * g), 0f, null, 0f);
-					k.Add("Block_Roof_Straight_Thatch", new Vector3(o.x + x * g, deck + 2.4f, o.z + z * g), 0f, null, 0f);
-				}
+			// (a hipped roof on the walls and the corner pillars, as Raft's building puts one)
+			RaftRoof.Hip((n, p, ry) => k.Add(n, p, ry, null, 0f), new Vector3(o.x, deck + RaftRoof.OnWalls, o.z), w, d);
 			for (int x = 0; x < w; x++)
 			{
 				k.Add("Block_Wall_Thatch", new Vector3(o.x + x * g, deck, o.z - g / 2f), 0f, null, 0f);
@@ -475,9 +480,12 @@ namespace DynamicIslands.Editor
 			for (int z = 0; z < d; z++) k.Add("Block_Wall_Thatch", new Vector3(o.x - g / 2f, deck, o.z + z * g), 90f, null, 0f);
 			foreach (Vector2 corner in new[] { new Vector2(-g / 2f, -g / 2f), new Vector2((w - 0.5f) * g, -g / 2f), new Vector2(-g / 2f, (d - 0.5f) * g), new Vector2((w - 0.5f) * g, (d - 0.5f) * g) })
 				k.Add("Block_Pillar_Wood", new Vector3(o.x + corner.x, deck, o.z + corner.y), 0f, null, 0f);
+			int furniture = k.File.Objects.Count;
 			k.Add("Placeable_Bed_Hammock", new Vector3(o.x + g, deck, o.z + g * 0.5f), 90f, null, 0f);
 			k.Add("Loot_Chest", new Vector3(o.x, deck, o.z + g), 90f, new Dictionary<string, string> { { ObjectProps.LootItems, MapKit.Loot("Basics") + ";" + MapKit.Loot("Food").Split(';').First() }, { ObjectProps.NoteTitle, "Castaway's chest" } }, 0f);
 			k.Add("Note_Book", new Vector3(o.x + g * 2f, deck, o.z), 0f, new Dictionary<string, string> { { ObjectProps.NoteTitle, "Castaway's diary" }, { ObjectProps.NoteText, "Built this from what the sea gave me. The sea wants it back, bit by bit. Take the chest before it does." } }, 0f);
+			// (ROADMAP LM13: maybe a bit of plastic or scrap on the floor)
+			GenBuildings.FloorPickups(k, new Vector2(o.x - g / 2f + 0.15f, o.z - g / 2f + 0.15f), new Vector2(o.x + (w - 0.5f) * g - 0.15f, o.z + (d - 0.5f) * g - 0.15f), deck, furniture);
 		}
 
 		#endregion

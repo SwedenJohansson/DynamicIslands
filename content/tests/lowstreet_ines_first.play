@@ -1,0 +1,46 @@
+# Lowstreet, Ines first (CIPlay lowstreet_ines_first, FV1): the store cage key used on Ines Marlowe's cage before
+# the cage release (player softlock 11-07). The key is used up, yet the release opens and step 11 finishes.
+# offset: as lowstreet.play.
+island Lowstreet
+offset -1.0632 0.7632
+expect step 0
+expect title The Drowned District
+zone tram_stop
+expect step 1
+read Expedition plan
+expect step 2
+read Council flood notice
+expect step 3
+zone shop_1
+air shop_1
+air shop_4
+expect step 4
+open Toy box at No. 14
+wait 3
+expect step 5
+kill Angler fish
+expect animals Angler fish 0
+expect step 6
+open Electronics shop
+wait 3
+expect step 7
+open Diner
+wait 3
+expect step 8
+read Jonah's letter
+expect step 9
+zone store_front
+expect step 10
+use cagerelease
+expect story cagesopen 0
+open Floor manager's office
+wait 3
+expect story storekey 1
+use inescage
+expect survivor highwater_ines
+expect story storekey 0
+use cagerelease
+expect story cagesopen 1
+expect step 11
+read Ines's report
+expect step 12

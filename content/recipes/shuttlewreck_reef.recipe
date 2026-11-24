@@ -1,0 +1,197 @@
+# Shuttlewreck Reef - a side island of the library's plan The Sunken Kingdom (sunken 10 m; km 4, off the route)
+# A Pelagic Network transit shuttle lying on a reef: a long cabin of windowed stone walls on a rock shelf, its nose in the
+# coral, its cabin still an air pocket. A luggage rack inside, the manifest on the bulkhead, a commuter's note on a
+# seat. Puffers in the reef (goo), silver algae, giant clams, a buoy on the surface over it. Quest "The Night Shuttle"
+# (11 steps).
+#
+# Points (metres over the reef's zero; the surface at 10): the shelf at 2, r 7 round 0 0; the shuttle x -2.25..2.25,
+# z -6..6 (floor at 2, roof at 4.85), its door in the south end; the buoy over -6 6.
+include lib_features
+include lib_sea
+include lib_gravity
+include lib_sunken
+# RESIZE 10-24: Radius 26 -> 60 (Height 5 -> 6), the island grows round the old content, which stays where it was.
+new
+gen Trees=0 Bushes=0 Rocks=0.4 Harvest=0 BeachThings=0
+gen Seed=11101 Radius=60 Height=6 Roughness=0.4 Peaks=2 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.3 PeakShape=0.4
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.4 Hostiles=0 Friendly=0 SeaLife=0.5
+generate
+elevation -10
+
+brush flatten at 0 0 r=7 s=25 frames=260 h=2
+brush sand at 0 -9 r=4 s=20 frames=20
+brush flatten at -13.1 -23.6 r=4 s=8 frames=40
+origin
+clear at -13.1 -23.6 r=5
+clear at 0 0 r=8
+
+# --- The shuttle: a cabin 3 cells wide, 8 long, windows down both sides, a door at the south end -----------------------
+push at -2.25 -6 h=2
+for fx 0.75 3.75 1.5
+for fz 0.75 11.25 1.5
+place Block_Floor_Tier3 shuttle at $fx $fz y=0
+place Block_Floor_Tier3 shuttle at $fx $fz y=2.635
+next
+next
+for fz 0.75 11.25 1.5
+place Block_Wall_Window_Tier3 shuttle at 0 $fz y=0 yaw=90
+place Block_Wall_Window_Tier3 shuttle at 4.5 $fz y=0 yaw=90
+next
+place Block_Wall_Tier3 shuttle at 0.75 0 y=0
+place Block_Wall_Door_Tier3 shuttle at 2.25 0 y=0
+place Block_Wall_Tier3 shuttle at 3.75 0 y=0
+place Block_Wall_Tier3 shuttle at 0.75 12 y=0
+place Block_Wall_Window_Tier3 shuttle at 2.25 12 y=0
+place Block_Wall_Tier3 shuttle at 3.75 12 y=0
+place Placeable_Lantern_Metal - at 2.25 6 y=0 sit
+place Placeable_Lantern_Metal - at 2.25 10.5 y=0 sit
+place Note_Board manifest at 2.25 11.8 y=1.3 yaw=180
+place Loot_Chest luggage at 0.5 7.5 y=0 sit yaw=90
+place Note_Paper commuter at 3.6 3 y=0 drop yaw=40
+pop
+prop shuttle tint.color=#7a8a90
+prop shuttle tint.amount=0.5
+call airpocketat x=0 z=0 h=2 id=cabin al=cabinair bub=cabinbub r=3.5 msg="Air in the shuttle's cabin - stale, but air."
+call ringwave x=0 z=6.3 h=4.35 yaw=0 s=1 al=shuttlewave
+call buoychain x=-6 z=6 h=10 n=2 al=buoy zal=buoyzone id=surface_buoy
+
+# --- The reef: puffers, coral, algae, clams ------------------------------------------------------------------------------
+place Creature_PufferFish puffers at 7 -6 h=3
+prop puffers creature.count=2
+prop puffers creature.respawn=0
+call coralwall x=5 z=8 n=4 yaw=30 seed=11102
+call coralwall x=-7 z=-6 n=4 yaw=-40 seed=11103
+scatter VP_CoralBulb04 6 at 8 -4 r=4 seed=11104 free=1
+scatter TinyCoral 8 at 8 -4 r=4 seed=11105 free=1
+scatter VP_CoralFoliose01 4 at -8 2 r=3 seed=11106 free=1
+scatter Pickup_Landmark_SilverAlgae 5 at -4 -10 r=5 seed=11107 free=1
+scatter Pickup_Landmark_GiantClam 3 at 6 10 r=4 seed=11108 free=1
+scatter SeaVine3 5 at -10 -2 r=4 seed=11109 free=1
+call shallows x=0 z=0 r=78 deep=4 n=1 seed=11110
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): diver's cache + slate + air pocket; RT_PlasticBoat + chest; hatch with a chest; viewpoint ---
+place "Box Small" dcampbox at -13.1 -23.6 ground sit
+place Note_Paper dnote at -13.1 -23.6 ground y=1.6 drop yaw=30
+place Loot_ChestSmall dcamp at -11.1 -22.1 ground sit yaw=337
+call airpocket x=-15.6 z=-25.6 id=shuttlewreck_reef_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
+note dnote Ines's slate (the reef) | DIVE SLATE - I. MARLOWE, WIRED TO A BOX\n\nAIR ON THE CHAIN. AIR IN THE HOUSES. NOT IN THE DARK BITS.\n\nShuttle 7 found. Hatch open. Nobody inside. The seats are all empty and the net on 14 is empty too - so wherever Milo went, he went without Mo. He will not be sleeping.\nFootprints in the silt along the ridge, small ones, going away along the ridge towards the Caisson Yard. Fourteen sets. I counted. I am not crying, it is the mask.\nGoing on along the chain. Teo, if you're following me, go home.
+note dcamp Diver's cache | A diver's spare kit, wired shut against the current.
+loot dcamp Rope*2;Glass*3;Plastic*4
+prop dcamp loot.refill=0
+place RT_PlasticBoat dvan at 13.1 23.6 ground yaw=97
+prop dvan tint.color=#4a6b7a
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at 9.1 26.6 ground sit yaw=37
+note dwreckchest Wreck's chest | A small chest from the wreck, its lid swollen shut by the salt: line, nails and scrap.
+loot dwreckchest Rope*3;Nail*8;Scrap*3
+prop dwreckchest loot.refill=0
+call hatchcache x=-23.6 z=13.1 r=4 seed=11191 alias=dhatch chest=dhatchchest items=MetalIngot*2;CopperIngot*2;Bolt*2
+place Zone_Trigger dview at 23.6 -13.1 ground y=1.5
+prop dview zone.id=shuttlewreck_reef_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=The shuttle lies along the reef below, its windows catching the light like a row of eyes.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): round the shuttle - the reef ridge in the north-west, a cave in
+# the south-east rock, the shuttle's tender van in the south (its luggage hold)
+call sk_ridge x1=-44 z1=20 x2=-30 z2=40 h=3 top=4 r=8
+call sk_reef x=-37 z=30 r=6 seed=11161
+call sk_reef x=-30 z=40 r=5 seed=11171
+call sk_zone x=-37 z=30 al=sw_ridge id=sw_ridge r=7 msg="The reef ridge. From here the shuttle's windows line up like a row of seats."
+call sk_cave x=40 z=8 h=2 yaw=0 al=sw_caverock chest=sw_cavechest
+call sk_zone x=40 z=13 al=sw_cave id=sw_cave r=4 msg="A cave in the reef rock. Seat cushions drifted in here and stayed."
+call sk_wreck x=4 z=-46 h=2 yaw=80 v=Van_4 al=sw_wreck crate=sw_wreckcrate scale=1
+place Van_1 - at -5 -41 ground sit yaw=140
+call sk_notebox x=10 z=-50 yaw=70 al=sw_wrecknote
+
+# --- Unique layer (10-24): booked seats: the tender van's luggage hold, bolted shut; its lever lets go
+call leverchest x=-2 z=-40 yaw=0 alias=holdlever sig=holdlever chest=luggagehold cx=10 cz=-50 cyaw=80 items=Leather*2;Glass*2;Battery*1;CopperOre*2 title="Luggage hold"
+
+# --- DEEP 1-HOUR (10-24): the depot rock breaking the surface (12.5 m from the floor) and the shuttle line's drowned depot in the south-east pit
+# the rock that breaks the surface (12.5 m up from the floor), a beacon tower on its dry top
+call sk_seamount x=-38 z=-10 top=12.5 r=14
+# (REACH 10-30: the rock's flat top stood 2.5 m over the water with its sides falling straight in - no way up out of
+# the sea to the depot tower (reach: summit, locker, timetable "can't get there"): a beach slope up its south side, to the tower's door)
+brush flatten at -38.6 -15.6 r=2.4 s=20 frames=200 h=11.9
+brush flatten at -38.6 -17.0 r=2.4 s=20 frames=200 h=11.2
+brush flatten at -38.6 -18.4 r=2.4 s=20 frames=200 h=10.5
+brush flatten at -38.6 -19.8 r=2.4 s=20 frames=200 h=9.8
+brush flatten at -38.6 -21.2 r=2.4 s=20 frames=200 h=9.1
+call sk_pit x=28 z=-32 h0=-6
+call sk_reef x=-25.4 z=-10 r=6 seed=25010
+call sk_reef x=-47.8 z=-1.6 r=6 seed=25020
+call sk_reef x=38 z=-26 r=5 seed=25030
+
+# the summit: the depot rock - the tower (ladder inside), the locker, the note, the zone
+call ladtower x=-38 z=-10 h0=12.5 lv=3 a=swtower
+place Loot_ChestSmall swlocker at -38.75 -9.25 h=19.97 sit yaw=180
+place Note_Paper swsumnote at -38.75 -10.75 h=20.07 drop yaw=20
+place Zone_Trigger swsummit at -38 -10 h=20.97
+place Loot_ChestSmall swledge at -45.7 -10 ground sit yaw=40
+place SmallRock_02 - at -33 -8 ground sit scale=0.5
+call treasure x=-35.5 z=-8 r=12 n=1 seed=25011
+prop treasure25011 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=41 z=-36 r=5 n=1 seed=25012
+prop treasure25012 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+
+# the drowned building: the shuttle depot, its ground floor 16 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=28 z=-32 h0=-6 n=2 w=RT_WallWindowBroken a=swbld cap=0 cal=swcap
+place Loot_Chest swdeep at 26.2 -34.5 h=-6 sit yaw=0
+place Placeable_Table_Basic - at 26.5 -31 h=-3 sit yaw=0
+place Note_Paper swbldnote at 26.5 -31 h=-1.7 drop yaw=10
+call airpocketat x=27.5 z=-34 h=-3 id=sw_dair al=swdair bub=swdbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=28 z=-43 al=swdeepzone id=sw_deep r=4 msg="The pit floor: the drowned building stands below you."
+
+# --- Settings, notes, quest --------------------------------------------------------------------------------------------
+info title=Shuttlewreck Reef
+info author=Custom Islands
+info description=A Network transit shuttle on a reef 10 m down, its cabin still holding air - a luggage rack, a manifest and a commuter's note. A side island of The Sunken Kingdom.
+island on.arrive=message||A buoy over a reef. Under it, the long shape of a shuttle with windows down its sides.
+
+note manifest Shuttle manifest | NIGHT SHUTTLE 7 - THALASSA TO THE COMMONS\n\n14 passengers, 2 crew, 31 bags.\nPassengers: 12 children (the roofs school party), 2 teachers.\nSeat 14: MARLOWE, MILO, age 6. Travelling with: one whale (knitted). Mother: I. Marlowe, Network diver, to meet at the Commons.\nDeparted 22:40. Arrived: -\n\nSomeone has written underneath, in a teacher's careful capitals: WE WENT THE LONG WAY ROUND THE REEF BECAUSE THE SPIRE TOLD THE DRIVER TO RUN WITH HIS LIGHTS OFF. THE DRIVER COULD NOT SEE THE REEF. NOBODY ASKED THE DRIVER.
+note commuter Teacher's note | Left on seat 14, under a little string net hooked to the armrest. The net is empty.\n\nTo whoever finds the shuttle - we got out through the roof hatch and walked the reef ridge on to the Caisson Yard, in a line, holding hands. All fourteen of us. I counted four times. Then I counted again, for luck.\nMilo Marlowe would not leave without his whale. We could not find it in the dark. I promised him somebody would bring it. Please do not make me a liar.\nThe luggage is yours. Some of it explodes, mind - the Commons ordered goo.\n- A. Okafor, teacher, Spirecrest roofs school
+note luggage Luggage rack | Bags, still dry inside the rack.
+loot luggage ExplosiveGoo*2;Seed_Grass*2;Leather*2
+prop luggage loot.refill=0
+
+note sw_cavechest Drifted luggage | A suitcase wedged in the rock: somebody's good boots and a rope.
+loot sw_cavechest Leather*2;Rope*2;Plastic*2;Scrap*2
+prop sw_cavechest loot.refill=0
+note sw_wrecknote Seat 14's ticket | CHILD'S TICKET - SEAT 14 - NETWORK SHUTTLE, THALASSA TO THE COMMONS\n\nFound in the tender van's hold with the bags that floated out.\nOn the back, in crayon: a yellow whale, very fat, with a speech bubble. The speech bubble says MO.\nUnder it, in a grown-up hand: "If found, this boy belongs to Ines Marlowe, diver, Spirecrest roofs. So does the whale. Return both. Reward: one large hug, may be wet."\nThe tender van rode on the shuttle's deck. When the shuttle tipped on the reef, the van slid off and took the hold with it.
+note sw_wreckcrate Tender van crate | The tender van's spare crate: tools and rope.
+loot sw_wreckcrate Bolt*2;Rope*2;Nail*8;Scrap*2
+prop sw_wreckcrate loot.refill=0
+
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story sw_key|Depot locker key|Hinge|The shuttle depot's locker key, from the chest at the bottom of the drowned depot.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note swdeep Shuttle depot chest | The depot's chest: metal, oxygen, and a crest shard.
+loot swdeep story:sk_crest*1;TradeToken*2;MetalIngot*2;Bolt*3;OxygenBottle*1
+prop swdeep loot.refill=0
+note swlocker Depot rock locker | The shuttle crew's locker on the rock: ingots, rope, food.
+loot swlocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
+prop swlocker loot.refill=0
+note swsumnote Shuttle timetable | SHUTTLE LINE - REEF STOP\n\nEvery hour, on the hour, until the night it was not.\n22:40 Thalassa. 23:00 the Reef. 23:30 the Caisson Yard. 00:10 the Commons.\nSomebody has crossed out every stop after the Reef, and written along the bottom: "LIGHTS OFF BY SPIRE ORDER. NO MORE SHUTTLES."\nFrom up here you can see the whole of the shuttle on its reef, windows down its side like a row of seats, and very far away, past the drowned roofs, a beacon blinking on the top of Spirecrest. Somebody there is still keeping a light on.
+note swbldnote Depot clerk's note | DEPOT CLERK - REEF STOP\n\nShuttle 7 never came in. The Spire's order that night: all shuttles to run dark, "so as not to draw anything". I said it was a reef. The voice said "I know. I'm sorry."\nAt 23:10 a teacher knocked on the depot window with twelve wet children behind her and asked me the way to the Yard. I gave them my torch, my biscuits and my coat, and I put the rock locker's spare key in the chest downstairs, where it is no use to anybody now.\nIf you are going on, the children went to the Caisson Yard over the trench. Follow the cranes.
+note swledge Passenger's cache | A passenger's bag wedged on the rock's shelf.
+loot swledge Rope*3;Bolt*2;Feather*3
+prop swledge loot.refill=0
+prop swsummit zone.id=sw_summit
+prop swsummit zone.radius=2.5
+prop swsummit zone.message=Out of the water on the depot rock. The shuttle lies on the reef below.
+
+quest title=The Night Shuttle
+quest intro=A shuttle full of children lost on the night run. Find its cabin.
+step reach|cabin|1|Find the wrecked shuttle and get into its cabin
+step read|Shuttle manifest|1|Read the shuttle manifest
+step kill|Puffer fish|2|Drive off the puffers in the reef
+step open|Luggage rack|1|Open the luggage rack
+step read|Teacher's note|1|Read the note left on seat 14
+step read|Seat 14's ticket|1|Find seat 14's ticket in the wrecked tender van's hold
+step open|Shuttle depot chest|1|Dive to the bottom of the drowned depot and open its chest
+step read|Depot clerk's note|1|Read the depot clerk's note
+step read|Shuttle timetable|1|Climb the rock to the timetable on its top
+quest done=All fourteen walked to the Caisson Yard - but Milo's whale, Mo, is missing. Somebody promised him it would come back.
+quest reward=CopperIngot*2;Battery*1
+
+save Shuttlewreck Reef

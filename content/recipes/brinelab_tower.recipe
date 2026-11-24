@@ -1,0 +1,368 @@
+# Brinelab Tower - an island of the library's plan The Sunken Kingdom (sea level, flooded floors to -15; chapter 3)
+# The Pelagic Network's lab tower stands in a drowned pit off a small island, leaning 6 degrees (each storey 0.3 m
+# east of the one below). Its upper floors are dry: the lobby at the waterline (the door to the island's plaza), the
+# overgrown greenhouse floor above it (boars root in its planters), lab 2, and a roof garden with beehives. Its five
+# lower floors are flooded labs, reached down the hatch shaft (a ladder in every storey) or through the broken windows.
+# On the island the boiler house (a stone shed with rats) stands in for the flooded basement. Quest "The Lab Tower"
+# (18 steps): the lobby, the safety board, the machete plans at reception, the vines over the hatch cut and the
+# stairwell, 3 boars, the fuel tank plans in lab 2, data drive 1, the flooded lab's air pocket, drives 2 and 3 (the
+# third sends "drives": the plan brings Biome Seven), the fuel pipe plans in the pipe store, the biofuel extractor
+# plans in the boiler house.
+#
+# Points (metres over the sea): the tower x -6..6 (+0.3 per storey east), z -4.5..4.5; storey s has its floor at
+# -14.7 + 3s: s0 -14.7 (the lab stores), s1 -11.7 (the deep air pocket), s2 -8.7 (drive 3), s3 -5.7 (the pipe store),
+# s4 -2.7 (the flooded lab, its air pocket; drive 2), s5 0.3 (the lobby), s6 3.3 (the greenhouse), s7 6.3 (lab 2),
+# the roof 9.3. The hatch shaft at x 0.3s - 0.75, z 3.75. The plaza x 9..26 at 0.3; the boiler house x 12..18, z 5..9.5.
+include lib_huts
+include lib_gravity
+include lib_rt
+include lib_sl1
+include lib_sunken
+include lib_features
+# RESIZE 10-24: Radius 34 -> 85. The tower, its pit and the plaza are one building (the lobby door opens on the
+# plaza), so they stay as they were in the middle; the island grows round them (the pit is now a drowned sinkhole).
+new
+gen Trees=0.25 Bushes=0.32 Rocks=0.3 Harvest=0.2 BeachThings=0.2
+gen Seed=10301 Radius=85 Height=14 Roughness=0.3 Peaks=2 Shape=0 Style=0 BeachWidth=0.2 Cliffs=0.2 PeakShape=0.5
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0 SeaLife=0.3
+generate
+elevation 0
+
+# --- Terrain: the drowned pit the tower stands in, the plaza east of it ------------------------------------------------
+brush flatten at -1 0 r=9 s=20 frames=260 h=-15
+brush flatten at 17 0 r=9 s=20 frames=200 h=0.3
+# REACH 10-28: the plaza was a hollow 4-6 m under the ground round it (no way back up): a ramp cut south-east up to the slope
+brush flatten at 21 -9 r=1.8 s=20 frames=200 h=1.2
+brush flatten at 22.5 -10.5 r=1.8 s=20 frames=200 h=2.1
+brush flatten at 24 -12 r=1.8 s=20 frames=200 h=3.0
+brush flatten at 25.5 -13.5 r=1.8 s=20 frames=200 h=3.6
+# (REACH 10-28: the island's ground still stood as a ridge between the lobby and the plaza - into the lobby's east half and
+# over its door (a wall of ground seen from the plaza, the walker stuck at x 6 inside): cut down to the lobby's floor)
+# (w03 11-09: that cut at 7.5 -1.5 r=2.2 reached into the pit - the east walls and floors of the flooded storeys stood
+# 3-10 m deep in its ground and CIFloating named them buried; the ridge is cut as a strip just east of the lobby's
+# wall instead, and the pit dug again under the tower's east side)
+brush flatten from 9 -4.5 to 9 4.5 r=1.4 s=20 frames=200 h=0.25
+brush flatten at 10 -1 r=2.5 s=20 frames=200 h=0.3
+brush flatten at 12 -1 r=2.5 s=20 frames=200 h=0.3
+brush grass at 18 -2 r=9 s=20 frames=20
+brush flatten from 3 -4.5 to 3 4.5 r=3.8 s=20 frames=260 h=-15
+# discoveries: level spots for the evacuees' camp and the loading yard
+brush flatten at -36 30 r=5 s=8 frames=40
+brush flatten at 36 -36 r=6 s=8 frames=40
+origin
+clear at -1 0 r=10
+clear at 16 2 r=9
+clear at -36 30 r=6
+clear at 36 -36 r=7
+
+# --- The tower: eight storeys and the roof ---------------------------------------------------------------------------
+call labstorey s=0 w=RT_WallWindowBroken pil=0
+call labstorey s=1 w=RT_WallWindowBroken
+call labstorey s=2 w=RT_WallWindowBroken
+call labstorey s=3 w=RT_WallWindowBroken
+call labstorey s=4 w=RT_WallWindowBroken
+call labstorey s=5 lad=0 door=RT_WallDoor1
+call labstorey s=6 lad=0
+call labstorey s=7 lad=0
+call labroof s=8
+# (REACH 10-28 (2): one ladder a storey, each 0.3 m east of the one below it with the lean - a climber coming up hit the
+# next ladder's foot and stuck: lobby, greenhouse and lab 2 unreached (quest steps 4-9). The three ladders above the
+# lobby now stand in one line, at x 1.35, inside all three hatches)
+place Block_Ladder_Tier3 - at 1.35 4.2 h=0.3 sy=1.23
+place Block_Ladder_Tier3 - at 1.35 4.2 h=3.3 sy=1.23
+place Block_Ladder_Tier3 - at 1.35 4.2 h=6.3 sy=1.23
+prop labwalls tint.color=#a7b2b0
+prop labwalls tint.amount=0.3
+
+# --- s5, the lobby (floor 0.3): the safety board, the reception desk, planters, the vines over the hatch --------------
+place Zone_Trigger lobbyzone at 3 0 h=1.8
+place Note_Board safetyboard at 4.5 4.33 h=1.5 yaw=0
+place Placeable_Table_Basic - at 5 -2.5 h=0.3 sit yaw=90
+place Loot_ChestSmall reception at 5 -2.5 h=1.6 drop yaw=270
+place Block_Foundation - at -3 -2.5 h=0.98
+place Block_Foundation - at -3 2.5 h=0.98
+place Pickup_Landmark_BerryBush - at -3 -2.5 h=0.98 sit
+place Pickup_Landmark_Flower_White - at -3 2.5 h=0.98 sit
+# (w03 11-09: at z 2.95 the vines' middle hung over the hatch - CIFloating "15 m above the ground": on the floor tile in front of it)
+# (11-09 later: still named - its leaves reach 0.4 m under its foot, through the floor tile into the flooded lab's ceiling:
+# set 0.35 m up, its leaves' bottom on the floor)
+place ChoppableVines atriumvines at 1.35 2.4 h=0.65 scale=0.6 yaw=0
+place Stairwell_WallLamp - at -2 4.42 h=2.3 yaw=180
+
+# --- s6, the greenhouse floor (3.3): planters overrun, the boars, the stairwell zone at the hatch ------------------------
+place Zone_Trigger stairzone at 0.5 2 h=4.8
+place Block_Foundation - at -2.5 -2.5 h=3.98
+place Block_Foundation - at 3.5 -2.5 h=3.98
+place Block_Foundation - at 5 2.5 h=3.98
+place Pickup_Landmark_BerryBush - at -2.5 -2.5 h=3.98 sit
+place Pickup_Landmark_BerryBush - at 3.5 -2.5 h=3.98 sit
+place Pickup_Landmark_Flower_Blue - at 5 2.5 h=3.98 sit
+place Creature_Boar boars at 3 0 h=3.7
+
+# --- s7, lab 2 (6.3): the cabinet (fuel tank plans), data drive 1 on the bench, the server racks -------------------------
+place Loot_Chest lab2cabinet at 6.5 -3.5 h=6.3 sit yaw=0
+place Placeable_Table_Basic - at -1.5 -2.5 h=6.3 sit yaw=0
+place Note_Paper drive1 at -1.5 -2.5 h=7.6 drop yaw=20
+place TP_LabBottle01 - at -0.8 -2.5 h=7.6 drop
+place TP_Selene_ComputerRoom_Server01 - at -3.2 3.6 h=6.3 sit yaw=180
+place TP_Selene_ComputerGeneric_01 - at 3.5 3.8 h=6.3 sit yaw=180
+
+# --- The roof (9.3): beehives on planter boxes, white and blue flowers, a small crop plot -------------------------------
+place Block_Foundation - at -3 -2.5 h=9.98
+place Block_Foundation - at -3 0 h=9.98
+place Block_Foundation - at 5 -2.5 h=9.98
+place Block_Foundation - at 5 2.5 h=9.98
+place Placeable_BeeHive hives at -3 -2.5 h=9.98 sit
+place Placeable_BeeHive hives at -3 0 h=9.98 sit
+place Pickup_Landmark_Flower_White - at 5 -2.5 h=9.98 sit
+place Pickup_Landmark_Flower_Blue - at 5 2.5 h=9.98 sit
+place Pickup_Landmark_BerryBush - at 1 -3 h=9.3 sit
+place Placeable_Cropplot_Small - at 2.5 1 h=9.3 sit
+# STORY 10-24s: Dr Sato's recorder, left on the beehive box
+place Note_Paper satonote at -1.6 -1.25 h=9.9 drop yaw=30
+
+# --- The flooded floors: s4 the flooded lab (air pocket, drive 2), s3 the pipe store, s2 drive 3, s1 the deep air -------
+call airpocketat x=4 z=0 h=-2.7 id=flooded_lab al=labair bub=labbub r=2.5 msg="Air, trapped under the lab's ceiling. Breathe."
+place Placeable_Table_Basic - at 5.5 -3 h=-2.7 sit yaw=0
+place Note_Paper drive2 at 5.5 -3 h=-1.4 drop yaw=10
+place Loot_Chest pipestore at 5 3.3 h=-5.7 sit yaw=180
+place Placeable_Table_Basic - at 3 -3 h=-8.7 sit yaw=0
+place Note_Paper drive3 at 3 -3 h=-7.4 drop yaw=350
+call airpocketat x=4 z=0 h=-11.7 id=deep_lab al=deepair bub=deepbub r=2.5 msg="A last bubble of air in the deep storey."
+place Loot_Chest labstores at 4 -3.3 h=-14.7 sit yaw=0
+place Reef_Barrel2 - at -3 -3 h=-14.7 sit
+
+# --- The plaza: the boiler house (rats; the biofuel extractor plans), pines, crops ------------------------------------
+brush flatten at 15 6.5 r=5 s=20 frames=40 h=0.3
+push at 12 5 h=0.3
+call shed w=4 d=3 door=2
+place Loot_Chest boilerlocker at 4.8 3.6 y=0.2 sit yaw=180
+place TP_Moontown_Barrel02 - at 1 3.6 y=0.2 sit
+pop
+place Creature_Rat rats at 15 8 h=0.8
+scatter Pickup_Landmark_Tree_Pine 3 at 20 -3 r=3 seed=10302 free=2
+scatter Pickup_Landmark_Tree_Birch 2 at 22 6 r=3 seed=10303 free=2
+scatter Pickup_Landmark_BerryBush 3 at 18 -7 r=3 seed=10304 free=1
+place Placeable_Cropplot_Medium - at 20 0 ground
+# (the corals and vines in the pit itself now: the old spots west of it are land on the bigger island)
+scatter VP_CoralDigitate02 5 at -1 -7 r=2 seed=10305 free=1
+scatter VP_CoralBulb03 4 at -1 -7 r=2 seed=10306 free=1
+scatter SeaVine3 14 at -2 0 r=8 seed=10307 free=2
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): the evacuees' camp (a note), a forklift and a crate in the
+# old loading yard, a chest behind vines, a buried treasure, a viewpoint where the tower's lean shows best ----------
+place campfire_1 - at -36 30 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at -33 32 ground sit yaw=160
+place "Box Small" - at -38 32.5 ground sit
+place Note_Paper evacnote at -38 32.5 ground y=1.6 drop yaw=25
+place VP_Forklift forklift at 36 -36 ground yaw=40
+prop forklift tint.color=#8a6a4e
+prop forklift tint.amount=0.4
+place Loot_ChestSmall yardcrate at 39 -33 ground sit yaw=220
+call vinecache x=-42 z=-36 r=12 seed=10308 chest=labvinechest vines=labvines items=Rope*3;MetalIngot*2;Glass*3
+call treasure x=52 z=30 r=10 n=1 seed=10309
+prop treasure10309 treasure.loot=CopperOre*3
+place Zone_Trigger viewzone at 0 -56 ground
+note evacnote Evacuees' camp note | WE CAME OUT OF THE TOWER ON DAY 9\n\nNine of us, the night shift. The lower floors went first, all at once, as if somebody had pulled a plug. Then the lobby lights - not the storm, the board, the Director's office turning them off one by one from a hundred miles away.\nDr Sato stayed to send the drives. She said she would follow when the bees were settled. We waited two days for her here.\nA diver came past on day 11, asking after a shuttle. Then an old man with hens in a basket, asking after the diver. We gave them both our last tin of peaches and pointed at the tower.\nThe tower leans a little more every morning. We are leaving by the old road.
+note yardcrate Loading yard crate | A crate never loaded onto the lab's lift: bolts, cable.
+loot yardcrate Bolt*4;Rope*2;Scrap*3
+prop yardcrate loot.refill=0
+prop viewzone zone.id=brinelab_view
+prop viewzone zone.radius=7
+prop viewzone zone.repeat=never
+prop viewzone zone.message=From here the lean is plain: the lab tower tilts out of its drowned pit, each floor a hand's width further out than the one below.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): the seawall ridge in the west, the sample cave in the north,
+# the sample keeper's ruin in the east, the lab's van and its dropped crane in the south-east (the bolt cutters)
+call sk_ridge x1=-66 z1=-8 x2=-62 z2=10 h=5 top=4 r=8
+call sk_plants x=-64 z=1 r=16 seed=10361
+call sk_zone x=-64 z=1 al=bl_ridge id=bl_ridge r=7 msg="The old seawall, now a ridge of rubble and grass. From here the lab tower leans like a tired man."
+call sk_cave x=-20 z=54 h=3 yaw=180 al=bl_caverock chest=bl_cavechest
+call sk_zone x=-20 z=49 al=bl_cave id=bl_cave r=4 msg="The sample cave: the lab kept its cold store in the rock, out of the sun."
+call sk_ruin x=70 z=-4 h=3 al=bl_ruin
+call sk_ruin x=70 z=8 h=3 al=bl_ruin2
+call sk_notebox x=72.5 z=-8.5 yaw=10 al=bl_ruinnote
+call sk_wreck x=46 z=-64 h=3 yaw=110 v=Van_2 al=bl_wreck crate=bl_wreckcrate scale=1
+place UT_ElectricityIsland_Crane02 - at 37 -58 ground sit yaw=200
+call sk_notebox x=52 z=-68 yaw=70 al=bl_wrecknote
+
+# --- Unique layer (10-24): the crane cab: its lever drops the hook crate it was lifting when the tower leaned
+call leverchest x=40 z=-60 yaw=200 alias=cranelever sig=cranelever chest=hookcrate cx=38 cz=-67 cyaw=20 items=MetalIngot*2;Bolt*4;Rope*2 title="Hook crate"
+
+# --- DEEP 1-HOUR (10-24): Brine Hill (24 m) with the weather mast, and the cold well in the south-west: the lab's drowned pump house
+# the mountain: a stepped path spirals up from its east foot (46.08 66) to the summit tower
+call sk_peak x=24 z=66 h=24 r=24
+call sk_pit x=-30 z=-66 h0=-12
+call sk_cave x=-36 z=-6 h=3 yaw=0 al=blcave2 chest=blcave2chest
+call sk_plants x=24 z=66 r=26.4 seed=24210
+call sk_reef x=-20 z=-60 r=5 seed=24230
+# (REACH 11-02: a 5x5 m hollow on the hill's east flank, 35-37 77-79, h 6.4-11.3, had one way out, a 1.2 m step up: a mid-step pad)
+brush flatten at 33.37 75.77 r=0.9 s=20 frames=150 h=11.9
+clear at 33.37 75.77 r=1.9 body
+
+# the summit: Brine Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
+call ladtower x=24 z=66 h0=24 lv=6 a=bltower
+place Loot_ChestSmall bllocker at 23.25 66.75 h=38.6 sit yaw=180
+# (REACH 10-28: the zipline post and the note swapped cells - the tower's ladder now comes up onto the zipline's old cell)
+place Note_Paper blsumnote at 24.75 65.25 h=38.84 drop yaw=20
+place Zone_Trigger blsummit at 24 66 h=39.73
+place ZiplinePath_Landmark blzip at 23.25 65.25 h=38.73 yaw=0
+zipto blzip 12 33
+place Loot_ChestSmall blledge at 13.82 76.18 ground sit yaw=40
+place SmallRock_02 - at 35.13 42.32 ground sit scale=0.5
+place SmallRock_02 - at 35.13 42.32 ground y=0.3 sit scale=0.32 yaw=40
+call treasure x=32.63 z=42.32 r=12 n=1 seed=24211
+prop treasure24211 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=-19.23 z=-3.21 r=5 n=1 seed=24212
+prop treasure24212 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=-36 z=-4 h=1 r=7 al=blcave2dark
+
+# the drowned building: the lab's pump house, its ground floor 12 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=-30 z=-66 h0=-11.94 n=3 w=RT_WallWindowBroken a=blbld cap=0 cal=blcap
+place Loot_Chest bldeep at -31.8 -68.5 h=-12 sit yaw=0
+place Placeable_Table_Basic - at -31.5 -65 h=-9 sit yaw=0
+place Note_Paper blbldnote at -31.5 -65 h=-7.7 drop yaw=10
+call airpocketat x=-30.5 z=-68 h=-9 id=bl_dair al=bldair bub=bldbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=-30 z=-77 al=bldeepzone id=bl_deep r=4 msg="The pit floor: the drowned building stands below you."
+
+# --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
+info title=Brinelab Tower
+info author=Custom Islands
+info description=The Pelagic Network's lab tower, leaning in a drowned pit: dry labs and a hive garden above the water, five flooded floors below. The third island of The Sunken Kingdom.
+island on.arrive=message||A tower leaning out of the sea, its lower windows dark with water. A plaza beside it, and a door at the waterline.
+
+note safetyboard Lab safety board | BRINELAB - SAFETY BOARD (amended by Dr M. Sato)\n\n1. The lower floors are SEALED. Do not open the hatch below the lobby. (Unless you are me.)\n2. Data goes on drives, three copies, one per floor, because the Network trusts nothing it cannot drop in the sea.\n3. Boars are NOT lab animals. Whoever let them into the greenhouse owes me eleven tomatoes.\n4. Lights off after dark, by order of the Director. Yes, Director. I will do my sums by moonlight like a poet.\n\nUnder it, in chalk: "Sato - the shuttle stopped here at six for tea. Twelve aboard. Did they say where next? - I.M."\nAnd under that, Sato's reply: "The Caisson Yard road. I gave them biscuits. Go up to the roof, Ines, I'll tell you there."
+note reception Reception drawer | The reception drawer: machete plans and a visitor's badge.
+note lab2cabinet Lab 2 cabinet | A lab cabinet: fuel tank plans, labelled "for the shuttle".
+note satonote Dr Sato's roof recording | RECORDER, LEFT ON THE BEEHIVE - DR M. SATO\n\nInes. You climbed all those stairs with a hen-keeper's oxygen tank on your back, so here is the truth, as much as I have.\nThe shuttle went on down the Caisson Yard road. The radio heard it hit the reef off the yard and then twelve small voices counting each other on the rocks. Twelve. All of them. They walked.\nNow the other thing. Someone sank my lower floors. Not the storm - the pumps went to REMOTE, and the command came down the wire with a name on it. I copied it onto drive 3 before the water took the room.\nGo down, read it, and then go to Wren at Biome Seven. She has the only boat left on the shelf and she will feed you melon whether you want it or not.\nThe bees say hello.
+note drive1 Data drive 1 | DRIVE 1 / 3 - BIOME PROGRAMME (voice log, Dr M. Sato)\n\nSeven sealed domes on the shelf, each its own little world. Six have gone dark, one after another, the way windows go dark in a street at night.\nBiome Seven is the last one still breathing. Its gardener, Wren, sends me a melon report every Sunday whether I ask or not. This Sunday: "Melons excellent. Morale fair. Do not come down, the light is wrong out here."\nI asked her what she meant by wrong. She said: "It moves when the current doesn't."\nCopies 2 and 3 of this drive are below, where the water is. I am not going down there today. I am going to the roof to see the bees, who at least have the decency to buzz.
+note drive2 Data drive 2 | DRIVE 2 / 3 - BIOME SEVEN\n\nCoordinates follow. Dome at eighteen metres, airlock on the dome's landward side. The gardener is Wren Ashby. She stays down there. She says the melons do better than we do, which is true, and that she does better than we do, which is also true.\nShelf note: Biome Seven's beacon is on this lab's transmitter. If the tower loses power the dome goes quiet with it.\n(In the margin, Sato's pencil: "copy 3 is one floor further down. Mind your head on the pipes. I didn't.")
+note drive3 Data drive 3 | DRIVE 3 / 3 - TRANSMIT\n\nLast order still on the drive: "send Biome Seven's beacon to anyone who reads this". Sending.\n\nCopied by hand underneath, by Dr Sato:\n"02:14 - PUMP CONTROL: LOCAL to REMOTE.\n02:14 - VALVE COMMAND: SPIRE. Flood levels 1 to 4.\n02:15 - Message attached, voice of the Director: 'This is the Sealkeeper. Brinelab, I am sorry. It is quieter this way.'"\n\nQuieter for whom, Halvard?\nI am sending Wren's beacon anyway. If you are reading this, the Receiver will hear Biome Seven now. Go to the dome on the shelf. Wren has a boat, and she will want to know about the light.
+note pipestore Pipe store | Shelves of pipe and a sealed tube of plans: fuel pipes.
+note labstores Lab stores | The lab's deep store: explosive goo in sealed jars, scrap.
+note boilerlocker Boiler room locker | The boiler man's locker: biofuel extractor plans and gloves.
+loot reception Blueprint_Machete*1;Machete*1;Rope*2
+prop reception loot.refill=0
+loot lab2cabinet Blueprint_Fueltank*1;Blueprint_HeadLight*1;Bolt*2
+prop lab2cabinet loot.refill=0
+loot pipestore Blueprint_Pipe_Fuel*1;Blueprint_Recycler*1;Scrap*3
+prop pipestore loot.refill=0
+loot labstores ExplosiveGoo*2;Scrap*6
+prop labstores loot.refill=0
+loot boilerlocker Blueprint_BiofuelExtractor*1;BioFuel*1;Leather*1
+prop boilerlocker loot.refill=0
+
+prop atriumvines obj.name=atriumvines
+prop atriumvines on.use=hide|atriumvines\nmessage||The machete bites through the vines. The hatch to the stairwell is free.
+prop drive2 on.read=show|drive3\nmessage||Drive 2 names a third copy, one floor further down.
+prop drive3 obj.name=drive3
+prop drive3 beh.hidden=1
+prop drive3 on.read=signal||drives\nmessage||The drive's last order runs: a beacon wakes somewhere on the shelf.
+prop lobbyzone zone.id=lobby
+prop lobbyzone zone.radius=3.5
+prop lobbyzone zone.message=The lobby. Water laps at the door; a hatch in the corner is grown shut with vines.
+prop stairzone zone.id=stairwell
+prop stairzone zone.radius=2.5
+prop stairzone zone.message=Up through the hatch - and something snorts among the planters.
+prop boars creature.count=3
+prop boars creature.respawn=0
+prop boars creature.zone=stairwell
+prop rats creature.count=3
+prop rats creature.respawn=0
+
+note bl_cavechest Cold store chest | A cold store chest: sample jars, cracked, and the lab's spare glass.
+loot bl_cavechest Glass*3;Rope*2;Bolt*2;Plastic*3
+prop bl_cavechest loot.refill=0
+note bl_ruinnote Sample keeper's list | SAMPLE KEEPER'S LIST\n\n1. Kelp, shelf edge. Smells of feet.\n2. Water, 18 m, for the dome. Wren asks for it every month like it is wine.\n3. Something from the trench. Do not open. Do not shake. Do not, Pieter, put it near the window again.\nThe thing from the trench glows when the lights go out. Faintly. Teal. I moved it here, then to the cave, then I moved myself a long way from both.\nThe tower leans a little more each spring. The drives stay in the tower. They are the lab's memory, and Sato says a lab without a memory is just a building full of mugs.
+note bl_wrecknote Crane driver's note | CRANE DRIVER'S NOTE\n\nWe were lifting the lab's cage crates when the tower moved. The crane stopped, the van stopped, I ran, and I am not ashamed of it - I have legs for a reason.\nThe bolt cutters for the cages are in the van's crate. The dome's gardener keeps animals in a cage down there and she will need them one day.\nFunny thing. The tower did not move by itself. I heard the pumps cough and stop, all of them, at the same second, like an orchestra at the end of a song. Pumps don't do that. People do that.
+note bl_wreckcrate Lab van crate | The lab van's crate: the cage crew's bolt cutters and their spares.
+loot bl_wreckcrate story:raft-Vasagatan_BoltCutter*1;Bolt*3;MetalIngot*1
+prop bl_wreckcrate loot.refill=0
+
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story bl_key|Pump house key|Hinge|The lab pump house's key, from the chest at the bottom of the cold well.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note bldeep Pump house chest | The pump keeper's chest: his wages and a crest shard.
+loot bldeep story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1;TradeToken*2
+prop bldeep loot.refill=0
+note bllocker Weather mast locker | The gauge reader's field kit, left on Brine Hill.
+loot bllocker MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
+prop bllocker loot.refill=0
+note blsumnote Weather log | BRINE HILL WEATHER LOG - GAUGE READER\n\nWind off the sea, sea rising. Third reading this week the gauge went under, and I went under with it to read it, because the Network does not accept "about".\nFrom up here the whole shelf is lit by one thing: the Spirecrest beacon, far off over the water, blinking like a lighthouse that has forgotten what it is for.\nUnder the sea, past the tower, there is another light that does not blink. It moves. I have stopped writing that one down, because the Director's office keeps sending the page back.
+note blbldnote Pump keeper's slate | PUMP KEEPER\n\nThe well pumps brine to the tower's drives. Twenty years, never missed a day, never dropped a bolt.\nThen the board in this house went REMOTE on its own and every valve opened together, and the well became the sea.\nI ran up the stairs, and the stairs held, which is more than I can say for the Network.\nThere is air on the first floor. The chest at the bottom has my wages in it, and the crest shard the old king's people left on the lintel. Take them. I am not coming back for either.
+note blledge Gauge reader's cache | A cache on a ledge of Brine Hill, where the gauge reader sheltered.
+loot blledge Rope*3;Bolt*2;Feather*3
+prop blledge loot.refill=0
+note blcave2chest Brine sampler's chest | A brine sampler's chest at the back of the rock cave.
+loot blcave2chest CopperOre*3;Rope*2;Battery*1
+prop blcave2chest loot.refill=0
+prop blsummit zone.id=bl_summit
+prop blsummit zone.radius=2.5
+prop blsummit zone.message=The top of Brine Hill. The whole island lies below.
+
+# --- 11-08 (w03): the spill lab by the loading yard (plan 03 row: ACID, optional, safe=suit, a lever hides the zone) ---
+# The lab's sample annex, a metal shed east of the loading yard: a carboy rack fell when the tower leaned and the floor is
+# still awash with brine acid. The annex locker is at the back past the spill. Two ways across: the spill suits in the
+# box by the door, or the drain lever behind the annex (round the back wall), which hides the acid. No quest step.
+brush flatten at 47 -21 r=5 s=20 frames=200 h=2.9
+push at 44 -24 h=3
+call shed w=4 d=4 door=1
+place TP_Moontown_Barrel02 - at 1 5.2 y=0.2 sit yaw=80
+place TP_Moontown_Barrel02 - at 2.4 4.6 y=0.2 sit yaw=200
+pop
+place Note_Sign blspillwarn at 43.4 -25.2 ground sit yaw=200
+note blspillwarn SAMPLE ANNEX - ACID SPILL | Brine acid on the floor since the lean. Suits in the box by the door. The drain lever is round the back of the annex.\n- Brinelab safety officer
+place "Box Big" blspillsuits at 42.6 -23 ground sit yaw=250
+prop blspillsuits obj.name=blspillsuits
+prop blspillsuits beh.use=Put on a spill suit
+prop blspillsuits on.use=suit||180\nmessage||A lab spill suit, rubber boots and gauntlets - three minutes before the acid gets through.
+place Zone_Trigger blspill at 47 -21 h=3.6
+prop blspill obj.name=blspill
+prop blspill zone.id=bl_spill
+prop blspill zone.radius=2.6
+prop blspill zone.hazard=acid
+prop blspill zone.damage=4
+prop blspill zone.safe=suit
+prop blspill zone.hazardMsg=The floor is awash with brine acid. Put on a spill suit from the box by the door - or drain it with the lever round the back.
+place UT_JumpPuzzle_LiftMechanism_Lever bldrain at 47 -16.6 ground sit yaw=0
+prop bldrain obj.name=bldrain
+prop bldrain beh.use=Pull the annex drain lever
+prop bldrain on.use=hide|blspill\nmessage||The drain under the annex coughs open and the acid runs off down the old sample gully. The floor steams, then dries.
+place Loot_ChestSmall blspilllocker at 49.2 -18.9 h=3.3 drop yaw=200
+note blspilllocker Sample annex locker | The annex's sample locker, sealed when the rack fell: the night shift's spare cells and a board from the sample fridge.
+loot blspilllocker Battery*2;CircuitBoard*1;Glass*3;Bolt*2
+prop blspilllocker loot.refill=0
+
+quest title=The Lab Tower
+quest intro=The shuttle stopped at this leaning tower for tea. Go in at the waterline.
+step reach|lobby|1|Go into the lobby at the waterline
+step read|Lab safety board|1|Read the safety board in the lobby
+step blueprint|Blueprint_Machete|1|Take the machete plans (and the caretaker's old machete) from the reception drawer
+step reach|stairwell|1|Cut the vines over the hatch with the machete and climb up
+step kill|Warthog|3|Drive the boars out of the greenhouse
+step blueprint|Blueprint_Fueltank|1|Find the fuel tank and head light plans in lab 2
+step blueprint|Blueprint_HeadLight|1|Take the head light plans from lab 2 too
+step read|Data drive 1|1|Read data drive 1 in lab 2
+step read|Dr Sato's roof recording|1|Climb to the roof garden and play Dr Sato's recorder by the beehives
+step reach|flooded_lab|1|Dive down the hatch shaft to the flooded lab's air pocket
+step blueprint|Blueprint_Pipe_Fuel|1|Find the fuel pipe and recycler plans in the flooded pipe store
+step blueprint|Blueprint_Recycler|1|Take the recycler plans from the pipe store too
+step blueprint|Blueprint_BiofuelExtractor|1|Get past the rats in the boiler room: biofuel extractor plans
+step read|Data drive 3|1|Read data drives 2 and 3 on the deepest flooded floor
+quest done=Someone at the Spire flooded the lab by remote. Biome Seven's beacon calls from the shelf; the Receiver finds it on band 600.
+quest reward=Nail*10;Scrap*4
+
+# (GROUND 10-30 G1: scattered rocks 2.1-3.2 m off the slopes (CIGroundIslands 11:28) taken out; Raft's zipline has no
+# stand - its near end's floor (ZiplineBase_FloorB, 5.72 m west and 0.97 m north of where it is put) hung 18.9 m over the
+# summit's flank: an iron post under it, in 6 m lengths)
+clear at -67.59 -11.46 r=1.5 all body only=SmallBoulder2
+clear at -69.65 -0.74 r=1.5 all body only=SmallBoulder2
+clear at 73.40 -2.68 r=1.5 all body only=SmallBoulder2
+clear at 73.40 9.32 r=1.5 all body only=SmallBoulder2
+clear at 26.67 53.34 r=1.5 all body only=SmallBoulder2
+clear at 44.50 50.87 r=1.5 all body only=SmallBoulder2
+for k 0 2
+place RT_PillarThick zipposts at 17.53 66.22 ground y={6*$k}
+next
+place RT_PillarThick zipposts at 17.53 66.22 ground y=18 sy=0.1467
+save Brinelab Tower

@@ -1,0 +1,121 @@
+# Play test of Camp Blackwater (CIPlay camp_blackwater, in a test world 'CI ...'). Points as in its recipe ("offset").
+# The camp on the lake's west shore (3.5 m): the gate at -44 35, the mess hall at -36 41, cabin 1 at -40..-29.5 22..32.5,
+# the archery shed at -44.5 22; the lake x -8..32 z 29..46; the old boathouse on its east shore (30-35 37-41.5); the fire
+# lookout up the hill at 0 11 (ground 10.4 m, deck 16.9 m, its ladder on the south side).
+island Camp Blackwater
+offset -0.4374 -1.2402
+expect step 0
+expect title The Last Week of Summer
+wait 5
+expect animals Chicken 6
+expect animals Goat 4
+expect animals Turtle 2
+
+# Off the jetty, up the road under the banner
+walk -55 36 to -49 36 to -45.5 35 h=3.5
+zone campgate
+expect step 1
+
+# The mess hall: the logbook, the pantry's honey; the footlocker in cabin 1 is padlocked
+read Head counselor's logbook
+expect step 2
+open Camp pantry
+expect story honey 1
+expect step 3
+open Counselor's footlocker
+expect message padlocked
+
+# The archery shed: the flare pistol
+walk -44 33 to -46 27 to -43 24 h=3.6 below=5
+open Archery shed box
+expect story flaregun 1
+expect step 4
+# (the canoe dock's box, on the way round the lake)
+open Dock box
+expect step 5
+
+# Round the lake's south shore to the old boathouse: the bait, the Ridge Bear, her last note
+walk -46 27 to -44 34.5 to -28 34.6 to -14 34 to -11 31 to -6 26.5 to 10 24.5 to 25 25.5 to 33 27.5 to 35 34 h=3
+zone boathouse
+expect step 6
+use baitpost
+expect shown ridgebear
+wait 2
+kill Bear
+expect step 7
+read Dana's last note
+expect step 8
+
+# Up the trail to the fire lookout: its ladder, the deck, the flare - the ranger boat answers, the key
+walk 33 27.5 to 25 25.5 to 10 24.5 to -6 26.5 to -4 20 to 0 13.5 to 3 11 to 1.2 8.2 h=10.4
+climb 0 8.25 h=10.4
+expect stand 0 11 h=16.9 below=18
+at 0 11.5 h=17.6
+zone lookout
+expect step 9
+use flarepost
+expect message a ship's horn answers
+expect story lockerkey 1
+expect step 10
+# SILVER 10-26: the ruined house, Walt Pruitt, the climb, Bear Hollow, the secrets
+expect hidden cb_rewchest
+use cb_machine
+expect hidden cb_rewchest
+read Caretaker's chalk board
+expect step 11
+use Walt Pruitt
+wait 1
+expect step 12
+expect hidden cb_lampchest
+use Porch lamp 1
+use Porch lamp 2
+wait 1
+expect shown cb_lampchest
+open Walt's tackle box
+zone cb_trail
+expect step 13
+zone cb_summit
+expect step 14
+open Ranger's radio mast box
+wait 3
+expect story cb_top 1
+expect step 15
+zone cb_cave
+expect step 16
+open Bear Hollow chest
+wait 3
+expect story cb_cave 1
+expect step 17
+use cb_machine
+expect shown cb_rewchest
+expect story cb_fixed 1
+open Camp loudspeaker reward
+wait 3
+read Last broadcast
+expect step 18
+# the secrets: the wreck, the jumps, the set
+zone cb_plane
+open Floatplane crate
+read Ranger's flight card
+zone cb_jumps
+open Counselors' perch
+open Top of the perch
+expect hidden cb_setchest
+use cb_piece1
+use cb_piece2
+use cb_piece3
+use cb_piece4
+use cb_piece5
+wait 2
+expect shown cb_setchest
+open Lost and found box
+
+# Back to cabin 1: her footlocker
+open Counselor's footlocker
+wait 2
+expect done
+
+# The other boxes: the fridge, cabin 2's box, the sunk canoe's box
+open Mess hall fridge
+open Cabin 2 box
+open Sunk canoe's box

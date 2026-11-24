@@ -1,0 +1,573 @@
+# Ironreef Caverns - a very large island of the library (caves)
+# A jungle mountain island where the Ironreef Mining Company struck iron - and left in a hurry. Four caves in the
+# mountain's flanks: the Iron Gate (the mine, high on the south flank, warthogs in the dark), the Vine Crawl (a low
+# cave choked with vines and bees), the Drowned Shaft (the mine's sea adit on the west coast, flooded - dive for what
+# is down there) and the Bear Hall (north), its mouth shut by a rockfall - and behind it Ironhide, the beast that drove
+# the miners out. Quest "The Heart of Ironreef" (21 steps): the camp, the company's notice, the supply
+# barrel, the plank road's top, the mine and its warthogs, the foreman's log and locker, the Vine Crawl's powder crate
+# (one charge), the Bear Hall's blocked mouth, the rockfall's warning and a try at it, the Drowned Shaft's sunken box
+# (the second), the rockfall blown, the Bear Hall, Ironhide, the company's strongbox. (The two "pages" steps count notes read - a chest's note is read as it opens - and
+# the rockfall's two journal pages: 6 before the first try, 8 before the blast.)
+# DEEP 10-25 (deep pass, The Long Voyage): Radius 110 kept; it already had the climb (plank road, 42 m mountain), the
+# dive (Drowned Shaft) and four caves. New: the missing miner Davy Rees's letter by the strongbox in the Bear Hall
+# (behind the rockfall, so it is read after both "pages" steps and leaves their counts alone), and his pay, buried on
+# the west tableland - a second treasure. Quest steps unchanged (22).
+#
+# Built by the recipe player (CIRecipe ironreef_caverns) through the editor's own operations. Each cave is placed
+# from a frame at its mouth: the ground there is the frame's floor, and the ground is levelled from the mouth into the
+# mountain where the cave's passage runs (the ground can't lie over a cave - the cave's own rock is its roof).
+include lib_sea
+include lib_features
+include lib_highwater
+include lib_areas
+include lib_abyss
+include lib_caves
+new
+# (nature: a jungle mountain: twice Raft's trees and bushes, a little rockier - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
+gen Trees=0.4 Bushes=0.38 Rocks=0.5 Harvest=0.24 BeachThings=0.3
+gen Seed=4410 Radius=110 Height=42 Roughness=0.5 Peaks=1 Shape=0 Style=0 BeachWidth=0.5 Cliffs=0.35 PeakShape=0.45
+gen SeaFloor=0 Shelf=0.5 Seabed=1
+# (sea: Raft's finds and corals as dense as around Raft's islands - Like Raft 0.5 - the review, 2026-10-03)
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.3 Hostiles=0 Friendly=0.3 SeaLife=0.4
+generate
+
+# --- The mountain: raised over the island's ridge into one rugged peak ----------------------------------------------
+brush raise at 0 -5 r=55 s=20 frames=18
+brush raise at -8 -10 r=28 s=20 frames=10
+brush rock at -6 -8 r=30 s=10 frames=40
+brush rock from -6 -8 to 10 -40 r=12 s=10 frames=30
+
+# --- The mining camp on the east beach: levelled, cleared ------------------------------------------------------------
+brush flatten at 80 -2 r=14 s=20 frames=40
+clear at 80 -2 r=20
+clear from 69 -11 to 52 -30 r=6
+clear from 50 -32 to 10 -60 r=6
+clear from 75 -5 to 10 48 r=4
+clear from -4 60 to -60 0 r=4
+clear from 0 -60 to 20 -78 r=12
+clear from 30 -45 to 8 -62 r=8
+
+# --- The caves: each placed from a frame at its mouth (the frame's floor the ground there, its +z out of the mouth) ---
+# The Iron Gate: the old iron mine, in Balboa's bear cave, on the south flank (its floor 23 m up)
+push at 8 -52 yaw=180
+brush flatten from 0 0 to 0 -34 r=6 s=20 frames=70
+brush flatten from 0 0 to 0 10 r=9 s=20 frames=30
+clear from 0 6 to 0 -34 r=8
+brush sand from 0 2 to 0 -34 r=7 s=10 frames=40
+place BalboaCave_Bear irongatecave at 1.2 -18.4 y=5.2 scale=1.15
+# the timbered portal at the mouth, rails along the floor, ore carts, lanterns on crates, veins of iron and copper
+place Relay_support_beam_wood - at -4.2 -1 rot=0,0,-90 sx=0.75
+place Relay_support_beam_wood - at 6.6 -1 rot=0,0,-90 sx=0.75
+place Relay_support_beam_wood - at 6.6 -1 y=7 rot=0,0,0 sx=1.15
+for rz -28.5 -1 3.5
+place Beam_Long_01 - at 0.5 $rz y=-0.04 rot=0,0,0 yaw=90
+place Beam_Long_01 - at 1.5 $rz y=-0.04 rot=0,0,0 yaw=90
+next
+place VP_Wagon02 - at 1 -8 sit
+place VP_Wagon02 - at 1 -19 sit
+place VP_Wagon02 - at 5.6 -14 sit tilt=75 yaw=20
+# (the crates on the mine's floor, along the passage: at x -3.2 / 5.4 they stood on its steep banks and were set down
+# into them, buried, CIGroundIslands)
+place Crate_Big_01 - at -1.8 -6 sit yaw=95
+place Placeable_Lantern_Metal - at -1.8 -6 y=0.45 sit
+place Crate_Big_01 - at -1.8 -16 sit yaw=90
+place Placeable_Lantern_Metal - at -1.8 -16 y=0.45 sit
+place Crate_Big_01 - at -1.8 -25 sit yaw=80
+place Placeable_Lantern_Metal - at -1.8 -25 y=0.45 sit
+place "Pickup_Landmark_Iron 1" - at -5 -11 sit
+place "Pickup_Landmark_Iron 2" - at 7.6 -22 sit
+place "Pickup_Landmark_Copper 1" - at -5.2 -18 sit
+place "Pickup_Landmark_Iron 3" - at 6.8 -28 sit
+place "Pickup_Landmark_Copper 2" - at -3.5 -31 sit
+# the foreman's corner at the back: his desk, his log, his locker
+place Balboa_DecorationPrefabBase_Desk - at 1.2 -31.5 y=-0.4 sit
+place Balboa_DecorationPrefabBase_Desk_Chair - at 1.2 -30.3 sit yaw=180
+place Balboa_DecorationPrefabBase_Lantern - at 0.2 -31.5 y=0.54 sit
+place Note_Book foremanlog at 1.6 -31.4 y=1.3 drop
+# (on the floor: at x 3.4 it stood on the bank, buried, CIGroundIslands)
+place Balboa_DecorationPrefabBase_SmallLocker minelocker at -1.6 -29.5 sit y=-0.35
+place Zone_Trigger irongate at 1 -4 y=1.5
+place Creature_Boar hogs at 1 -22 y=0.8
+place Zone_Atmosphere minedark at 1.2 -18 y=4
+place Zone_Sound minesound at 1.2 -18 y=3
+pop
+
+# The Vine Crawl: a low cave choked with vines, on the east flank - bees, and the company's powder crate. Its own
+# floor rises west under a shaft of light, where the crate is (the ground only levelled at its mouth)
+push at 52 4 yaw=90
+brush flatten from 0 0 to 0 -14 r=4 s=20 frames=40
+brush flatten from 0 0 to 0 8 r=7 s=20 frames=25
+clear from 0 6 to 0 -16 r=6
+brush sand from 0 2 to 0 -16 r=5 s=10 frames=25
+place BalboaCave_Vines vinecrawl at -1.2 -28.6 y=5.5 scale=1.3
+pop
+# (the shell's north side stood over the slope there, its rim 11 m off the ground at 30 15 - the ground brought up
+# under it, CIGroundIslands, 2026-10-12)
+brush flatten at 31 17.5 r=5 s=20 frames=40 h=29
+# (and on along the rim to its north, still 2.1 m off at 75 degrees round, and the lip on its west side, 1.1 m off at
+# 90 degrees - X7, 2026-10-13)
+brush flatten from 30 17.5 to 26.4 13 r=3.5 s=20 frames=40 h=31
+brush flatten from 27.2 8.6 to 26.4 11 r=3.5 s=20 frames=40 h=31
+# (and on round the NE side to the rim at 23.4 5.1 and south to 22 -1, still 2.5 m off the slope - X7, 2026-10-17)
+brush flatten from 27.2 8.6 to 22.2 5 r=3.5 s=20 frames=40 h=34.5
+brush flatten from 22.2 5 to 22 -1 r=3.5 s=20 frames=40 h=34.5
+brush flatten from 23.5 6 to 23 -2 r=3 s=20 frames=60 h=34.8
+brush flatten from 23.5 6 to 23 -2 r=3 s=20 frames=60 h=34.8
+# (and its south-east lip, 1.6 m off at 300 degrees round, local 27 -2)
+brush flatten from 24 -1.8 to 26.5 -1.8 r=3 s=20 frames=60 h=31.8
+# (the generated palm and bush the flattening left 4 and 1.7 m in the air - CIFloating, 2026-10-20)
+clear at 23.7 6 r=9 only=Bush|Fern|Plant|Palm|Flower|Grass
+place CaveVine1 - at 41 4 h=13.2
+place CaveVine2 - at 43.5 3.5 h=13
+place CaveVine3 - at 38.8 5 h=12.8
+place Loot_Crate powdercrate at 39.4 4 h=10.5 drop yaw=15
+place Zone_Trigger vines at 48 4 h=10.5
+place Creature_BugSwarm_Bee bees at 42 4 h=11.2
+place Zone_Atmosphere vinedark at 42 4 h=11
+
+# The Bear Hall: the beast's hall, in Balboa's dead-end cave, on the north flank - its mouth shut by a rockfall
+push at -4 46
+brush flatten from 0 0 to 0 -40 r=8 s=20 frames=70
+brush flatten from 0 0 to 0 12 r=10 s=20 frames=30
+clear from 0 10 to 0 -40 r=10
+brush sand from 0 0 to 0 -40 r=9 s=10 frames=40
+brush rock from 0 -8 to 0 -38 r=6 s=10 frames=30
+place BalboaCave_DeadEnd bearhallcave at -1.7 -20.5 y=9.4 scale=1.25
+place BigBoulder2_Low rockfall at -3.8 -1.5 sit scale=0.6 yaw=10
+place BigBoulder2_Low rockfall at 3.8 -1.2 sit scale=0.6 yaw=-15
+# (10-25: the two small rockfall stones sunk by what they hung over the dug floor - drop alone left them up to 3.9 m up)
+place SmallBoulder2 rockfall at -1 1.5 sit drop y=-3.9 yaw=80
+place SmallBoulder3 rockfall at 4.5 2 sit drop y=-1.8 yaw=30
+place SmallBoulder4 rockface at 0.8 2.6 sit
+place Note_Sign rocksign at -6.5 3.5 yaw=200
+place Zone_Trigger bearhall at 0 -10 y=1.5
+# (in front of the rockfall, outside the hall: a quest step)
+place Zone_Trigger hallmouth at 0 8 y=1.5
+place Creature_Bear ironhide at 0 -26 ground
+place Loot_ChestLarge strongbox at -0.5 -35 ground sit
+# DEEP 10-25: the missing miner's letter, by the strongbox (read after the blast: the pages counts stay as they were)
+# (REACH 10-28: "ground" here is the cave's roof - the letter lay in the rock; now beside the strongbox)
+# (REACH 10-29: d=1.2 on the default side put it in the hall's rock wall - the other side)
+# (REACH 10-29b: beside put it at the terrain under the cave floor, 1 m down - placed on the floor by the strongbox)
+# (agent Q 10-30, REACH: behind the strongbox, against the hall's back wall, nobody could stand by it - now on the floor in front of it)
+place Note_Paper davynote at -0.5 -33.4 h=6.2 drop yaw=180
+place Zone_Atmosphere halldark at 0 -20 y=5
+place Zone_Sound hallsound at 0 -20 y=3
+pop
+
+# The Drowned Shaft: the mine's flooded sea adit on the west coast - its floor under the sea, a channel out to sea
+push at -60 -8 h=-4 yaw=270
+for dz 4 -28 -4
+brush lower at 0 $dz r=6 s=20 frames=8
+next
+brush lower at 0 0 r=6 s=20 frames=4
+brush flatten from 0 0 to 0 -32 r=6 s=20 frames=80
+brush flatten from 0 0 to 0 30 r=8 s=20 frames=60
+brush smooth from 0 4 to 0 30 r=12 s=20 frames=40
+clear from 0 28 to 0 -32 r=8 all
+place BalboaCave_DeadEnd drownedcave at -1.4 -16 y=7.5
+place VP_Wagon02 - at 0.5 -12 ground yaw=10
+place VP_Wagon02 - at -2 -18 ground tilt=80 yaw=-30
+for rz -26 -2 3.5
+place Beam_Long_01 - at 0 $rz ground rot=0,0,0 yaw=90
+next
+place Loot_Crate sunkenbox at 0.8 -24 ground yaw=20
+scatter SmallBoulder2 3 at -9 14 r=5 seed=301
+scatter SmallBoulder3 3 at 9 14 r=5 seed=302
+scatter SmallBoulder4 4 at 0 22 r=9 seed=303
+place Zone_Trigger drowned at 0 -4 y=3
+pop
+
+# --- The camp: the company's office (a log cabin), the notice board, a tent and a fire, a jetty, a plank road up ----
+place Balboa_Shack office at 74 -14
+place Note_Board notice at 85 -4 yaw=90
+place Balboa_DecorationPrefabBase_SimpleTent - at 77 10 sit yaw=200
+place campfire_1 - at 82 7 sit
+place Crate_Big_01 - at 86 2 sit yaw=20
+place Crate_Big_01 - at 86.4 3.2 sit yaw=-10
+place Loot_Barrel campbarrel at 84.5 3.5 sit
+place VP_Wagon02 - at 82 -9 sit yaw=40
+place "Box Small" - at 87.5 -8 sit yaw=15
+place Zone_Trigger camp at 82 -2 y=1.5
+for jx 93.2 108.8 5.2
+place Relay_Floor_deck - at $jx 0.6 h=2.2
+place Relay_support_beam_wood - at {$jx-5} -4.4 h=-3 rot=0,0,-90 sx=0.55
+place Relay_support_beam_wood - at {$jx-5} 0.4 h=-3 rot=0,0,-90 sx=0.55
+next
+# (11-03 fixC, CIFloatingSweep: the last deck's east corners hung 2 m over the ground, two posts under its east edge, as the west ones)
+place Relay_support_beam_wood - at 108.6 -4.4 h=-3 rot=0,0,-90 sx=0.55
+place Relay_support_beam_wood - at 108.6 0.4 h=-3 rot=0,0,-90 sx=0.55
+# the plank road up the cliff to the mountain's shoulder: two lanes of raft planks on posts
+# (10-25: a cut under the road's upper half, 0.4 m under its planks - on the bigger island the cliff came up through
+# the road and the walker stuck at z -24.5; 10-27: the whole road - a cut starting part way up left a lip the walker stuck on, at z -14.8 and -9.5)
+for f -0.02 1.04 0.02
+brush flatten from {71.1-17.5*$f+2.1} {-0.9-27.7*$f-1.33} to {71.1-17.5*$f-2.1} {-0.9-27.7*$f+1.33} r=0.6 s=20 frames=100 h={2.0+18*$f}
+next
+ramp Block_Floor_Wood from 70.47 -0.5 2.4 to 52.97 -28.2 20.4 len=1.5 top=0
+ramp Block_Floor_Wood from 71.73 -1.3 2.4 to 54.23 -29.0 20.4 len=1.5 top=0
+for f 0.2 0.8 0.2
+place Relay_support_beam_wood - at {71.1-17.5*$f-0.93} {-0.9-27.7*$f+0.59} h=0 rot=0,0,-90 sx={(2.1+18*$f)/9.4}
+place Relay_support_beam_wood - at {71.1-17.5*$f+0.93} {-0.9-27.7*$f-0.59} h=0 rot=0,0,-90 sx={(2.1+18*$f)/9.4}
+next
+# and a short sanded path from the shoulder up onto the mine's terrace
+# (10-25: a bed for it, from a little below its foot - the crest came up through the old plank ramp here, so the planks went
+# and the path is the bed itself)
+for f -0.15 1.01 0.05
+brush flatten from {21-8*$f} -53.8 to {21-8*$f} -57.2 r=0.6 s=20 frames=100 h={19.2+4*$f}
+next
+brush sand from 21 -55.5 to 13 -55.5 r=1.6 s=8 frames=20
+place Balboa_DirectionSign - at 70 -8 ground yaw=220
+# (the top of the plank road, on the mountain's shoulder: a quest step)
+place Zone_Trigger shoulder at 53 -29 y=1.5
+
+# --- Settings, notes, behaviours, quest ---------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): palms, melons, flowers ----------
+scatter "Pickup_Landmark_Tree_Palm 1" 4 at 0 0 r=77.0 seed=4590 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 4 at 0 0 r=77.0 seed=4591 free=5
+scatter "Pickup_Landmark_WatermelonLandmark" 6 at 0 0 r=77.0 seed=4600 free=3
+scatter "Pickup_Landmark_Flower_Red" 4 at 0 0 r=77.0 seed=4610 free=3
+scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=77.0 seed=4611 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=130 deep=5 n=3
+
+info title=Ironreef Caverns
+info author=Custom Islands
+info description=A jungle mountain where the Ironreef Mining Company struck iron - and fled. Four caves in its flanks: the Iron Gate mine, the Vine Crawl, the flooded Drowned Shaft and the Bear Hall behind a rockfall, where Ironhide waits - and a miner who never came out. Bring a light and a full breath.
+island on.arrive=message||A jungle mountain with a ruined mining camp on its beach. Somewhere a bear roars - a very big bear.
+
+# the pump store key (TODO 4c): kept - it opens the company's pump store on the Drowned Metropolis' ferry islet
+story ironreef-key|Pump store key|quest:Caravan_KeyMayor|The Ironreef Mining Company's key to its pump store in the drowned city of Meridian.
+story charges|Blasting charge|quest:Vasagatan_Bomb|A bundle of the Ironreef Mining Company's blasting charges, still dry in its oilcloth.
+note notice Company notice | IRONREEF MINING COMPANY\n\nNOTICE TO ALL HANDS: the mine is CLOSED.\n\nThe deep gallery broke into a cave the size of a church - and the thing living in it. Two men hurt, one missing. The foreman has blown the Bear Hall shut.\n\nThe last of the blasting charges are where we left them: one crate in the Vine Crawl, one box in the sea adit. Leave them there.\n\nThe Iron Gate mine is up the plank road. - The Company
+note foremanlog Foreman's log | FOREMAN'S LOG\n\nWeek 9: The deep gallery hit a great hollow. Bones on the floor, big ones. Claw marks on the props.\nWeek 10: Something came through the gallery at night. Iron-grey, bigger than any bear I've seen. The men call it Ironhide.\nWeek 11: Blew the Bear Hall shut with half our charges. The other half I hid - one crate in the Vine Crawl, one box down the sea adit (the Drowned Shaft) before it flooded.\n\nThe richest ore is in the Bear Hall. So is the company strongbox. Two charges will clear the rockfall. I won't be the one to do it.
+note davynote Miner Davy Rees's letter | D. REES, HEWER - FOR MY MAM, IF ANYONE FINDS IT\n\nThey think I'm dead. I heard them shouting for me through the rock, and then I heard the foreman's charges go, and the hall went dark.\n\nI'm not hurt, Mam. The beast doesn't touch me. It sleeps on the ore like a dog on a rug and it watches me with its little eyes, and when I sit still it lets me be. I've been eating the roots that grow in the drip.\n\nThere's no way out now. The mouth of the hall is a wall of stone and the beast is between me and the gallery.\n\nMy pay is buried on the high flat ground by the crashed plane, under the palms, where I used to sit of an evening. Forty weeks of it. If someone blows that rockfall and gets past the beast, they've earned it more than the company ever did.\n\nYour loving son, Davy
+note rocksign Rockfall | DANGER - BLASTED SHUT\n\nDo not open. Do not feed.\n- Foreman
+note minelocker Foreman's locker | The foreman's locker: his spare lamp, a flask (empty), a map of the caves - and a brass key on a company tag: "PUMP STORE - MERIDIAN CONTRACT". The company pumped out the drowned city's cellars, until the sea won.
+loot minelocker story:ironreef-key*1;HeadLight*1;Battery*1;Rope*2
+prop minelocker loot.refill=0
+note powdercrate Powder crate | The company's powder crate, wedged behind the vines: one bundle of blasting charges, still dry.
+loot powdercrate story:charges*1;Nail*6
+prop powdercrate loot.refill=0
+note sunkenbox Sunken powder box | A tin box on the flooded floor of the adit, sealed with tar: a bundle of blasting charges, dry inside.
+loot sunkenbox story:charges*1;Scrap*4
+prop sunkenbox loot.refill=0
+note strongbox Company strongbox | The Ironreef Mining Company's strongbox: wages never paid, the richest ore of the reef - and the Heart of Ironreef.
+loot strongbox Blueprint_TitaniumTools*1;TitaniumOre*4;MetalIngot*6;CopperIngot*4
+prop strongbox loot.refill=0
+prop strongbox tint.color=#4a4e55
+prop strongbox tint.amount=0.6
+note campbarrel Supply barrel | A barrel of the company's supplies: rope, nails and a jar of honey.
+loot campbarrel Rope*3;Nail*10;Jar_Honey*1
+prop campbarrel loot.refill=0
+
+prop camp zone.id=camp
+prop camp zone.radius=12
+prop camp zone.message=An abandoned mining camp: an office, a notice board, a plank road up the cliff.
+prop irongate zone.id=irongate
+prop irongate zone.radius=6
+prop irongate zone.message=The Iron Gate. Rails run into the dark - and something grunts at the end of them.
+prop vines zone.id=vines
+prop vines zone.radius=4
+prop vines zone.message=The Vine Crawl. The air hums - bees!
+prop bearhall zone.id=bearhall
+prop bearhall zone.radius=7
+prop bearhall zone.message=The Bear Hall. Bones crunch underfoot. Out of the dark comes Ironhide.
+prop drowned zone.id=drowned
+prop drowned zone.radius=6
+prop drowned zone.message=The Drowned Shaft: the sea has taken the old adit to the roof. Take a deep breath.
+prop shoulder zone.id=shoulder
+prop shoulder zone.radius=5
+prop shoulder zone.message=The top of the plank road. The camp lies small below - and the mountain's caves gape in its flanks.
+prop hallmouth zone.id=hallmouth
+prop hallmouth zone.radius=4
+prop hallmouth zone.message=The Bear Hall's mouth, choked with fallen rock. Claw marks on the boulders - made from the inside.
+prop hogs creature.count=2
+prop hogs creature.respawn=0
+prop hogs creature.zone=irongate
+prop hogs creature.health=1.5
+prop bees creature.count=2
+prop bees creature.respawn=0
+prop bees creature.zone=vines
+prop ironhide creature.count=1
+prop ironhide creature.size=2
+prop ironhide creature.health=6
+prop ironhide creature.damage=2
+prop ironhide creature.respawn=0
+prop ironhide creature.zone=bearhall
+prop ironhide tint.color=#3a3c42
+prop ironhide tint.amount=0.7
+
+prop rockfall obj.name=rockfall
+prop rockface obj.name=rockface
+prop rockface beh.use=Set the blasting charges
+prop rockface if.use=take|story:charges|2
+prop rockface on.use=message||You wedge both charges into the rockfall, light the fuse and run. The blast shakes the mountain - and the way into the Bear Hall is open.\nhide|rockfall\nhide|rockface\nsound||event:/exploring/obstacles/door_explosion\njournal|The rockfall blown|Both charges wedged in and lit. The blast shook the mountain - the Bear Hall stands open.
+prop rockface else.use=message||A wall of fallen rock. Two blasting charges would clear it.\njournal|The rockfall|A wall of fallen rock over the Bear Hall's mouth. One charge won't shift it - the foreman wrote that two will.
+
+prop minedark atmo.fog=#070605
+prop minedark atmo.fogAmount=0.8
+prop minedark atmo.light=#1e1812
+prop minedark atmo.lightAmount=0.9
+prop minedark atmo.particles=mist
+prop minedark zone.radius=18
+prop vinedark atmo.fog=#0a0d06
+prop vinedark atmo.fogAmount=0.7
+prop vinedark atmo.light=#26301c
+prop vinedark atmo.lightAmount=0.85
+prop vinedark atmo.particles=fireflies
+prop vinedark zone.radius=16
+prop halldark atmo.fog=#060505
+prop halldark atmo.fogAmount=0.85
+prop halldark atmo.light=#1a1616
+prop halldark atmo.lightAmount=0.9
+prop halldark atmo.particles=mist
+prop halldark zone.radius=20
+prop minesound sound.event=event:/amb/cave
+prop minesound sound.volume=0.7
+prop minesound zone.radius=20
+prop hallsound sound.event=event:/amb/cave
+prop hallsound sound.volume=0.8
+prop hallsound zone.radius=22
+
+quest title=The Heart of Ironreef
+quest intro=A ruined mining camp on a jungle mountain. The Ironreef Mining Company struck rich iron here - then left in a hurry. Their notice board still stands on the beach.
+step reach|camp|1|Make for the jungle mountain and land at the mining camp on the beach below it
+step read|Company notice|1|Read the company's notice board
+step open|Supply barrel|1|Open the company's supply barrel by the campfire
+step reach|shoulder|1|Climb the plank road up the cliff to the mountain's shoulder
+step reach|irongate|1|Follow the shoulder to the Iron Gate mine
+step kill|Warthog|2|Drive the two warthogs out of the dark along the rails
+step read|Foreman's log|1|Read the foreman's log at the back of the mine
+step open|Foreman's locker|1|Take the foreman's spare lamp from his locker
+step reach|vines|1|Find the Vine Crawl, the tunnel choked with vines and bees
+step open|Powder crate|1|Open the powder crate wedged behind the vines
+step collect|story:charges|1|Take the first bundle of charges; the other is in the Drowned Shaft
+step reach|hallmouth|1|Go to the Bear Hall, the cave blocked by a rockfall
+step read|Rockfall|1|Read the foreman's warning on the rockfall
+step pages||7|Try one charge on the rockfall - it won't be enough
+step reach|drowned|1|Dive into the Drowned Shaft, the flooded mine tunnel by the shore
+step open|Sunken powder box|1|Open the powder box on the flooded floor of the Drowned Shaft
+step collect|story:charges|2|Bring both blasting charges back to the rockfall
+step pages||9|Wedge both charges into the rockfall and blow it open
+step reach|bearhall|1|Enter the Bear Hall
+step kill|Bear|1|Defeat Ironhide
+step open|Company strongbox|1|Open the company's strongbox
+step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools plans from the company strongbox
+quest done=Ironhide is dead and the strongbox is open: the Heart of Ironreef - a fist-sized lump of pure iron - and the blueprint the company kept from its miners are yours.
+quest reward=MetalIngot*8;Nail*20;Bolt*6
+
+# --- A Raft store on the north beach: the mining company's tally shop, still trading (Raft's goods, and plans the crew missed) --
+store tallyshop at 8 54 ground
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=55 n=1 seed=8813
+prop treasure8813 treasure.loot=TitaniumOre*3
+# DEEP 10-25: Davy Rees's pay, buried on the west tableland (his letter in the Bear Hall says where)
+call treasure x=-60 z=-28 r=20 n=1 seed=32030 kind=0
+prop treasure32030 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*3
+
+# --- ABYSS 10-26 (1-hour pass): the company's survey on the west tableland, its tallies, the plane and the ore boat ---
+# A The company plane, down on the west tableland (h 10), its crate beside it
+call ar_plane x=-72 z=-38 h=10.2 yaw=50 al=companyplane crate=companycrate
+note companycrate Company plane's crate | The company plane's freight: survey pegs, rope and a box of bolts, flown in for the tableland survey and never unloaded.
+loot companycrate Rope*3;Bolt*3;MetalIngot*2
+call hw_zone x=-72 z=-30 al=planez id=companyplane r=6 msg="The company plane, down on the tableland. Its wing lies in the grass; the survey it brought was never finished."
+# B The survey beacons (puzzle: all three lit shows the surveyor's cache); a beacon switches its neighbours too.
+# Start: 1 and 2 lit; beacon 1, then beacon 2, lights them all.
+call ab_lamp x=-100 z=-22 al=beacon1 nm="Survey beacon 1" grp="Survey beacons" on=1
+call ab_lamp x=-88 z=-30 al=beacon2 nm="Survey beacon 2" grp="Survey beacons" on=1
+call ab_lamp x=-62 z=-56 al=beacon3 nm="Survey beacon 3" grp="Survey beacons" on=0
+prop beacon1 on.use=light|Survey beacon 2|toggle
+prop beacon2 on.use=light|Survey beacon 1|toggle\nlight|Survey beacon 3|toggle
+prop beacon3 on.use=light|Survey beacon 2|toggle
+prop beacon1 on.alllit=show|surveycache\nmessage||All three survey beacons burn across the tableland. By the first, the surveyor's cache stands open.
+call ab_hidden x=-94 z=-18 al=surveycache
+note surveycache Surveyor's cache | The company surveyor's cache: his instruments, his pay and a sample of the best ore he found.
+loot surveycache TitaniumOre*2;MetalIngot*3;TradeToken*2
+# C The ore boat, run aground on the north beach, its crate beside it
+call hw_wreck x=-10 z=96 h=2 yaw=200 obj=BoatStranded al=oreboat crate=oreboatcrate r=9
+note oreboatcrate Ore boat's crate | The ore boat's last load, never shipped: iron and copper ingots under a tarpaulin.
+loot oreboatcrate MetalIngot*3;CopperIngot*2;Rope*2
+# D Company tallies: five brass tallies of the company's miners, lost about the island (a set: a secret)
+call ab_piece x=68 z=8 al=ctally1 set="Company tallies" nm="Company tally 1"
+call ab_piece x=-30 z=92 al=ctally2 set="Company tallies" nm="Company tally 2"
+call ab_piece x=-58 z=-48 al=ctally3 set="Company tallies" nm="Company tally 3"
+call ab_piece x=20 z=-92 al=ctally4 set="Company tallies" nm="Company tally 4"
+call ab_piece x=60 z=58 al=ctally5 set="Company tallies" nm="Company tally 5"
+prop ctally1 on.set=give||TitaniumIngot*1;MetalIngot*2\nmessage||All five company tallies. Every miner of Ironreef is accounted for.
+# E Dr. Calder's field note, by the company's wagon in the camp
+# (agent Q 10-30, REACH: between the office and the wagon nobody could stand by it - now on the open ground by the wagon's front)
+place Note_Paper caldernote3 at 80 -4.5 ground y=0.1 drop yaw=60
+note caldernote3 Dr. Ruth Calder's field note | THE ABYSS EXPEDITION - FIELD NOTE 3\n\nIronreef. The company dug for iron and found the sea under the mountain instead. Their foreman's log talks of a pump store in a drowned city - Meridian - and a key they never used.\n\nThe ore here is good, but it is not what we came for. The soundings all point the same way: deeper, and out to sea.\n\nWe take the company's key and go on.\n- R. C.
+# F The scaffold run on the east beach (a hop course on its own pad)
+# --- JUMP COURSE ir (Abyss pass 10-26): kz-style hop course of floor slabs on its own pad (the bs course, turned) ---
+# JUMP ir pad=2.5 at=88 26
+push at 88 26
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=2.5
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=2.5
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpir at 5.64 -0.10 h=3.10
+place Block_Foundation_Tier3 jpir at 5.64 -2.92 h=3.60
+place Block_Foundation_Tier3 jpir at 5.64 -5.93 h=4.00
+place Block_Foundation_Tier3 jpir at 3.03 -5.93 h=4.90
+place Block_Foundation_Tier3 jpir at -1.21 -5.93 h=5.40 sx=3 sz=0.3
+place Block_Foundation_Tier3 jpir at -5.64 -5.93 h=6.20
+place Block_Foundation_Tier3 jpir at -5.64 -3.02 h=7.10
+place Block_Foundation_Tier3 jpir at -5.64 -0.40 h=6.10
+place Block_Foundation_Tier3 jpir at -5.64 2.41 h=7.05
+place Block_Foundation_Tier3 jpir at -5.64 5.12 h=8.00
+place Block_Foundation_Tier3 jpir at -2.02 5.12 h=8.90 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jpir at -2.02 -1.30 h=9.20 sx=2 sz=2
+place Block_Foundation_Tier3 jpir at 3.21 -1.30 h=9.50
+# JUMP end
+# (each slab on one solid column of its own footprint, from under the pad up to the slab)
+# (the first slab rests on the pad itself: no column)
+place Block_Foundation_Tier3 jppir at 5.64 -2.92 h=2.918 sy=1.493
+place Block_Foundation_Tier3 jppir at 5.64 -5.93 h=3.318 sy=2.079
+place Block_Foundation_Tier3 jppir at 3.03 -5.93 h=4.218 sy=3.399
+place Block_Foundation_Tier3 jppir at -1.21 -5.93 h=4.718 sy=4.132 sx=3 sz=0.3
+place Block_Foundation_Tier3 jppir at -5.64 -5.93 h=5.518 sy=5.305
+place Block_Foundation_Tier3 jppir at -5.64 -3.02 h=6.418 sy=6.625
+place Block_Foundation_Tier3 jppir at -5.64 -0.40 h=5.418 sy=5.158
+place Block_Foundation_Tier3 jppir at -5.64 2.41 h=6.368 sy=6.551
+place Block_Foundation_Tier3 jppir at -5.64 5.12 h=7.318 sy=7.944
+place Block_Foundation_Tier3 jppir at -2.02 5.12 h=8.218 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jppir at -2.02 -1.30 h=8.518 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jppir at 3.21 -1.30 h=8.818 sy=10.144
+prop jpir tint.color=#6b5a48
+prop jpir tint.amount=0.35
+prop jppir tint.color=#6b5a48
+prop jppir tint.amount=0.35
+place Loot_Chest jcir at -2.02 5.12 h=8.90 sit yaw=0
+note jcir Scaffold perch | The miners raced up the scaffold on pay day; the winner sat up here and watched the ore boats come in.
+loot jcir Plank*6;Rope*3;MetalIngot*1
+prop jcir loot.refill=0
+place Loot_ChestSmall jbir at 3.21 -1.30 h=9.50 sit yaw=0
+note jbir Scaffold run prize | A tin wedged on the last scaffold post: a miner's pay-day winnings.
+loot jbir MetalIngot*2;CopperIngot*2;TitaniumIngot*1
+prop jbir loot.refill=0
+place Zone_Trigger jyir at 3.21 -1.30 h=10.50
+prop jyir zone.id=jump_ir_finale
+prop jyir zone.radius=1.8
+prop jyir zone.repeat=never
+prop jyir zone.message=The top of the scaffold run - a tin is wedged on the last post.
+pop
+# --- end of jump course ir ---
+
+# --- Reef Workings (Abyss Expedition, 11-04): a dug cave system in the south-west flank ---
+# Three tunnels into the reef rock - the west mouth (A) down into a hall, the south mouth (B) up into it, the gully
+# mouth (C) level into B - with a vine-choked side gallery (titanium) and a dead-end drift whose floor fell in onto
+# old spike traps: a plank way along its east wall, a warning sign at its start, a small box at its end.
+# (All dug with the Dig brush: dug tunnels join only dug tunnels, so the plan's three cave-tool tunnels are dug too.
+# Nowhere near the quest: the Iron Gate's rock is 6 m east of the gallery, the Drowned Shaft 13 m north of mouth A.)
+clear at -40.3 -22.3 r=1 only=Pickup_Landmark_Tree_Mango
+clear at -35.9 -22.9 r=1.5 only=BigBoulder3_Low
+clear at -35.4 -44.4 r=1 only=Monstera_2
+# (the tree stood in mouth A: its trunk filled the way out and the walker stuck on its roots - 11-04)
+clear at -41.3 -23 r=2.5
+# (a spoil heap up to mouth A: the slope fell 1.5 m in the last metre before its floor, a lip the walker and a player
+# without a jump could not climb - 11-04)
+brush flatten at -42.9 -24.4 r=1.6 s=20 frames=40 h=19.2
+brush flatten at -41.9 -24 r=1.6 s=20 frames=40 h=19.85
+brush flatten at -40.9 -23.65 r=1.6 s=20 frames=40 h=20.45
+dig -39,-23 -33,-24 -26,-30 r=1.75 slope=-8 as=irreef
+# (the hall stops 2 m short of the side gallery's room, so the gallery has a neck the vines close wall to wall: the hall's
+# round end reached the room and the vines stood free in the open like a cube - 11-05)
+dig -26,-30 -23.5,-30.8 r=3.5
+dig -35,-43 -30,-40 -25,-32 r=1.75 slope=3 as=irreef
+dig -18,-44 -23,-41 -29,-38 r=1.75 slope=2 as=irreef
+dig -24,-28 -25,-19 r=2.8
+# (the gallery's neck is in the system's group, so cavegate at= finds it: outside the group the nearest way was mouth
+# B's end in the hall, and the vines stood there free like a cube - 11-05; a quarter larger, so they fill the neck wall to wall)
+dig -23.5,-30.8 -21,-30 -16.8,-28.6 r=1.75 as=irreef
+dig -16.8,-28.6 -15,-27.9 r=2.2
+cavegate irreef at=-19.7,-29.6 scale=1.25 as=irreef_vines
+place Pickup_Landmark_Titanium_Land irti at -15.4 -27.9 h=19 drop
+caveloot irreef dirt=5 mush=4 stone=3
+# (no loot at the lens of the vine and drift views: a mushroom filled the look at the vines - 11-05)
+clear from -23.7 -30.6 to -21.6 -29.9 r=1.6 all only=^Pickup_Landmark_(Mushroom|DirtPickup|Rock)
+clear from -23.3 -28.2 to -24.2 -27 r=1.6 all only=^Pickup_Landmark_(Mushroom|DirtPickup|Rock)
+clear from -22.8 -26.3 to -23.3 -24.3 r=1.2 all only=^Pickup_Landmark_(Mushroom|DirtPickup|Rock)
+# (the plants before mouths A and B filled a look at them from a few metres: cleared, the rocks left - 11-05)
+clear from -46.5 -21.6 to -40.2 -23.4 r=2.6 body only=^(?!.*(Boulder|Rock|Cliff|Stone)).*$
+clear from -40 -46.8 to -35.2 -43.2 r=2.6 body only=^(?!.*(Boulder|Rock|Cliff|Stone)).*$
+clear from -13.5 -46.5 to -18 -44 r=2 body only=^(?!.*(Boulder|Rock|Cliff|Stone)).*$
+# (mouth C in the gully was a bare hole in the hillside: framed with boulders on both sides - 11-05)
+place SmallBoulder3 - at -16.5 -42.3 ground sit scale=0.6 yaw=30
+place SmallBoulder3 - at -18.75 -46.1 ground sit scale=0.6 yaw=200
+# (mouth B's dug lining stood out of the slope in front as a flat grey flap: a rock lip over it - RF4, 11-05)
+# (west of the way out, which runs south from -35 -43: two in it stopped the walk)
+place SmallBoulder3 - at -37.2 -43.2 ground y=-0.3 sit scale=0.6 yaw=70
+# the fallen drift: spikes where the floor gave way, planks along the east wall
+place Note_Sign irwarn at -25.9 -26.6 h=20.5 sit drop yaw=174
+note irwarn DANGER - DRIFT 4 | Floor gave way onto the old trap pit. Spikes under the rubble. Keep to the planks on the right.\n- Ironreef Mining Co.
+# (the trap pit's spike rigs sunk in the fallen floor to their tips, in rubble - stood upright whole they looked like a
+# saw workshop; Raft's only natural spikes, Temperance's stalagmites, are ice blue and hang stalactites in the air at
+# this size, and a tint does not take on them - 11-05; the rigs' pivot is their top bar, so h= is where the bar lies: just
+# over the floor, the saws half out of the rubble)
+# (sunk a third in the floor (19.0 m here) at a set height: dropped, they landed on the saws' bars and sat a metre over it - RF6, 11-05)
+place SmallBoulder3 - at -24.7 -25.9 h=18.6 sit scale=0.3 yaw=10
+place SmallBoulder3 - at -26.2 -24.6 h=18.55 sit scale=0.35 yaw=130
+place SmallBoulder3 - at -24.9 -22.6 h=18.6 sit scale=0.3 yaw=250
+place SmallBoulder3 - at -26.1 -21.3 h=18.6 sit scale=0.3 yaw=60
+place VP_Rubble_Plank01 - at -24.42 -24.55 h=20.5 drop yaw=30
+place VP_Rubble_Plank01 - at -25.6 -22.9 h=20.5 drop yaw=-70
+place VP_SpikeTrap_01 - at -25.18 -25.51 h=19.3 scale=0.75 yaw=84
+place VP_SpikeTrap_04 - at -25.58 -23.75 h=19.2 scale=0.75 yaw=20
+place VP_SpikeTrap_01 - at -25.48 -21.93 h=19.3 scale=0.75 yaw=-40
+place Block_Floor_Wood - at -22.96 -26.07 h=20.5 drop yaw=-6
+place Block_Floor_Wood - at -23.12 -24.58 h=20.5 drop yaw=-6
+place Block_Floor_Wood - at -23.29 -23.09 h=20.5 drop yaw=-6
+place Block_Floor_Wood - at -23.45 -21.6 h=20.5 drop yaw=-6
+place Zone_Trigger irspike1 at -25.25 -24.92 h=19.6
+place Zone_Trigger irspike2 at -25.53 -22.33 h=19.6
+prop irspike1 zone.id=irspike1
+prop irspike1 zone.radius=1.5
+prop irspike1 zone.hazard=spikes
+prop irspike1 zone.damage=4
+prop irspike1 zone.safe=none
+prop irspike1 zone.hazardMsg=Spikes under the rubble! Keep to the planks.
+prop irspike2 zone.id=irspike2
+prop irspike2 zone.radius=1.5
+prop irspike2 zone.hazard=spikes
+prop irspike2 zone.damage=4
+prop irspike2 zone.safe=none
+prop irspike2 zone.hazardMsg=Spikes under the rubble! Keep to the planks.
+place Loot_ChestSmall irdrift at -24.88 -20.05 h=20.5 drop yaw=174
+note irdrift Drift 4 tin | The last shift's tin, left when the floor went - and the foreman's machete, for the vines in the side gallery. Whoever reads this: you walked the planks. Good.
+loot irdrift Machete*1;MetalIngot*2;Rope*2;Bolt*1
+prop irdrift loot.refill=0
+# cavecheck inside irti irwarn irdrift irspike1 irspike2 irreef_vines
+# (11-05) Rats in the Reef Workings (the user: "in some caves there can be a monster, like a rat"): one in tunnel B (a pair's ring put one out at the mouth) and
+# one in tunnel C (a pair's ring, 3 m out, put one on the hill over the narrow tunnel), on the dug floor, 13 m and more from the drift's sign, tin and spikes, the vines and the titanium.
+# The hall has three ways in (A, B, C), so neither pair is the only way to anything. No respawn.
+# (11-07: the tunnel B rat, set 6 m in from the mouth, roamed out under the mouth's open arch - expect animalsinside
+# found it under open sky; it now starts 1.5 m deeper. Not deeper still: at -28.5 -37.5, 9 m from the hall's middle, it
+# ran out to a player standing there and killed him - kept 11 m off, like tunnel C's rat)
+# (11-07 fix1107i: rats wander up to 9 m from their spot, and the rock is open over the last 3-4 m of each mouth
+# (CIShotFrom up: B open to -32.5 -41.5, C at its mouth, A to -35 -23.7). Tunnel C runs from its mouth into tunnel B
+# by that open stretch, so no spot in it is far enough: in 3 runs one rat stood under open sky at B's or C's mouth
+# twice. Both now 10.5 m and more from every open mouth: B's at the hall end of tunnel B, C's at the hall's east end by
+# the vines. A player in the hall meets them - that is what a cave rat is for; the rats play watches from outside mouth A)
+place Creature_Rat bratsB at -25.8 -33.4 h=19.3
+prop bratsB creature.count=1
+prop bratsB creature.respawn=0
+place Creature_Rat bratsC at -21.5 -30.2 h=19.6
+prop bratsC creature.count=1
+prop bratsC creature.respawn=0
+# --- end of Reef Workings ---
+
+# (generator stones left in the air by the shaping - taken out, 10-25)
+clear at 23.03 -9.93 r=1.5 only=BigBoulder1_Low
+clear at 90.21 -40.6 r=1.5 only=BigBoulder2_Low
+clear at -63.18 -16.08 r=1 only=SmallBoulder2
+clear at -25.46 -44.26 r=1.5 only=BigBoulder2_Low
+clear at 8.76 12.65 r=1 only=SmallBoulder4
+clear at 27.53 -30.38 r=1 only=SmallBoulder4
+clear at -20.88 5.62 r=1 only=SmallBoulder3
+clear at 83.05 -57.57 r=1.5 only=BigBoulder2_Low
+save Ironreef Caverns

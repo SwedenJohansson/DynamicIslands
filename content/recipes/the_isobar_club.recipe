@@ -1,0 +1,451 @@
+# The Isobar Club - an island of the library's plan The Rainmakers (Nimbus Works' eighth station)
+# The company's members' club on a granite shelf: a lower terrace by the sea with tidal pools in the rock and the wine
+# cellar (a vault, its roof on pillars, against the cliff), Varuna Point's scissor lift as the club's funicular up the
+# rise, and on the upper shelf the clubhouse - Tangaroa's apartment facade panels made into one low pavilion with a flat
+# roof and a colonnade - pianos, a billiard table, the secretary's safe behind a keypad. Quest "Members Only" (18 steps):
+# the terrace, the members' book, the funicular, the board minutes (the safe's code), the safe, the secretary's cabinet
+# (the last blueprints), and the cage in the wine cellar - Dagny Holm herself.
+#
+# Built by the recipe player (CIRecipe the_isobar_club) through the editor's own operations.
+include lib_sea
+include lib_features
+include lib_huts
+include lib_areas
+include lib_highwater
+include lib_rain
+# RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 50 -> 85; the old island moved 35 m south (push frames), so its south shore stays on the coast and the new land is north
+# RAIN 10-26: the new land - Barometer Hill with club's weather mast, Smugglers' Cave, Lord Arvid Hale at the ruined house (a lamp puzzle), a crashed plane, a jump course, a maze, a set of five club medals
+new
+# (nature: grey granite, tropical shrubs, few trees; Harvest 0.2)
+gen Trees=0.15 Bushes=0.3 Rocks=0.45 Harvest=0.2 BeachThings=0.3
+gen Seed=9951 Radius=85 Height=12 Roughness=0.3 Peaks=1 Shape=0 Style=3 PeakShape=0.2 Cliffs=0.6 BeachWidth=0.4
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.4 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+push at 0 -35
+
+# --- Terrain: the upper shelf at 6.2 m (the club), the lower terrace at 1.5 m by the sea, the landing; the tidal pools
+# dug into the lower terrace ----------------------------------------------------------------------------------------
+brush flatten at 0 -2 r=24 s=20 frames=220 h=6.14
+brush flatten at 0 -25 r=3 s=20 frames=40 h=6.14
+for ix -20 14 4
+brush flatten at $ix -32 r=6 s=20 frames=50 h=1.44
+next
+brush flatten at -17 -28.5 r=3.5 s=20 frames=40 h=1.44
+brush flatten at 0 -42 r=5 s=20 frames=50 h=0.8
+brush flatten at 8 -35 r=2.5 s=20 frames=40 h=-0.7
+brush flatten at 13 -31 r=2 s=20 frames=40 h=-0.5
+pop
+origin
+# --- RAIN 10-26 terrain: Barometer Hill, the pads of the new areas ---------------------------------------------------
+call hw_mount x=-38 z=46 b=24 h=22
+call hw_trail x=-38 z=46 b=24 h=22 a0=126.38 turn=300 n=40 h0=3
+brush flatten at 0 18 r=4 s=8 frames=60
+clear at 0 18 r=7
+# (RESIZE 10-26: the old island, 35 m south)
+push at 0 -35
+clear at 0 -2 r=25
+clear from -20 -32 to 16 -32 r=7
+clear at 0 -42 r=5
+
+# --- The lower terrace: the landing, the members' book on its stand, rocks round the tidal pools ---------------------
+place Zone_Trigger terracezone at 0 -33 h=2.5
+place "Box Big" - at -4.5 -30 ground sit yaw=10
+place Note_Paper membersbook at -4.5 -30 ground y=1.5 sit drop yaw=30
+place SmallRock_02 poolrims at 10.6 -35 ground scale=0.45 yaw=40
+place SmallRock_02 poolrims at 6 -37.2 ground scale=0.4 yaw=120
+place SmallRock_02 poolrims at 15 -32.5 ground scale=0.4 yaw=200
+place SmallRock_02 poolrims at 11.2 -29.3 ground scale=0.35 yaw=300
+prop poolrims tint.color=#8d8a86
+
+# --- The club's funicular: Varuna Point's scissor lift at the foot of the rise, the porter's chest at its top ---------
+call lift x=0 z=-28.3 yaw=0 alias=clublift upalias=clubliftup chest=porterchest tx=3.5 tz=-23 items=Rope*2;Glass*2;Bolt*2 title="Club porter's chest"
+place Zone_Trigger clubzone at 0 -24.5 h=7.2
+
+# --- The wine cellar: a vault against the cliff west of the lift, its roof on pillars, the cage inside ---------------
+push at -20 -35 h=1.5
+for fx 0.75 5.25 1.5
+for fz 0.75 6.75 1.5
+place Block_Floor_Tier3 - at $fx $fz y=0.02
+next
+next
+for wz 0.75 6.75 1.5
+place Block_Wall_Tier3 - at 0 $wz y=0.17 yaw=90
+next
+for wx 0.75 5.25 1.5
+place Block_Wall_Tier3 - at $wx 0 y=0.17
+place Block_Wall_Tier3 - at $wx 7.5 y=0.17
+next
+place Block_Pillar_Tier3 - at 0 0 y=0.17
+place Block_Pillar_Tier3 - at 6 0 y=0.17
+place Block_Pillar_Tier3 - at 0 7.5 y=0.17
+place Block_Pillar_Tier3 - at 6 7.5 y=0.17
+place Block_Pillar_Tier3 - at 6 3 y=0.17
+place Block_Pillar_Tier3 - at 6 4.5 y=0.17
+roof 4 5 at 0 0 y=0.17
+place Survivor_Cage dagnycage at 3 3.75 y=0.2 sit yaw=0 scale=0.94
+place Loot_Chest dagnycase at 5.2 0.8 y=0.2 sit yaw=270
+place TP_Moontown_Barrel01 cellarcasks at 0.6 6.9 y=0.2 sit
+place TP_Moontown_Barrel03 cellarcasks at 1.4 6.9 y=0.2 sit
+place TP_Moontown_Barrel01 cellarcasks at 0.6 0.6 y=0.2 sit
+place Placeable_Lantern_Metal - at 5.4 6.9 y=0.2 sit
+pop
+place Zone_Trigger cellarzone at -15 -31 h=2.5
+
+# --- The clubhouse on the upper shelf: apartment facade panels as one low pavilion (a gap for its door), a flat roof
+# of floor plates, the colonnade in front on pillars; inside pianos, the billiard table, the safe and its keypad, the
+# secretary's cabinet ------------------------------------------------------------------------------------------------
+push at -7.5 -10 h=6.2
+for fx 0.75 14.25 1.5
+for fz 0.75 8.25 1.5
+place Block_Floor_Tier3 - at $fx $fz y=0.02
+next
+next
+for px 3 15 3
+place Apartment_Ext_BaseMidMidWall clubwalls at $px 6 y=0.02 yaw=0
+next
+for pz 3 9 3
+place Apartment_Ext_BaseMidMidWall clubwalls at 3 $pz y=0.02 yaw=270
+next
+for pz 0 6 3
+place Apartment_Ext_BaseMidMidWall clubwalls at 12 $pz y=0.02 yaw=90
+next
+place Apartment_Ext_BaseMidMidWall clubwalls at 0 3 y=0.02 yaw=180
+place Apartment_Ext_BaseMidMidWall clubwalls at 3 3 y=0.02 yaw=180
+place Apartment_Ext_BaseMidMidWall clubwalls at 9 3 y=0.02 yaw=180
+place Apartment_Ext_BaseMidMidWall clubwalls at 12 3 y=0.02 yaw=180
+# (the panels are drawn from outside only: from inside the hall they were see-through, only their frame strips showed -
+# so each has a twin turned round in the same place, its face to the room)
+for px 3 15 3
+place Apartment_Ext_BaseMidMidWall clubwalls at {$px-3} 12.15 y=0.02 yaw=180
+next
+for pz 3 9 3
+place Apartment_Ext_BaseMidMidWall clubwalls at -3.15 {$pz-3} y=0.02 yaw=90
+next
+for pz 0 6 3
+place Apartment_Ext_BaseMidMidWall clubwalls at 18.15 {$pz+3} y=0.02 yaw=270
+next
+place Apartment_Ext_BaseMidMidWall clubwalls at 3 -3.15 y=0.02 yaw=0
+place Apartment_Ext_BaseMidMidWall clubwalls at 6 -3.15 y=0.02 yaw=0
+place Apartment_Ext_BaseMidMidWall clubwalls at 12 -3.15 y=0.02 yaw=0
+place Apartment_Ext_BaseMidMidWall clubwalls at 15 -3.15 y=0.02 yaw=0
+for fx 0.75 14.25 1.5
+for fz -3.75 8.25 1.5
+place Block_Floor_Tier3 clubroof at $fx $fz y=3.22
+next
+next
+for cx 0 15 3
+place Block_Pillar_Tier3 colonnade at $cx -4.5 y=0.02 sy=1.22
+next
+# (the hall's own columns under the flat roof, every 3 m between the furniture: each holds the four plates round it, so
+# save stands no posts through the pianos and the pool table - the user 2026-10-18)
+for cx 1.5 13.5 3
+place Block_Pillar_Tier3 colonnade at $cx 1.5 y=0.02 sy=1.22
+place Block_Pillar_Tier3 colonnade at $cx 7.5 y=0.02 sy=1.22
+next
+place Placeable_Piano - at 3.2 4.5 y=0.05 sit yaw=90
+place Tangaroa_BallroomKit_GrandPiano - at 11.6 5 y=0.05 sit yaw=270
+place "VG_DecorationPrefabBase_Pooltable Variant" - at 7.5 5 y=0.05 sit yaw=90
+place Note_Paper boardminutes at 7.5 5 y=1.6 sit drop yaw=20
+place "Box Small" - at 1.2 8.2 y=0.05 sit
+place RT_PowerBox safekeypad at 1.2 8.2 y=1.4 sit drop yaw=180
+place VG_Safe secsafe at 2.6 8.3 y=0.05 sit yaw=180
+place Locker seccabinet at 14.2 8.3 y=0.05 sit yaw=180
+place Placeable_Lantern_Metal - at 0.8 0.8 y=0.05 sit
+place Placeable_Lantern_Metal - at 14.2 0.8 y=0.05 sit
+pop
+prop clubroof tint.color=#e6e1d6
+prop colonnade tint.color=#e6e1d6
+
+# --- A Raft store on the upper shelf, east of the clubhouse: the members' shop (Raft's goods, and plans the crew missed) --
+store clubshop at 12 -4 ground
+
+# --- Things to gather, reefs ----------------------------------------------------------------------------------------
+scatter "Pickup_Landmark_PineappleLandmark" 2 at 15 10 r=12 seed=9961 free=3
+scatter "Pickup_Landmark_Tree_Mango" 1 at -15 10 r=10 seed=9962 free=5
+scatter "Pickup_Landmark_Flower_Blue" 2 at 0 15 r=12 seed=9963 free=3
+call dirt x=-25 z=15 r=8 n=3 seed=9964
+call shallows r=72 deep=5 n=2
+
+pop
+
+# --- RAIN 10-26 (the user: one hour per island - hills, cliffs, a cave, a house, a wreck, secrets): Barometer Hill ------
+# Barometer Hill with club's weather mast on it, Smugglers' Cave, the ruined house where Lord Arvid Hale waits (four lamps round it: a puzzle), a crashed plane,
+# a jump course, a maze, five club medals about the island (a set), and at the hub the club signal that wants the mast barometer and the members' seal
+call hw_zone x=-17.87 z=31.17 al=ic_trailz id=ic_trail r=5 msg="The trail up Barometer Hill starts here - round and up."
+call hw_zone x=-38 z=46 al=ic_summitz id=ic_summit r=8 h=1 msg="The top of Barometer Hill. The whole island below you."
+call hw_mast x=-41 z=48 h0=22 lv=6 a=ic_mast chest=ic_topchest top=Placeable_Flag_01
+place ZiplinePath_Landmark ic_zip at -34.8 43.4 h=23.35
+zipto ic_zip -1.83 21.56
+place Creature_Goat ic_goats at -13.87 34.17 ground
+prop ic_goats creature.count=2
+call ar_cave x=46 z=50 h=3 yaw=180 al=ic_caverock chest=ic_cavechest
+call hw_zone x=47 z=41 al=ic_cavez id=ic_cave r=4 h=1 msg="Smugglers' Cave. Water drips somewhere in the dark."
+call ar_ruin x=58 z=-14 h=3 yaw=0 w=3 d=2 al=ic_ruin
+call rn_islander x=57 z=-18.5 yaw=200 al=ic_isl nm="Lord Arvid Hale" pose=stand
+prop ic_isl talk.text=A visitor! The club's been rather empty since the storms.\n---\nWe paid Nimbus Works to make it rain on our rivals' fields. Quite the sport. I've had eleven years to feel badly about it.\n---\nThe signal wants the barometer from the mast on the hill and our seal from the Smugglers' Cave - I hid it so nobody could call the members back. Call them, then. Let them see.\n---\nAnd the folly's lamps: four, each wakes its neighbour. Light them all and look behind the back wall.
+call rn_lamp x=51 z=-15 al=ic_lamp1 nm="Folly lamp 1" grp="Folly lamps" on=0
+call rn_lamp x=57 z=-8 al=ic_lamp2 nm="Folly lamp 2" grp="Folly lamps" on=1
+call rn_lamp x=64 z=-15 al=ic_lamp3 nm="Folly lamp 3" grp="Folly lamps" on=0
+call rn_lamp x=57 z=-22 al=ic_lamp4 nm="Folly lamp 4" grp="Folly lamps" on=1
+prop ic_lamp1 on.use=light|Folly lamp 2|toggle
+prop ic_lamp2 on.use=light|Folly lamp 3|toggle
+prop ic_lamp3 on.use=light|Folly lamp 4|toggle
+prop ic_lamp4 on.use=light|Folly lamp 1|toggle
+prop ic_lamp1 on.alllit=show|ic_lampchest\nmessage||All four lamps burn. Behind the back wall a stone has been lifted.
+call rn_hidden x=59 z=-9.4 al=ic_lampchest
+place Creature_Chicken ic_hens at 66 -8 ground
+prop ic_hens creature.count=3
+call ar_plane x=-60 z=-26 h=3 yaw=40 al=ic_plane crate=ic_planecrate
+place Note_Paper ic_pilot at -61.78 -21.9 ground y=0.1 drop yaw=70
+call hw_zone x=-60 z=-26 al=ic_planez id=ic_plane r=6 h=1 msg="A plane, nose down in the grass. Nobody came for it."
+# JUMP ic pad=3 at=4 66
+push at 4 66
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jpic at 4.24 4.24 h=3.6
+place Block_Foundation_Tier3 jpic at 5.77 1.65 h=4.35
+place Block_Foundation_Tier3 jpic at 5.85 -1.35 h=5.1
+place Block_Foundation_Tier3 jpic at 4.46 -4.01 h=5.85
+place Block_Foundation_Tier3 jpic at 1.95 -5.67 h=6.6
+place Block_Foundation_Tier3 jpic at -1.04 -5.91 h=7.35
+place Block_Foundation_Tier3 jpic at -3.78 -4.66 h=8.1
+place Block_Foundation_Tier3 jpic at -5.56 -2.25 h=8.85
+place Block_Foundation_Tier3 jpic at -5.96 0.73 h=9.6
+# JUMP from 10
+place Block_Foundation_Tier3 jpic at -4.85 3.53 h=10.35
+place Block_Foundation_Tier3 jpic at -2.54 5.44 h=11.1 sx=2 sz=2
+# JUMP end
+place Block_Foundation_Tier3 jppic at 5.77 1.65 h=3.668 sy=1.861
+place Block_Foundation_Tier3 jppic at 5.85 -1.35 h=4.418 sy=2.959
+place Block_Foundation_Tier3 jppic at 4.46 -4.01 h=5.168 sy=4.058
+place Block_Foundation_Tier3 jppic at 1.95 -5.67 h=5.918 sy=5.157
+place Block_Foundation_Tier3 jppic at -1.04 -5.91 h=6.668 sy=6.255
+place Block_Foundation_Tier3 jppic at -3.78 -4.66 h=7.418 sy=7.354
+place Block_Foundation_Tier3 jppic at -5.56 -2.25 h=8.168 sy=8.453
+place Block_Foundation_Tier3 jppic at -5.96 0.73 h=8.918 sy=9.552
+place Block_Foundation_Tier3 jppic at -4.85 3.53 h=9.668 sy=10.650
+place Block_Foundation_Tier3 jppic at -2.54 5.44 h=10.418 sy=11.749 sx=2 sz=2
+prop jpic tint.color=#8a7f70
+prop jpic tint.amount=0.35
+prop jppic tint.color=#8a7f70
+prop jppic tint.amount=0.35
+place Loot_Chest jcic at -1.04 -5.91 h=7.35 sit yaw=0
+prop jcic loot.refill=0
+place Loot_ChestSmall jbic at -2.54 5.44 h=11.1 sit yaw=0
+prop jbic loot.refill=0
+pop
+call hw_zone x=4 z=58 al=ic_jumpz id=ic_jumps r=6 h=1 msg="Stone stacks, one higher than the next. Something at the top."
+call rn_pad x=16 z=38 r=12 h=5
+brush flatten at 16 38 r=11 s=20 frames=600 h=5
+push at 8.5 30.5 h=5
+place Block_Wall_Tier3 ic_maze at 0.75 0 y=-0.35
+place Block_Wall_Tier3 ic_maze at 2.25 0 y=-0.35
+place Block_Wall_Tier3 ic_maze at 0.75 9 y=-0.35
+place Block_Wall_Tier3 ic_maze at 2.25 9 y=-0.35
+place Block_Wall_Tier3 ic_maze at 0.75 15 y=-0.35
+place Block_Wall_Tier3 ic_maze at 2.25 15 y=-0.35
+place Block_Wall_Tier3 ic_maze at 3.75 0 y=-0.35
+place Block_Wall_Tier3 ic_maze at 5.25 0 y=-0.35
+place Block_Wall_Tier3 ic_maze at 3.75 6 y=-0.35
+place Block_Wall_Tier3 ic_maze at 5.25 6 y=-0.35
+place Block_Wall_Tier3 ic_maze at 3.75 9 y=-0.35
+place Block_Wall_Tier3 ic_maze at 5.25 9 y=-0.35
+place Block_Wall_Tier3 ic_maze at 3.75 15 y=-0.35
+place Block_Wall_Tier3 ic_maze at 5.25 15 y=-0.35
+place Block_Wall_Tier3 ic_maze at 6.75 6 y=-0.35
+place Block_Wall_Tier3 ic_maze at 8.25 6 y=-0.35
+place Block_Wall_Tier3 ic_maze at 6.75 9 y=-0.35
+place Block_Wall_Tier3 ic_maze at 8.25 9 y=-0.35
+place Block_Wall_Tier3 ic_maze at 6.75 12 y=-0.35
+place Block_Wall_Tier3 ic_maze at 8.25 12 y=-0.35
+place Block_Wall_Tier3 ic_maze at 6.75 15 y=-0.35
+place Block_Wall_Tier3 ic_maze at 8.25 15 y=-0.35
+place Block_Wall_Tier3 ic_maze at 9.75 0 y=-0.35
+place Block_Wall_Tier3 ic_maze at 11.25 0 y=-0.35
+place Block_Wall_Tier3 ic_maze at 9.75 3 y=-0.35
+place Block_Wall_Tier3 ic_maze at 11.25 3 y=-0.35
+place Block_Wall_Tier3 ic_maze at 9.75 9 y=-0.35
+place Block_Wall_Tier3 ic_maze at 11.25 9 y=-0.35
+place Block_Wall_Tier3 ic_maze at 9.75 12 y=-0.35
+place Block_Wall_Tier3 ic_maze at 11.25 12 y=-0.35
+place Block_Wall_Tier3 ic_maze at 9.75 15 y=-0.35
+place Block_Wall_Tier3 ic_maze at 11.25 15 y=-0.35
+place Block_Wall_Tier3 ic_maze at 12.75 0 y=-0.35
+place Block_Wall_Tier3 ic_maze at 14.25 0 y=-0.35
+place Block_Wall_Tier3 ic_maze at 12.75 12 y=-0.35
+place Block_Wall_Tier3 ic_maze at 14.25 12 y=-0.35
+place Block_Wall_Tier3 ic_maze at 12.75 15 y=-0.35
+place Block_Wall_Tier3 ic_maze at 14.25 15 y=-0.35
+place Block_Wall_Tier3 ic_maze at 0 0.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 0 2.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 0 3.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 0 5.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 0 6.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 0 8.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 0 9.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 0 11.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 0 12.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 0 14.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 3 3.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 3 5.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 3 9.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 3 11.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 6 0.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 6 2.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 9 0.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 9 2.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 9 3.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 9 5.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 12 6.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 12 8.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 15 0.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 15 2.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 15 3.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 15 5.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 15 6.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 15 8.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 15 9.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 15 11.25 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 15 12.75 y=-0.35 yaw=90
+place Block_Wall_Tier3 ic_maze at 15 14.25 y=-0.35 yaw=90
+place Loot_ChestSmall ic_mazechest at 13.5 13.5 y=0.05 sit yaw=0
+pop
+prop ic_maze tint.color=#4e6b3a
+prop ic_maze tint.amount=0.55
+prop ic_mazechest loot.refill=0
+call hw_zone x=14.5 z=29 al=ic_mazez id=ic_maze r=3 msg="A maze of old walls. Somewhere in the middle, a box."
+call rn_piece x=-24 z=26 al=ic_piece1 set="Club medals"
+call rn_piece x=-52 z=-17 al=ic_piece2 set="Club medals"
+call rn_piece x=40 z=24 al=ic_piece3 set="Club medals"
+call rn_piece x=-10 z=60 al=ic_piece4 set="Club medals"
+call rn_piece x=16 z=38 al=ic_piece5 set="Club medals"
+prop ic_piece1 on.set=show|ic_setchest\nmessage||All five club medals found.
+call rn_hidden x=5 z=14 al=ic_setchest kind=Loot_Chest
+call treasure x=24 z=56 r=5 n=1 seed=26878 kind=0
+prop treasure26878 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+call ar_plants_hill x=-8 z=46 r=16 seed=26891
+call ar_plants_hill x=30 z=22 r=14 seed=26892
+call ar_plants_hill x=-30 z=4 r=14 seed=26893
+call ar_plants_hill x=40 z=-40 r=14 seed=26894
+call ar_plants_hill x=66 z=36 r=10 seed=26895
+call hw_machine x=0 z=18 yaw=180 al=ic_machine nm="Club signal" obj=RT_PowerBox sc=1 a=ic_top b=ic_cave done=ic_fixed rew=ic_rewchest rnote=ic_rewnote msg="It works." hint="It wants the mast barometer from Barometer Hill and the members' seal from Smugglers' Cave."
+call hw_note x=-2.6 z=19.2 yaw=200 al=ic_hint
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=The Isobar Club
+info author=Custom Islands
+info description=Nimbus Works' eighth station: the company's members' club on a granite shelf - tidal pools, a funicular up the rise, a white pavilion with a colonnade and pianos, and a wine cellar with somebody locked in it. The eighth island of The Rainmakers. Raft-sized: high ground, a cave, a ruined house where Lord Arvid Hale still lives, a crashed plane and secrets off the path.
+island on.arrive=message||A granite shelf with pools in the rock, and up the rise a white pavilion with columns. Music once. Nobody now.
+
+story cabinetkey|Cabinet key|Placeable_Lantern_Metal|The club secretary's cabinet key, from his safe.
+story cellarkey|Cellar key|Placeable_Lantern_Metal|The wine cellar's key, from the secretary's cabinet.
+
+note membersbook Members' book | THE ISOBAR CLUB - MEMBERS' BOOK\n\nNimbus Works directors and guests only. Ring for the funicular.\n\n(the last pages, in one hand: Holm, D. - Holm, D. - Holm, D. - every night for a month, and in the margin: "she's still down there")
+note boardminutes Board minutes | NIMBUS WORKS - MINUTES OF THE BOARD\n\nItem 1. The Chief Engineer asks that the Rain Engine be switched off. The sea has risen four metres.\nItem 2. The board votes to keep the Engine ON. Contracts are contracts.\nItem 3. Mrs Holm to be kept in the club's cellar until she calms down.\nItem 4. The secretary's safe code is changed to 6206.
+note secsafe Secretary's safe | The secretary's safe: a key tagged CABINET, the club's silver and a stack of unpaid rain contracts.
+loot secsafe story:cabinetkey*1;Glass*2;Bolt*2
+prop secsafe loot.refill=0
+prop secsafe if.open=signal|safe
+prop secsafe else.open=message||The safe is locked from the keypad beside it.
+note seccabinet Secretary's cabinet | The secretary's cabinet: Nimbus Works' last plans - titanium tools, a big backpack, an electric zipline handle - and a key on a ribbon, CELLAR.
+loot seccabinet Blueprint_TitaniumTools*1;Blueprint_BackpackAdvanced*1;Blueprint_ZiplineToolElectric*1;story:cellarkey*1;Cooked_GenericMeat*2
+prop seccabinet loot.refill=0
+prop seccabinet if.open=has|story:cabinetkey|1
+prop seccabinet else.open=message||The secretary's cabinet is locked. Its key would be in his safe.
+note dagnycase Dagny's case | Dagny Holm's case: her drawing instruments, a notebook of figures, and the Rain Engine's master switch plan, folded small.
+loot dagnycase Rope*2;Bolt*2;Plank*4;Cooked_GenericMeat*2
+prop dagnycase loot.refill=0
+prop dagnycase if.open=signal|dagnyfree
+prop dagnycase else.open=message||The case is inside the cage, under the engineer's hand.
+
+prop safekeypad obj.name=safekeypad
+prop safekeypad beh.use=Type the safe's code
+prop safekeypad lock.code=6206
+prop safekeypad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The keypad chirps and the safe's bolts slide back.\nsignal||safe
+prop dagnycage obj.name=dagnycage
+prop dagnycage survivor.name=Dagny
+prop dagnycage survivor.id=rainmakers_dagny
+prop dagnycage survivor.key=cellarkey
+prop dagnycage survivor.signal=dagnyfree
+prop dagnycage survivor.line=They kept me here so I couldn't switch it off. I'm Dagny Holm. I built the Rain Engine - and I know where its master switch is. Take me there.
+
+prop terracezone zone.id=terrace
+prop terracezone zone.radius=5
+prop terracezone zone.message=The club's lower terrace: pools in the rock, a book on a stand, and a lift up the rise.
+prop clubzone zone.id=club
+prop clubzone zone.radius=3.5
+prop clubzone zone.message=The Isobar Club: a white pavilion, its colonnade, its doors open on the dark.
+prop cellarzone zone.id=cellar
+prop cellarzone zone.radius=3
+prop cellarzone zone.message=The wine cellar: casks, a cage - and somebody in it.
+
+story ic_top|Mast barometer|Bolt|The club's silver barometer, unscrewed from the weather mast.
+story ic_cave|Members' seal|Bolt|The club's members' seal, hidden in the smugglers' cave.
+story ic_fixed|Club signal working|Bolt|The club signal, working again.
+note ic_hint Steward's notice | THE CLUB SIGNAL IS DARK. It wants the barometer from the weather mast on Barometer Hill and the members' seal from the Smugglers' Cave. Lord Hale at the old folly will tell you, if you let him. The hedge maze is for members.
+note ic_topchest Club's weather mast deck box | A box lashed to the deck rail at the top of the club's weather mast.
+loot ic_topchest story:ic_top*1;Rope*2;Scrap*2
+note ic_cavechest Smugglers' Cave chest | A chest at the back of Smugglers' Cave, dry under the rock.
+loot ic_cavechest story:ic_cave*1;TradeToken*2;Glass*2
+note ic_rewnote Signal book | The signal lamp flashes out to sea - the old call to the members' yachts. In its box: the signal book, every member who came to watch the rain they paid for.
+note ic_rewchest Club signal reward | What the club signal kept.
+loot ic_rewchest Glass*2;Bolt*3;TradeToken*3
+note ic_lampchest Lord Hale's strongbox | Lord Hale's strongbox: his club tie, a cigar case and a lot of tokens.
+loot ic_lampchest TradeToken*3;Glass*2;CopperIngot*1
+note ic_setchest Trophy case | The club's trophy case: every medal back, and the prize purse.
+loot ic_setchest TradeToken*3;MetalIngot*2;Glass*2
+note ic_planecrate Member's plane crate | A member's plane crate: wine, a picnic set, a rifle case (empty).
+loot ic_planecrate Glass*2;Scrap*3;Plastic*2
+prop ic_planecrate loot.refill=0
+note ic_pilot Member's flight card | ISOBAR CLUB REGATTA. Flew in for the rain show. Landing gear failed. The steward never came. Do send someone.
+note jcic Folly perch | The members' climbing folly, built for wagers.
+loot jcic Rope*3;Plank*4;MetalIngot*1
+note jbic Folly top | The wager's prize at the top.
+loot jbic CopperIngot*1;Bolt*2;TradeToken*2
+note ic_mazechest Maze prize | The prize at the heart of the members' hedge maze.
+loot ic_mazechest TradeToken*3;Glass*2;CopperIngot*2
+
+quest title=Members Only
+quest intro=A granite shelf with a white pavilion on it. Make for the white pavilion on the granite shelf and land on the lower terrace below it.
+step reach|terrace|1|Make for the white pavilion and land on the lower terrace
+step read|Members' book|1|Read the members' book on its stand
+step reach|club|1|Ride the funicular up to the club
+step read|Board minutes|1|Read the board minutes on the billiard table
+step open|Secretary's safe|1|Open the secretary's safe (its keypad code is in the minutes)
+step open|Secretary's cabinet|1|Open the secretary's cabinet with the key from the safe
+step blueprint|Blueprint_TitaniumTools|1|Take the titanium tools plans from the secretary's cabinet
+step blueprint|Blueprint_BackpackAdvanced|1|Take the advanced backpack plans from the secretary's cabinet
+step blueprint|Blueprint_ZiplineToolElectric|1|Take the electric zipline tool plans from the secretary's cabinet
+step read|Steward's notice|1|Read the steward's notice by the club signal
+step talk|Lord Arvid Hale|1|Talk to Lord Arvid Hale at the ruined house away from the club
+step reach|ic_trail|1|Find the foot of the trail up Barometer Hill, below the weather mast
+step reach|ic_summit|1|Climb the trail to the top of Barometer Hill
+step collect|story:ic_top|1|Climb the club's weather mast and take the mast barometer from the box on its deck
+step reach|ic_cave|1|Find Smugglers' Cave, the rock cave in the far hillside
+step collect|story:ic_cave|1|Take the members' seal from the chest at the back of the cave
+step read|Signal book|1|Bring both to the club signal and read what it shows
+step open|Dagny's case|1|Free the prisoner in the wine cellar and take her case
+quest done=Dagny Holm is coming with you, and she knows the way to the Rain Engine. Its station answers on 1400.
+quest reward=Glass*4;Bolt*4;MetalIngot*3
+
+# --- Raft's vending machine by the members' shop, from Tangaroa's arcade: Tangaroa's plants for its tokens; three tokens lie about --
+push at 0 -35
+vending clubvend at 18 -4 ground
+place QuestItemPickup_Tangaroa_Token - at 12 4 ground
+place QuestItemPickup_Tangaroa_Token - at 16 -12 ground
+place QuestItemPickup_Tangaroa_Token - at 18 0 ground
+
+# Buried treasure (one of the story line's last islands): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=25 n=1 seed=8826
+prop treasure8826 treasure.loot=TitaniumOre*3
+
+# Animals (reach audit 10-24: a late island of its story line had none)
+place Creature_Goat goats at 0 12 ground
+pop
+prop goats creature.count=2
+
+save The Isobar Club

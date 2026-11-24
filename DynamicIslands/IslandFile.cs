@@ -21,6 +21,16 @@ namespace DynamicIslands.Editor
 		/// tint... Keys and values are plain strings, see ObjectProps.
 		/// </summary>
 		public Dictionary<string, string> Props;
+		/// <summary>
+		/// The object's own number in its island (ROADMAP R1b): kept through edits, so a saved world finds what was used
+		/// on it after objects before it were removed or added. 0 = not given yet (a new object: the save gives one). See StableIds.
+		/// </summary>
+		public int Uid;
+		/// <summary>
+		/// Not saved. True when the generator placed this piece before Raft's piece was loaded, so Scale still lacks the
+		/// piece's own scale (the radio tower's floor is 2 x 1 x 3). PlaceableCatalog.ScaleUnloaded fixes it before saving.
+		/// </summary>
+		public bool Unscaled;
 	}
 
 	/// <summary>
@@ -50,6 +60,14 @@ namespace DynamicIslands.Editor
 	///     int32    island property count, then per property: string key, string value (IslandProps: author, description...)
 	///     int32    count of objects with properties, then per object: int32 index in the object list above,
 	///              int32 property count, then per property: string key, string value (creatures, notes, tints: ObjectProps)
+	///   tagged tail blocks this version writes (see Tail):
+	///     "mix"    a second style mixed in as texture layers 5-8 (ROADMAP E6): string style name, int32 alphamap
+	///              resolution (R), byte[4*R*R] weights of layers 5-8, layer-major then row-major. The paint above then
+	///              holds layers 1-4 with layers 5-8 added onto them (5 onto 1, 6 onto 2...), so a version without mixed
+	///              styles shows the first style's matching texture there; this version takes layers 5-8 back out.
+	///     "uid"    stable object ids (ROADMAP R1b, StableIds): int32 version, int32 count, int32 next id, int32 hash of
+	///              the object names, int32 id per object. Written only when the ids are not 1..n; a file without it
+	///              (or with a wrong count or hash) numbers its objects by place.
 	/// </summary>
 	public class IslandFile
 	{
@@ -86,6 +104,17 @@ namespace DynamicIslands.Editor
 		/// <summary>Island style (TerrainPainter.Styles: "Snowy", "Desert"...); empty = tropical.</summary>
 		public string Style = "";
 
+		/// <summary>
+		/// A second style mixed in (ROADMAP E6): its four textures are paint layers 5-8 (AlphamapLayers 8), saved in the
+		/// tail's "mix" block. Empty = none.
+		/// </summary>
+		public string MixStyle = "";
+
+		/// <summary>The tail tag of the mixed style's paint (layers 5-8).</summary>
+		public const string MixTag = "mix";
+
+		public bool HasMix { get { return !string.IsNullOrEmpty(MixStyle) && HasPaint && AlphamapLayers == TerrainPainter.MixLayerCount; } }
+
 		/// <summary>Island-wide settings (format 4), see IslandProps for the keys.</summary>
 		public Dictionary<string, string> Props = new Dictionary<string, string>();
 
@@ -95,6 +124,23 @@ namespace DynamicIslands.Editor
 
 		public bool HasPaint { get { return Alphamaps != null && AlphamapResolution > 0 && AlphamapLayers > 0; } }
 
+		/// <summary>Raft's short sea grass (PF-D3): a byte per cell (0 = bare), row by row; null = none. Tail block "grass".</summary>
+		public byte[] GrassCells;
+		public int GrassResolution;
+
+		public bool HasGrass { get { return GrassCells != null && GrassResolution > 0 && GrassCells.Length == GrassResolution * GrassResolution; } }
+
+		/// <summary>
+		/// The tagged tail (ROADMAP R12: forward compatibility): after format 4's data, any number of "tag, length, bytes"
+		/// blocks, ended by an empty tag. What a later version of the mod adds goes here under a tag of its own instead of a
+		/// new format number, so this version still opens the file: tags it doesn't know are skipped, and kept as they are
+		/// when the island is saved again (nothing a newer version wrote is lost). Empty: nothing is written (files as before).
+		/// </summary>
+		public Dictionary<string, byte[]> Tail = new Dictionary<string, byte[]>();
+
+		/// <summary>The number the next new object gets (R1b, StableIds): never one a removed object had.</summary>
+		public int NextUid = 1;
+
 		public void Save(string path)
 		{
 			Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
@@ -103,8 +149,24 @@ namespace DynamicIslands.Editor
 			{
 				var header = new BinaryWriter(file);
 				header.Write(Magic);
+				// (a mixed style: four layers in the paint block as before, layers 5-8 in the tail)
+				byte[] paint = Alphamaps;
+				int paintLayers = AlphamapLayers;
+				var tail = new Dictionary<string, byte[]>(Tail ?? new Dictionary<string, byte[]>());
+				tail.Remove(MixTag);
+				tail.Remove(SeaGrass.Tag);
+				if (HasGrass) tail[SeaGrass.Tag] = SeaGrass.Block(this);
+				// (the objects' own numbers: only when they aren't simply 1, 2, 3... - such files stay as before)
+				StableIds.WriteTail(this, tail);
+				if (HasPaint && AlphamapLayers > TerrainPainter.LayerCount)
+				{
+					byte[] extra;
+					paint = FoldPaint(out extra);
+					paintLayers = TerrainPainter.LayerCount;
+					if (HasMix) tail[MixTag] = MixBlock(extra);
+				}
 				// Each file uses the oldest format that holds what it needs, so simple islands stay readable by older versions of the mod
-				bool v4 = NeedsFormat4, v3 = v4 || NeedsFormat3;
+				bool v4 = NeedsFormat4 || tail.Count > 0, v3 = v4 || NeedsFormat3;
 				header.Write(v4 ? 4 : v3 ? 3 : 2);
 				header.Flush();
 
@@ -132,8 +194,8 @@ namespace DynamicIslands.Editor
 					if (HasPaint)
 					{
 						w.Write(AlphamapResolution);
-						w.Write(AlphamapLayers);
-						w.Write(Alphamaps);
+						w.Write(paintLayers);
+						w.Write(paint);
 						w.Write(PaintMask != null);
 						if (PaintMask != null) w.Write(PaintMask);
 					}
@@ -144,6 +206,15 @@ namespace DynamicIslands.Editor
 						List<int> withProps = Enumerable.Range(0, Objects.Count).Where(i => Objects[i].Props != null && Objects[i].Props.Count > 0).ToList();
 						w.Write(withProps.Count);
 						foreach (int i in withProps) { w.Write(i); WriteProps(w, Objects[i].Props); }
+						if (tail.Count > 0)
+						{
+							foreach (var kv in tail.Where(kv => !string.IsNullOrEmpty(kv.Key)))
+							{
+								byte[] data = kv.Value ?? new byte[0];
+								w.Write(kv.Key); w.Write(data.Length); w.Write(data);
+							}
+							w.Write("");
+						}
 					}
 					w.Flush();
 					deflate.Finish();
@@ -151,12 +222,23 @@ namespace DynamicIslands.Editor
 			}
 			// (in the old file's place in one step: a crash mid-save never destroys the previous file)
 			SafeFile.Commit(tmp, path);
+			IslandCache.ForgetFile(path);
 		}
 
 		public static IslandFile Load(string path)
 		{
 			SafeFile.Recover(path); // (a save that Raft stopped half way)
 			using (var file = File.OpenRead(path)) return Read(file, path);
+		}
+
+		/// <summary>
+		/// For a worker thread: the file read at once (its handle closed before unpacking, so a save on the main thread isn't
+		/// held up) and nothing deleted - SafeFile.Recover is the caller's, on the main thread (review 2026-10-06).
+		/// </summary>
+		public static IslandFile LoadOffThread(string path)
+		{
+			byte[] bytes = File.ReadAllBytes(path);
+			using (var m = new MemoryStream(bytes)) return Read(m, path);
 		}
 
 		/// <summary>An island file's bytes (a library update compares it with the one here before writing it).</summary>
@@ -231,9 +313,90 @@ namespace DynamicIslands.Editor
 							Dictionary<string, string> props = ReadProps(r);
 							if (i >= 0 && i < island.Objects.Count) island.Objects[i].Props = props;
 						}
+						// The tagged tail, if any (files without one end here)
+						try
+						{
+							for (int n = 0; n < 4096; n++)
+							{
+								string tag = r.ReadString();
+								if (tag.Length == 0) break;
+								int len = r.ReadInt32();
+								if (len < 0 || len > 256 * 1024 * 1024) throw new InvalidDataException("Invalid tail block '" + tag + "' (" + len + " bytes)");
+								island.Tail[tag] = ReadExactly(r, len);
+							}
+						}
+						catch (EndOfStreamException) { }
+						island.ReadMix();
+						SeaGrass.Read(island);
 					}
+					StableIds.ReadTail(island);
 					return island;
 				}
+			}
+		}
+
+		/// <summary>
+		/// The paint as saved: layers 1-4 with layers 5-8 added onto the matching ones (what an older version shows), and
+		/// layers 5-8 on their own (extra).
+		/// </summary>
+		byte[] FoldPaint(out byte[] extra)
+		{
+			int n = AlphamapResolution * AlphamapResolution, four = TerrainPainter.LayerCount;
+			var folded = new byte[four * n];
+			extra = new byte[four * n];
+			for (int l = 0; l < AlphamapLayers; l++)
+				for (int p = 0; p < n; p++)
+				{
+					int slot = l % four;
+					folded[slot * n + p] = (byte)Math.Min(255, folded[slot * n + p] + Alphamaps[l * n + p]);
+					if (l >= four && l < four * 2) extra[(l - four) * n + p] = Alphamaps[l * n + p];
+				}
+			return folded;
+		}
+
+		byte[] MixBlock(byte[] extra)
+		{
+			using (var m = new MemoryStream())
+			{
+				using (var w = new BinaryWriter(m))
+				{
+					w.Write(MixStyle ?? "");
+					w.Write(AlphamapResolution);
+					w.Write(extra);
+				}
+				return m.ToArray();
+			}
+		}
+
+		/// <summary>The tail's "mix" block, if any: the mixed style, and the paint back to eight layers (it is taken out of Tail, and written again from the paint on Save).</summary>
+		void ReadMix()
+		{
+			byte[] block;
+			if (Tail == null || !Tail.TryGetValue(MixTag, out block)) return;
+			Tail.Remove(MixTag);
+			try
+			{
+				using (var r = new BinaryReader(new MemoryStream(block)))
+				{
+					string style = r.ReadString();
+					int res = r.ReadInt32(), four = TerrainPainter.LayerCount, n = res * res;
+					if (string.IsNullOrEmpty(style) || !HasPaint || res != AlphamapResolution || AlphamapLayers != four) return;
+					byte[] extra = ReadExactly(r, four * n);
+					var all = new byte[four * 2 * n];
+					for (int l = 0; l < four; l++)
+						for (int p = 0; p < n; p++)
+						{
+							all[l * n + p] = (byte)Math.Max(0, Alphamaps[l * n + p] - extra[l * n + p]);
+							all[(l + four) * n + p] = extra[l * n + p];
+						}
+					Alphamaps = all;
+					AlphamapLayers = four * 2;
+					MixStyle = style;
+				}
+			}
+			catch (Exception e) when (e is EndOfStreamException || e is InvalidDataException)
+			{
+				Debug.LogWarning("[CUSTOM ISLANDS] The island's mixed style couldn't be read (" + e.Message + "): its first style's textures are shown");
 			}
 		}
 
@@ -246,6 +409,7 @@ namespace DynamicIslands.Editor
 			island.TerrainSize = data.size;
 			island.HeightmapResolution = data.heightmapResolution;
 			island.Heights = data.GetHeights(0, 0, data.heightmapResolution, data.heightmapResolution);
+			CaveGround.EditorOwnHeights(terrain, island.Heights); // (not as let down in its caves' rooms: that's made again when it's loaded or spawned - X7)
 
 			if (data.alphamapLayers > 0)
 			{
@@ -267,6 +431,8 @@ namespace DynamicIslands.Editor
 				}
 			}
 
+			island.GrassCells = SeaGrass.Capture(terrain, out island.GrassResolution);
+
 			foreach (EditorGameObject ego in placedObjectsRoot.GetComponentsInChildren<EditorGameObject>())
 			{
 				Transform t = ego.transform;
@@ -278,6 +444,7 @@ namespace DynamicIslands.Editor
 					Position = t.position - terrain.transform.position,
 					EulerRotation = t.rotation.eulerAngles,
 					Scale = t.lossyScale,
+					Uid = ego.Uid,
 				});
 			}
 			return island;
@@ -325,6 +492,54 @@ namespace DynamicIslands.Editor
 		{
 			w.Write(props.Count);
 			foreach (var kv in props.OrderBy(k => k.Key, StringComparer.Ordinal)) { w.Write(kv.Key ?? ""); w.Write(kv.Value ?? ""); }
+		}
+
+		/// <summary>
+		/// Only the island's own settings (Props), the rest of the file passed over unread into memory: Tidy up, Delete and
+		/// Rename read every island's rules, and a whole Load (heights, objects, paint) cost 4-10 ms an island. Files older
+		/// than format 4 have no settings and end at the header.
+		/// </summary>
+		public static Dictionary<string, string> LoadProps(string path)
+		{
+			SafeFile.Recover(path);
+			using (var file = File.OpenRead(path))
+			{
+				var header = new BinaryReader(file);
+				if (header.ReadUInt32() != Magic) throw new InvalidDataException(path + " is not a Custom Islands .island file");
+				int version = header.ReadInt32();
+				if (version > FormatVersion) throw new InvalidDataException(path + " was saved by a newer version of Custom Islands (format " + version + ")");
+				if (version < 4) return new Dictionary<string, string>();
+				using (var inflate = new InflaterInputStream(file) { IsStreamOwner = false })
+				using (var r = new BinaryReader(inflate))
+				{
+					byte[] buffer = new byte[65536];
+					Action<long> skip = n =>
+					{
+						while (n > 0)
+						{
+							int got = r.Read(buffer, 0, (int)Math.Min(n, buffer.Length));
+							if (got <= 0) throw new EndOfStreamException();
+							n -= got;
+						}
+					};
+					r.ReadString(); r.ReadSingle(); skip(12);
+					int res = r.ReadInt32();
+					if (res <= 0 || res > 4097) throw new InvalidDataException("Invalid heightmap resolution " + res);
+					skip((long)res * res * 2);
+					int count = r.ReadInt32();
+					if (count < 0 || count > MaxObjects) throw new InvalidDataException("Invalid object count " + count + " (at most " + MaxObjects + ")");
+					for (int i = 0; i < count; i++) { r.ReadString(); skip(36); }
+					if (r.ReadBoolean())
+					{
+						int ares = r.ReadInt32(), layers = r.ReadInt32();
+						if (ares < 16 || ares > 4096 || layers < 1 || layers > 16) throw new InvalidDataException("Invalid texture paint data (" + ares + " px, " + layers + " layers)");
+						skip((long)layers * ares * ares);
+						if (r.ReadBoolean()) skip((long)ares * ares);
+					}
+					r.ReadSingle(); r.ReadString();
+					return ReadProps(r);
+				}
+			}
 		}
 
 		static Dictionary<string, string> ReadProps(BinaryReader r)

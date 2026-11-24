@@ -137,13 +137,16 @@ namespace DynamicIslands.Editor
 		public static string ShownTitle { get { return IsOpen ? instance.titleText.text : null; } }
 		public static string ShownText { get { return IsOpen ? instance.bodyText.text : null; } }
 
-		static readonly Color Paper = new Color(0.94f, 0.9f, 0.8f, 0.98f), Ink = new Color(0.2f, 0.15f, 0.1f, 1f), PaperEdge = new Color(0.55f, 0.45f, 0.3f, 1f);
+		static readonly Color Ink = UIKit.ParchmentInk;
 
 		CustomNote note;
 		Text titleText, bodyText;
+		Button copyButton;
+
+		/// <summary>Tests: clicks the note's "Copy to my notebook".</summary>
+		internal static bool ClickCopy() { if (!IsOpen) return false; instance.copyButton.onClick.Invoke(); return true; }
 		ScrollRect scroll;
 		float openedAt;
-		bool cursorWasFree;
 
 		public static void Open(CustomNote n)
 		{
@@ -160,45 +163,36 @@ namespace DynamicIslands.Editor
 			DontDestroyOnLoad(canvas.gameObject);
 			instance = canvas.gameObject.AddComponent<NoteReader>();
 
-			RectTransform sheet = UIKit.Rect("Sheet", canvas.transform);
-			UIKit.Anchor(sheet, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(560, 640));
-			UIKit.Background(sheet.gameObject, Paper, 6);
-			UIKit.Border(sheet, PaperEdge, 6, 2f);
-			UIKit.Vertical(sheet.gameObject, 12f, new RectOffset(34, 34, 28, 22));
+			// (as the journal: Raft's brown panel, the title in its lettering, the text on Raft's light tan - the user, 2026-10-02:
+			// the cream sheet felt like Windows Notepad)
+			RectTransform panel = UIKit.Panel(canvas.transform, "Panel", new RectOffset(18, 18, 14, 16), 10f, false);
+			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(620, 680));
+			RectTransform head = UIKit.Row(panel, 40f, 8f, "Head");
+			instance.titleText = UIKit.Label(head, "", 24, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
+			instance.titleText.resizeTextForBestFit = true;
+			instance.titleText.resizeTextMinSize = 14;
+			instance.titleText.resizeTextMaxSize = 24;
+			UIKit.Separator(panel);
 
-			instance.titleText = UIKit.Label(sheet, "", 26, Ink, TextAnchor.MiddleCenter, FontStyle.Bold, "Title");
-			instance.titleText.font = SerifFont() ?? UIKit.Font;
-			UIKit.Size(instance.titleText.gameObject, -1, 40);
-			RectTransform line = UIKit.Rect("Line", sheet);
-			line.gameObject.AddComponent<Image>().color = new Color(PaperEdge.r, PaperEdge.g, PaperEdge.b, 0.5f);
-			UIKit.Size(line.gameObject, -1, 2);
-
+			RectTransform sheet = UIKit.Rect("Sheet", panel);
+			UIKit.ParchmentSheet(sheet);
+			UIKit.Size(sheet.gameObject, -1, -1).flexibleHeight = 1f;
+			UIKit.Vertical(sheet.gameObject, 0f, new RectOffset(28, 24, 22, 18));
 			RectTransform content = UIKit.ScrollList(sheet, out instance.scroll, 0f);
 			UIKit.Size(instance.scroll.gameObject, -1, -1).flexibleHeight = 1f;
 			instance.bodyText = UIKit.Label(content, "", 18, Ink, TextAnchor.UpperLeft, FontStyle.Normal, "Body");
-			instance.bodyText.font = SerifFont() ?? UIKit.Font;
 			instance.bodyText.lineSpacing = 1.15f;
 			instance.bodyText.supportRichText = false; // (the list's layout sizes it to its text)
+			{ Shadow sh = instance.bodyText.GetComponent<Shadow>(); if (sh != null) Destroy(sh); }
 
-			RectTransform bottom = UIKit.Row(sheet, 34f, 8f, "Bottom");
-			Text hint = UIKit.Label(bottom, "", 13, new Color(Ink.r, Ink.g, Ink.b, 0.6f), TextAnchor.MiddleLeft, FontStyle.Italic, "Hint");
+			RectTransform bottom = UIKit.Row(panel, 34f, 8f, "Bottom");
+			Text hint = UIKit.Label(bottom, "", 13, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Hint");
 			hint.text = "Press the interact key or Tab to close";
+			// (PF1: the note's text into the player's own notebook)
+			instance.copyButton = UIKit.Button(bottom, "Copy to my notebook", () => { if (instance.note != null) PlayerNotebook.CopyIn(instance.titleText.text, instance.note.Text); }, "Copies this note into your own notebook as a new page", 200, 34, 13);
 			UIKit.Button(bottom, "Close", Close, null, 110, 34);
 			canvas.gameObject.SetActive(false);
 		}
-
-		/// <summary>A book-like font if Windows has one (falls back to the UI font).</summary>
-		static Font SerifFont()
-		{
-			if (serif == null && !serifTried)
-			{
-				serifTried = true;
-				try { serif = Font.CreateDynamicFontFromOSFont(new[] { "Georgia", "Palatino Linotype", "Times New Roman" }, 18); } catch { }
-			}
-			return serif;
-		}
-		static Font serif;
-		static bool serifTried;
 
 		void Show(CustomNote n)
 		{
@@ -209,15 +203,22 @@ namespace DynamicIslands.Editor
 			Canvas.ForceUpdateCanvases();
 			scroll.verticalNormalizedPosition = 1f;
 			openedAt = Time.unscaledTime;
-			cursorWasFree = Cursor.visible;
-			if (!cursorWasFree) try { RAPI.ToggleCursor(true); } catch { }
+			ModCursor.Take(this);
 			Debug.Log("[CUSTOM ISLANDS] Reading note '" + titleText.text + "'");
 			QuestTracker.Event(ContentState.EntryOf(n.transform), "read", n.Title);
 			IslandObjectRef r = n.GetComponentInParent<IslandObjectRef>();
 			if (r != null) Behaviours.Fire(ContentState.EntryOf(n.transform), r.Index, "read", true);
-			// Every note read goes into the crew's journal (once)
+			// Every note read goes into the crew's book (once): a main story island's onto its tab in Raft's notebook
+			// (QuestBook), a side quest's into the journal
 			IslandWorldState.Entry e = ContentState.EntryOf(n.transform);
-			if (e != null && r != null && n.Text.Trim().Length > 0) StoryBook.AddPage("note:" + e.HostName + ":" + r.Index, titleText.text, n.Text, Behaviours.IslandTitle(e));
+			if (e != null && r != null && n.Text.Trim().Length > 0)
+			{
+				string key = "note:" + StoryBook.PageIsland(e) + ":" + r.Index;
+				bool first = !StoryBook.Pages.Any(p => p.Key == key);
+				StoryBook.AddPage(key, titleText.text, n.Text, Behaviours.IslandTitle(e));
+				if (first && StoryChain.BookRules.Any(x => x.Id.Equals(e.Rule ?? "", StringComparison.OrdinalIgnoreCase)))
+					IslandInfo.ShowMessage("Written into Raft's notebook (" + ModKeys.RaftNotebookName + "): '" + titleText.text + "'");
+			}
 		}
 
 		void Hide()
@@ -225,7 +226,7 @@ namespace DynamicIslands.Editor
 			if (!gameObject.activeSelf) return;
 			gameObject.SetActive(false);
 			note = null;
-			if (!cursorWasFree) try { RAPI.ToggleCursor(false); } catch { }
+			ModCursor.Give(this);
 		}
 
 		void Update()
@@ -234,7 +235,7 @@ namespace DynamicIslands.Editor
 			if (Time.unscaledTime - openedAt < 0.2f) return;
 			bool interact;
 			try { interact = MyInput.GetButtonDown("Interact"); } catch { interact = false; }
-			if (interact || Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.Escape)) { Hide(); return; }
+			if (interact || Input.GetKeyDown(KeyCode.Tab) || EscKey.Down(this)) { Hide(); return; }
 			Network_Player player = null;
 			try { player = ComponentManager<Network_Player>.Value; } catch { }
 			if (note == null || !LoadSceneManager.IsGameSceneLoaded || (player != null && Vector3.Distance(player.transform.position, note.transform.position) > 8f)) Hide();

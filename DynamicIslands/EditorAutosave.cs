@@ -31,6 +31,10 @@ namespace DynamicIslands.Editor
 		static bool restored;        // opened from its autosave: unsaved until the player saves it
 		static float lastWrite, nextCheck;
 		static bool quitHooked;
+		/// <summary>Autosaves this Raft session wrote or opened: only those are written over or removed. One from an earlier
+		/// session ("Not now" in the offer) is moved to deleted\autosave first - the next autosave or Ctrl+S of that island
+		/// wrote over the work Raft crashed with, or removed it.</summary>
+		static readonly HashSet<string> ours = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>The island in the editor has changes that aren't in its file.</summary>
 		public static bool Unsaved { get { return restored || UndoRedoManager.Changes != savedAt; } }
@@ -47,6 +51,19 @@ namespace DynamicIslands.Editor
 			savedAt = UndoRedoManager.Changes;
 			restored = fromAutosave;
 			lastWrite = Time.unscaledTime;
+			if (fromAutosave && !string.IsNullOrEmpty(name)) ours.Add(name);
+			else EditorEntry.RememberIsland(name); // (the start window's Continue)
+			EditorEntry.OnIslandOpened(name);
+		}
+
+		/// <summary>Before this session writes over or removes the autosave of name: one from an earlier session goes to
+		/// deleted\autosave (throws when it can't: then it is left as it is).</summary>
+		static void SetAsideEarlier(string name)
+		{
+			if (ours.Contains(name)) return;
+			string p = PathFor(name);
+			if (File.Exists(p)) { PiecesFiles.MoveToDeleted(p, "autosave"); Log("The autosave of '" + name + "' from an earlier session is kept in the deleted folder"); }
+			ours.Add(name);
 		}
 
 		/// <summary>The island was saved: its autosave (and the one under its old name, after Save as) isn't needed any more.</summary>
@@ -57,9 +74,19 @@ namespace DynamicIslands.Editor
 			Opened(name, false);
 		}
 
+		/// <summary>The island open in the editor was renamed (IslandRename): its autosave goes with it.</summary>
+		public static void Renamed(string from, string to)
+		{
+			try { string a = PathFor(from), b = PathFor(to); if (File.Exists(a) && !File.Exists(b)) File.Move(a, b); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not move the autosave of '" + from + "': " + e.Message); }
+			if (current != null && current.Equals(from, StringComparison.OrdinalIgnoreCase)) current = to;
+		}
+
 		static void Delete(string name)
 		{
-			try { string p = PathFor(name); if (File.Exists(p)) { File.Delete(p); Log("'" + name + "' is saved: its autosave is removed"); } }
+			// (the island was just saved: its autosave holds nothing more and goes - moving each one to the deleted folder
+			// filled it up with a copy per save. A discarded or older autosave is moved there instead - AU41.)
+			try { SetAsideEarlier(name); string p = PathFor(name); if (File.Exists(p)) { File.Delete(p); Log("'" + name + "' is saved: its autosave is removed"); } }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not remove the autosave of '" + name + "': " + e.Message); }
 		}
 
@@ -90,6 +117,7 @@ namespace DynamicIslands.Editor
 			{
 				Directory.CreateDirectory(Folder);
 				string path = PathFor(name);
+				SetAsideEarlier(name);
 				// (IslandFile.Save writes aside first and replaces in one step: a crash never leaves a broken autosave behind)
 				DynamicIslands.CaptureIsland(name).Save(path);
 				LastWritten = path;
@@ -117,8 +145,9 @@ namespace DynamicIslands.Editor
 					string island = IslandSpawner.PathFor(name);
 					if (File.Exists(island) && File.GetLastWriteTimeUtc(island) >= File.GetLastWriteTimeUtc(f))
 					{
-						// (saved since, e.g. by a test or by hand: nothing to give back)
-						try { File.Delete(f); } catch { }
+						// (saved since, e.g. by a test or by hand: nothing to give back - moved to deleted\autosave, not deleted:
+						// a clock or a copied-in island can make the island look newer than the work in its autosave - AU41)
+						try { PiecesFiles.MoveToDeleted(f, "autosave"); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not move the autosave " + f + " aside: " + e.Message); }
 						continue;
 					}
 					result.Add(name);
@@ -146,8 +175,9 @@ namespace DynamicIslands.Editor
 			if (waiting.Count == 0 || !DynamicIslands.InEditor()) yield break;
 			var choices = waiting.Take(8).Select(n => new ChoiceWindow.Choice(n, "Open '" + n + "'",
 				"autosaved " + File.GetLastWriteTime(PathFor(n)).ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) +
-				(File.Exists(IslandSpawner.PathFor(n)) ? " - newer than its saved island" : " - never saved"))).ToList();
-			choices.Add(new ChoiceWindow.Choice(DiscardChoice, "Throw them away", "the unsaved changes are deleted"));
+				(File.Exists(IslandSpawner.PathFor(n)) ? " - newer than its saved island" : " - never saved"))
+				{ OnDelete = () => ThrowAway(n), DeleteHint = "Throw away only this island's unsaved changes (moved to the deleted\\autosave folder)" }).ToList();
+			choices.Add(new ChoiceWindow.Choice(DiscardChoice, "Throw them away", "the unsaved changes are moved to the deleted\\autosave folder"));
 			choices.Add(new ChoiceWindow.Choice(LaterChoice, "Not now", "asked again the next time the editor opens"));
 			Log("Unsaved work from last time: " + string.Join(", ", waiting.ToArray()));
 			ChoiceWindow.Open("Unsaved work from last time", choices, Pick);
@@ -155,14 +185,23 @@ namespace DynamicIslands.Editor
 
 		public const string DiscardChoice = "*discard*", LaterChoice = "*later*";
 
+		/// <summary>The X on one island's row: only its autosave goes (to deleted\autosave); the window closes when none are left.</summary>
+		static void ThrowAway(string name)
+		{
+			try { PiecesFiles.MoveToDeleted(PathFor(name), "autosave"); Log("The autosave of '" + name + "' was thrown away (moved to the deleted folder)"); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not move the autosave of '" + name + "' aside: " + e.Message); }
+			if (Waiting().Count == 0) ChoiceWindow.Close();
+		}
+
 		/// <summary>What the player picked in the offer (public for tests).</summary>
 		public static void Pick(string value)
 		{
 			if (value == null || value == LaterChoice) return;
 			if (value == DiscardChoice)
 			{
-				foreach (string n in Waiting()) { try { File.Delete(PathFor(n)); } catch { } }
-				Log("The autosaves were thrown away");
+				// (to deleted\autosave, not deleted for good: a click on the wrong choice can be undone by hand - AU41)
+				foreach (string n in Waiting()) { try { PiecesFiles.MoveToDeleted(PathFor(n), "autosave"); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not move the autosave of '" + n + "' aside: " + e.Message); } }
+				Log("The autosaves were thrown away (moved to the deleted folder)");
 				return;
 			}
 			if (DynamicIslands.LoadIsland(value, PathFor(value)))

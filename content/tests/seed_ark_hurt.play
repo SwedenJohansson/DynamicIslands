@@ -1,0 +1,10 @@
+# The Seed Ark hazard test (11-05): valve miasma (2/s, r 3). CIPlay seed_ark_hurt, in a test world 'CI ...', CIGapsSuit off (no suit: the zone must hurt).
+island The Seed Ark keep
+offset 0 0
+hour 11
+weather Calm
+at 28 -49
+wait 8
+expect message Gas hisses out round the valve
+# (6 is about half of the expected damage)
+expect hurt 6

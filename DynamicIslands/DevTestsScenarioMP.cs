@@ -19,7 +19,7 @@ namespace DynamicIslands
 		public const string ScMpIsland = "ciscmp";
 
 		[ConsoleCommand(name: "CIScMpIsland", docs: "Dev, world (host): spawns and keeps 'ciscmp' for the two-player scenarios: a lever showing a hidden bridge, a once-zone 'gift' giving 3 ropes, a chest 'Box' (2 planks, never refilling), a sign, trees")]
-		public static void ScMpIslandCommand() { DynamicIslands.instance.StartCoroutine(ScMpIslandRoutine()); }
+		public static void ScMpIslandCommand() { StartTest(ScMpIslandRoutine()); }
 
 		static IEnumerator ScMpIslandRoutine()
 		{
@@ -46,9 +46,9 @@ namespace DynamicIslands
 		}
 
 		[ConsoleCommand(name: "CIScLair", docs: "Dev, world (host): spawns and keeps 'cisclair' for the two-player lair scenario (SC25): an arena zone that wakes a Boss warthog (x4 health, never coming back), a hoard chest; the level up system on")]
-		public static void ScLairCommand() { DynamicIslands.instance.StartCoroutine(ScMpSpawn("cisclair", "Boar's Lair", f =>
+		public static void ScLairCommand() { StartTest(ScMpSpawn("cisclair", "Boar's Lair", f =>
 		{
-			f.Props[IslandProps.Levels] = "on";
+			PlayerLevels.SetEnabled(true); // (a world option: islands don't turn it on)
 			Vector3 arena = ScDry(f, new Vector2(0, 0), 1);
 			f.Objects.Add(ScObj(ContentCatalog.TriggerZone, arena, ObjectProps.ZoneId, "arena", ObjectProps.ZoneRadius, "6", ObjectProps.ZoneMessage, "The ground shakes... the boar wakes!"));
 			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(8, 0), 2), ObjectProps.CreatureCount, "1", ObjectProps.CreatureRespawn, "0", ObjectProps.CreatureZone, "arena",
@@ -57,7 +57,7 @@ namespace DynamicIslands
 		})); }
 
 		[ConsoleCommand(name: "CIScSpots", docs: "Dev, world (host): spawns and keeps 'ciscspots' for SC26: a plain warthog spot and a Boss warthog spot (x4 health, red) 20 m apart, the same size")]
-		public static void ScSpotsCommand() { DynamicIslands.instance.StartCoroutine(ScMpSpawn("ciscspots", "Two Spots", f =>
+		public static void ScSpotsCommand() { StartTest(ScMpSpawn("ciscspots", "Two Spots", f =>
 		{
 			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(-10, 0), 1), ObjectProps.CreatureCount, "1", ObjectProps.CreatureDamage, "0.1"));
 			f.Objects.Add(ScObj("Creature_Boar", ScDry(f, new Vector2(10, 0), 2), ObjectProps.CreatureCount, "1", ObjectProps.CreatureHealth, "4", ObjectProps.CreatureDamage, "0.1",
@@ -65,7 +65,7 @@ namespace DynamicIslands
 		})); }
 
 		[ConsoleCommand(name: "CIScChickens", docs: "Dev, world (host): spawns and keeps 'ciscchick' for SC28/SC45: one chicken that both players try to net in the same second")]
-		public static void ScChickensCommand() { DynamicIslands.instance.StartCoroutine(ScMpSpawn("ciscchick", "Chicken Run", f =>
+		public static void ScChickensCommand() { StartTest(ScMpSpawn("ciscchick", "Chicken Run", f =>
 		{
 			f.Objects.Add(ScObj("Creature_Chicken", ScDry(f, new Vector2(0, 0), 1), ObjectProps.CreatureCount, "1", ObjectProps.CreatureRespawn, "0"));
 		})); }
@@ -77,7 +77,14 @@ namespace DynamicIslands
 			IslandFile f;
 			try { f = ScIsland(name, title); fill(f); f.Save(IslandSpawner.PathFor(name)); } catch (Exception ex) { Fail(name + ": " + ex.Message); yield break; }
 			var made = new List<IslandWorldState.Entry>();
-			Vector3? spot = ScSpot(name, 400f);
+			// (open sea further out rather than ScSpot's raft jump: islands go to player 2 relative to the host's raft, and a
+			// jumped raft reaches player 2 late - the island would land 600 m off there)
+			Vector3? spot = null;
+			for (float d = 400f; !spot.HasValue && d <= 1600f; d += 300f)
+			{
+				Vector3? s = CustomIslandSpawner.FindClearSpot(CustomIslandSpawner.RaftPosition.Value, CustomIslandSpawner.LandRadius(name), d);
+				if (s.HasValue) spot = new Vector3(s.Value.x, 0f, s.Value.z);
+			}
 			if (!spot.HasValue) { Fail(name + ": no open sea near the raft"); yield break; }
 			yield return ScBring(name, spot.Value, made);
 			IslandWorldState.Entry e = made.FirstOrDefault();
@@ -146,17 +153,31 @@ namespace DynamicIslands
 			Log("ITEMS " + name + " " + (p != null && p.Inventory != null ? p.Inventory.GetItemCount(name) : -1));
 		}
 
-		[ConsoleCommand(name: "CIScFarAway", docs: "Dev, in game (either player): puts this player in the sea 1.5 km from the raft (their copies of the islands there unload), or back on the raft: CIScFarAway [back]")]
+		[ConsoleCommand(name: "CIScFarAway", docs: "Dev, in game (either player): puts this player in the sea 1.5 km from the raft and streams this machine's islands as if the raft were far away too (their copies of the islands there unload), or back on the raft (or in the sea by an island): CIScFarAway [back [island]]")]
 		public static void ScFarAwayCommand(string[] args)
 		{
 			Network_Player p = RAPI.GetLocalPlayer();
 			Vector3? raft = CustomIslandSpawner.RaftPosition;
 			if (p == null || !raft.HasValue) { Fail("far away: in a world"); return; }
-			if (args != null && args.Length > 0 && args[0] == "back") { OnRaftCommand(); Log("Back on the raft"); return; }
+			if (args != null && args.Length > 0 && args[0] == "back")
+			{
+				CustomIslandSpawner.TestRaftFarAway = false;
+				// (back at an island: the raft drifts away from it over a long run - 786 m off, its copy never came back)
+				IslandWorldState.Entry at = args.Length > 1 ? IslandWorldState.Islands.FirstOrDefault(x => x.HostName.IndexOf(args[1], StringComparison.OrdinalIgnoreCase) >= 0) : null;
+				if (at == null) { OnRaftCommand(); Log("Back on the raft"); return; }
+				Vector3 near = at.Position + new Vector3(CustomIslandSpawner.LandRadius(at.Name) + 8f, 0f, 0f);
+				near.y = 0.5f;
+				PlayerMove.To(p, near, ControllerType.Water);
+				KeepAlive(p);
+				Log("Back at " + at.Name + ": " + ScFlat(p.transform.position, at.Position).ToString("F0") + " m from it");
+				return;
+			}
 			Vector3 far = raft.Value + new Vector3(-1500f, 0f, -300f);
 			far.y = 0.5f;
 			PlayerMove.To(p, far, ControllerType.Water);
 			KeepAlive(p);
+			// (the raft stays at the island the host is on: without this the copy near the raft stays loaded)
+			CustomIslandSpawner.TestRaftFarAway = true;
 			Log("Far away: " + ScFlat(p.transform.position, raft.Value).ToString("F0") + " m from the raft");
 		}
 
@@ -181,7 +202,10 @@ namespace DynamicIslands
 		{
 			string name = args != null && args.Length > 0 ? args[0] : ScMpIsland;
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.HostName.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
-			Log("LOADED " + name + " " + (e == null ? "unknown" : e.Root != null ? "yes" : "no"));
+			Network_Player p = RAPI.GetLocalPlayer();
+			string why = e == null || p == null ? "" : " (player " + ScFlat(p.transform.position, e.Position).ToString("F0") + " m from it, unload distance " +
+				WorldRules.UnloadDistance.ToString("F0") + ", far-away test " + CustomIslandSpawner.TestRaftFarAway + ", " + IslandWorldState.Islands.Count(x => x.HostName.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0) + " entries)";
+			Log("LOADED " + name + " " + (e == null ? "unknown" : e.Root != null ? "yes" : "no") + why);
 		}
 	}
 }

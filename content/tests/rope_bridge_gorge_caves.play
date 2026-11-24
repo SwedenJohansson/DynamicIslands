@@ -1,0 +1,17 @@
+# Rope Bridge Gorge's grotto (CIPlay rope_bridge_gorge_caves, 11-12 w07; in a test world 'CI ...'). Points as in its
+# recipe: the mouth on the west half's plateau at -10 -25 (floor 4 m), the dug grotto level west under its knoll to the
+# dry room -21 -25.5 .. -26 -27, the builders' chest at -26.6 -27.6. Walk in from the gorge's lip, take the chest, out.
+island Rope Bridge Gorge keep
+offset 0 0
+hour 11
+weather Calm
+
+picture rb_grotto_out -4 7 -21 -12 5 -25
+picture rb_knoll 2 16 -6 -20 10 -25
+walk -8 -18 to -8 -25 to -10 -25 to -16 -25 to -21 -25.5 to -25 -26.6 below=8
+picture rb_grotto_in -15 5.6 -25 -25 5 -26.8 light=20
+open Bridge builders' store
+wait 2
+expect item Rope 4
+walk -25 -26.6 to -21 -25.5 to -16 -25 to -10 -25 to -8 -25 to -8 -18 below=8
+picture rb_grotto_mouth_in -20 5.6 -25.4 -10 5 -25 light=20

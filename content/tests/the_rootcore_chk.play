@@ -1,0 +1,15 @@
+island The Rootcore
+offset 0 0
+hour 11
+weather Calm
+at 23 53
+wait 3
+picture chk_odacamp 17 +5 53 23 2 60
+picture chk_odacamp_t 23 +14 59 23 2 60
+at 30.5 44.5
+wait 3
+picture chk_dwreck 24.5 +5 44.5 30.5 4 51.5
+picture chk_dwreck_t 30.5 +14 50.5 30.5 4 51.5
+at -10 92
+wait 3
+picture chk_rctrap -10 +6 90 -10 1 98

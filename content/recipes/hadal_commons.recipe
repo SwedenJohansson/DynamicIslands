@@ -1,0 +1,428 @@
+# Hadal Commons - an island of the library's plan The Sunken Kingdom (sunken 45 m; chapter 8, the city below)
+# The Network's city, cut into the trench wall 45 m down: terraces of dark stone houses whose lit windows are the only
+# light, a plaza with the diving bell's landing at the bottom, a dry cellar of cave mushrooms, and the great doors -
+# Utopia's main gate - shut, with the Ringwave over them. Air in four houses; two air platforms on the marker chain on
+# the way down (every 15 m). Anglers on the terraces. In the last air house, in a cage: Ines Marlowe, the last Network
+# diver. Quest "The City Below" (22 steps); done at the doors, with a camera moment on the Ringwave.
+#
+# Points (metres over the island's own water line; in the world it all lies 45 m lower): the plaza at 0 (r 12 round
+# 0 0); terrace 1 at 4 round -16 0 (house 1 x -18..-13.5, z -2..1), terrace 2 at 8 round -14 16 (house 2 x -16..-11.5,
+# z 14..17), terrace 3 at 12 round 2 21 (house 3 x 0..4.5, z 19..23.5); the cellar x 5..8, z 3..6 on the plaza; the
+# warden's post x 5..8, z -11..-8; the doors at 0 -13 (the Ringwave over them), the trench past x 22; the marker chain
+# at 14 10 (the buoy on the surface at 45, air platforms at 30 and 15).
+include lib_features
+include lib_sea
+include lib_gravity
+include lib_sunken
+# RESIZE 10-24: Radius 50 -> 95 (Height 6 -> 8), the old content moved 24.8 0 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+new
+gen Trees=0 Bushes=0 Rocks=0.4 Harvest=0 BeachThings=0
+gen Seed=10801 Radius=95 Height=8 Roughness=0.4 Peaks=2 Shape=0 Style=0 BeachWidth=0.1 Cliffs=0.5 PeakShape=0.4
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.4 Sunken=0.5 Hostiles=0 Friendly=0 SeaLife=0.3
+generate
+elevation -45
+push at 24.8 0
+
+# --- Terrain: the plaza, three terraces up the trench wall, the trench --------------------------------------------------
+# (the strokes 2 m west of their places: they run before origin, and the trench cut at 34 0 moves the land's middle 2 m;
+# drawn at the places they buried the warden's post and left its roof hanging, 2026-10-23)
+brush flatten at -2 0 r=12 s=20 frames=240 h=0
+brush flatten at 6.5 -9.5 r=4.5 s=25 frames=450 h=0
+brush flatten at -18 0 r=7 s=25 frames=260 h=4
+brush flatten at -16 16 r=7 s=25 frames=260 h=8
+brush flatten at 0 21 r=7 s=25 frames=260 h=12
+brush flatten at 32 0 r=12 s=20 frames=240 h=-12
+pop
+brush flatten at -25.6 29.4 r=4 s=8 frames=40
+origin
+clear at -25.6 29.4 r=5
+push at 24.8 0
+clear at 0 0 r=11
+# (T 11-01, REACH + GROUND: the houses' floors lay under the terraces' banks (the strokes ran before origin) - their
+# rooms were inside the ground, so the walk went over the roofs and no spot inside was found: a pad at each floor's
+# height under every house, and a level path from its stairs to its door)
+brush flatten from -15.75 -0.5 to -15.75 0.5 r=3.2 s=20 frames=200 h=3.9
+brush flatten from -11.5 -3.6 to -18.6 -3.6 r=1.9 s=20 frames=200 h=3.95 line
+brush flatten from -13.75 15 to -13.75 16 r=3.2 s=20 frames=200 h=7.9
+brush flatten from -14 9.5 to -15.6 12.4 r=1.9 s=20 frames=200 h=7.95 line
+brush flatten from 2.25 20.5 to 2.25 22 r=3.2 s=20 frames=200 h=11.9
+brush flatten from -3 17 to 1.2 17.4 r=1.9 s=20 frames=200 h=11.95 line
+brush flatten at 6.5 4.5 r=2.6 s=20 frames=200 h=-0.1
+brush flatten from 5.75 1.4 to 3 0 r=1.8 s=20 frames=200 h=0
+brush flatten at 6.5 -9.5 r=2.6 s=20 frames=200 h=-0.1
+brush flatten from 5.75 -12.6 to 3 -12.6 r=1.8 s=20 frames=200 h=0
+
+# --- The plaza: the bell's landing, the council board, the stairs up ---------------------------------------------------
+place Block_Foundation bellpad at 0 4 h=0.3 sx=2 sz=2
+prop bellpad tint.color=#5b6266
+prop bellpad tint.amount=0.5
+place Antenna_pole - at 1.6 5.6 h=0.3 sy=0.6
+place Placeable_Lantern_Metal - at 1.6 5.6 h=3.5 sit
+place Zone_Trigger plazazone at 0 2 h=2
+place Note_Board minutes at -3.5 6 ground yaw=180
+ramp Block_Floor_Tier3 from -7 -1 0.4 to -11.5 -1 3.9 len=1.5 top=0
+ramp Block_Floor_Tier3 from -14 5 4.4 to -14 9.5 7.9 len=1.5 top=0
+ramp Block_Floor_Tier3 from -9 15 8.4 to -3 17 11.9 len=1.5 top=0
+# (CIFloating 11-05: the plaza slopes under this lamp, its post stood 0.5 m over the ground: the post sits lower in its stone)
+place SmallRock_02 - at -5 -3 ground sit scale=0.45 sy=0.9
+place Antenna_pole - at -5 -3 ground y=0.1 sy=0.45
+place Placeable_Lantern_Metal - at -5 -3 ground y=3 sit drop
+call stonelamp x=5 z=3
+call stonelamp x=-12 z=12
+# the Commons' streets: a camper van and a caravan, parked when the city went down
+place Van_5 - at -7 -8 ground yaw=60
+place Caravan_Green_01 - at 9 -2 ground yaw=-10
+
+# --- House 1 (terrace 1): the toolmaker's house, air -------------------------------------------------------------------
+push at -18 -2 h=4
+call stonehouse w=3 d=2 a=houses
+place Loot_Chest toolmaker at 3.7 2.2 y=0 sit yaw=180
+place Placeable_Table_Basic - at 2.2 1.6 y=0 sit yaw=0
+pop
+call airpocketat x=-16.5 z=-0.5 h=4 id=house_1 al=house1air bub=house1bub r=2 msg="Air - the toolmaker's house still holds it."
+place Creature_AnglerFish anglers at -10 -8 h=7
+prop anglers creature.count=4
+prop anglers creature.respawn=0
+prop anglers creature.zone=house_1
+
+# --- House 2 (terrace 2): the broadcast room, air, the cage key --------------------------------------------------------
+push at -16 14 h=8
+call stonehouse w=3 d=2 a=houses
+place Placeable_Table_Basic - at 2.2 2 y=0 sit yaw=0
+place Note_Paper broadcast at 2.2 2 y=1.3 drop yaw=20
+place RT_CommRadio - at 2.8 2.1 y=1.3 drop yaw=200
+place Loot_Chest packchest at 0.8 2.3 y=0 sit yaw=90
+pop
+call airpocketat x=-13 z=15.2 h=8 id=house_2 al=house2air bub=house2bub r=2 msg="Air. A radio on the table, its dial still lit."
+
+# --- House 3 (terrace 3): Ines in the cage, her bag, her account -------------------------------------------------------
+push at 0 19 h=12
+call stonehouse w=3 d=3 a=houses
+place Survivor_Cage inescage at 2.6 2.9 y=0 sit yaw=180
+place Loot_ChestSmall inesbag at 0.8 3.6 y=0 sit yaw=90
+place Note_Paper inesaccount at 3.9 0.9 y=0 drop yaw=40
+pop
+call airpocketat x=1.4 z=20.5 h=12 id=house_3 al=house3air bub=house3bub r=2.2 msg="Air - and someone breathing in it. A cage, and in it a diver."
+
+# --- The cellar: dry, cave mushrooms ------------------------------------------------------------------------------------
+# (2 m south-west of x 7..10, z 5..8: there its back wall and lanterns were under the plaza's bank, 2026-10-23)
+push at 5 3 h=0
+call stonehouse w=2 d=2 a=houses
+place "Pickup_Landmark_Mushroom 1" - at 0.7 0.9 y=0 sit
+place "Pickup_Landmark_Mushroom 2" - at 2.3 0.9 y=0 sit
+place "Pickup_Landmark_Mushroom 3" - at 0.7 2.2 y=0 sit
+place "Pickup_Landmark_Mushroom 1" - at 2.3 2.0 y=0 sit
+pop
+call airpocketat x=6.5 z=4.5 h=0 id=cellar al=cellarair bub=cellarbub r=1.8 msg="A dry cellar. Mushrooms in the dark."
+
+# --- The warden's post and the great doors ------------------------------------------------------------------------------
+push at 5 -11 h=0
+call stonehouse w=2 d=2 a=houses
+place Loot_Chest wardenchest at 2.2 2.2 y=0 sit yaw=180
+pop
+place UT_MainEntranceDoor greatdoors at 0 -13 ground sit yaw=0
+call ringwave x=0 z=-13.6 h=7.5 yaw=0 s=2 al=ringwave
+place Zone_Trigger doorszone at 0 -9 h=2
+place Placeable_Lantern_Metal doorcam at 0 -1 h=1.2 drop
+
+# --- The way down: the marker chain, air platforms at 30 and 15 --------------------------------------------------------
+call buoychain x=14 z=10 h=45 n=8 al=buoy zal=buoyzone id=surface_buoy
+place Block_Foundation airdeck at 14.85 10 h=15
+place Block_Foundation airdeck at 14.85 10 h=30
+prop airdeck tint.color=#5b6266
+prop airdeck tint.amount=0.5
+call airpocketat x=14.85 z=10 h=15 id=chain_air2 al=chainair2 bub=chainbub2 r=2 msg="An air platform on the chain, 30 m down."
+call airpocketat x=14.85 z=10 h=30 id=chain_air1 al=chainair1 bub=chainbub1 r=2 msg="An air platform on the chain, 15 m down."
+
+# --- The dark, reefs on the ledges, vines -------------------------------------------------------------------------------
+place Zone_Atmosphere darkcity at 0 4 h=6
+scatter VP_CoralBulb04 5 at -22 8 r=3 seed=10802 free=1
+scatter TinyCoral 6 at -22 8 r=3 seed=10803 free=1
+scatter VP_CoralDigitate01 5 at 10 24 r=3 seed=10804 free=1
+scatter VP_CoralFoliose01 4 at 10 24 r=3 seed=10805 free=1
+scatter SeaVine3 30 at 0 4 r=30 seed=10806 free=2
+scatter SeaVine3_klump 12 at 0 4 r=30 seed=10807 free=2
+call shallows x=-24.8 z=0 r=114 deep=6 n=1 seed=10808
+pop
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): diver's cache + slate + air pocket; VP_Forklift + chest; hatch with a chest; buried treasure; viewpoint ---
+place "Box Small" dcampbox at -25.6 29.4 ground sit
+place Note_Paper dnote at -25.6 29.4 ground y=1.6 drop yaw=30
+place Loot_ChestSmall dcamp at -23.6 30.9 ground sit yaw=37
+call airpocket x=-28.1 z=27.4 id=hadal_commons_dair al=dairzone bub=dairbub r=2.5 msg="Air trapped in a diver's bell-tent. Breathe."
+note dnote Ines's slate (the trench) | DIVE SLATE - I. MARLOWE, ON A LANYARD\n\nLAST DIVE - LIGHTS OUT BELOW 40. Spare kit left for whoever comes next.\n\nMilo. I came down the trench wall from the Yard on a rope and a temper. The Commons' windows are lit below me - the only lights left in the sea, and the shadow is between me and them.\nIf you read this one day: I was not brave. I was just your mum, and that is a different thing, and it is stronger.
+note dcamp Diver's cache | A diver's spare kit, wired shut against the current.
+loot dcamp Rope*2;Glass*3;Plastic*4
+prop dcamp loot.refill=0
+place VP_Forklift dvan at 21.6 -36 ground yaw=157
+prop dvan tint.color=#7a6a3a
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at 17.6 -33 ground sit yaw=97
+note dwreckchest Driver's locker | The driver's locker, still dry inside: a torch's glass, plastic, a few bolts.
+loot dwreckchest Glass*2;Plastic*5;Bolt*2
+prop dwreckchest loot.refill=0
+call hatchcache x=-31.7 z=-27.6 r=4 seed=10891 alias=dhatch chest=dhatchchest items=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=6.6 z=41.5 r=6 n=1 seed=10892
+prop treasure10892 treasure.loot=TitaniumOre*2;CopperOre*2
+place Zone_Trigger dview at -15 -0.3 ground y=1.5
+prop dview zone.id=hadal_commons_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=Below, the Commons' windows glow in rows down the trench wall - a whole city, still lit, and nobody at home.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): on the trench floor - the terrace ridge in the south, the dark
+# cave in the west, the warden's lodge in the north-east (its caged chest), the mine wagons in the north-west
+call sk_ridge x1=-32 z1=-74 x2=28 z2=-68 h=4 top=8 r=10
+call sk_reef x=-2 z=-71 r=6 seed=10861
+call sk_reef x=28 z=-68 r=5 seed=10871
+call sk_zone x=-2 z=-71 al=hc_ridge id=hc_ridge r=7 msg="The terrace ridge. The Commons' windows climb the trench wall behind you, warm and few."
+call sk_cave x=-60 z=-12 h=2 yaw=0 al=hc_caverock chest=hc_cavechest
+call sk_zone x=-60 z=-7 al=hc_cave id=hc_cave r=4 msg="The quarry cave the city was cut from. Air hangs under its roof."
+call airpocketat x=-57.4 z=-8 h=3.6 id=hc_air al=hc_air bub=hc_airbub r=2.2 msg="Air under the rock - breathe."
+call sk_ruin x=60 z=56 h=2 al=hc_ruin
+call sk_notebox x=62.5 z=51.5 yaw=10 al=hc_ruinnote
+call sk_wreck x=-46 z=50 h=2 yaw=120 v=VP_Wagon02 al=hc_wreck crate=hc_wreckcrate scale=1
+place VP_Wagon01 - at -53 56 ground sit yaw=140
+call sk_notebox x=-40 z=46 yaw=70 al=hc_wrecknote
+
+# --- Unique layer (10-24): the caged warden's store: a chest in a chained cage by the lodge (the bolt cutters from
+# Brinelab) - and the deep trench south-east of it is dark (dark hazard zone, the headlight from Lumen)
+place UT_DogCage_Medium02 wardencage at 66 60 ground sit yaw=200
+# (T 11-01, REACH: inside the cage the chest's middle lay in the cage's box collider - no spot to use it from; it
+# stands chained to the cage's side now, still shut until the cage is opened)
+place Loot_Chest lodgechest at 68.6 58.8 ground sit yaw=200
+place Loot_ChestSmall trenchchest at 62 -58 ground sit yaw=40
+place RT_Pillar - at 55 51 ground sy=0.4
+place TP_LaserControlPanel_lever doorlever at 55 51 ground y=1.25 scale=3 yaw=220
+place Loot_Chest strongroom at 0 -16.5 ground sit yaw=0
+place Zone_Trigger hctrenchdark at 62 -58 ground y=1
+
+# --- DEEP 1-HOUR (10-24): the trench spire (47.5 m from the floor - the highest climb under the sea) and the scavenger's hideout in the south-west pit behind a gauntlet of traps
+# the rock that breaks the surface (47.5 m up from the floor), a beacon tower on its dry top
+call sk_seamount x=-12 z=74 top=47.5 r=22
+# (CIFloating 11-05: the pit floor at the block's own -6 left its ground floor a few cm under the ground)
+call sk_pit x=-66 z=-48 h0=-6.15
+call sk_cave x=74 z=-22 h=2 yaw=0 al=hccave2 chest=hccave2chest
+call sk_reef x=7.8 z=74 r=6 seed=24710
+call sk_reef x=-27.4 z=87.2 r=6 seed=24720
+call sk_reef x=-56 z=-42 r=5 seed=24730
+
+# the summit: the trench spire - the tower (ladder inside), the locker, the note, the zone
+call ladtower x=-12 z=74 h0=47.5 lv=3 a=hctower
+place Loot_ChestSmall hclocker at -12.75 74.75 h=55.3 drop yaw=180
+place Note_Paper hcsumnote at -12.75 73.25 h=55.08 drop yaw=20
+place Zone_Trigger hcsummit at -12 74 h=55.98
+# (R 10-31: REACH - no walk got out of the sea onto the spire's dry top (47.5; summit, locker, boast): its sides drop
+# sheer from the top into deep water, and a pool ladder in the sea had no floor at its top. A beach is cut down the
+# spire's south side instead, from the dry top's edge to 3 m under the sea, 0.7 m a step)
+# (R 11-01: the walker still slid off a step's side onto the bare slope 2 m under it: the steps 2 m wider)
+brush flatten at -8 65.7 r=3.2 s=20 frames=300 h=46.8
+brush flatten at -8 64.4 r=3.2 s=20 frames=300 h=46.1
+brush flatten at -8 63.1 r=3.2 s=20 frames=300 h=45.4
+brush flatten at -8 61.8 r=3.2 s=20 frames=300 h=44.7
+brush flatten at -8 60.5 r=3.2 s=20 frames=300 h=44.0
+brush flatten at -8 59.2 r=3.2 s=20 frames=300 h=43.3
+brush flatten at -8 57.9 r=3.2 s=20 frames=300 h=42.6
+brush flatten at -8 56.6 r=3.2 s=20 frames=300 h=41.9
+clear from -8 67 to -8 56.6 r=4.2 body
+place Loot_ChestSmall hcledge at -24.1 74 ground sit yaw=40
+place SmallRock_02 - at -7 76 ground sit scale=0.5
+place SmallRock_02 - at -7 76 ground y=0.35 sit scale=0.32 yaw=40
+call treasure x=-9.5 z=76 r=12 n=1 seed=24711
+prop treasure24711 treasure.loot=TitaniumOre*3;CopperOre*2
+call treasure x=57.7 z=-17.16 r=5 n=1 seed=24712
+prop treasure24712 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=74 z=-20 h=1 r=7 al=hccave2dark
+
+# the drowned building: the scavenger's hideout, its ground floor 51 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=-66 z=-48 h0=-6 n=3 w=RT_WallWindowBroken a=hcbld cap=0 cal=hccap
+place Loot_Chest hcdeep at -67.8 -50.5 h=-6 sit yaw=0
+place Placeable_Table_Basic - at -67.5 -47 h=-3 sit yaw=0
+place Note_Paper hcbldnote at -67.5 -47 h=-1.7 drop yaw=10
+call airpocketat x=-66.5 z=-50 h=-3 id=hc_dair al=hcdair bub=hcdbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
+call sk_zone x=-66 z=-59 al=hcdeepzone id=hc_deep r=4 msg="The pit floor: the drowned building stands below you."
+
+# M22 the thief's trap gauntlet: three tripwires on the way to the hideout, each a spike trap for a few seconds;
+# the scavenger's notes I-III before them say where to swim
+call sk_notebox x=-42.8 z=-31.6 yaw=40 al=hcnote1
+call sk_notebox x=-48.8 z=-36.6 yaw=40 al=hcnote2
+call sk_notebox x=-54.8 z=-40.6 yaw=40 al=hcnote3
+place Zone_Trigger hctrip1 at -46 -34 ground y=1.5
+place Zone_Trigger hctrip2 at -52 -39 ground y=1.5
+# (T 11-01, REACH: 1.2 m off the drowned building's roof rail - the walk to it caught on the rail)
+place Zone_Trigger hctrip3 at -56.8 -42 ground y=1.5
+place Zone_Trigger hcspike1 at -46 -34 ground y=1
+place Zone_Trigger hcspike2 at -52 -39 ground y=1
+place Zone_Trigger hcspike3 at -56.8 -42 ground y=1
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+# the generator's rocks that floated over the slope, and walls left wholly under the ground (ground check, 2026-10-23)
+clear at 12.85 12.01 r=1.5 only=SmallRock
+# (and the generator's things under the warden's post, which kept its floor's posts out and left its roof unheld)
+clear at 31.3 -9.5 r=3
+
+info title=Hadal Commons
+info author=Custom Islands
+info description=A city cut into the trench wall 45 m down: stone houses with lit windows, air in four of them, a caged diver, and great doors sealed under the Ringwave. The eighth island of The Sunken Kingdom.
+island on.arrive=message||A buoy over black water. Far, far below: a few small, warm windows.
+
+story cagekey|Cage key|Placeable_Lantern_Metal|The key to the cage in house 3, from the broadcast room.
+
+note minutes Commons council minutes | COMMONS COUNCIL - LAST MINUTES (taken by G. Fennick, door warden, because nobody else would)\n\n1. Air holds in houses 1, 2, 3 and the cellar.\n2. The long shadow was seen at the doors again. Motion: the doors stay shut. Carried.\n3. The Spire sent the lift for the twelve shuttle children ONLY. Motion: we send them. Carried, with shouting. Warden Fennick to ride up with them, since he is "expendable and annoying". Accepted.\n4. Spire control room code changed to 2817. Do not write it down. (Noted: it is written down.)\n5. The diver, Marlowe, says the Spire drowned the stations on purpose. Motion: we do not believe her. Not carried. Not anything. We just sat there.\n6. The Director asks that Marlowe be kept below. Fennick says he will see to it, and looks at his boots.
+note broadcast The last broadcast | THE LAST BROADCAST (transcript)\n\nThis is Hadal Commons. The doors are shut. Repeat, the doors are shut.\nThe children have gone up in the Spire's lift. All twelve. The warden went with them, complaining.\nWhoever finds this: the Spire can open the Network again - or seal the Hollow for good. Somebody has to go up and choose, because the man up there has been choosing for all of us.\nP.S. from the warden: The cage key is under the radio. I am a door warden, not a jailer, and I am very sorry, Ines. Orders. You know whose.
+note inesaccount Ines Marlowe's account | INES MARLOWE - WRITTEN IN THE CAGE, ON THE BACK OF A MENU\n\nYou have Mo. You actually have Mo. I knitted that whale on the roofs in the winter Milo had measles, and he has not slept without it since.\nMilo is safe. Fennick took them up the lift to the Spire; the Director let the children go. The rest of us he kept below in the dark, with the doors shut, because the dark is quiet and the quiet keeps the Stalker in the Hollow.\nThat was his plan. Drown the lit stations, cut the cables, keep the Commons dark - and leave one light burning far away, on the roofs, for it to swim to instead of us. The beacon you answered.\nGo up to the Spire. RESTORE the Network or SEAL the Hollow. I can't choose for you. I would only choose Milo.
+note toolmaker Toolmaker's chest | The toolmaker's chest: titanium tool plans.
+note packchest Broadcast room chest | Advanced backpack plans, and a key under the radio.
+note inesbag Ines's bag | Ines's diving bag: her spare tank and a photo of Milo.
+note wardenchest Door warden's chest | Fennick's chest: electric zipline tool plans, "for the Spire".
+loot toolmaker Blueprint_TitaniumTools*1;TitaniumOre*1
+prop toolmaker loot.refill=0
+loot packchest Blueprint_BackpackAdvanced*1;story:cagekey*1;Leather*2
+prop packchest loot.refill=0
+loot inesbag Rope*2;Leather*1
+prop inesbag loot.refill=0
+prop inesbag obj.name=inesbag
+prop inesbag if.open=signal|inesfree
+prop inesbag else.open=message||Ines's bag is inside the cage with her.
+loot wardenchest Blueprint_ZiplineToolElectric*1;Bolt*2
+prop wardenchest loot.refill=0
+
+prop plazazone zone.id=plaza
+prop plazazone zone.radius=5
+prop plazazone zone.message=Hadal Commons. The bell's landing, the plaza - and lit windows up the trench wall.
+prop inescage obj.name=inescage
+prop inescage survivor.name=Ines Marlowe
+prop inescage survivor.id=sunken_ines
+prop inescage survivor.key=cagekey
+prop inescage survivor.signal=inesfree
+prop inescage survivor.line=You found the key. I'm Ines Marlowe. Is that - is that Mo? Milo's safe, he went up. Get to the Spire. And don't open those doors.
+prop doorszone zone.id=doors
+prop doorszone zone.radius=4
+prop doorszone zone.repeat=never
+prop doorszone zone.message=The great doors. Over them, painted in rust red: a ring, three waves across it.
+prop doorszone on.enter=camera|doorcam|greatdoors|6|40
+prop doorcam obj.name=doorcam
+prop greatdoors obj.name=greatdoors
+prop darkcity atmo.fog=#06141c
+prop darkcity atmo.fogAmount=0.65
+prop darkcity atmo.light=#2a4a5a
+prop darkcity atmo.lightAmount=0.25
+prop darkcity zone.radius=40
+
+note hc_cavechest Quarry chest | A quarryman's chest: chisels gone to rust, and titanium chips he kept.
+loot hc_cavechest TitaniumOre*2;Rope*2;Bolt*2;CopperOre*1
+prop hc_cavechest loot.refill=0
+note hc_ruinnote Warden's lodge note | WARDEN'S LODGE - G. FENNICK\n\nSpare tanks are in the cage by the lodge. The cage key went with Ines. If you have bolt cutters, take what you need, and close the lid after, I am not your mother.\nThe lever for the great doors is on the post by my lodge. Behind them is the strongroom of the Commons, which holds everything the council saved for the day the Spire answered. It has not answered.\nIf you are the Stalker, go home. I have said this on every door in the Network now, and you have not gone home once. I am beginning to think you cannot read.
+note hc_wrecknote Wagon driver's chit | WAGON DRIVER'S CHIT\n\nTwo wagons of quarry stone, Commons terrace 3. Signed, N. Abara.\nThe rails ran out at the trench floor. So did I.\nOn the back: I was hauling stone when the lights went out across the whole Commons at once. Not a fault. A switch. Somebody flicked us off from up the trench like a bedroom light.\nThen it got very quiet. And in the quiet, from the Hollow under the lip, something started to sing the lift's bell back at us. Ding. Ding. Calling.
+note hc_wreckcrate Wagon load | The wagon's load box: cut stone and what the quarrymen dropped.
+loot hc_wreckcrate Stone*6;TitaniumOre*1;Scrap*2;Rope*1
+prop hc_wreckcrate loot.refill=0
+prop wardencage obj.name=wardencage
+prop wardencage on.use=message||The chain snaps and the cage swings open.\nhide|wardencage\nsignal||wardencage
+note lodgechest Warden's store | The warden's store, safe in its cage: spare tanks and titanium.
+loot lodgechest OxygenBottle*1;TitaniumIngot*2;Bolt*3
+prop lodgechest loot.refill=0
+prop lodgechest if.open=signal|wardencage
+prop lodgechest else.open=message||The chest is chained to the cage. Open the cage first.
+note trenchchest Trench box | A box dropped down the dark trench: copper and a battery, dry in wax.
+loot trenchchest CopperOre*3;Battery*1;CircuitBoard*1
+prop trenchchest loot.refill=0
+prop hctrenchdark zone.radius=9
+prop hctrenchdark zone.hazard=dark
+prop hctrenchdark zone.hazardMsg=The trench swallows the light. A headlight would show the way.
+prop doorlever obj.name=doorlever
+prop doorlever beh.use=Pull the great doors' lever
+prop doorlever on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nsignal||hc_doors\nmessage||Far off, across the Commons, something heavy unlocks.
+note strongroom Commons strongroom | The Commons' strongroom behind the great doors: what the council saved for the day the Spire answered.
+loot strongroom TitaniumIngot*2;OxygenBottle*1;CircuitBoard*1;Battery*2
+prop strongroom loot.refill=0
+prop greatdoors if.use=signal|hc_doors
+prop greatdoors else.use=message||Locked. The door warden worked them from a lever by his lodge.
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story hc_key|Scavenger's key|Hinge|The scavenger's key, from the chest at the bottom of his hideout.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note hcdeep Scavenger's strongbox | The scavenger's strongbox: his best loot and a crest shard.
+loot hcdeep story:sk_crest*1;TradeToken*2;TitaniumOre*2;Bolt*3;OxygenBottle*1
+prop hcdeep loot.refill=0
+note hclocker Spire locker | The scavenger's locker on his spire: Commons brass.
+loot hclocker TitaniumIngot*2;MetalIngot*3;CopperIngot*2;Battery*1
+prop hclocker loot.refill=0
+note hcsumnote Scavenger's boast | TOP OF THE SPIRE\n\nNobody climbs up here. Nobody gets past my wires either.\nIf you did both, the locker is yours; I have a better one. From up here you can see the Commons - the lit windows of houses 1, 2 and 3, the dark everywhere else - and above it all the Spire, perched on the trench lip like a heron.
+note hcbldnote Scavenger's inventory | WHAT I TOOK - AND WHAT I SAW\n\nWindows, wire, the Commons' brass, one crown shard. Take the shard. You've earned it, swimming through my wires.\nWhat I saw, from the top of my spire, the night the stations went dark: lights going out one by one across the sea - the labs, the domes, the Yard - and in the middle of it all, the Spire on the trench, every window lit, and a man at the top window watching.\nHe watched every one go. Then he picked up his radio and said sorry to each of them.\nGo up the trench to the Sealkeeper Spire. Tell him the scavenger saw.
+note hcledge Scavenger's stash | One of the scavenger's stashes, on the spire's shelf.
+loot hcledge Rope*3;Bolt*2;Feather*3
+prop hcledge loot.refill=0
+note hccave2chest Warden's spare chest | A warden's spare chest in the rock cave.
+loot hccave2chest CopperOre*3;Rope*2;Battery*1
+prop hccave2chest loot.refill=0
+prop hcsummit zone.id=hc_summit
+prop hcsummit zone.radius=2.5
+prop hcsummit zone.message=Out of the water at the top of the trench spire. 47 m of rock below you.
+note hcnote1 Scavenger's note I | NOTE I - THE SCAVENGER\n\nYou followed me out here. Bold. The first wire is low, so swim high over the flat stones, unless you want to be a pincushion.\nI took what the Commons would not use. Windows. Wire. The council's brass. Stealing from people who have given up is not stealing, it is tidying.
+note hcnote2 Scavenger's note II | NOTE II\n\nThe second wire is across the gap. Go round by the left.\nI saw the lift go up with the children. I saw the warden hold the smallest one's hand the whole way. I did not steal anything that night. I am not a monster. I am a professional.
+note hcnote3 Scavenger's note III | NOTE III\n\nThe last one is at the door. Wait for the spikes to drop, then go.\nBelow the hideout the store is drowned. I keep the good things at the bottom, and the crown shard I lifted from the old king's arch, because one day somebody will need nine of them, and I will charge them a great deal.
+prop hctrip1 obj.name=hctrip1
+prop hctrip1 zone.id=hc_trip1
+prop hctrip1 zone.radius=2
+prop hctrip1 zone.repeat=1
+prop hctrip1 on.enter=show|hcspike1\nmessage||A wire snaps under you - spikes shoot up out of the flat stones!\nwait|5\nhide|hcspike1\nmessage||The spikes sink back into the stones.
+prop hcspike1 obj.name=hcspike1
+prop hcspike1 zone.id=hc_spike1
+prop hcspike1 zone.radius=3
+prop hcspike1 zone.hazard=spikes
+prop hcspike1 zone.damage=3
+prop hcspike1 zone.safe=none
+prop hcspike1 zone.hazardMsg=Spikes! Get clear of the trap.
+prop hcspike1 beh.hidden=1
+prop hctrip2 obj.name=hctrip2
+prop hctrip2 zone.id=hc_trip2
+prop hctrip2 zone.radius=2
+prop hctrip2 zone.repeat=1
+prop hctrip2 on.enter=show|hcspike2\nmessage||A wire across the gap - spikes!\nwait|5\nhide|hcspike2\nmessage||The spikes slide back down.
+prop hcspike2 obj.name=hcspike2
+prop hcspike2 zone.id=hc_spike2
+prop hcspike2 zone.radius=3
+prop hcspike2 zone.hazard=spikes
+prop hcspike2 zone.damage=3
+prop hcspike2 zone.safe=none
+prop hcspike2 zone.hazardMsg=Spikes! Get clear of the trap.
+prop hcspike2 beh.hidden=1
+prop hctrip3 obj.name=hctrip3
+prop hctrip3 zone.id=hc_trip3
+prop hctrip3 zone.radius=2
+prop hctrip3 zone.repeat=1
+prop hctrip3 on.enter=show|hcspike3\nmessage||The door wire - spikes all round the doorway!\nwait|5\nhide|hcspike3\nmessage||The spikes drop. The door is clear.
+prop hcspike3 obj.name=hcspike3
+prop hcspike3 zone.id=hc_spike3
+prop hcspike3 zone.radius=3
+prop hcspike3 zone.hazard=spikes
+prop hcspike3 zone.damage=3
+prop hcspike3 zone.safe=none
+prop hcspike3 zone.hazardMsg=Spikes! Get clear of the trap.
+prop hcspike3 beh.hidden=1
+
+quest title=The City Below
+quest intro=The Commons is the last lit room in the sea, 45 m down. Ines went down to it. Dive to the plaza.
+step reach|plaza|1|Dive to the Commons' plaza
+step read|Commons council minutes|1|Read the council minutes on the plaza
+step reach|house_1|1|Find the air in house 1
+step kill|Angler fish|4|Fight off the four anglers
+step blueprint|Blueprint_TitaniumTools|1|Open the toolmaker's chest: titanium tool plans
+step reach|house_2|1|Swim up to house 2
+step read|The last broadcast|1|Read the last broadcast
+step blueprint|Blueprint_BackpackAdvanced|1|Open the broadcast room chest: backpack plans and a key
+step reach|house_3|1|Climb to house 3, the last air house
+step open|Ines's bag|1|Free the diver from the cage with the key, then open her bag
+step read|Ines Marlowe's account|1|Read Ines Marlowe's account
+step blueprint|Blueprint_ZiplineToolElectric|1|Open the door warden's chest: electric zipline tool plans
+step read|Warden's lodge note|1|Read the note in the door warden's lodge
+step read|Wagon driver's chit|1|Read the chit at the old mine wagons
+step reach|doors|1|Go to the great doors
+step read|Scavenger's note I|1|Follow the scavenger's notes out to his hideout by the drowned store
+step read|Scavenger's note III|1|Get past his trip wires and read the last note at the hideout
+step open|Scavenger's strongbox|1|Dive to the bottom of his drowned store and open the strongbox
+step read|Scavenger's inventory|1|Read what the scavenger took - and what he saw
+quest done=The Director drowned the stations to keep the Stalker from the Commons. Face him at the Spire on the trench - the Receiver finds it on band 1200.
+quest reward=TitaniumOre*2;Battery*1
+
+save Hadal Commons

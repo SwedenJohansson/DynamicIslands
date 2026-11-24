@@ -1,0 +1,475 @@
+# Tangaroa Remade - an island of the library's plan Raft Remade (in place of Raft's Tangaroa)
+# Raft's Tangaroa made anew: the floating city's people moved onto a hill of their own and took the city with them -
+# its floating harbour on one of Tangaroa's great pontoons, a harbour front with Chi's Burgers and the pump house, a road
+# up to the square: the founder's statue, the city generator, the council office and an apartment block. Its first
+# statue lies toppled in the harbour. Quest "The Lights of Tangaroa" (6 steps): the council's notice on the harbour, the
+# dive to the old statue's strongbox, the rats in the pump house and the generator's part, the three key cards (the
+# founder's, the harbour master's, the caretaker's), the generator started and the council's vault (Tangaroa's
+# blueprints: the water pipe, the electric purifier, the water tank, the large storage).
+# RAFT REMADE 10-26 (1-hour pass): grown to Raft's size (r80 about 75) by land added round it: Lookout Hill (west, 20 m)
+# and its lookout mast, the fuel depot (south shore), a hidden cave, a ferry aground, the slab stacks (a jump course,
+# north). The generator now needs two cans of fuel too: the depot's and the lookout's. Quest 10 -> 15 steps.
+# Design: _ProjectDocs/plans/storylines_old/RAFT_REMADE.md.
+#
+# Built by the recipe player (CIRecipe tangaroa_remade) through the editor's own operations.
+include lib_sea
+include lib_rt
+include lib_features
+include lib_highwater
+include lib_areas
+include lib_raft_remade
+new
+# (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
+randomize Tangaroa like Seed=7105 Radius=52 Height=16 Cliffs=0.1 BeachWidth=0.6 Hostiles=0 Friendly=0 SeaLife=0.3 Trees=0.35 Bushes=0.35 Rocks=0.55 SeaRocks=0.6 SeaFinds=0.8
+# --- Terrain: the square on the hilltop (12.5 m), the harbour front along the east shore (2.2 m), the road between them
+brush flatten from -6 2 to -6 12 r=13 s=20 frames=60 h=12.5
+brush flatten from -5 20 to -5 24.5 r=6.5 s=20 frames=50 h=12.4
+brush flatten from -17 5.5 to -17 10.5 r=6.5 s=20 frames=50 h=12.4
+brush flatten from 24 -4 to 46 -4 r=6 s=20 frames=60 h=2.2
+brush flatten from 21 -4.5 to 21 2.5 r=6 s=20 frames=60 h=1.95
+brush flatten from 33 4.5 to 33 10.5 r=6 s=20 frames=60 h=1.95
+# (the way from the harbour front past the pump house's corner to the road's foot - a bump of the old hill stood there)
+brush flatten from 26.5 -2 to 27.5 8 r=3.5 s=20 frames=40 h=2.1
+for i 0 6 1
+brush flatten at {26.5-$i*3.4} {8+$i*1.0} r=2.8 s=20 frames=30 h={2.1+$i*1.73}
+next
+# (and again in half steps: the land made like Tangaroa's left the road's ramp a lumpy gully a player slid off -
+# SL6 plan run, 2026-10-19)
+for i 0 12 1
+brush flatten at {26.5-$i*1.7} {8+$i*0.5} r=2.2 s=20 frames=40 h={2.1+$i*0.865}
+next
+brush smooth from 26.5 8 to 6.1 14 r=3 s=10 frames=20
+# (the harbour's pier and the harbour master's office stand over the sea east of the shore: the land made like Tangaroa's
+# own reached out under them, 9.7 m up at the office, and stood the office on a hill - SL6 plan run, 2026-10-19)
+for px 59 83 6
+brush flatten from {$px} -16 to {$px} 9 r=4 s=20 frames=60 h=-5
+next
+# (the deck's south edge, z -17.5, met the land's foot: its ridges rose through the deck and buried two railings - a ledge
+# along the edge just under the deck (lower, the railings hung over it), the cliff behind it)
+brush flatten from 49 -17.6 to 83 -17.6 r=2 s=20 frames=120 h=1.85
+# (reach audit 10-29: a hump of the land rose through between the pier and the deck at x 57 - the walker stuck there
+# 'a step too high'; the land under the pier just under its plates)
+brush flatten from 47 -3 to 58 -3 r=3.5 s=20 frames=60 h=1.7
+origin
+# (the land made like Tangaroa is a flat 8.9 m table out to r 82 with a 70 m wall into the sea all round: the new land's
+# lobes sat in pits cut into it, the harbour was a lake inside its rim, and the sea-ring cameras stood inside the land -
+# reach audit 10-29. Its outer ring brought down: 3 m land to r 75, a beach at r 82, the sea floor beyond; off the
+# harbour (east) sea only. The core - the hill the city stands on - keeps its height. After the origin is set - the
+# land lowered off the harbour moves the land centre, and an origin taken after it moved the pump house and the deck's
+# railings a metre into the land - and before the set-pieces' objects, so theirs win.)
+# (the ring's angle is ra, not a: rt_storey's walls take $a as their alias - with a set here the pump house's and
+# Chi's walls came out wrong and buried)
+for k 0 29 1
+set ra {40+$k*10}
+brush flatten at {66*cos($ra)} {66*sin($ra)} r=9 s=20 frames=200 h=3
+brush flatten at {74*cos($ra)} {74*sin($ra)} r=9 s=20 frames=200 h=2.4
+brush flatten at {82*cos($ra)} {82*sin($ra)} r=9 s=20 frames=200 h=0.3
+brush flatten at {90*cos($ra)} {90*sin($ra)} r=9 s=20 frames=250 h=-5
+brush flatten at {98*cos($ra)} {98*sin($ra)} r=9 s=20 frames=300 h=-14
+next
+for k 0 8 1
+set ra {-40+$k*10}
+brush flatten at {76*cos($ra)} {76*sin($ra)} r=9 s=20 frames=250 h=-5
+brush flatten at {86*cos($ra)} {86*sin($ra)} r=9 s=20 frames=250 h=-6
+brush flatten at {96*cos($ra)} {96*sin($ra)} r=9 s=20 frames=300 h=-14
+next
+# (not off the harbour - east: a smooth there raised the land under the pier and the harbour front)
+for k 5 31 1
+set ra {$k*10}
+brush smooth at {55*cos($ra)} {55*sin($ra)} r=9 s=4 frames=30
+brush smooth at {86*cos($ra)} {86*sin($ra)} r=10 s=4 frames=30
+clear at {56*cos($ra)} {56*sin($ra)} r=10
+clear at {70*cos($ra)} {70*sin($ra)} r=10
+clear at {84*cos($ra)} {84*sin($ra)} r=10
+clear at {98*cos($ra)} {98*sin($ra)} r=10
+next
+# (the ring painted, not the whole island: one auto brush over it all raised the harbour front and buried the pump house's
+# walls and floor, the play's walker stuck at its door - reach audit 10-29)
+for k 4 32 1
+set ra {$k*10}
+brush auto at {74*cos($ra)} {74*sin($ra)} r=12 s=10 frames=25
+next
+
+# (the deck's north edge by the statue's ladder: the land rose under its last plate and railings - the ladder had no floor
+# at its top - reach audit 10-29)
+brush flatten from 56 7 to 62 13 r=5 s=20 frames=80 h=-5
+# (and the sea floor where the old statue and its strongbox lie, 7 m down: the ring left the box on a ledge - 10-29)
+brush flatten from 53 12 to 59 17 r=5 s=20 frames=80 h=-5
+clear at -6 7 r=16
+clear at 33 -2 r=14
+clear at 16 9 r=7
+# (the harbour's sea floor where the old statue lies: no boulders under it or its strongbox)
+clear at 56 15 r=10 only=Rock|Boulder
+# (no boulders strewn over the beach ring - Raft's beaches have few)
+clear at 0 0 r=90 only=Rock|Boulder on=sand above=0.2
+
+# --- The floating harbour: one of Tangaroa's ring pontoons moored off the harbour front, a deck of the radio tower's
+# floor plates laid over it (30 x 27 m, as the old city's deck lay on its rings), a pier out to it, the harbour office -
+place Flotation harbourbase at 68 -4 h=0
+for dx 59 83 6
+for dz -8.5 9.5 9
+place RT_Floor - at $dx $dz h=1.95
+next
+next
+place RT_Floor pier at 53 -0.5 h=2.05
+# (railings round the deck - fences run 1.5 m from their pivot towards -x, turned 90 along +z - open where the pier
+# arrives and at two ladders down to the water: the north one towards the old statue, the east one by the boat)
+for fx 54.5 57.5 1.5
+place RT_Fence - at $fx 9.5 h=1.96
+next
+for fx 60.5 83 1.5
+place RT_Fence - at $fx 9.5 h=1.96
+next
+for fx 54.5 83 1.5
+place RT_Fence - at $fx -17.5 h=1.96
+next
+for fz -17.5 -14.5 1.5
+place RT_Fence - at 83 $fz h=1.96 yaw=90
+next
+for fz -11.5 8 1.5
+place RT_Fence - at 83 $fz h=1.96 yaw=90
+next
+for fz -17.5 -11.5 1.5
+place RT_Fence - at 53 $fz h=1.96 yaw=90
+next
+for fz -0.5 8 1.5
+place RT_Fence - at 53 $fz h=1.96 yaw=90
+next
+place LandmarkLadder_6m northladder at 58.2 9.62 h=-4.35 yaw=180
+# (half a metre off the deck's edge: at 83.12 the climber hung against the deck's plate and stuck going down - 10-29)
+place LandmarkLadder_6m eastladder at 83.6 -12.2 h=-4.35 yaw=-90
+push at 80 2 h=1.96
+call rt_storey floor=none l2=RT_WallDoor1 f1=RT_WallWindow1 f2=RT_WallWindow1 b1=RT_WallWindow2 r2=RT_WallWindow1
+place RT_Floor - at 0 4.5 y=3.05
+place "Table Office" harbourdesk at -3 3.4 sit
+place "Chair Office" - at -3 2.5 sit yaw=170
+place Locker harbourlocker at -5.4 3.6 sit yaw=90
+place Note_Book - at -2.4 3.7 y=1.08 sit
+place RT_RadarScreen - at -0.5 0 sit yaw=-90
+place "Box Big" - at -5.3 -3.6 sit yaw=15
+pop
+# (box agent 10-25: at 54.6 -2.4 the pole and notice stood 5 m inside the harbour cliff - moved out onto the deck)
+place Relay_Fence_pole - at 61.5 -3 h=1.96
+place Note_Paper councilnotice at 61.5 -3 h=3.6 drop
+place Crate_Big_01 - at 60 -12 h=1.96 yaw=20
+place Crate_Big_02 - at 61.5 -13.6 h=1.96 yaw=-15
+place "Box Small" - at 62.4 -11.2 h=1.96 yaw=40
+place RestaSunshadeGround - at 74 -11 h=1.96
+place Tangaroa_OutdoorFurniture_Table - at 74 -11 h=1.96
+place Tangaroa_OutdoorFurniture_Chair - at 73 -11.4 h=1.96 yaw=90
+place Tangaroa_OutdoorFurniture_Chair - at 75 -10.6 h=1.96 yaw=-90
+# (moored a little up the deck from the east ladder: at its foot it barred the way from the ladder to the sea - 10-29)
+place RT_PlasticBoat - at 87.5 -4 h=-0.3 yaw=0
+place Crate_Big_01 - at 78 -6.5 h=1.96 yaw=5
+place Crate_Big_02 - at 79.6 -8 h=1.96 yaw=-25
+place "Box Big" - at 76.6 -7.4 h=1.96 yaw=10
+place TangaroaBench - at 66 8 h=1.96 yaw=180
+place VendingMachine_w_Animations - at 71 8.4 h=1.96 yaw=180
+place Trashcan_01 - at 68.6 8.4 h=1.96
+place TangaroaStoreSign_FloatingFashion - at 73.9 2 h=5.56 yaw=-90
+place Zone_Trigger harbour at 66 -4 h=3.2
+
+# --- The old founder's statue, toppled into the harbour in the storm that moved the city; its strongbox beside it ----
+place TangaroaFounderStatue oldstatue at 57 16 ground tilt=70 yaw=200
+place VG_Safe statuebox at 54.6 13.6 ground yaw=30
+
+# --- The harbour front (2.2 m): Chi's Burgers, the pump house built into the hill at its end, benches, a vending machine
+push at 36 7.5 h=2.2
+call rt_storey f2=RT_WallDoor1 f1=RT_WallWindow2 l2=RT_WallWindow1 r2=RT_WallWindow1
+place RT_Floor - at 0 4.5 y=3.05
+place TangaroaStoreSign_ChisBurgers - at -3 -4.2 y=3.1
+place "Counter Left" - at -5 1.5 sit
+place "Counter Mid" - at -4 1.5 sit
+place "Counter Right" - at -3 1.5 sit
+place Table_Common_01 - at -2 -2 sit yaw=90
+place Dinnerchair_01 - at -1 -2 sit yaw=-90
+pop
+place RestaSunshadeGround - at 33 0 ground
+place Tangaroa_OutdoorFurniture_Table - at 33 0 ground
+place Tangaroa_OutdoorFurniture_Chair - at 32 -0.5 ground yaw=90
+# (Raft's vending machine, working: Tangaroa's plants for its tokens; three tokens lie about the dome)
+vending domevend at 28.6 2.4 ground yaw=180
+place QuestItemPickup_Tangaroa_Token - at 32 -4 ground
+place QuestItemPickup_Tangaroa_Token - at 36 -4 ground
+place QuestItemPickup_Tangaroa_Token - at 28 -12 ground
+place TangaroaBench - at 40 -9.5 ground yaw=0
+place TangaroaBench - at 30 -9.5 ground yaw=0
+push at 24 -1 h=2.2
+call rt_storey r2=RT_WallDoor1 r1=RT_WallWindowBroken1 r3=RT_Wall1
+place RT_Floor - at 0 4.5 y=3.05
+# (the locker by the north wall, not the west one: the hill made like Tangaroa's leans into the house's west end
+# and hid a locker there - SL6 plan run, 2026-10-19)
+place Locker pumplocker at -2.5 3.6 sit yaw=180
+place "Box Big" - at -5.2 -3.6 sit yaw=10
+place "Box Small" - at -4 -3.7 sit yaw=-20
+place TangaroaBucket - at -1 3.7 sit
+pop
+place Zone_Trigger pumphouse at 21 -1 h=3.4
+place Creature_Rat_Tangaroa rats at 21 -1 h=2.4
+
+# --- The square (12.5 m): the founder's statue, the generator, the council office, the apartment block --------------
+place TangaroaFounderStatue statue at -4 7 ground yaw=90
+place Generator generator at -10 -1 ground yaw=0
+place TangaroaBench - at -4 1.5 ground yaw=180
+place TangaroaBench - at -4 12.5 ground yaw=0
+place LargePlant1 - at 0 3 ground
+place LargePlant2 - at 0 11 ground
+place LargePlant2 - at -8 3 ground
+place LargePlant1 - at -8 11 ground
+place RestaSunshadeGround - at 3 16 ground
+place Tangaroa_OutdoorFurniture_Table - at 3 16 ground
+place Tangaroa_OutdoorFurniture_Chair - at 2 15.5 ground yaw=90
+# the council office on the square's west side: its door a steel shutter the generator slides aside
+push at -14 8 h=12.5
+call rt_storey r2=none r1=RT_WallWindow1 r3=RT_WallWindow1 f1=RT_WallWindow2 b2=RT_WallWindow2
+place RT_Floor - at 0 4.5 y=3.05
+place Tangaroa_BoardRoomKit_Table - at -3.4 -1.2 sit
+place Tangaroa_OfficeKit_OfficeChair - at -4.6 -0.5 sit yaw=90
+place Tangaroa_OfficeKit_OfficeChair - at -2.2 -2.5 sit yaw=-90
+place VG_Safe councilvault at -5.3 3.6 sit yaw=90
+place Painting_Architect - at -3 4.4 y=1.6 yaw=180
+place RT_RoofLamp citylights at -3 0 y=3.1
+pop
+place RT_Wall1 councilshutter at -13.85 6.5 h=12.5 yaw=90
+place Zone_Trigger council at -17 8 h=13.7
+# the apartment block on the square's north side: the caretaker's flat below, two flats over it
+push at -2 22 h=12.5
+call rt_storey f2=RT_WallDoor1 f1=RT_WallWindow1 l2=RT_WallWindow1 r2=RT_WallWindow1
+place BedSmall - at -4.5 3 sit yaw=90
+place Table_Common_01 - at -2 2.6 sit
+place Armchair_01 - at -1 1.5 sit yaw=-120
+place Locker flatlocker at -5.4 -1.5 sit yaw=90
+place Painting_03 - at -2 4.42 y=1.5 yaw=180
+push at 0 0 y=3.05
+call rt_storey f1=RT_WallWindow1 f2=RT_WallWindow2 l1=RT_WallWindow1 l3=RT_WallWindow1 r1=RT_WallWindow1 r3=RT_WallWindow1 b1=RT_WallWindow1 b2=RT_WallWindow1
+place RT_Floor - at 0 4.5 y=3.05
+call rt_railing y=3.1
+place RT_RoofLamp citylights at -3 0 y=3.1
+pop
+pop
+place TangaroaStoreSign_SeasideBarber_Pole - at -1.6 17.2 h=12.5
+place Zone_Trigger flat at -5 17.5 h=13.7
+place Creature_Roach roaches at -5 19 h=12.6
+
+# --- RAFT REMADE 10-26 (1-hour pass): the island grows to Raft's size by land added round it (the hill, the square, the
+# harbour front and the floating harbour as they were): Lookout Hill (west, 20 m) and the city's lookout mast, the fuel
+# depot on the south shore, a hidden cave in Lookout Hill's south foot, a ferry run aground (north-west), the roofs
+# (a jump course of slab stacks, north). Land bridges first, from the old shore outwards, then each area.
+call rr_land x1=-38 z1=4 x2=-48 z2=4 h=3 r=11
+call rr_land x1=6 z1=-36 x2=10 z2=-50 h=3 r=11
+call rr_land x1=-28 z1=-30 x2=-40 z2=-42 h=3 r=9
+call rr_land x1=-30 z1=30 x2=-44 z2=42 h=3 r=9
+call rr_land x1=-6 z1=40 x2=-12 z2=50 h=3 r=9
+# A Lookout Hill (west): summit 20 m, base r 20, the trail from its east foot, the city's lookout mast on top
+call hw_mount x=-62 z=4 b=20 h=20
+call hw_trail x=-62 z=4 b=20 h=20 a0=80 turn=300 n=26 h0=3
+# (a step on the trail where the ring met the hill's foot - reach audit 10-29)
+brush smooth at -57.4 -17 r=3.5 s=8 frames=40
+brush flatten at -62 4 r=7 s=20 frames=400 h=20
+call hw_mast x=-62 z=4 h0=20 lv=5 a=lookoutmast chest=lookoutbox top=Placeable_Lantern_Metal
+# B The fuel depot (south shore): containers washed up on a pad, the depot's crate, barrels
+call rr_containers x=12 z=-60 h=3 yaw=10 n=3 al=depotcontainer
+place Loot_Crate depotcrate at 4 -52 ground sit yaw=20
+place "Box Big" - at 20 -52 ground sit
+place "Box Big" - at 21.5 -53 ground sit yaw=40
+# C The hidden cave in Lookout Hill's south foot, its mouth to the sea
+call ar_cave x=-44 z=-46 h=3 yaw=180 al=caverock chest=cavebox
+# (the hill round the cave rock, its mouth to the sea left open: the ring brought down the land the rock stood in and left
+# it a bare half-dome - reach audit 10-29)
+brush flatten from -55 -38 to -33 -38 r=5 s=20 frames=120 h=8
+brush flatten from -56 -50 to -56 -40 r=4 s=20 frames=120 h=7
+brush flatten from -32 -50 to -32 -40 r=4 s=20 frames=120 h=7
+brush smooth from -56 -37 to -32 -37 r=7 s=6 frames=30
+# D The ferry run aground (north-west), her crate on the sand by her
+call hw_wreck x=-50 z=50 h=2 yaw=40 obj=BoatStranded al=ferry crate=ferrycrate r=9
+# The new land planted (palms, mangoes, bushes as on the hill)
+call rr_plants_hill x=-62 z=4 r=22 seed=26901
+call rr_plants_tropical x=-44 z=4 r=8 seed=26911
+call rr_plants_tropical x=8 z=-44 r=8 seed=26921
+call rr_plants_tropical x=-34 z=-36 r=8 seed=26931
+call rr_plants_tropical x=-40 z=40 r=9 seed=26941
+call rr_plants_tropical x=-10 z=46 r=7 seed=26951
+# --- JUMP COURSE tg (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
+# JUMP tg pad=3 at=-14 64
+push at -14 64
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=3
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=3
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jptg at 0.10 5.64 h=3.60
+place Block_Foundation_Tier3 jptg at 2.92 5.64 h=4.10
+place Block_Foundation_Tier3 jptg at 5.93 5.64 h=4.50
+place Block_Foundation_Tier3 jptg at 5.93 3.03 h=5.40
+place Block_Foundation_Tier3 jptg at 5.93 -1.21 h=5.90 sx=0.3 sz=3
+place Block_Foundation_Tier3 jptg at 5.93 -5.64 h=6.70
+place Block_Foundation_Tier3 jptg at 3.02 -5.64 h=7.60
+place Block_Foundation_Tier3 jptg at 0.40 -5.64 h=6.60
+place Block_Foundation_Tier3 jptg at -2.41 -5.64 h=7.55
+place Block_Foundation_Tier3 jptg at -5.12 -5.64 h=8.50
+place Block_Foundation_Tier3 jptg at -5.12 -2.02 h=9.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jptg at 1.30 -2.02 h=9.70 sx=2 sz=2
+place Block_Foundation_Tier3 jptg at 1.30 3.21 h=10.00
+# JUMP end
+# (each slab on one solid column of its own footprint, from under the pad up to the slab; the first rests on the pad)
+place Block_Foundation_Tier3 jpptg at 2.92 5.64 h=3.418 sy=1.493
+place Block_Foundation_Tier3 jpptg at 5.93 5.64 h=3.818 sy=2.079
+place Block_Foundation_Tier3 jpptg at 5.93 3.03 h=4.718 sy=3.399
+place Block_Foundation_Tier3 jpptg at 5.93 -1.21 h=5.218 sy=4.132 sx=0.3 sz=3
+place Block_Foundation_Tier3 jpptg at 5.93 -5.64 h=6.018 sy=5.305
+place Block_Foundation_Tier3 jpptg at 3.02 -5.64 h=6.918 sy=6.625
+place Block_Foundation_Tier3 jpptg at 0.40 -5.64 h=5.918 sy=5.158
+place Block_Foundation_Tier3 jpptg at -2.41 -5.64 h=6.868 sy=6.551
+place Block_Foundation_Tier3 jpptg at -5.12 -5.64 h=7.818 sy=7.944
+place Block_Foundation_Tier3 jpptg at -5.12 -2.02 h=8.718 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jpptg at 1.30 -2.02 h=9.018 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jpptg at 1.30 3.21 h=9.318 sy=10.144
+prop jptg tint.color=#7d7468
+prop jptg tint.amount=0.35
+prop jpptg tint.color=#7d7468
+prop jpptg tint.amount=0.35
+place Loot_Chest jctg at -5.12 -2.02 h=9.40 sit yaw=0
+note jctg Rooftop chest | On top of the slab stacks: the roofers' good tools, out of the rats' reach.
+loot jctg CopperIngot*2;TitaniumOre*1;Bolt*3
+prop jctg loot.refill=0
+place Loot_ChestSmall jbtg at 1.30 3.21 h=10.00 sit yaw=0
+note jbtg Roofers' tin | Wedged on a slab half-way: the roofers' tea money.
+loot jbtg Nail*6;Scrap*3;MetalIngot*1
+prop jbtg loot.refill=0
+place Zone_Trigger jytg at 1.30 3.21 h=11.00
+prop jytg zone.id=jump_tg_finale
+prop jytg zone.radius=1.8
+prop jytg zone.repeat=never
+prop jytg zone.message=You topped the slab stacks.
+pop
+# --- end of jump course tg ---
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): palms, flowers, mangoes ----------
+scatter "Pickup_Landmark_Tree_Palm 1" 2 at 0 0 r=36.4 seed=4374 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 2 at 0 0 r=36.4 seed=4375 free=5
+scatter "Pickup_Landmark_Flower_Red" 2 at 0 0 r=36.4 seed=4384 free=3
+scatter "Pickup_Landmark_Flower_Yellow" 2 at 0 0 r=36.4 seed=4385 free=3
+scatter "Pickup_Landmark_Tree_Mango" 3 at 0 0 r=36.4 seed=4394 free=5
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=72 deep=5 n=2
+
+# --- RAFT REMADE 10-26: the new areas' zones and notes, the generator's fuel, the secrets ------------------------------
+call hw_zone x=8 z=-52 al=depotz id=fueldepot r=8 h=1 msg="The fuel depot. Containers the storm threw up the shore - and the depot's crate, still sealed."
+note depotcrate Fuel depot crate | The fuel depot's crate: one can of the generator's fuel left, and a funnel.
+loot depotcrate story:fuel*1;Plastic*2;Scrap*2
+prop depotcrate loot.refill=0
+call hw_zone x=-46 z=4 al=lookfootz id=lookoutfoot r=6 msg="Lookout Hill. A path round the hill to the city's lookout mast."
+call hw_zone x=-62 z=4 al=looktopz id=lookout r=7 h=1 msg="The top of Lookout Hill. The lookout's ladder runs up inside the mast - his box on the deck."
+note lookoutbox Lookout's box | The lookout's box on the mast deck: the reserve can of generator fuel the council kept up here, a spyglass with no glass.
+loot lookoutbox story:fuel*1;Rope*2;Bolt*2
+prop lookoutbox loot.refill=0
+note cavebox Smugglers' strongbox | A box in the cave under Lookout Hill: what the smugglers kept from the council's harbour tax.
+loot cavebox TitaniumIngot*1;CopperIngot*2;Bolt*3
+prop cavebox loot.refill=0
+call hw_zone x=-44 z=-50 al=cavez id=hiddencave r=4 msg="A cave in the hill's foot, its mouth hidden by boulders - a strongbox inside."
+note ferrycrate Ferry's crate | The ferry's crate, washed up by her: life jackets, a bell, a sack of rivets.
+loot ferrycrate Nail*8;Rope*2;Plastic*3
+call treasure x=-62 z=4 r=14 n=1 seed=26998 kind=0
+prop treasure26998 treasure.loot=CopperIngot*2;TitaniumOre*1;Nail*8
+
+info title=Tangaroa Remade
+info author=Custom Islands
+info description=Raft's Tangaroa made anew, on an island as big as Raft's own: the floating city on a hill of its own, Lookout Hill and its mast, the fuel depot, a ferry aground - its harbour on one of the old pontoons, Chi's Burgers on the harbour front, the founder's statue on the square - and every light out. Three key cards, a generator part and the council's vault. Raft Remade's fifth island.
+island on.arrive=message||A hill of white walls and shop signs, a harbour on a great round pontoon, a statue on the square at the top - and not a light anywhere.
+
+story keycard|Key card|quest:Tangaroa_KeyCard|One of the three city key cards the council's vault wants.
+story fuel|Fuel can|Placeable_Lantern_Metal|A can of the city generator's fuel - it needs two.
+story genpart|Generator part|quest:Tangaroa_GeneratorPart|The city generator's missing part, from the pump house on the harbour front.
+
+note councilnotice Council notice | TANGAROA CITY COUNCIL\n\nThe city's power is OFF until further notice. The generator's part is kept in the pump house.\n\nThe council's vault opens to the three key cards: the harbour master's, the caretaker's - and the founder's own, sealed in his statue's strongbox.\n\n(scrawled underneath) The founder's statue went into the harbour in the storm, strongbox and all. And the rats have the pump house.
+note harbourlocker Harbour master's locker | The harbour master's locker: oilskins, a tide table - and his city key card on a hook.
+loot harbourlocker story:keycard*1;Rope*2;Plastic*3
+prop harbourlocker loot.refill=0
+note statuebox Founder's strongbox | The founder's strongbox, from his toppled statue's base: barnacled, but still sealed - and inside, a city key card.
+loot statuebox story:keycard*1;Scrap*4
+prop statuebox loot.refill=0
+note flatlocker Caretaker's locker | The caretaker's locker: mops, a bucket, a ring of keys - and the caretaker's key card.
+loot flatlocker story:keycard*1;Nail*6
+prop flatlocker loot.refill=0
+note pumplocker Pump house locker | The pump house locker, chewed at the corners: the generator's part, wrapped in an oily rag.
+loot pumplocker story:genpart*1;Bolt*4;Scrap*3
+prop pumplocker loot.refill=0
+note councilvault Council's vault | The council's vault: the founders' plans for keeping a floating city alive - water pipes, purifiers, tanks and stores.
+loot councilvault Blueprint_Pipe_Water*1;Blueprint_ElectricPurifier*1;Blueprint_WaterTank*1;Blueprint_Storage_Large*1;CopperIngot*3
+prop councilvault loot.refill=0
+prop councilvault if.open=quest|10\ntake|story:keycard|3
+prop councilvault else.open=message||Three card slots - the harbour master's, the caretaker's and the founder's. The council's notice said where they are.
+
+prop generator obj.name=generator
+prop generator beh.use=Fit the part and start the generator
+prop generator if.use=quest|4\ntake|story:fuel|2\ntake|story:genpart|1
+prop generator on.use=message||The part slides home, the generator coughs and runs. Lamps come on across the square - and the council office's shutter rolls aside.\nopen|councilshutter\nshow|citylights
+prop generator else.use=message||The generator is missing a part and its tank is dry: two cans of fuel. The council's notice said where to look.
+prop councilshutter obj.name=councilshutter
+# (the island's axes: 3 m north, along the office's front, clear of its doorway)
+prop councilshutter beh.move=0,0,3
+prop councilshutter beh.moveTime=2
+prop citylights obj.name=citylights
+prop citylights beh.hidden=1
+
+prop harbour zone.id=harbour
+prop harbour zone.radius=12
+prop harbour zone.message=Tangaroa's floating harbour: one of the old city's pontoons - and the city dark on its hill.
+prop pumphouse zone.id=pumphouse
+prop pumphouse zone.radius=4
+prop pumphouse zone.message=The pump house: pipes, crates - and something scurrying in the dark.
+prop council zone.id=council
+prop council zone.radius=4
+prop council zone.message=The council office: the founders' table - and their vault.
+prop flat zone.id=flat
+prop flat zone.radius=4
+prop rats creature.count=3
+prop rats creature.respawn=0
+prop rats creature.zone=pumphouse
+prop roaches creature.count=2
+prop roaches creature.respawn=0
+prop roaches creature.zone=flat
+
+quest title=The Lights of Tangaroa
+quest intro=A floating city remade on a hill of its own, dark from the harbour to the square. Make for the city on the hill and start at the floating harbour by its shore.
+step read|Council notice|1|Make for the city on the hill, tie up at the floating harbour and read the notice by the pier
+step open|Founder's strongbox|1|Dive to the founder's toppled statue for his strongbox
+step kill|Tangaroa rat|3|Clear the rats out of the pump house
+step collect|story:genpart|1|Take the generator's part from the locker in the pump house
+step reach|fueldepot|1|Go round the shore to the fuel depot
+step open|Fuel depot crate|1|Open the depot's crate - one can of fuel left
+step reach|lookout|1|Climb Lookout Hill, the hill with the lookout mast
+step open|Lookout's box|1|Climb the mast and open the lookout's box - the council's reserve can
+step collect|story:fuel|2|Carry both cans of fuel for the generator
+step collect|story:keycard|3|Find the other two key cards: the harbour master's and the caretaker's
+step open|Council's vault|1|Start the generator on the square and open the council's vault
+step blueprint|Blueprint_Pipe_Water|1|Take the water pipe plans from the council's vault
+step blueprint|Blueprint_ElectricPurifier|1|Take the electric purifier plans from the council's vault
+step blueprint|Blueprint_WaterTank|1|Take the water tank plans from the council's vault
+step blueprint|Blueprint_Storage_Large|1|Take the large storage plans from the council's vault
+quest done=The vault opens on a city lit again: water pipes, purifiers, tanks - the founders' plans for keeping a floating city alive.
+quest reward=Plank*10;Plastic*6;Battery*1
+
+# Buried treasure (the story line's middle): titanium ore on top of Raft's own treasure loot - the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=30 n=1 seed=8831
+prop treasure8831 treasure.loot=TitaniumOre*3
+# Titanium rocks, as on Raft's Tangaroa (the pickaxe breaks them)
+scatter Pickup_Landmark_Titanium_Land 3 at 0 0 r=35 seed=8832 free=3
+
+# --- RAFT REMADE 10-27: groundall - rocks the scatters/randomizer left off a slope or edge (CIGroundIslands): taken away by their
+# bounds centre (the report's point; "body", as a rock's pivot can stand a metre or more off it)
+clear at -3.96 46.72 r=0.5 all body only=SmallBoulder2
+clear at -33.57 46.76 r=0.5 all body only=SmallBoulder2
+clear at -37.04 6.51 r=0.5 all body only=SmallBoulder2
+clear at -39.55 -1.47 r=0.5 all body only=SmallBoulder2
+clear at -40.32 39.01 r=0.5 all body only=SmallBoulder2
+clear at -44.67 43.51 r=0.5 all body only=SmallBoulder2
+clear at -46.39 39.40 r=0.5 all body only=SmallBoulder2
+clear at -9.83 41.36 r=0.5 all body only=SmallBoulder2
+clear at 4.20 -47.26 r=0.5 all body only=SmallBoulder2
+clear at 7.73 -44.01 r=0.5 all body only=SmallBoulder2
+
+save Tangaroa Remade

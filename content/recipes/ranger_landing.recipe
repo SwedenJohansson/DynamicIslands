@@ -1,0 +1,372 @@
+# Ranger Landing - the second island of the library's plan The Last Green World (SL11, Verdance)
+# The rangers' forward camp on Verdance's shore: a watch station on stilts over the beach, a hen run, a drying rack and
+# a fire pit; a trail of footprints and broken bushes leads into the birch wood to the rangers' boat shed. Ranger Oda
+# Fenn left her jobs on the board. Quest "The Forgotten Shore" (6 steps): the station, Oda's job board, the trail
+# (three marks in order - each shows the next), the motor wheel and steering wheel plans in the boat shed, Ranger log 3.
+#
+# Built by the recipe player (CIRecipe ranger_landing) through the editor's own operations. Points (metres over the
+# sea): the station pad at 1.4 m round -10 -24 (the stilt hut x -12..-7.5, z -26..-21.5, deck 2.6 m over the pad), the
+# fire pit -2 -18, the trail marks -6 -6, 4 4, -2 14, the boat shed x -5..-0.5, z 18..21.
+# (11-08 w02: a straight cave under the training hill and its tower - the rangers' cache den, its cache hatch opened by
+# Ranger Maya at the camp; Ranger Maya by the fire pit, leaning on a crate)
+include lib_sea
+include lib_features
+include lib_huts
+include lib_gravity
+include lib_verdance
+include lib_ni7a
+include lib_ni8
+include lib_caves
+# RESIZE 10-24: Radius 46 -> 85 (Height 12 -> 12), the old content moved 0 -21.5 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+new
+# RESIZE 10-24 rework: the bigger island was a wide bare sand plain - now wooded hills at Raft's density, the quest
+# spread out over it (x z * 1.8 in the old frame; the station still on the beach)
+gen Trees=0.28 Bushes=0.3 Rocks=0.35 Harvest=0.3 BeachThings=0.4
+gen Seed=11021 Radius=85 Height=14 Roughness=0.4 Peaks=2 Shape=0 Style=0 PeakShape=0.4 Cliffs=0.2 BeachWidth=0.22
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.3 Sunken=0.2 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+push at 0 -21.5
+
+# --- Terrain: the station pad, the camp, the trail and the boat shed's pad -------------------------------------------
+brush flatten at -17.55 -42.75 r=5 s=20 frames=200 h=1.4
+brush flatten from -16.2 -36 to 7.2 -36 r=5 s=20 frames=120 h=1.4
+pop
+# (FLOAT 11-09: wider and firmer - the camp's tent at 12.8 30.4 stood 0.6 m off the slope at one corner)
+brush flatten at 11.3 29.6 r=6.5 s=20 frames=120
+origin
+clear at 9.8 28.4 r=6
+push at 0 -21.5
+clear at -17.55 -42.75 r=5
+clear from -16.2 -34.2 to 10.8 -34.2 r=4
+
+# --- The watch station on stilts: Oda's job board on its deck; the camp below ----------------------------------------
+push at -21.6 -46.8 h=1.4
+call stilt_hut y=2.6
+place Note_Sign jobboard at 2.25 3.9 y=2.7 sit
+place "Box Small" - at 3.6 1.2 y=2.7 sit
+# (REACH 10-28: from 3.4 it lay inside the box - dropped from over it)
+place Note_Paper rangerlog2 at 3.6 1.2 y=4.0 drop yaw=20
+pop
+place Zone_Trigger stationzone at -17.1 -36 ground
+place campfire_1 - at -3.6 -32.4 ground sit
+place Log - at -3.6 -28.8 ground sit yaw=90 scale=0.4
+place UT_MarketBasket01 - at 1.8 -37.8 ground sit yaw=40
+place Creature_Chicken hens at 9 -34.2 ground
+prop hens creature.count=3
+
+
+# --- Gathering; the shallows ---------------------------------------------------------------------------------------
+call shallows x=0 z=21.5 r=107 deep=5 n=1 seed=11024
+pop
+
+# --- AREAS 10-24 (explore rule: no dead space, the quest crosses the island) ----------------------------------------
+#     South beach: the station and the camp. West: the old watchtower's ruins on a knoll (the split stone, mark 1).
+#     North-west: a ridge with a bear cave under it (the bent birch, mark 2; a ranger's stash inside). North beach: the
+#     boat shed (the shed path, mark 3; the plans and Ranger log 3). East: a crashed plane under a hill with a view, the
+#     excavator in the wood. Secrets: a cache under a hatch, dirt spots, the cave stash, the Seedkeepers' camp.
+clear at -46 -10 r=17
+brush raise at -46 -10 r=16 s=20 frames=6
+brush flatten at -46 -10 r=9 s=20 frames=80
+clear from -56 40 to -24 56 r=16
+brush raise from -56 40 to -24 56 r=14 s=20 frames=12
+clear at 46 6 r=16
+brush raise at 46 6 r=15 s=20 frames=6
+brush smooth at 46 6 r=15 s=6 frames=10
+call ni8cave x=-38 z=33 h=5 yaw=180 al=bearcave
+# (11-09 w02, REACH: the low ground before the bear cave ended at a 1.1 m step at x -30 - whoever came down the
+# bank by the bent birch found no way back out: a ramp up it to the east)
+for i 0 3 1
+brush flatten at {-31.5+1.3*$i} 6 r=2 s=20 frames=150 h={3.9+0.37*$i}
+next
+brush smooth from -33 6 to -25 6 r=2.6 s=10 frames=20
+brush flatten at 52 -28 r=12 s=20 frames=300 h=4.1
+clear at 52 -28 r=11
+brush flatten at 30 -48 r=7 s=20 frames=60
+clear at 30 -48 r=7
+brush flatten at 8.25 69.5 r=6 s=20 frames=200 h=2.6
+clear at 8.25 69.5 r=7
+for ga 0 315 45
+brush grass at {48*cos($ga)} {48*sin($ga)} r=20 s=20 frames=20
+next
+brush grass at 0 0 r=30 s=20 frames=20
+
+# the old watchtower's ruins (mark 1: the split stone in the middle)
+# (11-09 w02, REACH: the fox den's hill comes down over the knoll at 13-18 m - the ruins' floor at 9 m lay under it, the
+#     crate and mark 1 shut in; the knoll's top is up at 14.5 m now, over the hill's foot, the hill's slope runs onto it)
+# (11-10 w02: the den's dome is capped now (cave.dome) and its hill no longer reaches the knoll - left at 14.5 m the knoll
+#     stood 7 m over the ground round it, sheer: back down to the ruins' own floor)
+brush smooth at -45.5 -11 r=10.5 s=6 frames=10
+call ringwall x=-46 z=-10 r=7 a0=20 da=45 n=6 len=5 hgt=3
+place SmallBoulder2 splitstone at -46 -10 ground sit y=-0.4 scale=0.35 yaw=40
+place Zone_Trigger track1 at -46 -10 ground
+# the bear cave (mark 2: the bent birch in front of it); the ranger's stash inside
+place "Pickup_Landmark_Tree_Birch" bentbirch at -33 13 ground sit y=-0.85 roll=14
+place Zone_Trigger track2 at -37 13 ground
+place Loot_ChestSmall dcavechest at -35.5 28 h=5.45 sit yaw=200
+place Placeable_Lantern_Metal - at -40.6 29 h=5.45 sit
+# the boat shed on the north beach (mark 3: the shed path)
+place Zone_Trigger track3 at 2 58 ground
+# (11-10 w02, REACH: the slope in front of the south door stands 1.3-1.5 m over the shed's floor - no way in; the shed turned
+#     round on its own spot, the door on the beach side now, where the sand is level with the floor)
+push at 10.5 71 h=2.6 yaw=180
+call hut w=3 d=2 y=0.1
+place Loot_Chest boatshed at 3.6 2.3 y=0.1 sit yaw=180
+place "Box Small" - at 0.8 2.3 y=0.1 sit
+# (REACH 11-09: on the box in the corner no spot could read it - on the floor by the box now)
+# (11-10 w02: no spot inside the shed was reached - just inside the door now, read from the beach through it)
+# (11-10 w02 k9: just inside, the shut door hid it from every spot on the beach - out on the sand by the door now)
+place Note_Paper rangerlog3 at 1.6 -1.3 ground y=0.3 drop yaw=10
+pop
+# REDO 10-24: the slipway winch (the island's machine): its crank, chain and pawl lie in three zones (bear cave, plane,
+# west ruins); the winch hauls the shed door up, and the shed chest shows
+clear at 11 64 r=1.5
+call crank x=11 z=64 yaw=270 alias=winch
+place Loot_ChestSmall dpawlchest at -43.5 -11.5 ground sit yaw=80
+# the broken-bush trail: station - ruins - cave - shed
+call trailbush x=-28 z=-46 yaw=20
+call trailbush x=-40 z=-28 yaw=80
+call trailbush x=-43 z=2 yaw=140
+call trailbush x=-22 z=28 yaw=200
+call trailbush x=-8 z=44 yaw=10
+# the crashed plane under the east hill; the excavator in the east wood; the view from the hill
+place Airplane dplane at 52 -28 h=5.4 rot=4,200,-9 scale=0.8
+place WingBroken - at 49.7 -19.7 ground sit yaw=240
+place BackWingBroken - at 57.6 -18.3 ground sit yaw=310
+place Loot_ChestSmall dwreckchest at 44 -21 ground sit yaw=317
+place VP_Excavator dvan at 30 -48 ground yaw=60
+prop dvan tint.color=#7a6a3a
+prop dvan tint.amount=0.5
+place Zone_Trigger dview at 46 6 ground
+# no metal detector yet (it comes later in the storyline): dirt spots for the shovel instead of a buried treasure
+call dirt x=-58 z=-36 r=10 n=3 seed=11112
+call dirt x=20 z=-20 r=12 n=2 seed=11022
+scatter "Pickup_Landmark_Tree_Birch" 8 at -10 40 r=22 seed=11023 free=4
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; VP_Excavator + chest; hatch cache; dirt spots; viewpoint ---
+place campfire_1 - at 9.8 28.4 ground sit
+place "Box Small" - at 7.8 30.9 ground sit
+place Note_Paper dnote at 7.8 30.9 ground y=1.6 drop yaw=20
+note dnote Seedkeeper's note | SAMPLE RUN - BIRCH WOOD - A. (root gate crew, on loan)\n\nJars 1 to 12 filled. Pollen counts ten times last year's, and Teodor wrote PERFECT next to the number and underlined it twice.\n\nThe vines grew over the trail behind us in one night. Not slowly, the way vines are supposed to. I heard them. A soft sound, like someone turning the pages of a big book.\n\nWe go back by the beach. Jonas packed us honey sandwiches and a note: "Do not let Aki eat the samples." I have eaten one sample, once, a year ago, and I will never hear the end of it.\n\nThe ranger was right about the hunger. I will not tell Teodor that. He gets a look.
+note dwreckchest Pilot's locker | The plane's locker, thrown clear in the crash: plank, rope and a few seeds.
+loot dwreckchest Plank*4;Rope*2;Seed_Pineapple*1;story:winchpart*1
+prop dwreckchest loot.refill=0
+# no machete yet in this storyline (it comes on Riverfork Delta / Steamvent Harbour): a hatch, not vines
+brush flatten at 28 -12 r=3 s=20 frames=60
+clear at 28 -12 r=2.5
+place TangaroaHatchRoom_Hatch dhatch at 28 -12 ground
+prop dhatch obj.name=dhatch
+prop dhatch on.use=hide|\nshow|dhatchchest\nmessage||The hatch lifts on a dark hole. A chest was stowed in it.
+beside Loot_ChestSmall dhatchchest dhatch d=0.01
+prop dhatchchest obj.name=dhatchchest
+prop dhatchchest note.title=Under the hatch
+prop dhatchchest beh.hidden=1
+loot dhatchchest Rope*3;Nail*10;Leather*2
+note dcavechest Ranger's stash | Oda's spare kit, kept dry in the bear cave: rope, scrap and a few nails.
+loot dcavechest Rope*2;Nail*8;Scrap*3;story:winchpart*1
+prop dcavechest loot.refill=0
+prop dview zone.id=ranger_landing_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=From the hill: the stilt station on the beach, the old tower's ruins on the knoll, the ridge and its cave, and the boat shed by the water.
+
+# --- FILL 10-24 (RESIZE rework): the bigger island's whole area at Raft-like density - trees, bushes, rocks; free= keeps them
+#     off the quest's objects and paths
+scatter "Pickup_Landmark_Tree_Palm 1" 10 at 0 0 r=74 seed=11291 free=5
+scatter "Pickup_Landmark_Tree_Palm 2" 10 at 0 0 r=74 seed=11292 free=5
+scatter "Pickup_Landmark_Tree_Palm 4" 6 at 0 0 r=74 seed=11293 free=5
+scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=74 seed=11294 free=5
+scatter "Balboa_Bush_01 Variant" 30 at 0 0 r=74 seed=11295 free=2.5
+scatter "Balboa_Bush_03 Variant" 30 at 0 0 r=74 seed=11296 free=2.5
+scatter CaravanIsland_SmallRock_1 14 at 0 0 r=74 seed=11297 free=3 ground y=-0.6
+scatter "Pickup_Landmark_PineappleLandmark" 6 at 0 0 r=74 seed=11298 free=3
+scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=74 seed=11299 free=2
+
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): Oda's training hill and tower (climb), the sunk slipway van (dive), Oda's tool rack, the fox den
+# the climb: a mountain (trail winding up from bearing 200), a 8-storey climbing tower on its top, the summit box
+call vd_mount x=40 z=34 top=24 r=22 a0=200 turns=1.25 hb=3
+call vd_tower x=40 z=34 h0=24 lv=8 a=rltw box=rlbox zal=rltopz zid=rl_top msg="Oda's training tower. Chalk marks on the rail: 41 s, 38 s, 36 s - her climbing times."
+note rlbox Training tower box | ODA - TRAINING. Up the hill trail, up the tower, touch the flag, down. My saw lives up here so I have a reason to climb.
+loot rlbox story:tool*1;Rope*2;Plank*4
+# the dive: Van_1 on the sea floor 10 m down, its crate, an air pocket
+call vd_dive x=14 z=92 h=-10 yaw=90 obj="Van_1" al=rlwreck crate=rlcrate zal=rlwz zid=rl_wreck msg="The slipway's van rolled off the ramp and down. Its back doors hang open." air=rlair bub=rlbub
+note rlcrate Slipway van's toolbox | Oda's van, ten metres down, its back doors open like a mouth. In the glovebox, under a bag of mints that went to paste years ago, a card in Oda's hand: "Van parked on the slipway. Handbrake ON. If it rolls, it was Jonas." The handbrake is on. Something pulled the van down the ramp from the front - the bumper is wrapped in green rope that is not rope.
+loot rlcrate Bolt*4;Scrap*3;Rope*2
+# (11-09 w02, REACH: the bear cave's hill slopes over this spot at 12.4 m - the chest at 5 m was shut in under it; a
+#     quarry shelf cut level into the slope, over the hill's skin - ground shows only 0.6 m or more over it)
+# (11-10 w02: the shelf was terrain, and the hill's skin lies over the terrain there (13.2 m) - the chest sat under it at
+#     10 m. On the skin now; the terrain under a skin is never seen)
+# (11-11 w02fix, CIFloating: the editor builds no skin, so on it the chest "touched nothing" 8 m over the terrain (5 m); a
+#     drop fell through to the terrain; a terrain post under it bent the skin down and showed through it as a patch.
+#     The chest sits on a plank (lying along the hill, x): in the editor the two touch each other; in a world the skin
+#     (13.5 at z 59 - 14.2 at z 58) covers the plank and the chest stands on it
+place FL_Plank3 rlqplank at -30.3 58.7 h=13.66 yaw=0
+place Loot_ChestSmall rlquarry at -30.3 58.7 h=13.68 sit yaw=0
+note rlquarry Quarry tool chest | Oda's hammer, left where the stone was split. A chalk note: RACK. YES I KNOW.
+loot rlquarry story:tool*1;Stone*6;Nail*6
+prop rlquarry loot.refill=0
+# Oda's tool rack by the station (RAFT_QUEST_MECHANICS SL11 2, Bruno's rack): three tools back -> her postcard
+place CaravanWorkbench_Tools toolrack at -15 -64 ground sit yaw=160
+place Loot_ChestSmall odacard at -13.2 -65.6 ground sit yaw=160
+call ni8cave x=-60 z=10 h=2 yaw=180 al=rlfoxcave
+# (11-10 w02: cave.dome caps its dome - the dens' domes reached 40-60 m over the island's camps and sheds)
+prop rlfoxcave cave.dome=20
+# (11-09 w02, REACH: the den's way in ended at z=-17 against the hill's 7.5 m skin - in, no way out; a ramp up the way in
+#     to the skin's height - ground lower than the skin is covered by it, so the ramp's top stands just over it)
+for i 0 8 1
+brush flatten at -59.5 {-8-1.25*$i} r=3 s=20 frames=250 h={2.5+0.72*$i}
+next
+brush flatten at -59.5 -19.5 r=3 s=20 frames=250 h=7.8
+brush smooth from -59.5 -8 to -59.5 -20 r=3 s=6 frames=8
+place Loot_ChestSmall rlfoxcavebox at -57.5 5 h=2.45 sit yaw=200
+place Placeable_Lantern_Metal - at -62.6 6 h=2.45 sit
+note rlfoxcavebox Fox den stash | A den dug under the hill, and in it a ranger's lost satchel - and Oda's wrench, the one stamped ODA. The fox took it for the shine. A chalk line on the den wall: FOX 1, ODA 0.
+loot rlfoxcavebox story:tool*1;Leather*2;Rope*2;Seed_Pine*1
+prop rlfoxcavebox loot.refill=0
+place Creature_Goat rlgoats at 30 20 ground
+prop rlgoats creature.count=2
+call treasure x=55 z=-38 r=8 n=1 seed=11280 kind=0
+prop treasure11280 treasure.loot=Scrap*6;Bolt*3;Nail*10
+
+# --- STORY 10-24: Teodor's radio log at the rack, Jonas on the hens, Oda's training log at the summit
+beside Note_Paper teodorradio toolrack d=1.4
+note teodorradio Radio log: Heart lab | RADIO LOG - STATION COPY - heard on the lab band, written down by O.F.\n\nTEODOR (Heart lab): "...counts are up again along the coast, Oda. That is good news. That is life coming back."\nME: "It is coming back over my slipway."\nTEODOR: "Vines are only hungry. Hunger is a kind of hope. The river was dead when I came here, do you remember? Brown foam on every stone. Now look."\nME: "I am looking. The deer are gone."\nTEODOR: "The deer will adjust."\n\nThen he asked, very politely, whether anyone new had come ashore on the spit. Not Marit, not Jonas - anyone. A stranger. He asked twice.\n\nI said no. He said "Soon, then," and signed off.\n\nI wrote it down because it was strange. I am still not sure why it was strange.
+place Note_Paper jonashens at 7 -53.5 ground y=0.3 drop
+note jonashens Note on the hen run | HENS - A GUIDE, by Jonas Brandt, cook\n\nThe brown one is Pancake. The white one is Admiral. The speckled one has no name because she bit me and she knows what she did.\n\nOne handful of seeds in the morning. Not two. Oda gives them two and then says I spoil them.\n\nIf the eggs taste sweet, do not eat them, bring them to the lab. Teodor wants every sweet egg. He says it is very exciting. I say an egg should taste like an egg.\n\nI am taking honey to the Heart. If anybody needs me I am the man with the bees following him.\n\n- J.
+place Note_Paper odatrain at 43 30.5 h=24.3 drop
+note odatrain Oda's training log | TRAINING LOG - O. FENN\n\nMonday: 41 s. Wind.\nTuesday: 38 s. No wind. Shouted at a gull.\nWednesday: 36 s. Best ever. Nobody saw.\n\nMarit used to beat me up here every time. She climbs like the ladder owes her money. When she went up to the Heart lab to hang Teodor's sample lines from the balconies, I built this tower so I would not get slow while she was gone.\n\nFrom the flag you can see the river mouth and on a clear day the brown smudge of the delta's ferry. No smudge today. No smoke from the delta either.\n\nI will go and look tomorrow. Today I will beat 36.
+
+# --- Settings, notes, behaviours, quest ----------------------------------------------------------------------------
+info title=Ranger Landing
+info author=Custom Islands
+info description=The rangers' forward camp on Verdance's shore: a watch station on stilts, a hen run, a fire pit and a trail into the birch wood. The second island of The Last Green World.
+# (REACH 11-09: the tower tops are ladder climbs the 1x walker can't judge - the play climbs them)
+island reach.byplay=Training tower box;rl_top
+island on.arrive=message||A watch station on stilts over the beach, hens scratching under it. Smoke from a fire pit - still warm.
+
+note jobboard Oda's job board | RANGER STATION - JOBS\n\n1. Follow the trail to the boat shed. Three marks: the split stone, the bent birch, the shed path. Walk them in order or you lose it.\n2. The shed winch is stripped - I hid its parts from the scavengers: the crank in the bear cave, the chain with the plane, the pawl in the old tower's ruins. Fit them and the door goes up. The boat's wheels are in the shed. Take them, and my stores key. A raft with a motor goes where the rivers go.\n3. Read my log before you go upriver.\n\n- Oda Fenn, ranger
+note rangerlog2 Ranger log 2 | RANGER LOG 2 - O. FENN\n\nThe hens are laying again, which makes one of us. The deer did not come to the salt lick. Nothing comes out of the birch wood any more except the wind, and the wind smells sweet, like a greenhouse with the door shut.\n\nMarit wrote from the Heart lab. My sister has always had nicer handwriting than me and worse news. Teodor has stopped coming to meals. He sleeps in the lab, next to his sample tanks, and talks to them. Jonas says it is fine, all scientists talk to their tanks. Jonas says everything is fine; that is his job.\n\nI asked Marit to come down to the coast for a week. She said: "Who would hold the ropes?"\n\nTraining course today: 36 seconds. Getting old is a choice. I refuse it.
+note rangerlog3 Ranger log 3 | RANGER LOG 3 - O. FENN\n\nThe delta's river people have not answered in six days. Fourteen of them, and a ferry, and children who steal my apples. Six days of nothing on 800.\n\nI am going upriver. The machete plans are at their outpost - the vines grow back faster every week, and last night they grew over the slipway while I slept beside it.\n\nIf you read this, you followed my trail, fixed my winch and put my tools back where they live. Thank you. Nobody has done that for me since Marit was twelve.\n\nTake the boat's wheels. Take my stores key - the ranger lockers upriver open with it. Feed the hens if you pass this way again.\n\nRiverfork Delta, across the water from here. The band is 800. I will leave a light at the outpost.\n\n- Oda
+note boatshed Ranger boat shed | The rangers' boat shed: the motor wheel's and the steering wheel's plans, oiled and rolled.
+loot boatshed Blueprint_MotorWheel*1;Blueprint_SteeringWheel*1;Bolt*3;Hinge*2;story:rangerkey*1
+prop boatshed loot.refill=0
+prop boatshed obj.name=boatshed
+prop boatshed beh.hidden=1
+note dpawlchest Ruin crate | A crate in the old ruins, a ranger's tag on it: WINCH - SPARE PAWL.
+loot dpawlchest story:winchpart*1;Nail*4
+prop dpawlchest loot.refill=0
+story winchpart|Winch part|Placeable_Lantern_Metal|A piece of the boat shed's slipway winch: a crank, a chain or a pawl.
+story winch|Shed winch|Placeable_Lantern_Metal|The slipway winch runs again; the shed door is up.
+story rangerkey|Oda's ranger key|Placeable_Lantern_Metal|Oda's key on a leather tag: RANGER - STORES. Keep it; the rangers' locks upriver take it.
+prop winch beh.use=Fit the parts to the winch
+prop winch if.use=quest|4\ntake|story:winchpart|3
+prop winch on.use=message||Crank, chain, pawl. The winch catches and the shed door grinds up.\ngive||story:winch*1\nshow|boatshed
+prop winch else.use=message||The winch is stripped: no crank, no chain, no pawl. Oda's board says where the parts went.
+
+prop stationzone zone.id=station
+prop stationzone zone.radius=6
+prop stationzone zone.message=The ranger station. A job board on the deck, and nobody home.
+prop track1 zone.id=track_1
+prop track1 zone.radius=3
+prop track1 on.enter=show|track2\nmessage||The split stone - a boot print on the moss beside it. On to the bent birch.
+prop track2 obj.name=track2
+prop track2 beh.hidden=1
+prop track2 zone.id=track_2
+prop track2 zone.radius=3
+prop track2 on.enter=show|track3\nmessage||The bent birch, a ribbon tied round it. The path to the boat shed goes on from here.
+prop track3 obj.name=track3
+prop track3 beh.hidden=1
+prop track3 zone.id=track_3
+prop track3 zone.radius=3
+prop track3 zone.message=The shed path. A boat shed under the birches.
+
+# DEEP 10-24 settings
+story tool|Oda's tool|Placeable_Lantern_Metal|One of Oda's three tools from the station's rack: a saw, a wrench or a hammer.
+story rack|Tool rack|Placeable_Lantern_Metal|Oda's tools hang on her rack again.
+prop toolrack obj.name=toolrack
+prop toolrack beh.use=Hang the tools
+prop toolrack if.use=quest|9\ntake|story:tool|3
+prop toolrack on.use=give||story:rack*1\nshow|odacard\nmessage||Saw, wrench, hammer - each on its painted outline. Behind the last outline a drawer slides out.
+prop toolrack else.use=message||A tool rack with three painted outlines: a saw, a wrench, a hammer. All empty. Oda left them all over her course.
+prop odacard obj.name=odacard
+prop odacard beh.hidden=1
+note odacard Oda's postcard | A postcard of a thorny ridge with smoke on a ledge. On the back: "If the river goes wrong, the old man on Thornback knows the way. - O."
+loot odacard Rope*2;Coconut*2
+prop odacard loot.refill=0
+quest title=The Forgotten Shore
+quest intro=A ranger station, empty, and a trail into the wood. Make for the tall training tower, then find the stilt station on the beach.
+step reach|station|1|Go to the stilt ranger station on the beach
+step read|Oda's job board|1|Read Oda's job board
+step reach|track_3|1|Follow the trail: the split stone, the bent birch, the shed path
+step collect|story:winchpart|3|Find the winch's three parts in chests: bear cave, plane wreck, old tower ruins
+step collect|story:winch|1|Fit the three parts to the slipway winch at the boat shed
+step blueprint|Blueprint_MotorWheel|1|Take the motor wheel plans from the boat shed
+step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel plans from the boat shed
+step reach|rl_top|1|Climb Oda's training hill and tower to the flag
+step collect|story:tool|3|Find Oda's three tools: in the tower box, the fox den under the hill and a quarry chest
+step collect|story:rack|1|Hang the tools back on the rack by the station
+step read|Ranger log 3|1|Read Ranger log 3
+quest done=Oda went upriver. The delta's band is 800.
+quest reward=Seed_Birch*2;Seed_Pine*2
+
+# --- 11-08 (w02): the ranger cache under the lookout; Ranger Maya at the camp -----------------------------------------
+# A straight cave (kit_st) into the training hill's west foot, under the tower (the lookout), to a den: the rangers' cache.
+# Its chest lies under a steel hatch in the den's floor, locked until someone talked to Ranger Maya (talked gate); her
+# second answer opens it too. Not the old dens: the bear cave and the fox den keep their quest chests; this den is 70 m
+# from both. No rats here. cavecheck: 6 m from the tower, its box and ladders, the goats and the camp's things.
+# (CC 11-09: the walk out stuck under the mouth's lip - the ground outside rose to 6.9 m 4 m out, the head hit the rock at
+# 8.4: an apron at the den floor's 4.9 m runs out of the mouth, then eases up to the camp)
+brush flatten from 12.3 37.5 to 13.4 33.4 r=2.6 s=20 frames=120 h=4.9
+brush smooth from 13.4 33.4 to 13.6 31.6 r=2.5 s=10 frames=20
+# (11-09 w02: the apron's ease-up ran under the camp's tent, 0.8 m off the slope at one corner - the tent 1.8 m south,
+#     on its own flat pad, laid after the apron)
+brush flatten at 12.5 28.6 r=2.6 s=20 frames=150 h=7.2
+place Balboa_DecorationPrefabBase_SimpleTent - at 12.5 28.6 ground sit yaw=257
+call kit_st x=12 z=38 yaw=60 len=16 size=0.7 dirt=3 mush=2 stone=0 vines=0 as=rlcache
+# (11-10 w02: its den's dome buried the boat shed 30 m off; cave.dome caps it)
+prop rlcache cave.dome=20
+# cavecheck inside rlcachedoor rlcachechest
+# (den floor = the mouth's ground, ~4.9 m over the sea (slope 0; from the saved island's heightmap): set down from 6.5 m)
+place TangaroaHatchRoom_Hatch rlcachedoor at 38.2 53.1 h=6.5 drop yaw=240
+prop rlcachedoor obj.name=rlcachedoor
+prop rlcachedoor beh.use=Open the cache hatch
+prop rlcachedoor if.use=talked|Ranger Maya
+prop rlcachedoor on.use=hide|rlcachedoor\nshow|rlcachechest\nmessage||The hatch swings up on the rangers' cache - a chest stowed in the rock.
+prop rlcachedoor else.use=message||The cache door is locked. Ask the ranger at the camp.
+place Loot_ChestSmall rlcachechest at 39.3 53.75 h=6.5 drop yaw=240
+prop rlcachechest obj.name=rlcachechest
+prop rlcachechest beh.hidden=1
+prop rlcachechest loot.refill=0
+note rlcachechest Ranger cache | The rangers' cache under the training hill: dry rope, nails, a lamp's battery and seeds for the burnt ground.
+loot rlcachechest Rope*3;Nail*10;Battery*1;Seed_Birch*1;Seed_Pine*1
+# Ranger Maya by the fire pit, leaning on a crate (a leaner needs something at her back), facing the fire; 6 m and more
+# from the station's zone, the job board and the tool rack
+place Crate_Big_01 - at -0.1 -45.6 ground sit yaw=20
+place Story_Islander rlmaya at -0.5 -46.6 ground yaw=203
+prop rlmaya obj.name=Ranger Maya
+prop rlmaya islander.character=Maya
+prop rlmaya islander.pose=lean
+prop rlmaya talk.text=The green is dying from the mire outward. Start at the delta - the river carries everything.\n> What is in the mire?\n> Can I use the ranger cache?\n> I will manage.
+prop rlmaya on.choice1=journal|Ranger Maya: the mire|The mire's blight pools burn - green water that eats through boots and skin. Walk them only in a suit; it keeps the blight off.\nmessage||Maya writes it down for you: the blight pools burn, a suit protects.
+prop rlmaya on.choice2=hide|rlcachedoor\nshow|rlcachechest\nmessage||The cache is in the rock under the lookout.
+prop rlmaya on.choice3=message||Then go carefully. The river does not wait for anyone.
+
+# a fill rock that floated over the slope (ground check, 2026-10-24)
+clear at 10.56 15.27 r=1.5 only=CaravanIsland_SmallRock all
+# (box agent 10-25: names for the guide pictures' snap points)
+prop rltw obj.name=rltw
+prop rlwreck obj.name=rlwreck
+# (11-09 w02, REACH: under the north-west shore rocks the sea met a 0.7 m lip - a swimmer got in and not out: a
+# shelf up out of the water)
+brush flatten at -60.3 70.6 r=1.4 s=20 frames=150 h=-0.2
+brush flatten at -61.2 69.6 r=1.4 s=20 frames=150 h=0.3
+brush smooth from -59.8 71.1 to -62.2 68.8 r=2 s=10 frames=12
+# (11-11 c1111, REACH: a 3x2 m pool at -50.8 73.8 (sea level, open sky) behind a 0.8 m lip - a swimmer got in, not out:
+# the pool filled up to a low shelf, the lip at its sea side let down)
+brush flatten at -50.8 73.8 r=2.2 s=20 frames=150 h=0.3
+brush flatten at -52.6 73.8 r=1.6 s=20 frames=150 h=0.2
+brush smooth from -49.5 73.8 to -53.5 73.8 r=2.2 s=10 frames=12
+# (11-11 w02fix, REACH: a roofed sea pocket under the same rocks at -56.5 69.6 (h -1.7..0) - its way out at -58 71 was a
+# 1.1 m step: a shelf from the pocket up to it)
+brush flatten at -57.5 70.4 r=1.2 s=20 frames=150 h=0.4
+brush smooth from -56.4 69.5 to -58.6 71.4 r=1.6 s=10 frames=12
+save Ranger Landing

@@ -1,0 +1,10 @@
+island Ranger Landing
+offset 0 0
+hour 11
+weather Calm
+at -58 4.5
+wait 3
+picture ov_fox -58 +40 0.5 -58 0 4.5
+at 8.2 68.9
+wait 3
+picture ov_shed 8.2 +40 64.9 8.2 0 68.9

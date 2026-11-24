@@ -23,12 +23,26 @@ namespace DynamicIslands.Editor
 		/// <summary>Editing the island's own rules instead of a plan.</summary>
 		bool islandMode;
 		Text titleText, problemsText, planNameText;
-		Button randomButton, planButton, newButton, copyButton, deleteButton, exportButton, importButton, storyButton;
+		Button randomButton, planButton, newButton, copyButton, deleteButton, exportButton, importButton, storyButton, previewButton, progressButton;
 		readonly Dictionary<string, Button> storyIslandButtons = new Dictionary<string, Button>();
 		InputField descriptionField;
 		Text randomNote, rulesIntro;
 		Button helpButton, shareHelp;
 		RectTransform planRow, settingsRow, storyRow, rulesList, map;
+		// (TODO 5b P3: a plan's three tabs - its Main story line, its other islands, its settings)
+		public const int TabStory = 0, TabOther = 1, TabSettings = 2;
+		int tab;
+		Button[] tabButtons;
+		RectTransform tabsRow, settingsBox, body;
+		Button addRuleButton, templatesButton;
+		/// <summary>The cards shown, by the index of their rule in the plan.</summary>
+		readonly Dictionary<int, RectTransform> cardOf = new Dictionary<int, RectTransform>();
+
+		/// <summary>The tab shown (tests).</summary>
+		public static int Tab { get { return instance != null ? instance.tab : -1; } }
+
+		/// <summary>Shows one of the plan's tabs (TabStory, TabOther, TabSettings).</summary>
+		public static void ShowTab(int t) { if (instance != null && instance.plan != null) instance.SelectTab(t); }
 		readonly List<InputField> fields = new List<InputField>();
 
 		public static void Create(Transform canvas)
@@ -50,8 +64,78 @@ namespace DynamicIslands.Editor
 			instance.islandMode = false;
 			string pick = name ?? lastPlan ?? WorldPlan.All().FirstOrDefault(n => !WorldPlan.IsBuiltIn(n));
 			WorldPlan p = pick != null ? WorldPlan.Load(pick) : null;
-			if (p == null || p.BuiltIn) { EnsureSamples(); p = WorldPlan.Load(WorldPlan.All().FirstOrDefault(n => !WorldPlan.IsBuiltIn(n)) ?? "") ?? NewPlan("My plan"); }
+			if (p == null || p.BuiltIn) { p = WorldPlan.Load(WorldPlan.All().FirstOrDefault(n => !WorldPlan.IsBuiltIn(n)) ?? "") ?? NewPlan("My plan"); }
 			instance.Show(p);
+		}
+
+		/// <summary>Opens the plan editor on this plan as it is (back from Preview notebook: unsaved changes kept).</summary>
+		public static void OpenWith(WorldPlan p)
+		{
+			if (instance == null || p == null) return;
+			instance.islandMode = false;
+			instance.Show(p);
+		}
+
+		/// <summary>Raft's tab colours for the helper's lists.</summary>
+		public static IList<DropList.Option> TabColourChoices { get { return TabColourOptions; } }
+
+		/// <summary>The "New main story..." helper's islands as rule cards (after the plan's own), then Check.</summary>
+		public static void AddFromHelper(bool raftStory, List<IntroRule> rules)
+		{
+			if (instance == null || instance.plan == null) return;
+			instance.Keep();
+			instance.plan.RaftStory = raftStory;
+			instance.plan.Rules.AddRange(rules);
+			instance.ShowRandom();
+			instance.tab = TabStory;
+			instance.ShowTabParts();
+			instance.ShowRules();
+			instance.Check();
+			instance.problemsText.text = rules.Count + " main story card(s) made. Look them over (NOTEBOOK: tab title and intro), then Preview notebook. " + instance.problemsText.text;
+		}
+
+		Button testButton;
+
+		/// <summary>Test this plan (ROADMAP T2b): the plan saved, then a new test world with it.</summary>
+		void TestPlan()
+		{
+			if (islandMode) return;
+			Keep();
+			try { plan.Save(); MarkSaved(); }
+			catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
+			string name = plan.Name;
+			Close();
+			IslandTest.StartPlan(name);
+		}
+
+		/// <summary>
+		/// A name for a new rule that no rule of the plan has had (ROADMAP AU24: "rule" + the count came back after a delete -
+		/// "rule3" again, already done in running worlds, so the new rule never came): the next number with a letter of its
+		/// own, e.g. "rule4k".
+		/// </summary>
+		internal static string NewRuleId(WorldPlan p)
+		{
+			var used = new HashSet<string>(p.Rules.Select(x => x.Id), StringComparer.OrdinalIgnoreCase);
+			const string letters = "abcdefghjkmnpqrstuvwxyz";
+			var rnd = new System.Random();
+			for (int tries = 0; tries < 100; tries++)
+			{
+				// (three letters: a deleted rule's name comes back about once in 12 000, not once in 23 - review 2026-10-06)
+				string id = "rule" + (p.Rules.Count + 1) + letters[rnd.Next(letters.Length)] + letters[rnd.Next(letters.Length)] + letters[rnd.Next(letters.Length)];
+				if (!used.Contains(id)) return id;
+			}
+			return "rule" + DateTime.Now.Ticks.ToString("x");
+		}
+
+		/// <summary>Preview notebook: the plan as it is now, in Raft's notebook in the test world.</summary>
+		void PreviewNotebook()
+		{
+			Keep();
+			if (!plan.Rules.Any(r => r.MainStory)) { problemsText.text = "Preview notebook: no island is in the main story yet - choose a place in the story (STORY) for at least one island."; return; }
+			WorldPlan p = WorldPlan.Parse(plan.Name, plan.ToText());
+			p.Description = plan.Description;
+			Close();
+			IslandTest.StartPreview(p);
 		}
 
 		/// <summary>Opens the window on the rules of the island being edited.</summary>
@@ -69,6 +153,7 @@ namespace DynamicIslands.Editor
 			DropList.Close();
 			// (its Check report belongs to it: left open, it stayed on the screen after World Plans closed)
 			PlanCheckWindow.Close();
+			PlanProgressWindow.Close();
 			instance.gameObject.SetActive(false);
 			EditorInput.IsTyping = false;
 		}
@@ -78,16 +163,18 @@ namespace DynamicIslands.Editor
 		void Show(WorldPlan p)
 		{
 			plan = p;
-			if (!islandMode) lastPlan = p.Name;
+			if (!islandMode) { lastPlan = p.Name; EditorEntry.RememberPlan(p.Name); }
 			gameObject.SetActive(true);
 			transform.SetAsLastSibling();
-			titleText.text = islandMode ? "ISLAND RULES" : "WORLD PLANS";
+			titleText.text = islandMode ? "ISLAND RULES" : "WORLD PLAN";
 			planRow.gameObject.SetActive(!islandMode);
-			settingsRow.gameObject.SetActive(!islandMode);
-			storyRow.gameObject.SetActive(!islandMode);
-			descriptionField.transform.parent.gameObject.SetActive(!islandMode);
+			// (a plan opens on its Main story line - or on its other islands when it has only those)
+			tab = islandMode ? TabOther : p.Rules.Count > 0 && !p.Rules.Any(r => r.MainStory) ? TabOther : TabStory;
+			ShowTabParts();
 			if (exportButton != null) { exportButton.gameObject.SetActive(!islandMode); importButton.gameObject.SetActive(!islandMode); shareHelp.gameObject.SetActive(!islandMode); }
-			planNameText.text = islandMode ? "Islands that '" + p.Name + "' brings into a world (saved with the island; \"self\" = this island)" : "";
+			if (previewButton != null) previewButton.gameObject.SetActive(!islandMode);
+			if (progressButton != null) progressButton.gameObject.SetActive(!islandMode);
+			planNameText.text = islandMode ? "Islands that '" + p.Name + "' brings into a world (saved with the island; \"self\" = this island). \"Quest done\" waits for the MAIN quest unless quest no. says 2, 3...; \"steps done\" counts the main quest's steps; a signal rule waits for a lever, generator... (\"signal name\")" : "";
 			UIKit.LabelOf(planButton).text = "Plan: " + p.Name + "  \u25BC";
 			descriptionField.text = p.Description;
 			ShowRandom();
@@ -95,6 +182,32 @@ namespace DynamicIslands.Editor
 			problemsText.text = "";
 			findings = null;
 			ownFacts = null;
+			MarkSaved();
+		}
+
+		/// <summary>What Esc compares: the plan as it was opened or last saved.</summary>
+		string savedPrint;
+
+		string Print() { return plan == null ? "" : plan.Name + "\n" + plan.Description + "\n" + plan.ToText(); }
+
+		void MarkSaved() { if (plan != null) { Keep(); savedPrint = Print(); } }
+
+		/// <summary>The plan (or the island's rules) changed since it was opened or saved (Esc asks before it closes).</summary>
+		public static bool Unsaved
+		{
+			get
+			{
+				if (!IsOpen || instance.plan == null) return false;
+				instance.Keep();
+				return instance.Print() != instance.savedPrint;
+			}
+		}
+
+		/// <summary>Save and close (Esc's question): closes only when the save worked.</summary>
+		void SaveAndClose()
+		{
+			Save();
+			if (!Unsaved) Close();
 		}
 
 		void ShowRandom()
@@ -128,6 +241,68 @@ namespace DynamicIslands.Editor
 			ShowRules();
 		}
 
+		#region The recipe player (the library's plans made in this window, step by step)
+
+		/// <summary>A new, empty plan in the window, as New... makes it (a plan saved under that name before is replaced).</summary>
+		public static void RecipeNew(string name)
+		{
+			if (instance == null) return;
+			instance.islandMode = false;
+			instance.Show(NewPlan(name));
+		}
+
+		/// <summary>The description typed into its field.</summary>
+		public static void RecipeDescription(string text)
+		{
+			if (instance == null) return;
+			instance.descriptionField.text = text;
+			instance.descriptionField.onEndEdit.Invoke(text);
+			instance.plan.Description = text;
+		}
+
+		/// <summary>"Random islands while sailing" clicked until it says on / off.</summary>
+		public static void RecipeRandom(bool on) { if (instance != null && instance.plan.Random != on) instance.randomButton.onClick.Invoke(); }
+
+		/// <summary>"Raft's story islands" clicked until it says on / off.</summary>
+		public static void RecipeStory(bool on) { if (instance != null && instance.plan.RaftStory != on) instance.storyButton.onClick.Invoke(); }
+
+		/// <summary>One of Raft's story islands clicked out of the plan's story (false: no such island in the story row).</summary>
+		public static bool RecipeLeaveOut(string key)
+		{
+			Button b = StoryIslandButton(key);
+			if (b == null) return false;
+			if (!instance.plan.LeaveOut.Contains(key)) b.onClick.Invoke();
+			return instance.plan.LeaveOut.Contains(key);
+		}
+
+		/// <summary>A rule as its card's fields are filled in (Add rule, then each field): one with the same id is replaced.</summary>
+		public static void RecipeRule(IntroRule r)
+		{
+			if (instance == null) return;
+			instance.Keep();
+			int at = instance.plan.Rules.FindIndex(x => x.Id.Equals(r.Id, StringComparison.OrdinalIgnoreCase));
+			if (at >= 0) instance.plan.Rules[at] = r; else instance.plan.Rules.Add(r);
+			instance.ShowRandom();
+			instance.ShowRules();
+		}
+
+		/// <summary>Save clicked (Check runs): the problems Check found, empty when there are none.</summary>
+		public static List<string> RecipeSave()
+		{
+			if (instance == null) return new List<string> { "the World plans window isn't there" };
+			instance.Save();
+			PlanCheckWindow.Close();
+			return (instance.findings ?? new List<PlanChecker.Finding>()).Where(f => f.Level == PlanChecker.Level.Problem).Select(f => f.Text).ToList();
+		}
+
+		/// <summary>The plan's Check report as text (warnings and tips too), for the recipe's log.</summary>
+		public static List<string> RecipeFindings()
+		{
+			return instance != null && instance.findings != null ? instance.findings.Select(f => f.Level + ": " + f.Text).ToList() : new List<string>();
+		}
+
+		#endregion
+
 		/// <summary>What Check showed last (tests read it).</summary>
 		public static string LastCheck { get; private set; }
 
@@ -137,22 +312,24 @@ namespace DynamicIslands.Editor
 
 		void Update()
 		{
-			if (ChoiceWindow.IsOpen || TextPromptWindow.IsOpen || InfoWindow.IsOpen || DropList.Busy || PlanCheckWindow.IsOpen) return;
+			if (ChoiceWindow.IsOpen || TextPromptWindow.IsOpen || InfoWindow.IsOpen || DropList.Busy || PlanCheckWindow.IsOpen || PlanProgressWindow.IsOpen || MainStoryHelper.IsOpen || EditorInput.SubWindowJustClosed) return;
 			EditorInput.IsTyping = fields.Any(f => f != null && f.isFocused);
-			if (Input.GetKeyDown(KeyCode.Escape)) Close();
+			if (EscKey.Down(this)) { if (Unsaved) EscKey.AskUnsaved(islandMode ? "The island's rules" : "The plan '" + plan.Name + "'", SaveAndClose, Close); else Close(); }
 		}
 
 		void OnDisable() { EditorInput.IsTyping = false; }
 
 		#region Building
 
+		const float BodyHeight = 460f, ButtonHeight = 30f, ButtonGap = 6f;
+
 		void Build()
 		{
 			RectTransform panel = UIKit.Panel(transform, "Panel", new RectOffset(16, 16, 14, 16), 8f);
 			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1200, 0));
 			RectTransform head = UIKit.Row(panel, 28f, 6f, "Head");
-			titleText = UIKit.Label(head, "WORLD PLANS", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
-			UIKit.Label(head, "Which islands a world gets, when and where. Choose a plan when creating a world (New Game) or with WorldPlan <name>", 12, UIKit.TextMuted, TextAnchor.MiddleRight);
+			titleText = UIKit.Label(head, "WORLD PLAN", 18, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
+			UIKit.Label(head, "Which of your islands come into a new world, when and where. Players choose a plan when they start a New Game.", 12, UIKit.TextMuted, TextAnchor.MiddleRight);
 			helpButton = UIKit.Button(head, "Help", ShowHelp, "How this window works: the steps to make a plan, and the guide", 80, 26f, 13);
 			helpButton.name = "HelpButton";
 			UIKit.Primary(helpButton);
@@ -160,20 +337,39 @@ namespace DynamicIslands.Editor
 
 			planRow = UIKit.Row(panel, 30f, 6f, "PlanRow");
 			planButton = UIKit.Button(planRow, "Plan", PickPlan, "Choose the plan to edit", 320, 30f, 13);
-			newButton = UIKit.Button(planRow, "New...", () => AskName("New plan", "A new, empty plan", "", n => Show(NewPlan(n))), "Start a new plan", 90, 30f, 12);
-			copyButton = UIKit.Button(planRow, "Copy...", () => AskName("Copy plan", "A copy of '" + plan.Name + "'", plan.Name + " copy", n => { Keep(); var c = WorldPlan.Parse(n, plan.ToText()); c.Save(); Show(c); }), "Save a copy under another name", 90, 30f, 12);
-			deleteButton = UIKit.Button(planRow, "Delete", DeletePlan, "Delete this plan (worlds that use it keep their islands; their rules stop)", 90, 30f, 12);
+			newButton = UIKit.Button(planRow, "New...", AskNewPlan, "Start a new world plan: empty, its Main story line step by step, from a template or as a copy", 90, 30f, 12);
+			UIKit.Button(planRow, "Open...", PickPlan, "Open another of your world plans", 90, 30f, 12);
+			copyButton = UIKit.Button(planRow, "Copy...", () => AskName("Copy plan", "A copy of '" + plan.Name + "'", plan.Name + " copy", n => { Keep(); var c = WorldPlan.Parse(n, plan.ToText()); c.Id = WorldPlan.NewId(); c.Save(); Show(c); }), "Save a copy under another name", 90, 30f, 12);
+			deleteButton = UIKit.Button(planRow, "Delete", DeletePlan, "Move this plan to the deleted\\plans folder (worlds that use it keep their own copy)", 90, 30f, 12);
 			UIKit.DangerButton(deleteButton);
 			HelpMark(planRow, HelpPlans);
 			UIKit.Size(UIKit.Label(planRow, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
-			UIKit.Button(planRow, "Templates...", PickTemplate, "Add a ready-made set of rules (story chain, treasure hunt...) to this plan", 120, 30f, 12);
+			templatesButton = UIKit.Button(planRow, "Templates...", PickTemplate, "Add a ready-made set of islands (a story chain, a treasure hunt...) to this plan", 120, 30f, 12);
 			HelpMark(planRow, HelpTemplates);
 
-			settingsRow = UIKit.Row(panel, 28f, 6f, "Settings");
+			tabButtons = UIKit.Tabs(panel, new[] { "Main story line", "Other islands", "Settings" }, new[]
+			{
+				"The islands the Receiver leads players to, one after the other, each with a tab in Raft's notebook",
+				"Islands that come on their own: at the start, after some km or days, when a quest is done, near another island...",
+				"Random islands while sailing, Raft's own story islands on or off, and the plan's description",
+			}, i => { Keep(); SelectTab(i); }, 30f, 14);
+			tabsRow = (RectTransform)tabButtons[0].transform.parent;
+			tabsRow.name = "PlanTabs";
+			tabButtons[TabStory].name = "Tab_Story";
+			tabButtons[TabOther].name = "Tab_Other";
+			tabButtons[TabSettings].name = "Tab_Settings";
+
+			// (the Settings tab: as tall as the list tabs, so the window keeps its size)
+			settingsBox = UIKit.Rect("SettingsTab", panel);
+			UIKit.Vertical(settingsBox.gameObject, 8f, new RectOffset(0, 0, 4, 0));
+			UIKit.Size(settingsBox.gameObject, -1, BodyHeight + 40f);
+			Text settingsWords = UIKit.Label(settingsBox, "How the whole world goes with this plan. The islands themselves are in the other two tabs.", 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Italic, "SettingsWords");
+			UIKit.Size(settingsWords.gameObject, -1, 22);
+			settingsRow = UIKit.Row(settingsBox, 28f, 6f, "Settings");
 			randomButton = UIKit.Button(settingsRow, "", () => { plan.Random = !plan.Random; ShowRandom(); }, "Also let islands from the spawn pool (spawnpool.txt) appear by chance while sailing, as in the \"Random islands\" plan", 330, 28f, 12);
 			HelpMark(settingsRow, HelpRandom);
 			randomNote = UIKit.Label(settingsRow, "", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "RandomNote");
-			storyRow = UIKit.Row(panel, 28f, 4f, "Story");
+			storyRow = UIKit.Row(settingsBox, 28f, 4f, "Story");
 			storyButton = UIKit.Button(storyRow, "", () => { Keep(); FlipStory(); }, "Raft's own story islands (Radio Tower ... Utopia, found with the Receiver) come in worlds with this plan. Off: only this plan's own islands - a completely new adventure", 210, 28f, 12);
 			storyButton.name = "StoryToggle";
 			storyIslandButtons.Clear();
@@ -186,25 +382,26 @@ namespace DynamicIslands.Editor
 				storyIslandButtons[key] = b;
 			}
 			HelpMark(storyRow, HelpStory);
-			RectTransform descriptionRow = UIKit.Row(panel, 28f, 6f, "Description");
+			RectTransform descriptionRow = UIKit.Row(settingsBox, 28f, 6f, "Description");
 			descriptionField = UIKit.Field(descriptionRow, "Description, shown when choosing the plan (e.g. A story across five islands)", "", 28f, "Shown in the New Game box");
-			descriptionField.characterLimit = 120;
+			descriptionField.characterLimit = 400; // (120 cut the library plans' descriptions short)
 			fields.Add(descriptionField);
 			HelpMark(descriptionRow, HelpDescription);
 			// (how to read a card, once, above them)
-			rulesIntro = UIKit.Label(panel, "Each card is one rule and brings one island: <b>WHEN</b> something happens → <b>BRING</b> an island → <b>WHERE</b> it goes → what to <b>TELL</b> the players. " +
+			rulesIntro = UIKit.Label(panel, "Each card brings one island: <b>WHEN</b> something happens → <b>BRING</b> an island → <b>WHERE</b> it goes → what to <b>TELL</b> the players. " +
 				"Choose from the ▼ lists; the line in italics under each part says what the choice does.", 12, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "RulesIntro");
 			rulesIntro.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(rulesIntro.gameObject, -1, 32);
 
-			RectTransform body = UIKit.Row(panel, 440f, 10f, "Body");
+			// (408, not 440: the buttons below are two rows now, and the window must still fit 800 high - Raft's UI at 16:9)
+			body = UIKit.Row(panel, BodyHeight, 10f, "Body");
 			RectTransform rulesBox = UIKit.Rect("Rules", body);
-			UIKit.Size(rulesBox.gameObject, -1, 440, 1);
+			UIKit.Size(rulesBox.gameObject, -1, BodyHeight, 1);
 			ScrollRect scroll;
 			rulesList = UIKit.ScrollList(rulesBox, out scroll, 6f);
 			UIKit.Stretch((RectTransform)scroll.transform);
 			RectTransform side = UIKit.Rect("Side", body);
-			UIKit.Size(side.gameObject, 250, 440);
+			UIKit.Size(side.gameObject, 250, BodyHeight);
 			UIKit.Vertical(side.gameObject, 6f, new RectOffset(0, 0, 0, 0));
 			RectTransform mapHead = UIKit.Row(side, 18f, 4f, "MapHead");
 			UIKit.Label(mapHead, "WHERE ISLANDS GO (ROUGHLY)", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Bold);
@@ -213,20 +410,32 @@ namespace DynamicIslands.Editor
 			UIKit.Size(map.gameObject, 250, 250);
 			UIKit.Background(map.gameObject, new Color(0.08f, 0.2f, 0.3f, 1f), 6);
 			problemsText = UIKit.Label(side, "", 12, UIKit.TextColor, TextAnchor.UpperLeft);
-			UIKit.Size(problemsText.gameObject, 250, 160);
+			UIKit.Size(problemsText.gameObject, 250, BodyHeight - 18 - 250 - 12);
 			problemsText.verticalOverflow = VerticalWrapMode.Truncate;
 
-			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
-			UIKit.Button(buttons, "+ Add a rule", AddRule, "Another rule: when something happens, bring an island", 140, 34f, 13);
-			UIKit.Button(buttons, "Check", () => { Keep(); Check(); }, "Look for rules that can't work (missing islands, names that point nowhere) and draw the map", 110, 34f, 13);
-			HelpMark(buttons, HelpCheck);
-			exportButton = UIKit.Button(buttons, "Export...", ExportPlan, "Share this plan: a pack (.zip) with every island it needs, to send or to put in the island library (saves it first)", 110, 34f, 13);
-			importButton = UIKit.Button(buttons, "Import...", () => { Close(); LibraryImportWindow.Open(); }, "Install plans and islands from a pack (.zip) someone made, or remove what you installed", 110, 34f, 13);
-			shareHelp = HelpMark(buttons, HelpShare);
-			UIKit.Size(UIKit.Label(buttons, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
-			Button save = UIKit.Button(buttons, "Save", Save, "Keep the changes", 110, 34);
+			// Two rows (the user, 2026-10-16: everything visible, no menu): in one row the eleven didn't fit - Close stuck out
+			// past the window's right edge. The first works on the plan, the second is its files.
+			RectTransform buttons = UIKit.Rect("Buttons", panel);
+			UIKit.Vertical(buttons.gameObject, ButtonGap, new RectOffset(0, 0, 0, 0));
+			UIKit.Size(buttons.gameObject, -1, ButtonHeight * 2 + ButtonGap);
+			RectTransform work = UIKit.Row(buttons, ButtonHeight, 8f, "PlanButtons");
+			RectTransform files = UIKit.Row(buttons, ButtonHeight, 8f, "FileButtons");
+			addRuleButton = UIKit.Button(work, "+ Add a rule", AddRule, "Another island that comes on its own: when something happens, bring an island", 140, ButtonHeight, 13);
+			UIKit.Button(work, "Check", () => { Keep(); Check(); }, "Look for rules that can't work (missing islands, names that point nowhere) and draw the map", 110, ButtonHeight, 13);
+			HelpMark(work, HelpCheck);
+			progressButton = UIKit.Button(work, "Progression", () => { Keep(); PlanProgressWindow.Open(plan, ShowRule); }, "What the plan gives of Raft's progression, in play order: Raft's story islands it keeps and which rule's islands give which of Raft's blueprints, story items and tools, what their locks and features want, and what is never given", 120, ButtonHeight, 13);
+			progressButton.name = "Button_Progression";
+			previewButton = UIKit.Button(work, "Preview notebook", PreviewNotebook, "See the main story in Raft's own notebook, in the test world: every tab and page, and step by step as players will find them (the plan needn't be saved)", 150, ButtonHeight, 13);
+			previewButton.name = "Button_PreviewNotebook";
+			testButton = UIKit.Button(work, "Test this plan", TestPlan, "Play the plan in a new test world (saved first): its islands come as in any world; Esc > Custom Islands > Back to the editor brings you back here", 130, ButtonHeight, 13);
+			testButton.name = "Button_TestPlan";
+			exportButton = UIKit.Button(files, "Export...", ExportPlan, "Share this plan: a pack (.zip) with every island it needs, to send or to put in the island library (saves it first)", 110, ButtonHeight, 13);
+			importButton = UIKit.Button(files, "Import...", () => { Close(); LibraryImportWindow.Open(); }, "Install plans and islands from a pack (.zip) someone made, or remove what you installed", 110, ButtonHeight, 13);
+			shareHelp = HelpMark(files, HelpShare);
+			UIKit.Size(UIKit.Label(files, "", 12, UIKit.TextMuted).gameObject, -1, -1, 1);
+			Button save = UIKit.Button(files, "Save", Save, "Keep the changes", 110, ButtonHeight);
 			UIKit.Primary(save);
-			UIKit.Button(buttons, "Close", Close, "Close without saving", 110, 34);
+			UIKit.Button(files, "Close", Close, "Close without saving", 110, ButtonHeight);
 		}
 
 		// The choices of a rule's parts: the words in the drop-down and the line that explains the chosen one
@@ -256,6 +465,14 @@ namespace DynamicIslands.Editor
 			new DropList.Option("receiver", "On the Receiver", "It gets its own frequency on Raft's Receiver and comes when a player tunes to it"),
 			new DropList.Option("sailing", "By chance while sailing", "It turns up ahead of the raft some time later, while you sail"),
 		};
+		/// <summary>SL9: the blueprint a rule's island waits for before its Receiver dot shows and before it may come to the side.</summary>
+		static readonly DropList.Option[] NeedsOptions =
+		{
+			new DropList.Option("", "Always (as Raft's story islands)", "Its Receiver dot shows from the start, and it comes where WHERE says"),
+			new DropList.Option("Blueprint_MotorWheel", "Once players have the engine", "Until the host has the engine blueprint it comes straight ahead, and each player sees its dot once they have it"),
+			new DropList.Option("Blueprint_SteeringWheel", "Once players have the steering wheel", "Until the host has the steering wheel blueprint it comes straight ahead, and each player sees its dot once they have it"),
+			new DropList.Option("Blueprint_EngineControls", "Once players have the engine controls", "Until the host has the engine controls blueprint it comes straight ahead, and each player sees its dot once they have it"),
+		};
 		static readonly DropList.Option[] DoneOptions =
 		{
 			new DropList.Option("", "Its quest is done (or reached)", "Its quest is finished; an island without a quest counts when players reach it"),
@@ -264,6 +481,18 @@ namespace DynamicIslands.Editor
 			new DropList.Option("step", "Quest steps are done", "This many steps of its quest are done"),
 			new DropList.Option("zone", "Its trigger zone fires", "A player walks into this trigger zone on it"),
 			new DropList.Option("signal", "Its signal is sent", "An object on it sends this signal"),
+			new DropList.Option("note", "Its note is read", "A player reads this note on it (by the note's number)"),
+		};
+		/// <summary>Raft's ten tab colours (the sprites NoteBook_Thumbnail_1..10), and "by its place".</summary>
+		static readonly DropList.Option[] TabColourOptions =
+		{
+			new DropList.Option("0", "Automatic colour", "A colour by its place in the story"),
+			// (Raft has nine: there is no NoteBook_Thumbnail_3)
+			new DropList.Option("1", "Pink", "Raft's tab colour 1 (Utopia's)"), new DropList.Option("2", "Sand", "Raft's tab colour 2 (First page's)"),
+			new DropList.Option("4", "Purple", "Raft's tab colour 4 (Caravan Town's)"), new DropList.Option("5", "Teal", "Raft's tab colour 5 (Varuna Point's)"),
+			new DropList.Option("6", "Olive", "Raft's tab colour 6 (Tangaroa's)"), new DropList.Option("7", "Red", "Raft's tab colour 7 (Radio Tower's)"),
+			new DropList.Option("8", "Green", "Raft's tab colour 8 (Vasagatan's)"), new DropList.Option("9", "Blue", "Raft's tab colour 9 (Balboa's)"),
+			new DropList.Option("10", "Light blue", "Raft's tab colour 10 (Temperance's)"),
 		};
 		static DropList.Option[] DirectionOptions
 		{
@@ -283,8 +512,22 @@ namespace DynamicIslands.Editor
 			}
 			foreach (Transform child in rulesList) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
 			fields.RemoveAll(f => f == null || f.transform.IsChildOf(rulesList));
-			for (int i = 0; i < plan.Rules.Count; i++) RuleCard(i);
-			if (plan.Rules.Count == 0) UIKit.Label(rulesList, "<i>No rules yet. \"+ Add a rule\", or Templates... for a ready-made set.</i>", 13, UIKit.TextMuted);
+			cardOf.Clear();
+			if (islandMode)
+			{
+				for (int i = 0; i < plan.Rules.Count; i++) Card(i, 0);
+				if (plan.Rules.Count == 0) UIKit.Label(rulesList, "<i>No rules yet. \"+ Add a rule\", or Templates... for a ready-made set.</i>", 13, UIKit.TextMuted);
+			}
+			else if (tab == TabStory) StoryTab();
+			else if (tab == TabOther)
+			{
+				Text words = UIKit.Label(rulesList, "Islands that come on their own, not on the Receiver's chain: each card says <b>WHEN</b> it comes and <b>WHERE</b>. Its STORY row puts one into the Main story line.", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "OtherWords");
+				words.horizontalOverflow = HorizontalWrapMode.Wrap;
+				UIKit.Size(words.gameObject, -1, 32);
+				for (int i = 0; i < plan.Rules.Count; i++) if (!plan.Rules[i].MainStory) Card(i, 0);
+				if (cardOf.Count == 0) UIKit.Label(rulesList, "<i>No other islands yet. \"+ Add a rule\" brings one when something happens (at the start, after some km, when a quest is done...), or Templates... for a ready-made set.</i>", 13, UIKit.TextMuted).horizontalOverflow = HorizontalWrapMode.Wrap;
+			}
+			RefreshTabs();
 			DrawMap();
 			ShowRandom(); // (the story row follows the rules: an island of the plan in a story island's place)
 		}
@@ -295,7 +538,17 @@ namespace DynamicIslands.Editor
 		/// Raft's story. Each section: a drop-down with the choices, the fields that choice needs (with their names), and a
 		/// line explaining the choice.
 		/// </summary>
-		void RuleCard(int index)
+		void Card(int index, int storyStep)
+		{
+			RuleCard(index, storyStep);
+			cardOf[index] = (RectTransform)rulesList.GetChild(rulesList.childCount - 1);
+		}
+
+		const string HelpAgain = "Again until done: if the players haven't reached this island, or haven't finished its quest, it comes back ahead of the raft " +
+			"every N days (or N km sailed) after they were last near it - N is this rule's number - until they are done with it. " +
+			"Its quest, chests and harvest are kept; it is the same island, never a second copy. An island without a quest is done once a player reaches it.";
+
+		void RuleCard(int index, int storyStep)
 		{
 			IntroRule r = plan.Rules[index];
 			RectTransform card = UIKit.Group(rulesList, "", "Rule");
@@ -303,14 +556,25 @@ namespace DynamicIslands.Editor
 
 			// The rule's number and name, what it does in a sentence, and the arrows
 			RectTransform head = UIKit.Row(card, 28f, 6f, "Head");
-			Text number = UIKit.Label(head, "RULE " + (index + 1), 14, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
+			Text number = UIKit.Label(head, storyStep > 0 ? "STEP " + storyStep : r.Beside ? "BESIDE" : "RULE " + (index + 1), 14, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
 			UIKit.Size(number.gameObject, SectionLabel - 6f);
 			UIKit.Size(UIKit.Label(head, "Name", 12, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 40);
 			SmallField(head, "id", r.Id, 130, "The rule's name: other rules refer to the island it brings by it (e.g. camp)", v => r.Id = v.Replace("|", "").Replace(":", "").Replace(",", "").Replace(";", "").Trim());
 			HelpMark(head, islandMode ? HelpIdIsland : HelpId);
 			UIKit.Size(UIKit.Label(head, "", 12).gameObject, -1, -1, 1);
-			UIKit.Button(head, "▲", () => { if (index > 0) { Keep(); plan.Rules.Reverse(index - 1, 2); ShowRules(); } }, "Move this rule up (the order only matters for reading: each rule waits for its own WHEN)", 28, 26f, 11);
-			UIKit.Button(head, "▼", () => { if (index < plan.Rules.Count - 1) { Keep(); plan.Rules.Reverse(index, 2); ShowRules(); } }, "Move this rule down", 28, 26f, 11);
+			// (TODO 5b: the island this rule brings, in the 3D editor - the editor's top bar then offers Back to the plan)
+			if (!islandMode && r.What == "island" && r.WhatArg.Length > 0 && File.Exists(IslandSpawner.PathFor(r.WhatArg)))
+				UIKit.Button(head, "Edit island", () => EditIsland(r.WhatArg), "Open '" + r.WhatArg + "' in the island editor (the plan is saved first; the editor's top bar has Back to the plan)", 90, 26f, 11).name = "Button_EditIsland";
+			if (storyStep > 0)
+			{
+				UIKit.Button(head, "▲", () => { Keep(); MoveInStory(r, -1); }, "Earlier in the Main story line: players find it one island sooner (past one of Raft's islands too)", 28, 26f, 11);
+				UIKit.Button(head, "▼", () => { Keep(); MoveInStory(r, 1); }, "Later in the Main story line", 28, 26f, 11);
+			}
+			else
+			{
+				UIKit.Button(head, "▲", () => { if (index > 0) { Keep(); plan.Rules.Reverse(index - 1, 2); ShowRules(); } }, "Move this rule up (the order only matters for reading: each rule waits for its own WHEN)", 28, 26f, 11);
+				UIKit.Button(head, "▼", () => { if (index < plan.Rules.Count - 1) { Keep(); plan.Rules.Reverse(index, 2); ShowRules(); } }, "Move this rule down", 28, 26f, 11);
+			}
 			Button del = UIKit.Button(head, "Remove", () => { Keep(); plan.Rules.RemoveAt(index); ShowRules(); }, "Remove this rule", 80, 26f, 11);
 			UIKit.DangerButton(del);
 			height += 28f + 6f;
@@ -329,6 +593,7 @@ namespace DynamicIslands.Editor
 				if ((v == "km" || v == "day") && !float.TryParse(r.WhenArg, NumberStyles.Float, CultureInfo.InvariantCulture, out float _)) r.WhenArg = v == "km" ? "1" : "2";
 				if (v == "step" && !int.TryParse(r.WhenArg, out int _)) r.WhenArg = "1";
 				if (v == "zone" || v == "signal") r.WhenArg = "";
+				if (v == "quest" && !int.TryParse(r.WhenArg, out int _)) r.WhenArg = "";
 				if (islandMode && r.WhenRef.Length == 0 && v != "rule") r.WhenRef = IntroRule.Self;
 				ShowRules();
 			}, 230, "What the rule waits for: choose from the list");
@@ -352,6 +617,22 @@ namespace DynamicIslands.Editor
 					Pick(when, "Pick_WhenArg", "Choose from the " + ThingsOf(r.When) + " of that island", () => ThingChoices(IslandOf(r.WhenRef), r.When),
 						Capital(ThingsOf(r.When)) + " of " + RefLabel(r.WhenRef), v => r.WhenArg = v, () => NoThings(r.WhenRef, IslandOf(r.WhenRef), r.When));
 				if (r.When == "km") Tag(when, "km sailed", false);
+				if (r.When == "km" || r.When == "day")
+				{
+					// (SR1: the island comes back every N km / days until the players are done with it)
+					Button again = UIKit.Check(when, "again until done", () => { Keep(); r.Again = !r.Again; ShowRules(); }, HelpAgain, 26f, 12);
+					again.name = "Check_Again";
+					UIKit.Size(again.gameObject, 140, 26);
+					UIKit.SetCheck(again, r.Again);
+					HelpMark(when, HelpAgain);
+				}
+			}
+			if (r.When == "quest")
+			{
+				// (which of the island's quests: empty = the main quest; ROADMAP CB6)
+				Tag(when, "quest no.");
+				SmallField(when, "main", r.WhenArg, 56, "Which of the island's quests: empty or 1 = the main quest, 2 = its Quest 2, and so on",
+					v => { v = v.Trim(); r.WhenArg = v == "1" ? "" : v; });
 			}
 			Fill(when);
 			HelpMark(when, islandMode ? HelpWhenIsland : HelpWhen);
@@ -376,7 +657,7 @@ namespace DynamicIslands.Editor
 					Keep();
 					Action<string> set = v => { r.WhatArg = r.What == "oneof" && r.WhatArg.Trim().Length > 0 ? r.WhatArg.Trim() + ", " + v : v; ShowRules(); };
 					if (r.What == "type") ChoiceWindow.Open("Map type", ChoiceWindow.Types(), set);
-					else ChoiceWindow.Open(r.What == "oneof" ? "Add an island to the list" : "Island", ChoiceWindow.Islands(), set);
+					else ChoiceWindow.OpenIslands(r.What == "oneof" ? "Add an island to the list" : "Island", ChoiceWindow.Islands, set);
 				}, r.What == "oneof" ? "Add one of your saved islands to the list" : "Choose from a list", 24, 26f, 12);
 				choose.name = "Pick_What";
 			}
@@ -386,7 +667,9 @@ namespace DynamicIslands.Editor
 
 			// WHERE
 			RectTransform where = Section(card, "WHERE", ref height);
-			List<DropList.Option> whereOptions = (islandMode ? WhereOptions.Where(o => o.Value == "ahead" || o.Value == "near") : WhereOptions).ToList();
+			List<DropList.Option> whereOptions = (islandMode ? WhereOptions.Where(o => o.Value == "ahead" || o.Value == "near") :
+				// (main story: only the Receiver - its coordinates are what players follow, and its notebook tab shows them)
+				r.MainStory ? WhereOptions.Where(o => o.Value == "receiver") : WhereOptions).ToList();
 			DropList.Make(where, "Drop_Where", whereOptions, r.Where, v =>
 			{
 				Keep();
@@ -411,7 +694,14 @@ namespace DynamicIslands.Editor
 			}
 			Fill(where);
 			HelpMark(where, islandMode ? HelpWhereIsland : HelpWhere);
-			Explain(card, WhereHint(r), ref height);
+			// (SL9: the dot, and any place off to the side, wait for a blueprint - Raft's engine lets players reach off-course places)
+			RectTransform dot = Section(card, "DOT", ref height);
+			List<DropList.Option> needsOptions = NeedsOptions.ToList();
+			if (r.Needs.Length > 0 && !needsOptions.Any(o => o.Value == r.Needs)) needsOptions.Add(new DropList.Option(r.Needs, "Once players have " + PlanChecker.Pretty(r.Needs), "A blueprint written in the recipe"));
+			DropList.Make(dot, "Drop_Needs", needsOptions, r.Needs, v => { Keep(); r.Needs = v; ShowRules(); }, 300, "When its dot shows on the Receiver");
+			Fill(dot);
+			HelpMark(dot, HelpNeeds);
+			Explain(card, r.MainStory && !islandMode ? "MAIN STORY: found by its coordinates - its own frequency on the Receiver (shown on its notebook tab); it comes about this far away when a player tunes to it" : WhereHint(r), ref height);
 
 			// TELL
 			RectTransform tell = Section(card, "TELL", ref height);
@@ -441,7 +731,7 @@ namespace DynamicIslands.Editor
 			RectTransform row = UIKit.Row(card, 16f, 6f, "Explain");
 			UIKit.Size(UIKit.Label(row, "", 11).gameObject, SectionLabel);
 			Text t = UIKit.Label(row, text, 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Italic, "Explanation");
-			t.horizontalOverflow = HorizontalWrapMode.Wrap;
+			UIKit.Fit(t, 8);
 			height += 16f + 6f;
 		}
 
@@ -488,21 +778,31 @@ namespace DynamicIslands.Editor
 		void StoryRow(RectTransform card, IntroRule r, ref float height)
 		{
 			RectTransform c = Section(card, "STORY", ref height);
-			Button place = DropList.Make(c, "StoryPlace", StoryPlaces(r), r.StoryPlace, v => { Keep(); r.StoryPlace = IntroRule.NormalPlace(v); ShowRules(); }, 260,
+			Button place = DropList.Make(c, "StoryPlace", StoryPlaces(r), r.StoryPlace, v =>
+			{
+				Keep();
+				r.StoryPlace = IntroRule.NormalPlace(v);
+				// (a main story island is found by its coordinates: on the Receiver)
+				if (r.MainStory && r.Where != "receiver") { r.Where = "receiver"; r.Distance = Mathf.Max(r.Distance, 600f); }
+				// (the card goes with it: into the Main story line tab, or out to the other islands)
+				if (!islandMode && tab != (r.MainStory ? TabStory : TabOther)) { tab = r.MainStory ? TabStory : TabOther; ShowTabParts(); }
+				ShowRules();
+			}, 260,
 				"Put this island into Raft's story chain: first, after one of Raft's story islands (or another of your islands in the story), or in place of one");
 			if (r.InStory)
 			{
-				Tag(c, "done when");
+				Tag(c, "next coordinates when");
 				string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
 				DropList.Make(c, "Drop_Done", DoneOptions, kind, v =>
 				{
 					Keep();
-					r.StoryDone = v == "step" ? "step:1" : v == "zone" || v == "signal" ? v + ":" : v;
+					r.StoryDone = v == "step" ? "step:1" : v == "zone" || v == "signal" || v == "note" ? v + ":" : v;
 					ShowRules();
-				}, 200, "When this island counts as done in the story (then the next island of the story is unlocked)");
-				if (kind == "step" || kind == "zone" || kind == "signal")
+				}, 200, "When the players find the NEXT island's coordinates: when this island counts as done in the story (then the next island of the story is unlocked)");
+				if (kind == "step" || kind == "zone" || kind == "signal" || kind == "note")
 				{
-					SmallField(c, kind == "step" ? "steps" : kind + " name", arg, kind == "step" ? 50 : 110, kind == "step" ? "How many steps of its quest" : "The " + kind + "'s name on the island", v => r.StoryDone = kind + ":" + v.Trim());
+					SmallField(c, kind == "step" ? "steps" : kind == "note" ? "note #" : kind + " name", arg, kind == "step" || kind == "note" ? 50 : 110,
+						kind == "step" ? "How many steps of its quest" : kind == "note" ? "The note's number on the island (▾ lists them)" : "The " + kind + "'s name on the island", v => r.StoryDone = kind + ":" + v.Trim());
 					string own = r.What == "island" ? r.WhatArg : null;
 					Pick(c, "Pick_DoneArg", "Choose from the " + ThingsOf(kind) + " of the island this rule brings", () => ThingChoices(own, kind),
 						Capital(ThingsOf(kind)) + " of " + (own ?? "its island"), v => r.StoryDone = kind + ":" + v, () => NoThings(r.Id, own, kind));
@@ -510,14 +810,235 @@ namespace DynamicIslands.Editor
 			}
 			Fill(c);
 			HelpMark(c, HelpStoryPlace);
-			Explain(card, !r.InStory ? "Not in Raft's story: its own WHEN decides when it comes. Choose a place to make it part of the Receiver's chain of islands."
-				: r.DescribeStory() + (r.Where == "receiver" ? " - then players tune the Receiver to its frequency" : ""), ref height);
+			Explain(card, r.Beside ? "MAIN STORY beside Raft's story: it goes into Raft's NOTEBOOK (after the chain's islands). Its own WHEN brings it - e.g. when the quest of the island before is done."
+				: !r.InStory ? "SIDE QUEST: it goes into the JOURNAL (J). Its own WHEN decides when it comes. Choose a place in the story to make it MAIN STORY (Raft's notebook)."
+				: "MAIN STORY: it goes into Raft's NOTEBOOK. " + r.DescribeStory().Replace("; done when ", "; the next coordinates come when ") + (r.Where == "receiver" ? " - players tune the Receiver to its frequency" : ""), ref height);
+			if (r.MainStory) NotebookRow(card, r, ref height);
 		}
+
+		/// <summary>After the rules (a plan with a main story): the last page of the story in Raft's notebook.</summary>
+		/// <summary>Shows a tab: its cards, or the settings.</summary>
+		void SelectTab(int t)
+		{
+			DropList.Close();
+			tab = t;
+			ShowTabParts();
+			ShowRules();
+		}
+
+		/// <summary>The parts of the window for the tab shown (an island's own rules: no tabs, its cards).</summary>
+		void ShowTabParts()
+		{
+			tabsRow.gameObject.SetActive(!islandMode);
+			settingsBox.gameObject.SetActive(!islandMode && tab == TabSettings);
+			bool list = islandMode || tab != TabSettings;
+			body.gameObject.SetActive(list);
+			rulesIntro.gameObject.SetActive(list);
+			addRuleButton.gameObject.SetActive(islandMode || tab == TabOther);
+		}
+
+		/// <summary>The tabs' words: how many islands each holds; the one shown lit.</summary>
+		void RefreshTabs()
+		{
+			if (tabButtons == null || islandMode) return;
+			int story = plan.Rules.Count(r => r.MainStory), other = plan.Rules.Count - story;
+			UIKit.LabelOf(tabButtons[TabStory]).text = "Main story line (" + story + ")";
+			UIKit.LabelOf(tabButtons[TabOther]).text = "Other islands (" + other + ")";
+			for (int i = 0; i < tabButtons.Length; i++) UIKit.SetActive(tabButtons[i], i == tab);
+		}
+
+		/// <summary>
+		/// The Main story line tab: its buttons, then the story in the order players find it on the Receiver - the plan's
+		/// islands as cards, Raft's own story islands as grey lines between them - then the islands beside the story and
+		/// the last page.
+		/// </summary>
+		void StoryTab()
+		{
+			RectTransform tools = UIKit.Row(rulesList, 30f, 6f, "StoryTools");
+			UIKit.Button(tools, "New main story line", () => { Keep(); MainStoryHelper.Open(); }, "Make the Main story line step by step: Raft's story on or off, then your islands in the order players find them on the Receiver - each gets a tab in Raft's notebook", 170, 30f, 12).name = "Button_NewMainStory";
+			Button add = UIKit.Button(tools, "+ Add a saved island", null, "One of your saved islands at the end of the Main story line (before Raft's ending)", 170, 30f, 12);
+			add.name = "Button_AddStoryIsland";
+			add.onClick.AddListener(() => { Keep(); ChoiceWindow.OpenIslands("Add to the Main story line", ChoiceWindow.Islands, AddStoryIsland, "No saved islands yet: + New island makes one", add); });
+			UIKit.Button(tools, "+ New island", AskStoryIsland, "A new island at the end of the Main story line: name it, and the island editor opens on it (Back to the plan in its top bar)", 120, 30f, 12).name = "Button_NewStoryIsland";
+			UIKit.Size(UIKit.Label(tools, "", 12).gameObject, -1, -1, 1);
+			HelpMark(tools, HelpStoryTab);
+
+			List<string> steps = StoryChain.BuildSteps(plan.RaftStory, plan.LeaveOut, plan.Rules);
+			if (!plan.Rules.Any(r => r.MainStory))
+			{
+				Text none = UIKit.Label(rulesList, "<i>No Main story line yet. <b>New main story line</b> makes one step by step; <b>+ Add a saved island</b> puts one of your islands at its end." +
+					(plan.RaftStory ? " Now players follow Raft's own story: " + string.Join(", ", steps.Select(x => StoryOrder.Name(StoryChain.TypeOfStep(x))).ToArray()) + "." : "") + "</i>", 13, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Normal, "NoStory");
+				none.horizontalOverflow = HorizontalWrapMode.Wrap;
+				UIKit.Size(none.gameObject, -1, 54);
+				return;
+			}
+			Text words = UIKit.Label(rulesList, "In the order players find them on the Receiver. ▲ ▼ move an island along the story; Raft's own story islands are the grey lines (Settings turns them on or off).", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "StoryWords");
+			words.horizontalOverflow = HorizontalWrapMode.Wrap;
+			UIKit.Size(words.gameObject, -1, 32);
+			for (int k = 0; k < steps.Count; k++)
+			{
+				string step = steps[k];
+				if (StoryChain.IsRaft(step))
+				{
+					Text raft = UIKit.Label(rulesList, (k + 1) + ".  Raft's " + StoryOrder.Name(StoryChain.TypeOfStep(step)), 13, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Normal, "RaftStep");
+					UIKit.Size(raft.gameObject, -1, 22);
+					continue;
+				}
+				int index = plan.Rules.FindIndex(x => x.Id.Equals(StoryChain.RuleIdOf(step), StringComparison.OrdinalIgnoreCase));
+				if (index >= 0) Card(index, k + 1);
+			}
+			// (a story place that points nowhere: shown, so it can be fixed)
+			List<int> lost = Enumerable.Range(0, plan.Rules.Count).Where(i => plan.Rules[i].InStory && !cardOf.ContainsKey(i)).ToList();
+			if (lost.Count > 0)
+			{
+				UIKit.Size(UIKit.Label(rulesList, "NOT IN THE STORY - their STORY place points to no island of it:", 12, UIKit.Danger, TextAnchor.MiddleLeft, FontStyle.Bold, "LostHead").gameObject, -1, 22);
+				foreach (int i in lost) Card(i, 0);
+			}
+			List<int> beside = Enumerable.Range(0, plan.Rules.Count).Where(i => plan.Rules[i].Beside).ToList();
+			if (beside.Count > 0)
+			{
+				UIKit.Size(UIKit.Label(rulesList, "BESIDE THE STORY - in Raft's notebook, but each comes by its own WHEN:", 12, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Bold, "BesideHead").gameObject, -1, 22);
+				foreach (int i in beside) Card(i, 0);
+			}
+			EndingCard();
+		}
+
+		/// <summary>+ Add a saved island: the island at the end of the Main story line.</summary>
+		void AddStoryIsland(string island)
+		{
+			if (string.IsNullOrEmpty(island) || plan == null) return;
+			plan.Rules.Add(EditorEntry.RuleFor(plan, island, true));
+			if (tab != TabStory) SelectTab(TabStory); else ShowRules();
+			problemsText.text = "'" + island + "' is the Main story line's last island now. Save keeps it.";
+		}
+
+		/// <summary>+ New island: named, put at the end of the Main story line, the plan saved, then the island editor on it.</summary>
+		void AskStoryIsland()
+		{
+			Keep();
+			TextPromptWindow.Open("New island", "A name for the new island (it comes at the end of the Main story line; the island editor opens on it):", "", n =>
+			{
+				n = (n ?? "").Trim();
+				if (n.Length == 0) return;
+				if (File.Exists(IslandSpawner.PathFor(n))) { DynamicIslands.Notify("There is an island named '" + n + "' already: + Add a saved island puts it in", true); return; }
+				plan.Rules.Add(EditorEntry.RuleFor(plan, n, true));
+				try { plan.Save(); MarkSaved(); }
+				catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
+				string name = plan.Name;
+				Close();
+				CreateWindow.Close();
+				EditorEntry.NewIslandFromPlan(n, name);
+			});
+		}
+
+		/// <summary>
+		/// ▲ / ▼ on a Main story line card: the island one step earlier or later in the chain (past Raft's own islands too,
+		/// not past Raft's ending). The story places of the plan's islands are written again from the new order, the way
+		/// New main story line writes them (first / after:&lt;island before&gt;); one in place of a Raft island stays there.
+		/// </summary>
+		public string MoveInStory(IntroRule r, int dir)
+		{
+			if (r.StoryPlace.StartsWith("instead:", StringComparison.OrdinalIgnoreCase)) return Said("'" + r.TabName + "' is in place of one of Raft's islands: change its STORY place on its card to move it");
+			List<string> steps = StoryChain.BuildSteps(plan.RaftStory, plan.LeaveOut, plan.Rules);
+			int i = steps.FindIndex(x => !StoryChain.IsRaft(x) && StoryChain.RuleIdOf(x).Equals(r.Id, StringComparison.OrdinalIgnoreCase));
+			int j = i + dir;
+			if (i < 0 || j < 0 || j >= steps.Count) return Said(dir < 0 ? "'" + r.TabName + "' is the story's first island" : "'" + r.TabName + "' is the story's last island");
+			if (dir > 0 && StoryChain.IsRaft(steps[j]) && StoryChain.TypeOfStep(steps[j]) == ChunkPointType.Landmark_Utopia) return Said("Raft's ending (Utopia) stays the story's last island");
+			var old = plan.Rules.ToDictionary(x => x, x => x.StoryPlace);
+			string a = steps[i]; steps[i] = steps[j]; steps[j] = a;
+			for (int k = 0; k < steps.Count; k++)
+			{
+				if (StoryChain.IsRaft(steps[k])) continue;
+				IntroRule x = plan.Rules.FirstOrDefault(y => y.Id.Equals(StoryChain.RuleIdOf(steps[k]), StringComparison.OrdinalIgnoreCase));
+				if (x == null || x.StoryPlace.StartsWith("instead:", StringComparison.OrdinalIgnoreCase)) continue;
+				string before = k == 0 ? null : StoryChain.IsRaft(steps[k - 1]) ? StoryOrder.Key(StoryChain.TypeOfStep(steps[k - 1])) : StoryChain.RuleIdOf(steps[k - 1]);
+				x.StoryPlace = before == null ? "first" : "after:" + before;
+			}
+			// (the chain read back must be the order asked for; else nothing changes)
+			if (!StoryChain.BuildSteps(plan.RaftStory, plan.LeaveOut, plan.Rules).SequenceEqual(steps))
+			{
+				foreach (var kv in old) kv.Key.StoryPlace = kv.Value;
+				return Said("'" + r.TabName + "' can't move there (an island in place of one of Raft's is in the way): change its STORY place on its card");
+			}
+			ShowRules();
+			return null;
+		}
+
+		string Said(string text)
+		{
+			if (problemsText != null) problemsText.text = text;
+			return text;
+		}
+
+		void EndingCard()
+		{
+			RectTransform card = UIKit.Group(rulesList, "", "Ending");
+			float height = 16f;
+			RectTransform c = Section(card, "THE END", ref height);
+			InputField f = SmallField(c, "The last page of the main story in Raft's notebook (optional)", plan.StoryEnding, -1,
+				"Shown in Raft's notebook, with a banner, when every main story island is done. Enter = a new line", v => plan.StoryEnding = v.Trim());
+			f.lineType = InputField.LineType.MultiLineNewline;
+			f.characterLimit = 600;
+			f.name = "Field_StoryEnding";
+			HelpMark(c, HelpNotebook);
+			RectTransform t = Section(card, "CREDITS", ref height);
+			InputField title = SmallField(t, "Title on the credits (empty = the plan's name)", plan.EndingTitle, 260, "The big title on the credits screen", v => plan.EndingTitle = v.Trim());
+			title.characterLimit = 80;
+			title.name = "Field_EndingTitle";
+			InputField made = SmallField(t, "Made by (names; Enter = a new line)", plan.Credits, -1, "The makers' names on the credits screen", v => plan.Credits = v.Trim());
+			made.lineType = InputField.LineType.MultiLineNewline;
+			made.characterLimit = 400;
+			made.name = "Field_Credits";
+			Explain(card, "When the last main story island is done, this page appears at the end of the notebook and every player gets a banner. With a closing page or names, every player also sees the credits once: the title, the names and the page. The world goes on.", ref height);
+			UIKit.Size(card.gameObject, -1, height);
+		}
+
+		/// <summary>Recipes and tests: the ending page typed in.</summary>
+		public static void RecipeEnding(string text)
+		{
+			if (instance == null || instance.plan == null) return;
+			instance.plan.StoryEnding = (text ?? "").Trim();
+			instance.ShowRules();
+		}
+
+		/// <summary>Recipes and tests: the credits' title and the makers' names (`|` = a new line).</summary>
+		public static void RecipeCredits(string title, string names)
+		{
+			if (instance == null || instance.plan == null) return;
+			instance.plan.EndingTitle = (title ?? "").Trim();
+			instance.plan.Credits = (names ?? "").Replace("|", "\n").Trim();
+			instance.ShowRules();
+		}
+
+		/// <summary>A main story island's tab in Raft's notebook: its title, colour and the intro on its first page.</summary>
+		void NotebookRow(RectTransform card, IntroRule r, ref float height)
+		{
+			RectTransform c = Section(card, "NOTEBOOK", ref height);
+			Tag(c, "tab title");
+			SmallField(c, r.TabName, r.TabTitle, 150, "The tab's title in Raft's notebook (empty: the Receiver name, else the island's name)", v => r.TabTitle = v.Replace("|", "/").Trim()).characterLimit = 24;
+			DropList.Make(c, "Drop_TabColour", TabColourOptions, r.TabColour.ToString(CultureInfo.InvariantCulture), v => { Keep(); int n; r.TabColour = int.TryParse(v, out n) ? n : 0; ShowRules(); }, 170,
+				"The tab's colour: one of Raft's nine notebook tab colours");
+			Fill(c);
+			HelpMark(c, HelpNotebook);
+			RectTransform intro = Section(card, "", ref height);
+			Tag(intro, "first page");
+			InputField f = SmallField(intro, "The intro on the tab's first page (empty: \"A new frequency: #1234...\")", r.TabIntro, -1,
+				"Shown on the tab's first page when the island's coordinates are found, before any note is read. Enter = a new line", v => r.TabIntro = v.Trim());
+			f.lineType = InputField.LineType.MultiLineNewline;
+			f.characterLimit = 400;
+			Explain(card, "Its tab: the title" + (r.Where == "receiver" ? ", its Receiver #digits" : "") + " and this intro; then a page with its quest's steps (ticked off as players do them) and the notes read on it. Preview notebook shows it.", ref height);
+		}
+
+		const string HelpNotebook = "MAIN STORY islands get a tab in Raft's own notebook, in story order (between Raft's own islands when Raft's story is on).\n\n" +
+			"The tab shows its title and, for an island on the Receiver, its frequency. Its pages: the intro you write here (shown when its coordinates are found), " +
+			"its quest's steps (the steps done are crossed out), and the notes players read on the island - in Raft's paper and handwriting. Its story items show under Raft's 'Found items'.\n\n" +
+			"Side quests (islands not in the story) stay in the journal (J).";
 
 		/// <summary>The places an island can have in Raft's story, for the drop-down.</summary>
 		List<DropList.Option> StoryPlaces(IntroRule r)
 		{
-			var list = new List<DropList.Option> { new DropList.Option("", "Not in Raft's story", "Its own WHEN decides when it comes, as any rule"), new DropList.Option("first", "First in the story", "Unlocked from the start of the world, before Raft's first island") };
+			var list = new List<DropList.Option> { new DropList.Option("", "Side quest (not in the story)", "A side quest: the journal (J). Its own WHEN decides when it comes, as any rule"), new DropList.Option("first", "Main story: first", "Main story (Raft's notebook): unlocked from the start of the world, before Raft's first island"),
+				new DropList.Option("beside", "Main story, beside Raft's", "Main story (Raft's notebook), but not in the Receiver chain: its own WHEN brings it, beside Raft's story (an expedition alongside it)") };
 			foreach (ChunkPointType t in StoryOrder.Chain)
 			{
 				// (Raft's Utopia ends the story: it never counts as done, so nothing after it could come - offered only when
@@ -560,10 +1081,12 @@ namespace DynamicIslands.Editor
 		/// signals or quest steps); picking one fills the field. Typing still works.</summary>
 		void Pick(Transform row, string name, string hint, Func<List<ChoiceWindow.Choice>> choices, string title, Action<string> set, Func<string> empty)
 		{
-			Button b = UIKit.Button(row, "▾", () =>
+			Button b = null;
+			b = UIKit.Button(row, "▾", () =>
 			{
 				Keep();
-				ChoiceWindow.Open(title, choices(), v => { set(v); ShowRules(); }, empty());
+				// (the list may hold saved islands: it opens at once and loads them)
+				ChoiceWindow.OpenIslands(title, () => choices(), v => { set(v); ShowRules(); }, empty(), b);
 			}, hint, 24, 26f, 12);
 			b.name = name;
 		}
@@ -590,8 +1113,9 @@ namespace DynamicIslands.Editor
 		static string QuestNote(string island)
 		{
 			if (string.IsNullOrEmpty(island)) return "";
-			IslandQuest q = IslandCache.QuestOf(island);
-			return q.Exists ? " - quest, " + q.Steps.Count + " step" + (q.Steps.Count == 1 ? "" : "s") : " - no quest";
+			// (from the summary cache: each island's whole file was read for it)
+			int steps = IslandSummaries.QuestStepsOf(island);
+			return steps > 0 ? " - quest, " + steps + " step" + (steps == 1 ? "" : "s") : " - no quest";
 		}
 
 		List<ChoiceWindow.Choice> WhenRefChoices(IntroRule r)
@@ -623,7 +1147,7 @@ namespace DynamicIslands.Editor
 			return IslandSpawner.ListSavedIslands().FirstOrDefault(n => n.Equals(reference, StringComparison.OrdinalIgnoreCase));
 		}
 
-		static string ThingsOf(string kind) { return kind == "zone" ? "trigger zones" : kind == "signal" ? "signals" : "quest steps"; }
+		static string ThingsOf(string kind) { return kind == "zone" ? "trigger zones" : kind == "signal" ? "signals" : kind == "note" ? "notes" : "quest steps"; }
 		static string Capital(string s) { return s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s.Substring(1); }
 		static string RefLabel(string reference) { return string.IsNullOrEmpty(reference) ? "the island" : "'" + reference + "'"; }
 
@@ -634,6 +1158,7 @@ namespace DynamicIslands.Editor
 			if (string.IsNullOrEmpty(island)) return list;
 			if (kind == "zone") list.AddRange(IslandCache.ZonesOf(island).Select(z => new ChoiceWindow.Choice(z, z, "trigger zone on " + island)));
 			else if (kind == "signal") list.AddRange(IslandCache.SignalsOf(island).Select(s => new ChoiceWindow.Choice(s, s, "sent on " + island)));
+			else if (kind == "note") list.AddRange(IslandCache.NotesOf(island).Select(n => new ChoiceWindow.Choice(n.ToString(CultureInfo.InvariantCulture), "Note #" + n, "a note with a text on " + island)));
 			else
 			{
 				List<IslandQuest.Step> steps = IslandCache.QuestOf(island).Steps;
@@ -679,23 +1204,31 @@ namespace DynamicIslands.Editor
 		static Button HelpMark(Transform row, string text) { return UIKit.Help(row, text, 18f); }
 
 		const string HelpPlans = "A world plan is a list of rules: which custom islands a world gets, when they come and where. Each rule brings one island.\n\n" +
-			"Plan ▼: the plan to edit. New...: an empty plan. Copy...: this plan under a new name (a good way to start from a sample plan). " +
-			"Delete: removes the plan file at once - worlds that use it keep their own copy.";
-		const string HelpTemplates = "Adds a ready-made set of rules to this plan: an island-hopping trail, a story chain of your islands, flying islands, a quest reward, " +
+			"Plan ▼: the plan to edit. New...: an empty plan. Copy...: this plan under a new name. " +
+			"Delete: moves the plan file to Mods\\DynamicIslands\\deleted\\plans, where you can get it back - worlds that use it keep their own copy.\n\n" +
+			"New main story...: a main story made step by step - Raft's story on or off, then your islands in the order players find them on the Receiver; " +
+			"each gets a tab in Raft's notebook. It adds rule cards you can change afterwards.";
+		const string HelpTemplates = "Adds a ready-made set of rules to this plan: a story chain of your islands, flying islands, a quest reward, " +
 			"your island in Raft's story... They are added to the rules you have; change them afterwards like any rule.";
 		const string HelpRandom = "On: islands from your spawn pool (spawnpool.txt) also turn up by chance while sailing, between the plan's islands.\n\n" +
 			"Off: the world gets only the islands its rules bring. Best for a story.";
 		const string HelpStory = "Raft's own story: Radio Tower, Vasagatan ... Utopia, each found by tuning the Receiver to the frequency on the island before.\n\n" +
 			"On: it stays in worlds with this plan, next to your islands. Off: only your plan's islands - a new adventure.\n\n" +
-			"Click a story island's name to leave it out: the note before it then leads to the one after. A rule's \"In Raft's story\" can put one of your islands into this chain.";
-		const string HelpDescription = "One line about the plan. Players see it in the New Game box when they choose the plan (Custom Islands plan).";
+			"Click a story island's name to leave it out: the note before it then leads to the one after. A rule's STORY part can put one of your islands into this chain.";
+		const string HelpStoryTab = "The Main story line: the islands the Receiver leads players to, one after the other. Each one's notes give the frequency of the next, and each gets a tab in Raft's notebook.\n\n" +
+			"New main story line: make it step by step. + Add a saved island: one of your islands at its end. + New island: name a new one, and the island editor opens on it (Back to the plan comes back here).\n\n" +
+			"▲ ▼ on a card move the island one step along the story, past Raft's own islands too (the grey lines). Raft's ending, Utopia, stays last. Settings turns Raft's own story on or off.";
+		const string HelpDescription = "One line about the plan. Players see it in the New Game box when they choose the plan (Choose plan...).";
 		const string HelpMap = "A rough sketch from above of where the rules put their islands: the raft starts in the middle and sails up (north). " +
-			"In a world the places depend on where the raft is when a rule fires.\n\nUnder it, Check lists what can't work (red) and tips about Raft's story (yellow).";
+			"In a world the places depend on where the raft is when a rule fires.\n\nUnder it, Check lists what can't work (red) and tips about Raft's story (blue).";
 		const string HelpCheck = "Check goes through the plan the way a world will play it, and looks inside the islands: can each island's quest be finished " +
 			"(is there a zone, note, chest or creatures for every step)? Do the zones and signals the rules wait for exist? Do rules wait for each other in a circle, " +
 			"or for an island no rule brings? A report opens: problems (the rule can't work), warnings (it may not work as you mean) and tips, each with how to fix it. " +
 			"Afterwards each card shows its own problems as you edit. Save checks too.\n\n" +
-			"Check can't play the quests: create a world with the plan and try it (F10 → WorldPlan shows which rules have fired).";
+			"Check can't play the quests: Test this plan plays it in a new test world (F10 → WorldPlan shows which rules have fired).\n\n" +
+			"Progression: what the plan gives of Raft's progression, in order - which rule's islands give which blueprints and story items, what their locks want, and what is never given.\n" +
+			"Preview notebook: the main story in Raft's own notebook, in the test world, page by page (the plan needn't be saved).\n" +
+			"Test this plan: the plan saved, then played in a new test world; Esc > Custom Islands > Back to the editor comes back here.";
 		const string HelpShare = "Export...: a pack (.zip) of this plan with every island it needs, to send to friends or to share in the island library (it saves the plan first).\n\n" +
 			"Import...: installs a pack someone made (plans and islands), or removes what you installed.";
 		const string HelpId = "The rule's name, e.g. camp. Other rules use it to mean the island this rule brought: \"quest done at camp\", \"near camp\". " +
@@ -709,7 +1242,7 @@ namespace DynamicIslands.Editor
 			"\"island\": the id of the rule that brought it, or the island's name. The ▾ after a field lists them: the plan's rules, your saved islands (with their quests), and an island's zones, signals or quest steps.";
 		const string HelpWhenIsland = "WHEN the island comes - choose from the list: when this island's quest is done, when some of its quest steps are done, when one of its zones fires, " +
 			"when players first reach it, when it sends a signal... \"self\" means this island.";
-		const string HelpWhat = "WHAT island comes - choose from the list:\n" +
+		const string HelpWhat = "BRING: which island comes - choose from the list:\n" +
 			"• A new island of a map type: the mod makes it new for each world - a camp, volcano, wreck, sky island... (▾ lists them). No file needed, so it always works when shared\n" +
 			"• One of my saved islands: an island you built (▾ lists them)\n" +
 			"• One island from a list: island names with commas between them; one is picked (▾ adds one)\n• A random island (spawn pool): any island of your spawn pool";
@@ -719,10 +1252,13 @@ namespace DynamicIslands.Editor
 			"• On the Receiver: it gets its own frequency, and comes when a player tunes Raft's Receiver to it\n" +
 			"• By chance while sailing: it comes up ahead some time later\n\nThe ▾ after \"of\" lists the plan's rules and your saved islands.";
 		const string HelpWhereIsland = "WHERE it comes: that many metres ahead of the raft, or near an island (\"self\" = this island) in a direction - Any way means wherever there's room.";
+		const string HelpNeeds = "DOT - when the island's dot shows on Raft's Receiver:\n" +
+			"• Always: as Raft's own story islands (the default)\n" +
+			"• Once players have the engine / steering wheel / engine controls: each player sees the dot once they have that blueprint. Until the host has it, the island comes straight ahead of the raft (a raft without an engine can't turn far), even a \"near\" one; once they have it, it may come to the side as WHERE says.";
 		const string HelpTell = "Message: shown to every player when the island appears, with how far and which way it is (e.g. \"Smoke rises from a small island ahead.\").\n\n" +
 			"Receiver name: the island's name on its dot on Raft's Receiver. Both are optional.";
-		const string HelpStoryPlace = "Optional: puts this island into Raft's story chain (found with the Receiver): first, after a story island (or one of your story islands), or in place of one.\n\n" +
-			"\"done when\" says when it counts as done, which unlocks the next island of the story. Leave it on \"Not in Raft's story\" for an ordinary rule. The ▾ after its field lists the zones, signals or quest steps of the island it brings.";
+		const string HelpStoryPlace = "Optional: makes this island part of the main story (Raft's notebook): first, beside Raft's story, after a story island (or one of your story islands), or in place of one. A side quest goes in the journal (J) instead.\n\n" +
+			"\"done when\" says when it counts as done, which unlocks the next island of the story. Leave it on \"Side quest (not in the story)\" for an ordinary rule. The ▾ after its field lists the zones, signals or quest steps of the island it brings.";
 
 		/// <summary>The Help button: how to approach the window, step by step, and the guide.</summary>
 		void ShowHelp()
@@ -746,7 +1282,7 @@ namespace DynamicIslands.Editor
 			InfoWindow.Open("How to make a world plan",
 				"A world plan decides which custom islands a world gets, <b>when</b> they come and <b>where</b>. Each card on the left is one rule, and each rule brings one island:\n" +
 				"<i>When something happens → bring this island → put it there → tell the players.</i>\n\n" +
-				"1.  <b>New...</b> and give the plan a name - or pick a sample plan (Adventure, Island hopping...) and <b>Copy...</b> it to start from it.\n" +
+				"1.  <b>New...</b> and give the plan a name - or pick one of your plans and <b>Copy...</b> it to start from it.\n" +
 				"2.  Write a <b>description</b>: players see it when they choose the plan.\n" +
 				"3.  <b>Random islands while sailing</b>: off for a story (only your islands), on to have islands by chance as well.\n" +
 				"4.  <b>+ Add a rule</b> for the first island. Give it an <b>id</b> (e.g. camp), leave <b>WHEN</b> on \"When the world starts\", <b>BRING</b> \"A new island of a map type\" and pick one with ▾ (e.g. Old camp), " +
@@ -754,8 +1290,10 @@ namespace DynamicIslands.Editor
 				"5.  <b>+ Add a rule</b> again for the next island. A new rule already says \"When a quest is done\" at the rule before, \"Near an island\" - that one: that makes a story from island to island. " +
 				"Pick the island and the direction.\n" +
 				"6.  Read the sentence at the top of each card: it says in plain words what the rule will do.\n" +
-				"7.  <b>Check</b> (√ Every rule can work, or what to fix), then <b>Save</b>.\n" +
-				"8.  Main menu → <b>NEW WORLD</b> → click <b>Custom Islands plan</b> until it shows your plan → Create. Play it: F10 → <i>WorldPlan</i> shows which rules have fired.\n\n" +
+				"7.  <b>Check</b> (√ Every rule can work, or what to fix), then <b>Save</b>. <b>Progression</b> shows which rule gives which of Raft's blueprints and story items, and what their locks want.\n" +
+				"8.  <b>Test this plan</b> plays it at once in a new test world. For a real world: Main menu → <b>New Game</b> → <b>Choose plan...</b> → pick your plan → Create. " +
+				"F10 → <i>WorldPlan</i> shows which rules have fired.\n\n" +
+				"A story in Raft's notebook: <b>New main story...</b> makes one step by step, and <b>Preview notebook</b> shows its tabs and pages as players will find them.\n\n" +
 				"Hover any <b>?</b> in this window for help with that part. The guide walks through a whole plan with pictures (section 7.2), and lists every choice a rule has.",
 				new InfoWindow.Choice("Guide: world plans step by step", () => HelpLinks.OpenGuideSection("72-your-first-world-plan-step-by-step"), "Section 7.2 of the guide, online"),
 				new InfoWindow.Choice("Open the guide (PDF)", HelpLinks.OpenGuide, "The whole illustrated guide"),
@@ -776,12 +1314,25 @@ namespace DynamicIslands.Editor
 		void AddRule()
 		{
 			Keep();
-			var r = new IntroRule { Id = "rule" + (plan.Rules.Count + 1), What = "type", WhatArg = "random" };
+			var r = new IntroRule { Id = NewRuleId(plan), What = "type", WhatArg = "random" };
 			if (islandMode) { r.When = "quest"; r.WhenRef = IntroRule.Self; r.Where = "near"; r.WhereRef = IntroRule.Self; r.Distance = 600f; }
 			else if (plan.Rules.Count > 0) { r.When = "quest"; r.WhenRef = plan.Rules[plan.Rules.Count - 1].Id; r.Where = "near"; r.WhereRef = ""; r.Distance = 600f; }
 			while (plan.Rules.Any(x => x.Id.Equals(r.Id, StringComparison.OrdinalIgnoreCase))) r.Id += "b";
 			plan.Rules.Add(r);
+			if (!islandMode && tab != TabOther) { tab = TabOther; ShowTabParts(); }
 			ShowRules();
+		}
+
+		/// <summary>A rule card's Edit island: the plan saved, then the island in the 3D editor (TODO 5b).</summary>
+		void EditIsland(string island)
+		{
+			Keep();
+			try { plan.Save(); MarkSaved(); }
+			catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
+			string name = plan.Name;
+			Close();
+			CreateWindow.Close();
+			EditorEntry.EditFromPlan(island, name);
 		}
 
 		void Save()
@@ -792,12 +1343,13 @@ namespace DynamicIslands.Editor
 			if (islandMode)
 			{
 				IslandSettingsUndo.Change(() => WorldDirector.SetRulesInProps(DynamicIslands.currentIslandProps, plan.Rules));
+				MarkSaved();
 				EditorUI.RefreshIsland();
 				DynamicIslands.Notify("The island's " + plan.Rules.Count + " rule(s) are kept with it (save the island, Ctrl+S)" + (problems.Length > 0 ? " - Check found problems" : ""), problems.Length > 0);
 			}
 			else
 			{
-				try { plan.Save(); }
+				try { plan.Save(); MarkSaved(); }
 				catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
 				DynamicIslands.Notify("Saved plan '" + plan.Name + "' (" + plan.Rules.Count + " rules)" + (problems.Length > 0 ? " - Check found problems" : ""), problems.Length > 0);
 			}
@@ -809,7 +1361,7 @@ namespace DynamicIslands.Editor
 		{
 			if (islandMode) return;
 			Keep();
-			try { plan.Save(); }
+			try { plan.Save(); MarkSaved(); }
 			catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
 			string name = plan.Name;
 			Close();
@@ -826,8 +1378,10 @@ namespace DynamicIslands.Editor
 		void DeletePlan()
 		{
 			string path = WorldPlan.PathFor(plan.Name);
-			if (File.Exists(path)) File.Delete(path);
-			DynamicIslands.Notify("Deleted plan '" + plan.Name + "'");
+			// (moved to deleted\plans, where it can be got back, like islands, groups and stamps - it was deleted for good, AU41)
+			try { if (File.Exists(path)) PiecesFiles.MoveToDeleted(path, "plans"); }
+			catch (Exception e) { DynamicIslands.Notify(SafeFile.InUse(e) ? "The plan '" + plan.Name + "' is in use by another program - close it there and try again" : "Could not delete the plan '" + plan.Name + "': " + e.Message, true); return; }
+			DynamicIslands.Notify("Deleted plan '" + plan.Name + "' (kept in " + IslandFilesWindow.DeletedFolderName + " until you remove it there)");
 			lastPlan = null;
 			Open();
 		}
@@ -837,6 +1391,46 @@ namespace DynamicIslands.Editor
 			var p = new WorldPlan { Name = name, Description = "", Random = true };
 			p.Save();
 			return p;
+		}
+
+		public const string NewEmpty = "*empty*", NewStory = "*story*", NewTemplatePrefix = "template:", NewCopyPrefix = "copy:";
+
+		/// <summary>
+		/// New world plan (the start window and the plan's New...): how to start it - empty, its Main story line step by step,
+		/// from a template or as a copy of one of the player's plans - then its name. The new plan is saved and shown.
+		/// </summary>
+		public static void AskNewPlan()
+		{
+			if (instance == null) return;
+			if (IsOpen) instance.Keep();
+			var choices = new List<ChoiceWindow.Choice>
+			{
+				new ChoiceWindow.Choice(NewEmpty, "An empty plan", "No islands yet: add them to its Main story line, or as other islands"),
+				new ChoiceWindow.Choice(NewStory, "A Main story line, step by step", "Pick your islands in the order the Receiver leads players to them; each gets a tab in Raft's notebook"),
+			};
+			choices.AddRange(WorldPlanTemplates.All.Select(t => new ChoiceWindow.Choice(NewTemplatePrefix + t.Key, "From the template '" + t.Key + "'", t.Value.Description)));
+			choices.AddRange(WorldPlan.All().Where(n => !WorldPlan.IsBuiltIn(n)).Select(n => new ChoiceWindow.Choice(NewCopyPrefix + n, "A copy of '" + n + "'", "All its islands and settings, under a new name")));
+			ChoiceWindow.Open("New world plan", choices, how =>
+			{
+				string from = how.StartsWith(NewCopyPrefix) ? how.Substring(NewCopyPrefix.Length) : null;
+				AskName("New world plan", from != null ? "A copy of '" + from + "': its name" : "Its name (players see it when they choose a plan for a New Game)", from != null ? from + " copy" : "", n =>
+				{
+					WorldPlan p;
+					if (from != null)
+					{
+						WorldPlan source = WorldPlan.Load(from);
+						if (source == null) { DynamicIslands.Notify("The plan '" + from + "' could not be read", true); return; }
+						p = WorldPlan.Parse(n, source.ToText());
+						p.Id = WorldPlan.NewId();
+						p.Save();
+					}
+					else p = NewPlan(n);
+					instance.islandMode = false;
+					instance.Show(p);
+					if (how.StartsWith(NewTemplatePrefix)) { instance.AddTemplate(how.Substring(NewTemplatePrefix.Length)); instance.Keep(); instance.plan.Save(); instance.MarkSaved(); }
+					if (how == NewStory) MainStoryHelper.Open();
+				});
+			});
 		}
 
 		static void AskName(string title, string message, string text, Action<string> ok)
@@ -851,7 +1445,12 @@ namespace DynamicIslands.Editor
 		void PickTemplate()
 		{
 			Keep();
-			ChoiceWindow.Open("Add rules from a template", WorldPlanTemplates.All.Where(x => !islandMode || !WorldPlanTemplates.Get(x.Key).HasStory).Select(t => new ChoiceWindow.Choice(t.Key, t.Key, t.Value.Description)), key =>
+			ChoiceWindow.Open("Add rules from a template", WorldPlanTemplates.All.Where(x => !islandMode || !WorldPlanTemplates.Get(x.Key).HasStory).Select(t => new ChoiceWindow.Choice(t.Key, t.Key, t.Value.Description)), AddTemplate);
+		}
+
+		/// <summary>A template's rules (and story settings) added to the plan shown.</summary>
+		void AddTemplate(string key)
+		{
 			{
 				WorldPlan t = WorldPlanTemplates.Get(key);
 				if (t == null) return;
@@ -885,9 +1484,11 @@ namespace DynamicIslands.Editor
 						if (r.StoryPlace.StartsWith("after:") && renamed.TryGetValue(r.StoryPlace.Substring(6), out to)) r.StoryPlace = "after:" + to;
 					}
 					ShowRandom();
+					tab = t.Rules.Any(r => r.MainStory) ? TabStory : TabOther;
+					ShowTabParts();
 				}
 				ShowRules();
-			});
+			}
 		}
 
 		#endregion
@@ -906,7 +1507,22 @@ namespace DynamicIslands.Editor
 		/// warnings, tips, each with why and how to fix it. showReport: open the report (Check always; Save when there are
 		/// problems).
 		/// </summary>
-		void Check() { RunCheck(true, true); }
+		void Check()
+		{
+			// (its findings are shown beside the islands)
+			if (!islandMode && tab == TabSettings) SelectTab(plan.Rules.Count > 0 && !plan.Rules.Any(r => r.MainStory) ? TabOther : TabStory);
+			RunCheck(true, true);
+		}
+
+		/// <summary>Tests: the card of the plan's rule (its tab shown first), or null.</summary>
+		public static RectTransform CardFor(int index)
+		{
+			if (instance == null || instance.plan == null || index < 0 || index >= instance.plan.Rules.Count) return null;
+			int want = instance.islandMode ? instance.tab : instance.plan.Rules[index].MainStory ? TabStory : TabOther;
+			if (instance.tab != want) instance.SelectTab(want);
+			RectTransform card;
+			return instance.cardOf.TryGetValue(index, out card) ? card : null;
+		}
 
 		void RunCheck(bool deep, bool showReport)
 		{
@@ -942,8 +1558,14 @@ namespace DynamicIslands.Editor
 		/// <summary>The report's "Show rule n": scrolls the list to that rule's card.</summary>
 		void ShowRule(int index)
 		{
+			if (!islandMode && index >= 0 && index < plan.Rules.Count)
+			{
+				int want = plan.Rules[index].MainStory ? TabStory : TabOther;
+				if (tab != want) SelectTab(want);
+			}
 			Canvas.ForceUpdateCanvases();
-			Transform card = rulesList.Cast<Transform>().Where(t => t.name == "Rule").ElementAtOrDefault(index);
+			RectTransform card;
+			cardOf.TryGetValue(index, out card);
 			ScrollRect scroll = rulesList.GetComponentInParent<ScrollRect>();
 			if (card == null || scroll == null) return;
 			float content = rulesList.rect.height, view = scroll.viewport.rect.height;
@@ -980,6 +1602,7 @@ namespace DynamicIslands.Editor
 		void DrawMap()
 		{
 			foreach (Transform child in map) Destroy(child.gameObject);
+			labelled.Clear();
 			var spots = new Dictionary<string, Vector2>(StringComparer.OrdinalIgnoreCase);
 			var dots = new List<KeyValuePair<string, Vector2>>();
 			Vector2 raft = Vector2.zero, sail = Vector2.up; // the raft sails north in the sketch
@@ -1017,6 +1640,9 @@ namespace DynamicIslands.Editor
 			return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out f) ? f * 1000f : 0f;
 		}
 
+		// Map spots that have a name beside them: a dot close to one of them goes without (names written over each other)
+		readonly List<Vector2> labelled = new List<Vector2>();
+
 		void Dot(string label, Vector2 world, Color color, float half, float extent)
 		{
 			Vector2 p = world / extent * half;
@@ -1024,87 +1650,27 @@ namespace DynamicIslands.Editor
 			UIKit.Anchor(r, new Vector2(0.5f, 0.5f), p, new Vector2(10, 10));
 			Image img = r.gameObject.AddComponent<Image>();
 			img.sprite = UIKit.Rounded(5); img.type = Image.Type.Sliced; img.color = color; img.raycastTarget = false;
+			r.SetAsFirstSibling(); // dots under every name
+			if (labelled.Any(q => Mathf.Abs(q.x - p.x) < 80f && Mathf.Abs(q.y - p.y) < 13f)) return;
+			labelled.Add(p);
 			Text t = UIKit.Label(map, label, 10, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "Name");
 			UIKit.Anchor(t.rectTransform, new Vector2(0.5f, 0.5f), p + new Vector2(52f, 0f), new Vector2(90, 14));
-			t.horizontalOverflow = HorizontalWrapMode.Overflow;
+			UIKit.Fit(t, 7);
 		}
 
 		#endregion
-
-		/// <summary>
-		/// Writes each sample plan once (listed in plans\samples.txt): they can be changed or deleted, and deleted ones
-		/// don't come back; samples added by a later version of the mod are written then.
-		/// </summary>
-		public static void EnsureSamples()
-		{
-			try
-			{
-				Directory.CreateDirectory(WorldPlan.Folder);
-				string list = Path.Combine(WorldPlan.Folder, "samples.txt");
-				var written = new HashSet<string>(File.Exists(list) ? File.ReadAllLines(list).Select(l => l.Trim()) : new string[0], StringComparer.OrdinalIgnoreCase);
-				bool changed = false;
-				foreach (var t in WorldPlanTemplates.All.Where(t => t.Value.Sample && !written.Contains(t.Key)))
-				{
-					if (!File.Exists(WorldPlan.PathFor(t.Key)))
-					{
-						WorldPlan p = WorldPlanTemplates.Get(t.Key);
-						p.Name = t.Key;
-						p.Save();
-					}
-					written.Add(t.Key);
-					changed = true;
-				}
-				if (changed) SafeFile.WriteAllLines(list, new[] { "# Sample world plans the mod has written once (delete a line to get that sample back)" }.Concat(written.OrderBy(n => n)).ToArray());
-			}
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write the sample plans: " + e.Message); }
-		}
 	}
 
-	/// <summary>Ready-made sets of rules ("Templates..." in the plan editor; the samples are also written as plans).</summary>
+	/// <summary>Ready-made sets of rules ("Templates..." in the plan editor, and New... from a template).</summary>
 	public static class WorldPlanTemplates
 	{
 		public class Template
 		{
 			public string Description, Text;
-			/// <summary>Also written as a plan file the first time.</summary>
-			public bool Sample;
 		}
 
 		public static readonly List<KeyValuePair<string, Template>> All = new List<KeyValuePair<string, Template>>
 		{
-			new KeyValuePair<string, Template>("Island hopping", new Template { Sample = true,
-				Description = "An old camp near the start; each island you reach shows the way to the next, further out",
-				Text = "random = on\n" +
-					"rule = camp | type:camp | start | ahead:350 | Smoke rises from a small island ahead. | Old camp\n" +
-					"rule = treasure | type:treasure | visit:camp | near:camp:900:any | Birds fly off towards another island... | Treasure\n" +
-					"rule = islets | type:archipelago | visit:treasure | near:treasure:1100:any | From the top you can see a group of islets. | Islets\n" +
-					"rule = volcano | type:volcano | visit:islets | near:islets:1400:any | Smoke rises far away. | Volcano\n" }),
-			new KeyValuePair<string, Template>("Adventure", new Template { Sample = true,
-				Description = "A story: each quest leads to the next island (camp, islets, a beast, a treasure), with wrecks and a sunken island on the way",
-				Text = "random = off\n" +
-					"rule = camp | type:camp | start | ahead:350 | Smoke rises from a small island ahead. | Old camp\n" +
-					"rule = islets | type:archipelago | quest:camp | near:camp:900:north-east | The notice mentioned islets to the north-east. | Islets\n" +
-					"rule = beast | type:boss | quest:islets | near:islets:1000:any | The castaway's note warns of a beast on a plateau... | Plateau\n" +
-					"rule = treasure | type:treasure | quest:beast | near:beast:900:any | Among the spoils: a map to a treasure island! | Treasure\n" +
-					"rule = wreck | type:wreck | km:2 | ahead:300 | Something floats ahead: a wrecked raft. | Wreck\n" +
-					"rule = sunken | type:sunken | km:5 | ahead:350 | The water below looks strangely shallow. Dive! | Sunken\n" }),
-			new KeyValuePair<string, Template>("Growing sea", new Template { Sample = true,
-				Description = "Random islands while sailing, plus a special island every few km and days",
-				Text = "random = on\n" +
-					"rule = sandbar | type:sandbar | km:1 | ahead:300 | A tiny island with a chest. | Sandbar\n" +
-					"rule = atoll | type:atoll | km:4 | ahead:450 | A ring of land around a lagoon. | Atoll\n" +
-					"rule = stacks | type:stacks | day:3 | ahead:400 | Tall rocks rise from the sea. | Sea stacks\n" +
-					"rule = swamp | type:swamp | day:6 | ahead:400 | A green mist hangs over the water. | Swamp\n" +
-					"rule = spire | type:spire | km:8 | ahead:450 | It's getting colder. | Frozen spire\n" +
-					"rule = volcano | type:volcano | day:10 | ahead:450 | The sea smells of sulphur. | Volcano\n" }),
-			new KeyValuePair<string, Template>("Receiver adventure", new Template { Sample = true,
-				Description = "A new adventure instead of Raft's story: each island is found with the Receiver, and its quest gives the next frequency",
-				Text = "random = off\n" +
-					"story = off\n" +
-					"rule = camp | type:camp | start | receiver:600 | A faint signal crackles on the Receiver... | Old camp | first | quest\n" +
-					"rule = islets | type:archipelago | start | receiver:800 | The camp's radio log names another frequency. | Islets | after:camp | quest\n" +
-					"rule = beast | type:boss | start | receiver:900 | A distress call from a plateau... | Plateau | after:islets | quest\n" +
-					"rule = treasure | type:treasure | start | receiver:800 | Among the spoils: the frequency of a treasure island! | Treasure | after:beast | quest\n" }),
 			new KeyValuePair<string, Template>("Detour in Raft's story", new Template {
 				Description = "Raft's story as usual, with one of your islands after Vasagatan: its frequency comes with Vasagatan's note, and its quest gives Balboa's",
 				Text = "rule = detour | type:camp | start | receiver:700 | A second signal hides under Vasagatan's... | Old camp | after:Vasagatan | quest\n" }),

@@ -1,0 +1,22 @@
+# Weatherglass Deep's glass room (CIPlay weatherglass_deep_caves, 11-11 w06; in a test world 'CI ...'). Points as in
+# the recipe (20 m down): the mouth on the sea floor at 19 0, the bore climbing yaw 70 at 12 degrees under its own
+# mound, the glass room round 38.3 7 (air zone wg_glassroom, the keeper's spare case at 39.6 7.8). Heights guessed.
+island Weatherglass Deep keep
+offset 0 0
+hour 11
+weather Calm
+# (a CI world's bag emptied first: a full bag drops the loot)
+empty
+
+picture wg_cave_out 12.5 +5 -2.4 19 +0.5 0
+walk 15 -1.4 to 19 0 to 24.6 2 to 30.3 4.1 below=5
+# (the zone placed at 38.3 7 ends up with its middle at 29.7 5.2 (CIReach, 11-12); 38.3 7 is 8+ m off it, so check the air here)
+air wg_glassroom here
+walk 30.3 4.1 to 35 5.8 to 38.3 7 below=7.5
+picture wg_cave_in 28 5.8 3.4 39 4.5 7.5 light=20
+picture wg_room_back 41.5 7.5 8.3 30 4.8 4 light=20
+open Keeper's spare case
+wait 2
+expect item Glass 2
+air wg_glassroom
+walk 38.3 7 to 35 5.8 to 30.3 4.1 to 24.6 2 to 19 0 to 15 -1.4 below=7.5

@@ -1,0 +1,193 @@
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace DynamicIslands.Editor
+{
+	/// <summary>The inspector's rows for the story features players meet (2026-10-25, PlayerFeatures): an islander's
+	/// character, pose and dialogue.</summary>
+	public static partial class ObjectInspector
+	{
+		static void PlayerGroup(EditorGameObject target)
+		{
+			if (Islanders.Is(target.GameObjectName)) IslanderGroup(target);
+			if (Collectibles.Is(target.GameObjectName) || Collectibles.IsPiece(target.Props)) CollectibleGroup(target);
+			if (Lights.IsLight(target.GameObjectName, target.Props)) LightGroup(target);
+			if (OrderPuzzle.IsPiece(target.Props)) OrderGroup(target);
+			MakeFeatureGroup(target);
+		}
+
+		/// <summary>Any object: buttons that make it a piece of a collectible set or a puzzle light (the prop set for the
+		/// builder; its group then shows). Not on islanders.</summary>
+		static void MakeFeatureGroup(EditorGameObject target)
+		{
+			if (Islanders.Is(target.GameObjectName)) return;
+			bool piece = Collectibles.IsPiece(target.Props), light = Lights.IsLight(target.GameObjectName, target.Props), order = OrderPuzzle.IsPiece(target.Props);
+			if (piece && light && order) return;
+			RectTransform g = UIKit.Group(root, "Story puzzle");
+			RectTransform row = UIKit.Row(g, UIKit.RowHeight, 4f, "MakeStoryFeature");
+			if (!piece)
+				UIKit.Button(row, "Make collectible (set)", () => { Set(target, Collectibles.SetProp, "Relics"); Refresh(); }, "Makes this object a hidden piece of a collectible set (Relics; change it below): players pick it up with E, the HUD counts the set, the whole set runs the \"set\" event");
+			if (!light)
+				UIKit.Button(row, "Make puzzle light (group)", () => { Set(target, Lights.GroupProp, "Lamps"); Refresh(); }, "Makes this object a puzzle light of a group (Lamps; change it below): players switch it with E; events lit, unlit, alllit");
+			if (!order)
+				UIKit.Button(row, "Make order piece (in this order)", () =>
+				{
+					List<int> steps;
+					int next = OrderPuzzle.EditorSteps(PlacedEditorObjects()).TryGetValue(OrderPuzzle.DefaultGroup, out steps) && steps.Count > 0 ? steps.Max() + 1 : 1;
+					PropsCommand.Change(target, OrderPuzzle.MakePiece(target.Props, OrderPuzzle.DefaultGroup, next));
+					Refresh();
+				}, "Makes this object the next step of an order puzzle (" + OrderPuzzle.DefaultGroup + "; change it below): levers, lights or buttons pressed in a set order. A wrong order starts it again; the last step sends the signal order:<puzzle> and runs every piece's \"solved\" event");
+		}
+
+		static IEnumerable<EditorGameObject> PlacedEditorObjects()
+		{
+			GameObject placed = GameObject.Find("PlacedObjects");
+			return placed == null ? Enumerable.Empty<EditorGameObject>() : placed.GetComponentsInChildren<EditorGameObject>();
+		}
+
+		/// <summary>A piece of an order puzzle (QE6): its puzzle's name, its step, and what the puzzle still lacks.</summary>
+		static void OrderGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Order puzzle (in this order)");
+			ObjAction a = OrderPuzzle.ActionsIn(target.Props)[0];
+			string group = OrderPuzzle.GroupOf(a);
+			int step = OrderPuzzle.StepOf(a);
+			InputField f = SurvivorField(g, "Puzzle", group, 26f, "The order puzzle's name: every piece with this name is one puzzle; solved, the island sends the signal order:<name>");
+			f.characterLimit = 32;
+			f.onEndEdit.AddListener(v => { PropsCommand.Change(target, OrderPuzzle.MakePiece(target.Props, v.Trim().Length > 0 ? v.Trim() : OrderPuzzle.DefaultGroup, step)); Refresh(); });
+			amountFields.Add(f);
+			InputField s = SurvivorField(g, "Step", step.ToString(System.Globalization.CultureInfo.InvariantCulture), 26f, "This piece's place in the order: 1 = pressed first");
+			s.contentType = InputField.ContentType.IntegerNumber;
+			s.onEndEdit.AddListener(v => { int n; if (int.TryParse(v.Trim(), out n) && n > 0) PropsCommand.Change(target, OrderPuzzle.MakePiece(target.Props, group, System.Math.Min(n, 99))); Refresh(); });
+			amountFields.Add(s);
+			List<int> steps;
+			OrderPuzzle.EditorSteps(PlacedEditorObjects()).TryGetValue(group, out steps);
+			string problem = OrderPuzzle.Problem(group, steps);
+			int pieces = steps != null ? steps.Count : 0;
+			UIKit.Size(UIKit.Label(g, (problem != null ? "<color=#e0a040>" + char.ToUpper(problem[0]) + problem.Substring(1) + ".</color> " : pieces + " pieces in \"" + group + "\". ") + "Events: \"solved\", \"wrong\"; signal order:" + group.ToLowerInvariant() + " (check \"signal\", world plans)", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic).gameObject, -1, 30);
+		}
+
+		static void IslanderGroup(EditorGameObject target)
+		{
+			Dictionary<string, string> p = target.Props;
+			RectTransform g = UIKit.Group(root, "Islander");
+			InputField name = SurvivorField(g, "Name", ObjectProps.Get(p, BehaviourProps.Name, "Islander"), 26f, "Who it is: the name in its dialogue, and what a quest's \"Talk to\" step and the \"talked to\" check use");
+			name.characterLimit = 32;
+			name.onEndEdit.AddListener(v =>
+			{
+				string old = ObjectProps.Get(target.Props, BehaviourProps.Name), now = v.Trim().Length > 0 ? v.Trim() : "Islander";
+				Set(target, BehaviourProps.Name, now, null);
+				EditorRenames.ObjectName(target, old, now); // (player 10-30: "talk" steps and "talked to" checks follow)
+			});
+			amountFields.Add(name);
+			// Who it looks like: steps through Raft's characters (none: one picked by the island and the object)
+			string ch = ObjectProps.Get(p, Islanders.CharacterProp);
+			List<string> chars = new[] { "" }.Concat(Behaviours.Characters().Where(c => c != null).Select(c => c.displayName)).Distinct().ToList();
+			if (ch.Length > 0 && !chars.Contains(ch)) chars.Add(ch);
+			RectTransform crow = UIKit.Row(g, 26f, 4f, "IslanderCharacter");
+			UIKit.Size(UIKit.Label(crow, "Looks like", 13, UIKit.TextMuted).gameObject, 80);
+			UIKit.Button(crow, ch.Length > 0 ? ch : "any (by its place)", () =>
+			{
+				string next = chars[(chars.IndexOf(ch) + 1) % chars.Count];
+				Set(target, Islanders.CharacterProp, next.Length > 0 ? next : null);
+				Refresh();
+			}, "Click to step through Raft's characters", -1, 26f, 12);
+			// Its pose: one button each
+			string pose = Islanders.PoseOf(p);
+			RectTransform prow = UIKit.Row(g, 26f, 3f, "IslanderPose");
+			UIKit.Size(UIKit.Label(prow, "Pose", 13, UIKit.TextMuted).gameObject, 80);
+			foreach (string ps in Islanders.Poses)
+			{
+				string chosen = ps;
+				Button b = UIKit.Button(prow, ps, () => { Set(target, Islanders.PoseProp, chosen); Refresh(); }, "The islander " + (ps == "stand" ? "stands" : ps == "sit" ? "sits" : ps == "fish" ? "fishes with a rod" : ps == "sleep" ? "lies asleep" : "leans") + " (place it where that fits: on a seat, at the water, against a wall)", -1, 26f, 11);
+				if (ps == pose) UIKit.Primary(b);
+			}
+			// QE12: a walking path - names of objects or trigger zones, walked in a loop or there and back
+			InputField path = SurvivorField(g, "Walks to", IslanderWalks.PathOf(p), 26f, "A walking path (empty = it stays): the names of objects or trigger zones on this island, split by commas. It walks from where it stands through them, pausing at each, on the ground. Every player sees it at the same spot. An escort step or a \"move to\" action ends its walking");
+			path.characterLimit = 200;
+			path.onEndEdit.AddListener(v => { Set(target, IslanderWalks.PathProp, v.Trim().Length > 0 ? v.Trim() : null); Refresh(); });
+			amountFields.Add(path);
+			if (IslanderWalks.PathOf(p).Length > 0)
+			{
+				string mode = IslanderWalks.ModeOf(p);
+				RectTransform wrow = UIKit.Row(g, 26f, 3f, "IslanderWalk");
+				UIKit.Size(UIKit.Label(wrow, "Walk", 13, UIKit.TextMuted).gameObject, 80);
+				foreach (string m in IslanderWalks.Modes)
+				{
+					string chosen = m;
+					Button b = UIKit.Button(wrow, m == "loop" ? "loop" : "there and back", () => { Set(target, IslanderWalks.ModeProp, chosen == "loop" ? null : chosen); Refresh(); }, m == "loop" ? "After the last place it walks back to the start and round again" : "After the last place it walks the same way back", -1, 26f, 11);
+					if (m == mode) UIKit.Primary(b);
+				}
+				InputField spd = SurvivorField(g, "Speed m/s", IslanderWalks.SpeedOf(p).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture), 26f, "How fast it walks (0.3 to 4; Raft's players walk about 3)");
+				spd.onEndEdit.AddListener(v => { float f; if (float.TryParse(v.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out f)) Set(target, IslanderWalks.SpeedProp, Mathf.Clamp(f, 0.3f, 4f).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)); Refresh(); });
+				amountFields.Add(spd);
+				InputField ps2 = SurvivorField(g, "Pause s", IslanderWalks.PauseOf(p).ToString("0", System.Globalization.CultureInfo.InvariantCulture), 26f, "How long it stands at each place of its path (seconds)");
+				ps2.onEndEdit.AddListener(v => { float f; if (float.TryParse(v.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out f)) Set(target, IslanderWalks.PauseProp, Mathf.Clamp(f, 0f, 60f).ToString("0", System.Globalization.CultureInfo.InvariantCulture)); Refresh(); });
+				amountFields.Add(ps2);
+				List<string> missing = IslanderWalks.Missing(IslanderWalks.PathOf(p), PlacedEditorObjects());
+				if (missing.Count > 0) UIKit.Size(UIKit.Label(g, "Check: nothing on the island is called " + string.Join(", ", missing.ToArray()), 11, UIKit.Danger, TextAnchor.MiddleLeft).gameObject, -1, 16);
+			}
+			Text markup = UIKit.Label(g, "What it says. A line of only --- = next page. A line starting with > = an answer (up to 4 a page). #name starts a branch; > Answer -> name goes there. Hover for more.", 12, UIKit.TextMuted, TextAnchor.UpperLeft);
+			markup.horizontalOverflow = HorizontalWrapMode.Wrap;
+			UIKit.Size(markup.gameObject, -1, 48);
+			UIKit.Hint(markup.gameObject, "Example: \"Hello there.\", then a line ---, then \"Will you help me?\", then the lines \"> Yes\" and \"> Not now\". Answer 1 fires this islander's choice1 event, answer 2 choice2 (up to choice4). Closing the dialogue fires \"talk\" (what a quest's \"Talk to\" step waits for).\n" +
+				"Branches: a line \"#map\" starts lines of their own (left out when the dialogue is read in order). \"> Where are we? -> map\" goes there; \"-> end\" closes, \"-> start\" goes back to the top; an answer without -> closes the dialogue.\n" +
+				"Flags (the island's, shared by the crew): \"-> map +asked\" also sets the flag asked, \"-asked\" clears it; an answer with \"?asked\" only shows while it is set, \"?!asked\" while it isn't. Checks can read a flag: count|asked|>=1. In a \"show dialogue\" action, write \\n for a new line; its answers can branch but not set flags");
+			InputField text = UIKit.TextArea(g, "Hello there.\n---\nWill you help me?\n> Yes\n> Not now", 110f, "The dialogue players get with the interact key. Answer 1..4 fires the islander's choice1..choice4 event; closing it fires \"talk\"");
+			text.text = ObjectProps.Get(p, Islanders.TextProp);
+			text.characterLimit = 4000;
+			text.onEndEdit.AddListener(v => Set(target, Islanders.TextProp, v.Trim().Length > 0 ? v.Trim() : null));
+			amountFields.Add(text);
+			int pages = Islanders.Parse(text.text).Count, answers = Islanders.Answers(text.text).Count, branches = Islanders.Sections(text.text).Count;
+			UIKit.Size(UIKit.Label(g, pages + " page" + (pages == 1 ? "" : "s") + (answers > 0 ? ", " + answers + " answer" + (answers == 1 ? "" : "s") : "") + (branches > 0 ? ", " + branches + " branch" + (branches == 1 ? "" : "es") : "") + ". Events: Behaviour > \"talk\", \"choice1\"..", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic).gameObject, -1, 16);
+			string problem = Islanders.BranchProblem(text.text);
+			if (problem != null)
+			{
+				Text warn = UIKit.Label(g, "Check: " + problem, 11, UIKit.Danger, TextAnchor.UpperLeft);
+				warn.horizontalOverflow = HorizontalWrapMode.Wrap;
+				UIKit.Size(warn.gameObject, -1, 32);
+			}
+			UIKit.Button(g, "Add an answer with its own lines", () =>
+			{
+				Set(target, Islanders.TextProp, Islanders.WithBranch(ObjectProps.Get(target.Props, Islanders.TextProp)));
+				Refresh();
+			}, "Adds \"> Answer N -> branchN\" under the first lines and a branch #branchN at the end, for what the islander says after it. Rename both as you like", -1, 26f, 11);
+		}
+
+		/// <summary>A piece of a collectible set (PF3): its set's name and how many pieces the island has.</summary>
+		static void CollectibleGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Collectible set");
+			string set = Collectibles.SetOf(target.Props);
+			InputField f = SurvivorField(g, "Set", set, 26f, "The set this piece belongs to (any object with a set is a piece; empty = none). Players pick pieces up; the HUD counts them; the whole set runs every piece's \"set\" event");
+			f.characterLimit = 32;
+			f.onEndEdit.AddListener(v => { Set(target, Collectibles.SetProp, v.Trim().Length > 0 ? v.Trim() : null); Refresh(); });
+			amountFields.Add(f);
+			GameObject placed = GameObject.Find("PlacedObjects");
+			int pieces = placed == null || set.Length == 0 ? 0 : placed.GetComponentsInChildren<EditorGameObject>().Count(o => string.Equals(Collectibles.SetOf(o.Props), set, System.StringComparison.OrdinalIgnoreCase));
+			UIKit.Size(UIKit.Label(g, set.Length == 0 ? "No set: not a piece." : pieces + " piece" + (pieces == 1 ? "" : "s") + " of \"" + set + "\" on this island. Reward: Behaviour > \"set\"; quest step \"Find set\"; check \"set found\"", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic).gameObject, -1, 16);
+		}
+
+		/// <summary>A puzzle light (PF6): its group, whether it starts on, and how many lights its group has.</summary>
+		static void LightGroup(EditorGameObject target)
+		{
+			RectTransform g = UIKit.Group(root, "Puzzle light");
+			string group = Lights.GroupOf(target.Props);
+			InputField f = SurvivorField(g, "Group", group, 26f, "The lights' group: when every light of it is on, each runs its \"alllit\" event and the island sends the signal lights:<group> (empty = no group; any object with a group is a light)");
+			f.characterLimit = 32;
+			f.onEndEdit.AddListener(v => { Set(target, Lights.GroupProp, v.Trim().Length > 0 ? v.Trim() : null); Refresh(); });
+			amountFields.Add(f);
+			bool on = Lights.StartsOn(target.Props);
+			RectTransform row = UIKit.Row(g, 26f, 4f, "LightStartsOn");
+			UIKit.Size(UIKit.Label(row, "Starts", 13, UIKit.TextMuted).gameObject, 80);
+			Button offB = UIKit.Button(row, "off", () => { Set(target, Lights.OnProp, null); Refresh(); }, "The light starts switched off", -1, 26f, 12);
+			Button onB = UIKit.Button(row, "on", () => { Set(target, Lights.OnProp, "1"); Refresh(); }, "The light starts switched on (players switch it off)", -1, 26f, 12);
+			UIKit.Primary(on ? onB : offB);
+			GameObject placed = GameObject.Find("PlacedObjects");
+			int lights = placed == null || group.Length == 0 ? 0 : placed.GetComponentsInChildren<EditorGameObject>().Count(o => Lights.IsLight(o.GameObjectName, o.Props) && string.Equals(Lights.GroupOf(o.Props), group, System.StringComparison.OrdinalIgnoreCase));
+			UIKit.Size(UIKit.Label(g, (group.Length == 0 ? "No group." : lights + " light" + (lights == 1 ? "" : "s") + " in \"" + group + "\" on this island.") + " Events: \"lit\", \"unlit\", \"alllit\"; action \"switch light\"; checks \"light is\", \"all lights\"; step \"Light up\"", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic).gameObject, -1, 30);
+		}
+	}
+}

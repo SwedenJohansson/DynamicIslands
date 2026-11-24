@@ -1,0 +1,290 @@
+# Reefmachine Atoll - the second island of The End of the Ocean (SL14, the Concord Engine's Station 4: its intake reef)
+# A low ring of sand round a lagoon - and in the lagoon four rows of iron frames, half in the water, the reef growing over
+# them. The frames are an intake: the engine drinks the sea here. A sunk service boat lies on the lagoon floor, the pump
+# head under the middle has an air pocket, and on the islet the old intake cage still holds its water behind a gate.
+# Quest "The Intake" (15 steps; the frame tower is an optional climb since the 10-24 story pass): the frame rows, the frame plate (the Ringwave again), the stingrays, the Motor plans in
+# the sunk boat, the puffers, the pump head, the steering plans in it, the frame valve, the service note, the cage.
+#
+# Built by the recipe player (CIRecipe reefmachine_atoll) through the editor's own operations. Points (metres over the
+# sea): the lagoon floor at -5 m (round 0 0, r 12), the frame rows at z -9 -3 3 9 (posts x -9 -3 3 9, beams at 0.5 m),
+# the pump head at 0 0 on the floor, the sunk boat at -6 -6, the north landing round 0 16 at 1 m, the valve at 14 5,
+# the cage islet round 20 0 at 1 m (its gate on the west side).
+include lib_sea
+include lib_features
+include lib_huts
+include lib_gravity
+include lib_concord
+include lib_areas
+include lib_deep14
+include lib_caves
+new
+# (nature 10-24: hills and Raft-like trees over the whole island - the coordinator's check after the resize)
+gen Trees=0.4 Bushes=0.38 Rocks=0.55 Harvest=0.25 BeachThings=0.45
+gen Seed=14021 Radius=85 Height=12 Roughness=0.25 Peaks=3 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.2 BeachWidth=0.9
+gen Water=0.6 SeaRocks=0.5 SeaFinds=0.4 Sunken=0.4 Hostiles=0 Friendly=0.1 SeaLife=0.5
+generate
+
+# --- Terrain: the lagoon cut into the middle; the north landing, the valve bank, the cage islet --------------------------
+brush flatten at 0.31 -0.7 r=13 s=20 frames=500 h=-5
+brush flatten at -1.01 35.01 r=5 s=20 frames=200 h=1
+brush flatten at 33.97 6.69 r=3 s=20 frames=200 h=1
+brush flatten at 39.97 1.69 r=5 s=20 frames=200 h=1
+brush flatten at -9.19 8.8 r=3 s=20 frames=200 h=-5
+brush flatten at 9.81 8.8 r=3 s=20 frames=200 h=-5
+brush flatten at -9.19 -10.2 r=3 s=20 frames=200 h=-5
+brush flatten at 9.81 -10.2 r=3 s=20 frames=200 h=-5
+brush flatten at -4.01 37.01 r=4 s=20 frames=400 h=1
+# (REACH 10-28: since the hills came (nature 10-24) the lagoon, the landing, the valve bank and the cage islet are pits 5-8 m
+# deep with sheer banks - nine quest steps couldn't be reached or left (pictures reach_ra). Ways in and out:
+# - the landing: a cut through the ridge to the sink's shelf, whose steps climb out
+brush flatten from 1 36 to 9.5 38.6 r=2.5 s=20 frames=200 h=1
+clear from 1 36 to 9.5 38.6 r=2.5
+# - the valve bank joined to the cage islet, and steps from the islet up to the ground (0.5 m a step)
+brush flatten from 33.97 6.69 to 39.97 1.69 r=2.5 s=20 frames=200 h=1
+for k 0 11
+brush flatten at {42.6+0.84*$k} {0.7-0.32*$k} r=1.8 s=20 frames=150 h={1.3+0.5*$k}
+next
+clear from 33.97 6.69 to 51.8 -2.8 r=3
+# - the lagoon: steps from the water up through the south bank, between two rows of frames (0.5 m a step)
+for k 0 16
+brush flatten at -5.7 {-11.2-0.9*$k} r=1.8 s=20 frames=150 h={-0.4+0.5*$k}
+next
+clear from -5.7 -11 to -5.7 -26 r=2.5
+brush sand at 0.31 -0.7 r=20 s=10 frames=40
+origin
+clear at 0.31 -0.7 r=14
+clear at 39.97 1.69 r=5
+clear at 33.97 6.69 r=5
+
+# --- The frame rows: thick posts standing on the lagoon floor, their tops out of the water, beams along each row ---------
+for fz -9.7 8.3 6
+for fx -8.69 9.31 6
+place RT_PillarThick frames at $fx $fz ground
+next
+place RT_Beam framebeams at -5.69 $fz h=0.5
+place RT_Beam framebeams at 0.31 $fz h=0.5
+place RT_Beam framebeams at 6.31 $fz h=0.5
+next
+prop frames tint.color=#5a4636
+prop frames tint.amount=0.55
+prop framebeams tint.color=#5a4636
+prop framebeams tint.amount=0.55
+scatter VP_CoralDigitate02 10 at 0.31 -0.7 r=11 seed=14022 wet free=1
+scatter VP_CoralBulb04 8 at 0.31 -0.7 r=11 seed=14023 wet free=1
+scatter SeaVine3 6 at 0.31 -0.7 r=11 seed=14024 wet free=1
+call loopsound x=0.31 z=-0.7 al=intakesound ev=event:/raft/engine/waterwheel r=22 vol=0.35 h=1
+
+# --- The north landing: the frame plate with the Ringwave cut into it ----------------------------------------------------
+call tzone x=-1.01 z=34.01 al=framezone id=frame_row r=5 msg="Rows of iron frames standing in the lagoon, coral grown all over them. The water round them is pulling - slowly, all one way."
+call notebox x=-5.5 z=38.5 yaw=160 al=teoreef
+place Note_Sign frameplate at 0.49 36.51 ground sit yaw=180
+call ringwave x=-4.01 z=37.01 r=2 al=ringwave y=0.15
+prop ringwave tint.color=#8a8577
+prop ringwave tint.amount=0.6
+
+# --- The lagoon floor: the sunk service boat and its chest; the rays and the puffers ------------------------------------
+place RT_PlasticBoat - at -5.69 -6.7 ground sit rot=8,35,-14
+place Loot_Chest boatchest at -3.99 -8.3 ground sit yaw=40
+place Creature_Stingray rays at -2 5 h=-3
+prop rays creature.count=2
+prop rays creature.respawn=0
+place Creature_PufferFish puffers at 6.31 5.3 h=-2
+prop puffers creature.count=4
+prop puffers creature.respawn=0
+
+# --- The pump head under the middle: a pipe mouth, a pump, its air pocket and its chest -----------------------------------
+place VP_ConcretePipe01 - at 0.31 -0.7 ground sit scale=0.6
+place UT_Generator01 - at 2.11 0.5 ground sit scale=0.6 yaw=90
+place UT_ElectricCableHub01 - at -1.49 0.5 ground sit scale=0.6
+place Loot_Chest pumpchest at 0.31 1.5 ground sit yaw=180
+call airpocket x=0.31 z=-2.3 id=pump_head al=pumpair bub=pumpbub r=2.5 msg="The pump head - a pocket of old air trapped under the pipe mouth. Breathe."
+
+# --- The frame valve on the bank; the service note; the intake cage on its islet ----------------------------------------
+call wheel x=33.97 z=6.69 yaw=270 al=framevalve
+place Note_Sign servicenote at 35.97 4.69 ground sit yaw=250
+for ca 0 330 30
+place RT_Fence cage at {39.97+3*sin($ca)} {1.69+3*cos($ca)} ground sit yaw={$ca+90} sx=0.6
+next
+place RT_Wall1 cagegate at 36.97 0.19 ground sit yaw=90
+prop cage tint.color=#4a5560
+prop cage tint.amount=0.5
+prop cagegate tint.color=#4a5560
+prop cagegate tint.amount=0.5
+prop cagegate obj.name=cagegate
+place Loot_Crate cagecrate at 40.97 2.19 ground sit yaw=30
+call tzone x=39.97 z=1.69 al=cagezone id=cage r=2 msg="Inside the intake cage. The water that stood here is gone; the floor is slick and full of shells."
+place Note_Paper keeperlog at 39.2 1 ground drop yaw=30
+
+# --- Things to gather: silver algae and giant clams in the lagoon; four reefs round the atoll; the shallows -------------
+scatter "Pickup_Landmark_SilverAlgae" 3 at 0.31 -0.7 r=10 seed=14025 wet
+scatter "Pickup_Landmark_GiantClam" 3 at -3.69 3.3 r=7 seed=14026 wet
+scatter "Pickup_Landmark_Tree_Palm 2" 3 at -27.22 24.09 r=6 seed=14027 free=2
+scatter "Pickup_Landmark_Tree_Palm 4" 2 at -34 -21.25 r=5 seed=14028 free=2
+call reef x=-63.75 z=21.25 r=5 seed=14031
+call reef x=63.75 z=29.75 r=5 seed=14035
+call reef x=-21.25 z=-68 r=5 seed=14039
+call reef x=25.5 z=68 r=5 seed=14043
+call shallows x=0.31 z=-0.7 r=110.5 deep=5 n=1 seed=14047
+
+# --- Discoveries: things to find off the quest path (not needed for the quest) ---------------------------------
+call tzone x=67.7 z=-0.7 al=atollview id=atollview r=4 msg="The highest rock of the atoll. From up here the iron frames in the lagoon line up like the teeth of a comb - all pointing the same way."
+place Loot_Chest pumplocker at -56 -16.8 ground sit yaw=74
+prop pumplocker loot.refill=0
+call notebox x=0.1 z=55.2 yaw=0 al=intakelog
+place BoatStranded - at 16.1 -79.4 ground sit yaw=258 scale=0.7
+call treasure x=24.7 z=-27.8 r=5 n=1 seed=14048
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): the south ridge with its lookout and
+# a buried treasure, the cave in the north bank, the pump keeper's ruined hut in the west, the supply plane in the south-east
+call ar_ridge x1=-24 z1=-50 x2=28 z2=-52 h=9 top=7 r=9
+call ar_plants_tropical x=2 z=-51 r=30 seed=14151
+call tzone x=2 z=-51 al=southridge id=southridge r=7 msg="The top of the ridge. The lagoon below is a perfect circle - nothing that round grows by itself."
+# (11-12 w08: the ridge treasure is placed after the intake culvert below - the culvert's hill cover lifted the ground 0.1 m over it)
+call ar_cave x=-24 z=52 h=3 yaw=0 al=reefcave chest=reefcavechest
+call tzone x=-24 z=57 al=reefcavezone id=reefcave r=4 msg="A cave in the bank. Pipe fittings in a row on the floor, each one labelled in neat paint."
+call ar_ruin x=-52 z=0 h=3 yaw=0 al=keeperhut
+call notebox x=-49.5 z=-4.5 yaw=20 al=pumpdiary
+call ar_plane x=48 z=-32 h=3 yaw=150 al=supplyplane crate=supplycrate
+call notebox x=42.5 z=-36.5 yaw=70 al=supplylog
+call ar_plants_tropical x=-44 z=36 r=16 seed=14171
+call ar_plants_tropical x=48 z=36 r=16 seed=14181
+
+# --- Unique layer (10-24): reefmachine_atoll device - see SL14_progress.md UNIQUE ISLANDS
+call crankcache x=-56.5 z=-4 yaw=0 alias=sluicecrank sig=sluice chest=sluicecrate cx=-47 cz=4.5 cyaw=0 items=story:raft-Vasagatan_BoltCutter*1;TitaniumOre*2;Rope*2 title="Sluice crate"
+prop sluicecrank if.use=has|story:reefhandle|1\n!signal|sluice
+prop sluicecrank else.use=message||The sluice wheel's square socket is empty - or the wheel is turned as far as it goes. Its handle went down with the supply plane.
+prop sluicecrank on.use=message||The handle bites and the old sluice drains with a roar. In the mud where the water was, a crate.\nsignal||sluice\nshow|sluicecrate
+prop supplycrate note.title=Supply plane's crate
+story reefhandle|Sluice handle|Bolt|The square handle for the sluice wheel at the keeper's hut on the Reef Machine.
+loot supplycrate story:reefhandle*1;Plank*4;Nail*6
+prop supplycrate loot.refill=0
+note sluicecrate Sluice crate | Wrapped in oilcloth: bolt cutters with the keeper's name on them.
+prop sluicecrate loot.refill=0
+prop reefcavechest if.open=has|story:raft-Tangaroa_KeyCard|1
+prop reefcavechest else.open=message||The pump crew's store has a card slot stamped CONCORD. A keycard would open it.
+loot reefcavechest Bolt*3;Scrap*4;MetalIngot*2;TitaniumOre*2
+
+# --- Deep (10-24, SL14 DEEP 1-HOUR PASS): the climb - a 36 m scaffold tower on its pad beside a raised peak, a plank
+# bridge from landing 3 to the summit, the top locker, a stash on landing 2, a cairn and buried tin on the peak; the
+# dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
+call dp_ground tx=-52 tz=-37 hb=1.8 sx=-62.59 sz=-44.54 hs=23.4
+call dp_tower ox=-51.47 oz=-33.86 hb=1.8 yaw=144.57 al=ratower top=ratop stash=rastash zal=ratopzone zid=ra_top msg="The top of the frame tower. Below, the four rows of iron frames under the lagoon, the reef thick on them."
+call tzone x=-59.74 z=-42.51 al=rasummit id=ra_summit r=4 msg="The peak beside the frame tower - the highest point of the atoll." h=1
+call notebox x=-60.56 z=-47.39 yaw=234.57 al=racairn
+call treasure x=-63.75 z=-42.91 r=1.5 n=1 seed=14911
+prop treasure14911 treasure.loot=TitaniumOre*2;Battery*1
+place Creature_Goat ragoats at -41.19 -36.67 ground
+prop ragoats creature.count=2
+# (REACH 10-28: the ramp out rose 8.4 m in 8 m - too steep to walk up: now 13 m long on the same line)
+call dp_sink x=23 z=41 d=-14 ex1=17.62 ez1=31.41 ex2=11.25 ez2=20.06 eh=8.36
+place Van_4 rawreck at 23 41 ground sit yaw=119.29
+place Loot_Chest radivechest at 25.97 39.34 ground sit yaw=209.29
+call dp_air x=20.03 z=42.66 id=ra_air al=raair msg="Air trapped under the wreck - breathe."
+place Loot_ChestSmall radivesecret at 25.45 45.36 ground sit yaw=119.29
+call tzone x=23 z=41 al=radivezone id=ra_dive r=7 msg="The bottom of the lagoon pit. A van lies on its nose, its cargo door open." h=1
+call tzone x=13.7 z=24.43 al=rarim id=ra_rim r=5 msg="The pit's rim, where the supply van slid in." h=1
+call treasure x=11.75 z=20.94 r=12 n=1 seed=14912
+prop treasure14912 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+
+# --- 11-12 w08: the intake culvert - the engine's old intake pipe, flooded ------------------------------------------------
+# An underwater mouth in the lagoon's south wall between the first row's posts, an iron-lined culvert climbing
+# 12 degrees south under the sand ring to a dry room under the south ridge, the pump store - air, stone and the scrap
+# chest. The stingrays moved 12 m north in the lagoon (their spawn was on the mouth). No rats: reached only under water.
+# cavecheck: 6 m and more from the pump's air, the boat chest and the ridge treasure; far from the den at -24 52.
+call kit_st x=5.7 z=-8.5 yaw=175 len=36 slope=12 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=1 as=racave
+prop racave cave.rock=plain
+place Zone_Trigger raintakeair at 9.5 -52.6 h=4.5
+prop raintakeair obj.name=raintakeair
+prop raintakeair zone.id=ra_intake
+prop raintakeair zone.radius=8
+prop raintakeair zone.repeat=1
+prop raintakeair zone.air=1
+prop raintakeair zone.message=The top of the intake pipe - dry, and air. The pump crew's store: a chest of scrap on the floor.
+# cavecheck inside rascrapchest
+place Loot_ChestSmall rascrapchest at 7.2 -54.7 h=4 drop yaw=355
+prop rascrapchest obj.name=rascrapchest
+prop rascrapchest loot.refill=0
+note rascrapchest Pump store | Intake crew, pump store: spares for the frames. Anything that rusts through goes in here - the engine wastes nothing.
+loot rascrapchest Scrap*4;MetalIngot*1;Bolt*2;Nail*6
+call treasure x=2 z=-51 r=14 n=1 seed=14161
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Reefmachine Atoll
+info author=Custom Islands
+info description=A low atoll round a lagoon full of iron frames, the reef grown over them and the water pulling one way: the Concord Engine's intake. A sunk service boat, a pump head with air in it, and a cage on the islet.
+island on.arrive=message||A ring of sand, a lagoon - and rows of rusted frames standing in the water like a fence. The current runs into the lagoon, not out.
+
+story valve|Frame valve turned|Hinge|You wound the frame valve on Reefmachine Atoll. The intake cage on the islet drained, and its gate dropped.
+
+note frameplate Frame plate | A plate bolted to the first frame, green with age.\n\nCONCORD WORKS - INTAKE 4\nTHE RINGWAVE\n\nUnder the words, the sign again: a ring, cut through by three waves.
+note servicenote Service note | SERVICE NOTE - scratched into a tin plate, by the pump crew\n\nStation 4 reef. Feeding the engine's intake.\n\nKeep the frames clear of shell. Keep the cage full for the inspectors. Smile at the inspectors; they have never once smiled back.\n\nIf the inspectors stop coming, open the valve and go home.\n\nUnderneath, in a different hand, much later: The inspectors stopped coming. We opened the valve. Nobody told us where home was, so we stayed a while longer and scraped the frames for no one. Old habits. If you are here, scrape one for us. The reef likes it.
+note boatchest Service boat | A motor's plans in an oil bag.
+note pumpchest Pump head | Dry in the trapped air: a steering wheel's plans.
+note cagecrate Cage crate | Shells, tools, and a tin of goo.
+loot boatchest Blueprint_MotorWheel*1;Scrap*4;Bolt*2
+prop boatchest loot.refill=0
+loot pumpchest Blueprint_SteeringWheel*1;Hinge*2;MetalIngot*1
+prop pumpchest loot.refill=0
+loot cagecrate ExplosiveGoo*2;SilverAlgae*2;CopperOre*2;Bolt*2
+prop cagecrate loot.refill=0
+
+prop framevalve beh.use=Wind the frame valve
+prop framevalve if.use=!signal|valve
+prop framevalve on.use=signal||valve\ngive||story:valve*1\nhide|cagegate\nmessage||The valve fights, then spins. Out on the islet the cage's water drops away with a long gurgle - and its gate sinks out of sight.\nsound||event:/raft/engine/waterwheel
+prop framevalve else.use=message||The valve is open. The cage is dry.
+
+note pumplocker Pump crew's locker | Spare parts nobody came back for.
+loot pumplocker MetalIngot*2;Bolt*4;Hinge*2;CopperIngot*1
+note intakelog Intake log | INTAKE LOG - a page torn from the crew's book\n\nIntake open 06:00. Flow good.\nIntake open 06:00. Flow good.\nIntake open 06:00. The reef keeps growing over the grilles - we scrape them every week.\nIntake open 06:00. Flow good. Cook made fish again.\nIntake open 06:00. No orders since spring. We keep the valve as we were told.\nIntake open 06:00. The pulse on the set changed today. Same beat, but there is a voice under it now, a man's, saying one word. Nobody on the crew will say the word out loud.\nIntake open 06:00. Flow good. Cook made fish again. We are almost glad.
+note reefcavechest Pipe store | Fittings, a gasket, and grease gone hard.
+prop reefcavechest loot.refill=0
+note pumpdiary Pump keeper's diary | PUMP KEEPER'S DIARY - in a tin by the fallen wall\n\nThe intake drinks the whole lagoon twice a day. Where it goes nobody told us. The pipes run south under the reef, straight as a ruler, the same way the pulse points. I asked the engineers. They said: to the Engine. Capital E.\n\nA beacon keeper from up north came through today in a leaking dory, asking which way the Command Well lay. Wren, he said his name was. His wife is on the crew down there. I told him the truth: nobody goes there now, the Well went quiet. He thanked me as if I had said the opposite, and rowed south.\n\nWe never built the frames to hold back the sea. We built them to farm coral for the Concord's lime. I kept my bolt cutters in the sluice crate - the sluice handle went south on the supply plane.
+note supplylog Supply plane log | SUPPLY PLANE LOG - the pilot's hand, getting worse\n\nSpare valves for the Intake, as ordered. Could not raise the atoll on the radio - only that pulse, louder every mile south, and once, under it, someone answering it. An old man's voice. He was not talking to me.\n\nDitching on the south-east shore. I have ditched before. It does not get better with practice.\n\nThe valves are in the crate. Whoever finds them: the frames need them more than I do. Tell my sister I meant to visit.\n\nCargo: one sluice handle for the keeper's hut, wrapped in sacking.
+# (deep pass 10-24: the climb and the dive)
+story reeflog|Reef log|CircuitBoard|The reef keepers' log, sealed in a van that went into the lagoon pit with the last supply run. It holds the frame tower's lock number in its last page.
+story chainkey|Chain key|Bolt|A heavy key on a ring, stamped CONCORD WELL. One of the five that open the chained door of the Command Well, deep under the calm circle.
+note radivechest Drowned supply van | The van that never arrived. A sealed tin: the reef log.
+loot radivechest story:reeflog*1;Plastic*4;Scrap*3;Rope*2
+prop radivechest loot.refill=0
+prop radivechest if.open=quest|13
+prop radivechest else.open=message||The van's cargo tin is sealed fast. Dive into the lagoon pit, to the van itself, and it will give.
+note ratop Frame tower locker | The log's number opens it: a chain key and spare parts.
+loot ratop story:chainkey*1;TitaniumOre*2;Battery*1;Bolt*4
+prop ratop loot.refill=0
+prop ratop obj.name=ratop
+prop ratop if.open=has|story:reeflog|1
+prop ratop else.open=message||The frame tower's locker. A dial lock - the number is in a log somebody kept.
+note rastash Frame tower stash | A lunch tin: fuses and a pencilled sum.
+loot rastash Battery*1;CircuitBoard*1;Nail*6
+prop rastash loot.refill=0
+note radivesecret Van glovebox | The driver's tools, and a postcard of the atoll, green and busy.
+loot radivesecret MetalIngot*2;Bolt*3;Rope*1
+prop radivesecret loot.refill=0
+note racairn Reef cairn | A cairn of coral and iron on the peak, a page of Ines's radio log under the top stone:\n\nNight two. The intake hums like a throat. I put the radio to the frames and listened for an hour, and I am sure now: under the pulse, a man talks back to it. Not to us. To it. The same word, then a name I cannot make out.\n\nHedda let me sleep the watch through, which she never does. Teo cooked. It was terrible and I ate all of it.\n\nThe needle wants us west, to three rocks with masts on them. The masts are dead. Somebody pointed them wrong on purpose, Hedda thinks. - I.
+note teoreef Teo's complaint | TEO'S COMPLAINT - pinned under a shell on a box by the frames\n\nTo whoever runs this reef:\n\nYour stingrays bit me. Your puffers puffed at me. Your water pulls one way and I wanted to go the other. Your coral is in rows, like a vegetable garden for a giant, and I find that rude.\n\nHedda says the frames are a machine and the reef is just the paint. Ines put her ear on an iron post and said it is breathing. I put my ear on it too and got a cold ear.\n\nFive stars for the view. One star for everything else. We are going on. Hedda says I have to stop leaving reviews.\n\n- T. Varga
+note keeperlog Keeper's log: Intake | A sheet of oilcloth nailed inside the cage, in a careful old hand:\n\nKEEPER'S LOG. Intake 4.\n\nCalling. Calling. Station, this is the Keeper. The intake is clear again; I scraped it myself, all four rows, with these hands that are too old for it.\n\nThree of them came through last week, following my beacon - a captain, a smoker and the girl from the deep with the good radio. They camped where I told them with the light. They will do. Five posts want five pairs of hands, and I have only the one pair.\n\nThe masts at the three rocks are lying. I will turn them true again. Calling. Calling. Answer me, Mara.
+quest title=The Intake
+quest intro=Iron frames in a lagoon, coral over them. Go ashore by the first row.
+step reach|frame_row|1|Go ashore by the rows of iron frames in the lagoon
+step read|Frame plate|1|Read the plate on the first frame
+step kill|Stingray|2|Drive off the two stingrays in the lagoon
+step blueprint|Blueprint_MotorWheel|1|Take the motor plans from the sunk service boat
+step kill|Puffer fish|2|Clear the puffer fish from the frames
+step reach|pump_head|1|Swim down into the pump head's air pocket
+step blueprint|Blueprint_SteeringWheel|1|Take the steering plans from the pump head
+step collect|story:valve|1|Wind the frame valve on the lagoon bank, by the service note
+step read|Service note|1|Read the service note by the valve
+step collect|story:reefhandle|1|Find the sluice handle in the crashed supply plane's crate on the shore
+step read|Pump keeper's diary|1|Read the pump keeper's diary in the ruined pump keeper's hut
+step open|Sluice crate|1|Turn the sluice by the hut and open what it uncovers
+step reach|ra_dive|1|Dive into the lagoon pit to the drowned van
+step collect|story:reeflog|1|Take the reef log from the van's cargo chest
+step reach|cage|1|Go into the drained intake cage
+quest done=The intake is open and the cage is dry. Something on the Receiver answers now - three relays, out on the water.
+quest reward=Rope*4;Scrap*6;Nail*10
+
+# (11-03 fixC, CIFloatingSweep: a scattered boulder hung over the ground, cleared the stray scatter)
+clear at 43.56 -1.67 r=1.5 only=SmallBoulder1 all
+# (11-03 fixC, CIFloatingSweep: a scattered boulder hung over the ground, cleared the stray scatter)
+clear at 37.91 41.85 r=1.5 only=SmallBoulder2 all
+save Reefmachine Atoll

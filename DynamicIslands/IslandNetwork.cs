@@ -53,6 +53,73 @@ namespace DynamicIslands.Editor
 		/// <summary>Host -> everyone (and each player who joins): the story chain (StoryChain) - Data = "on;steps|frequencies|unlocked|fired",
 		/// Name = a banner to show ("title\ntext"), if any.</summary>
 		public const int StoryChain = 19;
+		/// <summary>Host -> everyone (when it changes, and each player who joins): the world's quest count (QuestCount, ROADMAP
+		/// CW3) - Data = one line per quest, "group\tname\t1|0", so every player's journal shows the host's count.</summary>
+		public const int QuestCount = 20;
+		/// <summary>Host -> players: which island spot animals belong to (AU32/AU62) - Data = "objectIndex:islandId:spot;..."
+		/// for one animal when it is made, for all of them to a player who joins.</summary>
+		public const int CreatureSpots = 21;
+		/// <summary>A tree chopped or an item picked up on a custom island (IslandObjectState, AU63): Ids = island, active (1/0),
+		/// harvests left (-1 = none), Index = its ordinal, Count = in-game day. Client -> host, host -> everyone; an older
+		/// version ignores it.</summary>
+		public const int ObjectHarvest = 22;
+		/// <summary>Host -> players: the host lacks an island file its world needs (AU6) - Name = the island's name, Hash = its
+		/// content hash. A player with a file of that content sends it back as FileChunks (SendFile's path); an older one ignores it.</summary>
+		public const int FileWanted = 23;
+		/// <summary>Player -> host, as the host's copy of the world arrives on joining: the player's kept copy of this world is
+		/// newer (AU26) - Name = world id, Data = "savecount;savedat ticks"; the host is warned.</summary>
+		public const int WorldCopyNewer = 24;
+		/// <summary>QuestStep for an island's further quests (n &gt; 0, LM4): Ids = island, quest number. Its own kind, so a version
+		/// before LM4 ignores it - it read every QuestStep as the main quest's (a second quest's step moved the main one on).</summary>
+		public const int QuestStepMore = 25;
+		/// <summary>The world option Daily quest: the host's task ("state", Data = DailyQuest.Task), a player's part ("add":
+		/// Index = day, Count) or reward taken ("got").</summary>
+		public const int DailyQuest = 26;
+		/// <summary>The world option Rogue shark, host to players: Index = the rogue's object index (0 = none), Count = no new one
+		/// before this day; Name = "spawn", "dead" or "state" (a player who joins).</summary>
+		public const int RogueShark = 27;
+		/// <summary>Host -> everyone (after each of Raft's saves) and each player who joins: Raft's newest save of the world
+		/// (AU43, WorldSaveShare): Name = world id, Hash = save folder name, Index/Count = part, Data = base64 part of the pack.</summary>
+		public const int WorldSave = 28;
+		/// <summary>The upgrade research table (UpgradeTable): host -> everyone "state" (Data = researched|learned item indexes)
+		/// and "learned" (Index = upgrade, Data = by whom); a player -> host "research" (Index = item, Count = table's object
+		/// index) and "learn" (Index = upgrade).</summary>
+		public const int UpgradeTable = 29;
+		/// <summary>Host -> everyone: a when/then moment (RF1/RF2). Ids[0] = island, Index = object (-1 = the island, -2 = all of
+		/// it), Name = "sound" / "stop" (TriggerSounds, Data = the action's sound text), "camera" (CameraMoment, Data =
+		/// marker, a line break, "look at|seconds|range") or "ending" (StoryCredits, Data = title, credits and note split by U+001F). An older version ignores it.</summary>
+		public const int Moment = 33;
+		/// <summary>Host -> players: Raft's vending machine on a custom island (SL7b, RaftVending) paid or emptied: Ids = island,
+		/// state key, button + 1 (0 = empty), Count = day. Raft's own message can reach a player before the island is set up there
+		/// (F195); this keeps the player's island state, and its machine, as the host has it. An older version ignores it.</summary>
+		public const int VendingHatch = 34;
+		/// <summary>Host -> everyone: the world option Storm seas (TODO 4e, StormSeas): a storm broke a raft floor. Name = "broke", Index =
+		/// the storm, Count = floors broken in the world. Raft itself takes the floor away on every machine; this is the banner. An older version ignores it.</summary>
+		public const int StormSeas = 35;
+		/// <summary>Host -> everyone: the world option Whale breach (TODO 4j, WhaleBreach): a whale breaches. Index = its number, Offsets = { dx, dz from the host's raft, heading, roll side }. Looks only.</summary>
+		public const int WhaleBreach = 36;
+		/// <summary>Both ways: the world option Kraken arm (Kraken). Host -> everyone: Name "rise" (Index = the arm's number, Data = "block;side;seed;hits needed;stay s",
+		/// Offsets[0] = seconds since it rose - a joiner gets it in the join reply), "hits" (Count = hits so far), "let" (beaten off), "tear" (Count = floors torn;
+		/// Raft's own block removal takes the floors away), "away" (sent away, quietly). Player -> host: "hit" (Index = the arm). An older version ignores it.</summary>
+		public const int Kraken = 37;
+		/// <summary>Host -> everyone: an animal turned alpha (WorldRandomizer, Big Bruce too): Index = its object index, Offsets = { max health, health }
+		/// as the host gave it then, so other players have it exactly (CreatureSpawner.HostHealth; MatchHealth stays for players who join later). An older version ignores it.</summary>
+		public const int AlphaHealth = 38;
+		/// <summary>Both ways: quest mechanics (MechFeatures). Player -> host: Name "carry" (Ids = island, object: pick it up), "drop" (Offsets = x, y, z, yaw
+		/// where it was put down, in its parent's space). Host -> everyone: "held" (Data = the holder's id), "refused" (Data = the asker), "at" (put down there),
+		/// "move" (Offsets = x, y, z, yaw, seconds: a moveto), "collapse" (Ids = island, objects...; Offsets[0] = seconds), "heldlist" (to a joiner: Data =
+		/// "island,object,holder;..."). An older version ignores it.</summary>
+		public const int Mech = 39;
+		/// <summary>Both ways: a ping on the island map (Minimap, PF5). Ids = { island } with Offsets = x, y, z in the island's space, or no Ids and
+		/// Offsets from the raft (at sea); Data = the pinging player's id. A player sends it to the host, the host shows it and sends it to everyone. An older version ignores it.</summary>
+		public const int Ping = 40;
+		/// <summary>Host -> one player: items of a "Bring items" hand-over the host did not count (another player brought the rest
+		/// first, the step had moved on, or the hand-over was refused), given back (QuestSteps.ItemsBack). Ids = { island, quest },
+		/// Index = the step, Data = the item, Count = how many, Name = why ("over", "late", "refused"). An older version ignores it.</summary>
+		public const int QuestItemsBack = 41;
+		/// <summary>Host -> a joiner: the world got a new id when it loaded without one (WorldIdRepair), Name = the id. The joiner's
+		/// fresh start there gets its own no-id inventory back (WorldIdRepair.OnNewIdFromHost). An older version ignores it.</summary>
+		public const int WorldNewId = 42;
 		public int Kind;
 
 		// Islands: one entry per island. Offsets are x,z per island relative to the host's raft, so a world shift
@@ -67,6 +134,9 @@ namespace DynamicIslands.Editor
 		public string[] States;
 		/// <summary>Names shown on the Receiver (Entry.Label).</summary>
 		public string[] Labels;
+		/// <summary>The rule that brought each island (Entry.Rule): players' notebooks find a main story island's quest and
+		/// notes by it (QuestBook) - since 2026-10-04.</summary>
+		public string[] Rules;
 		public bool FullList;
 
 		// FileRequest / FileChunk: island file with this name and content hash, chunk Index of Count (base64)
@@ -100,6 +170,8 @@ namespace DynamicIslands.Editor
 		// Client: when each file was asked for (asked again when it doesn't come), and whether the player was told
 		static readonly Dictionary<string, float> requestedAt = new Dictionary<string, float>();
 		static readonly HashSet<string> toldWaiting = new HashSet<string>();
+		// Client: the host's island names left out (not file names here - AU41), the player told once each
+		static readonly HashSet<string> toldRefused = new HashSet<string>();
 		static bool toldNoList;
 		static float nextFileCheck;
 		const float FileRetrySeconds = 30f, SlowSyncSeconds = 30f;
@@ -115,6 +187,10 @@ namespace DynamicIslands.Editor
 		// is. Island offsets are relative to the raft: before this they would land around the scene's origin. Seen in
 		// a two-player test: an island spawned while the client was still joining ended up 1 km away.
 		static bool worldReceived, wasInGame;
+		/// <summary>Client: when this player was first seen in a game without Raft's world-arrived event (-1: not so).</summary>
+		static float inGameNoWorldSince = -1f;
+		/// <summary>Client: how long a player may be in a game without the world-arrived event before asking anyway.</summary>
+		internal const float MissedWorldSeconds = 10f;
 
 		/// <summary>Whether this machine knows the world's islands: the host always, a client once the host's list came.</summary>
 		public static bool HasList { get { return Raft_Network.IsHost || synced; } }
@@ -128,10 +204,21 @@ namespace DynamicIslands.Editor
 			WorldRules.OnWorldReceived();
 			WorldOptions.OnWorldReceived();
 			global::DynamicIslands.Editor.StoryChain.OnWorldReceived();
+			global::DynamicIslands.Editor.WorldCopy.OnWorldReceived();
+			global::DynamicIslands.Editor.QuestCount.Reset();
+			global::DynamicIslands.Editor.Collectibles.Reset();
+			global::DynamicIslands.Editor.QuestRewards.OnWorldReceived();
+			global::DynamicIslands.Editor.Behaviours.ForgetWorld(); // (a late answer for the last host's event: questfix 11-14)
+			global::DynamicIslands.Editor.ContentState.ForgetWorld();
+			QuestTimers.Reset(); // (questfix 11-14: the last world's clocks)
+			toldRefused.Clear(); // (a new host: its left-out islands are told again - review 10-30)
 			IslandWorldState.RemoveIds(IslandWorldState.Islands.Select(e => e.Id).ToList(), false);
 			synced = false;
 			syncTries = 0;
 			nextSyncTry = 0;
+			hostToldVersion = false;
+			// (a notice from an earlier world is not about this host - and the same one must be shown again here)
+			VersionNotice = null;
 			Log("The host's world arrived: asking for its islands");
 		}
 
@@ -150,6 +237,8 @@ namespace DynamicIslands.Editor
 			requestedAt.Clear();
 			toldWaiting.Clear();
 			toldNoList = false;
+			wanted.Clear();
+			nextWantedAsk = 0f;
 		}
 
 		/// <summary>Called every frame. Clients keep asking the host for the island list until it arrives.</summary>
@@ -159,7 +248,23 @@ namespace DynamicIslands.Editor
 			// before it counts the game scene as loaded.)
 			if (LoadSceneManager.IsGameSceneLoaded) wasInGame = true;
 			else if (wasInGame) { wasInGame = false; worldReceived = false; }
+			// (a joined player whose mod never heard Raft's world-arrived event - the hook is put back each frame, and Raft may
+			// raise it before then - never asked for the islands: player 2 sometimes had no list in the two-player tests. In
+			// the game for a while without it, the world is here: ask anyway)
+			if (!Raft_Network.IsHost && !worldReceived && !synced && InMultiplayerGame)
+			{
+				if (inGameNoWorldSince < 0f) inGameNoWorldSince = Time.unscaledTime;
+				else if (Time.unscaledTime - inGameNoWorldSince > MissedWorldSeconds)
+				{
+					inGameNoWorldSince = -1f;
+					Debug.LogWarning("[CUSTOM ISLANDS] [net] No world-arrived event from Raft " + MissedWorldSeconds + " s into the game: asking for the host's islands anyway");
+					OnWorldReceived();
+				}
+			}
+			else inGameNoWorldSince = -1f;
 			if (!Raft_Network.IsHost && worldReceived && InMultiplayerGame && Time.unscaledTime >= nextFileCheck) { nextFileCheck = Time.unscaledTime + 5f; RetryLateFiles(); }
+			// (the host: the island files it asked the players for, asked again now and then - AU6)
+			if (Raft_Network.IsHost && wanted.Count > 0 && InMultiplayerGame && Time.unscaledTime >= nextWantedAsk) { nextWantedAsk = Time.unscaledTime + FileRetrySeconds; AskPlayers(null); }
 			if (synced || Raft_Network.IsHost || !worldReceived || !InMultiplayerGame || Time.unscaledTime < nextSyncTry) return;
 			// (after the first minute: still asking, slowly - a host busy loading, or a message lost, was left without islands for
 			// the whole session before)
@@ -172,8 +277,10 @@ namespace DynamicIslands.Editor
 			syncTries++;
 			nextSyncTry = Time.unscaledTime + (syncTries > SyncMaxTries ? SlowSyncSeconds : SyncRetrySeconds);
 			// (with this player's version of the mod: the host says when they differ, and answers with its own)
-			if (syncTries == 1) { HostAnswersClaims = false; HostAddsCounts = false; } // (a new host: known again from its answer)
-			SendToHost(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion });
+			// (only for a new host's world - a Resync of the same host kept asking with them off until its answer, and a quest
+			// event meanwhile sent a total, which overwrote another player's count - questfix round 2)
+			if (syncTries == 1 && !hostToldVersion) { HostAnswersClaims = false; HostAddsCounts = false; HostAnswersEvents = false; CreatureSpawner.HostSendsSpots = false; } // (a new host: known again from its answer)
+			SendToHost(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion, Data = BuildTag + Build });
 		}
 
 		/// <summary>A player: the host answers claims (it sent its version - claims are older than that - or answered one):
@@ -182,30 +289,87 @@ namespace DynamicIslands.Editor
 		public static bool HostAnswersClaims { get; internal set; }
 
 		/// <summary>What this host does that older ones don't, told to players with its version ("counts": a player's quest
-		/// events go to it as amounts it adds up, also for later steps - an older host took an amount for the total).</summary>
-		const string HostCapabilities = "counts";
+		/// events go to it as amounts it adds up, also for later steps - an older host took an amount for the total;
+		/// "events": a player's event it checks again is answered, yes or no).</summary>
+		const string HostCapabilities = "counts,spots,events";
+
+		/// <summary>A player: the host answers an event whose crew checks it makes again (yes: the event back, no: its
+		/// "otherwise" part), so the player's own part waits for that answer; else it runs at once, as before.</summary>
+		public static bool HostAnswersEvents { get; internal set; }
 
 		/// <summary>A player: the host adds quest counts up (since 2026-10-01); else the player sends its total, as before.</summary>
 		public static bool HostAddsCounts { get; internal set; }
 
 		const string VersionTag = "version:";
+		const string BuildTag = "build=";
+
+		static string build;
+		/// <summary>Dev tests (CIFakeBuild): this PC pretends to be another build.</summary>
+		public static string TestBuild;
+		/// <summary>This build of the mod: the first 8 hex digits of a hash over every file in the .rmod (in name order), so
+		/// two players with the same release have the same, and any other build differs ("?" when the files can't be read).</summary>
+		public static string Build
+		{
+			get
+			{
+				if (TestBuild != null) return TestBuild;
+				if (build != null) return build;
+				try
+				{
+					var files = DynamicIslands.instance != null ? DynamicIslands.instance.modlistEntry.modinfo.modFiles : null;
+					if (files == null || files.Count == 0) return "?";
+					using (var md5 = System.Security.Cryptography.MD5.Create())
+					{
+						foreach (string name in files.Keys.OrderBy(k => k, StringComparer.Ordinal))
+						{
+							byte[] n = System.Text.Encoding.UTF8.GetBytes(name);
+							md5.TransformBlock(n, 0, n.Length, null, 0);
+							byte[] b = files[name] ?? new byte[0];
+							md5.TransformBlock(b, 0, b.Length, null, 0);
+						}
+						md5.TransformFinalBlock(new byte[0], 0, 0);
+						build = BitConverter.ToString(md5.Hash, 0, 4).Replace("-", "").ToLowerInvariant();
+					}
+					Log("This build: " + build);
+					return build;
+				}
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Build stamp: " + e.Message); return build = "?"; }
+			}
+		}
 
 		/// <summary>The last version difference seen (tests), or "".</summary>
 		public static string VersionNotice { get; private set; }
 
-		/// <summary>A player who joined (on the host) or the host (on a player) has another version of the mod: say so, once each.</summary>
-		static void CompareVersions(string tag, string who)
+		/// <summary>A player: the host's version reply came (since this world arrived). A full island list without one first is
+		/// from a host older than the version reply (it is sent ahead of the list) - AU35.</summary>
+		static bool hostToldVersion;
+
+		/// <summary>A player who joined (on the host) or the host (on a player) has another version of the mod: say so, once each,
+		/// with both versions and which one to install. A version that couldn't be read ("?", modinfo.json unreadable) is
+		/// unknown, never taken as the same (AU35).</summary>
+		static void CompareVersions(string tag, string who, string data)
 		{
 			if (string.IsNullOrEmpty(tag) || !tag.StartsWith(VersionTag)) return;
 			string theirs = tag.Substring(VersionTag.Length), mine = LibraryPack.ModVersion;
-			if (theirs == mine) return;
-			string text = Raft_Network.IsHost
-				? who + " joined with Custom Islands " + theirs + " - you have " + mine + ". Things may not match between you: both should use the same version."
-				: "The host has Custom Islands " + theirs + " - you have " + mine + ". Things may not match between you: both should use the same version.";
+			string text;
+			if (theirs == mine && VersionMismatch.IsKnown(mine))
+			{
+				// (the same version: every build of an alpha says the same, so the builds are compared too - a friend with a
+				// 3.0 from before the upgrade table joined without a word and never saw it - AU81)
+				string theirBuild = (data ?? "").Split(',').Where(x => x.StartsWith(BuildTag)).Select(x => x.Substring(BuildTag.Length)).FirstOrDefault();
+				if (theirBuild == Build || Build == "?" || theirBuild == "?") return;
+				text = theirBuild == null
+					? (Raft_Network.IsHost ? who + " joined with an older build of Custom Islands " + mine + " (from before build stamps)." : "The host has an older build of Custom Islands " + mine + " (from before build stamps).") +
+					  " Things added since may be missing for them: both should install the same, newest release."
+					: (Raft_Network.IsHost ? who + " joined with another build of Custom Islands " + mine : "The host has another build of Custom Islands " + mine) +
+					  " (theirs " + theirBuild + ", yours " + Build + "). Things one has may be missing for the other: both should install the same, newest release.";
+			}
+			else text = VersionMismatch.MismatchText(Raft_Network.IsHost, who, theirs, mine);
 			if (VersionNotice == text) return;
 			VersionNotice = text;
 			Debug.LogWarning("[CUSTOM ISLANDS] [net] " + text);
-			global::DynamicIslands.DynamicIslands.Notify(text, true);
+			// (shown longer than other notices: a long text, and it explains whatever goes wrong next)
+			global::DynamicIslands.DynamicIslands.Notify(text, true, 15);
 		}
 
 		#region Sending
@@ -224,8 +388,15 @@ namespace DynamicIslands.Editor
 		/// <summary>Host: a message for every other player.</summary>
 		public static void SendToEveryone(IslandNetMessage msg) { SendToClients(msg); }
 
+		/// <summary>A player: a message for the host (Kraken "hit").</summary>
+		public static void SendToTheHost(IslandNetMessage msg) { if (Loopback != null) { Loopback(msg); return; } if (InMultiplayerGame) SendToHost(msg); }
+
+		/// <summary>Tests: the player the last message for one player went to.</summary>
+		internal static ulong LastSentTo;
+
 		static void SendToPlayer(IslandNetMessage msg, Network_UserId player)
 		{
+			LastSentTo = player.Id;
 			if (Loopback != null) { Loopback(msg); return; }
 			try { DynamicIslands.instance.SendNetworkMessageToPlayer(msg, player, EP2PSend.k_EP2PSendReliable); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Sending failed: " + e.Message); }
@@ -246,6 +417,13 @@ namespace DynamicIslands.Editor
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
 
+		/// <summary>Host: a story message for one player (T8: the answer to their take-out).</summary>
+		public static void SendStoryTo(IslandNetMessage msg, Network_UserId player)
+		{
+			msg.Kind = IslandNetMessage.Story;
+			if (Raft_Network.IsHost) SendToPlayer(msg, player);
+		}
+
 		/// <summary>Host: the world's rules, to everyone.</summary>
 		public static void SendWorldRules(IslandNetMessage msg)
 		{
@@ -261,6 +439,37 @@ namespace DynamicIslands.Editor
 			if (to.HasValue) SendToPlayer(msg, to.Value); else SendToClients(msg);
 		}
 
+		/// <summary>The upgrade research table: the host to one player or everyone; a player to the host.</summary>
+		public static void SendUpgradeTable(IslandNetMessage msg, Network_UserId? to)
+		{
+			msg.Kind = IslandNetMessage.UpgradeTable;
+			if (Raft_Network.IsHost) { if (to.HasValue) SendToPlayer(msg, to.Value); else SendToClients(msg); }
+			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
+		}
+
+		/// <summary>Raft's save of the world: the host to one player (who joined) or everyone (AU43).</summary>
+		public static void SendWorldSave(IslandNetMessage msg, Network_UserId? to)
+		{
+			msg.Kind = IslandNetMessage.WorldSave;
+			if (!Raft_Network.IsHost) return;
+			if (to.HasValue) SendToPlayer(msg, to.Value); else SendToClients(msg);
+		}
+
+		/// <summary>A player -> the host: their kept copy of the world is newer than the host's (AU26).</summary>
+		public static void SendWorldCopyNewer(IslandNetMessage msg)
+		{
+			msg.Kind = IslandNetMessage.WorldCopyNewer;
+			if (!Raft_Network.IsHost && (InMultiplayerGame || Loopback != null)) SendToHost(msg);
+		}
+
+		/// <summary>Daily quest: the host to one player or everyone; a player to the host.</summary>
+		public static void SendDaily(IslandNetMessage msg, Network_UserId? to)
+		{
+			msg.Kind = IslandNetMessage.DailyQuest;
+			if (Raft_Network.IsHost) { if (to.HasValue) SendToPlayer(msg, to.Value); else SendToClients(msg); }
+			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
+		}
+
 		public static void SendLevels(IslandNetMessage msg, Network_UserId? to)
 		{
 			msg.Kind = IslandNetMessage.Levels;
@@ -271,11 +480,13 @@ namespace DynamicIslands.Editor
 		/// <summary>Host: tell clients about islands (new ones, or the whole list for a client that asked).</summary>
 		internal static IslandNetMessage IslandsMessage(IEnumerable<IslandWorldState.Entry> entries, bool fullList)
 		{
-			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
 			// (an island still being made - its file not written yet - is left out: a player who joined in that moment got
 			// it without a hash, it failed there, and its announcement later was ignored as known; it comes with that)
 			var list = entries.Where(e => !e.Failed && HashOf(e.Name) != null).ToList();
 			foreach (var e in list) IslandObjectState.Capture(e);
+			// (the raft once for the whole message, as it is made - after the files were hashed - and the same place
+			// (CustomIslandSpawner.RaftPosition) the player measures from as it arrives - AU41)
+			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
 			var msg = new IslandNetMessage
 			{
 				Kind = IslandNetMessage.Islands,
@@ -286,6 +497,7 @@ namespace DynamicIslands.Editor
 				Hashes = list.Select(e => HashOf(e.Name) ?? "").ToArray(),
 				States = list.Select(e => IslandObjectState.Encode(e.State)).ToArray(),
 				Labels = list.Select(e => e.Label ?? "").ToArray(),
+				Rules = list.Select(e => e.Rule ?? "").ToArray(),
 				Offsets = new float[list.Count * 3]
 			};
 			for (int i = 0; i < list.Count; i++)
@@ -294,6 +506,40 @@ namespace DynamicIslands.Editor
 				msg.Offsets[i * 3] = o.x; msg.Offsets[i * 3 + 1] = list[i].Position.y; msg.Offsets[i * 3 + 2] = o.z;
 			}
 			return msg;
+		}
+
+		/// <summary>An island was unloaded here: a version change that waited for it is made now (RK1).</summary>
+		internal static void AfterUnload(IslandWorldState.Entry e)
+		{
+			if (e == null || e.Root != null) return;
+			if (Raft_Network.IsHost && e.SwitchTo != null)
+			{
+				string to = e.SwitchTo;
+				e.SwitchTo = null;
+				if (!File.Exists(IslandSpawner.PathFor(to))) return;
+				e.Name = to;
+				e.StandIn = false;
+				e.Failed = false;
+				Log("'" + e.HostName + "' plays the world's version from now on (" + to + ")");
+				SendToClients(IslandsMessage(new[] { e }, false));
+			}
+			else if (!Raft_Network.IsHost && e.PendingHash != null)
+			{
+				string h = e.PendingHash;
+				e.PendingHash = null;
+				SwitchVersion(e, h);
+			}
+		}
+
+		/// <summary>Client: the host plays another version of a known island - this one takes that file too (RK1).</summary>
+		static void SwitchVersion(IslandWorldState.Entry e, string hash)
+		{
+			e.Hash = hash;
+			e.Failed = false;
+			e.WaitingForFile = false;
+			e.PendingHash = null;
+			ResolveFile(e);
+			Log("Island " + e.Id + " '" + e.HostName + "': the host plays another version of it now (" + hash + ")");
 		}
 
 		public static void BroadcastAdded(IslandWorldState.Entry entry)
@@ -310,19 +556,104 @@ namespace DynamicIslands.Editor
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
 
-		/// <summary>A player's quest event: its amount at that step, for the host to add ("add"; an older host takes it as the
-		/// total, as before).</summary>
-		public static void SendQuestAdd(int islandId, int step, int amount)
+		/// <summary>Host: a vending machine's hatch as the host has it (RaftVending.Note), for every player.</summary>
+		public static void SendVendingHatch(int islandId, int key, int value, int day)
 		{
-			if (Raft_Network.IsHost) return;
-			if (InMultiplayerGame || Loopback != null) SendToHost(new IslandNetMessage { Kind = IslandNetMessage.QuestStep, Ids = new[] { islandId }, Index = step, Count = amount, Name = "add" });
+			if (Raft_Network.IsHost) SendToClients(new IslandNetMessage { Kind = IslandNetMessage.VendingHatch, Ids = new[] { islandId, key, value }, Count = day });
 		}
 
-		public static void SendQuest(int islandId, int step, int progress)
+		/// <summary>A tree or pickup was used on this machine's copy (host: to all clients; client: to the host, who passes it on).</summary>
+		public static void SendHarvest(int islandId, int ord, bool active, int yield, int day)
 		{
-			var msg = new IslandNetMessage { Kind = IslandNetMessage.QuestStep, Ids = new[] { islandId }, Index = step, Count = progress };
+			var msg = new IslandNetMessage { Kind = IslandNetMessage.ObjectHarvest, Ids = new[] { islandId, active ? 1 : 0, yield }, Index = ord, Count = day };
 			if (Raft_Network.IsHost) SendToClients(msg);
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
+		}
+
+		/// <summary>Host -> one player whose "used" of a key the host refused (CB2): the key as the host has it. Not used on the
+		/// host: available again (day -1, as a refill says); used on the host too: nothing to put right. A state of another
+		/// shape (not a "used") is left alone. Their copy showed it used for good, everyone else's not - review 10-30.</summary>
+		internal static void SendUsedCorrection(Network_UserId player, int islandId, int key)
+		{
+			if (!Raft_Network.IsHost) return;
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			if (e == null || e.State.ContainsKey(key)) return;
+			SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.ObjectUsed, Ids = new[] { islandId }, Index = key, Count = -1 }, player);
+		}
+
+		/// <summary>Host -> one player whose harvest the host refused (CB2): the tree or pickup as the host has it - whole (grown
+		/// back, day -1) or the host's state. Only for an island not loaded on the host: a loaded copy has Raft's own message,
+		/// and its state is in the scene, not the entry - review 10-30.</summary>
+		internal static void SendHarvestCorrection(Network_UserId player, int islandId, int ord)
+		{
+			if (!Raft_Network.IsHost || ord <= 0 || ord >= CreatureSpawner.StateKeyBase) return;
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			if (e == null || e.Root != null || e.Loading) return;
+			ObjectState s;
+			if (!e.State.TryGetValue(ord, out s)) SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.ObjectUsed, Ids = new[] { islandId }, Index = ord, Count = -1 }, player);
+			else SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.ObjectHarvest, Ids = new[] { islandId, s.Active ? 1 : 0, s.Yield }, Index = ord, Count = s.Day }, player);
+		}
+
+		/// <summary>A player's quest event: its amount at that step, for the host to add ("add"; an older host takes it as the
+		/// total, as before).</summary>
+		public static void SendQuestAdd(int islandId, int step, int amount) { SendQuestAdd(islandId, 0, step, amount); }
+
+		/// <summary>Quest n of an island (0 = the main quest): its number goes as a second id (an island's further quests, LM4).</summary>
+		public static void SendQuestAdd(int islandId, int n, int step, int amount)
+		{
+			if (Raft_Network.IsHost) return;
+			if (InMultiplayerGame || Loopback != null) SendToHost(new IslandNetMessage { Kind = QuestKind(n), Ids = n == 0 ? new[] { islandId } : new[] { islandId, n }, Index = step, Count = amount, Name = "add" });
+		}
+
+		public static void SendQuest(int islandId, int step, int progress) { SendQuest(islandId, 0, step, progress); }
+
+		/// <summary>The message kind for quest n: QuestStep for the main quest, QuestStepMore for the others.</summary>
+		static int QuestKind(int n) { return n == 0 ? IslandNetMessage.QuestStep : IslandNetMessage.QuestStepMore; }
+
+		public static void SendQuest(int islandId, int n, int step, int progress)
+		{
+			var msg = new IslandNetMessage { Kind = QuestKind(n), Ids = n == 0 ? new[] { islandId } : new[] { islandId, n }, Index = step, Count = progress };
+			if (Raft_Network.IsHost) SendToClients(msg);
+			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
+		}
+
+		/// <summary>Host -> one player: items of their bring hand-over it did not count, given back (QuestItemsBack).</summary>
+		internal static void SendItemsBack(Network_UserId player, int islandId, int n, int step, string item, int amount, string why)
+		{
+			if (!Raft_Network.IsHost || amount <= 0 || string.IsNullOrEmpty(item)) return;
+			Debug.Log("[CUSTOM ISLANDS] [quest] " + amount + " " + item + " given back to player " + player.Id + " (" + why + ", quest " + (n + 1) + " step " + (step + 1) + " of island " + islandId + ")");
+			SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.QuestItemsBack, Ids = new[] { islandId, n }, Index = step, Count = amount, Data = item, Name = why }, player);
+		}
+
+		/// <summary>Host -> one player: quest n's step and progress as the host has them, Name "set" - the player takes them even
+		/// when older than its own (a step the host refused). An older version takes it as a plain step: never back.</summary>
+		internal static void SendQuestCorrection(Network_UserId player, int islandId, int n)
+		{
+			if (!Raft_Network.IsHost) return;
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			if (e == null) return;
+			SendToPlayer(new IslandNetMessage { Kind = QuestKind(n), Ids = n == 0 ? new[] { islandId } : new[] { islandId, n }, Index = QuestTracker.StepOf(e, n), Count = QuestTracker.ProgressOf(e, n), Name = "set" }, player);
+		}
+
+		/// <summary>Host -> everyone: quest n's step and progress as the host has them, Name "set" (QuestTest set it back:
+		/// the players take it even when older than their own; an older version takes it as a plain step: never back).</summary>
+		internal static void SendQuestSet(int islandId, int n)
+		{
+			if (!Raft_Network.IsHost) return;
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == islandId);
+			if (e == null) return;
+			SendToClients(new IslandNetMessage { Kind = QuestKind(n), Ids = n == 0 ? new[] { islandId } : new[] { islandId, n }, Index = QuestTracker.StepOf(e, n), Count = QuestTracker.ProgressOf(e, n), Name = "set" });
+		}
+
+		/// <summary>Host -> everyone: the island was set back to new (QuestTest reset): its islands entry with Name "reset" -
+		/// a player takes the host's (empty) state and makes the island again if it is loaded there. An older version takes
+		/// it as a known island's entry (nothing changes there until it joins again).</summary>
+		internal static void SendReset(IslandWorldState.Entry e)
+		{
+			if (!Raft_Network.IsHost || e == null) return;
+			IslandNetMessage msg = IslandsMessage(new[] { e }, false);
+			msg.Name = "reset";
+			SendToClients(msg);
 		}
 
 		/// <summary>Host: tells everyone a rule brought this island (the banner with its direction).</summary>
@@ -341,18 +672,29 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>An object event: a client tells the host; the host tells clients (fromHost: they do the personal part).</summary>
-		public static void SendEvent(int islandId, int index, string ev, bool fromHost)
+		public static void SendEvent(int islandId, int index, string ev, bool fromHost) { SendEvent(islandId, index, ev, fromHost, false); }
+
+		/// <summary>SendEvent; waits: a player whose own part waits for the host's answer (Count 1 - an older host leaves it).</summary>
+		public static void SendEvent(int islandId, int index, string ev, bool fromHost, bool waits)
 		{
-			var msg = new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { islandId }, Index = index, Name = ev, FullList = fromHost };
+			var msg = new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { islandId, GapBehaviours.Seed }, Index = index, Name = ev, FullList = fromHost, Count = waits ? 1 : 0 };
 			if (Raft_Network.IsHost) { if (fromHost) SendToClients(msg); }
 			else if (InMultiplayerGame || Loopback != null) SendToHost(msg);
 		}
 
-
-		/// <summary>Client: asks the host for a thing only one player can have (Claims).</summary>
-		public static void SendClaim(int islandId, int key)
+		/// <summary>Host -> one player: an object event's personal part for them (the "otherwise" part of an event the host
+		/// refused - AU18 - or the event itself, the answer a waiting player's part waits for). Count 1: the answer to them.</summary>
+		public static void SendEventTo(Network_UserId player, int islandId, int index, string ev)
 		{
-			if (!Raft_Network.IsHost && (InMultiplayerGame || Loopback != null)) SendToHost(new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = new[] { islandId }, Index = key });
+			if (!Raft_Network.IsHost) return;
+			SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.EventFired, Ids = new[] { islandId, GapBehaviours.Seed }, Index = index, Name = ev, FullList = true, Count = 1 }, player);
+		}
+
+		/// <summary>Client: asks the host for a thing only one player can have (Claims). The question's number goes as Ids[1]:
+		/// the host sends Ids back with its answer (every version that answers claims does).</summary>
+		public static void SendClaim(int islandId, int key, int ask, int late)
+		{
+			if (!Raft_Network.IsHost && (InMultiplayerGame || Loopback != null)) SendToHost(new IslandNetMessage { Kind = IslandNetMessage.Claim, Ids = new[] { islandId, ask }, Index = key, Count = late });
 		}
 		public static void BroadcastRemoved(IEnumerable<int> ids)
 		{
@@ -365,37 +707,115 @@ namespace DynamicIslands.Editor
 
 		#region Receiving
 
+		/// <summary>Kinds only the host sends to a player: the world's state (islands, options, rules, story chain, saves...).
+		/// A player drops one from anyone else (AUDIT 11-09 #14: a modified peer could set them on a public lobby).</summary>
+		internal static readonly HashSet<int> HostOnlyKinds = new HashSet<int> {
+			IslandNetMessage.Islands, IslandNetMessage.Remove, IslandNetMessage.SyncRequest, IslandNetMessage.WorldRules,
+			IslandNetMessage.ObjectSet, IslandNetMessage.QuestItemsBack, IslandNetMessage.WorldNewId, IslandNetMessage.AlphaHealth, IslandNetMessage.WorldOptions,
+			IslandNetMessage.Randomizer, IslandNetMessage.RogueShark, IslandNetMessage.WorldCopy, IslandNetMessage.WorldSave,
+			IslandNetMessage.StormSeas, IslandNetMessage.WhaleBreach, IslandNetMessage.VendingHatch, IslandNetMessage.StoryChain,
+			IslandNetMessage.QuestCount, IslandNetMessage.CreatureSpots, IslandNetMessage.Announce,
+			// (only the host sends these too: a modified peer moved every player or ran the ending credits and cutscenes - sweep 11-14)
+			IslandNetMessage.PlayerPlace, IslandNetMessage.Moment };
+
+		/// <summary>Kinds both ways (a player asks the host, the host answers or tells everyone): the host takes them from anyone,
+		/// a player only from the host - nothing is ever sent player to player (a modified peer granted itself claims, set the
+		/// Kraken, mechanisms, story pages, levels and upgrades on the other players - sweep 11-14). (Quest steps and daily
+		/// quests: the quest code's own checks.)</summary>
+		internal static readonly HashSet<int> FromHostOnPlayers = new HashSet<int> {
+			IslandNetMessage.Claim, IslandNetMessage.Kraken, IslandNetMessage.Mech, IslandNetMessage.Story, IslandNetMessage.Levels,
+			IslandNetMessage.UpgradeTable };
+
+		/// <summary>Tests: how many host-only messages from someone else a player dropped.</summary>
+		internal static int DroppedNotFromHost;
+		/// <summary>Tests: the host's id a player checks against (0: Raft's HostID).</summary>
+		internal static ulong HostIdOverride;
+
+		/// <summary>On a player: a host-only kind (HostOnlyKinds, FromHostOnPlayers) sent by someone other than the host (known). The host takes all.</summary>
+		internal static bool NotFromHost(IslandNetMessage msg, ulong from, bool isHost)
+		{
+			if (isHost || msg == null || !(HostOnlyKinds.Contains(msg.Kind) || FromHostOnPlayers.Contains(msg.Kind))) return false;
+			ulong host = HostIdOverride;
+			if (host == 0UL)
+				try { Raft_Network network = ComponentManager<Raft_Network>.Value; host = network != null ? network.HostID.Id : 0UL; } catch { }
+			return host != 0UL && from != 0UL && from != host;
+		}
+
+		/// <summary>On a player: the sender is known and isn't the host (any kind; questfix 11-14).</summary>
+		internal static bool NotHostSender(ulong from)
+		{
+			ulong host = HostIdOverride;
+			if (host == 0UL)
+				try { Raft_Network network = ComponentManager<Raft_Network>.Value; host = network != null ? network.HostID.Id : 0UL; } catch { }
+			return host != 0UL && from != 0UL && from != host;
+		}
+
 		/// <summary>Returns true if the message was ours.</summary>
 		public static bool OnMessage(object message, Network_UserId from)
 		{
 			var msg = message as IslandNetMessage;
 			if (msg == null) return false;
+			if (NotFromHost(msg, from.Id, Raft_Network.IsHost))
+			{
+				DroppedNotFromHost++;
+				Debug.LogWarning("[CUSTOM ISLANDS] [net] Dropped a host-only message (kind " + msg.Kind + ") from " + from.Id + ", who isn't the host");
+				return true;
+			}
 			try
 			{
 				switch (msg.Kind)
 				{
 					case IslandNetMessage.SyncRequest:
 						// (a player: the host's answer with its version)
-						if (!Raft_Network.IsHost) { if ((msg.Name ?? "").StartsWith(VersionTag)) HostAnswersClaims = true; HostAddsCounts = (msg.Data ?? "").Split(',').Contains("counts"); CompareVersions(msg.Name, "The host"); break; }
+						if (!Raft_Network.IsHost) { if ((msg.Name ?? "").StartsWith(VersionTag)) { HostAnswersClaims = true; hostToldVersion = true; } HostAddsCounts = (msg.Data ?? "").Split(',').Contains("counts"); CreatureSpawner.HostSendsSpots = (msg.Data ?? "").Split(',').Contains("spots"); HostAnswersEvents = (msg.Data ?? "").Split(',').Contains("events"); CompareVersions(msg.Name, "The host", msg.Data); break; }
 						if (Raft_Network.IsHost)
 						{
-							CompareVersions(msg.Name ?? VersionTag + "an older version", "A player");
-							SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion, Data = HostCapabilities }, from);
+							// (a player older than the version handshake sends no version; a name for who joined, if Raft shows one)
+							string who = PrivateStorage.NameOf(from.Id);
+							CompareVersions(string.IsNullOrEmpty(msg.Name) ? VersionTag + VersionMismatch.Older : msg.Name, who == "another player" || string.IsNullOrEmpty(who) ? "A player" : "'" + who + "'", msg.Data);
+							// (the version first, alone in a message kind and with fields every version has, so an older player
+							// can still read it: everything else follows it)
+							SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.SyncRequest, Name = VersionTag + LibraryPack.ModVersion, Data = HostCapabilities + "," + BuildTag + Build }, from);
 							Log("Sending the island list (" + IslandWorldState.Islands.Count + ") to " + from);
-							SendToPlayer(WorldRules.Message(), from);
-							SendToPlayer(IslandsMessage(IslandWorldState.Islands, true), from);
-							SendToPlayer(StoryBook.StateMessage(), from);
-							SendToPlayer(WorldRandomizer.Message(), from);
-							SendToPlayer(WorldOptions.Message(), from);
-							SendToPlayer(global::DynamicIslands.Editor.StoryChain.Message(), from);
+							// (each part on its own: one that fails is logged and the rest still goes - before, one failing part
+							// dropped everything after it, and the player had the islands without the story or their levels - AU41)
+							Network_UserId to = from;
+							JoinPart("world rules", () => WorldRules.Message(), to);
+							JoinPart("island list", () => IslandsMessage(IslandWorldState.Islands, true), to, true);
+							JoinPart("story", () => StoryBook.StateMessage(), to, true);
+							JoinPart("world options", () => WorldOptions.Message(), to);
+							JoinPart("daily quest", () => global::DynamicIslands.Editor.DailyQuest.Message(), to);
+							JoinPart("upgrade numbers", () => global::DynamicIslands.Editor.UpgradeTable.IndexMessage(), to);
+							JoinPart("upgrade table", () => global::DynamicIslands.Editor.UpgradeTable.Message(), to);
+							JoinPart("rogue shark", () => global::DynamicIslands.Editor.RogueShark.Message("state"), to);
+							JoinPart("story chain", () => global::DynamicIslands.Editor.StoryChain.Message(), to);
+							JoinPart("quest count", () => global::DynamicIslands.Editor.QuestCount.Message(), to);
+							JoinPart("animal spots", () => CreatureSpawner.SpotsMessage(null), to);
+							// (after the animal spots: the randomizer looks at every animal once it comes, and took an island's
+							// animals for Raft's while their spots hadn't come yet)
+							JoinPart("randomizer", () => WorldRandomizer.Message(), to);
+							JoinPart("kraken arm", () => global::DynamicIslands.Editor.Kraken.Message(), to);
+							JoinPart("carried pieces", () => MechFeatures.HeldMessage(), to);
 							// (after the list: the island it names is in the player's list then)
-							IslandNetMessage place = PlayerPlaces.PlaceMessage(from.Id);
-							if (place != null) SendToPlayer(place, from);
-							IslandNetMessage levels = PlayerLevels.StateFor(from.Id);
-							if (levels != null) SendLevels(levels, from);
+							JoinPart("player's place", () => PlayerPlaces.PlaceMessage(to.Id), to);
+							JoinPart("new world id", () => WorldIdRepair.NewIdMessage(), to);
+							try { IslandNetMessage levels = PlayerLevels.StateFor(to.Id); if (levels != null) SendLevels(levels, to); }
+							catch (Exception e) { JoinPartFailed("levels", e); }
 							// (their own copy of the world, to host it later)
-							global::DynamicIslands.Editor.WorldCopy.Send(from);
+							try { global::DynamicIslands.Editor.WorldCopy.Send(to); }
+							catch (Exception e) { JoinPartFailed("world copy", e); }
+							try { global::DynamicIslands.Editor.WorldSaveShare.Send(to); }
+							catch (Exception e) { JoinPartFailed("world save", e); }
+							// (island files the host lacks: the player who joined may have them - AU6)
+							if (wanted.Count > 0) AskPlayers(to);
 						}
+						break;
+					case IslandNetMessage.FileWanted:
+						// (a player: the host lacks this file - sent back if this PC has one with that content, else nothing - AU6)
+						if (!Raft_Network.IsHost) SendFile(msg.Name, msg.Hash, from, true);
+						break;
+					case IslandNetMessage.WorldCopyNewer:
+						if (Raft_Network.IsHost) global::DynamicIslands.Editor.WorldCopy.OnPlayerNewer(msg, from);
 						break;
 					case IslandNetMessage.WorldRules:
 						WorldRules.OnMessage(msg);
@@ -417,31 +837,83 @@ namespace DynamicIslands.Editor
 						if (!Raft_Network.IsHost) IslandWorldState.RemoveIds(msg.Ids, false);
 						break;
 					case IslandNetMessage.FileChunk:
-						if (!Raft_Network.IsHost) ReceiveChunk(msg);
+						// (the host too: a file it asked the players for - only hashes it asked for are taken - AU6)
+						ReceiveChunk(msg);
 						break;
 					case IslandNetMessage.QuestStep:
+					case IslandNetMessage.QuestStepMore:
 						if (msg.Ids != null && msg.Ids.Length > 0)
 						{
 							// (a player's amount: the host adds it up and tells everyone the total)
-							if (Raft_Network.IsHost && msg.Name == "add") { QuestTracker.AddFromPlayer(msg.Ids[0], msg.Index, msg.Count); break; }
-							QuestTracker.Apply(msg.Ids[0], msg.Index, msg.Count);
-							if (Raft_Network.IsHost) SendToClients(msg);
+							int questNo = msg.Ids.Length > 1 ? msg.Ids[1] : 0;
+							// (CB2: a player's progress only on an island near them - loaded on their side)
+							// (refused: that player is told the host's step - its own view had moved on already and stayed ahead for
+							// good, the others never saw the step done - review 10-30)
+							if (Raft_Network.IsHost && !PlayerTrust.MayMark(from.Id, msg.Ids[0], "quest step"))
+							{
+								SendQuestCorrection(from, msg.Ids[0], questNo);
+								if (msg.Name == "add") QuestTracker.GiveBack(msg.Ids[0], questNo, msg.Index, msg.Count, from.Id, "refused"); // (a bring hand-over's items)
+								break;
+							}
+							// (questfix 11-14: a player takes quest steps from the host only - another player's "set" moved its quest back
+							// or on; the host takes a player's plain step (an older version's) one step on at most - it jumped to the end)
+							if (!Raft_Network.IsHost && NotHostSender(from.Id)) { DroppedNotFromHost++; break; }
+							if (Raft_Network.IsHost && msg.Name != "add" && from.Id != 0UL && !QuestTracker.MayTakeStep(msg.Ids[0], questNo, msg.Index))
+							{
+								Debug.Log("[CUSTOM ISLANDS] [quest] A player's step " + (msg.Index + 1) + " of quest " + (questNo + 1) + " on island " + msg.Ids[0] + " is refused: more than one step on");
+								SendQuestCorrection(from, msg.Ids[0], questNo);
+								break;
+							}
+							// (the host's answer to a refused step: the host's step, even an older one)
+							if (!Raft_Network.IsHost && msg.Name == "set") { QuestTracker.Correct(msg.Ids[0], questNo, msg.Index, msg.Count); break; }
+							if (Raft_Network.IsHost && msg.Name == "add") { QuestTracker.AddFromPlayer(msg.Ids[0], questNo, msg.Index, msg.Count, from.Id); break; }
+							// (one it ignored - stale, or older than what it has - isn't passed on: it lowered the others' count)
+							if (QuestTracker.Apply(msg.Ids[0], questNo, msg.Index, msg.Count) && Raft_Network.IsHost) SendToClients(msg);
 						}
 						break;
 					case IslandNetMessage.ObjectSet:
 						if (!Raft_Network.IsHost && msg.Ids != null && msg.Ids.Length > 0) Behaviours.ApplyRemote(msg.Ids[0], msg.Index, msg.Count);
 						break;
 					case IslandNetMessage.EventFired:
-						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList);
+						// (CB2: a player's fired rule only on an island near them; the one who asked for an answer gets its "otherwise")
+						if (msg.Ids != null && msg.Ids.Length > 0 && Raft_Network.IsHost && !PlayerTrust.MayMark(from.Id, msg.Ids[0], "'" + msg.Name + "'"))
+						{
+							if (msg.Count == 1 && !(msg.Name ?? "").EndsWith("!")) SendEventTo(from, msg.Ids[0], msg.Index, (msg.Name ?? "") + "!");
+							break;
+						}
+						// (Ids[1]: the event's seed - its random choice picks the same here; an older version sends none)
+						if (msg.Ids != null && msg.Ids.Length > 1) GapBehaviours.Seed = msg.Ids[1]; else GapBehaviours.NewSeed();
+						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList, from, msg.Count == 1);
 						break;
 					case IslandNetMessage.Story:
-						StoryBook.OnMessage(msg);
+						StoryBook.OnMessage(msg, from.Id, from);
 						break;
 					case IslandNetMessage.Randomizer:
 						WorldRandomizer.OnMessage(msg);
 						break;
+					case IslandNetMessage.Mech:
+						MechFeatures.OnMessage(msg, from.Id);
+						break;
+					case IslandNetMessage.Ping:
+						Minimap.OnMessage(msg, from.Id);
+						break;
+					case IslandNetMessage.WorldNewId:
+						if (!Raft_Network.IsHost) WorldIdRepair.OnNewIdFromHost(msg.Name);
+						break;
+					case IslandNetMessage.QuestItemsBack:
+						if (!Raft_Network.IsHost) QuestSteps.ItemsBack(msg.Data, msg.Count, msg.Name);
+						break;
+					case IslandNetMessage.AlphaHealth:
+						if (!Raft_Network.IsHost && msg.Offsets != null && msg.Offsets.Length >= 2) CreatureSpawner.HostHealth(unchecked((uint)msg.Index), msg.Offsets[0], msg.Offsets[1]);
+						break;
 					case IslandNetMessage.WorldOptions:
 						WorldOptions.OnMessage(msg);
+						break;
+					case IslandNetMessage.DailyQuest:
+						global::DynamicIslands.Editor.DailyQuest.OnMessage(msg, from);
+						break;
+					case IslandNetMessage.RogueShark:
+						global::DynamicIslands.Editor.RogueShark.OnMessage(msg);
 						break;
 					case IslandNetMessage.Levels:
 						PlayerLevels.OnMessage(msg, from);
@@ -449,19 +921,70 @@ namespace DynamicIslands.Editor
 					case IslandNetMessage.WorldCopy:
 						global::DynamicIslands.Editor.WorldCopy.OnMessage(msg);
 						break;
+					case IslandNetMessage.WorldSave:
+						global::DynamicIslands.Editor.WorldSaveShare.OnMessage(msg);
+						break;
+					case IslandNetMessage.StormSeas:
+						global::DynamicIslands.Editor.StormSeas.OnMessage(msg);
+						break;
+					case IslandNetMessage.Kraken:
+						global::DynamicIslands.Editor.Kraken.OnMessage(msg);
+						break;
+					case IslandNetMessage.WhaleBreach:
+						global::DynamicIslands.Editor.WhaleBreach.OnMessage(msg);
+						break;
+					case IslandNetMessage.VendingHatch:
+						if (!Raft_Network.IsHost && msg.Ids != null && msg.Ids.Length >= 3) RaftVending.OnHatchMessage(msg.Ids[0], msg.Ids[1], msg.Ids[2], msg.Count);
+						break;
+					case IslandNetMessage.Moment:
+						if (msg.Name == "camera") global::DynamicIslands.Editor.CameraMoment.OnMessage(msg);
+						else if (msg.Name == "bolt") global::DynamicIslands.Editor.LightningStrikes.OnMessage(msg);
+						else if (msg.Name == "ufo") global::DynamicIslands.Editor.UfoSightings.OnMessage(msg);
+						else if (msg.Name == "ending") global::DynamicIslands.Editor.StoryCredits.OnMessage(msg);
+						else if (msg.Name == "path") global::DynamicIslands.Editor.CameraPath.OnMessage(msg);
+						else if (msg.Name == "timer") global::DynamicIslands.Editor.QuestTimers.OnMessage(msg);
+						else global::DynamicIslands.Editor.TriggerSounds.OnMessage(msg);
+						break;
+					case IslandNetMessage.UpgradeTable:
+						global::DynamicIslands.Editor.UpgradeTable.OnMessage(msg, from);
+						break;
 					case IslandNetMessage.StoryChain:
 						global::DynamicIslands.Editor.StoryChain.OnMessage(msg);
 						break;
+					case IslandNetMessage.QuestCount:
+						global::DynamicIslands.Editor.QuestCount.OnMessage(msg);
+						break;
+					case IslandNetMessage.CreatureSpots:
+						if (!Raft_Network.IsHost) CreatureSpawner.OnSpots(msg.Data);
+						break;
 					case IslandNetMessage.Announce:
-						if (!Raft_Network.IsHost && worldReceived && msg.Offsets != null && msg.Offsets.Length >= 3)
-							WorldDirector.Show(msg.Name ?? "", msg.Data ?? "", FromHost(CustomIslandSpawner.RaftPosition ?? Vector3.zero, msg.Offsets, 0));
+						// (from the raft as it arrives, like an island list; none here yet: no banner pointing from the scene's origin)
+						if (!Raft_Network.IsHost && worldReceived && msg.Offsets != null && msg.Offsets.Length >= 3 && CustomIslandSpawner.RaftPosition.HasValue)
+							WorldDirector.Show(msg.Name ?? "", msg.Data ?? "", FromHost(CustomIslandSpawner.RaftPosition.Value, msg.Offsets, 0));
 						break;
 					case IslandNetMessage.Claim:
 						Claims.OnMessage(msg, from.Id, answer => SendToPlayer(answer, from));
 						break;
+					case IslandNetMessage.ObjectHarvest:
+						if (msg.Ids != null && msg.Ids.Length >= 3)
+						{
+							if (Raft_Network.IsHost && !PlayerTrust.MayMark(from.Id, msg.Ids[0], "harvest")) { SendHarvestCorrection(from, msg.Ids[0], msg.Index); break; } // (CB2; that player is told the host's state)
+							if (Raft_Network.IsHost) msg.Count = ContentState.Today; // (the host's day, as for ObjectUsed - AU60)
+							if (IslandObjectState.OnHarvest(msg.Ids[0], msg.Index, msg.Ids[1] != 0, msg.Ids[2], msg.Count) && Raft_Network.IsHost) SendToClients(msg);
+						}
+						break;
 					case IslandNetMessage.ObjectUsed:
 						if (msg.Ids != null && msg.Ids.Length > 0)
 						{
+							// (a player's day isn't trusted - AU60: only the host makes things available again, and what a player
+							// used gets the host's day, the one its regrow counts from - on every machine, as it is passed on so)
+							if (Raft_Network.IsHost)
+							{
+								// (CB2: code locks, signals, used things; that player is told the host's state of it - review 10-30)
+								if (!PlayerTrust.MayMark(from.Id, msg.Ids[0], "use of " + msg.Index.ToString("X"))) { SendUsedCorrection(from, msg.Ids[0], msg.Index); break; }
+								if (msg.Count < 0) { Log("A player said " + msg.Index.ToString("X") + " on island " + msg.Ids[0] + " is available again: only the host decides that"); break; }
+								msg.Count = ContentState.Today;
+							}
 							ContentState.ApplyUsed(msg.Ids[0], msg.Index, msg.Count);
 							if (Raft_Network.IsHost) SendToClients(msg); // everyone else learns it from the host
 						}
@@ -470,6 +993,37 @@ namespace DynamicIslands.Editor
 			}
 			catch (Exception e) { Debug.LogError("[CUSTOM ISLANDS] [net] Handling message " + msg.Kind + " failed: " + e); }
 			return true;
+		}
+
+		/// <summary>Host: one part of the reply to a player who joined, made and sent on its own (nothing when it makes none).</summary>
+		static void JoinPart(string what, Func<IslandNetMessage> make, Network_UserId to) { JoinPart(what, make, to, false); }
+
+		/// <summary>JoinPart; logSize: its size goes in the log too (the two big parts, sent in one message each - review 10-30).</summary>
+		static void JoinPart(string what, Func<IslandNetMessage> make, Network_UserId to, bool logSize)
+		{
+			try
+			{
+				IslandNetMessage part = make();
+				if (part != null && logSize) Log("Join reply: the " + what + " is about " + (SizeOf(part) / 1024L) + " KB (one message)");
+				if (part != null) SendToPlayer(part, to);
+			}
+			catch (Exception e) { JoinPartFailed(what, e); }
+		}
+
+		/// <summary>About how big a message is: its text and numbers (for the log).</summary>
+		internal static long SizeOf(IslandNetMessage m)
+		{
+			long n = 64 + Len(m.Name) + Len(m.Hash) + Len(m.Data) + 4L * ((m.Ids != null ? m.Ids.Length : 0) + (m.Offsets != null ? m.Offsets.Length : 0));
+			foreach (string[] a in new[] { m.Names, m.Hashes, m.States, m.Labels, m.Rules })
+				if (a != null) foreach (string s in a) n += 4 + Len(s);
+			return n;
+		}
+
+		static long Len(string s) { return s != null ? s.Length : 0; }
+
+		static void JoinPartFailed(string what, Exception e)
+		{
+			Debug.LogError("[CUSTOM ISLANDS] [net] The reply to a player who joined: its " + what + " failed (the other parts are sent): " + e);
 		}
 
 		/// <summary>Where the host's island number i is here: beside this machine's raft as it is beside the host's, at its own height.</summary>
@@ -482,23 +1036,62 @@ namespace DynamicIslands.Editor
 		{
 			// (while joining: the raft isn't where the host's is yet; the full list asked for once the world is here has it)
 			if (!worldReceived) { Log("Island message while joining: waiting for the host's world first"); return; }
-			synced = true;
-			Vector3 raft = CustomIslandSpawner.RaftPosition ?? Vector3.zero;
+			// (the host's version reply comes ahead of its list: none came, so the host is older than it - AU35)
+			if (msg.FullList && !hostToldVersion) CompareVersions(VersionTag + VersionMismatch.Older, "The host", null);
+			// (the raft as this message arrives, once for all its islands - the host took its own once as it made the message;
+			// no raft here yet: nothing is placed around the scene's origin, the whole list is asked for again - AU41)
+			Vector3? raftNow = CustomIslandSpawner.RaftPosition;
+			if (!raftNow.HasValue)
+			{
+				Log("Island message before the raft is here: asking for the whole list again");
+				synced = false; syncTries = 0; nextSyncTry = Time.unscaledTime + SyncRetrySeconds;
+				return;
+			}
+			Vector3 raft = raftNow.Value;
 			int n = msg.Ids != null ? msg.Ids.Length : 0;
 			if (msg.FullList)
 			{
 				var keep = new HashSet<int>(msg.Ids ?? new int[0]);
 				IslandWorldState.RemoveIds(IslandWorldState.Islands.Where(e => !keep.Contains(e.Id)).Select(e => e.Id).ToArray(), false);
 			}
-			int added = 0;
+			int added = 0, skipped = 0;
 			for (int i = 0; i < n; i++)
 			{
+				// (an older or damaged message: an entry without its name or place is left out, not the whole list - AU35)
+				bool whole = msg.Names != null && i < msg.Names.Length && !string.IsNullOrEmpty(msg.Names[i]) && msg.Offsets != null && i * 3 + 2 < msg.Offsets.Length;
 				IslandWorldState.Entry known = IslandWorldState.Islands.FirstOrDefault(e => e.Id == msg.Ids[i]);
+				if (known != null && msg.Rules != null && i < msg.Rules.Length && !string.IsNullOrEmpty(msg.Rules[i])) known.Rule = msg.Rules[i];
+				if (known != null && msg.Name == "reset" && msg.States != null && i < msg.States.Length)
+				{
+					// (QuestTest reset: the host's island is new again - its state here too, made again if loaded; nothing captured)
+					if (known.Root != null)
+					{
+						QuestTestCommands.KeepOnTop(known);
+						try { ItemHold.HoldOn(known); } catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Holding dropped items failed: " + x.Message); }
+						IslandSpawner.Despawn(known.Root);
+						known.Root = null;
+					}
+					known.State = IslandObjectState.Decode(msg.States[i] ?? "");
+					Log("Island " + known.Id + " '" + known.HostName + "' was set back to new by the host (QuestTest reset)");
+					continue;
+				}
 				if (known != null)
 				{
+					// (moved by the host: an island the players still need came back ahead of the raft - ReturningIslands)
+					if (msg.Offsets != null && i * 3 + 2 < msg.Offsets.Length)
+					{
+						Vector3 at = FromHost(raft, msg.Offsets, i);
+						if (new Vector2(at.x - known.Position.x, at.z - known.Position.z).magnitude > 5f)
+						{
+							if (known.Root != null) { IslandObjectState.Capture(known); IslandSpawner.Despawn(known.Root); known.Root = null; }
+							known.Position = at;
+							Log("Island " + known.Id + " '" + known.HostName + "' moved by the host to " + at.ToString("F0"));
+						}
+					}
 					// (known without its file - it came while the host was still making it, or its file failed here: the
 					// host's hash now lets it come after all; Resync didn't help before)
 					string hash = msg.Hashes != null && i < msg.Hashes.Length ? msg.Hashes[i] ?? "" : "";
+					if (!IsHash(hash)) hash = ""; // (part of a file's name here - AU41)
 					if ((known.Failed || string.IsNullOrEmpty(known.Hash)) && hash.Length > 0 && known.Root == null && !known.Loading)
 					{
 						known.Hash = hash;
@@ -507,16 +1100,49 @@ namespace DynamicIslands.Editor
 						ResolveFile(known);
 						Log("Island " + known.Id + " '" + known.HostName + "' had no file here: trying again with the host's");
 					}
+					// (the host plays another version of it now - the world's, which a player sent: RK1. Loaded here, it changes
+					// once it is unloaded - AfterUnload)
+					else if (hash.Length > 0 && !string.IsNullOrEmpty(known.Hash) && hash != known.Hash)
+					{
+						if (known.Root != null || known.Loading) known.PendingHash = hash;
+						else SwitchVersion(known, hash);
+					}
+					// (still waiting for its file after a Resync, which forgot the requests: asked for again - AU64)
+					else if (known.WaitingForFile && known.Root == null && !string.IsNullOrEmpty(known.Hash) && !requested.Contains(known.Hash)) ResolveFile(known);
+					// (the whole list - a Resync: a known island's things as the host has them, as for a new one - drift from a
+					// refused "used" stayed until the player joined again. Only for a copy not loaded here: a loaded one shows
+					// its state already and isn't set again; it takes the host's state from a Resync once it is unloaded - review 10-30)
+					if (msg.FullList && known.Root == null && !known.Loading && msg.States != null && i < msg.States.Length && msg.States[i] != null)
+						known.State = IslandObjectState.Decode(msg.States[i]);
+					// (a loaded copy: its quests' steps as the host has them - a drifted step stayed wrong - questfix round 2)
+					else if (msg.FullList && msg.States != null && i < msg.States.Length && msg.States[i] != null)
+						try { QuestTracker.FromHostList(known, IslandObjectState.Decode(msg.States[i])); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Quest steps from the host's list: " + ex.Message); }
+					if (msg.FullList && msg.Labels != null && i < msg.Labels.Length && msg.Labels[i] != null) known.Label = msg.Labels[i];
 					continue;
 				}
-				var entry = IslandWorldState.AddRemote(msg.Ids[i], msg.Names[i], msg.Hashes[i],
+				// (incomplete first: the name check below read Names[i] of a list without names - review 10-30)
+				if (!whole) { skipped++; continue; }
+				// (the host's name and hash become a file's name here: one that isn't a plain file name - "..\..\x" wrote
+				// outside the mod's folder - is left out, not written - AU41)
+				string problem = ReceivedProblem(msg.Names[i], msg.Hashes != null && i < msg.Hashes.Length ? msg.Hashes[i] : null);
+				if (problem != null)
+				{
+					Debug.LogWarning("[CUSTOM ISLANDS] [net] The host's island " + msg.Ids[i] + " is left out: " + problem);
+					if (toldRefused.Add(msg.Names[i] ?? "")) DynamicIslands.Notify("An island from the host is left out: its name can't be a file name here (see the log, F10)", true);
+					continue;
+				}
+				var entry = IslandWorldState.AddRemote(msg.Ids[i], msg.Names[i], msg.Hashes != null && i < msg.Hashes.Length ? msg.Hashes[i] ?? "" : "",
 					FromHost(raft, msg.Offsets, i));
 				if (msg.States != null && i < msg.States.Length) entry.State = IslandObjectState.Decode(msg.States[i]);
 				if (msg.Labels != null && i < msg.Labels.Length) entry.Label = msg.Labels[i] ?? "";
+				if (msg.Rules != null && i < msg.Rules.Length) entry.Rule = msg.Rules[i] ?? "";
 				ResolveFile(entry);
 				added++;
 			}
-			Log("Host sent " + n + " island(s)" + (msg.FullList ? " (full list)" : "") + ", " + added + " new");
+			// (only once the whole list was taken: a single new island that came first no longer stops the asking, and a list
+			// that failed half way is asked for again)
+			if (msg.FullList) synced = true;
+			Log("Host sent " + n + " island(s)" + (msg.FullList ? " (full list)" : "") + ", " + added + " new" + (skipped > 0 ? ", " + skipped + " left out (incomplete)" : ""));
 		}
 
 		/// <summary>
@@ -529,7 +1155,27 @@ namespace DynamicIslands.Editor
 			if (string.IsNullOrEmpty(hash)) return; // host couldn't hash it; try the local file
 			if (HashOf(entry.HostName) == hash) { entry.Name = entry.HostName; return; }
 			string downloaded = DownloadName(entry.HostName, hash);
-			if (File.Exists(IslandSpawner.PathFor(downloaded))) { entry.Name = downloaded; return; }
+			if (HashOf(downloaded) == hash) { entry.Name = downloaded; return; }
+			// (a kept copy whose content isn't the host's - cut short by a crash while it was written: it failed to read and the
+			// island never loaded; asked for again below, the download writes over it - COV14)
+			if (File.Exists(IslandSpawner.PathFor(downloaded))) Log("The kept copy " + downloaded + " isn't the host's (damaged): asking for it again");
+			// (the same content downloaded for another island name - the request already answered: a copy of it, not a wait
+			// of 30 s for a second download - review 2026-10-06)
+			try
+			{
+				// (by its content too: the name alone found the damaged copy itself - COV14)
+				string same = Directory.GetFiles(DynamicIslands.assetpath, "*_" + hash + IslandFile.Extension)
+					.FirstOrDefault(f => HashOf(Path.GetFileNameWithoutExtension(f)) == hash);
+				if (same != null)
+				{
+					File.Copy(same, IslandSpawner.PathFor(downloaded), true);
+					IslandCache.ForgetFile(IslandSpawner.PathFor(downloaded)); // (not "missing" for 2 s more - AU41)
+					entry.Name = downloaded;
+					Log("Island file '" + entry.HostName + "' is the same as " + Path.GetFileName(same) + ": copied (" + hash + ")");
+					return;
+				}
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Copying an island file with the same content: " + e.Message); }
 
 			entry.Name = downloaded;
 			entry.WaitingForFile = true;
@@ -546,6 +1192,26 @@ namespace DynamicIslands.Editor
 
 		internal static string DownloadName(string name, string hash) { return name + "_" + hash; }
 
+		/// <summary>A content hash as Hash makes it: 12 digits 0-9 a-f (no wildcards or folders for a file's name).</summary>
+		public static bool IsHash(string hash)
+		{
+			return hash != null && hash.Length == 12 && hash.All(c => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'));
+		}
+
+		/// <summary>
+		/// Why an island name and hash from another PC can't make a file's name here (AU41: the host's names went into paths
+		/// unchecked), or null. The hash may be missing (an island the host couldn't hash).
+		/// </summary>
+		internal static string ReceivedProblem(string name, string hash)
+		{
+			string p = FileNames.ReceivedProblem(name);
+			if (p != null) return "the name '" + Shown(name) + "' " + p;
+			if (!string.IsNullOrEmpty(hash) && !IsHash(hash)) return "'" + Shown(hash) + "' isn't a content hash";
+			return null;
+		}
+
+		static string Shown(string s) { return s == null ? "" : s.Length > 80 ? s.Substring(0, 80) + "..." : s; }
+
 		/// <summary>
 		/// True for island files downloaded from a host (or kept for a saved world): &lt;name&gt;_&lt;12 hex digits&gt;, where the
 		/// digits are the file's own content hash. (A player's island named like "camp_202609281530" - a date and time are
@@ -555,26 +1221,144 @@ namespace DynamicIslands.Editor
 		{
 			int i = name.LastIndexOf('_');
 			if (i <= 0 || name.Length - i - 1 != 12 || !name.Substring(i + 1).All(c => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return false;
+			// (the answer kept 10 s: the pool asks for every saved name on each pick, and each HashOf is two disk checks - with
+			// hundreds of downloaded copies that was 0.1-0.7 s a pick on a player who joined many worlds, IM43)
+			KeyValuePair<float, bool> known;
+			if (downloadNames.TryGetValue(name, out known) && Time.unscaledTime - known.Key < 10f && Time.unscaledTime >= known.Key) return known.Value;
 			string h = HashOf(name);
-			return h == null || h == name.Substring(i + 1);
+			bool yes = h == null || h == name.Substring(i + 1);
+			downloadNames[name] = new KeyValuePair<float, bool>(Time.unscaledTime, yes);
+			return yes;
 		}
+
+		static readonly Dictionary<string, KeyValuePair<float, bool>> downloadNames = new Dictionary<string, KeyValuePair<float, bool>>(StringComparer.OrdinalIgnoreCase);
 
 		internal static void ReceiveChunk(IslandNetMessage msg)
 		{
 			if (!requested.Contains(msg.Hash) || msg.Count <= 0 || msg.Index < 0 || msg.Index >= msg.Count) return;
+			// (the name the host sends with it is the saved file's - AU41)
+			string problem = ReceivedProblem(msg.Name, msg.Hash);
+			if (problem != null) { Debug.LogWarning("[CUSTOM ISLANDS] [net] An island file from the host isn't saved: " + problem); return; }
 			string[] parts;
 			if (!incoming.TryGetValue(msg.Hash, out parts) || parts.Length != msg.Count) incoming[msg.Hash] = parts = new string[msg.Count];
 			parts[msg.Index] = msg.Data;
+			// (the wait for a retry starts again with every chunk: a big file over a slow line was asked for again every 30 s
+			// from the first request and never finished - AU14)
+			requestedAt[msg.Hash] = Time.unscaledTime;
 			if (parts.Any(p => p == null)) return;
 
 			incoming.Remove(msg.Hash);
 			byte[] bytes = Convert.FromBase64String(string.Concat(parts));
-			if (Hash(bytes) != msg.Hash) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Island file '" + msg.Name + "' arrived damaged, asking again"); requested.Remove(msg.Hash); RetryWaiting(msg.Hash); return; }
+			if (Hash(bytes) != msg.Hash)
+			{
+				Debug.LogWarning("[CUSTOM ISLANDS] [net] Island file '" + msg.Name + "' arrived damaged, asking again");
+				// (the host keeps asking the players at its next round - AU6)
+				if (Raft_Network.IsHost) return;
+				requested.Remove(msg.Hash); RetryWaiting(msg.Hash); return;
+			}
 			string name = DownloadName(msg.Name, msg.Hash);
 			Directory.CreateDirectory(DynamicIslands.assetpath);
 			SafeFile.WriteAllBytes(IslandSpawner.PathFor(name), bytes);
+			IslandCache.ForgetFile(IslandSpawner.PathFor(name)); // (not "missing" for 2 s more - AU41)
+			CustomIslandSpawner.ForgetSize(name); // (a damaged copy read before it was fetched again kept its size as unreadable - COV14)
 			Log("Received island file '" + msg.Name + "' (" + bytes.Length + " bytes), saved as " + name + IslandFile.Extension);
-			foreach (var e in IslandWorldState.Islands.Where(e => e.Hash == msg.Hash)) e.WaitingForFile = false;
+			foreach (var e in IslandWorldState.Islands.Where(e => e.Hash == msg.Hash))
+			{
+				// (two of the host's islands with the same content but other names: each entry waits for its own name's copy
+				// - only the first was saved and the other never loaded, AU15)
+				string want = DownloadName(e.HostName, msg.Hash);
+				try { if (want != name && !File.Exists(IslandSpawner.PathFor(want))) { File.Copy(IslandSpawner.PathFor(name), IslandSpawner.PathFor(want)); IslandCache.ForgetFile(IslandSpawner.PathFor(want)); } }
+				catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Copying '" + name + "' for '" + e.HostName + "': " + ex.Message); }
+				// (the host: an island of its world that waited for this file - or played another version of it, not loaded
+				// yet - plays the one the world was saved with now, and players who joined meanwhile get it - AU6)
+				// (a stand-in for it is loaded - players may stand on it: the world's version comes at its next load - RK1)
+				if (Raft_Network.IsHost && e.StandIn && (e.Root != null || e.Loading))
+				{
+					e.SwitchTo = want;
+					Log("'" + e.HostName + "': the world's version came while this PC's own plays - it loads from the island's next load");
+					continue;
+				}
+				if (Raft_Network.IsHost && (e.WaitingForFile || (e.Root == null && !e.Loading && HashOf(e.Name) != msg.Hash)))
+				{
+					bool waited = e.WaitingForFile, stood = e.StandIn;
+					e.Name = want;
+					e.Failed = false;
+					e.WaitingForFile = false;
+					e.Excluded = false; // (MissingIslandsCheck: the file is here now)
+					e.StandIn = false;
+					e.SwitchTo = null;
+					// (players who joined meanwhile have the stand-in's hash: they take this one - RK1)
+					if (waited || stood) SendToClients(IslandsMessage(new[] { e }, false));
+					continue;
+				}
+				e.WaitingForFile = false;
+				e.Excluded = false;
+			}
+			hashMissAt.Remove(msg.Hash);
+			// (the host asked everyone: one answer is enough, a second player's parts are no longer taken)
+			if (Raft_Network.IsHost) requested.Remove(msg.Hash);
+			if (Raft_Network.IsHost && wanted.Remove(msg.Hash))
+			{
+				Log("A player had the island file '" + msg.Name + "' (" + msg.Hash + ") this host lacked: the world plays it");
+				DynamicIslands.Notify("A player had the island '" + msg.Name + "' this world needs: it is on this PC now.");
+			}
+		}
+
+		/// <summary>Host: island files the world needs that this PC lacks, by hash (with the island's name) - asked of the players (AU6).</summary>
+		static readonly Dictionary<string, string> wanted = new Dictionary<string, string>();
+		static float nextWantedAsk;
+
+		/// <summary>The island files the host is asking the players for (tests): hashes.</summary>
+		public static IEnumerable<string> Wanted { get { return wanted.Keys; } }
+
+		/// <summary>
+		/// Host: the world needs the island file with this content and this PC has none (an island saved by another host, a
+		/// plan's coming island - AU6). The players are asked (now, each who joins, and every 30 s); one who has it sends it,
+		/// it is kept as name_hash like a downloaded file, and islands waiting for it play it.
+		/// </summary>
+		public static void WantFromPlayers(string name, string hash)
+		{
+			if (!Raft_Network.IsHost || !IsHash(hash) || ReceivedProblem(name, hash) != null || wanted.ContainsKey(hash)) return;
+			wanted[hash] = name;
+			requested.Add(hash);
+			Log("This host lacks the island file '" + name + "' (" + hash + "): asking the players for it");
+			if (InGame) AskPlayers(null);
+		}
+
+		/// <summary>Host: asks one player (who joined) or everyone for the island files the host lacks.</summary>
+		static void AskPlayers(Network_UserId? to)
+		{
+			foreach (var w in wanted.ToList())
+			{
+				requested.Add(w.Key);
+				var msg = new IslandNetMessage { Kind = IslandNetMessage.FileWanted, Name = w.Value, Hash = w.Key };
+				if (to.HasValue) SendToPlayer(msg, to.Value); else SendToClients(msg);
+			}
+		}
+
+		static readonly Dictionary<string, float> hashMissAt = new Dictionary<string, float>();
+
+		/// <summary>
+		/// Any island file on this PC with this content (AU6): the preferred name or its name_hash copy, else another copy
+		/// with that hash, else any island file of that content (an imported pack's island renamed "Camp (Pack title)").
+		/// Null when there is none. Not found is remembered for 10 s: the first look hashes every island file.
+		/// </summary>
+		internal static string FileWithHash(string hash, string prefer)
+		{
+			if (!IsHash(hash)) return null;
+			if (!string.IsNullOrEmpty(prefer))
+			{
+				if (HashOf(prefer) == hash) return prefer;
+				if (HashOf(DownloadName(prefer, hash)) == hash) return DownloadName(prefer, hash);
+			}
+			float at;
+			if (hashMissAt.TryGetValue(hash, out at) && Time.unscaledTime - at < 10f) return null;
+			List<string> all;
+			try { all = IslandSpawner.ListSavedIslands().ToList(); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking for an island file by its content: " + e.Message); return null; }
+			string found = all.Where(n => n.EndsWith("_" + hash, StringComparison.OrdinalIgnoreCase)).FirstOrDefault(n => HashOf(n) == hash) ?? all.FirstOrDefault(n => HashOf(n) == hash);
+			if (found == null) hashMissAt[hash] = Time.unscaledTime; else hashMissAt.Remove(hash);
+			return found;
 		}
 
 		/// <summary>
@@ -588,9 +1372,9 @@ namespace DynamicIslands.Editor
 				float at;
 				if (!requestedAt.TryGetValue(e.Hash, out at) || Time.unscaledTime - at < FileRetrySeconds) continue;
 				if (toldWaiting.Add(e.Hash)) DynamicIslands.Notify("Waiting for the island '" + e.HostName + "' from the host - still asking", true);
-				Log("Island file '" + e.HostName + "' (" + e.Hash + ") hasn't come: asking again");
+				Log("Island file '" + e.HostName + "' (" + e.Hash + ") hasn't come: asking again (keeping the " + (incoming.ContainsKey(e.Hash) ? incoming[e.Hash].Count(x => x != null) : 0) + " parts that came)");
 				requested.Remove(e.Hash);
-				incoming.Remove(e.Hash);
+				// (the parts that came are kept: the host's next sending fills in the rest - AU14)
 				RetryWaiting(e.Hash);
 			}
 		}
@@ -608,30 +1392,73 @@ namespace DynamicIslands.Editor
 			foreach (var e in IslandWorldState.Islands.Where(e => e.Hash == hash).ToList()) ResolveFile(e);
 		}
 
-		internal static void SendFile(string name, string hash, Network_UserId to)
+		internal static void SendFile(string name, string hash, Network_UserId to) { SendFile(name, hash, to, false); }
+
+		/// <summary>Sends an island file by its content hash (quiet: a player answering the host's FileWanted, which most
+		/// players can't - nothing logged when this PC hasn't got it).</summary>
+		internal static void SendFile(string name, string hash, Network_UserId to, bool quiet)
 		{
 			// (a host playing an island from a copy - name_hash, downloaded as a player or kept for a saved world - sends
 			// that copy, under the island's own name: the player saves it as name_hash, the name its entry waits for; sent
 			// as name_hash it was saved as name_hash_hash and the island never loaded)
+			// (a player's name is a file's here: only plain file names in the mod's folder are sent - AU41)
+			string problem = ReceivedProblem(name, hash);
+			if (problem != null) { Debug.LogWarning("[CUSTOM ISLANDS] [net] " + to + " asked for an island file that isn't one: " + problem); return; }
 			string file = name;
 			if (HashOf(name) != hash && HashOf(DownloadName(name, hash)) == hash) file = DownloadName(name, hash);
+			// (the same content under another name - a pack's island renamed on import, which a plan's island was brought
+			// from: still sent under the island's own name - AU6)
+			if (HashOf(file) != hash) file = FileWithHash(hash, null) ?? file;
 			string path = IslandSpawner.PathFor(file);
-			if (!File.Exists(path) || HashOf(file) != hash) { Debug.LogWarning("[CUSTOM ISLANDS] [net] " + to + " asked for island '" + name + "' (" + hash + ") which the host no longer has"); return; }
+			if (!File.Exists(path) || HashOf(file) != hash)
+			{
+				if (!quiet) Debug.LogWarning("[CUSTOM ISLANDS] [net] " + to + " asked for island '" + name + "' (" + hash + ") which the host no longer has");
+				return;
+			}
+			if (quiet) Log("The host lacks island file '" + name + "' (" + hash + "): sending this PC's " + file);
+			// (a player asking again while the file is still going out to them gets the one being sent, not another copy
+			// alongside it - CB12; after SendingSeconds a stalled send counts as gone)
+			string key = hash + "|" + to;
+			float since;
+			if (sending.TryGetValue(key, out since) && Time.realtimeSinceStartup - since < SendingSeconds) { Log("Island file '" + name + "' is still being sent to " + to + ": not sent twice"); return; }
+			if (sending.Count >= 64) sending.Clear();
+			sending[key] = Time.realtimeSinceStartup;
 			byte[] bytes = File.ReadAllBytes(path);
+			System.Collections.IEnumerator send = SendChunks(name, hash, bytes, to, key);
+			if (Loopback != null) { while (send.MoveNext()) { } } // (tests: the loopback takes every chunk at once)
+			else if (DynamicIslands.instance != null) DynamicIslands.instance.StartCoroutine(send);
+		}
+
+		/// <summary>Host: the files going out now, by hash and player, with when they started.</summary>
+		static readonly Dictionary<string, float> sending = new Dictionary<string, float>();
+		const float SendingSeconds = 60f;
+		/// <summary>Tests: how many files are going out now.</summary>
+		internal static int SendingCount { get { return sending.Count; } }
+
+		/// <summary>Chunks sent a frame (ROADMAP M3: all ~300 chunks of a 900 KB island went out in one loop, a burst that
+		/// a slow connection dropped messages of).</summary>
+		internal const int ChunksPerFrame = 6;
+
+		static System.Collections.IEnumerator SendChunks(string name, string hash, byte[] bytes, Network_UserId to, string key)
+		{
 			int count = Mathf.Max(1, (bytes.Length + ChunkBytes - 1) / ChunkBytes);
+			float started = Time.realtimeSinceStartup;
 			for (int i = 0; i < count; i++)
 			{
 				int len = Mathf.Min(ChunkBytes, bytes.Length - i * ChunkBytes);
-				SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.FileChunk, Name = name, Hash = hash, Index = i, Count = count, Data = Convert.ToBase64String(bytes, i * ChunkBytes, len) }, to);
+				try { SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.FileChunk, Name = name, Hash = hash, Index = i, Count = count, Data = Convert.ToBase64String(bytes, i * ChunkBytes, len) }, to); }
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Sending '" + name + "' chunk " + i + ": " + e.Message); }
+				if ((i + 1) % ChunksPerFrame == 0) yield return null;
 			}
-			Log("Sent island file '" + name + "' (" + bytes.Length + " bytes, " + count + " chunks) to " + to);
+			sending.Remove(key);
+			Log("Sent island file '" + name + "' (" + bytes.Length + " bytes, " + count + " chunks in " + (Time.realtimeSinceStartup - started).ToString("F1") + " s) to " + to);
 		}
 
 		#endregion
 
 		#region Hashes
 
-		static string Hash(byte[] bytes)
+		internal static string Hash(byte[] bytes)
 		{
 			using (var sha = SHA1.Create())
 				return BitConverter.ToString(sha.ComputeHash(bytes), 0, 6).Replace("-", "").ToLowerInvariant();

@@ -1,0 +1,42 @@
+# Raft Row Bazaar's Fixer Johnny and his strongroom (CIPlay raft_row_bazaar_talk, 11-11; in a test world 'CI ...').
+# Points as in its recipe (the origin frame): Johnny leans on a crate on the key at 12 47, east of the causeway's foot;
+# his strongroom is a small concrete storey at x 16..22, z 47.5..56.5, its back door at 20.5 47.5 bolted until someone
+# talked to him (talked gate); his three answers (journal, rope, the back way); the strongroom chest.
+island Raft Row Bazaar keep
+offset 0 0
+hour 11
+weather Calm
+empty
+expect shown rbbackdoor
+expect hidden rbstrongchest
+
+# The strongroom from the key, the back door: bolted before anyone talked to Johnny
+picture rb_strongroom_out 14 4 40 20 3.5 52
+use rbbackdoor
+expect message bolted from inside
+expect shown rbbackdoor
+expect hidden rbstrongchest
+
+# Fixer Johnny, leaning on his crate
+snap rb_islander Fixer Johnny 300 3.5 0.6
+use Fixer Johnny
+expect step 0
+
+# Now the back door opens on the strongroom chest
+use rbbackdoor
+expect message Johnny's strongroom
+expect hidden rbbackdoor
+expect shown rbstrongchest
+picture rb_strongroom_in 20.5 4 45 19 3 52 light=20
+open Johnny's strongroom
+wait 2
+expect item Battery 1
+
+# His answers: 1 the city (journal), 2 work (rope), 3 the back way
+use Fixer Johnny pick 1
+expect message who runs the city
+use Fixer Johnny pick 2
+expect message rope back with interest
+expect item Rope 4
+use Fixer Johnny pick 3
+expect message back door of his strongroom is open

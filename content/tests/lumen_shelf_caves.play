@@ -1,0 +1,27 @@
+# Lumen Shelf's lamp-lit galleries (CIPlay lumen_shelf_caves, 11-08, redesigned 11-09; in a test world 'CI ...'). Points
+# as in its recipe (heights in the island frame: the sea floor ~0, the surface at 25): the survey rock's south shoulder, the west
+# mouth on the grass at -16.4 -45.7 and the east mouth at 4.4 -45.7 (faces smoothed first), both tunnels dug level (floor 6.0) to their meeting at -6 -54.5, the chamber west
+# to -12.5 -56.3 (air zone lu_galleries, lamps, mushrooms, dirt, cave vines). The [CITEST] dig lines give the real floors.
+# In at one mouth, out at the other - all a swim.
+island Lumen Shelf keep
+offset 0.2094 -1.8777
+hour 11
+weather Calm
+where Pickup_Landmark_Mushroom
+where Pickup_Landmark_DirtPickup
+where CaveVine
+
+# Outside: both mouths on the rock's south shoulder
+picture lu_cave_out -22.5 9 -40.6 -16.4 7 -45.7 light=20
+picture lu_cave_out2 10.5 9 -40.6 4.4 7 -45.7 light=20
+
+# Swim in at the west mouth to the chamber, and breathe there
+swim -21 -41.8 7.5 to -16.4 -45.7 7.5 to -11.2 -50.1 7.6 to -6.5 -54.5 7.6 to -10.5 -55.7 8
+air lu_galleries here
+picture lu_cave_in -14.5 7.8 -47.3 -6.5 7.5 -54 light=20
+picture lu_chamber -6.5 8.5 -54.8 -12.5 7.5 -56.3 light=20
+air lu_galleries
+
+# On through the east tunnel and out at the other mouth
+swim -10.5 -55.7 8 to -6 -54.5 7.6 to -0.8 -50.1 7.6 to 4.4 -45.7 7.5 to 9 -41.8 7.5
+picture lu_cave_back 1.5 7.6 -48.2 -6 7.6 -54.5 light=20

@@ -1,0 +1,101 @@
+# Play test of The Drowned Metropolis (CIPlay drowned_metropolis, in a test world 'CI ...'). Points as in its recipe:
+# the ferry islet west, the Harbour Tower south-west (roof 12-21 m), the sunken offices and the Spire's foundations in
+# the middle, the Meridian Tower east (pool deck 6-9 m). The quest has 20 steps; the city's papers (notes and the chests'
+# tags) go into the journal as they are read, and its pages steps follow (3, 4, 5, 6).
+island The Drowned Metropolis
+# (no offset: the city's points line up with the island as it comes - the recipe's land-centre offset, -14 7, put
+# the Harbour Tower's ladder 17 m off; 10-27)
+expect step 0
+expect title The Keys of Meridian
+
+# The ferry islet: the evacuation notice
+walk -52 -41 to -44 -34 h=4
+zone ferry
+expect step 1
+read Evacuation notice
+expect step 2
+
+# Up the Harbour Tower's ladders, up its roof to the mayor's penthouse
+climb -19.2 -50 h=0.3
+climb -19.2 -50 h=6.5
+expect stand -22 -50 h=12.4
+zone harbourroof
+expect step 3
+# (up the plank ramp: in play tests it lies at z -49..-46, 2.6 m north of the recipe's numbers)
+walk -22 -50 to -35 -50 to -40 -47.5 to -50.5 -47.5 to -54.5 -48.5 h=21.3
+read Mayor's memo
+expect step 4
+open Penthouse safe
+expect story keycard 1
+wait 1
+expect item OxygenBottle 1
+expect step 7
+
+# Down to the sunken council offices: puffer fish, the filing cabinet
+zone offices
+expect step 8
+expect message puffs up
+kill Puffer fish
+expect step 9
+open Council filing cabinet
+expect story keycard 2
+wait 1
+expect step 12
+
+# The Spire's foundations: the Lantern Lord, the treasurer's strongbox
+zone foundations
+expect step 13
+expect message a light swings
+kill Angler fish
+expect step 14
+open Foundation strongbox
+expect story keycard 3
+wait 1
+expect step 17
+
+# Up the Meridian Tower to the pool deck: the vault
+climb 45.7 -2 h=-3
+climb 45.7 -2 h=3
+expect stand 48 -2 h=8.8
+zone meridianroof
+expect step 18
+open Meridian Vault
+wait 2
+expect story keycard 0
+expect item Blueprint_BatteryAdvanced 1
+wait 1
+expect done
+# DEEP 10-25 (off the quest): Lena's camp on the north-east islet, the treasurer's house sunk east of the Meridian Tower
+at 25 49
+read Deckhand Lena Moss's letter
+open Deckhand's crate
+zone cranehouse
+air craneair
+read Treasurer Silas Crane's note
+open Treasurer's chest
+
+# ABYSS 10-26: the secrets of the 1-hour pass (no steps) - Calder's note at Lena's camp, the Meridian badges (a set),
+# the harbour lamps (puzzle lights) and the harbour master's strongbox, the seaplane, the sea cave, the rooftop run
+read Dr. Ruth Calder's field note
+use Meridian badge 1
+use Meridian badge 2
+use Meridian badge 3
+use Meridian badge 4
+use Meridian badge 5
+wait 1
+expect message All five Meridian badges
+expect item TitaniumIngot 1
+expect hidden harbourbox
+use Harbour lamp 1
+use Harbour lamp 2
+use Harbour lamp 3
+use Harbour lamp 4
+wait 1
+expect shown harbourbox
+open Harbour master's strongbox
+zone seaplane
+open Seaplane's crate
+zone seacave
+open Sea cave chest
+zone jump_mt_finale
+open Rooftop run prize

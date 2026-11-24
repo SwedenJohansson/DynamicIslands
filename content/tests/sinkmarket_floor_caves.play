@@ -1,0 +1,20 @@
+# Sinkmarket Floor's bonded cellar (CIPlay sinkmarket_floor_caves, 11-11 w06; in a test world 'CI ...'). Points as in
+# the recipe (30 m down): the mouth in its own mound at 9 -9, the bore running yaw 135 for 14 m, the cellar round
+# 26.7 -26.7 (air zone sm_bondedcellar, the bonded goods at 28.2 -28.2). Heights are guesses.
+island Sinkmarket Floor keep
+offset 0 0
+hour 11
+weather Calm
+# (a CI world's bag emptied first: a full bag drops the loot)
+empty
+
+picture sm_cave_out 3.5 +2 -3.5 9 1.2 -9
+walk 6.2 -6.2 to 9 -9 to 13 -13 to 18.9 -18.9 to 23 -23 to 26.7 -26.7 below=-2
+air sm_bondedcellar here
+picture sm_cave_in 10.6 4.5 -10.6 20 4.2 -20 light=20
+picture sm_room_back 25.6 5.2 -25.6 17 4.5 -17 light=20
+open Bonded goods
+wait 2
+expect item Glass 2
+air sm_bondedcellar
+walk 26.7 -26.7 to 23 -23 to 18.9 -18.9 to 13 -13 to 9 -9 to 6.2 -6.2 below=-2

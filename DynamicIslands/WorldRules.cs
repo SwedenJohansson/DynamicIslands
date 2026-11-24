@@ -43,6 +43,12 @@ namespace DynamicIslands.Editor
 
 		public static void SaveDefault(string key, string value)
 		{
+			SaveDefaults(new Dictionary<string, string> { { key, value } });
+		}
+
+		/// <summary>Several last choices at once (one write of world_rules.txt): the other lines stay as they are.</summary>
+		public static void SaveDefaults(IDictionary<string, string> changes)
+		{
 			try
 			{
 				var values = new List<KeyValuePair<string, string>>();
@@ -52,10 +58,12 @@ namespace DynamicIslands.Editor
 						int eq = line.IndexOf('=');
 						if (line.StartsWith("#") || eq < 1) continue;
 						string k = line.Substring(0, eq).Trim();
-						if (!k.Equals(key, StringComparison.OrdinalIgnoreCase)) values.Add(new KeyValuePair<string, string>(k, line.Substring(eq + 1).Trim()));
+						if (!changes.Keys.Any(c => c.Equals(k, StringComparison.OrdinalIgnoreCase))) values.Add(new KeyValuePair<string, string>(k, line.Substring(eq + 1).Trim()));
 					}
-				values.Add(new KeyValuePair<string, string>(key, value));
-				SafeFile.WriteAllLines(DefaultPath, new[] { "# The last choices in the New Game box: monsters=timid|normal|fierce|savage|nightmare, buildcost=0-100 (% more)" }
+				values.AddRange(changes);
+				SafeFile.WriteAllLines(DefaultPath, new[] { "# The last choices in the New Game box: monsters=timid|normal|fierce|savage|nightmare, buildcost=0-100 (% more)",
+					"# journalkey=J, statskey=K: the keys of the journal and the stats page in a world (Unity key names; Defaults > Keys)",
+					"# cameralook, cameraspeed, camerazoom, camerapan=1 (x0.1-10), cameradragup=down|up, camerawheel=normal|reversed: the editor camera (Defaults > Editor camera, or the editor's Camera button)" }
 					.Concat(values.Select(kv => kv.Key + "=" + kv.Value)).ToArray());
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + DefaultPath + ": " + e.Message); }
@@ -68,29 +76,71 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		internal static void Reset()
 		{
+			worldRegrow = -1;
 			if (!Raft_Network.IsHost) return;
+			Survivors.Reset();
 			bool isNew = false;
 			try { isNew = GameManager.IsInNewGame; } catch { }
 			bool newWorld = isNew;
 			MonsterDifficulty.Reset(newWorld);
 			BuildCost.Reset(newWorld);
+			BuildCostRefund.Reset(BuildCost.Current);
+			AnimalLooks.Reset(newWorld);
 			if (newWorld) Broadcast();
 		}
 
 		/// <summary>A "@key=value" line of the world file; false if it isn't one of the rules.</summary>
-		internal static bool ReadLine(string key, string value) { return MonsterDifficulty.ReadLine(key, value) || BuildCost.ReadLine(key, value); }
+		internal static bool ReadLine(string key, string value)
+		{
+			if (key.Equals("regrow", StringComparison.OrdinalIgnoreCase))
+			{
+				int d;
+				if (int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out d)) worldRegrow = Mathf.Max(0, d);
+				return true;
+			}
+			return MonsterDifficulty.ReadLine(key, value) || BuildCost.ReadLine(key, value) || BuildCostRefund.ReadLine(key, value) || Survivors.ReadLine(key, value) || AnimalLooks.ReadLine(key, value);
+		}
 
-		internal static IEnumerable<string> WriteLines() { return MonsterDifficulty.WriteLines().Concat(BuildCost.WriteLines()); }
+		internal static IEnumerable<string> WriteLines()
+		{
+			IEnumerable<string> lines = MonsterDifficulty.WriteLines().Concat(BuildCost.WriteLines()).Concat(BuildCostRefund.WriteLines()).Concat(Survivors.WriteLines()).Concat(AnimalLooks.WriteLines());
+			return worldRegrow >= 0 ? lines.Concat(new[] { "@regrow=" + worldRegrow.ToString(CultureInfo.InvariantCulture) }) : lines;
+		}
+
+		/// <summary>
+		/// The world's days until things come back (ROADMAP AU20): taken from the host's spawnpool.txt when the world is first
+		/// played and kept with the world from then on - a later host with another setting refilled every chest a group had
+		/// emptied for good ("never"). -1 = not known yet.
+		/// </summary>
+		static int worldRegrow = -1;
+
+		/// <summary>Host, after the world file was read: a world without its own regrow days takes this PC's now.</summary>
+		internal static void OnWorldRead()
+		{
+			if (!Raft_Network.IsHost) return;
+			if (worldRegrow < 0) worldRegrow = CustomIslandSpawner.RegrowDays;
+			else if (worldRegrow != CustomIslandSpawner.RegrowDays) Debug.Log("[CUSTOM ISLANDS] [world rules] This world keeps its regrow days (" + worldRegrow + "); this PC's spawnpool.txt says " + CustomIslandSpawner.RegrowDays + " (for new worlds)");
+			Broadcast();
+		}
+
+		/// <summary>Host: changes the world's regrow days (the RegrowDays command).</summary>
+		public static void SetRegrow(int days)
+		{
+			worldRegrow = Mathf.Max(0, days);
+			Broadcast();
+			IslandWorldState.Save();
+		}
 
 		/// <summary>True when the world file is needed for the rules alone.</summary>
-		internal static bool HasState { get { return MonsterDifficulty.HasState || BuildCost.HasState; } }
+		internal static bool HasState { get { return Survivors.HasState || MonsterDifficulty.HasState || BuildCost.HasState || BuildCostRefund.HasState || AnimalLooks.HasState || worldRegrow >= 0 && worldRegrow != CustomIslandSpawner.RegrowDays; } }
 
 		public static string Describe() { return "monsters " + MonsterDifficulty.Describe(MonsterDifficulty.Current) + ", build cost " + BuildCost.Describe(BuildCost.Current); }
 
-		/// <summary>Host -> clients: the world's rules, and the host's spawnpool.txt settings every player must share (Data).</summary>
+		/// <summary>Host -> clients: the world's rules, and the host's spawnpool.txt settings every player must share (Data);
+		/// the rescued survivors (Names, RF3).</summary>
 		internal static IslandNetMessage Message()
 		{
-			return new IslandNetMessage { Kind = IslandNetMessage.WorldRules, Index = MonsterDifficulty.Current, Count = BuildCost.Current, Data = HostSettingsData() };
+			return new IslandNetMessage { Kind = IslandNetMessage.WorldRules, Index = MonsterDifficulty.Current, Count = BuildCost.Current, Data = HostSettingsData() + AnimalLooks.Data(), Name = BuildCostRefund.Encode(), Names = Survivors.Encode() };
 		}
 
 		internal static void Broadcast()
@@ -103,7 +153,10 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost) return;
 			MonsterDifficulty.FromHost(msg.Index);
 			BuildCost.FromHost(msg.Count);
+			// (the cost each block was placed at, AU33; a host with an older version: its blocks at its cost)
+			if (msg.Name != null) BuildCostRefund.Decode(msg.Name); else BuildCostRefund.OnCostRead(msg.Count);
 			HostSettingsFrom(msg.Data);
+			Survivors.FromHost(msg.Names);
 		}
 
 		/// <summary>Client: a host's world arrived; Raft's own rules until that host's come.</summary>
@@ -111,7 +164,11 @@ namespace DynamicIslands.Editor
 		{
 			MonsterDifficulty.OnWorldReceived();
 			BuildCost.OnWorldReceived();
+			BuildCostRefund.Reset(0);
+			AnimalLooks.OnWorldReceived();
+			Survivors.Reset();
 			hostKnown = false;
+			worldRegrow = -1;
 		}
 
 		#region The host's settings (spawnpool.txt)
@@ -129,19 +186,24 @@ namespace DynamicIslands.Editor
 		/// <summary>Whether custom islands show on the Receiver in this world: the host's setting.</summary>
 		public static bool ShowOnReceiver { get { return UseHost ? hostReceiver : CustomIslandSpawner.ShowOnReceiver; } }
 
+		/// <summary>How far the Receiver shows custom islands (m, 0 = all): the host's setting.</summary>
+		public static float ReceiverDistance { get { return UseHost ? hostReceiverDistance : CustomIslandSpawner.ReceiverDistance; } }
+		static float hostReceiverDistance = 2000f;
+
 		/// <summary>How far away a custom island unloads in this world: the host's setting.</summary>
 		public static float UnloadDistance { get { return UseHost ? hostUnload : CustomIslandSpawner.UnloadDistance; } }
 
 		/// <summary>The world's days until things come back (the host's; islands may have their own rule, IslandRules).</summary>
-		public static int RegrowDays { get { return UseHost ? hostRegrow : CustomIslandSpawner.RegrowDays; } }
+		public static int RegrowDays { get { return UseHost ? hostRegrow : worldRegrow >= 0 ? worldRegrow : CustomIslandSpawner.RegrowDays; } }
 
 		/// <summary>Whether this machine uses a host's settings (a client in a game whose host sent them).</summary>
 		public static bool HostSettingsFromHost { get { return UseHost; } }
 
 		static string HostSettingsData()
 		{
-			return "receiver=" + (CustomIslandSpawner.ShowOnReceiver ? 1 : 0) + ";unload=" + CustomIslandSpawner.UnloadDistance.ToString("F0", CultureInfo.InvariantCulture) +
-				";regrow=" + CustomIslandSpawner.RegrowDays;
+			// (the distances to two decimals: whole metres gave player 2 813 m where the host had 812.5 - IM25)
+			return "receiver=" + (CustomIslandSpawner.ShowOnReceiver ? 1 : 0) + ";unload=" + CustomIslandSpawner.UnloadDistance.ToString("0.##", CultureInfo.InvariantCulture) +
+				";regrow=" + RegrowDays + ";rdist=" + CustomIslandSpawner.ReceiverDistance.ToString("0.##", CultureInfo.InvariantCulture);
 		}
 
 		static void HostSettingsFrom(string data)
@@ -153,10 +215,12 @@ namespace DynamicIslands.Editor
 				if (eq < 1) continue;
 				string key = part.Substring(0, eq), value = part.Substring(eq + 1);
 				float v;
-				if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out v)) continue;
+				if (!CustomIslandSpawner.ParseNumber(value, out v)) continue;
 				if (key == "receiver") hostReceiver = v != 0f;
 				else if (key == "unload") hostUnload = Mathf.Max(300f, v);
 				else if (key == "regrow") hostRegrow = Mathf.Max(0, Mathf.RoundToInt(v));
+				else if (key == "rdist") hostReceiverDistance = Mathf.Max(0f, v);
+				else AnimalLooks.FromHost(key, v); // (rare=, caught=: the rare animal looks)
 			}
 			hostKnown = true;
 			Debug.Log("[CUSTOM ISLANDS] [world rules] The host's settings: " + HostSettingsDescribe());
@@ -185,7 +249,8 @@ namespace DynamicIslands.Editor
 
 	/// <summary>
 	/// How many more materials everything in Raft's build menu (the hammer's blocks) costs in a world: 0-100 %, each amount
-	/// rounded up. Raft keeps one cost list per buildable item (ItemInstance_Recipe.NewCost); placing a block takes it from
+	/// rounded to the nearest (never below Raft's own). Raft keeps one cost list per buildable item
+	/// (ItemInstance_Recipe.NewCost); placing a block takes it from
 	/// the builder's inventory on the builder's machine (BlockCreator.CreateBlock), removing one gives it back
 	/// (RemovePlaceables.ReturnItemsFromBlock), and the hammer's repair and reinforce use it too - so those follow.
 	/// The amounts are set from Raft's own numbers as first seen (never on top of an earlier change) while a world is
@@ -211,11 +276,12 @@ namespace DynamicIslands.Editor
 
 		public static int Clamp(int percent) { return Mathf.Clamp(percent, 0, Max); }
 
-		/// <summary>An amount at this percent, always rounded up (1 at 50 % is 2, 2 is 3, 3 is 5).</summary>
+		/// <summary>An amount at this percent, rounded to the nearest (a half up) and never below Raft's own: 1 at 5-45 % stays 1,
+		/// 1 at 50 % is 2, 2 is 3, 3 is 5. (Rounded up before, "+5 %" doubled every 1-item cost - AU41.)</summary>
 		public static int Cost(int amount, int percent)
 		{
 			if (percent <= 0 || amount <= 0) return amount;
-			return (amount * (100 + percent) + 99) / 100;
+			return Mathf.Max(amount, (amount * (100 + percent) + 50) / 100);
 		}
 
 		public static string Describe(int percent) { return percent <= 0 ? "Raft's own" : "+" + percent + "%"; }
@@ -224,8 +290,8 @@ namespace DynamicIslands.Editor
 		public static string DescriptionFor(int percent)
 		{
 			if (percent <= 0) return "Building costs what it does in Raft.";
-			return "Everything in the build menu costs " + percent + "% more materials, rounded up: 1 plank becomes " + Cost(1, percent) + ", 2 become " + Cost(2, percent) +
-				", 3 become " + Cost(3, percent) + ". Removing a block gives back half of what it cost.";
+			return "Everything in the build menu costs " + percent + "% more materials, rounded: 1 plank becomes " + Cost(1, percent) + ", 2 become " + Cost(2, percent) +
+				", 3 become " + Cost(3, percent) + ". Removing a block gives back half of what it cost when it was placed.";
 		}
 
 		/// <summary>The "?" next to the slider.</summary>
@@ -235,8 +301,8 @@ namespace DynamicIslands.Editor
 			{
 				return "How many more materials everything in the build menu costs in this world: the hammer's foundations, floors, walls, " +
 					"roofs, stairs, pillars and the rest. 0% is Raft's own cost, 100% twice as much.\n" +
-					"Amounts are always rounded up: at 50% one plank becomes two and two planks become three.\n" +
-					"Removing a block with the hammer gives back half of what it cost, as in Raft, and repairing and reinforcing blocks cost more too. " +
+					"Amounts are rounded to the nearest whole number (a half up), never below Raft's own: at 50% one plank becomes two and two planks become three; below 50% one plank stays one.\n" +
+					"Removing a block with the hammer gives back half of what it cost when it was placed, as in Raft (a change later doesn't change it), and repairing and reinforcing blocks cost more too. " +
 					"What you make in the crafting menu (Tab) costs the same as in Raft.\n" +
 					"Every player in the world pays the same: players who join get the host's setting. " +
 					"The host can change it later with the console command BuildCost (F10).";
@@ -272,6 +338,7 @@ namespace DynamicIslands.Editor
 			int p;
 			if (!int.TryParse(value.Trim().TrimEnd('%'), NumberStyles.Integer, CultureInfo.InvariantCulture, out p)) { Debug.LogWarning("[CUSTOM ISLANDS] Unknown build cost '" + value + "' in the world file: Raft's own"); p = 0; }
 			Current = Clamp(p);
+			BuildCostRefund.OnCostRead(Current);
 			Log("This world's build cost: " + Describe(Current));
 			Refresh();
 			return true;
@@ -384,19 +451,32 @@ namespace DynamicIslands.Editor
 			EnsureKeeper();
 			bool inGame = false;
 			try { inGame = LoadSceneManager.IsGameSceneLoaded; } catch { }
+			if (!inGame) { searchWait = 0f; nextSearch = 0f; }
 			int want = inGame ? Current : 0;
 			if (want == Applied) return;
 			if (want == 0) { RestoreAll(); return; }
 			if (items == null || items.Count == 0)
 			{
+				if (Time.unscaledTime < nextSearch) return;
 				items = FindBuildMenuItems();
-				if (items.Count == 0) return; // (the build menu isn't there yet: the keeper tries again)
+				if (items.Count == 0)
+				{
+					// (the build menu isn't there yet: the keeper tries again, less often the longer it isn't - every object
+					// was searched 4 times a second for as long as the world was open)
+					searchWait = Mathf.Min(Mathf.Max(searchWait * 2f, 0.5f), 30f);
+					nextSearch = Time.unscaledTime + searchWait;
+					return;
+				}
+				searchWait = 0f;
 			}
 			List<CostMultiple> entries = Entries(items);
 			ApplyTo(entries, want);
 			Applied = want;
 			Log("Build menu costs " + Describe(want) + ": " + items.Count + " items, " + entries.Count + " amounts (e.g. " + Example() + ")");
 		}
+
+		/// <summary>When the build menu is looked for again, and how long the last wait was (it doubles, up to 30 s).</summary>
+		static float nextSearch, searchWait;
 
 		static string Example()
 		{
@@ -416,7 +496,7 @@ namespace DynamicIslands.Editor
 
 		#endregion
 
-		[ConsoleCommand(name: "BuildCost", docs: "Build cost: BuildCost = this world's; BuildCost <0-100> = everything in the build menu costs that many % more, rounded up (host), or at the main menu for the next new world")]
+		[ConsoleCommand(name: "BuildCost", docs: "Build cost: BuildCost = this world's; BuildCost <0-100> = everything in the build menu costs that many % more, rounded (host), or at the main menu for the next new world")]
 		public static void BuildCostCommand(string[] args)
 		{
 			string arg = args != null ? string.Join(" ", args).Trim().TrimEnd('%') : "";
@@ -468,13 +548,14 @@ namespace DynamicIslands.Editor
 	static class NewWorldRulesBox
 	{
 		public const string PanelName = "CustomIslands_WorldRules";
-		public const float PanelHeight = 186f;
+		public const float PanelHeight = 248f;
 
-		static int? monsterChoice, buildChoice;
+		static int? monsterChoice, buildChoice, looksChoice;
 		/// <summary>The box shows the remembered choices again (a saved world was loaded after the box was changed).</summary>
-		internal static void Forget() { monsterChoice = buildChoice = null; }
+		internal static void Forget() { monsterChoice = buildChoice = looksChoice = null; }
 		static UIKit.SliderRow monsterSlider, buildSlider;
-		static Text monsterDetail, buildDetail;
+		static Text monsterDetail, buildDetail, looksDetail;
+		static readonly List<Button> looksButtons = new List<Button>();
 		static readonly List<Text> ticks = new List<Text>();
 
 		/// <summary>The monster level shown in the box (the last choice until it is moved).</summary>
@@ -490,6 +571,17 @@ namespace DynamicIslands.Editor
 			get { if (!buildChoice.HasValue) buildChoice = BuildCost.Default; return buildChoice.Value; }
 			set { buildChoice = BuildCost.Clamp(value); Refresh(); }
 		}
+
+		/// <summary>The rare animal looks level shown (the last choice until another is pressed).</summary>
+		public static int LooksLevel
+		{
+			get { if (!looksChoice.HasValue) looksChoice = AnimalLooks.Default; return looksChoice.Value; }
+			set { looksChoice = AnimalLooks.Clamp(value); Refresh(); }
+		}
+
+		/// <summary>The rare animal looks buttons (Normal, More, Lots) and their line (tests).</summary>
+		public static Button LooksButton(int level) { return level >= 0 && level < looksButtons.Count ? looksButtons[level] : null; }
+		public static string LooksText { get { return looksDetail != null ? looksDetail.text : null; } }
 
 		/// <summary>The sliders (tests move them as a player would); the build cost slider counts steps of 5 %.</summary>
 		public static Slider MonsterSlider { get { return monsterSlider != null ? monsterSlider.Slider : null; } }
@@ -604,6 +696,21 @@ namespace DynamicIslands.Editor
 			Heading(buildSlider);
 			buildDetail = Detail(panel, "BuildDetail", 44); // (three lines in the window's column)
 
+			// Rare animal looks: three buttons (Normal, More, Lots) and their line
+			RectTransform lrow = UIKit.Row(panel, 24f, 4f, "RareLooks");
+			Text lt = UIKit.Label(lrow, "RARE ANIMAL LOOKS", 13, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Bold, "Label");
+			UIKit.Heading(lt, 13);
+			UIKit.Size(lt.gameObject, 170);
+			looksButtons.Clear();
+			for (int i = 0; i < AnimalLooks.Names.Length; i++)
+			{
+				int level = i;
+				Button b = UIKit.Button(lrow, AnimalLooks.Names[i], () => { looksChoice = level; Refresh(); }, AnimalLooks.HelpText, -1, 24f, 12);
+				b.name = "RareLooks_" + AnimalLooks.Names[i];
+				looksButtons.Add(b);
+			}
+			looksDetail = Detail(panel, "RareLooksDetail", 30);
+
 			Refresh();
 			return panel;
 		}
@@ -627,6 +734,23 @@ namespace DynamicIslands.Editor
 		static string MonsterFormat(int level) { return MonsterDifficulty.Name(level).ToUpperInvariant() + "   " + MonsterDifficulty.FactorText(level); }
 		static string BuildFormat(int percent) { return percent <= 0 ? "RAFT'S OWN" : "+" + percent + "%"; }
 
+		/// <summary>
+		/// What the game mode tab does with the monster level, after its text - as Raft's own modes are (AU61, their values
+		/// read from Raft's game files): in Peaceful the monsters are tame and players' hits count as usual, in Creative
+		/// players take no damage, Easy and Hard change the monsters' hits (and Hard players' hits on them, x0.8) as well.
+		/// </summary>
+		static string ModeNote(GameMode mode)
+		{
+			switch (mode)
+			{
+				case GameMode.Peaceful: return " In Peaceful monsters leave you alone, so only their health changes.";
+				case GameMode.Creative: return " In Creative nothing can hurt you, so only their health changes.";
+				case GameMode.Easy: return " On top of Easy: their hits hurt you less.";
+				case GameMode.Hardcore: return " On top of Hard: their hits hurt more and yours do less.";
+				default: return "";
+			}
+		}
+
 		internal static void Refresh()
 		{
 			if (monsterSlider != null && monsterSlider.Slider != null)
@@ -634,10 +758,7 @@ namespace DynamicIslands.Editor
 				int l = MonsterLevel;
 				if (Mathf.RoundToInt(monsterSlider.Slider.value) != l) monsterSlider.Slider.SetValueWithoutNotify(l);
 				monsterSlider.Value.text = MonsterFormat(l);
-				GameMode mode = GameManager.GameMode;
-				monsterDetail.text = MonsterDifficulty.Descriptions[l] +
-					(l == MonsterDifficulty.Normal ? "" : mode == GameMode.Peaceful ? " In Peaceful monsters leave you alone, so only their health changes." :
-					mode == GameMode.Creative ? " In Creative nothing can hurt you, so mostly their health changes." : "");
+				monsterDetail.text = MonsterDifficulty.Descriptions[l] + (l == MonsterDifficulty.Normal ? "" : ModeNote(GameManager.GameMode));
 				// (the chosen one golden; Raft's body font is bold already)
 				for (int i = 0; i < ticks.Count; i++)
 					if (ticks[i] != null) ticks[i].color = i == l ? UIKit.Accent : UIKit.TextMuted;
@@ -648,6 +769,12 @@ namespace DynamicIslands.Editor
 				if (Mathf.RoundToInt(buildSlider.Slider.value) != step) buildSlider.Slider.SetValueWithoutNotify(step);
 				buildSlider.Value.text = BuildFormat(p);
 				buildDetail.text = BuildCost.DescriptionFor(p) + (p > 0 && GameManager.GameMode == GameMode.Creative ? " (Creative builds for free anyway.)" : "");
+			}
+			if (looksDetail != null)
+			{
+				int l = LooksLevel;
+				for (int i = 0; i < looksButtons.Count; i++) if (looksButtons[i] != null) UIKit.SetActive(looksButtons[i], i == l);
+				looksDetail.text = AnimalLooks.DescriptionFor(l);
 			}
 			WorldSettingsWindow.Show(); // (its summary and the box's button follow)
 		}
@@ -670,12 +797,18 @@ namespace DynamicIslands.Editor
 	{
 		static void Prefix()
 		{
-			int l = NewWorldRulesBox.MonsterLevel, p = NewWorldRulesBox.BuildPercent;
-			MonsterDifficulty.Pending = l;
-			BuildCost.Pending = p;
-			MonsterDifficulty.SaveDefault(l);
-			BuildCost.SaveDefault(p);
-			Debug.Log("[CUSTOM ISLANDS] Creating a world with the monster difficulty " + MonsterDifficulty.Describe(l) + " and the build cost " + BuildCost.Describe(p));
+			try
+			{
+				int l = NewWorldRulesBox.MonsterLevel, p = NewWorldRulesBox.BuildPercent;
+				MonsterDifficulty.Pending = l;
+				BuildCost.Pending = p;
+				MonsterDifficulty.SaveDefault(l);
+				BuildCost.SaveDefault(p);
+				AnimalLooks.Pending = NewWorldRulesBox.LooksLevel;
+				AnimalLooks.SaveDefault(NewWorldRulesBox.LooksLevel);
+				Debug.Log("[CUSTOM ISLANDS] Creating a world with the monster difficulty " + MonsterDifficulty.Describe(l) + " and the build cost " + BuildCost.Describe(p));
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] New world rules: " + e); }
 		}
 	}
 }

@@ -1,0 +1,19 @@
+# Colossus of the Strait's bolt store (CIPlay colossus_of_the_strait_caves, 11-12 w07; in a test world 'CI ...'). Points
+# as in its recipe: the mouth on the strait's floor at 3 16 (4 m down), the culvert climbing under the east headland
+# (yaw 110, len 26, slope 18) to the dry room round 35.9 4 (air zone co_boltstore, the builders' chest at 37.2 4.5). Swim in
+# from the strait, breathe in the room, take the chest, swim back out.
+island Colossus of the Strait keep
+offset 0 0
+hour 11
+weather Calm
+
+picture co_cave_mouth -6 4 18 3 1 16
+walk 0 16 to 3 16 to 12.4 12.6 to 21.8 9.2 to 30 6.3 to 35.5 4.2 below=8
+air co_boltstore here
+picture co_cave_in 31 10 6 37.5 8.6 4.3 light=20
+open Bolt store
+wait 2
+expect item Bolt 6
+air co_boltstore
+walk 35.5 4.2 to 30 6.3 to 21.8 9.2 to 12.4 12.6 to 3 16 to 0 16 below=8
+picture co_headland -12 10 30 25 10 8

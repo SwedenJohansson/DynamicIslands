@@ -21,14 +21,45 @@ namespace DynamicIslands.Editor
 			CreatureSpeed = "creature.speed", CreatureSize = "creature.size", CreatureRespawn = "creature.respawn";
 		public const string NoteTitle = "note.title", NoteText = "note.text";
 		public const string TintColor = "tint.color", TintAmount = "tint.amount";
+		/// <summary>"rock": the object's rock textures swapped for Raft's brown island rock (the cave tool's tunnels, whose
+		/// icy rock shader has no colour to tint).</summary>
+		public const string Skin = "skin", SkinRock = "rock";
+		/// <summary>"1" (or the cave's size, e.g. "0.7"): a bear den laid at a cave tool tunnel's end - a rock wall across its wide mouth around the tunnel (CaveTool.Plug), at that size.</summary>
+		public const string CavePlug = "cave.plug";
+		/// <summary>The cave's size (e.g. "1"): a cave tool tunnel's rock frame at its mouth (CaveMouth: its first piece) or
+		/// at its open far end (CaveEnd: its last) - CaveTool.Mouth.</summary>
+		public const string CaveMouth = "cave.mouth", CaveEnd = "cave.end";
+		/// <summary>The cave's size: a cave tool tunnel followed by another or the den gets a floor plate over their join - CaveTool.Join.</summary>
+		public const string CaveJoin = "cave.join";
+		/// <summary>"1" on any cave piece under a cave hill: the hill leaves out its skin over deep sea (CaveMountain.SeaCut and its shore ring) -
+		/// Old Mine Islet, whose mound over the sea closed pools of water under it. Without it a hill raised from the sea floor keeps its slope into the sea.</summary>
+		public const string CaveSeaCut = "cave.seacut";
+		/// <summary>"den" on a cave piece under a cave hill: the hill's rock texture coloured as that piece's own shell (CaveMountain.RockAsDen) -
+		/// Balboa's sandy rock showed blue-grey round Shelter Atoll's brown ammo den. Only on a hill none of whose caves is tinted.</summary>
+		public const string CaveRock = "cave.rock";
+		/// <summary>"dry" on a cave piece: its hill's foot meets raised dry land cleanly - the ground under the piece's walls leaning
+		/// out over it outside is not let down (CaveGround.Walled), and the hill's sunk rim goes on over dry land the sea cut took
+		/// (CaveMountain, only near a way in's mouth), and the skin's foot is smoothed (CaveMountain.FootPasses). Shelter Atoll's ammo den, 11-07; without it nothing changes.</summary>
+		public const string CaveFoot = "cave.foot";
+		/// <summary>A dry-footed den's dome reaches at most this many m from its den (side, back and front; the roof under it is still
+		/// covered by the hill's own slopes). Unset: the dome as wide as it needs (11-10: w02's dens buried camps and sheds 40-60 m off).</summary>
+		public const string CaveDome = "cave.dome";
 		/// <summary>Loot: "UniqueItemName*amount;..." (Raft's item names), and "0" = never fills up again.</summary>
 		public const string LootItems = "loot.items", LootRefill = "loot.refill";
+		/// <summary>Buried treasure: Raft's treasure kind (its uniqueTreasureIndex; 0 = the common chest).</summary>
+		public const string TreasureKind = "treasure.kind";
+		/// <summary>Buried treasure: extra loot in its chest, "UniqueItemName*amount;..." like loot.items (story:... items too; RF4).
+		/// Not loot.items, so the treasure is not counted as a chest (IsLoot).</summary>
+		public const string TreasureLoot = "treasure.loot";
 		public const int MaxLootStacks = 12, MaxLootAmount = 999;
 		/// <summary>Zones: a name other things link to, radius (m), a message, "1" = fires every time (default once).
 		/// A trigger zone gives its loot.items to whoever enters. creature.zone: the creature waits until that zone fires.</summary>
 		public const string ZoneId = "zone.id", ZoneRadius = "zone.radius", ZoneMessage = "zone.message", ZoneRepeat = "zone.repeat", CreatureZone = "creature.zone";
 		/// <summary>zone.repeat for a zone that fires once ever (never again after the regrow days).</summary>
 		public const string ZoneOnceEver = "never";
+		/// <summary>"1": an air pocket - a player inside the zone breathes (breath back to full), as in Raft's own air pockets
+		/// under Caravan Town (theirs are scripts, which copies of Raft's objects don't keep).</summary>
+		public const string ZoneAir = "zone.air";
 		public const float MinZoneRadius = 1f, MaxZoneRadius = 50f;
 
 		/// <summary>Atmosphere zones: fog colour and thickness, light tint and strength, particles (AtmosphereZone.ParticleKinds).</summary>
@@ -52,10 +83,11 @@ namespace DynamicIslands.Editor
 		public static bool Repeats(IDictionary<string, string> p) { return GetBool(p, ZoneRepeat, false); }
 
 		public const int MaxCount = 8;
-		public const float MinMultiplier = 0.25f, MaxMultiplier = 4f, MinSize = 0.5f, MaxSize = 2.5f;
+		public const float MinMultiplier = 0.25f, MaxMultiplier = 4f, MaxHealth = 12f, MinSize = 0.5f, MaxSize = 3f;
 
-		/// <summary>What an object starts with when it is placed from the list (a note gets a title to edit).</summary>
-		public static Dictionary<string, string> Defaults(string name)
+		/// <summary>What an object starts with when it is placed from the list (a note gets a title to edit). ready=false leaves
+		/// out the Ready pieces' working settings (CB1: a recipe's decorative copy without an alias stays decoration).</summary>
+		public static Dictionary<string, string> Defaults(string name, bool ready = true)
 		{
 			var props = new Dictionary<string, string>();
 			if (ContentCatalog.IsNoteObject(name))
@@ -63,8 +95,24 @@ namespace DynamicIslands.Editor
 				props[NoteTitle] = ContentCatalog.DefaultNoteTitle(name);
 				props[NoteText] = "";
 			}
-			if (ContentCatalog.IsLootObject(name)) props[LootItems] = ContentCatalog.DefaultLoot();
+			if (ContentCatalog.IsLootObject(name)) props[LootItems] = name == ContentCatalog.WildHive ? ContentCatalog.PresetLoot(new[] { ContentCatalog.WildHiveLoot }) : ContentCatalog.DefaultLoot();
 			if (ContentCatalog.IsZone(name)) props[ZoneId] = ContentCatalog.NewZoneId();
+			// Raft's machete vines (the user, 2026-10-05: Raft's quest items put to work): cut with the player's own machete,
+			// which they keep for the next vines (a "has" check, not "take")
+			if (QuestItemPickups.IsModel(name)) QuestItemPickups.Defaults(name, props);
+			PlayerFeatures.Defaults(name, props);
+			if (name == ContentCatalog.MacheteVines)
+			{
+				props[BehaviourProps.Use] = "Cut the vines with the machete";
+				props[BehaviourProps.CheckKey("use")] = "has|" + ContentCatalog.MacheteItem + "|1";
+				props[BehaviourProps.EventKey("use")] = "hide|";
+				props[BehaviourProps.ElseKey("use")] = "message||The vines are too thick to tear. A machete would cut through them.";
+			}
+			if (ready)
+			{
+				ReadyPieces.Defaults(name, props);
+				Survivors.Defaults(name, props);
+			}
 			return props;
 		}
 
@@ -115,7 +163,7 @@ namespace DynamicIslands.Editor
 		#region Creature settings (with their limits)
 
 		public static int Count(IDictionary<string, string> p) { return Mathf.Clamp(GetInt(p, CreatureCount, 1), 1, MaxCount); }
-		public static float Health(IDictionary<string, string> p) { return Mathf.Clamp(GetFloat(p, CreatureHealth, 1f), MinMultiplier, MaxMultiplier); }
+		public static float Health(IDictionary<string, string> p) { return Mathf.Clamp(GetFloat(p, CreatureHealth, 1f), MinMultiplier, MaxHealth); }
 		public static float Damage(IDictionary<string, string> p) { return Mathf.Clamp(GetFloat(p, CreatureDamage, 1f), 0f, MaxMultiplier); }
 		public static float Speed(IDictionary<string, string> p) { return Mathf.Clamp(GetFloat(p, CreatureSpeed, 1f), MinMultiplier, 2.5f); }
 		public static float Size(IDictionary<string, string> p) { return Mathf.Clamp(GetFloat(p, CreatureSize, 1f), MinSize, MaxSize); }
@@ -141,10 +189,13 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The loot as (item name, amount) pairs, in order; bad entries are skipped.</summary>
-		public static List<KeyValuePair<string, int>> Loot(IDictionary<string, string> props)
+		public static List<KeyValuePair<string, int>> Loot(IDictionary<string, string> props) { return Loot(props, LootItems); }
+
+		/// <summary>The items under another key in the same form (treasure.loot).</summary>
+		public static List<KeyValuePair<string, int>> Loot(IDictionary<string, string> props, string key)
 		{
 			var list = new List<KeyValuePair<string, int>>();
-			foreach (string part in Get(props, LootItems).Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+			foreach (string part in Get(props, key).Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
 			{
 				int star = part.LastIndexOf('*');
 				string item = (star > 0 ? part.Substring(0, star) : part).Trim();
@@ -222,8 +273,91 @@ namespace DynamicIslands.Editor
 
 		public static void ApplyTint(GameObject root, IDictionary<string, string> props)
 		{
+			// (the cave tool's frames first: they take the tint and the rock skin with the piece)
+			float mouth, end;
+			bool hasMouth = float.TryParse(Get(props, CaveMouth, ""), NumberStyles.Float, CultureInfo.InvariantCulture, out mouth) && mouth > 0f;
+			bool hasEnd = float.TryParse(Get(props, CaveEnd, ""), NumberStyles.Float, CultureInfo.InvariantCulture, out end) && end > 0f;
+			float join;
+			bool hasJoin = float.TryParse(Get(props, CaveJoin, ""), NumberStyles.Float, CultureInfo.InvariantCulture, out join) && join > 0f;
+			if (hasMouth || hasEnd || hasJoin || root != null && (root.transform.Find(CaveTool.MouthName) != null || root.transform.Find(CaveTool.JoinName) != null)) CaveTool.ClearMouths(root);
+			if (hasMouth) CaveTool.Mouth(root, mouth, false);
+			if (hasEnd) CaveTool.Mouth(root, end, true);
+			if (hasJoin) CaveTool.Join(root, join);
+			if (props != null && props.ContainsKey(DigTunnel.PathKey)) DigTunnel.Apply(root, props); // (a dug tunnel's rock, from its path - first, so it is tinted too)
 			if (HasTint(props)) ApplyTint(root, Tint(props), TintStrength(props));
 			else ApplyTint(root, Color.white, 0f);
+			if (Get(props, Skin, "") == SkinRock) ApplyRockSkin(root);
+			float plug;
+			bool hasPlug = float.TryParse(Get(props, CavePlug, ""), NumberStyles.Float, CultureInfo.InvariantCulture, out plug) && plug > 0f;
+			if (hasPlug) CaveTool.Plug(root, plug);
+			// (the cave tool's pieces take a warm grey light in a world, as in the editor - not Raft's blue sky light)
+			if ((hasMouth || hasEnd || hasJoin || hasPlug) && root != null) CaveLit.Mark(root);
+		}
+
+		static Texture rockDiffuse, rockNormal;
+		static bool rockMissingSaid;
+
+		/// <summary>Raft's brown island rock (Rock_Stylized), from the ground textures borrowed or any loaded material.</summary>
+		static bool FindRock()
+		{
+			if (rockDiffuse != null) return true;
+			// (the borrowed ground layer first: it is kept for the islands' ground, where a search of what is loaded can miss it)
+			TerrainLayer layer = TerrainPainter.RaftLayer("Rock_Stylized_basecolor");
+			if (layer != null) { rockDiffuse = layer.diffuseTexture; rockNormal = layer.normalMapTexture; }
+			if (rockDiffuse == null || rockNormal == null)
+				foreach (Texture2D t in Resources.FindObjectsOfTypeAll<Texture2D>())
+				{
+					if (t == null) continue;
+					if (rockDiffuse == null && t.name == "Rock_Stylized_basecolor") rockDiffuse = t;
+					else if (rockNormal == null && t.name == "Rock_Stylized_normal") rockNormal = t;
+				}
+			if (rockDiffuse == null) { if (!rockMissingSaid) Debug.LogWarning("[CUSTOM ISLANDS] Rock skin: Raft's Rock_Stylized texture is not loaded - the cave keeps its own rock"); rockMissingSaid = true; return false; }
+			rockDiffuse.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+			if (rockNormal != null) rockNormal.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+			return true;
+		}
+
+		/// <summary>Raft's brown island rock texture and its normal map (false when not loaded).</summary>
+		public static bool RockTextures(out Texture diffuse, out Texture normal)
+		{
+			bool ok = FindRock();
+			diffuse = rockDiffuse; normal = rockNormal;
+			return ok;
+		}
+
+		static readonly string[] RockDiffuseProps = { "_TopDiffuse", "_SideDiffuse" }, RockNormalProps = { "_TopNormal", "_SideNormal" };
+
+		/// <summary>Swaps the top and side rock textures of root's rock materials (the CaravanIslandRocks shader) for Raft's
+		/// brown island rock, by property blocks. Returns how many materials changed.</summary>
+		public static int ApplyRockSkin(GameObject root)
+		{
+			if (root == null || !FindRock()) return 0;
+			int done = 0;
+			foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
+			{
+				Material[] mats = r.sharedMaterials;
+				for (int i = 0; i < mats.Length; i++)
+				{
+					Material m = mats[i];
+					if (m == null || !m.HasProperty("_TopDiffuse")) continue;
+					var block = new MaterialPropertyBlock();
+					if (mats.Length == 1) r.GetPropertyBlock(block); else r.GetPropertyBlock(block, i);
+					foreach (string prop in RockDiffuseProps) if (m.HasProperty(prop)) block.SetTexture(prop, rockDiffuse);
+					if (rockNormal != null) foreach (string prop in RockNormalProps) if (m.HasProperty(prop)) block.SetTexture(prop, rockNormal);
+					// (and any other colour or normal map the shader takes - the ice's other layers stayed white, 10-26)
+					foreach (string prop in m.GetTexturePropertyNames())
+					{
+						Texture was = m.GetTexture(prop);
+						if (was == null || RockDiffuseProps.Contains(prop) || RockNormalProps.Contains(prop)) continue;
+						string n = was.name.ToLowerInvariant();
+						if (n.EndsWith("_basecolor") || n.EndsWith("_albedo") || n.EndsWith("_diffuse")) block.SetTexture(prop, rockDiffuse);
+						else if (rockNormal != null && n.EndsWith("_normal")) block.SetTexture(prop, rockNormal);
+					}
+					if (mats.Length == 1) r.SetPropertyBlock(block); else r.SetPropertyBlock(block, i);
+					done++;
+				}
+			}
+			return done;
 		}
 
 		#endregion

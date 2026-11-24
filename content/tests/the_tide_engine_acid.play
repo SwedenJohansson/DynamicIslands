@@ -1,0 +1,19 @@
+# The Tide Engine's coolant sump without a suit (CIPlay the_tide_engine_acid, 11-12 w07; in a test world 'CI ...').
+# Points as in its recipe: the sump at 30 -30 (floor ~3.6, zone r 3.4, safe=suit), the suit box at 35.6 -35.2, the
+# sign at 36.9 -33.6. Into the sump: hurt and the message; out again up its slope.
+island The Tide Engine keep
+offset 0 0
+hour 11
+weather Calm
+expect shown tesump
+picture te_sump_out 39 9 -39 30 4 -30
+at 36 -34 h=5.5
+wait 2
+read THE SUMP - COOLANT
+walk 36 -34 to 33 -32 to 30 -30
+wait 8
+expect message spent coolant
+expect hurt 10
+walk 30 -30 to 33 -32 to 37 -35
+wait 2
+expect hurt 1

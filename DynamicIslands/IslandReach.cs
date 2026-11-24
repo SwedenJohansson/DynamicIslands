@@ -70,6 +70,51 @@ namespace DynamicIslands.Editor
 			return r;
 		}
 
+		/// <summary>The last Assess's cells a player gets to without building (wading or swimming ashore, walking and jumping up ledges).</summary>
+		internal static bool[] LastReachable;
+
+		/// <summary>
+		/// Moves a generated island's chests and notes that stand where players can't get without building (on a stack's
+		/// top, a cliff ledge) to the nearest place they can, within 40 m (ROADMAP LM3). Returns how many moved.
+		/// </summary>
+		public static int MoveContentWithinReach(IslandFile f)
+		{
+			if (f == null || f.Heights == null || f.Elevation != 0f) return 0;
+			int res = f.HeightmapResolution;
+			float step = f.TerrainSize.x / (res - 1);
+			var m = new float[res, res];
+			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) m[z, x] = f.Heights[z, x] * f.TerrainSize.y;
+			Assess(m, step, f.WaterLevel);
+			bool[] ok = LastReachable;
+			if (ok == null) return 0;
+			int moved = 0;
+			foreach (IslandObject o in f.Objects)
+			{
+				bool content = ContentCatalog.IsLootObject(o.Name) || ContentCatalog.IsNoteObject(o.Name) || (o.Props != null && (o.Props.ContainsKey(ObjectProps.LootItems) || o.Props.ContainsKey(ObjectProps.NoteTitle)));
+				if (!content || o.Props != null && o.Props.ContainsKey("set.piece")) continue;
+				int cx = Mathf.Clamp(Mathf.RoundToInt(o.Position.x / step), 0, res - 1), cz = Mathf.Clamp(Mathf.RoundToInt(o.Position.z / step), 0, res - 1);
+				// (under water, or above the ground - in a building, on a deck: as it was put)
+				if (m[cz, cx] < f.WaterLevel + 0.05f || o.Position.y > m[cz, cx] + 1f || ok[cz * res + cx]) continue;
+				int best = -1; float bestD = float.MaxValue;
+				int r = Mathf.CeilToInt(40f / step);
+				for (int dz = -r; dz <= r; dz++)
+					for (int dx = -r; dx <= r; dx++)
+					{
+						int x = cx + dx, z = cz + dz;
+						if (x < 1 || z < 1 || x >= res - 1 || z >= res - 1) continue;
+						int i = z * res + x;
+						if (!ok[i] || m[z, x] < f.WaterLevel + 0.4f) continue;
+						float d = dx * dx + dz * dz;
+						if (d < bestD) { bestD = d; best = i; }
+					}
+				if (best < 0) continue;
+				int bx = best % res, bz = best / res;
+				o.Position = new Vector3(bx * step, m[bz, bx], bz * step);
+				moved++;
+			}
+			return moved;
+		}
+
 		/// <summary>Assesses heights (m above the terrain's base, sea at waterLevel) on a grid of this step (m).</summary>
 		public static ReachResult Assess(float[,] m, float step, float waterLevel)
 		{
@@ -121,6 +166,7 @@ namespace DynamicIslands.Editor
 			bool[] walk = Flood(h, stand, res, step, wade, false);
 			var jumpStarts = new List<int>(wade); jumpStarts.AddRange(swimJump);
 			bool[] jumps = Flood(h, stand, res, step, jumpStarts, true);
+			LastReachable = jumps;
 			var anyStarts = new List<int>(jumpStarts); anyStarts.AddRange(raftJump);
 			bool[] any = Flood(h, stand, res, step, anyStarts, true);
 			int w = 0, j = 0, a = 0;

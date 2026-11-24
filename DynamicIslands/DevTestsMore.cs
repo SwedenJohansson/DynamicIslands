@@ -29,7 +29,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGenMatrix", docs: "Dev, editor: every layout x style x sea floor (8 x 5 x 2) with its own seed: no exceptions, the top as asked, flat edges, no NaN, every object on the ground (or sunk as Raft's are), inside the build area, nothing above the sea offshore, under the object cap, the same twice, and the reach line in time")]
 		public static void GenMatrixCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(GenMatrixRoutine());
+			StartTest(GenMatrixRoutine());
 		}
 
 		static IEnumerator GenMatrixRoutine()
@@ -83,7 +83,9 @@ namespace DynamicIslands
 							{
 								if (o.Position.x < 0f || o.Position.z < 0f || o.Position.x > size.x || o.Position.z > size.z) { outside++; continue; }
 								if (float.IsNaN(o.Position.y)) { floating++; continue; }
-								float g = IslandGenerator.SampleHeights(m, res, step, o.Position.x, o.Position.z);
+								// (the ground as the terrain has it, its triangles - what the generator sets things on since 11aa73a; the
+								// blended height lies metres off it on a steep twisted cell: rocks read 1.2 m up, a chest 3.4 m down)
+								float g = IslandGenerator.TerrainSurface(m, step, o.Position.x, o.Position.z);
 								Bounds? lb = localBounds(o.Name);
 								float tall = lb.HasValue ? lb.Value.size.y * Mathf.Abs(o.Scale.y) : 2f;
 								float big = lb.HasValue ? Vector3.Scale(lb.Value.size, o.Scale).magnitude : 2f;
@@ -131,7 +133,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGenParity", docs: "Dev, editor: generating in the editor and IslandGenerator.CreateFile (islands made while sailing, map types) give the same heights and the same objects for the same settings")]
 		public static void GenParityCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(GenParityRoutine());
+			StartTest(GenParityRoutine());
 		}
 
 		static IEnumerator GenParityRoutine()
@@ -181,7 +183,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIPresetTest", docs: "Dev, editor: the generator window's presets with the newer settings (sea floor, drop-off, the four sea sliders): Save these settings -> file -> use it again; an old preset file without them loads with the defaults (deep, 0.5, like Raft)")]
 		public static void PresetTestCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(PresetTestRoutine());
+			StartTest(PresetTestRoutine());
 		}
 
 		static IEnumerator PresetTestRoutine()
@@ -238,6 +240,27 @@ namespace DynamicIslands
 			if (ok) Log("PASS: generator presets"); else Fail("generator presets");
 		}
 
+		[ConsoleCommand(name: "CILevelPreset", docs: "Dev, any time: Level up is a world option only - the generator has no Levels setting, a preset saved now has no Levels line, an older preset with Levels=True still loads with its other values (the line passed by), and a map type's Levels line is passed by too")]
+		public static void LevelPresetCommand()
+		{
+			bool ok = true;
+			try
+			{
+				Check(ref ok, typeof(IslandGenSettings).GetField("Levels") == null, "the generator has no Levels setting");
+				var s0 = new IslandGenSettings { Seed = 9, Radius = 33f };
+				string text = s0.ToText();
+				Check(ref ok, !text.Contains("Levels"), "a preset saved now has no Levels line");
+				IslandGenSettings back = IslandGenSettings.FromText(text + "Levels=True" + (char)10);
+				Check(ref ok, back.Seed == 9 && Mathf.Approximately(back.Radius, 33f) && back.ToText() == text, "an older preset with Levels=True loads, the line passed by");
+				var t = new MapType { Name = "cilevelpreset", Sets = { "Levels=on", "Radius=30" } };
+				float elevation;
+				IslandGenSettings rolled = MapTypes.Roll(t, new System.Random(1), out elevation);
+				Check(ref ok, rolled != null, "a map type with a Levels line still rolls");
+			}
+			catch (Exception e) { Fail("level preset: " + e); ok = false; }
+			if (ok) Log("PASS: level preset"); else Fail("level preset");
+		}
+
 		/// <summary>The first setting that differs (name: a -> b), or null.</summary>
 		static string SettingsDiff(IslandGenSettings a, IslandGenSettings b)
 		{
@@ -257,7 +280,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIRandomizeDeep", docs: "Dev, editor: a variation of each measured Raft island keeps its real depths under water (the generated profile against the measured one in raft_underwater.txt); \"something new like it\" gets the island's drop-off")]
 		public static void RandomizeDeepCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(RandomizeDeepRoutine());
+			StartTest(RandomizeDeepRoutine());
 		}
 
 		/// <summary>
@@ -361,7 +384,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIGenWindowTest", docs: "Dev, editor: every slider and choice of the generator window's Normal tab changes the preview (a pixel hash) or the estimate - or, for those that only matter when generating, the setting; the reach line's colour follows its level; the window fits a 1280 x 720 screen")]
 		public static void GenWindowTestCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(GenWindowTestRoutine());
+			StartTest(GenWindowTestRoutine());
 		}
 
 		static int PixelHash(Texture t)
@@ -390,8 +413,9 @@ namespace DynamicIslands
 			FieldInfo estField = typeof(GeneratorWindow).GetField("estimate", BindingFlags.NonPublic | BindingFlags.Instance);
 			Func<string> estimate = () => { var t = estField != null ? estField.GetValue(w) as Text : null; return t != null ? t.text : ""; };
 			Transform tab = w.transform.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "Tab0");
-			// (settings that only matter when generating: they change the setting, not the picture or the count)
-			var onlySetting = new HashSet<string> { "Groups", "Lowest tier", "Highest tier" };
+			// (settings that only matter when generating: they change the setting, not the picture or the count - also the things
+			// to gather, buildings, quest and Raft's features, LM9-LM12: the estimate counts only land and sea nature)
+			var onlySetting = new HashSet<string> { "Groups", "Lowest tier", "Highest tier", "Things to gather", "Finds in the shallows", "How far out", "How many", "Quest steps", "Raft's features" };
 			int sliders = 0, changed = 0;
 			var dead = new List<string>();
 			foreach (Transform row in tab.GetComponentsInChildren<Transform>(true).Where(t => t.name.StartsWith("Slider_")).ToList())
@@ -500,7 +524,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIUnderwaterPick", docs: "Dev, in game (either player; the host spawns): on a deep island with each kind of pickup under water (giant clam, silver algae, ore, scrap, stone, the seaweed in a sea vine), dives for each the way CIPick does: the items arrive, each stays gone after unloading and loading the island, and comes back after the regrow days. CIUnderwaterPick [keep]")]
 		public static void UnderwaterPickCommand(string[] args)
 		{
-			DynamicIslands.instance.StartCoroutine(UnderwaterPickRoutine(args != null && args.Contains("keep")));
+			StartTest(UnderwaterPickRoutine(args != null && args.Contains("keep")));
 		}
 
 		/// <summary>Every item the local player has (unique name -> count).</summary>
@@ -599,7 +623,7 @@ namespace DynamicIslands
 		{
 			var ledges = new List<float>();
 			foreach (string a in args ?? new string[0]) { float v; if (float.TryParse(a, System.Globalization.NumberStyles.Float, Inv, out v)) ledges.Add(v); }
-			DynamicIslands.instance.StartCoroutine(ReachWorldRoutine(ledges.Count > 0 ? ledges.ToArray() : new[] { 0.8f, 1.8f, 3f }));
+			StartTest(ReachWorldRoutine(ledges.Count > 0 ? ledges.ToArray() : new[] { 0.8f, 1.8f, 3f }));
 		}
 
 		/// <summary>A flat round island, radius r, its edge a ledge this high above the water as steep as the generator's grid (1.95 m) allows, in water 3 m deep.</summary>
@@ -672,6 +696,25 @@ namespace DynamicIslands
 				while (coast < 150f && ground(centre + dir * coast) > 0f) coast += 0.25f;
 				float top = ground(centre);
 
+				// (the island's ground must stop a swimmer before the swim: on a minimised Raft (few frames) the first island's
+				// swimmer went in under the beach - feet 3.4 m under the sea, 6.5 m of ground over them - and the raft try a moment
+				// later stood on it; RUN2 10-20. Waited for here, up to 15 s; if it never comes, that is the mod's)
+				{
+					TerrainCollider tc = terrain.GetComponent<TerrainCollider>();
+					Vector3 probe = centre + dir * Mathf.Max(0f, coast - 2f);
+					float waited = 0f;
+					bool solid = false;
+					for (; waited < 15f; waited += 0.25f)
+					{
+						Physics.SyncTransforms();
+						RaycastHit hit;
+						solid = tc != null && tc.enabled && tc.Raycast(new Ray(probe + Vector3.up * 60f, Vector3.down), out hit, 200f) && Mathf.Abs(hit.point.y - ground(probe)) < 0.5f;
+						if (solid) break;
+						yield return new WaitForSecondsRealtime(0.25f);
+					}
+					if (waited > 0f) Log("  (" + kv.Key + ": the ground stopped things after " + waited.ToString("F2") + " s more)");
+					if (!solid) { Check(ref ok, false, kv.Key + ": the island's ground has no collider at its coast 15 s after it spawned"); IslandWorldState.Remove(f.Name); yield return null; continue; }
+				}
 				// 1. From the water: swim in, jump when blocked (WaterControll's jump: 1.25 x jumpSpeed), up to 4 tries
 				bool fromWater = false; int waterJumps = 0;
 				yield return BringIn(player, centre + dir * (coast + 5f), -dir, true, ground, (got, j) => { fromWater = got; waterJumps = j; });
@@ -780,7 +823,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIDeepWorld", docs: "Dev, in game (host): a generated island on the deep sea floor in a world - its ground kept to 110 m with no edge above 100 m, its land radius (spacing) as a shallow one's; flying (holes, the underside, no foot hanging under it, no underwater objects) and sunken (its top at the depth asked); the creatures' NavMesh only over land and shallows, every hostile spot on it; several deep islands at once (frame time)")]
 		public static void DeepWorldCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(DeepWorldRoutine());
+			StartTest(DeepWorldRoutine());
 		}
 
 		static IEnumerator DeepWorldRoutine()
@@ -790,6 +833,8 @@ namespace DynamicIslands
 			if (player == null || !raft.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
 			bool ok = true;
 			yield return EnsureAlive();
+			// (the generator places nothing until the object catalog is built: just after a world loads it may still be building)
+			yield return PlaceableCatalog.EnsureBuilt();
 			var deepS = new IslandGenSettings { Seed = 9191, Radius = 55f, Height = 30f, Trees = 0.3f, Bushes = 0.2f, Rocks = 0.2f, Harvest = 0.2f, BeachThings = 0.2f, Water = 0.5f, SeaRocks = 0.5f, SeaFinds = 0.5f, Sunken = 0.3f, Hostiles = 4, HostileKinds = "Boar" };
 			IslandGenSettings shallowS = deepS.Copy(); shallowS.SeaFloor = IslandGenSettings.SeaFloorShallow;
 			IslandFile deepF = IslandGenerator.CreateFile(deepS, "cideep"), shallowF = IslandGenerator.CreateFile(shallowS, "cideepshallow");
@@ -856,6 +901,8 @@ namespace DynamicIslands
 				bool footUnder = Enumerable.Range(0, 8).Any(k => Physics.Raycast(new Vector3(c.x, 1f, c.z) + Quaternion.Euler(0f, k * 45f, 0f) * Vector3.forward * deepS.Radius * 1.6f, Vector3.up, out hit, 58f, 1 << IslandSpawner.TerrainLayer));
 				Check(ref ok, holeCount > 0 && under != null && underLowest >= 7.5f && low == 0 && !footUnder && shown <= wanted + 5,
 					"flying 60 m up: " + holeCount + " holes, underside down to " + underLowest.ToString("F1") + " m above the sea, " + low + " objects under the land, nothing hangs below the coast: " + !footUnder + ", " + shown + " objects (the file has " + wanted + " above its sea)");
+				string open = FlyingOpenFromBelow(e.Root);
+				Check(ref ok, open == null, "seen from below the flying cideep's underside meets its ground all round the coast" + (open != null ? ": " + open : ""));
 				Screenshot(new[] { "deep_flying" });
 				yield return new WaitForSeconds(0.6f);
 				IslandWorldState.Remove("cideep");
@@ -905,7 +952,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIDeepMP", docs: "Dev, in game (host): spawns and keeps a generated deep island 'cideepmp' (with pickups under water) and a ready-made atoll made from a seed, for the two-player test (mpfull.ps1 phase deep); each is logged with CIIslandHash")]
 		public static void DeepMPCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(DeepMPRoutine());
+			StartTest(DeepMPRoutine());
 		}
 
 		static IEnumerator DeepMPRoutine()
@@ -959,6 +1006,50 @@ namespace DynamicIslands
 
 		#region A long sail
 
+		// (objects by their top object, digits and "(Clone)" left out: which kind of object a long sail leaves behind)
+		static IEnumerable<KeyValuePair<string, int>> SailRootGrowth(Dictionary<string, int> before)
+		{
+			return SailRootCounts().Select(kv => new KeyValuePair<string, int>(kv.Key, kv.Value - (before.TryGetValue(kv.Key, out int c0) ? c0 : 0))).Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Take(12).ToList();
+		}
+
+		// (frame time of a still moment: the middle of three 60-frame runs, a second apart - one hitch from the PC does not decide it)
+		static IEnumerator StillFrames(float[] result)
+		{
+			var runs = new List<float>();
+			for (int r = 0; r < 3; r++)
+			{
+				yield return new WaitForSeconds(1f);
+				float t = Time.realtimeSinceStartup;
+				for (int i = 0; i < 60; i++) yield return null;
+				runs.Add((Time.realtimeSinceStartup - t) / 60f * 1000f);
+			}
+			runs.Sort(); result[0] = runs[1];
+		}
+
+		// (Raft's own floating debris - planks, barrels, under FloatingObjectParent - comes with the distance sailed: at the
+		// sail's 12 m/s some 6000 of its objects were about, none the mod's. Counted apart, and reported at each sample)
+		static int SeaDebris()
+		{
+			GameObject f = GameObject.Find("FloatingObjectParent");
+			return f != null ? f.GetComponentsInChildren<Transform>(true).Length : 0;
+		}
+
+		static int SailObjects()
+		{
+			return UnityEngine.Object.FindObjectsOfType<Transform>().Count(t => t.root.name != "FloatingObjectParent");
+		}
+
+		static Dictionary<string, int> SailRootCounts()
+		{
+			var r = new Dictionary<string, int>();
+			foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
+			{
+				string n = System.Text.RegularExpressions.Regex.Replace(t.root.name.Replace("(Clone)", ""), "[0-9]+", "#").Trim();
+				r[n] = (r.TryGetValue(n, out int c) ? c : 0) + 1;
+			}
+			return r;
+		}
+
 		[ConsoleCommand(name: "CILongSail", docs: "Dev, in game (host, Normal world): sails about 14 km with automatic islands (one tried every 850 m - the spacing between islands is 800 m - or 150 m on when Raft's islands left no room), then checks the islands behind unloaded and memory, frame time and errors stayed flat. CILongSail [km] [m/s]")]
 		public static void LongSailCommand(string[] args)
 		{
@@ -966,10 +1057,10 @@ namespace DynamicIslands
 			if (args != null && args.Length > 0) float.TryParse(args[0], System.Globalization.NumberStyles.Float, Inv, out km);
 			if (args != null && args.Length > 1) float.TryParse(args[1], System.Globalization.NumberStyles.Float, Inv, out speed);
 			RunInBackground();
-			DynamicIslands.instance.StartCoroutine(LongSailRoutine(km, speed));
+			StartTest(LongSailRoutine(km, speed, args != null && args.Length > 2 && args[2] == "keep"));
 		}
 
-		static IEnumerator LongSailRoutine(float km, float speed)
+		static IEnumerator LongSailRoutine(float km, float speed, bool keep = false)
 		{
 			Raft raftObj = UnityEngine.Object.FindObjectOfType<Raft>();
 			if (raftObj == null || raftObj.body == null || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
@@ -980,11 +1071,17 @@ namespace DynamicIslands
 			int errors = 0; string firstError = null;
 			Application.LogCallback watch = (msg, trace, type) =>
 			{
-				if ((type == LogType.Exception || type == LogType.Error) && (msg.Contains("[CUSTOM ISLANDS]") || (trace ?? "").Contains("DynamicIslands")) && !msg.Contains("[CITEST]"))
+				if ((type == LogType.Exception || type == LogType.Error) && (msg.Contains("[CUSTOM ISLANDS]") || (trace ?? "").Contains("DynamicIslands")) && !msg.Contains("[CITEST]")
+					// (Unity's own notice when the sea grass sets the grass on its copy of Raft's terrain data - SeaGrass.MakeTemplate, once a game - not a fault)
+					&& !msg.StartsWith("only implemented in editor"))
 				{ errors++; if (firstError == null) firstError = msg.Split('\n')[0]; }
 			};
 			Application.logMessageReceived += watch;
 			int n0 = IslandWorldState.Islands.Count, spawned = 0, unloaded = 0;
+			int objs0 = SailObjects(), debris0 = SeaDebris(), ai0 = UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Length;
+			// (the raft standing still, nothing loading: the same is measured at the end once the sail's islands are gone)
+			var still0 = new float[1]; yield return StillFrames(still0);
+			Dictionary<string, int> roots0 = SailRootCounts();
 			Application.LogCallback unloads = (msg, trace, type) => { if (msg.Contains("Unloaded island")) unloaded++; };
 			Application.logMessageReceived += unloads;
 			var samples = new List<float[]>(); // sailed m, frame ms, managed MB, Unity MB (0 if the build does not report it), loaded islands
@@ -995,6 +1092,8 @@ namespace DynamicIslands
 			{
 				yield return new WaitForFixedUpdate();
 				KeepAlive(player);
+				// (the raft is dragged through islands' land: one scrapes the host off, and an island a player is at stays loaded)
+				if (player != null && Flat(player.transform.position - body.position).magnitude > 30f) PlayerMove.To(player, body.position + Vector3.up * 3f);
 				body.MovePosition(body.position + dir * speed * Time.fixedDeltaTime);
 				Vector3 d = Flat(body.position - last);
 				last = body.position;
@@ -1017,7 +1116,7 @@ namespace DynamicIslands
 					float managed = GC.GetTotalMemory(false) / 1048576f, unity = Mathf.Max(UnityEngine.Profiling.Profiler.GetTotalReservedMemoryLong(), UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong()) / 1048576f;
 					int loaded = IslandWorldState.Islands.Count(x => x.Root != null);
 					samples.Add(new[] { sailed, ms, managed, unity, loaded });
-					Log(string.Format(Inv, "  {0:F1} km: frame {1:F1} ms, managed {2:F0} MB, Unity {3:F0} MB, islands {4} ({5} loaded)", sailed / 1000f, ms, managed, unity, IslandWorldState.Islands.Count, loaded));
+					Log(string.Format(Inv, "  {0:F1} km: frame {1:F1} ms, managed {2:F0} MB, Unity {3:F0} MB, islands {4} ({5} loaded), sea debris {6}", sailed / 1000f, ms, managed, unity, IslandWorldState.Islands.Count, loaded, SeaDebris()));
 				}
 			}
 			body.velocity = Vector3.zero;
@@ -1026,17 +1125,42 @@ namespace DynamicIslands
 			Application.logMessageReceived -= unloads;
 			int added = IslandWorldState.Islands.Count - n0;
 			int loadedNow = IslandWorldState.Islands.Count(x => x.Root != null);
+			var near = new List<Vector3> { body.position };
+			near.AddRange(Players.All.Where(p => p != null).Select(p => p.transform.position));
+			int loadedFar = IslandWorldState.Islands.Count(x => x.Root != null && near.All(p => Flat(x.Position - p).magnitude - Mathf.Max(0f, CustomIslandSpawner.LandRadius(x.Name)) > WorldRules.UnloadDistance + 100f));
 			// (the first samples against the last: Unity's own memory settles after the first islands)
 			Func<int, float> firstThird = k => samples.Take(Mathf.Max(1, samples.Count / 3)).Skip(1).DefaultIfEmpty(samples[0]).Average(s => s[k]);
 			Func<int, float> lastThird = k => samples.Skip(samples.Count - Mathf.Max(1, samples.Count / 3)).Average(s => s[k]);
 			float f0 = firstThird(1), f1 = lastThird(1), m0 = firstThird(3), m1 = lastThird(3), g0 = firstThird(2), g1 = lastThird(2);
 			Check(ref ok, added >= 10, "sailed " + (sailed / 1000f).ToString("F1") + " km: " + added + " islands appeared (" + spawned + " by the spawner), " + unloaded + " unloaded behind, " + loadedNow + " loaded now");
-			Check(ref ok, loadedNow <= 4 && unloaded >= added - 4, "only the islands near the raft stay loaded (" + loadedNow + ")");
-			Check(ref ok, f1 < Mathf.Max(f0 * 1.5f, f0 + 8f), "frame time stays flat: " + f0.ToString("F1") + " ms at first, " + f1.ToString("F1") + " ms at the end");
+			Check(ref ok, loadedFar == 0 && unloaded >= added - loadedNow, "only the islands near the raft or a player stay loaded (" + loadedNow + " loaded, " + loadedFar + " far from everyone)");
+			// (11-14 IX8: the samples while sailing are mostly island loading and the other Rafts on the PC - 42-463 ms, the floor
+			// the same at 3 and 23 km - so they are only reported; the check is the still raft before and after, below)
+			Log("  frame time while sailing: " + f0.ToString("F1") + " ms in the first third, " + f1.ToString("F1") + " ms in the last");
 			Check(ref ok, m1 < m0 + 400f && g1 < g0 + 150f, "memory stays flat: Unity " + m0.ToString("F0") + " -> " + m1.ToString("F0") + " MB, managed " + g0.ToString("F0") + " -> " + g1.ToString("F0") + " MB");
 			Check(ref ok, errors == 0, errors + " errors from the mod while sailing" + (firstError != null ? " (first: " + firstError + ")" : ""));
-			// (the test world stays as it was: no automatic islands left behind)
-			IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(n0).Select(x => x.Id).ToList(), true);
+			// (the test world stays as it was: no automatic islands left behind, unless kept for a check after)
+			// (where the frame time goes when it grows - 11-14 IX8 solo: 64 ms at 3 km, 190-526 ms after 24 km, memory flat:
+			// the same frames measured again once the sail's islands are gone, and the scene's objects counted)
+			int objsEnd = SailObjects();
+			Log("  objects (Raft's sea debris apart): " + objs0 + " at the start, " + objsEnd + " at the end; sea debris " + debris0 + " -> " + SeaDebris() + "; " + UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Length + " creatures (" + ai0 + ")");
+			foreach (var kv in SailRootGrowth(roots0)) Log("    more at the end: " + kv.Key + " +" + kv.Value + " objects");
+			if (!keep)
+			{
+				IslandWorldState.RemoveIds(IslandWorldState.Islands.Skip(n0).Select(x => x.Id).ToList(), true);
+				yield return new WaitForSeconds(5f);
+				var still1 = new float[1]; yield return StillFrames(still1);
+				int objs1 = SailObjects();
+				foreach (var kv in SailRootGrowth(roots0)) Log("    left after removal: " + kv.Key + " +" + kv.Value + " objects");
+				Check(ref ok, still1[0] < Mathf.Max(still0[0] * 1.5f, still0[0] + 8f), "frame time stays flat (raft still, nothing loading): " + still0[0].ToString("F1") + " ms before the sail, " + still1[0].ToString("F1") + " ms after it with its islands gone");
+				Check(ref ok, objs1 < objs0 + 1500 + objs0 / 2, "objects (Raft's sea debris apart) back near the start once the islands are gone: " + objs0 + " -> " + objs1 + ", " + UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Length + " creatures (" + ai0 + ")");
+			}
+			else
+			{
+				// (islands kept for a check after: the still raft with the few islands near it loaded)
+				var still1 = new float[1]; yield return StillFrames(still1);
+				Check(ref ok, still1[0] < Mathf.Max(still0[0] * 2f, still0[0] + 15f), "frame time stays flat (raft still, nothing loading): " + still0[0].ToString("F1") + " ms before the sail, " + still1[0].ToString("F1") + " ms after it with " + IslandWorldState.Islands.Count(x => x.Root != null) + " islands loaded");
+			}
 			if (ok) Log("PASS: a long sail"); else Fail("a long sail");
 		}
 
@@ -1135,7 +1259,7 @@ namespace DynamicIslands
 		public static void EditorMoreCommand()
 		{
 			if (!DynamicIslands.InEditor()) { Fail("not in the editor"); return; }
-			ObjectPlacer placer = UnityEngine.Object.FindObjectOfType<ObjectPlacer>();
+			ObjectPlacer placer = ObjectPlacer.Current;
 			var g = DynamicIslands.EditorGizmoHandler;
 			Log("Editor more: heights " + TerrainFingerprint() + ", speed " + EditorCamera.SpeedFactor.ToString("F2", Inv) + ", flash '" + FlashText() + "', selection " + SelectionInView() +
 				", selected " + (g != null ? g.SelectedRoots.Count : 0) + ", placing " + (placer != null ? placer.GameObjectName : "none") + ", undo " + CommandUndoRedo.UndoRedoManager.UndoCount + ", objects " + PlacedEditorObjects().Count);
@@ -1175,57 +1299,225 @@ namespace DynamicIslands
 
 		#region Raft's interact key on a note and a lever
 
-		[ConsoleCommand(name: "CIFace", docs: "Dev, in game: stands the player in front of an island object (its name, or a note's title) looking at it, and checks Raft's interaction ray finds it (the keys test then presses E): CIFace <island> <name or title>")]
+		[ConsoleCommand(name: "CIFace", docs: "Dev, in game (either player): stands the player in front of an island object (its name, a note's title, an islander's name or the start of it) looking at it, and checks Raft's interaction ray finds it (the keys test then presses E). Stand points are on solid ground (a floor too), with room to stand and a clear view; none found = the player goes back where they were: CIFace <island> <name or title>")]
 		public static void FaceCommand(string[] args)
 		{
 			IslandWorldState.Entry e = LoadedIsland(args);
-			if (e != null) DynamicIslands.instance.StartCoroutine(FaceRoutine(e, args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()) : ""));
+			if (e != null) StartTest(FaceRoutine(e, args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()) : ""));
+		}
+
+		/// <summary>What the last FaceRoutine found with Raft's ray (its object's interact holder), or null.</summary>
+		static RaycastInteractable faceFound;
+		static IslandObjectRef faceRef;
+
+		/// <summary>The island object called <paramref name="what"/>: its name or note title (any case), else an object whose
+		/// name starts with it ("Mara" finds the islander "Mara Quill"), else one whose name holds it.</summary>
+		static IslandObjectRef FaceTarget(IslandWorldState.Entry e, string what)
+		{
+			what = (what ?? "").Trim();
+			if (what.Length == 0) return null;
+			IslandObjectRef[] all = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Where(o => o.transform.Find(CustomNote.HolderName) != null || o.GetComponentInChildren<RaycastInteractable>(true) != null).ToArray();
+			return all.FirstOrDefault(o => string.Equals(o.Name.Trim(), what, StringComparison.OrdinalIgnoreCase) || string.Equals(ObjectProps.Get(o.Props, ObjectProps.NoteTitle).Trim(), what, StringComparison.OrdinalIgnoreCase))
+				?? all.FirstOrDefault(o => o.Name.Trim().StartsWith(what, StringComparison.OrdinalIgnoreCase))
+				?? all.FirstOrDefault(o => o.Name.IndexOf(what, StringComparison.OrdinalIgnoreCase) >= 0 || ObjectProps.Get(o.Props, ObjectProps.NoteTitle).IndexOf(what, StringComparison.OrdinalIgnoreCase) >= 0);
+		}
+
+		/// <summary>The nearest solid hit (no triggers) of a ray that isn't part of the player or the target.</summary>
+		static bool FaceSolidHit(Vector3 from, Vector3 dir, float dist, Transform a, Transform b, out RaycastHit hit)
+		{
+			hit = default(RaycastHit);
+			bool any = false;
+			foreach (RaycastHit h in Physics.RaycastAll(from, dir, dist, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+			{
+				if (h.collider == null || (a != null && h.collider.transform.IsChildOf(a)) || (b != null && h.collider.transform.IsChildOf(b))) continue;
+				if (!any || h.distance < hit.distance) { hit = h; any = true; }
+			}
+			return any;
+		}
+
+		/// <summary>Room for a player standing with their feet at <paramref name="feet"/> (nothing solid in the capsule).</summary>
+		static bool FaceRoom(Vector3 feet, Transform a, Transform b)
+		{
+			foreach (Collider c in Physics.OverlapCapsule(feet + Vector3.up * 0.5f, feet + Vector3.up * 1.5f, 0.3f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+				if (!((a != null && c.transform.IsChildOf(a)) || (b != null && c.transform.IsChildOf(b)))) return false;
+			return true;
+		}
+
+		/// <summary>Helper.FindInteractable's ray, from the camera straight ahead instead of through the screen's middle
+		/// (Camera.ScreenPointToRay of a minimised window's size is no ray through the view): the interactable hit, its
+		/// redirect's target, or null.</summary>
+		static RaycastInteractable AheadInteractable(Camera cam, float dist)
+		{
+			if (cam == null) return null;
+			RaycastHit hit;
+			if (!Physics.Raycast(new Ray(cam.transform.position, cam.transform.forward), out hit, dist, LayerMasks.MASK_RaycastInteractable, QueryTriggerInteraction.Collide) || hit.collider == null) return null;
+			RaycastInteractable ri = hit.collider.GetComponent<RaycastInteractable>();
+			if (ri != null) return ri;
+			RaycastInteractable_Redirect rd = hit.collider.GetComponent<RaycastInteractable_Redirect>();
+			return rd != null ? rd.RaycastInteractable : null;
 		}
 
 		static IEnumerator FaceRoutine(IslandWorldState.Entry e, string what)
 		{
+			faceFound = null;
+			faceRef = null;
 			Network_Player player = RAPI.GetLocalPlayer();
-			IslandObjectRef r = e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(o => string.Equals(o.Name, what, StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(ObjectProps.Get(o.Props, ObjectProps.NoteTitle), what, StringComparison.OrdinalIgnoreCase));
-			if (r == null || player == null) { Fail("no object '" + what + "' on '" + e.HostName + "'"); yield break; }
+			IslandObjectRef r = player != null ? FaceTarget(e, what) : null;
+			if (r == null) { Fail("no object '" + what + "' on '" + e.HostName + "'"); yield break; }
 			Transform holder = r.transform.Find(CustomNote.HolderName);
+			if (holder == null) { RaycastInteractable ri = r.GetComponentInChildren<RaycastInteractable>(true); holder = ri != null ? ri.transform : null; }
 			Collider col = holder != null ? holder.GetComponent<Collider>() : null;
 			if (col == null) { Fail("'" + what + "' has nothing to interact with"); yield break; }
+			string label = r.Name.Trim().Length > 0 ? r.Name.Trim() : what;
 			NoteReader.Close();
+			DialoguePanel.Close();
 			yield return EnsureAlive();
 			Physics.SyncTransforms();
+			Vector3 back = player.transform.position;
+			// (a player on the raft goes back to the same spot of the raft: it drifts while the test runs, and the world spot
+			// it had is open sea a minute later - the player ended under the raft)
+			Transform backParent = player.transform.parent;
+			Vector3 backLocal = backParent != null ? backParent.InverseTransformPoint(back) : back;
 			Vector3 target = col.bounds.center;
-			// On the ground 1.6 m from it, first on the side towards the island's middle (open ground), then around it
-			// until Raft's ray finds it (a rock or the slope can be in the way from one side)
+			bool islander = r.GetComponentInChildren<Islander>(true) != null;
+			// (an islander: aim at the chest; the floor they stand on is the height to stand at - in a hut on stilts the
+			// ground under the floor was the old stand point: the player went under the hut, the floor hid the islander)
+			float floorY = islander ? r.transform.position.y : col.bounds.min.y;
+			if (islander) target = new Vector3(target.x, Mathf.Clamp(r.transform.position.y + 1.2f, col.bounds.min.y, col.bounds.max.y), target.z);
 			Vector3 toMiddle = Flat(new Vector3(e.Position.x, 0f, e.Position.z) - target).normalized;
 			if (toMiddle.sqrMagnitude < 0.01f) toMiddle = Vector3.forward;
-			CharacterController cc = player.PersonController.controller;
+			// Stand points 1-2.6 m off, first towards the island's middle, then round it: solid ground (a floor too) near the
+			// object's foot, room to stand, nothing solid between the eyes and the object
+			var spots = new List<Vector3>();
+			foreach (float d in new[] { 1.6f, 1.2f, 2.2f, 2.6f })
+				for (int k = 0; k < 8; k++)
+				{
+					Vector3 p = target + Quaternion.Euler(0f, (k % 2 == 0 ? 1 : -1) * ((k + 1) / 2) * 45f, 0f) * toMiddle * d;
+					RaycastHit ground;
+					if (!FaceSolidHit(new Vector3(p.x, floorY + 1.8f, p.z), Vector3.down, 4f, player.transform, r.transform, out ground)) continue;
+					if (Mathf.Abs(ground.point.y - floorY) > 1.6f || ground.normal.y < 0.6f) continue;
+					Vector3 feet = ground.point + Vector3.up * 0.05f;
+					if (!FaceRoom(feet, player.transform, r.transform)) continue;
+					Vector3 eye = feet + Vector3.up * 1.6f;
+					RaycastHit block;
+					if (FaceSolidHit(eye, target - eye, Vector3.Distance(eye, target), player.transform, r.transform, out block)) continue;
+					spots.Add(feet);
+				}
 			Camera cam = Helper.MainCamera;
 			RaycastInteractable found = null;
-			for (int k = 0; k < 8 && (found == null || found.gameObject != holder.gameObject); k++)
+			int tried = 0;
+			bool byAhead = false, aimedCam = false;
+			string miss = null;
+			// (the player's position is not their feet: put at a stand point's height they started half in the ground)
+			Vector3 lift = Vector3.up * (PlayerMove.StandHeight(player) - 0.05f);
+			foreach (Vector3 stand in spots.Take(8))
 			{
-				Vector3 stand = target + Quaternion.Euler(0f, k * 45f, 0f) * toMiddle * 1.6f;
-				RaycastHit ground;
-				if (Physics.Raycast(stand + Vector3.up * 10f, Vector3.down, out ground, 30f, 1 << IslandSpawner.TerrainLayer)) stand.y = ground.point.y + 0.2f;
-				cc.enabled = false;
-				player.transform.position = stand;
-				player.PersonController.SwitchControllerType(ControllerType.Ground);
-				cc.enabled = true;
-				yield return new WaitForSeconds(k == 0 ? 1f : 0.6f);
+				tried++;
+				PlayerMove.To(player, stand + lift);
+				KeepAlive(player);
+				// (held on the spot while it looks: a minimised box Raft let the player slide off it - 4.9 m off and down in
+				// the water a second later, out of reach)
+				CharacterController hold = player.PersonController != null ? player.PersonController.controller : null;
+				if (hold != null) hold.enabled = false;
+				Physics.SyncTransforms();
+				yield return new WaitForSeconds(tried == 1 ? 1f : 0.6f);
 				Vector3 look = target - cam.transform.position;
 				Look(player, Quaternion.LookRotation(Flat(look)).eulerAngles.y, -Mathf.Atan2(look.y, Flat(look).magnitude) * Mathf.Rad2Deg);
 				yield return new WaitForSeconds(0.5f);
 				found = Helper.FindInteractable(Player.UseDistance * 1.1f, QueryTriggerInteraction.Collide);
+				if (found != null && found.transform.IsChildOf(r.transform)) break;
+				// (a minimised Raft: Raft's ray goes through the screen's middle, and a minimised window has no screen size -
+				// the same ray from the camera straight ahead, which is what the screen's middle is when the window has one)
+				RaycastInteractable ahead = AheadInteractable(cam, Player.UseDistance * 1.1f);
+				if (ahead != null && ahead.transform.IsChildOf(r.transform)) { found = ahead; byAhead = true; break; }
+				// (a minimised Raft may not turn the view (its mouse look waits for a frame drawn): the camera itself turned to
+				// the object, and the same ray in the same frame, before anything turns it back)
+				cam.transform.rotation = Quaternion.LookRotation(target - cam.transform.position);
+				ahead = AheadInteractable(cam, Player.UseDistance * 1.1f);
+				if (ahead != null && ahead.transform.IsChildOf(r.transform)) { found = ahead; byAhead = true; aimedCam = true; break; }
+				if (miss == null)
+				{
+					RaycastHit any;
+					bool hitAny = Physics.Raycast(cam.transform.position, target - cam.transform.position, out any, 10f, ~0, QueryTriggerInteraction.Collide);
+					miss = "camera " + Vector3.Distance(cam.transform.position, target).ToString("F1") + " m off, player " + Vector3.Distance(player.transform.position, stand + lift).ToString("F1") + " m from the stand point (" + (player.transform.position.y - stand.y - lift.y).ToString("F1") + " m up), turned " + Vector3.Angle(cam.transform.forward, target - cam.transform.position).ToString("F0") + " deg off before the camera was turned; the first thing towards it: " + (hitAny ? any.collider.name + " (layer " + LayerMask.LayerToName(any.collider.gameObject.layer) + ", " + any.distance.ToString("F1") + " m)" : "nothing") + ", use distance " + Player.UseDistance.ToString("F1");
+				}
 			}
+			if (player.PersonController != null && player.PersonController.controller != null) player.PersonController.controller.enabled = true;
 			typeof(Behaviours).GetProperty("LastMessage").SetValue(null, "", null);
-			if (found != null && found.gameObject == holder.gameObject) Log("Facing '" + what + "': Raft's interaction ray finds it from " + Vector3.Distance(cam.transform.position, target).ToString("F1") + " m");
-			else Fail("facing '" + what + "': Raft's ray found " + (found != null ? found.name : "nothing"));
+			if (found != null && found.transform.IsChildOf(r.transform))
+			{
+				faceFound = found;
+				faceRef = r;
+				Log("Facing '" + label + "': Raft's interaction ray finds it" + (byAhead ? " (the camera's straight-ahead ray" + (aimedCam ? ", the camera turned to it" : "") + ": the screen's middle missed - screen " + Screen.width + "x" + Screen.height + ")" : "") + " from " + Vector3.Distance(cam.transform.position, target).ToString("F1") + " m");
+				yield break;
+			}
+			// (never left in the ground or under a floor: back where the player was)
+			Vector3 to = backParent != null && backParent.gameObject.activeInHierarchy ? backParent.TransformPoint(backLocal) : back;
+			PlayerMove.To(player, to + Vector3.up * 0.1f);
+			KeepAlive(player);
+			Fail("facing '" + label + "': Raft's ray found " + (found != null ? found.name : "nothing") + " (" + spots.Count + " stand points with room and a clear view, " + tried + " tried" + (miss != null ? "; first try: " + miss : "") + "); the player is back where they were");
+		}
+
+		[ConsoleCommand(name: "CITalk", docs: "Dev, in game (either player): talks to an islander as a player does - faces them (CIFace), opens the dialogue through the E key's path (Islander.Talk), then closes it as Esc does (or picks an answer, or reads every page with E), which ends in Islanders.Talked: talk events, a \"Bring items\" step's hand-in, the quest's talk step: CITalk <island> <islander name> [read | pick <n>]")]
+		public static void TalkCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			List<string> words = args.Skip(1).ToList();
+			int pick = 0;
+			bool read = false;
+			if (words.Count > 2 && words[words.Count - 2].Equals("pick", StringComparison.OrdinalIgnoreCase) && int.TryParse(words[words.Count - 1], out pick)) words.RemoveRange(words.Count - 2, 2);
+			else if (words.Count > 1 && words[words.Count - 1].Equals("read", StringComparison.OrdinalIgnoreCase)) { read = true; words.RemoveAt(words.Count - 1); }
+			StartTest(TalkRoutine(e, string.Join(" ", words.ToArray()), pick, read));
+		}
+
+		static IEnumerator TalkRoutine(IslandWorldState.Entry e, string who, int pick, bool read)
+		{
+			yield return FaceRoutine(e, who);
+			if (faceFound == null) yield break;
+			Islander isl = faceFound.GetComponent<Islander>() ?? faceRef.GetComponentInChildren<Islander>(true);
+			if (isl == null) { Fail("'" + who + "' on '" + e.HostName + "' is not an islander"); yield break; }
+			string name = Islanders.NameOf(isl.Ref != null ? isl.Ref.Props : null);
+			int talks = Islanders.Talks;
+			// E: what Islander.OnIsRayed does on the interact key
+			DialoguePanel.LastClose = null;
+			isl.Talk();
+			if (!DialoguePanel.IsOpen) { Fail("talking to '" + name + "': no dialogue opened"); yield break; }
+			Log("Dialogue open: '" + DialoguePanel.ShownSpeaker + "', page 1: " + TalkShort(DialoguePanel.ShownText));
+			yield return new WaitForSeconds(0.5f);
+			if (!DialoguePanel.IsOpen) { Fail("talking to '" + name + "': the dialogue closed by itself within 0.5 s (" + (DialoguePanel.LastClose ?? "unknown") + ")"); yield break; }
+			if (pick > 0) { DialoguePanel.Pick(pick); Log("Picked answer " + pick); }
+			else if (read)
+			{
+				// (E on every page: Next, Goodbye on the last; a page with answers waits for one - then Esc)
+				for (int n = 0; n < 30 && DialoguePanel.IsOpen; n++)
+				{
+					int was = DialoguePanel.ShownPage;
+					DialoguePanel.Next();
+					yield return new WaitForSeconds(0.3f);
+					if (DialoguePanel.IsOpen && DialoguePanel.ShownPage == was) { Log("Page " + (was + 1) + " wants an answer: closed with Esc"); break; }
+					if (DialoguePanel.IsOpen) Log("Page " + (DialoguePanel.ShownPage + 1) + ": " + TalkShort(DialoguePanel.ShownText));
+				}
+			}
+			// Esc: DialoguePanel.Update's Finish(0) - the same close
+			DialoguePanel.Close();
+			yield return new WaitForSeconds(0.5f);
+			if (DialoguePanel.IsOpen) { Fail("talking to '" + name + "': the dialogue is still open"); yield break; }
+			if (Islanders.Talks == talks) { Fail("talking to '" + name + "': the dialogue closed but Islanders.Talked didn't run"); yield break; }
+			string msg = Behaviours.LastMessage;
+			Log("PASS: talked to '" + name + "' on '" + e.HostName + "' (" + (Raft_Network.IsHost ? "host" : "client") + "; Islanders.Talked ran" + (string.IsNullOrEmpty(msg) ? "" : ", message '" + TalkShort(msg) + "'") + ")");
+		}
+
+		static string TalkShort(string s)
+		{
+			s = (s ?? "").Replace("\n", " / ");
+			return s.Length > 120 ? s.Substring(0, 117) + "..." : s;
 		}
 
 		[ConsoleCommand(name: "CILastMessage", docs: "Dev, in game: the last message an island object gave this player, and whether the note reader is open")]
 		public static void LastMessageCommand()
 		{
-			Log("Last message '" + Behaviours.LastMessage + "', note reader " + (NoteReader.IsOpen ? "open" : "closed"));
+			Log("Last message '" + Behaviours.LastMessage + "', island message '" + IslandInfo.LastMessage + "', note reader " + (NoteReader.IsOpen ? "open" : "closed"));
 		}
 
 		#endregion

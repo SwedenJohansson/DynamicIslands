@@ -1,0 +1,322 @@
+# Skyhook Mast - an island of the library's plan Relic of the Seventh Tide (the tower in the sky)
+# A tall sea stack with an airship mooring mast on its flat top: a steel lattice of the radio tower's thick pillars and
+# cross braces, three stages high, a mooring station's cabin at its foot and the station's old vending machine. Below, in
+# the shallows off the beach, the wreck of Kett's airship: a plane's body and broken wings as its ribs, a Caravan Town
+# caravan on its side as its gondola. Varuna Point's skylift is the way up the stack; a zipline the way down. Quest
+# "The Mooring Mast" (13 steps): the stack's foot, the mooring log, the skylift, the screechers nesting on the mast, the
+# cabin strongbox (the Gear of the Second Tide), the zipline down to the wreck; then Gull Crag in the east and the
+# station keeper's note on its top, the Albatross engineer's cave on the east shore (her note, the chart locker key),
+# and the Albatross's chart locker in the lagoon by the wreck (needs the key).
+# DEEP 10-25 (Relic deep pass): Radius 48 -> 62 (a small island: the stack and a skirt of land round it); the landing
+# path runs out to the new south shore and a lagoon is dug round the airship wreck so it stays in the shallows. Gull
+# Crag (16 m, trail + the station's signal mast) in the east, the engineer's cave on the east shore, the station's supply
+# barge drowned off the north (-9 m, an air pocket), the chart locker under water. Voices: the keeper Bram Holt, the
+# Albatross's engineer Nell Okafor, Silas Grey.
+# OLDER4 10-26: the riggers' practice stack on the west rim of the top (-22 6): a jump course of 11 slabs, a chest
+# halfway and one on top (a secret off the quest).
+#
+# Built by the recipe player (CIRecipe skyhook_mast) through the editor's own operations.
+include lib_sea
+include lib_features
+include lib_areas
+include lib_highwater
+new
+# (nature: a green rock stack at Raft's density - grass, bushes and a few palms on top, rocks below; one reef)
+gen Trees=0.55 Bushes=0.75 Rocks=0.65 Harvest=0.6 BeachThings=0.6
+gen Seed=9401 Radius=62 Height=18 Roughness=0.3 Peaks=1 Shape=4 Style=0 PeakShape=0.6 Cliffs=0.9 BeachWidth=0.6
+gen Water=0.5 SeaRocks=0.5 SeaFinds=0.2 Sunken=0.4 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+
+# --- Terrain: the stack's flat top at 18 m, the beach and the stack's foot in the south, the wreck's shore in the
+# south-west -----------------------------------------------------------------------------------------------------------
+brush flatten at 0 6 r=13 s=20 frames=220 h=18
+# (DEEP 10-25: the lagoon round the airship wreck, dug first so the wreck's beach strip below wins where they meet)
+brush flatten at -27 -51 r=13 s=20 frames=180 h=-2
+brush smooth at -27 -51 r=15 s=5 frames=30
+brush flatten from 0 -60 to 0 -24 r=6 s=20 frames=200 h=1.5
+brush flatten from -16 -42 to -4 -34 r=5 s=20 frames=120 h=1.2
+brush smooth from -16 -44 to 0 -40 r=4 s=6 frames=20
+# --- DEEP 10-25 terrain: Gull Crag (east, summit 16 m, base r 14) and its trail from the south, the engineer's cave on
+# the east shore, the supply barge's basin off the north (-9 m) -------------------------------------------------------
+call hw_mount x=36 z=18 b=14 h=16
+call hw_trail x=36 z=18 b=14 h=16 a0=180 turn=300 n=26 h0=3
+call ar_cave x=44 z=-24 h=2 yaw=180 al=okarock chest=okachest
+call hw_basin x=-8 z=56 r=10 h=-9
+origin
+clear at 0 6 r=14
+clear from 0 -60 to 0 -22 r=6
+clear from -18 -44 to -4 -34 r=6
+
+# --- The stack's foot: the mooring station's landing, its log on a crate, the skylift against the cliff -----------------
+place Zone_Trigger stackfoot at 0 -30 ground
+place "Box Small" logdesk at 3 -28 ground sit
+# (REACH 10-29: at h=2 the log sat inside the crate (its top is 2.64 m) - no spot to read it from: set on the lid)
+place Note_Paper mooringlog at 3 -28 h=2.66 sit yaw=15
+place "Box Big" - at 3 -30 ground sit yaw=20
+place VP_Skylift lift at 0 -22.5 ground sit yaw=0
+place Zone_Trigger liftfoot at 0 -26 ground
+
+# --- The mast: four legs (radio tower thick pillars), three stages stacked leg on leg, cross braces on every face, a
+# top plate and the mooring cone ---------------------------------------------------------------------------------------
+push at 0 9 h=18
+for st 0 12 6
+place RT_PillarThick mastlegs at -1.5 -1.5 y={$st}
+place RT_PillarThick mastlegs at 1.5 -1.5 y={$st}
+place RT_PillarThick mastlegs at -1.5 1.5 y={$st}
+place RT_PillarThick mastlegs at 1.5 1.5 y={$st}
+for by 0.3 3.3 3
+place RT_Crossbeam mastbraces at 1.5 -1.5 y={$st+$by} sit sx=0.667
+place RT_Crossbeam mastbraces at 1.5 1.5 y={$st+$by} sit sx=0.667
+place RT_Crossbeam mastbraces at -1.5 -1.5 y={$st+$by} sit sx=0.667 yaw=90
+place RT_Crossbeam mastbraces at 1.5 -1.5 y={$st+$by} sit sx=0.667 yaw=90
+next
+next
+place RT_Floor mastplate at 0 0 y=18 sit sx=0.66 sz=0.44
+place RT_PillarThick mastcone at 0 0 y=18.07 sx=1.4 sz=1.4 sy=0.5
+place RT_Floodlight - at 1.4 1.4 y=18.07 sit
+pop
+prop mastlegs tint.color=#6f7780
+prop mastbraces tint.color=#6f7780
+prop mastplate tint.color=#5d646b
+prop mastcone tint.color=#a8743c
+
+# --- The mooring station's cabin by the mast's foot (tier 3 blocks, a flat roof of plates), its strongbox inside ------
+push at 4.5 -1 h=18
+for fx 0.75 3.75 1.5
+for fz 0.75 3.75 1.5
+place Block_Floor_Tier3 cabinfloor at $fx $fz y=0.05
+place Block_Floor_Tier3 cabinroof at $fx $fz y=2.83
+next
+next
+place Block_Wall_Tier3 cabinwalls at 0.75 0 y=0.2
+place Block_Wall_Door_Tier3 cabinwalls at 2.25 0 y=0.2
+place Block_Wall_Tier3 cabinwalls at 3.75 0 y=0.2
+for fx 0.75 3.75 1.5
+place Block_Wall_Tier3 cabinwalls at $fx 4.5 y=0.2
+next
+for fz 0.75 3.75 1.5
+place Block_Wall_Tier3 cabinwalls at 0 $fz y=0.2 yaw=90
+place Block_Wall_Tier3 cabinwalls at 4.5 $fz y=0.2 yaw=90
+next
+for px 0 4.5 4.5
+place Block_Pillar_Tier3 cabinpillars at $px 0 y=0.2
+place Block_Pillar_Tier3 cabinpillars at $px 4.5 y=0.2
+next
+place Loot_Chest strongbox at 3.5 3.6 y=0.05 sit yaw=180
+place "Box Small" - at 0.8 3.6 y=0.05 sit
+place Placeable_Lantern_Metal - at 0.8 3.6 y=1.0 sit drop
+pop
+prop cabinwalls tint.color=#7d8a96
+prop cabinpillars tint.color=#5d646b
+prop cabinroof tint.color=#4f5961
+prop cabinfloor tint.color=#8c7a62
+place VP_Skylift liftdown at 0 -5 ground sit yaw=180
+place Zone_Trigger lifttop at 0 -2 ground
+place Zone_Trigger masttop at 0 4 ground
+place Creature_StoneBird screechers at 0 9 h=34
+
+# --- The station's old vending machine (it still takes Tangaroa tokens) and tokens dropped round the stack top --------
+vending mastvend at -6 8 ground yaw=90
+place QuestItemPickup_Tangaroa_Token - at -5 12 ground
+place QuestItemPickup_Tangaroa_Token - at 6 12 ground
+place QuestItemPickup_Tangaroa_Token - at -3 -3 ground
+place QuestItemPickup_Tangaroa_Token - at 2 -30 ground
+
+# --- The zipline down from the stack's edge to the wreck's shore -------------------------------------------------------
+# (its near floor - 5.72 m west, 0.97 m north of where it is put, 1.35 m under its h - on the flat top at -7 -1)
+place ZiplinePath_Landmark zipdown at -1.28 -1.97 h=19.35
+zipto zipdown -12 -38
+place Zone_Trigger wreckshore at -12 -40 ground
+
+# --- Kett's airship, wrecked in the shallows: the plane's body as the envelope's nose, broken wings standing as ribs, a
+# caravan on its side as the gondola ------------------------------------------------------------------------------------
+place Airplane wreck at -24 -54 ground rot=6,130,12 scale=0.9
+for rz -50 -42 2.6
+place WingBroken ribs at -31 $rz ground rot=0,0,80 scale=1.6
+place WingBroken ribs at -25 $rz ground rot=0,180,80 scale=1.6
+next
+place CaravanBarebones1 gondola at -20 -46 ground sit rot=0,40,88 scale=0.8
+prop ribs tint.color=#9a9488
+prop gondola tint.color=#b58a5a
+call shallows x=-26 z=-54 r=14 deep=3 n=1 seed=9411
+# DEEP 10-25: the Albatross's chart locker, fallen out of the gondola into the lagoon (needs the engineer's key)
+place Loot_Chest chartlocker at -30 -62 ground sit yaw=40
+call hw_reef x=-40 z=-40 r=4 seed=31024
+call hw_reef x=50 z=40 r=4 seed=31025
+
+# --- DEEP 10-25: Gull Crag - its foot and top as zones, the station's signal mast (keeper Holt's note on top) --------
+call hw_zone x=36 z=3 al=cragfootz id=cragfoot r=5 msg="Gull Crag. White with birds, and a path of flat stones winding up it to a little signal mast."
+call hw_zone x=36 z=18 al=cragtopz id=cragtop r=6 h=1 msg="The top of Gull Crag. Across the gap, the mooring mast on its stack - and on the shore below, a cave with a tarpaulin over its mouth."
+call hw_mast x=36 z=18 h0=16 lv=2 a=holtmast chest=holtbox top=Placeable_Lantern_Metal
+place Note_Paper holtnote at 32.5 14.5 h=16.1 drop yaw=200
+loot holtbox Rope*2;Battery*1;Feather*3;Cooked_GenericMeat*2
+prop holtbox loot.refill=0
+note holtbox Keeper's signal box | The keeper's box on the signal mast: a spare battery for the lamp, rope, feathers for the fletching he never got round to.
+scatter "Pickup_Landmark_PineappleLandmark" 2 at 36 18 r=16 seed=31026 free=3
+call treasure x=48 z=6 r=12 n=1 seed=31022 kind=0
+prop treasure31022 treasure.loot=MetalOre*3;CopperOre*2;Glass*2
+# --- The Albatross engineer's cave on the east shore: Nell Okafor's note, her tool chest (the chart locker key) -------
+call hw_zone x=44 z=-29 al=okaz id=albatross_cave r=4 msg="A cave under a tarpaulin. A hammock, a stove, engine parts laid out in rows on a blanket."
+place Note_Paper okanote at 42.5 -29.5 h=2.45 drop yaw=180
+loot okachest story:chartkey*1;Bolt*3;Hinge*2;MetalIngot*1
+prop okachest loot.refill=0
+prop okachest if.open=quest|11
+prop okachest else.open=message||Nell's tool chest is padlocked. Her note says where she keeps the key to it.
+note okachest Engineer's tool chest | Nell Okafor's tool chest: spanners, bolts, hinges - and a small brass key on a wire tag: "CHART LOCKER - ALBATROSS".
+# --- The station's supply barge, drowned off the north (-9 m): Silas Grey's report, an air pocket --------------------
+call hw_sunkhouse x=-8 z=56 h=-9 yaw=0 a=barge chest=bargechest air=bargeair bub=bargebub dal=bargedoor
+call hw_zone x=-8 z=56 al=bargez id=supplybarge r=6 h=1 msg="A barge's deckhouse on the sea floor, nine metres down. Its front room still holds a breath of air."
+place Note_Paper greyreport at -7.4 54.8 h=-8.5 drop yaw=0
+loot bargechest Glass*2;CopperIngot*1;MetalIngot*2;Rope*2
+prop bargechest loot.refill=0
+note bargechest Barge strongbox | The supply barge's strongbox: iron and copper for the station, glass for the lamp, rope.
+call treasure x=-20 z=46 r=12 n=1 seed=31023 kind=0
+prop treasure31023 treasure.loot=Scrap*4;Bolt*2;Glass*2
+
+# --- OLDER4 10-26: the riggers' practice stack on the stack's west rim - a jump course of stone slabs, each one higher ---
+push at -22 6
+clear at 0 0 r=13 all
+brush flatten at 0 0 r=10 s=20 frames=300 h=18
+brush smooth at 0 0 r=14 s=4 frames=40
+brush flatten at 0 0 r=8 s=20 frames=300 h=18
+brush auto at 0 0 r=14 s=10 frames=25
+clear at 0 0 r=14
+place Block_Foundation_Tier3 jpsk at 4.24 4.24 h=18.6
+place Block_Foundation_Tier3 jpsk at 5.77 1.65 h=19.35
+place Block_Foundation_Tier3 jpsk at 5.85 -1.35 h=20.1
+place Block_Foundation_Tier3 jpsk at 4.46 -4.01 h=20.85
+place Block_Foundation_Tier3 jpsk at 1.95 -5.67 h=21.6
+place Block_Foundation_Tier3 jpsk at -1.04 -5.91 h=22.35
+place Block_Foundation_Tier3 jpsk at -3.78 -4.66 h=23.1
+place Block_Foundation_Tier3 jpsk at -5.56 -2.25 h=23.85
+place Block_Foundation_Tier3 jpsk at -5.96 0.73 h=24.6
+place Block_Foundation_Tier3 jpsk at -4.85 3.53 h=25.35
+place Block_Foundation_Tier3 jpsk at -2.54 5.44 h=26.1 sx=2 sz=2
+place Block_Foundation_Tier3 jppsk at 5.77 1.65 h=18.668 sy=1.857
+place Block_Foundation_Tier3 jppsk at 5.85 -1.35 h=19.418 sy=2.956
+place Block_Foundation_Tier3 jppsk at 4.46 -4.01 h=20.168 sy=4.054
+place Block_Foundation_Tier3 jppsk at 1.95 -5.67 h=20.918 sy=5.153
+place Block_Foundation_Tier3 jppsk at -1.04 -5.91 h=21.668 sy=6.252
+place Block_Foundation_Tier3 jppsk at -3.78 -4.66 h=22.418 sy=7.350
+place Block_Foundation_Tier3 jppsk at -5.56 -2.25 h=23.168 sy=8.449
+place Block_Foundation_Tier3 jppsk at -5.96 0.73 h=23.918 sy=9.547
+place Block_Foundation_Tier3 jppsk at -4.85 3.53 h=24.668 sy=10.646
+place Block_Foundation_Tier3 jppsk at -2.54 5.44 h=25.418 sy=11.745 sx=2 sz=2
+prop jpsk tint.color=#8a7f70
+prop jpsk tint.amount=0.35
+prop jppsk tint.color=#8a7f70
+prop jppsk tint.amount=0.35
+place Loot_Chest jcsk at -1.04 -5.91 h=22.35 sit yaw=0
+prop jcsk loot.refill=0
+place Loot_ChestSmall jbsk at -2.54 5.44 h=26.1 sit yaw=0
+prop jbsk loot.refill=0
+pop
+call hw_zone x=-22 z=6 al=sk_jumpz id=sk_jumps r=6 h=1 msg="Stone slabs stacked in a ring, each one higher. The riggers trained here before they climbed the mast."
+note jcsk Riggers' halfway box | The riggers' box halfway up: spare rope and a flask. "Don't look down - look at the next one."
+loot jcsk Rope*3;Bolt*2;Hinge*1
+note jbsk Top of the practice stack | A rigger's tin on the top slab: whoever reached it first won the round. Copper, glass and a note of names.
+loot jbsk CopperIngot*2;Glass*2;MetalIngot*2
+
+# --- Things to gather ------------------------------------------------------------------------------------------------
+scatter "Pickup_Landmark_PineappleLandmark" 2 at -6 14 r=6 seed=9421 free=2
+call dirt x=8 z=14 r=5 n=2 seed=9422
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Skyhook Mast
+info author=Custom Islands
+info description=A tall sea stack in a skirt of green land, with an airship mooring mast on top - a steel lattice three stages high, the station cabin and its old vending machine - and below, in the shallows, the wreck of Kett's airship and its chart locker. Gull Crag and its signal mast, the engineer's cave on the shore, a supply barge drowned off the island. The fourth island of Relic of the Seventh Tide.
+island on.arrive=message||A sea stack like a chimney, and on top of it a steel mast. In the shallows below, the ribs of a wrecked airship.
+
+story liftride|Skylift ride|Placeable_Lantern_Metal|You rode the station's skylift up the stack.
+story chartkey|Chart locker key|Placeable_PaperBundle|A small brass key on a wire tag: the Albatross's chart locker, from Nell Okafor's tool chest.
+story gear2|Gear of the Second Tide|Bolt|A bronze gear with teeth cut like waves, bigger than the first. Two of three.
+
+note mooringlog Mooring log | SKYHOOK MOORING STATION - LOG\n\nAirship "Albatross", Prof. I. Kett, moored 0600. Took on water and gas. She left a box in the cabin strongbox "for whoever follows with the first gear".\n\n1100: Syndicate launch sighted. The professor cast off in a hurry - she said she was flying on to "the Fang".\n\n1130: The Albatross is down. Wind took her into the stack. The professor got out. Screechers nest on the mast again; the lift still works.
+note strongbox Mast cabin strongbox | Kett's box: a bronze gear wrapped in her scarf - the Gear of the Second Tide - and the station's zipline handle, its tag "for the quick way down".
+loot strongbox story:gear2*1;ZiplineTool*1;MetalIngot*3;Scrap*3
+prop strongbox loot.refill=0
+
+prop chartlocker if.open=has|story:chartkey|1
+prop chartlocker else.open=message||The Albatross's chart locker, green with weed and locked tight. The chart locker key would open it - the engineer kept the keys.
+prop chartlocker loot.refill=0
+note chartlocker Albatross chart locker | The Albatross's chart locker: Kett's sea charts in oilcloth, the Fang marked in red - "THREE TRIALS - MIND THE GLASS" - and the airship's brass compass.
+loot chartlocker Rope*3;MetalIngot*2;CopperIngot*2;TradeToken*2
+note holtnote Station keeper Bram Holt's note | B. HOLT, KEEPER, SKYHOOK MOORING STATION\n\nThe Albatross came in crooked on the morning wind and went down in the shallows before I could get a line on her. The professor got out, and her engineer, the Okafor girl, and that was everyone.\n\nThe professor went up the lift, left her box in the strongbox and was off on the next boat before noon. Okafor stayed. She says an airship is only a balloon with ideas, and she will have her flying again.\n\nShe has set up in the cave with the tarpaulin, down on the shore. She has the keys to everything on that ship. If you want what the professor left in the chart locker, ask Nell, not me. I only keep the mast.
+note okanote Nell Okafor's note | N. OKAFOR, ENGINEER, AIRSHIP ALBATROSS\n\nTo whoever reads this, if it isn't the man in the grey coat:\n\nThe chart locker fell out of the gondola when we hit. It's in the lagoon by the wreck, a few feet down. The key's in my tool chest - take it. The professor's charts are in that locker, and the Fang is marked on them. She wanted whoever followed her to have them.\n\nThe grey-coat man's diver came round twice asking after the locker. I told him it sank in deep water off the island, with the supply barge. He has been diving on the wrong wreck all week.\n\nI am going after the professor as soon as the engine runs. - Nell
+note greyreport Silas Grey's report | S. GREY - SKYHOOK, REPORT\n\nThe barge out in the deep water is a barge. Rope, iron, lamp glass. No charts.\n\nThe engineer lied to my diver, and he believed her, and I have told him what I think of that. We have lost three days.\n\nThe keeper says Kett went to the Fang. Everyone in these waters knows the Fang: a hollow tooth of rock with a pool of glass inside it and trials the old kings set. Men who go in for the gear come out without it, or do not come out.\n\nGood. Let her go first. Let the Fang do our work. We wait at the strait, by the giant, where every road from here ends.
+prop lift obj.name=lift
+prop lift beh.use=Ride the skylift up the stack
+prop lift on.use=message||The skylift's motor coughs, catches, and hauls you up the face of the stack.\nsound||event:/exploring/utopia/lift_pull\nwait|4\nteleport|lifttop\ngive||story:liftride*1
+prop liftdown obj.name=liftdown
+prop liftdown beh.use=Ride the skylift down
+prop liftdown on.use=message||Down the face of the stack you go.\nsound||event:/exploring/utopia/lift_pull\nwait|4\nteleport|liftfoot
+
+prop stackfoot zone.id=stack_foot
+prop stackfoot zone.radius=5
+prop stackfoot zone.message=The foot of the stack. A crate with a logbook on it, and a lift against the rock.
+prop liftfoot obj.name=liftfoot
+prop liftfoot zone.id=lift_foot
+prop liftfoot zone.radius=2
+prop lifttop obj.name=lifttop
+prop lifttop zone.id=lift_top
+prop lifttop zone.radius=2
+prop masttop zone.id=mast_top
+prop masttop zone.radius=7
+prop masttop zone.repeat=never
+prop masttop zone.message=Wings beat over the mast - screechers, nesting in the lattice!
+prop screechers creature.count=2
+prop screechers creature.respawn=0
+prop screechers creature.zone=mast_top
+prop wreckshore zone.id=wreck_shore
+prop wreckshore zone.radius=5
+prop wreckshore zone.message=The Albatross's ribs stand out of the shallows. Kett got out of here - and went on to the Fang.
+
+quest title=The Mooring Mast
+quest intro=A sea stack with a mast on top. Kett flew from here. Go to the stack's foot.
+step reach|stack_foot|1|Go to the foot of the stack
+step read|Mooring log|1|Read the mooring log
+step collect|story:liftride|1|Ride the skylift up the stack
+step kill|Screecher|2|Drive off the screechers nesting on the mast
+step open|Mast cabin strongbox|1|Open the strongbox in the mast cabin
+step reach|wreck_shore|1|Take the zipline down to the wreck's shore
+step reach|cragfoot|1|Find the path up Gull Crag, the crag with the signal mast
+step reach|cragtop|1|Climb Gull Crag to the station's signal mast
+step read|Station keeper Bram Holt's note|1|Read the station keeper's note on the crag top
+step reach|albatross_cave|1|Find the engineer's cave with the tarpaulin over its mouth, on the shore
+step read|Nell Okafor's note|1|Read Nell Okafor's note
+step collect|story:chartkey|1|Take the chart locker key from her tool chest
+step open|Albatross chart locker|1|Dive in the lagoon by the wreck and open the Albatross's chart locker
+quest done=The second gear. The log said where Kett went: the Fang, a hollow tooth of rock - 1000 on the Receiver.
+quest reward=Rope*4;Feather*4;Bolt*4
+
+# (the boulders the ground check found hanging off the slopes, 2026-10-25)
+clear at -39.71 -13.04 r=1.2 all only=SmallBoulder
+clear at 6.23 -35.93 r=1.2 all only=SmallBoulder
+clear at -30.7 25.81 r=1.2 all only=SmallBoulder
+clear at 17.76 33.97 r=1.2 all only=SmallBoulder
+clear at -15.51 -33.83 r=1.2 all only=SmallBoulder
+clear at -32.08 21.29 r=1.2 all only=SmallBoulder
+clear at 31.13 0.37 r=1.2 all only=SmallBoulder
+clear at -28.83 29.01 r=1.2 all only=SmallBoulder
+clear at 22.56 -27.12 r=1.2 all only=SmallBoulder
+clear at 9.27 37.84 r=1.2 all only=SmallBoulder
+clear at -38.79 -15.8 r=1.2 all only=SmallBoulder
+clear at 10.16 38.45 r=1.2 all only=SmallBoulder
+clear at -24.68 27.51 r=1.2 all only=SmallBoulder
+
+# (G2 10-30: a palm on the rim of a drop, its trunk over it - CIGroundIslands 10-30)
+clear at 26.92 0.59 r=1.5 only=BigPalm4
+
+# (TRAP 11-01 N: the basin a player drops into, its lowest side a 1.9 m step: a ladder up it)
+place Block_Ladder - at 32.4 -13.8 h=14.3 yaw=318
+place Block_Pillar_Wood - at 32.27 -13.65 h=14.3
+# (TRAP 11-01 N: a low hollow under the rock by the shore, its side a 0.8 m step under a roof: a ladder up it)
+place Block_Ladder nskl2 at 51.8 -27.5 h=1.9 yaw=315
+place Block_Pillar_Wood nskp2 at 51.66 -27.36 h=1.9
+
+# (GROUND 11-01 N: a generator pineapple sunk 1.7 m into the ground: taken off)
+clear at 25.6 18.39 r=0.8 all only=Pineapple
+
+# (11-03 fixC, CIFloatingSweep: a scattered bush hung over the ground, cleared the stray scatter)
+clear at 32.81 -0.95 r=1.5 only=Banana_Bush_3 all
+save Skyhook Mast

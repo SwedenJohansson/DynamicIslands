@@ -39,6 +39,74 @@ namespace DynamicIslands.Editor
 			return dots.TryGetValue(r, out list) ? list : new List<Reciever_Dot>();
 		}
 
+		/// <summary>An island the players still need, its dot shown however far (cached a second): one that comes back
+		/// (ReturningIslands.Why), a story step not done yet, a plan's island (brought by a rule) not finished, or any island
+		/// whose quest is begun and not done. Not only what comes back: an island on its own Receiver frequency never does
+		/// (a player 6 h past one lost it beyond receiverDistance, 2026-10-30), nor a step left unvisited or done by a zone /
+		/// note / signal, nor a quest island past its returns - without the dot such an island was lost for good.</summary>
+		static bool Needed(IslandWorldState.Entry e)
+		{
+			float t;
+			bool v;
+			if (neededAt.TryGetValue(e.Id, out t) && Time.time - t < 1f && needed.TryGetValue(e.Id, out v)) return v;
+			try { v = ReturningIslands.Why(e) != null || StillOpen(e); }
+			catch { v = false; }
+			needed[e.Id] = v; neededAt[e.Id] = Time.time;
+			return v;
+		}
+
+		/// <summary>A story step the chain hasn't counted done (it may need more than the quest: a zone, a note, a signal),
+		/// else a plan's island or a begun quest until ReturningIslands.Finished. (e.Rule and the chain's steps reach clients too.)</summary>
+		internal static bool StillOpen(IslandWorldState.Entry e)
+		{
+			// (one that couldn't be made, or whose file this PC is still waiting for, isn't there to sail to - review 10-30)
+			if ((e.Failed && e.Root == null) || e.WaitingForFile || e.Excluded) return false;
+			bool ruled = !string.IsNullOrEmpty(e.Rule);
+			if (ruled)
+			{
+				string key = StoryChain.RuleKey(e.Rule);
+				// (a step done before its quest - done when step N, a zone, a signal: the rest of its quest and its rewards are
+				// still there, and its dot went when the raft was beyond receiverDistance - questdive 11-01. Done, it is
+				// needed like any plan island, until ReturningIslands.Finished)
+				if (StoryChain.Steps.Contains(key, System.StringComparer.OrdinalIgnoreCase) && !StoryChain.Done.Contains(key)) return true;
+				// (its quest done on a copy without the rule - one spawned by hand: the plan counts it done (StoryItems), so
+				// no dot either; looked at once a second per island, as all of this - RK8)
+				string name = e.HostName ?? e.Name;
+				if (IslandWorldState.Islands.Any(x => x != e && string.IsNullOrEmpty(x.Rule) && string.Equals(x.HostName ?? x.Name, name, System.StringComparison.OrdinalIgnoreCase) && ReturningIslands.Finished(x))) return false;
+			}
+			// (a client never gets the host's VisitKey, so there an island without a quest never counted finished and kept its
+			// dot for good: on a client only an island with a quest, whose steps it does get - review 10-30)
+			if (!Raft_Network.IsHost && IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count == 0) return false;
+			bool begun = e.State.ContainsKey(WorldDirector.VisitKey) || QuestTracker.StepOf(e) > 0;
+			return (ruled || begun) && !ReturningIslands.Finished(e);
+		}
+
+		/// <summary>SL9: an island whose rule needs a blueprint (needs=engine...) shows once this player has it (BlueprintSteps.Has).</summary>
+		internal static bool Unlocked(IslandWorldState.Entry e)
+		{
+			string bp = ReturningIslands.NeedsOf(e);
+			if (bp.Length == 0) return true;
+			float t;
+			bool v;
+			if (hasAt.TryGetValue(bp, out t) && Time.time - t < 1f && has.TryGetValue(bp, out v)) return v;
+			v = BlueprintSteps.Has(bp);
+			has[bp] = v; hasAt[bp] = Time.time;
+			return v;
+		}
+
+		static readonly Dictionary<string, float> hasAt = new Dictionary<string, float>();
+		static readonly Dictionary<string, bool> has = new Dictionary<string, bool>();
+
+		static readonly Dictionary<int, float> neededAt = new Dictionary<int, float>();
+		static readonly Dictionary<int, bool> needed = new Dictionary<int, bool>();
+		/// <summary>The islands shown this frame (one list kept: HandleUI runs every frame).</summary>
+		static readonly List<IslandWorldState.Entry> islands = new List<IslandWorldState.Entry>();
+		/// <summary>The islands the last Draw showed, dot i for island i (tests).</summary>
+		internal static List<IslandWorldState.Entry> Shown { get { return islands.ToList(); } }
+		/// <summary>Each dot's text and what it was made from (label, metres): made again only when they change.</summary>
+		sealed class DotText { public string Label, Text; public int Metres; }
+		static readonly Dictionary<Reciever_Dot, DotText> dotText = new Dictionary<Reciever_Dot, DotText>();
+
 		internal static void Draw(Reciever r)
 		{
 			if (r == null || r.dotPrefab == null || r.dotParent == null) return;
@@ -51,7 +119,17 @@ namespace DynamicIslands.Editor
 
 			bool show = WorldRules.ShowOnReceiver && r.radarSection != null && r.radarSection.activeSelf; // (the host's setting)
 			// (not the randomizer's extras on Raft's own islands: Raft shows those islands itself)
-			List<IslandWorldState.Entry> islands = IslandWorldState.Islands.Where(e => !WorldRandomizer.IsExtras(e)).ToList();
+			// (ROADMAP LM2: only what helps - the islands within receiverDistance, and those the players still need however far)
+			float range = WorldRules.ReceiverDistance;
+			Vector3 rp0 = r.transform.position;
+			islands.Clear();
+			IList<IslandWorldState.Entry> all = IslandWorldState.Islands;
+			for (int k = 0; k < all.Count; k++)
+			{
+				IslandWorldState.Entry e = all[k];
+				// (not one an earlier plan of this world brought: only this plan's islands - receiver1109)
+				if (!WorldRandomizer.IsExtras(e) && !e.Excluded && !WorldDirector.FromOtherPlan(e) && (range <= 0f || new Vector2(e.Position.x - rp0.x, e.Position.z - rp0.z).magnitude <= range || Needed(e)) && Unlocked(e)) islands.Add(e);
+			}
 			int wanted = show ? islands.Count : 0;
 			while (list.Count < wanted)
 			{
@@ -88,8 +166,18 @@ namespace DynamicIslands.Editor
 				d.SetLengthToPoint(dist);
 				// Islands brought by a rule (WorldDirector) carry a name, e.g. "Old camp 820m"
 				string label = islands[i].Label ?? "";
-				if (label.Length > 18) label = label.Substring(0, 17) + "\u2026";
-				d.SetText((label.Length > 0 ? label + " " : "") + dist.ToString("F0") + "m");
+				int metres = Mathf.RoundToInt(dist);
+				DotText t;
+				if (!dotText.TryGetValue(d, out t)) dotText[d] = t = new DotText();
+				if (t.Text == null || t.Label != label || t.Metres != metres)
+				{
+					t.Label = label;
+					t.Metres = metres;
+					if (label.Length > 18) label = label.Substring(0, 17) + "\u2026";
+					t.Text = (label.Length > 0 ? label + " " : "") + metres + "m";
+				}
+				// (set again only if something else wrote over it)
+				if (d.dotNumberText == null || d.dotNumberText.text != t.Text) d.SetText(t.Text);
 				r.isCurrentlyShowingRadarDot = true;
 			}
 		}

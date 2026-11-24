@@ -84,9 +84,12 @@ namespace DynamicIslands.Editor
 			Button export = UIKit.Button(buttons, "Export", Export, "Write the pack (.zip) to Mods\\DynamicIslands\\exports", 130, 34f, 15);
 			UIKit.Primary(export);
 			openButton = UIKit.Button(buttons, "Open folder", OpenFolder, "Show the exported pack in Windows' file explorer", 130, 34f, 13);
-			shareButton = UIKit.Button(buttons, "Share...", Share, "Open the island library's page in your browser to send the pack in (attach the .zip)", 130, 34f, 13);
+			shareButton = UIKit.Button(buttons, "Share...", Share, "Open the library's GitHub submit form in your browser to send the pack in (attach the .zip). Or post it on the Discord", 130, 34f, 13);
 			UIKit.Size(UIKit.Label(buttons, "", 12).gameObject, -1, -1, 1);
 			UIKit.Button(buttons, "Close", Close, "Close", 110, 34f, 13);
+			WindowKeys keys = window.gameObject.AddComponent<WindowKeys>();
+			keys.Typing = () => new[] { titleField, authorField, summaryField, descriptionField, tagsField, playersField, lengthField }.Any(f => f != null && f.isFocused);
+			keys.Close = Close;
 			window.gameObject.SetActive(false);
 		}
 
@@ -264,7 +267,7 @@ namespace DynamicIslands.Editor
 
 			RectTransform packs = UIKit.Group(panel, "Packs to import (Mods\\DynamicIslands\\import)", "Packs");
 			RectTransform packTools = UIKit.Row(packs, 28f, 6f, "PackTools");
-			UIKit.Label(packTools, "Put a pack you got into the import folder, then pick it here.", 12, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Italic);
+			UIKit.Label(packTools, "Put a pack you got into the import folder, then pick it here. Worlds you have started keep their version.", 12, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Italic);
 			UIKit.Button(packTools, "Open import folder", OpenImportFolder, "Show the import folder in Windows' file explorer", 160, 28f, 12);
 			UIKit.Button(packTools, "Refresh", Refresh, "Look for packs again", 90, 28f, 12);
 			RectTransform packBox = UIKit.Rect("PackBox", packs);
@@ -291,7 +294,7 @@ namespace DynamicIslands.Editor
 			UIKit.Stretch((RectTransform)s2.transform, 4, 4, 4, 4);
 			RectTransform hostRow = UIKit.Row(inst, 28f, 6f, "HostCopies");
 			hostCopies = UIKit.Label(hostRow, "", 12, UIKit.TextColor, TextAnchor.MiddleLeft, FontStyle.Normal, "HostCopiesText");
-			tidyButton = UIKit.Button(hostRow, "Tidy up", TidyUp, "Click twice: delete island copies from hosts no saved world uses, move generated islands (gen-...) nothing uses to the deleted folder, and move the files of worlds you deleted (Raft's own world is gone) to worlds\\removed", 150, 28f, 12);
+			tidyButton = UIKit.Button(hostRow, "Tidy up", TidyUp, "Click twice: move island copies from hosts no saved world uses to the deleted folder, move generated islands (gen-...) nothing uses to the deleted folder, and move the files of worlds you deleted (Raft's own world is gone) to worlds\\removed", 150, 28f, 12);
 
 			status = UIKit.Label(panel, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Status");
 			status.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -299,6 +302,7 @@ namespace DynamicIslands.Editor
 			RectTransform buttons = UIKit.Row(panel, 34f, 8f, "Buttons");
 			UIKit.Size(UIKit.Label(buttons, "", 12).gameObject, -1, -1, 1);
 			UIKit.Button(buttons, "Close", Close, "Close", 110, 34f, 13);
+			EscKey.Add(window.gameObject, Close);
 			window.gameObject.SetActive(false);
 		}
 
@@ -432,9 +436,10 @@ namespace DynamicIslands.Editor
 				SetStatus(scan.Describe() + " Click again to clear it.", false);
 				return;
 			}
-			Housekeeping.Scan found = tidyPending;
+			// (looked at again: a world saved or an island used since the first click keeps its files)
+			Housekeeping.Scan found = Housekeeping.Look().Within(tidyPending);
 			tidyPending = null;
-			SetStatus(Housekeeping.TidyUp(found) + " (Generated islands can be got back from the deleted folder, world files from worlds\\" + Housekeeping.RemovedWorldsFolder + ".)", false);
+			SetStatus(Housekeeping.TidyUp(found) + " (Island copies and generated islands can be got back from the deleted folder, world files from worlds\\" + Housekeeping.RemovedWorldsFolder + ".)", false);
 			ShowInstalled();
 		}
 
@@ -455,5 +460,27 @@ namespace DynamicIslands.Editor
 		}
 
 		static void SetStatus(string text, bool error) { status.text = text; status.color = error ? UIKit.Danger : UIKit.TextColor; }
+	}
+
+	/// <summary>
+	/// A window without an Update of its own (Share, the island library): its text fields count as typing - the editor's
+	/// camera flew, Delete hid the selection and 1-4 changed the gizmo while a title was typed - and Esc closes it (when given).
+	/// </summary>
+	class WindowKeys : MonoBehaviour
+	{
+		public Func<bool> Typing;
+		public Action Close;
+		bool typing;
+
+		void Update()
+		{
+			bool now = Typing != null && Typing();
+			if (now) EditorInput.IsTyping = true;
+			else if (typing) EditorInput.IsTyping = false;
+			typing = now;
+			if (Close != null && !DropList.Busy && !InfoWindow.IsOpen && !EditorInput.SubWindowJustClosed && EscKey.Down(this)) Close();
+		}
+
+		void OnDisable() { if (typing) EditorInput.IsTyping = false; typing = false; }
 	}
 }

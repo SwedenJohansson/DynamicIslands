@@ -1,0 +1,473 @@
+# Raft Row Bazaar - the second island of the library's plan The City That Never Sank (SL13, Highwater, chapter 2)
+# Highwater's black market: a raft of Raft's own foundations lashed between four drowned towers' roofs off a small green
+# key, stalls under wooden roofs, string lights, flags, a vending machine on the key. The key is the market's garden:
+# hens and goats, flowers in five colours, pineapples, watermelons, strawberries and beet planters. Quest "Prices
+# Without Rules" (24 steps): the market, the price board, the engine stall's plans (motor wheel), the shortage list,
+# the Free Fleet's stall, the steering wheel's plans, the merchant's back room (key from his drawer), the withheld
+# stock ledger, a hen for the Fleet's coop, the merchant's warning.
+#
+# Points: the key 0 0 (r about 40, levelled at 2 round -4 4); the causeway along x 0 from z 36 to 46; the market's
+# foundations x -9..9, z 46..58 (deck about 1 m); tower roofs x -15..-9 and 9..15, z 42.5..51.5 and 52.5..61.5
+# (deck 1 m); the back room (a storey) on the north-east roof.
+include lib_features
+include lib_sea
+include lib_rt
+include lib_huts
+include lib_highwater
+include lib_areas
+# RESIZE 10-24: Radius 40 -> 85 (Height 5 -> 5), the old content moved 0 24.8 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+# DEEP 10-24: Tin Peak: the pedlars climb to ring a bell over the market, the arcade lies drowned under the west shore, and the market's own stall numbers open its strongbox.
+# STORY 10-24: no dive on the quest's way any more (the till key is in the pedlars' cave; the sunk arcade is an optional
+# secret); the order is a market tour west - south - east - up. Voices: Councillor Crane on the market's speaker, Dobbs's
+# complaint No. 230, Marta, Teo Varga, the merchant, the fire warden, Oswin the crier, Rook the pedlar (who holds Pip's
+# tin tram, the little six-forty) and 'a friend', whose note names Fleetbreak.
+new
+gen Trees=0.28 Bushes=0.3 Rocks=0.3 Harvest=0.4 BeachThings=0.25
+gen Seed=13201 Radius=85 Height=5 Roughness=0.25 Peaks=1 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.6
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.4 Sunken=0.2 Hostiles=0 Friendly=0.3 SeaLife=0.3
+generate
+push at 0 24.8
+
+# --- Terrain: the garden levelled ------------------------------------------------------------------------------------
+brush flatten at -4 4 r=12 s=20 frames=300 h=2
+brush grass at -4 4 r=14 s=3 frames=30
+# (a sandbar under the causeway's far end, whose foundations stood up to 0.9 m over a hollow)
+brush flatten at 0 43 r=3.5 s=20 frames=200 h=-0.5
+pop
+# --- DEEP 10-24 terrain: Tin Peak (north-west, summit 30 m, base r 25), its trail, the drowned sunk arcade (-12 m) ------------
+call hw_mount x=-44 z=54 b=25 h=30
+call hw_trail x=-44 z=54 b=25 h=30 a0=140.83 turn=300 n=40 h0=3
+brush flatten at -55.78 58.48 r=2.6 s=20 frames=200 h=16.5
+clear at -55.78 58.48 r=3
+call hw_basin x=-80 z=-14 r=14 h=-12
+brush flatten at -68 16 r=4 s=8 frames=60
+clear at -68 16 r=6
+brush flatten at -4.7 -29.6 r=5 s=8 frames=40
+origin
+clear at -4.7 -29.6 r=6
+push at 0 24.8
+clear at -4 4 r=11
+clear from 0 30 to 0 62 r=16
+
+# --- The market: Raft's foundations lashed between the towers, a causeway from the key ------------------------------
+line Block_Foundation from 0 34.75 to 0 45.25 step=1.5 h=0.35
+for mz 46.75 57.25 1.5
+line Block_Foundation from -8.25 $mz to 8.25 $mz step=1.5 h=0.35
+next
+place Zone_Trigger marketzone at 0 50 h=1.2
+
+# --- Four drowned towers' roofs at the market's corners ---------------------------------------------------------------
+push at -9 47 h=1
+call hw_roof d=12 a=concrete rm=none
+# (11-03 fixC: the sand rose 0.8 m over this roof since - at y=0.05 the crate lay buried, nothing to open: set on the sand)
+place Loot_Chest enginecrate at -3 0 ground sit yaw=90
+place "VG_DecorationPrefabBase_Engine Variant" - at -4.5 -2.5 y=0.05 sit
+pop
+push at -9 57 h=1
+call hw_roof d=12 a=concrete rm=none
+place Placeable_Flag_01 - at -5.5 3.5 y=0.05 sit
+place "Box Small" - at -3 2 y=0.05 sit
+place "Box Small" - at -3.6 2.8 y=0.05 sit
+pop
+push at 15 47 h=1
+call hw_roof d=12 a=concrete lm=none
+place Placeable_Flag_02 fleetflag at -1 -3.5 y=0.05 sit
+place "Table Office" - at -3 0 y=0.05 sit
+place Loot_Chest fleetstall at -3 2.4 y=0.05 sit
+place Note_Paper teoschalk at -3 0 y=0.85 drop
+place Zone_Trigger fleetzone at -3 0 y=0.5
+pop
+push at 15 57 h=1
+call hw_penthouse d=12 a=concrete f2=RT_Wall1 l2=RT_WallDoor1
+place Loot_Chest backroom at -4.6 3.4 y=0.1 sit yaw=180
+place Note_Paper ledger at -1.5 3.4 y=0.1 drop
+place "Box Small" - at -5.2 -3.6 y=0.1 sit
+place "Box Small" - at -4.4 -3.6 y=0.1 sit
+place Placeable_Lantern_Metal - at -3 0 y=0.1 drop
+pop
+
+# --- Stalls on the market's deck --------------------------------------------------------------------------------------
+push at -7.5 47.5 h=1.05
+call hw_stall w=2 d=2
+place Loot_ChestSmall drawer at 1.5 2 y=0.1 sit
+pop
+push at -1.5 47.5 h=1.05
+call hw_stall w=2 d=2
+place Pickup_Landmark_MarketGood_Banana_CrateSmall01 - at 1.5 1.5 y=0.1 sit
+pop
+push at 4.5 47.5 h=1.05
+call hw_stall w=2 d=2
+place "Box Small" - at 1 1.5 y=0.1 sit
+pop
+push at -7.5 53.5 h=1.05
+call hw_stall w=2 d=2
+place Pickup_Landmark_MarketGood_Banana_Basket01 - at 1.5 1.5 y=0.1 sit
+pop
+push at 4.5 53.5 h=1.05
+call hw_stall w=2 d=2
+place Note_Sign shortage at 1.5 0.4 y=0.1 sit
+pop
+place Note_Sign pricesign at 0 46.2 h=1.05 sit yaw=180
+push at -6 52 h=1.05
+# (11-03 fixC: its east post stood over the sand off the market floor, 0.41 m up: both posts down to the sand as the
+# line beside it - the west one through the floor)
+call hw_laundry n=4 y=-0.42
+pop
+push at 2 52 h=1.05
+call hw_laundry n=3 y=-0.42
+pop
+
+# --- The key: the market's garden ---------------------------------------------------------------------------------------
+vending bazaarvend at 2 4 ground
+place QuestItemPickup_Tangaroa_Token - at 4 7 ground
+place QuestItemPickup_Tangaroa_Token - at -1 6.5 ground
+place QuestItemPickup_Tangaroa_Token - at 5 1 ground
+place QuestItemPickup_Tangaroa_Token - at 0 1.5 ground
+place Placeable_Cropplot_Medium - at -8 0 ground sit
+place Placeable_Cropplot_Medium - at -4.5 0 ground sit
+place Placeable_Cropplot_Medium - at -1 0 ground sit
+place Loot_ChestSmall seedbox at -11 1.5 ground sit yaw=90
+place Pickup_Landmark_Flower_Red - at -8 7 ground sit
+place Pickup_Landmark_Flower_Yellow - at -6 9 ground sit
+place Pickup_Landmark_Flower_Blue - at -3.5 8 ground sit
+place Pickup_Landmark_Flower_White - at -1 10 ground sit
+place Pickup_Landmark_Flower_Black - at -10 10 ground sit
+place Pickup_Landmark_PineappleLandmark - at 8 -6 ground sit
+place Pickup_Landmark_WatermelonLandmark - at 11 -3 ground sit
+place Pickup_Landmark_Strawberry - at 9 -10 ground sit
+place Pickup_Landmark_Strawberry - at 12 -8 ground sit
+place Creature_Chicken hens at -12 -6 ground
+place Creature_Goat goats at 10 10 ground
+place Block_Wall_Fence_Rope - at -14 -8 ground
+place Block_Wall_Fence_Rope - at -12.5 -8 ground
+scatter "Pickup_Landmark_Tree_Palm 2" 3 at 0 -14 r=16 seed=13202 free=3
+call shallows x=0 z=-24.8 r=119 deep=5 n=2 seed=13203
+call hw_reef x=-12 z=52 r=3 seed=13204
+call hw_reef x=12 z=52 r=3 seed=13208
+pop
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; RT_PlasticBoat + chest; hatch with a chest; buried treasure; viewpoint ---
+place campfire_1 - at -4.7 -29.6 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at -1.7 -27.6 ground sit yaw=277
+place "Box Small" - at -6.7 -27.1 ground sit
+place Note_Paper dnote at -6.7 -27.1 ground y=1.6 drop yaw=20
+note dnote Salvager's note | SALVAGE CLAIM - this side is ours. Union stamp below (smudged).\n\nGood copper in the roofs off shore. Bad currents at the turn of the tide. Don't dive alone - Jory dived alone, and we only got his boots back, and they weren't even good boots.\n\nThe old arcade went down off the shore last winter. The pedlars got the till out first, the thieves. There's still a strongbox in its back room if your lungs are better than mine.\n\nThe market people think we're vultures. We are. Somebody has to pick a drowned city clean, or it just sits there under you, full of things you need.
+place RT_PlasticBoat dvan at 18.9 34.1 ground yaw=37
+prop dvan tint.color=#4a6b7a
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at 14.9 37.1 ground sit yaw=337
+note dwreckchest Runner's stash | A runner's stash in the glovebox: plastic, glass, a few nails.
+loot dwreckchest Plastic*5;Glass*2;Nail*8
+prop dwreckchest loot.refill=0
+call hatchcache x=-34.1 z=18.9 r=4 seed=13291 alias=dhatch chest=dhatchchest items=MetalIngot*2;CopperIngot*2;Bolt*3
+call treasure x=36.9 z=-12.7 r=6 n=1 seed=13292
+prop treasure13292 treasure.loot=CopperOre*3;TitaniumOre*1
+place Zone_Trigger dview at -36.4 -14 ground
+prop dview zone.id=raft_row_bazaar_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=The bazaar's raft lies between the four drowned towers, all lanterns and noise.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): Rubbish Hill in the south, the burnt stall
+# row in the west, the pedlars' caravans and their cave in the east, a chained cage for bolt cutters
+call ar_ridge x1=-35 z1=-62 x2=15 z2=-66 h=8 top=8 r=10
+call ar_plants_hill x=-10 z=-64 r=32 seed=13211
+call hw_zone x=-10 z=-64 al=rubbishhill id=rubbish_hill r=7 msg="Rubbish Hill: what Raft Row throws away, grown over with palms. From the top the market looks small - and the Authority's patrol boat is always in sight."
+call ar_ruin x=-58 z=-28 h=3 yaw=0 w=4 d=2 al=burntrow
+call hw_note x=-55 z=-32.5 yaw=10 al=wardenreport
+call hw_wreck x=52 z=-38 h=3 yaw=30 obj=Caravan_Blue_01 al=pedlarvan crate=pedlarcrate r=10
+place Caravan_Green_02 pedlarvan at 60 -50 ground sit yaw=75
+call ar_cave x=64 z=2 h=3 yaw=0 al=pedlarcave chest=pedlarcavechest
+call hw_zone x=64 z=16 al=pedlarcavezone id=pedlars_cave r=4 msg="The pedlars' cave. Whatever the Authority bans, the pedlars keep in here until it is worth more."
+call cagecache x=20 z=-38 yaw=200 alias=pedlarcage sig=pedlarcage chest=pedlarcagechest items=TradeToken*3;Leather*2;Glass*2 title="Pedlar's caged chest" kx=-58 kz=-28 kr=16 seed=13221 keychest=wardencutters keytitle="Fire warden's tools" keyitems=Rope*2
+call ar_plants_hill x=-50 z=-55 r=12 seed=13231
+call ar_plants_hill x=40 z=-65 r=12 seed=13241
+
+# --- DEEP 10-24 (the user: one hour per island - real height, a big climb, a deep dive): Tin Peak: the pedlars climb to ring a bell over the market, the arcade lies drowned under the west shore, and the market's own stall numbers open its strongbox. ------
+# the climb: the trail spirals up from the south-east foot; on the summit the pedlars' bell tower (8 storeys, a ladder inside), its deck chest
+# and a zipline down to the hub (the shortcut back); the dive: the sunk arcade on a basin floor -12 m down, an air pocket
+# in its front room; the hub: the Crier's box that wants both, the notice; secrets: the trail ledge cache, the summit treasure,
+# the sunk boat's crate
+call hw_zone x=-27.58 z=33.84 al=rb_trailz id=rb_trail r=5 msg="The trail up Tin Peak starts here - cut into the slope, round and up."
+call hw_zone x=-44 z=54 al=rb_summitz id=rb_summit r=8 h=1 msg="The top of Tin Peak. The whole island below, the city beyond it, and the pedlars' bell tower still higher."
+call hw_mast x=-41.86 z=57.38 h0=30 lv=8 a=rb_mast chest=rb_topchest top=Placeable_Flag_03
+place ZiplinePath_Landmark rb_zip at -42.74 50.97 h=31.35
+zipto rb_zip -65.86 19.38
+place Loot_ChestSmall rb_ledge at -55.78 58.48 ground sit yaw=110.83
+call treasure x=-47.38 z=56.14 r=5 n=1 seed=13278 kind=0
+prop treasure13278 treasure.loot=CopperOre*2;MetalOre*2;TradeToken*1
+place Creature_Goat rb_goats at -31.8 36.51 ground
+prop rb_goats creature.count=2
+place Creature_Goat rb_summitgoat at -41.46 52.4 ground
+prop rb_summitgoat creature.count=1
+scatter "Pickup_Landmark_Copper 1" 2 at -44 54 r=21 seed=13282 free=2
+scatter "Pickup_Landmark_Clay 1" 2 at -44 54 r=23 seed=13283 free=2
+scatter "Pickup_Landmark_Rock 1" 2 at -44 54 r=19 seed=13284 free=2
+call hw_sunkhouse x=-80 z=-14 h=-12 yaw=0 a=rb_sunk chest=rb_deepchest air=rb_air bub=rb_airbub dal=rb_sunkdoor
+call hw_zone x=-80 z=-14 al=rb_deepz id=rb_deep r=7 h=1 msg="The sunk arcade, 12 metres down. The front room still holds a pocket of air."
+place RT_PlasticBoat rb_sunkboat at -72 -12 ground sit yaw=35
+prop rb_sunkboat tint.color=#5a5048
+prop rb_sunkboat tint.amount=0.45
+place Loot_Crate rb_boatcrate at -73 -18 ground sit yaw=10
+prop rb_boatcrate loot.refill=0
+call hw_reef x=-87 z=-9 r=3 seed=13286
+place Creature_PufferFish rb_puffers at -86 -21 h=-8
+prop rb_puffers creature.count=2
+call hw_machine x=-68 z=16 yaw=32.28 al=rb_machine nm="Crier's box" obj=RT_PowerBox sc=1 a=rb_top b=rb_deep done=rb_fixed rew=rb_rewchest rnote=rb_rewnote msg="It works." hint="It needs the bell clapper from the top of Tin Peak and the arcade till key the pedlars keep in their cave."
+call hw_note x=-66.69 z=13.4 yaw=52.28 al=rb_hint
+# the stall code: four row signs (the trail foot, the summit, the sunk arcade, the stalls) each give a stall
+# number; the crier's ledger gives the rows' order - the crier's strongbox keypad wants the four numbers
+place Note_Sign rb_rowA at -25.08 36.34 ground sit yaw=140.83
+place Note_Sign rb_rowB at -41.5 56.5 ground sit yaw=140.83
+place Note_Sign rb_rowC at -50 -24 ground sit yaw=200
+place Note_Sign rb_rowD at -72.17 19.17 ground sit yaw=140.83
+place RT_Pillar - at -61.86 14.49 ground sit sy=0.4
+place RT_PowerBox rb_strongpad at -61.86 14.49 ground y=1.25 yaw=140.83
+prop rb_strongpad obj.name=rb_strongpad
+prop rb_strongpad beh.use=Type the strongbox's stall code
+prop rb_strongpad lock.code=8523
+prop rb_strongpad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nshow|rb_strongchest\nshow|rb_friendnote\ngive||story:rb_strong*1\nmessage||Four clicks - the crier's strongbox unlocks.
+prop rb_strongpad else.use=message||Four digits. A stall number from each market row, in the crier's order.
+place Loot_ChestLarge rb_strongchest at -63.55 15.56 ground sit yaw=320.83
+place Note_Paper rb_friendnote at -62.4 16.6 ground y=0.05 drop yaw=30
+prop rb_friendnote obj.name=rb_friendnote
+prop rb_friendnote beh.hidden=1
+# (11-03 fixC, CIFloatingSweep: the speaker stood 0.7 m over its block - no market floor here: set on the block, h=0.35)
+place "VG_DecorationPrefabBase_Speaker Variant" rb_speaker at 0 82.3 h=0.35 sit yaw=180
+prop rb_speaker obj.name=rb_speaker
+prop rb_speaker beh.use=Listen to the speaker
+prop rb_speaker on.use=show|rb_broadcast\nsound||event:/raft/radio/casette_switch\nmessage||A crackle, a cough, then a calm, tired voice over the whole market. The stallholders go quiet, and then, very deliberately, louder.
+place Note_Paper rb_broadcast at 1.2 82 h=1.1 drop yaw=200
+prop rb_broadcast obj.name=rb_broadcast
+prop rb_broadcast beh.hidden=1
+place Note_Paper dobbs230 at 0.9 71 h=1.1 drop yaw=170
+call hw_note x=57 z=-46 yaw=30 al=rb_tramtag
+prop rb_strongchest obj.name=rb_strongchest
+prop rb_strongchest beh.hidden=1
+prop rb_strongchest loot.refill=0
+story rb_top|Bell clapper|Bolt|The bell tower's iron clapper, taken down so the bell could not ring.
+story rb_deep|Arcade till key|Bolt|The till key of the old shopping arcade, pulled out of its drawer by the pedlars before the arcade went under.
+story rb_fixed|Crier's box working|Bolt|The crier's box, working again.
+story rb_strong|Crier's strongbox open|Bolt|The crier's strongbox, opened with the market's own stall numbers.
+note rb_hint Market crier's notice | MARKET CRIER'S NOTICE - in my own hand, since I'm not allowed to shout it.\n\nThe crier's box has been quiet since the arcade sank, and a market without a crier is just people standing near fish.\n\nMy bell's clapper is up in the pedlars' bell tower on Tin Peak. The Authority made me take it down after I rang the bell the night of the fire, and I hid it up there out of spite. The trail starts on the side toward the stalls. The box's till key the pedlars pulled out of the arcade before it went under - they keep it in their cave by the shore, with everything else they won't sell.\n\nBring me both, and Raft Row will hear itself again.\n\n- Oswin, crier (retired, by order)
+note rb_topchest Pedlars' bell tower deck box | A box lashed to the deck rail at the top of the pedlars' bell tower.
+loot rb_topchest story:rb_top*1;Bolt*2;Scrap*2
+prop rb_topchest if.open=quest|19
+prop rb_topchest else.open=message||The box is lashed fast to the rail. Climb Tin Peak first; the bell tower's box waits for the pedlars' trail.
+note rb_deepchest Sunk arcade strongbox | A strongbox in the back room of the sunk arcade.
+loot rb_deepchest Plastic*3;Nail*4;TradeToken*2
+note rb_rewnote Crier's ledger | The crier's box hums, and the bell rings out over the stalls for the first time in a year. Somebody on the market cheers; somebody else drops a crate of eggs.\n\nInside the box: Oswin's ledger. Which stalls paid the Authority's levy to stay open, and which ones were burned. The levy was collected by a different clerk every week - but every page is signed off at the bottom in the same small, square hand: For the weight. A.C.\n\nOswin has written under the last one: What weight? Weight of what?\n\nOn the last page, the crier's round, the order he called the rows every morning: ROW C, ROW A, ROW D, ROW B. His strongbox opens the same way.
+note rb_rewchest Crier's box reward | What the crier's box kept.
+loot rb_rewchest TradeToken*3;Watermelon*2;Rope*2
+note rb_ledge Climber's cache | A climber's cache on a ledge off the trail - rope, a flask, a few bolts.
+loot rb_ledge Rope*2;Bolt*2;Scrap*2
+prop rb_ledge loot.refill=0
+loot rb_boatcrate Plastic*3;Scrap*2;MetalIngot*1
+note rb_rowA Row A sign | MARKET ROW A\nStall 5 - tin and wire
+note rb_rowB Row B sign | MARKET ROW B\nStall 3 - bells and pans
+note rb_rowC Row C sign | MARKET ROW C\nStall 8 - shoes and rope
+note rb_rowD Row D sign | MARKET ROW D\nStall 2 - fish and salt
+note rb_strongchest Crier's strongbox | The crier's strongbox: the stall fees nobody ever paid back.
+loot rb_strongchest TradeToken*4;CopperIngot*2;Rope*2
+
+# --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
+info title=Raft Row Bazaar
+info author=Custom Islands
+info description=Highwater's black market, lashed between four drowned towers: stalls, string lights, a garden key with hens, goats and fruit - and a back room the Authority doesn't know about. The second island of The City That Never Sank.
+island on.arrive=message||Music, smoke, a hundred voices. A market floats between the roofs of four drowned towers, and nobody here asks to see a permit.
+
+story backkey|Back room key|Placeable_Lantern_Metal|The merchant's back room key, from the drawer of his stall.
+
+prop concrete tint.color=#9a9a94
+prop concrete tint.amount=0.35
+prop hens creature.count=3
+prop goats creature.count=2
+prop backroom if.open=has|story:backkey|1
+prop backroom else.open=message||Locked. The merchant keeps the key on him - or in his stall's drawer.
+
+note pricesign Bazaar price board | RAFT ROW - TODAY'S PRICES\n\nNails - cheap\nRope - cheap\nScrap - cheaper\nFilters - ASK\nClean water - ASK\n\nNo permits. No questions. No credit.
+note shortage Shortage list | Chalked on a slate, rubbed out and written again many times -\n\nSHORT: filters, filter cloth, charcoal.\nSHORT: clean water.\nSHORT: anything the Authority stamps.\nSHORT: patience (mine).\n\nTwenty years I've had this stall and I've never seen a shortage go on this long. The prices go up, then the boats from Pumpcrown come in light, then the prices go up again. Funny, how the filters are always short, and the merchant on the high roof always has a new coat.\n\nAsk at the Free Fleet's stall. They find things.\n\n- Marta, corner stall
+note teoschalk Free Fleet stall | FREE FLEET - WE FIND THINGS\n\nEngines, wheels, anything that floats. Ask for Teo.\n\nTeo is out. Teo is always out. Teo is at sea, where the Authority can't count him.\n\nTake what you need from the crate - the Fleet trusts you or it doesn't, and if it doesn't, you'll find out. If you're new: the wheel plans in there are good. My father drew them. He sailed out past Pumpcrown when the rules said nobody could, and he came back, which is more than the rules ever did.\n\n- T. Varga
+note ledger Withheld stock ledger | The merchant's real book, in his small, careful hand.\n\nFilters received from the Authority: 400.\nFilters sold at the board: 0.\nFilters held back to raise the price: 400.\n\nThe Authority's cut, paid each week at Pumpcrown - to a clerk with a Council seal, never the same clerk twice.\n\nAt the bottom of the page, in a shakier hand: I didn't want this. They told me the market stays open as long as the board says ASK. My daughter drinks clean water. Other people's daughters don't. I write it down here so that somebody knows I know.\n\nSo the shortage is made. Someone should know.
+note drawer Merchant's drawer | The stall's drawer: string, a broken pencil, a key on a tag that says BACK.
+note enginecrate Engine stall crate | The engine stall's crate: the motor wheel's plans, bolts, a greasy rag.
+note fleetstall Free Fleet stall | The Fleet's crate: the steering wheel's plans, and a chalked note - for the one who reads the board.
+note backroom Back room | The back room's strongbox. Filters, stacked to the ceiling - and the merchant's warning.
+note seedbox Garden box | The garden's seed box: beets and potatoes to plant.
+loot enginecrate Blueprint_MotorWheel*1;Bolt*3;Nail*10
+prop enginecrate loot.refill=0
+loot fleetstall Blueprint_SteeringWheel*1;Rope*2;Plank*4
+prop fleetstall loot.refill=0
+loot drawer story:backkey*1;Rope*1
+prop drawer loot.refill=0
+loot backroom TradeToken*4;Plastic*4;Glass*2;story:raft-Vasagatan_BoltCutter*1
+prop backroom loot.refill=0
+loot seedbox Raw_Beet*4;Raw_Potato*2
+prop seedbox loot.refill=0
+place Note_Paper warning at 12 83.8 h=1.1 drop
+prop warning obj.name=warning
+prop warning beh.hidden=1
+prop backroom on.open=show|warning\nmessage||Filters, stacked to the ceiling. On the strongbox, a folded note.
+note warning Merchant's warning | Left on the strongbox, for whoever opened it -\n\nYou found the filters. Put them back and walk away.\n\nThe Authority takes its cut and leaves us alone. Tell the Fleet and they'll come with boats. Tell the Authority and they'll come with matches - ask the burnt stalls how that went.\n\nI am not a brave man. I sell things. I would like to go on selling things, in a market that is still here next week.\n\nEither way the market burns. Think about it. And if you have to go, go - but don't tell them where you got it.
+
+prop marketzone zone.id=market
+prop marketzone zone.radius=7
+prop marketzone zone.message=Raft Row. Stalls under wooden roofs, string lights, flags - and prices nobody stamped.
+prop fleetzone zone.id=fleet_stall
+prop fleetzone zone.radius=3
+prop fleetzone zone.message=The Free Fleet's stall. A flag with a gull on it, and nobody at the table.
+
+note wardenreport Fire warden's report | FIRE WARDEN'S REPORT - Raft Row, the burnt stalls\n\nCause: a lamp knocked over. Or so the Authority's clerk wrote, before he looked.\n\nSix stalls burnt. All six had refused to pay the Authority's 'market levy'. All six lamps were knocked over on the same night, in a flat calm, at the same hour. Fourteen years a fire warden, and I have never seen lamps so clumsy.\n\nNobody died. The pedlars dragged their stock out through the smoke and moved out to their caravans. They keep it in a cave now, where a lamp can't find it. The crier rang his bell all through the fire, and the Authority has not forgiven him.\n\nMy bolt cutters are in my tool box here. The pedlars chained up a chest by the old van down the shore - use them, if you're one of us.\n\n- J. Okafor, fire warden
+note pedlarcavechest Pedlars' stock | The pedlars' stock: the things a city on rafts runs out of first - and the drowned arcade's till key on a loop of wire.
+loot pedlarcavechest story:rb_deep*1;Battery*1;Bolt*3;Rope*2;TradeToken*2
+note rb_broadcast Councillor's broadcast | From the market's speaker, the same calm voice as the loop on five hundred -\n\n'Citizens of Raft Row. This is Councillor Crane. I know what is said about me in this market. I know the price of a filter here, and I know who sets it. I am not a fool, and I am not your enemy.\n\nThe Authority does not ration water out of spite. We ration it because this city cannot carry one more pound of anything. If you hoard, it sinks. If you riot, it sinks. If you sail off with the Fleet and leave your floors empty, the weight shifts, and it sinks.\n\nI ask you for patience. I have asked for nine years. I will ask again tomorrow.'\n\nScratched into the speaker's casing, deep: TURN IT OFF, ALDOUS.
+note dobbs230 Complaint No. 230 | To the Harbor Council, Water Committee.\nCOMPLAINT No. 230\n\nSirs,\nToday I bought a filter at Raft Row for eleven trade tokens. It was one of mine. I know it was one of mine because I scratch a little W into every filter cloth before it leaves Pumpcrown, in case of exactly this.\n\nSo: my works makes a filter. The Authority takes the filter. The filter goes missing between Pumpcrown and the ration office. The filter comes back to me across a market stall at eleven tokens, and the stallholder calls me grandad.\n\nI am fifty-three.\n\nI would like the eleven tokens back, and an explanation, in that order.\n\nYours, still in hope, but less of it,\nWilmer Dobbs, Foreman, Pumpcrown Works\n\n(Pinned under the price board. Someone has added: ASK.)
+note rb_tramtag Pedlar's tag | A brown card on a string, tied to a tin tram at the bottom of the crate - blue paint, a clockwork key, 6:40 on its side.\n\nNOT FOR SALE.\n\nA little girl from the Rookery swapped this for a bottle of clean water for her gran. She cried, and I cried, and her gran drank the water, so I suppose it was a fair trade. I said I'd hold it for her till she can buy it back. She told me her dad drove the real six-forty down Lowstreet before the street went under - blue door, number fourteen - and that he'll come back for it himself.\n\nI don't think he will. I'm holding it anyway. Hands off.\n\n- Rook, pedlar
+note rb_friendnote A friend's note | Under the strongbox, the same folded paper, the same hurry -\n\nYou read the merchant's book. Four hundred filters held back, and the cut paid at Pumpcrown every week. Now you know the shortage is made, and you are starting to know who makes it.\n\nThe Free Fleet should hear this. They are the only people in Highwater with boats and no master. Their moorings are at Fleetbreak - band seven hundred. Ask for Teo Varga. He is loud, and proud, and mostly honest, which in this city is a lot.\n\nDon't trust the Councillor's voice. It is a very good voice. That is the trouble with it.\n\n- a friend
+prop pedlarcavechest loot.refill=0
+prop pedlarcavechest if.open=quest|16
+prop pedlarcavechest else.open=message||The pedlars' stock is roped shut. The tag at their caravans says what they won't sell - read it first.
+note pedlarcrate Pedlar's caravan | The caravan's stock crate: bottles of clean water at twice the Authority's price - and a list of who can't pay.
+loot pedlarcrate Plastic*3;Glass*2;Leather*2
+quest title=Prices Without Rules
+quest intro=The tip said the bazaar sells what the Authority says doesn't exist. Find the market.
+step reach|market|1|Walk onto the market between the towers
+step read|Bazaar price board|1|Read the price board
+step blueprint|Blueprint_MotorWheel|1|Take the motor wheel's plans from the engine stall's crate
+step read|Shortage list|1|Read the shortage list at the corner stall
+step reach|fleet_stall|1|Find the stall with the Free Fleet flag on a tower roof at the market
+step blueprint|Blueprint_SteeringWheel|1|Take the steering wheel's plans from the chest at the Fleet's stall
+step read|Complaint No. 230|1|Read the complaint pinned under the price board
+step read|Councillor's broadcast|1|Listen to the market's speaker
+step open|Back room|1|Find the merchant's key and open the back room's strongbox
+step read|Withheld stock ledger|1|Read the ledger in the back room
+step catch|Chicken|1|Catch a hen from the garden for the Fleet's coop
+step read|Fire warden's report|1|Read the fire warden's report in the burnt stall row on the shore
+step read|Market crier's notice|1|Read the market crier's notice by his silent box near the burnt stall row
+step reach|rubbish_hill|1|Climb Rubbish Hill, the big heap of junk on the key
+step open|Pedlar's caravan|1|Open the stock crate at the pedlars' caravans by the shore
+step read|Pedlar's tag|1|Read the tag on what the pedlar won't sell
+step collect|story:rb_deep|1|Find the pedlars' cave and take the arcade till key from their stock
+step reach|rb_trail|1|Find the foot of the trail up Tin Peak, the tall peak on the island
+step reach|rb_summit|1|Climb the trail to the top of Tin Peak
+step collect|story:rb_top|1|Climb the pedlars' bell tower and take the bell clapper from the box on its deck
+step read|Crier's ledger|1|Bring both to the crier's box and read what it shows
+step collect|story:rb_strong|1|Find the four market row signs and open the crier's strongbox with their stall numbers
+step read|Merchant's warning|1|Read the merchant's warning
+step read|A friend's note|1|Read the folded note under the crier's strongbox
+quest done=The shortage is made. The Free Fleet will want to know - their moorings are at Fleetbreak, band 700.
+quest reward=Raw_Beet*3;Egg*2
+
+# (the traders' vans, parked on the key by the causeway)
+place Van_4 - at -18 20 ground sit yaw=200
+place Caravan_Green_02 - at 17 22 ground sit yaw=250
+
+# --- 10-25: the open sand filled - hills where nothing stands, a ruin on the biggest, a wreck, plants over all
+# (plan.py from the built island: every hill at least 8 m clear of anything the recipe placed; frame = the land centre)
+origin
+# hill 1: 44 m across, 16 m over the sea
+brush flatten at 54 52 r=22 s=20 frames=600 h=5.6
+brush flatten at 54 52 r=15.8 s=20 frames=600 h=10.4
+brush flatten at 54 52 r=9.9 s=20 frames=600 h=14.4
+brush flatten at 54 52 r=6 s=20 frames=500 h=16
+brush smooth at 54 52 r=25.3 s=5 frames=70
+brush flatten at 54 52 r=6 s=20 frames=400 h=16
+brush auto at 54 52 r=26.4 s=10 frames=25
+clear at 54 52 r=25
+# hill 2: 32 m across, 12 m over the sea
+brush flatten at 40 -68 r=16 s=20 frames=600 h=4.2
+brush flatten at 40 -68 r=11.5 s=20 frames=600 h=7.8
+brush flatten at 40 -68 r=7.2 s=20 frames=600 h=10.8
+brush flatten at 40 -68 r=6 s=20 frames=500 h=12
+brush smooth at 40 -68 r=18.4 s=5 frames=70
+brush flatten at 40 -68 r=6 s=20 frames=400 h=12
+brush auto at 40 -68 r=19.2 s=10 frames=25
+clear at 40 -68 r=19
+# hill 3: 28 m across, 10 m over the sea
+brush flatten at 70 -22 r=14 s=20 frames=600 h=3.5
+brush flatten at 70 -22 r=10.1 s=20 frames=600 h=6.5
+brush flatten at 70 -22 r=6.3 s=20 frames=600 h=9.0
+brush flatten at 70 -22 r=6 s=20 frames=500 h=10
+brush smooth at 70 -22 r=16.1 s=5 frames=70
+brush flatten at 70 -22 r=6 s=20 frames=400 h=10
+brush auto at 70 -22 r=16.8 s=10 frames=25
+clear at 70 -22 r=17
+# a ruin on hill 1: someone lived up here before the water rose
+call ar_ruin x=54 z=52 h=16 yaw=240 w=3 d=2 al=fillrrruin
+# a plane wreck on the open sand, a crate by its door
+call ar_plane x=-30 z=-38 h=2.6 yaw=120 al=fillrrplane crate=fillrrplanecrate
+call ar_plants_hill x=54 z=52 r=22 seed=6000
+call ar_plants_hill x=40 z=-68 r=16 seed=6010
+call ar_plants_hill x=70 z=-22 r=14 seed=6020
+call ar_plants_hill x=22 z=-80 r=12 seed=6030
+call ar_plants_hill x=-34 z=-56 r=12 seed=6040
+call ar_plants_hill x=76 z=38 r=12 seed=6050
+call ar_plants_hill x=42 z=26 r=12 seed=6060
+call ar_plants_hill x=-4 z=-4 r=12 seed=6070
+call ar_plants_hill x=12 z=-60 r=12 seed=6080
+call ar_plants_hill x=-70 z=42 r=12 seed=6090
+call ar_plants_hill x=16 z=-18 r=12 seed=6100
+call ar_plants_hill x=-44 z=4 r=12 seed=6110
+call ar_plants_hill x=52 z=-18 r=12 seed=6120
+
+# --- 10-25b: low hills over the open sand left in the middle (plan2.py: 16 m clear of the recipe's things)
+# low hill 1: 24 m across, 10.2 m over the sea (D 21)
+brush flatten at 42 18 r=12 s=20 frames=600 h=5.5
+brush flatten at 42 18 r=8.6 s=20 frames=600 h=8.0
+brush flatten at 42 18 r=5.4 s=20 frames=500 h=10.2
+brush smooth at 42 18 r=13.8 s=5 frames=70
+brush auto at 42 18 r=14.4 s=10 frames=25
+clear at 42 18 r=14
+# low hill 2: 24 m across, 9.9 m over the sea (D 20)
+brush flatten at -46 4 r=12 s=20 frames=600 h=5.2
+brush flatten at -46 4 r=8.6 s=20 frames=600 h=7.7
+brush flatten at -46 4 r=5.4 s=20 frames=500 h=9.9
+brush smooth at -46 4 r=13.8 s=5 frames=70
+brush auto at -46 4 r=14.4 s=10 frames=25
+clear at -46 4 r=14
+# low hill 3: 24 m across, 10.7 m over the sea (D 19)
+brush flatten at 16 -18 r=12 s=20 frames=600 h=6.0
+brush flatten at 16 -18 r=8.6 s=20 frames=600 h=8.6
+brush flatten at 16 -18 r=5.4 s=20 frames=500 h=10.7
+brush smooth at 16 -18 r=13.8 s=5 frames=70
+brush auto at 16 -18 r=14.4 s=10 frames=25
+clear at 16 -18 r=14
+call ar_plants_hill x=42 z=18 r=12 seed=6200
+call ar_plants_hill x=-46 z=4 r=12 seed=6210
+call ar_plants_hill x=16 z=-18 r=12 seed=6220
+# (a hill rock that stood off a steep slope, CIGroundIslands 10-25)
+clear at -53.67 9.45 r=3 only=SmallBoulder4 all
+# (11-03 fixC, CIFloatingSweep: a hill palm 2.5 m over the ground at 37.2 23.2)
+clear at 37.2 23.2 r=1.5 only=Tree_Palm all
+# --- 11-11 (w04): Fixer Johnny and his strongroom by the causeway foot - optional ----------------------------------------
+# A small concrete storey on the key east of the causeway's foot: the Row's back way, its door locked until someone
+# talked to Fixer Johnny (talked gate); his third answer opens it too. Behind the door, a chest in a strongroom. No quest
+# step needs it. cavecheck: 6 m and more from the market's things, the garden and the walks between them.
+origin
+push at 22 52 h=2.6
+call rt_storey a=concrete f2=none
+place RT_Floor concrete at 0 4.5 y=3
+place PlantationDoor rbbackdoor at -1.5 -4.5 y=0.05 sit yaw=0
+place Loot_ChestSmall rbstrongchest at -3 2 y=0.1 sit yaw=180
+pop
+prop rbbackdoor obj.name=rbbackdoor
+prop rbbackdoor beh.use=Open the back door
+prop rbbackdoor if.use=talked|Fixer Johnny
+prop rbbackdoor on.use=hide|rbbackdoor\nshow|rbstrongchest\nmessage||The back door gives with a shove. Johnny's strongroom: one chest, one lamp hook, no lamp.
+prop rbbackdoor else.use=message||The back door is bolted from inside. Ask the fixer on the key.
+prop rbstrongchest obj.name=rbstrongchest
+prop rbstrongchest beh.hidden=1
+prop rbstrongchest loot.refill=0
+note rbstrongchest Johnny's strongroom | What the Row does not put on a stall: a tin of rivets, two coils of good rope, a battery wrapped in oilcloth. A tag on the lid: IF IT IS GONE, JOHNNY KNOWS WHO.
+loot rbstrongchest Rope*2;Nail*8;Battery*1;Bolt*2
+# Fixer Johnny on the key, leaning on a crate (a leaner needs something at his back), facing the causeway
+place Crate_Big_01 - at 12.9 46.5 ground sit yaw=30
+place Story_Islander rbjohnny at 12 47 ground yaw=300
+prop rbjohnny obj.name=Fixer Johnny
+prop rbjohnny islander.character=Johnny
+prop rbjohnny islander.pose=lean
+prop rbjohnny talk.text=Welcome to the Row. Everything floats here, even the prices.\n> Who runs the city?\n> Got work?\n> Show me the back way.
+prop rbjohnny on.choice1=journal|Fixer Johnny: the city|The Crown runs the city - the council up on the bridgeworks. But the Crown only runs it because the pumps run. Whoever keeps the pumps going keeps the streets dry, and whoever keeps the streets dry gets to make the rules. The Row floats, so the Row does not need the pumps. That is why the Crown hates us.\nmessage||Johnny tells you who runs the city: the Crown, and the pumps under it. It is in your journal.
+prop rbjohnny on.choice2=give||Rope*2\nmessage||Johnny wants the rope back with interest.
+prop rbjohnny on.choice3=hide|rbbackdoor\nshow|rbstrongchest\nmessage||Johnny slides a bolt somewhere you cannot see. The back door of his strongroom is open.
+save Raft Row Bazaar

@@ -1,0 +1,359 @@
+# Blightmire - the seventh island of the library's plan The Last Green World (SL11, Verdance)
+# A marsh where the jungle's roots surface and rot: green fog over black pools, grey stumps, black flowers, and on three
+# roots a purple growth (Varuna's corals, tinted) that the hyenas and boars will not leave. The Seedkeepers' smelter
+# camp stands on a dry hummock in the south. Burn the three roots in the order the blight map marks them; when the last
+# goes up, the marsh is cleansed and the root it grew on opens. Quest "The Poisoned Marsh" (11 steps): the hummock, the
+# blight map, the electric smelter plans in the camp, three hyenas, the west root burnt, the north root burnt, the
+# advanced biofuel extractor plans in the marsh station by it, two boars, the east root burnt (the marsh cleansed), the
+# advanced anchor plans in the root cache, the Seedkeeper's confession. Buried in the marsh: titanium.
+#
+# Built by the recipe player (CIRecipe blightmire) through the editor's own operations. Points (metres over the sea),
+# in the content frame (push 0 -8.8): the hummock 3.6 m round 0 -49.6 (the camp round -4.65 -55.8), the roots west -46.5 0,
+# north 12.4 34.1, east 52.7 -9.3 (pads levelled to their ground), the marsh station by the north root 18.6 40.3.
+include lib_sea
+include lib_features
+include lib_huts
+include lib_verdance
+include lib_ni8
+# RESIZE 10-24: Radius 72 -> 88 (Height 5 -> 5), the old content moved 0 -8.8 as one frame (push) so its sea side stays at the coast; the island grows behind it.
+new
+# RESIZE 10-24 rework: the bigger island was a flat empty sandbank - now hummocky marsh land at Raft's density, the
+# quest spread out over it (x z * 1.55 in the old frame), no pools
+gen Trees=0.22 Bushes=0.35 Rocks=0.4 Harvest=0.25 BeachThings=0.25
+gen Seed=11081 Radius=88 Height=11 Roughness=0.45 Peaks=3 Shape=0 Style=0 PeakShape=0.3 Cliffs=0.1 BeachWidth=0.15
+gen Water=0.5 SeaRocks=0.3 SeaFinds=0.4 Sunken=0.2 Hostiles=0 Friendly=0.1 SeaLife=0.3
+generate
+push at 0 -8.8
+
+# --- Terrain: the hummock, the root pads (the black pools left out in the RESIZE 10-24 rework: Raft's sea does not
+#     fill ground under its level inland - they were dry sand pits) ---------------------------------------
+brush flatten at 0 -49.6 r=8 s=20 frames=200 h=3.6
+brush flatten at -46.5 0 r=5 s=20 frames=150
+brush flatten from 12.4 34.1 to 18.6 40.3 r=5 s=20 frames=150
+brush flatten at 52.7 -9.3 r=5 s=20 frames=150
+pop
+brush flatten at -28 48 r=5 s=8 frames=40
+origin
+clear at -28 48 r=6
+push at 0 -8.8
+clear at 0 -49.6 r=8
+clear at -46.5 0 r=5
+clear from 12.4 34.1 to 18.6 40.3 r=5
+clear at 52.7 -9.3 r=5
+
+# --- The smelter camp on the hummock: a shelter, the camp chest, the fire, the blight map, the confession (hidden) ----
+push at -4.65 -55.8 h=3.6
+call shelter w=2 d=2 y=0.1
+place Loot_Chest smeltercamp at 1.5 2.2 y=0.1 sit yaw=180
+place "Box Small" - at 0.7 0.8 y=0.1 sit
+# (REACH 10-28: dropped onto the box it fell through it to the floor, inside the box: set on its lid, 0.89 m)
+place Note_Paper confession at 0.7 0.8 y=1 yaw=15
+pop
+place campfire_1 - at 6.2 -46.5 ground sit
+place Note_Sign blightmap at -7.75 -41.85 ground sit yaw=200
+place Zone_Trigger hummockzone at 0 -49.6 ground
+place Zone_Atmosphere marshfog at 0 0 ground y=2
+
+# --- The three poisoned roots: a rotten log under purple growth, a fire hidden in each until it is burnt -------------
+# GAPS 10-24: fumes round each growth (a protective suit keeps them off: the blight suits at the camp)
+place Zone_Trigger fume1 at -46.5 0 ground y=1
+place Zone_Trigger fume2 at 12.4 34.1 ground y=1
+place Zone_Trigger fume3 at 52.7 -9.3 ground y=1
+place "Box Big" suitlocker at 2.6 -47.6 ground sit yaw=200
+place Log root1log at -46.5 0 ground sit yaw=30 scale=1.6 roll=28
+call blight x=-46.5 z=0 al=root1
+place campfire_1 fire1 at -46.5 0 ground sit
+place Log root2log at 12.4 34.1 ground sit yaw=120 scale=1.6 roll=28
+call blight x=12.4 z=34.1 al=root2
+place campfire_1 fire2 at 12.4 34.1 ground sit
+place Log root3log at 52.7 -9.3 ground sit yaw=75 scale=1.6 roll=28
+call blight x=52.7 z=-9.3 al=root3
+place campfire_1 fire3 at 52.7 -9.3 ground sit
+place Loot_Chest rootcache at 55.2 -7.6 ground sit yaw=220
+
+# --- The marsh station by the north root; the hyenas and boars; Burr by a vine-choked cache ---------------------------
+place Loot_Crate marshstation at 18.6 40.3 ground sit yaw=200
+# REDO 10-24: the vines choked the station (the machete on the main path)
+beside ChoppableVines stationvines marshstation d=1.6
+# REDO 10-24 (optional): the Seedkeepers' root cellar, a hatch on the dry ground west of the station (no light down there)
+clear at 4 30 r=2.5
+place TangaroaHatchRoom_Hatch cellarhatch at 4 30 ground
+beside Loot_ChestSmall cellarchest cellarhatch d=0.01
+place "Box Big" - at 20.93 37.2 ground sit yaw=30
+place Creature_Hyena hyenas at -21.7 -18.6 ground
+prop hyenas creature.count=3
+prop hyenas creature.respawn=0
+place Creature_Boar boars at 40.3 18.6 ground
+prop boars creature.count=2
+prop boars creature.respawn=0
+call vinecache x=-40 z=-38 r=8 seed=11082 chest=burrchest vines=burrvines items=Seed_Flower_Black*2;ExplosiveGoo*1;Rope*2
+place Creature_Goat burr at -35 -33 ground
+prop burr creature.count=1
+prop burr creature.respawn=0
+
+# --- Grey stumps, black flowers, clay pits; titanium buried in the marsh; the shallows ------------------------------
+scatter Tree_Stump 14 at 0 0 r=62 seed=11083 free=3 as=stumps
+scatter Pickup_Landmark_Flower_Black 16 at 0 6.2 r=58 seed=11084 free=2
+scatter "Pickup_Landmark_Clay 1" 2 at -31 -27.9 r=6 seed=11085 free=2
+scatter "Pickup_Landmark_Clay 2" 2 at 34.1 -37.2 r=6 seed=11086 free=2
+call treasure x=15.5 z=-9.3 r=14 n=1 seed=11051
+prop treasure11051 treasure.loot=TitaniumOre*3
+call shallows x=0 z=8.8 r=103 deep=5 n=2 seed=11087
+pop
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; Caravan_Green_01 + chest; vine-hidden chest; buried treasure; viewpoint ---
+place campfire_1 - at -28 48 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at -25 50 ground sit yaw=317
+place "Box Small" - at -30 50.5 ground sit
+place Note_Paper dnote at -30 50.5 ground y=0.9 yaw=20
+note dnote Ranger's camp note | OUTER CAMP 3 - LISE, Seedkeepers' search crew\n\nWe stopped here on the way in. The birds go quiet past the ridge. Bo tried whistling to them and the quiet got worse, which I did not know quiet could do.\n\nThe Seedkeepers say the green is waking up. Oda says it is hungry. Greta says it is both, like a baby, and Greta has five, so we listen to Greta.\n\nWe found the river people's lamps in the reeds, still lit, all in a row, set down very neatly as if they would be picked up again in a minute.\n\nKeep the fire small and the machete close. Keep the sandwiches closer.
+place Caravan_Green_01 dvan at -38.5 6.1 ground yaw=77
+prop dvan tint.color=#5a6b3a
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -42.5 9.1 ground sit yaw=17
+note dwreckchest Overgrown chest | A chest the green has half swallowed: rope, nails and an old machete's whetstone.
+loot dwreckchest Rope*3;Nail*8;Stone*3
+prop dwreckchest loot.refill=0
+call vinecache x=39 z=0.7 r=15 seed=11171 chest=dvinechest vines=dvines items=Rope*3;Nail*10;Leather*2
+call treasure x=-14 z=36.4 r=15 n=1 seed=11172
+prop treasure11172 treasure.loot=CopperOre*2;Clay*3
+place Zone_Trigger dview at 33.4 20.1 ground
+prop dview zone.id=blightmire_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=Green fog lies on the marsh, and here and there the purple growths glow on the roots.
+
+# --- FILL 10-24 (RESIZE rework): the bigger island's whole area at Raft-like density - trees, bushes, rocks; free= keeps them
+#     off the quest's objects and paths
+scatter "Pickup_Landmark_Tree_Palm 2" 12 at 0 0 r=74 seed=11191 free=5
+scatter "Pickup_Landmark_Tree_Palm 4" 8 at 0 0 r=74 seed=11192 free=5
+scatter "Pickup_Landmark_Tree_Mango" 5 at 0 0 r=74 seed=11193 free=5
+scatter "Balboa_Bush_01 Variant" 34 at 0 0 r=74 seed=11194 free=2.5
+scatter "Balboa_Bush_03 Variant" 34 at 0 0 r=74 seed=11195 free=2.5
+scatter CaravanIsland_SmallRock_1 14 at 0 0 r=74 seed=11196 free=3 ground y=-0.6
+scatter Bamboo_2 24 at 0 0 r=74 seed=11197 free=2
+scatter Tree_Stump 8 at 0 0 r=74 seed=11198 free=3
+
+# --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): the drowned digger's west hill and its boom gantry (climb, zipline to the camp), the sunk pump barge (dive), the acid bog and its sinking log path (M7), the hummock beacon
+# the west hill (STORY 10-24: no gantry tower or zipline - an optional walk up to the digger crew's survey cairn and
+# its box; no quest step)
+call vd_mount x=-66 z=-30 top=20 r=18 a0=60 turns=1.25 hb=3
+place Loot_ChestSmall bmbox at -65 -29.2 h=20 sit yaw=200
+place Placeable_Flag_05 - at -67.4 -31 h=20 sit
+call vd_spot x=-66 z=-30 al=bmtopz id=bm_top r=4 msg="The digger crew's cairn on the hill. From up here the bog's acid pools shine like spilt oil."
+note bmbox Digger crew's box | SEEDKEEPERS - DIGGER CREW. We dug the channels the growth was meant to drink from. The pump barge drained the bog; it sank in the first storm.
+loot bmbox Rope*3;Bolt*3;MetalIngot*1
+prop bmbox loot.refill=0
+# the drowned digger at the foot of the west hill, half in the mud
+place VP_Excavator bmdigger at -58 -50 ground sit yaw=210
+prop bmdigger tint.color=#4a4f3a
+prop bmdigger tint.amount=0.5
+# the dive: BoatStranded on the sea floor 10 m down, its crate, an air pocket
+call vd_dive x=70 z=-68 h=-10 yaw=135 obj="BoatStranded" al=bmwreck crate=bmcrate zal=bmwz zid=bm_wreck msg="The Seedkeepers' pump barge, on the bottom off the shore. The valve box on its deck is still shut." air=bmair bub=bmbub
+note bmcrate Pump barge's valve box | A brass bog-pump valve, greased and wrapped. Stamped on it: BOG PUMP.
+loot bmcrate story:valve*1;Scrap*3;Bolt*2
+prop bmcrate if.open=quest|10
+prop bmcrate else.open=message||The valve box is rusted shut. The Seedkeepers' root cache comes first.
+# the acid bog (RAFT_QUEST_MECHANICS SL11 7, M7): a sunken bog of acid round a dead stump island with the burner's
+# fuel drum; old logs lie across it and bob as you step on them. The pump at its edge takes the barge's valve and drains it;
+# without the valve the camp's blight suit keeps the acid off for three minutes.
+# M7 with the 10-24 mechanics: the bog breathes (zone.pulse) - the acid surges 5 s and ebbs 3 s, so a quick player can
+# hop the logs in the ebbs; the logs bob (no sink-under-foot mechanic: EDITOR GAP).
+brush flatten at 56 40 r=9 s=20 frames=150 h=0.8
+clear at 56 40 r=11 all
+brush flatten at 56 40 r=2 s=20 frames=120 h=1.3
+place Zone_Trigger bogacid at 56 40 ground y=-2
+place Log boglog1 at 50.5 34.5 ground sit yaw=45
+place Log boglog2 at 52.6 36.6 ground sit yaw=45
+place Log boglog3 at 54.6 38.6 ground sit yaw=45
+place Tree_Stump - at 56 40 ground sit
+place "Box Big" - at 57.6 41.6 ground sit yaw=40
+place Loot_ChestSmall fueldrum at 56.6 41.9 ground sit yaw=220
+place UT_JumpPuzzle_LiftMechanism_Lever bogpump at 47.5 31.5 ground sit yaw=225
+scatter Pickup_Landmark_Flower_Black 6 at 56 40 r=8 seed=11290 free=1.5
+# the burner beacon on the hummock: the fuel lights it, a fire every drowned island can see
+place "Box Big" beacon at -2 -53 ground sit yaw=20
+place campfire_1 beaconfire at -0.6 -51.6 ground sit
+call ni8cave x=30 z=-70 h=2 yaw=0 al=bmcavecave
+place Loot_ChestSmall bmcavecavebox at 27.5 -65 h=2.45 sit yaw=20
+place Placeable_Lantern_Metal - at 32.6 -66 h=2.45 sit
+note bmcavecavebox Seedkeepers' cellar chest | The Seedkeepers kept their spare masks and a sealed jar of ash here.
+loot bmcavecavebox Rope*2;Leather*2;ExplosiveGoo*1
+prop bmcavecavebox loot.refill=0
+# the heron hummock in the north (secret): a low hill, a heron-watcher's box on top
+call vd_mount x=-10 z=70 top=12 r=14 a0=250 turns=1 n=30 hb=3
+place Loot_ChestSmall bmheron at -10 70 h=12 sit yaw=160
+note bmheron Heron watcher box | A bird-watcher's tally: HERONS 0. FROGS 0. THE MARSH IS TOO QUIET.
+loot bmheron Feather*4;Rope*2;Coconut*2
+prop bmheron loot.refill=0
+call vd_spot x=-10 z=71.5 al=bmheronz id=bm_heron r=3 msg="From the heron hummock the burnt roots smoke in a line across the marsh."
+
+# --- STORY 10-24: Ranger log 7 at the marsh station, the dog-handler's note by the west root, Marit's sample tag at the east root
+place Note_Paper rangerlog7 at 20 41.6 ground y=0.3 drop
+note rangerlog7 Ranger log 7 | RANGER LOG 7 - O. FENN\n\nThe marsh station's sample jars line every shelf: grove soil, delta water, cave root, all labelled T.L. And one shelf of empty jars with names on them instead of places. HEDDA. ULF. LISE. GRETA. BO.\n\nI held the vial up against them. Same glass. Same hand.\n\nI am not calm any more. I said I would ask Teodor very calmly. I take it back.\n\nBurr found me in the reeds and stood on my foot until I stopped shaking. Good goat. Terrible goat. He has lost his bell; I have it in my pocket with the vial, which is getting crowded.\n\nThe burn crew's map says three roots. I will burn the first and see what the marsh does.
+place Note_Paper dognote at -43.4 2.6 ground y=0.3 drop
+note dognote Dog-handler's note | BO - SEARCH CREW\n\nThe dogs will not go near the hyena root. Good dogs, smart dogs, and they sit down in the mud and look at me like I have suggested something rude.\n\nThe hyenas came out of the reeds at dusk. Thin, wrong, too quiet. They did not want us. They wanted to drive us to the root, and stood in a ring round it like they were guarding a door.\n\nGreta says burn it. Lise says wait for the lab. I say whatever we do, do it before supper; I am not walking back through that in the dark.\n\nIf you read this, we waited for the lab.
+place Note_Paper marittag at 54 -6 ground y=0.3 drop
+note marittag Tag on the east root | A climbing tag, the kind you clip to a rope, wired to the root with care:\n\nM. FENN - SAMPLE LINE 40 - BOAR ROOT. GROWTH 1 METRE A DAY. TEODOR SAYS DO NOT CUT. I SAY SOMEBODY MUST.\n\nOn the back, scratched with a pin: ODA - IF YOU GET THIS FAR, I AM STILL UP AT THE HEART. I KEEP THE TOP BALCONY LAMP ON FOR YOU.
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Blightmire
+info author=Custom Islands
+info description=A rotting marsh of black pools and grey stumps, where a purple growth covers three surfaced roots. Burn them in order. The seventh island of The Last Green World.
+island on.arrive=message||Green fog over black water. The roots here have surfaced, and something purple grows on them.
+
+story burnt|Root burnt|Note_Paper|A poisoned root of the marsh, burnt clean.
+
+prop stumps tint.color=#8a8a84
+prop stumps tint.amount=0.5
+prop root1 tint.color=#8a3ac0
+prop root1 tint.amount=0.75
+prop root2 tint.color=#8a3ac0
+prop root2 tint.amount=0.75
+prop root3 tint.color=#8a3ac0
+prop root3 tint.amount=0.75
+prop root1log tint.color=#3a2a30
+prop root1log tint.amount=0.6
+prop root2log tint.color=#3a2a30
+prop root2log tint.amount=0.6
+prop root3log tint.color=#3a2a30
+prop root3log tint.amount=0.6
+prop marshfog atmo.fog=#6a8a40
+prop marshfog atmo.fogAmount=0.25
+prop marshfog atmo.light=#c0e080
+prop marshfog atmo.lightAmount=0.2
+prop marshfog atmo.particles=mist
+prop marshfog zone.radius=90
+
+prop fire1 beh.hidden=1
+prop fire2 beh.hidden=1
+prop fire3 beh.hidden=1
+prop rootcache beh.hidden=1
+prop marshstation obj.name=marshstation
+prop marshstation beh.hidden=1
+prop stationvines obj.name=stationvines
+prop stationvines on.use=hide|\nshow|marshstation\nmessage||The machete cuts the station free. Its locker was under the vines all along.
+prop cellarhatch obj.name=cellarhatch
+prop cellarhatch on.use=hide|\nshow|cellarchest\nmessage||A root cellar under the hatch, pitch black. Something glints at the bottom.
+note cellarchest Root cellar | The Seedkeepers' root cellar: seed jars sealed against the blight, and a titanium bar.
+loot cellarchest TitaniumIngot*1;Seed_Pineapple*2;Seed_Mango*2;Seed_Flower_Red*2
+prop cellarchest loot.refill=0
+prop cellarchest obj.name=cellarchest
+prop cellarchest beh.hidden=1
+prop cellarchest if.open=wears|HeadLight*
+prop cellarchest else.open=message||Pitch black down there. You can hear glass clink, but you can't see a thing - wear a headlight.
+prop confession beh.hidden=1
+
+prop root1 obj.name=root1
+prop root1 beh.use=Set the growth alight
+prop root1 if.use=!signal|root1
+prop root1 on.use=signal||root1\nhide|fume1\ngive||story:burnt*1\nhide|root1\nshow|fire1\nmessage||The growth hisses, curls and burns down to the wood. The fog thins a little.
+prop root2 obj.name=root2
+prop root2 beh.use=Set the growth alight
+prop root2 if.use=signal|root1\n!signal|root2
+prop root2 on.use=signal||root2\nhide|fume2\ngive||story:burnt*1\nhide|root2\nshow|fire2\nmessage||The second root burns. Somewhere out in the marsh, something squeals.
+prop root2 else.use=message||The growth only smoulders. The map says: hyena root first.
+prop root3 obj.name=root3
+prop root3 beh.use=Set the growth alight
+prop root3 if.use=signal|root2\n!signal|cleansed
+prop root3 on.use=signal||cleansed\nhide|fume3\ngive||story:burnt*1\nhide|root3\nshow|fire3\nshow|rootcache\nshow|confession\nmessage||The last root goes up with a roar. The fog lifts off the marsh - and the burnt root splits open over a chest.
+prop root3 else.use=message||The growth only smoulders. The map says: hyena root, then station root, then boar root.
+prop burrvines on.use=hide|\nshow|burrchest\nmessage||Burr butts through the vines - he found it: a Seedkeeper's stash.
+
+note blightmap Blight map | BLIGHT MAP - MARSH STATION\n\nThree roots up through the marsh, all three grown over.\nBurn them in order or the growth runs back along the root:\n  1. HYENA ROOT   2. STATION ROOT (by this station)   3. BOAR ROOT\n\nThe hyenas nest at the first. Boars at the last.
+note confession Seedkeeper's confession | To whoever burns the last root -\n\nThank you. I mean that. I could not do it; I tried twice and stood here with the torch until it went out.\n\nI made it. V-1. A spore to eat the oil out of the river and give back clean water. It did. And then it went on into the roots, and fed on the roots, and then on whatever lay down among them to rest. Fourteen river people. Lise's crew. They are not dead, exactly. They are part of it. It sings with their voices at night.\n\nThe ranger has my first trial vial. I saw her pocket it. She is looking for me, and she will want to burn everything, and she will be right, and it will still be the wrong answer.\n\nThe Seedkeepers' last camp is on Canopy Stair, the climb to the Heart. Come up. I left the stair for you. - T.L.
+note smeltercamp Smelter camp chest | The smelter camp's chest: the plans of a smelter that runs on power.
+note marshstation Marsh station locker | The marsh station's locker: an advanced extractor's plans and the root samples, sealed.
+note rootcache Root cache | A chest the root had grown round: an anchor's plans, and the Seedkeepers' mark on the lid.
+# (box agent 10-25: a spare machete here - the vines need one, and a fresh world or a lost one from the delta left the island stuck)
+loot smeltercamp Blueprint_SmelterElectric*1;MetalIngot*2;CopperIngot*1;Machete*1
+prop smeltercamp loot.refill=0
+loot marshstation Blueprint_BiofuelExtractorAdvanced*1;ExplosiveGoo*1
+prop marshstation loot.refill=0
+loot rootcache Blueprint_AnchorStationaryAdvanced*1;MetalIngot*2
+prop rootcache loot.refill=0
+
+prop hummockzone zone.id=hummock
+prop fume1 obj.name=fume1
+prop fume1 zone.radius=6
+prop fume1 zone.hazard=miasma
+prop fume1 zone.hazardMsg=The growth's fumes burn your throat - a blight suit keeps them off.
+prop fume2 obj.name=fume2
+prop fume2 zone.radius=6
+prop fume2 zone.hazard=miasma
+prop fume2 zone.hazardMsg=The growth's fumes burn your throat - a blight suit keeps them off.
+prop fume3 obj.name=fume3
+prop fume3 zone.radius=6
+prop fume3 zone.hazard=miasma
+prop fume3 zone.hazardMsg=The growth's fumes burn your throat - a blight suit keeps them off.
+prop suitlocker obj.name=suitlocker
+prop suitlocker beh.use=Put on a Seedkeeper blight suit
+prop suitlocker on.use=suit||180\nmessage||An oilcloth blight suit and a mask - three minutes of clean air in the fumes.
+prop hummockzone zone.radius=6
+prop hummockzone zone.message=The hummock. Dry ground, a cold smelter camp, a map nailed to a post.
+
+# DEEP 10-24 settings
+story valve|Bog pump valve|Placeable_Lantern_Metal|A brass valve stamped BOG PUMP, from the sunk pump barge.
+story fuel|Burner fuel|Placeable_Lantern_Metal|A drum of the Seedkeepers' burner fuel, from the acid bog's stump island.
+story beacon|Beacon lit|Placeable_Lantern_Metal|The hummock beacon is burning: the marsh is clean.
+prop bogacid obj.name=bogacid
+prop bogacid zone.id=bm_bog
+prop bogacid zone.radius=9
+prop bogacid zone.hazard=acid
+prop bogacid zone.damage=4
+prop bogacid zone.pulse=5,3
+prop bogacid zone.hazardMsg=The bog water is acid and it eats at your boots. Drain it with the pump - or wear the camp's blight suit.
+prop boglog1 beh.bob=0.15
+prop boglog1 beh.bobTime=2.5
+prop boglog2 beh.bob=0.15
+prop boglog2 beh.bobTime=3
+prop boglog3 beh.bob=0.15
+prop boglog3 beh.bobTime=2
+prop bogpump obj.name=bogpump
+prop bogpump beh.use=Fit the valve and work the bog pump
+prop bogpump if.use=!signal|drained\ntake|story:valve|1
+prop bogpump on.use=signal||drained\nhide|bogacid\nmessage||The valve bites, the pump wheezes and the acid drains off down the old channel. The logs settle in the mud.
+prop bogpump else.use=message||The bog pump. Its valve is gone - BOG PUMP, the plate says; the pump barge carried the spares.
+prop fueldrum obj.name=fueldrum
+note fueldrum Fuel drum | The Seedkeepers' burner fuel, sealed against the acid. Enough for one big fire.
+loot fueldrum story:fuel*1;Scrap*2
+prop fueldrum loot.refill=0
+prop fueldrum if.open=quest|11
+prop fueldrum else.open=message||The drum's cap is seized. Fetch the bog pump's valve from the sunk barge first.
+prop beacon obj.name=beacon
+prop beacon beh.use=Pour the fuel into the beacon burner
+prop beacon if.use=!signal|beacon\ntake|story:fuel|1
+prop beacon on.use=signal||beacon\ngive||story:beacon*1\nshow|beaconfire\nmessage||The beacon roars up. Across the water, on the other green islands, someone will see it.
+prop beacon else.use=message||The camp's beacon burner, dry. The fuel was kept out on the bog, the gantry box says.
+prop beaconfire obj.name=beaconfire
+prop beaconfire beh.hidden=1
+quest title=The Poisoned Marsh
+quest intro=Green fog and dead wood. Make for the digger crew's hill, then find the Seedkeepers' camp on the dry hummock out in the marsh.
+step reach|hummock|1|Go to the dry hummock
+step read|Blight map|1|Read the blight map
+step blueprint|Blueprint_SmelterElectric|1|Take the electric smelter plans from the camp chest
+step kill|Hyena|3|Drive off the three hyenas
+step collect|story:burnt|1|Burn the root where the hyenas nest
+step collect|story:burnt|2|Burn the root by the marsh station
+step blueprint|Blueprint_BiofuelExtractorAdvanced|1|Take the advanced extractor plans from the marsh station
+step kill|Warthog|2|Drive off the two boars
+step collect|story:burnt|3|Burn the root where the boars roam
+step blueprint|Blueprint_AnchorStationaryAdvanced|1|Take the advanced anchor plans from the root cache
+step collect|story:valve|1|Dive to the sunk pump barge off the shore and open its valve box
+step collect|story:fuel|1|Cross the acid bog to the fuel drum (drain it with the bog pump, or wear the blight suit)
+step collect|story:beacon|1|Light the beacon on the hummock with the fuel
+step read|Seedkeeper's confession|1|Read the Seedkeeper's confession in the camp
+quest done=The growth started at the Heart. The Seedkeepers' last camp is on the climb to it - band 900.
+quest reward=TitaniumOre*1;Seed_Flower_Black*2
+
+# names for the show/hide actions (actions find objects by obj.name)
+prop burrchest obj.name=burrchest
+prop confession obj.name=confession
+prop fire1 obj.name=fire1
+prop fire2 obj.name=fire2
+prop fire3 obj.name=fire3
+prop rootcache obj.name=rootcache
+# (box agent 10-25: names for the guide pictures' snap points)
+prop bmbox obj.name=bmbox
+prop bmwreck obj.name=bmwreck
+save Blightmire

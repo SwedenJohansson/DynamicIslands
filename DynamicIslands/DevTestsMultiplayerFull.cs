@@ -28,14 +28,14 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIMPFull", docs: "Dev, in game (host): spawns and keeps 'cimpfull', an island with every in-world feature for the two-player test (tools\\mpfull.ps1)")]
 		public static void MPFullCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(MPFullRoutine());
+			StartTest(MPFullRoutine());
 		}
 
 		static IEnumerator MPFullRoutine()
 		{
 			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
 			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor("generated_sample"));
+			IslandFile f = SampleIsland();
 			f.Name = FullIsland;
 			f.Elevation = 0f;
 			Vector2 c = IslandSpawner.LandCentre(f);
@@ -111,14 +111,14 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIMPVisit", docs: "Dev, in game (host): spawns 'cimpvisit' 600 m ahead with an island rule 'when players first get here: bring a sandbar'")]
 		public static void MPVisitCommand()
 		{
-			DynamicIslands.instance.StartCoroutine(MPVisitRoutine());
+			StartTest(MPVisitRoutine());
 		}
 
 		static IEnumerator MPVisitRoutine()
 		{
 			Vector3? raftPos = CustomIslandSpawner.RaftPosition;
 			if (!raftPos.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
-			IslandFile f = IslandFile.Load(IslandSpawner.PathFor(TestIsland));
+			IslandFile f = System.IO.File.Exists(IslandSpawner.PathFor(TestIsland)) ? IslandFile.Load(IslandSpawner.PathFor(TestIsland)) : SampleIsland();
 			f.Name = VisitIsland;
 			f.Props[IslandProps.Title] = "Far island";
 			f.Props[WorldDirector.IslandRulesKey] = "v | type:sandbar | visit:self | near:self:400:any | Someone reached the far island | Visit sandbar";
@@ -172,7 +172,7 @@ namespace DynamicIslands
 		public static void GotoIslandCommand(string[] args)
 		{
 			IslandWorldState.Entry e = LoadedIsland(args);
-			if (e != null) DynamicIslands.instance.StartCoroutine(StandRoutine(e.Root));
+			if (e != null) StartTest(StandRoutine(e.Root));
 		}
 
 		/// <summary>The animals near an island's creature spots of a kind (every machine: Raft shows the host's animals to everyone).</summary>
@@ -187,7 +187,12 @@ namespace DynamicIslands
 			string label = bySize ? string.Join(" ", k.Take(k.Length - 1).ToArray()) : kind ?? "";
 			List<CreatureSpawnPoint> spots = e.Root.GetComponentsInChildren<CreatureSpawnPoint>(true).Where(p => p.Kind != null && (label.Length == 0 || p.Kind.Label.Equals(label, StringComparison.OrdinalIgnoreCase))).ToList();
 			float reach = CustomIslandSpawner.LandRadius(e.Name) + margin;
-			return UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null && spots.Any(p => p.Kind.Type == a.behaviourType) &&
+			// (on the host: only what the island's own spots spawned - a generated island or Raft's own island with the
+			// randomizer's extra hens 230 m off Camp Blackwater were counted with it in Silver Screen Seas, 2026-10-05)
+			// (a boss phase's summons too - CIRfBossPhaseMp's host saw the beast but not its 2 summons, 2026-10-18)
+			HashSet<AI_NetworkBehaviour> own = new HashSet<AI_NetworkBehaviour>(spots.SelectMany(p => p.Spawned.Concat(p.Summoned)).Where(a => a != null));
+			bool byOwn = Raft_Network.IsHost && own.Count > 0;
+			return UnityEngine.Object.FindObjectsOfType<AI_NetworkBehaviour>().Where(a => a != null && (!byOwn || own.Contains(a)) && spots.Any(p => p.Kind.Type == a.behaviourType) &&
 					FlatDistance(a.transform.position, e.Position) < reach && (!bySize || Mathf.Abs(a.transform.localScale.x - size) < 0.05f))
 				.OrderBy(a => a.transform.position.x).ToList();
 		}
@@ -219,13 +224,61 @@ namespace DynamicIslands
 		}
 
 		/// <summary>Hits the animals of a kind until they are down, through Raft's Network_Host.DamageEntity (a client's hit goes to the host).</summary>
+		[ConsoleCommand(name: "CIHitOnce", docs: "Dev, in game (either player), IM15: one hit of <damage> on the first live animal of a kind at an island, as this player's weapon (Raft's DamageEntity, the Damage stat on top): CIHitOnce <island> <damage> <kind>; logs HITONCE <id> before <health>, x<Damage stat> x<game mode>")]
+		public static void HitOnceCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			float dmg;
+			if (args.Length < 3 || !float.TryParse(args[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out dmg)) { Fail("CIHitOnce <island> <damage> <kind>"); return; }
+			string kind = string.Join(" ", args.Skip(2).ToArray());
+			AI_NetworkBehaviour a = AnimalsOf(e, kind, 150f).Where(x => x.networkEntity != null && !x.networkEntity.IsDead)
+				// (the lowest id: the same animal on both players - their lists come in different orders, IM28)
+				.OrderBy(x => x.ObjectIndex).FirstOrDefault();
+			Network_Host host = ComponentManager<Network_Host>.Value;
+			if (a == null || host == null) { Fail("no live " + kind + " at '" + e.HostName + "'"); return; }
+			SO_GameModeValue mode = GameModeValueManager.GetCurrentGameModeValue();
+			float modeMul = mode != null && mode.playerSpecificVariables != null ? mode.playerSpecificVariables.outgoingDamageMultiplierPVE : 1f;
+			float before = a.networkEntity.stat_health.Value;
+			PutPlayerNear(a.transform);
+			host.DamageEntity(a.networkEntity, a.transform, dmg, a.transform.position + Vector3.up, Vector3.up, EntityType.Player, null);
+			Log("HITONCE " + a.ObjectIndex + " before " + before.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + ", x" + PlayerLevels.Factor(LevelRules.Damage).ToString("F2", System.Globalization.CultureInfo.InvariantCulture) +
+				" x" + modeMul.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + " (" + (Raft_Network.IsHost ? "host" : "client: sent to the host") + ")");
+			Log("PASS: hit once");
+		}
+
+		[ConsoleCommand(name: "CIRaceCount", docs: "Dev, in game (either player), IM28: what a race of two players changes, counted before and after: CIRaceCount <island> <animal kind> <item part, * = any>; logs RACE kills <this player's kills> live <live animals of the kind> pickups <that item's pickups left on the island> item <its name> have <how many this player has>")]
+		public static void RaceCountCommand(string[] args)
+		{
+			IslandWorldState.Entry e = LoadedIsland(args);
+			if (e == null) return;
+			if (args.Length < 3) { Fail("CIRaceCount <island> <animal kind> <item part>"); return; }
+			string kind = args[1], part = string.Join(" ", args.Skip(2).ToArray());
+			int live = AnimalsOf(e, kind, 150f).Count(a => a.networkEntity != null && !a.networkEntity.IsDead);
+			List<PickupItem> left = e.Root.GetComponentsInChildren<PickupItem>()
+				.Where(p => p.gameObject.activeInHierarchy && p.GetComponent<HarvestableTree>() == null && (part == "*" ||
+					p.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0 || (p.transform.parent != null && p.transform.parent.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0))).ToList();
+			// (the first networked one, as CIPick takes it; many give their item through a yield, not an itemInstance - then
+			// "have" counts everything this player carries, IM28)
+			PickupItem first = left.Where(p => p.GetComponent<PickupItem_Networked>() != null).OrderBy(p => p.GetComponent<PickupItem_Networked>().ObjectIndex).FirstOrDefault();
+			string item = first != null && first.itemInstance != null && first.itemInstance.baseItem != null ? first.itemInstance.UniqueName : "";
+			// (the first one's object name, as CIPick finds it: up to a space or bracket)
+			string obj = first != null ? first.name.Split(' ', '(')[0] : "?";
+			if (part != "*") left = left.Where(p => p.itemInstance != null && p.itemInstance.UniqueName == item).ToList();
+			Network_Player me = RAPI.GetLocalPlayer();
+			int have = me == null ? -1 : item.Length > 0 ? me.Inventory.GetItemCount(item) :
+				me.Inventory.allSlots.Where(x => x != null && !x.IsEmpty && x.itemInstance != null).Sum(x => x.itemInstance.Amount);
+			Log("RACE kills " + (PlayerLevels.On && PlayerLevels.Mine != null ? PlayerLevels.Mine.Kills : -1) + " live " + live + " pickups " + left.Count + " item " + (item.Length > 0 ? item : first != null ? "any" : "?") + " have " + have + " obj " + obj);
+			Log("PASS: race count");
+		}
+
 		[ConsoleCommand(name: "CIHit", docs: "Dev, in game (either player): defeats the animals of a kind at an island, as a player's weapon would (Raft's DamageEntity): CIHit <island> <kind, e.g. Warthog>")]
 		public static void HitCommand(string[] args)
 		{
 			IslandWorldState.Entry e = LoadedIsland(args);
 			if (e == null) return;
 			string kind = args.Length > 1 ? string.Join(" ", args.Skip(1).ToArray()) : "";
-			DynamicIslands.instance.StartCoroutine(HitRoutine(e, kind));
+			StartTest(HitRoutine(e, kind));
 		}
 
 		static IEnumerator HitRoutine(IslandWorldState.Entry e, string kind)
@@ -268,7 +321,7 @@ namespace DynamicIslands
 		public static void CatchCommand(string[] args)
 		{
 			IslandWorldState.Entry e = LoadedIsland(args);
-			if (e != null) DynamicIslands.instance.StartCoroutine(CatchRoutine(e));
+			if (e != null) StartTest(CatchRoutine(e));
 		}
 
 		static IEnumerator CatchRoutine(IslandWorldState.Entry e)
@@ -345,7 +398,7 @@ namespace DynamicIslands
 		public static void ReloadIslandCommand(string[] args)
 		{
 			IslandWorldState.Entry e = LoadedIsland(args);
-			if (e != null) DynamicIslands.instance.StartCoroutine(ReloadIslandRoutine(e));
+			if (e != null) StartTest(ReloadIslandRoutine(e));
 		}
 
 		static IEnumerator ReloadIslandRoutine(IslandWorldState.Entry e)

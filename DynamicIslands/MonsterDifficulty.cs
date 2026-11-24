@@ -82,7 +82,11 @@ namespace DynamicIslands.Editor
 					string.Join("\n", Enumerable.Range(0, Names.Length).Select(i => Names[i] + " (" + FactorText(i) + "): " + Short(i)).ToArray()) +
 					"\nBruce and your raft stay as in Raft: his bites on it, how often he comes for it and how soon he is back after you kill him. " +
 					"Puffer fish: only their health changes, their explosion and poison hurt as in Raft.\n" +
-					"It comes on top of the game mode above. Tame animals (llamas, goats, chickens) and seagulls don't change. " +
+					"It comes on top of the game mode: Easy's monsters hit softer, Hard's harder (and in Hard your hits do 20% less). " +
+					"In Peaceful monsters leave you alone (only Raft's Varuna Point and Utopia bosses still fight), so mostly their health changes. " +
+					"In Creative nothing can hurt you, and no screechers or puffer fish come (a quest step that needs them can't be done there). " +
+					"In every mode your hits count, so kill quests and lairs can be done.\n" +
+					"Tame animals (llamas, goats, chickens) and seagulls don't change. " +
 					"The host can change it later with the console command Monsters (F10).";
 			}
 		}
@@ -217,8 +221,9 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static float Scale(Network_Entity target, float damage, EntityType inflictor)
 		{
-			if (Current == Normal || target == null || damage <= 0f || damage >= KillDamage) return damage;
-			float f = Factor, result;
+			// (with Night is dangerous on top: NightDanger)
+			float f = Factor * NightDanger.MonsterFactor, result;
+			if (Mathf.Approximately(f, 1f) || target == null || damage <= 0f || damage >= KillDamage) return damage;
 			if (target.entityType == EntityType.Player)
 			{
 				if (inflictor != EntityType.Enemy || PufferFishHurting) return damage;
@@ -235,7 +240,7 @@ namespace DynamicIslands.Editor
 
 		#endregion
 
-		[ConsoleCommand(name: "Monsters", docs: "Monster difficulty: Monsters = this world's; Monsters timid|normal|fierce|savage|nightmare = change it for this world (host), or at the main menu for the next new world. Health and damage of hostile animals x0.75 / x1 / x1.25 / x1.5 / x2")]
+		[ConsoleCommand(name: "Monsters", docs: "Monster difficulty: Monsters = this world's; Monsters timid|normal|fierce|savage|nightmare (or easy|moderate|hard|impossible, or 0-4) = change it for this world (host), or at the main menu for the next new world. Health and damage of hostile animals x0.75 / x1 / x1.25 / x1.5 / x2")]
 		public static void MonstersCommand(string[] args)
 		{
 			string arg = args != null ? string.Join(" ", args).Trim() : "";

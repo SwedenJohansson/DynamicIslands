@@ -45,13 +45,16 @@ namespace DynamicIslands.Editor
 		{
 			var words = new[]
 			{
-				new[] { "StoryChain", "the story chain (your islands on the Receiver)" }, new[] { "StoryOrder", "story islands in a new order" },
-				new[] { "Blueprint", "scrambled blueprints" }, new[] { "PrivateStorage", "private storages" }, new[] { "Ghost", "ghost rafts" },
+				new[] { "StormSeas", "storm seas" }, new[] { "GlowSea", "the bioluminescent sea" }, new[] { "Upgrade", "extra upgrades" }, new[] { "StoryChain", "the story chain (your islands on the Receiver)" }, new[] { "StoryOrder", "story islands in a new order" },
+				new[] { "Carry", "carrying pieces (no jumping or ziplines while carrying)" }, new[] { "Blueprint", "scrambled blueprints" }, new[] { "PrivateStorage", "private storages" }, new[] { "Ghost", "ghost rafts" },
 				new[] { "Level", "the level up system" }, new[] { "Stat", "the level up system" }, new[] { "Monster", "monster difficulty" },
 				new[] { "BuildCost", "build cost" }, new[] { "Randomizer", "the world randomizer" }, new[] { "WorldSettings", "the World settings window" },
 				new[] { "NewWorld", "the New Game box" }, new[] { "NewGame", "the New Game box" }, new[] { "Save", "saving custom islands with the world" },
 				new[] { "ChunkPoint", "keeping Raft's islands clear of custom ones" }, new[] { "Creature", "creatures" }, new[] { "Note", "notes" },
 				new[] { "Receiver", "the Receiver" }, new[] { "Notice", "the main menu box" }, new[] { "Library", "the island library" },
+				new[] { "IslandGround", "standing on custom islands (a moving raft could carry players off them)" },
+				new[] { "DeadCarrier", "warthogs letting go of a player when killed while carrying them" },
+				new[] { "ControlsKeys", "the journal and stats keys in Raft's Controls settings" }, new[] { "FogBanks", "fog banks" }, new[] { "AnimalLooks", "rare animal looks" }, new[] { "Kraken", "the kraken arm" }, new[] { "FogSight", "binoculars seeing through fog" },
 			};
 			foreach (string[] w in words) if (patch.IndexOf(w[0], StringComparison.OrdinalIgnoreCase) >= 0) return w[1];
 			return "a part of the mod (" + patch + ")";

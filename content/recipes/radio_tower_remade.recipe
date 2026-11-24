@@ -1,0 +1,381 @@
+# Radio Tower Remade - an island of the library's plan Raft Remade (in place of Raft's Radio Tower)
+# Raft's radio tower made anew: its rock remade with the generator's "Randomize existing" (bigger and steeper), and on it
+# a tower of three storeys of the radio tower's pieces climbing the rock: the landing at the sea, the generator room
+# halfway up, the radio room at the top with its roof. The storm took the battery bank into the sea by the old shark
+# cage; a screecher, Old Beak, has taken the roof. Quest "Back on the Air" (7 steps): the landing, the keeper's note, the
+# battery bank from the cage, the roof and its nest, Old Beak, the radio room, the radio on the air and the keeper's locker.
+# RAFT REMADE 10-26 (1-hour pass): grown to Raft's size (r80 about 75) by land added round the old rock: Antenna Hill
+# and its relay mast (north), Keeper's Cove and his hut (west), Wreckers' Point and its beacon lamps (south-west),
+# Gull Cliffs and a sea cave (east), a mail plane, a trawler wreck and the pylon bases (a jump course). Quest 7 -> 11
+# steps: the cove, the diary, the hill and the relay valve before the battery bank; the radio needs both now. The
+# head light and recycler plans in the locker (their own steps). Design: _ProjectDocs/plans/storylines_old/RAFT_REMADE.md.
+#
+# Built by the recipe player (CIRecipe radio_tower_remade) through the editor's own operations.
+include lib_sea
+include lib_rt
+include lib_features
+include lib_highwater
+include lib_areas
+include lib_raft_remade
+new
+# (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
+gen Friendly=0 SeaLife=0.3
+# (harvestables at Like Raft: "like" Raft's Radar island scaled its handful of plants on its tiny land up to the slider's
+# top - 62 pineapples, 19 sand piles and 16 berry bushes on 3500 m2, twelve times Raft's - the review, 2026-10-03)
+randomize Radar like Seed=7101 Radius=34 Height=28 Cliffs=0.6 Peaks=1 PeakShape=0.7 Hostiles=0 Harvest=0.24
+
+# --- Terrain: the tower's footing levelled on the south terrace, a dock's beach below it -----------------------------
+brush flatten at -1 -18 r=7 s=20 frames=40
+clear at -1 -16 r=9
+clear from -1 -22 to -1 -30 r=4
+origin
+
+# --- The tower: four legs of the radio tower's thick pillars, three decks, ladders up its front, the radio room on top
+# (its top deck reaches north over the peak). Frame on the levelled terrace, its floor the ground (2.7 m).
+push at 2 -18 h=2.7
+for lx -5.9 -0.1 5.8
+for lz -4.4 4.4 8.8
+for ly 0 12 6
+place RT_PillarThick - at $lx $lz y=$ly
+next
+# (the last piece cut to end under the top deck)
+place RT_PillarThick - at $lx $lz y=18 sy=0.383
+next
+next
+# decks (each floor spans 6 m west and 9 m south of its corner)
+place RT_Floor deck1 at 0 4.5 y=6.3
+place RT_Floor deck2 at 0 4.5 y=13.3
+place RT_Floor deck3 at 0 4.5 y=20.3
+place RT_Floor - at 0 13.5 y=20.3
+# ladders up the front, from the ground to each deck in turn
+place LandmarkLadder_6m ladder0 at -1.5 -4.62 y=0
+place LandmarkLadder_6m ladder1 at -4.5 -4.62 y=6.3
+place LandmarkLadder_6m ladder2 at -1.5 -4.62 y=13.3
+# railings on the decks' backs and sides
+for d 6.3 13.3 7
+line RT_Fence from 0 4.5 to -6 4.5 step=1.5 ends y=$d
+place RT_Fence - at -6 -3 y=$d yaw=90
+place RT_Fence - at -6 0 y=$d yaw=90
+place RT_Fence - at -6 3 y=$d yaw=90
+place RT_Fence - at 0 -3 y=$d yaw=90
+place RT_Fence - at 0 0 y=$d yaw=90
+place RT_Fence - at 0 3 y=$d yaw=90
+next
+# the radio room on the top deck's north half (its door faces the ladder's arrival)
+push at 0 9 y=20.3
+call rt_storey f2=RT_WallDoor1 l2=RT_WallWindow1 r2=RT_WallWindow1 b1=RT_WallWindow2 b2=RT_WallWindow2
+place "Table Office" - at -3 3.5 sit
+place RT_CommRadio radio at -3.3 3.9 y=1.08 sit
+place Note_Paper - at -2.3 3.85 y=1.08 sit
+place RT_RadarScreen - at -5.45 -0.5 sit yaw=90
+place Locker radiolocker at -0.6 2.5 sit yaw=270
+place "Chair Office" - at -3 2.7 sit yaw=170
+place RT_RoofLamp - at -3 0 y=2.95
+place RT_RoofLamp onairlights at -4.5 3 y=2.95
+place Zone_Trigger radioroom at -3 0 y=1.2
+# its roof: the dish, the floodlights - and Old Beak's nest
+place RT_Floor - at 0 4.5 y=3
+place RT_SatteliteDisc - at -4.6 -2.5 y=3 sit yaw=200
+# (on the roof itself - it has no railing to stand on, at the railing's height it hung 1.35 m over the roof)
+place RT_Floodlight - at -5.5 4.0 y=3 sit yaw=315
+place Bird_Nest - at -2 2 y=3 sit
+place Creature_StoneBird oldbeak at -2 2 y=5
+place Zone_Trigger roofzone at -3 0 y=6.5
+pop
+pop
+
+# --- The landing: a dock on posts below the tower, the keeper's note on the tower's foot, a plastic boat ------------
+for dz -26.5 -31.7 -5.2
+place Relay_Floor_deck - at 1.6 $dz h=1.9
+place Relay_support_beam_wood - at -3.4 {$dz-0.4} h=-15 rot=0,0,-90 sx=1.81
+place Relay_support_beam_wood - at 1.2 {$dz-0.4} h=-15 rot=0,0,-90 sx=1.81
+place Relay_support_beam_wood - at -3.4 {$dz-4.8} h=-15 rot=0,0,-90 sx=1.81
+place Relay_support_beam_wood - at 1.2 {$dz-4.8} h=-15 rot=0,0,-90 sx=1.81
+next
+place RT_PlasticBoat - at 4.5 -34 h=0.3 yaw=15
+place Note_Board keepernote at -2 -23.2 ground yaw=180
+place "Box Big" - at -5.5 -23 ground sit yaw=20
+place "Box Big" - at -5.4 -21.8 ground sit yaw=-10
+place Zone_Trigger landing at -1 -26 h=2.5
+
+# --- The old shark cage on the seabed south-west, the cage locker wedged inside it ----------------------------------
+place RT_SharkCage cage at -13 -33 ground sit yaw=30
+# (the shark cage as a ready piece is chained shut, wants Raft's bolt cutters and goes when used: here it is the old cage the battery bank lies by, open to divers - the ready piece's settings taken off)
+prop cage beh.use=
+prop cage if.use=
+prop cage else.use=
+prop cage on.use=
+place Loot_Chest cagebox at -13 -33 ground sit yaw=30
+
+# --- RAFT REMADE 10-26 (1-hour pass): the rock grows to Raft's size by land added round it (the old rock, tower, dock
+# and cage as they were; the south bay stays open). Antenna Hill and its relay mast (north), the north ridge, Keeper's
+# Cove and his hut (west), Wreckers' Point and its beacon lamps (south-west), Gull Cliffs (east) and a sea cave at
+# their foot, a mail plane (north-east), a trawler wreck (north-west), the pylon bases (south-east: a jump course).
+# Land bridges first, from the old shore outwards, then each area.
+# (11-08 c: the trawler's shoal (G) laid first, before the land round it: rings stepping down from its pad into the deep sea,
+# then smoothed, so its sides run under the water as a sloping bank, not a block - the land's own strokes after it keep their shores)
+brush flatten from -60 42.5 to -50 48.5 r=21 s=20 frames=400 h=-14
+brush flatten from -60 42.5 to -50 48.5 r=17 s=20 frames=400 h=-6
+brush flatten from -61.5 41.5 to -47.5 49.9 r=13.5 s=20 frames=400 h=-1.5
+brush flatten from -61.5 41.5 to -46.5 50.5 r=10.5 s=20 frames=400 h=0.6
+brush flatten from -61.5 41.5 to -46.5 50.5 r=8 s=20 frames=400 h=2
+brush smooth from -61.5 41.5 to -46.5 50.5 r=24 s=4 frames=80
+call rr_land x1=0 z1=26 x2=0 z2=46 h=3 r=10
+call rr_land x1=-40 z1=6 x2=-50 z2=8 h=3 r=10
+call rr_land x1=38 z1=0 x2=46 z2=-2 h=3 r=10
+call rr_land x1=20 z1=22 x2=38 z2=38 h=3 r=9
+call rr_land x1=-20 z1=22 x2=-42 z2=40 h=3 r=9
+call rr_land x1=-26 z1=-14 x2=-48 z2=-30 h=3 r=9
+call rr_land x1=26 z1=-20 x2=58 z2=-34 h=2.5 r=9
+# A Antenna Hill (north): summit 24 m, base r 20, the trail from its south foot round to the top, the relay mast on it
+call hw_mount x=0 z=66 b=20 h=24
+call hw_trail x=0 z=66 b=20 h=24 a0=180 turn=300 n=26 h0=3
+brush flatten at 0 66 r=8 s=20 frames=400 h=24
+call hw_mast x=0 z=66 h0=24 lv=4 a=relaymast chest=relaybox top=Placeable_Lantern_Metal
+# B The north ridge (west of the hill): a rock spine between the hill and the cove
+call ar_ridge x1=-38 z1=44 x2=-16 z2=52 h=6 top=5 r=8
+# C Keeper's Cove (west): the keeper's hut on a pad above the cove's beach
+call rr_pad x=-62 z=8 h=3 r=15
+call rr_ruin x=-62 z=12 h=3 yaw=0 w=3 d=2 al=keeperhut
+place Balboa_DecorationPrefabBase_SimpleTent - at -55 2 h=3 sit yaw=200
+place campfire_1 - at -58.5 3 ground sit
+place "Box Big" - at -67.5 6 ground sit yaw=30
+place RT_PlasticBoat - at -78 4 h=0.3 yaw=100
+# D Wreckers' Point (south-west): a low point with the keeper's three beacon lamps for ships in the strait
+call rr_pad x=-56 z=-38 h=3 r=13
+# E Gull Cliffs (east): summit 16 m, base r 20, the trail from the west foot; the sea cave at their south foot
+call hw_mount x=64 z=-2 b=20 h=16
+call hw_trail x=64 z=-2 b=20 h=16 a0=270 turn=240 n=20 h0=3
+brush flatten at 64 -2 r=7 s=20 frames=400 h=16
+call ar_cave x=70 z=-36 h=2 yaw=180 al=seacaverock chest=smugglerbox
+place SmallBoulder4 - at 69 -55 ground yaw=40 scale=0.9
+place SmallBoulder4 - at 72.5 -57 ground yaw=110 scale=0.8
+# F The mail plane (north-east): the mail run's plane, down on the shore field
+call ar_plane x=46 z=46 h=3 yaw=210 al=mailplane crate=mailcrate
+# G The trawler (north-west): run aground on the beach below the ridge
+call hw_wreck x=-54 z=46 h=2 yaw=60 obj=BoatStranded al=trawler crate=trawlercrate r=9
+# libx 11-07: sand bank under the trawler's hull
+brush flatten from -51 48 to -48 51 r=3.5 s=20 frames=300 h=1.9
+# (11-08: its stern and the north side of its hull still hung over the sea past the pad's edge - the pad's land runs on under
+# the whole hull now, stern to bow)
+# (11-08 b: that pad stood as a square block with sheer sides in the sea - 11-08 c: the shoal is laid before the land (above);
+# here the pad under the whole hull, beam to beam, is set again at 2 m and its edge rounded into that shoal)
+brush flatten from -61.5 41.5 to -46.5 50.5 r=7.5 s=20 frames=300 h=2
+brush smooth from -61.5 41.5 to -46.5 50.5 r=13 s=2 frames=20
+brush flatten from -61 41.8 to -47 50 r=6.5 s=20 frames=300 h=2
+brush auto from -61.5 41.5 to -46.5 50.5 r=22 s=10 frames=25
+# (agent Q 10-30, REACH: the sea cave's mouth path ended 2.4 m over the sea and the rock filled the land round it - the
+# cave and the Smugglers' cache unreached: a beach down from the path's end into the water)
+brush flatten at 71 -57.9 r=2.2 s=20 frames=200 h=1.8
+brush flatten at 71 -59.2 r=2.2 s=20 frames=200 h=1.1
+brush flatten at 71 -60.5 r=2.2 s=20 frames=200 h=0.4
+brush flatten at 71 -61.8 r=2.2 s=20 frames=200 h=-0.3
+brush flatten at 71 -63.1 r=2.2 s=20 frames=200 h=-1.0
+brush flatten at 71 -64.4 r=2.2 s=20 frames=200 h=-1.6
+clear from 71 -57.9 to 71 -64.4 r=3.2 body
+# (UT 11-04) the deep pool south of the towers: a swimmer could not climb its sheer south bank. A ladder on a wooden
+# pillar against the bank, climbed from the water (+z side), its top over the bank lip. (Replaces fixA 11-03's landing
+# stage, which was placed by walker coords - 7.3 m off - and stood in the wrong place.) Two ladders wide: a swimmer
+# coming at one ladder's edge was squeezed into the nook beside its pillar.
+for lx 39.11 39.91 0.8
+place Block_Ladder - at $lx -18.28 h=-3.0 yaw=180
+place Block_Pillar_Wood - at $lx -18.48 h={-3.0-($lx-39.11)*0.55}
+place Block_Ladder - at $lx -18.28 h=-0.58 yaw=180
+place Block_Pillar_Wood - at $lx -18.48 h={-0.58-($lx-39.11)*0.55}
+next
+# --- JUMP COURSE rt (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
+# JUMP rt pad=4 at=40 -56
+push at 40 -56
+clear at 0 0 r=17 all
+brush flatten at 0 0 r=14 s=20 frames=300 h=4
+brush smooth at 0 0 r=18 s=4 frames=40
+brush flatten at 0 0 r=12 s=20 frames=300 h=4
+brush auto at 0 0 r=18 s=10 frames=25
+clear at 0 0 r=18
+place Block_Foundation_Tier3 jprt at 0.10 5.64 h=4.60
+place Block_Foundation_Tier3 jprt at 2.92 5.64 h=5.10
+place Block_Foundation_Tier3 jprt at 5.93 5.64 h=5.50
+place Block_Foundation_Tier3 jprt at 5.93 3.03 h=6.40
+place Block_Foundation_Tier3 jprt at 5.93 -1.21 h=6.90 sx=0.3 sz=3
+place Block_Foundation_Tier3 jprt at 5.93 -5.64 h=7.70
+place Block_Foundation_Tier3 jprt at 3.02 -5.64 h=8.60
+place Block_Foundation_Tier3 jprt at 0.40 -5.64 h=7.60
+place Block_Foundation_Tier3 jprt at -2.41 -5.64 h=8.55
+place Block_Foundation_Tier3 jprt at -5.12 -5.64 h=9.50
+place Block_Foundation_Tier3 jprt at -5.12 -2.02 h=10.40 sx=2 sz=2
+# JUMP from 11
+place Block_Foundation_Tier3 jprt at 1.30 -2.02 h=10.70 sx=2 sz=2
+place Block_Foundation_Tier3 jprt at 1.30 3.21 h=11.00
+# JUMP end
+# (each slab on one solid column of its own footprint, from under the pad up to the slab; the first rests on the pad)
+place Block_Foundation_Tier3 jpprt at 2.92 5.64 h=4.418 sy=1.493
+place Block_Foundation_Tier3 jpprt at 5.93 5.64 h=4.818 sy=2.079
+place Block_Foundation_Tier3 jpprt at 5.93 3.03 h=5.718 sy=3.399
+place Block_Foundation_Tier3 jpprt at 5.93 -1.21 h=6.218 sy=4.132 sx=0.3 sz=3
+place Block_Foundation_Tier3 jpprt at 5.93 -5.64 h=7.018 sy=5.305
+place Block_Foundation_Tier3 jpprt at 3.02 -5.64 h=7.918 sy=6.625
+place Block_Foundation_Tier3 jpprt at 0.40 -5.64 h=6.918 sy=5.158
+place Block_Foundation_Tier3 jpprt at -2.41 -5.64 h=7.868 sy=6.551
+place Block_Foundation_Tier3 jpprt at -5.12 -5.64 h=8.818 sy=7.944
+place Block_Foundation_Tier3 jpprt at -5.12 -2.02 h=9.718 sy=9.264 sx=2 sz=2
+place Block_Foundation_Tier3 jpprt at 1.30 -2.02 h=10.018 sy=9.704 sx=2 sz=2
+place Block_Foundation_Tier3 jpprt at 1.30 3.21 h=10.318 sy=10.144
+prop jprt tint.color=#4a4e56
+prop jprt tint.amount=0.35
+prop jpprt tint.color=#4a4e56
+prop jpprt tint.amount=0.35
+place Loot_Chest jcrt at -5.12 -2.02 h=10.40 sit yaw=0
+note jcrt Pylon top chest | The linemen kept a chest on the last pylon base: spare cable, insulators, a flask.
+loot jcrt Plank*6;Rope*3;CopperIngot*2
+prop jcrt loot.refill=0
+place Loot_ChestSmall jbrt at 1.30 3.21 h=11.00 sit yaw=0
+note jbrt Lineman's tin | A tin wedged on the highest slab: the linemen's bet money, never paid out.
+loot jbrt CopperIngot*2;MetalIngot*2;TitaniumIngot*1
+prop jbrt loot.refill=0
+place Zone_Trigger jyrt at 1.30 3.21 h=12.00
+prop jyrt zone.id=jump_rt_finale
+prop jyrt zone.radius=1.8
+prop jyrt zone.repeat=never
+prop jyrt zone.message=The top of the old pylon bases. The tower, the hill and its mast all in a line.
+pop
+# --- end of jump course rt ---
+# The new land planted (palms, bamboo, mangoes as on the rock)
+call rr_plants_tropical x=0 z=40 r=10 seed=26301
+call rr_plants_hill x=0 z=66 r=22 seed=26311
+call rr_plants_hill x=-27 z=48 r=16 seed=26321
+call rr_plants_tropical x=-62 z=8 r=15 seed=26331
+call rr_plants_tropical x=-42 z=-26 r=10 seed=26341
+call rr_plants_hill x=64 z=-2 r=22 seed=26351
+call rr_plants_tropical x=40 z=-28 r=10 seed=26361
+call rr_plants_tropical x=40 z=36 r=14 seed=26371
+call rr_plants_tropical x=-40 z=36 r=12 seed=26381
+call rr_plants_tropical x=-40 z=7 r=8 seed=26391
+
+# --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
+# --- Things to gather, as suits the island (the user, 2026-10-05): palms, melons, bananas ----------
+scatter "Pickup_Landmark_Tree_Palm 1" 2 at 0 0 r=23.8 seed=4282 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 2 at 0 0 r=23.8 seed=4283 free=5
+scatter "Pickup_Landmark_WatermelonLandmark" 3 at 0 0 r=23.8 seed=4292 free=3
+scatter "Banana_Bush_2" 3 at 0 0 r=23.8 seed=4302 free=3
+# --- Raft's finds in the shallows round the island (lib_sea) ----------------------------------------
+call shallows r=54 deep=5 n=1
+
+# --- RAFT REMADE 10-26: the new areas' zones, notes, the relay valve, the beacon puzzle and the secrets --------------
+# Keeper's Cove: the cove's zone, the keeper's diary on his hut's table
+call hw_zone x=-62 z=6 al=covez id=keepercove r=9 h=1 msg="Keeper's Cove. A hut of stone above the beach, its roof long gone, and a boat pulled up."
+place Note_Paper keeperdiary at -62.75 12 h=4.45 drop yaw=20
+# Antenna Hill: the zone at its foot and on top, the relay valve in the mast's deck box
+call hw_zone x=0 z=45 al=hillfootz id=antennafoot r=5 msg="Antenna Hill. A path cut round it to the relay mast on its top."
+call hw_zone x=0 z=66 al=hilltopz id=antennatop r=8 h=1 msg="The top of Antenna Hill. The relay mast's cable runs down the hill to the tower - and its box hangs open."
+note relaybox Relay mast deck box | The relay mast's deck box: the relay valve, pulled and wrapped by the keeper so the storm couldn't fry it.
+loot relaybox story:valve*1;Rope*2;CopperIngot*1
+# Wreckers' Point: three beacon lamps for the strait; all three lit shows the keeper's tin
+call hw_zone x=-56 z=-38 al=pointz id=wreckerspoint r=8 h=1 msg="Wreckers' Point. Three beacon lamps for the strait - dark now, and ships wrecked for it."
+call rr_lamp x=-62 z=-36 al=beacon1 nm="Beacon lamp 1" grp="Beacon lamps" on=0
+call rr_lamp x=-56 z=-42 al=beacon2 nm="Beacon lamp 2" grp="Beacon lamps" on=1
+call rr_lamp x=-50 z=-36 al=beacon3 nm="Beacon lamp 3" grp="Beacon lamps" on=0
+prop beacon1 on.use=light|Beacon lamp 2|toggle
+prop beacon2 on.use=light|Beacon lamp 1|toggle\nlight|Beacon lamp 3|toggle
+prop beacon3 on.use=light|Beacon lamp 2|toggle
+prop beacon1 on.alllit=show|keepertin\nmessage||All three beacons burn over the strait. Under the middle lamp's post, a tin shows in the sand.
+call rr_hidden x=-56 z=-39.5 al=keepertin
+note keepertin Keeper's tin | The keeper's tin under the beacon post: what the ships' masters paid him for a lit strait.
+loot keepertin CopperIngot*2;MetalIngot*2;Battery*1;TradeToken*2
+# QSL cards: five of the station's call cards, blown about the island (a set: a secret)
+call rr_piece x=6 z=47 al=qsl1 set="QSL cards" nm="QSL card 1"
+call rr_piece x=52 z=40 al=qsl2 set="QSL cards" nm="QSL card 2"
+call rr_piece x=-48 z=42 al=qsl3 set="QSL cards" nm="QSL card 3"
+call rr_piece x=56 z=-12 al=qsl4 set="QSL cards" nm="QSL card 4"
+call rr_piece x=-70 z=14 al=qsl5 set="QSL cards" nm="QSL card 5"
+prop qsl1 on.set=give||TitaniumIngot*1;CopperIngot*2\nmessage||All five QSL cards: ships from a dozen seas once answered this tower.
+# Gull Cliffs, the sea cave, the plane and the trawler: what's in them
+call hw_zone x=64 z=-2 al=gulltopz id=gullcliffs r=7 h=1 msg="Gull Cliffs. Screecher droppings and feathers everywhere - Old Beak's old roost."
+call treasure x=64 z=-2 r=6 n=1 seed=26398 kind=0
+prop treasure26398 treasure.loot=CopperIngot*2;TitaniumOre*1;Nail*8
+note smugglerbox Smugglers' cache | A cache in the sea cave: what the wreckers took off the ships the dark strait wrecked.
+loot smugglerbox TitaniumOre*2;CopperIngot*2;Bolt*3
+prop smugglerbox loot.refill=0
+call hw_zone x=70 z=-40 al=seacavez id=seacave r=4 msg="A cave at the cliffs' foot, its mouth to the sea. Boot prints in the sand inside."
+note mailcrate Mail plane's crate | The mail plane's last load: sacks of letters for the tower - and spares for its radio.
+loot mailcrate Battery*1;CopperIngot*1;Glass*2;Rope*2
+note trawlercrate Trawler's crate | A crate from the trawler's hold: net, floats, rope.
+loot trawlercrate Rope*3;Plank*4;Scrap*2
+
+info title=Radio Tower Remade
+info author=Custom Islands
+info description=Raft's radio tower, made anew on an island as big as Raft's own: a steeper rock, a tower of three storeys climbing it, Antenna Hill and its relay mast, the keeper's cove, Wreckers' Point, Gull Cliffs and a sea cave, the old shark cage on the seabed - and a screecher that has taken the roof. The battery bank fell into the sea in a storm; the radio waits for it. Raft Remade's first island.
+island on.arrive=message||A tower of steel rooms climbs a black rock out of the sea. Its antenna is dead - and something big circles its roof.
+
+story valve|Relay valve|CopperIngot|The relay mast's valve, from the deck box on Antenna Hill: the radio's call goes nowhere without it.
+story battery|Battery bank|quest:Tangaroa_GeneratorPart|The radio tower's battery bank, salvaged from the old shark cage on the seabed.
+note keeperdiary Keeper's diary | KEEPER'S DIARY - LAST PAGES\n\nStorm coming. I pulled the relay valve off the mast on Antenna Hill and boxed it up there - better boxed than fried.\nIf you mean to put the tower back on the air you need both: the valve from the hill and the battery bank the sea took, down by the old cage.\nThe beacons on Wreckers' Point are out too. Lamp one and lamp three; the middle one minds itself.
+note keepernote Keeper's note | RADIO TOWER - KEEPER'S NOTE\n\nThe storm took the battery bank off the landing and into the sea. It's down by the old shark cage - I saw it go.\nThe screecher has the roof now. It doesn't like visitors.\nBring the bank up to the radio room, plug it in, and the tower talks again: whoever is out there will hear where to go next.\n\nThe rest is in my diary, in the hut in Keeper's Cove - west round the rock.
+note cagebox Cage locker | A locker wedged against the old shark cage: the tower's battery bank, still sealed.
+loot cagebox story:battery*1;Battery*1
+prop cagebox loot.refill=0
+note radiolocker Radio room locker | The keeper's locker: everything he kept for whoever came to put the tower back on the air.
+loot radiolocker Blueprint_Reciever*1;Blueprint_Antenna*1;Blueprint_HeadLight*1;Blueprint_Recycler*1;Battery*2;Nail*12;Rope*4;Scrap*6
+prop radiolocker loot.refill=0
+prop radiolocker if.open=signal|onair
+prop radiolocker else.open=message||The locker's lock is wired to the radio. Put the tower on the air first.
+
+prop radio obj.name=radio
+prop radio beh.use=Plug in the battery bank
+prop radio if.use=has|story:valve|1\ntake|story:battery|1
+prop radio on.use=message||The bank clicks home. Lights run up the panel, the speaker crackles - and the tower talks again, a long call out over the sea.\nshow|onairlights\nsignal||onair\nsound||event:/exploring/obstacles/tangaroa/generator_placepart
+prop radio else.use=message||The radio is dead: its battery bank is missing - and the relay valve from the hill's mast, the keeper's diary says.
+prop onairlights obj.name=onairlights
+prop onairlights beh.hidden=1
+
+prop landing zone.id=landing
+prop landing zone.radius=7
+prop landing zone.message=The tower's landing: a plastic boat tied up, crates, and a note nailed to the tower's foot.
+prop radioroom zone.id=radioroom
+prop radioroom zone.radius=2.5
+prop radioroom zone.message=The radio room: a dead panel, a radar screen, an empty battery bay.
+prop roofzone zone.id=roof
+prop roofzone zone.radius=6
+prop roofzone zone.message=The roof - and a nest of wire and bones. Old Beak doesn't share.
+prop oldbeak creature.count=1
+prop oldbeak creature.size=1.6
+prop oldbeak creature.health=4
+prop oldbeak creature.damage=1.5
+prop oldbeak creature.respawn=0
+prop oldbeak creature.zone=roof
+prop oldbeak tint.color=#3a3a46
+prop oldbeak tint.amount=0.5
+
+quest title=Back on the Air
+quest intro=A tower of steel rooms on a black rock, its antenna dead, on an island grown wide round it. The landing at its foot is the place to start.
+step reach|landing|1|Land at the tower's landing
+step read|Keeper's note|1|Read the keeper's note on the landing
+step reach|keepercove|1|Go round to Keeper's Cove, the beach with the ruined stone hut and a boat
+step read|Keeper's diary|1|Read the keeper's diary in his hut
+step reach|antennatop|1|Climb Antenna Hill, the hill with the relay mast, to the mast
+step collect|story:valve|1|Take the relay valve from the mast's deck box
+step collect|story:battery|1|Dive to the old shark cage near the landing and open its chest for the battery bank
+step reach|roof|1|Climb the tower's three ladders to the nest of wire and bones on its roof
+step kill|Screecher|1|Drive Old Beak off the tower's roof
+step reach|radioroom|1|Climb to the radio room at the top
+step open|Radio room locker|1|Put the tower on the air and open the keeper's locker
+step blueprint|Blueprint_Reciever|1|Take the Receiver plans from the radio room locker
+step blueprint|Blueprint_Antenna|1|Take the antenna plans from the radio room locker
+step blueprint|Blueprint_HeadLight|1|Take the head light plans from the radio room locker
+step blueprint|Blueprint_Recycler|1|Take the recycler plans from the radio room locker
+quest done=The tower talks again: its call goes out over the sea - and somewhere far off, a ship's beacon answers.
+quest reward=Plank*10;Rope*3;Nail*10
+
+# --- RAFT REMADE 10-27: groundall - rocks the scatters/randomizer left off a slope or edge (CIGroundIslands): taken away by their
+# bounds centre (the report's point; "body", as a rock's pivot can stand a metre or more off it)
+clear at -0.36 39.63 r=0.5 all body only=SmallBoulder2
+clear at -32.55 44.42 r=0.5 all body only=BigBoulder1_Low
+clear at -42.90 -34.96 r=0.5 all body only=Coral1
+clear at -59.51 5.83 r=0.5 all body only=SmallBoulder2
+clear at -61.43 8.02 r=0.5 all body only=SmallBoulder2
+clear at -69.19 16.12 r=0.5 all body only=SmallBoulder4
+clear at -70.44 13.84 r=0.5 all body only=BigBoulder1_Low
+clear at 37.46 44.61 r=0.5 all body only=SmallBoulder2
+clear at 48.81 37.72 r=0.5 all body only=SmallBoulder2
+clear at 73.92 10.17 r=0.5 all body only=SmallBoulder4
+
+save Radio Tower Remade

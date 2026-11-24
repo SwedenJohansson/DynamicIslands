@@ -3,8 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using HarmonyLib;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -116,11 +118,40 @@ namespace DynamicIslands.Editor
 		/// <summary>The crate on Raft's abandoned (drifting) rafts: grabbed whole, it gives random loot (Raft's own table) - and
 		/// now and then a cooking recipe or a mystery package, as there.</summary>
 		public const string RaftCrate = "Pickup_Landmark_LandmarkCrateRaft";
-		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Tree_Mango|Tree_Banana|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark|WatermelonLandmark|Flower_(Black|Blue|Red|White|Yellow)|Scrap \d+_OceanBottom|GiantClam|SilverAlgae|LandmarkCrateRaft)$");
+		static readonly Regex HarvestableObjects = new Regex(@"^Pickup_Landmark_(Tree_Palm \d+|Tree_Pine|Tree_Birch|MangoTree|Tree_Mango|Tree_Banana|Rock \d+|BerryBush|Clay \d+|Sand|Sand_Caravan|Copper \d+|Iron \d+|PineappleLandmark|WatermelonLandmark|Flower_(Black|Blue|Red|White|Yellow)|Scrap \d+_OceanBottom|GiantClam|SilverAlgae|LandmarkCrateRaft|DirtPickup|Beehive)$");
+		/// <summary>
+		/// More of Raft's things to gather (ROADMAP LM11, 2026-10-06): the small islands' palms, Caravan Town's acacias,
+		/// Tangaroa's trees and strawberries, Balboa's mushrooms and the finds lying on the story islands' land (stone,
+		/// scrap, titanium, planks, plastic), and (SL9) Utopia's market goods: the baskets, crates and sacks of bananas
+		/// on its stalls (in catalog_index.txt by hand, scene 56#Landmark_Utopia#). Taken with their gameplay like the others, but never core objects: the
+		/// generator's islands stay the same for a seed (it only uses core objects).
+		/// </summary>
+		static readonly Regex ExtraGatherObjects = new Regex(@"^Pickup_Landmark_(Palmtree \d+|Tree_AcaciaTree_Big \d+|Tree_Tangaroa_1|Strawberry|Mushroom \d+|Rock_2_Land|Scrap \d+_Land|Titanium_Land|Plank_Land|Plastic\d+_Land|MarketGood_Banana_(Basket0[13]|CrateBig02|CrateSmall0[13]|Sack))$");
+		/// <summary>A snowy pine to cut (LM11): Raft's snowy islands' pines are scenery only, so this is Raft's pine (its
+		/// pickup, tree scripts and colliders: cut with the axe, gives what Raft's pine gives, regrows) wearing Temperance's
+		/// snowy pine.</summary>
+		public const string SnowyPine = "Pickup_Landmark_Tree_PineSnowy";
+		/// <summary>Raft's seaweed clump (its pickup gives seaweed) - listed with the things to gather (LM11).</summary>
+		public const string Seaweed = "SeaVine3_klump";
+		/// <summary>Labels of things to gather whose names say little ("Tree_AcaciaTree_Big 1").</summary>
+		static readonly Dictionary<string, string> gatherLabels = new Dictionary<string, string>
+		{
+			{ SnowyPine, "Snowy Pine Tree" }, { Seaweed, "Seaweed" },
+			{ "Pickup_Landmark_Tree_AcaciaTree_Big 1", "Acacia Tree 1" }, { "Pickup_Landmark_Tree_AcaciaTree_Big 3", "Acacia Tree 2" },
+			{ "Pickup_Landmark_Tree_Tangaroa_1", "Tangaroa Tree" }, { "Pickup_Landmark_Tree_Banana", "Banana Tree" },
+			{ "Pickup_Landmark_Palmtree 1", "Small Palm 1" }, { "Pickup_Landmark_Palmtree 2", "Small Palm 2" }, { "Pickup_Landmark_Palmtree 3", "Small Palm 3" }, { "Pickup_Landmark_Palmtree 4", "Small Palm 4" },
+			{ "Pickup_Landmark_Rock_2_Land", "Stone (on land)" }, { "Pickup_Landmark_Titanium_Land", "Titanium Ore (on land)" }, { "Pickup_Landmark_Plank_Land", "Planks (on land)" },
+			{ "Pickup_Landmark_Plastic3_Land", "Plastic (on land)" }, { "Pickup_Landmark_Plastic6_Land", "Plastic Pile (on land)" },
+			{ "Pickup_Landmark_Scrap 1_Land", "Scrap 1 (on land)" }, { "Pickup_Landmark_Scrap 2_Land", "Scrap 2 (on land)" }, { "Pickup_Landmark_Scrap 3_Land", "Scrap 3 (on land)" }, { "Pickup_Landmark_Scrap 4_Land", "Scrap 4 (on land)" },
+		};
 		/// <summary>Labels for the list, where Raft has a real name (buildable items: "Simple Grill").</summary>
 		static readonly Dictionary<string, string> labels = new Dictionary<string, string>();
 		/// <summary>Names of the core objects (what EnsureBuilt loads; the island generator only uses these).</summary>
 		static readonly HashSet<string> core = new HashSet<string>();
+		/// <summary>The generator's names (CA19): the objects of Raft's own island scenes and its things to gather that a
+		/// catalog without placeables.txt makes core - whatever placeables.txt says and whatever other mods add, so a seed
+		/// gives the same island on every PC.</summary>
+		static readonly HashSet<string> gen = new HashSet<string>();
 
 		static readonly Dictionary<string, float> sizes = new Dictionary<string, float>();
 
@@ -192,8 +223,15 @@ namespace DynamicIslands.Editor
 		public static int BuildDone, BuildTotal;
 		/// <summary>All loaded objects (core plus on-demand ones loaded so far).</summary>
 		public static IEnumerable<string> Names { get { return prototypes.Keys.OrderBy(n => n); } }
+
+		/// <summary>Every object of Raft's island scenes the index knows (loaded or not) - the tests load them all.</summary>
+		internal static IEnumerable<string> IndexedNames { get { return index.Keys; } }
 		/// <summary>The core objects only: always the same set, whatever else was loaded (the generator relies on this).</summary>
-		public static IEnumerable<string> CoreNames { get { return prototypes.Keys.Where(n => core.Contains(n)).OrderBy(n => n); } }
+		public static IEnumerable<string> CoreNames { get { return prototypes.Keys.Where(n => core.Contains(n)).OrderBy(n => n, StringComparer.Ordinal); } }
+		/// <summary>What the generator picks from (CA19): Raft's own island objects in ordinal order - the same list on every PC
+		/// (not the PC's culture order, not placeables.txt, not other mods' buildables). A name placeables.txt left out is
+		/// still planned (the file is the same as elsewhere); this PC just doesn't show it.</summary>
+		public static IEnumerable<string> GenNames { get { return gen.OrderBy(n => n, StringComparer.Ordinal); } }
 
 		public static string CategoryOf(string name)
 		{
@@ -248,6 +286,11 @@ namespace DynamicIslands.Editor
 			HashSet<string> whitelist = cachedWhitelist;
 			foreach (IndexEntry e in index.Values)
 				if (!prototypes.ContainsKey(e.Name) && !e.Hidden && (whitelist == null || whitelist.Contains(e.Name))) add(e.Name, e.Category, e.Scene);
+			foreach (var d in derived)
+			{
+				IndexEntry src;
+				if (!prototypes.ContainsKey(d.Key) && index.TryGetValue(d.Value.Source, out src)) add(d.Key, d.Value.Category, src.Scene);
+			}
 			var result = new List<KeyValuePair<string, List<Entry>>>();
 			foreach (string cat in CategoryOrder.Concat(ExtraCategoryOrder()).Concat(byCat.Keys.OrderBy(k => k)).Distinct())
 			{
@@ -265,7 +308,55 @@ namespace DynamicIslands.Editor
 		}
 
 		public static bool IsLoaded(string name) { return prototypes.ContainsKey(name); }
+		/// <summary>The objects loaded now (tests).</summary>
+		internal static IEnumerable<string> LoadedNames { get { return prototypes.Keys; } }
+		/// <summary>Whether the index knows the object (loaded or not).</summary>
+		public static bool IsIndexed(string name) { return name != null && (index.ContainsKey(name) || derived.ContainsKey(name)); }
+
+		class Derived { public string Source, Category, Label; public Action<GameObject> Tidy; }
+		/// <summary>Custom objects made from an on-demand object (RF3's survivor cage from Raft's shark cage): built when
+		/// the source's scene is loaded.</summary>
+		static readonly Dictionary<string, Derived> derived = new Dictionary<string, Derived>();
+
+		/// <summary>A custom object that is a copy of Raft's object source: added now when the source is loaded, else when
+		/// its scene is (an island or the editor asks for the custom object: the source's scene loads).</summary>
+		/// tidy: the custom object is its own copy of the source, which tidy changes (the survivor cage leaves out the
+		/// shark cage's loose rope); without it the two share one prototype.
+		internal static void AddCustomFrom(string name, string source, string category, string label, Action<GameObject> tidy = null)
+		{
+			labels[name] = label;
+			categories[name] = category;
+			GameObject proto;
+			if (prototypes.TryGetValue(source, out proto) && proto != null) { derived.Remove(name); AddDerived(name, proto, category, label, tidy); return; }
+			derived[name] = new Derived { Source = source, Category = category, Label = label, Tidy = tidy };
+		}
+
+		static void AddDerived(string name, GameObject source, string category, string label, Action<GameObject> tidy)
+		{
+			if (tidy == null) { AddCustom(name, source, category, label); return; }
+			// (a copy under the inactive container: no script of it wakes up; Spawn copies it as any other object)
+			GameObject own = UnityEngine.Object.Instantiate(source, container.transform);
+			own.name = name;
+			own.transform.localPosition = source.transform.localPosition;
+			own.transform.localRotation = source.transform.localRotation;
+			own.transform.localScale = source.transform.localScale;
+			try { tidy(own); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Tidying '" + name + "': " + e.Message); }
+			AddCustom(name, own, category, label);
+		}
+
+		static string SourceOf(string name) { Derived d; return derived.TryGetValue(name, out d) && !prototypes.ContainsKey(name) ? d.Source : name; }
+
+		static void BuildDerived()
+		{
+			foreach (var d in derived.ToList())
+			{
+				GameObject proto;
+				if (prototypes.TryGetValue(d.Value.Source, out proto) && proto != null) { AddDerived(d.Key, proto, d.Value.Category, d.Value.Label, d.Value.Tidy); derived.Remove(d.Key); }
+			}
+		}
 		public static bool IsHarvestable(string name) { return harvestables.ContainsKey(name); }
+		/// <summary>The index's things to gather (they keep their gameplay, pickups too - CIMeasurePickups).</summary>
+		internal static List<string> IndexedGatherNames() { return index.Values.Where(e => e.Harvestable).Select(e => e.Name).ToList(); }
 
 		/// <summary>
 		/// Creates an active copy of a catalog object. Returns null if the name is unknown or not loaded yet.
@@ -277,7 +368,7 @@ namespace DynamicIslands.Editor
 			GameObject proto = Get(name);
 			if (proto == null) return null;
 			GameObject go;
-			if (harvestables.ContainsKey(name) && !withGameplay)
+			if ((harvestables.ContainsKey(name) || RaftStore.Is(name) || RaftVending.Is(name)) && !withGameplay)
 			{
 				// Instantiate under the inactive container so no script wakes up, strip the scripts, then move it out
 				go = UnityEngine.Object.Instantiate(proto, container.transform);
@@ -286,6 +377,7 @@ namespace DynamicIslands.Editor
 			}
 			else go = UnityEngine.Object.Instantiate(proto, parent);
 			go.name = name;
+			if (PlacementOptions.Vehicles.Contains(name)) PlacementOptions.MakeSolid(go);
 			go.SetActive(true);
 			return go;
 		}
@@ -352,10 +444,11 @@ namespace DynamicIslands.Editor
 					foreach (KeyValuePair<string, Transform> pick in Pick(root))
 					{
 						string name = pick.Key;
-						if (prototypes.ContainsKey(name)) continue;
 						bool second = source.Include2 != null && source.Include2.IsMatch(name);
-						bool wanted = whitelist != null ? whitelist.Contains(name)
-							: second || (source.Include == null ? !excluded.IsMatch(name) : source.Include.IsMatch(name)); // trees come in as harvestables
+						bool byDefault = second || (source.Include == null ? !excluded.IsMatch(name) : source.Include.IsMatch(name)); // trees come in as harvestables
+						if (byDefault) gen.Add(name);
+						if (prototypes.ContainsKey(name)) continue;
+						bool wanted = whitelist != null ? whitelist.Contains(name) : byDefault;
 						if (!wanted) { skipped++; continue; }
 						Add(name, pick.Value, second ? source.Category2 : source.Category, false);
 						core.Add(name);
@@ -368,21 +461,30 @@ namespace DynamicIslands.Editor
 					foreach (Transform t in AllTransforms(scene))
 					{
 						string hn = CleanName(t.name);
-						if (!HarvestableObjects.IsMatch(hn) || harvestables.ContainsKey(hn)) continue;
+						if (!IsGatherName(hn) || harvestables.ContainsKey(hn)) continue;
+						if (HarvestableObjects.IsMatch(hn)) gen.Add(hn);
 						if (whitelist != null && !whitelist.Contains(hn)) continue;
 						AddHarvestable(hn, t);
-						core.Add(hn);
+						// (the more recent ones aren't core: the generator's islands stay as they were - LM11)
+						if (HarvestableObjects.IsMatch(hn)) core.Add(hn);
 					}
 
 				// Ground textures (and footstep sounds) for the island styles
 				foreach (Terrain t in scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Terrain>(true)))
-					if (t.terrainData != null) TerrainPainter.UseRaftTextures(t.terrainData.terrainLayers, t.GetComponent<TerrainIdentifier>());
+					if (t.terrainData != null)
+					{
+						TerrainPainter.UseRaftTextures(t.terrainData.terrainLayers, t.GetComponent<TerrainIdentifier>());
+						SeaGrass.Learn(t.terrainData); // (Raft's short sea grass, PF-D3)
+					}
 
 				Debug.Log("[CUSTOM ISLANDS] " + source.Scene + ": " + (prototypes.Count - before) + " objects");
 				yield return CloseScene(opened);
 			}
 
 			AddRaftBuildables(whitelist);
+			AddSnowyPine(whitelist);
+			// (Raft's seaweed with the things to gather: its pickup gives seaweed - LM11)
+			if (prototypes.ContainsKey(Seaweed)) categories[Seaweed] = HarvestableCategory;
 
 			if (whitelist == null)
 			{
@@ -410,7 +512,7 @@ namespace DynamicIslands.Editor
 			Debug.Log("[CUSTOM ISLANDS] Object catalog ready: " + prototypes.Count + " objects (" + string.Join(", ", ByCategory().Select(c => c.Value.Count + " " + c.Key.ToLower()).ToArray()) +
 				(whitelist != null ? ", from placeables.txt" : ", " + skipped + " fragments/story items/pickups left out") + ")" +
 				(TerrainPainter.HasRaftTextures ? ", using Raft's terrain textures" : "") +
-				"; " + index.Count + " more objects of Raft's islands load when needed" + (IndexIsCurrent ? "" : " (the object index needs a scan: open the editor)"));
+				"; " + index.Count + " more objects of Raft's islands load when needed" + (IndexIsCurrent ? "" : " (the object index needs a scan: the main menu or the editor makes it)"));
 			RaiseChanged();
 		}
 
@@ -418,19 +520,145 @@ namespace DynamicIslands.Editor
 		{
 			// Parent is inactive, so the clone's Awake/OnEnable don't run here
 			GameObject clone = UnityEngine.Object.Instantiate(source.gameObject, container.transform);
+			AnchorBatches(clone, source);
 			clone.name = name;
 			clone.transform.localPosition = Vector3.zero;
 			clone.transform.localRotation = source.rotation;
 			clone.transform.localScale = source.lossyScale;
+			BringSeparateModel(clone, source);
+			// (a quest item pickup: which of Raft's quest items it is, read before its scripts go)
+			if (QuestItemPickups.IsModel(name)) QuestItemPickups.Remember(name, source.gameObject);
 			// Island decoration from story places carries quest, AI and trigger scripts that expect their own island
-			if (stripScripts) { RemoveRaftThingsInside(clone); StripScripts(clone); }
+			// (Raft's trading post keeps its store's scripts, only its landmark bookkeeping goes: RaftStore)
+			if (RaftStore.Is(name) || RaftVending.Is(name)) RaftStore.Prepare(clone);
+			else if (stripScripts) { RemoveRaftThingsInside(clone); StripScripts(clone); }
 			KeepVisibleFarAway(clone);
 			prototypes.Add(name, clone);
 			categories[name] = category;
 		}
 
+		/// <summary>The model a quest item pickup shows from somewhere else in its scene (Utopia's KeyRescue hangs from Olof's
+		/// rope while its pickup sits apart), or null when the pickup carries its own.</summary>
+		static GameObject SeparateModelOf(Transform t)
+		{
+			PickupItem_Networked_SeparateModel sm = t.GetComponent<PickupItem_Networked_SeparateModel>();
+			GameObject m = sm != null ? sm.separateModel : null;
+			return m != null && !m.transform.IsChildOf(t) ? m : null;
+		}
+
+		/// <summary>RK11: a copy of a pickup's separate model goes inside the catalog's copy, right where the pickup is - before,
+		/// the pickup was placed with nothing to see.</summary>
+		static void BringSeparateModel(GameObject clone, Transform source)
+		{
+			GameObject sep = SeparateModelOf(source);
+			if (sep == null) return;
+			GameObject m = UnityEngine.Object.Instantiate(sep, clone.transform);
+			m.name = "model";
+			m.transform.localPosition = Vector3.zero;
+			m.transform.localRotation = Quaternion.Inverse(source.rotation) * sep.transform.rotation;
+			Vector3 a = sep.transform.lossyScale, b = source.lossyScale;
+			m.transform.localScale = new Vector3(a.x / Mathf.Max(b.x, 1e-4f), a.y / Mathf.Max(b.y, 1e-4f), a.z / Mathf.Max(b.z, 1e-4f));
+			m.SetActive(true);
+			foreach (Renderer r in m.GetComponentsInChildren<Renderer>(true)) r.enabled = true;
+		}
+
+		/// <summary>
+		/// Raft's door walls on an island (ROADMAP E11): Raft's helper "block collider" fills the whole wall cell, and on the
+		/// player's raft its door script opens and shuts the way through - without scripts the doorway was a wall nobody walks
+		/// through. The collider is cut down to the lintel over the doorway and the door leaves stand open.
+		/// </summary>
+		static void OpenDoorway(GameObject clone)
+		{
+			Transform[] leaves = clone.GetComponentsInChildren<Transform>(true).Where(t => t.name.StartsWith("door", StringComparison.OrdinalIgnoreCase) && t.GetComponent<Renderer>() != null).ToArray();
+			if (!clone.name.StartsWith("Block_Wall_Door", StringComparison.Ordinal) || leaves.Length == 0) return;
+			// (the top of the door leaves: the doorway's height)
+			float top = leaves.Max(l => l.GetComponent<Renderer>().bounds.max.y) - clone.transform.position.y;
+			foreach (BoxCollider bc in clone.GetComponentsInChildren<BoxCollider>(true).Where(c => !c.isTrigger && c.name == "block collider"))
+			{
+				Transform bt = bc.transform;
+				float bottom = bt.localPosition.y + bc.center.y - bc.size.y / 2f, ceiling = bt.localPosition.y + bc.center.y + bc.size.y / 2f;
+				float lintel = Mathf.Max(0.05f, ceiling - top);
+				bc.size = new Vector3(bc.size.x, lintel, bc.size.z);
+				bc.center = new Vector3(bc.center.x, top + lintel / 2f - bt.localPosition.y, bc.center.z);
+			}
+			// (Raft's door animator would set the leaves shut again every frame: it goes)
+			foreach (Animator an in clone.GetComponentsInChildren<Animator>(true)) UnityEngine.Object.DestroyImmediate(an);
+			// (each leaf turned on its hinge, away from the doorway's middle)
+			foreach (Transform l in leaves) l.localRotation = Quaternion.Euler(0f, l.localPosition.x < 0f ? -95f : 95f, 0f) * l.localRotation;
+		}
+
 		/// <summary>The inactive container the catalog's prototypes live in.</summary>
 		internal static GameObject Container { get { return container; } }
+
+		static readonly System.Reflection.PropertyInfo batchRootProperty = typeof(Renderer).GetProperty("staticBatchRootTransform",
+			System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+
+		/// <summary>Unity's static batch root of a renderer (internal in Unity 2019), or null.</summary>
+		internal static Transform BatchRoot(Renderer r)
+		{
+			try { return batchRootProperty != null && r != null ? batchRootProperty.GetValue(r, null) as Transform : null; }
+			catch { return null; }
+		}
+
+		internal static void SetBatchRoot(Renderer r, Transform root)
+		{
+			try { if (batchRootProperty != null && r != null) batchRootProperty.SetValue(r, root, null); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Anchoring a batched mesh: " + e.Message); }
+		}
+
+		/// <summary>How many renderers of the catalog's copies were anchored (AnchorBatches) - the tests read it.</summary>
+		internal static int AnchoredRenderers { get; private set; }
+
+		/// <summary>
+		/// Raft's island scenes are statically batched: the meshes of their scenery are combined into big meshes laid out
+		/// where the objects stand in Raft's scene, and each renderer draws its part of them. A copy of such an object drew
+		/// its mesh where the original stands in Raft's scene - far from where it was placed - while its collider stayed
+		/// with it: the library's Stranded Gull had an invisible beached boat, its locker and crate floating over the sand
+		/// (found by the user, 2026-10-02). Each batched renderer of a copy gets an anchor (Unity's static batch root, set
+		/// by BatchAnchor in every copy) that maps the original's place onto the copy's own: under the renderer, the inverse
+		/// of the original's scale, turn and place, then the original's own batch root when it had one.
+		/// </summary>
+		static int AnchorBatches(GameObject clone, Transform source)
+		{
+			Renderer[] mine = clone.GetComponentsInChildren<Renderer>(true), theirs = source.GetComponentsInChildren<Renderer>(true);
+			if (mine.Length != theirs.Length) return 0;
+			int n = 0;
+			for (int i = 0; i < mine.Length; i++)
+			{
+				if (!(theirs[i] is MeshRenderer) || !theirs[i].isPartOfStaticBatch) continue;
+				Transform o = theirs[i].transform, oldRoot = BatchRoot(theirs[i]);
+				// (anchor = the copy's renderer x the original's place, inverted x the original's batch root)
+				Vector3 s = o.lossyScale;
+				Transform t = Node("CI_BatchAnchor", mine[i].transform);
+				t.localScale = new Vector3(1f / NonZero(s.x), 1f / NonZero(s.y), 1f / NonZero(s.z));
+				t = Node("CI_BatchTurn", t);
+				t.localRotation = Quaternion.Inverse(o.rotation);
+				t = Node("CI_BatchPlace", t);
+				t.localPosition = -o.position;
+				if (oldRoot != null)
+				{
+					t = Node("CI_BatchRootPlace", t);
+					t.localPosition = oldRoot.position;
+					t = Node("CI_BatchRootTurn", t);
+					t.localRotation = oldRoot.rotation;
+					t = Node("CI_BatchRootScale", t);
+					t.localScale = oldRoot.lossyScale;
+				}
+				mine[i].gameObject.AddComponent<BatchAnchor>().Leaf = t;
+				n++;
+			}
+			AnchoredRenderers += n;
+			return n;
+		}
+
+		static Transform Node(string name, Transform parent)
+		{
+			Transform t = new GameObject(name).transform;
+			t.SetParent(parent, false);
+			return t;
+		}
+
+		static float NonZero(float v) { return Mathf.Abs(v) < 1e-6f ? 1e-6f : v; }
 
 		/// <summary>
 		/// Adds (or replaces) an object made by the mod itself: a creature marker, or a readable note that shows one of
@@ -443,6 +671,9 @@ namespace DynamicIslands.Editor
 			labels[name] = label;
 			sizes.Remove(name);
 		}
+
+		/// <summary>Keeps an object out of the editor's list (one a tool makes, as the dug tunnels).</summary>
+		internal static void Hide(string name) { hidden.Add(name); }
 
 		/// <summary>Takes a custom object out of the catalog (a deleted group).</summary>
 		internal static void RemoveCustom(string name)
@@ -461,6 +692,7 @@ namespace DynamicIslands.Editor
 		static void AddHarvestable(string name, Transform t)
 		{
 			GameObject clone = UnityEngine.Object.Instantiate(t.gameObject, container.transform);
+			AnchorBatches(clone, t);
 			clone.name = name;
 			clone.transform.localPosition = Vector3.zero;
 			harvestables.Add(name, clone);
@@ -468,6 +700,47 @@ namespace DynamicIslands.Editor
 			categories[name] = HarvestableCategory;
 			// (the abandoned rafts' crate: with the chests, where builders look for loot)
 			if (name == RaftCrate) { categories[name] = ContentCatalog.LootCategory; labels[name] = "Abandoned raft crate"; }
+		}
+
+		/// <summary>
+		/// The snowy pine to cut (ROADMAP LM11): a copy of Raft's pine (Balboa's: its pickup, tree scripts and colliders, so
+		/// the axe cuts it, it gives Raft's pine's items and regrows as Raft's trees do, in multiplayer too) whose own look
+		/// is switched off, wearing Temperance's snowy pine (scenery in Raft) scaled to the pine's height. The look sits
+		/// where the pine's own look was, so what hides the cut tree hides it too.
+		/// </summary>
+		static void AddSnowyPine(HashSet<string> whitelist)
+		{
+			const string pineName = "Pickup_Landmark_Tree_Pine", lookName = "TP_PineTreeSnowy";
+			GameObject pine, snowy = Get(lookName);
+			if (!harvestables.TryGetValue(pineName, out pine) || snowy == null || harvestables.ContainsKey(SnowyPine)) return;
+			if (whitelist != null && !whitelist.Contains(SnowyPine)) return;
+			try
+			{
+				Bounds pb, sb;
+				if (!LocalBounds(pineName, out pb) || !LocalBounds(lookName, out sb) || sb.size.y < 0.1f) return;
+				GameObject clone = UnityEngine.Object.Instantiate(pine, container.transform);
+				clone.name = SnowyPine;
+				clone.transform.localPosition = Vector3.zero;
+				// Where the pine's look hangs (a child "Model" on Raft's trees), else the tree itself
+				Transform holder = clone.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t != clone.transform && t.name == "Model") ?? clone.transform;
+				foreach (Renderer r in clone.GetComponentsInChildren<Renderer>(true))
+					if (r is MeshRenderer || r is SkinnedMeshRenderer) r.enabled = false;
+				GameObject look = UnityEngine.Object.Instantiate(snowy, container.transform);
+				look.name = "CI_SnowyLook";
+				StripScripts(look);
+				foreach (Collider c in look.GetComponentsInChildren<Collider>(true)) UnityEngine.Object.DestroyImmediate(c);
+				// (as tall as Raft's pine, upright as in Temperance, standing where the pine stands)
+				float k = Mathf.Clamp(pb.size.y * clone.transform.lossyScale.y / (sb.size.y * snowy.transform.lossyScale.y), 0.3f, 3f);
+				look.transform.rotation = snowy.transform.rotation;
+				look.transform.localScale = snowy.transform.localScale * k;
+				look.transform.position = clone.transform.position + Vector3.up * (pb.min.y * clone.transform.lossyScale.y - sb.min.y * snowy.transform.lossyScale.y * k);
+				look.transform.SetParent(holder, true);
+				harvestables.Add(SnowyPine, clone);
+				prototypes[SnowyPine] = clone;
+				categories[SnowyPine] = HarvestableCategory;
+				sizes.Remove(SnowyPine);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not make the snowy pine: " + e.Message); }
 		}
 
 		/// <summary>
@@ -491,7 +764,8 @@ namespace DynamicIslands.Editor
 			// first: on each object, remove the scripts nothing else needs, round by round
 			foreach (Transform t in go.GetComponentsInChildren<Transform>(true))
 			{
-				List<MonoBehaviour> left = t.GetComponents<MonoBehaviour>().Where(m => m != null).ToList();
+				// (not the mod's own BatchAnchor: it keeps a batched mesh drawn where the copy stands)
+				List<MonoBehaviour> left = t.GetComponents<MonoBehaviour>().Where(m => m != null && !(m is BatchAnchor)).ToList();
 				for (int round = 0; left.Count > 0 && round < 8; round++)
 				{
 					List<MonoBehaviour> free = left.Where(m => !left.Any(o => o != m && Requires(o.GetType(), m.GetType()))).ToList();
@@ -500,6 +774,9 @@ namespace DynamicIslands.Editor
 					left = left.Where(m => m != null).ToList();
 				}
 			}
+			// Decoration stands still: a body Raft lets fall (Varuna Point's debris planks) tipped a little more on its rails
+			// each time the island was saved and loaded (round trip)
+			foreach (Rigidbody body in go.GetComponentsInChildren<Rigidbody>(true)) { body.isKinematic = true; body.useGravity = false; }
 		}
 
 		static readonly Dictionary<Type, Type[]> requirements = new Dictionary<Type, Type[]>();
@@ -547,6 +824,7 @@ namespace DynamicIslands.Editor
 					// Raft's "Block" layer is only walkable as part of the player's raft; as island scenery they go on the
 					// terrain's layer, so players walk on them, the editor can stack them, and a raft stops against them
 					foreach (Transform t in clone.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = IslandSpawner.TerrainLayer;
+					OpenDoorway(clone);
 					KeepVisibleFarAway(clone);
 					prototypes.Add(item.UniqueName, clone);
 					core.Add(item.UniqueName);
@@ -613,10 +891,13 @@ namespace DynamicIslands.Editor
 				foreach (GameObject g in s.GetRootGameObjects()) g.SetActive(false);
 			};
 			if (hide) SceneManager.sceneLoaded += switchOff;
+			// (every copy the mod loads itself is quiet from now until it is unloaded: the core catalogue's scenes are loaded
+			// switched on, and their scripts' Start comes a frame after they arrive)
+			quietScenes[sceneName] = existing;
 			AsyncOperation op;
 			try { op = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive); }
-			catch (Exception e) { SceneManager.sceneLoaded -= switchOff; Debug.LogError("[CUSTOM ISLANDS] Could not load Raft scene " + sceneName + ": " + e.Message); yield break; }
-			if (op == null) { SceneManager.sceneLoaded -= switchOff; Debug.LogError("[CUSTOM ISLANDS] Could not load Raft scene " + sceneName); yield break; }
+			catch (Exception e) { SceneManager.sceneLoaded -= switchOff; quietScenes.Remove(sceneName); Debug.LogError("[CUSTOM ISLANDS] Could not load Raft scene " + sceneName + ": " + e.Message); yield break; }
+			if (op == null) { SceneManager.sceneLoaded -= switchOff; quietScenes.Remove(sceneName); Debug.LogError("[CUSTOM ISLANDS] Could not load Raft scene " + sceneName); yield break; }
 			try { while (!op.isDone) yield return null; }
 			finally { SceneManager.sceneLoaded -= switchOff; }
 			for (int i = SceneManager.sceneCount - 1; i >= 0; i--)
@@ -624,19 +905,85 @@ namespace DynamicIslands.Editor
 				Scene s = SceneManager.GetSceneAt(i);
 				if (s.name == sceneName && !existing.Contains(s.handle)) { result.Scene = s; result.Ours = true; break; }
 			}
-			if (!result.Scene.IsValid()) { Debug.LogError("[CUSTOM ISLANDS] Loaded Raft scene " + sceneName + " but could not find it"); yield break; }
+			if (!result.Scene.IsValid()) { quietScenes.Remove(sceneName); Debug.LogError("[CUSTOM ISLANDS] Loaded Raft scene " + sceneName + " but could not find it"); yield break; }
 			// Scenes only read for their objects are switched off at once, so they don't show up in the editor or the world
 			if (hide) foreach (GameObject g in result.Scene.GetRootGameObjects()) g.SetActive(false);
+		}
+
+		/// <summary>
+		/// The Raft scenes the mod has loaded itself right now, only to take objects from (switched off or not - the core
+		/// catalogue's are switched on): each name with the handles of Raft's own copies, which are never kept quiet. Unity
+		/// runs their scripts' Awake and OnEnable as it loads them, before sceneLoaded can switch them off.
+		/// </summary>
+		static readonly Dictionary<string, HashSet<int>> quietScenes = new Dictionary<string, HashSet<int>>();
+
+		/// <summary>The scenes the mod has loaded for their objects right now, by name (an error then may be Raft's script in one).</summary>
+		internal static string QuietSceneNames { get { return string.Join(", ", quietScenes.Keys.ToArray()); } }
+
+		/// <summary>Whether a scene is one the mod loaded itself to take objects from (not Raft's own copy).</summary>
+		internal static bool IsQuietScene(Scene scene)
+		{
+			HashSet<int> raftCopies;
+			return scene.IsValid() && quietScenes.TryGetValue(scene.name, out raftCopies) && !raftCopies.Contains(scene.handle);
+		}
+
+		/// <summary>The story scripts kept quiet (type, method) and how many of them were found in this Raft and patched.</summary>
+		internal static readonly string[][] QuietMethods = new[] { "CoolingChallenge", "OlofFinalRoom" }.SelectMany(t => new[] { new[] { t, "Awake" }, new[] { t, "OnEnable" }, new[] { t, "Start" } }).ToArray();
+		internal static readonly List<string> QuietPatched = new List<string>();
+		/// <summary>How many exceptions were kept quiet (tests; the first of each method is logged).</summary>
+		internal static int Quieted;
+		static readonly HashSet<string> quietTold = new HashSet<string>();
+
+		/// <summary>
+		/// Two of Raft's story-island scripts throw in Awake/OnEnable away from their own island (CoolingChallenge on Temperance,
+		/// OlofFinalRoom on Utopia): loaded to take objects from, their scenes logged a NullReferenceException each time
+		/// (CIButtons 2026-10-13) and RML said "AN ERROR OCCURED!". Swallowed only in the scenes the mod loaded itself (also the
+		/// core catalogue's, loaded switched on, and Start); on the islands themselves they run as Raft has them.
+		/// </summary>
+		internal static void Patch(Harmony harmony)
+		{
+			QuietPatched.Clear();
+			var missing = new List<string>();
+			// (both: with Awake kept quiet, CoolingChallenge threw in OnEnable next)
+			foreach (string[] m in QuietMethods)
+				try
+				{
+					Type type = AccessTools.TypeByName(m[0]);
+					MethodInfo original = type != null ? type.GetMethod(m[1], BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly) : null;
+					if (original == null) { if (type == null || m[1] != "Start") missing.Add(m[0] + "." + m[1] + (type == null ? " (no such script)" : "")); continue; } // (Start: only where the script has one)
+					harmony.Patch(original, finalizer: new HarmonyMethod(typeof(PlaceableCatalog).GetMethod("QuietLoadFinalizer", BindingFlags.Static | BindingFlags.NonPublic)));
+					QuietPatched.Add(m[0] + "." + m[1]);
+				}
+				catch (Exception e) { missing.Add(m[0] + "." + m[1] + " (" + e.Message + ")"); }
+			// (once, at start: whether the patch applied - a Raft update that renamed the scripts shows here)
+			if (missing.Count == 0) Debug.Log("[CUSTOM ISLANDS] Raft's story scripts kept quiet in the scenes the mod loads for objects: " + string.Join(", ", QuietPatched.ToArray()));
+			else Debug.LogWarning("[CUSTOM ISLANDS] Raft's story scripts kept quiet in the scenes the mod loads for objects: " + (QuietPatched.Count > 0 ? string.Join(", ", QuietPatched.ToArray()) : "none") + "; not patched: " + string.Join(", ", missing.ToArray()));
+		}
+
+		static Exception QuietLoadFinalizer(Exception __exception, object __instance, MethodBase __originalMethod)
+		{
+			if (__exception == null) return null;
+			Component c = __instance as Component;
+			if (c == null || !IsQuietScene(c.gameObject.scene)) return __exception;
+			Quieted++;
+			string what = (__originalMethod != null ? __originalMethod.DeclaringType.Name + "." + __originalMethod.Name : c.GetType().Name);
+			if (quietTold.Add(what)) Debug.Log("[CUSTOM ISLANDS] Raft's " + what + " threw in " + c.gameObject.scene.name + ", loaded only for its objects: kept quiet (" + __exception.GetType().Name + ")");
+			return null;
 		}
 
 		static IEnumerator CloseScene(OpenedScene opened)
 		{
 			if (!opened.Ours || !opened.Scene.IsValid()) yield break;
+			string name = opened.Scene.name;
 			AsyncOperation unload = null;
 			try { unload = SceneManager.UnloadSceneAsync(opened.Scene); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not unload " + opened.Scene.name + ": " + e.Message); }
-			if (unload != null)
-				while (!unload.isDone) yield return null;
+			try
+			{
+				if (unload != null)
+					while (!unload.isDone) yield return null;
+			}
+			finally { quietScenes.Remove(name); }
 		}
 
 		static IEnumerable<Transform> AllTransforms(Scene scene)
@@ -657,6 +1004,31 @@ namespace DynamicIslands.Editor
 			yield return CloseScene(opened);
 		}
 
+		/// <summary>
+		/// Tests (CIGenBuildingsQuiet): loads the core catalogue's scenes as the catalogue does (switched on, but the floating
+		/// raft) and the scenes these objects come from (switched off, as when they are wanted), one after another, and unloads
+		/// each again - takes nothing. Raft's scripts in them run as they do when the mod loads them for real.
+		/// </summary>
+		internal static IEnumerator ReopenForTest(IEnumerable<string> names, Action<string> visited)
+		{
+			var scenes = Sources.Select(src => new KeyValuePair<string, bool>(src.Scene, src.Hide)).ToList();
+			foreach (string n in names)
+			{
+				IndexEntry e;
+				if (n == null || !index.TryGetValue(n, out e)) continue;
+				string scene = ResolveScene(e.Scene);
+				if (!scenes.Any(kv => kv.Key == scene)) scenes.Add(new KeyValuePair<string, bool>(scene, true));
+			}
+			foreach (KeyValuePair<string, bool> kv in scenes)
+			{
+				var opened = new OpenedScene();
+				yield return OpenScene(kv.Key, opened, kv.Value);
+				if (visited != null) visited(kv.Key + (opened.Scene.IsValid() ? (opened.Ours ? "" : " (Raft's own copy)") : " (didn't load)"));
+				yield return null; // (a frame: the switched-on scenes' Start runs)
+				yield return CloseScene(opened);
+			}
+		}
+
 		/// <summary>All of Raft's island scenes, in build order.</summary>
 		internal static List<string> LandmarkSceneNames() { return LandmarkScenes(); }
 
@@ -664,7 +1036,28 @@ namespace DynamicIslands.Editor
 		internal static IEnumerable<KeyValuePair<string, Transform>> PlaceablesOf(Scene scene) { return PickAll(scene); }
 
 		/// <summary>Raft's harvestable things: trees, rocks, ores, clay, sand, scrap, fruit bushes ("Pickup_Landmark_...").</summary>
+		/// <summary>Raft's story pieces that keep their own scripts, so they work for the player (the user, 2026-10-05: Raft's
+		/// quest items put to work on custom islands): the machete's vines and the zipline tool's lines.</summary>
+		internal static readonly Regex Working = new Regex(@"^(ChoppableVines|ZiplinePath|ZiplinePath_Landmark)$");
+
 		internal static bool IsHarvestableName(string name) { return HarvestableObjects.IsMatch(name); }
+
+		/// <summary>Every thing to gather the catalog takes with its gameplay: Raft's harvestables, also the ones added for
+		/// LM11 (not core), and the snowy pine.</summary>
+		internal static bool IsGatherName(string name) { return name != null && (HarvestableObjects.IsMatch(name) || ExtraGatherObjects.IsMatch(name) || name == SnowyPine); }
+
+		/// <summary>
+		/// Every thing to gather the editor offers (ROADMAP LM11), loaded or not: the "Things to gather" category - Raft's
+		/// harvestables, seaweed, the snowy pine, and those of Raft's other islands (loaded with their scene when wanted).
+		/// </summary>
+		public static List<string> GatherNames()
+		{
+			return prototypes.Keys.Where(n => CategoryOf(n) == HarvestableCategory && !hidden.Contains(n))
+				.Concat(index.Values.Where(e => e.Category == HarvestableCategory && !e.Hidden).Select(e => e.Name)).Distinct().OrderBy(n => n).ToList();
+		}
+
+		/// <summary>Whether the editor's object list has the object (loaded, or in the index of Raft's island scenes).</summary>
+		internal static bool Known(string name) { return !string.IsNullOrEmpty(name) && (prototypes.ContainsKey(name) || index.ContainsKey(name)); }
 
 		#endregion
 
@@ -676,7 +1069,9 @@ namespace DynamicIslands.Editor
 			public bool Harvestable, Hidden;
 		}
 
-		const int IndexVersion = 2;
+		// (3: Raft's quest item pickups, its wild beehive and the story islands' finds - ROADMAP LM12, 2026-10-05;
+		// 5: more things to gather - palms, acacias, Tangaroa's trees, strawberries, mushrooms, finds on land - LM11, 2026-10-06)
+		const int IndexVersion = 5;
 		static readonly Dictionary<string, IndexEntry> index = new Dictionary<string, IndexEntry>();
 		/// <summary>Scenes whose on-demand objects are loaded.</summary>
 		static readonly HashSet<string> loadedScenes = new HashSet<string>();
@@ -685,12 +1080,28 @@ namespace DynamicIslands.Editor
 		static int indexFileVersion;
 
 		/// <summary>The index matches this Raft version (else the editor scans Raft's islands again).</summary>
-		public static bool IndexIsCurrent { get { return index.Count > 0 && indexFileVersion == IndexVersion && indexRaftVersion == Application.version; } }
+		public static bool IndexIsCurrent { get { return index.Count > 0 && indexFileVersion == IndexVersion && indexRaftVersion == RaftVersion && (indexScenes < 0 || indexScenes == LandmarkSceneCount); } }
+		/// <summary>Raft's version the index must be made with (tests pretend an update with RaftVersionForTest).</summary>
+		static string RaftVersion { get { return RaftVersionForTest ?? Application.version; } }
+		internal static string RaftVersionForTest;
+		/// <summary>Tests: reads the index file again (after putting it back).</summary>
+		internal static void ReadIndexForTest() { ReadIndex(); }
+		/// <summary>How many of Raft's island scenes the index was made with ("# scenes=" line; -1 = an index from before it).</summary>
+		static int indexScenes = -1;
+		static int landmarkSceneCount = -1;
+		/// <summary>How many island scenes this Raft has (an update that adds or removes one makes the index stale too).</summary>
+		static int LandmarkSceneCount { get { if (landmarkSceneCount < 0) landmarkSceneCount = LandmarkScenes().Count; return landmarkSceneCount; } }
 		public static bool Indexing { get; private set; }
 		/// <summary>What a running scan is doing, for the editor's status line ("Scanning Utopia (34/40)").</summary>
 		public static string IndexProgress { get; private set; }
 		/// <summary>Scenes currently being loaded for their objects (shown by the editor).</summary>
 		public static IEnumerable<string> LoadingScenes { get { return loadingScenes; } }
+
+		/// <summary>The indexed objects of the scenes whose name has this (e.g. "Balboa"), not the left-out ones (CIKitInfo).</summary>
+		internal static List<string> IndexedIn(string scenePart)
+		{
+			return index.Values.Where(e => !e.Hidden && e.Scene != null && e.Scene.IndexOf(scenePart, StringComparison.OrdinalIgnoreCase) >= 0).Select(e => e.Name).OrderBy(n => n).ToList();
+		}
 
 		public static string SceneOf(string name)
 		{
@@ -731,18 +1142,17 @@ namespace DynamicIslands.Editor
 			string text = null;
 			try { if (File.Exists(IndexPath)) text = File.ReadAllText(IndexPath); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read " + IndexPath + ": " + e.Message); }
-			if (text == null)
+			// (an index the editor made with an older version of the mod: the one the mod ships, when that one is current -
+			// so a mod update that adds objects doesn't wait for the editor's scan)
+			if (text != null && !IsCurrentText(text))
 			{
-				// The mod ships an index made with the current Raft, so islands can be spawned before the editor was opened
-				try
-				{
-					byte[] shipped = DynamicIslands.instance != null ? DynamicIslands.instance.GetEmbeddedFileBytes(IndexFileName) : null;
-					if (shipped != null && shipped.Length > 0) text = Encoding.UTF8.GetString(shipped);
-				}
-				catch { }
+				string mine = ShippedIndex();
+				if (mine != null && IsCurrentText(mine)) text = mine;
 			}
+			// The mod ships an index made with the current Raft, so islands can be spawned before the editor was opened
+			if (text == null) text = ShippedIndex();
 			if (text == null) return;
-			indexFileVersion = 0; indexRaftVersion = null;
+			indexFileVersion = 0; indexRaftVersion = null; indexScenes = -1;
 			foreach (string raw in text.Split('\n'))
 			{
 				string line = raw.TrimEnd('\r');
@@ -750,6 +1160,8 @@ namespace DynamicIslands.Editor
 				{
 					Match m = Regex.Match(line, @"^# CustomIslands object index (\d+) raft=(.*)$");
 					if (m.Success) { indexFileVersion = int.Parse(m.Groups[1].Value); indexRaftVersion = m.Groups[2].Value.Trim(); }
+					m = Regex.Match(line, @"^# scenes=(\d+)");
+					if (m.Success) indexScenes = int.Parse(m.Groups[1].Value);
 					continue;
 				}
 				string[] f = line.Split('\t');
@@ -758,10 +1170,58 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		/// <summary>"&lt;version&gt; raft=&lt;Raft's version&gt;" from an index file's first line ("" when it has none).</summary>
+		static string HeaderOf(string text)
+		{
+			Match m = Regex.Match(text ?? "", @"^# CustomIslands object index (\d+) raft=([^\r\n]*)");
+			return m.Success ? m.Groups[1].Value + " raft=" + m.Groups[2].Value.Trim() : "";
+		}
+
+		/// <summary>An index text made by this version of the mod with this Raft (its version and, when the file says, its
+		/// number of island scenes).</summary>
+		static bool IsCurrentText(string text)
+		{
+			if (HeaderOf(text) != IndexVersion + " raft=" + RaftVersion) return false;
+			Match m = Regex.Match(text ?? "", @"^# scenes=(\d+)", RegexOptions.Multiline);
+			return !m.Success || int.Parse(m.Groups[1].Value) == LandmarkSceneCount;
+		}
+
+		/// <summary>The index the mod ships (catalog_index.txt in the .rmod), or null.</summary>
+		internal static string ShippedIndex()
+		{
+			try
+			{
+				byte[] shipped = DynamicIslands.instance != null ? DynamicIslands.instance.GetEmbeddedFileBytes(IndexFileName) : null;
+				return shipped != null && shipped.Length > 0 ? Encoding.UTF8.GetString(shipped) : null;
+			}
+			catch { return null; }
+		}
+
+		/// <summary>
+		/// Why the object index a world would use isn't for this Raft (the player's catalog_index.txt, or else the one the mod
+		/// ships - as ReadIndex picks), or null when it is current. Read from the files: works before the catalogue is built.
+		/// </summary>
+		internal static string IndexStaleReason()
+		{
+			string user = null;
+			try { if (File.Exists(IndexPath)) user = File.ReadAllText(IndexPath); } catch { }
+			string shipped = ShippedIndex();
+			if ((user != null && IsCurrentText(user)) || (shipped != null && IsCurrentText(shipped))) return null;
+			string text = user ?? shipped;
+			if (text == null) return "there is no object index";
+			Match h = Regex.Match(text, @"^# CustomIslands object index (\d+) raft=([^\r\n]*)");
+			if (!h.Success) return "the object index has no header";
+			if (h.Groups[2].Value.Trim() != RaftVersion) return "the object index was made with Raft " + h.Groups[2].Value.Trim() + ", this is Raft " + RaftVersion;
+			if (h.Groups[1].Value != IndexVersion.ToString()) return "the object index is from an older version of the mod (" + h.Groups[1].Value + ", now " + IndexVersion + ")";
+			Match s = Regex.Match(text, @"^# scenes=(\d+)", RegexOptions.Multiline);
+			return "the object index was made with " + (s.Success ? s.Groups[1].Value : "?") + " of Raft's island scenes, this Raft has " + LandmarkSceneCount;
+		}
+
 		static void WriteIndex()
 		{
 			var sb = new StringBuilder();
-			sb.Append("# CustomIslands object index ").Append(IndexVersion).Append(" raft=").Append(Application.version).Append('\n');
+			sb.Append("# CustomIslands object index ").Append(IndexVersion).Append(" raft=").Append(RaftVersion).Append('\n');
+			sb.Append("# scenes=").Append(LandmarkSceneCount).Append('\n');
 			sb.Append("# Every placeable object of Raft's island scenes that isn't in the core list: name, scene, category, flags (h = harvestable, x = left out of the list).\n");
 			sb.Append("# Made by the editor; delete this file to scan Raft's islands again.\n");
 			foreach (IndexEntry e in index.Values.OrderBy(e => e.Scene).ThenBy(e => e.Name))
@@ -772,7 +1232,7 @@ namespace DynamicIslands.Editor
 				SafeFile.WriteAllText(IndexPath, sb.ToString());
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not write " + IndexPath + ": " + e.Message); }
-			indexFileVersion = IndexVersion; indexRaftVersion = Application.version;
+			indexFileVersion = IndexVersion; indexRaftVersion = RaftVersion;
 		}
 
 		/// <summary>
@@ -784,11 +1244,147 @@ namespace DynamicIslands.Editor
 			while (Indexing) yield return null;
 			if (IndexIsCurrent || !IsBuilt) yield break;
 			Indexing = true;
-			try { yield return Guarded(ScanAll(), "Scanning Raft's islands for objects"); }
+			try { yield return Guarded(ScanAll(DynamicIslands.InEditor, "the editor"), "Scanning Raft's islands for objects"); }
 			finally { Indexing = false; IndexProgress = null; RaiseChanged(); }
 		}
 
-		static IEnumerator ScanAll()
+		/// <summary>Raft's main menu is showing (not a world, not the editor).</summary>
+		internal static bool InMainMenu()
+		{
+			try { return !LoadSceneManager.IsGameSceneLoaded && !DynamicIslands.InEditor() && GameObject.Find("MainMenuCanvas") != null; }
+			catch { return false; }
+		}
+
+		static Coroutine menuScan;
+		/// <summary>The last main-menu check, for tests and the log: "current", "scanned (...)", "stopped", or null before one ran.</summary>
+		internal static string MenuScanResult { get; private set; }
+		/// <summary>The longest frame (seconds) while the last main-menu scan ran (tests: no long stall).</summary>
+		internal static float MenuScanLongestFrame { get; private set; }
+		/// <summary>What the scan was doing in its longest frame (tests and the log).</summary>
+		internal static string MenuScanLongestStep { get; private set; }
+		static string scanStep;
+
+		/// <summary>
+		/// At start-up and back at the main menu: an object index made with another Raft (an update; its version or number of
+		/// island scenes differ) or by an older version of the mod is made again here, in the background - the island scenes
+		/// load one at a time, switched off, at low loading priority. Before, only the editor did it, and a world played after a
+		/// Raft update could miss objects on custom islands until the editor was opened once. Leaving the menu stops the scan;
+		/// it starts again the next time the menu shows. delay: seconds to let the menu settle first.
+		/// </summary>
+		public static void CheckIndexInMenu(float delay = 3f)
+		{
+			if (menuScan != null || DynamicIslands.instance == null) return;
+			menuScan = DynamicIslands.instance.StartCoroutine(MenuScan(delay));
+		}
+
+		/// <summary>Whether a main-menu check or scan is running.</summary>
+		internal static bool MenuScanRunning { get { return menuScan != null; } }
+
+		static IEnumerator MenuScan(float delay)
+		{
+			try
+			{
+				yield return new WaitForSecondsRealtime(delay);
+				if (!InMainMenu()) yield break;
+				string why = IndexStaleReason();
+				if (why == null) { MenuScanResult = "current"; Debug.Log("[CUSTOM ISLANDS] Object index: current for Raft " + RaftVersion); yield break; }
+				while (Indexing) yield return null;
+				if (!InMainMenu()) yield break;
+				Debug.Log("[CUSTOM ISLANDS] Object index: " + why + " - scanning Raft's islands again here in the main menu (in the background)");
+				Indexing = true;
+				ThreadPriority priority = Application.backgroundLoadingPriority;
+				Application.backgroundLoadingPriority = ThreadPriority.Low;
+				MenuScanLongestFrame = 0f; MenuScanLongestStep = null;
+				Coroutine frames = DynamicIslands.instance.StartCoroutine(WatchFrames());
+				float started = Time.realtimeSinceStartup;
+				try { yield return Guarded(ScanAll(InMainMenu, "the main menu", true), "Scanning Raft's islands for objects (main menu)"); }
+				finally
+				{
+					Application.backgroundLoadingPriority = priority;
+					if (frames != null) DynamicIslands.instance.StopCoroutine(frames);
+					Indexing = false; IndexProgress = null; RaiseChanged();
+				}
+				MenuScanResult = IndexStaleReason() == null ? "scanned (" + why + ")" : "stopped";
+				Debug.Log("[CUSTOM ISLANDS] Object index: main-menu scan " + MenuScanResult + " in " + (Time.realtimeSinceStartup - started).ToString("F0") +
+					" s; longest frame " + (MenuScanLongestFrame * 1000f).ToString("F0") + " ms (" + MenuScanLongestStep + ")");
+			}
+			finally { menuScan = null; }
+		}
+
+		/// <summary>Runs take on each item, a few milliseconds a frame when gentle, else all at once.</summary>
+		static IEnumerator Walk<T>(IEnumerable<T> items, Action<T> take, bool gentle, string sceneName)
+		{
+			var watch = System.Diagnostics.Stopwatch.StartNew();
+			IEnumerator<T> it;
+			try { it = items.GetEnumerator(); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Scanning " + sceneName + ": " + e.Message); yield break; }
+			var one = new System.Diagnostics.Stopwatch();
+			using (it)
+				while (true)
+				{
+					one.Reset(); one.Start();
+					long moved = 0;
+					try { if (!it.MoveNext()) yield break; moved = one.ElapsedMilliseconds; take(it.Current); }
+					catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Scanning " + sceneName + ": " + e.Message); yield break; }
+					if (one.ElapsedMilliseconds > 100) Debug.Log("[CUSTOM ISLANDS] Object index: " + sceneName + " - one step " + one.ElapsedMilliseconds + " ms (next " + moved + " ms) at " + it.Current);
+					if (gentle && watch.ElapsedMilliseconds >= 15) { yield return null; watch.Reset(); watch.Start(); }
+				}
+		}
+
+		/// <summary>
+		/// Takes a scanned (switched-off) scene apart a little each frame before it is unloaded: unloading a big island such
+		/// as Tangaroa destroys everything in one frame (2.2 s in the main menu, CIIndexMenuScan 2026-10-23).
+		/// </summary>
+		static IEnumerator Dismantle(Scene scene)
+		{
+			if (!scene.IsValid() || !scene.isLoaded) yield break;
+			var watch = System.Diagnostics.Stopwatch.StartNew();
+			var stack = new Stack<Transform>(scene.GetRootGameObjects().Select(g => g.transform));
+			var opened = new HashSet<Transform>();
+			while (stack.Count > 0)
+			{
+				Transform t = stack.Pop();
+				if (t == null) continue;
+				if (t.childCount > 0 && opened.Add(t))
+				{
+					// (its children first, then it again with none left)
+					stack.Push(t);
+					for (int c = 0; c < t.childCount; c++) stack.Push(t.GetChild(c));
+					continue;
+				}
+				try { UnityEngine.Object.DestroyImmediate(t.gameObject); }
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Taking " + scene.name + " apart: " + e.Message); }
+				if (watch.ElapsedMilliseconds >= 15) { yield return null; watch.Reset(); watch.Start(); if (!scene.isLoaded) yield break; }
+			}
+		}
+
+		static IEnumerator WatchFrames()
+		{
+			// (the time of a frame is known only in the next one: the step it is told under is the step at that frame's start.
+			// Before, a frame was told under the step the scan had reached during it - Unity activating Varuna Point's 38,700
+			// objects in one frame, 0.75 s before the scan's next line ran, read "reading Varuna Point", which looked like the
+			// mod's own reading (measured 2026-10-23: the scene's sceneLoaded came 0.75 s into that frame, its reading never
+			// took over 100 ms a step))
+			string atStart = scanStep;
+			int gcAt = GC.CollectionCount(0);
+			long heapAt = GC.GetTotalMemory(false);
+			while (true)
+			{
+				string step = atStart;
+				atStart = scanStep;
+				if (atStart != step) step += " / " + atStart;
+				int gc = gcAt; long heap = heapAt;
+				gcAt = GC.CollectionCount(0); heapAt = GC.GetTotalMemory(false);
+				yield return null;
+				if (Time.unscaledDeltaTime > 0.3f) Debug.Log("[CUSTOM ISLANDS] Object index: a " + (Time.unscaledDeltaTime * 1000f).ToString("F0") + " ms frame (" + step + ")" +
+					(GC.CollectionCount(0) != gc ? ", a garbage collection (heap " + (heap >> 20) + " -> " + (GC.GetTotalMemory(false) >> 20) + " MB)" : ""));
+				if (Time.unscaledDeltaTime > MenuScanLongestFrame) { MenuScanLongestFrame = Time.unscaledDeltaTime; MenuScanLongestStep = step; }
+			}
+		}
+
+		/// <summary>Scans every island scene while stillHere() holds (the editor, or the main menu: a new scene replaces
+		/// everything, so leaving stops the scan; it starts again next time).</summary>
+		static IEnumerator ScanAll(Func<bool> stillHere, string place, bool gentle = false)
 		{
 			float started = Time.realtimeSinceStartup;
 			var found = new Dictionary<string, IndexEntry>();
@@ -796,42 +1392,67 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < scenes.Count; i++)
 			{
 				string sceneName = scenes[i];
-				// Leaving the editor (a new scene replaces everything) stops the scan; it starts again next time
-				if (!DynamicIslands.InEditor()) { Debug.Log("[CUSTOM ISLANDS] Object index: scan stopped (left the editor)"); yield break; }
+				if (!stillHere()) { Debug.Log("[CUSTOM ISLANDS] Object index: scan stopped (left " + place + ")"); yield break; }
+				scanStep = "freeing assets";
 				if (i > 0 && i % 8 == 0) yield return Resources.UnloadUnusedAssets(); // the scanned islands' textures and meshes
+				scanStep = "loading " + sceneName;
 				IndexProgress = "Scanning Raft's islands for objects: " + SceneLabel(sceneName) + " (" + (i + 1) + "/" + scenes.Count + ")";
 				var opened = new OpenedScene();
 				yield return OpenScene(sceneName, opened, true);
 				if (!opened.Scene.IsValid()) continue;
+				// (left while the scene loaded: it goes again, switched off as it came)
+				if (!stillHere()) { yield return CloseScene(opened); Debug.Log("[CUSTOM ISLANDS] Object index: scan stopped (left " + place + ")"); yield break; }
+				scanStep = "reading " + sceneName;
 				string category = CategoryForScene(sceneName);
 				int count = 0;
-				try
+				Action<KeyValuePair<string, Transform>> takePick = pick =>
 				{
-					foreach (KeyValuePair<string, Transform> pick in PickAll(opened.Scene))
-					{
-						string name = pick.Key;
-						if (core.Contains(name) || found.ContainsKey(name)) continue;
-						found[name] = new IndexEntry { Name = name, Scene = sceneName, Category = category, Hidden = clutter.IsMatch(name) };
-						count++;
-					}
-					foreach (Transform t in AllTransforms(opened.Scene))
-					{
-						string hn = CleanName(t.name);
-						if (!HarvestableObjects.IsMatch(hn) || core.Contains(hn) || found.ContainsKey(hn)) continue;
-						found[hn] = new IndexEntry { Name = hn, Scene = sceneName, Category = HarvestableCategory, Harvestable = true };
-						count++;
-					}
-				}
-				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Scanning " + sceneName + ": " + e.Message); }
+					string name = pick.Key;
+					if (name == null || core.Contains(name) || found.ContainsKey(name) || !IsPlaceable(pick.Value, name)) return;
+					found[name] = new IndexEntry { Name = name, Scene = sceneName, Category = category, Hidden = clutter.IsMatch(name) };
+					count++;
+				};
+				Action<Transform> takeGather = t =>
+				{
+					string hn = CleanName(t.name);
+					if (!IsGatherName(hn) || core.Contains(hn) || found.ContainsKey(hn)) return;
+					found[hn] = new IndexEntry { Name = hn, Scene = sceneName, Category = HarvestableCategory, Harvestable = true };
+					count++;
+				};
+				// (in the main menu a little each frame: reading Tangaroa at once took 2.3 s)
+				yield return Walk(PickAll(opened.Scene, true), takePick, gentle, sceneName);
+				yield return Walk(AllTransforms(opened.Scene), takeGather, gentle, sceneName);
 				Debug.Log("[CUSTOM ISLANDS] Object index: " + sceneName + " has " + count + " new objects");
+				scanStep = "closing " + sceneName;
+				if (gentle) yield return Dismantle(opened.Scene);
+				scanStep = "unloading " + sceneName;
 				yield return CloseScene(opened);
 			}
 			index.Clear();
 			foreach (var p in found) index[p.Key] = p.Value;
 			WriteIndex();
+			scanStep = "freeing assets";
 			yield return Resources.UnloadUnusedAssets();
-			Debug.Log("[CUSTOM ISLANDS] Object index ready: " + index.Count + " objects in " + scenes.Count + " of Raft's island scenes (" +
+			Debug.Log("[CUSTOM ISLANDS] Object index ready (" + place + "): " + index.Count + " objects in " + scenes.Count + " of Raft's island scenes (" +
 				(Time.realtimeSinceStartup - started).ToString("F0") + " s), written to " + IndexPath);
+		}
+
+		/// <summary>
+		/// Gives the pieces the generator placed before Raft's piece was loaded (IslandObject.Unscaled) the piece's own scale:
+		/// made in a world, where only the core pieces are loaded, the radio tower's floors were saved 3 x 3 m instead of 6 x 9 m
+		/// and its walls and furniture stood partly in the air (CIGroundTypes). Loads those pieces' scenes first.
+		/// </summary>
+		public static IEnumerator ScaleUnloaded(IslandFile file)
+		{
+			List<IslandObject> late = file != null ? file.Objects.Where(o => o.Unscaled).ToList() : new List<IslandObject>();
+			if (late.Count == 0) yield break;
+			yield return EnsureLoaded(late.Select(o => o.Name).Distinct().ToList());
+			foreach (IslandObject o in late)
+			{
+				GameObject proto = Get(o.Name);
+				if (proto != null) o.Scale = Vector3.Scale(o.Scale, proto.transform.localScale);
+				o.Unscaled = false;
+			}
 		}
 
 		/// <summary>
@@ -842,20 +1463,21 @@ namespace DynamicIslands.Editor
 		{
 			yield return EnsureBuilt();
 			var scenes = new List<string>();
-			foreach (string n in names)
+			foreach (string n in names.Select(SourceOf))
 			{
 				IndexEntry e;
 				if (prototypes.ContainsKey(n) || !index.TryGetValue(n, out e) || scenes.Contains(e.Scene)) continue;
 				scenes.Add(e.Scene);
 			}
 			foreach (string s in scenes) yield return LoadScene(s);
+			BuildDerived();
 		}
 
 		/// <summary>Scenes that must be loaded before these names can be spawned (empty = all ready).</summary>
 		public static List<string> ScenesNeededFor(IEnumerable<string> names)
 		{
 			var scenes = new List<string>();
-			foreach (string n in names)
+			foreach (string n in names.Select(SourceOf))
 			{
 				IndexEntry e;
 				if (!prototypes.ContainsKey(n) && index.TryGetValue(n, out e) && !scenes.Contains(e.Scene)) scenes.Add(e.Scene);
@@ -876,23 +1498,63 @@ namespace DynamicIslands.Editor
 			return index.Values.Where(e => e.Category == category).All(e => prototypes.ContainsKey(e.Name) || loadedScenes.Contains(e.Scene));
 		}
 
+		static readonly Dictionary<string, string> resolved = new Dictionary<string, string>();
+		static bool staleTold;
+
+		/// <summary>
+		/// The scene to load for an index entry's scene (ROADMAP R11): the same when Raft still has it; after a Raft update
+		/// that renumbered or renamed its island scenes ("44#Landmark_Vasagatan" became "45#Landmark_Vasagatan"), the scene
+		/// of the same island ("Landmark_Vasagatan", and its variant after the second #) - so worlds keep finding objects
+		/// before the editor scans again.
+		/// </summary>
+		internal static string ResolveScene(string sceneName)
+		{
+			string got;
+			if (resolved.TryGetValue(sceneName ?? "", out got)) return got;
+			List<string> scenes = LandmarkScenes();
+			got = sceneName;
+			if (!scenes.Contains(sceneName) && sceneName != null && sceneName.Contains("#"))
+			{
+				string[] parts = sceneName.Split('#');
+				string island = parts.Length > 1 ? parts[1] : "", variant = parts.Length > 2 ? parts[2] : "";
+				string match = scenes.FirstOrDefault(s => { string[] p = s.Split('#'); return p.Length > 1 && p[1] == island && (p.Length > 2 ? p[2] : "") == variant; })
+					?? scenes.FirstOrDefault(s => { string[] p = s.Split('#'); return p.Length > 1 && p[1] == island; });
+				if (match != null)
+				{
+					got = match;
+					Debug.Log("[CUSTOM ISLANDS] Raft's scene '" + sceneName + "' is now '" + match + "' (the object index is from an older Raft)");
+				}
+			}
+			resolved[sceneName ?? ""] = got;
+			// (in a world, once: the editor scans Raft's islands again)
+			if (!IndexIsCurrent && !staleTold && !DynamicIslands.InEditor() && LoadSceneManager.IsGameSceneLoaded)
+			{
+				staleTold = true;
+				DynamicIslands.Notify((indexRaftVersion == RaftVersion ? "The mod's object index is from an older version of the mod" : "Raft was updated since the mod's object index was made") +
+					": the mod scans Raft's islands again in the main menu (a minute or two, in the background) - until then an object of a custom island may be missing", true);
+			}
+			return got;
+		}
+
 		static IEnumerator LoadScene(string sceneName)
 		{
 			while (loadingScenes.Contains(sceneName)) yield return null;
 			if (loadedScenes.Contains(sceneName)) yield break;
 			loadingScenes.Add(sceneName);
-			try { yield return Guarded(LoadSceneObjects(sceneName), "Loading objects from " + sceneName); }
+			try { yield return Guarded(LoadSceneObjects(sceneName, ResolveScene(sceneName)), "Loading objects from " + sceneName); }
 			finally
 			{
 				loadingScenes.Remove(sceneName);
 				loadedScenes.Add(sceneName);
+				BuildDerived();
 				RaiseChanged();
 			}
 		}
 
-		static IEnumerator LoadSceneObjects(string sceneName)
+		/// <summary>The objects the index has under indexScene, taken from Raft's scene openScene (renamed by a Raft update - R11).</summary>
+		static IEnumerator LoadSceneObjects(string indexScene, string sceneName)
 		{
-			var wanted = new HashSet<string>(index.Values.Where(e => e.Scene == sceneName && !prototypes.ContainsKey(e.Name)).Select(e => e.Name));
+			var wanted = new HashSet<string>(index.Values.Where(e => e.Scene == indexScene && !prototypes.ContainsKey(e.Name)).Select(e => e.Name));
 			if (wanted.Count == 0) yield break;
 			if (LoadSceneManager.IsGameSceneLoaded)
 				Debug.Log("[CUSTOM ISLANDS] Loading Raft's " + sceneName + " scene for a moment to take " + wanted.Count + " objects an island uses");
@@ -903,7 +1565,7 @@ namespace DynamicIslands.Editor
 			foreach (KeyValuePair<string, Transform> pick in PickAll(opened.Scene))
 			{
 				if (!wanted.Contains(pick.Key) || prototypes.ContainsKey(pick.Key)) continue;
-				Add(pick.Key, pick.Value, index[pick.Key].Category, true);
+				Add(pick.Key, pick.Value, index[pick.Key].Category, !Working.IsMatch(pick.Key));
 				// Picked from a switched-off scene: the clone of a scene root would stay switched off
 				prototypes[pick.Key].SetActive(true);
 				if (index[pick.Key].Hidden) hidden.Add(pick.Key);
@@ -911,7 +1573,7 @@ namespace DynamicIslands.Editor
 			foreach (Transform t in AllTransforms(opened.Scene))
 			{
 				string hn = CleanName(t.name);
-				if (!wanted.Contains(hn) || prototypes.ContainsKey(hn) || !HarvestableObjects.IsMatch(hn)) continue;
+				if (!wanted.Contains(hn) || prototypes.ContainsKey(hn) || !IsGatherName(hn)) continue;
 				AddHarvestable(hn, t);
 				harvestables[hn].SetActive(true);
 			}
@@ -923,7 +1585,9 @@ namespace DynamicIslands.Editor
 		/// Every placeable object of a whole scene: top-most descendants that render a mesh, except fragments, story
 		/// items and pickups (and the model parts inside them).
 		/// </summary>
-		static IEnumerable<KeyValuePair<string, Transform>> PickAll(Scene scene)
+		/// <summary>The scene's objects. paced: every candidate unchecked (the caller runs IsPlaceable) and an empty pair
+		/// (Key null) now and then, so a caller can stop for a frame in the middle of a big island.</summary>
+		static IEnumerable<KeyValuePair<string, Transform>> PickAll(Scene scene, bool paced = false)
 		{
 			foreach (GameObject root in scene.GetRootGameObjects())
 			{
@@ -931,27 +1595,69 @@ namespace DynamicIslands.Editor
 				if (root.GetComponent<Renderer>() != null || root.GetComponent<LODGroup>() != null)
 				{
 					string rn = CleanName(root.name);
-					if (IsPlaceable(root.transform, rn)) yield return new KeyValuePair<string, Transform>(rn, root.transform);
+					if (paced || IsPlaceable(root.transform, rn)) yield return new KeyValuePair<string, Transform>(rn, root.transform);
 					continue;
 				}
-				foreach (KeyValuePair<string, Transform> pick in Pick(root.transform))
-					if (IsPlaceable(pick.Value, pick.Key)) yield return pick;
+				foreach (KeyValuePair<string, Transform> pick in Pick(root.transform, paced))
+					if (paced || IsPlaceable(pick.Value, pick.Key)) yield return pick;
+				// Raft's trading post is one object too (its hut, register and radio): RaftStore puts it to work
+				foreach (TradingPost tp in root.GetComponentsInChildren<TradingPost>(true))
+					yield return new KeyValuePair<string, Transform>(RaftStore.ObjectName, tp.transform);
+				// and so is Raft's vending machine (its buttons, hatch and animator): RaftVending puts it to work
+				foreach (VendingMachine vm in root.GetComponentsInChildren<VendingMachine>(true))
+					yield return new KeyValuePair<string, Transform>(RaftVending.ObjectName, vm.transform);
 			}
+		}
+
+		/// <summary>Dev (RK11): opens a scene and logs every object of that name in it: where it sits, what it renders, and
+		/// whether the catalog takes it.</summary>
+		public static IEnumerator DescribeInScene(string sceneName, string name, Action<string> log)
+		{
+			var opened = new OpenedScene();
+			yield return OpenScene(sceneName, opened, true);
+			if (!opened.Scene.IsValid()) { log("  scene " + sceneName + " did not open"); yield break; }
+			foreach (Transform t in AllTransforms(opened.Scene))
+			{
+				if (CleanName(t.name) != name) continue;
+				string path = t.name;
+				for (Transform p = t.parent; p != null; p = p.parent) path = p.name + "/" + path;
+				log("  in scene: " + path + " active " + t.gameObject.activeInHierarchy + "/" + t.gameObject.activeSelf + " placeable " + IsPlaceable(t, name)
+					+ " parts " + string.Join(",", t.GetComponents<Component>().Select(c => c == null ? "null" : c.GetType().Name).ToArray()));
+				foreach (Renderer r in t.GetComponentsInChildren<Renderer>(true))
+					log("    " + r.GetType().Name + " '" + r.name + "' enabled " + r.enabled + " active " + r.gameObject.activeSelf + " mats " + string.Join("/", r.sharedMaterials.Select(m => m == null ? "null" : m.name).ToArray()));
+				foreach (Transform c in t) log("    child " + c.name + " active " + c.gameObject.activeSelf);
+				foreach (Component c in t.GetComponents<Component>())
+				{
+					if (c == null || c is Transform) continue;
+					foreach (var f in c.GetType().GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic))
+					{
+						object v = null; try { v = f.GetValue(c); } catch { }
+						UnityEngine.Object uo = v as UnityEngine.Object;
+						if (uo != null || (v != null && !(v is System.Collections.ICollection) && f.FieldType.IsPrimitive)) log("    " + c.GetType().Name + "." + f.Name + " = " + (uo != null ? uo.GetType().Name + " '" + uo.name + "'" : v.ToString()));
+					}
+				}
+			}
+			yield return CloseScene(opened);
 		}
 
 		static bool IsPlaceable(Transform t, string name)
 		{
-			if (excluded.IsMatch(name) || excludedExtra.IsMatch(name) || treeParent.IsMatch(name)) return false;
+			bool questItem = QuestItemPickups.IsModel(name);
+			if (!questItem && (excluded.IsMatch(name) || excludedExtra.IsMatch(name) || treeParent.IsMatch(name))) return false;
 			// Inside a pickup (harvestable tree, quest item...): its parts aren't objects of their own
-			for (Transform p = t; p != null; p = p.parent)
-				if (pickupAncestor.IsMatch(p.name)) return false;
+			for (Transform p = questItem ? t.parent : t; p != null; p = p.parent)
+				// (RK10: Raft's plain folders "QuestItem Pickups" (Vasagatan) and "QuestItems" (Utopia) hold quest pickups)
+				if (pickupAncestor.IsMatch(p.name) && !(questItem && questFolder.IsMatch(p.name))) return false;
 			// Must show a mesh (not only an effect, and not a hidden collider shape)
 			foreach (Renderer r in t.GetComponentsInChildren<Renderer>(true))
 				if (r.enabled && (r is MeshRenderer || r is SkinnedMeshRenderer)) return true;
-			return false;
+			// (a quest item whose model sits elsewhere in the scene: BringSeparateModel)
+			GameObject sep = questItem ? SeparateModelOf(t) : null;
+			return sep != null && sep.GetComponentsInChildren<Renderer>(true).Any(r => r is MeshRenderer || r is SkinnedMeshRenderer);
 		}
 
 		static readonly Regex pickupAncestor = new Regex(@"^(Pickup_|QuestItem|NotePickup)", RegexOptions.IgnoreCase);
+		static readonly Regex questFolder = new Regex(@"^QuestItem(s| Pickups)$", RegexOptions.IgnoreCase);
 
 		#endregion
 
@@ -967,16 +1673,25 @@ namespace DynamicIslands.Editor
 		/// Top-most descendants that render something themselves (their parts come along), keyed by catalog name.
 		/// Harvestable trees keep their visual under a child called "Model"; those are named after the tree instead.
 		/// </summary>
-		static IEnumerable<KeyValuePair<string, Transform>> Pick(Transform root)
+		static IEnumerable<KeyValuePair<string, Transform>> Pick(Transform root, bool paced = false)
 		{
 			var stack = new Stack<Transform>();
 			foreach (Transform child in root) stack.Push(child);
+			int seen = 0;
 			while (stack.Count > 0)
 			{
 				Transform t = stack.Pop();
+				if (paced && ++seen % 200 == 0) yield return default(KeyValuePair<string, Transform>);
+				// (a quest item pickup is one object, its model inside it: QuestItemPickups)
+				if (QuestItemPickups.IsModel(CleanName(t.name))) { yield return new KeyValuePair<string, Transform>(CleanName(t.name), t); continue; }
 				if (t.GetComponent<Renderer>() != null || t.GetComponent<LODGroup>() != null)
 				{
 					yield return new KeyValuePair<string, Transform>(IsTreeModel(t) ? TreeName(t.parent.name) : CleanName(t.name), t);
+					// (G10, 2026-10-24: quest item pickups lying inside a rendered object - Vasagatan's keys and bolt cutters on
+					// its furniture, Utopia's keys - are objects of their own too)
+					foreach (Transform q in t.GetComponentsInChildren<Transform>(true))
+						if (q != t && QuestItemPickups.IsModel(CleanName(q.name)) && (q.parent == null || !QuestItemPickups.IsModel(CleanName(q.parent.name))))
+							yield return new KeyValuePair<string, Transform>(CleanName(q.name), q);
 					continue;
 				}
 				foreach (Transform child in t) stack.Push(child);
@@ -1053,7 +1768,7 @@ namespace DynamicIslands.Editor
 		public static string DisplayName(string name)
 		{
 			string label;
-			if (labels.TryGetValue(name, out label)) return label;
+			if (labels.TryGetValue(name, out label) || gatherLabels.TryGetValue(name, out label)) return label;
 			Match hm = harvestableLabel.Match(name);
 			if (hm.Success) name = hm.Groups[2].Success ? hm.Groups[2].Value + " Tree " + hm.Groups[3].Value : hm.Groups[4].Success ? hm.Groups[4].Value + " Tree" : hm.Groups[5].Value;
 			string s = displayPrefix.Replace(name, "").Replace('_', ' ').Trim();
@@ -1070,6 +1785,25 @@ namespace DynamicIslands.Editor
 		public static string CleanName(string name)
 		{
 			return duplicateSuffix.Replace(cloneSuffix.Replace(name, ""), "").Trim();
+		}
+	}
+
+	/// <summary>
+	/// On a renderer of a copy of one of Raft's statically batched objects (PlaceableCatalog.AnchorBatches): points
+	/// Unity's static batch root at the copy's own anchor, so the batched mesh is drawn where the copy stands. Again in
+	/// every copy made of it (Unity copies the root as it was: a copy of a copy drew where the first copy stood).
+	/// </summary>
+	public class BatchAnchor : MonoBehaviour
+	{
+		public Transform Leaf;
+
+		void Awake() { Apply(); }
+		void OnEnable() { Apply(); }
+
+		public void Apply()
+		{
+			Renderer r = GetComponent<Renderer>();
+			if (r != null && Leaf != null) PlaceableCatalog.SetBatchRoot(r, Leaf);
 		}
 	}
 }

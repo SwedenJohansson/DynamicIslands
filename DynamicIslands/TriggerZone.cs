@@ -16,11 +16,57 @@ namespace DynamicIslands.Editor
 	public class TriggerZone : MonoBehaviour
 	{
 		public const int KeyBase = 0x30000;
+		/// <summary>The zone gave its story items (loot): + its zone ordinal (as KeyBase), once per world - GiveStoryOnce
+		/// (after TriggerSounds.KeyBase 0x150000 + 0xFFFF).</summary>
+		public const int StoryLootBase = 0x160000;
+		/// <summary>The world file has the story-loot keys ("@storyloot=1", written by every save of this version). Read
+		/// without it, the file came from a version before them: a zone that fired there gave its story items already.</summary>
+		static bool storyLootKeysRead;
+		internal const string StoryLootSetting = "storyloot";
+		internal static void ForgetStoryLootLine() { storyLootKeysRead = false; }
+		internal static string StoryLootLine { get { return "@" + StoryLootSetting + "=1"; } }
+		internal static bool ReadLine(string key, string value)
+		{
+			if (key != StoryLootSetting) return false;
+			storyLootKeysRead = true;
+			return true;
+		}
+
+		/// <summary>
+		/// Host, after reading a world file from before the story-loot keys (merge review 10-31): every zone whose "used" key
+		/// is set gets its story-loot key too, so a zone that fires on every walk-in doesn't hand its story items out once
+		/// more after the update. A zone without story items only gets a key nothing reads. Returns how many were set.
+		/// </summary>
+		internal static int MarkOldStoryLoot(IEnumerable<IslandWorldState.Entry> islands)
+		{
+			if (storyLootKeysRead || islands == null) return 0;
+			int set = 0;
+			foreach (IslandWorldState.Entry e in islands)
+			{
+				if (e == null || e.State == null) continue;
+				foreach (KeyValuePair<int, ObjectState> kv in e.State.ToList())
+				{
+					if (kv.Key < KeyBase || kv.Key >= KeyBase + 0x10000 || kv.Value == null || kv.Value.Active) continue;
+					int story = StoryLootBase + (kv.Key - KeyBase);
+					if (e.State.ContainsKey(story)) continue;
+					e.State[story] = new ObjectState { Active = false, Yield = 0, Day = kv.Value.Day };
+					set++;
+				}
+			}
+			if (set > 0) Debug.Log("[CUSTOM ISLANDS] World file from before the story-loot keys: " + set + " zone(s) that fired keep their story items given");
+			return set;
+		}
 		const float RepeatCooldown = 30f;
 
 		public string Id = "", Message = "";
 		public float Radius = 6f;
 		public bool Repeats;
+		/// <summary>An air pocket: a player inside breathes (ObjectProps.ZoneAir) - while the zone is shown.</summary>
+		public bool Air;
+		/// <summary>A hazard zone (Hazards: acid, shock, darkness...): hurts the local player inside unless protected.</summary>
+		public string Hazard = "";
+		public Dictionary<string, string> Props = new Dictionary<string, string>();
+		float nextHazard, toldHazardAt = -100f;
 		/// <summary>Fires once ever: never ready again after the regrow days (a story's once-zone fired again: a double
 		/// ambush, a bridge flipped back).</summary>
 		public bool OnceEver;
@@ -28,9 +74,22 @@ namespace DynamicIslands.Editor
 		/// <summary>Place among the island's zones (file order: the same on every machine).</summary>
 		public int Ordinal;
 		public int StateKey { get { return KeyBase + Ordinal; } }
+		/// <summary>Its story items were given: StoryLootBase + its ordinal - as StateKey, and as MarkOldStoryLoot writes it
+		/// for an old world file (by the object index, a zone after another object read another zone's key: verify 10-31).</summary>
+		public int StoryKey { get { return StoryLootBase + Ordinal; } }
 
-		bool inside;
-		float nextCheck, cooldownUntil;
+		/// <summary>A once-zone another player had first is tried again this often while the local player stays inside
+		/// (the host holds it for them about as long: their "only if" may fail, or they walk off without setting it off).</summary>
+		const float RetrySeconds = 6f;
+
+		bool inside, toldRefused;
+		/// <summary>The quest step "go to this zone" was counted for this arrival (once per walk-in).</summary>
+		bool reachCounted;
+		// (spent before this player came near - an earlier session's, or before the island loaded: old news, said nothing;
+		// spent meanwhile by someone else: "someone else got here first" - SC50, the host losing the race was told nothing)
+		bool? spentWhenSeen;
+		bool firedHere;
+		float nextCheck, cooldownUntil, retryAt;
 
 		/// <summary>Raised on every machine when the local player sets a zone off (tests and quests listen).</summary>
 		public static event Action<TriggerZone> Fired;
@@ -47,34 +106,104 @@ namespace DynamicIslands.Editor
 			z.Repeats = ObjectProps.Repeats(o.Props);
 			z.OnceEver = ObjectProps.Get(o.Props, ObjectProps.ZoneRepeat) == ObjectProps.ZoneOnceEver;
 			z.Items = ObjectProps.Loot(o.Props);
+			z.Air = ObjectProps.GetBool(o.Props, ObjectProps.ZoneAir, false);
 			z.Ordinal = ordinal;
+			z.Props = o.Props != null ? new Dictionary<string, string>(o.Props) : new Dictionary<string, string>();
+			z.Hazard = Hazards.KindOf(z.Props);
+			z.Push = MechFeatures.PushSpec.Parse(z.Props);
 			return z;
 		}
 
 		public bool HasFired { get { return ContentState.IsUsed(ContentState.EntryOf(transform), StateKey); } }
 
+		/// <summary>A push zone (zone.push - fans, wind, a knockback) and its on/off cycle (zone.pulse): MechFeatures.</summary>
+		public MechFeatures.PushSpec Push;
+
 		void Update()
 		{
+			// (a push every frame - a quarter second's steps would be jerky)
+			if (Push != null) MechFeatures.PushTick(this);
 			if (Time.time < nextCheck) return;
 			nextCheck = Time.time + 0.25f;
+			if (spentWhenSeen == null) spentWhenSeen = HasFired; // (as the zone first came: SC50)
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null) return;
 			bool now = (player.transform.position - transform.position).sqrMagnitude <= Radius * Radius;
 			if (now && !inside) Enter();
+			// (refused by the host - another player had it: tried again while the player stays inside - AU70)
+			else if (now && retryAt > 0f && Time.time >= retryAt) { retryAt = 0f; Enter(false, true); }
+			if (!now) { retryAt = 0f; toldRefused = false; }
 			inside = now;
+			// (a pulsing zone - a firebomb, a steam vent: its air and hazard only while it is on)
+			bool on = MechFeatures.PulseOn(Props);
+			if (now && on && Air) Breathe(player);
+			if (now && on && Hazard.Length > 0) HazardTick(player);
 		}
 
-		/// <summary>The local player walked in (tests call it directly). granted: again, now that the host said yes.</summary>
-		public void Enter() { Enter(false); }
-
-		void Enter(bool granted)
+		/// <summary>The local player stands in a hazard zone (every quarter second): unprotected, it hurts - damage every
+		/// second, breath drained in deep water, the screen dark in a dark zone - and says why at most every 6 s.</summary>
+		void HazardTick(Network_Player player)
 		{
-			// A quest step "go to this zone" counts every time (even when the zone itself has fired already)
-			if (!granted) QuestTracker.Event(ContentState.EntryOf(transform), "reach", Id);
+			bool safe;
+			try { safe = Hazards.Protected(this, player); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Hazard zone '" + Id + "': " + e.Message); safe = false; }
+			if (Hazard == Hazards.Dark) { DarknessOverlay.Mark(safe); if (!safe) Tell(); return; }
+			if (safe) return;
+			float dmg = Hazards.DamageOf(Props);
+			if (Hazard == Hazards.Deep)
+			{
+				try { if (player.Stats != null && player.Stats.stat_oxygen != null) player.Stats.stat_oxygen.Value = Mathf.Max(0f, player.Stats.stat_oxygen.Value - dmg * 0.25f); }
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Deep water: " + e.Message); }
+				Tell();
+				return;
+			}
+			if (Time.time < nextHazard || dmg <= 0f) return;
+			nextHazard = Time.time + 1f;
+			try
+			{
+				float h0 = player.Stats.stat_health.Value;
+				player.Stats.Damage(dmg, player.transform.position + Vector3.up, Vector3.up, EntityType.Environment, true, null);
+				Hazards.Taken += Mathf.Max(0f, h0 - player.Stats.stat_health.Value);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Hazard damage: " + e.Message); }
+			Tell();
+		}
+
+		void Tell()
+		{
+			if (Time.time - toldHazardAt < 6f) return;
+			toldHazardAt = Time.time;
+			string m = Hazards.MessageOf(Props);
+			if (m.Length > 0) IslandInfo.ShowMessage(m);
+			Debug.Log("[CUSTOM ISLANDS] Hazard zone '" + Id + "' (" + Hazard + ") hurts the player");
+		}
+
+		/// <summary>A player in an air pocket breathes: breath back to full.</summary>
+		public static void Breathe(Network_Player player)
+		{
+			try { if (player.Stats != null && player.Stats.stat_oxygen != null) player.Stats.stat_oxygen.Value = player.Stats.stat_oxygen.Max; }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Breathing in an air pocket: " + e.Message); }
+		}
+
+		/// <summary>The local player walked in (tests call it directly). granted: again, now that the host said yes;
+		/// again: tried again while the player stayed inside after a refusal (not a new arrival).</summary>
+		public void Enter() { reachCounted = false; Enter(false, false); }
+
+		void Enter(bool granted, bool again)
+		{
+			// A quest step "go to this zone" counts on every arrival (even when the zone itself has fired already), but
+			// only once the zone's own "only if" passes (before, it counted as the player walked in: a "go to" step was
+			// done at a zone that refused the player - AU41)
 			bool fired = HasFired;
-			if (fired && !Repeats) return;
-			if (!Repeats && !granted) Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' entered");
-			if (Repeats && Time.time < cooldownUntil) return;
+			if (spentWhenSeen == null) spentWhenSeen = fired;
+			if (fired && !Repeats)
+			{
+				if ((spentWhenSeen == false || ContentState.UsedByOtherLately(ContentState.EntryOf(transform), StateKey, 30f)) && !firedHere && (Items.Count > 0 || Message.Length > 0) && !toldRefused) { toldRefused = true; IslandInfo.ShowMessage("Someone else got here first"); }
+				Reached();
+				return;
+			}
+			if (!Repeats && !granted && !again) Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' entered");
+			if (Repeats && Time.time < cooldownUntil) { Reached(); return; }
 			// (a zone the player can't set off yet says why before it is claimed: claimed, it was held from the others)
 			IslandObjectRef self = GetComponent<IslandObjectRef>();
 			if (!fired && !Repeats && !granted && self != null && !Behaviours.WouldAllow(ContentState.EntryOf(transform), self.Index, "enter"))
@@ -82,8 +211,14 @@ namespace DynamicIslands.Editor
 				Behaviours.Allows(ContentState.EntryOf(transform), self.Index, "enter");
 				return;
 			}
-			// A zone that fires once fires for one player: a client asks the host first (Claims)
-			if (!fired && !Repeats && !Claims.May(ContentState.EntryOf(transform), StateKey, yes => { if (yes && this != null) Enter(true); })) return;
+			// A zone that fires once fires for one player: a client asks the host first (Claims). Refused (another player
+			// has it), the player is told so and it is tried again while they stay inside (before: nothing was said, and
+			// it never went off for them until they walked out and in again - AU70)
+			if (!fired && !Repeats && !Claims.May(ContentState.EntryOf(transform), StateKey, yes => { if (this == null) return; if (yes) Enter(true, false); else Refused(); }))
+			{
+				if (Raft_Network.IsHost) Refused(); // (the host is answered at once: another player holds it)
+				return;
+			}
 			// Its "only if" checks first: when they fail the player is told why and the zone stays ready - not marked
 			// as fired, no cooldown. (Before, a failed check still used the zone up: a treasure map's X crossed
 			// without the map did nothing when the player came back with it within half a minute, and a zone that
@@ -92,13 +227,60 @@ namespace DynamicIslands.Editor
 			IslandWorldState.Entry entry = ContentState.EntryOf(transform);
 			if (r != null && !Behaviours.Allows(entry, r.Index, "enter")) return;
 			cooldownUntil = Time.time + RepeatCooldown;
+			if (!reachCounted) { reachCounted = true; QuestTracker.Event(entry, "reach", Id); } // (passed just above)
 
-			if (Message.Length > 0) IslandInfo.ShowMessage(Message);
-			if (Items.Count > 0) Give(Items);
-			if (!fired) ContentState.MarkUsed(transform, StateKey); // the host wakes up the linked creatures
+			if (Message.Length > 0) { IslandInfo.ShowMessage(Message); StoryBook.AddMessagePage(entry, Message); } // (PQ8: kept in the journal)
+			// (its story items once per world - GiveStoryOnce; its other loot every time it fires)
+			if (Items.Count > 0)
+			{
+				List<KeyValuePair<string, int>> story = Items.Where(l => StoryItems.IsStory(l.Key)).ToList();
+				Give(story.Count == 0 ? Items : Items.Where(l => !StoryItems.IsStory(l.Key)).ToList());
+				if (story.Count > 0) GiveStoryOnce(entry, r, story, fired);
+			}
+			if (!fired) { firedHere = true; ContentState.MarkUsed(transform, StateKey); } // the host wakes up the linked creatures
 			Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' set off" + (Message.Length > 0 ? ": " + Message : ""));
 			if (r != null) Behaviours.Fire(entry, r.Index, "enter", true, true); // (checked above)
 			if (Fired != null) try { Fired(this); } catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Zone listener: " + e.Message); }
+		}
+
+		/// <summary>
+		/// The zone's story items, once per world: they are the crew's, and a second key or quest item let players skip ahead
+		/// or broke "has"/"take" counts (player 10-30). Its own key (StoryKey: StoryLootBase + zone ordinal) is saved and shared like
+		/// "used" and never made ready again, so a zone ready again after the regrow days gives its other loot but not these.
+		/// A zone that fires once was claimed already; one that fires on every walk-in is claimed here (two players walking
+		/// in together each got the crew's key). Without its object reference (tests): its first firing only.
+		/// </summary>
+		void GiveStoryOnce(IslandWorldState.Entry entry, IslandObjectRef r, List<KeyValuePair<string, int>> story, bool fired)
+		{
+			if (entry == null || r == null) { if (!fired) Give(story); return; }
+			int key = StoryKey;
+			if (ContentState.IsUsed(entry, key)) { Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "' gave its story items before - not again"); return; }
+			if (Repeats && !Claims.May(entry, key, yes => { if (this != null && yes) GiveStoryOnce(entry, r, story, false); })) return;
+			Give(story);
+			ContentState.MarkUsed(transform, key);
+		}
+
+		/// <summary>Counts the quest step "go to this zone" for this arrival when the zone's "only if" passes - checked
+		/// quietly (nothing taken, no "otherwise"): for a zone that doesn't fire now (fired already, cooling down, or another
+		/// player's).</summary>
+		void Reached()
+		{
+			if (reachCounted) return;
+			IslandWorldState.Entry entry = ContentState.EntryOf(transform);
+			IslandObjectRef r = GetComponent<IslandObjectRef>();
+			if (r != null && !Behaviours.WouldAllow(entry, r.Index, "enter")) return;
+			reachCounted = true;
+			QuestTracker.Event(entry, "reach", Id);
+		}
+
+		/// <summary>The host gave this once-zone to another player: the local player is told once while inside, and it is
+		/// tried again in a few seconds (when the other player set it off, it has fired by then and nothing happens).</summary>
+		void Refused()
+		{
+			Debug.Log("[CUSTOM ISLANDS] Trigger zone '" + Id + "': another player has it");
+			Reached(); // (the player got there: the "go to" step counts even though the zone is another player's)
+			if (!toldRefused) { toldRefused = true; IslandInfo.ShowMessage("Someone else got here first"); }
+			retryAt = Time.time + RetrySeconds;
 		}
 
 		/// <summary>Puts items in the local player's inventory; what doesn't fit is dropped in front of them. Story items go to the crew's journal.</summary>

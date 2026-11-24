@@ -1,0 +1,45 @@
+# Hollins Cannery's cellar and Mrs. Elaine Hollins (CIPlay hollins_cannery_caves, 11-12 w10; in a test world 'CI ...').
+# Points as in its recipe: the sea cave's mouth at 66 22 on the shore under Smokehouse Hill (kit_st yaw 258, len 6,
+# den floor ~2), the hatch at 46.4 17.8 in the den; Elaine sitting in the yard at -15 -9. The hatch is locked until
+# someone talked to her; her three answers (the cellar, who heard it, no); the walk in and out; the cellar chest.
+island Hollins Cannery keep
+offset 0 0
+hour 11
+weather Calm
+expect hidden hccellarchest
+
+# The sea cave from outside, the walk in to the den
+picture hc_cave_out 75 7 27 66 3 22
+walk 71 23 to 66 22 to 60 20.7 to 52 19 to 48 18.2 below=8
+picture hc_cave_in 58 5.5 20.4 46.4 3 17.8 light=20
+
+# The hatch: locked before anyone talked to Elaine
+use hccellarhatch stay
+expect message has the key
+expect shown hccellarhatch
+expect hidden hccellarchest
+
+# Mrs. Elaine Hollins in the yard
+picture hc_islander -11.5 4.8 -8 -15 4 -9
+use Mrs. Elaine Hollins
+
+# Now the hatch opens on the cellar chest
+walk 60 20.7 to 52 19 to 48 18.2 below=8
+use hccellarhatch stay
+expect message louder than anywhere
+expect hidden hccellarhatch
+expect shown hccellarchest
+open Hollins cellar
+wait 2
+expect item CopperIngot 2
+
+# Her answers: 2 who heard it (journal), 3 no, 1 the cellar (journal)
+use Mrs. Elaine Hollins pick 2
+expect message Only Pim stayed
+use Mrs. Elaine Hollins pick 3
+expect message twelve past three
+use Mrs. Elaine Hollins pick 1
+expect message Go and listen
+
+# Out of the cave again
+walk 48 18.2 to 52 19 to 60 20.7 to 66 22 to 71 23 below=8

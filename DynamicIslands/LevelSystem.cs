@@ -10,13 +10,13 @@ namespace DynamicIslands.Editor
 {
 	/// <summary>
 	/// The level up system's numbers: what a level costs, what a monster is worth, and the nine stats a player puts
-	/// points into. Each point is +1% (Hunger, Thirst and Oxygen: the stat lasts 1% longer), at most 10 points per
-	/// stat, 2 points per level. Once every stat is full (90 points, level 46) players still level up, without points.
+	/// points into. Each point is +1% (Hunger, Thirst and Oxygen: the stat lasts 1% longer), at most 15 points per
+	/// stat, 2 points per level. Once every stat is full (135 points, level 69) players still level up, without points.
 	/// </summary>
 	public static class LevelRules
 	{
 		public const int Walk = 0, Run = 1, Swim = 2, Jump = 3, Damage = 4, Health = 5, Hunger = 6, Thirst = 7, Oxygen = 8, StatCount = 9;
-		public const int MaxPoints = 10, PointsPerLevel = 2;
+		public const int MaxPoints = 15, PointsPerLevel = 2; // (15 since 2026-10-06, the user's wish; was 10)
 		public const float PerPoint = 0.01f;
 
 		/// <summary>Every point there is (all stats full).</summary>
@@ -39,16 +39,27 @@ namespace DynamicIslands.Editor
 		/// <summary>Stat points a player has had at this level: 2 a level, until every stat could be full.</summary>
 		public static int PointsAt(int level) { return Mathf.Min(AllPoints, Mathf.Max(0, level - 1) * PointsPerLevel); }
 
-		/// <summary>EXP of the monster every level is measured in: Bruce, Raft's shark.</summary>
+		/// <summary>EXP of the monster every level is measured in: Bruce, Raft's shark (before GainMultiplier).</summary>
 		public const int ReferenceXp = 20;
 
-		/// <summary>Monster kills (worth ReferenceXp each) from this level to the next: 5, 10, 20, 30, 40, ...</summary>
-		public static int KillsFor(int level) { return level <= 1 ? 5 : 10 * (level - 1); }
+		/// <summary>EXP gained is nine times what the levels are measured in (the user: doubled 2026-10-02, tripled again
+		/// 2026-10-04, +50 % 2026-10-09) - Bruce gives 180 - so a level takes a ninth of the kills; the EXP each level needs
+		/// is 75, 150, then 100 more each level (since 2026-11-03).</summary>
+		public const float GainMultiplier = 9f;
 
-		/// <summary>EXP from this level to the next: 100, 200, 400, 600, 800, ...</summary>
-		public static int XpFor(int level) { return ReferenceXp * KillsFor(level); }
+		/// <summary>What Bruce gives (ReferenceXp x GainMultiplier).</summary>
+		public static int BruceXp { get { return Mathf.RoundToInt(ReferenceXp * GainMultiplier); } }
 
-		/// <summary>Total EXP at which this level starts (level 1 at 0, level 2 at 100, level 3 at 300, level 4 at 700, level 5 at 1300).</summary>
+		/// <summary>EXP from level 1 to 2, and from level 2 to 3 (the user 2026-11-03: 75 % of the old 100 and 200).</summary>
+		public const int FirstLevelXp = 75, SecondLevelXp = 150;
+
+		/// <summary>How much more EXP each level after that needs than the one before (the user 2026-11-03: +100, was +150).</summary>
+		public const int StepXp = 100;
+
+		/// <summary>EXP from this level to the next: 75, 150, 250, 350, 450, ...</summary>
+		public static int XpFor(int level) { return level <= 1 ? FirstLevelXp : SecondLevelXp + StepXp * (level - 2); }
+
+		/// <summary>Total EXP at which this level starts (level 1 at 0, level 2 at 75, level 3 at 225, level 4 at 475, level 5 at 825).</summary>
 		public static int TotalFor(int level)
 		{
 			int total = 0;
@@ -58,7 +69,7 @@ namespace DynamicIslands.Editor
 
 		public static int LevelOf(int xp)
 		{
-			int level = 1, total = 0;
+			int level = 1; long total = 0; // (long: a total past int.MaxValue would wrap)
 			while (level < 9999 && xp >= total + XpFor(level)) { total += XpFor(level); level++; }
 			return level;
 		}
@@ -82,11 +93,11 @@ namespace DynamicIslands.Editor
 		/// <summary>
 		/// A monster's EXP from its health and damage (as they are on this animal, so the editor's Easy/Hard/Boss
 		/// settings count): half from how tough it is, half from how hard it hits, both compared with Bruce, who is
-		/// worth ReferenceXp. At least 1.
+		/// worth BruceXp. At least 1.
 		/// </summary>
 		public static int XpOf(float health, float damage)
 		{
-			float x = ReferenceXp * (0.5f * health / SharkHealth + 0.5f * damage / SharkDamage);
+			float x = GainMultiplier * ReferenceXp * (0.5f * health / SharkHealth + 0.5f * damage / SharkDamage);
 			return Mathf.Max(1, Mathf.RoundToInt(x));
 		}
 	}
@@ -134,8 +145,8 @@ namespace DynamicIslands.Editor
 	}
 
 	/// <summary>
-	/// The level up system in a world. It is off until an island made with "Level up system" on appears in the world
-	/// (IslandProps.Levels); from then on it stays on in that world, and every player earns EXP by hitting monsters
+	/// The level up system in a world: a world option, chosen in the New Game box's World settings (or switched with the
+	/// Levels command); islands and plans don't turn it on. While it is on, every player earns EXP by hitting monsters
 	/// anywhere (Bruce, the island animals, Raft's own). The EXP of a hit is the monster's EXP times the share of its
 	/// health the hit took, so killing it alone gives exactly its EXP; the number floats up over the monster (+5).
 	/// Each level gives 2 stat points to spend on the stats page (K).
@@ -145,7 +156,8 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class PlayerLevels
 	{
-		public const KeyCode Key = KeyCode.K;
+		/// <summary>K unless changed in Defaults (Keys, ModKeys).</summary>
+		public static KeyCode Key { get { return ModKeys.Stats; } }
 
 		static readonly Dictionary<ulong, LevelRecord> records = new Dictionary<ulong, LevelRecord>();
 		static LevelRecord mine;
@@ -174,8 +186,8 @@ namespace DynamicIslands.Editor
 		public static bool HasState { get { return On || OffByHost; } }
 
 		/// <summary>
-		/// The host switched the system off in this world (World settings when creating it, or the Levels command): an island
-		/// made with it doesn't switch it on again, and everyone's levels are kept for when it is switched on.
+		/// The host switched the system off in this world (the Levels command): everyone's levels are kept for when it is
+		/// switched on again.
 		/// </summary>
 		public static bool OffByHost { get; private set; }
 
@@ -236,6 +248,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Raised whenever this player's EXP or points change (the stats page and the HUD follow).</summary>
 		public static event Action Changed;
 
+		public static ulong LocalPlayerId { get { return LocalId; } }
+
 		static ulong LocalId
 		{
 			get
@@ -295,22 +309,6 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		/// <summary>An island was spawned in this world: one made with the level up system on turns it on.</summary>
-		public static void OnIslandSpawned(IDictionary<string, string> props)
-		{
-			// (not over the host's choice: switched off in World settings or with the Levels command. Only the host decides -
-			// its "on" reaches every player: a player who joined doesn't know the host switched it off, and turned it on for
-			// themselves when such an island spawned on their side)
-			if (!Raft_Network.IsHost || On || OffByHost || !IsOn(props)) return;
-			TurnOn(true);
-		}
-
-		public static bool IsOn(IDictionary<string, string> props)
-		{
-			string v = props != null ? ObjectProps.Get(props, IslandProps.Levels) : "";
-			return v == "on" || v == "1" || v.Equals("true", StringComparison.OrdinalIgnoreCase);
-		}
-
 		/// <summary>Turns the system on in this world (host: tells everyone; a client does it when the host says so).</summary>
 		public static void TurnOn(bool announce)
 		{
@@ -348,6 +346,7 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		public static int OnHit(Network_Entity entity, float damage)
 		{
+			if (Raft_Network.IsHost) CountDailyKill(entity, damage);
 			if (!On || !Raft_Network.IsHost) return 0;
 			return HostHit(entity, damage, LocalId);
 		}
@@ -355,8 +354,23 @@ namespace DynamicIslands.Editor
 		/// <summary>Host: another player's hit, as Raft's damage message from them arrives (before it is applied).</summary>
 		public static int OnRemoteHit(Network_Entity entity, float damage, ulong player)
 		{
+			if (Raft_Network.IsHost && player != LocalId) CountDailyKill(entity, damage);
 			if (!On || !Raft_Network.IsHost || player == LocalId) return 0;
 			return HostHit(entity, damage, player);
+		}
+
+		/// <summary>Host: a hit that defeats a monster counts for the Daily quest (also with the level up system off).</summary>
+		static void CountDailyKill(Network_Entity entity, float damage)
+		{
+			try
+			{
+				if (!DailyQuest.On || entity == null || damage <= 0f) return;
+				AI_NetworkBehaviour ai = AiOf(entity);
+				Stat_Health h = entity.stat_health;
+				if (ai == null || !LevelRules.IsMonster(ai.behaviourType) || h == null || h.Value <= 0f) return;
+				if (damage >= h.Value - 0.001f) DailyQuest.Add(DailyQuest.Monsters, "", 1);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [daily] " + e.Message); }
 		}
 
 		/// <summary>Host: the EXP a hit on a monster is worth to a player, from the monster's health before the hit.</summary>
@@ -382,8 +396,22 @@ namespace DynamicIslands.Editor
 			// (forget monsters that are gone)
 			if (Fraction.Count > 64) foreach (Network_Entity gone in Fraction.Keys.Where(k => k == null || k.IsDead).ToList()) Fraction.Remove(gone);
 			bool kill = kills && before < 1f;
+			if (kill) ShareKill(entity, ai, worth, player, byPlayer);
 			if (player != LocalId)
 			{
+				// (the host's record of them grows with it: only their own "mine" moved it before, and what a player earned in
+				// the second before leaving was never saved; a "mine" sent before this gain reached them is older and left out,
+				// the next one has it)
+				LevelRecord rec;
+				// (CB2: a record made for a player the host has none of yet - the host's credit is what a player's record is checked against)
+				if ((gain > 0 || kill) && !records.TryGetValue(player, out rec)) records[player] = rec = new LevelRecord();
+				if ((gain > 0 || kill) && records.TryGetValue(player, out rec))
+				{
+					int levelBefore = rec.Level;
+					rec.Xp += Mathf.Max(0, gain);
+					if (kill) rec.Kills++;
+					if (rec.Level != levelBefore) levelsDirty = true;
+				}
 				if (gain > 0 || kill)
 					IslandNetwork.SendLevels(new IslandNetMessage { Name = "gain", Count = Mathf.Max(0, gain), Index = unchecked((int)entity.ObjectIndex), FullList = kill }, new Network_UserId(player));
 				LastRemote = player + " +" + Mathf.Max(0, gain) + (kill ? " kill" : "");
@@ -391,6 +419,42 @@ namespace DynamicIslands.Editor
 			}
 			return Gained(ai, Mathf.Max(0, gain), kill);
 		}
+
+		/// <summary>The world option Shared EXP: players this near a kill share in it, each this much of the monster's EXP.</summary>
+		public const float SharedXpRange = 50f, SharedXpShare = 0.6f;
+
+		/// <summary>
+		/// Host, a monster killed with Shared EXP on: every other player within SharedXpRange of it gets SharedXpShare of its EXP,
+		/// less what their own hits on it already earned (a helper never ends up with less than the share, nor gets it twice).
+		/// Not a kill for them. The same message as a hit's EXP.
+		/// </summary>
+		static void ShareKill(Network_Entity entity, AI_NetworkBehaviour ai, int worth, ulong killer, Dictionary<ulong, float> byPlayer)
+		{
+			if (!WorldOptions.On(WorldOptions.SharedXp) || worth <= 0) return;
+			Vector3 at = entity.transform.position;
+			foreach (Network_Player p in Players.All)
+			{
+				if (p == null || p.steamID.Id == killer || p.steamID.Id == 0UL) continue;
+				Vector3 d = p.transform.position - at;
+				if (d.magnitude > SharedXpRange) continue;
+				ulong id = p.steamID.Id;
+				float had;
+				byPlayer.TryGetValue(id, out had);
+				int give = Mathf.RoundToInt(SharedXpShare * worth) - Mathf.RoundToInt(had * worth);
+				if (give <= 0) continue;
+				byPlayer[id] = Mathf.Max(had, SharedXpShare);
+				LastShared = id + " +" + give;
+				Debug.Log("[CUSTOM ISLANDS] Shared EXP: +" + give + " to " + id + " (" + d.magnitude.ToString("F0") + " m from the kill)");
+				if (id == LocalId) { Gained(ai, give, false); continue; }
+				LevelRecord rec;
+				if (!records.TryGetValue(id, out rec)) records[id] = rec = new LevelRecord(); // (CB2: as for a hit)
+				{ int levelBefore = rec.Level; rec.Xp += give; if (rec.Level != levelBefore) levelsDirty = true; }
+				IslandNetwork.SendLevels(new IslandNetMessage { Name = "gain", Count = give, Index = unchecked((int)entity.ObjectIndex), FullList = false }, new Network_UserId(id));
+			}
+		}
+
+		/// <summary>The host's last shared EXP ("id +n", tests).</summary>
+		public static string LastShared { get; internal set; }
 
 		/// <summary>The host's last EXP for another player's hit ("id +n [kill]", tests).</summary>
 		public static string LastRemote { get; private set; }
@@ -415,7 +479,7 @@ namespace DynamicIslands.Editor
 		{
 			if (!On || amount <= 0 || Mine == null) return;
 			int levelBefore = Mine.Level;
-			Mine.Xp += amount;
+			Mine.Xp = (int)Math.Min(int.MaxValue, (long)Mine.Xp + amount);
 			LastGain = amount;
 			if (at.HasValue) { LastGainAt = at.Value; LevelHud.Float("+" + amount, at.Value); }
 			LevelHud.ShowBar();
@@ -488,18 +552,22 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		/// <summary>The EXP a monster is worth (cached per animal: its health and damage don't change).</summary>
+		/// <summary>
+		/// The EXP a monster is worth, cached per animal together with the max health it was worked out from: a
+		/// randomizer turned on mid-game makes an animal that was already hit an alpha (x3 health, x1.6 damage), and
+		/// the old worth would stick.
+		/// </summary>
 		public static int MonsterXp(AI_NetworkBehaviour ai)
 		{
-			int xp;
-			if (xpCache.TryGetValue(ai, out xp)) return xp;
 			float hp = ai.networkEntity != null && ai.networkEntity.stat_health != null ? ai.networkEntity.stat_health.Max : 0f;
-			xp = LevelRules.XpOf(hp, DamageOf(ai.gameObject, ai.behaviourType));
+			KeyValuePair<float, int> cached;
+			if (xpCache.TryGetValue(ai, out cached) && Mathf.Abs(cached.Key - hp) < 0.01f) return cached.Value;
+			int xp = LevelRules.XpOf(hp, DamageOf(ai.gameObject, ai.behaviourType));
 			if (xpCache.Count > 256) foreach (AI_NetworkBehaviour gone in xpCache.Keys.Where(k => k == null).ToList()) xpCache.Remove(gone);
-			xpCache[ai] = xp;
+			xpCache[ai] = new KeyValuePair<float, int>(hp, xp);
 			return xp;
 		}
-		static readonly Dictionary<AI_NetworkBehaviour, int> xpCache = new Dictionary<AI_NetworkBehaviour, int>();
+		static readonly Dictionary<AI_NetworkBehaviour, KeyValuePair<float, int>> xpCache = new Dictionary<AI_NetworkBehaviour, KeyValuePair<float, int>>();
 
 		static readonly string[] NotDamage = { "taken", "threshold", "treshold", "treshhold", "recieved", "received", "range", "radius", "frequency", "time", "particle", "state", "reached", "sound", "box", "event", "cooldown", "delay", "multiplier", "chance", "speed", "distance" };
 
@@ -660,6 +728,8 @@ namespace DynamicIslands.Editor
 					break;
 				case "state": // host -> a joining player: their record
 					if (Raft_Network.IsHost) break;
+					// (CB2: Count 2 = the host put this player's record right - more EXP than it credited: taken as it is)
+					if (msg.Count == 2 && On) { mine = LevelRecord.Decode(msg.Data); stateSeen = true; dirty = false; Debug.Log("[CUSTOM ISLANDS] Levels: the host put this player's record right (" + mine.Xp + " EXP)"); Raise(); StatApply.Tick(); break; }
 					if (msg.Count != 1) break;
 					{
 						bool was = On;
@@ -678,13 +748,27 @@ namespace DynamicIslands.Editor
 					break;
 				case "mine": // a player -> host: their record now
 					if (!Raft_Network.IsHost) break;
-					if (!On && OffByHost) break; // (a record sent just before the host switched it off)
-					if (!On) TurnOn(false);
+					// (CB2: only the host switches the system on - a player's record no longer does; a record sent just before the
+					// host switched it off is left out too)
+					if (!On) { Debug.Log("[CUSTOM ISLANDS] Levels: a record from " + from.Id + " left out (the system is off here)"); break; }
 					LevelRecord old;
 					int levelBefore = records.TryGetValue(from.Id, out old) ? old.Level : 0;
 					LevelRecord sent = LevelRecord.Decode(msg.Data);
 					// (a message older than what the host has - EXP only grows - is left out)
 					if (old != null && sent.Xp < old.Xp) { Debug.Log("[CUSTOM ISLANDS] Levels: an older record from " + from.Id + " left out (" + sent.Xp + " < " + old.Xp + " EXP)"); break; }
+					// (CB2: the host credits every player's EXP - their hits, shared kills, the daily quest - so a record with more
+					// EXP or kills than that is put right: the host's EXP and kills, the player's points as far as that level
+					// gives, and the player is told)
+					int creditedXp = old != null ? old.Xp : 0, creditedKills = old != null ? old.Kills : 0;
+					if (!PlayerTrust.ForTests && (sent.Xp > creditedXp || sent.Kills > creditedKills))
+					{
+						Debug.Log("[CUSTOM ISLANDS] Levels: a record from " + from.Id + " with more than the host credited (" + sent.Xp + " EXP, " + sent.Kills + " kills; credited " + creditedXp + ", " + creditedKills + "): put right");
+						sent.Xp = Mathf.Min(sent.Xp, creditedXp);
+						sent.Kills = Mathf.Min(sent.Kills, creditedKills);
+						sent = LevelRecord.Decode(sent.Encode()); // (the points as far as the level gives)
+						Corrected++;
+						IslandNetwork.SendLevels(new IslandNetMessage { Name = "state", Count = 2, Data = sent.Encode() }, from);
+					}
 					records[from.Id] = sent;
 					if (records[from.Id].Level != levelBefore || old == null || records[from.Id].Points[LevelRules.Health] != old.Points[LevelRules.Health]) levelsDirty = true;
 					break;
@@ -698,6 +782,23 @@ namespace DynamicIslands.Editor
 					Gained(AiOf(hit), Mathf.Max(0, msg.Count), msg.FullList);
 					break;
 			}
+		}
+
+		/// <summary>Host: how many players' records it put right (CB2, tests).</summary>
+		public static int Corrected { get; private set; }
+
+		/// <summary>
+		/// Host, CB2: EXP for another player that the host credits itself (the daily quest's reward, which their machine adds
+		/// on its side): their record grows with it, so their next record isn't put right.
+		/// </summary>
+		public static void CreditXp(ulong player, int amount)
+		{
+			if (!Raft_Network.IsHost || !On || amount <= 0 || player == 0UL || player == LocalId) return;
+			LevelRecord rec;
+			if (!records.TryGetValue(player, out rec)) records[player] = rec = new LevelRecord();
+			int levelBefore = rec.Level;
+			rec.Xp = (int)Math.Min(int.MaxValue, (long)rec.Xp + amount);
+			if (rec.Level != levelBefore) levelsDirty = true;
 		}
 
 		/// <summary>Host: the record of a player (tests).</summary>
@@ -737,7 +838,7 @@ namespace DynamicIslands.Editor
 		public static void Tick()
 		{
 			Network_Player local = Local;
-			foreach (Network_Player p in UnityEngine.Object.FindObjectsOfType<Network_Player>())
+			foreach (Network_Player p in Players.All)
 			{
 				Stat_Health h = p != null && p.Stats != null ? p.Stats.stat_health : null;
 				if (h == null) continue;
@@ -791,11 +892,21 @@ namespace DynamicIslands.Editor
 			var s = new Saved();
 			if (!IsLocal(pc)) return s;
 			s = new Saved { Walk = pc.normalSpeed, Run = pc.sprintSpeed, Swim = pc.swimSpeed, Jump = pc.jumpSpeed, Set = true };
-			pc.normalSpeed *= PlayerLevels.Factor(LevelRules.Walk);
-			pc.sprintSpeed *= PlayerLevels.Factor(LevelRules.Run);
-			pc.swimSpeed *= PlayerLevels.Factor(LevelRules.Swim);
-			// (a jump this much higher: the height goes with the take-off speed squared)
-			pc.jumpSpeed *= Mathf.Sqrt(PlayerLevels.Factor(LevelRules.Jump));
+			try
+			{
+				pc.normalSpeed *= PlayerLevels.Factor(LevelRules.Walk);
+				pc.sprintSpeed *= PlayerLevels.Factor(LevelRules.Run);
+				pc.swimSpeed *= PlayerLevels.Factor(LevelRules.Swim);
+				// (a jump this much higher: the height goes with the take-off speed squared)
+				pc.jumpSpeed *= Mathf.Sqrt(PlayerLevels.Factor(LevelRules.Jump));
+			}
+			catch (Exception e)
+			{
+				// (part way through: the speeds as they were - AU41)
+				Restore(pc, s);
+				Debug.LogWarning("[CUSTOM ISLANDS] Levels: speed boost: " + e.Message);
+				return new Saved();
+			}
 			return s;
 		}
 
@@ -825,28 +936,36 @@ namespace DynamicIslands.Editor
 		}
 	}
 
+	// (the speeds go back in a Finalizer, not a Postfix: it runs also when Raft's method throws - a Postfix was skipped then,
+	// and the boost stayed on and grew at every frame - AU41)
 	[HarmonyPatch(typeof(PersonController), "GroundControll")]
 	static class LevelGroundPatch
 	{
 		static void Prefix(PersonController __instance, out StatApply.Saved __state) { __state = StatApply.Boost(__instance); }
-		static void Postfix(PersonController __instance, StatApply.Saved __state) { StatApply.Restore(__instance, __state); }
+		static Exception Finalizer(Exception __exception, PersonController __instance, StatApply.Saved __state) { StatApply.Restore(__instance, __state); return __exception; }
 	}
 
 	[HarmonyPatch(typeof(PersonController), "WaterControll")]
 	static class LevelWaterPatch
 	{
 		static void Prefix(PersonController __instance, out StatApply.Saved __state) { __state = StatApply.Boost(__instance); }
-		static void Postfix(PersonController __instance, StatApply.Saved __state) { StatApply.Restore(__instance, __state); }
+		static Exception Finalizer(Exception __exception, PersonController __instance, StatApply.Saved __state) { StatApply.Restore(__instance, __state); return __exception; }
 	}
 
 	/// <summary>Hunger and thirst drain slower with the Hunger and Thirst stats (each of Raft's is two consumables: normal and bonus).</summary>
 	[HarmonyPatch(typeof(Stat_Consumable), "LostPerSecond", MethodType.Getter)]
 	static class LevelHungerPatch
 	{
+		static bool warned;
+
 		static void Postfix(Stat_Consumable __instance, ref float __result)
 		{
-			int stat = StatApply.ConsumableStat(__instance);
-			if (stat >= 0) __result /= PlayerLevels.Factor(stat);
+			try
+			{
+				int stat = StatApply.ConsumableStat(__instance);
+				if (stat >= 0) __result /= PlayerLevels.Factor(stat);
+			}
+			catch (Exception e) { if (!warned) { warned = true; Debug.LogWarning("[CUSTOM ISLANDS] Levels: hunger and thirst: " + e.Message); } }
 		}
 	}
 
@@ -854,19 +973,34 @@ namespace DynamicIslands.Editor
 	[HarmonyPatch(typeof(Stat_Oxygen), "Update")]
 	static class LevelOxygenPatch
 	{
-		static readonly FieldInfo LostPerSecond = AccessTools.Field(typeof(Stat_Oxygen), "oxygenLostPerSecond");
+		// (a reference to the field, not FieldInfo: GetValue and SetValue boxed the float twice a frame)
+		static readonly AccessTools.FieldRef<Stat_Oxygen, float> LostPerSecond = OxygenField();
+		static bool warned;
+
+		static AccessTools.FieldRef<Stat_Oxygen, float> OxygenField()
+		{
+			try { return AccessTools.FieldRefAccess<Stat_Oxygen, float>("oxygenLostPerSecond"); }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Levels: oxygen: " + e.Message); return null; }
+		}
 
 		static void Prefix(Stat_Oxygen __instance, out float __state)
 		{
 			__state = -1f;
-			if (LostPerSecond == null || !StatApply.IsLocalOxygen(__instance)) return;
-			__state = (float)LostPerSecond.GetValue(__instance);
-			LostPerSecond.SetValue(__instance, __state / PlayerLevels.Factor(LevelRules.Oxygen));
+			try
+			{
+				if (LostPerSecond == null || !StatApply.IsLocalOxygen(__instance)) return;
+				__state = LostPerSecond(__instance);
+				LostPerSecond(__instance) = __state / PlayerLevels.Factor(LevelRules.Oxygen);
+			}
+			catch (Exception e) { if (!warned) { warned = true; Debug.LogWarning("[CUSTOM ISLANDS] Levels: oxygen: " + e.Message); } }
 		}
 
-		static void Postfix(Stat_Oxygen __instance, float __state)
+		// (a Finalizer: put back also when Raft's Update throws - AU41)
+		static Exception Finalizer(Exception __exception, Stat_Oxygen __instance, float __state)
 		{
-			if (__state >= 0f && LostPerSecond != null) LostPerSecond.SetValue(__instance, __state);
+			try { if (__state >= 0f && LostPerSecond != null) LostPerSecond(__instance) = __state; }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Levels: oxygen: " + e.Message); }
+			return __exception;
 		}
 	}
 
@@ -882,7 +1016,7 @@ namespace DynamicIslands.Editor
 		{
 			try
 			{
-				if (!PlayerLevels.On || !Raft_Network.IsHost) return;
+				if (!(PlayerLevels.On || DailyQuest.On) || !Raft_Network.IsHost) return; // (also for the Daily quest's kills with levels off)
 				Message_NetworkEntity_Damage d = msg as Message_NetworkEntity_Damage;
 				if (d == null || d.damageInflictorEntityType != EntityType.Player) return;
 				Network_Entity entity = NetworkIDManager.GetNetworkIDFromObjectIndex<Network_Entity>(d.entityObjectIndex);
@@ -907,9 +1041,19 @@ namespace DynamicIslands.Editor
 		{
 			try
 			{
-				if (!PlayerLevels.On || entity == null || damageInflictorEntityType != EntityType.Player || entity.entityType != EntityType.Enemy) return;
+				if (!(PlayerLevels.On || DailyQuest.On) || entity == null || entity.entityType != EntityType.Enemy) return; // (Factor is 1 with levels off)
+				if (damageInflictorEntityType == EntityType.Environment && LevelFireworkPatch.By != 0UL)
+				{
+					// a firework's hit (Raft counts it as the world's): EXP for the player who lit it, its damage as Raft's
+					if (entity.IsInvurnerable) return;
+					if (LevelFireworkPatch.By == PlayerLevels.LocalPlayerId) PlayerLevels.OnHit(entity, damage);
+					else PlayerLevels.OnRemoteHit(entity, damage, LevelFireworkPatch.By);
+					return;
+				}
+				if (damageInflictorEntityType != EntityType.Player) return;
 				damage *= PlayerLevels.Factor(LevelRules.Damage);
-				// What Raft does to it next (DamageEntity): peaceful mode takes it away, the PvE multiplier scales it
+				// What Raft does to it next (DamageEntity): a mode that takes players' damage away makes it 0 (none of Raft's own
+				// does; never on an island creature - IslandCreatureHitPatch), the mode's PvE multiplier scales it (Hard x0.8)
 				SO_GameModeValue mode = GameModeValueManager.GetCurrentGameModeValue();
 				float dealt = damage;
 				if (mode != null && mode.playerSpecificVariables != null)
@@ -921,5 +1065,52 @@ namespace DynamicIslands.Editor
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Levels (hit): " + e.Message); }
 		}
+	}
+
+	/// <summary>
+	/// Raft's fireworks hurt as the world (EntityType.Environment) and keep no owner, so a monster hit by one gave no
+	/// EXP. Every machine launches the firework from the player's hand (Firework_Hand.LaunchFirework, with the
+	/// firework's network index): that player is kept per firework, and while the host works out its hit (only the
+	/// host does: Firework.TryToDamageEntity) LevelDamagePatch gives that player the EXP.
+	/// </summary>
+	[HarmonyPatch(typeof(Firework_Hand), "LaunchFirework", new Type[] { typeof(Vector3), typeof(Vector3), typeof(float), typeof(bool), typeof(int), typeof(uint) })]
+	static class LevelFireworkLaunchPatch
+	{
+		static void Postfix(Firework_Hand __instance, uint objectIndex)
+		{
+			try
+			{
+				Network_Player p = Traverse.Create(__instance).Field("player").GetValue<Network_Player>();
+				if (p != null) LevelFireworkPatch.Lit(objectIndex, p.steamID.Id);
+			}
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Levels (firework): " + e.Message); }
+		}
+	}
+
+	[HarmonyPatch(typeof(Firework), "TryToDamageEntity")]
+	static class LevelFireworkPatch
+	{
+		/// <summary>The player whose firework is hitting something now (0: none).</summary>
+		public static ulong By;
+		static readonly Dictionary<uint, ulong> Owner = new Dictionary<uint, ulong>();
+
+		public static void Lit(uint objectIndex, ulong player)
+		{
+			if (Owner.Count > 200) Owner.Clear();   // fireworks live seconds; never let it grow
+			Owner[objectIndex] = player;
+		}
+
+		static void Prefix(Firework __instance)
+		{
+			try
+			{
+				ulong id;
+				By = __instance != null && Owner.TryGetValue(__instance.ObjectIndex, out id) ? id : 0UL;
+			}
+			catch (Exception e) { By = 0UL; Debug.LogWarning("[CUSTOM ISLANDS] Levels (firework): " + e.Message); }
+		}
+
+		// (a Finalizer, not a Postfix: By is cleared also when Raft's method throws - later damage went to that player otherwise)
+		static Exception Finalizer(Exception __exception) { By = 0UL; return __exception; }
 	}
 }

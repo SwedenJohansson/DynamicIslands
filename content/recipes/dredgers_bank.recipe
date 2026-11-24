@@ -1,0 +1,171 @@
+# Dredgers Bank - a side island of the library's plan Relic of the Seventh Tide (met by chance while sailing)
+# A long sandbank where the Syndicate dredge the seabed: a dredging rig on four legs with one of Utopia's small cranes on
+# its deck, shipping containers stacked on the sand, Varuna Point's forklift, the camp's tents and the paymaster's safe.
+# A working site, not a wreck. Quest "The Dredging Camp" (12 steps): the dredge manifest, the camp's dogs, the
+# paymaster's safe on its keypad (the code is in the manifest), the Syndicate's map fragment, the rig's top; then the
+# Spoil Dune in the north-west and foreman Lopez's note and the tender key on its mast, the dredge's tender sunk off the
+# south-west (its lockbox needs the key), and Pim Lark's note in the cave on the north-east shore.
+# DEEP 10-25 (Relic deep pass): Radius 46 -> 60 (a side island). The Spoil Dune (14 m, trail + the foreman's survey
+# mast), a cave on the north-east shore where Kett's boatman hides, the dredge's tender sunk off the south-west (-9 m,
+# an air pocket), two buried caches. Voices: the foreman Lopez, Pim Lark, Silas Grey.
+#
+# Built by the recipe player (CIRecipe dredgers_bank) through the editor's own operations.
+include lib_sea
+include lib_features
+include lib_areas
+include lib_highwater
+new
+# (nature: a low tropical sandbank at Raft's density - a few low palms and bushes, beach things; one reef)
+gen Trees=0.6 Bushes=0.8 Rocks=0.7 Harvest=0.6 BeachThings=0.4
+gen Seed=9801 Radius=60 Height=3 Roughness=0.2 Peaks=1 Shape=0 Style=0 PeakShape=0.2 Cliffs=0.1 BeachWidth=0.9
+gen Water=0.5 SeaRocks=0.6 SeaFinds=0.5 Sunken=0.5 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+
+# --- Terrain: the camp flat at 1.6 m, the rig's pad at 1 m on the east end ------------------------------------------
+brush flatten at -6 0 r=16 s=20 frames=200 h=1.6
+brush flatten at 18 0 r=6 s=20 frames=80 h=1
+# --- DEEP 10-25 terrain: the Spoil Dune (north-west, summit 14 m, base r 13) and its trail from the south, the cave on
+# the north-east shore, the tender's basin off the south-west (-9 m) --------------------------------------------------
+call hw_mount x=-32 z=30 b=13 h=14
+call hw_trail x=-32 z=30 b=13 h=14 a0=180 turn=300 n=24 h0=2
+call ar_cave x=30 z=34 h=2 yaw=180 al=pimrock chest=pimchest
+call hw_basin x=-36 z=-46 r=10 h=-9
+origin
+clear at -6 0 r=17
+clear at 18 0 r=7
+
+# --- The camp: tents, the manifest on a crate, the paymaster's safe and its keypad, containers, the forklift ---------
+place Balboa_DecorationPrefabBase_SimpleTent - at -14 -6 ground sit yaw=20
+place Balboa_DecorationPrefabBase_SimpleTent - at -16 4 ground sit yaw=160
+place "Box Big" manifestdesk at -6 -4 ground sit yaw=10
+place Note_Paper manifest at -6 -4 h=3 sit drop yaw=15
+place VG_Safe paysafe at -10 -9 ground sit yaw=0
+place "Box Small" - at -8.6 -9 ground sit
+place RT_PowerBox safekeypad at -8.6 -9 h=2.6 sit drop yaw=0
+place Reef_Container containers at -2 8 ground sit yaw=90
+place Reef_Container containers at -2 11 ground sit yaw=90
+place Reef_Container containers at -2 14 ground sit yaw=90
+place VP_Forklift - at 6 6 ground sit yaw=200
+place Placeable_Lantern_Metal - at -5 -3 ground sit
+place Zone_Trigger camp at -6 0 h=1.6
+place Creature_Hyena dogs at 2 -6 ground
+prop containers tint.color=#a0522d
+prop containers tint.amount=0.4
+
+# --- The dredging rig: four thick legs, a steel deck at 7 m, a small crane on the deck, a ladder up -----------------
+for lx 16.5 19.5 3
+place RT_PillarThick riglegs at $lx -1.5 h=1
+place RT_PillarThick riglegs at $lx 1.5 h=1
+next
+# (REACH 10-28: RT_Floor's pivot is its +x +z corner - the deck hung off the legs to the west and the ladder ran up
+# into its middle, the climb stuck under it at 5.3 m; now the deck sits on the four legs, the ladder against its south edge)
+place RT_Floor rigdeck at 19.81 1.8 h=7 sit sx=0.6 sz=0.4
+place UT_ElectricityIsland_Crane02 rigcrane at 18.6 0.6 h=7.07 sit scale=0.25 yaw=90
+# (REACH 10-28 (2): the ladder's top was flush with the deck - going back down, the climber stepped off the edge, missed
+# the rungs and hung under the deck at 5.3 m: the ladder now stands 1.2 m over the deck, to take hold of from it)
+place LandmarkLadder_6m rigladder at 18 -1.95 h=1 sit yaw=180 sy=1.2
+place Zone_Trigger rigtop at 17 -0.6 h=7.2
+prop riglegs tint.color=#6f7780
+prop rigdeck tint.color=#5d646b
+prop rigcrane tint.color=#c8a020
+
+# --- Things to gather, the reef -------------------------------------------------------------------------------------
+scatter "Pickup_Landmark_PineappleLandmark" 2 at -20 -14 r=8 seed=9811 free=3
+call shallows x=40 z=-38 r=10 deep=3 n=1 seed=9812
+call hw_reef x=52 z=-14 r=4 seed=31046
+
+# --- DEEP 10-25: the Spoil Dune - its foot and top as zones, the foreman's survey mast (Lopez's note, the tender key) -
+call hw_zone x=-32 z=16 al=dunefootz id=dunefoot r=5 msg="The Spoil Dune: everything the dredge brings up, heaped into a hill. Planks are laid up it in a spiral to a survey mast."
+call hw_zone x=-32 z=30 al=dunetopz id=dunetop r=6 h=1 msg="The top of the Spoil Dune. The camp, the rig - and off the point, a mast-top just under the water."
+call hw_mast x=-32 z=30 h0=14 lv=2 a=lopezmast chest=lopezbox top=Placeable_Lantern_Metal
+place Note_Paper lopeznote at -35.5 26.5 h=14.1 drop yaw=200
+loot lopezbox story:tenderkey*1;Rope*2;Battery*1
+prop lopezbox loot.refill=0
+note lopezbox Foreman's survey box | The foreman's box on the survey mast: a battery for his lamp, rope - and a steel key on a cork float stamped TENDER.
+scatter "Pickup_Landmark_Flower_Blue" 2 at -32 30 r=14 seed=31047 free=3
+call treasure x=-44 z=18 r=12 n=1 seed=31044 kind=0
+prop treasure31044 treasure.loot=MetalOre*3;CopperOre*2;Glass*2
+# --- The cave on the north-east shore: Pim Lark's hide-out (a secret) ------------------------------------------------
+call hw_zone x=30 z=29 al=pimz id=pimcave r=4 msg="A cave on the shore. A bedroll, a fishing line, a tin cup - and a small boat pulled up out of sight."
+place Note_Paper pimnote at 28.5 28.5 h=2.45 drop yaw=180
+loot pimchest Cooked_GenericMeat*3;PlasticBottle_Water*2;Rope*2;Nail*6
+prop pimchest loot.refill=0
+note pimchest Pim's stores | Pim Lark's stores: dried meat, water, rope, a bag of nails "for the boat, when I have a boat worth nailing".
+# --- The dredge's tender, sunk off the south-west (-9 m): Silas Grey's orders, an air pocket ------------------------
+call hw_sunkhouse x=-36 z=-46 h=-9 yaw=0 a=tender chest=tenderbox air=tenderair bub=tenderbub dal=tenderdoor
+call hw_zone x=-36 z=-46 al=tenderz id=tender r=6 h=1 msg="The dredge's tender on the sea floor, nine metres down, its deckhouse still whole. Its front room still holds a breath of air."
+place Note_Paper greyorders at -35.4 -47.2 h=-8.5 drop yaw=0
+loot tenderbox MetalIngot*2;CopperIngot*2;TradeToken*3;Bolt*3
+prop tenderbox loot.refill=0
+prop tenderbox if.open=quest|10\nhas|story:tenderkey|1
+prop tenderbox else.open=message||The tender's lockbox is bolted to the deck and locked. It wants the tender key - the foreman keeps it.
+note tenderbox Tender's lockbox | The tender's lockbox: the camp's spare iron and copper, a bag of tokens, and bolts for the rig's legs.
+call treasure x=-22 z=-40 r=12 n=1 seed=31045 kind=0
+prop treasure31045 treasure.loot=Scrap*4;Bolt*2;Glass*2
+
+# --- Settings, story items, notes, behaviours, quest ----------------------------------------------------------------
+info title=Dredgers Bank
+info author=Custom Islands
+info description=A long sandbank where the Syndicate dredge the seabed: a dredging rig on four legs, containers on the sand, a forklift and the camp's tents. A spoil dune with a survey mast, a cave on the shore, the dredge's tender sunk off the point. A side island of Relic of the Seventh Tide.
+island on.arrive=message||A sandbank with a rig on legs, containers and tents. Somewhere a generator coughs - this camp is working.
+
+story tenderkey|Tender key|Placeable_PaperBundle|A steel key on a cork float stamped TENDER: the dredge tender's lockbox, from the foreman's survey box.
+story mapfrag|Syndicate map fragment|Placeable_PaperBundle|A torn corner of a Syndicate sea chart: a ring of rock marked ENGINE, and seven little wave marks round it.
+
+note manifest Dredge manifest | SYNDICATE DREDGING - MANIFEST, BANK 4\n\nSand: 900 t. Wreck metal: 14 t. One brass plate with writing (sent to the boss).\n\nPay day Friday. Paymaster: the safe code is the bank's number and the week's - 4 and 471. Don't lose it again.
+note paysafe Paymaster's safe | The paymaster's safe: the crew's wages in metal and a battery - and a torn piece of sea chart.
+loot paysafe story:mapfrag*1;MetalIngot*4;Battery*1;TradeToken*3
+prop paysafe loot.refill=0
+prop paysafe if.open=signal|paysafe
+prop paysafe else.open=message||The safe is locked from the keypad beside it. Four digits.
+prop safekeypad obj.name=safekeypad
+prop safekeypad beh.use=Type the safe's code
+prop safekeypad lock.code=4471
+prop safekeypad on.use=sound||event:/exploring/obstacles/keypad/keypad_correct\nmessage||The keypad chirps and the safe's bolts slide back.\nsignal||paysafe
+
+note lopeznote Foreman Lopez's note | R. LOPEZ, FOREMAN, BANK 4\n\nTo the night shift: the tender went down in the squall on Tuesday with the lockbox still bolted in her. Nobody is to dive on her without me. The key stays up here.\n\nMr Grey says we dredge until we bring up more brass plates, and then we dredge some more. He says the plates are a map, and the map ends at an engine. I say it ends at my bad back.\n\nThe boat that sneaks round the far point at night is not ours. Leave it be. Whoever it is steals only fish, and I have seen worse men on my own payroll.
+note pimnote Pim Lark's note | PIM LARK - BANK 4, THE CAVE\n\nIf the professor comes by: I am here, I am fine, I am very hungry of sand.\n\nThe Syndicate dredge all day for the builders' brass plates, and send them off on the launch. I have seen three go. Each one has the seven wave marks on it, like on your notes.\n\nThe foreman's a decent sort for a Syndicate man. He keeps the tender key on his mast on the dune and tells the night shift to leave me alone.\n\nI am going to borrow their tender's lockbox, if I can find a diver. Or I'll eat it. One or the other. - Pim
+note greyorders Silas Grey's orders | S. GREY - ORDERS FOR BANK 4\n\nDredge the whole bank, end to end. Every plate with the wave marks comes to me, unread, by the next launch. If a man reads one, he goes over the side.\n\nNo one dives without the foreman. No one leaves the camp at night. If a woman in a battered hat comes ashore, do not stop her - watch her, and send word.\n\nThe engine the plates speak of is the job. The professor is the way to it. Do not frighten either one.
+prop camp zone.id=dredge_camp
+prop camp zone.radius=9
+prop camp zone.repeat=never
+prop camp zone.message=Dogs come out from behind the containers - the Syndicate's!
+prop dogs creature.count=3
+prop dogs creature.respawn=0
+prop dogs creature.zone=dredge_camp
+prop dogs tint.color=#c8a46a
+prop dogs tint.amount=0.5
+prop rigladder obj.name=rigladder
+prop rigladder beh.use=Climb to the rig's deck
+prop rigladder on.use=teleport|rigtop
+prop rigtop obj.name=rigtop
+prop rigtop zone.id=rig_top
+prop rigtop zone.radius=2.5
+prop rigtop zone.message=The rig's deck. Out to sea the Syndicate's dredge lines run - all toward the horizon where the chart says ENGINE.
+
+quest title=The Dredging Camp
+quest intro=A Syndicate camp on a sandbank, below a dredging rig. Their manifest lies on a crate.
+step read|Dredge manifest|1|Make for the dredging rig and read the manifest on the crate in the camp
+step kill|Hyena|3|Deal with the camp's dogs
+step open|Paymaster's safe|1|Open the paymaster's safe (the manifest has the code)
+step collect|story:mapfrag|1|Take the Syndicate's map fragment
+step reach|rig_top|1|Climb up onto the dredging rig
+step reach|dunefoot|1|Find the plank path up the Spoil Dune, the dune with the survey mast
+step reach|dunetop|1|Climb the Spoil Dune to the foreman's survey mast
+step read|Foreman Lopez's note|1|Read the foreman's note on the dune top
+step collect|story:tenderkey|1|Climb the mast and take the tender key from his box
+step reach|tender|1|Dive to the dredge's sunk tender, a mast-top just under the water off the point
+step open|Tender's lockbox|1|Open the tender's lockbox with the key
+step read|Silas Grey's orders|1|Read Silas Grey's orders in the tender
+quest done=A piece of the Syndicate's chart: a ring of rock marked ENGINE. Whatever they dredge for, it ends there.
+quest reward=MetalIngot*3;Battery*1;Rope*3
+
+# Buried treasure (reach audit 10-24: a late island of its story line needs one): the metal detector finds it, the shovel digs it
+call treasure x=0 z=0 r=34 n=1 seed=8842
+prop treasure8842 treasure.loot=TitaniumOre*2
+
+# (G2 10-30: two bamboos on the rim of a drop, their trunks over it - CIGroundIslands 10-30)
+clear at -29.21 -37.31 r=1 only=Bamboo
+clear at -34.06 -35.68 r=1 only=Bamboo
+
+save Dredgers Bank

@@ -1,0 +1,397 @@
+# Thalassa Mooring - an island of the library's plan The Sunken Kingdom (sea level; chapter 5, the surface station)
+# The Pelagic Network's surface station on a rock shelf: a steel deck on posts over the rock with a moonpool shaft cut
+# through it down into the sea, and over the shaft a crane holding the diving bell - Varuna's scissor lift, used here the
+# other way: it carries whoever stands on it 20 m straight down the shaft to a bell zone with air in it, and back up.
+# A water tower on legs (the water tank plans on its top), the pump pipes, the station office (the purifier plans), the
+# store shed (the large storage plans), the vending machine under a canopy on posts with four Tangaroa tokens round the
+# decks, palms and grass, two reefs, buried titanium for the metal detector. Quest "The Surface Station" (15 steps).
+#
+# Points (metres over the sea): the rock shelf at 2 (r 14 round 0 0); the deck x -3..7.5, z -4.5..4.5, its top at 4.5;
+# the shaft round 5.25 0 (r 3, its bottom at -22), the bell in the deck's hole (x 3..7.5, z -1.5..1.5) at 2.3, the bell
+# zone at -17; the water tower at -8 6 (its top at 5.3); the office x -10..-7, z -3..0; the store shed x -4..0.5,
+# z -12..-9; the canopy x 4.5..7.5, z -11.5..-8.5 over the vending machine.
+include lib_sunken
+include lib_huts
+include lib_gravity
+include lib_sl1
+include lib_features
+include lib_sea
+include lib_caves
+# RESIZE 10-24: Radius 34 -> 85 (Height 6 -> 8), the island grows round the old content, which stays where it was.
+new
+gen Trees=0.25 Bushes=0.3 Rocks=0.4 Harvest=0.3 BeachThings=0.4
+gen Seed=10501 Radius=85 Height=8 Roughness=0.35 Peaks=2 Shape=0 Style=0 BeachWidth=0.25 Cliffs=0.35 PeakShape=0.4
+gen Water=0.5 SeaRocks=0.4 SeaFinds=0.4 Sunken=0.3 Hostiles=0 Friendly=0.2 SeaLife=0.3
+generate
+
+# --- Terrain: the rock shelf, the moonpool shaft ------------------------------------------------------------------------
+brush flatten at 0 0 r=14 s=20 frames=240 h=2
+brush flatten at 5.25 0 r=3 s=30 frames=300 h=-22
+# (REACH 10-30 G1: the shaft's sides went 2 m straight up from the water under the deck - whoever fell in, or swam up
+# from the bell, never got out; a ledge 1 m over the water on its north side, a step up to the shelf)
+brush flatten at 5.25 3.4 r=1.5 s=20 frames=150 h=1
+brush grass at -9 3 r=6 s=20 frames=20
+brush flatten at 14 -36.4 r=5 s=8 frames=40
+origin
+clear at 14 -36.4 r=6
+clear at 0 0 r=13
+clear at 5.25 3.4 r=2.4 body
+
+# --- The steel deck on posts, the hole over the shaft -------------------------------------------------------------------
+for dx -2.25 6.75 1.5
+place Block_Floor_Tier3 deck at $dx -3.75 h=4.5
+place Block_Floor_Tier3 deck at $dx -2.25 h=4.5
+place Block_Floor_Tier3 deck at $dx 2.25 h=4.5
+place Block_Floor_Tier3 deck at $dx 3.75 h=4.5
+next
+for dx -2.25 2.25 1.5
+place Block_Floor_Tier3 deck at $dx -0.75 h=4.5
+place Block_Floor_Tier3 deck at $dx 0.75 h=4.5
+next
+prop deck tint.color=#5b6266
+prop deck tint.amount=0.45
+for px -3 3 3
+place RT_Pillar - at $px -4.5 ground sy=0.76
+place RT_Pillar - at $px 4.5 ground sy=0.76
+next
+place RT_Pillar - at 7.5 -4.5 ground sy=0.76
+place RT_Pillar - at 7.5 4.5 ground sy=0.76
+place RT_Pillar - at -3 0 ground sy=0.76
+ramp Block_Wall_Fence_Rope from -2.25 -4.5 4.5 to 6.75 -4.5 4.5 len=1.5 top=-0.1
+ramp Block_Wall_Fence_Rope from 7.5 -3.75 4.5 to 7.5 3.75 4.5 len=1.5 top=-0.1
+# (REACH 10-30 G1: Block_Ladder_Tier3's climb trigger is 0.3 m in front of it at yaw 0 - at 270 it lay under the deck and
+# nobody took hold; both ladders here turned to face their climbers, as the ladder towers')
+place Block_Ladder_Tier3 - at -3.15 -0.75 ground yaw=90
+place Zone_Trigger deckzone at 0 0 h=5.5
+place Placeable_Table_Basic - at -1.5 2.6 h=4.5 sit yaw=0
+place Note_Paper handbook at -1.5 2.6 h=5.4 drop yaw=10
+place Placeable_Lantern_Metal - at -2.5 3.9 h=4.5 sit
+
+# --- The crane and the diving bell over the shaft -----------------------------------------------------------------------
+place UT_ElectricityIsland_Crane02 bellcrane at 7 3.5 h=4.5 sit scale=0.3 yaw=225
+place VP_Skylift bell at 5.25 0 h=2.3
+place Zone_Trigger bellzone at 5.25 0 h=-17
+place Zone_Atmosphere bellbub at 5.25 0 h=-17.5
+place Antenna_pole - at 3.4 1.6 h=-22 sy=0.6
+place Placeable_Lantern_Metal - at 3.4 1.6 h=-18.8 sit
+
+# --- The water tower on legs, the pipes to the deck ---------------------------------------------------------------------
+place RT_Pillar - at -8.9 5.1 ground sy=1.05
+place RT_Pillar - at -7.1 5.1 ground sy=1.05
+place RT_Pillar - at -8.9 6.9 ground sy=1.05
+place RT_Pillar - at -7.1 6.9 ground sy=1.05
+place Block_Foundation towertop at -8 6 h=5.65 sx=1.25 sz=1.25
+place Placeable_WaterTank - at -8.3 6.3 h=5.65 sit
+place Loot_ChestSmall towerchest at -7.5 5.3 h=5.65 sit yaw=180
+place Block_Ladder_Tier3 - at -8 4.85 ground sy=1.45 yaw=0
+# (11-03 fixC, CIFloatingSweep: the water pipe hung 0.98 m over the ground, lowered by the gap)
+place WaterPipe_Short_1 pipes at -6 6 h=2.02 rot=0,0,90
+# (11-03 fixC, CIFloatingSweep: the water pipe hung 0.99 m over the ground, lowered by the gap)
+place WaterPipe_Short_1 pipes at -4.5 5 h=2.01 rot=0,60,90
+place Loot_Chest pipecrate at -4.6 6.6 ground sit yaw=270
+prop pipes tint.color=#6d7f86
+prop pipes tint.amount=0.4
+
+# --- The station office (hut) and the store shed -------------------------------------------------------------------------
+push at -10 -3 h=2
+call hut w=2 d=2 y=0.1
+place Loot_Chest officechest at 2.2 2.2 y=0.1 sit yaw=180
+place Placeable_Lantern_Metal - at 0.6 2.4 y=0.1 sit
+pop
+push at -4 -12 h=2
+call shed w=3 d=2 door=1
+place Loot_Chest storeshed at 0.8 2.2 y=0.2 sit yaw=180
+place "Box Small" - at 3.6 2.3 y=0.2 sit yaw=30
+pop
+
+# --- The canopy on posts, the vending machine, the tokens round the decks -----------------------------------------------
+push at 4.5 -11.5 h=2
+place Block_Pillar_Wood - at 0 0 y=0
+place Block_Pillar_Wood - at 3 0 y=0
+place Block_Pillar_Wood - at 0 3 y=0
+place Block_Pillar_Wood - at 3 3 y=0
+roof 2 2 at 0 0 y=0 wood
+pop
+vending thalvend at 6 -10 ground
+place QuestItemPickup_Tangaroa_Token - at -1.5 -3.5 h=4.5
+place QuestItemPickup_Tangaroa_Token - at 6.5 3.5 h=4.5
+place QuestItemPickup_Tangaroa_Token - at -8 6.8 h=5.65
+clear at -11 -6 r=2.5 only=SmallBoulder
+place QuestItemPickup_Tangaroa_Token - at -11 -6 ground
+
+# --- Palms, grass, crops, animals, treasure, reefs, the sea -------------------------------------------------------------
+place "Pickup_Landmark_Tree_Palm 2" - at -12 9 ground
+place "Pickup_Landmark_Tree_Palm 1" - at -5 11 ground
+place "Pickup_Landmark_Tree_Palm 3" - at 11 -6 ground
+place "Pickup_Landmark_Tree_Palm 4" - at -13 -9 ground
+place Pickup_Landmark_PineappleLandmark - at -11 1 ground
+place Pickup_Landmark_BerryBush - at -3 9 ground
+place Placeable_Cropplot_Medium - at -6 -6.5 ground sit
+place Creature_Chicken hens at -7 -7 ground
+prop hens creature.count=3
+call treasure x=-14 z=8 r=12 n=1 seed=10051
+prop treasure10051 treasure.loot=TitaniumOre*3
+call hives x=-6 z=12 r=6 n=1 seed=10502
+scatter VP_CoralBulb04 5 at 50 35 r=3 seed=10503 free=1
+scatter VP_CoralDigitate01 5 at 50 35 r=3 seed=10504 free=1
+scatter TinyCoral 6 at -50 -35 r=3 seed=10505 free=1
+scatter VP_CoralFoliose01 4 at -50 -35 r=3 seed=10506 free=1
+place Creature_PufferFish puffers at 55 25 h=-4
+prop puffers creature.count=2
+call shallows x=0 z=0 r=125 deep=5 n=1 seed=10507
+
+# --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; BoatStranded + chest; hatch with a chest; buried treasure; viewpoint ---
+place campfire_1 - at 14 -36.4 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at 17 -34.4 ground sit yaw=97
+place "Box Small" - at 12 -33.9 ground sit
+place Note_Paper dnote at 12 -33.9 ground y=1.6 drop yaw=20
+note dnote Castaway's note | DAY 40 - OR 41\n\nThe station people never came up for me. I watch their crane from here and wave, and the crane does not wave back, which is fair.\nAt night a light goes down the shaft and does not come back up. Teal. Last night it came UP the shaft instead, slowly, and sat under the deck while the bell was ringing. When the bell stopped, it went down again.\nSo I don't ring anything. I don't light anything. I talk to the crabs very quietly.\nI have fish, rain, and this pencil. That is enough for now.
+place BoatStranded dvan at -14 36.4 ground yaw=217
+prop dvan tint.color=#6b5a48
+prop dvan tint.amount=0.5
+place Loot_ChestSmall dwreckchest at -18 39.4 ground sit yaw=157
+note dwreckchest Wreck's chest | A small chest from the wreck: line, nails, scrap.
+loot dwreckchest Rope*3;Nail*8;Scrap*3
+prop dwreckchest loot.refill=0
+call hatchcache x=-36.4 z=-14 r=12 seed=10591 alias=dhatch chest=dhatchchest items=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=36.4 z=14 r=6 n=1 seed=10592
+prop treasure10592 treasure.loot=TitaniumOre*2;CopperOre*2
+place Zone_Trigger dview at -36.9 12.7 ground
+prop dview zone.id=thalassa_mooring_view
+prop dview zone.radius=7
+prop dview zone.repeat=never
+prop dview zone.message=From the high ground the station's crane is a toy over the shelf - and past it the sea turns from green to black.
+
+# --- Areas (10-24: every story island has places all over it and its quest crosses it): the breakwater ridge in the west, the bell crew's cave in
+# the south-east, the dive master's hut in the north, the divers' dinghy in the south-west (the dive log's three lost dives)
+call sk_ridge x1=-74 z1=-24 x2=-64 z2=26 h=5 top=8 r=10
+call sk_plants x=-69 z=1 r=16 seed=10561
+call sk_zone x=-69 z=1 al=th_ridge id=th_ridge r=7 msg="The breakwater ridge. The station's bell hangs on its frame below you, and the zipline cable still runs down to the yard."
+call sk_cave x=30 z=-60 h=3 yaw=180 al=th_caverock chest=th_cavechest
+call sk_zone x=30 z=-65 al=th_cave id=th_cave r=4 msg="The bell crew's cave: their lockers, a bench, a cold stove."
+call sk_ruin x=22 z=56 h=3 al=th_ruin
+call sk_notebox x=24.5 z=51.5 yaw=10 al=th_ruinnote
+call sk_wreck x=-50 z=-52 h=3 yaw=40 v=RT_PlasticBoat al=th_wreck crate=th_wreckcrate scale=1
+call sk_notebox x=-44 z=-56 yaw=70 al=th_wrecknote
+
+# --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
+clear from -69 3 to -46 0 r=3
+place ZiplinePath_Landmark thridgezip at -69 3 ground
+zipto thridgezip -46 0
+call vinecache x=-30 z=-70 r=8 seed=10571 chest=thvinechest vines=thvines items=Rope*3;Nail*8;Glass*2
+
+# --- Unique layer (10-24): the dive log's three lost dives: buried tags and sample bags for the metal detector at the
+# three places the log names (east, north-east, south)
+call treasure x=70 z=-6 r=6 n=1 seed=10581
+call treasure x=48 z=58 r=6 n=1 seed=10582
+call treasure x=-26 z=-72 r=6 n=1 seed=10583
+
+# --- DEEP 1-HOUR (10-24): Mooring Hill (24 m) and the flooded salvage store in the north-west pit - its air comes down the salvage pump's hose
+# the mountain: a stepped path spirals up from its east foot (76.08 -36) to the summit tower
+call sk_peak x=54 z=-36 h=24 r=24
+call sk_pit x=-48 z=54 h0=-12
+call sk_cave x=-18 z=-42 h=3 yaw=0 al=thcave2 chest=thcave2chest
+call sk_plants x=54 z=-36 r=26.4 seed=24410
+call sk_reef x=-38 z=60 r=5 seed=24430
+
+# the summit: Mooring Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
+call ladtower x=54 z=-36 h0=24 lv=6 a=thtower
+place Loot_ChestSmall thlocker at 53.25 -35.25 h=39.2 drop yaw=180
+place Note_Paper thsumnote at 53.25 -36.75 h=38.84 drop yaw=20
+place Zone_Trigger thsummit at 54 -36 h=39.73
+place ZiplinePath_Landmark thzip at 54.75 -36.75 h=38.73 yaw=0
+zipto thzip 27 -18
+place Loot_ChestSmall thledge at 43.82 -25.82 ground sit yaw=40
+place SmallRock_02 - at 31.45 -38.77 ground sit scale=0.5
+place SmallRock_02 - at 31.45 -38.77 ground y=0.6 sit scale=0.32 yaw=40
+call treasure x=28.95 z=-38.77 r=12 n=1 seed=24411
+prop treasure24411 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
+call treasure x=-11.3 z=-26.37 r=5 n=1 seed=24412
+prop treasure24412 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
+call sk_dark x=-18 z=-40 h=1 r=7 al=thcave2dark
+
+# the drowned building: the salvage store, its ground floor 12 m down; the deep chest at the bottom, air on storey 1
+call sk_drowned x=-48 z=54 h0=-12 n=3 w=RT_WallWindowBroken a=thbld cap=0 cal=thcap
+place Loot_Chest thdeep at -49.8 51.5 h=-12 sit yaw=0
+place Placeable_Table_Basic - at -49.5 55 h=-9 sit yaw=0
+place Note_Paper thbldnote at -49.5 55 h=-7.7 drop yaw=10
+call sk_zone x=-48 z=43 al=thdeepzone id=th_deep r=4 msg="The pit floor: the drowned building stands below you."
+
+# M21 the air line: the salvage pump on the rim fills the store with air down its hose (hidden air zones) and ends the
+# deep zone's breath drain over the pit
+place Pump thpump at -34 54 ground sit yaw=270
+place Zone_Trigger thair1 at -48.5 52 h=-7.4
+place Zone_Atmosphere thbub1 at -48.5 52 h=-7.8
+place Zone_Trigger thair2 at -47.5 53 h=-10.4
+place Zone_Atmosphere thbub2 at -47.5 53 h=-10.8
+place Zone_Trigger thwater at -48 54 h=-8
+
+# --- Settings, notes, behaviours, quest ---------------------------------------------------------------------------------
+# the generator's rocks that floated over the slope, and walls left wholly under the ground (ground check, 2026-10-23)
+clear at -29.82 -2.51 r=1.5 only=SmallBoulder
+
+info title=Thalassa Mooring
+info author=Custom Islands
+info description=The Network's surface station: a steel deck over a moonpool, a crane and a diving bell that rides 20 m down, a water tower and a vending machine. The fifth island of The Sunken Kingdom.
+island on.arrive=message||A crane over a steel deck - and under it, a square of black water going straight down.
+
+note handbook Station handbook | THALASSA MOORING - HANDBOOK (annotated by the last crew)\n\n1. Fresh water from the tower. Pipes to the deck. Don't drink from the moonpool. ("Kowalski.")\n2. The purifier plans are in the office. Keep the filters dry.\n3. The bell: stand on it, use it. It goes down the shaft to the shelf at twenty metres and comes back when used again.\n4. Tokens for the machine - the old crews hid them round the decks, like squirrels with a pension.\n5. Nobody goes below the shelf edge. Nobody.\n\nPencilled over rule 5, in a different hand: "Unless the Spire sends you. Then everybody does, and nobody comes back."
+note towerchest Water tower chest | A chest on top of the water tower: water tank plans.
+note pipecrate Pipe crate | A crate of pipe fittings: water pipe plans.
+note officechest Station office chest | The office chest: electric purifier plans and a logbook stub.
+note storeshed Store shed chest | The store shed's chest: large storage plans.
+loot towerchest Blueprint_WaterTank*1;Plank*4
+prop towerchest loot.refill=0
+loot pipecrate Blueprint_Pipe_Water*1;Scrap*3
+prop pipecrate loot.refill=0
+loot officechest Blueprint_ElectricPurifier*1;Bolt*2
+prop officechest loot.refill=0
+loot storeshed Blueprint_Storage_Large*1;Plank*6;Nail*10
+prop storeshed loot.refill=0
+
+prop deckzone zone.id=deck
+prop deckzone zone.radius=5
+prop deckzone zone.message=Thalassa Mooring's deck. The moonpool breathes cold air.
+prop bell obj.name=bell
+prop bell beh.use=Ride the diving bell
+prop bell beh.move=0,-20,0
+prop bell beh.moveTime=12
+prop bell beh.carry=1
+prop bell on.use=switch|\nmessage||The crane's winch groans. The bell sinks into the shaft.
+prop bellzone zone.id=bell
+prop bellzone zone.radius=4
+prop bellzone zone.air=1
+prop bellzone zone.repeat=1
+prop bellzone zone.message=Twenty metres down. Through the shaft's mouth: a glowing shelf, lamps in a line - the shelf the handbook spoke of.
+prop bellbub atmo.particles=bubbles
+prop bellbub zone.radius=3
+prop bellcrane obj.name=bellcrane
+
+note th_cavechest Bell crew's locker | A bell crew locker: a dive knife's sheath, a rope, a tin of grease.
+loot th_cavechest Rope*3;Bolt*2;Leather*1;CopperOre*2
+prop th_cavechest loot.refill=0
+note th_ruinnote Dive log | DIVE LOG - DIVE MASTER R. OYELARAN\n\nDive 41: beside the station, off the rocks. Order from the Spire: cut the trench cable at marker 3. Diver did not surface. Her sample bag is still down there, buried in the sand.\nDive 44: out by the old marker. Order from the Spire: cut the dome feed. Line cut - not by us.\nDive 47: past the dinghy. Order from the Spire: cut the lab line. Bell came up empty.\nThree dives, three cables, three crews. Why is the Director cutting his own Network? He says "to keep the Commons quiet". Quiet from what?\nWhoever has a metal detector: their tags will ring under the sand. Bring them home.
+note th_wrecknote Dinghy logbook | DINGHY LOGBOOK\n\nTook the dinghy out for dive 47. Came back without the bell crew. I tied her up on the rocks, walked to the hut, and sat on the floor for a long time.\nThen a gardener rowed in from Biome Seven with a diver, an old man and a hen, and the hen walked straight into my hut as if it had paid rent.\nThe diver, Marlowe, asked about the shuttle. I told her what we heard on the station set: the shuttle hit the reef past the Caisson Yard, and the children walked. Then I told her what the dive orders were. She went very quiet. She said she used to lay those cables.
+note th_wreckcrate Dinghy stores | The dinghy's stores crate: spare line, a lamp, a tin of fuel.
+loot th_wreckcrate Rope*3;Plank*3;Scrap*2;Battery*1
+prop th_wreckcrate loot.refill=0
+
+# --- DEEP 1-HOUR (10-24): story items, notes and checks
+story th_key|Salvage store key|Hinge|The salvage store's key, from the harbour master's locker on Mooring Hill.
+story sk_crest|Kingdom crest shard|Bolt|A shard of the Sunken Kingdom's crest, from a drowned building. The Hollow's crown vault wants nine.
+note thdeep Salvage store chest | The salvage crew's chest: their pay and a crest shard.
+loot thdeep story:sk_crest*1;MetalIngot*2;Bolt*3;OxygenBottle*1;TradeToken*2
+prop thdeep if.open=quest|11\nhas|story:th_key|1
+prop thdeep else.open=message||Locked. A tag: "Key in my locker on Mooring Hill. - Harbour master".
+prop thdeep loot.refill=0
+note thlocker Mooring hill locker | The harbour master's locker: the salvage store key.
+loot thlocker story:th_key*1;MetalIngot*3;CopperIngot*2;Rope*3;Cooked_Potato*2
+prop thlocker loot.refill=0
+note thsumnote Harbour master's card | MOORING HILL - HARBOUR MASTER\n\nFrom here I watched the bell go down every morning, and every evening I counted heads coming up. Then the Spire's dive orders started, and I stopped counting, because the numbers were wrong.\nI have locked the salvage store and put its key in my locker here, so nobody else goes down for the Director's cables.\nIf you must go down: the crew's pump on the pit rim sends air down the hose to the first floor. Work it first. Breathe on the way.\nAnd if anybody asks, I was never here. I was fishing.
+note thbldnote Ines's slate (salvage store) | DIVE SLATE - I. MARLOWE, SALVAGE STORE\n\nMilo. The station diver showed me their orders. Cut the cables. All of them. Signed "Sealkeeper".\nI laid those cables, love. With your dad. They carried the lights from the Spire to the domes and the labs and the Commons. Someone cut the lights off from the Commons on purpose, and the Commons is where everybody went.\nI am going down the bell to the shelf. The survey team strung lamps along the shelf edge to the Yard, and the radio says the Yard road still has light. Teo says he will wait here and look after the hen, which is his way of saying his knees have had enough.\nDown the bell. Then the shelf. Then you.
+note thledge Lookout's cache | A harbour lookout's cache on a ledge.
+loot thledge Rope*3;Bolt*2;Feather*3
+prop thledge loot.refill=0
+note thcave2chest Salvager's spare chest | A salvager's spare chest in the rock cave.
+loot thcave2chest CopperOre*3;Rope*2;Battery*1
+prop thcave2chest loot.refill=0
+prop thsummit zone.id=th_summit
+prop thsummit zone.radius=2.5
+prop thsummit zone.message=The top of Mooring Hill. The whole island lies below.
+story th_pump|Air line running|Pump|The salvage pump is running: air down the hose into the flooded store.
+prop thpump obj.name=thpump
+prop thpump beh.use=Work the salvage pump
+prop thpump if.use=!signal|thpump
+prop thpump on.use=signal||thpump\nshow|thair1\nshow|thbub1\nshow|thair2\nshow|thbub2\nhide|thwater\ngive||story:th_pump*1\nmessage||The pump thumps into life. Down in the pit, bubbles stream out of the store's windows: air in there now.
+prop thair1 obj.name=thair1
+prop thair1 zone.id=th_air1
+prop thair1 zone.radius=2.2
+prop thair1 zone.repeat=1
+prop thair1 zone.air=1
+prop thair1 zone.message=The pump's air, trapped under the first floor ceiling. Breathe.
+prop thair1 beh.hidden=1
+prop thair2 obj.name=thair2
+prop thair2 zone.id=th_air2
+prop thair2 zone.radius=2.2
+prop thair2 zone.repeat=1
+prop thair2 zone.air=1
+prop thair2 zone.message=Air from the hose, by the ground floor chest. Breathe.
+prop thair2 beh.hidden=1
+prop thbub1 obj.name=thbub1
+prop thbub1 atmo.particles=bubbles
+prop thbub1 zone.radius=3
+prop thbub1 beh.hidden=1
+prop thbub2 obj.name=thbub2
+prop thbub2 atmo.particles=bubbles
+prop thbub2 zone.radius=3
+prop thbub2 beh.hidden=1
+prop thwater obj.name=thwater
+prop thwater zone.id=thwater
+prop thwater zone.radius=9
+prop thwater zone.hazard=deep
+prop thwater zone.damage=1
+prop thwater zone.safe=none
+prop thwater zone.hazardMsg=Cold, deep water: your breath goes fast down here. The salvage pump on the rim would help.
+
+quest title=The Surface Station
+quest intro=Wren's boat brought Ines and Teo to this surface station. Find its deck.
+step reach|deck|1|Climb onto the station's deck
+step read|Station handbook|1|Read the station handbook
+step blueprint|Blueprint_WaterTank|1|Climb the water tower: water tank plans
+step blueprint|Blueprint_Pipe_Water|1|Find the water pipe plans in the pipe crate
+step blueprint|Blueprint_ElectricPurifier|1|Find the purifier plans in the station office
+step blueprint|Blueprint_Storage_Large|1|Open the store shed: large storage plans
+step read|Dive log|1|Read the dive log in the dive master's hut on the rocks
+step read|Dinghy logbook|1|Read the logbook at the divers' wrecked dinghy
+step reach|th_summit|1|Climb Mooring Hill to the harbour master's tower
+step collect|story:th_key|1|Take the salvage store key from the harbour master's locker
+step collect|story:th_pump|1|Work the salvage pump on the pit rim to send air down to the flooded store
+step open|Salvage store chest|1|Dive down the air line into the salvage store and unlock its chest
+step read|Ines's slate (salvage store)|1|Read the diver's slate in the salvage store
+step reach|bell|1|Ride the diving bell 20 m down the shaft after her
+quest done=The Spire ordered its own cables cut. Down the shaft the shelf glows; the Receiver picks up the survey lamps on band 600.
+quest reward=Rope*4;Plank*6
+
+# --- 11-08 (w03): the old sea gate under the flag hill; Harbourmistress Elaine at the office - optional ---------------
+# An underwater mouth on the sea floor off the shore below the rocky hill by the office's side of the island, barred by
+# the harbour's old sea gate (Selene room bars): Harbourmistress Elaine's second answer opens it (the talked gate). Behind it the tunnel climbs out of the water under the hill into a dry
+# room - air, mushrooms, and the kingdom's charter in a chest. A flag on the hilltop marks it. No quest step needs it;
+# the bell and its zone are not gated. No rats: reached only under water, no NavMesh floor. cavecheck: 6 m and more from
+# the quest's things and the walks between them.
+# (11-09 w03: a pale flat strip stands in the mouth's +z side 2 m before the bars - the picture's rays hit the cave's
+# CaveMouth there, 4 m off, in front of the rods. Not the bars (moved 0.8 m, it stayed), not hidden by a rock (SmallRock
+# reads mossy blue), still there at size 0.8 (and the hill and room looked worse): open, see CAVE_LESSONS)
+call kit_st x=-102 z=8 yaw=90 len=29 slope=12 end=room size=0.7 hill=1 dirt=0 mush=2 stone=1 vines=1 as=thgatecave
+prop thgatecave cave.rock=plain
+# the sea gate: two of Selene's room bars stacked across the tunnel 2 m in (the bars' mesh lies 3 m off its pivot along
+# its own x: at yaw 90 that is -z, so the pivot sits 3 m to the +z side). Plain bars: Elaine's second answer hides
+# them (a use on the bars themselves would make them a quest object in the tunnel's mouth).
+place TP_Selene_Int_Room_Bars thgate at -100 11 h=-4.7 yaw=90
+place TP_Selene_Int_Room_Bars thgate at -100 11 h=-1.95 yaw=90
+prop thgate obj.name=thgate
+# the flag on the hilltop over the room
+place Placeable_Flag_01 - at -70 2 ground sit yaw=90
+place Zone_Trigger thgateair at -64 8 h=3
+prop thgateair obj.name=thgateair
+prop thgateair zone.id=th_seagate
+prop thgateair zone.radius=8
+prop thgateair zone.repeat=1
+prop thgateair zone.air=1
+prop thgateair zone.message=A dry room behind the sea gate - air. The harbour kept its papers here, out of the floods' reach.
+# cavecheck inside thcharter
+place Loot_ChestSmall thcharter at -61 11 h=3 drop yaw=250
+prop thcharter obj.name=thcharter
+prop thcharter loot.refill=0
+note thcharter Kingdom charter | THE CHARTER OF THE SUNKEN KINGDOM\n\nWe who stayed when the water came over the walls: the Network keeps the gardens, the mooring keeps the bell, and the bell keeps the people. Nobody is to be left below.\n\n(Below, in another hand: the bell still goes down. Nobody comes up.)
+loot thcharter Rope*2;Nail*6;Seed_Pineapple*1;Battery*1
+# Harbourmistress Elaine at the office, standing by its door and looking out over the deck
+place Story_Islander thelaine at -13 -4.5 ground yaw=60
+prop thelaine obj.name=Harbourmistress Elaine
+prop thelaine islander.character=Elaine
+prop thelaine islander.pose=stand
+prop thelaine talk.text=Mooring fees are waived for the living. What brings you down the old canal?\n> Where did the kingdom go?\n> I need to get below.\n> Just passing.
+prop thelaine on.choice1=journal|Harbourmistress Elaine: the flood|The kingdom did not sink in a day. The sea came up a little every year, and every year the walls went higher, until one spring the walls went under. Those who stayed went down in the bell to the gardens and the halls below. The bell still goes down. Ask the deep why it comes up empty.\nmessage||Elaine tells you about the flood and the bell. It is in your journal.
+prop thelaine on.choice2=hide|thgate\nmessage||The sea gate under the flag hill is open.
+prop thelaine on.choice3=message||Then pass quickly. The tide has a long memory here.
+
+save Thalassa Mooring

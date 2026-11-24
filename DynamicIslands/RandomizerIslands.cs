@@ -107,9 +107,12 @@ namespace DynamicIslands.Editor
 			float low = ground(p.x, p.y);
 			if (info == null) return low;
 			Quaternion rot = Quaternion.Euler(0f, yaw, 0f);
+			// (the part it stands on where that is smaller: the excavator's tracks, not its boom)
+			bool part = info.StandSize.x > 0f;
+			Vector2 mid = part ? info.StandCentre : new Vector2(info.Centre.x, info.Centre.z), size = part ? info.StandSize : new Vector2(info.Size.x, info.Size.z);
 			foreach (Vector2 c in new[] { Vector2.zero, new Vector2(-1f, -1f), new Vector2(1f, -1f), new Vector2(-1f, 1f), new Vector2(1f, 1f) })
 			{
-				Vector3 w = rot * new Vector3(info.Centre.x + c.x * info.Size.x * 0.45f, 0f, info.Centre.z + c.y * info.Size.z * 0.45f);
+				Vector3 w = rot * new Vector3(mid.x + c.x * size.x * 0.45f, 0f, mid.y + c.y * size.y * 0.45f);
 				float g = ground(p.x + w.x, p.y + w.z);
 				if (float.IsNaN(g)) return float.NaN;
 				low = Mathf.Min(low, g);
@@ -121,14 +124,136 @@ namespace DynamicIslands.Editor
 		static float Footprint(string name)
 		{
 			PropInfo p = RaftProps.Get(name);
-			return p == null ? 0.6f : Mathf.Max(0.4f, Mathf.Min(p.Size.x, p.Size.z) * 0.45f);
+			// (plus how far its body sits off its pivot: a fence panel's pivot is at its end - IG7, a fence through a monument 2026-10-18)
+			return p == null ? 0.6f : Mathf.Max(0.4f, Mathf.Min(p.Size.x, p.Size.z) * 0.45f + new Vector2(p.Centre.x, p.Centre.z).magnitude);
+		}
+
+		/// <summary>How far a set piece's body reaches from its pivot on the ground: its longest side, all of it (a monument, a statue).</summary>
+		static float Reach(string name)
+		{
+			PropInfo p = RaftProps.Get(name);
+			return p == null ? 0.6f : Mathf.Max(0.4f, Mathf.Max(p.Size.x, p.Size.z) * 0.5f + new Vector2(p.Centre.x, p.Centre.z).magnitude);
+		}
+
+		/// <summary>The setting a themed scene's pieces carry (the theme's name), the chest and the note too: the overlap check
+		/// (CIOverlap*) measures them against each other.</summary>
+		internal const string SceneProp = "set.scene";
+
+		/// <summary>How far apart a scene's footprints stay (metres): their measured boxes, so a little room for a tilted flat prop.</summary>
+		const float FootGap = 0.05f;
+
+		/// <summary>Room kept for a scene's chest and note (half a side, metres), whatever way they turn.</summary>
+		const float ChestRoom = 0.85f, NoteRoom = 0.8f;
+
+		/// <summary>Containers raft_props doesn't measure, with their meshes' box (CIPropColliders 2026-10-22: Loot_Box is
+		/// 2.6 x 1 x 2.2 m - taken as a 1.2 m cube, a radio scene's power box stood 0.3 m inside it).</summary>
+		static readonly Dictionary<string, Vector3> ContainerSizes = new Dictionary<string, Vector3>(StringComparer.Ordinal) { { "Loot_Box", new Vector3(2.59f, 1f, 2.18f) } };
+
+		/// <summary>Room kept for a chest of this kind, whatever way it turns: half its box's diagonal, at least ChestRoom.</summary>
+		static float ChestRoomOf(string kind)
+		{
+			Vector3 size;
+			return ContainerSizes.TryGetValue(kind ?? "", out size) ? Mathf.Max(ChestRoom, new Vector2(size.x, size.z).magnitude * 0.5f + FootGap) : ChestRoom;
+		}
+
+		/// <summary>A prop's footprint on the ground: a turned rectangle - its middle and its two half sides.</summary>
+		internal struct Foot { public Vector2 Mid, X, Z; }
+
+		/// <summary>
+		/// The ground a measured prop covers with its pivot at p, turned by euler: its measured box turned (a tilted flat prop's
+		/// box laid flat), as a rectangle along its turn. Balboa's dish also covers its pole's foot (it hangs on it).
+		/// </summary>
+		internal static Foot FootOf(string name, Vector2 p, Vector3 euler)
+		{
+			PropInfo info = RaftProps.Get(name);
+			Vector3 size = info != null ? info.Size : new Vector3(1.2f, 1.2f, 1.2f), centre = info != null ? info.Centre : Vector3.zero, known;
+			if (info == null && name != null && ContainerSizes.TryGetValue(name, out known)) { size = known; centre = new Vector3(0f, known.y * 0.5f, 0f); }
+			Quaternion turn = Quaternion.Euler(0f, euler.y, 0f), full = Quaternion.Euler(euler);
+			Vector3 ax = turn * Vector3.right, az = turn * Vector3.forward;
+			float x0 = float.MaxValue, x1 = float.MinValue, z0 = float.MaxValue, z1 = float.MinValue;
+			for (int i = 0; i < 8; i++)
+			{
+				Vector3 v = full * (centre + Vector3.Scale(size * 0.5f, new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f)));
+				float x = Vector3.Dot(v, ax), z = Vector3.Dot(v, az);
+				x0 = Mathf.Min(x0, x); x1 = Mathf.Max(x1, x); z0 = Mathf.Min(z0, z); z1 = Mathf.Max(z1, z);
+			}
+			if (name == "Antenna_dish") { x0 = Mathf.Min(x0, -0.4f); x1 = Mathf.Max(x1, 0.4f); z0 = Mathf.Min(z0, -0.4f); z1 = Mathf.Max(z1, 0.4f); }
+			Vector3 mid = ax * ((x0 + x1) * 0.5f) + az * ((z0 + z1) * 0.5f);
+			return new Foot { Mid = p + new Vector2(mid.x, mid.z), X = new Vector2(ax.x, ax.z) * ((x1 - x0) * 0.5f), Z = new Vector2(az.x, az.z) * ((z1 - z0) * 0.5f) };
+		}
+
+		/// <summary>A square of half side r round p: room for something whose turn isn't drawn yet (a chest, a note).</summary>
+		static Foot Spot(Vector2 p, float r) { return new Foot { Mid = p, X = new Vector2(r, 0f), Z = new Vector2(0f, r) }; }
+
+		/// <summary>How far two footprints pass into each other (separating axes): above 0 they overlap; 0 or less, they are
+		/// at least that far apart.</summary>
+		internal static float Into(Foot a, Foot b)
+		{
+			float depth = float.MaxValue;
+			Vector2 d = b.Mid - a.Mid;
+			foreach (Vector2 axis in new[] { a.X, a.Z, b.X, b.Z })
+			{
+				float len = axis.magnitude;
+				if (len < 1e-4f) continue;
+				Vector2 n = axis / len;
+				depth = Mathf.Min(depth, Mathf.Abs(Vector2.Dot(a.X, n)) + Mathf.Abs(Vector2.Dot(a.Z, n)) + Mathf.Abs(Vector2.Dot(b.X, n)) + Mathf.Abs(Vector2.Dot(b.Z, n)) - Mathf.Abs(Vector2.Dot(d, n)));
+			}
+			return depth;
+		}
+
+		/// <summary>Whether a footprint keeps <see cref="FootGap"/> from all of these.</summary>
+		static bool Clear(IEnumerable<Foot> feet, Foot f) { return feet.All(q => Into(q, f) <= -FootGap); }
+
+		/// <summary>A chest's or note's spot moved out from the scene's middle c until its room is clear of these (a wide centrepiece).</summary>
+		static Vector2 OutOf(Vector2 c, Vector2 p, float room, IList<Foot> feet)
+		{
+			Vector2 dir = (p - c).sqrMagnitude > 1e-6f ? (p - c).normalized : Vector2.up;
+			for (int i = 0; i < 12 && !Clear(feet, Spot(p, room)); i++) p += dir * 0.25f;
+			return p;
+		}
+
+		/// <summary>A set piece's settings: kept when the land is cleared; in a themed scene, the scene's name too.</summary>
+		static Dictionary<string, string> Tags(string scene)
+		{
+			var d = new Dictionary<string, string> { { "set.piece", "1" } };
+			if (scene != null) d[SceneProp] = scene;
+			return d;
+		}
+
+		/// <summary>Balboa's dish never stands on the ground by itself: it goes up on its antenna pole, the pole on the ground where
+		/// the dish was (dishes lay on the grass or hung over their spot, the ground check 2026-10-19). <paramref name="add"/> adds
+		/// the pole (name, position, yaw).</summary>
+		static void DishOnPole(IslandObject dish, float yaw, float sink, Func<string, Vector3, float, IslandObject> add)
+		{
+			if (dish == null || dish.Name != "Antenna_dish") return;
+			float baseY = dish.Position.y - RaftProps.Lift("Antenna_dish") + sink;
+			Vector3 at = dish.Position;
+			add("Antenna_pole", new Vector3(at.x, baseY - 0.1f, at.z), yaw);
+			// (its mount on the pole's top, as the hand-built islands stand it - pivot on the pole, 6.0-6.2 m up; the pole is 6.3 m.
+			// Set 0.25 m out and 5.3 m up, its back hung 0.1 m off the pole, held by nothing: CIGroundTypes gen-shack-296323)
+			dish.Position = new Vector3(at.x, baseY - 0.1f + 6f, at.z);
 		}
 
 		/// <summary>Stands a measured prop on generated ground (sunk a little), protected from clearing like a set piece.</summary>
-		static IslandObject Prop(MapKit k, string name, Vector2 p, float yaw, float sink = 0.05f)
+		static IslandObject Prop(MapKit k, string name, Vector2 p, float yaw, float sink = 0.05f, string scene = null)
 		{
 			float ground = LowestUnder((x, z) => k.Ground(new Vector2(x, z)), name, p, yaw);
-			return k.Add(name, new Vector3(p.x, ground + RaftProps.Lift(name) - sink, p.y), yaw, new Dictionary<string, string> { { "set.piece", "1" } }, 0f);
+			PropInfo fi = RaftProps.Get(name);
+			if (fi != null && (fi.Size.y < 0.3f || fi.Size.y < 0.25f * Mathf.Min(fi.Size.x, fi.Size.z)))
+			{
+				// (a sheet, firewood, a tyre, a pallet - anything flat: lies along the slope - set on the lowest ground and sunk,
+				// it was under the ground at its middle and uphill side, the ground check 2026-10-12; a 4 m pallet, IG6)
+				Quaternion q = Quaternion.Euler(0f, yaw, 0f);
+				Vector3 ax = q * new Vector3(fi.Size.x * 0.45f, 0f, 0f), az = q * new Vector3(0f, 0f, fi.Size.z * 0.45f);
+				Func<Vector3, float> g = v => k.Ground(new Vector2(p.x + v.x, p.y + v.z));
+				float tz = Mathf.Atan2(g(ax) - g(-ax), 2f * ax.magnitude) * Mathf.Rad2Deg, tx = -Mathf.Atan2(g(az) - g(-az), 2f * az.magnitude) * Mathf.Rad2Deg;
+				IslandObject flat = k.Add(name, new Vector3(p.x, k.Ground(p) + RaftProps.Lift(name) - Mathf.Min(sink, fi.Size.y * 0.3f) + 0.02f, p.y), yaw, Tags(scene), 0f);
+				flat.EulerRotation = new Vector3(tx, yaw, tz);
+				return flat;
+			}
+			// (never more than half its height under the ground at its middle, as a set piece)
+			if (fi != null) ground = Mathf.Max(ground, k.Ground(p) - fi.Size.y * 0.5f);
+			return k.Add(name, new Vector3(p.x, ground + RaftProps.Lift(name) - sink, p.y), yaw, Tags(scene), 0f);
 		}
 
 		#region Themed scenes
@@ -149,21 +274,33 @@ namespace DynamicIslands.Editor
 			radius = Mathf.Max(radius, anchorSize + 5f);
 			k.Clear(c, radius + 1f);
 			RemoveContentNear(k, c, radius + 1f);
-			Prop(k, anchor, c, yaw);
+			IslandObject centre = Prop(k, anchor, c, yaw, 0.05f, t.Name);
 			// (each prop's footprint kept clear of the others': brick stacks and baskets stood inside each other)
-			var placed = new List<KeyValuePair<Vector2, float>> { new KeyValuePair<Vector2, float>(c, anchorSize * 0.8f) };
+			var placed = new List<KeyValuePair<Vector2, float>> { new KeyValuePair<Vector2, float>(c, Mathf.Max(anchorSize * 0.8f, Reach(anchor))) };
 			Func<string, Vector2, bool> free = (name, p) => { float fr = Footprint(name); return placed.All(q => (q.Key - p).magnitude >= q.Value + fr); };
+			// (and their turned boxes, the chest's and the note's room too: two metal crates 2.4 m apart, each turned its own way,
+			// stood 0.35 m into each other - the round footprints don't turn; gen-large-37435, 2026-10-21. A prop whose box
+			// doesn't fit gets another try instead, up to four more, so a scene keeps its props)
+			var feet = new List<Foot> { FootOf(anchor, c, centre.EulerRotation) };
+			Vector2 box = OutOf(c, Around(c, yaw + 180f, 0f, anchorSize + 1.5f), ChestRoomOf(t.Container), feet);
+			feet.Add(Spot(box, ChestRoomOf(t.Container)));
+			Vector2 notePos = OutOf(c, Around(c, yaw + 150f, 0f, anchorSize + 2.5f), NoteRoom, feet);
+			if (withNote) feet.Add(Spot(notePos, NoteRoom));
 			int nm = medium.Length == 0 ? 0 : 2 + r.Next(3);
 			for (int i = 0; i < nm; i++)
 			{
 				string name = One(r, medium);
-				for (int attempt = 0; attempt < 4; attempt++)
+				for (int attempt = 0, bumps = 0; attempt < 4 + bumps; attempt++)
 				{
 					float a = yaw + 60f + i * (240f / Mathf.Max(1, nm)) + (float)r.NextDouble() * 30f;
 					Vector2 p = Around(c, a, 0f, anchorSize + 2f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 3f));
 					if (k.Slope(p) > 22f || !free(name, p)) continue;
 					Vector2 toC = c - p;
-					Prop(k, name, p, Mathf.Atan2(toC.x, toC.y) * Mathf.Rad2Deg + (float)r.NextDouble() * 30f - 15f);
+					float my = Mathf.Atan2(toC.x, toC.y) * Mathf.Rad2Deg + (float)r.NextDouble() * 30f - 15f;
+					if (!Clear(feet, FootOf(name, p, new Vector3(0f, my, 0f)))) { bumps = Mathf.Min(4, bumps + 1); continue; }
+					IslandObject o = Prop(k, name, p, my, 0.05f, t.Name);
+					feet.Add(FootOf(name, p, o.EulerRotation));
+					DishOnPole(o, my, 0.05f, (pn, pp, py) => k.Add(pn, pp, py, Tags(t.Name), 0f));
 					placed.Add(new KeyValuePair<Vector2, float>(p, Footprint(name)));
 					break;
 				}
@@ -172,18 +309,20 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < ns; i++)
 			{
 				string name = One(r, small);
-				for (int attempt = 0; attempt < 4; attempt++)
+				for (int attempt = 0, bumps = 0; attempt < 4 + bumps; attempt++)
 				{
 					Vector2 p = Around(c, Yaw(r), 0f, anchorSize + 1f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 1f));
 					if (k.Slope(p) > 25f || !free(name, p)) continue;
-					Prop(k, name, p, Yaw(r));
+					float sy = Yaw(r);
+					if (!Clear(feet, FootOf(name, p, new Vector3(0f, sy, 0f)))) { bumps = Mathf.Min(4, bumps + 1); continue; }
+					IslandObject o = Prop(k, name, p, sy, 0.05f, t.Name);
+					feet.Add(FootOf(name, p, o.EulerRotation));
 					placed.Add(new KeyValuePair<Vector2, float>(p, Footprint(name)));
 					break;
 				}
 			}
-			Vector2 box = Around(c, yaw + 180f, 0f, anchorSize + 1.5f);
-			k.Chest(t.Container, box, t.Label, MapKit.Loot(t.Loot));
-			if (withNote) k.Note(t.NoteKind, Around(c, yaw + 150f, 0f, anchorSize + 2.5f), t.NoteTitle, One(r, t.Notes));
+			k.Chest(t.Container, box, t.Label, MapKit.Loot(t.Loot)).Props[SceneProp] = t.Name;
+			if (withNote) k.Note(t.NoteKind, notePos, t.NoteTitle, One(r, t.Notes)).Props[SceneProp] = t.Name;
 			if (t.Creature != null && r.NextDouble() < 0.5)
 			{
 				Vector2? den = k.Find(c, radius * 2.5f, MapKit.Dry, 6f);
@@ -192,23 +331,30 @@ namespace DynamicIslands.Editor
 			return true;
 		}
 
-		/// <summary>A few of a theme's props scattered between inner and outer metres around c (no centrepiece, chest or note): a touch of it.</summary>
-		public static int Sprinkle(MapKit k, Theme t, Vector2 c, float inner, float outer, int count)
+		/// <summary>A few of a theme's props scattered between inner and outer metres around c (no centrepiece, chest or note): a touch of it.
+		/// <paramref name="force"/> (tests only, CIShackDish): the first prop placed is this one instead of a random pick; null = as always.</summary>
+		public static int Sprinkle(MapKit k, Theme t, Vector2 c, float inner, float outer, int count, string force = null)
 		{
 			System.Random r = k.Rnd;
 			string[] props = t.Medium.Concat(t.Small).Where(RaftProps.Standable).ToArray();
 			int placed = 0;
 			// (clear of the set pieces already there and of each other, by their footprints)
-			var taken = k.File.Objects.Where(o => o.Props != null && o.Props.ContainsKey("set.piece") && new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < outer + 25f)
-				.Select(o => new KeyValuePair<Vector2, float>(new Vector2(o.Position.x, o.Position.z), Footprint(o.Name))).ToList();
-			for (int i = 0; i < count * 4 && placed < count && props.Length > 0; i++)
+			var near = k.File.Objects.Where(o => o.Props != null && o.Props.ContainsKey("set.piece") && new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < outer + 25f).ToList();
+			var taken = near.Select(o => new KeyValuePair<Vector2, float>(new Vector2(o.Position.x, o.Position.z), Reach(o.Name))).ToList();
+			// (and by their turned boxes, as Dress's)
+			var feet = near.Where(o => !o.Props.ContainsKey("cave")).Select(o => FootOf(o.Name, new Vector2(o.Position.x, o.Position.z), o.EulerRotation)).ToList();
+			for (int i = 0, bumps = 0; i < count * 4 + bumps && placed < count && props.Length > 0; i++)
 			{
 				Vector2 p = Around(c, Yaw(r), 0f, inner + (float)r.NextDouble() * (outer - inner));
 				if (k.Ground(p) - k.Sea < 0.8f || k.Slope(p) > 22f) continue;
-				string name = One(r, props);
+				string name = placed == 0 && force != null ? force : One(r, props);
 				if (taken.Any(q => (q.Key - p).magnitude < q.Value + Footprint(name))) continue;
+				float sy = Yaw(r);
+				if (!Clear(feet, FootOf(name, p, new Vector3(0f, sy, 0f)))) { bumps = Mathf.Min(count * 2, bumps + 1); continue; }
 				k.Clear(p, 1.5f);
-				Prop(k, name, p, Yaw(r));
+				IslandObject o = Prop(k, name, p, sy, 0.05f, t.Name);
+				feet.Add(FootOf(name, p, o.EulerRotation));
+				DishOnPole(o, sy, 0.05f, (pn, pp, py) => k.Add(pn, pp, py, Tags(t.Name), 0f));
 				taken.Add(new KeyValuePair<Vector2, float>(p, Footprint(name)));
 				placed++;
 			}
@@ -227,6 +373,9 @@ namespace DynamicIslands.Editor
 			string[] anchors = t.Anchors.Where(RaftProps.Standable).ToArray(), medium = t.Medium.Where(RaftProps.Standable).ToArray(), small = t.Small.Where(RaftProps.Standable).ToArray();
 			if (anchors.Length == 0) return false;
 			Func<float, float, float> ground = (x, z) => { Vector3 gh, gn; return g.Hit(x, z, out gh, out gn) ? gh.y : float.NaN; };
+			// (the scene's turned boxes kept apart, as Dress's: bumped = the last one didn't fit them, worth another try)
+			var feet = new List<Foot>();
+			bool bumped = false;
 			Func<Vector3, float, float, string, IslandObject> put = (at, yaw, sink, name) =>
 			{
 				Vector3 hit, n;
@@ -235,31 +384,49 @@ namespace DynamicIslands.Editor
 				PropInfo pi = RaftProps.Get(name);
 				float clear = pi != null ? Mathf.Max(1.5f, Mathf.Max(pi.Size.x, pi.Size.z) * 0.4f + 0.5f) : 1.5f;
 				if (k.Taken.Any(x => new Vector2(x.x - at.x, x.z - at.z).sqrMagnitude < clear * clear)) return null;
+				Foot f = FootOf(name, new Vector2(at.x, at.z), new Vector3(0f, yaw, 0f));
+				if (!Clear(feet, f)) { bumped = true; return null; }
 				float low = LowestUnder(ground, name, new Vector2(at.x, at.z), yaw);
 				if (float.IsNaN(low) || low < 0.6f) return null;
-				return k.Add(name, new Vector3(at.x, low + RaftProps.Lift(name) - sink, at.z), yaw, new Dictionary<string, string> { { "set.piece", "1" } });
+				feet.Add(f);
+				return k.Add(name, new Vector3(at.x, low + RaftProps.Lift(name) - sink, at.z), yaw, Tags(t.Name));
 			};
 			float y0 = Yaw(r);
 			string anchor = One(r, anchors);
 			if (put(c, y0, 0.05f, anchor) == null) return false;
 			float anchorSize = Mathf.Max(2f, RaftProps.Get(anchor).Size.x * 0.5f, RaftProps.Get(anchor).Size.z * 0.5f);
+			// (the chest's and the note's room kept first)
+			Vector2 c2 = new Vector2(c.x, c.z);
+			Vector3 box = c + Quaternion.Euler(0f, y0 + 180f, 0f) * Vector3.forward * (anchorSize + 1.5f), bh, bn;
+			Vector2 b2 = OutOf(c2, new Vector2(box.x, box.z), ChestRoomOf(t.Container), feet);
+			feet.Add(Spot(b2, ChestRoomOf(t.Container)));
+			Vector3 note = c + Quaternion.Euler(0f, y0 + 150f, 0f) * Vector3.forward * (anchorSize + 2.5f), nh, nn;
+			Vector2 n2 = OutOf(c2, new Vector2(note.x, note.z), NoteRoom, feet);
+			feet.Add(Spot(n2, NoteRoom));
 			int nm = medium.Length == 0 ? 0 : 2 + r.Next(3);
 			for (int i = 0; i < nm; i++)
 			{
-				float a = y0 + 60f + i * (240f / Mathf.Max(1, nm));
-				Vector3 p = c + Quaternion.Euler(0f, a, 0f) * Vector3.forward * (anchorSize + 2f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 3f));
-				put(p, a + 180f, 0.05f, One(r, medium));
+				float a0 = y0 + 60f + i * (240f / Mathf.Max(1, nm));
+				for (int attempt = 0; attempt < 4; attempt++)
+				{
+					float a = attempt == 0 ? a0 : a0 + (float)r.NextDouble() * 30f - 15f;
+					Vector3 p = c + Quaternion.Euler(0f, a, 0f) * Vector3.forward * (anchorSize + 2f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 3f));
+					bumped = false;
+					IslandObject o = put(p, a + 180f, 0.05f, One(r, medium));
+					DishOnPole(o, a + 180f, 0.05f, (pn, pp, py) => k.Add(pn, pp, py, Tags(t.Name)));
+					if (o != null || !bumped) break;
+				}
 			}
 			int ns = small.Length == 0 ? 0 : 3 + r.Next(3);
 			for (int i = 0; i < ns; i++)
-			{
-				Vector3 p = c + Quaternion.Euler(0f, Yaw(r), 0f) * Vector3.forward * (anchorSize + 1f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 1f));
-				put(p, Yaw(r), 0.05f, One(r, small));
-			}
-			Vector3 box = c + Quaternion.Euler(0f, y0 + 180f, 0f) * Vector3.forward * (anchorSize + 1.5f), bh, bn;
-			if (g.Hit(box.x, box.z, out bh, out bn)) k.Chest(t.Container, bh, Yaw(r), t.Label, MapKit.Loot(t.Loot));
-			Vector3 note = c + Quaternion.Euler(0f, y0 + 150f, 0f) * Vector3.forward * (anchorSize + 2.5f), nh, nn;
-			if (g.Hit(note.x, note.z, out nh, out nn)) k.Note(t.NoteKind, nh, Yaw(r), t.NoteTitle, One(r, t.Notes));
+				for (int attempt = 0; attempt < 4; attempt++)
+				{
+					Vector3 p = c + Quaternion.Euler(0f, Yaw(r), 0f) * Vector3.forward * (anchorSize + 1f + (float)r.NextDouble() * Mathf.Max(1f, radius - anchorSize - 1f));
+					bumped = false;
+					if (put(p, Yaw(r), 0.05f, One(r, small)) != null || !bumped) break;
+				}
+			if (g.Hit(b2.x, b2.y, out bh, out bn)) k.Chest(t.Container, bh, Yaw(r), t.Label, MapKit.Loot(t.Loot)).Props[SceneProp] = t.Name;
+			if (g.Hit(n2.x, n2.y, out nh, out nn)) k.Note(t.NoteKind, nh, Yaw(r), t.NoteTitle, One(r, t.Notes)).Props[SceneProp] = t.Name;
 			return true;
 		}
 
@@ -411,45 +578,109 @@ namespace DynamicIslands.Editor
 			return false;
 		}
 
-		/// <summary>The ground under a den levelled to its floor out to its reach, blended into the land beyond; a level path out of the mouth.</summary>
+		/// <summary>
+		/// The ground round a den: the passage (mouth to back and a metre and a half past it) level at its floor, a mound
+		/// round the rest of the outcrop that buries its rim (Raft's dens are shells made to sit in a hillside: on level
+		/// ground their rim floated over it and you saw into them - AU83), blended into the land beyond; in front of the
+		/// mouth no mound, and a level path out of it.
+		/// </summary>
 		static void Level(MapKit k, Vector2 c, float reach, float floor, Vector2 outward, Cave cave)
 		{
 			// (the den's passage, mouth to back and a metre past it: its floor all the way - the passage reaches past the
-			// levelled circle, and the hill's blend rose into the back of the den, a lantern 3 m under the ground there)
+			// outcrop's middle, and the hill's blend rose into the back of the den, a lantern 3 m under the ground there)
 			Vector2 back = new Vector2(cave.Back.x, cave.Back.z) - outward * 1.5f, mouth = new Vector2(cave.Mouth.x, cave.Mouth.z);
-			float half = cave.Width * 0.5f + 1.5f;
+			float half = cave.Width * 0.5f + 1.5f, mound = MoundHeight(cave);
 			IslandFile f = k.File;
 			int res = f.HeightmapResolution;
 			float step = f.TerrainSize.x / (res - 1), blend = 10f, reachAll = reach + blend + 18f;
+			// The outcrop's footprint: an ellipse round its middle, in its own turn
+			Quaternion toDen = Quaternion.Inverse(Quaternion.Euler(0f, cave.Yaw, 0f));
+			Vector3 mid3 = cave.Pivot + Quaternion.Euler(0f, cave.Yaw, 0f) * cave.Info.Centre;
+			Vector2 mid = new Vector2(mid3.x, mid3.z);
+			float ax = cave.Info.Size.x * 0.5f, az = cave.Info.Size.z * 0.5f;
 			// What stands around keeps its height above the ground as the ground changes (trees in the blend don't float)
 			var around = f.Objects.Where(o => new Vector2(o.Position.x - c.x, o.Position.z - c.y).magnitude < reachAll).Select(o => new KeyValuePair<IslandObject, float>(o, k.Ground(new Vector2(o.Position.x, o.Position.z)))).ToList();
+			float[,] was = (float[,])f.Heights.Clone();
+			Func<Vector2, float> aroundGround = q0 => IslandGenerator.SampleHeights(was, res, step, q0.x, q0.y) * f.TerrainSize.y;
 			int x0 = Mathf.Max(0, Mathf.FloorToInt((c.x - reachAll) / step)), x1 = Mathf.Min(res - 1, Mathf.CeilToInt((c.x + reachAll) / step));
 			int z0 = Mathf.Max(0, Mathf.FloorToInt((c.y - reachAll) / step)), z1 = Mathf.Min(res - 1, Mathf.CeilToInt((c.y + reachAll) / step));
-			Vector2 side = new Vector2(-outward.y, outward.x);
+			Vector2 side = new Vector2(-outward.y, outward.x), seg = mouth - back;
 			for (int z = z0; z <= z1; z++)
 				for (int x = x0; x <= x1; x++)
 				{
 					Vector2 q = new Vector2(x * step, z * step);
-					float h = f.Heights[z, x] * f.TerrainSize.y, d = (q - c).magnitude;
-					// Under the outcrop: level; around it: blended into the land
-					float w = d <= reach ? 1f : d < reach + blend ? 1f - (d - reach) / blend : 0f;
-					Vector2 seg = mouth - back;
+					float h = f.Heights[z, x] * f.TerrainSize.y;
+					// How far out of the passage, and past the mouth
 					float u = Mathf.Clamp01(Vector2.Dot(q - back, seg) / Mathf.Max(0.01f, seg.sqrMagnitude));
-					if ((q - (back + seg * u)).magnitude <= half) w = 1f;
+					float fromPassage = Mathf.Max(0f, (q - (back + seg * u)).magnitude - half), pastMouth = Vector2.Dot(q - mouth, outward);
+					// How far out of the footprint (0 inside it)
+					Vector3 l = toDen * new Vector3(q.x - mid.x, 0f, q.y - mid.y);
+					float e = Mathf.Sqrt(l.x * l.x / (ax * ax) + l.z * l.z / (az * az)), r = new Vector2(l.x, l.z).magnitude;
+					float outside = e <= 1f ? 0f : r * (1f - 1f / e);
+					// The mound: its full height a few metres out of the passage, none in front of the mouth
+					float rise = Smooth((fromPassage - 0.5f) / 3f) * (1f - Smooth(pastMouth / 5f));
+					float target = floor - 0.15f + (mound + 0.15f) * rise, w = 1f - Smooth(outside / blend);
+					float g = w <= 0f ? h : Mathf.Lerp(h, target, w);
+					// (beyond the footprint it only raises the land: higher land behind it stays)
+					if (outside > 0f) g = Mathf.Max(h, g);
 					// A path out of the mouth: level 5 m wide for 12 m past the outcrop, blended at its sides and end
 					float along = Vector2.Dot(q - c, outward), across = Mathf.Abs(Vector2.Dot(q - c, side));
 					if (along > 0f)
 					{
 						float wSide = across < 2.5f ? 1f : across < 6f ? 1f - (across - 2.5f) / 3.5f : 0f;
 						float wEnd = along < reach + 12f ? 1f : along < reach + 18f ? 1f - (along - reach - 12f) / 6f : 0f;
-						w = Mathf.Max(w, wSide * wEnd);
+						g = Mathf.Lerp(g, floor - 0.15f, Smooth(wSide * wEnd));
 					}
-					if (w <= 0f) continue;
-					w = w * w * (3f - 2f * w);
-					f.Heights[z, x] = Mathf.Clamp01(Mathf.Lerp(h, floor - 0.15f, w) / f.TerrainSize.y);
+					// The passage itself: its floor
+					if (fromPassage <= 0f) g = floor - 0.15f;
+					if (Mathf.Abs(g - h) > 0.001f) f.Heights[z, x] = Mathf.Clamp01(g / f.TerrainSize.y);
 				}
+			// (nature moves with the ground at its lowest change under it: by its pivot's alone, grass on the mound's steep
+			// blend stood 1.1-1.4 m over the ground lowered more beside it, CIGroundIslands gen-large-315592)
+			// (and where the ground changed unevenly under it - the mound's edge rose 1.9 m under its middle and hardly at all a
+			// metre and a half off - it can't stand on both: taken away, else it stood under the raised ground at its middle and
+			// over the drop beside it, CIGroundIslands gen-large-416923)
 			foreach (var kv in around)
-				kv.Key.Position.y += k.Ground(new Vector2(kv.Key.Position.x, kv.Key.Position.z)) - kv.Value;
+			{
+				Vector2 p = new Vector2(kv.Key.Position.x, kv.Key.Position.z);
+				float d = k.Ground(p) - kv.Value;
+				if (kv.Key.Props == null || kv.Key.Props.Count == 0)
+				{
+					float most = d;
+					foreach (Vector2 o in new[] { new Vector2(1.5f, 0f), new Vector2(-1.5f, 0f), new Vector2(0f, 1.5f), new Vector2(0f, -1.5f) })
+					{
+						float ch = k.Ground(p + o) - aroundGround(p + o);
+						d = Mathf.Min(d, ch);
+						most = Mathf.Max(most, ch);
+					}
+					if (most - d > 1f) { f.Objects.Remove(kv.Key); continue; }
+				}
+				kv.Key.Position.y += d;
+			}
+		}
+
+		static float Smooth(float t) { t = Mathf.Clamp01(t); return t * t * (3f - 2f * t); }
+
+		/// <summary>How high the mound round a den rises over its floor: enough to bury its rim, under its roof.</summary>
+		public static float MoundHeight(Cave cave) { return Mathf.Min(5f, cave.Headroom * 0.6f); }
+
+		/// <summary>
+		/// Whether the ground under a den's footprint (behind its mouth) falls more than a metre or so under its floor, where
+		/// its rim would float over it. ground(x, z) gives the ground's height there.
+		/// </summary>
+		public static bool RimFloats(Cave cave, Func<float, float, float> ground, float drop = 1.5f)
+		{
+			Quaternion turn = Quaternion.Euler(0f, cave.Yaw, 0f);
+			Vector3 mid = cave.Pivot + turn * cave.Info.Centre;
+			foreach (float e in new[] { 0.7f, 1f })
+				for (int i = 0; i < 16; i++)
+				{
+					float b = i * Mathf.PI / 8f;
+					Vector3 q = mid + turn * new Vector3(Mathf.Cos(b) * cave.Info.Size.x * 0.5f * e, 0f, Mathf.Sin(b) * cave.Info.Size.z * 0.5f * e);
+					if (Vector2.Dot(new Vector2(q.x - cave.Mouth.x, q.z - cave.Mouth.z), cave.Out) > -1f) continue;
+					if (ground(q.x, q.z) < cave.Floor - (e < 1f ? drop * 2f / 3f : drop)) return true;
+				}
+			return false;
 		}
 
 		/// <summary>Takes the generator's animal spots and loot boxes off a spot that content is going on (a den, a scene).</summary>
@@ -469,7 +700,7 @@ namespace DynamicIslands.Editor
 			if (name == null) return null;
 			PropInfo p = Den(name);
 			float reach = Mathf.Max(p.Size.x, p.Size.z) * 0.5f;
-			int noSpot = 0, bumpy = 0, raftThings = 0, overSea = 0, mouth = 0;
+			int noSpot = 0, bumpy = 0, raftThings = 0, overSea = 0, rim = 0, mouth = 0;
 			for (int attempt = 0; attempt < 160; attempt++)
 			{
 				Vector3? spot = g.Find(r, (h, slope) => h > 2f && h < 30f && slope < 14f, null, 0f, 40);
@@ -482,7 +713,9 @@ namespace DynamicIslands.Editor
 					Vector2 outward = (Vector2)(Quaternion.Euler(0f, 0f, turn) * away);
 					Cave cave = PlaceDen(name, c, outward, spot.Value.y);
 					// Inside the den: Raft's ground can't be changed, so the floor goes on its highest point there (ground a
-					// little under the floor is hidden by it - its rock reaches 6-11 m under it); too bumpy if it drops more than 5 m, nothing of Raft's in it
+					// little under the floor is hidden by it); too bumpy if it drops more than 3 m (the den has no floor of its own: where Raft's
+					// ground fell away under it you saw out under its walls - AU83; CaveMountain's skirt now closes that down to the ground,
+					// but a deeper drop makes a wall of rock - at 1.5 m no den fitted on any of Raft's big islands), nothing of Raft's in it
 					float top = float.MinValue, low = float.MaxValue;
 					bool ok = true;
 					for (float t = 1f; t <= cave.Depth && ok; t += 2f)
@@ -494,15 +727,29 @@ namespace DynamicIslands.Editor
 							if (blockers.Any(x => (new Vector2(x.x - q.x, x.z - q.z)).sqrMagnitude < 6.25f)) { ok = false; raftThings++; break; }
 						}
 					if (!ok) continue;
-					if (top - low > 5f) { bumpy++; continue; }
+					// (nor under its outcrop round the passage: its rock buried Raft's crates and palms by the passage - CA23. The
+					// ellipse its measured footprint holds, a metre around)
+					Quaternion toDen = Quaternion.Inverse(Quaternion.Euler(0f, cave.Yaw, 0f));
+					float ax = cave.Info.Size.x * 0.5f + 1f, az = cave.Info.Size.z * 0.5f + 1f;
+					if (blockers.Any(x =>
+					{
+						Vector3 d = toDen * new Vector3(x.x - cave.Pivot.x, 0f, x.z - cave.Pivot.z) - new Vector3(cave.Info.Centre.x, 0f, cave.Info.Centre.z);
+						return d.x * d.x / (ax * ax) + d.z * d.z / (az * az) < 1f;
+					})) { raftThings++; continue; }
+					if (top - low > 3f) { bumpy++; continue; }
 					if (top - 0.3f > cave.Floor + 0.01f || top - 0.3f < cave.Floor - 0.01f) cave = PlaceDen(name, c, outward, top - 0.3f);
 					// Around it: land under the whole outcrop (not hanging over the sea)
 					for (int i = 0; i < 12 && ok; i++)
 					{
 						float b = i * Mathf.PI / 6f;
 						Vector3 q = new Vector3(c.x + Mathf.Cos(b) * reach, 0f, c.y + Mathf.Sin(b) * reach), hit, n;
-						if (!g.Hit(q.x, q.z, out hit, out n) || hit.y < 0.5f || hit.y < cave.Floor - 5f) ok = false;
+						if (!g.Hit(q.x, q.z, out hit, out n) || hit.y < 0.5f) ok = false;
 					}
+					if (!ok) { overSea++; continue; }
+					// and its rim on the ground all round (not floating over ground that falls away - AU83): Raft's ground can't be
+					// raised round it as a generated island's is, so it goes only where the ground is as high as its floor or higher
+					// under its footprint, but in front of its mouth
+					if (RimFloats(cave, (x, z) => { Vector3 hit, n; return g.Hit(x, z, out hit, out n) ? hit.y : float.MinValue; }, 3f)) { rim++; continue; }
 					if (!ok) { overSea++; continue; }
 					// Out of the mouth: walkable ground that meets the floor
 					for (float t = 1f; t <= 8f && ok; t += 2f)
@@ -515,7 +762,7 @@ namespace DynamicIslands.Editor
 					return "a den (" + name + ", " + cave.Depth.ToString("F0", CultureInfo.InvariantCulture) + " m deep" + (guard != null ? ", a " + guard.ToLowerInvariant() : "") + ")";
 				}
 			}
-			Debug.Log("[CUSTOM ISLANDS] [randomizer] no den fits: " + noSpot + " no level spot, " + bumpy + " too bumpy, " + raftThings + " Raft's things in the way, " + overSea + " over the sea, " + mouth + " no way out of the mouth");
+			Debug.Log("[CUSTOM ISLANDS] [randomizer] no den fits: " + noSpot + " no level spot, " + bumpy + " too bumpy, " + raftThings + " Raft's things in the way, " + overSea + " over the sea, " + rim + " ground falling away under its rim, " + mouth + " no way out of the mouth");
 			return null;
 		}
 
@@ -656,6 +903,11 @@ namespace DynamicIslands.Editor
 				if (Dress(k, t, spot.Value, 9f)) used.Add(spot.Value);
 				if (themes.Count == 0) break;
 			}
+			// Up to two of the generator's landmarks (ROADMAP LM10): a wreck, a lighthouse, a jetty, a skyscraper... - away
+			// from the scenes and the cave
+			var spots = new List<Vector2>(used);
+			spots.AddRange(k.File.Objects.Where(o => o.Props != null && o.Props.ContainsKey("cave")).Select(o => new Vector2(o.Position.x, o.Position.z)));
+			for (int i = r.Next(3); i > 0; i--) GenBuildings.Landmark(k, s, spots);
 		}
 
 		#endregion

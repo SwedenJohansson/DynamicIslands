@@ -20,9 +20,9 @@ namespace DynamicIslands.Editor
 
 		static Canvas canvas;
 		static RectTransform list, detail;
-		static Text status, title, meta, tags, description, warning, progress, pictureCount, empty;
+		static Text banner, status, title, meta, quest, tags, description, warning, progress, pictureCount, empty;
 		static Button[] tabs;
-		static Button mainButton, removeButton, sailingButton;
+		static Button mainButton, removeButton, sailingButton, keepButton, cancelButton;
 		static InputField search;
 		static RawImage picture;
 		static int tab, pictureIndex;
@@ -35,8 +35,18 @@ namespace DynamicIslands.Editor
 		public static LibraryEntry Selected { get { return selected; } }
 		public static Button MainButton { get { return mainButton; } }
 		public static Button RemoveButton { get { return removeButton; } }
+		public static Button KeepButton { get { return keepButton; } }
 		public static string Status { get { return status != null ? status.text : ""; } }
 		public static string Progress { get { return progress != null ? progress.text : ""; } }
+		public static string QuestText { get { return quest != null ? quest.text : ""; } }
+		/// <summary>The detail panel's quest line: islands only ("quest" tag, any case); empty for a plan.</summary>
+		public static string QuestLine(LibraryInfo i)
+		{
+			if (i == null || i.IsPlan) return "";
+			bool has = i.tags != null && i.tags.Any(t => string.Equals((t ?? "").Trim(), "quest", StringComparison.OrdinalIgnoreCase));
+			return has ? "Quest: yes" : "No quest - an island to explore";
+		}
+		public static Text Banner { get { return banner; } }
 		public static bool Busy { get { return busy; } }
 		public static Texture Picture { get { return picture != null ? picture.texture : null; } }
 		public static Button Row(string id) { Button b; return rows.TryGetValue(id, out b) ? b : null; }
@@ -51,7 +61,7 @@ namespace DynamicIslands.Editor
 			UIKit.Stretch(dim);
 			dim.gameObject.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.6f);
 			RectTransform panel = UIKit.Panel(root, "Panel", new RectOffset(16, 16, 12, 14), 8f, false);
-			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1240f, 720f));
+			UIKit.Anchor(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1240f, 764f));
 
 			RectTransform head = UIKit.Row(panel, 34f, 8f, "Head");
 			Text t = UIKit.Label(head, "ISLAND LIBRARY", 22, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
@@ -62,6 +72,9 @@ namespace DynamicIslands.Editor
 			Button submit = UIKit.Button(head, "Submit yours...", OpenSubmit, "How to get your own island or plan into the library", 150, 32f, 13);
 			submit.name = "Button_Submit";
 			UIKit.Primary(submit);
+			// (the user, 2026-10-04: a manual button here, so players can read how the library, islands, world plans and the
+			// editor work - the illustrated guide, chapter 15 about the library's examples)
+			UIKit.Button(head, "Guide", HelpLinks.OpenGuide, "The illustrated guide (PDF): the island library and its examples (chapter 15), world plans, the editor and everything else", 100, 32f, 13).name = "Button_Guide";
 			UIKit.Button(head, "Refresh", () => Load(true), "Read the library's list again", 110, 32f, 13);
 			UIKit.Button(head, "Close", Close, "Close the library", 110, 32f, 13);
 
@@ -70,6 +83,16 @@ namespace DynamicIslands.Editor
 			foreach (Button b in tabs) UIKit.Size(b.gameObject, 150);
 			search = UIKit.Field(tools, "Search titles, authors, tags...", "", 32f, "Show only the entries whose title, author, summary or tags hold this");
 			search.onValueChanged.AddListener(_ => ShowList());
+			WindowKeys keys = canvas.gameObject.AddComponent<WindowKeys>();
+			keys.Typing = () => search != null && search.isFocused;
+			keys.Close = Close;
+
+		// (the user, 2026-11-01: an info banner above the list, on both tabs - the entries are not all fully tested yet)
+		RectTransform bannerRow = UIKit.Row(panel, 34f, 8f, "BannerRow");
+		UIKit.Background(bannerRow.gameObject, new Color(0.97f, 0.8f, 0.42f, 0.22f), 6);
+		banner = UIKit.Label(bannerRow, "Not everything on these islands is fully tested yet - please report any issues you find!", 13, UIKit.Accent, TextAnchor.MiddleCenter, FontStyle.Normal, "Banner");
+		banner.horizontalOverflow = HorizontalWrapMode.Wrap;
+		UIKit.Size(banner.gameObject, 1180, 34);
 
 			RectTransform body = UIKit.Rect("Body", panel);
 			UIKit.Size(body.gameObject, -1, 610);
@@ -99,12 +122,15 @@ namespace DynamicIslands.Editor
 			meta = UIKit.Label(detail, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Meta");
 			meta.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(meta.gameObject, -1, 32);
+			// (the user, 2026-10-19: the library page of an island should say whether it has a quest on it or not - read from the "quest" tag)
+			quest = UIKit.Label(detail, "", 12, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "QuestLine");
+			UIKit.Size(quest.gameObject, -1, 16);
 			tags = UIKit.Label(detail, "", 11, UIKit.TextMuted, TextAnchor.MiddleLeft, FontStyle.Italic, "Tags");
 			UIKit.Size(tags.gameObject, -1, 16);
 			description = UIKit.Label(detail, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Description");
 			description.horizontalOverflow = HorizontalWrapMode.Wrap;
 			description.verticalOverflow = VerticalWrapMode.Truncate;
-			UIKit.Size(description.gameObject, -1, 62);
+			UIKit.Size(description.gameObject, -1, 46);
 			warning = UIKit.Label(detail, "", 12, UIKit.Accent, TextAnchor.UpperLeft, FontStyle.Italic, "Warning");
 			warning.horizontalOverflow = HorizontalWrapMode.Wrap;
 			UIKit.Size(warning.gameObject, -1, 30);
@@ -113,6 +139,10 @@ namespace DynamicIslands.Editor
 			mainButton.name = "Button_Main";
 			removeButton = UIKit.Button(actions, "Remove", OnRemove, "Remove what it installed (what a saved world uses stays; click twice)", 120, 34f, 13);
 			removeButton.name = "Button_Remove";
+			keepButton = UIKit.Button(actions, "Keep my changes", OnKeep, "Update the rest, and keep your changed files as they are (the new version's are not installed)", 150, 34f, 13);
+			keepButton.name = "Button_Keep";
+			cancelButton = UIKit.Button(actions, "Cancel", () => { pendingUpdate = false; progress.text = ""; ShowDetail(); }, "Don't update now", 90, 34f, 13);
+			cancelButton.name = "Button_Cancel";
 			sailingButton = UIKit.Button(actions, "", () => { appearWhileSailing = !appearWhileSailing; ShowDetail(); }, "An island may also turn up by chance while sailing - in new worlds and in the ones you've started with random islands (untick it for a new world in World settings)", -1, 34f, 12);
 			sailingButton.name = "Button_Sailing";
 			progress = UIKit.Label(detail, "", 12, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Italic, "Progress");
@@ -175,7 +205,7 @@ namespace DynamicIslands.Editor
 			status.text = "Reading the library's list...";
 			DynamicIslands.instance.StartCoroutine(LibraryClient.LoadIndex(force, error =>
 			{
-				status.text = error ?? (LibraryClient.Entries.Count + " entries in the library - " + LibraryClient.Address);
+				status.text = error ?? (LibraryClient.Entries.Count + " entries in the library");
 				status.color = error != null ? UIKit.Danger : UIKit.TextMuted;
 				ShowList();
 			}));
@@ -216,7 +246,9 @@ namespace DynamicIslands.Editor
 			ir.anchorMin = ir.anchorMax = new Vector2(0f, 0.5f); ir.pivot = new Vector2(0f, 0.5f); ir.anchoredPosition = new Vector2(4f, 0f); ir.sizeDelta = new Vector2(56f, 56f);
 			Text name = UIKit.Label(b.transform, e.Info.title, 14, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Bold, "Name");
 			UIKit.Stretch(name.rectTransform, 70, 110, 6, 30);
-			Text sub = UIKit.Label(b.transform, "by " + e.Info.author + "  -  " + e.Info.summary, 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Normal, "Sub");
+			// (its difficulty when the list says: TODO 4d)
+			string difficulty = IslandDifficulty.Label(e.Monsters);
+			Text sub = UIKit.Label(b.transform, "by " + e.Info.author + "  -  " + (difficulty.Length > 0 ? difficulty + "  -  " : "") + e.Info.summary, 11, UIKit.TextMuted, TextAnchor.UpperLeft, FontStyle.Normal, "Sub");
 			UIKit.Stretch(sub.rectTransform, 70, 110, 28, 4);
 			sub.horizontalOverflow = HorizontalWrapMode.Wrap; sub.verticalOverflow = VerticalWrapMode.Truncate;
 			LibraryClient.State st = LibraryClient.StateOf(e);
@@ -250,15 +282,20 @@ namespace DynamicIslands.Editor
 			meta.text = (i.IsPlan ? "World plan" : "Island") + " by " + i.author + "  -  version " + i.version + (selected.Updated.Length > 0 ? ", " + selected.Updated : "") +
 				"  -  " + Math.Max(1, selected.Size / 1024) + " KB" + (i.IsPlan ? ", " + selected.Islands + " island(s)" : "") +
 				(i.players.Length > 0 ? "  -  players " + i.players : "") + (i.length.Length > 0 ? ", " + i.length : "") + (i.basedOn.Length > 0 ? "\nBased on " + i.basedOn : "");
+			quest.text = QuestLine(i);
 			tags.text = i.tags.Length > 0 ? "Tags: " + string.Join(", ", i.tags) : "";
 			description.text = i.description.Length > 0 ? i.description : i.summary;
 			LibraryClient.State st = LibraryClient.StateOf(selected);
 			bool newer = LibraryPack.CompareVersions(i.minModVersion, LibraryPack.ModVersion) > 0;
 			warning.text = newer ? "Made with Custom Islands " + i.minModVersion + " - you have " + LibraryPack.ModVersion + ". Some things may be missing, and a quest that needs them may not be finishable." : "";
-			UIKit.LabelOf(mainButton).text = busy ? "..." : st == LibraryClient.State.Installed ? "Installed" : st == LibraryClient.State.Update ? (pendingUpdate ? "Sure? Update" : "Update") : newer ? "Download anyway" : "Download";
+			UIKit.LabelOf(mainButton).text = busy ? "..." : st == LibraryClient.State.Installed ? "Installed" : st == LibraryClient.State.Update ? (pendingUpdate ? "Update, keep a copy" : "Update") : newer ? "Download anyway" : "Download";
 			mainButton.interactable = !busy && st != LibraryClient.State.Installed;
 			if (st == LibraryClient.State.Installed) UIKit.Flat(mainButton); else if (pendingUpdate) UIKit.DangerButton(mainButton); else UIKit.Primary(mainButton);
-			removeButton.gameObject.SetActive(st != LibraryClient.State.NotInstalled);
+			removeButton.gameObject.SetActive(st != LibraryClient.State.NotInstalled && !pendingUpdate);
+			keepButton.gameObject.SetActive(pendingUpdate && !busy);
+			cancelButton.gameObject.SetActive(pendingUpdate && !busy);
+			UIKit.Flat(keepButton);
+			UIKit.Flat(cancelButton);
 			UIKit.LabelOf(removeButton).text = pendingRemove ? "Sure? Remove" : "Remove";
 			if (pendingRemove) UIKit.DangerButton(removeButton); else UIKit.Flat(removeButton);
 			removeButton.interactable = !busy;
@@ -274,10 +311,19 @@ namespace DynamicIslands.Editor
 			string[] pics = selected.Info.pictures.Length > 0 ? selected.Info.pictures : (selected.Info.icon.Length > 0 ? new[] { selected.Info.icon } : new string[0]);
 			if (pics.Length == 0) { picture.texture = null; pictureCount.text = "no picture"; return; }
 			pictureIndex = (index % pics.Length + pics.Length) % pics.Length;
-			pictureCount.text = (pictureIndex + 1) + " / " + pics.Length;
+			string count = (pictureIndex + 1) + " / " + pics.Length;
 			LibraryEntry e = selected;
 			int want = pictureIndex;
-			DynamicIslands.instance.StartCoroutine(LibraryClient.Picture(e, pics[pictureIndex], tex => { if (selected == e && pictureIndex == want) picture.texture = tex; }));
+			// (cleared first: while a slow download ran, the entry before's picture stayed up, so one island's picture
+			// showed on every entry clicked after it. A picture in memory comes back at once, before the first yield.)
+			picture.texture = null;
+			pictureCount.text = count + "  (loading)";
+			DynamicIslands.instance.StartCoroutine(LibraryClient.Picture(e, pics[pictureIndex], tex =>
+			{
+				if (selected != e || pictureIndex != want) return;
+				picture.texture = tex;
+				pictureCount.text = tex != null ? count : count + "  (can't be loaded)";
+			}));
 		}
 
 		/// <summary>Download / Update (public for tests: clicking the button does this).</summary>
@@ -287,23 +333,44 @@ namespace DynamicIslands.Editor
 			LibraryEntry e = selected;
 			bool update = LibraryClient.StateOf(e) == LibraryClient.State.Update;
 			// (an update replaces the entry's files - also ones the player changed since: the first click says which, and
-			// how to keep them - Save as under another name in the editor or World Plans)
+			// offers the choice - replace them (theirs kept as "name (yours)", out of the random pool), keep them, or cancel)
 			List<string> changed = update ? LibraryPack.ChangedFiles(e.Info.id) : new List<string>();
 			if (changed.Count > 0 && !pendingUpdate)
 			{
 				pendingUpdate = true;
 				pendingRemove = false;
 				progress.color = UIKit.Danger;
-				progress.text = "You changed " + string.Join(", ", changed.Select(n => "'" + n + "'").ToArray()) + " since you downloaded it. Update replaces your changes. " +
-					"To keep them, open it in the editor and use Save as with a new name first. Click Update again to go ahead.";
+				progress.text = "You changed " + string.Join(", ", changed.Select(n => "'" + n + "'").ToArray()) + " since you downloaded it" + UsedIn(changed) + ". " +
+					"Update, keep a copy: the new version replaces them, and yours stay as '<name> (yours)'. Keep my changes: the rest is updated, your changed files stay as they are.";
 				ShowDetail();
 				return;
 			}
+			Start(e, update, true);
+		}
+
+		/// <summary>Keep my changes (public for tests): updates with the player's changed files left as they are.</summary>
+		public static void OnKeep()
+		{
+			if (selected == null || busy || !pendingUpdate) return;
+			Start(selected, true, false);
+		}
+
+		/// <summary>Where the changed files are used: " (used in the worlds 'A', 'B')" or "".</summary>
+		static string UsedIn(List<string> names)
+		{
+			var worlds = new List<string>();
+			try { foreach (string n in names) foreach (string w in LibraryPack.WorldsUsing(n)) if (!worlds.Contains(w)) worlds.Add(w); }
+			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] [library] Worlds using: " + ex.Message); }
+			return worlds.Count == 0 ? "" : " (used in the world" + (worlds.Count > 1 ? "s " : " ") + string.Join(", ", worlds.Take(4).Select(w => "'" + w + "'").ToArray()) + (worlds.Count > 4 ? "..." : "") + ")";
+		}
+
+		static void Start(LibraryEntry e, bool update, bool replace)
+		{
 			pendingUpdate = false;
 			busy = true;
 			pendingRemove = false;
 			ShowDetail();
-			DynamicIslands.instance.StartCoroutine(LibraryClient.Download(e, appearWhileSailing, true, text => progress.text = text, (report, error) =>
+			DynamicIslands.instance.StartCoroutine(LibraryClient.Download(e, appearWhileSailing, replace, text => progress.text = text, (report, error) =>
 			{
 				busy = false;
 				if (error != null) { progress.text = error; progress.color = UIKit.Danger; }
@@ -312,7 +379,9 @@ namespace DynamicIslands.Editor
 					progress.color = UIKit.TextColor;
 					string planLine = report.PlanName != null ? (fromNewGame ? "The plan '" + report.PlanName + "' is chosen in the New Game box." : "Pick the plan '" + report.PlanName + "' in the New Game box.") : "";
 					progress.text = (update ? "Updated" : "Installed") + " '" + e.Info.title + "'. " + planLine +
-						(report.Lines.Any(l => l.Contains(" as '")) ? " (Some islands got a new name: you have different ones with the same name.)" : "");
+						(report.Lines.Any(l => l.Contains(" is kept as '")) ? " (Your changed versions are kept as '<name> (yours)'.)" :
+						report.Lines.Any(l => l.StartsWith("Kept your changed")) ? " (Your changed files were kept.)" :
+						report.Lines.Any(l => l.Contains(" as '")) ? " (Some islands got a new name: you have different ones with the same name.)" : "");
 					if (fromNewGame && report.PlanName != null) WorldDirector.PendingPlan = report.PlanName;
 				}
 				ShowList();
