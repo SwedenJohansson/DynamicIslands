@@ -11,7 +11,7 @@ namespace DynamicIslands.Editor
 	/// </summary>
 	public static class HelpLinks
 	{
-		public const string Discord = "https://discord.gg/U7DfKY9tN";
+		public const string Discord = "https://discord.gg/u9tkW9uSaQ";
 		public const string Repo = "https://github.com/SwedenJohansson/DynamicIslands";
 		public const string Issues = Repo + "/issues";
 		/// <summary>The mod's page on raftmodding.com, where new versions come out (the mod never updates itself).</summary>
