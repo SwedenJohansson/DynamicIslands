@@ -1062,7 +1062,7 @@ namespace DynamicIslands
 			int low = fly.Root.GetComponentsInChildren<EditorGameObject>(true).Length + fly.Root.transform.Find("Objects").Cast<Transform>().Count(t => t.position.y < Flying - 1f);
 			Check(ref ok, low == 0, "no objects hang below the flying island (" + fly.Root.transform.Find("Objects").childCount + " objects)");
 
-			yield return StandRoutine(); // puts the player on the nearest island's peak and logs PASS/FAIL
+			yield return StandRoutine(fly.Root); // puts the player on the flying island's peak and logs PASS/FAIL
 
 			// Under water, 250 m to the side
 			pos = raftPos.Value + Vector3.right * 300f; pos.y = Sunken;
@@ -2424,7 +2424,8 @@ namespace DynamicIslands
 				for (float until = Time.realtimeSinceStartup + 5f; !ChoiceWindow.IsOpen && Time.realtimeSinceStartup < until; ) yield return new WaitForSecondsRealtime(0.25f);
 				if (ChoiceWindow.IsOpen) { ChoiceWindow.Close(); Log("The offer of unsaved work closed (tests): " + string.Join(", ", EditorAutosave.Waiting().ToArray())); }
 			}
-			if (report) Log("Editor ready: " + PlaceableCatalog.Names.Count() + " objects loaded");
+			// (CIEditor reports a result, so a job counts it: hollow-tests 11-24)
+			if (report) Log("PASS: editor ready: " + PlaceableCatalog.Names.Count() + " objects loaded");
 		}
 
 		[ConsoleCommand(name: "CITab", docs: "Dev, editor: switches the editor tab: CITab terrain|objects|island")]

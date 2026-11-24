@@ -102,9 +102,13 @@ namespace DynamicIslands
 			yield return new WaitForSeconds(1f);
 			pts = BuriedTreasure.PointsOf(tm, e.Root.transform);
 			Check(ref ok, pts.Count == 2, days + " days later it is buried again: " + pts.Count);
+			// (the root is destroyed by then and PointsOf(null) is always empty: Raft's own list is looked at for the old root)
+			Transform rootT = e.Root != null ? e.Root.transform : null;
 			IslandWorldState.Remove(TreasureIsland);
 			yield return new WaitForSeconds(1f);
-			Check(ref ok, BuriedTreasure.PointsOf(tm, e.Root != null ? e.Root.transform : null).Count == 0, "removing the island takes its treasure out of Raft's list");
+			FieldInfo keptField = typeof(TreasurePointManager).GetField("treasurePoints", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+			var kept = keptField != null ? keptField.GetValue(tm) as Dictionary<Transform, List<TreasurePoint>> : null;
+			Check(ref ok, !ReferenceEquals(rootT, null) && kept != null && !kept.Keys.Any(k => ReferenceEquals(k, rootT)), "removing the island takes its treasure out of Raft's list");
 			if (ok) Log("PASS: buried treasure"); else Fail("buried treasure");
 		}
 	}

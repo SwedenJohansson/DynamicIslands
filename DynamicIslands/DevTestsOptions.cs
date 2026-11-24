@@ -163,11 +163,12 @@ namespace DynamicIslands
 			// The last choice
 			string rules = Path.Combine(DynamicIslands.assetpath, WorldRules.DefaultFileName);
 			string before = File.Exists(rules) ? File.ReadAllText(rules) : null;
+			string monstersBefore = WorldRules.ReadDefault("monsters");
 			try
 			{
 				WorldOptions.SaveDefaults(new[] { WorldOptions.GhostRafts, WorldOptions.LongVoyage });
 				HashSet<string> d = WorldOptions.Defaults;
-				Check(ref ok, d.Count == 2 && d.Contains(WorldOptions.GhostRafts) && d.Contains(WorldOptions.LongVoyage) && WorldRules.ReadDefault("monsters") == (before != null ? WorldRules.ReadDefault("monsters") : null), "the last choice kept in world_rules.txt (" + WorldOptions.Describe(d) + "), the other lines untouched");
+				Check(ref ok, d.Count == 2 && d.Contains(WorldOptions.GhostRafts) && d.Contains(WorldOptions.LongVoyage) && WorldRules.ReadDefault("monsters") == monstersBefore, "the last choice kept in world_rules.txt (" + WorldOptions.Describe(d) + "), the other lines untouched");
 				WorldOptions.SaveDefaults(new string[0]);
 				Check(ref ok, WorldOptions.Defaults.Count == 0, "... and none");
 			}

@@ -80,13 +80,13 @@ namespace DynamicIslands
 			// After a reload the dirt spot stays dug; regrow days later the dirt and the honey are back
 			yield return ReloadIslandRoutine(e);
 			yield return new WaitForSeconds(1f);
-			Check(ref ok, picked < 0 || PickupsOf(e, "DirtPickup").Any(p => (int)(p.ObjectIndex & 0xFFFF) == picked && !p.gameObject.activeInHierarchy), "after a reload the dug spot is still gone");
+			Check(ref ok, picked >= 0 && PickupsOf(e, "DirtPickup").Any(p => (int)(p.ObjectIndex & 0xFFFF) == picked && !p.gameObject.activeInHierarchy), "after a reload the dug spot is still gone");
 			int days = IslandRules.RegrowDays(e) + 1;
 			IslandObjectState.Capture(e);
 			foreach (ObjectState st in e.State.Values) st.Day -= days;
 			yield return ReloadIslandRoutine(e);
 			yield return new WaitForSeconds(1f);
-			Check(ref ok, picked < 0 || PickupsOf(e, "DirtPickup").Any(p => (int)(p.ObjectIndex & 0xFFFF) == picked && p.gameObject.activeInHierarchy), days + " days later the dirt is back");
+			Check(ref ok, picked >= 0 && PickupsOf(e, "DirtPickup").Any(p => (int)(p.ObjectIndex & 0xFFFF) == picked && p.gameObject.activeInHierarchy), days + " days later the dirt is back");
 			List<string> again = ScOpenChest(e, "Wild beehive");
 			Check(ref ok, again != null && again.Any(h => h.IndexOf("honeycomb", StringComparison.OrdinalIgnoreCase) >= 0), days + " days later the hive has honey again: " + (again != null ? string.Join(", ", again.ToArray()) : "nothing"));
 			OnRaftCommand();
