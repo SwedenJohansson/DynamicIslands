@@ -8,10 +8,10 @@ using UnityEngine;
 
 namespace DynamicIslands
 {
-	/// <summary>The pause menu's SPAWN TO RAFT button (PlayerMove.cs SpawnToRaft): a player in a pit, the box, No, then Yes.</summary>
+	/// <summary>Spawn to raft (PlayerMove.cs SpawnToRaft) in the world's settings (Esc > Custom Islands): a player in a pit, the box, Cancel, then Yes.</summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CISpawnToRaft", docs: "Dev, in game (either player): a pit 50 m off the raft, Esc menu, SPAWN TO RAFT, No, again, Yes - on the raft? Picture shot_spawn_box.png")]
+		[ConsoleCommand(name: "CISpawnToRaft", docs: "Dev, in game (either player): a pit 50 m off the raft, Esc > Custom Islands, Spawn to raft (beside Skip current quest step), Cancel, again, Yes - on the raft? Pictures shot_spawn_window.png, shot_spawn_box.png")]
 		public static void SpawnToRaftCommand() { StartTest(SpawnToRaftRoutine()); }
 
 		static IEnumerator SpawnToRaftRoutine()
@@ -45,38 +45,41 @@ namespace DynamicIslands
 				yield return new WaitForSecondsRealtime(2f);
 				Check(ref ok, (p.transform.position - c).magnitude < 3f, "the player is in the pit (" + (p.transform.position - c).magnitude.ToString("F1") + " m from its floor)");
 
-				// the menu with the button
+				// the window with the button, beside Skip current quest step
 				CallPrivate(menu, "Pause");
 				yield return new WaitForSecondsRealtime(0.6f);
-				UnityEngine.UI.Button b = SpawnToRaft.Button;
-				Check(ref ok, b != null && b.gameObject.activeInHierarchy, "the pause menu has the SPAWN TO RAFT button");
+				WorldWindow.Open();
+				yield return new WaitForSecondsRealtime(1.2f);
+				UnityEngine.UI.Button b = WorldWindow.ButtonNamed("SpawnToRaft"), skip = WorldWindow.ButtonNamed("SkipStep");
+				Check(ref ok, b != null && b.gameObject.activeInHierarchy, "the world's settings have the Spawn to raft button");
 				if (b == null) yield break;
-				string label = string.Join(" ", b.GetComponentsInChildren<UnityEngine.UI.Text>(true).Select(t => t.text).ToArray());
-				Check(ref ok, label.Contains(SpawnToRaft.Label), "its label: '" + label + "'");
-				Check(ref ok, b.interactable, "it can be clicked (" + (SpawnToRaft.WhyNot() ?? "ready") + ")");
+				Check(ref ok, !menu.buttonHolderPanel.transform.Cast<Transform>().Any(t => t.gameObject.activeSelf && t.GetComponentsInChildren<UnityEngine.UI.Text>(true).Any(x => x.text.ToUpperInvariant().Contains("SPAWN TO RAFT"))), "the pause menu has no SPAWN TO RAFT button any more");
+				Check(ref ok, skip != null && skip.transform.parent == b.transform.parent, "it is in the same row as Skip current quest step");
+				string label = UIKit.LabelOf(b) != null ? UIKit.LabelOf(b).text : "";
+				Check(ref ok, label == SpawnToRaft.Label, "its label: '" + label + "'");
+				Check(ref ok, b.interactable, "it can be clicked (" + (SpawnToRaft.WhyNot() ?? "ready") + (Raft_Network.IsHost ? ", host" : ", client") + ")");
+				Screenshot(new[] { "spawn_window" });
+				yield return new WaitForSecondsRealtime(0.8f);
 
-				// the box, No
+				// the box, Cancel
 				b.onClick.Invoke();
 				yield return new WaitForSecondsRealtime(0.4f);
-				string text = SpawnToRaft.Box == null ? "" : string.Join(" | ", SpawnToRaft.Box.GetComponentsInChildren<UnityEngine.UI.Text>(true).Where(t => t.gameObject.activeInHierarchy).Select(t => t.text).ToArray());
-				Check(ref ok, SpawnToRaft.Asking && text.Contains(SpawnToRaft.Question), "the box asks: " + text);
-				Check(ref ok, SpawnToRaft.YesButton != null && SpawnToRaft.NoButton != null && SpawnToRaft.YesButton != SpawnToRaft.NoButton, "it has a Yes and a No");
-				Check(ref ok, !menu.buttonHolderPanel.activeSelf, "the menu's buttons are hidden behind it");
+				Check(ref ok, QuestSkip.AskingSpawn, "the box asks (Spawn to raft)");
 				Screenshot(new[] { "spawn_box" });
+				yield return new WaitForSecondsRealtime(0.8f);
+				if (QuestSkip.CancelButton != null) QuestSkip.CancelButton.onClick.Invoke();
 				yield return new WaitForSecondsRealtime(0.5f);
-				if (SpawnToRaft.NoButton != null) SpawnToRaft.NoButton.onClick.Invoke();
-				yield return new WaitForSecondsRealtime(0.5f);
-				Check(ref ok, !SpawnToRaft.Asking && menu.buttonHolderPanel.activeSelf && CanvasHelper.ActiveMenu == MenuType.PauseMenu, "No: the box is gone, the menu is back");
-				Check(ref ok, (p.transform.position - c).magnitude < 3f, "No: the player is still in the pit");
+				Check(ref ok, !QuestSkip.ConfirmShown && WorldWindow.IsOpen && CanvasHelper.ActiveMenu == MenuType.PauseMenu, "Cancel: the box is gone, the window and the menu stay");
+				Check(ref ok, (p.transform.position - c).magnitude < 3f, "Cancel: the player is still in the pit");
 
 				// again, Yes
 				b.onClick.Invoke();
 				yield return new WaitForSecondsRealtime(0.4f);
-				Check(ref ok, SpawnToRaft.Asking, "a second click opens the box again");
+				Check(ref ok, QuestSkip.AskingSpawn, "a second click opens the box again");
 				float health = p.Stats.stat_health.Value;
-				if (SpawnToRaft.YesButton != null) SpawnToRaft.YesButton.onClick.Invoke();
+				if (QuestSkip.YesButton != null) QuestSkip.YesButton.onClick.Invoke();
 				yield return new WaitForSecondsRealtime(0.3f);
-				Check(ref ok, !SpawnToRaft.Asking && CanvasHelper.ActiveMenu != MenuType.PauseMenu, "Yes: the box and the menu are closed");
+				Check(ref ok, !QuestSkip.ConfirmShown && !WorldWindow.IsOpen && CanvasHelper.ActiveMenu != MenuType.PauseMenu, "Yes: the box, the window and the menu are closed");
 				yield return new WaitForSecondsRealtime(3f);
 				Raft raft = ComponentManager<Raft>.Value;
 				RaycastHit hit;
@@ -89,7 +92,7 @@ namespace DynamicIslands
 				Check(ref ok, p.PersonController.controllerType == ControllerType.Ground, "... walking, not swimming");
 				Check(ref ok, p.Stats.stat_health.Value >= health - 0.5f, "... with no fall damage (health " + health.ToString("F0") + " -> " + p.Stats.stat_health.Value.ToString("F0") + ")");
 			}
-			finally { Object.Destroy(pit); }
+			finally { Object.Destroy(pit); QuestSkip.CloseConfirm(); WorldWindow.Close(); }
 			if (ok) Log("PASS: spawn to raft"); else Fail("spawn to raft");
 		}
 

@@ -11,10 +11,13 @@ namespace DynamicIslands.Editor
 	/// <summary>
 	/// "Skip current quest step" (3.2): a way out of a soft-locked quest. Not on the quest panel (the user, 11-07) but in two
 	/// places a player looks for on purpose: a button in the world's settings (Esc > Custom Islands, WorldWindow; asks first)
-	/// and the F10 command SkipStep (no arguments). Both act on the CURRENT quest (Current): the quest panel's quest when the
-	/// panel shows one, else the quest that last started or moved on (Noted, from QuestTracker.Set / Apply), else - a saved
-	/// world just loaded - the begun quest whose step changed on the latest day. Any quest of any island: storyline, plan,
-	/// random islands, main or side. Host only. The step counts as done and the quest moves on as play moves it
+	/// and the F10 command SkipStep (no arguments). Both act on the CURRENT quest (Current): the one chosen with the page's
+	/// "Other quest", else the first of Candidates - the quest panel's quest when the panel shows one, the quest that last
+	/// started or moved on (Noted, from QuestTracker.Set / Apply), the begun quests by the day their step changed (a saved
+	/// world just loaded), then any other open quest of an island within 150 m of any player (11-24: a side quest behind
+	/// an open main quest, a quest stuck at its first step, a client's island). Any quest of any island: storyline, plan,
+	/// random islands, main or side. Host only; a client sees the button greyed and is told to ask the host. Beside it
+	/// on the page, Spawn to raft (any player; the same box asks - AskSpawn). The step counts as done and the quest moves on as play moves it
 	/// (QuestTracker.JumpTo forward = Set: the next step, events, rules, the reward and finished state at the end; players
 	/// are told by the usual QuestStep message, the world is saved). Before that, what the step would have given where the mod
 	/// can know it: a "collect" step's story items the crew is short of, a "signal" step's signal (or its object put in the
@@ -40,30 +43,94 @@ namespace DynamicIslands.Editor
 			return q.Exists && QuestTracker.StepOf(e, n) < q.Steps.Count;
 		}
 
-		/// <summary>The current quest: the quest panel's, else the last one that started or moved on, else the begun quest
-		/// whose step changed on the latest day (a saved world). False = no quest in progress.</summary>
-		public static bool Current(out IslandWorldState.Entry e, out int n)
+		/// <summary>
+		/// The quests a skip can be for, the likeliest first (11-24, "make sure that button always works"): the quest panel's,
+		/// the one that last started or moved on, the begun quests by the day their step last changed (a saved world), then
+		/// every other open quest of an island within 150 m of ANY player - its first step too, and a side quest while the main
+		/// one is open (the panel shows the main one first), and an island only a client is at (the host picks it with "Other
+		/// quest"). Before, only the first three: a quest stuck at its first step out of the panel's reach, a side quest
+		/// behind an open main quest, or a client's quest far from the host could not be chosen.
+		/// </summary>
+		public static List<KeyValuePair<IslandWorldState.Entry, int>> Candidates()
 		{
-			e = null; n = 0;
-			if (!LoadSceneManager.IsGameSceneLoaded) return false;
-			int island = QuestTracker.PanelIsland, quest = QuestTracker.PanelQuest;
-			e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == island);
-			if (island >= 0 && Open(e, quest)) { n = quest; return true; }
-			e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == lastIsland);
-			if (lastIsland >= 0 && Open(e, lastQuest)) { n = lastQuest; return true; }
-			int bestDay = -1;
-			IslandWorldState.Entry best = null;
+			List<KeyValuePair<IslandWorldState.Entry, int>> list = new List<KeyValuePair<IslandWorldState.Entry, int>>();
+			if (!LoadSceneManager.IsGameSceneLoaded) return list;
+			Action<IslandWorldState.Entry, int> add = (x, i) =>
+			{
+				if (x != null && Open(x, i) && !list.Any(k => k.Key == x && k.Value == i)) list.Add(new KeyValuePair<IslandWorldState.Entry, int>(x, i));
+			};
+			int island = QuestTracker.PanelIsland;
+			if (island >= 0) add(IslandWorldState.Islands.FirstOrDefault(x => x.Id == island), QuestTracker.PanelQuest);
+			if (lastIsland >= 0) add(IslandWorldState.Islands.FirstOrDefault(x => x.Id == lastIsland), lastQuest);
+			List<KeyValuePair<int, KeyValuePair<IslandWorldState.Entry, int>>> begun = new List<KeyValuePair<int, KeyValuePair<IslandWorldState.Entry, int>>>();
+			List<KeyValuePair<float, KeyValuePair<IslandWorldState.Entry, int>>> near = new List<KeyValuePair<float, KeyValuePair<IslandWorldState.Entry, int>>>();
+			List<Vector3> players = UnityEngine.Object.FindObjectsOfType<Network_Player>().Where(p => p != null && p.transform != null).Select(p => p.transform.position).ToList();
+			Network_Player me = RAPI.GetLocalPlayer();
 			foreach (IslandWorldState.Entry x in IslandWorldState.Islands)
 			{
 				int quests = QuestTracker.QuestsOf(x);
+				if (quests == 0) continue;
+				float far = -1f;
 				for (int i = 0; i < quests; i++)
 				{
-					int day = QuestTracker.StepDayOf(x, i);
-					if (day > bestDay && QuestTracker.StepOf(x, i) > 0 && Open(x, i)) { bestDay = day; best = x; n = i; }
+					if (!Open(x, i)) continue;
+					KeyValuePair<IslandWorldState.Entry, int> k = new KeyValuePair<IslandWorldState.Entry, int>(x, i);
+					if (QuestTracker.StepOf(x, i) > 0) { begun.Add(new KeyValuePair<int, KeyValuePair<IslandWorldState.Entry, int>>(QuestTracker.StepDayOf(x, i), k)); continue; }
+					if (far < 0f) far = Distance(x, players, me);
+					if (far < float.MaxValue) near.Add(new KeyValuePair<float, KeyValuePair<IslandWorldState.Entry, int>>(far + i * 0.001f, k));
 				}
 			}
-			e = best;
-			return best != null;
+			foreach (var b in begun.OrderByDescending(b => b.Key)) add(b.Value.Key, b.Value.Value);
+			foreach (var b in near.OrderBy(b => b.Key)) add(b.Value.Key, b.Value.Value);
+			return list;
+		}
+
+		/// <summary>How far the island is from the local player when any player is within 150 m of its land; else MaxValue.</summary>
+		static float Distance(IslandWorldState.Entry e, List<Vector3> players, Network_Player me)
+		{
+			// (the island built here: its land's middle and reach; not built here - a client's island - its position, generously)
+			IslandInfoTag tag = e.Root != null ? e.Root.GetComponent<IslandInfoTag>() : null;
+			Vector3 c = tag != null ? e.Root.transform.position + tag.LocalCentre : e.Position;
+			float r = tag != null ? tag.Radius : Mathf.Max(e.Root != null ? 30f : 150f, CustomIslandSpawner.LandRadius(e.Name));
+			Func<Vector3, float> flat = at => new Vector2(c.x - at.x, c.z - at.z).magnitude;
+			if (!players.Any(at => flat(at) < r + 150f)) return float.MaxValue;
+			return me != null ? flat(me.transform.position) : 0f;
+		}
+
+		/// <summary>The quest chosen with "Other quest" (island id, quest n; -1 = none: the first candidate). Reset when the window opens.</summary>
+		static int chosenIsland = -1, chosenQuest;
+
+		public static void ResetChoice() { chosenIsland = -1; }
+
+		/// <summary>Which candidate the current quest is (0-based) and how many there are.</summary>
+		public static int CurrentIndex(out int count)
+		{
+			List<KeyValuePair<IslandWorldState.Entry, int>> list = Candidates();
+			count = list.Count;
+			return Math.Max(0, list.FindIndex(k => k.Key.Id == chosenIsland && k.Value == chosenQuest));
+		}
+
+		/// <summary>"Other quest": the next candidate becomes the current quest (round).</summary>
+		public static void NextCandidate()
+		{
+			List<KeyValuePair<IslandWorldState.Entry, int>> list = Candidates();
+			if (list.Count == 0) { chosenIsland = -1; return; }
+			int i = Math.Max(0, list.FindIndex(k => k.Key.Id == chosenIsland && k.Value == chosenQuest));
+			KeyValuePair<IslandWorldState.Entry, int> next = list[(i + 1) % list.Count];
+			chosenIsland = next.Key.Id; chosenQuest = next.Value;
+			WorldWindow.Refresh();
+		}
+
+		/// <summary>The current quest: the one chosen with "Other quest" while it is still open, else the first candidate
+		/// (Candidates: the quest panel's, the last that started or moved on, ...). False = no quest in progress.</summary>
+		public static bool Current(out IslandWorldState.Entry e, out int n)
+		{
+			e = null; n = 0;
+			List<KeyValuePair<IslandWorldState.Entry, int>> list = Candidates();
+			if (list.Count == 0) return false;
+			int i = Math.Max(0, list.FindIndex(k => k.Key.Id == chosenIsland && k.Value == chosenQuest));
+			e = list[i].Key; n = list[i].Value;
+			return true;
 		}
 
 		/// <summary>"'Quest title' (island), step 2: Find the keys" for the current quest, or "" when there is none.</summary>
@@ -77,6 +144,7 @@ namespace DynamicIslands.Editor
 		}
 
 		public const string NoQuest = "No quest in progress";
+		public const string ClientNote = "Only the host can skip a quest step: ask the host (Esc > Custom Islands)";
 
 		/// <summary>F10 SkipStep: the current quest's step counts as done and the quest moves on (host).</summary>
 		[ConsoleCommand(name: "SkipStep", docs: "Stuck on a quest? SkipStep = the current quest's step counts as done and the quest moves on (host; can't be undone). Also Esc > Custom Islands > Skip current quest step")]
@@ -92,7 +160,7 @@ namespace DynamicIslands.Editor
 		/// <summary>The settings page's button: the confirm box for the current quest's step (host).</summary>
 		public static void AskCurrent()
 		{
-			if (!Raft_Network.IsHost) { DynamicIslands.Notify("Only the host can skip a quest step", true); return; }
+			if (!Raft_Network.IsHost) { DynamicIslands.Notify(ClientNote, true); return; }
 			IslandWorldState.Entry e; int n;
 			if (!Current(out e, out n)) { DynamicIslands.Notify(NoQuest, true); return; }
 			AskFor(e, n, QuestTracker.StepOf(e, n));
@@ -306,9 +374,18 @@ namespace DynamicIslands.Editor
 		#region The confirm box
 
 		static RectTransform box;
-		static Text boxText;
-		static Button yes;
+		static Text boxTitle, boxText;
+		static Button yes, cancel;
 		static int boxIsland = -1, boxQuest, boxStep;
+		/// <summary>The box asks about Spawn to raft (11-24: the settings page's other way out), not a quest step.</summary>
+		static bool boxSpawn;
+
+		/// <summary>Tests: whether the box up is the Spawn to raft question.</summary>
+		public static bool AskingSpawn { get { return ConfirmShown && boxSpawn; } }
+		/// <summary>Tests: the box's Yes button.</summary>
+		public static Button YesButton { get { return yes; } }
+		/// <summary>Tests: the box's Cancel button.</summary>
+		public static Button CancelButton { get { return cancel; } }
 
 		/// <summary>Tests: the box stays while the cursor is locked (a test has no inventory open).</summary>
 		internal static bool HoldOpen;
@@ -323,15 +400,40 @@ namespace DynamicIslands.Editor
 			if (box == null) Build();
 			IslandQuest q = QuestTracker.QuestOf(e, n);
 			if (!q.Exists || step >= q.Steps.Count) return;
-			boxIsland = e.Id; boxQuest = n; boxStep = step;
+			boxIsland = e.Id; boxQuest = n; boxStep = step; boxSpawn = false;
+			boxTitle.text = "Skip this quest step?";
+			UIKit.LabelOf(yes).text = "Skip step";
 			boxText.text = "Skip step " + (step + 1) + " of '" + q.ShownTitle + "'?\n<color=#ffc766>" + q.Steps[step].Describe() + "</color>\n\n" + ConfirmText;
 			box.gameObject.SetActive(true);
 		}
 
-		/// <summary>The box's Skip button (tests click it through here).</summary>
+		/// <summary>
+		/// The settings page's "Spawn to raft" (any player - each moves only themselves): the same box asks Raft's own Unstuck
+		/// question; Yes closes the window and the pause menu and stands the local player on the raft (SpawnToRaft.FromMenu).
+		/// Dead, asleep or on a zipline: not now, and why. "No raft block" asks anyway - Yes looks again (RK16: a moment's miss).
+		/// </summary>
+		public static void AskSpawn()
+		{
+			string why = SpawnToRaft.WhyNot();
+			if (why != null && why != SpawnToRaft.NoBlock) { DynamicIslands.Notify("Spawn to raft: not now (" + why + ")", true); return; }
+			if (box == null) Build();
+			boxIsland = -1; boxSpawn = true;
+			boxTitle.text = "Spawn to raft?";
+			UIKit.LabelOf(yes).text = "Spawn to raft";
+			boxText.text = SpawnToRaft.Question + "\n\nYou stand on your raft again. Only you move; the quests stay as they are.";
+			box.gameObject.SetActive(true);
+		}
+
+		/// <summary>The box's Yes button (tests click it through here): skip the step, or spawn to the raft.</summary>
 		public static bool Confirm()
 		{
 			if (!ConfirmShown) return false;
+			if (boxSpawn)
+			{
+				CloseConfirm();
+				WorldWindow.Close();
+				return SpawnToRaft.FromMenu();
+			}
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == boxIsland);
 			int n = boxQuest, step = boxStep;
 			CloseConfirm();
@@ -341,12 +443,18 @@ namespace DynamicIslands.Editor
 			return done;
 		}
 
-		public static void CloseConfirm() { if (box != null) box.gameObject.SetActive(false); boxIsland = -1; }
+		public static void CloseConfirm() { if (box != null) box.gameObject.SetActive(false); boxIsland = -1; boxSpawn = false; }
 
 		/// <summary>From the quest tick: the box goes when the cursor is taken back (the menu closed) or its step is gone.</summary>
 		internal static void Tick()
 		{
 			if (!ConfirmShown) return;
+			if (boxSpawn)
+			{
+				string why = SpawnToRaft.WhyNot();
+				if (!LoadSceneManager.IsGameSceneLoaded || (Cursor.lockState == CursorLockMode.Locked && !HoldOpen) || (why != null && why != SpawnToRaft.NoBlock)) CloseConfirm();
+				return;
+			}
 			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == boxIsland);
 			if (e == null || !LoadSceneManager.IsGameSceneLoaded || (Cursor.lockState == CursorLockMode.Locked && !HoldOpen) || QuestTracker.StepOf(e, boxQuest) != boxStep)
 				CloseConfirm();
@@ -360,16 +468,16 @@ namespace DynamicIslands.Editor
 			UIKit.Anchor(box, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(420, 0));
 			UIKit.Surface(box);
 			UIKit.Vertical(box.gameObject, 10f, new RectOffset(18, 18, 14, 14), true);
-			UIKit.Label(box, "Skip this quest step?", 17, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
+			boxTitle = UIKit.Label(box, "Skip this quest step?", 17, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold, "Title");
 			boxText = UIKit.Label(box, "", 14, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Text");
 			boxText.horizontalOverflow = HorizontalWrapMode.Wrap;
 			boxText.verticalOverflow = VerticalWrapMode.Overflow;
 			UIKit.Fit(boxText);
 			RectTransform row = UIKit.Row(box, 32f, 8f, "Buttons");
 			UIKit.Label(row, "", 12);
-			Button no = UIKit.Button(row, "Cancel", CloseConfirm, "Keep the step", 120, 32f, 14);
-			no.name = "Cancel";
-			yes = UIKit.Button(row, "Skip step", () => Confirm(), "The step counts as done and the quest moves on (host; can't be undone)", 140, 32f, 14);
+			cancel = UIKit.Button(row, "Cancel", CloseConfirm, "Nothing changes", 120, 32f, 14);
+			cancel.name = "Cancel";
+			yes = UIKit.Button(row, "Skip step", () => Confirm(), "", 140, 32f, 14);
 			yes.name = "Skip";
 			UIKit.DangerButton(yes);
 			box.gameObject.SetActive(false);
