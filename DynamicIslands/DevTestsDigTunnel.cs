@@ -1536,7 +1536,7 @@ namespace DynamicIslands
 		/// lie FootDrop (0.5) under the ground on a steep cutting wall.</summary>
 		const float SeeThroughDip = 0.6f;
 
-		[ConsoleCommand(name: "CIDigSeeThrough", docs: "Dev, in a world, after a CIPlay on the island (CIDigSeeThrough <island> [norim]): no dug tunnel's cut ground is seen through, by the drawn faces (cv47: Pendulum Isle's tube showed in the cut beside its mouth while CIDigEars, CIDigHoleRock and CIDigMouthLook passed - the older looks go by colliders, where the rim's top is solid, and leave the opening and its lip out). Looks from each mouth's eye (9 m out, 3 m up; turned 30 and 60 degrees each way round the mouth; 15 m out) and from the last play picture's camera (its own 64x36 rays too) at points 0.8, 1.5 and 2.5 m under each cut cell's ground: a look that goes more than 0.6 m under the ground over a cut cell and then meets nothing, or anything but the tunnel's rock seen from its front, sees through the cut; one that passes the lining's outside (not drawn) and meets the rock's front behind it sees the tube through its own outside. FAIL over 5 such looks. 'norim': the rim's top left out, so the cut lies open - a check of the check: PASS when it sees the open cut, FAIL 'blind' when not")]
+		[ConsoleCommand(name: "CIDigSeeThrough", docs: "Dev, in a world, after a CIPlay on the island (CIDigSeeThrough <island> [norim]): no dug tunnel's cut ground is seen through, by the drawn faces (cv47: Pendulum Isle's tube showed in the cut beside its mouth while CIDigEars, CIDigHoleRock and CIDigMouthLook passed - the older looks go by colliders, where the rim's top is solid, and leave the opening and its lip out). Looks from each mouth's eye (9 m out, 3 m up; turned 30 and 60 degrees each way round the mouth; 15 m out) and from the last play picture's camera (its own 64x36 rays too) at points 0.8, 1.5 and 2.5 m under each cut cell's ground: a look that goes more than 0.6 m under the ground over a cut cell and then meets nothing, or anything but a dug tunnel's rock seen from its front (this one's or a tube joined to it), sees through the cut; one that passes the lining's outside (not drawn) and meets the rock's front behind it sees the tube through its own outside. FAIL over 5 such looks. 'norim': the rim's top left out, so the cut lies open - a check of the check: PASS when it sees the open cut, FAIL 'blind' when not")]
 		public static void DigSeeThroughCommand(string[] args)
 		{
 			var rest = (args ?? new string[0]).ToList();
@@ -1564,20 +1564,14 @@ namespace DynamicIslands
 			var byEye = new Dictionary<string, int>();
 			try
 			{
+				// (the rock's faces as drawn, of every dug tunnel here: tubes that join show each other's rock through the join (11-24:
+				// Cinderfall's lava tubes - looks down one tube's mouth met the branch tube's rock, which only its collider stood for)
+				var fr = new List<Vector3>(); var fr2 = new List<Vector3>(); var bk = new List<Vector3>();
 				foreach (DigTunnel t in tuns)
 				{
-					Terrain land = t.SkinLand;
-					TerrainData td = land.terrainData;
-					Vector3 lo = land.transform.position;
-					float cw = td.size.x / td.holesResolution, ch = td.size.z / td.holesResolution;
-					var cut = new HashSet<Vector2Int>();
-					t.CellsToCut(land, cut);
-					if (cut.Count == 0) { Log("  tunnel at " + t.transform.position.ToString("F0") + ": no cut ground - skipped"); continue; }
-					cutAll += cut.Count;
 					// (the rock's faces as drawn, in world space: the fronts (both sides where the material draws both), and the
 					// lining's backs - its outside, never drawn; a collider can't stand in: the rim's top is solid in DigRock's)
 					Transform rock = t.transform.Find(DigTunnel.RockName);
-					var fr = new List<Vector3>(); var fr2 = new List<Vector3>(); var bk = new List<Vector3>();
 					foreach (MeshFilter mf in rock.GetComponentsInChildren<MeshFilter>(false))
 					{
 						Mesh m = mf.sharedMesh;
@@ -1600,8 +1594,19 @@ namespace DynamicIslands
 							}
 						}
 					}
-					MeshCollider colF = SeeThroughFaces(fr, made), colF2 = SeeThroughFaces(fr2, made), colB = SeeThroughFaces(bk, made);
-					Physics.SyncTransforms();
+				}
+				MeshCollider colF = SeeThroughFaces(fr, made), colF2 = SeeThroughFaces(fr2, made), colB = SeeThroughFaces(bk, made);
+				Physics.SyncTransforms();
+				foreach (DigTunnel t in tuns)
+				{
+					Terrain land = t.SkinLand;
+					TerrainData td = land.terrainData;
+					Vector3 lo = land.transform.position;
+					float cw = td.size.x / td.holesResolution, ch = td.size.z / td.holesResolution;
+					var cut = new HashSet<Vector2Int>();
+					t.CellsToCut(land, cut);
+					if (cut.Count == 0) { Log("  tunnel at " + t.transform.position.ToString("F0") + ": no cut ground - skipped"); continue; }
+					cutAll += cut.Count;
 					// (the cut's box, for the way under its ground; the points under each cut cell's ground, 3 x 3 a cell)
 					int ix0 = int.MaxValue, ix1 = int.MinValue, iz0 = int.MaxValue, iz1 = int.MinValue;
 					foreach (Vector2Int q in cut) { ix0 = Mathf.Min(ix0, q.x); ix1 = Mathf.Max(ix1, q.x); iz0 = Mathf.Min(iz0, q.y); iz1 = Mathf.Max(iz1, q.y); }
@@ -1641,7 +1646,7 @@ namespace DynamicIslands
 						}
 					}
 					if (ours) eyes.Add(new KeyValuePair<string, Vector3>("play picture", pFrom));
-					Log("  tunnel at " + t.transform.position.ToString("F0") + ": " + cut.Count + " cut cells (" + cw.ToString("0.00") + " m), " + groups.Count + " mouth(s), " + fr.Count / 3 + " drawn faces" + (norim ? " (the rim's top left out)" : "") + ", " + eyes.Count + " eyes");
+					Log("  tunnel at " + t.transform.position.ToString("F0") + ": " + cut.Count + " cut cells (" + cw.ToString("0.00") + " m), " + groups.Count + " mouth(s), " + fr.Count / 3 + " drawn faces of all tunnels" + (norim ? " (the rim's top left out)" : "") + ", " + eyes.Count + " eyes");
 					var looks = new List<KeyValuePair<string, Ray>>();
 					foreach (KeyValuePair<string, Vector3> ey in eyes)
 						foreach (Vector3 aim in aims)
@@ -1661,7 +1666,7 @@ namespace DynamicIslands
 					}
 					for (int k = 0; k < looks.Count; k++)
 					{
-						string why = DigSeeThroughRay(looks[k].Value, 160f, t.transform, colF, colF2, colB, buf, cut, land, cw, ch, box);
+						string why = DigSeeThroughRay(looks[k].Value, 160f, colF, colF2, colB, buf, cut, land, cw, ch, box);
 						rays++;
 						if (why != null)
 						{
@@ -1708,16 +1713,16 @@ namespace DynamicIslands
 		}
 
 		/// <summary>CIDigSeeThrough's one look: null when it sees what it should, or what it sees through.</summary>
-		static string DigSeeThroughRay(Ray ray, float far, Transform tun, MeshCollider colF, MeshCollider colF2, MeshCollider colB, RaycastHit[] buf,
+		static string DigSeeThroughRay(Ray ray, float far, MeshCollider colF, MeshCollider colF2, MeshCollider colB, RaycastHit[] buf,
 			HashSet<Vector2Int> cut, Terrain land, float cw, float ch, Rect box)
 		{
-			// (the nearest other thing: colliders, but not the tunnel's own (its rim's top is solid there), players or creatures)
+			// (the nearest other thing: colliders, but not the dug tunnels' (their rims' tops are solid there; their drawn faces stand in), players or creatures)
 			float sD = float.PositiveInfinity; string sName = "";
 			int k = Physics.RaycastNonAlloc(ray, buf, far, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
 			for (int i = 0; i < k; i++)
 			{
 				Collider c = buf[i].collider;
-				if (c == null || buf[i].distance < 1f || buf[i].distance >= sD || c.transform.IsChildOf(tun)
+				if (c == null || buf[i].distance < 1f || buf[i].distance >= sD || c.GetComponentInParent<DigTunnel>() != null
 					|| c.GetComponentInParent<Network_Player>() != null || c.GetComponentInParent<AI_NetworkBehaviour>() != null) continue;
 				sD = buf[i].distance; sName = c.name;
 			}
