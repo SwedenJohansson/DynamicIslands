@@ -51,6 +51,8 @@ namespace DynamicIslands.Editor
 		public static float Visibility { get; private set; } = 60f;
 		/// <summary>Raft's own fog distance and the one shown, at the last hand-over to the shaders (tests).</summary>
 		public static float RaftDistance { get; private set; }
+		/// <summary>AzureSky's fog blend as Raft had it (tests).</summary>
+		public static float RaftBlend { get; private set; }
 		public static float ShownDistance { get; private set; }
 		public static float ShownDensity { get; private set; }
 
@@ -220,12 +222,12 @@ namespace DynamicIslands.Editor
 			float end = Mathf.Exp(Mathf.Lerp(Mathf.Log(FarEnd), Mathf.Log(Mathf.Max(5f, Visibility * NearEnd)), w));
 			RenderSettings.fog = true;
 			RenderSettings.fogMode = FogMode.Linear;
-			RenderSettings.fogStartDistance = Mathf.Lerp(FarEnd * 0.5f, Visibility * NearStart, w);
-			RenderSettings.fogEndDistance = end;
 			Color c = FogColour();
+			RenderSettings.fogStartDistance = Mathf.Lerp(FarEnd * 0.5f, Visibility * Mathf.Lerp(DayNearStart, NearStart, Night), w);
+			RenderSettings.fogEndDistance = end;
 			RenderSettings.fogColor = c;
 			NearEndShown = end;
-			SetTint(c, TintAlpha * Mathf.Lerp(1f, NightTint, Night) * w);
+			SetTint(c, TintAlpha * Mathf.Lerp(DayTint, NightTint, Night) * w);
 		}
 
 		/// <summary>How dark the hour is, 0 (day) to 1 (night), from the sky's horizon ambient (W8).</summary>
@@ -247,6 +249,16 @@ namespace DynamicIslands.Editor
 		/// </summary>
 		internal static float Grey = 0.55f, NightGrey = 0.3f, NightTint = 0.5f;
 		internal static Color NightFloor = new Color(0.11f, 0.17f, 0.27f, 1f);
+		/// <summary>
+		/// The day look (W8, 11-24): by day a bank is a soft grey-white haze, not Raft's sky cyan (the sky's fog took its
+		/// scattering whole: the island a flat cyan shape, the sand nearby washed out). DayWhite: how far the sky fog's light
+		/// (AzureSkyFogScattering's material, a copy of it while a bank is shown - SkyFogColour) and Unity's near fog go to a
+		/// grey-white of their own brightness. DayTint: the veil by day (x TintAlpha; NightTint at night). DayNearStart: the
+		/// clear ring of the near fog by day (x sight; NearStart at night). DayBlend: AzureSky's fog blend by day (null =
+		/// Raft's). All of it x (1 - Night) and only in a bank: the night look and Raft's own fog stay as they were.
+		/// </summary>
+		internal static float DayWhite = 0.8f, DayTint = 0.45f, DayNearStart = 0.4f;
+		internal static float? DayBlend;
 		static Color FogColour()
 		{
 			Color c = RenderSettings.ambientMode == UnityEngine.Rendering.AmbientMode.Trilight
@@ -256,6 +268,7 @@ namespace DynamicIslands.Editor
 			Night = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(NightLum, DayLum, lum));
 			float grey = Mathf.Lerp(Grey, NightGrey, Night);
 			c = Color.Lerp(c, new Color(lum, lum, lum) * 1.1f, grey);
+			c = Color.Lerp(c, new Color(0.97f, 0.98f, 1f) * Mathf.Min(1f, lum * 1.25f), DayWhite * (1f - Night));
 			c = new Color(Mathf.Max(c.r, NightFloor.r), Mathf.Max(c.g, NightFloor.g), Mathf.Max(c.b, NightFloor.b), 1f);
 			ColourShown = c;
 			return c;
@@ -287,9 +300,71 @@ namespace DynamicIslands.Editor
 			tint.enabled = alpha > 0.001f;
 		}
 
+		static AzureSkyFogScattering skyFog;
+		static Material skyFogOwn, skyFogWas;
+		static float nextSkyFogLook;
+		static readonly int idBr = Shader.PropertyToID("_Azure_Br"), idBm = Shader.PropertyToID("_Azure_Bm"),
+			idRayleighColor = Shader.PropertyToID("_Azure_RayleighColor"), idMieColor = Shader.PropertyToID("_Azure_MieColor");
+		/// <summary>How far the sky fog's light is greyed now (tests): 0 when Raft's own material is back.</summary>
+		public static float SkyWhiteShown { get; private set; }
+
+		/// <summary>
+		/// FogBanksSkyPatch, after Raft's sky set its shader values: by day in a bank the sky fog draws with a copy of its
+		/// material whose scattering (AzureSky's Br/Bm and its Rayleigh/Mie colours, set on the copy over Raft's global
+		/// values) is taken DayWhite toward grey, so the fog is grey-white instead of the sky's cyan; the sky itself keeps
+		/// Raft's values. Raft's own material goes back as soon as the bank or the day look is gone.
+		/// </summary>
+		internal static void SkyFogColour()
+		{
+			float k = Weight > 0.001f && !Underwater ? Mathf.Clamp01(Weight * (1f - Night) * DayWhite) : 0f;
+			if (k <= 0.001f) { ReleaseSkyFog(); return; }
+			if (skyFog == null)
+			{
+				if (Time.unscaledTime < nextSkyFogLook) return;
+				nextSkyFogLook = Time.unscaledTime + 2f;
+				Camera cam = Camera.main;
+				skyFog = cam != null ? cam.GetComponent<AzureSkyFogScattering>() : null;
+				if (skyFog == null) skyFog = UnityEngine.Object.FindObjectOfType<AzureSkyFogScattering>();
+				if (skyFog == null) return;
+			}
+			Material m = skyFog.fogScatteringMaterial;
+			if (m == null) return;
+			if (m != skyFogOwn)
+			{
+				if (skyFogOwn != null) UnityEngine.Object.Destroy(skyFogOwn);
+				skyFogWas = m;
+				skyFogOwn = new Material(m) { name = m.name + " (fog bank)" };
+				skyFog.fogScatteringMaterial = skyFogOwn;
+			}
+			skyFogOwn.SetVector(idBr, Greyed(Shader.GetGlobalVector(idBr), k));
+			skyFogOwn.SetVector(idBm, Greyed(Shader.GetGlobalVector(idBm), k));
+			skyFogOwn.SetColor(idRayleighColor, Greyed(Shader.GetGlobalColor(idRayleighColor), k));
+			skyFogOwn.SetColor(idMieColor, Greyed(Shader.GetGlobalColor(idMieColor), k));
+			SkyWhiteShown = k;
+		}
+		static Vector4 Greyed(Vector4 v, float k)
+		{
+			float m = (v.x + v.y + v.z) / 3f;
+			return new Vector4(Mathf.Lerp(v.x, m, k), Mathf.Lerp(v.y, m, k), Mathf.Lerp(v.z, m, k), v.w);
+		}
+		static Color Greyed(Color c, float k)
+		{
+			float m = (c.r + c.g + c.b) / 3f;
+			return new Color(Mathf.Lerp(c.r, m, k), Mathf.Lerp(c.g, m, k), Mathf.Lerp(c.b, m, k), c.a);
+		}
+		static void ReleaseSkyFog()
+		{
+			SkyWhiteShown = 0f;
+			if (skyFogOwn == null) return;
+			if (skyFog != null && skyFog.fogScatteringMaterial == skyFogOwn) skyFog.fogScatteringMaterial = skyFogWas;
+			UnityEngine.Object.Destroy(skyFogOwn);
+			skyFogOwn = null; skyFogWas = null;
+		}
+
 		static void ReleaseNearFog()
 		{
 			NearEndShown = 0f;
+			ReleaseSkyFog();
 			if (tint != null && tint.enabled) SetTint(Color.clear, 0f);
 			if (!nearTaken) return;
 			nearTaken = false;
@@ -326,6 +401,7 @@ namespace DynamicIslands.Editor
 		internal static Saved Lend(AzureSkyController s)
 		{
 			RaftDistance = s.fogDistance;
+			RaftBlend = s.fogBlend;
 			float w = Weight;
 			if (w <= 0.001f || Underwater)
 			{
@@ -343,6 +419,7 @@ namespace DynamicIslands.Editor
 			float density = Mathf.Lerp(saved.Density, Mathf.Lerp(1f, NightDensity, Night), w);
 			s.fogDistance = distance;
 			s.fogDensity = density;
+			if (DayBlend.HasValue) s.fogBlend = Mathf.Lerp(saved.Blend, DayBlend.Value, w * (1f - Night));
 			ShownDistance = s.fogDistance; ShownDensity = s.fogDensity;
 			return saved;
 		}
@@ -406,6 +483,8 @@ namespace DynamicIslands.Editor
 		static Exception Finalizer(Exception __exception, AzureSkyController __instance, FogBanks.Saved __state)
 		{
 			FogSight.Return(__instance); FogBanks.Return(__instance, __state);
+			try { FogBanks.SkyFogColour(); }
+			catch (Exception e) { if (!warned) { warned = true; Debug.LogWarning("[CUSTOM ISLANDS] [fog] The day fog's colour: " + e.Message); } }
 			return __exception;
 		}
 	}
