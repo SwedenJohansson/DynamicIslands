@@ -265,7 +265,7 @@ namespace DynamicIslands.Editor
 			Note(box, IslandsMidGame, 1);
 		}
 
-		const string SkipNoteHost = "Skip: asks first, can't be undone (F10: SkipStep). Spawn to raft: asks first, moves only you.";
+		const string SkipNoteHost = "Skip: asks first, can't be undone. Spawn to raft: asks first, moves only you.";
 		const string SkipNoteClient = "Only the host can skip a step: ask the host. Spawn to raft: asks first, moves only you.";
 
 		/// <summary>3.2 "Stuck on a quest?" (QuestSkip), since 11-24 "Stuck on a quest or in a hole?": the current quest's step,
@@ -279,7 +279,7 @@ namespace DynamicIslands.Editor
 			stuckText.fontSize = 11; stuckText.color = UIKit.TextColor;
 			UIKit.Size(stuckText.gameObject, -1, 27);
 			RectTransform row = UIKit.Row(box, 26f, 6f, "SkipRow");
-			Add("SkipStep", UIKit.Button(row, "Skip current quest step", QuestSkip.AskCurrent, "Only if a step can no longer be done (a key used up, a lever that won't move): the current quest's step counts as done and the quest moves on, for every player. Host only. Asks first; can't be undone. F10: SkipStep", 175, 26f, 12));
+			Add("SkipStep", UIKit.Button(row, "Skip current quest step", QuestSkip.AskCurrent, "Only if a step can no longer be done (a key used up, a lever that won't move): the current quest's step counts as done and the quest moves on, for every player. Host only. Asks first; can't be undone.", 175, 26f, 12));
 			Add("SpawnToRaft", UIKit.Button(row, SpawnToRaft.Label, QuestSkip.AskSpawn, "Stuck in a hole or a shaft you can't climb out of: you stand on your raft again. Any player; only you move. Asks first", 120, 26f, 12));
 			Add("OtherQuest", UIKit.Button(row, "Other quest", QuestSkip.NextCandidate, "Not the quest you are stuck on? The next quest in progress near a player (a side quest, a client's island)", 110, 26f, 11));
 			skipNote = Note(box, SkipNoteHost, 1, "SkipNote");
