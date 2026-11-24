@@ -418,6 +418,7 @@
     <Compile Include="DevTestsQuestTraps.cs" />
     <Compile Include="DevTestsCopiesIndex.cs" />
     <Compile Include="DevTestsQuestSoftlock.cs" />
+    <Compile Include="DevTestsQuestSoftlockMp.cs" />
     <Compile Include="DevTestsX5.cs" />
     <Compile Include="DevTestsGapsA.cs" />
     <Compile Include="DevTestsGenSweep.cs" />

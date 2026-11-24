@@ -623,5 +623,115 @@ namespace DynamicIslands
 			}
 			if (ok) Log("PASS: skip replays"); else Fail("skip replays");
 		}
+
+		[ConsoleCommand(name: "CISkipReplaysObjects", docs: "Dev, world (host): M8's limit closed - skipping an open, set or lights step sets off its chest, set or light group as the host's player would: the chest opened (its loot, used mark, \"open\" event), the set's \"set\" event and signal, the group's lights switched on (\"alllit\" and signal) - each once, nothing twice later; a step asking for part of a group sets off nothing; on an island not loaded here the chest's open is kept in its saved state and done when it loads (TEST_CATALOGUE QSL10b)")]
+		public static void SkipReplaysObjectsCommand() { StartTest(SkipReplaysObjectsRoutine()); }
+
+		static IEnumerator SkipReplaysObjectsRoutine()
+		{
+			if (!CustomIslandSpawner.RaftPosition.HasValue || !Raft_Network.IsHost) { Fail("run in a world, as the host"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			const System.Reflection.BindingFlags priv = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+			string[] items = { "qsl10open", "qsl10set", "qsl10lit" };
+			Action clear = () => { foreach (string it in items) { int c = StoryBook.Count(it); if (c > 0) StoryBook.Take(it, c); } };
+			Func<string> counts = () => string.Join("/", items.Select(it => StoryBook.Count(it).ToString()).ToArray());
+			clear();
+			int ci = -1;
+			var lamps = new List<int>();
+			IslandFile f = PlayerTestIsland((file, add) =>
+			{
+				file.Props[IslandQuest.KeyTitle] = "QSL skip objects";
+				file.Props[IslandQuest.KeySteps] = "open|QSL box|1|Open the box\n" + Collectibles.QuestType + "|qslgems|2|Find the gems\n" + Lights.QuestType + "|qsllamps|1|Light a lamp\n"
+					+ Lights.QuestType + "|qsllamps|2|Light the lamps\nsignal|qsl10b-end|1|Ring the bell";
+				ci = add("Loot_Chest", 3f, 0f, P(ObjectProps.NoteTitle, "QSL box", ObjectProps.LootItems, "Plank*1", ObjectProps.LootRefill, "0", BehaviourProps.EventKey("open"), "give||" + StoryItems.Ref(items[0]) + "*1"));
+				for (int i = 0; i < 2; i++)
+				{
+					Dictionary<string, string> p = ObjectProps.Defaults(Collectibles.ObjectName);
+					p[Collectibles.SetProp] = "qslgems";
+					if (i == 0) p[BehaviourProps.EventKey(Collectibles.SetEvent)] = "give||" + StoryItems.Ref(items[1]) + "*1";
+					add(Collectibles.ObjectName, -6f + i * 3f, 6f, p);
+				}
+				for (int i = 0; i < 2; i++)
+				{
+					Dictionary<string, string> p = ObjectProps.Defaults(Lights.ObjectName);
+					p[Lights.GroupProp] = "qsllamps";
+					if (i == 0) p[BehaviourProps.EventKey(Lights.AllLitEvent)] = "give||" + StoryItems.Ref(items[2]) + "*1";
+					lamps.Add(add(Lights.ObjectName, 3f + i * 3f, 6f, p));
+				}
+			});
+			IslandWorldState.Entry isl = null;
+			yield return SpawnPlayerIsland(f, x => isl = x);
+			if (isl == null || isl.Root == null) { Fail("the island did not spawn"); RemovePlayerIsland(isl); yield break; }
+			string far = "ciqsl10b-far", farPath = IslandSpawner.PathFor(far);
+			IslandWorldState.Entry fe = null;
+			GameObject fake = null;
+			try
+			{
+				yield return new WaitForSeconds(1.5f);
+				int replayed = QuestSkip.Replayed;
+				LootCrate crate = Behaviours.RefsOf(isl).Where(r => r.Index == ci).Select(r => r.GetComponentInChildren<LootCrate>(true)).FirstOrDefault();
+				Func<int> lit = () => Behaviours.RefsOf(isl).Count(r => lamps.Contains(r.Index) && Lights.Lit(isl, r));
+				Check(ref ok, crate != null && !crate.Looted && lit() == 0 && QuestTracker.StepOf(isl) == 0, "the quest is at its open step, the box full, no lamp lit");
+
+				Check(ref ok, QuestSkip.Skip(isl, 0), "the open step skipped");
+				yield return new WaitForSeconds(0.5f);
+				Check(ref ok, StoryBook.Count(items[0]) == 1 && crate != null && crate.Looted, "its chest opened for the host's player: its open event gave its item, the chest used (" + counts() + ")");
+				Check(ref ok, QuestSkip.Skip(isl, 0), "the set step skipped");
+				yield return new WaitForSeconds(1f);
+				Check(ref ok, StoryBook.Count(items[1]) == 1 && Behaviours.HasSignal(isl, Collectibles.SignalOf("qslgems")), "its set's \"set\" event gave its item once, the set's signal sent (" + counts() + ")");
+				Check(ref ok, QuestSkip.Skip(isl, 0), "the 'light 1 of 2' step skipped");
+				yield return new WaitForSeconds(0.5f);
+				Check(ref ok, lit() == 0 && StoryBook.Count(items[2]) == 0, "part of the group asked: nothing set off (" + lit() + " lit)");
+				Check(ref ok, QuestSkip.Skip(isl, 0), "the 'light the lamps' step skipped");
+				yield return new WaitForSeconds(1.5f);
+				Check(ref ok, lit() == 2 && StoryBook.Count(items[2]) == 1 && Behaviours.HasSignal(isl, Lights.SignalOf("qsllamps")), "its lamps switched on: \"alllit\" gave its item once, the group's signal sent (" + lit() + " lit, " + counts() + ")");
+				Check(ref ok, QuestSkip.Replayed == replayed + 3 && QuestTracker.StepOf(isl) == 4, "three set off, the quest at its last step (" + (QuestSkip.Replayed - replayed) + ", step " + (QuestTracker.StepOf(isl) + 1) + ")");
+
+				// (later done for real: nothing twice - the chest opened again, the set looked at again, the lamps watched)
+				if (crate != null) crate.Open();
+				Collectibles.Tick();
+				yield return new WaitForSeconds(1.5f);
+				Check(ref ok, StoryBook.Count(items[0]) == 1 && StoryBook.Count(items[1]) == 1 && StoryBook.Count(items[2]) == 1, "nothing given twice afterwards (" + counts() + ")");
+
+				// (an island not loaded here: the chest's open kept in its state, done when it loads)
+				IslandFile ff = SampleIsland();
+				ff.Name = far;
+				ff.Props[IslandQuest.KeyTitle] = "QSL far";
+				ff.Props[IslandQuest.KeySteps] = "open|QSL far box|1|Open the box";
+				int fi = ff.Objects.Count;
+				ff.Objects.Add(new IslandObject { Name = "Loot_Chest", Position = ff.Objects.Count > 0 ? ff.Objects[0].Position : Vector3.zero, Scale = Vector3.one, Props = P(ObjectProps.NoteTitle, "QSL far box", ObjectProps.LootItems, "Plank*1") });
+				ff.Save(farPath);
+				IslandCache.ForgetFile(farPath);
+				Vector3 at = CustomIslandSpawner.RaftPosition.Value - CustomIslandSpawner.SailDirection() * (CustomIslandSpawner.UnloadDistance + 3000f);
+				at.y = 0f;
+				fe = IslandWorldState.Add(far, at, null, false);
+				Check(ref ok, fe != null && fe.Root == null, "a far island, not loaded here");
+				if (fe != null)
+				{
+					IslandWorldState.Entry fisl = fe;
+					Func<List<KeyValuePair<int, ObjectState>>> queued = () => fisl.State.Where(k => Behaviours.IsQueuedKey(k.Key)).ToList();
+					int kept = QuestSkip.ReplayKept;
+					string said = QuestSkip.Replay(fe, IslandQuest.From(ff.Props, 0).Steps[0]);
+					Check(ref ok, QuestSkip.ReplayKept == kept + 1 && queued().Count == 1 && queued()[0].Value.Yield == fi, "far: the chest's open is kept in the island's state (" + said + ")");
+					int done = Behaviours.NotLoadedDone;
+					fake = new GameObject("ciqsl10b-fake-root");
+					fake.transform.position = new Vector3(0f, -2000f, 0f);
+					fe.Root = fake;
+					var tick = typeof(Behaviours).GetMethod("DoNotLoadedYet", priv);
+					try { if (tick != null) tick.Invoke(null, null); } finally { fe.Root = null; }
+					Check(ref ok, Behaviours.NotLoadedDone == done + 1 && queued().Count == 0, "far: done when the island loads (" + (Behaviours.NotLoadedDone - done) + ")");
+				}
+			}
+			finally
+			{
+				clear();
+				RemovePlayerIsland(isl);
+				if (fe != null) { fe.Root = null; IslandWorldState.RemoveIds(new List<int> { fe.Id }, false); }
+				if (fake != null) UnityEngine.Object.Destroy(fake);
+				try { File.Delete(farPath); IslandCache.ForgetFile(farPath); } catch { }
+			}
+			if (ok) Log("PASS: skip replays objects"); else Fail("skip replays objects");
+		}
 	}
 }
