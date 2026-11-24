@@ -393,9 +393,6 @@ namespace DynamicIslands.Editor
 			ShowInstalled();
 		}
 
-		/// <summary>Sets the install options (tests).</summary>
-		public static void SetOptions(bool sailing, bool replace) { appearWhileSailing = sailing; replaceChanged = replace; ShowToggles(); }
-
 		static void ShowInstalled()
 		{
 			foreach (Transform c in installedList) { c.gameObject.SetActive(false); UnityEngine.Object.Destroy(c.gameObject); }

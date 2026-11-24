@@ -638,19 +638,6 @@ namespace DynamicIslands.Editor
 			return PlayerNotebook.Pages.Count == before + 1;
 		}
 
-		/// <summary>Tests: copies the open double page's first page of ours; false when none of ours is open.</summary>
-		public static bool CopyOpenPage()
-		{
-			if (ui == null) return false;
-			uint at = (uint)Traverse.Create(ui).Field("currentPageIndex").GetValue<uint>();
-			foreach (uint i in new[] { at, at + 1 })
-			{
-				NoteBookPage p = PageAt(i);
-				if (p != null && p.name.EndsWith(Mark) && CopyPage(p)) return true;
-			}
-			return false;
-		}
-
 		/// <summary>A paper on a page: a copy of one of Raft's notes, our text on it (top = its top edge from the page's top).</summary>
 		static NoteBookNote AddPaper(NoteBookPage pg, NoteBookNote tpl, string text, float top, float height = 0f)
 		{

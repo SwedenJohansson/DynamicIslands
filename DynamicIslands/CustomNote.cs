@@ -143,8 +143,6 @@ namespace DynamicIslands.Editor
 		Text titleText, bodyText;
 		Button copyButton;
 
-		/// <summary>Tests: clicks the note's "Copy to my notebook".</summary>
-		internal static bool ClickCopy() { if (!IsOpen) return false; instance.copyButton.onClick.Invoke(); return true; }
 		ScrollRect scroll;
 		float openedAt;
 

@@ -296,8 +296,6 @@ namespace DynamicIslands.Editor
 		static readonly List<string> clashed = new List<string>();
 		public static IList<string> Clashed { get { return clashed.AsReadOnly(); } }
 		static bool clashShown;
-		/// <summary>For tests: the in-game clash warning was shown this session.</summary>
-		internal static bool ClashShown { get { return clashShown; } }
 		static void Clash(string display) { if (!clashed.Contains(display)) clashed.Add(display); }
 
 		/// <summary>The next index from ClashBase on that no item has and no upgrade or cosmetic declares, or -1.</summary>

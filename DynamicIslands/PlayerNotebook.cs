@@ -424,7 +424,6 @@ namespace DynamicIslands.Editor
 		}
 
 		internal static void NewPageForTest() { if (IsOpen) instance.NewPage(); }
-		internal static int ShownIndex { get { return IsOpen ? instance.shown : -1; } }
 		internal static string ShownTitle { get { return IsOpen ? instance.titleField.text : null; } }
 		internal static string ShownText { get { return IsOpen ? instance.textField.text : null; } }
 		internal static int ListedPages { get { return IsOpen ? instance.pageButtons.Count : -1; } }

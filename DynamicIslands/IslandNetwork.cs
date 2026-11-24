@@ -1436,8 +1436,6 @@ namespace DynamicIslands.Editor
 		/// <summary>Host: the files going out now, by hash and player, with when they started.</summary>
 		static readonly Dictionary<string, float> sending = new Dictionary<string, float>();
 		const float SendingSeconds = 60f;
-		/// <summary>Tests: how many files are going out now.</summary>
-		internal static int SendingCount { get { return sending.Count; } }
 
 		/// <summary>Chunks sent a frame (ROADMAP M3: all ~300 chunks of a 900 KB island went out in one loop, a burst that
 		/// a slow connection dropped messages of).</summary>

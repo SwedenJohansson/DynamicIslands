@@ -82,7 +82,6 @@ namespace DynamicIslands.Editor
 			shown = target;
 			titleField = null;
 			amountFields.Clear();
-			chanceFields.Clear();
 			placeFields.Clear();
 			foreach (Transform child in root) { child.gameObject.SetActive(false); UnityEngine.Object.Destroy(child.gameObject); }
 			root.gameObject.SetActive(target != null);
@@ -680,7 +679,7 @@ namespace DynamicIslands.Editor
 						PropsCommand.Change(target, RandomLoot.WithChance(target.Props, item, Mathf.Clamp(n, 0, 100)));
 						Refresh();
 					});
-					chanceFields.Add(pct); amountFields.Add(pct);
+					amountFields.Add(pct);
 				}
 				Button remove = UIKit.Button(row, "\u00D7", () => SetLootAmount(target, index, 0), "Take it out of the chest", 24, 24, 13);
 				UIKit.DangerButton(remove);
@@ -724,7 +723,7 @@ namespace DynamicIslands.Editor
 					Set(target, RandomLoot.Pick, n > 0 ? n.ToString() : null);
 					Refresh();
 				});
-				chanceFields.Add(pick); amountFields.Add(pick);
+				amountFields.Add(pick);
 				UIKit.Label(pickRow, "(0 = each rolls its chance)", 11, UIKit.TextMuted);
 				UIKit.Label(g, "<i>" + RandomLoot.Summary(target.Props, loot) + "</i>", 11, UIKit.TextMuted);
 			}
@@ -748,9 +747,6 @@ namespace DynamicIslands.Editor
 		}
 
 		static readonly List<InputField> amountFields = new List<InputField>();
-		/// <summary>A random chest's chance fields, then its Pick field (tests).</summary>
-		static readonly List<InputField> chanceFields = new List<InputField>();
-		internal static IList<InputField> ChanceFields { get { return chanceFields; } }
 
 		#region Place exactly
 

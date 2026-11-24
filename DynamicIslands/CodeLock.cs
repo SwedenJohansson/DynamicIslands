@@ -19,8 +19,6 @@ namespace DynamicIslands.Editor
 
 		static CodeLock instance;
 		public static bool IsOpen { get { return instance != null && instance.gameObject.activeSelf; } }
-		/// <summary>What is typed (the tests read it).</summary>
-		public static string Typed { get { return instance != null ? instance.typed : ""; } }
 
 		IslandWorldState.Entry entry;
 		int index;

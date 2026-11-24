@@ -228,9 +228,6 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		/// <summary>Tests: count one of Raft's islands as met.</summary>
-		internal static void CountRaftIslandForTest(int n) { WorldIslands.RaftIslandsSince += n; }
-
 		#region Streaming
 
 		/// <summary>Unloads far-away islands (keeping their entry) and loads them again when the raft comes back.</summary>

@@ -35,9 +35,6 @@ namespace DynamicIslands.Editor
 		RectTransform giveRow;
 		Text giveText;
 		List<string> olderWorlds = new List<string>();
-		/// <summary>Tests: whether the Give row is shown now, and a press of its button.</summary>
-		internal static bool GiveShown { get { return instance != null && instance.giveRow.gameObject.activeSelf; } }
-		internal static void Give() { if (instance != null) instance.OnGive(); }
 		InputField search, nameField;
 		RectTransform listContent;
 		Text status, summary;

@@ -252,9 +252,8 @@ namespace DynamicIslands.Editor
 		/// <summary>This machine's player carries something (no jumping, no ziplines).</summary>
 		public static bool CarryingLocal { get { return mine != null; } }
 
-		/// <summary>Tests: what this machine's player carries (its name), and how many pieces are carried.</summary>
+		/// <summary>Tests: what this machine's player carries (its name).</summary>
 		internal static string CarriedName { get { return mine != null && mine.Ref != null ? mine.Ref.Name : ""; } }
-		internal static int CarriedCount { get { return carried.Count; } }
 
 		internal static void Tell(string text)
 		{

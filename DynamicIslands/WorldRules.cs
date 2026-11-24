@@ -593,10 +593,6 @@ namespace DynamicIslands.Editor
 			set { looksChoice = AnimalLooks.Clamp(value); Refresh(); }
 		}
 
-		/// <summary>The rare animal looks buttons (Normal, More, Lots) and their line (tests).</summary>
-		public static Button LooksButton(int level) { return level >= 0 && level < looksButtons.Count ? looksButtons[level] : null; }
-		public static string LooksText { get { return looksDetail != null ? looksDetail.text : null; } }
-
 		/// <summary>The sliders (tests move them as a player would); the build cost slider counts steps of 5 %.</summary>
 		public static Slider MonsterSlider { get { return monsterSlider != null ? monsterSlider.Slider : null; } }
 		public static Slider BuildSlider { get { return buildSlider != null ? buildSlider.Slider : null; } }

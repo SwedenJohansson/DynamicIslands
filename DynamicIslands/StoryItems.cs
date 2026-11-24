@@ -1481,9 +1481,6 @@ namespace DynamicIslands.Editor
 
 		void CopyShown() { if (copyFrom != null) PlayerNotebook.CopyIn(copyFrom.Title, copyFrom.Text); }
 
-		/// <summary>Tests: clicks "Copy to my notebook" on the shown page; false when it isn't shown.</summary>
-		internal static bool ClickCopyPage() { if (!IsOpen || !instance.copyPage.gameObject.activeSelf) return false; instance.copyPage.onClick.Invoke(); return true; }
-
 		void ShowPage(StoryBook.Page p)
 		{
 			copyFrom = p;
@@ -1587,9 +1584,6 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The Progress panel's lines now (tests).</summary>
 		public static List<string> ProgressShown { get { return IsOpen ? instance.progressText.Select(t => System.Text.RegularExpressions.Regex.Replace(t.text, "<[^>]+>", "")).ToList() : new List<string>(); } }
-
-		/// <summary>The top right's text now (tests).</summary>
-		public static string CountsShown { get { return IsOpen ? instance.countText.text : null; } }
 
 		/// <summary>The world's quests on the paper: done and still to do, by kind.</summary>
 		void ShowQuests()
