@@ -3,7 +3,7 @@
 # the culvert climbs to the dry chamber round 90 -53 (air zone ut_seadoor, chest at 90 -54). Swim in, breathe, take the chest,
 # swim out. HEIGHT GUESSES (need a Raft surface probe): mouth floor -5, chamber floor ~+6, zone/chest h 8. The offset is the old one.
 island Utopia Remade keep
-offset 17.0092 -14.8873
+offset 17.8504 -15.6342
 hour 11
 weather Calm
 
