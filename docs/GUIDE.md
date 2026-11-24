@@ -1493,7 +1493,7 @@ library's example islands and plans.
 
 **Sharing yours in the library:** click **Submit yours...** at the top of the island library. It explains the three steps:
 1. **Export** your island or plan in the editor (above), with a title, summary, description and picture;
-2. **post the pack** (`.zip`) on the [Custom Islands Discord](https://discord.gg/U7DfKY9tN) with a few words about it;
+2. **post the pack** (`.zip`) on the [Custom Islands Discord](https://discord.gg/u9tkW9uSaQ) with a few words about it;
 3. it is **approved first**: every entry is looked at before it goes into the library, so it can take a while. Once it
    is in, every player sees it in the library.
 
@@ -4792,7 +4792,7 @@ problem** button. It opens a box with the list above in short, and buttons that 
   [github.com/SwedenJohansson/DynamicIslands/issues](https://github.com/SwedenJohansson/DynamicIslands/issues)
   (**New issue**). Give it a short title that says what went wrong ("A chest on my island is empty again after
   loading"), write the report, and attach the files (zip them if there are many).
-- **Discord:** post it on the mod's Discord server, [discord.gg/U7DfKY9tN](https://discord.gg/U7DfKY9tN), with the
+- **Discord:** post it on the mod's Discord server, [discord.gg/u9tkW9uSaQ](https://discord.gg/u9tkW9uSaQ), with the
   same details and the files attached.
 
 A template to copy into the issue or the post:
