@@ -482,5 +482,6 @@ prop rkhollow cave.rock=plain
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth)
 # (keep=, lib 3.5.1 minor fixes 11-23: the talus filled or buried the bathhouse cellar's dive site - the cellar, the boat, its crate and the puffers - left as built)
-cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=21,-73,17
+# (walls=, lib 3.5.1 extra fixes 11-23: the kept walls still showed as bare sheets - no talus there, so the pit keeps its depth, but rock is stood on its faces)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low walls=21,-73,17
 save Rookery Stacks

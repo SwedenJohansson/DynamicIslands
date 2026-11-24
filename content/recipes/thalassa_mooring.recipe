@@ -30,6 +30,9 @@ brush flatten at 5.25 0 r=3 s=30 frames=300 h=-22
 # (REACH 10-30 G1: the shaft's sides went 2 m straight up from the water under the deck - whoever fell in, or swam up
 # from the bell, never got out; a ledge 1 m over the water on its north side, a step up to the shelf)
 brush flatten at 5.25 3.4 r=1.5 s=20 frames=150 h=1
+# (lib 3.5.1 extra fixes 11-23: the shaft's brush left one point on its south rim at -12, a notch 14 m deep at the
+#     waterline - filled back to the shelf; the shaft's own points stay at -22)
+brush flatten at 5.64 -4 r=2 s=30 frames=150 h=2 line
 brush grass at -9 3 r=6 s=20 frames=20
 brush flatten at 14 -36.4 r=5 s=8 frames=40
 origin
@@ -401,11 +404,27 @@ prop thelaine on.choice1=journal|Harbourmistress Elaine: the flood|The kingdom d
 prop thelaine on.choice2=hide|thgate\nmessage||The sea gate under the flag hill is open.
 prop thelaine on.choice3=message||Then pass quickly. The tide has a long memory here.
 
-# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
-#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
-#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
-cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
-# (the rocks= stood five rocks round the moonpool - in the shaft the bell rides down, at its rim and one through the
-#     deck floor - taken out again: the shaft and the ledge out of it stay clear)
-clear at 5.25 0 r=6 all only=^BigBoulder
+# (lib 3.5.1 extra fixes 11-23: the moonpool's walls stood 24 m straight up from the shaft's foot, a bare sheet at the
+#     waterline; rock (cliffs rocks=) stood in the shaft the bell rides down and over the ledge, and the deck's posts were
+#     lost with them - instead a steel lining round the shaft at the waterline, its back in the rim, from h -0.4 up to the
+#     shelf, open on the north side over the ledge out of the water)
+# (the two at the south-east corner 0.2 m higher: there the rim is a little higher, the save took them for buried and set them
+#     up on the ground, 2.4 m over the rim - their tops now just over it)
+place Block_Wall_Tier3 lining at 1.88 -2.25 h=-0.42 yaw=90
+place Block_Wall_Tier3 lining at 1.88 -0.75 h=-0.42 yaw=90
+place Block_Wall_Tier3 lining at 1.88 0.75 h=-0.42 yaw=90
+place Block_Wall_Tier3 lining at 1.88 2.25 h=-0.42 yaw=90
+place Block_Wall_Tier3 lining at 9.42 -2.25 h=-0.2 yaw=90
+place Block_Wall_Tier3 lining at 9.42 -0.75 h=-0.42 yaw=90
+place Block_Wall_Tier3 lining at 9.42 0.75 h=-0.42 yaw=90
+place Block_Wall_Tier3 lining at 9.42 2.25 h=-0.42 yaw=90
+place Block_Wall_Tier3 lining at 2.63 -3.05 h=-0.42
+place Block_Wall_Tier3 lining at 4.14 -3.05 h=-0.42
+place Block_Wall_Tier3 lining at 5.65 -3.05 h=-0.42
+place Block_Wall_Tier3 lining at 7.16 -3.05 h=-0.42
+place Block_Wall_Tier3 lining at 8.67 -3.05 h=-0.2
+place Block_Wall_Tier3 lining at 7.13 2.53 h=-0.42
+place Block_Wall_Tier3 lining at 8.65 2.53 h=-0.42
+prop lining tint.color=#5b6266
+prop lining tint.amount=0.45
 save Thalassa Mooring

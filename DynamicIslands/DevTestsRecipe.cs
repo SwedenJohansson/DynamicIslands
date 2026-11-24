@@ -2788,7 +2788,7 @@ namespace DynamicIslands
 						}
 						case "cliffs":
 						{
-							// cliffs [rise=7] [step=3] [depth=10] [reach=12] [at x z r=20] [rocks=piece] [keep=x,z,r|..]: bare cliff faces at the waterline
+							// cliffs [rise=7] [step=3] [depth=10] [reach=12] [at x z r=20] [rocks=piece] [keep=x,z,r|..] [walls=x,z,r|..]: bare cliff faces at the waterline
 							// sloped from their low side (CliffsStep, c3 round 3 - Raft draws them as one stretched sheet; CISheetIslands
 							// finds them); rocks=: that rock piece stood in the waterline at the faces the slope can't reach (a pit's wall)
 							var co = Options(t.Skip(1).Where(w => w.Contains("=")));
@@ -2800,20 +2800,25 @@ namespace DynamicIslands
 							if (cat > 0 && cat + 2 < t.Length) cwhere = WorldXZ(F(t[cat + 1]), F(t[cat + 2]));
 							if (cstep < 0.5f || crise < 2f) { error = "cliffs: step= 0.5 or more, rise= 2 or more"; break; }
 							// (keep=x,z,r|x,z,r: circles in the recipe's coordinates the talus leaves as they are - a dock pool, a dive site)
-							List<Vector3> ckeep = null;
-							if (co.ContainsKey("keep"))
+							// (walls=x,z,r|..: circles no talus is raised in either, but whose bare faces get the rocks= - a dive site's pit walls
+							// rocked, its floor and the boat on it kept - lib 3.5.1 11-23: keep left Cistern Hall's and the dive sites' pits bare sheets)
+							List<Vector3> ckeep = null, cwalls = null;
+							foreach (string ck in new[] { "keep", "walls" })
 							{
-								ckeep = new List<Vector3>();
-								foreach (string kc in co["keep"].Split('|'))
+								if (!co.ContainsKey(ck)) continue;
+								var circles = new List<Vector3>();
+								foreach (string kc in co[ck].Split('|'))
 								{
 									string[] kp = kc.Split(',');
-									if (kp.Length != 3) { error = "cliffs: keep=x,z,r|x,z,r (" + kc + ")"; break; }
+									if (kp.Length != 3) { error = "cliffs: " + ck + "=x,z,r|x,z,r (" + kc + ")"; break; }
 									Vector2 kw = WorldXZ(F(kp[0]), F(kp[1]));
-									ckeep.Add(new Vector3(kw.x, kw.y, F(kp[2])));
+									circles.Add(new Vector3(kw.x, kw.y, F(kp[2])));
 								}
-								if (error != null) break;
+								if (ck == "keep") ckeep = circles; else cwalls = circles;
 							}
-							Log("  " + CliffsStep(crise, cstep, cdepth, creach, cwhere, cr, co.ContainsKey("rocks") ? co["rocks"] : null, ckeep));
+							if (error != null) break;
+							if (cwalls != null && !co.ContainsKey("rocks")) { error = "cliffs: walls= needs rocks="; break; }
+							Log("  " + CliffsStep(crise, cstep, cdepth, creach, cwhere, cr, co.ContainsKey("rocks") ? co["rocks"] : null, ckeep, cwalls));
 							break;
 						}
 						case "where":
