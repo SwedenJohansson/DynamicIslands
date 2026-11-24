@@ -211,11 +211,18 @@ namespace DynamicIslands
 				yield return CameraShot(eye, at, "fog_day_clear");
 				Vector3 nearEye = eyeAt(15f);
 				yield return CameraShot(nearEye, at, "fog_day_near_clear");
-				// The shore close up (W8 day): 3 m in from the island's edge, seen from 15 m out on the water (about 18 m)
+				// The shore close up (W8 day): the first ground above the sea in from the island's edge, seen from 15 m further out (15-20 m)
 				RaycastHit shoreHit;
-				Vector3 shore = centre + dir * Mathf.Max(0f, edge - 3f);
-				shore = Physics.Raycast(new Vector3(shore.x, 300f, shore.z), Vector3.down, out shoreHit, 600f, ~0, QueryTriggerInteraction.Ignore) ? shoreHit.point + Vector3.up * 0.3f : new Vector3(shore.x, 1f, shore.z);
-				Vector3 shoreEye = centre + dir * (edge + 15f) + Vector3.up * 3f;
+				// (the first ground above the sea inward from the edge: a reef under water read the sea, not the shore)
+				Vector3 shore = new Vector3(0f, -100f, 0f);
+				for (float k = Mathf.Max(0f, edge - 3f); k >= 0f && shore.y < 0.8f; k -= 2f)
+				{
+					Vector3 q = centre + dir * k;
+					shore = Physics.Raycast(new Vector3(q.x, 300f, q.z), Vector3.down, out shoreHit, 600f, ~0, QueryTriggerInteraction.Ignore) ? shoreHit.point + Vector3.up * 0.3f : new Vector3(q.x, -100f, q.z);
+				}
+				if (shore.y < 0.8f) shore = centre + dir * Mathf.Max(0f, edge - 3f) + Vector3.up;
+				Vector3 shoreEye = shore + dir * 15f;
+				shoreEye.y = Mathf.Max(3f, shore.y + 2f);
 				yield return CameraShot(shoreEye, shore, "fog_day_shore_clear");
 				FogBanks.TestVisibility = sight; FogBanks.TestInstant = true; FogBanks.TestTarget = 1f;
 				yield return new WaitForSeconds(2f);

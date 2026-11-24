@@ -259,7 +259,7 @@ namespace DynamicIslands.Editor
 		/// whole well before its distance, and at 1 the shore 20 m off went flat too.
 		/// All of it x (1 - Night) and only in a bank: the night look and Raft's own fog stay as they were.
 		/// </summary>
-		internal static float DayWhite = 1f, DayTint = 0.3f, DayNearStart = 0.5f, DayDistance = 2f;
+		internal static float DayWhite = 1f, DayTint = 0.3f, DayNearStart = 0.5f, DayDistance = 1.5f;
 		internal static float? DayBlend;
 		static Color FogColour()
 		{
