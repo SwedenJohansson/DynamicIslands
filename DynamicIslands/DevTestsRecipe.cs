@@ -907,6 +907,34 @@ namespace DynamicIslands
 		public static void FloatingCommand(string[] args)
 		{
 			if (!DynamicIslands.InEditor()) { floatProblems = 1; Fail("CIFloating [gap] (in the editor)"); return; }
+			// (the check sees the island as a world builds it: the editor's cave pieces keep their colliders off and a world
+			// drapes a hill over them - Rootweave's den cache on the den's floor had "nothing under it" and the generator's
+			// palms and boulders on the Flooded Passage's hill stood "17 m over the ground", isl-fix 11-24: the pieces' colliders
+			// on and the hill built for the check (CaveMountain.Preview, as zipto measures), both undone after it)
+			var caveOff = new List<Collider>();
+			GameObject caveHill = null;
+			try
+			{
+				foreach (EditorGameObject ce in PlacedEditorObjects())
+				{
+					PropInfo ci = ce != null && ce.gameObject.activeInHierarchy ? RaftProps.Get(ce.GameObjectName) : null;
+					if (ci == null || !ci.IsCave) continue;
+					foreach (Collider c in ce.GetComponentsInChildren<Collider>(true)) if (!c.enabled && c.gameObject.activeInHierarchy) { c.enabled = true; caveOff.Add(c); }
+				}
+				if (terraineditor.terrain != null) caveHill = CaveMountain.Preview(PlacedEditorObjects(), terraineditor.terrain.transform.position);
+				Physics.SyncTransforms();
+				FloatingCheck(args);
+			}
+			finally
+			{
+				if (caveHill != null) UnityEngine.Object.DestroyImmediate(caveHill);
+				foreach (Collider c in caveOff) if (c != null) c.enabled = false;
+				Physics.SyncTransforms();
+			}
+		}
+
+		static void FloatingCheck(string[] args)
+		{
 			float gap = args != null && args.Length > 0 ? F(args[0]) : 0.3f;
 			string only = args != null && args.Length > 1 ? args[1] : "";
 			Vector2 mid = EditorLandCentre();
