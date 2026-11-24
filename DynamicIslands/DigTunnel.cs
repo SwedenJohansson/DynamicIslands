@@ -523,7 +523,7 @@ namespace DynamicIslands.Editor
 			RimWalls = CaveMountain.DressRimWalls(mr) ?? "";
 			SideRockOnly(mr, 1);
 			GroundTop(mr, land);
-			RimMatch = MatchSkin(mr); // (after SplitTop: what it leaves in part 1 is the rim beside the hill's skin)
+			MatchSkin(mr); // (after SplitTop: what it leaves in part 1 is the rim beside the hill's skin)
 		}
 
 		/// <summary>Texture pairs of Raft's top/side rock shader: the top one is drawn on faces turned up.</summary>
@@ -564,8 +564,6 @@ namespace DynamicIslands.Editor
 			if (any) mr.SetPropertyBlock(b, part);
 		}
 
-		/// <summary>Tests: what MatchSkin last did to the rim walls ("" when not run).</summary>
-		[NonSerialized] public string RimMatch = "";
 		static bool toldMatch;
 
 		/// <summary>

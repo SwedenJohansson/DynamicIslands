@@ -3721,7 +3721,7 @@ namespace DynamicIslands.Editor
 				if (f <= 0f) continue;
 				f *= SeaCap(s, sea, cat, f);
 				var rnd = new System.Random(s.Seed * 4099 + 71 + ci * 577);
-				Vector2 reefOff = RandomOffset(rnd);
+				RandomOffset(rnd); // (the draw is kept: the seeds after it stay the same)
 				int placed = 0;
 				ReefMask reefs = null;
 				if (cat == CatWater)

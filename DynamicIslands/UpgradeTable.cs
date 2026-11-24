@@ -243,8 +243,6 @@ namespace DynamicIslands.Editor
 		static int worldPartsBefore;
 		/// <summary>Tests: the world's parts read before the host's numbers came at the last join (-1: no join seen).</summary>
 		internal static int LastJoinPartsBefore = -1;
-		/// <summary>Tests: how many upgrades the host's numbers moved at the last join.</summary>
-		internal static int LastJoinMoved = -1;
 		/// <summary>Tests: the host's numbers at the last join.</summary>
 		internal static string LastJoinData;
 		/// <summary>Tests: at the last join Raft restored the world (RGD_World.RestoreWorld, before the raft, the bags and
@@ -254,7 +252,7 @@ namespace DynamicIslands.Editor
 		/// <summary>Tests: Raft restored the world at the last join (the check above is only worth something then).</summary>
 		internal static bool LastJoinRestoreSeen;
 
-		internal static void OnRequestWorld() { waitingWorld = true; worldPartsBefore = 0; partTypes.Length = 0; LastJoinRestoredFirst = false; LastJoinRestoreSeen = false; LastJoinRestoreAt = ""; tracing = true; trace.Length = 0; lastTok = null; LastJoinContentBefore = -1; contentBefore = 0; }
+		internal static void OnRequestWorld() { waitingWorld = true; worldPartsBefore = 0; partTypes.Length = 0; LastJoinRestoredFirst = false; LastJoinRestoreSeen = false; tracing = true; trace.Length = 0; lastTok = null; LastJoinContentBefore = -1; contentBefore = 0; }
 
 		// (the join's Raft messages and restores in order, NUMBERS where the host's numbers came, until the world is loaded:
 		// Raft's world comes on its own channel, so only this shows whether any of it - blocks, bags - came first)
@@ -299,9 +297,6 @@ namespace DynamicIslands.Editor
 			}
 			return -1;
 		}
-		/// <summary>Tests: where the last join's restore was seen first (SaveAndLoad.RestoreRGDGame, before the raft, the
-		/// bags and the chests; else Raft_Network.WorldHasBeenLoaded, after them).</summary>
-		internal static string LastJoinRestoreAt = "";
 		/// <summary>Player: Raft restores the host's world now (RGD_World.RestoreWorld runs on the host only).</summary>
 		internal static void OnClientWorldRestore(string at)
 		{
@@ -309,7 +304,6 @@ namespace DynamicIslands.Editor
 			if (at == "WorldHasBeenLoaded") EndTrace(); else Trace(at, true);
 			if (LastJoinRestoreSeen) return;
 			LastJoinRestoreSeen = true;
-			LastJoinRestoreAt = at;
 			Log("The host's world is restored (" + at + "); its upgrade numbers came first: " + !waitingWorld);
 			if (!waitingWorld) return;
 			LastJoinRestoredFirst = true;
@@ -338,7 +332,6 @@ namespace DynamicIslands.Editor
 			waitingWorld = false;
 			LastJoinPartsBefore = worldPartsBefore;
 			LastJoinPartTypes = partTypes.ToString().Trim();
-			LastJoinMoved = moved;
 			LastJoinData = data ?? "";
 			Log("The host's upgrade numbers came before the world was restored: " + !LastJoinRestoredFirst + "; " + worldPartsBefore + " Raft message(s) read before them (" + LastJoinPartTypes + "), " + moved + " upgrade(s) moved");
 			if (LastJoinRestoredFirst && moved > 0)

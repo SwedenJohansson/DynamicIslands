@@ -38,8 +38,6 @@ namespace DynamicIslands.Editor
 		public const string EndLabel = "end", StartLabel = "start";
 		public const string DefaultText = "Hello there, traveller.\n---\nThe sea brought you here, didn't it? It brings everyone, sooner or later.";
 
-		/// <summary>The last dialogue shown on this machine (tests): speaker, page text.</summary>
-		public static string LastSpeaker = "", LastPage = "";
 		public static int Talks;
 
 		public static bool Is(string objectName) { return objectName == ObjectName; }
@@ -488,8 +486,6 @@ namespace DynamicIslands.Editor
 		{
 			Islanders.Page pg = pages[page];
 			bodyText.text = pg.Text;
-			Islanders.LastSpeaker = speakerText.text;
-			Islanders.LastPage = pg.Text;
 			foreach (Transform t in buttons.Cast<Transform>().ToList()) Destroy(t.gameObject);
 			// (QE10: the page count is its branch's)
 			List<Islanders.Page> same = pages.Where(x => string.Equals(x.Section, pg.Section, StringComparison.OrdinalIgnoreCase)).ToList();

@@ -1849,7 +1849,7 @@ namespace DynamicIslands.Editor
 			{
 				Transform r = t.transform.Find(DigTunnel.RockName);
 				MeshRenderer mr = r != null ? r.GetComponent<MeshRenderer>() : null;
-				if (mr != null) { t.RimWalls = DressRimWalls(mr) ?? ""; t.RimMatch = DigTunnel.MatchSkin(mr); }
+				if (mr != null) { t.RimWalls = DressRimWalls(mr) ?? ""; DigTunnel.MatchSkin(mr); }
 			}
 		}
 

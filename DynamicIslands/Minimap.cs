@@ -67,8 +67,8 @@ namespace DynamicIslands.Editor
 		internal static RenderTexture Picture { get { return tex; } }
 		public static readonly List<Mark> Marks = new List<Mark>();
 		public static readonly List<Ping> Pings = new List<Ping>();
-		/// <summary>Dev tests: pings sent (by this player) and shown.</summary>
-		public static int PingsSent, PingsShown;
+		/// <summary>Dev tests: pings shown.</summary>
+		public static int PingsShown;
 		public static bool Shown { get { return panel != null && panel.gameObject.activeSelf; } }
 		/// <summary>Tests: the map panel's size in UI units (CornerSize square in the corner) and how much of
 		/// the screen's height it takes; zero when there is no panel.</summary>
@@ -471,7 +471,6 @@ namespace DynamicIslands.Editor
 			ulong id = me != null ? me.steamID.Id : 0UL;
 			IslandNetMessage msg = MessageFor(at, id);
 			Show(msg, id);
-			PingsSent++;
 			if (Raft_Network.IsHost) IslandNetwork.SendToEveryone(msg);
 			else IslandNetwork.SendToTheHost(msg);
 			return true;

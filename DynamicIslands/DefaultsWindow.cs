@@ -197,12 +197,8 @@ namespace DynamicIslands.Editor
 			Refresh();
 		}
 
-		/// <summary>The frame Esc or Close shut the window in (the world window under it doesn't close with the same Esc).</summary>
-		internal static int ClosedFrame = -1;
-
 		public static void Close()
 		{
-			if (canvas != null && canvas.gameObject.activeSelf) ClosedFrame = Time.frameCount;
 			if (canvas != null) canvas.gameObject.SetActive(false);
 			CameraSettings.Save();
 			EditorInput.IsTyping = false;
@@ -258,7 +254,7 @@ namespace DynamicIslands.Editor
 			listenFor = null;
 			listenExtra = null;
 			ModKeys.Listen(false);
-			if (k == KeyCode.Escape) { EscKey.Swallow(); ClosedFrame = Time.frameCount; SetStatus("The keys stay as they were.", false); Refresh(); return; }
+			if (k == KeyCode.Escape) { EscKey.Swallow(); SetStatus("The keys stay as they were.", false); Refresh(); return; }
 			if (extra != null)
 			{
 				string why = ModKeys.Set(extra, k);

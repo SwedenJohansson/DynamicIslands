@@ -21,10 +21,8 @@ namespace DynamicIslands.Editor
 
 		static CameraMoment current;
 		public static bool Active { get { return current != null; } }
-		/// <summary>Tests: moments shown here, skipped with Esc, and where the marker was.</summary>
+		/// <summary>Tests: moments shown here and skipped with Esc.</summary>
 		public static int Shown, Skipped;
-		public static Vector3 LastMarker;
-		public static Quaternion LastLook;
 
 		Transform cam;
 		Vector3 localPos, fromPos;
@@ -121,8 +119,6 @@ namespace DynamicIslands.Editor
 			}
 			current = c;
 			Shown++;
-			LastMarker = at;
-			LastLook = rot;
 			Debug.Log("[CUSTOM ISLANDS] Camera moment: " + seconds.ToString("0.#", CultureInfo.InvariantCulture) + " s at " + at.ToString("F1"));
 		}
 

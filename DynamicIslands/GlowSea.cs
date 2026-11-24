@@ -24,8 +24,8 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Tests: glowing (true) or not (false) whatever the night says (null = the roll).</summary>
 		internal static bool? TestGlow;
-		/// <summary>Tests: the fishing wait Raft asked for and the one it got, at the last bite timer.</summary>
-		internal static float LastWaitIn = -1f, LastWaitOut = -1f;
+		/// <summary>Tests: the fishing wait Raft asked for at the last bite timer.</summary>
+		internal static float LastWaitIn = -1f;
 
 		static float level, nextCheck;
 		static bool glowing;
@@ -135,7 +135,6 @@ namespace DynamicIslands.Editor
 		{
 			GlowSea.LastWaitIn = timeDelay;
 			timeDelay *= GlowSea.WaitFactor;
-			GlowSea.LastWaitOut = timeDelay;
 		}
 	}
 

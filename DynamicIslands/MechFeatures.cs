@@ -41,9 +41,8 @@ namespace DynamicIslands.Editor
 		public const int PlaceBase = 0x5000000, StackDoneBase = 0x5F00000;
 		public const float MaxForce = 40f, DefaultLureRadius = 3f;
 
-		/// <summary>Tests: pushes done, lures on, the last drop's place.</summary>
-		internal static int Pushes, Lured;
-		internal static Vector3 LastDrop;
+		/// <summary>Tests: pushes done.</summary>
+		internal static int Pushes;
 
 		#region Push and pulse
 
@@ -363,7 +362,6 @@ namespace DynamicIslands.Editor
 			if (snap > 0.05f) yaw = Mathf.Round(yaw / 90f) * 90f;
 			Vector3 local = parent != null ? parent.InverseTransformPoint(pos) : pos;
 			float localYaw = parent != null ? Mathf.Repeat(yaw - parent.eulerAngles.y, 360f) : yaw;
-			LastDrop = pos;
 			Place(c.Ref, local, localYaw);
 			AskDrop(c, local, localYaw, true);
 		}
@@ -702,7 +700,6 @@ namespace DynamicIslands.Editor
 								tv.Field("circulationRadius").SetValue(radius);
 								tv.Field("circulationRadiusMin").SetValue(0f);
 								tv.Field("playerDistance").SetValue(0f);
-								Lured++;
 							}
 						}
 					}

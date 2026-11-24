@@ -663,8 +663,6 @@ namespace DynamicIslands.Editor
 
 		/// <summary>How far the last WallLikeHill turned its wall's outside faces toward the hill's slope, degrees (log, tests).</summary>
 		public static float WallTiltSeen;
-		/// <summary>How many of the last WallLikeHill's outside points in the hill's opening were brought flush with the skin (log, tests).</summary>
-		public static int WallFlushed;
 		/// <summary>How many of the last WallLikeHill's outside faces took the texture mapping of the skin behind them, and how many of its corners the skin's own normal (log, tests).</summary>
 		public static int WallSkinMapped, WallSkinLit;
 		/// <summary>Of WallSkinMapped, the last WallLikeHill's faces in the hill's opening (no skin behind them) mapped as the skin at
@@ -927,7 +925,6 @@ namespace DynamicIslands.Editor
 					flush[v] = Mathf.Clamp(fitD[v], -WallFlushMax, WallFlushMax) * keep;
 					if (Mathf.Abs(flush[v]) > 0.02f) { flushed++; flushMax = Mathf.Max(flushMax, Mathf.Abs(flush[v])); }
 				}
-			WallFlushed = flushed;
 			Debug.Log("[CUSTOM ISLANDS] Plug " + den.name + ": " + hitIdx.Count + " of " + mv.Length + " outside point(s) with the hill's skin in line, skin offset "
 				+ (hitIdx.Count > 0 ? hitIdx.Min(v => skinD[v]).ToString("0.00") + ".." + hitIdx.Max(v => skinD[v]).ToString("0.00") : "-") + " m; " + flushed + " in its opening brought onto the skin's surface (up to " + flushMax.ToString("0.00") + " m), arch rim " + rimIdx.Count + " point(s)");
 			// (the outside point nearest a world point, across the wall, that met the skin with a texture side; -1 when none)
@@ -2891,9 +2888,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Whether a cave is being laid (its pieces loading).</summary>
 		public static bool Busy { get; private set; }
 
-		/// <summary>The last cave laid (tests): its layout and its objects.</summary>
+		/// <summary>The last cave laid (tests): its layout.</summary>
 		public static Layout LastLayout;
-		public static List<GameObject> LastPieces = new List<GameObject>();
 
 		/// <summary>
 		/// Lays a cave in the editor's island (the scenes its pieces come from loaded first): the pieces, the ground shaped
@@ -2979,7 +2975,6 @@ namespace DynamicIslands.Editor
 				CommandUndoRedo.UndoRedoManager.Insert(group);
 
 				LastLayout = l;
-				LastPieces = made;
 				float sea = DynamicIslands.EditorWaterLevel;
 				float lowest = Mathf.Min(l.Mouth.y, l.End.y);
 				string what = (Mathf.Abs(l.Size - 1f) > 0.01f ? "size " + l.Size.ToString("0.0") + "x, " : "") + (l.Tunnels > 0 ? l.Tunnels + " tunnel piece" + (l.Tunnels == 1 ? "" : "s") + " (" + Mathf.RoundToInt(l.Length) + " m" + (Mathf.Abs(l.Slope) > 0.5f ? ", " + (l.Slope < 0 ? "down " : "up ") + Mathf.RoundToInt(Mathf.Abs(l.Slope)) + "°" : "") + ")" : "") +
