@@ -174,8 +174,21 @@ namespace DynamicIslands
 				// Looming: the shore from further out (only a shadow) and closer in (firming up)
 				yield return CameraShot(eyeAt(sight * 1.2f), at, "fog_day_far");
 				yield return CameraShot(eyeAt(15f), at, "fog_day_near");
+				// The hours: how bright the sky's horizon ambient is and how much night the fog takes from it (W8: the night
+				// look must be whole at night and gone by day)
+				var hours = new List<string>();
+				float dayNight = FogBanks.Night;
+				foreach (float h in new[] { 0f, 3f, 5f, 6f, 7f, 8f, 17f, 18f, 19f, 20f, 21f, 22f, 23f })
+				{
+					SetHour(h);
+					yield return new WaitForSeconds(1f);
+					hours.Add(h.ToString("F0") + "h " + FogBanks.HorizonLum.ToString("F2") + "/" + FogBanks.Night.ToString("F2"));
+				}
+				Log("fog look: hours (horizon brightness/night): " + string.Join(", ", hours.ToArray()));
 				SetHour(23f);
 				yield return new WaitForSeconds(3f);
+				if (FogBanks.Night >= 0.9f && dayNight <= 0.1f) Log("PASS: the fog takes its night look at 23:00 (night " + FogBanks.Night.ToString("F2") + ") and none at 11:00 (" + dayNight.ToString("F2") + ")");
+				else Fail("the fog's night look: night " + FogBanks.Night.ToString("F2") + " at 23:00 (want 0.9+), " + dayNight.ToString("F2") + " at 11:00 (want 0.1 or less)");
 				Log("fog look: night, shown " + FogBanks.ShownDistance.ToString("F0") + " (Raft's " + FogBanks.RaftDistance.ToString("F0") + "), colour " + FogBanks.ColourShown + ", night " + FogBanks.Night.ToString("F2") + ", veil " + FogBanks.TintShown.ToString("F2") + ", density " + FogBanks.ShownDensity.ToString("F2"));
 				yield return CameraShot(eye, at, "fog_night");
 				FogBanks.TestTarget = 0f;

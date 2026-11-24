@@ -230,6 +230,14 @@ namespace DynamicIslands.Editor
 
 		/// <summary>How dark the hour is, 0 (day) to 1 (night), from the sky's horizon ambient (W8).</summary>
 		public static float Night { get; private set; }
+		/// <summary>The brightness of the sky's horizon ambient that Night came from (tests).</summary>
+		public static float HorizonLum { get; private set; }
+		/// <summary>
+		/// The horizon ambient's brightness at which Night is 1 (and below) and 0 (and above). Raft's night ambient is not
+		/// near black: about 0.21 at 23:00 against about 0.66 by day, so the first bounds (0.08-0.3) gave a night of only
+		/// 0.38 at 23:00 and the night look (NightDensity, NightTint, NightGrey) was mostly not used - W8.
+		/// </summary>
+		internal static float NightLum = 0.24f, DayLum = 0.45f;
 		/// <summary>The fog's colour shown now (tests).</summary>
 		public static Color ColourShown { get; private set; }
 		/// <summary>
@@ -244,7 +252,8 @@ namespace DynamicIslands.Editor
 			Color c = RenderSettings.ambientMode == UnityEngine.Rendering.AmbientMode.Trilight
 				? Color.Lerp(RenderSettings.ambientEquatorColor, RenderSettings.ambientSkyColor, 0.25f) : RenderSettings.ambientLight;
 			float lum = 0.2126f * c.r + 0.7152f * c.g + 0.0722f * c.b;
-			Night = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.08f, 0.3f, lum));
+			HorizonLum = lum;
+			Night = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(NightLum, DayLum, lum));
 			float grey = Mathf.Lerp(Grey, NightGrey, Night);
 			c = Color.Lerp(c, new Color(lum, lum, lum) * 1.1f, grey);
 			c = new Color(Mathf.Max(c.r, NightFloor.r), Mathf.Max(c.g, NightFloor.g), Mathf.Max(c.b, NightFloor.b), 1f);
