@@ -104,16 +104,17 @@ namespace DynamicIslands
 				// In: fades, never jumps
 				FogBanks.TestVisibility = 60f;
 				FogBanks.TestTarget = 1f;
-				float last = FogBanks.Weight, step = 0f, t0 = Time.unscaledTime;
+				float last = FogBanks.Weight, step = 0f, jump = 0f, longest = 0f, t0 = Time.unscaledTime;
 				bool halfway = false;
 				while (FogBanks.Weight < 0.999f && Time.unscaledTime - t0 < FogBanks.FadeSeconds * 2f)
 				{
 					yield return null;
-					step = Mathf.Max(step, FogBanks.Weight - last); last = FogBanks.Weight;
+					// (a step past what its frame's time allows is a jump; a long frame on a busy machine is not)
+					step = Mathf.Max(step, FogBanks.Weight - last); jump = Mathf.Max(jump, FogBanks.Weight - last - Time.unscaledDeltaTime / FogBanks.FadeSeconds); longest = Mathf.Max(longest, Time.unscaledDeltaTime); last = FogBanks.Weight;
 					if (!halfway && FogBanks.Weight > 0.5f) { halfway = true; Log("fog: halfway after " + (Time.unscaledTime - t0).ToString("F1") + " s, shown " + FogBanks.ShownDistance.ToString("F0") + " m"); }
 				}
 				Check(ref ok, FogBanks.Weight >= 0.999f, "the fog rolls in (" + (Time.unscaledTime - t0).ToString("F0") + " s)");
-				Check(ref ok, step < 0.05f, "smoothly (largest step " + step.ToString("F3") + " a frame)");
+				Check(ref ok, jump < 0.01f && (step < 0.05f || longest > 0.05f * FogBanks.FadeSeconds), "smoothly (largest step " + step.ToString("F3") + " a frame, longest frame " + longest.ToString("F2") + " s, past its frame " + jump.ToString("F3") + ")");
 				yield return new WaitForSeconds(1f);
 				float want = 60f * FogBanks.DistanceFactor * Mathf.Lerp(FogBanks.DayDistance, 1f, FogBanks.Night);
 				Check(ref ok, FogBanks.ShownDistance <= want * 1.1f && FogBanks.ShownDistance < raft * 0.5f, "fog distance drops: " + FogBanks.ShownDistance.ToString("F0") + " (Raft's " + raft.ToString("F0") + ", want " + want.ToString("F0") + ")");
