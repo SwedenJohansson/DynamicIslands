@@ -3950,7 +3950,7 @@ late, as a grey shape that firms up as you sail closer, so the **Receiver's rada
   the same banks.
 - **It fades:** the fog thickens over about an in-game hour and thins out the same way at the end - never a jump. A
   message says when it rolls in.
-- **Raft's own sky draws it,** with a veil in the fog's colour over the whole view so the sea fades too, by day grey-white and at night dark, with Raft's colours of the hour; Raft's weather
+- **Raft's own sky draws it,** with a light veil in the fog's colour over the whole view so the sea fades too: by day a soft grey-white haze that lets near things keep their colours, at night a moonlit blue-grey in which you can still make out an island's shape close by; Raft's weather
   goes on as before underneath. **While a storm blows** (rain, rough snow, big waves - Raft's own or Storm days) the
   wind keeps the fog away. Under water it does nothing.
 - **Every player sees the same fog at the same time:** each machine works out the banks from the host's world seed and
@@ -4298,8 +4298,10 @@ multiplayer each player moves only themselves: nobody else is taken to the raft.
 ## 10. Settings files
 
 In `<Raft>\Mods\DynamicIslands\`. Text files: open them with Notepad. They explain themselves, and changes are picked
-up while the game runs - but edit them with Raft closed where you can: the mod rewrites some files itself, and a change
-made while Raft runs can be lost or mixed in half-way. Never edit the files in `worlds\` (the mod rewrites them at every
+up while the game runs (`spawnpool.txt` a second after you save it, so a save still going on is not read half-way; a
+file another program holds locked keeps the values read before and is read again once it can be) - but edit them with
+Raft closed where you can: the mod rewrites some files itself (the Defaults... window, a rename, a library update), and
+when it does while the file is open in Notepad, the one that saves last wins. Never edit the files in `worlds\` (the mod rewrites them at every
 save, and Tidy up and host swaps read their first lines). You don't need to edit them by hand: **Defaults...** in the World settings window of Raft's
 New Game box ([9.1](#91-the-world-settings-window)) sets the `spawnpool.txt` values in a window. It is only there:
 **Esc > Custom Islands** in a world has the world's own settings, not these. In a world, the world's regrow days are the

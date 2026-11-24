@@ -239,7 +239,7 @@ Island files and settings live in `<Raft>\Mods\DynamicIslands\`:
 ### Keys in the settings files
 
 `spawnpool.txt`, `world_rules.txt` and `randomizer.txt` are written by the mod and can be edited by hand (changes are
-picked up while the game runs). **Defaults...** in World settings sets the first in a window. A decimal comma (`0,5`) reads as 0.5 (only a number with one comma and no dot).
+picked up while the game runs: `spawnpool.txt` a second after the save, so a save still going on is not read half-way; edit with Raft closed where you can). **Defaults...** in World settings sets the first in a window. A decimal comma (`0,5`) reads as 0.5 (only a number with one comma and no dot).
 
 **`spawnpool.txt`** (the host's counts; lines that start with `#` are notes; a number outside its range is kept within it, and an unknown key is ignored and named in the log):
 
@@ -577,7 +577,7 @@ It counts with plans that use random islands (Random islands, or a plan with ran
   sees the same one at the same time (the host sends its path and colour).
 - **Fog banks:** on about three days in five thick fog rolls in for three to six hours, by day or at night, fading in
   and out over an in-game hour. In it you see only 45-75 m, so islands show up late and the radar matters. Raft's own
-  sky draws it, with a veil in its colour so the sea fades too; a storm blows it away. Looks only; every player sees the same fog (worked out from the host's seed).
+  sky draws it, with a light veil so the sea fades too (a soft grey-white haze by day, a moonlit blue-grey at night that you can still see in); a storm blows it away. Looks only; every player sees the same fog (worked out from the host's seed).
 - **Whale breach:** now and then by day (about once or twice a Raft day) a whale breaches 170-320 m from the raft:
   it rises, leaps half out of the water, falls back with a big splash and spray, and dives away. Raft's own whale; looks
   only, it never comes near the raft. Every player sees the same breach (the host sends where and which way).
