@@ -14,7 +14,7 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIFog", docs: "Dev, in game (host): Fog banks (TODO 4i). Checks the schedule (rate, hours, sight, storms, smooth ramps), then brings fog in now, checks that the sky's fog distance drops to the bank's sight, ends it and checks that Raft's own fog is back.")]
 		public static void FogCommand(string[] args) { StartTest(FogRoutine()); }
 
-		[ConsoleCommand(name: "CIFogLook", docs: "Dev, in game (host): pictures of a fog bank - an island looming out of it by day and the fog at night (shot_fog_day.png, shot_fog_day_far.png, shot_fog_day_near.png, shot_fog_day_clear.png, shot_fog_night.png, shot_fog_night_clear.png). CIFogLook [sight m] [white=|tint=|near=|blend= day-look values to try]")]
+		[ConsoleCommand(name: "CIFogLook", docs: "Dev, in game (host): pictures of a fog bank - an island looming out of it by day and the fog at night (shot_fog_day.png, shot_fog_day_far.png, shot_fog_day_near.png, shot_fog_day_shore.png, shot_fog_day_clear.png, shot_fog_night.png, shot_fog_night_clear.png). CIFogLook [sight m] [white=|tint=|near=|dist=|blend= day-look values to try]")]
 		public static void FogLookCommand(string[] args)
 		{
 			float sight = 60f;
@@ -27,6 +27,7 @@ namespace DynamicIslands
 					if (kv[0] == "white") FogBanks.DayWhite = v;
 					else if (kv[0] == "tint") FogBanks.DayTint = v;
 					else if (kv[0] == "near") FogBanks.DayNearStart = v;
+					else if (kv[0] == "dist") FogBanks.DayDistance = v;
 					else if (kv[0] == "blend") FogBanks.DayBlend = v < 0f ? (float?)null : v;
 				}
 				else if (float.TryParse(a, NumberStyles.Float, CultureInfo.InvariantCulture, out v)) sight = v;
@@ -114,7 +115,7 @@ namespace DynamicIslands
 				Check(ref ok, FogBanks.Weight >= 0.999f, "the fog rolls in (" + (Time.unscaledTime - t0).ToString("F0") + " s)");
 				Check(ref ok, step < 0.05f, "smoothly (largest step " + step.ToString("F3") + " a frame)");
 				yield return new WaitForSeconds(1f);
-				float want = 60f * FogBanks.DistanceFactor;
+				float want = 60f * FogBanks.DistanceFactor * Mathf.Lerp(FogBanks.DayDistance, 1f, FogBanks.Night);
 				Check(ref ok, FogBanks.ShownDistance <= want * 1.1f && FogBanks.ShownDistance < raft * 0.5f, "fog distance drops: " + FogBanks.ShownDistance.ToString("F0") + " (Raft's " + raft.ToString("F0") + ", want " + want.ToString("F0") + ")");
 				Check(ref ok, FogBanks.ShownDensity > 0.95f, "thick: density " + FogBanks.ShownDensity.ToString("F2"));
 				Check(ref ok, RenderSettings.fog && FogBanks.NearEndShown > 0f && RenderSettings.fogEndDistance <= 60f * FogBanks.NearEnd * 1.1f,
@@ -210,6 +211,12 @@ namespace DynamicIslands
 				yield return CameraShot(eye, at, "fog_day_clear");
 				Vector3 nearEye = eyeAt(15f);
 				yield return CameraShot(nearEye, at, "fog_day_near_clear");
+				// The shore close up (W8 day): 3 m in from the island's edge, seen from 15 m out on the water (about 18 m)
+				RaycastHit shoreHit;
+				Vector3 shore = centre + dir * Mathf.Max(0f, edge - 3f);
+				shore = Physics.Raycast(new Vector3(shore.x, 300f, shore.z), Vector3.down, out shoreHit, 600f, ~0, QueryTriggerInteraction.Ignore) ? shoreHit.point + Vector3.up * 0.3f : new Vector3(shore.x, 1f, shore.z);
+				Vector3 shoreEye = centre + dir * (edge + 15f) + Vector3.up * 3f;
+				yield return CameraShot(shoreEye, shore, "fog_day_shore_clear");
 				FogBanks.TestVisibility = sight; FogBanks.TestInstant = true; FogBanks.TestTarget = 1f;
 				yield return new WaitForSeconds(2f);
 				Log("fog look: day, shown " + FogBanks.ShownDistance.ToString("F0") + " (Raft's " + FogBanks.RaftDistance.ToString("F0") + "), colour " + FogBanks.ColourShown + ", night " + FogBanks.Night.ToString("F2") + ", veil " + FogBanks.TintShown.ToString("F2"));
@@ -217,16 +224,14 @@ namespace DynamicIslands
 				// Looming: the shore from further out (only a shadow) and closer in (firming up)
 				yield return CameraShot(eyeAt(sight * 1.2f), at, "fog_day_far");
 				yield return CameraShot(nearEye, at, "fog_day_near");
+				yield return CameraShot(shoreEye, shore, "fog_day_shore");
 				// The day look (W8 day): near things keep their colours, the far island still fades - into a grey-white, not cyan.
-				// The near point: the shore on the camera's line (the beach 20-25 m off); the far one: the island's top.
+				// The near point: the shore close up (shot_fog_day_shore, about 18 m off); the far one: the island's top.
 				Log("fog look: day look white " + FogBanks.DayWhite.ToString("F2") + " (shown " + FogBanks.SkyWhiteShown.ToString("F2") + "), veil x" + FogBanks.DayTint.ToString("F2") + ", clear ring x" + FogBanks.DayNearStart.ToString("F2") + ", blend " + (FogBanks.DayBlend.HasValue ? FogBanks.DayBlend.Value.ToString("F2") : "Raft's") + " (Raft's " + FogBanks.RaftBlend.ToString("F2") + ")");
-				RaycastHit shoreHit;
-				Vector3 shore = centre + dir * Mathf.Max(0f, edge - 3f);
-				shore = Physics.Raycast(new Vector3(shore.x, 300f, shore.z), Vector3.down, out shoreHit, 600f, ~0, QueryTriggerInteraction.Ignore) ? shoreHit.point + Vector3.up * 0.3f : new Vector3(shore.x, 1f, shore.z);
 				Vector2 pxN, pxF;
-				Color nearClear = ShotPatch("fog_day_near_clear", nearEye, at, shore, out pxN), nearFog = ShotPatch("fog_day_near", nearEye, at, shore, out pxN);
+				Color nearClear = ShotPatch("fog_day_shore_clear", shoreEye, shore, shore, out pxN), nearFog = ShotPatch("fog_day_shore", shoreEye, shore, shore, out pxN);
 				Color farClear = ShotPatch("fog_day_clear", eye, at, at, out pxF), farFog = ShotPatch("fog_day", eye, at, at, out pxF);
-				float nearM = Vector3.Distance(nearEye, shore);
+				float nearM = Vector3.Distance(shoreEye, shore);
 				Log("fog look: near " + nearM.ToString("F0") + " m at px " + pxN.x.ToString("F0") + "," + pxN.y.ToString("F0") + " (from the bottom): clear " + Rgb(nearClear) + " sat " + Sat(nearClear).ToString("F2") + ", fog " + Rgb(nearFog) + " sat " + Sat(nearFog).ToString("F2") + ", diff " + Diff(nearClear, nearFog).ToString("F2"));
 				Log("fog look: far " + Vector3.Distance(eye, at).ToString("F0") + " m at px " + pxF.x.ToString("F0") + "," + pxF.y.ToString("F0") + ": clear " + Rgb(farClear) + ", fog " + Rgb(farFog) + " sat " + Sat(farFog).ToString("F2") + ", diff " + Diff(farClear, farFog).ToString("F2"));
 				if (pxN.x < 0f || pxF.x < 0f) Fail("the day look: no colours read from the pictures");

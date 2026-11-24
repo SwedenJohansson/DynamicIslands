@@ -255,9 +255,11 @@ namespace DynamicIslands.Editor
 		/// (AzureSkyFogScattering's material, a copy of it while a bank is shown - SkyFogColour) and Unity's near fog go to a
 		/// grey-white of their own brightness. DayTint: the veil by day (x TintAlpha; NightTint at night). DayNearStart: the
 		/// clear ring of the near fog by day (x sight; NearStart at night). DayBlend: AzureSky's fog blend by day (null =
-		/// Raft's). All of it x (1 - Night) and only in a bank: the night look and Raft's own fog stay as they were.
+		/// Raft's). DayDistance: the sky fog's distance by day (x sight x DistanceFactor; 1 at night) - the sky's fog is
+		/// whole well before its distance, and at 1 the shore 20 m off went flat too.
+		/// All of it x (1 - Night) and only in a bank: the night look and Raft's own fog stay as they were.
 		/// </summary>
-		internal static float DayWhite = 0.8f, DayTint = 0.45f, DayNearStart = 0.4f;
+		internal static float DayWhite = 1f, DayTint = 0.3f, DayNearStart = 0.5f, DayDistance = 2f;
 		internal static float? DayBlend;
 		static Color FogColour()
 		{
@@ -409,7 +411,7 @@ namespace DynamicIslands.Editor
 				return default(Saved);
 			}
 			Saved saved = new Saved { Set = true, Distance = s.fogDistance, Density = s.fogDensity, Blend = s.fogBlend };
-			float want = Mathf.Max(5f, Visibility * DistanceFactor);
+			float want = Mathf.Max(5f, Visibility * DistanceFactor * Mathf.Lerp(DayDistance, 1f, Night));
 			float from = Mathf.Max(want, s.fogDistance);
 			// (never thinner than Raft's own: its foggy weather may already be closer)
 			// (both worked out before either is set: nothing between them can throw and leave the sky half-changed with no
