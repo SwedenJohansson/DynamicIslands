@@ -124,7 +124,9 @@ prop denbear creature.count=1
 prop denbear creature.respawn=0
 # (11-24 REACH: 'sit' put it on the den piece's buried floor at 13.6, 0.6 m under the sand the world keeps here (14.1-14.4):
 # no spot to use it from - set on the sand)
-place Loot_Chest dencache at 1 -27 h=14.35 yaw=180
+# (bugfix 11-25, CIFloating: at 14.35 it stood 0.47 m over the editor's ground (13.88) with nothing under it - its bottom
+# at 14.15, 0.27 m over that and at most 0.25 m into the world's sand)
+place Loot_Chest dencache at 1 -27 h=14.15 sit yaw=180
 place "Pickup_Landmark_Iron 1" - at -5 -11 sit
 place "Pickup_Landmark_Copper 1" - at -5.2 -18 sit
 place "Pickup_Landmark_Iron 2" - at 7.6 -22 sit
@@ -449,7 +451,9 @@ clear at -16.24 47.33 r=2 all only=^Balboa_Bush_03
 clear at -23.39 55.0 r=2 all only=^Balboa_Bush_03
 # (c3z43: in the Flooded Passage's dead end, from a spot on its floor by the west wall, the look down met the back of the
 # rock's inner slab 2.6 m off - a hole in Raft's own rock there: a boulder on that spot)
-place SmallBoulder3 - at -27.2 -22.7 h=6.5 drop scale=1.6
+# (bugfix 11-25, CIFloating: 'drop' set it on a ledge of the piece's wall, its middle 0.9 m over the dead end's floor
+# (4.97) - set on the floor)
+place SmallBoulder3 - at -27.2 -22.7 h=4.9 sit scale=1.6
 # (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth; the hill over the Fungus Hall and Flooded Passage

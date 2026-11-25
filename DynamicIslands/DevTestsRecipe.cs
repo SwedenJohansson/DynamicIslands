@@ -1018,6 +1018,10 @@ namespace DynamicIslands
 				// and what the generator set on the old ground stands on it - Rootweave's west side over the Flooded Passage, its
 				// palms and boulders 17 m over the trench under the hill, isl-fix 11-24)
 				if (OnCaveSkin(e, p)) continue;
+				// (set into a cave hill: the first thing over its foot is the hill's skin, met from below - it lies in the hill, under the
+				// ground a player walks on, as the rock set in the earth to close a slit seen from Rootweave's Flooded Passage dead end
+				// (bugfix 11-25); a rock hanging in a cave's room meets the room's roof first and still counts)
+				if (InCaveSkin(e, p)) continue;
 				// (set up on purpose: a standing stone reaches down to the ground, a flowerpot stands on a roof, a rockfall's
 				// boulder on the one under it - only what hangs over the ground with nothing under it is lifted)
 				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
@@ -4557,6 +4561,24 @@ namespace DynamicIslands
 				foreach (RaycastHit h in Physics.RaycastAll(from, Vector3.down, 1.4f, ~0, QueryTriggerInteraction.Ignore))
 					if (h.collider != null && h.collider.name == CaveMountain.SkinName) return true;
 			return false;
+		}
+
+		/// <summary>The thing's foot under a cave hill's skin (CaveMountain.SkinName): a ray up from it meets the skin's
+		/// underside before anything else that is not the thing itself.</summary>
+		static bool InCaveSkin(EditorGameObject e, Vector3 p)
+		{
+			bool was = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				foreach (RaycastHit h in Physics.RaycastAll(p, Vector3.up, 60f, ~0, QueryTriggerInteraction.Ignore).OrderBy(x => x.distance))
+				{
+					if (h.collider == null || h.collider.GetComponentInParent<EditorGameObject>() == e) continue;
+					return h.collider.name == CaveMountain.SkinName;
+				}
+				return false;
+			}
+			finally { Physics.queriesHitBackfaces = was; }
 		}
 
 		static bool ShowsAboveGround(Bounds b, Terrain ground)

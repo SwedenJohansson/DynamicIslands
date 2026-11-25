@@ -140,6 +140,10 @@ call hw_trail x=0 z=-74 b=24 h=26 a0=0 turn=300 n=30 h0=3
 brush flatten at 0 -74 r=8 s=20 frames=400 h=26
 # (11-24 REACH: the deck sunk 0.45 m under the ladder's top, as Old Mine's headframe: the climber could not step off it)
 call hw_mast x=0 z=-74 h0=26 lv=6 a=lighthousemast chest=keeperbox top=Placeable_Lantern_Metal deckdrop=0.45
+# (bugfix 11-25, REACH: the walker that came round the summit to the mast's 0.9 m door from its south-west corner
+# caught the door's frame and slid off round the west wall (11-24 and 11-25 runs alike, the keeper's box out of reach):
+# the door piece taken out, a 1.5 m gap in the bottom storey's front wall)
+clear at -0.75 -75.5 r=0.6 all only=Block_Wall_Door_Tier3
 # B Olof's crew camp (west): their stone hut, a tent, a fire, their boxes
 call rr_pad x=-72 z=4 h=3 r=14
 call rr_ruin x=-72 z=8 h=3 yaw=0 w=3 d=2 al=crewhut
@@ -503,10 +507,17 @@ pop
 brush flatten at 90 -8 r=6 s=20 frames=200 h=-5
 brush smooth at 90 -8 r=9 s=6 frames=20
 brush flatten at 90 -8 r=3.5 s=20 frames=200 h=-5
-# (bugfix 11-25, REACH: two shore lips a swimmer could not climb out over - the quarry sea door's walk stuck in the sea
-# at 93 -20 below a 0.8 m lip, the Keeper's box walk at -27 63 under a 0.5 m step of 64 deg; both smoothed to a slope)
-brush smooth at 93.2 -20.1 r=3.5 s=10 frames=40
-brush smooth at -26.7 63 r=3.5 s=10 frames=40
+# (bugfix 11-25, REACH: the east shore at 108-114 -32..-42, where the swimmer from the sea door and the quarry sea door
+# comes to land, rose 1 m in 1 m from the water (-0.9 to 0.8): the swimmer, afloat at -1.1, rose 0.07 m and stayed in
+# the sea. A beach 10 m wide from 1.6 m under the water up to the bank, 0.3 m a step to above the water, then 0.45 m)
+for i 0 7 1
+brush flatten from {116.4-$i*0.8} -31.5 to {116.4-$i*0.8} -42.5 r=0.9 s=20 frames=200 h={-1.6+$i*0.3}
+next
+for i 0 3 1
+brush flatten from {110.0-$i*0.8} -31.5 to {110.0-$i*0.8} -42.5 r=0.9 s=20 frames=200 h={0.65+$i*0.45}
+next
+brush smooth from 116 -37 to 108 -37 r=6 s=3 frames=10
+clear from 116.4 -37 to 107.6 -37 r=6 body
 # (11-16 w13 build: the islet was hill mesh only, over open sea - the room showed the sea through its wall and the
 # islet's side had a hole. A low terrain pad under the room and dome gives the mesh ground to stand on.)
 call rr_pad x=90 z=-50 h=2 r=12
