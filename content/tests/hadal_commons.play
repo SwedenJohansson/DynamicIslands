@@ -2,7 +2,7 @@
 # anglers, the toolmaker's chest, house 2, the last broadcast, the broadcast room chest (the cage key), house 3, Ines
 # freed (her bag opens only then), her account, the warden's chest, the doors.
 island Hadal Commons
-offset 0 0
+offset 0.6093 0.5358
 expect step 0
 expect title The City Below
 zone surface_buoy

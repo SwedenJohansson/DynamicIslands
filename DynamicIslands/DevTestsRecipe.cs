@@ -1007,6 +1007,10 @@ namespace DynamicIslands
 				Vector3 p = e.transform.position;
 				float land = ground.SampleHeight(p) + ground.transform.position.y;
 				if (p.y - land <= 0.5f) continue;
+				// (a cave hill's skin is the ground where it lies: a world's mountain over a cave piece is draped over the cut terrain,
+				// and what the generator set on the old ground stands on it - Rootweave's west side over the Flooded Passage, its
+				// palms and boulders 17 m over the trench under the hill, isl-fix 11-24)
+				if (OnCaveSkin(e, p)) continue;
 				// (set up on purpose: a standing stone reaches down to the ground, a flowerpot stands on a roof, a rockfall's
 				// boulder on the one under it - only what hangs over the ground with nothing under it is lifted)
 				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
@@ -1027,7 +1031,7 @@ namespace DynamicIslands
 						on.collider.GetComponentInParent<EditorGameObject>() != e) continue;
 				}
 				lifted++;
-				if (lifted <= floatDetail) FLog("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground");
+				if (lifted <= floatDetail) FLog("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground" + UnderIt(e, p));
 			}
 			// Objects in the air touching nothing, and objects buried whole under the ground (the user, 2026-10-02: the Stranded
 			// Gull's boat was set down by its middle and sank under the beach - its locker and crate hung in the air over it)
@@ -4522,6 +4526,28 @@ namespace DynamicIslands
 				if (!held) return false;
 			}
 			return true;
+		}
+
+		// (what is under a lifted plant, for the log: the first thing below its foot that is not itself, and how far down)
+		static string UnderIt(EditorGameObject e, Vector3 p)
+		{
+			foreach (RaycastHit h in Physics.RaycastAll(new Vector3(p.x, p.y + 0.3f, p.z), Vector3.down, 40f, ~0, QueryTriggerInteraction.Ignore).OrderBy(x => x.distance))
+				if (h.collider != null && h.collider.GetComponentInParent<EditorGameObject>() != e) return " (under it: " + h.collider.name + " " + Num(h.distance - 0.3f) + " m down)";
+			return " (under it: nothing in 40 m)";
+		}
+
+		/// <summary>The thing's foot or its body's bottom over a cave hill's skin (CaveMountain.SkinName) within 1.1 m (rays from
+		/// 0.3 m over them): it stands on the mountain the world drapes over the island's caves - ground to a player, though the
+		/// terrain under it lies lower.</summary>
+		static bool OnCaveSkin(EditorGameObject e, Vector3 p)
+		{
+			float bottom = p.y;
+			Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).ToArray();
+			if (parts.Length > 0) { Bounds whole = parts[0].bounds; foreach (Renderer r in parts) whole.Encapsulate(r.bounds); bottom = Mathf.Min(bottom, whole.min.y); }
+			foreach (Vector3 from in new[] { new Vector3(p.x, p.y + 0.3f, p.z), new Vector3(p.x, bottom + 0.3f, p.z) })
+				foreach (RaycastHit h in Physics.RaycastAll(from, Vector3.down, 1.4f, ~0, QueryTriggerInteraction.Ignore))
+					if (h.collider != null && h.collider.name == CaveMountain.SkinName) return true;
+			return false;
 		}
 
 		static bool ShowsAboveGround(Bounds b, Terrain ground)

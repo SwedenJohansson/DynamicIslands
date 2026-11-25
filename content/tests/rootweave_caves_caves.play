@@ -4,7 +4,7 @@
 # The thorn drift walked along its planks to the survey kit at its end and back. Run under CIGapsWatchHealth: no walk
 # here may cost health.
 island Rootweave Caves keep
-offset 0 0
+offset 1.2266 0.3427
 hour 11
 weather Calm
 where Loot_ChestSmall

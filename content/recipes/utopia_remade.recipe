@@ -138,7 +138,8 @@ clear at 0 -74 r=30 all body
 call hw_mount x=0 z=-74 b=24 h=26
 call hw_trail x=0 z=-74 b=24 h=26 a0=0 turn=300 n=30 h0=3
 brush flatten at 0 -74 r=8 s=20 frames=400 h=26
-call hw_mast x=0 z=-74 h0=26 lv=6 a=lighthousemast chest=keeperbox top=Placeable_Lantern_Metal
+# (11-24 REACH: the deck sunk 0.45 m under the ladder's top, as Old Mine's headframe: the climber could not step off it)
+call hw_mast x=0 z=-74 h0=26 lv=6 a=lighthousemast chest=keeperbox top=Placeable_Lantern_Metal deckdrop=0.45
 # B Olof's crew camp (west): their stone hut, a tent, a fire, their boxes
 call rr_pad x=-72 z=4 h=3 r=14
 call rr_ruin x=-72 z=8 h=3 yaw=0 w=3 d=2 al=crewhut
@@ -152,7 +153,9 @@ call ar_cave x=62 z=-36 h=3 yaw=180 al=quarryrock chest=quarrybox
 call ar_plane x=-48 z=46 h=3 yaw=150 al=wardenplane crate=planecrate
 # E The cargo yard (south-east): containers the storm threw up, the yard's crate
 call rr_containers x=42 z=-54 h=3 yaw=-20 n=3 al=yardcontainer
-place Loot_Crate yardcrate at 34 -46 ground sit yaw=10
+# (11-24 REACH: at 34 -46 a cave hill's skin lay 0.6 m under the yard's ground and the crate was 'can't get there', the
+# nearest reached spot 3.5 m off at 30.9 -48.3 - moved there)
+place Loot_Crate yardcrate at 31.2 -48.2 ground sit yaw=10
 # (agent Q 10-30, REACH: sea lay between the cargo yard and the quarry cave's mouth path - the cave and the quarrymen's
 # strongbox had no way in on foot: a strip of land joins them)
 brush flatten from 52 -52.2 to 60.5 -52 r=3.5 s=20 frames=200 h=3.2
@@ -580,6 +583,11 @@ info title=Utopia Remade
 info author=Custom Islands
 info description=Raft's Utopia made anew - the end of the voyage, on an island as big as Raft's own: docks with Utopia's market, Lighthouse Head, Olof's crew camp, a quarry, the warden's prison house on its stilts, and on the summit his yard behind a thatch palisade, its gate locked with two keys. His hyenas wait inside. Raft Remade's eighth and last island.
 island on.arrive=message||Docks, market stalls, a prison house on stilts - and on the summit a thatch palisade, its gate shut. Somewhere behind it, hyenas laugh.
+# (isl-fix 11-24, REACH: the warden's yard is shut behind the three-key gate (a quest gate, not a door the measure opens) -
+#     its four targets are checked by the island's play, which unlocks the gate and opens each)
+# (and the Quarrymen's lower store: utopia_remade_cave.play walks the sea door's tunnel in to it and opens it; the grid
+# can't see the way through the kit_st tunnel's rock, 11-24)
+island reach.byplay=Warden's table;Warden's pot;Warden's jar;Warden's chest;Quarrymen's lower store
 
 story dockkey|Dock master's key|quest:Utopia_KeyEntrance|One of the two keys to the warden's gate - the dock master's.
 story prisonkey|Prison clerk's key|quest:Utopia_KeyPrison|One of the two keys to the warden's gate - the prison clerk's.
@@ -735,4 +743,8 @@ clear at -69.91 14.99 r=0.8 all only=Bamboo
 clear at 58.66 -24.19 r=0.8 all only=Bamboo
 reseat trees
 
+# (11-24 REACH: two of the generator's supply chests stood in the hollow under a cave hill's skin, in its rock -
+# 'can't get there' from all sides; taken off)
+clear at 29.7 -33.5 r=1.5 all
+clear at 29.7 -14 r=1.5 all
 save Utopia Remade

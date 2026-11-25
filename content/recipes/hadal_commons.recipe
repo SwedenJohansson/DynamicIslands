@@ -161,7 +161,9 @@ call airpocketat x=6.5 z=4.5 h=0 id=cellar al=cellarair bub=cellarbub r=2.4 msg=
 # --- The warden's post and the great doors ------------------------------------------------------------------------------
 push at 5 -11 h=0
 call stonehouse w=2 d=2 a=houses
-place Loot_Chest wardenchest at 2.2 2.2 y=0 sit yaw=180
+# (isl-fix 11-24, REACH: in the back corner the chest stood 3.2 m from where a diver coming in at the door could reach - moved
+# in towards the door)
+place Loot_Chest wardenchest at 2.0 1.2 y=0 sit yaw=180
 # (fxT 11-01, ground check: the roof blocks lay on the walls' tops with nothing under them - stone pillars in the corners carry it)
 place Block_Pillar_Tier3 hcposts at 0.15 0.15 y=0
 place Block_Pillar_Tier3 hcposts at 0.15 2.85 y=0
@@ -227,6 +229,11 @@ call sk_reef x=-2 z=-71 r=6 seed=10861
 call sk_reef x=28 z=-68 r=5 seed=10871
 call sk_zone x=-2 z=-71 al=hc_ridge id=hc_ridge r=7 msg="The terrace ridge. The Commons' windows climb the trench wall behind you, warm and few."
 call sk_cave x=-60 z=-12 h=2 yaw=0 al=hc_caverock chest=hc_cavechest
+# (isl-fix 11-24, REACH: the den's dry dome, uncapped, reached 66 m back and 20 m in front - its skin lay over the pit, the
+# trap gauntlet and the city's dives and stopped the walker going down; capped as the other islands' dens, CAVE_LESSONS cave.dome)
+# (11-25: 14 cut its front to 4 m and the dome's foot sank across its own way in - the den sealed; 30 keeps the front 9 m
+# and the back short of the pit 36 m behind it)
+prop hc_caverock cave.dome=30
 call sk_zone x=-60 z=-7 al=hc_cave id=hc_cave r=4 msg="The quarry cave the city was cut from. Air hangs under its roof."
 call airpocketat x=-57.4 z=-8 h=3.6 id=hc_air al=hc_air bub=hc_airbub r=2.2 msg="Air under the rock - breathe."
 call sk_ruin x=60 z=56 h=2 al=hc_ruin
@@ -253,6 +260,9 @@ call sk_seamount x=-12 z=74 top=47.5 r=22
 # (CIFloating 11-05: the pit floor at the block's own -6 left its ground floor a few cm under the ground)
 call sk_pit x=-66 z=-48 h0=-6.15
 call sk_cave x=74 z=-22 h=2 yaw=0 al=hccave2 chest=hccave2chest
+# (isl-fix 11-24, REACH + cave gap: the second den's dome skin lay 0.6 m over its own way in and the warden's spare chest's
+# path - capped as the first)
+prop hccave2 cave.dome=14
 call sk_reef x=7.8 z=74 r=6 seed=24710
 call sk_reef x=-27.4 z=87.2 r=6 seed=24720
 call sk_reef x=-56 z=-42 r=5 seed=24730
@@ -327,6 +337,9 @@ clear at 63.65 57.2 r=0.8 all only=SmallBoulder2
 clear at -63 -43.5 r=0.3 all only=RT_WallWindowBroken above=-1 below=1
 clear at -63 -46.5 r=0.3 all only=RT_WallWindowBroken above=-1 below=1
 clear at -63 -44.25 r=0.8 all only=RT_Fence above=2 below=4
+# (11-24 REACH: with the top storey's walls and the roof rail gone, the top ladder led up the hatch shaft to a roof with
+# no floor to step off onto - 'no floor at its top'; the building is under water, swum through: the top one gone too)
+clear at -63.75 -43.8 r=0.6 all only=Block_Ladder above=-1 below=1
 
 info title=Hadal Commons
 info author=Custom Islands

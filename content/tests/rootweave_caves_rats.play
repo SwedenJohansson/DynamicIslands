@@ -2,7 +2,7 @@
 # the ramp's foot) - alive, on the dug floor, under the rock, walking. The player waits outside mouth C, far from both.
 # Points as in its recipe.
 island Rootweave Caves keep
-offset 0 0
+offset 1.2266 0.3427
 hour 11
 weather Calm
 at 8.2 44
