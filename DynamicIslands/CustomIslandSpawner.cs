@@ -890,7 +890,9 @@ namespace DynamicIslands.Editor
 			{
 				if (WorldRandomizer.IsExtras(e) || !string.Equals(e.HostName ?? e.Name, name, StringComparison.OrdinalIgnoreCase)) continue;
 				if (e.Root != null || e.Loading || e.WaitingForFile) return true;
-				if (HasQuest(e) && ReturningIslands.Finished(e)) return true;
+				// (Finished first: it says no without reading the island's file for one never reached - HasQuest reads the whole
+				// file, every pool island's on a new session's first pick: 1.6-2.4 s with 150 islands, IM43 11-25)
+				if (ReturningIslands.Finished(e) && HasQuest(e)) return true;
 			}
 			return false;
 		}
