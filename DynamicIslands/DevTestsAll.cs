@@ -33,7 +33,7 @@ namespace DynamicIslands
 
 		class ButtonRun
 		{
-			public int Pressed, Windows;
+			public int Pressed, Windows, UnderTopBar;
 			public readonly HashSet<Button> Done = new HashSet<Button>();
 			public readonly HashSet<string> Keys = new HashSet<string>(), Walked = new HashSet<string>();
 			public readonly List<string> Errors = new List<string>(), Unclosed = new List<string>(), Sampled = new List<string>();
@@ -290,9 +290,13 @@ namespace DynamicIslands
 			foreach (MonoBehaviour w in OpenWindows().Where(x => !before.Contains(x)).ToList())
 			{
 				run.Windows++;
-				// (the top bar is the same on every screen: its windows are walked once, not grown on each screen - e.g. templates added to a plan)
-				if (owner == "TopBar" &&!run.Walked.Add(key + " " + w.GetType().Name)) continue;
-				yield return TestWindow(run, w, b, run.Current, depth + 1);
+				// (the top bar is the same on every screen: its windows are walked once, not grown on each screen - e.g. templates added to a plan;
+				// so are the windows those open: Open, Save and Save as each open the islands window, and its My islands... was walked
+				// three times, each a few minutes on a test PC with 3469 islands and ~5,800 world files - 11-25)
+				if ((owner == "TopBar" || run.UnderTopBar > 0) && !run.Walked.Add(key + " " + w.GetType().Name)) continue;
+				if (owner == "TopBar") run.UnderTopBar++;
+				try { yield return TestWindow(run, w, b, run.Current, depth + 1); }
+				finally { if (owner == "TopBar") run.UnderTopBar--; }
 			}
 			// Whatever this press opened is closed again
 			foreach (MonoBehaviour w in OpenWindows().Where(x => !before.Contains(x)).ToList())
@@ -397,7 +401,10 @@ namespace DynamicIslands
 			// on every screen: ~300 buttons a screen on an 11634-object generated island, the run over 2 h - 10-13)
 			foreach (var group in owner.Cast<Transform>().Where(c => c.GetComponent<Button>() == null).GroupBy(c => c.name.Split('_')[0]))
 			{
-				var rows = group.Select(c => new KeyValuePair<Transform, HashSet<string>>(c, new HashSet<string>(c.GetComponentsInChildren<Button>(true).Select(LabelOfButton)))).Where(r => r.Value.Count > 0).ToList();
+				// (a row's button named for its entry, "Island_<name>", counts as shared too: My islands' rows each have one
+				// button, labelled with the island's own name - its up to 400 rows were all pressed on 3 screens, each pick reading
+				// every saved world, and 3 screens ran out of time on a test PC with 3469 islands - 11-25)
+				var rows = group.Select(c => new KeyValuePair<Transform, HashSet<string>>(c, new HashSet<string>(c.GetComponentsInChildren<Button>(true).SelectMany(RowKeys)))).Where(r => r.Value.Count > 0).ToList();
 				if (rows.Count <= ListThreshold) continue;
 				var shared = new HashSet<string>(rows.SelectMany(r => r.Value).GroupBy(l => l).Where(g => g.Count() > ListThreshold).Select(g => g.Key));
 				int n = 0;
@@ -406,7 +413,15 @@ namespace DynamicIslands
 			return result;
 		}
 
-		static bool InSampledList(Button b, Dictionary<Transform, Dictionary<Transform, int>> cache) { Transform owner; int index; return ListItemOf(b, cache, out owner, out index); }
+		/// <summary>What rows alike share: a button's label, and the name it was given before a "_&lt;entry&gt;" tail ("Island_", not UIKit's "Button_").</summary>
+		static IEnumerable<string> RowKeys(Button b)
+		{
+			yield return LabelOfButton(b);
+			int cut = b.name.IndexOf('_');
+			if (cut > 0 && b.name.Substring(0, cut) != "Button") yield return "\u0001name " + b.name.Substring(0, cut);
+		}
+
+		static bool InSampledList(Button b,Dictionary<Transform, Dictionary<Transform, int>> cache) { Transform owner; int index; return ListItemOf(b, cache, out owner, out index); }
 
 		/// <summary>The journal and the note reader belong to the world (CIWorldButtons).</summary>
 		static bool IsWorldOnly(Button b) { MonoBehaviour w = WindowOf(b); return w is JournalWindow || w is NoteReader; }

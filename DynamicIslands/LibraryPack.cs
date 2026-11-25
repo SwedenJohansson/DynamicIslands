@@ -1253,6 +1253,10 @@ namespace DynamicIslands.Editor
 			{
 				string now = IslandNetwork.HashOf(island);
 				if (now == null || IslandNetwork.IsDownloadName(island)) return result;
+				// (no kept copy <island>_<hash> here: no world can play an older one, and the scan below reads every saved world -
+				// 20-30 s for each island picked in My islands on a PC with ~5,800 world files, 11-25)
+				string kept = island + "_";
+				if (!IslandSpawner.ListSavedIslands().Any(n => n.Length == kept.Length + 12 && n.StartsWith(kept, StringComparison.OrdinalIgnoreCase) && IslandNetwork.IsHash(n.Substring(kept.Length)))) return result;
 				foreach (string file in WorldStateFiles())
 				{
 					string[] lines = File.ReadAllLines(file);
