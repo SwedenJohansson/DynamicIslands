@@ -212,3 +212,18 @@ Use `ci.ps1` in the repo root to run this mod's console commands (the CI* test c
 ## Raft's Controls rows for the mod keys: CIControlsKeys (`DevTestsControlsKeys.cs`)
 
 - `CIControlsKeys` (main menu or a world): opens Settings > Controls, checks the two rows (not Raft keybinds, below Raft's last row, same size, label fits, alt key "Not set" and not settable), rebinds through the row (Esc keeps, Return passed over, a Raft key allowed), checks `world_rules.txt`, `ModKeys` and the hotbar tab, Raft's reset (J/K), a change from Defaults, then puts every key back. Writes `shot_controls_keys_<menu|world>.png` scrolled to the bottom. `CIControlsDump` writes the Controls UI tree to `controls_dump.txt`.
+
+## Storyline steps: CIStorySteps (`DevTestsStorySteps.cs`, TEST_CATALOGUE SS1-SS9)
+- `make` (editor): 13 test islands `ciss-a..m` (+ quest-less `ciss-q`) and the plan "CI Story Steps" built only through the
+  World Plans window's controls (+ Add a rule, `DropList.Pick` on `Drop_What/When/WhenRef/WhenArg/Done/DoneArg/Where`,
+  `StoryPlace`, the ▾ `Pick_WhenRef`), every link kind: start, km, day, quest, zone, signal, step, rule (beside),
+  instead:/after: Raft's islands, done = quest/visit/step/zone/signal/note, side rules visit/near, quest/ahead, rule/sailing.
+- `part1` / `part2` (host, fresh world "CI ..." with the plan; save + load between them) play each step; `all` = both
+  (two players, no reload) and `client` (player 2) checks every island arrived. Lines `STEP <n> <kind>: PASS|FAIL`.
+- `checks` (editor): one broken plan "CI Story Check" per fault kind; asserts the Finding's level, field, plain text
+  (starts with `PlanChecker.RuleName`), Fix prefix, and that the report's Show rule sets `WorldPlanWindow.LastShownField`.
+- `clean` removes the islands and plans. Batch jobs: `D:\Temp\scratch_8e762ddb\storysteps\ss_*.sh`.
+- Test gotchas: tuning turns on `CustomIslandSpawner.TestAllRound` (the test's own islands leave "no free spot" ahead of
+  the raft); the walk-on spot keeps clear of every trigger zone (landing in 'gate' set off a later "when zone" rule);
+  after the reload the player is put near s3 so its island loads again. The final FAIL line lists the failed steps
+  (`ci.ps1` cuts long output, Player.log rotates).

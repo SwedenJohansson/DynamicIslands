@@ -23,7 +23,10 @@ namespace DynamicIslands.Editor
 			public int Rule = -1;
 			public Level Level;
 			public string Text = "", Fix = "";
-			public Finding(int rule, Level level, string text, string fix = "") { Rule = rule; Level = level; Text = text; Fix = fix ?? ""; }
+			/// <summary>Which field of the rule card is wrong ("id", "whenref", "whenarg", "whenquest", "whatarg", "whereref", "distance",
+			/// "place", "donearg"), or "": the editor marks that field.</summary>
+			public string Field = "";
+			public Finding(int rule, Level level, string text, string fix = "", string field = "") { Rule = rule; Level = level; Text = text; Fix = fix ?? ""; Field = field ?? ""; }
 		}
 
 		/// <summary>What an island has that rules and quests can point at.</summary>
@@ -373,7 +376,9 @@ namespace DynamicIslands.Editor
 			/// <summary>Rules on the islands the plan brings (and on the islands those bring), by name, with their island: a
 			/// world finds the island one of them brought by the rule's name, as it does a plan rule's.</summary>
 			public Dictionary<string, KeyValuePair<IntroRule, Facts>> IslandRules = new Dictionary<string, KeyValuePair<IntroRule, Facts>>(StringComparer.OrdinalIgnoreCase);
-			public void Add(int rule, Level level, string text, string fix = "") { Out.Add(new Finding(rule, level, text, fix)); }
+			/// <summary>The card field findings are about while a check runs without naming one (see CheckIslandFor, CheckQuest).</summary>
+			public string Field = "";
+			public void Add(int rule, Level level, string text, string fix = "", string field = null) { Out.Add(new Finding(rule, level, text, fix, field ?? Field)); }
 		}
 
 		/// <summary>The rules of the islands a plan brings, followed through what those rules bring (not the plan's own names).</summary>
@@ -390,7 +395,7 @@ namespace DynamicIslands.Editor
 					int same = ir.Id.Length > 0 ? c.Plan.Rules.FindIndex(x => x.Id.Equals(ir.Id, StringComparison.OrdinalIgnoreCase)) : -1;
 					// (a world finds an island by the name of the rule that brought it, any rule's: the two are mixed up)
 					if (same >= 0 && !f.Sample)
-						c.Add(same, Level.Warning, R(c, same) + " has the same name as a rule of " + f.Describe + " (its own rules): what waits for or is placed near '" + ir.Id + "' may take the island that one brings.", "Give rule " + (same + 1) + " another name.");
+						c.Add(same, Level.Warning, R(c, same) + " has the same name as a rule of " + f.Describe + " (its own rules): what waits for or is placed near '" + ir.Id + "' may take the island that one brings.", "Rule " + (same + 1) + ": type another name in its Name field (not '" + ir.Id + "'), so what waits for it or is placed near it finds the right island.", "id");
 					if (ir.Id.Length == 0 || c.IslandRules.ContainsKey(ir.Id) || same >= 0) continue;
 					c.IslandRules[ir.Id] = new KeyValuePair<IntroRule, Facts>(ir, f);
 					foreach (Facts g in Brings(c, ir)) queue.Enqueue(g);
@@ -398,7 +403,22 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		static string R(Ctx c, int i) { IntroRule r = c.Plan.Rules[i]; return "Rule " + (i + 1) + (r.Id.Length > 0 ? " '" + r.Id + "'" : ""); }
+		/// <summary>Where a finding is, in plain words: the rule's number and name, then its name in the story (its Receiver
+		/// name) and the island it brings - "Rule 3 'harbor' ("The Harbor", island 'ciweave-harbor')" (check messages 11-24).</summary>
+		static string R(Ctx c, int i) { return RuleName(c.Plan, i); }
+
+		/// <summary>How a finding names a rule: its number and id, then its Receiver name and island (USE1 11-24: where, not
+		/// an id only) - e.g. Rule 3 'cave' ("Old Cave", island 'my-cave'). The editor's cards strip it off their own findings.</summary>
+		public static string RuleName(WorldPlan plan, int i)
+		{
+			IntroRule r = plan.Rules[i];
+			var about = new List<string>();
+			if (r.Label.Trim().Length > 0) about.Add("\"" + r.Label.Trim() + "\"");
+			string what = r.WhatArg.Trim();
+			if (r.What == "island" && what.Length > 0) about.Add("island '" + what + "'");
+			else if (r.What == "type" && what.Length > 0) about.Add("a new " + what + " island");
+			return "Rule " + (i + 1) + (r.Id.Length > 0 ? " '" + r.Id + "'" : "") + (about.Count > 0 ? " (" + string.Join(", ", about.ToArray()) + ")" : "");
+		}
 
 		/// <summary>Everything Check finds, problems first. deep: also make sample islands of the map types used (a moment each, once).</summary>
 		public static List<Finding> Check(WorldPlan plan, bool islandMode, bool deep, Facts own = null)
@@ -416,23 +436,23 @@ namespace DynamicIslands.Editor
 			for (int i = 0; i < rules.Count; i++)
 			{
 				IntroRule r = rules[i];
-				if (r.Id.Length == 0) c.Add(i, Level.Problem, R(c, i) + " has no name: other rules can't point at its island.", "Type a name in the Name field (e.g. camp).");
-				else if (ids.ContainsKey(r.Id)) c.Add(i, Level.Problem, R(c, i) + " has the same name as rule " + (ids[r.Id] + 1) + ": rules that point at '" + r.Id + "' can't tell them apart.", "Give each rule its own name.");
+				if (r.Id.Length == 0) c.Add(i, Level.Problem, R(c, i) + " has no name: other rules can't point at its island.", "Rule " + (i + 1) + ": type a short name in its Name field (e.g. camp). Other rules pick this rule's island by that name.", "id");
+				else if (ids.ContainsKey(r.Id)) c.Add(i, Level.Problem, R(c, i) + " has the same name as rule " + (ids[r.Id] + 1) + ": rules that point at '" + r.Id + "' can't tell them apart.", "Type another name in the Name field of rule " + (i + 1) + " (or of rule " + (ids[r.Id] + 1) + "): each rule needs its own.", "id");
 				else ids[r.Id] = i;
 			}
 			// (questdeepB 11-14: these were dropped or changed when the plan was read, without a word)
 			foreach (string bad in plan.UnreadRules)
 				c.Add(-1, Level.Problem, "A rule line the game can't read (\"" + (bad.Length > 60 ? bad.Substring(0, 60) + "..." : bad) + "\"): it is kept in the file, but its island never comes.",
-					"Make the rule again, or fix its WHAT / WHEN / WHERE words in the file (a plan from a newer Custom Islands: update the mod).");
+					"Make that rule again with + Add a rule (its old line stays in the file until you do), or fix its WHAT / WHEN / WHERE words in the plan file. A plan made with a newer Custom Islands: update the mod.");
 			foreach (string ren in plan.Renamed)
 				c.Add(-1, Level.Problem, "Two rules have the same name in the file: the later one was renamed (" + ren + ") - rules and the world that point at the old name find the first one.",
-					"Give each rule its own name in the file.");
+					"Give each rule its own name: type another name in the Name field of one of the two cards (the renamed one is the later of them).", "id");
 			for (int i = 0; i < rules.Count; i++)
 			{
 				IntroRule r = rules[i];
-				if (r.BadPlace.Length > 0) c.Add(i, Level.Problem, R(c, i) + "'s place in Raft's story ('" + r.BadPlace + "') can't be read: the island is left out of the story.", "STORY: choose its place again (first, after an island, in place of one).");
-				if (r.BadDone.Length > 0) c.Add(i, Level.Warning, R(c, i) + "'s \"done when\" ('" + r.BadDone + "') can't be read: the story counts the island's quest instead.", "STORY: choose \"done when\" again.");
-				if (r.BadDistance.Length > 0) c.Add(i, Level.Warning, R(c, i) + "'s distance ('" + r.BadDistance + "') isn't a number: the island comes at the default distance.", "WHERE: type the distance in metres (e.g. 300).");
+				if (r.BadPlace.Length > 0) c.Add(i, Level.Problem, R(c, i) + ": its place in Raft's story ('" + r.BadPlace + "') can't be read: the island is left out of the story.", "STORY: pick the place again from the list (first, after an island, or in place of one of Raft's islands).", "place");
+				if (r.BadDone.Length > 0) c.Add(i, Level.Warning, R(c, i) + ": its \"done when\" ('" + r.BadDone + "') can't be read: the story counts the island's quest instead.", "STORY: pick \"done when\" again from the list (the island's quest, a step, a zone, a signal or a note).", "donearg");
+				if (r.BadDistance.Length > 0) c.Add(i, Level.Warning, R(c, i) + ": its distance ('" + r.BadDistance + "') isn't a number: the island comes at the default distance.", "WHERE: type the distance as a number of metres, e.g. 300 (empty = the default distance).", "distance");
 			}
 			for (int i = 0; i < rules.Count; i++)
 			{
@@ -447,8 +467,8 @@ namespace DynamicIslands.Editor
 			CheckOrder(c);
 			if (!islandMode && rules.Count > 0 && !plan.Random && !rules.Any(r => r.When == "start" || r.When == "km" || r.When == "day" || r.Where == "receiver"))
 				c.Add(-1, Level.Warning, "Nothing of the plan comes by itself: no rule starts with the world, a distance or a day, and random islands are off. Every rule waits for another island - so none ever comes.",
-					"Let the first rule be \"When the world starts\" (or after a distance / on a day).");
-			if (islandMode && rules.Any(x => x.Special)) c.Add(-1, Level.Problem, "An island's own rules can't use Raft's story or the Receiver (a world plan can).", "Use \"Ahead of the raft\" or \"Near an island\", or make these rules in a world plan.");
+					"Give the first rule WHEN = \"When the world starts\" (or a distance or a day) so something comes by itself, or switch random islands on.");
+			if (islandMode && rules.Any(x => x.Special)) c.Add(-1, Level.Problem, "An island's own rules can't use Raft's story or the Receiver (a world plan can).", "Open each of these rules: in WHERE choose \"Ahead of the raft\" or \"Near an island\", and leave Raft's story out - or make them in a world plan instead.");
 			foreach (string tip in StoryTips(plan, islandMode)) c.Add(-1, tip.StartsWith("Story:") ? Level.Tip : Level.Tip, tip);
 			if (!islandMode)
 			{
@@ -935,42 +955,42 @@ namespace DynamicIslands.Editor
 			if (r.When == "km" || r.When == "day")
 			{
 				if (!float.TryParse(r.WhenArg, NumberStyles.Float, CultureInfo.InvariantCulture, out num) || num < 0f)
-					c.Add(i, Level.Problem, R(c, i) + " waits " + (r.When == "km" ? "for a distance" : "for a day") + " but has no number (\"" + r.WhenArg + "\").", "Type " + (r.When == "km" ? "the km to sail, e.g. 2" : "the day, e.g. 3") + " in WHEN.");
+					c.Add(i, Level.Problem, R(c, i) + " waits " + (r.When == "km" ? "for a distance" : "for a day") + " but has no number (\"" + r.WhenArg + "\").", "WHEN: type " + (r.When == "km" ? "the km to sail, e.g. 2" : "the day, e.g. 3") + " in the number box.", "whenarg");
 				// (the game plays them at once: 0 km sailed and day 0 are reached when the world starts)
 				else if (num <= 0f)
-					c.Add(i, Level.Tip, R(c, i) + " waits for " + (r.When == "km" ? "0 km" : "day 0") + ": that is there when the world starts, so it comes at once - like \"When the world starts\".", "Fine if that is what you want; else type " + (r.When == "km" ? "the km to sail, e.g. 2" : "a later day, e.g. 3") + ".");
+					c.Add(i, Level.Tip, R(c, i) + " waits for " + (r.When == "km" ? "0 km" : "day 0") + ": that is there when the world starts, so it comes at once - like \"When the world starts\".", "Fine if that is what you want; else in WHEN type " + (r.When == "km" ? "the km to sail, e.g. 2" : "a later day, e.g. 3") + ".", "whenarg");
 				else if (r.When == "km" && num > 30f || r.When == "day" && num > 20f)
-					c.Add(i, Level.Tip, R(c, i) + " comes only after " + (r.When == "km" ? num + " km of sailing" : "day " + num) + ": that takes a long time in play - and to test.", "Try the plan with a small number first.");
+					c.Add(i, Level.Tip, R(c, i) + " comes only after " + (r.When == "km" ? num + " km of sailing" : "day " + num) + ": that takes a long time in play - and to test.", "Try the plan with a small number in WHEN first, and raise it when it works.", "whenarg");
 				// (SR1: "again until done" brings the island back every N km / days - not one found on the Receiver)
 				if (r.Again && r.Where == "receiver")
 					c.Add(i, Level.Tip, R(c, i) + " has \"again until done\", but its island comes on the Receiver: players find it by its frequency, so it doesn't come back by itself.", "Fine as it is; for an island that comes back, bring it ahead of the raft.");
 				else if (r.Again && float.TryParse(r.WhenArg, NumberStyles.Float, CultureInfo.InvariantCulture, out num) && num < 1f)
-					c.Add(i, Level.Tip, R(c, i) + " comes again until done every " + (r.When == "km" ? "km" : "day") + " (its number is below 1).", "Type a larger number for longer waits between returns.");
+					c.Add(i, Level.Tip, R(c, i) + " comes again until done every " + (r.When == "km" ? "km" : "day") + " (its number is below 1).", "WHEN: type a number of 1 or more for a longer wait between returns.", "whenarg");
 			}
 			if (r.When == "step" && (!int.TryParse(r.WhenArg, out int n) || n < 1))
-				c.Add(i, Level.Problem, R(c, i) + " waits for quest steps but the number of steps (\"" + r.WhenArg + "\") isn't a number from 1 up.", "Type how many steps, e.g. 2.");
+				c.Add(i, Level.Problem, R(c, i) + " waits for quest steps (of " + (r.WhenRef.Length > 0 ? "island '" + r.WhenRef + "'" : "an island") + ") but the number of steps (\"" + r.WhenArg + "\") isn't a number from 1 up.", "WHEN: type how many quest steps players must finish, e.g. 2, in the step box.", "whenarg");
 			if (r.When == "rule")
 			{
-				if (r.WhenRef.Length == 0) c.Add(i, Level.Problem, R(c, i) + " waits for another rule but doesn't say which.", "Choose the rule after \"rule\" in WHEN (▾ lists them).");
-				else if (r.WhenRef.Equals(r.Id, StringComparison.OrdinalIgnoreCase)) c.Add(i, Level.Problem, R(c, i) + " waits for itself: it never comes.", "Choose another rule to wait for.");
-				else if (!c.Plan.Rules.Any(x => x.Id.Equals(r.WhenRef, StringComparison.OrdinalIgnoreCase))) c.Add(i, Level.Problem, R(c, i) + " waits for rule '" + r.WhenRef + "', which isn't in the " + (c.IslandMode ? "island's rules" : "plan") + ".", "Pick the rule from the ▾ list, or type its name exactly.");
+				if (r.WhenRef.Length == 0) c.Add(i, Level.Problem, R(c, i) + " waits for another rule but doesn't say which.", "WHEN: pick the rule it waits for from the list after \"rule\".", "whenref");
+				else if (r.WhenRef.Equals(r.Id, StringComparison.OrdinalIgnoreCase)) c.Add(i, Level.Problem, R(c, i) + " waits for itself: it never comes.", "WHEN: pick another rule from the list after \"rule\": a rule can't wait for itself.", "whenref");
+				else if (!c.Plan.Rules.Any(x => x.Id.Equals(r.WhenRef, StringComparison.OrdinalIgnoreCase))) c.Add(i, Level.Problem, R(c, i) + " waits for rule '" + r.WhenRef + "', which isn't in the " + (c.IslandMode ? "island's rules" : "plan") + ".", "WHEN: pick the rule from the list after \"rule\" (or type a rule's Name exactly as on its card).", "whenref");
 				return;
 			}
 			if (!NeedsIsland(r.When)) return;
 			if (r.WhenRef.Length == 0)
 			{
-				if (!c.IslandMode) c.Add(i, Level.Problem, R(c, i) + " waits for something on an island but doesn't say which island.", "Choose the island after \"island\" in WHEN: a rule of this plan (the island it brings) or one of your saved islands.");
+				if (!c.IslandMode) c.Add(i, Level.Problem, R(c, i) + " waits for something on an island but doesn't say which island.", "WHEN: pick the island from the list after \"island\": a rule of this plan (the island it brings) or one of your saved islands.", "whenref");
 				return;
 			}
-			if (r.WhenRef.Equals(r.Id, StringComparison.OrdinalIgnoreCase)) { c.Add(i, Level.Problem, R(c, i) + " waits for its own island: it can't come before it is there, so it never comes.", "Wait for another rule's island."); return; }
+			if (r.WhenRef.Equals(r.Id, StringComparison.OrdinalIgnoreCase)) { c.Add(i, Level.Problem, R(c, i) + " waits for its own island: it can't come before it is there, so it never comes.", "WHEN: pick another rule's island from the list: this rule's own island can't be waited for.", "whenref"); return; }
 			string what; bool known; int ruleIndex;
 			List<Facts> islands = RefFacts(c, r.WhenRef, out what, out known, out ruleIndex);
-			if (!known && r.WhenRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase)) { c.Add(i, Level.Problem, R(c, i) + " waits for \"self\", which only means something in an island's own rules (the island itself): in a world plan it points at nothing, so the rule never comes.", "Name the island instead: a rule of this plan, or one of your saved islands."); return; }
-			if (!known) { c.Add(i, Level.Problem, R(c, i) + " waits for '" + r.WhenRef + "': no rule of this plan and no saved island has that name.", "Pick it from the ▾ list after the island field (it lists the plan's rules and your saved islands)."); return; }
+			if (!known && r.WhenRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase)) { c.Add(i, Level.Problem, R(c, i) + " waits for \"self\", which only means something in an island's own rules (the island itself): in a world plan it points at nothing, so the rule never comes.", "WHEN: pick the island from the list instead: a rule of this plan, or one of your saved islands.", "whenref"); return; }
+			if (!known) { c.Add(i, Level.Problem, R(c, i) + " waits for '" + r.WhenRef + "': no rule of this plan and no saved island has that name.", "WHEN: pick the island from the list after \"island\" (it lists this plan's rules and your saved islands), or fix the spelling of the name.", "whenref"); return; }
 			if (ruleIndex < 0 && !c.IslandMode && !r.WhenRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase) && !c.IslandRules.ContainsKey(r.WhenRef) && !c.Plan.Rules.Any(x => IslandNamed(x, r.WhenRef)))
 				c.Add(i, c.Plan.Random ? Level.Warning : Level.Problem, R(c, i) + " waits for the saved island '" + r.WhenRef + "', but no rule of this plan brings it. " +
 					(c.Plan.Random ? "It only works if that island turns up by chance while sailing (or another plan or an island's rule brings it)." : "Random islands are off, so it never comes into the world - and this rule never fires."),
-					"Add a rule that brings '" + r.WhenRef + "', and wait for that rule's name instead.");
+					"Add a rule that brings '" + r.WhenRef + "' (BRING > island), then in WHEN pick that new rule's island from the list.", "whenref");
 			if (ruleIndex >= 0 && c.Plan.Rules[ruleIndex].What == "pool")
 				c.Add(i, Level.Tip, R(c, i) + " waits for " + what + ": a random island from the spawn pool, so what it has (a quest, zones) can't be checked here.", "");
 			foreach (Facts f in islands) CheckIslandFor(c, i, r.When, r.WhenArg, f, "WHEN");
@@ -986,46 +1006,55 @@ namespace DynamicIslands.Editor
 		/// <summary>What a WHEN (or a story "done when") needs of an island: a quest that can be finished, enough steps, the zone, the signal.</summary>
 		static void CheckIslandFor(Ctx c, int i, string kind, string arg, Facts f, string part)
 		{
+			string before = c.Field;
+			c.Field = part == "STORY" ? "donearg" : "whenref"; // (what is wrong with the island as a whole: pick another; zone/signal/note/step number name their own)
+			try { CheckIslandForCore(c, i, kind, arg, f, part); }
+			finally { c.Field = before; }
+		}
+
+		static void CheckIslandForCore(Ctx c, int i, string kind, string arg, Facts f, string part)
+		{
 			string who = R(c, i) + (part == "STORY" ? " (its STORY \"done when\")" : "");
+			string ctl = part == "STORY" ? "STORY > done when" : "WHEN", argField = part == "STORY" ? "donearg" : "whenarg";
 			int questNo;
 			if (kind == "quest" && part != "STORY" && int.TryParse(arg.Trim(), out questNo) && questNo > 1)
 			{
 				// (a rule waiting for Quest 2 or later of the island)
 				if (questNo - 2 >= f.MoreQuests.Count || f.MoreQuests[questNo - 2].Steps.Count == 0)
-					c.Add(i, Level.Problem, who + " waits for quest " + questNo + " of " + f.Describe + ", which has " + (f.MoreQuests.Count == 0 ? "only its main quest" : "quests up to " + (f.MoreQuests.Count + 1)) + ": it never comes.", "Use a quest number the island has (empty = its main quest).");
+					c.Add(i, Level.Problem, who + " waits for quest " + questNo + " of " + f.Describe + ", which has " + (f.MoreQuests.Count == 0 ? "only its main quest" : "quests up to " + (f.MoreQuests.Count + 1)) + ": it never comes.", ctl + ": type a quest number " + (f.MoreQuests.Count == 0 ? "of " + f.Describe + " (it has only quest 1, its main quest: leave the number empty)" : "from 1 to " + (f.MoreQuests.Count + 1) + " (empty = its main quest)") + ", or add that quest to the island (Island tab > Edit quest...).", "whenquest");
 				// (its steps, as the main quest's are: before, only the main quest's were looked at - questfix 11-14)
 				else CheckQuest(c, i, f, questNo - 1, f.MoreQuests[questNo - 2].Steps.Count, who, true);
 				return;
 			}
 			if (kind == "quest" || kind == "step")
 			{
-				if (!f.Quest.Exists) { c.Add(i, Level.Problem, who + " waits for the quest of " + f.Describe + ", which has no quest: it never " + (part == "STORY" ? "counts as done" : "comes") + ".", f.Sample ? "Use \"When players reach an island\" for this map type, or a map type with a quest (camp, treasure, stacks, swamp...)." : "Use \"When players reach an island\", or give '" + f.Name + "' a quest (open it in the editor: Island tab > Edit quest...)."); return; }
+				if (!f.Quest.Exists) { c.Add(i, Level.Problem, who + " waits for the quest of " + f.Describe + ", which has no quest: it never " + (part == "STORY" ? "counts as done" : "comes") + ".", f.Sample ? ctl + ": pick \"When players reach an island\" for this map type, or pick a map type that has a quest (camp, treasure, stacks, swamp...)." : ctl + ": pick \"When players reach an island\" instead, or give '" + f.Name + "' a quest (open it in the editor: Island tab > Edit quest...)."); return; }
 				int need = f.Quest.Steps.Count;
-				if (kind == "step" && int.TryParse(arg, out int n)) { if (n > need) c.Add(i, Level.Problem, who + " waits for " + n + " quest steps of " + f.Describe + ", but its quest has only " + need + ".", "Wait for at most " + need + " steps."); need = Math.Min(n, need); }
+				if (kind == "step" && int.TryParse(arg, out int n)) { if (n > need) c.Add(i, Level.Problem, who + " waits for " + n + " quest steps of " + f.Describe + ", but its quest has only " + need + ".", ctl + ": type " + need + " or fewer steps, or add steps to the quest of " + f.Describe + " (Island tab > Edit quest...).", argField); need = Math.Min(n, need); }
 				CheckQuest(c, i, f, 0, need, who, true);
 			}
 			else if (kind == "zone")
 			{
-				if (arg.Trim().Length == 0) c.Add(i, Level.Problem, who + " waits for a trigger zone of " + f.Describe + " but doesn't say which.", "Choose the zone with the ▾ after the zone field.");
-				else if (!f.Zones.Contains(arg.Trim())) c.Add(i, Level.Problem, who + " waits for the zone '" + arg + "' of " + f.Describe + ", which has " + (f.Zones.Count == 0 ? "no trigger zones" : "only " + List(f.Zones)) + ".", "Pick the zone from the ▾ list" + (f.Sample ? "" : ", or place a trigger zone named '" + arg + "' on the island") + ".");
+				if (arg.Trim().Length == 0) c.Add(i, Level.Problem, who + " waits for a trigger zone of " + f.Describe + " but doesn't say which.", ctl + ": pick a zone from the list.", argField);
+				else if (!f.Zones.Contains(arg.Trim())) c.Add(i, Level.Problem, who + " waits for the zone '" + arg + "' of " + f.Describe + ", which has " + (f.Zones.Count == 0 ? "no trigger zones" : "only " + List(f.Zones)) + ".", ctl + ": pick a zone from the list" + (f.Sample ? "" : ", or place a trigger zone named '" + arg + "' on " + f.Describe + " (Zones & triggers)") + ".", argField);
 			}
 			else if (kind == "note")
 			{
 				int n;
 				List<int> notes = f.Sample ? null : IslandCache.NotesOf(f.Name);
-				if (arg.Trim().Length == 0) c.Add(i, Level.Problem, who + " waits for a note of " + f.Describe + " but doesn't say which.", "Choose the note with the ▾ after the note field.");
+				if (arg.Trim().Length == 0) c.Add(i, Level.Problem, who + " waits for a note of " + f.Describe + " but doesn't say which.", ctl + ": pick a note from the list.", argField);
 				else if (!int.TryParse(arg.Trim(), out n))
 				{
 					// (a note by its title: StoryChain.NoteRead - a title survives a rebuild that moves the objects)
 					if (!f.Sample && !IslandCache.NoteTextsOf(f.Name).Values.Any(t => t.Key.Equals(arg.Trim(), StringComparison.OrdinalIgnoreCase)))
-						c.Add(i, Level.Problem, who + " waits for the note '" + arg.Trim() + "' of " + f.Describe + ", which has no note with a text by that title.", "Pick the note from the ▾ list, or give its exact title.");
+						c.Add(i, Level.Problem, who + " waits for the note '" + arg.Trim() + "' of " + f.Describe + ", which has no note with a text by that title.", ctl + ": pick a note from the list, or type its exact title (a note needs a text to be listed).", argField);
 				}
-				else if (notes != null && !notes.Contains(n)) c.Add(i, Level.Problem, who + " waits for note #" + n + " of " + f.Describe + ", which has " + (notes.Count == 0 ? "no notes with a text" : "only notes " + string.Join(", ", notes.Select(x => "#" + x).ToArray())) + ".", "Pick the note from the ▾ list.");
+				else if (notes != null && !notes.Contains(n)) c.Add(i, Level.Problem, who + " waits for note #" + n + " of " + f.Describe + ", which has " + (notes.Count == 0 ? "no notes with a text" : "only notes " + string.Join(", ", notes.Select(x => "#" + x).ToArray())) + ".", ctl + ": pick a note from the list (only notes with a text are listed).", argField);
 			}
 			else if (kind == "signal")
 			{
-				if (arg.Trim().Length == 0) c.Add(i, Level.Problem, who + " waits for a signal from " + f.Describe + " but doesn't say which.", "Choose the signal with the ▾ after the signal field.");
-				else if (!f.Signals.Contains(arg.Trim())) c.Add(i, Level.Problem, who + " waits for the signal '" + arg + "' from " + f.Describe + ", but nothing there sends it" + (f.Signals.Count > 0 ? " (it sends " + List(f.Signals) + ")" : "") + ".", "Pick it from the ▾ list, or give an object a \"send a signal\" action with that name (Behaviour & events...).");
+				if (arg.Trim().Length == 0) c.Add(i, Level.Problem, who + " waits for a signal from " + f.Describe + " but doesn't say which.", ctl + ": pick a signal from the list.", argField);
+				else if (!f.Signals.Contains(arg.Trim())) c.Add(i, Level.Problem, who + " waits for the signal '" + arg + "' from " + f.Describe + ", but nothing there sends it" + (f.Signals.Count > 0 ? " (it sends " + List(f.Signals) + ")" : "") + ".", ctl + ": pick a signal from the list, or give an object on " + f.Describe + " a \"send a signal\" action with that name (Behaviour & events...).", argField);
 			}
 		}
 
@@ -1058,6 +1087,15 @@ namespace DynamicIslands.Editor
 		/// rule waits for it (the finding says the rule never comes).</summary>
 		static void CheckQuest(Ctx c, int i, Facts f, int n, int steps, string who, bool forRule)
 		{
+			string before = c.Field;
+			// (the quest itself lives in the island; on the card the way out is another island)
+			c.Field = !forRule ? "" : who.Contains("STORY") ? "donearg" : "whenref";
+			try { CheckQuestCore(c, i, f, n, steps, who, forRule); }
+			finally { c.Field = before; }
+		}
+
+		static void CheckQuestCore(Ctx c, int i, Facts f, int n, int steps, string who, bool forRule)
+		{
 			IslandQuest q = n == 0 ? f.Quest : n - 1 < f.MoreQuests.Count ? f.MoreQuests[n - 1] : null;
 			if (q == null) return;
 			for (int s = 0; s < steps && s < q.Steps.Count; s++)
@@ -1066,9 +1104,9 @@ namespace DynamicIslands.Editor
 				if (!f.Sample && !c.QuestSeen.Add(f.Name + "#" + n + "#" + s)) continue;
 				IslandQuest.Step st = q.Steps[s];
 				string t = st.Target.Trim();
-				string head = who + ": step " + (s + 1) + " of " + (n == 0 ? "the quest" : "quest " + (n + 1)) + " of " + f.Describe + " (\"" + st.Describe() + "\")";
+				string head = who + ": step " + (s + 1) + " of " + (n == 0 ? "the quest" : "quest " + (n + 1)) + (q.Title.Trim().Length > 0 ? " '" + q.Title.Trim() + "'" : "") + " of " + f.Describe + " (\"" + st.Describe() + "\")";
 				string tail = forRule ? " - the quest can't be finished, so the rule never " + (who.Contains("STORY") ? "counts as done" : "comes") + "." : " - the quest can't be finished.";
-				string fix = f.Sample ? "Choose another map type, or \"When players reach an island\"." : "Open '" + f.Name + "' in the editor and fix its quest (Island tab > Edit quest...), or the object it names.";
+				string fix = f.Sample ? "Pick another map type in BRING, or WHEN \"When players reach an island\"." : "Open '" + f.Name + "' in the editor and fix step " + (s + 1) + " (Island tab > Edit quest...: pick another target for it), or place the object it names on the island.";
 				switch (st.Type)
 				{
 					case "reach":
@@ -1083,8 +1121,8 @@ namespace DynamicIslands.Editor
 						if (t.Length > 0 && !f.Chests.Contains(t)) c.Add(i, Level.Problem, head + " needs a chest titled \"" + t + "\", which the island doesn't have" + (f.Chests.Count > 0 ? " (its chests: " + List(f.Chests) + ")" : "") + tail, fix);
 						else if (t.Length == 0 && f.ChestCount == 0) c.Add(i, Level.Problem, head + " needs a chest to open, and the island has none" + (f.RaftCrates > 0 ? " (its abandoned raft crates don't count: place a chest from Loot & chests)" : "") + tail, fix);
 						// (a chest with no loot can't be opened - players only read its note: the step never counts)
-						else if (t.Length > 0 && f.EmptyChests.Contains(t) && !f.FullChests.Contains(t)) c.Add(i, Level.Problem, head + " needs the chest \"" + t + "\" opened, and it has nothing in it: Raft can't open an empty chest (players only read its note)" + tail, "Put something in it (its Loot items), or make the step \"Read\" its note.");
-						else if (t.Length == 0 && f.ChestCount > 0 && f.EmptyChestCount == f.ChestCount) c.Add(i, Level.Problem, head + " needs a chest opened, and every chest of the island is empty: Raft can't open an empty chest" + tail, "Put something in a chest (its Loot items).");
+						else if (t.Length > 0 && f.EmptyChests.Contains(t) && !f.FullChests.Contains(t)) c.Add(i, Level.Problem, head + " needs the chest \"" + t + "\" opened, and it has nothing in it: Raft can't open an empty chest (players only read its note)" + tail, "Open '" + f.Name + "' in the editor: put something in the chest's Loot items, or change step " + (s + 1) + " to \"Read\" its note (Island tab > Edit quest...).");
+						else if (t.Length == 0 && f.ChestCount > 0 && f.EmptyChestCount == f.ChestCount) c.Add(i, Level.Problem, head + " needs a chest opened, and every chest of the island is empty: Raft can't open an empty chest" + tail, "Open '" + f.Name + "' in the editor and put something in one chest's Loot items.");
 						break;
 					case "kill":
 					case "catch":
@@ -1093,32 +1131,32 @@ namespace DynamicIslands.Editor
 						Func<string, bool> catchable = label => ContentCatalog.Creatures.Any(k => k.Label.Equals(label, StringComparison.OrdinalIgnoreCase) && k.Category == ContentCatalog.CatchableCategory);
 						if (catching && t.Length > 0 && ContentCatalog.Creatures.Any(k => k.Label.Equals(t, StringComparison.OrdinalIgnoreCase)) && !catchable(t))
 						{
-							c.Add(i, Level.Problem, head + " needs " + t.ToLowerInvariant() + "s caught, and Raft's net launcher can't catch those (only " + string.Join(", ", ContentCatalog.Creatures.Where(k => k.Category == ContentCatalog.CatchableCategory).Select(k => k.Label.ToLowerInvariant() + "s").ToArray()) + ")" + tail, "Make it a \"Defeat\" step, or catch an animal the net launcher takes.");
+							c.Add(i, Level.Problem, head + " needs " + t.ToLowerInvariant() + "s caught, and Raft's net launcher can't catch those (only " + string.Join(", ", ContentCatalog.Creatures.Where(k => k.Category == ContentCatalog.CatchableCategory).Select(k => k.Label.ToLowerInvariant() + "s").ToArray()) + ")" + tail, "Island tab > Edit quest... step " + (s + 1) + ": make it a \"Defeat\" step, or pick an animal the net launcher takes.");
 							break;
 						}
 						int have = t.Length > 0 ? (f.Creatures.TryGetValue(t, out int h) ? h : 0) : f.Creatures.Where(kv => !catching || catchable(kv.Key)).Sum(kv => kv.Value);
 						if (have == 0) c.Add(i, Level.Problem, head + " needs " + (t.Length > 0 ? t.ToLowerInvariant() + "s" : catching ? "animals to catch (chickens, goats or llamas)" : "creatures") + ", and the island has none" + tail, fix);
 						else if (st.Count > have && !(t.Length > 0 ? f.CreaturesComeBack.Contains(t) : f.CreaturesComeBack.Count > 0))
-							c.Add(i, Level.Warning, head + " needs " + st.Count + ", but the island has only " + have + " and they don't come back: players can't reach " + st.Count + " there.", "Place more, or set them to come back after some days, or lower the number in the quest.");
+							c.Add(i, Level.Warning, head + " needs " + st.Count + ", but the island has only " + have + " and they don't come back: players can't reach " + st.Count + " there.", "On '" + f.Name + "': place more of them, or set them to come back after some days, or lower the number in step " + (s + 1) + " (Island tab > Edit quest...).");
 						else if (st.Count > have)
-							c.Add(i, Level.Tip, head + " needs " + st.Count + ", and the island has " + have + " at a time: players wait for them to come back (after the island's regrow days) to reach " + st.Count + ".", "Fine if that is what you want; else place more or lower the number.");
+							c.Add(i, Level.Tip, head + " needs " + st.Count + ", and the island has " + have + " at a time: players wait for them to come back (after the island's regrow days) to reach " + st.Count + ".", "Fine if that is what you want; else place more on '" + f.Name + "' or lower the number in step " + (s + 1) + " (Island tab > Edit quest...).");
 						// (Raft leaves some kinds out in some game modes - screechers and puffer fish in Creative: the step can't be done there)
 						ContentCatalog.CreatureKind kind = t.Length > 0 ? ContentCatalog.Creatures.FirstOrDefault(k => k.Label.Equals(t, StringComparison.OrdinalIgnoreCase)) : null;
 						List<string> without = kind != null && have > 0 ? CreatureSpawner.ModesWithout(kind.Type) : new List<string>();
 						if (without.Count > 0)
-							c.Add(i, Level.Tip, head + " needs " + t.ToLowerInvariant() + "s, and in " + string.Join(" and ", without.ToArray()) + " worlds Raft has none (as on its own islands): there the quest can't be finished.", "Fine for worlds in the other game modes; for every mode, use another creature.");
+							c.Add(i, Level.Tip, head + " needs " + t.ToLowerInvariant() + "s, and in " + string.Join(" and ", without.ToArray()) + " worlds Raft has none (as on its own islands): there the quest can't be finished.", "Fine for worlds in the other game modes; for every mode, pick another creature in step " + (s + 1) + " (Island tab > Edit quest...).");
 						break;
 					case "collect":
 						// (what the island gives - not the quest's own "collect story:key" line, which matched itself: questfix 11-14)
 						if (t.Length > 0 && !f.GivesStory.Contains(StoryItems.IdOf(t)))
-							c.Add(i, Level.Warning, head + " needs the story item " + StoryItems.Label(t) + ", but nothing on the island gives it (no chest, zone or action). It works only if players got it on another island.", "Put it in a chest or a zone's items on this island, or make sure another island gives it first.");
+							c.Add(i, Level.Warning, head + " needs the story item " + StoryItems.Label(t) + ", but nothing on the island gives it (no chest, zone or action). It works only if players got it on another island.", "Put the story item in a chest's loot or a trigger zone's items on '" + f.Name + "', or make sure an island met before it gives it.");
 						break;
 					case "blueprint":
 						ScrambledBlueprints.Read();
 						if (t.Length > 0 && ItemManager.GetAllItems() != null && ItemManager.GetAllItems().Count > 0 && !BlueprintSteps.Exists(t))
-							c.Add(i, Level.Problem, head + " needs the blueprint '" + t + "', and Raft has no item of that name" + tail, "Pick the blueprint from the list beside the step (Raft's names start with Blueprint_).");
+							c.Add(i, Level.Problem, head + " needs the blueprint '" + t + "', and Raft has no item of that name" + tail, "Island tab > Edit quest... step " + (s + 1) + ": pick the blueprint from the list beside the step (Raft's names start with Blueprint_).");
 						else if (t.Length > 0 && f.AllText.IndexOf(t + "*", StringComparison.OrdinalIgnoreCase) < 0 && !ScrambledBlueprints.OnIslands.ContainsKey(t))
-							c.Add(i, Level.Warning, head + " needs the blueprint " + Pretty(t) + ", but nothing on the island gives it (no chest, zone or action) and it isn't on Raft's story islands. It works only if players got it elsewhere (another island, a Raft store).", "Put " + t + "*1 in a chest or a zone's items on this island, or make sure another island gives it first.");
+							c.Add(i, Level.Warning, head + " needs the blueprint " + Pretty(t) + ", but nothing on the island gives it (no chest, zone or action) and it isn't on Raft's story islands. It works only if players got it elsewhere (another island, a Raft store).", "Put " + t + "*1 in a chest's loot or a trigger zone's items on '" + f.Name + "', or make sure an island met before it gives it.");
 						else if (t.Length > 0 && f.AllText.IndexOf(t + "*", StringComparison.OrdinalIgnoreCase) < 0)
 							c.Add(i, Level.Tip, head + " needs the blueprint " + Pretty(t) + ", which this island doesn't give: it lies on Raft's story island " + string.Join("/", ScrambledBlueprints.OnIslands[t].ToArray()) + " (or a Raft store sells it to players who missed it).", "Fine if the plan keeps that island before this one; else put " + t + "*1 in a chest here.");
 						break;
@@ -1509,31 +1547,31 @@ namespace DynamicIslands.Editor
 			string arg = r.WhatArg.Trim();
 			if (r.What == "island")
 			{
-				if (arg.Length == 0) c.Add(i, Level.Problem, R(c, i) + " brings an island but doesn't say which.", "Choose it with the ▾ after the island field in BRING.");
-				else if (!c.SavedNames.Contains(arg)) c.Add(i, Level.Problem, R(c, i) + " brings '" + arg + "', which isn't a saved island.", "Pick one of your islands with ▾, or save the island under that name.");
+				if (arg.Length == 0) c.Add(i, Level.Problem, R(c, i) + " brings an island but doesn't say which.", "BRING: pick a saved island from the list.", "whatarg");
+				else if (!c.SavedNames.Contains(arg)) c.Add(i, Level.Problem, R(c, i) + " brings '" + arg + "', which isn't a saved island.", "BRING: pick one of your saved islands from the list, or save an island under the name '" + arg + "' first.", "whatarg");
 				else
 				{
 					Facts f = Saved(arg);
-					if (f != null && f.Objects > 12000) c.Add(i, Level.Warning, R(c, i) + " brings '" + arg + "' with " + f.Objects + " objects: big islands take long to appear and can slow the game.", "Thin it out in the editor (the generator keeps islands under 12 000).");
+					if (f != null && f.Objects > 12000) c.Add(i, Level.Warning, R(c, i) + " brings '" + arg + "' with " + f.Objects + " objects: big islands take long to appear and can slow the game.", "Open '" + arg + "' in the editor and take out some objects (the generator keeps islands under 12 000), or bring a smaller island.", "whatarg");
 					if (c.Plan.Rules.Where((x, j) => j != i && x.What == "island" && x.WhatArg.Trim().Equals(arg, StringComparison.OrdinalIgnoreCase)).Any())
-						c.Add(i, Level.Tip, R(c, i) + " brings '" + arg + "', and another rule brings it too: the world gets two copies of it.", "Fine if that is what you want; else use another island in one of them.");
+						c.Add(i, Level.Tip, R(c, i) + " brings '" + arg + "', and another rule brings it too: the world gets two copies of it.", "Fine if that is what you want; else in BRING pick another island for one of the two rules.", "whatarg");
 				}
 			}
 			else if (r.What == "oneof")
 			{
 				var names = r.WhatArg.Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList();
 				var missing = names.Where(n => !c.SavedNames.Contains(n)).ToList();
-				if (names.Count == 0) c.Add(i, Level.Problem, R(c, i) + " picks one island from a list, but the list is empty.", "Add islands with the ▾ after the list.");
-				else if (missing.Count == names.Count) c.Add(i, Level.Problem, R(c, i) + " picks one of " + List(names) + ", but none of them is a saved island.", "Add saved islands with the ▾ after the list.");
-				else if (missing.Count > 0) c.Add(i, Level.Warning, R(c, i) + " picks one of a list, but " + List(missing) + (missing.Count == 1 ? " isn't a saved island" : " aren't saved islands") + ": only the others can come.", "Take them out of the list, or save islands with those names.");
+				if (names.Count == 0) c.Add(i, Level.Problem, R(c, i) + " picks one island from a list, but the list is empty.", "BRING: pick the islands to choose from, from the list.", "whatarg");
+				else if (missing.Count == names.Count) c.Add(i, Level.Problem, R(c, i) + " picks one of " + List(names) + ", but none of them is a saved island.", "BRING: add saved islands from the list (or save the islands named there first).", "whatarg");
+				else if (missing.Count > 0) c.Add(i, Level.Warning, R(c, i) + " picks one of a list, but " + List(missing) + (missing.Count == 1 ? " isn't a saved island" : " aren't saved islands") + ": only the others can come.", "BRING: take those names out of the list, or save islands with those names.", "whatarg");
 			}
 			else if (r.What == "type")
 			{
-				if (MapTypes.Get(arg) == null) c.Add(i, Level.Problem, R(c, i) + " brings a map type '" + arg + "', which doesn't exist.", "Choose one with the ▾ after the map type field.");
+				if (MapTypes.Get(arg) == null) c.Add(i, Level.Problem, R(c, i) + " brings a map type '" + arg + "', which doesn't exist.", "BRING: pick a map type from the list.", "whatarg");
 			}
 			else if (r.What == "pool")
 			{
-				if (WorldIslands.Candidates().Count == 0) c.Add(i, Level.Problem, R(c, i) + " brings a random island from the spawn pool, but the pool is empty.", "Save some islands, or bring a map type instead.");
+				if (WorldIslands.Candidates().Count == 0) c.Add(i, Level.Problem, R(c, i) + " brings a random island from the spawn pool, but the pool is empty.", "Save some islands (they join the spawn pool), or in BRING pick a map type instead.", "whatarg");
 			}
 		}
 
@@ -1542,23 +1580,23 @@ namespace DynamicIslands.Editor
 			IntroRule r = c.Plan.Rules[i];
 			// (SL9: the blueprint its dot waits for must be one of Raft's)
 			if (r.Needs.Length > 0 && ItemManager.GetAllItems() != null && ItemManager.GetAllItems().Count > 0 && !BlueprintSteps.Exists(r.Needs))
-				c.Add(i, Level.Problem, R(c, i) + " shows its dot once players have '" + r.Needs + "', which isn't one of Raft's items: its dot never shows.", "Choose a blueprint in DOT (engine, steering wheel, engine controls).");
-			if (r.Distance > 3000f) c.Add(i, Level.Tip, R(c, i) + " puts its island " + r.Distance.ToString("0") + " m away: far enough that players may not find it" + (r.Label.Length == 0 ? " (it has no Receiver name)" : "") + ".", "A message saying which way helps, and a Receiver name shows it on Raft's Receiver.");
+				c.Add(i, Level.Problem, R(c, i) + " shows its dot once players have '" + r.Needs + "', which isn't one of Raft's items: its dot never shows.", "DOT: pick a blueprint from the list (engine, steering wheel, engine controls).");
+			if (r.Distance > 3000f) c.Add(i, Level.Tip, R(c, i) + " puts its island " + r.Distance.ToString("0") + " m away: far enough that players may not find it" + (r.Label.Length == 0 ? " (it has no Receiver name)" : "") + ".", "WHERE: type a shorter distance, or add a message in TELL saying which way to sail and a Receiver name so it shows on Raft's Receiver.", "distance");
 			if (r.Where != "near") return;
 			bool happened = r.WhereRef.Length == 0 || r.WhereRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase) && !c.IslandMode;
 			if (happened)
 			{
 				if (!c.IslandMode && !NeedsIsland(r.When))
-					c.Add(i, Level.Problem, R(c, i) + " is placed near \"the island where it happened\", but " + r.DescribeWhen().ToLowerInvariant() + " happens at no island: it never finds a place.", "Name an island after \"of\" in WHERE (▾ lists them).");
+					c.Add(i, Level.Problem, R(c, i) + " is placed near \"the island where it happened\", but " + r.DescribeWhen().ToLowerInvariant() + " happens at no island: it never finds a place.", "WHERE: pick the island from the list after \"of\".", "whereref");
 				return;
 			}
 			if (r.WhereRef.Equals(IntroRule.Self, StringComparison.OrdinalIgnoreCase)) return;
 			int idx = c.Plan.Rules.FindIndex(x => x.Id.Equals(r.WhereRef, StringComparison.OrdinalIgnoreCase));
 			bool islandRule = idx < 0 && c.IslandRules.ContainsKey(r.WhereRef);
-			if (idx < 0 && !islandRule && !c.SavedNames.Contains(r.WhereRef)) { c.Add(i, Level.Problem, R(c, i) + " is placed near '" + r.WhereRef + "': no rule and no saved island has that name.", "Pick the island from the ▾ list after \"of\"."); return; }
-			if (idx == i) { c.Add(i, Level.Problem, R(c, i) + " is placed near its own island: it can't be.", "Choose another island after \"of\"."); return; }
+			if (idx < 0 && !islandRule && !c.SavedNames.Contains(r.WhereRef)) { c.Add(i, Level.Problem, R(c, i) + " is placed near '" + r.WhereRef + "': no rule and no saved island has that name.", "WHERE: pick the island from the list after \"of\" (a rule of this plan or a saved island).", "whereref"); return; }
+			if (idx == i) { c.Add(i, Level.Problem, R(c, i) + " is placed near its own island: it can't be.", "WHERE: pick another island from the list after \"of\".", "whereref"); return; }
 			if (idx < 0 && !islandRule && !c.IslandMode && !c.Plan.Rules.Any(x => IslandNamed(x, r.WhereRef)))
-				c.Add(i, Level.Warning, R(c, i) + " is placed near the saved island '" + r.WhereRef + "', which no rule of this plan brings: it waits until that island is in the world" + (c.Plan.Random ? " (by chance)" : ", and random islands are off") + ".", "Place it near a rule of this plan instead (its name), or add a rule that brings '" + r.WhereRef + "'.");
+				c.Add(i, Level.Warning, R(c, i) + " is placed near the saved island '" + r.WhereRef + "', which no rule of this plan brings: it waits until that island is in the world" + (c.Plan.Random ? " (by chance)" : ", and random islands are off") + ".", "WHERE: pick a rule's island of this plan from the list after \"of\", or add a rule that brings '" + r.WhereRef + "' (BRING > island).", "whereref");
 		}
 
 		static void CheckTell(Ctx c, int i)
@@ -1576,7 +1614,7 @@ namespace DynamicIslands.Editor
 			// (the user, 2026-10-04: main story islands are found by their coordinates - a frequency on the Receiver)
 			if (r.MainStory && r.Where != "receiver")
 				c.Add(i, Level.Problem, R(c, i) + " is main story, but it isn't on the Receiver: a main story island needs coordinates (its own frequency) - its tab in Raft's notebook shows them.",
-					"WHERE: choose \"On the Receiver\" (or make it a side quest in STORY).");
+					"WHERE: pick \"On the Receiver\" for this rule (or set STORY to a side quest instead of main story).");
 			if (r.Beside)
 			{
 				// (its done-when too: before, only story rules' were looked at, so Effigy Shoals' note:3 - no note - went unseen and its
@@ -1594,16 +1632,16 @@ namespace DynamicIslands.Editor
 			bool endsWithUtopia = StoryChain.EndsStory(c.Plan, ChunkPointType.Landmark_Utopia);
 			// (Utopia ends Raft's story: it never counts as done, so an island after it never unlocks)
 			if (r.StoryPlace.StartsWith("after:") && StoryOrder.Parse(r.StoryPlace.Substring(6)) == ChunkPointType.Landmark_Utopia && endsWithUtopia)
-				c.Add(i, Level.Problem, R(c, i) + " comes in the story after Utopia, but Utopia is the end of Raft's story: it never counts as done, so this island never unlocks.", "Place it after Temperance (or in place of Utopia), or leave Utopia out of the story.");
+				c.Add(i, Level.Problem, R(c, i) + " comes in the story after Utopia, but Utopia is the end of Raft's story: it never counts as done, so this island never unlocks.", "STORY: pick a place before Utopia (after Temperance, or in place of Utopia), or leave Utopia out of the story.", "place");
 			else if (r.StoryPlace.StartsWith("after:") && StoryOrder.Parse(r.StoryPlace.Substring(6)) == ChunkPointType.None && !c.Plan.Rules.Any(o => o != r && o.InStory && o.Id.Equals(r.StoryPlace.Substring(6), StringComparison.OrdinalIgnoreCase)))
 				c.Add(i, endsWithUtopia ? Level.Problem : Level.Warning, R(c, i) + " comes in the story after '" + r.StoryPlace.Substring(6) + "', which isn't in the story: it goes at the end" +
-					(endsWithUtopia ? ", after Utopia - which never counts as done, so this island never unlocks." : "."), "Choose its place again in STORY.");
+					(endsWithUtopia ? ", after Utopia - which never counts as done, so this island never unlocks." : "."), "STORY: pick its place again from the list (an island that is in the story, or one of Raft's islands).", "place");
 			// (a story rule comes when its step unlocks AND its WHEN is met: another WHEN held the step back without a word, its
 			// note showing no number - review 10-30. WHEN "rule" naming another story island is met by the story's own order.)
 			if (!string.Equals(r.When, "start", StringComparison.OrdinalIgnoreCase) &&
 				!(r.When == "rule" && c.Plan.Rules.Any(o => o != r && o.InStory && o.Id.Equals(r.WhenRef, StringComparison.OrdinalIgnoreCase))))
 				c.Add(i, Level.Warning, R(c, i) + " is in the story, but its WHEN isn't \"When the world starts\": when its turn in the story comes it still waits for that, and nothing tells the players why (its note shows #---- until then).",
-					"WHEN: choose \"When the world starts\" - the story's order already decides when it comes.");
+					"WHEN: pick \"When the world starts\" - the story's order already decides when this island comes.");
 			// (questdeepB 11-14: islands placed after each other in a circle - or after themselves - never get their turn)
 			if (r.StoryPlace.StartsWith("after:") && StoryOrder.Parse(r.StoryPlace.Substring(6)) == ChunkPointType.None)
 			{
@@ -1616,7 +1654,7 @@ namespace DynamicIslands.Editor
 				}
 				if (at == r)
 					c.Add(i, Level.Problem, R(c, i) + " comes in the story after '" + r.StoryPlace.Substring(6) + "', " + (r.StoryPlace.Substring(6).Equals(r.Id, StringComparison.OrdinalIgnoreCase) ? "itself" : "which comes after it (a circle)") + ": none of them ever gets its turn.",
-						"STORY: place one of them first or after one of Raft's islands.");
+						"STORY: pick another place for one of these islands: first, or after one of Raft's islands.", "place");
 			}
 			string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
 			foreach (Facts f in Brings(c, r))
@@ -1670,7 +1708,7 @@ namespace DynamicIslands.Editor
 				{
 					foreach (int k in path) reported.Add(k);
 					c.Add(i, Level.Problem, "Rules " + string.Join(" → ", path.Concat(new[] { i }).Select(k => "'" + (rules[k].Id.Length > 0 ? rules[k].Id : (k + 1).ToString()) + "'").ToArray()) + " wait for each other in a circle: none of them ever comes.",
-						"Let one of them start another way (e.g. \"When the world starts\").");
+						"WHEN: change one of these rules to another trigger (e.g. \"When the world starts\"), or pick a different island for it, so the circle breaks.", "whenref");
 				}
 			}
 			// A rule waiting for one that can't work, and "near" an island that may not be there yet
@@ -1679,13 +1717,13 @@ namespace DynamicIslands.Editor
 			{
 				int d = dep(i);
 				if (d >= 0 && d != i && broken.Contains(d) && !broken.Contains(i))
-					c.Add(i, Level.Warning, R(c, i) + " waits for rule " + (d + 1) + " '" + rules[d].Id + "', which has a problem (see above): while that isn't fixed, this rule never comes either.", "Fix rule " + (d + 1) + " first.");
+					c.Add(i, Level.Warning, R(c, i) + " waits for rule " + (d + 1) + " '" + rules[d].Id + "', which has a problem (see above): while that isn't fixed, this rule never comes either.", "Fix rule " + (d + 1) + " '" + rules[d].Id + "' first (open its card and read its problem above).");
 				IntroRule r = rules[i];
 				if (r.Where == "near" && r.WhereRef.Length > 0)
 				{
 					int n = rules.FindIndex(x => x.Id.Equals(r.WhereRef, StringComparison.OrdinalIgnoreCase));
 					if (n >= 0 && n != i && !WaitsFor(dep, i, n) && !(rules[n].When == "start" && r.When != "start"))
-						c.Add(i, Level.Tip, R(c, i) + " is placed near '" + r.WhereRef + "', but doesn't wait for it: if it fires first, it waits until '" + r.WhereRef + "' is in the world.", "Fine if that is what you want; else let its WHEN wait for '" + r.WhereRef + "'.");
+						c.Add(i, Level.Tip, R(c, i) + " is placed near '" + r.WhereRef + "', but doesn't wait for it: if it fires first, it waits until '" + r.WhereRef + "' is in the world.", "Fine if that is what you want; else set WHEN to wait for '" + r.WhereRef + "' (pick it from the list).");
 				}
 			}
 		}
