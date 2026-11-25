@@ -45,7 +45,11 @@ namespace DynamicIslands
 			public string Screen = "";
 			public float ScreenStart = Time.realtimeSinceStartup, ScreenLimit = float.PositiveInfinity, ThisLimit = float.PositiveInfinity;   // (CIButtons: 4 min a screen; CIWorldButtons: none)
 			public bool Active;
-			public bool ScreenOver { get { return Time.realtimeSinceStartup - ScreenStart > ThisLimit; } }
+			public int ScreenFrame = Time.frameCount;
+			// (the limit counts frames at up to 0.2 s each, at most 3x the wall limit: on a loaded test PC (300-1600 ms frames, 2 Rafts)
+			// four screens ran out of time with most buttons still to press - 11-25; a hang still runs out, only later)
+			public float ScreenTime { get { float wall = Time.realtimeSinceStartup - ScreenStart; return Math.Max(wall / 3f, Math.Min(wall, (Time.frameCount - ScreenFrame) * 0.2f)); } }
+			public bool ScreenOver { get { return ScreenTime > ThisLimit; } }
 			public string Where()
 			{
 				return "'" + Current + "' (screen '" + Screen + "', " + Pressed + " pressed, " + Mathf.RoundToInt(Time.realtimeSinceStartup - ScreenStart) + " s on this screen, "
@@ -314,7 +318,7 @@ namespace DynamicIslands
 		/// <summary>A screen of the button walk starts: its time limit counts from now.</summary>
 		static void ScreenStarts(ButtonRun run, string screen, float times = 1f)
 		{
-			run.Screen = screen; run.ScreenStart = Time.realtimeSinceStartup; run.Current = screen; run.ThisLimit = run.ScreenLimit * times;
+			run.Screen = screen; run.ScreenStart = Time.realtimeSinceStartup; run.ScreenFrame = Time.frameCount; run.Current = screen; run.ThisLimit = run.ScreenLimit * times;
 		}
 
 		/// <summary>When the screen's time limit was reached: it FAILs with the press it was on (the next screen starts).</summary>
