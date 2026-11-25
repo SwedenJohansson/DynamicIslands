@@ -907,34 +907,6 @@ namespace DynamicIslands
 		public static void FloatingCommand(string[] args)
 		{
 			if (!DynamicIslands.InEditor()) { floatProblems = 1; Fail("CIFloating [gap] (in the editor)"); return; }
-			// (the check sees the island as a world builds it: the editor's cave pieces keep their colliders off and a world
-			// drapes a hill over them - Rootweave's den cache on the den's floor had "nothing under it" and the generator's
-			// palms and boulders on the Flooded Passage's hill stood "17 m over the ground", isl-fix 11-24: the pieces' colliders
-			// on and the hill built for the check (CaveMountain.Preview, as zipto measures), both undone after it)
-			var caveOff = new List<Collider>();
-			GameObject caveHill = null;
-			try
-			{
-				foreach (EditorGameObject ce in PlacedEditorObjects())
-				{
-					PropInfo ci = ce != null && ce.gameObject.activeInHierarchy ? RaftProps.Get(ce.GameObjectName) : null;
-					if (ci == null || !ci.IsCave) continue;
-					foreach (Collider c in ce.GetComponentsInChildren<Collider>(true)) if (!c.enabled && c.gameObject.activeInHierarchy) { c.enabled = true; caveOff.Add(c); }
-				}
-				if (terraineditor.terrain != null) caveHill = CaveMountain.Preview(PlacedEditorObjects(), terraineditor.terrain.transform.position);
-				Physics.SyncTransforms();
-				FloatingCheck(args);
-			}
-			finally
-			{
-				if (caveHill != null) UnityEngine.Object.DestroyImmediate(caveHill);
-				foreach (Collider c in caveOff) if (c != null) c.enabled = false;
-				Physics.SyncTransforms();
-			}
-		}
-
-		static void FloatingCheck(string[] args)
-		{
 			float gap = args != null && args.Length > 0 ? F(args[0]) : 0.3f;
 			string only = args != null && args.Length > 1 ? args[1] : "";
 			Vector2 mid = EditorLandCentre();
@@ -1059,7 +1031,7 @@ namespace DynamicIslands
 						on.collider.GetComponentInParent<EditorGameObject>() != e) continue;
 				}
 				lifted++;
-				if (lifted <= floatDetail) FLog("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground");
+				if (lifted <= floatDetail) FLog("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground" + UnderIt(e, p));
 			}
 			// Objects in the air touching nothing, and objects buried whole under the ground (the user, 2026-10-02: the Stranded
 			// Gull's boat was set down by its middle and sank under the beach - its locker and crate hung in the air over it)
@@ -4554,6 +4526,14 @@ namespace DynamicIslands
 				if (!held) return false;
 			}
 			return true;
+		}
+
+		// (what is under a lifted plant, for the log: the first thing below its foot that is not itself, and how far down)
+		static string UnderIt(EditorGameObject e, Vector3 p)
+		{
+			foreach (RaycastHit h in Physics.RaycastAll(new Vector3(p.x, p.y + 0.3f, p.z), Vector3.down, 40f, ~0, QueryTriggerInteraction.Ignore).OrderBy(x => x.distance))
+				if (h.collider != null && h.collider.GetComponentInParent<EditorGameObject>() != e) return " (under it: " + h.collider.name + " " + Num(h.distance - 0.3f) + " m down)";
+			return " (under it: nothing in 40 m)";
 		}
 
 		/// <summary>The thing's foot or its body's bottom over a cave hill's skin (CaveMountain.SkinName) within 1.1 m (rays from
