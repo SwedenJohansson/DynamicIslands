@@ -1617,7 +1617,7 @@ namespace DynamicIslands
 
 		/// <summary>Everything a look meets, back faces too, nearest first: "name d m (back)" - what the see-through ray went
 		/// through and what it saw (c3 round 3, for the cave fixes).</summary>
-		static string LookHits(Vector3 eye, Vector3 look)
+		static string LookHits(Vector3 eye, Vector3 look, Vector3? mid = null)
 		{
 			bool backs = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true;
@@ -1625,7 +1625,9 @@ namespace DynamicIslands
 			{
 				RaycastHit[] hs = Physics.RaycastAll(eye, look.normalized, 60f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).Take(8).ToArray();
 				return "the worst look from " + eye.ToString("F1") + " meets " + (hs.Length == 0 ? "nothing (the sky)" : string.Join(", ", hs.Select(h => h.collider.name + " " + h.distance.ToString("F1") + " m" +
-					(Vector3.Dot(h.normal, look) > 0f ? " (back)" : "") + (h.collider is TerrainCollider ? "" : " [" + h.collider.GetType().Name.Replace("Collider", "") + "]")).ToArray()));
+					(Vector3.Dot(h.normal, look) > 0f ? " (back)" : "") + (h.collider is TerrainCollider ? "" : " [" + h.collider.GetType().Name.Replace("Collider", "") + "]" +
+					// (where the thing hit stands, as the problems print it - the Bear Hall's see-through named a BigBoulder2_Low, but which, bugfix 11-25)
+					(mid.HasValue ? " at " + Num(h.collider.transform.position.x - mid.Value.x) + " " + Num(h.collider.transform.position.z - mid.Value.z) + " h=" + Num(h.collider.transform.position.y - mid.Value.y) : ""))).ToArray()));
 			}
 			finally { Physics.queriesHitBackfaces = backs; }
 		}
@@ -2234,7 +2236,7 @@ namespace DynamicIslands
 					Vector3 eye, look;
 					if (CaveSeeThrough(o, RaftProps.Get(n), out at, out eye, out look) > 0)
 					{
-						lines.Add("cave seen through from inside: " + n + " - " + at + "; " + LookHits(eye, look));
+						lines.Add("cave seen through from inside: " + n + " - " + at + "; " + LookHits(eye, look, mid));
 						QueueCheckShot("cave_" + e.Name + "_" + n + "_look", eye, eye + look * 5f);
 					}
 					continue;
