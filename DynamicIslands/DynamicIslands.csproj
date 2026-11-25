@@ -130,6 +130,7 @@
     <Compile Include="DevTestsWorldIslands.cs" />
     <Compile Include="DevTestsIslandPicker.cs" />
     <Compile Include="DevTestsStoryChain.cs" />
+    <Compile Include="DevTestsStorySteps.cs" />
     <Compile Include="DevTestsQuestBook.cs" />
     <Compile Include="QuestBook.cs" />
     <Compile Include="QuestBookPreview.cs" />

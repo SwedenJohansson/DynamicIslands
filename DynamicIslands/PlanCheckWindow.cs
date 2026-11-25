@@ -21,6 +21,8 @@ namespace DynamicIslands.Editor
 		ScrollRect scroll;
 		Action again;
 		Action<int> showRule;
+		/// <summary>Shows rule i's card with the field a finding is about picked out (null: the card only).</summary>
+		Action<int, string> showField;
 
 		/// <summary>What the report shows now (tests).</summary>
 		public static List<PlanChecker.Finding> Shown { get; private set; }
@@ -38,11 +40,12 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Shows the findings of a check of the plan called name; again = Check again, showRule(i) = show rule i's card.</summary>
-		public static void Open(string name, List<PlanChecker.Finding> findings, Action again, Action<int> showRule)
+		public static void Open(string name, List<PlanChecker.Finding> findings, Action again, Action<int> showRule, Action<int, string> showField = null)
 		{
 			if (instance == null) return;
 			instance.again = again;
 			instance.showRule = showRule;
+			instance.showField = showField;
 			instance.Fill(name, findings);
 			instance.gameObject.SetActive(true);
 			instance.transform.SetAsLastSibling();
@@ -114,7 +117,10 @@ namespace DynamicIslands.Editor
 			if (f.Rule >= 0 && showRule != null)
 			{
 				int rule = f.Rule;
-				UIKit.Button(top, "Show rule " + (rule + 1), () => { Close(); showRule(rule); }, "Close the report and scroll to this rule's card", 120, 22f, 11);
+				string field = f.Field;
+				Action<int, string> toField = showField;
+				UIKit.Button(top, "Show rule " + (rule + 1), () => { Close(); if (toField != null && field.Length > 0) toField(rule, field); else showRule(rule); },
+					field.Length > 0 ? "Close the report and go to the field to fix on this rule's card (outlined in red)" : "Close the report and scroll to this rule's card", 120, 22f, 11).name = "Button_ShowRule" + (rule + 1);
 			}
 			Text text = UIKit.Label(item, f.Text, 13, UIKit.TextColor, TextAnchor.UpperLeft, FontStyle.Normal, "Text");
 			text.horizontalOverflow = HorizontalWrapMode.Wrap;

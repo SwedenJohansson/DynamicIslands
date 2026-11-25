@@ -359,7 +359,8 @@ namespace DynamicIslands
 				if (cd == null) { Check(ref ok, false, "rule " + (i + 1) + ": no card"); continue; }
 				bool typed = TypeInto(cd, "id", r[0]);
 				if (r[2].Length > 0) typed &= TypeInto(cd, "rule id / island", r[2]);
-				if (r[3].Length > 0) typed &= TypeInto(cd, r[1] == "zone" ? "zone name" : "km", r[3]);
+				// (a known island's zone is picked from its list - USE1 11-24; a distance is typed)
+				if (r[3].Length > 0) typed &= r[1] == "zone" && DropList.Pick(cd, "Drop_WhenArg", r[3]) || TypeInto(cd, r[1] == "zone" ? "zone name" : "km", r[3]);
 				typed &= TypeInto(cd, r[4] == "type" ? "map type" : "island name", r[5]);
 				typed &= TypeInto(cd, "300", r[7]);
 				if (r[9].Length > 0) typed &= TypeInto(cd, "where it happened", r[9]);

@@ -3112,6 +3112,15 @@ your saved islands (with "quest, 4 steps" or "no quest"), and the zones, signals
 file. Picking one fills the field; typing still works. A new map-type island is only made in the world, so its zones and
 signals can't be listed: its list is empty and says so - type the name.
 
+**Lists instead of fields.** When the island is known (a rule of the plan bringing a saved island, or a saved island),
+its zone, signal, number of quest steps, quest (main quest first, then Quest 2...) and a main story island's "done when"
+zone, signal, step or note are a ▼ list of what the island really has, and "right after a rule" is a ▼ list of the
+plan's rules. The last choice, **custom...**, gives the text field and its ▾ back, to type a name yourself (one you will
+add to the island later). A name typed by hand that the island hasn't got is never cleared or changed: the list shows
+it as **(custom)**, and Check says whether it works. A link with nothing chosen yet has a red **✖** after it
+(hover it: "Nothing chosen yet"); hover a field's name for a short hint of what goes in it. The plan file is the same as
+before: old plans load and play as they did.
+
 ![The ▾ list of a rule](images/plan-picks.jpg)
 *The ▾ after the zone of "When a trigger zone fires" lists the zones of the island the rule waits for (here the saved island "shrine").*
 
@@ -3182,8 +3191,28 @@ doesn't know and skips), its trigger zones and signals, and - for new islands of
 - **Tip** (blue): good to know (no message, very far away, Raft's story...).
 
 After the first Check, every card shows its own problems and warnings in red and yellow under its sentence, and they
-follow as you change the plan. The box under the map sums up. **Save** checks too, and opens the report when there is a
-problem. The report's **Check again** checks after you changed something.
+follow as you change the plan. The box under the map sums up. **Save** checks too: it always saves, and when there is a
+problem its message says how many ("2 problems found: players can get stuck") and the report opens. The report's
+**Check again** checks after you changed something. **Show rule** closes the report, scrolls to the rule's card and
+outlines in red the field to fix (the zone list, the Name field, the "done when"...).
+
+**Storyline check messages.** Every message names the rule (its number, name, Receiver name and island:
+`Rule 3 'cave' ("Old Cave", island 'shrine')`), says what is wrong, and its "how to fix" starts with the part of the
+card to change (WHEN, BRING, WHERE, STORY > done when). The ones a storyline's links give:
+
+| The message says | What to do |
+|---|---|
+| has no name / has the same name as rule N | Type a (different) name in the rule's Name field |
+| waits for another rule but doesn't say which / waits for itself / waits for rule 'x', which isn't in the plan | WHEN: pick the rule from the list after "rule" |
+| doesn't say which island / waits for its own island / waits for "self" / no rule of this plan and no saved island has that name | WHEN: pick the island from the list after "island" |
+| waits for the saved island 'x', but no rule of this plan brings it | Add a rule that brings it, or pick a rule's island (with random islands off it never comes) |
+| waits for a distance / a day but has no number | WHEN: type the km or the day in the number box |
+| the number of steps isn't a number from 1 up / its quest has only N | WHEN (or STORY > done when): pick the steps from the list |
+| waits for quest N of ..., which has only its main quest / which has no quest | WHEN: pick the quest from the list, or wait for "players reach an island" |
+| waits for a trigger zone / a note / a signal but doesn't say which; waits for the zone 'x' / note 'x' / note #n the island hasn't; nothing there sends the signal | WHEN or STORY > done when: pick from the list, or add that zone, note (with a text) or signal to the island |
+| its place in Raft's story can't be read (problem) / its "done when" can't be read (warning) | STORY: pick the place or "done when" again from the list |
+| its distance isn't a number (warning) | WHERE: type the metres as a number |
+| brings an island but doesn't say which | BRING: pick a saved island from the list |
 
 Check walks the plan in **play order**, the order a player meets its islands, not the order of the cards. Raft's story
 chain comes first, with your islands in their places (first, after, instead of). Every other rule comes where its WHEN
