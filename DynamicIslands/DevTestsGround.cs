@@ -140,6 +140,16 @@ namespace DynamicIslands
 				var made = new List<IslandWorldState.Entry>();
 				yield return ScBring(name, spot.Value, made);
 				IslandWorldState.Entry e = made.LastOrDefault();
+				// (bugfix 11-25: a brand-new world is noticed a few seconds after it is ready - Raft's "World ready" comes first -
+				// and its start clears the world's island list; an island asked for in between lost its entry and stopped
+				// loading ('Ironreef Caverns: didn't come', ir1). Asked for once more: its spawn never failed)
+				if (e != null && e.Root == null && !e.Failed && !IslandWorldState.Contains(e))
+				{
+					Log("  (" + name + ": its entry was dropped while it loaded - the new world was still starting: brought again)");
+					made.Clear();
+					Vector3? again = ScSpot(name, 400f);
+					if (again.HasValue) { yield return ScBring(name, again.Value, made); e = made.LastOrDefault(); }
+				}
 				if (e == null || e.Root == null) { Log("  " + name + ": didn't come"); report.AppendLine(name + ": NOT MEASURED - didn't come" + (e != null && e.Failed ? " (its spawn failed)" : "")); missed++; if (made.Count > 0) yield return RemoveIslandsAndWait(made.Select(x => x.Id).ToList()); continue; }
 				yield return WaitIslandSettled(e, 0.5f, 2f); // (the cave mountains and Raft's physics settle: until they have, 2 s at most)
 				// (a night ghost ship brought by day sinks away at once - IG5 run 11-18 threw on it, ending the check)
