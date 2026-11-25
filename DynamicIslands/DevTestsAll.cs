@@ -93,7 +93,9 @@ namespace DynamicIslands
 			run.Active = true;
 			Application.LogCallback watch = (msg, trace, type) =>
 			{
-				if ((type == LogType.Exception || type == LogType.Error) && !msg.StartsWith("[CITEST]"))
+				// (not Unity's own "only implemented in editor" notice: the sea grass setting the grass on its copy of Raft's terrain data,
+				// SeaGrass.MakeTemplate once a game - "Start window > New island" on base 41a4a73b too; CIRaftCrossing skips it as well)
+				if ((type == LogType.Exception || type == LogType.Error) && !msg.StartsWith("[CITEST]") && !msg.StartsWith("only implemented in editor"))
 					run.Errors.Add(run.Current + ": " + msg.Split('\n')[0] + (type == LogType.Exception ? " @ " + (trace ?? "").Split('\n').FirstOrDefault() : ""));
 			};
 			Application.logMessageReceived += watch;
@@ -294,6 +296,10 @@ namespace DynamicIslands
 				// so are the windows those open: Open, Save and Save as each open the islands window, and its My islands... was walked
 				// three times, each a few minutes on a test PC with 3469 islands and ~5,800 world files - 11-25)
 				if ((owner == "TopBar" || run.UnderTopBar > 0) && !run.Walked.Add(key + " " + w.GetType().Name)) continue;
+				// (and a panel's window with nothing selected: the first screen's top-bar Island and Objects presses walk those panels
+				// already, and the Island tab screen walked the generator, quest, events and story items windows again and ran out of
+				// its 4 minutes at its last button - 11-25; with an object selected a window is walked on each screen, its content differs)
+				if (owner != "TopBar" && run.UnderTopBar == 0 && NothingSelected() && !run.Walked.Add("bare " + key + " " + w.GetType().Name)) continue;
 				if (owner == "TopBar") run.UnderTopBar++;
 				try { yield return TestWindow(run, w, b, run.Current, depth + 1); }
 				finally { if (owner == "TopBar") run.UnderTopBar--; }
@@ -451,6 +457,8 @@ namespace DynamicIslands
 		}
 
 		/// <summary>A button by where it is and what it says (a rebuilt panel's new button has the same key).</summary>
+		static bool NothingSelected() { var g = DynamicIslands.EditorGizmoHandler; return g == null || g.SelectedRoots.Count == 0; }
+
 		static string KeyOf(Button b) { return OwnerOf(b) + " > " + PathOf(b.transform, b.transform.root) + " '" + LabelOfButton(b) + "'"; }
 
 		static string LabelOfButton(Button b)
