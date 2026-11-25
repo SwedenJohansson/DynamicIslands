@@ -231,7 +231,9 @@ call sk_zone x=-2 z=-71 al=hc_ridge id=hc_ridge r=7 msg="The terrace ridge. The 
 call sk_cave x=-60 z=-12 h=2 yaw=0 al=hc_caverock chest=hc_cavechest
 # (isl-fix 11-24, REACH: the den's dry dome, uncapped, reached 66 m back and 20 m in front - its skin lay over the pit, the
 # trap gauntlet and the city's dives and stopped the walker going down; capped as the other islands' dens, CAVE_LESSONS cave.dome)
-prop hc_caverock cave.dome=14
+# (11-25: 14 cut its front to 4 m and the dome's foot sank across its own way in - the den sealed; 30 keeps the front 9 m
+# and the back short of the pit 36 m behind it)
+prop hc_caverock cave.dome=30
 call sk_zone x=-60 z=-7 al=hc_cave id=hc_cave r=4 msg="The quarry cave the city was cut from. Air hangs under its roof."
 call airpocketat x=-57.4 z=-8 h=3.6 id=hc_air al=hc_air bub=hc_airbub r=2.2 msg="Air under the rock - breathe."
 call sk_ruin x=60 z=56 h=2 al=hc_ruin
