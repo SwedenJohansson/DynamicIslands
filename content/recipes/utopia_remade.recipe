@@ -503,6 +503,10 @@ pop
 brush flatten at 90 -8 r=6 s=20 frames=200 h=-5
 brush smooth at 90 -8 r=9 s=6 frames=20
 brush flatten at 90 -8 r=3.5 s=20 frames=200 h=-5
+# (bugfix 11-25, REACH: two shore lips a swimmer could not climb out over - the quarry sea door's walk stuck in the sea
+# at 93 -20 below a 0.8 m lip, the Keeper's box walk at -27 63 under a 0.5 m step of 64 deg; both smoothed to a slope)
+brush smooth at 93.2 -20.1 r=3.5 s=10 frames=40
+brush smooth at -26.7 63 r=3.5 s=10 frames=40
 # (11-16 w13 build: the islet was hill mesh only, over open sea - the room showed the sea through its wall and the
 # islet's side had a hole. A low terrain pad under the room and dome gives the mesh ground to stand on.)
 call rr_pad x=90 z=-50 h=2 r=12

@@ -264,6 +264,17 @@ namespace DynamicIslands
 		{
 			return Physics.Linecast(a, b, mask, QueryTriggerInteraction.Ignore) || Physics.Linecast(b, a, mask, QueryTriggerInteraction.Ignore);
 		}
+		/// <summary>Between, and no room for the swimmer's body on the way: a ray slips through a slit a body cannot - Hadal's
+		/// grid swam into its houses by the gap at the roof's edge and the walker stuck on the roof, 'block quad', bugfix 11-25.</summary>
+		static bool SwimBetween(Vector3 a, Vector3 b, int mask)
+		{
+			if (Between(a, b, mask)) return true;
+			Vector3 d = b - a; float len = d.magnitude;
+			if (len < 0.01f) return false;
+			RaycastHit h;
+			return Physics.SphereCast(a, SwimBody, d / len, out h, len, mask, QueryTriggerInteraction.Ignore) || Physics.SphereCast(b, SwimBody, -d / len, out h, len, mask, QueryTriggerInteraction.Ignore);
+		}
+		const float SwimBody = 0.2f;
 		[ConsoleCommand(name: "CIReachSwim", docs: "Dev, world: PQ11 - the reach walker's swim alone: the player put in the sea 150 m off, Walk held 3 s with and without a look pitch; the metres moved")]
 		public static void ReachSwimCommand(string[] args) { StartTest(ReachSwimRoutine()); }
 
@@ -444,6 +455,12 @@ namespace DynamicIslands
 					foreach (Vector3 q in new[] { a, b })
 						Log("  grid at " + (q - e.Position).ToString("F1") + ": stands " + Stands(q) + ", inside solid " + InsideSolid(q + Vector3.up * 0.5f) + ", swim sphere free " + !Physics.CheckSphere(q + Vector3.up * 0.9f, 0.4f, reachMask, QueryTriggerInteraction.Ignore));
 					{ string why; bool sw = SlopeWalk(a, b, out why); Log("  grid: slope walk " + sw + " (" + why + ")"); }
+					{
+						// (from the sea: the shore rule's walk up from the sea floor under a, as a swimmer climbs it)
+						RaycastHit bh; float bed = Physics.Raycast(new Vector3(a.x, RSea - 0.1f, a.z), Vector3.down, out bh, 3f, reachMask, QueryTriggerInteraction.Ignore) ? bh.point.y : RSea - 3f;
+						string why; bool sw = SlopeWalk(new Vector3(a.x, bed, a.z), b, out why, RSea + RSwimFeet);
+						Log("  grid: sea floor under a at " + (bed - e.Position.y).ToString("F2") + ", swimmer's walk out " + sw + " (" + why + ")");
+					}
 				}
 				// (a and b are feet, as the walker's reports give them; Raft's player transform sits 0.85 m over the feet)
 				PlayerMove.To(pl, a + Vector3.up * 0.95f);
@@ -628,7 +645,7 @@ namespace DynamicIslands
 
 		// ---------------------------------------------------------------- the grid
 
-		static int dbgShoreHigh, dbgShoreLow, dbgShoreBlocked, dbgShoreOk; static int dbgOutBlocked, dbgOutFall, dbgOutOk;
+		static int dbgShoreHigh, dbgShoreLow, dbgShoreBlocked, dbgShoreOk; static int dbgOutBlocked, dbgOutFall, dbgOutOk, dbgWetRoof, dbgFloatOut;
 		const float RSea = 0f, RStepUp = 0.55f, RJump = 1.1f, RDrop = 12f, RSwimFeet = -1.3f, RUse = 2.5f, RRadius = 0.3f, RHeight = 1.75f;
 
 		class ReachTarget
@@ -876,10 +893,11 @@ namespace DynamicIslands
 				int other;
 				Vector3 p = g.Pos[kv.Value];
 				// (not through a thin floor, roof or wall between two free cells: the swimmer's 0.4 m spheres miss a block's
-				// 0.2 m slab half way between cells 1 m apart - Hadal Commons' houses were swum into through their roofs, PQ11 10-28)
-				if (g.Vox.TryGetValue(VoxKey(vi + 1, vj, vk), out other) && !Between(p, g.Pos[other], mask)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
-				if (g.Vox.TryGetValue(VoxKey(vi, vj + 1, vk), out other) && !Between(p, g.Pos[other], mask)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
-				if (g.Vox.TryGetValue(VoxKey(vi, vj, vk + 1), out other) && !Between(p, g.Pos[other], mask)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
+				// 0.2 m slab half way between cells 1 m apart - Hadal Commons' houses were swum into through their roofs, PQ11 10-28; and a ray
+				// still slipped by the roof's edge where a body cannot: the body's 0.2 m is swept too, bugfix 11-25)
+				if (g.Vox.TryGetValue(VoxKey(vi + 1, vj, vk), out other) && !SwimBetween(p, g.Pos[other], mask)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
+				if (g.Vox.TryGetValue(VoxKey(vi, vj + 1, vk), out other) && !SwimBetween(p, g.Pos[other], mask)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
+				if (g.Vox.TryGetValue(VoxKey(vi, vj, vk + 1), out other) && !SwimBetween(p, g.Pos[other], mask)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
 				for (int a = 0; a < vstep; a++) for (int c = 0; c < vstep; c++)
 				{
 					List<int> col = g.At(vi * vstep + a, vj * vstep + c);
@@ -1074,9 +1092,9 @@ namespace DynamicIslands
 				if (reachTrace != null) ReachTraceLog(e, g, fwd, offset);
 				int seaSwim = sea.Count(k => g.Kind[k] == 1);
 				report.Add("REACH " + name + " | shore links | - | NOTE out of the water: ok " + dbgShoreOk + ", too high " + dbgShoreHigh + ", too low " + dbgShoreLow + ", blocked " + dbgShoreBlocked);
-				report.Add("REACH " + name + " | shore links | - | NOTE into the water: ok " + dbgOutOk + ", blocked " + dbgOutBlocked + ", fall caught " + dbgOutFall);
+				report.Add("REACH " + name + " | shore links | - | NOTE into the water: ok " + dbgOutOk + ", blocked " + dbgOutBlocked + ", fall caught " + dbgOutFall + "; under water, floor to floor through a roof/floor " + dbgWetRoof + "; afloat over a floor, up too high for a swimmer " + dbgFloatOut);
 				dbgShoreOk = dbgShoreHigh = dbgShoreLow = dbgShoreBlocked = 0;
-				dbgOutOk = dbgOutBlocked = dbgOutFall = 0;
+				dbgOutOk = dbgOutBlocked = dbgOutFall = dbgWetRoof = dbgFloatOut = 0;
 				report.Add("REACH " + name + " | walk-in | - | NOTE sea " + sea.Count + " spots (" + seaSwim + " swim), grid " + g.NX + "x" + g.NZ + "; floor reached per side n/e/s/w " + string.Join("/", gotS.Select(x => x.ToString()).ToArray()));
 			}
 			var back = new bool[g.Pos.Count];
@@ -1438,6 +1456,22 @@ namespace DynamicIslands
 			return !(down.collider is TerrainCollider) && down.normal.y > 0.3f;
 		}
 
+		/// <summary>For a stuck walk: what the rays of a floor-to-floor link meet now (bugfix 11-25).</summary>
+		static string LinkWhy(Vector3 pa, Vector3 pb)
+		{
+			float hi = Mathf.Max(pa.y, pb.y);
+			Vector3 lo = pa.y < pb.y ? pa : pb;
+			Func<Vector3, Vector3, string> ray = (a, b) =>
+			{
+				RaycastHit h;
+				if (Physics.Linecast(a, b, out h, reachMask, QueryTriggerInteraction.Ignore) || Physics.Linecast(b, a, out h, reachMask, QueryTriggerInteraction.Ignore))
+					return BlockerName(h.collider) + " n" + h.normal.y.ToString("0.00") + " at dy " + (h.point.y - lo.y).ToString("0.00");
+				return "free";
+			};
+			return "; rise " + ray(lo + Vector3.up * 0.3f, new Vector3(lo.x, hi + 0.45f, lo.z)) + "; across 0.3 " + ray(pa + Vector3.up * 0.3f, pb + Vector3.up * 0.3f)
+				+ "; across 1.0 " + ray(pa + Vector3.up * 1.0f, pb + Vector3.up * 1.0f) + "; flat " + (Blocked(pa, pb, hi + 0.45f) || Blocked(pa, pb, hi + 1.0f) || Blocked(pa, pb, hi + 1.55f) ? "blocked" : "free") + ", swept " + (Swept(pa, pb, hi) ? "blocked" : "free");
+		}
+
 		static bool Blocked(Vector3 a, Vector3 b, float y)
 		{
 			return Physics.Linecast(new Vector3(a.x, y, a.z), new Vector3(b.x, y, b.z), reachMask, QueryTriggerInteraction.Ignore) ||
@@ -1459,6 +1493,10 @@ namespace DynamicIslands
 				if (!wet && (dy > RJump || dy < -RDrop)) return;
 				// (no jump with the feet in the sea: jumps there rose 0.2-0.4 m)
 				if (!wet && dy > RStepUp && pa.y < RSea - 0.3f) return;
+				// (from a floor deep enough that the player floats over it - feet -1.1..-1.5 - up onto ground more than a step over
+				// the floating feet: the swimmer's own way out, as off a swim spot (SwimOutWalk). Utopia 11-25: after the shore
+				// rule, two walks still stuck in the water at -1.1, 'a step too high', the grid stepping floor to floor out of it)
+				if (!wet && pa.y < RSea + RSwimFeet + 0.3f && pb.y > Mathf.Max(pa.y, RSea + RSwimFeet) + 0.3f && !SwimOutWalk(pa, pb)) { dbgFloatOut++; return; }
 				if (wet && Mathf.Abs(dy) > 2f) return;
 				float hi = Mathf.Max(pa.y, pb.y);
 				bool flat = !(Blocked(pa, pb, hi + 0.45f) || Blocked(pa, pb, hi + 1.0f) || Blocked(pa, pb, hi + 1.55f) || Swept(pa, pb, hi));
@@ -1466,6 +1504,16 @@ namespace DynamicIslands
 				// in 0.9 s that they called blocked, PQ11 10-27; follow the ground instead)
 				bool slope = !flat && !wet && SlopeWalk(pa, pb);
 				if (!flat && !slope) return;
+				// (a swim between two floors under water: the swimmer rises in the lower spot's column and crosses over, or swims
+				// straight across - one of the two must be free. The rays above only looked over the higher spot: Hadal's walker
+				// swam from a roof down through the roof slab to the floor under it, 'block quad', bugfix 11-25)
+				if (wet && Mathf.Abs(dy) > 0.3f)
+				{
+					Vector3 lo = pa.y < pb.y ? pa : pb;
+					bool rise = !Between(lo + Vector3.up * 0.3f, new Vector3(lo.x, hi + 0.45f, lo.z), reachMask);
+					bool across = !Between(pa + Vector3.up * 0.3f, pb + Vector3.up * 0.3f, reachMask) && !Between(pa + Vector3.up * 1.0f, pb + Vector3.up * 1.0f, reachMask);
+					if (!rise && !across) { dbgWetRoof++; return; }
+				}
 				// (a jump: room over the head as the player rises)
 				if (flat && dy > RStepUp && !wet && Physics.CheckCapsule(pa + Vector3.up * (dy + RRadius + 0.1f), pa + Vector3.up * (dy + RHeight - RRadius), RRadius, reachMask, QueryTriggerInteraction.Ignore)) return;
 				// (a drop: nothing to land on on the way down - a floor that reaches over the spot below catches the player)
@@ -1488,7 +1536,7 @@ namespace DynamicIslands
 				float bed = Physics.Raycast(new Vector3(pa.x, RSea - 0.1f, pa.z), Vector3.down, out bh, 3f, reachMask, QueryTriggerInteraction.Ignore) ? bh.point.y : RSea - 3f;
 				// (or up a slope out of the water, as on land: Tangaroa's shores rose 0.6-1 m from one spot to the next all
 				// round, every one called a lip - 2 ways in for the whole island, PQ11 10-29)
-				if (pb.y > Mathf.Max(bed, RSea + RSwimFeet) + RStepUp && (pb.y > RSea + 0.6f || bed < RSea - 2.9f || !SlopeWalk(new Vector3(pa.x, bed, pa.z), pb))) { dbgShoreHigh++; return; }
+				if (pb.y > Mathf.Max(bed, RSea + RSwimFeet) + RStepUp && (pb.y > RSea + 0.6f || bed < RSea - 2.9f || !SwimOutWalk(new Vector3(pa.x, bed, pa.z), pb))) { dbgShoreHigh++; return; }
 				if (pb.y < RSea - 1.7f) { dbgShoreLow++; return; }
 				if (!same && (Blocked(pa, pb, Mathf.Max(pb.y, RSea) + 0.45f) || Blocked(pa, pb, Mathf.Max(pb.y, RSea) + 1.2f))) { dbgShoreBlocked++; return; }
 				dbgShoreOk++;
@@ -1520,7 +1568,15 @@ namespace DynamicIslands
 		/// (bar the bottom 0.45 m) has room over it, and nothing stands between two samples. It ends at b's floor.</summary>
 		static bool SlopeWalk(Vector3 a, Vector3 b) { string why; return SlopeWalk(a, b, out why); }
 
-		static bool SlopeWalk(Vector3 a, Vector3 b, out string why)
+		static bool SlopeWalk(Vector3 a, Vector3 b, out string why) { return SlopeWalk(a, b, out why, float.NegativeInfinity); }
+
+		/// <summary>A swimmer's way up out of the sea (bugfix 11-25, Utopia Remade: 8 walks stuck at shores the grid called
+		/// slopes): the swimmer has no jump there (it rose 0-0.24 m) and its controller climbs what Raft's controller climbs
+		/// without one - slopeLimit 45 deg, stepOffset 0.3 (CIPlayerJump) - not the 60 deg and 0.5 m steps a walker on land
+		/// took. Ground under its floating feet it swims over.</summary>
+		static bool SwimOutWalk(Vector3 bedPoint, Vector3 b) { string why; return SlopeWalk(bedPoint, b, out why, RSea + RSwimFeet); }
+
+		static bool SlopeWalk(Vector3 a, Vector3 b, out string why, float swimFeet)
 		{
 			const float r = 0.2f, stepLen = 0.25f;
 			why = "";
@@ -1538,6 +1594,8 @@ namespace DynamicIslands
 				Vector3 g = h.point;
 				float rise = g.y - prev.y;
 				if (rise > 0.5f || (rise > 0.05f && h.normal.y < 0.5f)) { why = "sample " + i + " rise " + rise.ToString("0.00") + " normal y " + h.normal.y.ToString("0.00"); return false; }
+				// (a swimmer: over its floating feet only a 0.3 m step or a 45 deg slope - a 2 deg margin for the terrain's facets)
+				if (g.y > swimFeet && (rise > 0.3f || (rise > 0.05f && h.normal.y < 0.68f))) { why = "swimmer: sample " + i + " rise " + rise.ToString("0.00") + " normal y " + h.normal.y.ToString("0.00"); return false; }
 				// (the body over the bottom step's height: a terrain cell's edge rises like a step just ahead and the controller
 				// steps up it - a capsule from 0.45 m touched the trail's next 0.5 m rise)
 				Collider[] hit = Physics.OverlapCapsule(g + Vector3.up * (RStepUp + r), g + Vector3.up * (RHeight - r), r, reachMask, QueryTriggerInteraction.Ignore);
@@ -2089,6 +2147,7 @@ namespace DynamicIslands
 			}
 			Camera cam = Camera.main;
 			Vector3 eye = cam != null && (cam.transform.position - feet).magnitude < 3f ? cam.transform.position : feet + Vector3.up * 1.6f;
+			string blocker = null;
 			foreach (Vector3 aim in new[] { tb.center, tb.ClosestPoint(eye), tb.center + Vector3.up * tb.extents.y * 0.6f })
 			{
 				Vector3 d = aim - eye;
@@ -2097,10 +2156,12 @@ namespace DynamicIslands
 				{
 					if (t.Root != null && h.collider.transform.IsChildOf(t.Root)) return null;
 					if (h.collider.isTrigger || h.collider.transform.IsChildOf(pl.transform)) continue;
+					if (blocker == null) blocker = h.collider.name + " (" + LayerMask.LayerToName(h.collider.gameObject.layer) + ") " + h.distance.ToString("F1") + " m out";
 					break;
 				}
 			}
-			return "it isn't in reach from where the walk ended (" + (tb.center - eye).magnitude.ToString("F1") + " m from the eye)";
+			// (bugfix 11-25: say what stood in the way - Hadal's toolmaker's chest failed 1.6 m from the eye with no clue why)
+			return "it isn't in reach from where the walk ended (" + (tb.center - eye).magnitude.ToString("F1") + " m from the eye" + (blocker != null ? "; in the way: " + blocker : "") + ")";
 		}
 
 		/// <summary>A swimmer can't go straight from a to b: something in the way of a 0.25 m ball, either way.</summary>
@@ -2417,7 +2478,9 @@ namespace DynamicIslands
 					// (progress counts the way down too: a drop's last metre is a fall, not a walk)
 					float dist = water ? d.magnitude : flatLen + Mathf.Max(0f, d.y - 0.6f) + Mathf.Max(0f, -d.y - 0.9f);
 					if (d.y < -0.9f && flatLen < 1.3f && seg.sqrMagnitude > 0.01f && !inWaterNow(pl)) flat = seg.normalized * Mathf.Max(flatLen, 0.8f);
-					if (water ? (kind == 1 ? flatLen < 0.8f && Mathf.Abs(d.y) < 1.4f : d.magnitude < 1.0f || (flatLen < 0.8f && d.y < 0f && pl.PersonController.controllerType == ControllerType.Water && pl.GetComponent<CharacterController>() != null && pl.GetComponent<CharacterController>().isGrounded)) : flatLen < 0.5f && d.y < 0.9f && d.y > -0.9f) break;
+					// (standing over a dive cell counts only with nothing between the feet and it: Hadal's walker stood on house 1's
+					// roof over a cell inside, took it as reached and stuck at the next one under the roof, 'block quad', bugfix 11-25)
+					if (water ? (kind == 1 ? flatLen < 0.8f && Mathf.Abs(d.y) < 1.4f : d.magnitude < 1.0f || (flatLen < 0.8f && d.y < 0f && pl.PersonController.controllerType == ControllerType.Water && pl.GetComponent<CharacterController>() != null && pl.GetComponent<CharacterController>().isGrounded && !Between(ReachFeet(pl) + Vector3.up * 0.1f, aim, reachMask))) : flatLen < 0.5f && d.y < 0.9f && d.y > -0.9f) break;
 					if (dist < best - 0.15f) { best = dist; since2 = 0f; } else since2 += Time.deltaTime;
 					if (since2 > 2.5f)
 					{
@@ -2443,7 +2506,7 @@ namespace DynamicIslands
 						{
 							string diag = ReachDiag(pl) + ReachCreatures(pl);
 							mmWalk = 0f; mmJump = false;
-							result("stuck at " + (p - e.Position).ToString("F1") + " on the way to " + (aim - e.Position).ToString("F1") + (hops > 0 ? " (" + hops + " jumps, rose up to " + hopPeak.ToString("F2") + " m)" : "") + " (in the way: " + ReachBlocker(pl, flat.sqrMagnitude > 0.01f ? flat.normalized : d.normalized) + ")" + diag);
+							result("stuck at " + (p - e.Position).ToString("F1") + " on the way to " + (aim - e.Position).ToString("F1") + (hops > 0 ? " (" + hops + " jumps, rose up to " + hopPeak.ToString("F2") + " m)" : "") + " (in the way: " + ReachBlocker(pl, flat.sqrMagnitude > 0.01f ? flat.normalized : d.normalized) + ")" + diag + " [the grid's step: from " + (W(way[i - 1]) - e.Position).ToString("F1") + " kind " + g.Kind[way[i - 1]] + " to kind " + kind + LinkWhy(W(way[i - 1]), W(k)) + "; the way: " + string.Join(" ", Enumerable.Range(Mathf.Max(0, i - 8), Mathf.Min(way.Count, i + 3) - Mathf.Max(0, i - 8)).Select(q => (q == i ? "*" : "") + g.Kind[way[q]] + (W(way[q]) - e.Position).ToString("F1")).ToArray()) + "]");
 							yield break;
 						}
 					}
@@ -2464,7 +2527,7 @@ namespace DynamicIslands
 					if ((bad = guard()) != null) { mmWalk = 0f; result(bad); yield break; }
 					int wd = watchdog();
 					if (wd == 1) { jumpT = 0.4f; turnLeft = 0.7f; turnDir = -turnDir; }
-					if (wd == 2) { mmWalk = 0f; mmJump = false; result(wdWhy() + " at " + (p - e.Position).ToString("F1") + " on the way to " + (aim - e.Position).ToString("F1") + " (in the way: " + ReachBlocker(pl, flat.sqrMagnitude > 0.01f ? flat.normalized : d.normalized) + ")"); yield break; }
+					if (wd == 2) { mmWalk = 0f; mmJump = false; result(wdWhy() + " at " + (p - e.Position).ToString("F1") + " on the way to " + (aim - e.Position).ToString("F1") + " (in the way: " + ReachBlocker(pl, flat.sqrMagnitude > 0.01f ? flat.normalized : d.normalized) + ") [the way: " + string.Join(" ", Enumerable.Range(Mathf.Max(0, i - 8), Mathf.Min(way.Count, i + 3) - Mathf.Max(0, i - 8)).Select(q => (q == i ? "*" : "") + g.Kind[way[q]] + (W(way[q]) - e.Position).ToString("F1")).ToArray()) + "]"); yield break; }
 					if (n > 60000) { mmWalk = 0f; result("gave up (too long)"); yield break; }
 				}
 			}
