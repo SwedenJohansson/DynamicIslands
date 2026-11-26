@@ -115,10 +115,11 @@ place Pickup_Landmark_Flower_Yellow - at 1.5 13.5 h=5.68 sit
 place Pickup_Landmark_Flower_Red - at -1.5 16 h=5.68 sit
 place Pickup_Landmark_BerryBush - at 1.8 16.2 h=5.05 sit
 place "Box Small" - at 2.2 19.8 h=5.05 sit
-place Note_Paper diary at 2.2 19.8 h=5.75 drop yaw=40
+place Note_Paper diary at 2.2 19.8 h=6.3 drop yaw=40
 # STORY 10-24s: Ines's first slate on the coop roof, by the hens
+# (11-26: notes drop from above the box top at 5.94 - from 5.75 they started inside it and fell into it)
 place "Box Small" - at -2.2 -19.6 h=5.05 sit
-place Note_Paper inesslate1 at -2.2 -19.6 h=5.75 drop yaw=-20
+place Note_Paper inesslate1 at -2.2 -19.6 h=6.3 drop yaw=-20
 
 # --- The hen coop (south tower): a roof on four posts, hens ---------------------------------------------------------
 push at -2.5 -15.5 h=5
