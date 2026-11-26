@@ -455,7 +455,10 @@ clear at -23.39 55.0 r=2 all only=^Balboa_Bush_03
 # (4.97) - set on the floor)
 # (bugfix 11-26, CIFloating ru5: on the floor its foot - the pivot, 1.1 m up in the rock - was still 1.02 m over the floor,
 # out of reach of the check's look down from the foot; sunk 0.5 m into the floor, foot 0.57 m over it)
-place SmallBoulder3 - at -27.2 -22.7 h=4.45 sit scale=1.6
+# (bugfix 11-26, CIFloating ru6: h=4.45 changed nothing - the save sets a rock the 9-point gap test reads floating down to
+# where it rests (1.70 m here, 2.15 m from 4.9), so the foot ended 1.02 m over the floor each time. Set 2.25 m lower than
+# 4.45, under where the save puts it: it reads resting and is left alone, its foot about 0.5 m over the floor)
+place SmallBoulder3 - at -27.2 -22.7 h=2.2 sit scale=1.6
 # (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth; the hill over the Fungus Hall and Flooded Passage
