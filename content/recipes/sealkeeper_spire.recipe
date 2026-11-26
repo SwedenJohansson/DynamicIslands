@@ -130,7 +130,9 @@ call treasure x=-6 z=-14 r=16 n=1 seed=10053
 prop treasure10053 treasure.loot=TitaniumOre*3
 
 # --- The pump tower (west): crank and log on its deck -------------------------------------------------------------------
-call ladtower x=-24 z=-14 h0=2 lv=3 a=towers
+# (REACH 11-26: with the ladder inside, the walk up stopped at the top - the pump tower's deck (Pump log, pump_tower) never reached: ladtowerout's ladder outside
+# the south wall comes up facing the deck, as Biome Seven's)
+call ladtowerout x=-24 z=-14 h0=2 lv=3 a=towers
 place RT_Pillar - at -24.8 -14.6 h=9.475 sy=0.6
 place TP_Selene_DoorCrankWheel pumpcrank at -24.8 -14.69 h=10.675
 place Note_Paper pumplog at -23.3 -14.6 h=9.6 drop yaw=40

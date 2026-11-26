@@ -217,8 +217,10 @@ call sk_reef x=-20 z=-60 r=5 seed=24230
 brush flatten at 33.37 75.77 r=0.9 s=20 frames=150 h=11.9
 clear at 33.37 75.77 r=1.9 body
 
-# the summit: Brine Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
-call ladtower x=24 z=66 h0=24 lv=6 a=bltower
+# the summit: Brine Hill - the tower (ladder outside), the locker, the note, the zone, the zipline down
+# (REACH 11-26: with the ladder inside, the walk up stopped at the top - the Weather mast locker never reached: ladtowerout's ladder outside
+# the south wall comes up facing the deck, as Biome Seven's)
+call ladtowerout x=24 z=66 h0=24 lv=6 a=bltower
 place Loot_ChestSmall bllocker at 23.25 66.75 h=38.6 sit yaw=180
 # (REACH 10-28: the zipline post and the note swapped cells - the tower's ladder now comes up onto the zipline's old cell)
 place Note_Paper blsumnote at 24.75 65.25 h=38.84 drop yaw=20

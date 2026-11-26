@@ -200,7 +200,9 @@ next
 for k 0 10 1
 brush flatten at -6.5 {-78+$k} r=2.4 s=20 frames=200 h={22.4+0.5*$k}
 next
-call ladtower x=-6 z=-66 h0=27.5 lv=3 a=lutower
+# (REACH 11-26: with the ladder inside, the walk up stopped at the top - the Surveyor's card never reached: ladtowerout's ladder outside
+# the south wall comes up facing the deck, as Biome Seven's)
+call ladtowerout x=-6 z=-66 h0=27.5 lv=3 a=lutower
 place Loot_ChestSmall lulocker at -6.75 -65.25 h=35.2 drop yaw=180
 place Note_Paper lusumnote at -6.75 -66.75 h=35.08 drop yaw=20
 place Zone_Trigger lusummit at -6 -66 h=35.98
