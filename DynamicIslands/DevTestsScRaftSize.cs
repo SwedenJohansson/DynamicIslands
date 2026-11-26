@@ -229,7 +229,8 @@ namespace DynamicIslands
 				OnRaftCommand();
 				yield return new WaitForSeconds(1.5f);
 				Vector3 dir = Flat(e.Position - raft.body.position).normalized;
-				yield return ScPush(dir, 6f, 45f, 1000f, r);
+				// (90 s: it stops as soon as the raft is stuck; 45 s left it reaching the shore just as the time ran out - SC9 11-26)
+				yield return ScPush(dir, 6f, 90f, 1000f, r);
 				Check(ref ok, r[1] > 0f, "the raft runs up to the island and stops (" + Gf(r[0], "F0") + " m; " + Gf(ScFlat(e.Position, raft.body.position), "F0") + " m from its middle)");
 
 				// (foundations from the bow towards the island, until some stand on land: up to 12 rows)

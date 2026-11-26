@@ -64,14 +64,23 @@ namespace DynamicIslands
 					if (land != null)
 					{
 						seen = Time.time;
-						// (the pickups may come a few frames after the landmark: still well inside the 1.5 s look)
-						for (int f = 0; f < 30 && (pick = fresh(land)) == null; f++) { hold(); yield return null; hold(); }
+						// (the pickups may come a while after the landmark - a big island is built over many frames; the look is held
+						// off, so waiting costs nothing. 30 frames was too short: SC17 runs 11-25 and 11-26)
+						for (float w = 0f; w < 10f && (pick = fresh(land)) == null; w += Time.unscaledDeltaTime) { hold(); yield return null; hold(); }
 					}
 				}
 				finally { WorldShiftManager.OnWorldShift -= onShift; if (pick == null) tick.SetValue(0f); }
 				Check(ref ok, land != null, island + " appeared");
 				if (land == null) yield break;
-				if (pick == null) { Log("  (the 1.5 s look got to all its blueprints first: no unswapped pickup to take - run again)"); Check(ref ok, false, "a blueprint picked up before the look"); yield break; }
+				if (pick == null)
+				{
+					PickupItem[] all = land.GetComponentsInChildren<PickupItem>(true);
+					int swappedAll = all.Count(p => p != null && originals.Contains(p));
+					string names = string.Join(", ", all.Where(p => p != null && p.itemInstance != null && p.itemInstance.baseItem != null && p.itemInstance.baseItem.UniqueName.StartsWith("Blueprint_")).Select(p => p.itemInstance.baseItem.UniqueName.Replace("Blueprint_", "")).Distinct().ToArray());
+					Log("  (no unswapped pickup of a moving blueprint 10 s after " + land.name + " appeared: " + all.Length + " pickups, " + swappedAll + " already swapped; blueprints there: " + (names.Length > 0 ? names : "none") + ")");
+					Check(ref ok, false, "a blueprint picked up before the look");
+					yield break;
+				}
 
 				string was = pick.itemInstance.baseItem.UniqueName, partner = ScrambledBlueprints.Map(was);
 				int hadWas = me.Inventory.GetItemCount(was), hadPartner = me.Inventory.GetItemCount(partner);
