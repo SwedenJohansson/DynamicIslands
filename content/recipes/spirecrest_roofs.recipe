@@ -26,7 +26,10 @@ elevation 0
 # --- Terrain: the drowned street level at -7 ---------------------------------------------------------------------------
 brush flatten at 0 0 r=46 s=20 frames=400 h=-7
 # discoveries: a level spot for the camp on the ring
-brush flatten at 4 63 r=5 s=8 frames=40
+# (11-26 REACH: that spot lay 3 m under the sea - the tent, the fire and the note's box on the lagoon floor, the note
+# out of reach: raised to a rubble mound 1.2 m over the water, its sides smoothed so a swimmer climbs out onto it)
+brush flatten at 4 63 r=6 s=20 frames=300 h=1.2
+brush smooth at 4 63 r=9 s=6 frames=20
 origin
 clear at 0 0 r=44
 clear at 4 63 r=6
@@ -190,6 +193,11 @@ prop sc_caverock cave.dome=30
 call sk_zone x=-46 z=1 al=sc_cave id=sc_cave r=4 msg="A cave in the rock. Somebody slept here and kept a mast by the door."
 call sk_ruin x=-8 z=-66 h=3 al=sc_ruin
 call sk_notebox x=-5.5 z=-70.5 yaw=10 al=sc_ruinnote
+# (11-26 REACH: the plane's pad sat in a bowl - Signal Hill's first terrace a cliff on one side, the ring's rubble higher
+# than a step all round the rest: a player who dropped in had no way out. The plane ploughed a gap out through the
+# rubble to the sea, at the pad's height)
+brush flatten from -46 58 to -64.6 81.4 r=4 s=20 frames=120 h=3
+clear from -46 58 to -64.6 81.4 r=4
 call sk_plane x=-46 z=58 h=3 yaw=60 al=sc_plane crate=sc_wreckcrate
 call sk_notebox x=-51 z=63.5 yaw=70 al=sc_wrecknote
 
