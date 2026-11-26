@@ -307,11 +307,16 @@ namespace DynamicIslands
 			float d = (p.transform.position - z.transform.position).magnitude;
 			if (d <= z.Radius) yield break;
 			Log("  (the player was moved " + d.ToString("F1") + " m away from zone '" + z.Id + "' at once: put there again; " + Whereabouts(p, z.transform.position) + ")");
-			PutPlayerNear(target, 0.3f);
-			yield return new WaitForSeconds(0.6f);
-			if (p == null || z == null) yield break;
-			d = (p.transform.position - z.transform.position).magnitude;
-			if (d > z.Radius) Log("  (moved " + d.ToString("F1") + " m away again; " + Whereabouts(p, z.transform.position) + ")");
+			// (x5fix 11-26: up to 3 times - a boar near the spot may charge again at once)
+			for (int i = 0; i < 3; i++)
+			{
+				PutPlayerNear(target, 0.3f);
+				yield return new WaitForSeconds(0.6f);
+				if (p == null || z == null) yield break;
+				d = (p.transform.position - z.transform.position).magnitude;
+				if (d <= z.Radius) yield break;
+				Log("  (moved " + d.ToString("F1") + " m away again; " + Whereabouts(p, z.transform.position) + ")");
+			}
 		}
 
 		/// <summary>What may have moved a player off a test spot: their parent, what is under them, the raft's distance.</summary>
@@ -322,6 +327,7 @@ namespace DynamicIslands
 			string under = Physics.Raycast(at + Vector3.up * 0.5f, Vector3.down, out hit, 4f, ~0, QueryTriggerInteraction.Ignore) ? hit.collider.name + " (layer " + LayerMask.LayerToName(hit.collider.gameObject.layer) + ")" : "nothing";
 			Raft raft = ComponentManager<Raft>.Value;
 			return "now " + at.ToString("F1") + ", " + (at - spot).ToString("F1") + " from the spot, parent " + (p.transform.parent != null ? p.transform.parent.name : "none")
+				+ (PlayerMove.HeldBy(p) != null ? " (held by " + PlayerMove.HeldBy(p).transform.root.name + ")" : "")
 				+ ", under " + under + (raft != null ? ", raft " + (raft.transform.position - at).magnitude.ToString("F0") + " m" : "");
 		}
 

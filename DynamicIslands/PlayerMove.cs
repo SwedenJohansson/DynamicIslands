@@ -26,6 +26,10 @@ namespace DynamicIslands.Editor
 			// (w10fix3 11-14: also off Raft's "FirstPersonParent" - on The Listening Mirrors every reach walk started at sea a child
 			// of it, grounded at -0.4 m over an 11 m deep sea and not moving; HasRaftAsParent knows only the raft's pivot)
 			if (pc != null && (pc.HasRaftAsParent || IsFirstPersonParent(player.transform.parent))) player.transform.SetParent(null, true);
+			// (x5fix 11-26: also out of a creature's hold - a boar that charged a player carries them on its tusks (Raft's
+			// AttachPlayer, parent "CarryPlayerPosition") and puts them back on its own spot every frame: moved anywhere,
+			// the player was back with the boar at once, 17-19 m off the gift zone in mpfull)
+			LetGoOfCreature(player);
 			player.transform.position = at;
 			if (pc != null)
 			{
@@ -39,6 +43,26 @@ namespace DynamicIslands.Editor
 				if (pc.controllerType != type) pc.SwitchControllerType(type);
 			}
 			if (cc != null) cc.enabled = true;
+		}
+
+		/// <summary>The creature holding this player (Raft's AttachPlayer: a boar's charge), or null.</summary>
+		public static AttachPlayer HeldBy(Network_Player player)
+		{
+			if (player == null || player.transform.parent == null) return null;
+			AttachPlayer a = player.transform.parent.GetComponentInParent<AttachPlayer>();
+			if (a != null && a.carriedPlayer == player) return a;
+			foreach (AttachPlayer x in Object.FindObjectsOfType<AttachPlayer>()) if (x != null && x.carriedPlayer == player) return x;
+			return null;
+		}
+
+		/// <summary>Out of a creature's hold (see To): the creature lets go where the player is.</summary>
+		public static void LetGoOfCreature(Network_Player player)
+		{
+			AttachPlayer a = HeldBy(player);
+			if (a == null) return;
+			try { a.StopCarryingPlayer(false, false); }
+			catch (System.Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Out of a creature's hold: " + e.Message); }
+			if (player.transform.parent != null && player.transform.parent.GetComponentInParent<AttachPlayer>() == a) player.transform.SetParent(null, true);
 		}
 
 		/// <summary>Raft's scene object "FirstPersonParent" as the player's parent (see To).</summary>
