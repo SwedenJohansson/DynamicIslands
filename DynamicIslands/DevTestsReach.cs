@@ -2501,7 +2501,11 @@ namespace DynamicIslands
 					if (d.y < -0.9f && flatLen < 1.3f && seg.sqrMagnitude > 0.01f && !inWaterNow(pl)) flat = seg.normalized * Mathf.Max(flatLen, 0.8f);
 					// (standing over a dive cell counts only with nothing between the feet and it: Hadal's walker stood on house 1's
 					// roof over a cell inside, took it as reached and stuck at the next one under the roof, 'block quad', bugfix 11-25)
-					if (water ? (kind == 1 ? flatLen < 0.8f && Mathf.Abs(d.y) < 1.4f : d.magnitude < 1.0f || (flatLen < 0.8f && d.y < 0f && pl.PersonController.controllerType == ControllerType.Water && pl.GetComponent<CharacterController>() != null && pl.GetComponent<CharacterController>().isGrounded && !Between(ReachFeet(pl) + Vector3.up * 0.1f, aim, reachMask) && !BodyDown(ReachFeet(pl), aim))) : flatLen < 0.5f && d.y < 0.9f && d.y > -0.9f) break;
+					// (a dive cell within 1 m counts only when the body can go on from where it is to the next spot: Hadal's walker stood on
+					// the lip in front of house 3's door 0.6 m from the cell the grid set beside it, took it as reached and was held by
+					// the lip on the way down to the next, bugfix 11-26 hd8 - then it swims on into the cell itself)
+					bool nearDive = d.magnitude < 1.0f && (d.magnitude < 0.35f || kind != 2 || !inWaterNow(pl) || i + 1 >= way.Count || !SwimBodyBlocked(p, W(way[i + 1]), reachMask));
+					if (water ? (kind == 1 ? flatLen < 0.8f && Mathf.Abs(d.y) < 1.4f : nearDive || (flatLen < 0.8f && d.y < 0f && pl.PersonController.controllerType == ControllerType.Water && pl.GetComponent<CharacterController>() != null && pl.GetComponent<CharacterController>().isGrounded && !Between(ReachFeet(pl) + Vector3.up * 0.1f, aim, reachMask) && !BodyDown(ReachFeet(pl), aim))) : flatLen < 0.5f && d.y < 0.9f && d.y > -0.9f) break;
 					if (dist < best - 0.15f) { best = dist; since2 = 0f; } else since2 += Time.deltaTime;
 					if (since2 > 2.5f)
 					{
