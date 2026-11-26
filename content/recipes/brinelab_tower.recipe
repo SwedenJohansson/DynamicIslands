@@ -90,7 +90,9 @@ place ChoppableVines atriumvines at 1.35 2.4 h=0.65 scale=0.6 yaw=0
 place Stairwell_WallLamp - at -2 4.42 h=2.3 yaw=180
 
 # --- s6, the greenhouse floor (3.3): planters overrun, the boars, the stairwell zone at the hatch ------------------------
-place Zone_Trigger stairzone at 0.5 2 h=4.8
+# (11-26 REACH: at h=4.8 the zone's middle hung 1.5 m over the greenhouse floor - a player standing at the hatch was
+# only just inside its 2.5 m: set 0.5 m over the floor, the climber still comes up through it)
+place Zone_Trigger stairzone at 0.5 2 h=3.8
 place Block_Foundation - at -2.5 -2.5 h=3.98
 place Block_Foundation - at 3.5 -2.5 h=3.98
 place Block_Foundation - at 5 2.5 h=3.98
@@ -178,6 +180,9 @@ call sk_ridge x1=-66 z1=-8 x2=-62 z2=10 h=5 top=4 r=8
 call sk_plants x=-64 z=1 r=16 seed=10361
 call sk_zone x=-64 z=1 al=bl_ridge id=bl_ridge r=7 msg="The old seawall, now a ridge of rubble and grass. From here the lab tower leans like a tired man."
 call sk_cave x=-20 z=54 h=3 yaw=180 al=bl_caverock chest=bl_cavechest
+# (11-26 REACH: the sample cave's dry dome, uncapped, ran 64 m back out over the north shore - its skin lay 1.4-2.2 m
+# over the sea there, a 55 m roofed pocket a swimmer got under and not out of: capped at 30 m)
+prop bl_caverock cave.dome=30
 call sk_zone x=-20 z=49 al=bl_cave id=bl_cave r=4 msg="The sample cave: the lab kept its cold store in the rock, out of the sun."
 call sk_ruin x=70 z=-4 h=3 al=bl_ruin
 call sk_ruin x=70 z=8 h=3 al=bl_ruin2
