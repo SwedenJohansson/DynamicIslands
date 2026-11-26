@@ -577,7 +577,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>Forgets what was read (files were installed or removed).</summary>
-		public static void Forget() { cache.Clear(); none.Clear(); notBeforeAt.Clear(); rulesAt.Clear(); IslandSummaries.Recheck(); }
+		public static void Forget() { cache.Clear(); none.Clear(); notBeforeAt.Clear(); questsAt.Clear(); rulesAt.Clear(); IslandSummaries.Recheck(); }
 
 		#region Rules, kept on disk (ROADMAP P6)
 
@@ -675,40 +675,68 @@ namespace DynamicIslands.Editor
 		static bool notBeforeDirty;
 		static string NotBeforePath { get { return Path.Combine(DynamicIslands.assetpath, "notbeforecache.txt"); } }
 
+		// name -> (file time, has a quest with steps "1" or ""): NotAgain asks it of every finished world island on a pick -
+		// each read the whole file on a new session's first pick (1.6 s with 150 islands, mphostswap -big 11-25)
+		static Dictionary<string, KeyValuePair<long, string>> quests;
+		static readonly Dictionary<string, float> questsAt = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+		static bool questsDirty;
+		static string QuestsPath { get { return Path.Combine(DynamicIslands.assetpath, "questcache.txt"); } }
+
 		/// <summary>An island's "not before" setting (IslandProps.NotBeforeKm; "" when it has none or the file is missing),
 		/// read from the file only when it changed since last time.</summary>
 		public static string NotBeforeKm(string name)
 		{
-			if (string.IsNullOrEmpty(name)) return "";
 			if (notBefore == null) notBefore = LoadKept(NotBeforePath);
+			return Kept(name, notBefore, notBeforeAt, ref notBeforeDirty, i => ObjectProps.Get(i.Props, IslandProps.NotBeforeKm), "'Not before'");
+		}
+
+		/// <summary>Whether the island's file has a main quest (steps), read from the file only when it changed since last time
+		/// (false when the file is missing).</summary>
+		public static bool HasQuestSteps(string name)
+		{
+			if (quests == null) quests = LoadKept(QuestsPath);
+			return Kept(name, quests, questsAt, ref questsDirty, i => IslandQuest.From(i.Props).Steps.Count > 0 ? "1" : "", "Quest of") == "1";
+		}
+
+		/// <summary>One value of an island's file kept on disk (LoadKept/SaveKept), looked up again only when the file changed.</summary>
+		static string Kept(string name, Dictionary<string, KeyValuePair<long, string>> kept, Dictionary<string, float> keptAt, ref bool dirty, Func<Info, string> value, string what)
+		{
+			if (string.IsNullOrEmpty(name)) return "";
 			KeyValuePair<long, string> had;
-			bool known = notBefore.TryGetValue(name, out had);
+			bool known = kept.TryGetValue(name, out had);
 			float at;
 			// (the file's time looked at again at most every 2 s, as Get does)
-			if (known && notBeforeAt.TryGetValue(name, out at) && Time.unscaledTime - at < 2f && Time.unscaledTime >= at) return had.Value;
+			if (known && keptAt.TryGetValue(name, out at) && Time.unscaledTime - at < 2f && Time.unscaledTime >= at) return had.Value;
 			try
 			{
 				string path = IslandSpawner.PathFor(name);
 				if (!File.Exists(path)) return "";
 				long t = File.GetLastWriteTimeUtc(path).Ticks;
-				notBeforeAt[name] = Time.unscaledTime;
+				keptAt[name] = Time.unscaledTime;
 				if (known && had.Key == t) return had.Value;
 				Info read = Get(name);
 				if (read == null) return "";
-				string v = ObjectProps.Get(read.Props, IslandProps.NotBeforeKm);
-				notBefore[name] = new KeyValuePair<long, string>(t, v);
-				notBeforeDirty = true;
+				string v = value(read);
+				kept[name] = new KeyValuePair<long, string>(t, v);
+				dirty = true;
 				return v;
 			}
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] 'Not before' of '" + name + "': " + e.Message); return ""; }
+			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] " + what + " '" + name + "': " + e.Message); return ""; }
 		}
 
-		/// <summary>Writes what NotBeforeKm read since (after a pick from the pool).</summary>
+		/// <summary>Writes what NotBeforeKm and HasQuestSteps read since (after a pick from the pool).</summary>
 		public static void SaveNotBefore()
 		{
-			if (notBefore == null || !notBeforeDirty) return;
-			try { SaveKept(NotBeforePath, notBefore); notBeforeDirty = false; }
-			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Writing notbeforecache.txt: " + e.Message); }
+			if (notBefore != null && notBeforeDirty)
+			{
+				try { SaveKept(NotBeforePath, notBefore); notBeforeDirty = false; }
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Writing notbeforecache.txt: " + e.Message); }
+			}
+			if (quests != null && questsDirty)
+			{
+				try { SaveKept(QuestsPath, quests); questsDirty = false; }
+				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Writing questcache.txt: " + e.Message); }
+			}
 		}
 
 		#endregion
