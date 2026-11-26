@@ -777,8 +777,13 @@ namespace DynamicIslands
 				foreach (IslandObjectRef ir in e.Root.GetComponentsInChildren<IslandObjectRef>(false))
 				{
 					if (ir.ObjectName != ContentCatalog.MacheteVines) continue;
+					// (a use line that only hides the vine itself (and says something) is the cut too: Brinelab's atrium vines,
+					// "hide|atriumvines" plus a message - the grid saw them as a wall at the stairwell hatch and the walker,
+					// coming down the ladder past them, stuck on their box, 11-26 blx)
+					string vown = ir.Name ?? "";
 					if (ir.Props.Any(kv => (kv.Key.StartsWith("if.") || kv.Key.StartsWith("else.") || kv.Key.StartsWith("on.") || kv.Key.StartsWith("beh."))
-						&& !(vdef.ContainsKey(kv.Key) && vdef[kv.Key] == kv.Value))) continue;
+						&& !(vdef.ContainsKey(kv.Key) && vdef[kv.Key] == kv.Value)
+						&& !(kv.Key == BehaviourProps.EventKey("use") && VineUseIsCut(kv.Value, vown)))) continue;
 					ir.gameObject.SetActive(false);
 					cut++;
 				}
@@ -2623,6 +2628,21 @@ namespace DynamicIslands
 		}
 
 		static float reachTraceT;
+		/// <summary>A vine's use line that cuts it as the default does: every action hides the vine itself or only says something.</summary>
+		static bool VineUseIsCut(string onUse, string own)
+		{
+			var acts = ObjAction.ParseLines((onUse ?? "").Replace("\\n", "\n"));
+			bool hides = false;
+			foreach (var a in acts)
+			{
+				if (a.Verb == "message") continue;
+				if (a.Verb != "hide") return false;
+				if (!(a.Target.Length == 0 || a.Target.Equals("self", StringComparison.OrdinalIgnoreCase) || (own.Length > 0 && a.Target == own))) return false;
+				hides = true;
+			}
+			return hides;
+		}
+
 		/// <summary>With CIReachOnly set: the walker's state each 0.2 s (feet, climbing, grounded) - to see one target's walk.</summary>
 		static void ReachTrace(Network_Player pl, IslandWorldState.Entry e, string what)
 		{

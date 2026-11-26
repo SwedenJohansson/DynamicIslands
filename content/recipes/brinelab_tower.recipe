@@ -108,6 +108,10 @@ place Note_Paper drive1 at -1.5 -2.5 h=7.6 drop yaw=20
 place TP_LabBottle01 - at -0.8 -2.5 h=7.6 drop
 place TP_Selene_ComputerRoom_Server01 - at -3.2 3.6 h=6.3 sit yaw=180
 place TP_Selene_ComputerGeneric_01 - at 3.5 3.8 h=6.3 sit yaw=180
+# (11-26 REACH blx: lab 2's hatch (with the lean, x 0.6..2.1) left its east rim 0.75 m from the ladder at x 1.35 - a climber
+# could not step off onto lab 2 (drive 1 and the cabinet: can't get there from any side), while the greenhouse's rim, 0.45 m
+# off, works: a 0.3 m strip on that rim brings it to x 1.8 like the greenhouse's)
+place Block_Floor_Tier3 labfloors at 1.95 3.75 h=6.3 sx=0.2
 
 # --- The roof (9.3): beehives on planter boxes, white and blue flowers, a small crop plot -------------------------------
 place Block_Foundation - at -3 -2.5 h=9.98
