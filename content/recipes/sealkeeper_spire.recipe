@@ -28,6 +28,13 @@ brush flatten at -24 -14 r=4.5 s=25 frames=260 h=2
 brush flatten at 24 -14 r=4.5 s=25 frames=260 h=2
 brush flatten at -11 13 r=5 s=25 frames=260 h=1.2
 brush flatten at 15 4 r=4 s=25 frames=260 h=1.5
+# (REACH 11-26: the west coast's water under the generated cliff (-95..-106, -25..+30) was a trap - every way out was a 0.7-1.1 m
+#     step up the bank at -96..-99 -22..-25: a notch cut in the bank there, a landing just over the water and a step up
+#     to the bank inland (east), as Old Mine Islet's)
+brush flatten at -97.8 -23.3 r=2.6 s=20 frames=600 h=0.4
+clear at -97.8 -23.3 r=3.4 body
+brush flatten at -95.2 -23.3 r=1.5 s=20 frames=600 h=0.8
+clear at -95.2 -23.3 r=2.5 body
 brush grass at -4 6 r=7 s=20 frames=20
 brush flatten at 23.2 -38.6 r=5 s=8 frames=40
 # (REACH 10-30 G1: since the resize the land round the door tower's rock and the dock stands 4 m and 2 m over them -
@@ -110,7 +117,9 @@ place "Box Small" - at -12.6 10.4 ground sit
 place Note_Paper milocard at -12.6 10.4 ground y=1.6 drop yaw=40
 # STORY 10-24s: the fuse board lights the spire - and the Stalker's lure comes up the trench to look (seen from the door tower's deck)
 place Placeable_Lantern_Metal skcam at 22.5 -15.5 h=9.475 sit
-place Placeable_Lantern_Metal sklure at 45 25 h=-6 drop scale=1.6
+# (CIFloating 11-26: since the 10-24 resize 45 25 is land - the lure lay 10 m under the ground and rose through it: it comes up
+#     the flooded sinkhole by the drowned office now, west of the building, from its floor (-14) to 4 m under the water)
+place Placeable_Lantern_Metal sklure at -55 -62 h=-12 scale=1.6
 ramp Block_Floor_Tier3 from -13 16 1.2 to -16 19 1.2 len=1.5 top=0
 call ladtower x=-8 z=-6 h0=3 lv=4 a=towers
 place Loot_Chest baselocker at -5.6 -4.2 ground sit yaw=90
@@ -133,25 +142,29 @@ prop treasure10053 treasure.loot=TitaniumOre*3
 # (REACH 11-26: with the ladder inside, the walk up stopped at the top - the pump tower's deck (Pump log, pump_tower) never reached: ladtowerout's ladder outside
 # the south wall comes up facing the deck, as Biome Seven's)
 call ladtowerout x=-24 z=-14 h0=2 lv=3 a=towers
-place RT_Pillar - at -24.8 -14.6 h=9.475 sy=0.6
-place TP_Selene_DoorCrankWheel pumpcrank at -24.8 -14.69 h=10.675
+# (CIFloating 11-26: set 0.16 m over its deck it touched nothing - set down on the deck, the crank with it)
+place RT_Pillar - at -24.8 -14.6 h=9.33 sy=0.6
+place TP_Selene_DoorCrankWheel pumpcrank at -24.8 -14.69 h=10.53
 place Note_Paper pumplog at -23.3 -14.6 h=9.6 drop yaw=40
 place Zone_Trigger pumpzone at -24 -14 h=10.5
 place WaterPipe_Short_1 pipes at -21.5 -14 h=2.4 rot=0,0,90
 
 # --- The door tower (east): three fuse lockers, the fuse board, the warning ---------------------------------------------
 call ladtower x=24 z=-14 h0=2 lv=3 a=towers
-place Loot_ChestSmall fuselocker1 at 23.3 -14.7 h=9.475 sit yaw=180
+# (CIFloating 11-26: set 0.16 m over its deck it touched nothing - dropped onto the deck)
+place Loot_ChestSmall fuselocker1 at 23.3 -14.7 h=9.8 drop yaw=180
 place Loot_ChestSmall fuselocker2 at 23.2 -13.4 h=2 sit yaw=90
 place Loot_ChestSmall fuselocker3 at 26.6 -12 ground sit yaw=270
-place RT_PowerBox fuseboard at 24.7 -14.7 h=9.82 yaw=180
+# (CIFloating 11-26: 0.16 m over the deck - set down on it)
+place RT_PowerBox fuseboard at 24.7 -14.7 h=9.66 yaw=180
 place Note_Paper warning at 24.6 -12.4 h=2 drop yaw=200
 place Zone_Trigger doortowerzone at 24 -14 h=10.5
 
 # --- The cable head: the cable into the sea, the two levers, the descend lever --------------------------------------
 place Block_Foundation cablepad at 15 4 h=1.6 sx=2 sz=2
-place Antenna_pole cable at 12 3 h=4 rot=0,0,-70 sy=1.4
-place Antenna_pole cable at 17 4.5 h=1.4 rot=0,0,-110 sy=1.6
+# (CIFloating 11-26: since the 10-24 resize the land runs on east of the cable head - the cable's sea end lay 5 m under the
+#     ground and its upper pole hung 2.3 m over the base's edge: one short end now, from the pad's edge down into the ground)
+place Antenna_pole cable at 16.6 4.3 h=1.6 rot=0,0,-110 sy=0.5
 place Zone_Trigger cablezone at 15 4 h=2.6
 place Note_Paper twoswitches at 14 5.2 h=1.6 drop yaw=0
 place RT_Pillar - at 14 2.6 h=1.6 sy=0.4
@@ -254,7 +267,8 @@ call sk_reef x=-40 z=-56 r=5 seed=24830
 
 # the summit: Storm Crown - the tower (ladder inside), the locker, the note, the zone, the zipline down
 call ladtower x=44 z=-66 h0=26 lv=6 a=sktower
-place Loot_ChestSmall sklocker at 43.25 -65.25 h=40.73 sit yaw=180
+# (CIFloating 11-26: set 0.16 m over its deck it touched nothing - dropped onto the deck)
+place Loot_ChestSmall sklocker at 43.25 -65.25 h=41 drop yaw=180
 place Note_Paper sksumnote at 43.25 -66.75 h=40.84 drop yaw=20
 place Zone_Trigger sksummit at 44 -66 h=41.73
 # (10-26: the near floor, 5.7 m west and 1.3 m under the object, hung in the air off the tower and then inside it: now on the deck's south-east cell, 44.75 -66.75)
@@ -311,7 +325,7 @@ prop sklure obj.name=sklure
 prop sklure beh.hidden=1
 prop sklure tint.color=#2fd0c0
 prop sklure tint.amount=0.8
-prop sklure beh.move=-28,0,-14
+prop sklure beh.move=0,8,0
 prop sklure beh.moveTime=20
 prop sklure beh.moveMode=switch
 note orders Sealkeeper's orders | SEALKEEPER'S ORDERS - DIRECTOR H. ROOK\n\n1. Power first: the generator on the base.\n2. Prime the pumps from the pump tower. Fuses from the door tower.\n3. The control room is keyed with the Commons' code.\n4. Wind the cable. At the cable head: RESTORE, or SEAL. Not both. There is no both.\n5. Then go down. Somebody has to see it done.\n\nUnder it, in Fennick's capitals: "AND WIPE YOUR FEET." And under that, very small, in the Director's own hand: "Whoever you are - I am glad somebody came. I could not pull either lever. I tried for nine days."

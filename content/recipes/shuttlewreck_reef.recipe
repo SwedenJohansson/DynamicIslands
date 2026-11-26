@@ -18,7 +18,9 @@ gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.4 Hostiles=0 Friendly=0 SeaLife
 generate
 elevation -10
 
-brush flatten at 0 0 r=7 s=25 frames=260 h=2
+# (CIFloating 11-26: the shuttle's floor (h 2) lay up to 0.28 m under the ground at its ends - the site flattened wider, a
+#     little lower)
+brush flatten at 0 0 r=9 s=25 frames=260 h=1.95
 brush sand at 0 -9 r=4 s=20 frames=20
 brush flatten at -13.1 -23.6 r=4 s=8 frames=40
 origin
@@ -139,6 +141,10 @@ prop treasure25012 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
 
 # the drowned building: the shuttle depot, its ground floor 16 m down; the deep chest at the bottom, air on storey 1
 call sk_drowned x=28 z=-32 h0=-6 n=2 w=RT_WallWindowBroken a=swbld cap=0 cal=swcap
+# (REACH 11-26: the top ladder led up the hatch to a roof 10 m under the sea (elevation -10) with no floor beside the hatch
+# to step off onto - 'no floor at its top' in every run since 10-24; the building is under water and swum through: the top
+# one gone, as Hadal Commons' - the ground-floor ladder up to storey 1 stays)
+clear at 30.25 -27.8 r=0.6 all only=Block_Ladder above=-4 below=-2
 place Loot_Chest swdeep at 26.2 -34.5 h=-6 sit yaw=0
 place Placeable_Table_Basic - at 26.5 -31 h=-3 sit yaw=0
 place Note_Paper swbldnote at 26.5 -31 h=-1.7 drop yaw=10

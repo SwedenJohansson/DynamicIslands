@@ -46,6 +46,9 @@ brush flatten at 10 -1 r=2.5 s=20 frames=200 h=0.3
 brush flatten at 12 -1 r=2.5 s=20 frames=200 h=0.3
 brush grass at 18 -2 r=9 s=20 frames=20
 brush flatten from 3 -4.5 to 3 4.5 r=3.8 s=20 frames=260 h=-15
+# (CIFloating 11-26: the flooded storeys' west walls and floors (x -6..-7) stood 5-15 m deep in the pit's west side -
+#     the pit dug again under the tower's west side too)
+brush flatten from -5 -4.5 to -5 4.5 r=3.8 s=20 frames=260 h=-15
 # discoveries: level spots for the evacuees' camp and the loading yard
 brush flatten at -36 30 r=5 s=8 frames=40
 brush flatten at 36 -36 r=6 s=8 frames=40
@@ -384,4 +387,6 @@ for k 0 2
 place RT_PillarThick zipposts at 17.53 66.22 ground y={6*$k}
 next
 place RT_PillarThick zipposts at 17.53 66.22 ground y=18 sy=0.1467
+# (CIFloating 11-26: a generated blue flower north of the west cave hung 0.65 m over the ground the cave hill's apron left there)
+clear at -33.5 12.5 r=1.2 only=Pickup_Landmark_Flower_Blue all
 save Brinelab Tower
