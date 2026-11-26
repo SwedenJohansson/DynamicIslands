@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using DynamicIslands.Editor;
 using HMLLibrary;
@@ -80,6 +81,7 @@ namespace DynamicIslands
 			yield return WaitForEditor(false);
 			if (!DynamicIslands.InEditor()) { Fail("open the editor first"); yield break; }
 			bool ok = true;
+			const string Cave = "BalboaCave_DeadEnd"; // (a piece with a cave line in raft_props.txt - plain "BalboaCave" has none)
 			EditorUI.SetTab(TAB.TerrainEdit);
 			terraineditor editor = UnityEngine.Object.FindObjectOfType<terraineditor>();
 			IslandGenerator.GenerateInEditor(new IslandGenSettings { Seed = 4242, Radius = 70f, Height = 40f, SeaFloor = IslandGenSettings.SeaFloorShallow, Trees = 0f, Bushes = 0f, Rocks = 0f, Harvest = 0f, BeachThings = 0f, Water = 0f, SeaRocks = 0f, SeaFinds = 0f, Sunken = 0f });
@@ -94,11 +96,12 @@ namespace DynamicIslands
 
 			float radius = terraineditor.brushRadius, strength = terraineditor.strength;
 			terraineditor.TerrainModificationAction action = terraineditor.modificationAction;
-			Check(ref ok, CaveMountain.Wants("BalboaCave") && !CaveMountain.Wants("Log"), "BalboaCave is a cave piece, Log is not");
+			Check(ref ok, CaveMountain.Wants(Cave) && !CaveMountain.Wants("Log"), Cave + " is a cave piece, Log is not");
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { Cave, "Log" });
 			Vector3 at = o + new Vector3(500f, 0f, 500f); // (on the land: the sea floor may not go lower)
 			Vector3 pc = at + new Vector3(-2f, 0f, 0f), pl = at + new Vector3(2f, 0f, 0f), pg = at + new Vector3(0f, 0f, 2f);
 			pc.y = ground(pc) - 4f; pl.y = ground(pl) - 4f; pg.y = ground(pg);
-			EditorGameObject cave = PlaceForTest("BalboaCave", pc, placed), log = PlaceForTest("Log", pl, placed), onGround = PlaceForTest("BalboaCave", pg, placed);
+			EditorGameObject cave = PlaceForTest(Cave, pc, placed), log = PlaceForTest("Log", pl, placed), onGround = PlaceForTest(Cave, pg, placed);
 			if (cave == null || log == null || onGround == null) { Fail("could not place the test pieces"); yield break; }
 			yield return null;
 			cave.transform.position = pc; log.transform.position = pl; onGround.transform.position = pg;
