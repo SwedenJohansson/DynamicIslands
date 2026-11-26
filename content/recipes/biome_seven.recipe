@@ -181,8 +181,6 @@ call sk_notebox x=-38 z=58 yaw=70 al=b7_wrecknote
 # --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
 call vinecache x=60 z=-58 r=8 seed=10471 chest=b7vinechest vines=b7vines items=Rope*3;Nail*8;Seed_Flower_Red*2
 
-# --- Unique layer (10-24): the airlock garden's outer sluice: a crank on a post at the shed brings up the bed box
-call crankcache x=1 z=51 yaw=270 alias=sluicecrank sig=sluice chest=bedbox cx=-11 cz=52 cyaw=0 items=Seed_Watermelon*2;Seed_Pineapple*2;Dirt*2 title="Bed box"
 
 # --- DEEP 1-HOUR (10-24): the garden rock breaking the surface (20.5 m from the floor) and the drowned seed store in the west pit
 # the rock that breaks the surface (20.5 m up from the floor), a beacon tower on its dry top
@@ -197,6 +195,11 @@ call sk_pit x=-66 z=-30 h0=-8
 call sk_cave x=-12 z=72 h=2 yaw=180 al=b7cave2 chest=b7cave2chest
 # (REACH 11-26: as b7_caverock above - its dome's skin stood 18-20 m over the floor, out of the sea at the car park)
 prop b7cave2 cave.foot=wet
+# --- Unique layer (10-24): the airlock garden's outer sluice: a crank on a post at the shed brings up the bed box
+# (REACH 11-26: set down after the den above - its wet foot's apron lowers the ground here by about 1 m: placed before it,
+# the post stood 1 m over the ground; and one sea vine of the scatter left hanging 2.6 m up)
+call crankcache x=1 z=51 yaw=270 alias=sluicecrank sig=sluice chest=bedbox cx=-11 cz=52 cyaw=0 items=Seed_Watermelon*2;Seed_Pineapple*2;Dirt*2 title="Bed box"
+clear at 2.91 55.72 r=1 only=SeaVine3 all
 call sk_reef x=-6 z=-66 r=6 seed=24310
 call sk_reef x=-38 z=-54 r=6 seed=24320
 call sk_reef x=-56 z=-24 r=5 seed=24330
