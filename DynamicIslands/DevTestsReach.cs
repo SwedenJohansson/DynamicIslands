@@ -387,8 +387,10 @@ namespace DynamicIslands
 					lowHit = Mathf.Min(lowHit, h.point.y); topHit = Mathf.Max(topHit, h.point.y);
 					string what = h.collider is TerrainCollider ? "terrain" : BlockerName(h.collider);
 					if (what.Length > 14) what = what.Substring(0, 14);
+					standWhyOn = true; standWhy = "";
 					bool st = Stands(h.point), ins = InsideSolid(h.point + Vector3.up * 0.5f);
-					line.Append(" " + (h.point.y - e.Position.y).ToString("F1") + "/n" + h.normal.y.ToString("F2") + "/" + what + (h.normal.y >= 0.64f && st && !ins ? "=FLOOR" : (!st ? "-nostand" : "") + (ins ? "-insolid(" + solidWhy + ")" : "")));
+					standWhyOn = false;
+					line.Append(" " + (h.point.y - e.Position.y).ToString("F1") + "/n" + h.normal.y.ToString("F2") + "/" + what + (h.normal.y >= 0.64f && st && !ins ? "=FLOOR" : (!st ? "-nostand(" + standWhy + ")" : "") + (ins ? "-insolid(" + solidWhy + ")" : "")));
 					from = h.point + Vector3.down * 0.03f;
 				}
 				var sw = new System.Text.StringBuilder();
@@ -1371,13 +1373,21 @@ namespace DynamicIslands
 			if (!Physics.CheckCapsule(low, top, RRadius, reachMask, QueryTriggerInteraction.Ignore)) return true;
 			// (on a slope over ~38 deg the 0.6 m wide capsule's foot touches the rising terrain itself - Raft's controller stands
 			// and walks there (a 40 deg trail pad edge, PQ11 10-27): the terrain alone may touch it under 0.4 m, nothing else)
-			if (Physics.CheckCapsule(feet + Vector3.up * (0.4f + RRadius), top, RRadius, reachMask, QueryTriggerInteraction.Ignore)) return false;
+			if (Physics.CheckCapsule(feet + Vector3.up * (0.4f + RRadius), top, RRadius, reachMask, QueryTriggerInteraction.Ignore))
+			{
+				if (standWhyOn) { standWhy = ""; foreach (Collider c in Physics.OverlapCapsule(feet + Vector3.up * (0.4f + RRadius), top, RRadius, reachMask, QueryTriggerInteraction.Ignore)) standWhy += (standWhy.Length > 0 ? "," : "") + (c is TerrainCollider ? "terrain" : BlockerName(c)); }
+				return false;
+			}
 			// (a dug passage's rock is ground as the terrain is: its mouth ramps up out of a den at 35-55 deg - every spot on
 			// Hollowtrunk Grove's root den ramp was ruled out and the den called a trap, though Raft's walker came up it in 2 s, 11-08)
 			foreach (Collider c in Physics.OverlapCapsule(low, top, RRadius, reachMask, QueryTriggerInteraction.Ignore))
-				if (!StandGround(c)) return false;
+				if (!StandGround(c)) { if (standWhyOn) standWhy = "low " + BlockerName(c); return false; }
 			return true;
 		}
+
+		/// <summary>(CIReachColumns) What the last Stands that said no met: only while standWhyOn, the grid's own calls skip it.</summary>
+		static string standWhy = "";
+		static bool standWhyOn;
 
 		/// <summary>Ground a standing player's foot may touch on a slope: the terrain, or a dug passage's rock (DigTunnel.RockName).</summary>
 		static bool StandGround(Collider c)
@@ -1441,8 +1451,10 @@ namespace DynamicIslands
 			Physics.queriesHitBackfaces = true;
 			try
 			{
-				solidWhy = "faces";
-				return OverFacesUp(p, 40f);
+				overWhy = "";
+				bool over = OverFacesUp(p, 40f);
+				solidWhy = "faces " + overWhy;
+				return over;
 			}
 			finally { Physics.queriesHitBackfaces = was; }
 		}
@@ -1477,8 +1489,8 @@ namespace DynamicIslands
 				// (but a steep bit of skin over a mouth is its lintel, not the hill: out from p along the skin's facing, at p's
 				// height, no skin or ground closes the hill - inside the hill that ray must cross the skin to get out. Spirecrest's
 				// spare chest cave mouth (the skin 4.4 m over its floor, n0.12) cut the way in, 'can't get there', sc4 11-26)
-				if (h.normal.y > 0.02f && h.normal.y < 0.3f && h.collider.name == CaveMountain.SkinName && SkinOpenOut(p, h.normal)) { float ss = h.distance + 0.02f; o += Vector3.up * ss; dist -= ss; continue; }
-				if (h.normal.y > 0.02f && h.collider.name == CaveMountain.SkinName) { overTerrain = false; overWhy = "under the cave skin n" + h.normal.y.ToString("0.00") + " +" + (o.y + h.distance - p.y).ToString("0.0"); return true; }
+				if (h.normal.y > 0.02f && h.normal.y < 0.3f && h.collider.name == CaveMountain.SkinName && SkinOpenOut(p, h.normal, o.y + h.distance)) { float ss = h.distance + 0.02f; o += Vector3.up * ss; dist -= ss; continue; }
+				if (h.normal.y > 0.02f && h.collider.name == CaveMountain.SkinName) { overTerrain = false; overWhy = "under the cave skin n" + h.normal.y.ToString("0.00") + " +" + (o.y + h.distance - p.y).ToString("0.0") + (h.normal.y < 0.3f ? " closed by " + skinClosedBy : ""); return true; }
 				if (h.normal.y <= 0.1f) return false;
 				// (a lone den's wall (CaveTool.PlugOpening) is one sheet of rock, not a body: over its way in it leans back into the
 				// den as a funnel, so from the passage under it the ray meets its front from behind - the passage was called solid
@@ -1493,15 +1505,23 @@ namespace DynamicIslands
 		}
 
 		/// <summary>(back faces on) From p out along a cave skin's facing (level, 15 m) neither the skin nor the ground is met:
-		/// the skin over p does not close round it, p is under the lip of an opening in the hill, not in the hill.</summary>
-		static bool SkinOpenOut(Vector3 p, Vector3 n)
+		/// the skin over p does not close round it, p is under the lip of an opening in the hill, not in the hill.
+		/// (The ray goes at head height under the skin (skinY), not at p's: from a passage's floor a level ray grazed the floor's
+		/// bumps further out, and the ground counts within 5 m only - past a mouth its passage runs on to the rising ground
+		/// beyond. Inside a hill the skin closes round p near by. Spirecrest's spare chest cave: one row of its passage, 4.4 m
+		/// under the lintel, called solid across, 'can't get there' sc6 11-26.)</summary>
+		static bool SkinOpenOut(Vector3 p, Vector3 n, float skinY)
 		{
+			skinClosedBy = "";
 			Vector3 d = new Vector3(n.x, 0f, n.z);
-			if (d.sqrMagnitude < 0.01f) return false;
-			foreach (RaycastHit r in Physics.RaycastAll(p, d.normalized, 15f, reachMask, QueryTriggerInteraction.Ignore))
-				if (r.collider is TerrainCollider || r.collider.name == CaveMountain.SkinName) return false;
+			if (d.sqrMagnitude < 0.01f) { skinClosedBy = "level"; return false; }
+			Vector3 o = p + Vector3.up * Mathf.Min(1.5f, Mathf.Max(0f, (skinY - p.y) * 0.5f));
+			foreach (RaycastHit r in Physics.RaycastAll(o, d.normalized, 15f, reachMask, QueryTriggerInteraction.Ignore))
+				if (r.collider.name == CaveMountain.SkinName || (r.collider is TerrainCollider && r.distance < 5f))
+				{ skinClosedBy = (r.collider is TerrainCollider ? "terrain" : "skin") + " at " + r.distance.ToString("0.0"); return false; }
 			return true;
 		}
+		static string skinClosedBy = "";
 
 		/// <summary>The terrain's holes (cut cells), read once per audit: ReachAnalyze clears them.</summary>
 		static readonly Dictionary<Terrain, bool[,]> reachHoles = new Dictionary<Terrain, bool[,]>();

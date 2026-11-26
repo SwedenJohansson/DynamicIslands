@@ -433,6 +433,13 @@ quest reward=Plank*8;Rope*3;OxygenBottle*1;Flipper*1
 #     3 m, the rope 2.48 m up there - the shore under that last stretch taken down to 1.9 m and smoothed out)
 brush flatten from -41.2 14.4 to -37.9 12.4 r=1.6 s=20 frames=60 h=1.9
 brush smooth from -41.6 14.6 to -37.5 12.2 r=3 s=6 frames=12
+# (11-26 REACH sc6: the way out of the lagoon below the annex tower came up a bank 1.8 m high in 1.8 m - a swimmer the
+#     waves set a step east of the way met it head on and could not climb out: a 6 m wide ramp from 1.4 m under the
+#     water to the ring's top at 1.8, 0.53 m a step, its sides smoothed)
+for k 0 6
+brush flatten at {-12.6+1.0*$k} {45.0+1.0*$k} r=3 s=20 frames=60 h={-1.4+0.53*$k}
+next
+brush smooth from -13.2 44.4 to -6.2 51.4 r=4.5 s=6 frames=12
 # (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth)
