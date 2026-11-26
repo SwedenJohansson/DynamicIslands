@@ -394,13 +394,23 @@ namespace DynamicIslands.Editor
 		{
 			int count = chunks.Count;
 			bool paced = count > IslandNetwork.ChunksPerFrame && IslandNetwork.Loopback == null && DynamicIslands.instance != null;
+			float waitedFrom = -1f;
+			bool stalled = false;
 			for (int i = 0; i < count; i++)
 			{
+				// (paced: the budget all transfers share, ahead of island files, and never more than Steam's queue to the
+				// player holds - a big world's copy sent while 28 island files went to the player never came, X5 IM43)
+				while (paced && !IslandNetwork.MaySend(to, true, stalled))
+				{
+					if (waitedFrom < 0f) waitedFrom = Time.realtimeSinceStartup;
+					else if (Time.realtimeSinceStartup - waitedFrom > IslandNetwork.StallSeconds) stalled = true;
+					yield return null;
+				}
+				waitedFrom = -1f;
 				if (!to.HasValue && gen != sendGeneration) yield break;
 				if (!Raft_Network.IsHost) yield break;
 				var msg = new IslandNetMessage { Name = key, Hash = id, Index = i, Count = count, Data = chunks[i] };
 				IslandNetwork.SendWorldCopy(msg, to);
-				if (paced && (i + 1) % IslandNetwork.ChunksPerFrame == 0) yield return null;
 			}
 			Debug.Log("[CUSTOM ISLANDS] [net] Sent the world's copy (" + length + " characters, " + count + " part(s)) to " + (to.HasValue ? to.Value.ToString() : "every player"));
 		}

@@ -1451,7 +1451,8 @@ namespace DynamicIslands.Editor
 			string key = hash + "|" + to;
 			float since;
 			if (sending.TryGetValue(key, out since) && Time.realtimeSinceStartup - since < SendingSeconds) { Log("Island file '" + name + "' is still being sent to " + to + ": not sent twice"); return; }
-			if (sending.Count >= 64) sending.Clear();
+			// (only stalled ones are forgotten: clearing them all at 64 let a player asking again get a second copy)
+			if (sending.Count >= 64) foreach (string old in sending.Where(kv => Time.realtimeSinceStartup - kv.Value >= SendingSeconds).Select(kv => kv.Key).ToList()) sending.Remove(old);
 			sending[key] = Time.realtimeSinceStartup;
 			byte[] bytes = File.ReadAllBytes(path);
 			System.Collections.IEnumerator send = SendChunks(name, hash, bytes, to, key);
@@ -1459,7 +1460,7 @@ namespace DynamicIslands.Editor
 			else if (DynamicIslands.instance != null) DynamicIslands.instance.StartCoroutine(send);
 		}
 
-		/// <summary>Host: the files going out now, by hash and player, with when they started.</summary>
+		/// <summary>Host: the files going out now, by hash and player, with when one last sent a chunk or waited its turn.</summary>
 		static readonly Dictionary<string, float> sending = new Dictionary<string, float>();
 		const float SendingSeconds = 60f;
 		/// <summary>Tests: how many files are going out now.</summary>
@@ -1469,16 +1470,76 @@ namespace DynamicIslands.Editor
 		/// a slow connection dropped messages of).</summary>
 		internal const int ChunksPerFrame = 6;
 
+		/// <summary>No more parts go to a player while Steam still has this much to send them.</summary>
+		internal const int QueuedBytesMax = 256 * 1024;
+		/// <summary>A wait for Steam's queue longer than this: the line is taken as dead and the gate no longer holds the send.</summary>
+		internal const float StallSeconds = 30f;
+		static int budgetFrame = -1, budgetUsed;
+		static float urgentUntil;
+
+		/// <summary>
+		/// Host: whether one more part of a transfer (an island file, the world's copy, Raft's save) may go out now. All
+		/// transfers share one budget of ChunksPerFrame a frame, and none goes to a player Steam still has QueuedBytesMax for.
+		/// Each file used to send 6 a frame on its own: a player asking for 28 islands at once got ~13 MB in two seconds, Steam
+		/// dropped what didn't fit, and the last files - and the world's copy behind them - never came (X5, IM43 11-25).
+		/// The world's copy and save (urgent) go first: island files wait while one of those is waiting.
+		/// </summary>
+		internal static bool MaySend(Network_UserId? to, bool urgent, bool ignoreQueue)
+		{
+			if (Loopback != null) return true;
+			float now = Time.realtimeSinceStartup;
+			if (urgent) urgentUntil = now + 1f;
+			else if (now < urgentUntil) return false;
+			if (Time.frameCount != budgetFrame) { budgetFrame = Time.frameCount; budgetUsed = 0; }
+			if (budgetUsed >= ChunksPerFrame) return false;
+			if (!ignoreQueue && QueuedBytes(to) > QueuedBytesMax) return false;
+			budgetUsed++;
+			return true;
+		}
+
+		/// <summary>The bytes Steam still has to send to a player (no player: the most of any); 0 when not on line.</summary>
+		internal static int QueuedBytes(Network_UserId? to)
+		{
+			if (Loopback != null || !InMultiplayerGame) return 0;
+			try
+			{
+				if (to.HasValue) return QueuedFor(to.Value.Id);
+				Raft_Network network = ComponentManager<Raft_Network>.Value;
+				if (network == null || network.remoteUsers == null) return 0;
+				int most = 0;
+				foreach (Network_UserId id in network.remoteUsers.Keys) most = Math.Max(most, QueuedFor(id.Id));
+				return most;
+			}
+			catch { return 0; }
+		}
+
+		static int QueuedFor(ulong id)
+		{
+			P2PSessionState_t state;
+			return SteamNetworking.GetP2PSessionState(new CSteamID(id), out state) ? state.m_nBytesQueuedForSend : 0;
+		}
+
 		static System.Collections.IEnumerator SendChunks(string name, string hash, byte[] bytes, Network_UserId to, string key)
 		{
 			int count = Mathf.Max(1, (bytes.Length + ChunkBytes - 1) / ChunkBytes);
-			float started = Time.realtimeSinceStartup;
+			float started = Time.realtimeSinceStartup, waitedFrom = -1f;
+			bool stalled = false;
 			for (int i = 0; i < count; i++)
 			{
+				// (its turn: the shared budget, Steam's queue to the player; while waiting it still counts as being sent)
+				while (!MaySend(to, false, stalled))
+				{
+					float now = Time.realtimeSinceStartup;
+					if (waitedFrom < 0f) waitedFrom = now;
+					else if (now - waitedFrom > StallSeconds && !stalled) { stalled = true; Log("Island file '" + name + "': Steam's queue to " + to + " hasn't moved in " + StallSeconds + " s: sending on"); }
+					sending[key] = now;
+					yield return null;
+				}
+				waitedFrom = -1f;
+				sending[key] = Time.realtimeSinceStartup;
 				int len = Mathf.Min(ChunkBytes, bytes.Length - i * ChunkBytes);
 				try { SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.FileChunk, Name = name, Hash = hash, Index = i, Count = count, Data = Convert.ToBase64String(bytes, i * ChunkBytes, len) }, to); }
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Sending '" + name + "' chunk " + i + ": " + e.Message); }
-				if ((i + 1) % ChunksPerFrame == 0) yield return null;
 			}
 			sending.Remove(key);
 			Log("Sent island file '" + name + "' (" + bytes.Length + " bytes, " + count + " chunks in " + (Time.realtimeSinceStartup - started).ToString("F1") + " s) to " + to);
