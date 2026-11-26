@@ -126,7 +126,8 @@ call sk_reef x=38 z=-26 r=5 seed=25030
 # (REACH 11-26: with the ladder inside, the walk up stopped at the top - the Depot rock locker and the Shuttle timetable never reached: ladtowerout's ladder outside
 # the south wall comes up facing the deck, as Biome Seven's)
 call ladtowerout x=-38 z=-10 h0=12.5 lv=3 a=swtower
-place Loot_ChestSmall swlocker at -38.75 -9.25 h=19.97 sit yaw=180
+# (CIFloating 11-26: set at 19.97 it hung 0.16 m over the deck (19.81) - dropped onto it, as Biome Seven's)
+place Loot_ChestSmall swlocker at -38.75 -9.25 h=20.2 drop yaw=180
 place Note_Paper swsumnote at -38.75 -10.75 h=20.07 drop yaw=20
 place Zone_Trigger swsummit at -38 -10 h=20.97
 place Loot_ChestSmall swledge at -45.7 -10 ground sit yaw=40
