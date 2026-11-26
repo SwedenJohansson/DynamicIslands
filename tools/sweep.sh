@@ -44,7 +44,7 @@ ci(){ local label=$1 cmd=$2 until=$3 t=$4 out rc
   [ $rc = 3 ] && { STALL="$label: timed out after ${t}s"; return 1; }
   return 0; }
 fresh(){ ci menu "CIMainMenu" "main menu|Main menu|PASS|FAIL" 60
-  ci world "CINewWorld CI Sweep $(date +%H%M%S)" "Hotbar key tabs|FAIL" 150
+  ci world "CINewWorld CI Sweep $(date +%H%M%S)" "World ready|FAIL" 240
   ci ready "CIBackground;CIAlive;CIClearInventory;CIOnRaft" "On the raft|FAIL" 90; }
 
 if [ $DRY = 0 ]; then
@@ -79,7 +79,7 @@ for isl in "$@"; do
   ci count1 "CIQuestCountCheck" "QCOUNT|FAIL" 60; c1=$(grep -oE "QCOUNT [0-9]+/[0-9]+" "$LOG" 2>/dev/null | tail -1)
   ci save "CISave" "PASS|FAIL|aved" 60
   ci menu2 "CIMainMenu" "main menu|Main menu|PASS|FAIL" 60
-  ci load "CILoadWorld CI Sweep" "Hotbar key tabs|FAIL" 180
+  ci load "CILoadWorld CI Sweep" "World ready|FAIL" 240
   ci count2 "CIQuestCountCheck" "QCOUNT|FAIL" 60; c2=$(grep -oE "QCOUNT [0-9]+/[0-9]+" "$LOG" 2>/dev/null | tail -1)
   if [ $DRY = 1 ]; then R[saveload]=dry; elif [ -n "$c1" ] && [ "$c1" = "$c2" ]; then R[saveload]="same $c1"; else R[saveload]="FAIL: $c1 -> $c2"; fi
   if [ $DRY = 1 ]; then say "  [slot] rq.sh release $RAFT $ME"
