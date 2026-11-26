@@ -239,6 +239,9 @@ namespace DynamicIslands
 			return sum;
 		}
 
+		[ConsoleCommand(name: "CIGrassProbe", docs: "Dev, in game after an island loaded: which ways of giving a copy of Raft's terrain one detail layer log Unity's 'only implemented in editor'")]
+		public static void GrassProbe() { Log("GRASS " + Editor.SeaGrass.Probe()); }
+
 		[ConsoleCommand(name: "CICreatureTest", docs: "Dev, in game (host): an island with creatures and notes 150 m ahead - spawning, stats, tint, NavMesh, an angler fish swimming its rounds, reading a note, the island banner, killing, unloading and reloading. CICreatureTest [keep]")]
 		public static void CreatureTest(string[] args)
 		{
@@ -424,6 +427,9 @@ namespace DynamicIslands
 				Check(ref ok, entry.State.TryGetValue(boars.StateKey, out s) && s.Yield == 1, "a killed warthog is remembered (" + (entry.State.ContainsKey(boars.StateKey) ? IslandObjectState.Encode(new Dictionary<int, ObjectState> { { boars.StateKey, entry.State[boars.StateKey] } }) : "no state") + ")");
 			}
 
+			// Back on the raft first: unloading the island under the player dropped them into the sea, where the shark (or, on the
+			// island, the tough warthogs) killed them during the minute-long reload wait - mpsettings' "player died (idle)" 11-25
+			OnRaftCommand();
 			// Unload: the animals go with the island; reload: the dead one stays dead
 			List<AI_NetworkBehaviour> all = points.SelectMany(p => p.Spawned).Where(a => a != null).ToList();
 			IslandObjectState.Capture(entry);
@@ -433,10 +439,10 @@ namespace DynamicIslands
 			Check(ref ok, all.All(a => a == null) && CreatureSpawner.LiveCount == 0, "unloading the island removes its " + all.Count + " animals (" + all.Count(a => a != null) + " left)");
 			// The automatic spawner loads it again (it is close to the raft)
 			t0 = Time.realtimeSinceStartup;
-			while (entry.Root == null && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
+			while (entry.Root == null && Time.realtimeSinceStartup - t0 < 60f) { KeepAlive(RAPI.GetLocalPlayer()); yield return new WaitForSeconds(0.5f); }
 			Check(ref ok, entry.Root != null && IslandSpawner.SpawnedRoots.Count(r => r != null && r.name == "CustomIsland_" + CreatureIsland) == 1, "the island comes back once (" + (Time.realtimeSinceStartup - t0).ToString("F1") + " s)");
 			t0 = Time.realtimeSinceStartup;
-			while (CreatureSpawner.LiveCount < 4 && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
+			while (CreatureSpawner.LiveCount < 4 && Time.realtimeSinceStartup - t0 < 60f) { KeepAlive(RAPI.GetLocalPlayer()); yield return new WaitForSeconds(0.5f); }
 			yield return new WaitForSeconds(1f);
 			CreatureSpawnPoint boars2 = entry.Root != null ? entry.Root.GetComponentsInChildren<CreatureSpawnPoint>().FirstOrDefault(p => p.Kind.Type == AI_NetworkBehaviourType.Boar) : null;
 			Check(ref ok, boars2 != null && boars2.Spawned.Count == 1, "after reloading, one warthog (the other was killed): " + (boars2 != null ? boars2.Spawned.Count : -1));
