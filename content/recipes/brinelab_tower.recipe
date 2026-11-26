@@ -107,11 +107,14 @@ place Placeable_Table_Basic - at -1.5 -2.5 h=6.3 sit yaw=0
 place Note_Paper drive1 at -1.5 -2.5 h=7.6 drop yaw=20
 place TP_LabBottle01 - at -0.8 -2.5 h=7.6 drop
 place TP_Selene_ComputerRoom_Server01 - at -3.2 3.6 h=6.3 sit yaw=180
-place TP_Selene_ComputerGeneric_01 - at 3.5 3.8 h=6.3 sit yaw=180
+# (11-26 REACH bl4: the strip still led nowhere - the computer at x 3.5 stood over the floor east of the hatch (no room to stand
+# from x 2.4 on), and the west rim was 0.75 m off too: the computer moved 1.3 m east, and the same 0.3 m strip on the west rim)
+place TP_Selene_ComputerGeneric_01 - at 4.8 3.8 h=6.3 sit yaw=180
 # (11-26 REACH blx: lab 2's hatch (with the lean, x 0.6..2.1) left its east rim 0.75 m from the ladder at x 1.35 - a climber
 # could not step off onto lab 2 (drive 1 and the cabinet: can't get there from any side), while the greenhouse's rim, 0.45 m
 # off, works: a 0.3 m strip on that rim brings it to x 1.8 like the greenhouse's)
 place Block_Floor_Tier3 labfloors at 1.95 3.75 h=6.3 sx=0.2
+place Block_Floor_Tier3 labfloors at 0.75 3.75 h=6.3 sx=0.2
 
 # --- The roof (9.3): beehives on planter boxes, white and blue flowers, a small crop plot -------------------------------
 place Block_Foundation - at -3 -2.5 h=9.98
@@ -203,6 +206,9 @@ call leverchest x=40 z=-60 yaw=200 alias=cranelever sig=cranelever chest=hookcra
 call sk_peak x=24 z=66 h=24 r=24
 call sk_pit x=-30 z=-66 h0=-12
 call sk_cave x=-36 z=-6 h=3 yaw=0 al=blcave2 chest=blcave2chest
+# (11-26 REACH bl4: the rock cave's dry dome, uncapped, reached 42 m to the side - its skin ran through the tower's flooded
+# storeys 36 m east at h -5.1..-5.5, a rock sheet across the stairwell that stopped a climber going down to the deep lab: capped at 30)
+prop blcave2 cave.dome=30
 call sk_plants x=24 z=66 r=26.4 seed=24210
 call sk_reef x=-20 z=-60 r=5 seed=24230
 # (REACH 11-02: a 5x5 m hollow on the hill's east flank, 35-37 77-79, h 6.4-11.3, had one way out, a 1.2 m step up: a mid-step pad)
