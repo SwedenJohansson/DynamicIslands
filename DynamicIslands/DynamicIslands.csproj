@@ -408,6 +408,9 @@
     <Compile Include="DevTestsFeat35b.cs" />
     <Compile Include="DevTestsGapHost.cs" />
     <Compile Include="DevTestsGapStory.cs" />
+    <Compile Include="DevTestsPlanDriven.cs" />
+    <Compile Include="DevTestsScRaftSize.cs" />
+    <Compile Include="DevTestsScPickup.cs" />
     <Compile Include="DevTestsStorylineMp.cs" />
     <Compile Include="DevTestsDirtHoney.cs" />
     <Compile Include="DevTestsShovelProbe.cs" />
