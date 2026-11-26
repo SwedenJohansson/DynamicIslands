@@ -79,15 +79,26 @@ ramp Block_Floor_Tier3 from 0 -5.25 5 to 0 -4.5 5 len=1.5 top=0
 # the wall, not the rungs) - the ladder moved onto the window panel, and a boat landing (a deck tile on two posts down to
 # the street) in front of its foot: climb out of the water onto it (0.3 m), then up the ladder; the ladder stands 0.5 m off
 # the wall, since at 0.2 m the window frame kept the walks from taking hold of it)
+# (11-26 REACH scp: the deck stood in front of the ladder, over the climber - a swimmer took hold under it and climbed
+# into its underside. The landings now stand beside the ladders, against the wall: the ladder's front is open water,
+# step off the deck sideways onto it. The west tower's ladder, 0.2 m off the wall and facing it as the coop's did before
+# fixA, its rungs walled in, now faces out 0.5 m off the window panel with its own landing)
 place LandmarkLadder_6m - at -1 -21.0 h=-1.2 yaw=180
-place Block_Floor_Tier3 - at -1 -21.85 h=0.3
-place Block_Pillar_Tier3 - at -1.6 -22.15 h=-7.6
-place Block_Pillar_Tier3 - at -1.6 -22.15 h=-5.05
-place Block_Pillar_Tier3 - at -1.6 -22.15 h=-2.5
-place Block_Pillar_Tier3 - at -0.4 -22.15 h=-7.6
-place Block_Pillar_Tier3 - at -0.4 -22.15 h=-5.05
-place Block_Pillar_Tier3 - at -0.4 -22.15 h=-2.5
-place LandmarkLadder_6m - at -18.2 0 h=-1.2 yaw=90
+place Block_Floor_Tier3 - at -2.5 -21.25 h=0.3
+place Block_Pillar_Tier3 - at -2.9 -21.55 h=-7.6
+place Block_Pillar_Tier3 - at -2.9 -21.55 h=-5.05
+place Block_Pillar_Tier3 - at -2.9 -21.55 h=-2.5
+place Block_Pillar_Tier3 - at -2.1 -21.55 h=-7.6
+place Block_Pillar_Tier3 - at -2.1 -21.55 h=-5.05
+place Block_Pillar_Tier3 - at -2.1 -21.55 h=-2.5
+place LandmarkLadder_6m - at -18.5 0 h=-1.2 yaw=270
+place Block_Floor_Tier3 - at -18.75 1.5 h=0.3
+place Block_Pillar_Tier3 - at -19.05 1.1 h=-7.6
+place Block_Pillar_Tier3 - at -19.05 1.1 h=-5.05
+place Block_Pillar_Tier3 - at -19.05 1.1 h=-2.5
+place Block_Pillar_Tier3 - at -19.05 1.9 h=-7.6
+place Block_Pillar_Tier3 - at -19.05 1.9 h=-5.05
+place Block_Pillar_Tier3 - at -19.05 1.9 h=-2.5
 
 # --- The beacon roof: the beacon hut (distress card, the Receiver plans), the beacon mast and its light ---------------
 push at -2.5 0.5 h=5
@@ -150,14 +161,16 @@ call tower x=-24 z=26 h=-7 n=3 a=towers2
 prop towers2 tint.color=#7d8a8c
 prop towers2 tint.amount=0.35
 # (fixA 11-03, REACH: as the coop ladder - moved onto the window panel, a boat landing in front of its foot)
-place LandmarkLadder_6m - at -28.5 21.3 h=-4.2 yaw=180
-place Block_Floor_Tier3 - at -28.5 20.45 h=0.3
-place Block_Pillar_Tier3 - at -29.1 20.15 h=-7.6
-place Block_Pillar_Tier3 - at -29.1 20.15 h=-5.05
-place Block_Pillar_Tier3 - at -29.1 20.15 h=-2.5
-place Block_Pillar_Tier3 - at -27.9 20.15 h=-5.05
-place Block_Pillar_Tier3 - at -27.9 20.15 h=-7.6
-place Block_Pillar_Tier3 - at -27.9 20.15 h=-2.5
+# (11-26 REACH scp: still 0.2 m off the wall, where the window frame keeps a hand off the rungs - nothing took hold of it:
+# 0.5 m off as the coop's, its landing beside it against the wall)
+place LandmarkLadder_6m - at -28.5 21.0 h=-4.2 yaw=180
+place Block_Floor_Tier3 - at -27.0 20.75 h=0.3
+place Block_Pillar_Tier3 - at -27.4 20.45 h=-7.6
+place Block_Pillar_Tier3 - at -27.4 20.45 h=-5.05
+place Block_Pillar_Tier3 - at -27.4 20.45 h=-2.5
+place Block_Pillar_Tier3 - at -26.6 20.45 h=-5.05
+place Block_Pillar_Tier3 - at -26.6 20.45 h=-7.6
+place Block_Pillar_Tier3 - at -26.6 20.45 h=-2.5
 place Loot_Chest annexchest at -27.5 27.5 h=2.05 sit yaw=90
 place BoatStranded - at 26 -28 ground yaw=35
 place Loot_ChestSmall wreckchest at 22 -24 ground sit yaw=200
@@ -233,7 +246,9 @@ place ZiplinePath_Landmark sczip at -63.25 27.25 h=36.73 yaw=0
 zipfrom sczip -63.25 27.25 h=36.73
 # (c3z37 11-21: the far end at -32 14 lay at the waterline, its rope 0.57 m in the shore in its last 3 m - on the dry shore 10 m back)
 zipto sczip -42 16
-place Loot_ChestSmall scledge at -73.33 37.33 ground sit yaw=40
+# (11-26 REACH scp: at -73.33 37.33 it stood on the second terrace's cliff, 6 m under the path's second round and its
+# first round pads 3-4 m below - no way to it from either: on the terrace's lip beside the path, still off it)
+place Loot_ChestSmall scledge at -70.4 38.4 ground sit yaw=40
 place SmallRock_02 - at -39.34 34.51 ground sit scale=0.5
 place SmallRock_02 - at -39.34 34.51 ground y=0.6 sit scale=0.32 yaw=40
 call treasure x=-41.84 z=34.51 r=12 n=1 seed=24011

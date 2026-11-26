@@ -2477,7 +2477,9 @@ namespace DynamicIslands
 						float lpitch = climbing ? (up ? -60f : 60f) : wet ? -35f : 0f;
 						if (!up && !climbing && inWaterNow(pl)) lpitch = Mathf.Clamp(Mathf.Atan2(p.y - (ladTop - 0.5f), Mathf.Max(d.magnitude, 0.3f)) * Mathf.Rad2Deg, 0f, 80f);
 						Look(pl, d.sqrMagnitude > 0.01f ? Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg : pl.transform.eulerAngles.y, lpitch);
-						mmWalk = walkSign;
+						// (the walk turned back for a climber that made no headway; off the ladder again it kept walking backwards, away from
+						// the ladder - 5.5 m out from the coop ladder at Spirecrest, 5 m across Brinelab's lobby, PQ11 scp/s6u 11-26)
+						mmWalk = climbing ? walkSign : 1f;
 						MmHold(pl, false);
 						ReachTrace(pl, e, "ladder up=" + up + " top=" + (ladTop - e.Position.y).ToString("F2") + " next=" + (nextY - e.Position.y).ToString("F2"));
 						yield return null;
