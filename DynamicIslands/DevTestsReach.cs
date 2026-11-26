@@ -1638,8 +1638,10 @@ namespace DynamicIslands
 				// (sweeps miss a mesh's back faces whatever queriesHitBackfaces says - only rays honour it: a cave hill's skirt
 				// skin, its roof a back face from above, let the grid drop through it where Raft's walker stood on it, Old Mine
 				// Islet's wedge under Grey's den hill, round 4. Rays down the sphere's middle and its four sides as well)
+				// (a skin's roof met from above catches up to 50 deg: Utopia's ridge skin over the sea off the quarry, 46 deg (n -0.69), let
+				// the grid drop through it into the sea - the walker landed on it 2 m down and stuck there, bugfix 11-26 ua6)
 				foreach (Vector3 o in new[] { Vector3.zero, Vector3.right * r, Vector3.left * r, Vector3.forward * r, Vector3.back * r })
-					if (Physics.Raycast(top + o, Vector3.down, out h, dist + r, reachMask, QueryTriggerInteraction.Ignore) && (!floorOnly || h.normal.y > 0.7f || h.normal.y < -0.7f)) return true;
+					if (Physics.Raycast(top + o, Vector3.down, out h, dist + r, reachMask, QueryTriggerInteraction.Ignore) && (!floorOnly || h.normal.y > 0.7f || h.normal.y < -0.64f)) return true;
 				return false;
 			}
 			finally { Physics.queriesHitBackfaces = was; }
@@ -2474,7 +2476,7 @@ namespace DynamicIslands
 				}
 				Vector3 aim = W(k);
 				bool water = kind != 0;
-				float best = float.MaxValue, since2 = 0f, turnLeft = 0f, turnDir = 1f, jumpT = 0f;
+				float best = float.MaxValue, since2 = 0f, turnLeft = 0f, turnDir = 1f, jumpT = 0f, lastFlat = float.MaxValue;
 				// (a drop off a ledge into the sea or onto a floor below: the walker gets over the spot and then keeps going the
 				// way it came in, over the edge, as a player walks off it)
 				Vector3 seg = W(k) - W(way[i - 1]); seg.y = 0f;
@@ -2505,7 +2507,15 @@ namespace DynamicIslands
 					// the lip in front of house 3's door 0.6 m from the cell the grid set beside it, took it as reached and was held by
 					// the lip on the way down to the next, bugfix 11-26 hd8 - then it swims on into the cell itself)
 					bool nearDive = d.magnitude < 1.0f && (d.magnitude < 0.35f || kind != 2 || !inWaterNow(pl) || i + 1 >= way.Count || !SwimBodyBlocked(p, W(way[i + 1]), reachMask));
-					if (water ? (kind == 1 ? flatLen < 0.8f && Mathf.Abs(d.y) < 1.4f : nearDive || (flatLen < 0.8f && d.y < 0f && pl.PersonController.controllerType == ControllerType.Water && pl.GetComponent<CharacterController>() != null && pl.GetComponent<CharacterController>().isGrounded && !Between(ReachFeet(pl) + Vector3.up * 0.1f, aim, reachMask) && !BodyDown(ReachFeet(pl), aim))) : flatLen < 0.5f && d.y < 0.9f && d.y > -0.9f) break;
+					// (a spot on the ground within 0.5 m counts only when the body can go straight on from where it is to the next
+					// spot on the ground: Utopia's walker came along the mast's south wall, turned for the ladder 0.5 m short of the
+					// corner spot before the door gap, caught the wall's end and slid off round the west wall, the keeper's box out of
+					// reach, bugfix 11-26 ua6 - then it walks on to the spot itself)
+					// (or once it comes no nearer: at 3x a step is 0.4 m and the spot itself may lie between two of them)
+					bool nearGround = flatLen < 0.5f && d.y < 0.9f && d.y > -0.9f && (flatLen < 0.15f || flatLen > lastFlat - 0.01f || i + 1 >= way.Count || g.Kind[way[i + 1]] != 0 ||
+						!Swept(p, W(way[i + 1]), Mathf.Max(p.y, W(way[i + 1]).y)));
+					lastFlat = flatLen;
+					if (water ? (kind == 1 ? flatLen < 0.8f && Mathf.Abs(d.y) < 1.4f : nearDive || (flatLen < 0.8f && d.y < 0f && pl.PersonController.controllerType == ControllerType.Water && pl.GetComponent<CharacterController>() != null && pl.GetComponent<CharacterController>().isGrounded && !Between(ReachFeet(pl) + Vector3.up * 0.1f, aim, reachMask) && !BodyDown(ReachFeet(pl), aim))) : nearGround) break;
 					if (dist < best - 0.15f) { best = dist; since2 = 0f; } else since2 += Time.deltaTime;
 					if (since2 > 2.5f)
 					{
