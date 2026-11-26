@@ -255,6 +255,7 @@
     <Compile Include="DevTestsGfx.cs" />
     <Compile Include="DevTestsReady.cs" />
     <Compile Include="DevTestsSaveSoon.cs" />
+    <Compile Include="DevTestsUntested1125.cs" />
     <Compile Include="StormSeas.cs" />
     <Compile Include="DevTestsStormSeas.cs" />
     <Compile Include="UfoSightings.cs" />
