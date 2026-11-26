@@ -1402,10 +1402,16 @@ namespace DynamicIslands
 		static string standWhy = "";
 		static bool standWhyOn;
 
-		/// <summary>Ground a standing player's foot may touch on a slope: the terrain, or a dug passage's rock (DigTunnel.RockName).</summary>
+		/// <summary>Ground a standing player's foot may touch on a slope: the terrain, a dug passage's rock (DigTunnel.RockName),
+		/// or a cave tunnel piece's round floor and the join plate between two pieces (bugfix 11-26, Thalassa Mooring's sea
+		/// gate: the tube's floor curves up into its walls, and where two pieces meet the 0.6 m wide body's foot touched the
+		/// curve and the plate a few cm under it - the cells across the join were no spots and the dry room behind it 'can't get
+		/// there', though the caves play swims through).</summary>
 		static bool StandGround(Collider c)
 		{
-			return c is TerrainCollider || (c != null && c.name.StartsWith(DigTunnel.RockName, StringComparison.Ordinal));
+			if (c == null) return false;
+			return c is TerrainCollider || c.name.StartsWith(DigTunnel.RockName, StringComparison.Ordinal) ||
+				c.name.StartsWith("TP_UnderwaterCaveTunnel", StringComparison.Ordinal) || c.name == CaveTool.JoinName;
 		}
 
 		/// <summary>The player's body (bar the bottom 0.45 m, which steps over) swept from a to b at floor height y:
