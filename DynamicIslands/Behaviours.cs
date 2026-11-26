@@ -368,6 +368,8 @@ namespace DynamicIslands.Editor
 		static float offset;
 		static bool synced;
 		static int frame = -1;
+		static float lastFollow;
+		static Network_Water lastWater;
 
 		/// <summary>Seconds on the shared clock.</summary>
 		public static float Now { get { Follow(); return Time.time + offset; } }
@@ -380,13 +382,20 @@ namespace DynamicIslands.Editor
 			if (frame == Time.frameCount) return;
 			frame = Time.frameCount;
 			Network_Water water = ComponentManager<Network_Water>.Value;
-			if (water == null) { synced = false; offset = 0f; return; }
+			if (water == null) { synced = false; offset = 0f; lastWater = null; return; }
+			// (another world - left and loaded again without a read at the main menu - starts over: G23 11-25, the host kept the
+			// last world's offset, 1.79 s off, under the jump limit)
+			if (water != lastWater) { lastWater = water; synced = false; }
 			float target;
 			try { target = water.WaterTime - Time.time; }
 			catch { return; }
+			// (eased by the time since the last read, not by one frame's: read now and then, as only a test or a far mover does,
+			// a frame's step barely moved it)
+			float since = Time.unscaledTime - lastFollow;
+			lastFollow = Time.unscaledTime;
 			// A new game or a big correction: jump there; small differences (network delay) are eased out
 			if (!synced || Mathf.Abs(target - offset) > 2f) offset = target;
-			else offset = Mathf.Lerp(offset, target, Mathf.Min(1f, Time.deltaTime * 0.5f));
+			else offset = Mathf.Lerp(offset, target, Mathf.Clamp01(since * 0.5f));
 			synced = true;
 		}
 	}
