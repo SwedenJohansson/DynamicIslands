@@ -202,6 +202,13 @@ call sk_cave x=66 z=-12 h=3 yaw=0 al=cycave2 chest=cycave2chest
 # behind it and buried its toolbox and the driver's report; capped at 30: back 30 m, sides 20 m, front 9 m)
 prop cycave2 cave.dome=30
 call sk_plants x=12 z=-66 r=26.4 seed=24610
+# (11-26 REACH cy2: a trough 11x3 m along Crane Hill's south foot, under pad 9 (x 9..20, z -86..-83, h 4.6..6.6) - a player
+# dropped in from the pad and could not get out; its east end lay 2 m from the slope down to the shore at the same height but
+# did not link. A level cut at 5.85 runs from the trough to that slope, cleared of plants)
+for k 0 5
+brush flatten at {14+1.8*$k} {-84.6+0.4*$k} r=2 s=20 frames=60 h=5.85
+clear at {14+1.8*$k} {-84.6+0.4*$k} r=3
+next
 call sk_reef x=-20 z=66 r=5 seed=24630
 
 # the summit: Crane Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
