@@ -1408,6 +1408,10 @@ namespace DynamicIslands
 				// (a cave hill's skin met from behind is rock under the hill: its faces all look out of the hill, and the space
 				// between it and the terrain under it is the hill's inside - the grid walked into it and got stuck, Hadal Commons'
 				// dives and Utopia's supplies, 11-24; a cave or a dug mouth under it has its own roof met first)
+				// (but a steep bit of skin over a mouth is its lintel, not the hill: out from p along the skin's facing, at p's
+				// height, no skin or ground closes the hill - inside the hill that ray must cross the skin to get out. Spirecrest's
+				// spare chest cave mouth (the skin 4.4 m over its floor, n0.12) cut the way in, 'can't get there', sc4 11-26)
+				if (h.normal.y > 0.02f && h.normal.y < 0.3f && h.collider.name == CaveMountain.SkinName && SkinOpenOut(p, h.normal)) { float ss = h.distance + 0.02f; o += Vector3.up * ss; dist -= ss; continue; }
 				if (h.normal.y > 0.02f && h.collider.name == CaveMountain.SkinName) { overTerrain = false; overWhy = "under the cave skin n" + h.normal.y.ToString("0.00") + " +" + (o.y + h.distance - p.y).ToString("0.0"); return true; }
 				if (h.normal.y <= 0.1f) return false;
 				// (a lone den's wall (CaveTool.PlugOpening) is one sheet of rock, not a body: over its way in it leans back into the
@@ -1420,6 +1424,17 @@ namespace DynamicIslands
 				o += Vector3.up * step; dist -= step;
 			}
 			return false;
+		}
+
+		/// <summary>(back faces on) From p out along a cave skin's facing (level, 15 m) neither the skin nor the ground is met:
+		/// the skin over p does not close round it, p is under the lip of an opening in the hill, not in the hill.</summary>
+		static bool SkinOpenOut(Vector3 p, Vector3 n)
+		{
+			Vector3 d = new Vector3(n.x, 0f, n.z);
+			if (d.sqrMagnitude < 0.01f) return false;
+			foreach (RaycastHit r in Physics.RaycastAll(p, d.normalized, 15f, reachMask, QueryTriggerInteraction.Ignore))
+				if (r.collider is TerrainCollider || r.collider.name == CaveMountain.SkinName) return false;
+			return true;
 		}
 
 		/// <summary>The terrain's holes (cut cells), read once per audit: ReachAnalyze clears them.</summary>
@@ -2413,6 +2428,7 @@ namespace DynamicIslands
 			};
 			// (set when a ladder was climbed to its top: the next floor may be one to jump onto - ReachLadderDismount)
 			bool ladderUpTop = false; Vector3 ladderFace = Vector3.zero;
+			int backs = 0, bj;
 			for (int i = 1; i < way.Count; i++)
 			{
 				wdWay = Time.realtimeSinceStartup; wdTried = false; wdMoved = 99f; hbProg++; wpAt = i;
@@ -2509,7 +2525,9 @@ namespace DynamicIslands
 						if (since > 2.5f)
 						{
 							if (flips < 1 && climbing) { walkSign = -walkSign; flips++; since = 0f; continue; }
-							if (toSea && !dropped && climbing) { dropped = true; dropT = 1.5f; since = 0f; walkSign = 1f; continue; }
+							// (the turned-back walk had stepped the player off the ladder onto the roof again, so the drop ("climbing" only)
+							// never came: Spirecrest's coop ladder again, sc4 11-26 - a player off it steps off the edge just the same)
+							if (toSea && !dropped && held > 0f) { dropped = true; dropT = 1.5f; since = 0f; walkSign = 1f; continue; }
 							if (held <= 0f && !climbing && sweeps < 4) { sweepYaw = sweeps * 90f; sweeps++; sweepT = 0.35f; since = 1.2f; continue; }
 							// (a player who can't take hold from one side tries the other: the dp_tower ladders took hold only from their back,
 							// the walker came from the front, walked through them and on 11 m - PQ11 10-28)
@@ -2594,6 +2612,11 @@ namespace DynamicIslands
 							since2 = 1.2f;
 						}
 						else if (turns < 2) { turns++; turnLeft = 0.7f; turnDir = turns == 1 ? 1f : -1f; since2 = 0f; }
+						// (a swimmer swept off a beach's way into the deeper water beside it, the next spot up a bank it cannot climb: a
+						// player swims back to where the way came out of the sea and walks up again. Spirecrest's annex way out: in the
+						// waves the walker kept the water controller up to the feet 0.3 m over the sea, slid off the beach's side to -1.1
+						// with the next spot 2 m up the bank, sc4 11-26 - it passed in sc3)
+						else if (backs < 2 && kind == 0 && inWaterNow(pl) && d.y > RStepUp && (bj = WayBackToSea(g, way, i)) > 0) { backs++; mmJump = false; i = bj - 1; break; }
 						else
 						{
 							string diag = ReachDiag(pl) + ReachCreatures(pl);
@@ -2625,6 +2648,15 @@ namespace DynamicIslands
 			}
 			mmWalk = 0f; mmJump = false;
 			result(null);
+		}
+
+		/// <summary>The last spot before way[i] (at most 6 back) where the way is in the sea - a swim spot or a floor under the
+		/// waves - to walk on again from there; 0 if there is none.</summary>
+		static int WayBackToSea(ReachGrid g, List<int> way, int i)
+		{
+			for (int j = i - 1; j >= 1 && j >= i - 6; j--)
+				if (g.Kind[way[j]] == 1 || (g.Kind[way[j]] == 0 && g.Pos[way[j]].y < RSea - 0.3f)) return j;
+			return 0;
 		}
 
 		static float reachTraceT;
