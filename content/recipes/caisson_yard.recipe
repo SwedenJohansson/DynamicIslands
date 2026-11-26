@@ -206,8 +206,9 @@ place Zone_Trigger cysummit at 12 -66 h=37.73
 # (11-21: the zipline starts at the tower's foot, on its side towards the far end, as Thalassa Mooring's. From the top
 # its rope ran 5.5 m through the top's rope fence (a rider stopped 5 m out) and its floor shut the top ladder's climb side.
 # zipto raises this near end on a deck if the hill wants it)
-place ZiplinePath_Landmark cyzip at 11.35 -62.45 ground
-zipfrom cyzip 11.35 -62.45 ground
+# (11-26 s6t: the zipline base's own ladder faced the tower wall 1 m off - no room to climb it. The base 1 m further out along the rope)
+place ZiplinePath_Landmark cyzip at 11.17 -61.47 ground
+zipfrom cyzip 11.17 -61.47 ground
 prop cyzip zip.slack=-0.692
 # (11-21 c3z9: its last 6 m came down over the world's cave hill skin by the hill's foot - the rope 0.3 m into it, a rider
 # stopped 6.5 m short; the editor doesn't see that skin. The far end 4 m further out along the line, onto the flat yard, and a tight rope.
@@ -239,6 +240,8 @@ place VP_ConcretePipe02 cyweight at -31.5 60 h=-1 sit yaw=0
 info title=Caisson Yard
 info author=Custom Islands
 info description=Concrete caissons standing out of the sea over the trench edge, linked by stone footbridges, with two cranes, a zipline, a smelter and a store. The seventh island of The Sunken Kingdom.
+# (the jump course's hops are jumps the reach grid doesn't make: its play goes to them instead)
+island reach.byplay=Diver's perch;Crew's dare;jump_cy_finale
 island on.arrive=message||Grey concrete blocks standing out of the sea, two cranes over them - and past them, dark water.
 
 note foremanboard Foreman's board | CAISSON YARD - FOREMAN (J. Achterberg)\n\nSmelter: on the yard, under the roof. Fuel: the little shed on the next caisson over.\nCrane 1 to crane 2 by the cable only - the footbridge is for carts, and for people who enjoy swimming.\nAnchor gear stays on the crane 2 caisson: we anchor over the trench. Chart of the trench on its table. Hadal is straight down.\n\nChalked across the bottom, big letters: "SHUTTLE KIDS - 12 - ALL FED, ALL COUNTED. Warden Fennick took them down to the Commons Tues. Doors shut from inside. Good."\nUnder it, smaller, a different chalk: "Counted them myself. - I.M."

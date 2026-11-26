@@ -678,6 +678,8 @@ namespace DynamicIslands
 			public Vector3 Anchor;
 			public Dictionary<int, Bounds> LadderB = new Dictionary<int, Bounds>();
 			public Dictionary<int, Vector3> LadderF = new Dictionary<int, Vector3>();
+			// (each climb collider of a stacked chain on its own: the walker heads for the one at its height)
+			public Dictionary<int, List<Bounds>> LadderParts = new Dictionary<int, List<Bounds>>();
 			// (a used object's teleport (a lift, a hatch down): from a spot a player uses it from to the spot it puts the player on)
 			public HashSet<long> Tele = new HashSet<long>();
 			public static long TeleKey(int a, int b) { return ((long)a << 32) | (uint)b; }
@@ -715,6 +717,7 @@ namespace DynamicIslands
 			for (int i = 0; i < g.Pos.Count; i++) g.Pos[i] -= s;
 			g.X0 -= s.x; g.Z0 -= s.z; g.Anchor -= s;
 			foreach (int k in g.LadderB.Keys.ToList()) { Bounds b = g.LadderB[k]; b.center -= s; g.LadderB[k] = b; }
+			foreach (List<Bounds> parts in g.LadderParts.Values) for (int j = 0; j < parts.Count; j++) { Bounds b = parts[j]; b.center -= s; parts[j] = b; }
 			if (shiftTargets != null) foreach (ReachTarget t in shiftTargets) t.B.center -= s;
 			Log("[REACH] world shift " + s + " followed");
 		}
@@ -850,7 +853,7 @@ namespace DynamicIslands
 					if (low < RSea - 1.6f && hits > 0) underCols.Add(i * g.NZ + j);
 					if (!landAbove && !InsideSolid(new Vector3(x, RSea - 1.1f, z)) && !Physics.CheckCapsule(new Vector3(x, RSea - 1.1f, z), new Vector3(x, RSea + 0.3f, z), RRadius, mask, QueryTriggerInteraction.Ignore))
 						g.Add(new Vector3(x, RSea, z), 1, i * g.NZ + j);
-					if (++work % 64 == 0 && slice.ElapsedMilliseconds >= 25) { yield return null; slice.Reset(); slice.Start(); }
+					if (++work % 64 == 0 && slice.ElapsedMilliseconds >= 25) { hbProg++; yield return null; slice.Reset(); slice.Start(); }
 				}
 			}
 			// under water: 1 m cells with room for a swimmer, where something of the island lies below the surface
@@ -875,12 +878,14 @@ namespace DynamicIslands
 						Vector3 p;
 						if (SwimSpot(new Vector3(x, y, z), mask, out p))
 							g.Vox[VoxKey(i / vstep, j / vstep, k)] = g.Add(p, 2, -1);
-						if (++work % 64 == 0 && slice.ElapsedMilliseconds >= 25) { yield return null; slice.Reset(); slice.Start(); }
+						if (++work % 64 == 0 && slice.ElapsedMilliseconds >= 25) { hbProg++; yield return null; slice.Reset(); slice.Start(); }
 					}
 				}
 			}
 			Log("  reach grid '" + name + "': " + g.NX + "x" + g.NZ + " cells of " + g.Cell.ToString("F2") + " m, " + g.Pos.Count + " spots (" + sw.ElapsedMilliseconds + " ms)");
 
+			// (each slice moves the heartbeat's prog on: Biome Seven's grid and links took over 20 min on box3, the heartbeat read
+			// step=0 prog=0 all that time and the runner called it stalled and stopped the phase, bugfix 11-26 s6t)
 			// moves between neighbouring columns
 			int[] di = { 1, 0, 1, 1 }, dj = { 0, 1, 1, -1 };
 			for (int i = 0; i < g.NX; i++)
@@ -897,7 +902,7 @@ namespace DynamicIslands
 						if (there == null) continue;
 						foreach (int a in here) foreach (int b in there) { TryMove(g, a, b, false); TryMove(g, b, a, false); }
 					}
-					if (++work % 64 == 0 && slice.ElapsedMilliseconds >= 25) { yield return null; slice.Reset(); slice.Start(); }
+					if (++work % 64 == 0 && slice.ElapsedMilliseconds >= 25) { hbProg++; yield return null; slice.Reset(); slice.Start(); }
 				}
 			}
 			// swimming under water: cell to cell, up to the surface, onto floors under water
@@ -924,7 +929,7 @@ namespace DynamicIslands
 						else if (g.Kind[f] == 0 && q.y < RSea - 0.5f && Mathf.Abs(q.y + 0.9f - p.y) <= 1.1f && !Between(p, q + Vector3.up * 0.9f, mask)) { g.Link(kv.Value, f); g.Link(f, kv.Value); }
 					}
 				}
-				if (++work % 64 == 0 && slice.ElapsedMilliseconds >= 25) { yield return null; slice.Reset(); slice.Start(); }
+				if (++work % 64 == 0 && slice.ElapsedMilliseconds >= 25) { hbProg++; yield return null; slice.Reset(); slice.Start(); }
 			}
 
 			Log("  reach grid '" + name + "': moves linked (" + sw.ElapsedMilliseconds + " ms)");
@@ -945,6 +950,7 @@ namespace DynamicIslands
 				foreach (Collider c in ch) lb.Encapsulate(c.bounds);
 				int node = g.Add(lb.center, 3, -1);
 				g.LadderB[node] = lb;
+				g.LadderParts[node] = ch.Select(c => c.bounds).ToList();
 				{
 					// (the side a player climbs it from: its front, or its back when only the back has room)
 					Vector3 lf = LadderRoot(ch[0]).forward; lf.y = 0f;
@@ -1688,6 +1694,13 @@ namespace DynamicIslands
 		}
 
 		/// <summary>Which of the ladder's two faces has room for a climber, half way up: its object's forward side or its back.</summary>
+		static Bounds LadderPart(List<Bounds> parts, float y)
+		{
+			Bounds best = parts[0]; float bd = float.MaxValue;
+			foreach (Bounds b in parts) { float dd = y < b.min.y ? b.min.y - y : y > b.max.y ? y - b.max.y : 0f; if (dd < bd) { bd = dd; best = b; } }
+			return best;
+		}
+
 		static string LadderFacing(List<Collider> ch, Bounds lb)
 		{
 			Transform t = LadderRoot(ch[0]);
@@ -2401,6 +2414,9 @@ namespace DynamicIslands
 					Bounds lb;
 					if (!g.LadderB.TryGetValue(k, out lb)) lb = new Bounds(g.Pos[k], Vector3.one * 0.5f);
 					Vector3 lc = e.Position + (lb.center - g.Anchor);
+					// (a stacked chain whose ladders step sideways storey by storey: the walker headed for the whole chain's middle, 0.6 m off
+					// the top ladder, and stood on it at the lobby hatch - Brinelab PQ11 s6t 11-26. It heads for the ladder at its height)
+					List<Bounds> lparts; g.LadderParts.TryGetValue(k, out lparts);
 					float ladTop = e.Position.y + (lb.max.y - g.Anchor.y);
 					float nextY = i + 1 < way.Count ? W(way[i + 1]).y : W(k).y;
 					bool up = nextY > ReachFeet(pl).y + 0.3f;
@@ -2412,6 +2428,7 @@ namespace DynamicIslands
 					{
 						Vector3 p = ReachFeet(pl);
 						if (up ? p.y >= nextY + 0.1f : p.y <= nextY + 0.15f) break;
+						if (lparts != null && lparts.Count > 1) lc = e.Position + (LadderPart(lparts, p.y - e.Position.y + g.Anchor.y + (up ? 0.9f : -0.5f)).center - g.Anchor);
 						// (at the ladder's top Raft holds the player at its end - the next segment walks off it onto the floor;
 						// the walker kept climbing to the floor's height and stuck there, radar mast PQ11 10-27)
 						if (up && Climbing(pl) && p.y >= ladTop - 0.35f) break;
