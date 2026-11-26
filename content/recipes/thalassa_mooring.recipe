@@ -35,6 +35,10 @@ brush flatten at 5.25 3.4 r=1.5 s=20 frames=150 h=1
 brush flatten at 5.64 -4 r=2 s=30 frames=150 h=2 line
 brush grass at -9 3 r=6 s=20 frames=20
 brush flatten at 14 -36.4 r=5 s=8 frames=40
+# (bugfix 11-26: the office hut and the canopy stood on the shelf's rising edge - the hut's six floor tiles and the
+#     canopy's south-east post lay whole under the ground and were left out; the ground under both brought down to the shelf)
+brush flatten at -7.75 -1.5 r=3.5 s=20 frames=150 h=2
+brush flatten at 6 -10 r=3.2 s=20 frames=150 h=2
 origin
 clear at 14 -36.4 r=6
 clear at 0 0 r=13
@@ -75,8 +79,14 @@ place UT_ElectricityIsland_Crane02 bellcrane at 7 3.5 h=4.5 sit scale=0.3 yaw=22
 place VP_Skylift bell at 5.25 0 h=2.3
 place Zone_Trigger bellzone at 5.25 0 h=-17
 place Zone_Atmosphere bellbub at 5.25 0 h=-17.5
-place Antenna_pole - at 3.4 1.6 h=-22 sy=0.6
-place Placeable_Lantern_Metal - at 3.4 1.6 h=-18.8 sit
+# (bugfix 11-26: at -22 the pole and its lamp stood in the shaft's side, whole under the ground, and were left out -
+#     now on the ground where they stand, the lamp on the pole's top)
+place Antenna_pole - at 3.4 1.6 ground sy=0.6
+place Placeable_Lantern_Metal - at 3.4 1.6 ground y=3.2 sit
+# (bugfix 11-26: whoever fell into the moonpool or swam up from the bell had no way out - the ledge on its north side
+#     stands 1 m over the water, too high to climb out of deep water; a ladder from the water up the hole's west edge
+#     to the deck, facing the shaft)
+place Block_Ladder_Tier3 - at 3.3 0 h=-1.1 sy=2.45 yaw=270
 
 # --- The water tower on legs, the pipes to the deck ---------------------------------------------------------------------
 place RT_Pillar - at -8.9 5.1 ground sy=1.05

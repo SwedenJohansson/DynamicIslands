@@ -798,6 +798,27 @@ namespace DynamicIslands
 				}
 				if (gone > 0) report.Add("REACH " + name + " | used-away | - | NOTE " + gone + " object(s) a player uses away (a hatch that hides itself) taken away as a player would");
 			}
+			// (a plain gate an islander's answer hides (on.choiceN ... hide|gate, the islander not gated by if./else.): Thalassa
+			// Mooring's sea gate - any player asks Harbourmistress Elaine and it is gone; the grid saw it shut and the dry room
+			// and its charter behind it as never reached, s6u 11-26. A gated islander's answers stay: only the play opens them)
+			{
+				var talked = new HashSet<string>();
+				foreach (IslandObjectRef ir in e.Root.GetComponentsInChildren<IslandObjectRef>(false))
+				{
+					if (!ir.Props.ContainsKey("talk.text") || ir.Props.Keys.Any(k => k.StartsWith("if.") || k.StartsWith("else."))) continue;
+					foreach (var kv in ir.Props)
+					{
+						if (!kv.Key.StartsWith("on.choice", StringComparison.Ordinal) || kv.Value.IndexOf("hide", StringComparison.Ordinal) < 0) continue;
+						foreach (var act in ObjAction.ParseLines(kv.Value.Replace("\\n", "\n")))
+							if (act.Verb == "hide" && act.Target.Length > 0 && !act.Target.Equals("self", StringComparison.OrdinalIgnoreCase)) talked.Add(act.Target);
+					}
+				}
+				int gone = 0;
+				if (talked.Count > 0)
+					foreach (IslandObjectRef ir in e.Root.GetComponentsInChildren<IslandObjectRef>(false))
+						if (ir.Name != null && talked.Contains(ir.Name)) { ir.gameObject.SetActive(false); gone++; }
+				if (gone > 0) report.Add("REACH " + name + " | talked-away | - | NOTE " + gone + " object(s) an islander's answer takes away (" + string.Join(", ", talked.ToArray()) + ") taken away as a player asking would");
+			}
 			// (a store sealed until a quest step opens it: Caisson Yard's drowned store, capped until the crane key's lever drops the
 			// weight - fresh, its chest, note, air pocket and ladder all failed "can't get there", while the reach after the play
 			// passed them, cy4 11-26: island reach.sealed=lid:target;target)
@@ -2460,6 +2481,10 @@ namespace DynamicIslands
 					foreach (RaycastHit h in Physics.RaycastAll(prev, d.normalized, d.magnitude, reachMask, QueryTriggerInteraction.Ignore))
 					{
 						if (h.collider.transform.IsChildOf(pl.transform)) continue;
+						// (a raft's block that is not the island's - the player's own raft or a trader raft drifting past the island
+						// while the walker swims out to the sea: Thalassa Mooring's walks "crossed block collider" 94 m off its middle,
+						// s6u 11-26. The island's ways are what the walk proves, a raft on the move is not part of them)
+						if (!h.collider.transform.IsChildOf(e.Root.transform) && h.collider.GetComponentInParent<Block>() != null) continue;
 						// (a collider Raft's own CharacterController never meets - a layer the player's layer ignores, or a pair
 						// set to ignore - is passed through by a real player too, e.g. a landmark zipline's rope: not tunnelling, PQ11 10-27)
 						CharacterController gcc = pl.GetComponent<CharacterController>();
