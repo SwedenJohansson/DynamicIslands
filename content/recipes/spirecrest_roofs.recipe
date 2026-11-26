@@ -240,6 +240,7 @@ call sk_zone x=36 z=-71 al=scdeepzone id=sc_deep r=4 msg="The pit floor: the dro
 info title=Spirecrest Roofs
 info author=Custom Islands
 info description=Five drowned skyscraper tops in a clear sea, linked by fallen antenna masts: a beacon still blinking, a roof garden, a hen coop. The first island of The Sunken Kingdom.
+island reach.byplay=jump_sc_top;jump_sc_finale;Scaffold cap
 island on.arrive=message||Roofs. Five of them, standing out of the sea - and through the clear water, the streets below.
 
 note distresscard Pelagic Network distress card | PELAGIC NETWORK - AUTOMATED NOTICE\n\nThis is the Sealkeeper. The Commons are sealed and safe.\nStay where you are. Keep your lights low. Do not answer the deep.\nThis is the Sealkeeper. The Commons are sealed and safe...\n\n(A printout of the beacon's loop: the same three lines, again and again, down the whole page.)\n\nIn pencil at the bottom: "Then why is HIS light the only one still on? - T."\nUnder that, in a neat hand: "That is Director Rook's voice. He read the weather at the regatta once and nobody heard a word. He has found his volume now. - I.M."
