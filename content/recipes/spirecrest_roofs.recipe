@@ -179,6 +179,10 @@ place campfire_1 - at 4 63 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 7 65 ground sit yaw=200
 place "Box Small" - at 2 65.5 ground sit
 place Note_Paper campnote at 2 65.5 ground y=1.6 drop yaw=20
+# (11-26 REACH sc3: the van stood in a fold of the slope - the hill over it on one side, the van's flank across the
+# fold's low end: a player who dropped into the 6 x 4 m gap had no way out. The ground under it is levelled first)
+brush flatten at -56 -34 r=6 s=20 frames=120 h=7
+clear at -56 -34 r=6
 place Van_5 ringvan at -56 -34 ground yaw=60
 prop ringvan tint.color=#6b4a32
 prop ringvan tint.amount=0.55
@@ -236,19 +240,30 @@ call sk_cave x=24 z=36 h=3 yaw=180 al=sccave2 chest=sccave2chest
 prop sccave2 cave.dome=30
 call sk_plants x=-64 z=28 r=24.2 seed=24010
 call sk_reef x=46 z=-54 r=5 seed=24030
+# (11-26 REACH sc3: the way up from the south shore to the ridge ran along the pit's east rim, a 45 degree slope with
+# the rim falling away at its side - a player slid off it into the pit's edge. Steps cut into it, 0.94 m each, a
+# 4 m wide stair from the shore at 1.2 m to the top at 7.8)
+for k 0 6
+brush flatten at 47 {-64.7+1.2*$k} r=2 s=20 frames=60 h={1.2+0.94*$k}
+next
 
 # the summit: Signal Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
 call ladtower x=-64 z=28 h0=22 lv=6 a=sctower
 place Loot_ChestSmall sclocker at -64.75 28.75 h=36.73 sit yaw=180
-place Note_Paper scsumnote at -64.75 27.25 h=36.84 drop yaw=20
-place Zone_Trigger scsummit at -64 28 h=37.73
+# (11-26 REACH sc3: the tower top is a 3 x 3 m deck round the ladder's hole, the locker, the zipline post and the slate
+# each on a tile of it; the slate, on the far tile behind the post, was 3 m from where the ladder lets a player off, the
+# zone's middle 2.7 m: the slate lies on the locker by the ladder's top, the zone's middle over the ladder's hole)
+place Note_Paper scsumnote at -64.75 28.75 h=37.6 drop yaw=20
+place Zone_Trigger scsummit at -63.6 28.9 h=37.73
 place ZiplinePath_Landmark sczip at -63.25 27.25 h=36.73 yaw=0
 zipfrom sczip -63.25 27.25 h=36.73
 # (c3z37 11-21: the far end at -32 14 lay at the waterline, its rope 0.57 m in the shore in its last 3 m - on the dry shore 10 m back)
 zipto sczip -42 16
 # (11-26 REACH scp: at -73.33 37.33 it stood on the second terrace's cliff, 6 m under the path's second round and its
 # first round pads 3-4 m below - no way to it from either: on the terrace's lip beside the path, still off it)
-place Loot_ChestSmall scledge at -70.4 38.4 ground sit yaw=40
+# (11-26 REACH sc3: at -70.4 38.4 it slid off the pad's edge 1.7 m down the slope - on the second round's pad, 1.2 m
+# out from its middle, beside the way up)
+place Loot_ChestSmall scledge at -69.5 37.5 ground sit yaw=40
 place SmallRock_02 - at -39.34 34.51 ground sit scale=0.5
 place SmallRock_02 - at -39.34 34.51 ground y=0.6 sit scale=0.32 yaw=40
 call treasure x=-41.84 z=34.51 r=12 n=1 seed=24011

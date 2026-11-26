@@ -1405,6 +1405,11 @@ namespace DynamicIslands
 				// dives and Utopia's supplies, 11-24; a cave or a dug mouth under it has its own roof met first)
 				if (h.normal.y > 0.02f && h.collider.name == CaveMountain.SkinName) { overTerrain = false; overWhy = "under the cave skin n" + h.normal.y.ToString("0.00") + " +" + (o.y + h.distance - p.y).ToString("0.0"); return true; }
 				if (h.normal.y <= 0.1f) return false;
+				// (a lone den's wall (CaveTool.PlugOpening) is one sheet of rock, not a body: over its way in it leans back into the
+				// den as a funnel, so from the passage under it the ray meets its front from behind - the passage was called solid
+				// though nothing stood in it from the floor to the wall 9 m up, and Spirecrest's west den was 'can't get there',
+				// PQ11 sc3 11-26. The ray goes on past it: a point in the rock round the hole still meets the den's own rock)
+				if (h.collider.name == CaveTool.PlugName || h.collider.name == CaveTool.PlugOutName) { float ps = h.distance + 0.02f; o += Vector3.up * ps; dist -= ps; continue; }
 				if (h.normal.y > 0.3f) { overTerrain = h.collider is TerrainCollider; overWhy = BlockerName(h.collider) + " n" + h.normal.y.ToString("0.00") + " +" + (o.y + h.distance - p.y).ToString("0.0"); return true; }
 				float step = h.distance + 0.02f;
 				o += Vector3.up * step; dist -= step;
