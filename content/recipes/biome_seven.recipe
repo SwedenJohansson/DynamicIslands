@@ -98,11 +98,15 @@ place Pickup_Landmark_Flower_Black - at -3.2 2.4 h=0 sit
 place Placeable_Table_Basic - at -2.4 4.3 h=0 sit yaw=0
 place Note_Paper rota at -2.4 4.3 h=1.3 drop yaw=15
 # STORY 10-24s: the hydrophone printout by the control desk; Wren's letter in a tin under the beds (shown when the beds are watered)
-place Note_Paper hydrolog at 3.3 3.5 h=0.8 drop yaw=200
+# (REACH 11-26 b7_r2: at 3.3 3.5 it fell under the console (3.6 3.6) - the console's collider stood between it and every eye:
+# on the floor in front of the console, toward the beds)
+place Note_Paper hydrolog at 2.6 2.6 h=0.8 drop yaw=200
 place Note_Paper wrenletter at -0.6 -1.6 h=0.6 drop yaw=10
 place TP_Selene_ComputerGeneric_01 - at 3.6 3.6 h=0 sit yaw=225
 place Loot_Chest controldesk at 2.1 4.6 h=0 sit yaw=180
-place Loot_ChestSmall gardenlocker at -4.9 2.2 h=0 sit yaw=90
+# (REACH 11-26 b7_r2: at -4.9 2.2, 1.8 m from the glass, the walk ended at the glass with a pane between the eye and it:
+# 1 m further in from the wall, out of reach through the panes)
+place Loot_ChestSmall gardenlocker at -3.9 1.4 h=0 sit yaw=90
 place Loot_Chest seedvault at -0.6 5.2 h=0 sit yaw=180
 place UT_DogCage_Medium02 goatcage at 4.3 -0.6 h=0 sit yaw=270
 place Creature_Goat labgoat at 4.3 -0.6 h=0.3
