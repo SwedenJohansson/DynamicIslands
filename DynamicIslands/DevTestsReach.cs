@@ -275,6 +275,18 @@ namespace DynamicIslands
 			return Physics.SphereCast(a, SwimBody, d / len, out h, len, mask, QueryTriggerInteraction.Ignore) || Physics.SphereCast(b, SwimBody, -d / len, out h, len, mask, QueryTriggerInteraction.Ignore);
 		}
 		const float SwimBody = 0.2f;
+		/// <summary>The swimmer's whole body in the way from a to b: Raft's controller stays upright under water (h 1.7, r 0.2), its
+		/// middle at the swim cell's - a 0.2 m ball passed under a door's lintel where the body's top could not, and the walker stuck
+		/// on the lip in front of house 3's door, Hadal bugfix 11-26. Cast both ways (a body overlapping a collider at the start
+		/// does not see it).</summary>
+		static bool SwimBodyBlocked(Vector3 a, Vector3 b, int mask)
+		{
+			Vector3 d = b - a; float len = d.magnitude;
+			if (len < 0.01f) return false;
+			Vector3 up = Vector3.up * (RHeight * 0.5f - SwimBody);
+			return Physics.CapsuleCast(a - up, a + up, SwimBody, d / len, len, mask, QueryTriggerInteraction.Ignore) ||
+				Physics.CapsuleCast(b - up, b + up, SwimBody, -d / len, len, mask, QueryTriggerInteraction.Ignore);
+		}
 		[ConsoleCommand(name: "CIReachSwim", docs: "Dev, world: PQ11 - the reach walker's swim alone: the player put in the sea 150 m off, Walk held 3 s with and without a look pitch; the metres moved")]
 		public static void ReachSwimCommand(string[] args) { StartTest(ReachSwimRoutine()); }
 
@@ -895,8 +907,8 @@ namespace DynamicIslands
 				// (not through a thin floor, roof or wall between two free cells: the swimmer's 0.4 m spheres miss a block's
 				// 0.2 m slab half way between cells 1 m apart - Hadal Commons' houses were swum into through their roofs, PQ11 10-28; and a ray
 				// still slipped by the roof's edge where a body cannot: the body's 0.2 m is swept too, bugfix 11-25)
-				if (g.Vox.TryGetValue(VoxKey(vi + 1, vj, vk), out other) && !SwimBetween(p, g.Pos[other], mask)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
-				if (g.Vox.TryGetValue(VoxKey(vi, vj + 1, vk), out other) && !SwimBetween(p, g.Pos[other], mask)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
+				if (g.Vox.TryGetValue(VoxKey(vi + 1, vj, vk), out other) && !SwimBetween(p, g.Pos[other], mask) && !SwimBodyBlocked(p, g.Pos[other], mask)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
+				if (g.Vox.TryGetValue(VoxKey(vi, vj + 1, vk), out other) && !SwimBetween(p, g.Pos[other], mask) && !SwimBodyBlocked(p, g.Pos[other], mask)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
 				if (g.Vox.TryGetValue(VoxKey(vi, vj, vk + 1), out other) && !SwimBetween(p, g.Pos[other], mask)) { g.Link(kv.Value, other); g.Link(other, kv.Value); }
 				for (int a = 0; a < vstep; a++) for (int c = 0; c < vstep; c++)
 				{
@@ -2164,6 +2176,15 @@ namespace DynamicIslands
 			return "it isn't in reach from where the walk ended (" + (tb.center - eye).magnitude.ToString("F1") + " m from the eye" + (blocker != null ? "; in the way: " + blocker : "") + ")";
 		}
 
+		/// <summary>The body's foot (a 0.2 m ball just over the feet) meets something on its way down from the feet to a dive cell:
+		/// a ray slipped past the lip the walker stood on in front of Hadal's house 3 door, took the cells under it as reached
+		/// and swam at the lintel, bugfix 11-26.</summary>
+		static bool BodyDown(Vector3 feet, Vector3 aim)
+		{
+			Vector3 a = feet + Vector3.up * 0.3f, d = aim - a; float len = d.magnitude;
+			return len > 0.01f && Physics.SphereCast(a, SwimBody, d / len, out RaycastHit h, len, reachMask, QueryTriggerInteraction.Ignore);
+		}
+
 		/// <summary>A swimmer can't go straight from a to b: something in the way of a 0.25 m ball, either way.</summary>
 		static bool SwimBlocked(Vector3 a, Vector3 b)
 		{
@@ -2199,7 +2220,7 @@ namespace DynamicIslands
 					// (and a swimmer's corner: no clear line (a 0.25 m ball) from the last waypoint to the next cell - the walker swam
 					// straight from over a sea cave's mouth to a cell 6 m in and stuck on the mouth's lip, Riverfork's den, cave check 11-08)
 					else if (!keep && i + 1 < path.Count && g.Kind[last] >= 1 && g.Kind[last] <= 2 && g.Kind[path[i + 1]] >= 1 && g.Kind[path[i + 1]] <= 2)
-						keep = SwimBlocked(g.Pos[last], g.Pos[path[i + 1]]);
+						keep = SwimBlocked(g.Pos[last], g.Pos[path[i + 1]]) || (g.Kind[last] == 2 && g.Kind[path[i + 1]] == 2 && SwimBodyBlocked(g.Pos[last], g.Pos[path[i + 1]], reachMask));
 				}
 				if (keep) { w.Add(k); lastI = i; }
 			}
@@ -2480,7 +2501,7 @@ namespace DynamicIslands
 					if (d.y < -0.9f && flatLen < 1.3f && seg.sqrMagnitude > 0.01f && !inWaterNow(pl)) flat = seg.normalized * Mathf.Max(flatLen, 0.8f);
 					// (standing over a dive cell counts only with nothing between the feet and it: Hadal's walker stood on house 1's
 					// roof over a cell inside, took it as reached and stuck at the next one under the roof, 'block quad', bugfix 11-25)
-					if (water ? (kind == 1 ? flatLen < 0.8f && Mathf.Abs(d.y) < 1.4f : d.magnitude < 1.0f || (flatLen < 0.8f && d.y < 0f && pl.PersonController.controllerType == ControllerType.Water && pl.GetComponent<CharacterController>() != null && pl.GetComponent<CharacterController>().isGrounded && !Between(ReachFeet(pl) + Vector3.up * 0.1f, aim, reachMask))) : flatLen < 0.5f && d.y < 0.9f && d.y > -0.9f) break;
+					if (water ? (kind == 1 ? flatLen < 0.8f && Mathf.Abs(d.y) < 1.4f : d.magnitude < 1.0f || (flatLen < 0.8f && d.y < 0f && pl.PersonController.controllerType == ControllerType.Water && pl.GetComponent<CharacterController>() != null && pl.GetComponent<CharacterController>().isGrounded && !Between(ReachFeet(pl) + Vector3.up * 0.1f, aim, reachMask) && !BodyDown(ReachFeet(pl), aim))) : flatLen < 0.5f && d.y < 0.9f && d.y > -0.9f) break;
 					if (dist < best - 0.15f) { best = dist; since2 = 0f; } else since2 += Time.deltaTime;
 					if (since2 > 2.5f)
 					{
