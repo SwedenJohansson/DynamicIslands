@@ -2433,6 +2433,11 @@ namespace DynamicIslands
 					Vector3 lfront; bool hasF = g.LadderF.TryGetValue(k, out lfront), atFront = false;
 					int flips = 0, sweeps = 0; bool otherSide = false; float bestH = float.MaxValue;
 					float sweepT = 0f, sweepYaw = 0f, nearT = 0f; Vector3 lastD = Vector3.zero;
+					// (down to the sea from a roof: Raft took hold of the ladder's top while the player still stood on the roof's edge,
+					// and the climb down ran into the roof under the body - Spirecrest's coop ladder, PQ11 sc3 11-26. A player lets go
+					// and steps off the edge past the ladder's front into the water below: dropT, once, when the next spot is the sea)
+					float dropT = 0f; bool dropped = false;
+					bool toSea = !up && i + 1 < way.Count && g.Kind[way[i + 1]] != 0 && g.Kind[way[i + 1]] != 3;
 					for (int n = 0; n < 6000; n++)
 					{
 						Vector3 p = ReachFeet(pl);
@@ -2469,6 +2474,7 @@ namespace DynamicIslands
 						// took hold - tower ladders at Array Root/Caisson Yard/Brinelab PQ11 10-27: sweep four headings into it)
 						if (climbing) sweepT = 0f;
 						if (sweepT > 0f) { sweepT -= Time.deltaTime; d = Quaternion.Euler(0f, sweepYaw, 0f) * Vector3.forward; }
+						if (dropT > 0f) { dropT -= Time.deltaTime; d = lc + (hasF ? lfront : d.normalized) * 0.9f - p; d.y = 0f; }
 						// (a swimmer at a dock ladder looks up and swims up into it, Jump held - Raft takes hold when the body touches its
 						// "Ladder" trigger (PersonController.OnTriggerStay); the walker swam level under the rungs and never touched it,
 						// Caisson Yard / Array Root PQ11 10-28)
@@ -2479,7 +2485,8 @@ namespace DynamicIslands
 						Look(pl, d.sqrMagnitude > 0.01f ? Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg : pl.transform.eulerAngles.y, lpitch);
 						// (the walk turned back for a climber that made no headway; off the ladder again it kept walking backwards, away from
 						// the ladder - 5.5 m out from the coop ladder at Spirecrest, 5 m across Brinelab's lobby, PQ11 scp/s6u 11-26)
-						mmWalk = climbing ? walkSign : 1f;
+						mmWalk = climbing && dropT <= 0f ? walkSign : 1f;
+						if (dropT > 1.2f) { mmJump = true; lpitch = 0f; Look(pl, d.sqrMagnitude > 0.01f ? Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg : pl.transform.eulerAngles.y, 0f); }
 						MmHold(pl, false);
 						ReachTrace(pl, e, "ladder up=" + up + " top=" + (ladTop - e.Position.y).ToString("F2") + " next=" + (nextY - e.Position.y).ToString("F2"));
 						yield return null;
@@ -2492,6 +2499,7 @@ namespace DynamicIslands
 						if (since > 2.5f)
 						{
 							if (flips < 1 && climbing) { walkSign = -walkSign; flips++; since = 0f; continue; }
+							if (toSea && !dropped && climbing) { dropped = true; dropT = 1.5f; since = 0f; walkSign = 1f; continue; }
 							if (held <= 0f && !climbing && sweeps < 4) { sweepYaw = sweeps * 90f; sweeps++; sweepT = 0.35f; since = 1.2f; continue; }
 							// (a player who can't take hold from one side tries the other: the dp_tower ladders took hold only from their back,
 							// the walker came from the front, walked through them and on 11 m - PQ11 10-28)
