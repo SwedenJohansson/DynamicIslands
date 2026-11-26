@@ -600,6 +600,38 @@ namespace DynamicIslands
 			return set;
 		}
 
+		/// <summary>"island reach.sealed=lid:name;name" - targets behind a lid that only a gated use (if./else.: a quest step) takes
+		/// away. While the lid is there (a fresh island) they are "SEALED" instead of a fail - the reach after the island's play checks
+		/// them; with it gone they count as any other. Nothing is excused unless the lid stands and a gated on.use hides it.</summary>
+		static string ReachSealed(IslandWorldState.Entry e, out HashSet<string> names, out Bounds lidB)
+		{
+			names = new HashSet<string>(StringComparer.OrdinalIgnoreCase); lidB = new Bounds();
+			string v;
+			IDictionary<string, string> props = IslandCache.PropsOf(e);
+			if (props == null || !props.TryGetValue("reach.sealed", out v) || string.IsNullOrEmpty(v)) return null;
+			int c = v.IndexOf(':');
+			if (c <= 0) return null;
+			string lid = v.Substring(0, c).Trim(), by = null;
+			GameObject lidGo = null;
+			foreach (IslandObjectRef ir in e.Root.GetComponentsInChildren<IslandObjectRef>(true))
+			{
+				if (ir.Name == lid) { if (ir.gameObject.activeInHierarchy) lidGo = ir.gameObject; continue; }
+				string onUse;
+				if (!ir.Props.TryGetValue("on.use", out onUse) || !ir.Props.Keys.Any(k => k.StartsWith("if.") || k.StartsWith("else."))) continue;
+				if (ObjAction.ParseLines(onUse.Replace("\\n", "\n")).Any(a => a.Verb == "hide" && a.Target == lid)) by = ir.Name.Length > 0 ? ir.Name : ir.ObjectName;
+			}
+			if (lidGo == null || by == null) return null;
+			bool any = false;
+			foreach (Collider col in lidGo.GetComponentsInChildren<Collider>(false))
+			{
+				if (col.isTrigger) continue;
+				if (!any) { lidB = col.bounds; any = true; } else lidB.Encapsulate(col.bounds);
+			}
+			if (!any) return null;
+			foreach (string n in v.Substring(c + 1).Split(';')) if (n.Trim().Length > 0) names.Add(n.Trim());
+			return "SEALED behind " + lid + " until " + by + "'s gated use takes it away (a quest step) - the reach after the play checks it";
+		}
+
 		/// <summary>"CHECKED BY PLAY (file)" for a target listed as checked by play that the island's play goes to, null when none does (a plain fail)
 		/// or it isn't listed.</summary>
 		static string ByPlayNote(HashSet<string> byPlay, ReachTarget t)
@@ -766,6 +798,12 @@ namespace DynamicIslands
 				}
 				if (gone > 0) report.Add("REACH " + name + " | used-away | - | NOTE " + gone + " object(s) a player uses away (a hatch that hides itself) taken away as a player would");
 			}
+			// (a store sealed until a quest step opens it: Caisson Yard's drowned store, capped until the crane key's lever drops the
+			// weight - fresh, its chest, note, air pocket and ladder all failed "can't get there", while the reach after the play
+			// passed them, cy4 11-26: island reach.sealed=lid:target;target)
+			HashSet<string> sealedNames; Bounds sealedLid;
+			string sealedNote = ReachSealed(e, out sealedNames, out sealedLid);
+			if (sealedNote != null) report.Add("REACH " + name + " | sealed | - | NOTE " + sealedNote + ": " + string.Join(", ", sealedNames.ToArray()));
 			// (Raft's machete vines with nothing of the island's on them (a cave kit's gate): cut, as a player with the machete
 			// does - the grid saw them as a wall, so Tracker's Rise's cut and its cache were "can't get there" and both mouths
 			// traps, 11-09. A gated one (if./else./on.use) stays as the play left it)
@@ -999,6 +1037,13 @@ namespace DynamicIslands
 				Vector3 lr = Rel(e, lb.center, offset);
 				string where = "ladder " + LadderName(ch[0], e) + " at " + lr.x.ToString("F1") + " " + lr.z.ToString("F1") + " h=" + (lb.min.y - e.Position.y).ToString("F1") + ".." + (lb.max.y - e.Position.y).ToString("F1");
 				string facing = LadderFacing(ch, lb);
+				// (a ladder up to the sealed store's lid: its top is under the lid until the quest step takes it away)
+				if (grabs > 0 && tops == 0 && sealedNote != null && lb.max.y >= sealedLid.min.y - 2.5f && lb.max.y <= sealedLid.max.y + 0.5f
+					&& lb.max.x >= sealedLid.min.x - 1.5f && lb.min.x <= sealedLid.max.x + 1.5f && lb.max.z >= sealedLid.min.z - 1.5f && lb.min.z <= sealedLid.max.z + 1.5f)
+				{
+					report.Add("REACH " + name + " | " + where + " | - | " + sealedNote + " - the grid: no floor to step off onto at its top (" + facing + ")");
+					continue;
+				}
 				if (grabs == 0 || tops == 0)
 				{
 					problems++;
@@ -1171,7 +1216,7 @@ namespace DynamicIslands
 					SurvivorCage sc = t.Root.GetComponentInChildren<SurvivorCage>(false);
 					if (sc != null && sc.IsOpen) { report.Add(head + "NOTE opened in the play (the cage is gone now): not checked"); continue; }
 				}
-				string playNote = ByPlayNote(byPlay, t);
+				string playNote = ByPlayNote(byPlay, t) ?? (sealedNote != null && sealedNames.Contains(t.Name ?? "") ? sealedNote : null);
 				if (use.Count == 0 && playNote != null) { report.Add(head + playNote + " - the grid: no spot to use it from (" + WhyNoSpot(t) + ")"); continue; }
 				if (use.Count == 0)
 				{

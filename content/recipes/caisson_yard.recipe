@@ -255,6 +255,9 @@ info author=Custom Islands
 info description=Concrete caissons standing out of the sea over the trench edge, linked by stone footbridges, with two cranes, a zipline, a smelter and a store. The seventh island of The Sunken Kingdom.
 # (the jump course's hops are jumps the reach grid doesn't make: its play goes to them instead)
 island reach.byplay=Diver's perch;Crew's dare;jump_cy_finale
+# (11-26 cy4: the drowned store is sealed by design until the crane key's lever takes its cap away - the fresh reach marks
+# what lies behind the cap as sealed, the reach after the play (cap gone) judges them as any other target)
+island reach.sealed=cycap:Yard store chest;Yard pump log;cy_dair
 island on.arrive=message||Grey concrete blocks standing out of the sea, two cranes over them - and past them, dark water.
 
 note foremanboard Foreman's board | CAISSON YARD - FOREMAN (J. Achterberg)\n\nSmelter: on the yard, under the roof. Fuel: the little shed on the next caisson over.\nCrane 1 to crane 2 by the cable only - the footbridge is for carts, and for people who enjoy swimming.\nAnchor gear stays on the crane 2 caisson: we anchor over the trench. Chart of the trench on its table. Hadal is straight down.\n\nChalked across the bottom, big letters: "SHUTTLE KIDS - 12 - ALL FED, ALL COUNTED. Warden Fennick took them down to the Commons Tues. Doors shut from inside. Good."\nUnder it, smaller, a different chalk: "Counted them myself. - I.M."
