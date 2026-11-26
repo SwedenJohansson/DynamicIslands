@@ -80,6 +80,7 @@ namespace DynamicIslands
 			var grown = new List<Block>();
 			var made = new List<IslandWorldState.Entry>();
 			WorldPlan keep = WorldDirector.Plan;
+			var doneBefore = WorldDirector.Done.ToList();
 			try
 			{
 				for (int i = 0; i < files.Length; i++)
@@ -104,13 +105,23 @@ namespace DynamicIslands
 				int foundations = StormSeas.Foundations().Count;
 				float reach = CustomIslandSpawner.RaftRadius;
 				Check(ref ok, foundations >= 144, "the raft is 12 x 12: " + foundations + " foundations (" + grown.Count + " added to " + start.Count + ")");
-				Check(ref ok, reach >= 10f && reach > before + 5f, "its reach follows: " + Gf(reach, "F1") + " m from its middle (was " + Gf(before, "F1") + " m)");
+				// (the furthest block, measured here; a world whose raft is big already has the same reach before - SC10 11-26)
+				float far = 0f;
+				foreach (Block b in BlockCreator.GetPlacedBlocks())
+					if (b != null && b.transform.IsChildOf(raft.transform)) far = Mathf.Max(far, ScFlat(b.transform.position, raft.transform.position));
+				Check(ref ok, reach >= 5.5f * HeadStart.Cell && Mathf.Abs(reach - far) < 0.6f && (start.Count >= 100 || reach > before + 5f), "its reach follows: " + Gf(reach, "F1") + " m from its middle, its furthest block " + Gf(far, "F1") + " m (was " + Gf(before, "F1") + " m with " + start.Count + " foundations)");
 				float need = CustomIslandSpawner.LandRadius(big) + CustomIslandSpawner.Clearance + reach;
+
+				// (the tests' clear spot, before this test's islands are in the sea: they keep MinSpacing from it)
+				Vector3? clear = CustomIslandSpawner.FindClearSpot(CustomIslandSpawner.RaftPosition.Value, CustomIslandSpawner.LandRadius(big), 450f);
+				Check(ref ok, clear.HasValue && ScFlat(clear.Value, CustomIslandSpawner.RaftPosition.Value) >= need - 1f, "the tests' clear spot keeps the same room: " + (clear.HasValue ? Gf(ScFlat(clear.Value, CustomIslandSpawner.RaftPosition.Value), "F0") + " m, needs " + Gf(need, "F0") + " m" : "none within 450 m"));
 
 				// (a plan rule that asks for less room than the raft needs: ahead:20)
 				IntroRule ahead = IntroRule.Parse("big_ahead | island:" + big + " | start | ahead:20 | | Big Ahead");
 				IntroRule hostRule = IntroRule.Parse("big_host | island:" + host + " | start | ahead:150 | | Big Host");
 				WorldDirector.Plan = new WorldPlan { Name = "CI big raft", Random = true, Rules = { ahead, hostRule } };
+				// (brought by the test itself: done, or the director's own check brings each a second time)
+				WorldDirector.Done.Add(ahead.Id); WorldDirector.Done.Add(hostRule.Id);
 				Vector3 raftAt = CustomIslandSpawner.RaftPosition.Value;
 				string why = WorldDirector.Bring(ahead, null, null);
 				IslandWorldState.Entry a = null;
@@ -141,6 +152,7 @@ namespace DynamicIslands
 					Check(ref ok, nearRule != null && nearRule.Where == "near", "the near-rule reads: " + (nearRule != null ? nearRule.ToLine() : "null"));
 					if (nearRule != null)
 					{
+						WorldDirector.Done.Add(nearRule.Id);
 						WorldDirector.Plan.Rules.Add(nearRule);
 						why = WorldDirector.Bring(nearRule, null, null);
 						IslandWorldState.Entry n = null;
@@ -173,12 +185,15 @@ namespace DynamicIslands
 					if (d < r + CustomIslandSpawner.Clearance + reach - 1f) close++;
 				}
 				Check(ref ok, spots > 0 && close == 0, "random islands' spot ahead: " + spots + "/30 found, " + close + " too close; nearest " + (spots > 0 ? Gf(nearest, "F0") : "-") + " m, needs " + Gf(r + CustomIslandSpawner.Clearance + reach, "F0") + " m");
-				Vector3? clear = CustomIslandSpawner.FindClearSpot(raftAt, r, 30f);
-				Check(ref ok, clear.HasValue && ScFlat(clear.Value, raftAt) >= r + CustomIslandSpawner.Clearance + reach - 1f, "the tests' clear spot keeps the same room: " + (clear.HasValue ? Gf(ScFlat(clear.Value, raftAt), "F0") + " m" : "none"));
+				int copies = IslandWorldState.Islands.Count(x => files.Contains(x.HostName));
+				Check(ref ok, copies == made.Count, "each rule brought its island once: " + copies + " in the world for " + made.Count + " rules");
 			}
 			finally
 			{
 				WorldDirector.Plan = keep;
+				WorldDirector.Done.Clear();
+				foreach (string d in doneBefore) WorldDirector.Done.Add(d);
+				made.AddRange(IslandWorldState.Islands.Where(x => files.Contains(x.HostName) && !made.Contains(x)));
 				ScRemove(made, files);
 				ScTakeDown(grown);
 			}

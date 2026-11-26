@@ -48,22 +48,27 @@ namespace DynamicIslands
 				WorldShiftManager.OnWorldShift += onShift;
 				Func<Vector3> target = () => point.worldPosition != p0 ? point.worldPosition : p0 + shifted;
 				float seen = -1f;
+				// (the 1.5 s look held off while the island comes: which frame it falls on is chance, and when it comes first there
+				// is no unswapped pickup left to take - SC17 run 11-26. The pickup hook is what this row is about.)
+				HarmonyLib.Traverse tick = HarmonyLib.Traverse.Create(typeof(ScrambledBlueprints)).Field("nextTick");
+				Action hold = () => tick.SetValue(Time.unscaledTime + 5f);
 				try
 				{
 					for (int leg = 0; leg < 8 && land == null; leg++)
 					{
 						IEnumerator sail = SailTo(() => target() + (CustomIslandSpawner.RaftPosition.Value - target()).normalized * 200f, 60f);
-						while (land == null && sail.MoveNext()) { yield return sail.Current; land = find(); }
-						for (float t = 0f; land == null && t < 20f; t += Time.deltaTime) { yield return null; land = find(); }
+						hold();
+						while (land == null && sail.MoveNext()) { hold(); yield return sail.Current; hold(); land = find(); }
+						for (float t = 0f; land == null && t < 20f; t += Time.deltaTime) { hold(); yield return null; hold(); land = find(); }
 					}
 					if (land != null)
 					{
 						seen = Time.time;
 						// (the pickups may come a few frames after the landmark: still well inside the 1.5 s look)
-						for (int f = 0; f < 30 && (pick = fresh(land)) == null; f++) yield return null;
+						for (int f = 0; f < 30 && (pick = fresh(land)) == null; f++) { hold(); yield return null; hold(); }
 					}
 				}
-				finally { WorldShiftManager.OnWorldShift -= onShift; }
+				finally { WorldShiftManager.OnWorldShift -= onShift; if (pick == null) tick.SetValue(0f); }
 				Check(ref ok, land != null, island + " appeared");
 				if (land == null) yield break;
 				if (pick == null) { Log("  (the 1.5 s look got to all its blueprints first: no unswapped pickup to take - run again)"); Check(ref ok, false, "a blueprint picked up before the look"); yield break; }
@@ -72,6 +77,7 @@ namespace DynamicIslands
 				int hadWas = me.Inventory.GetItemCount(was), hadPartner = me.Inventory.GetItemCount(partner);
 				float after = Time.time - seen;
 				me.PickupScript.PickupItem(pick, true, false);
+				tick.SetValue(0f); // (the look runs again)
 				yield return new WaitForSeconds(0.5f);
 				int gotWas = me.Inventory.GetItemCount(was) - hadWas, gotPartner = me.Inventory.GetItemCount(partner) - hadPartner;
 				Check(ref ok, gotPartner == 1 && gotWas == 0, "picked up " + Gf(after, "F2") + " s after the island appeared (Raft's own there: " + was.Replace("Blueprint_", "") + "): the player got " + partner.Replace("Blueprint_", "") + " x" + gotPartner + ", " + was.Replace("Blueprint_", "") + " x" + gotWas);
