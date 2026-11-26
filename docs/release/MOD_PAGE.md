@@ -121,7 +121,7 @@ Download islands and world plans others made, right in the game: **ISLAND LIBRAR
 
 - Library on GitHub: [SwedenJohansson/CustomIslands-Library](https://github.com/SwedenJohansson/CustomIslands-Library)
 - Share your own: export it in the editor, then post the pack on the
-  [Custom Islands Discord](https://discord.gg/U7DfKY9tN), or use the
+  [Custom Islands Discord](https://discord.gg/u9tkW9uSaQ), or use the
   [Submit an island or plan](https://github.com/SwedenJohansson/CustomIslands-Library/issues/new?template=submit.yml)
   form.
 
@@ -145,7 +145,7 @@ versions filled in, opens the log folder, and opens a new GitHub issue or the Di
 
 Or report it yourself, on either:
 - **GitHub:** [github.com/SwedenJohansson/DynamicIslands/issues](https://github.com/SwedenJohansson/DynamicIslands/issues)
-- **Discord:** [discord.gg/U7DfKY9tN](https://discord.gg/U7DfKY9tN)
+- **Discord:** [discord.gg/u9tkW9uSaQ](https://discord.gg/u9tkW9uSaQ)
 
 Please include:
 1. **What happened**, step by step, and how often (every time, now and then, once).

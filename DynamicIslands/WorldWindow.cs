@@ -100,6 +100,8 @@ namespace DynamicIslands.Editor
 		/// <summary>Tests: a button of the window by its name ("Monsters_Savage", "Option_ghostrafts", "Levels"...).</summary>
 		public static Button ButtonNamed(string name) { Button b; return buttons.TryGetValue(name, out b) ? b : null; }
 		/// <summary>Tests: whether a tick-box row of the window ("Option_ghostrafts", "Levels", "Part_colours", "Island_...") is ticked.</summary>
+		/// <summary>The stuck section's notes by name (StuckNote, SkipNote), for the tests.</summary>
+		public static Text NoteText(string name) { return name == "StuckNote" ? stuckText : name == "SkipNote" ? skipNote : null; }
 		public static bool Ticked(string name) { return UIKit.IsChecked(ButtonNamed(name)); }
 		static bool Host { get { return Raft_Network.IsHost; } }
 
@@ -263,29 +265,40 @@ namespace DynamicIslands.Editor
 			Note(box, IslandsMidGame, 1);
 		}
 
-		const string SkipNoteHost = "Asks first. Can't be undone. (F10: SkipStep)";
+		const string SkipNoteHost = "Skip: asks first, can't be undone. Spawn to raft: asks first, moves only you.";
+		const string SkipNoteClient = "Only the host can skip a step: ask the host. Spawn to raft: asks first, moves only you.";
 
-		/// <summary>3.2 "Stuck on a quest?" (QuestSkip): the current quest's step and "Skip current quest step" (host; asks first).</summary>
+		/// <summary>3.2 "Stuck on a quest?" (QuestSkip), since 11-24 "Stuck on a quest or in a hole?": the current quest's step,
+		/// "Skip current quest step" (host; asks first) and beside it "Spawn to raft" (SpawnToRaft, any player; asks first -
+		/// before, a button of Raft's pause menu: the user, the two ways out side by side). "Other quest" when more than one
+		/// quest could be the stuck one (QuestSkip.Candidates: a side quest, a first step, a client's island).</summary>
 		static void BuildStuck(Transform left)
 		{
-			RectTransform box = Section(left, "Stuck on a quest?", "StuckOnAQuest");
+			RectTransform box = Section(left, "Stuck on a quest or in a hole?", "StuckOnAQuest");
 			stuckText = Note(box, "", 2, "StuckNote");
 			stuckText.fontSize = 11; stuckText.color = UIKit.TextColor;
 			UIKit.Size(stuckText.gameObject, -1, 27);
 			RectTransform row = UIKit.Row(box, 26f, 6f, "SkipRow");
-			Add("SkipStep", UIKit.Button(row, "Skip current quest step", QuestSkip.AskCurrent, "Only if a step can no longer be done (a key used up, a lever that won't move): the current quest's step counts as done and the quest moves on, for every player. Asks first; can't be undone. F10: SkipStep", 200, 26f, 12));
-			skipNote = Note(row, SkipNoteHost, 1, "SkipNote");
+			Add("SkipStep", UIKit.Button(row, "Skip current quest step", QuestSkip.AskCurrent, "Only if a step can no longer be done (a key used up, a lever that won't move): the current quest's step counts as done and the quest moves on, for every player. Host only. Asks first; can't be undone.", 175, 26f, 12));
+			Add("SpawnToRaft", UIKit.Button(row, SpawnToRaft.Label, QuestSkip.AskSpawn, "Stuck in a hole or a shaft you can't climb out of: you stand on your raft again. Any player; only you move. Asks first", 120, 26f, 12));
+			Add("OtherQuest", UIKit.Button(row, "Other quest", QuestSkip.NextCandidate, "Not the quest you are stuck on? The next quest in progress near a player (a side quest, a client's island)", 110, 26f, 11));
+			skipNote = Note(box, SkipNoteHost, 1, "SkipNote");
 		}
 
-		/// <summary>The current quest and its step, and the button (host only).</summary>
+		/// <summary>The current quest and its step; Skip for the host, Spawn to raft for every player (not while dead, asleep or on a zipline).</summary>
 		static void RefreshStuck(bool host)
 		{
 			string now = QuestSkip.DescribeCurrent();
+			int count, index = QuestSkip.CurrentIndex(out count);
 			stuckText.text = now.Length == 0 ? QuestSkip.NoQuest + "." : "Now: " + now;
+			// (a guest sees the button greyed, not hidden, and the note says to ask the host - MP check 11-07 hid it)
 			buttons["SkipStep"].interactable = host && now.Length > 0;
-			buttons["SkipStep"].gameObject.SetActive(host);
-			// (a guest: the note beside the hidden button says why - added under the quest's two lines it was cut off, MP check 11-07)
-			skipNote.text = host ? SkipNoteHost : "Only the host can skip a step.";
+			string why = SpawnToRaft.WhyNot();
+			buttons["SpawnToRaft"].interactable = why == null || why == SpawnToRaft.NoBlock;
+			buttons["OtherQuest"].interactable = count > 1;
+			buttons["OtherQuest"].gameObject.SetActive(count > 1);
+			UIKit.LabelOf(buttons["OtherQuest"]).text = "Other quest (" + (index + 1) + "/" + count + ")";
+			skipNote.text = host ? SkipNoteHost : SkipNoteClient;
 		}
 
 		static void BuildOptions(Transform right)
@@ -369,6 +382,7 @@ namespace DynamicIslands.Editor
 			WorldWindowHint.Opened();
 			// (read afresh each time the window opens)
 			candidatesSig = null;
+			QuestSkip.ResetChoice();
 			FillIslands();
 			Refresh();
 		}

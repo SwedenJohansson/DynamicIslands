@@ -3,14 +3,14 @@
 # Quiet Choir stand on them, every one facing the middle; there are no buildings at all. Each effigy is there twice: the
 # second set faces the landing beach and is hidden - stepping into the circle swaps the sets once, so the effigies have
 # all turned to face you. Quest "Count Them Again" (5 steps): the landing, the tide marker, the circle, the choir hymn
-# sheet at the tallest effigy's feet (a story item Gannet Rock's pit gate asks for), "Who made them" (note 3: the plan's
-# done-when).
+# sheet at the tallest effigy's feet (a story item Gannet Rock's pit gate asks for), "Who made them" (the plan's done-when,
+# by its title: a number goes stale when the island is rebuilt - quest softlock audit 11-23).
 # RESIZE + DEEP 10-25 (deep pass, The Lullaby Frequency): Radius 48 -> 80, as big as Raft's own big islands. The ring of
 # bars and the circle stay in the middle; the three channels now run on out to the sea, cutting the outer dunes into
 # three wedges. New: the Pyre Dune in the north-west (a 22 m climb to the pyre the Choir built to burn the effigies; the
 # warden left the reliquary key in her chest by it), the Choir's boathouse drowned in a deep hole off the north-east
 # shore (an air pocket; the boatman's note), the Choir's cave in the north-east with its locked reliquary (the quest's
-# end), two buried treasures. Quest 5 -> 13 steps (the plan's done-when stays note:3 and zone:effigy:circle).
+# end), two buried treasures. Quest 5 -> 13 steps (the plan's done-when is note:Who made them, and zone:effigy:circle).
 # Voices: warden Hester Vane, boatman Silas Crewe, novice Lise Marren.
 # OLDER4 10-26: relief on the flat south and east wedges - the Whistling Dune (south-west, 10 m), the Ash Dunes
 # (south-east, 8 m) and the Seal Bank (east, 5 m), each a named area; and Lise's five straw dolls hidden round the

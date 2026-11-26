@@ -76,27 +76,40 @@ namespace DynamicIslands.Editor
 			Vector3 pivot = new Vector3(list.Average(o => o.transform.position.x), list.Min(o => o.transform.position.y), list.Average(o => o.transform.position.z));
 			Directory.CreateDirectory(Folder);
 			// (written whole, then in the file's place in one step - SafeFile: a crash mid-save left a broken group, AU41)
+			SafeFile.WriteAllBytes(PathFor(name), Write(list.Select(o => new Member { Name = o.GameObjectName, Position = o.transform.position - pivot,
+				Euler = o.transform.rotation.eulerAngles, Scale = o.transform.lossyScale, Props = o.Props ?? new Dictionary<string, string>() })));
+			return list.Count;
+		}
+
+		/// <summary>A group file's bytes (also the Raft buildings the mod ships: RaftBuildings).</summary>
+		internal static byte[] Write(IEnumerable<Member> members)
+		{
+			List<Member> list = members.ToList();
 			var bytes = new MemoryStream();
 			using (var w = new BinaryWriter(bytes))
 			{
 				w.Write(Magic); w.Write(1); w.Write(list.Count);
-				foreach (EditorGameObject o in list)
+				foreach (Member m in list)
 				{
-					w.Write(o.GameObjectName);
-					Vec(w, o.transform.position - pivot); Vec(w, o.transform.rotation.eulerAngles); Vec(w, o.transform.lossyScale);
-					Dictionary<string, string> p = o.Props ?? new Dictionary<string, string>();
-					w.Write(p.Count);
-					foreach (var kv in p) { w.Write(kv.Key); w.Write(kv.Value ?? ""); }
+					w.Write(m.Name);
+					Vec(w, m.Position); Vec(w, m.Euler); Vec(w, m.Scale);
+					w.Write(m.Props.Count);
+					foreach (var kv in m.Props) { w.Write(kv.Key); w.Write(kv.Value ?? ""); }
 				}
 			}
-			SafeFile.WriteAllBytes(PathFor(name), bytes.ToArray());
-			return list.Count;
+			return bytes.ToArray();
 		}
 
 		public static List<Member> Load(string name)
 		{
+			using (Stream s = File.OpenRead(PathFor(name))) return Read(s, name);
+		}
+
+		/// <summary>Reads a group file (also the Raft buildings the mod ships: RaftBuildings).</summary>
+		internal static List<Member> Read(Stream stream, string name)
+		{
 			var list = new List<Member>();
-			using (var r = new BinaryReader(File.OpenRead(PathFor(name))))
+			using (var r = new BinaryReader(stream))
 			{
 				if (r.ReadUInt32() != Magic) throw new InvalidDataException(name + " is not a Custom Islands group");
 				r.ReadInt32();
@@ -162,11 +175,18 @@ namespace DynamicIslands.Editor
 			List<Member> members;
 			try { members = Load(name); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Group '" + name + "' can't be read: " + e.Message); yield break; }
+			yield return RegisterMembers(Prefix + name, members, Category, name);
+		}
+
+		/// <summary>Puts a group in the object catalog under a name and category ("My groups", or Raft buildings), loading
+		/// the Raft scenes its objects come from first. The label is the name and its object count.</summary>
+		internal static IEnumerator RegisterMembers(string catalogName, List<Member> members, string category, string name)
+		{
 			yield return PlaceableCatalog.EnsureLoaded(members.Select(m => m.Name).Distinct().ToList());
 			try
 			{
-				GameObject old = PlaceableCatalog.Get(Prefix + name);
-				var proto = new GameObject(Prefix + name);
+				GameObject old = PlaceableCatalog.Get(catalogName);
+				var proto = new GameObject(catalogName);
 				proto.transform.SetParent(PlaceableCatalog.Container.transform, false);
 				int missing = 0;
 				foreach (Member m in members)
@@ -181,8 +201,8 @@ namespace DynamicIslands.Editor
 					gm.PropsText = GroupMember.Pack(m.Props);
 					ObjectProps.ApplyTint(go, m.Props);
 				}
-				PlaceableCatalog.AddCustom(Prefix + name, proto, Category, name + " (" + members.Count + ")");
-				if (old != null) { UnityEngine.Object.Destroy(old); ObjectThumbnails.Forget(Prefix + name); }
+				PlaceableCatalog.AddCustom(catalogName, proto, category, name + " (" + members.Count + ")");
+				if (old != null) { UnityEngine.Object.Destroy(old); ObjectThumbnails.Forget(catalogName); }
 				PlaceableCatalog.NotifyChanged();
 				if (missing > 0) Debug.LogWarning("[CUSTOM ISLANDS] Group '" + name + "': " + missing + " object(s) not found in the object list");
 			}

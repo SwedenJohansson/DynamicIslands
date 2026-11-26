@@ -21,6 +21,7 @@ FranzFischer78/Custom-Islands-UI; the panels are built in code.
 | Packs and the online library | `areas/library.md` |
 | Updating GUIDE, README, CHANGELOG for a feature | `areas/docs.md` |
 | Adding a feature: every place it touches | `CHANGE_CHECKLISTS.md` (your kind's section only) |
+| Can a quest or storyline get stuck? (known cases, open proposals) | `QUEST_SOFTLOCK_AUDIT.md` |
 
 Anything else: grep README.md's "### Source overview" table, which has one
 line per source file.

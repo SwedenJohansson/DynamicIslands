@@ -1,7 +1,7 @@
 # Rootweave Caves' thorn pit (CIPlay rootweave_caves_spikes, 11-08; in a test world, under CIGapsWatchHealth): the
 # floor of the pit is real floor (expect stand), and standing on it costs health. Points as in its recipe.
 island Rootweave Caves keep
-offset 0 0
+offset 1.2266 0.3427
 hour 11
 weather Calm
 expect stand 8.55 21.7 h=12.2 below=16

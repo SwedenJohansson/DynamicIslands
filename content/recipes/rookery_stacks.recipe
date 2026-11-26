@@ -478,4 +478,10 @@ clear at -10 55.5 r=3.5 only=(?i)boulder|rock|tree|bush|bamboo|plant|fern
 call kit_dig x=-10 z=55.5 yaw=180 len=10 flat=0 r=1.75 slope=0 room=0 dirt=0 mush=2 stone=0 vines=0 titanium=0 as=rkhollow
 prop rkhollow cave.rock=plain
 
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+# (keep=, lib 3.5.1 minor fixes 11-23: the talus filled or buried the bathhouse cellar's dive site - the cellar, the boat, its crate and the puffers - left as built)
+# (walls=, lib 3.5.1 extra fixes 11-23: the kept walls still showed as bare sheets - no talus there, so the pit keeps its depth, but rock is stood on its faces)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low walls=21,-73,17
 save Rookery Stacks

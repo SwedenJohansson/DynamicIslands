@@ -64,6 +64,7 @@ namespace DynamicIslands.Editor
 			{
 				Text t = UIKit.Label(h.canvasRect, "", 30, Gold, TextAnchor.MiddleCenter, FontStyle.Bold, "Exp");
 				t.horizontalOverflow = HorizontalWrapMode.Overflow;
+				t.transform.SetAsFirstSibling(); // (behind the level up box: a "+n EXP" rising over it covered its title - 11-23 picture check)
 				UIKit.Anchor(t.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(160, 40));
 				Outline o = t.gameObject.AddComponent<Outline>();
 				o.effectColor = new Color(0.2f, 0.1f, 0.03f, 0.9f);

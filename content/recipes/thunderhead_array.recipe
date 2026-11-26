@@ -442,4 +442,7 @@ call treasure x=0 z=0 r=48 n=1 seed=8860
 pop
 prop treasure8860 treasure.loot=TitaniumOre*2
 
+# (lib 3.5.1 11-23: CISheetIslands found the west coast cliff round -74 -38 near-black (16 m step) - drawn as the ground's texture stretched down
+#     a wall. Sloped as rock talus where it can be; rock stood in the waterline band where it can't (rocks=))
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save Thunderhead Array

@@ -349,4 +349,13 @@ prop puffers creature.count=3
 
 # (CIGroundIslands 10-26: a gen rock left floating over a slope)
 clear at -39.4 -4.5 r=1.5 all only=CaravanIsland_SmallRock
+# (lib 3.5.1 11-23: CISheetIslands found tall near-black walls along the narrows channel round -3 -4 and two
+#     open-coast walls (31 78, 74 -58) - drawn as the ground's texture stretched down
+#     a wall. Sloped as rock talus where it can be; rock stood in the waterline band where it can't (rocks=))
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
+# (three of the tall stood rocks reached the zipline's rope along the channel's top - taken off it again, each by its
+#     own middle: the ground check names the rope's points in the land-centre frame, about 4.5 m south of this recipe's)
+clear at -14.16 -2.08 r=0.3 all only=BigBoulder2
+clear at -6.87 -1.08 r=0.3 all only=BigBoulder1
+clear at 6.45 -0.87 r=0.3 all only=BigBoulder2
 save Telegraph Narrows

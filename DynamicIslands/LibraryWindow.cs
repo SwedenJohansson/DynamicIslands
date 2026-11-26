@@ -260,6 +260,9 @@ namespace DynamicIslands.Editor
 				DynamicIslands.instance.StartCoroutine(LibraryClient.Picture(e, e.Info.icon, tex => { if (icon != null) icon.texture = tex; }));
 		}
 
+		/// <summary>Shows this tab (0 = world plans, 1 = islands) as a click on it does (tests, the showcase video).</summary>
+		public static void ShowTab(int t) { if (canvas == null) return; tab = Mathf.Clamp(t, 0, tabs.Length - 1); ShowList(); }
+
 		/// <summary>Selects an entry by its id (tests).</summary>
 		public static bool Select(string id)
 		{

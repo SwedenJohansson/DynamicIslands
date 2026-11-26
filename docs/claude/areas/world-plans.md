@@ -11,7 +11,7 @@ Which custom islands a world gets, when and where (world plans and island rules)
 | `QuestBook.cs` | Main story tabs and pages in Raft's notebook, built on every machine |
 | `QuestBookPreview.cs` | World Plans' Preview notebook: a plan's story as `Moment`s, stepped with Back / Next |
 | `MainStoryHelper.cs` | New main story helper; `Finish` turns its islands into rule cards |
-| `WorldPlanWindow.cs` | Plan window (title WORLD PLAN; an island's own rules: `OpenIsland`, no tabs); `WorldPlanTemplates`. Tabs `TabStory` / `TabOther` / `TabSettings` (`SelectTab`, `ShowTabParts`, `StoryTab`); `MoveInStory` (the card's ▲/▼) rewrites the rule's `StoryPlace` (`first` / `after:<prev>`) and checks the result against `StoryChain.BuildSteps`; `CardFor` / `ShowTab` are for tests |
+| `WorldPlanWindow.cs` | Plan window (title WORLD PLAN; an island's own rules: `OpenIsland`, no tabs); `WorldPlanTemplates`. Tabs `TabStory` / `TabOther` / `TabSettings` (`SelectTab`, `ShowTabParts`, `StoryTab`); `MoveInStory` (the card's ▲/▼) rewrites the rule's `StoryPlace` (`first` / `after:<prev>`) and checks the result against `StoryChain.BuildSteps`; `CardFor` / `ShowTab` are for tests. Link fields of a known island are `DropdownButton`s (`IdDrop`: `Drop_WhenRef` / `Drop_WhenArg` / `Drop_WhenQuest` / `Drop_DoneArg`) with a hand-typed value kept as "(custom)" and a last `CustomValue` ("custom...") that brings the `Field_*` and its ▾ back - never rewrite a typed value; empty links get a red `LinkMark` ✖. `ShowField(rule, field)` (Check's Show rule) scrolls to the card and outlines the control (`LastShownField`); `LastSaveNotice` is Save's problem count (Save always saves) |
 | `MenuWindows.cs` | Canvas `CustomIslandsMenuWindows` (sort 872) that builds `CreateWindow`, `WorldPlanWindow`, `MainStoryHelper`, `PlanCheckWindow`, `PlanProgressWindow`, `LibraryExportWindow`, `LibraryImportWindow`, `TextPromptWindow`, `ChoiceWindow` on the main menu, so a plan is made with no island loaded |
 | `CreateWindow.cs`, `EditorEntry.cs` | Start window (EDITOR) and the ways between plan and island editor: plan card Edit island -> `EditorEntry.EditFromPlan`; `+ New island` -> `NewIslandFromPlan`; island editor Use in a plan... -> `UseInPlan` -> `AddToPlan` (Next in the Main story line = `StoryEnd` place, or Another island = start / ahead rule) |
 | `ChoiceWindow.cs` | Modal pick-one list with search (islands, map types, plans) |
@@ -50,7 +50,7 @@ Which custom islands a world gets, when and where (world plans and island rules)
 | Play order (Check, Progression) | `PlanChecker.PlayOrder` (`KmPerStoryIsland`, `DayKm`) |
 | Which tool a feature wants | `RaftFeatures.Features` / `RaftFeatures.Tools` |
 | Notebook tabs and pages | `QuestBook.Describe`, `BuildIsland`, `MakeTab`, `Apply`, and `Signature` |
-| Check findings | `PlanChecker.Check` and its `Check*` methods |
+| Check findings | `PlanChecker.Check` and its `Check*` methods. Text: `RuleName(plan, i)` + what is wrong; Fix starts with the card part (WHEN / BRING / WHERE / STORY > done when); `Finding.Field` (id, whenref, whenarg, whenquest, whatarg, distance, place, donearg) is what Show rule outlines. A new kind: add a case to CIStorySteps checks (DevTestsStorySteps.cs) and the guide's 7.5 message list |
 | New plan file key | `WorldPlan.Parse`, `ToText`, `Help`; the world's copy in `WorldDirector.ReadLine` / `WriteLines` |
 | Random-island pool | `WorldIslands.TakesPart`; `CustomIslandSpawner.PlanIslandNames` |
 

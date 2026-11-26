@@ -42,7 +42,7 @@ namespace DynamicIslands.Editor
 		public const string HarvestableCategory = "Harvestable";
 
 		/// <summary>Order of the core categories in the editor's object list.</summary>
-		static readonly string[] CategoryOrder = new[] { GroupLibrary.Category, NatureCategory, SnowCategory, DesertCategory, ForestCategory, UnderwaterCategory, HarvestableCategory }
+		static readonly string[] CategoryOrder = new[] { GroupLibrary.Category, RaftBuildings.Category, NatureCategory, SnowCategory, DesertCategory, ForestCategory, UnderwaterCategory, HarvestableCategory }
 			.Concat(ContentCatalog.Categories).Concat(new[] { RaftBlocksCategory, BuildablesCategory, PropsCategory }).ToArray();
 
 		/// <summary>Categories of the on-demand island scenes, by scene name, in list order (the first match wins).</summary>
@@ -291,6 +291,9 @@ namespace DynamicIslands.Editor
 				IndexEntry src;
 				if (!prototypes.ContainsKey(d.Key) && index.TryGetValue(d.Value.Source, out src)) add(d.Key, d.Value.Category, src.Scene);
 			}
+			// (the Raft buildings the mod ships: each loads when it is picked)
+			foreach (RaftBuildings.Building b in RaftBuildings.All)
+				if (!prototypes.ContainsKey(b.CatalogName)) add(b.CatalogName, RaftBuildings.Category, b.Scene);
 			var result = new List<KeyValuePair<string, List<Entry>>>();
 			foreach (string cat in CategoryOrder.Concat(ExtraCategoryOrder()).Concat(byCat.Keys.OrderBy(k => k)).Distinct())
 			{
@@ -668,6 +671,39 @@ namespace DynamicIslands.Editor
 		{
 			prototypes[name] = prototype;
 			categories[name] = category;
+			labels[name] = label;
+			sizes.Remove(name);
+		}
+
+		/// <summary>
+		/// A whole piece of Raft's scene as one object (RaftBuildings: the Vasagatan's hull, whose meshes the scan leaves out):
+		/// a copy as Add makes one, inside a holder whose pivot is the piece's bottom centre.
+		/// </summary>
+		internal static void AddWhole(string name, Transform source, string category, string label)
+		{
+			if (prototypes.ContainsKey(name)) return;
+			// (its bottom centre from the meshes: the scene is switched off, so the renderers have no bounds)
+			bool any = false;
+			Bounds b = new Bounds();
+			foreach (MeshFilter mf in source.GetComponentsInChildren<MeshFilter>(true))
+			{
+				if (mf.sharedMesh == null) continue;
+				Bounds mb = mf.sharedMesh.bounds;
+				for (int i = 0; i < 8; i++)
+				{
+					Vector3 p = mf.transform.TransformPoint(mb.center + Vector3.Scale(mb.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1))) - source.position;
+					if (!any) { b = new Bounds(p, Vector3.zero); any = true; } else b.Encapsulate(p);
+				}
+			}
+			Add(name, source, category, true);
+			GameObject clone = prototypes[name];
+			GameObject holder = new GameObject(name);
+			holder.transform.SetParent(container.transform, false);
+			clone.transform.SetParent(holder.transform, false);
+			clone.name = "model";
+			clone.transform.localPosition = any ? -new Vector3(b.center.x, b.min.y, b.center.z) : Vector3.zero;
+			clone.SetActive(true);
+			prototypes[name] = holder;
 			labels[name] = label;
 			sizes.Remove(name);
 		}
@@ -1106,7 +1142,7 @@ namespace DynamicIslands.Editor
 		public static string SceneOf(string name)
 		{
 			IndexEntry e;
-			return index.TryGetValue(name, out e) ? e.Scene : null;
+			return index.TryGetValue(name, out e) ? e.Scene : RaftBuildings.SceneOf(name);
 		}
 
 		/// <summary>"44#Landmark_Vasagatan" -> "Vasagatan", "36#Landmark_Small#3" -> "Small 3".</summary>
@@ -1462,6 +1498,9 @@ namespace DynamicIslands.Editor
 		public static IEnumerator EnsureLoaded(IEnumerable<string> names)
 		{
 			yield return EnsureBuilt();
+			names = names.ToList();
+			// (a Raft building the mod ships: registered as a group, which loads its parts' scenes)
+			yield return RaftBuildings.EnsureRegistered(names);
 			var scenes = new List<string>();
 			foreach (string n in names.Select(SourceOf))
 			{
@@ -1476,7 +1515,9 @@ namespace DynamicIslands.Editor
 		/// <summary>Scenes that must be loaded before these names can be spawned (empty = all ready).</summary>
 		public static List<string> ScenesNeededFor(IEnumerable<string> names)
 		{
-			var scenes = new List<string>();
+			names = names.ToList();
+			// (a whole piece of a Raft scene the mod ships, as the Vasagatan's hull)
+			var scenes = RaftBuildings.ScenesNeeded(names);
 			foreach (string n in names.Select(SourceOf))
 			{
 				IndexEntry e;
@@ -1640,6 +1681,12 @@ namespace DynamicIslands.Editor
 			yield return CloseScene(opened);
 		}
 
+		/// <summary>Dev (Raft buildings): the objects the scan finds under root (catalog name, transform), as Pick finds them.</summary>
+		internal static IEnumerable<KeyValuePair<string, Transform>> PicksUnder(Transform root) { return Pick(root).Where(p => p.Value != null); }
+
+		/// <summary>Dev (Raft buildings): whether the scan takes this object (IsPlaceable).</summary>
+		internal static bool TakesObject(Transform t, string name) { return IsPlaceable(t, name); }
+
 		static bool IsPlaceable(Transform t, string name)
 		{
 			bool questItem = QuestItemPickups.IsModel(name);
@@ -1769,6 +1816,7 @@ namespace DynamicIslands.Editor
 		{
 			string label;
 			if (labels.TryGetValue(name, out label) || gatherLabels.TryGetValue(name, out label)) return label;
+			if (RaftBuildings.Is(name)) return RaftBuildings.Label(name);
 			Match hm = harvestableLabel.Match(name);
 			if (hm.Success) name = hm.Groups[2].Success ? hm.Groups[2].Value + " Tree " + hm.Groups[3].Value : hm.Groups[4].Success ? hm.Groups[4].Value + " Tree" : hm.Groups[5].Value;
 			string s = displayPrefix.Replace(name, "").Replace('_', ' ').Trim();

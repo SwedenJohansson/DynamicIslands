@@ -344,7 +344,7 @@ namespace DynamicIslands.Editor
 				moved = j >= 0 ? TradeStand.KeyFor(j, sunit) : key;
 				return j >= 0 && j < 0x10000;
 			}
-			foreach (int pb in new[] { Behaviours.PendingBase, Behaviours.MorePendingBase })
+			foreach (int pb in Behaviours.PendingBases)
 				if (key >= pb && key < pb + 0x100000)
 				{
 					int i = (key - pb) >> 4, ev = (key - pb) & 0xF;
@@ -389,6 +389,14 @@ namespace DynamicIslands.Editor
 			foreach (var kv in old)
 			{
 				int key;
+				// (a player's event waiting for the island - Behaviours.QueuedBase: its object is in the value - quest softlock audit M5)
+				if (Behaviours.IsQueuedKey(kv.Key))
+				{
+					int i = kv.Value.Yield, j = i;
+					if (i >= 0 && i < a.Uids.Length && (a.Uids[i] <= 0 || !b.IndexOf.TryGetValue(a.Uids[i], out j))) { dropped++; continue; }
+					moved[kv.Key] = new ObjectState { Active = kv.Value.Active, Yield = j, Day = kv.Value.Day };
+					continue;
+				}
 				if (Move(kv.Key, a, b, out key) && !moved.ContainsKey(key)) moved[key] = kv.Value;
 				else dropped++;
 			}

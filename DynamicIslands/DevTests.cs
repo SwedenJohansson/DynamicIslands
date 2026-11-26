@@ -1062,7 +1062,7 @@ namespace DynamicIslands
 			int low = fly.Root.GetComponentsInChildren<EditorGameObject>(true).Length + fly.Root.transform.Find("Objects").Cast<Transform>().Count(t => t.position.y < Flying - 1f);
 			Check(ref ok, low == 0, "no objects hang below the flying island (" + fly.Root.transform.Find("Objects").childCount + " objects)");
 
-			yield return StandRoutine(); // puts the player on the nearest island's peak and logs PASS/FAIL
+			yield return StandRoutine(fly.Root); // puts the player on the flying island's peak and logs PASS/FAIL
 
 			// Under water, 250 m to the side
 			pos = raftPos.Value + Vector3.right * 300f; pos.y = Sunken;
@@ -1359,13 +1359,15 @@ namespace DynamicIslands
 			StartTest(PushTowards(new Vector3(x, 0, z), seconds, "(" + x + ", " + z + ")"));
 		}
 
-		[ConsoleCommand(name: "CISail", docs: "Dev, in game (host, Normal world): sails the raft straight ahead for <seconds> (default 120) at <m/s> (default 15) and logs custom islands spawning / unloading")]
+		[ConsoleCommand(name: "CISail", docs: "Dev, in game (host, Normal world): sails the raft straight ahead for <seconds> (default 120) at <m/s> (default 15) and logs custom islands spawning / unloading; an optional <heading> (degrees, 0 = +z) fixes the line, so a leg at -15 and one at 15 on the same heading come back (without it the leg follows the raft's own drift, which after a push points anywhere)")]
 		public static void Sail(string[] args)
 		{
 			float seconds = args != null && args.Length > 0 ? float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture) : 120f;
 			float speed = args != null && args.Length > 1 ? float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) : 15f;
+			float? heading = null;
+			if (args != null && args.Length > 2) heading = float.Parse(args[2], System.Globalization.CultureInfo.InvariantCulture);
 			RunInBackground();
-			StartTest(SailRoutine(seconds, speed));
+			StartTest(SailRoutine(seconds, speed, heading));
 		}
 
 		[ConsoleCommand(name: "CICloseRmlMenu", docs: "Dev: closes RML's own menu (the one F9 opens, open when Raft starts) without a key press - tests with Raft minimised (tools\\quiet.ps1)")]
@@ -1433,12 +1435,13 @@ namespace DynamicIslands
 			body.velocity = Vector3.zero; body.angularVelocity = Vector3.zero; // (a raft dragged at test speed through the sea keeps no spin either)
 			Log("Sailed back: the raft " + Flat(target() - body.position).magnitude.ToString("F0") + " m from where it was");
 		}
-		static IEnumerator SailRoutine(float seconds, float speed)
+		static IEnumerator SailRoutine(float seconds, float speed, float? heading = null)
 		{
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
 			if (raft == null || raft.body == null) { Fail("no raft"); yield break; }
 			Rigidbody body = raft.body;
-			Vector3 dir = Flat(body.velocity).sqrMagnitude > 0.04f ? Flat(body.velocity).normalized : (Flat(Raft.direction).sqrMagnitude > 0.01f ? Flat(Raft.direction).normalized : Vector3.forward);
+			Vector3 dir = heading.HasValue ? Quaternion.Euler(0f, heading.Value, 0f) * Vector3.forward
+				: Flat(body.velocity).sqrMagnitude > 0.04f ? Flat(body.velocity).normalized : (Flat(Raft.direction).sqrMagnitude > 0.01f ? Flat(Raft.direction).normalized : Vector3.forward);
 			int startCount = IslandWorldState.Islands.Count;
 			Log("Sailing " + dir + " at " + speed + " m/s for " + seconds + " s; custom islands in the world: " + startCount + ", auto " + (CustomIslandSpawner.Enabled ? "on" : "off"));
 			float t = 0, sailed = 0, nextLog = 10f;
@@ -2429,7 +2432,8 @@ namespace DynamicIslands
 				for (float until = Time.realtimeSinceStartup + 5f; !ChoiceWindow.IsOpen && Time.realtimeSinceStartup < until; ) yield return new WaitForSecondsRealtime(0.25f);
 				if (ChoiceWindow.IsOpen) { ChoiceWindow.Close(); Log("The offer of unsaved work closed (tests): " + string.Join(", ", EditorAutosave.Waiting().ToArray())); }
 			}
-			if (report) Log("Editor ready: " + PlaceableCatalog.Names.Count() + " objects loaded");
+			// (CIEditor reports a result, so a job counts it: hollow-tests 11-24)
+			if (report) Log("PASS: editor ready: " + PlaceableCatalog.Names.Count() + " objects loaded");
 		}
 
 		[ConsoleCommand(name: "CITab", docs: "Dev, editor: switches the editor tab: CITab terrain|objects|island")]

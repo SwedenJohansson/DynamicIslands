@@ -33,7 +33,7 @@ namespace DynamicIslands
 
 		class ButtonRun
 		{
-			public int Pressed, Windows;
+			public int Pressed, Windows, UnderTopBar;
 			public readonly HashSet<Button> Done = new HashSet<Button>();
 			public readonly HashSet<string> Keys = new HashSet<string>(), Walked = new HashSet<string>();
 			public readonly List<string> Errors = new List<string>(), Unclosed = new List<string>(), Sampled = new List<string>();
@@ -45,7 +45,11 @@ namespace DynamicIslands
 			public string Screen = "";
 			public float ScreenStart = Time.realtimeSinceStartup, ScreenLimit = float.PositiveInfinity, ThisLimit = float.PositiveInfinity;   // (CIButtons: 4 min a screen; CIWorldButtons: none)
 			public bool Active;
-			public bool ScreenOver { get { return Time.realtimeSinceStartup - ScreenStart > ThisLimit; } }
+			public int ScreenFrame = Time.frameCount;
+			// (the limit counts frames at up to 0.2 s each, at most 3x the wall limit: on a loaded test PC (300-1600 ms frames, 2 Rafts)
+			// four screens ran out of time with most buttons still to press - 11-25; a hang still runs out, only later)
+			public float ScreenTime { get { float wall = Time.realtimeSinceStartup - ScreenStart; return Math.Max(wall / 3f, Math.Min(wall, (Time.frameCount - ScreenFrame) * 0.2f)); } }
+			public bool ScreenOver { get { return ScreenTime > ThisLimit; } }
 			public string Where()
 			{
 				return "'" + Current + "' (screen '" + Screen + "', " + Pressed + " pressed, " + Mathf.RoundToInt(Time.realtimeSinceStartup - ScreenStart) + " s on this screen, "
@@ -93,7 +97,9 @@ namespace DynamicIslands
 			run.Active = true;
 			Application.LogCallback watch = (msg, trace, type) =>
 			{
-				if ((type == LogType.Exception || type == LogType.Error) && !msg.StartsWith("[CITEST]"))
+				// (not Unity's own "only implemented in editor" notice: the sea grass setting the grass on its copy of Raft's terrain data,
+				// SeaGrass.MakeTemplate once a game - "Start window > New island" on base 41a4a73b too; CIRaftCrossing skips it as well)
+				if ((type == LogType.Exception || type == LogType.Error) && !msg.StartsWith("[CITEST]") && !msg.StartsWith("only implemented in editor"))
 					run.Errors.Add(run.Current + ": " + msg.Split('\n')[0] + (type == LogType.Exception ? " @ " + (trace ?? "").Split('\n').FirstOrDefault() : ""));
 			};
 			Application.logMessageReceived += watch;
@@ -290,9 +296,17 @@ namespace DynamicIslands
 			foreach (MonoBehaviour w in OpenWindows().Where(x => !before.Contains(x)).ToList())
 			{
 				run.Windows++;
-				// (the top bar is the same on every screen: its windows are walked once, not grown on each screen - e.g. templates added to a plan)
-				if (owner == "TopBar" &&!run.Walked.Add(key + " " + w.GetType().Name)) continue;
-				yield return TestWindow(run, w, b, run.Current, depth + 1);
+				// (the top bar is the same on every screen: its windows are walked once, not grown on each screen - e.g. templates added to a plan;
+				// so are the windows those open: Open, Save and Save as each open the islands window, and its My islands... was walked
+				// three times, each a few minutes on a test PC with 3469 islands and ~5,800 world files - 11-25)
+				if ((owner == "TopBar" || run.UnderTopBar > 0) && !run.Walked.Add(key + " " + w.GetType().Name)) continue;
+				// (and a panel's window with nothing selected: the first screen's top-bar Island and Objects presses walk those panels
+				// already, and the Island tab screen walked the generator, quest, events and story items windows again and ran out of
+				// its 4 minutes at its last button - 11-25; with an object selected a window is walked on each screen, its content differs)
+				if (owner != "TopBar" && run.UnderTopBar == 0 && NothingSelected() && !run.Walked.Add("bare " + key + " " + w.GetType().Name)) continue;
+				if (owner == "TopBar") run.UnderTopBar++;
+				try { yield return TestWindow(run, w, b, run.Current, depth + 1); }
+				finally { if (owner == "TopBar") run.UnderTopBar--; }
 			}
 			// Whatever this press opened is closed again
 			foreach (MonoBehaviour w in OpenWindows().Where(x => !before.Contains(x)).ToList())
@@ -304,7 +318,7 @@ namespace DynamicIslands
 		/// <summary>A screen of the button walk starts: its time limit counts from now.</summary>
 		static void ScreenStarts(ButtonRun run, string screen, float times = 1f)
 		{
-			run.Screen = screen; run.ScreenStart = Time.realtimeSinceStartup; run.Current = screen; run.ThisLimit = run.ScreenLimit * times;
+			run.Screen = screen; run.ScreenStart = Time.realtimeSinceStartup; run.ScreenFrame = Time.frameCount; run.Current = screen; run.ThisLimit = run.ScreenLimit * times;
 		}
 
 		/// <summary>When the screen's time limit was reached: it FAILs with the press it was on (the next screen starts).</summary>
@@ -397,7 +411,10 @@ namespace DynamicIslands
 			// on every screen: ~300 buttons a screen on an 11634-object generated island, the run over 2 h - 10-13)
 			foreach (var group in owner.Cast<Transform>().Where(c => c.GetComponent<Button>() == null).GroupBy(c => c.name.Split('_')[0]))
 			{
-				var rows = group.Select(c => new KeyValuePair<Transform, HashSet<string>>(c, new HashSet<string>(c.GetComponentsInChildren<Button>(true).Select(LabelOfButton)))).Where(r => r.Value.Count > 0).ToList();
+				// (a row's button named for its entry, "Island_<name>", counts as shared too: My islands' rows each have one
+				// button, labelled with the island's own name - its up to 400 rows were all pressed on 3 screens, each pick reading
+				// every saved world, and 3 screens ran out of time on a test PC with 3469 islands - 11-25)
+				var rows = group.Select(c => new KeyValuePair<Transform, HashSet<string>>(c, new HashSet<string>(c.GetComponentsInChildren<Button>(true).SelectMany(RowKeys)))).Where(r => r.Value.Count > 0).ToList();
 				if (rows.Count <= ListThreshold) continue;
 				var shared = new HashSet<string>(rows.SelectMany(r => r.Value).GroupBy(l => l).Where(g => g.Count() > ListThreshold).Select(g => g.Key));
 				int n = 0;
@@ -406,7 +423,15 @@ namespace DynamicIslands
 			return result;
 		}
 
-		static bool InSampledList(Button b, Dictionary<Transform, Dictionary<Transform, int>> cache) { Transform owner; int index; return ListItemOf(b, cache, out owner, out index); }
+		/// <summary>What rows alike share: a button's label, and the name it was given before a "_&lt;entry&gt;" tail ("Island_", not UIKit's "Button_").</summary>
+		static IEnumerable<string> RowKeys(Button b)
+		{
+			yield return LabelOfButton(b);
+			int cut = b.name.IndexOf('_');
+			if (cut > 0 && b.name.Substring(0, cut) != "Button") yield return "\u0001name " + b.name.Substring(0, cut);
+		}
+
+		static bool InSampledList(Button b,Dictionary<Transform, Dictionary<Transform, int>> cache) { Transform owner; int index; return ListItemOf(b, cache, out owner, out index); }
 
 		/// <summary>The journal and the note reader belong to the world (CIWorldButtons).</summary>
 		static bool IsWorldOnly(Button b) { MonoBehaviour w = WindowOf(b); return w is JournalWindow || w is NoteReader; }
@@ -436,6 +461,8 @@ namespace DynamicIslands
 		}
 
 		/// <summary>A button by where it is and what it says (a rebuilt panel's new button has the same key).</summary>
+		static bool NothingSelected() { var g = DynamicIslands.EditorGizmoHandler; return g == null || g.SelectedRoots.Count == 0; }
+
 		static string KeyOf(Button b) { return OwnerOf(b) + " > " + PathOf(b.transform, b.transform.root) + " '" + LabelOfButton(b) + "'"; }
 
 		static string LabelOfButton(Button b)

@@ -163,7 +163,7 @@ namespace DynamicIslands.Editor
 			idField.characterLimit = 40;
 			// (T8: a Raft item players can take it out of the journal as - "Take out" in the journal; none: a journal item only)
 			bool hasRaft = (d.RaftItem ?? "").Trim().Length > 0;
-			UIKit.Button(row, hasRaft ? "As " + ContentCatalog.ItemLabel(d.RaftItem.Trim()) : "Raft item...", () => { Keep(); ItemPickerWindow.PickOne(item => { defs[index].RaftItem = item; Rebuild(); }); }, "Optional: one of Raft's own items players can take it out of the journal as (Take out in the journal puts that item in their inventory; the crew has one less). None: it stays a journal item.", 120, 28f, 12);
+			UIKit.Button(row, hasRaft ? "As " + ContentCatalog.ItemLabel(d.RaftItem.Trim()) : "Raft item...", () => { Keep(); ItemPickerWindow.PickOne(item => { defs[index].RaftItem = item; Rebuild(); }); }, "Optional: one of Raft's own items players can take it out of the journal as (Take out in the journal puts that item in their inventory; the crew has one less, for good; not while a has/take check or cage key on an island here, or one the plan still brings, needs every one the crew holds). None: it stays a journal item.", 120, 28f, 12);
 			if (hasRaft) UIKit.Button(row, "-", () => { Keep(); defs[index].RaftItem = ""; Rebuild(); }, "Not a Raft item: it stays in the journal", 24, 28f, 12);
 			Button del = UIKit.Button(row, "\u00D7", () => { Keep(); defs.RemoveAt(index); pickingIconFor = -1; Rebuild(); }, "Remove this story item (what uses it stops working)", 28, 28f, 12);
 			UIKit.DangerButton(del);

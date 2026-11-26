@@ -423,13 +423,15 @@ namespace DynamicIslands.Editor
 
 		/// <summary>
 		/// T8: one of the crew's story items taken out of the journal as the Raft item it names, into this player's
-		/// inventory. The host decides (two players taking out the last one at once get one item between them): a client
+		/// inventory - not one a quest still needs (StoryNeeds: a check or a survivor cage would wait for it for good). The host decides (two players taking out the last one at once get one item between them): a client
 		/// asks ("out") and gets the item when the host says yes ("outok"); on the host it happens at once.
 		/// </summary>
 		public static bool TakeOut(string id)
 		{
 			id = StoryItems.IdOf(id);
 			if (!CanTakeOut(id)) return false;
+			string kept = StoryNeeds.KeptFor(id);
+			if (kept != null) { IslandInfo.ShowMessage(StoryNeeds.KeptMessage(kept)); return false; }
 			if (Raft_Network.IsHost)
 			{
 				string raft = DefOf(id).RaftItem.Trim();
@@ -460,6 +462,8 @@ namespace DynamicIslands.Editor
 		internal const int MaxPages = 2000, MaxItems = 500, MaxTitle = 200, MaxPageText = 8000;
 		/// <summary>The most island copies one story item's finds are kept for.</summary>
 		const int MaxSources = 64;
+		/// <summary>At most this many of a story item given or taken at once.</summary>
+		const int MaxChange = 100000;
 
 		static bool Apply(string op, string data)
 		{
@@ -468,7 +472,8 @@ namespace DynamicIslands.Editor
 			switch (op)
 			{
 				case "give":
-					if (f.Length < 2 || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out n)) return false;
+					// (a count that makes sense: a player's "give -5" took, its "take -1000" gave - audit 2026-10-06)
+					if (f.Length < 2 || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out n) || n <= 0 || n > MaxChange) return false;
 					Held h;
 					if (!held.TryGetValue(f[0], out h))
 					{
@@ -496,7 +501,7 @@ namespace DynamicIslands.Editor
 					return true;
 				case "take":
 					Held t;
-					if (f.Length < 2 || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out n) || !held.TryGetValue(f[0], out t) || t.Count <= 0) return false;
+					if (f.Length < 2 || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out n) || n <= 0 || n > MaxChange || !held.TryGetValue(f[0], out t) || t.Count <= 0) return false;
 					t.Count = Mathf.Max(0, t.Count - n);
 					Debug.Log("[CUSTOM ISLANDS] Story item '" + t.Def.ShownName + "' used: " + t.Count + " left");
 					return true;
@@ -524,6 +529,24 @@ namespace DynamicIslands.Editor
 
 		/// <summary>From the network.</summary>
 		public static void OnMessage(IslandNetMessage msg) { OnMessage(msg, 0UL); }
+
+		/// <summary>
+		/// Host: story items a player's refused event used up given back to the crew. The player's machine takes the item at
+		/// once (its "take" reaches the host first); when the host then says no - the island isn't loaded here, or another
+		/// of the event's story checks no longer holds - nothing was done, and a keycard door's only card was gone for good
+		/// (quest softlock audit 11-23). Not counted as found again (a collect step counted it once).
+		/// </summary>
+		internal static void GiveBack(string id, int count)
+		{
+			id = StoryItems.IdOf(id);
+			Held h;
+			if (!Raft_Network.IsHost || count <= 0 || !held.TryGetValue(id, out h)) return;
+			h.Count += count;
+			h.Found = Mathf.Max(h.Found, h.Count);
+			Debug.Log("[CUSTOM ISLANDS] Story item '" + h.Def.ShownName + "' x" + count + " given back (the player's event was refused): " + h.Count);
+			IslandNetwork.SendStory(StateMessage());
+			Raise();
+		}
 
 		/// <summary>Host: a player's "take" the crew no longer had enough for, by player and item, and when (TakeRefused).</summary>
 		static readonly Dictionary<string, float> refusedTakes = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
@@ -555,7 +578,7 @@ namespace DynamicIslands.Editor
 				if (Raft_Network.IsHost) return;
 				string[] o = Split(msg.Data);
 				if (msg.Name == "outok" && o.Length >= 2) GiveRaftItem(o[0], o[1]);
-				else IslandInfo.ShowMessage("The crew has none of it left to take out");
+				else IslandInfo.ShowMessage(o.Length >= 3 && o[2].Length > 0 ? StoryNeeds.KeptMessage(o[2]) : "The crew has none of it left to take out");
 				return;
 			}
 			if (msg.Name == "all")
@@ -578,10 +601,13 @@ namespace DynamicIslands.Editor
 				string[] o = Split(msg.Data);
 				string oid = o.Length > 0 ? StoryItems.IdOf(o[0]) : "";
 				bool ok = CanTakeOut(oid);
+				// (not one a quest still needs - the T8 guard, quest softlock audit 11-23)
+				string kept = ok ? StoryNeeds.KeptFor(oid) : null;
+				if (kept != null) ok = false;
 				string raft = ok ? DefOf(oid).RaftItem.Trim() : "";
 				if (ok && Apply("take", Fields(oid, "1"))) { IslandNetwork.SendStory(StateMessage()); Raise(); }
-				Debug.Log("[CUSTOM ISLANDS] A player's take-out of story item '" + oid + "': " + (ok ? "given as " + raft : "refused (none left)"));
-				if (fromUser.HasValue) IslandNetwork.SendStoryTo(new IslandNetMessage { Name = ok ? "outok" : "outno", Data = Fields(oid, raft) }, fromUser.Value);
+				Debug.Log("[CUSTOM ISLANDS] A player's take-out of story item '" + oid + "': " + (ok ? "given as " + raft : kept != null ? "refused (still needed: " + kept + ")" : "refused (none left)"));
+				if (fromUser.HasValue) IslandNetwork.SendStoryTo(new IslandNetMessage { Name = ok ? "outok" : "outno", Data = Fields(oid, raft, kept ?? "") }, fromUser.Value);
 				return;
 			}
 			// (a take the crew no longer has enough for - another player used the item up at the same moment: refused, not
@@ -1253,7 +1279,7 @@ namespace DynamicIslands.Editor
 			instance.readIcon.preserveAspect = true;
 			instance.readIcon.raycastTarget = false;
 			instance.readTitle = UIKit.Label(titleRow, "", 24, Ink, TextAnchor.MiddleLeft, FontStyle.Normal, "Title");
-			instance.takeOut = UIKit.Button(titleRow, "Take out", () => instance.TakeOutShown(), "Take one out of the journal as Raft's own item, into your inventory (the crew has one less)", 230, 34, 14);
+			instance.takeOut = UIKit.Button(titleRow, "Take out", () => instance.TakeOutShown(), "Take one out of the journal as Raft's own item, into your inventory (the crew has one less). Not while a quest still needs every one the crew holds: a lock, a check or a survivor's cage", 230, 34, 14);
 			instance.takeOut.gameObject.SetActive(false);
 			// (PF1: a page's text into the player's own notebook)
 			instance.copyPage = UIKit.Button(titleRow, "Copy to my notebook", () => instance.CopyShown(), "Copies this page into your own notebook as a new page", 200, 34, 13);
@@ -1357,13 +1383,17 @@ namespace DynamicIslands.Editor
 			RefreshTakeOut();
 		}
 
-		/// <summary>T8: the Take out button, on a shown story item that names a Raft item the crew holds.</summary>
+		/// <summary>T8: the Take out button, on a shown story item that names a Raft item the crew holds. Greyed out, saying
+		/// where, while a quest still needs every one the crew holds (StoryNeeds).</summary>
 		void RefreshTakeOut()
 		{
 			string id = shownKey != null && shownKey.StartsWith("item:") ? shownKey.Substring(5) : null;
 			bool can = id != null && StoryBook.CanTakeOut(id);
 			takeOut.gameObject.SetActive(can);
-			if (can) UIKit.LabelOf(takeOut).text = "Take out: " + ContentCatalog.ItemLabel(StoryBook.DefOf(id).RaftItem.Trim());
+			if (!can) return;
+			string kept = StoryNeeds.KeptFor(id);
+			takeOut.interactable = kept == null;
+			UIKit.LabelOf(takeOut).text = kept == null ? "Take out: " + ContentCatalog.ItemLabel(StoryBook.DefOf(id).RaftItem.Trim()) : "Needed on " + kept;
 		}
 
 		void TakeOutShown()
@@ -1374,8 +1404,11 @@ namespace DynamicIslands.Editor
 		/// <summary>For tests: the Take out button's label, or null when it is not shown.</summary>
 		internal static string TakeOutLabel { get { return IsOpen && instance.takeOut.gameObject.activeSelf ? UIKit.LabelOf(instance.takeOut).text : null; } }
 
-		/// <summary>For tests: clicks the Take out button.</summary>
-		internal static void ClickTakeOut() { if (IsOpen && instance.takeOut.gameObject.activeSelf) instance.takeOut.onClick.Invoke(); }
+		/// <summary>For tests: whether the Take out button can be clicked (shown and not kept for a quest).</summary>
+		internal static bool TakeOutEnabled { get { return IsOpen && instance.takeOut.gameObject.activeSelf && instance.takeOut.interactable; } }
+
+		/// <summary>For tests: clicks the Take out button (as a player can: not while it is greyed out).</summary>
+		internal static void ClickTakeOut() { if (TakeOutEnabled) instance.takeOut.onClick.Invoke(); }
 
 		void ItemTile(StoryBook.Held h)
 		{
@@ -1635,5 +1668,123 @@ namespace DynamicIslands.Editor
 			instance.ShowPage(p);
 			return true;
 		}
+	}
+	/// <summary>
+	/// The T8 guard (quest softlock audit 11-23): a story item a quest still needs - an object's or the island's has/take
+	/// check, a survivor cage's key - isn't taken out of the journal as its Raft item: used up as that, the door, the event or
+	/// the cage waited for it for good. Each island file's needs are read once (IslandCache). A need ends when its island's
+	/// quests are all done, a note's "read" or the island's "arrive" has run, a once-zone or a chest that doesn't fill again
+	/// was used, or the cage was opened; islands the plan still brings (not here yet) need theirs. The crew can take out
+	/// what it holds beyond the needs (the takes' counts together, and the biggest has).
+	/// </summary>
+	public static class StoryNeeds
+	{
+		public class Need
+		{
+			public int Index, Count = 1, Zone = -1;
+			public string Ev = "", Id = "";
+			public bool Take, Cage, ZoneRepeats;
+		}
+
+		/// <summary>An island file's story needs (IslandCache keeps them per file).</summary>
+		internal static List<Need> FromFile(IslandFile f)
+		{
+			var list = new List<Need>();
+			if (f == null) return list;
+			int zone = 0;
+			for (int i = 0; i < f.Objects.Count; i++)
+			{
+				IslandObject o = f.Objects[i];
+				int ord = o.Name == ContentCatalog.TriggerZone ? zone++ : -1; // (zones' place in file order: their used keys)
+				if (o.Props == null) continue;
+				if (Survivors.IsCage(o.Name))
+				{
+					string key = StoryItems.IdOf(ObjectProps.Get(o.Props, Survivors.KeyProp).Trim());
+					if (key.Length > 0) list.Add(new Need { Index = i, Ev = "cage", Id = key, Take = true, Cage = true });
+				}
+				AddChecks(list, o.Props, i, ord, ord >= 0 && ObjectProps.Repeats(o.Props));
+			}
+			AddChecks(list, f.Props, Behaviours.IslandIndex, -1, false);
+			return list;
+		}
+
+		static void AddChecks(List<Need> list, IDictionary<string, string> p, int index, int zone, bool repeats)
+		{
+			if (p == null) return;
+			foreach (KeyValuePair<string, string> kv in p)
+			{
+				if (!kv.Key.StartsWith(BehaviourProps.CheckPrefix)) continue;
+				string ev = kv.Key.Substring(BehaviourProps.CheckPrefix.Length);
+				foreach (ObjCheck c in ObjCheck.ParseLines(kv.Value))
+					if (c.IsItem && !c.Not && StoryItems.IsStory(c.Target))
+						list.Add(new Need { Index = index, Ev = ev, Id = StoryItems.IdOf(c.Target), Count = c.Count, Take = c.Kind == "take", Zone = zone, ZoneRepeats = repeats });
+			}
+		}
+
+		/// <summary>Whether the need still holds on this island (null: an island the plan still brings - it does).</summary>
+		internal static bool Holds(IslandWorldState.Entry e, Need n)
+		{
+			if (e == null) return true;
+			if (n.Cage) return !ContentState.IsUsed(e, Survivors.KeyBase + (n.Index & 0xFFFF));
+			int quests = QuestTracker.QuestsOf(e);
+			if (quests > 0 && Enumerable.Range(0, quests).All(q => QuestTracker.IsDone(e, q))) return false;
+			if (n.Ev == "read" || n.Ev == "arrive") return !e.State.ContainsKey(Behaviours.DoneBase + n.Index);
+			if (n.Ev == "enter" && n.Zone >= 0 && !n.ZoneRepeats) return !ContentState.IsUsed(e, TriggerZone.KeyBase + n.Zone);
+			if (n.Ev == "open")
+			{
+				// (a chest's place among the loot containers is known only once built: on an island not loaded here it holds)
+				LootCrate c = Behaviours.RefsOf(e).Where(r => r.Index == n.Index).Select(r => r.GetComponentInChildren<LootCrate>(true)).FirstOrDefault(x => x != null);
+				if (c != null && !c.Refills && ContentState.IsUsed(e, c.StateKey)) return false;
+			}
+			return true;
+		}
+
+		/// <summary>How many of the story item the needs that still hold want, and the first island that needs it ("" = none).</summary>
+		public static int Needed(string id, out string where)
+		{
+			where = "";
+			id = StoryItems.IdOf(id);
+			if (id.Length == 0) return 0;
+			int take = 0, has = 0;
+			var here = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.ToList())
+			{
+				if (e == null || string.IsNullOrEmpty(e.Name)) continue;
+				here.Add(e.Name);
+				Sum(IslandCache.NeedsOf(e.Name), e, id, ref take, ref has, ref where, Behaviours.IslandTitle(e));
+			}
+			// (islands the plan still brings: none of their needs met yet)
+			WorldPlan plan = WorldDirector.Plan;
+			if (plan != null)
+				foreach (IntroRule r in plan.Rules)
+				{
+					string name = (r.WhatArg ?? "").Trim();
+					if (r.What != "island" || name.Length == 0 || here.Contains(name) || WorldDirector.Done.Contains(r.Id ?? "")) continue;
+					here.Add(name);
+					Sum(IslandCache.NeedsOf(name), null, id, ref take, ref has, ref where, name);
+				}
+			return take + has;
+		}
+
+		static void Sum(List<Need> needs, IslandWorldState.Entry e, string id, ref int take, ref int has, ref string where, string title)
+		{
+			foreach (Need n in needs)
+			{
+				if (!string.Equals(n.Id, id, StringComparison.OrdinalIgnoreCase) || !Holds(e, n)) continue;
+				if (n.Take) take += n.Count; else has = Mathf.Max(has, n.Count);
+				if (where.Length == 0) where = title;
+			}
+		}
+
+		/// <summary>Where a quest still needs every one the crew holds of the story item (so none may be taken out), else null.</summary>
+		public static string KeptFor(string id)
+		{
+			string where;
+			int need = Needed(id, out where);
+			return need > 0 && StoryBook.Count(id) - 1 < need ? (where.Length > 0 ? where : "an island") : null;
+		}
+
+		/// <summary>What a player is told when they try to take out one a quest still needs.</summary>
+		public static string KeptMessage(string where) { return "Still needed for the story on " + where + ": it stays in the journal until then"; }
 	}
 }

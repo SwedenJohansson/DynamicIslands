@@ -157,6 +157,9 @@ namespace DynamicIslands.Editor
 	{
 		/// <summary>Raw bytes per file chunk (base64 makes it about a third bigger).</summary>
 		const int ChunkBytes = 3000;
+		/// <summary>At most this many chunks in one file (64 MB): a chunk's Count is the size of what the receiver allocates
+		/// for the file's parts (audit 2026-10-06).</summary>
+		const int MaxChunks = 64 * 1024 * 1024 / ChunkBytes;
 		const float SyncRetrySeconds = 5f;
 		const int SyncMaxTries = 12;
 
@@ -883,7 +886,7 @@ namespace DynamicIslands.Editor
 						}
 						// (Ids[1]: the event's seed - its random choice picks the same here; an older version sends none)
 						if (msg.Ids != null && msg.Ids.Length > 1) GapBehaviours.Seed = msg.Ids[1]; else GapBehaviours.NewSeed();
-						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList, from, msg.Count == 1);
+						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList && !Raft_Network.IsHost, from, msg.Count == 1); // (a player's "from the host" skipped the host's checks - audit 2026-10-06)
 						break;
 					case IslandNetMessage.Story:
 						StoryBook.OnMessage(msg, from.Id, from);
@@ -1235,7 +1238,8 @@ namespace DynamicIslands.Editor
 
 		internal static void ReceiveChunk(IslandNetMessage msg)
 		{
-			if (!requested.Contains(msg.Hash) || msg.Count <= 0 || msg.Index < 0 || msg.Index >= msg.Count) return;
+			if (!requested.Contains(msg.Hash) || msg.Count <= 0 || msg.Count > MaxChunks || msg.Index < 0 || msg.Index >= msg.Count) return;
+			if (msg.Data != null && msg.Data.Length > ChunkBytes * 2) return; // (base64 of a chunk is 4000 characters)
 			// (the name the host sends with it is the saved file's - AU41)
 			string problem = ReceivedProblem(msg.Name, msg.Hash);
 			if (problem != null) { Debug.LogWarning("[CUSTOM ISLANDS] [net] An island file from the host isn't saved: " + problem); return; }

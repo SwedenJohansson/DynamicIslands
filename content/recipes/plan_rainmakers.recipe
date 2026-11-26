@@ -17,7 +17,7 @@ plan rule kites | island:The Kite Meadow | start | receiver:900 | From the silos
 plan rule fogworks | island:The Fogworks | start | receiver:1000 | The kite winch's radio picks up a foghorn's beat on the next band: the Fogworks. | The Fogworks | after:kites | quest
 plan rule reservoir | island:Vaporhold Reservoir | start | receiver:1000 | The fog lines' hub gives the reservoir's band: Vaporhold, a ring of grass round a lake. | Vaporhold Reservoir | after:fogworks | quest
 plan rule array | island:Thunderhead Array | start | receiver:1100 | Static and thunder on 1100: the lightning array under its own storm. | Thunderhead Array | after:reservoir | quest
-plan rule kilns | island:The Sleet Kilns | start | receiver:1100 | The array's beacon points north, to the salt kilns where the seeding salt was baked. | The Sleet Kilns | after:array | quest
+plan rule kilns | island:The Sleet Kilns | start | receiver:1100 | The array's beacon points the way to the salt kilns where the seeding salt was baked: a row of brick kilns on black sand. | The Sleet Kilns | after:array | quest
 plan rule club | island:The Isobar Club | start | receiver:1200 | Dance music on 1200, and under it a weather report: the cloud-watchers' club, still open. | The Isobar Club | after:kilns | quest
 plan rule engine | island:The Rain Engine | start | receiver:1400 | Dagny's last broadcast, on a loop: "The arms, the drums, then the switch." The Rain Engine, at the end of the line. | The Rain Engine | after:club | quest
 plan credits The Rainmakers | Custom Islands

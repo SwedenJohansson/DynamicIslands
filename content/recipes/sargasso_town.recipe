@@ -395,5 +395,15 @@ step open|The town chest|1|Cast the five votes and open the town chest
 quest done=Five votes of five: the first stranger the Council of Captains ever agreed on. The town creaks round you like applause.
 quest reward=Cooked_Herring*3;Rope*4;Plank*6
 
+# (lib 3.5.1 11-23: CISheetIslands found the channel's east wall round 8 -70 a near-black rock face - the ground's texture
+#     stretched down one 12 m step from the channel floor to the rim. A talus (cliffs) filled the 6 m channel, the only way in,
+#     so the wall is cut back into two terraces on the rim's side instead: steps of 6-6.5 m, under a sheet's 7 m; the channel
+#     keeps its width and depth)
+#     (each stroke is a 'line' stroke drawn right along one row of the ground's 1.95 m samples - the wall's top row, then
+#     the one behind it - so it moves that row only: a 2 m brush without 'line' reaches 1.4 rows and pulled the channel's
+#     edge row up out of the water too. The rows sit at x 9.18 and 11.13 here (this recipe's frame is the land's middle,
+#     3.32 m east of the terrain's): 3.5 m, then 9.5 m, then the rim's 14-16 m)
+brush flatten from 9.18 -56 to 9.18 -79 r=1 s=20 frames=120 h=3.5 line
+brush flatten from 11.13 -62 to 11.13 -76 r=1 s=20 frames=120 h=9.5 line
 save Sargasso Town
 

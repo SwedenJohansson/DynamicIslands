@@ -33,7 +33,7 @@ namespace DynamicIslands
 	/// </summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CIRecipe", docs: "Dev, the editor (opened when needed): builds an island (or a world plan, in World plans) from Mods\\DynamicIslands\\recipes\\<name>.recipe through the editor's operations (generator, terrain strokes, placer, properties, notes, quests, story items, rules, Save) - the library content's builder. Loads the saved island instead when the recipe, its includes and the mod build are what the last build saved (CIRecipeCache; 'fresh' builds anyway). CIRecipe <name> [fresh]")]
+		[ConsoleCommand(name: "CIRecipe", docs: "Dev, the editor (opened when needed): builds an island (or a world plan, in World plans) from Mods\\DynamicIslands\\recipes\\<name>.recipe through the editor's operations (generator, terrain strokes, placer, properties, notes, quests, story items, rules, Save) - the library content's builder. Loads the saved island instead when the recipe, its includes and the mod build are what the last build saved (CIRecipeCache; 'fresh' builds anyway). A patch recipe starts with \"load <island name>\" (the saved island opened, a few ops, save <same name>) instead of new + generate. CIRecipe <name> [fresh]")]
 		public static void RecipeCommand(string[] args)
 		{
 			if (args == null || args.Length == 0) { Fail("recipe: name a recipe (Mods\\DynamicIslands\\recipes\\<name>.recipe)"); return; }
@@ -691,8 +691,12 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIFloatingSweep", docs: "Dev, editor: CIFloating on every saved island (ROADMAP CA30) - each opened in the editor and measured; the islands with problems are named with their first <details> (3) lines; all of them in Mods\\DynamicIslands\\floating_sweep.txt. Leaves out the test islands (ci...), the world-kept copies and the randomizer's extras (rnd-...). CIFloatingSweep [part of the name|*] [details]")]
 		public static void FloatingSweepCommand(string[] args)
 		{
-			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
-			int details = args != null && args.Length > 1 ? (int)F(args[1]) : 3;
+			// (a name may have spaces: "CIFloatingSweep Old Vine" read "Vine" as the details count and threw - hollow-tests 11-24;
+			//  a number last is the details count, the words before it the name)
+			var parts = args ?? new string[0];
+			int details = 3, n;
+			if (parts.Length > 1 && int.TryParse(parts[parts.Length - 1], out n)) { details = n; parts = parts.Take(parts.Length - 1).ToArray(); }
+			string only = parts.Length > 0 && parts[0] != "*" ? string.Join(" ", parts) : "";
 			StartTest(FloatingSweepRoutine(only, details));
 		}
 
@@ -706,14 +710,15 @@ namespace DynamicIslands
 				(only.Length == 0 || n.IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0)).OrderBy(n => n).ToList();
 			var report = new StringBuilder();
 			int bad = 0, problems = 0;
+			var unread = new List<string>();
 			foreach (string name in names)
 			{
 				DynamicIslands.currentIslandName = "";
 				bool loaded = false;
-				try { loaded = DynamicIslands.LoadIsland(name); } catch (Exception e) { Log("  " + name + ": loading failed: " + e.Message); continue; }
-				if (!loaded) { Log("  " + name + ": the editor didn't load it"); continue; }
+				try { loaded = DynamicIslands.LoadIsland(name); } catch (Exception e) { Log("  " + name + ": loading failed: " + e.Message); unread.Add(name); continue; }
+				if (!loaded) { Log("  " + name + ": the editor didn't load it"); unread.Add(name); continue; }
 				for (float t = 0; t < 120f && DynamicIslands.currentIslandName != name; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
-				if (DynamicIslands.currentIslandName != name) { Log("  " + name + ": still not loaded after 2 minutes"); continue; }
+				if (DynamicIslands.currentIslandName != name) { Log("  " + name + ": still not loaded after 2 minutes"); unread.Add(name); continue; }
 				yield return null; yield return null;
 				var lines = new List<string>();
 				floatLines = lines;
@@ -730,7 +735,8 @@ namespace DynamicIslands
 				foreach (string l in lines.Where(l => l.StartsWith("  ")).Take(details)) Log("  " + l);
 			}
 			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "floating_sweep.txt"), report.ToString());
-			Log((bad == 0 ? "PASS" : "FAIL") + ": floating sweep - " + bad + " of " + names.Count + " islands with " + problems + " problems (floating_sweep.txt)");
+			Log((bad == 0 && unread.Count == 0 && names.Count > 0 ? "PASS" : "FAIL") + ": floating sweep - " + bad + " of " + names.Count + " islands with " + problems + " problems (floating_sweep.txt)" +
+				(unread.Count > 0 ? "; not measured: " + string.Join(", ", unread.ToArray()) : ""));
 		}
 
 		[ConsoleCommand(name: "CIRemoveBuried", docs: "Dev, editor: takes out the objects buried whole under the ground (CIFloating's \"buried\" ones: nobody sees them) of the named islands and saves each; the old file goes to Mods\\DynamicIslands\\deleted\\ first (ROADMAP CA30): CIRemoveBuried <island>[,<island>...]")]
@@ -1001,6 +1007,10 @@ namespace DynamicIslands
 				Vector3 p = e.transform.position;
 				float land = ground.SampleHeight(p) + ground.transform.position.y;
 				if (p.y - land <= 0.5f) continue;
+				// (a cave hill's skin is the ground where it lies: a world's mountain over a cave piece is draped over the cut terrain,
+				// and what the generator set on the old ground stands on it - Rootweave's west side over the Flooded Passage, its
+				// palms and boulders 17 m over the trench under the hill, isl-fix 11-24)
+				if (OnCaveSkin(e, p)) continue;
 				// (set up on purpose: a standing stone reaches down to the ground, a flowerpot stands on a roof, a rockfall's
 				// boulder on the one under it - only what hangs over the ground with nothing under it is lifted)
 				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
@@ -1021,7 +1031,7 @@ namespace DynamicIslands
 						on.collider.GetComponentInParent<EditorGameObject>() != e) continue;
 				}
 				lifted++;
-				if (lifted <= floatDetail) FLog("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground");
+				if (lifted <= floatDetail) FLog("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground" + UnderIt(e, p));
 			}
 			// Objects in the air touching nothing, and objects buried whole under the ground (the user, 2026-10-02: the Stranded
 			// Gull's boat was set down by its middle and sank under the beach - its locker and crate hung in the air over it)
@@ -2115,6 +2125,27 @@ namespace DynamicIslands
 					yield return null;
 					continue;
 				}
+				if (verb == "load")
+				{
+					// load <island name>: a patch recipe - the saved island opened in the editor (its land, objects, quests, notes,
+					// story items as saved), a few ops on it, then save <same name> writes it back; no ~9 min rebuild for a small fix.
+					// The origin is the saved land centre (a recipe's origin after generate/randomize); a recipe without them adds
+					// "origin 500 500", one whose build said "the land centre is dx dz from the recipe's origin" adds "origin shift -dx -dz"
+					string island = Rest(line, 1).Trim();
+					if (island.Length == 0) { Fail("recipe " + name + ", " + rl.Where + ": load <island name>"); yield break; }
+					pendingQuest = null;
+					pendingMore.Clear();
+					gen.Length = 0;
+					DynamicIslands.currentIslandName = "";
+					if (!DynamicIslands.LoadIsland(island)) { Fail("recipe " + name + ", " + rl.Where + ": no saved island '" + island + "' (or the editor didn't load it)"); yield break; }
+					for (float w = 0; w < 120f && DynamicIslands.currentIslandName != island; w += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+					if (DynamicIslands.currentIslandName != island) { Fail("recipe " + name + ", " + rl.Where + ": '" + island + "' not loaded after 2 minutes"); yield break; }
+					yield return null; yield return null;
+					Physics.SyncTransforms();
+					SetOrigin(EditorLandCentre());
+					Log("  loaded '" + island + "': " + PlacedEditorObjects().Count() + " objects - origin (the land centre) " + Num(recipeOrigin.x) + " " + Num(recipeOrigin.y));
+					continue;
+				}
 				// (a generate with buildings or caves: their objects of Raft's islands loaded first)
 				if (verb == "generate") yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(IslandGenSettings.FromText(gen.ToString())));
 				try
@@ -2161,7 +2192,9 @@ namespace DynamicIslands
 							break;
 						}
 						case "origin":
-							SetOrigin(t.Length > 2 ? new Vector2(F(t[1]), F(t[2])) : EditorLandCentre());
+							// (origin shift dx dz: the origin moved - a patch recipe's land centre to the full recipe's origin)
+							if (t.Length > 3 && t[1].ToLowerInvariant() == "shift") SetOrigin(recipeOrigin + new Vector2(F(t[2]), F(t[3])));
+							else SetOrigin(t.Length > 2 ? new Vector2(F(t[1]), F(t[2])) : EditorLandCentre());
 							break;
 						case "push":
 						{
@@ -2788,7 +2821,7 @@ namespace DynamicIslands
 						}
 						case "cliffs":
 						{
-							// cliffs [rise=7] [step=3] [depth=10] [reach=12] [at x z r=20] [rocks=piece]: bare cliff faces at the waterline
+							// cliffs [rise=7] [step=3] [depth=10] [reach=12] [at x z r=20] [rocks=piece] [keep=x,z,r|..] [walls=x,z,r|..]: bare cliff faces at the waterline
 							// sloped from their low side (CliffsStep, c3 round 3 - Raft draws them as one stretched sheet; CISheetIslands
 							// finds them); rocks=: that rock piece stood in the waterline at the faces the slope can't reach (a pit's wall)
 							var co = Options(t.Skip(1).Where(w => w.Contains("=")));
@@ -2799,7 +2832,26 @@ namespace DynamicIslands
 							Vector2? cwhere = null;
 							if (cat > 0 && cat + 2 < t.Length) cwhere = WorldXZ(F(t[cat + 1]), F(t[cat + 2]));
 							if (cstep < 0.5f || crise < 2f) { error = "cliffs: step= 0.5 or more, rise= 2 or more"; break; }
-							Log("  " + CliffsStep(crise, cstep, cdepth, creach, cwhere, cr, co.ContainsKey("rocks") ? co["rocks"] : null));
+							// (keep=x,z,r|x,z,r: circles in the recipe's coordinates the talus leaves as they are - a dock pool, a dive site)
+							// (walls=x,z,r|..: circles no talus is raised in either, but whose bare faces get the rocks= - a dive site's pit walls
+							// rocked, its floor and the boat on it kept - lib 3.5.1 11-23: keep left Cistern Hall's and the dive sites' pits bare sheets)
+							List<Vector3> ckeep = null, cwalls = null;
+							foreach (string ck in new[] { "keep", "walls" })
+							{
+								if (!co.ContainsKey(ck)) continue;
+								var circles = new List<Vector3>();
+								foreach (string kc in co[ck].Split('|'))
+								{
+									string[] kp = kc.Split(',');
+									if (kp.Length != 3) { error = "cliffs: " + ck + "=x,z,r|x,z,r (" + kc + ")"; break; }
+									Vector2 kw = WorldXZ(F(kp[0]), F(kp[1]));
+									circles.Add(new Vector3(kw.x, kw.y, F(kp[2])));
+								}
+								if (ck == "keep") ckeep = circles; else cwalls = circles;
+							}
+							if (error != null) break;
+							if (cwalls != null && !co.ContainsKey("rocks")) { error = "cliffs: walls= needs rocks="; break; }
+							Log("  " + CliffsStep(crise, cstep, cdepth, creach, cwhere, cr, co.ContainsKey("rocks") ? co["rocks"] : null, ckeep, cwalls));
 							break;
 						}
 						case "where":
@@ -4476,6 +4528,28 @@ namespace DynamicIslands
 			return true;
 		}
 
+		// (what is under a lifted plant, for the log: the first thing below its foot that is not itself, and how far down)
+		static string UnderIt(EditorGameObject e, Vector3 p)
+		{
+			foreach (RaycastHit h in Physics.RaycastAll(new Vector3(p.x, p.y + 0.3f, p.z), Vector3.down, 40f, ~0, QueryTriggerInteraction.Ignore).OrderBy(x => x.distance))
+				if (h.collider != null && h.collider.GetComponentInParent<EditorGameObject>() != e) return " (under it: " + h.collider.name + " " + Num(h.distance - 0.3f) + " m down)";
+			return " (under it: nothing in 40 m)";
+		}
+
+		/// <summary>The thing's foot or its body's bottom over a cave hill's skin (CaveMountain.SkinName) within 1.1 m (rays from
+		/// 0.3 m over them): it stands on the mountain the world drapes over the island's caves - ground to a player, though the
+		/// terrain under it lies lower.</summary>
+		static bool OnCaveSkin(EditorGameObject e, Vector3 p)
+		{
+			float bottom = p.y;
+			Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).ToArray();
+			if (parts.Length > 0) { Bounds whole = parts[0].bounds; foreach (Renderer r in parts) whole.Encapsulate(r.bounds); bottom = Mathf.Min(bottom, whole.min.y); }
+			foreach (Vector3 from in new[] { new Vector3(p.x, p.y + 0.3f, p.z), new Vector3(p.x, bottom + 0.3f, p.z) })
+				foreach (RaycastHit h in Physics.RaycastAll(from, Vector3.down, 1.4f, ~0, QueryTriggerInteraction.Ignore))
+					if (h.collider != null && h.collider.name == CaveMountain.SkinName) return true;
+			return false;
+		}
+
 		static bool ShowsAboveGround(Bounds b, Terrain ground)
 		{
 			float need = Mathf.Min(0.03f, 0.3f * b.size.y);
@@ -4683,7 +4757,9 @@ namespace DynamicIslands
 
 		static float F(string s) { return float.Parse(s.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture); }
 
-		static string Unescape(string s) { return (s ?? "").Replace("\\n", "\n"); }
+		// (\\n stays a written \n: a new line inside a journal or dialogue text in an event, whose actions a real
+		// line break splits - quest softlock audit 11-23: three islanders' journal pages were cut after their first line)
+		static string Unescape(string s) { return (s ?? "").Replace("\\\\n", "\u0001").Replace("\\n", "\n").Replace("\u0001", "\\n"); }
 
 		static Dictionary<string, string> Options(IEnumerable<string> tokens)
 		{

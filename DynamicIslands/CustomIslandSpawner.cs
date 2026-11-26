@@ -74,6 +74,9 @@ namespace DynamicIslands.Editor
 		public const string TypePrefix = "type:";
 		static readonly List<KeyValuePair<string, float>> poolLines = new List<KeyValuePair<string, float>>();
 		static DateTime poolFileTime;
+		/// <summary>The number settings as built in (before spawnpool.txt was first read): a line taken out of the file while Raft runs
+		/// goes back to this, not the value of the line read before (UT2, 11-25).</summary>
+		static Dictionary<string, float> builtInNumbers;
 
 		/// <summary>Automatic spawning in the current world (stored in the world's island list).</summary>
 		public static bool Enabled = true;
@@ -1051,6 +1054,14 @@ type:sunken 0.2
 				}
 				DateTime t = File.GetLastWriteTimeUtc(PoolPath);
 				if (!force && t == poolFileTime) return;
+				// (edited while Raft runs - TODO 6b: a file saved under a second ago waits for the next tick, so a save still
+				// going on is not read half-way; and it is read in full before anything changes, so a file another program
+				// holds open keeps the values read before and is tried again, instead of an empty pool until its next change)
+				double age = (DateTime.UtcNow - t).TotalSeconds;
+				if (!force && age >= 0 && age < 1) return;
+				if (builtInNumbers == null) builtInNumbers = NumberKeys.ToDictionary(k => k.ToLowerInvariant(), k => ValueOf(k));
+				string[] read = File.ReadAllLines(PoolPath);
+				foreach (var kv in builtInNumbers) SetValue(kv.Key, kv.Value);
 				poolFileTime = t;
 				// (islands may have been re-saved too; an island still being generated has no file yet - its estimated size and
 				// height stay, or it was spaced as unreadable and never moved clear once it came out bigger)
@@ -1058,7 +1069,7 @@ type:sunken 0.2
 				foreach (string n in elevationCache.Keys.ToList()) if (File.Exists(IslandSpawner.PathFor(n))) elevationCache.Remove(n);
 
 				poolLines.Clear();
-				foreach (string raw in File.ReadAllLines(PoolPath))
+				foreach (string raw in read)
 				{
 					string line = raw.Trim();
 					if (line.Length == 0 || line.StartsWith("#")) continue;

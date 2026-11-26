@@ -386,6 +386,7 @@ namespace DynamicIslands
 				Log("PASS: adventure play clean");
 				yield break;
 			}
+			else { Fail("adventure play: no part '" + part + "'"); yield break; }
 			IslandWorldState.Save();
 			if (ok) Log("PASS: adventure play " + part); else Fail("adventure play " + part);
 		}

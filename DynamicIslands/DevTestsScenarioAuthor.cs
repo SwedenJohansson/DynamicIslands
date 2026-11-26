@@ -281,7 +281,7 @@ namespace DynamicIslands
 						yield return new WaitForSeconds(1.5f);
 						for (int i = 0; i < 3; i++) { WorldDirector.Evaluate(); yield return new WaitForSeconds(0.5f); }
 						bool quest = QuestTracker.StepOf(e) >= 1, rule = IslandWorldState.Islands.Any(x => x.Rule == "g");
-						Check(ref ok, quest == rule, "two zones called 'gate', the second entered: the quest (" + (quest ? "counted" : "not") + ") and the island's rule (" + (rule ? "fired" : "waits") + ") agree - AU54");
+						Check(ref ok, quest && rule, "two zones called 'gate', the second entered: the quest (" + (quest ? "counted" : "not") + ") and the island's rule (" + (rule ? "fired" : "waits") + ") agree - AU54");
 						made.AddRange(IslandWorldState.Islands.Where(x => x.Rule == "g"));
 					}
 					else Check(ref ok, false, "the island with two gates came");

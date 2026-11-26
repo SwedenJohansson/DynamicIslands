@@ -437,4 +437,8 @@ clear at -8.50 -32.99 r=1.5 all body only=BigRock_2
 clear at -14.59 -2.64 r=1.5 all body only=BigRock_Low1_Sand
 clear at -16.72 16.79 r=1.5 all body only=BigRock_Low1_Sand
 clear at -23.35 -22.52 r=1.5 all body only=BigRock_Low1_Sand
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save Keeper's Light

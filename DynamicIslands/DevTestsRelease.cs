@@ -359,7 +359,8 @@ namespace DynamicIslands
 				if (cd == null) { Check(ref ok, false, "rule " + (i + 1) + ": no card"); continue; }
 				bool typed = TypeInto(cd, "id", r[0]);
 				if (r[2].Length > 0) typed &= TypeInto(cd, "rule id / island", r[2]);
-				if (r[3].Length > 0) typed &= TypeInto(cd, r[1] == "zone" ? "zone name" : "km", r[3]);
+				// (a known island's zone is picked from its list - USE1 11-24; a distance is typed)
+				if (r[3].Length > 0) typed &= r[1] == "zone" && DropList.Pick(cd, "Drop_WhenArg", r[3]) || TypeInto(cd, r[1] == "zone" ? "zone name" : "km", r[3]);
 				typed &= TypeInto(cd, r[4] == "type" ? "map type" : "island name", r[5]);
 				typed &= TypeInto(cd, "300", r[7]);
 				if (r[9].Length > 0) typed &= TypeInto(cd, "where it happened", r[9]);
@@ -517,8 +518,9 @@ namespace DynamicIslands
 			if (raftObj != null) yield return PutPlayer(RAPI.GetLocalPlayer(), raftObj.transform.position + Vector3.up * 2f, false);
 			int before = IslandWorldState.Islands.Count;
 			yield return SailRoutine(100f, 25f);
-			yield return new WaitForSeconds(5f);
-			bool far = IslandWorldState.Islands.Count > before && IslandWorldState.Islands.Skip(before).Any(e => (e.Name ?? "").StartsWith("gen-"));
+			// (by the rule's id: the plan keeps random islands on, so any 'gen-' island could be one of those)
+			yield return WaitFor(() => IslandWorldState.Islands.Any(e => e.Rule == "far"), 30f);
+			bool far = IslandWorldState.Islands.Any(e => e.Rule == "far");
 			Check(ref ok, far, "2.5 km sailed: the 'far' rule brought an island (" + string.Join(", ", IslandWorldState.Islands.Skip(before).Select(e => e.Name).ToArray()) + ")");
 			// Each rule once
 			var names = IslandWorldState.Islands.Select(e => e.HostName ?? e.Name).ToList();

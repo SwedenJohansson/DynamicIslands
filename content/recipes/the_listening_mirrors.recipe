@@ -113,6 +113,9 @@ brush flatten at 1.95 {-9+0.5*$k} r=1.8 s=20 frames=200 h={8.6-0.25*$k}
 next
 clear from 0 -9 to 0 9 r=4 body
 origin
+# (port-1101 11-24: fixes-1101 12c49179 cut its own pit-foot and pump-bank ramps here, in the objects' frame; this
+# branch's w10fix3 ramp into the water and the pump basin's pocket fill and second stair above fix the same traps, and
+# the two would cross (its ramp raised 92 -26.5 to 3.6 over the second stair at 1.4) - left out)
 clear at 0 4 r=35
 clear from 0 -66 to 0 -32 r=5
 clear from 0 -66 to 0 -112 r=9
@@ -178,7 +181,10 @@ place Survivor_Cage wrencage at 11 -10 ground yaw=90
 place Loot_Chest wrenbundle at 11.4 -13.2 ground sit yaw=0
 place Note_Paper wrenwarning at 13.2 -7 ground sit drop yaw=30
 place Creature_Hyena choirdogs at 22 -20 ground y=0.5
-place TP_SeleneReactorChimney - at 27 -16 ground sit scale=0.5
+# (fxT 11-02, REACH: at half size the chimney's body still fills 13 x 12 m (x 17..31, z -24.5..-12.5), its north edge
+# 2.5 m from the bell - the walk in to the chapel from the east squeezed between them and the walker went through the
+# chimney's edge: 4 m south, the way past the bell 6 m wide)
+place TP_SeleneReactorChimney - at 28 -20 ground sit scale=0.5
 
 # --- Area C, the crane: Varuna's crane by the pit, its lever and hook; the cab on a pillar tower, its ladder ----------
 place VP_ApexCrane crane at 18 22 ground yaw=270
@@ -214,8 +220,10 @@ place Block_Wall_Tier3 sluicegate at -0.75 -12 ground
 place Block_Wall_Tier3 sluicegate at 0.75 -12 ground
 place Placeable_Lantern_Metal lure at 0.4 -10.4 ground sit
 place Zone_Trigger pit_edge at 0 2 ground y=1
-place Placeable_Brick_Wet pitaltar at 0.7 2 ground y=0.15 sit scale=2.5
-place Candle_02 - at 1.6 2 ground y=0.9 sit drop
+# (fxT 11-01, REACH: the stair down is two points wide (x 0.3 and 2.2, steep walls past them); the altar at 0.7 and its
+# candle at 1.6 stood across both - the audit found no way up past them. The altar at the west wall, the candle on it)
+place Placeable_Brick_Wet pitaltar at 0.2 2 ground y=0.15 sit scale=2.5
+place Candle_02 - at 0.2 2 ground y=0.9 sit drop
 place Zone_Trigger bosszone at 0 2 ground y=1
 place Creature_AnglerFish lanternmother at 0 16 h=-4
 place Zone_Atmosphere redlight at 0 16 h=2
@@ -255,7 +263,8 @@ scatter "Pickup_Landmark_Rock 1" 3 at -66 24 r=26 seed=30705 free=2
 place Creature_Goat hillgoats at -37.63 17.77 ground
 prop hillgoats creature.count=2
 # --- The pump house (east), drowned in a hole 14 m down, an air pocket: Dora's note, the back room's chest ------------
-call hw_sunkhouse x=76 z=-30 h=-14 yaw=0 a=pumphouse chest=pumpchest air=pumpair bub=pumpbub dal=pumpdoor
+# (fxT 11-01, REACH: the pump chest - the audit's way in came down through the front room's roof and stuck on it: the back tile over the chest left open, as on Old Mine Islet)
+call hw_sunkhouse x=76 z=-30 h=-14 yaw=0 a=pumphouse chest=pumpchest air=pumpair bub=pumpbub dal=pumpdoor rn=2
 call hw_zone x=76 z=-30 al=pumpzone id=pumphouse r=7 h=1 msg="The quarry's pump house, 14 m down. Its pumps kept the pit dry for forty years. Their valves are all open. Its front room still holds air."
 place Note_Paper doranote at 76.6 -32.2 h=-13.7 drop yaw=20
 loot pumpchest TitaniumIngot*1;Bolt*4;MetalIngot*2;Rope*2

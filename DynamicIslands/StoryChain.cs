@@ -232,8 +232,10 @@ namespace DynamicIslands.Editor
 					// (a kept number moved: the journal's page still gives the old one - Tick adds one with the new)
 					if (digits != null && digits.Length == 4) Moved.Add(r.Id);
 					var rnd = new System.Random(StableHash(IslandWorldState.WorldKey + "/" + r.Id));
+					// (given up after a while: with every code taken it never ended - audit 2026-10-06)
+					int tries = 0;
 					do digits = new[] { rnd.Next(10), rnd.Next(10), rnd.Next(10), rnd.Next(10) };
-					while (taken.Any(t => t.SequenceEqual(digits)));
+					while (taken.Any(t => t.SequenceEqual(digits)) && ++tries < 1000);
 				}
 				taken.Add(digits);
 				Frequencies.Add(new KeyValuePair<string, int[]>(r.Id, digits));
@@ -646,6 +648,31 @@ namespace DynamicIslands.Editor
 					: "its frequency tuned again - its island, left behind unfinished, comes back"));
 		}
 
+		/// <summary>
+		/// A "note:" done-when: whether the note was read (true/false), or null when the plan's note names no note with a text
+		/// in the island's file (IsDone then waits for the island's quest). The note is its number on the island, or its
+		/// title (a title survives a rebuild that moves the objects). An island with one note only: any note read there.
+		/// </summary>
+		public static bool? NoteRead(IntroRule r, List<IslandWorldState.Entry> entries, string arg)
+		{
+			arg = (arg ?? "").Trim();
+			if (entries.Any(e => StoryBook.Pages.Any(p => p.Key.Equals("note:" + StoryBook.PageIsland(e) + ":" + arg, StringComparison.OrdinalIgnoreCase)))) return true;
+			IslandWorldState.Entry file = entries.FirstOrDefault(e => System.IO.File.Exists(IslandSpawner.PathFor(e.Name))) ?? entries[0];
+			Dictionary<int, KeyValuePair<string, string>> notes = IslandCache.NoteTextsOf(file.Name);
+			int n;
+			bool number = int.TryParse(arg, NumberStyles.None, CultureInfo.InvariantCulture, out n);
+			if (number && notes.ContainsKey(n)) return false;
+			List<int> titled = number ? new List<int>() : notes.Where(x => x.Value.Key.Equals(arg, StringComparison.OrdinalIgnoreCase)).Select(x => x.Key).ToList();
+			if (titled.Count > 0)
+				return entries.Any(e => titled.Any(t => StoryBook.Pages.Any(p => p.Key.Equals("note:" + StoryBook.PageIsland(e) + ":" + t.ToString(CultureInfo.InvariantCulture), StringComparison.OrdinalIgnoreCase))));
+			if (notes.Count == 1)
+				return entries.Any(e => StoryBook.Pages.Any(p => p.Key.StartsWith("note:" + StoryBook.PageIsland(e) + ":", StringComparison.OrdinalIgnoreCase)));
+			if (staleWarned.Add(r.Id ?? ""))
+				Log("Rule '" + r.Id + "': its note '" + arg + "' is no note with a text on '" + file.Name + "' (rebuilt since the plan?) - its quest finishes it instead");
+			return null;
+		}
+		static readonly HashSet<string> staleWarned = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
 		/// <summary>The rule's island counts as done (its quest, step N, a zone, a signal, players at it).</summary>
 		public static bool IsDone(IntroRule r)
 		{
@@ -657,7 +684,17 @@ namespace DynamicIslands.Editor
 			if (entries.All(e => e.Failed && e.Root == null || !System.IO.File.Exists(IslandSpawner.PathFor(e.Name)))) return false;
 			string kind = r.StoryDone.Split(':')[0], arg = r.StoryDone.Contains(":") ? r.StoryDone.Substring(r.StoryDone.IndexOf(':') + 1) : "";
 			if (kind.Length == 0) kind = IslandQuest.From(IslandCache.PropsOf(entries.FirstOrDefault(e => System.IO.File.Exists(IslandSpawner.PathFor(e.Name))) ?? entries[0])).Steps.Count > 0 ? "quest" : "visit"; // (a copy whose file is gone read as quest-less: a visit counted it done - questdeepA)
-			if (kind == "note") return entries.Any(e => StoryBook.Pages.Any(p => p.Key.Equals("note:" + StoryBook.PageIsland(e) + ":" + arg.Trim(), StringComparison.OrdinalIgnoreCase)));
+			if (kind == "note")
+			{
+				bool? read = NoteRead(r, entries, arg);
+				if (read.HasValue) return read.Value;
+				// (a number that is no note with a text in the island's file now - the island rebuilt after the plan was saved:
+				// The Last Post waited for note #2495, an object that is coral in the shipped file, and the story stopped - quest
+				// softlock audit 11-23. Its island's quest (or a visit, if it has none) finishes it instead: never before the
+				// note would have, as it can't say which note was meant)
+				kind = IslandQuest.From(IslandCache.PropsOf(entries.FirstOrDefault(e => System.IO.File.Exists(IslandSpawner.PathFor(e.Name))) ?? entries[0])).Steps.Count > 0 ? "quest" : "visit";
+				arg = "";
+			}
 			IslandWorldState.Entry at;
 			var done = new IntroRule { When = kind, WhenRef = r.Id, WhenArg = arg };
 			if (WorldDirector.Met(done, null, out at)) return true;

@@ -2126,18 +2126,26 @@ namespace DynamicIslands
 			{
 				Log("Leaving the editor");
 				UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
-				StartTest(WaitForMainMenu());
+				StartTest(MainMenuReported());
 				return;
 			}
 			// (already at the main menu: nothing to leave - LeaveGame threw a NullReferenceException there)
-			if (!LoadSceneManager.IsGameSceneLoaded || ComponentManager<Raft_Network>.Value == null) { Log("At the main menu already (not in a world or the editor)"); StartTest(WaitForMainMenu()); return; } // (a test, so IDLE follows: ci.ps1 -done waited its whole timeout - 11-06)
+			if (!LoadSceneManager.IsGameSceneLoaded || ComponentManager<Raft_Network>.Value == null) { Log("At the main menu already (not in a world or the editor)"); StartTest(MainMenuReported()); return; } // (a test, so IDLE follows: ci.ps1 -done waited its whole timeout - 11-06)
 			Log("Leaving the world");
 			ComponentManager<Raft_Network>.Value.LeaveGame((DisconnectReason)2, (SceneName)1, true, false);
-			StartTest(WaitForMainMenu());
+			StartTest(MainMenuReported());
 		}
 
 		/// <summary>CIMainMenu's end (10-20): "At the main menu" once the menu's New Game box is there (60 s at most), then
 		/// IDLE - so "CIMainMenu;CINewWorld ..." and scripts wait for the menu itself instead of sleeping.</summary>
+		/// <summary>CIMainMenu's own wait: a PASS line once the menu is there (WaitForMainMenu FAILs if not), so a job counts
+		/// a result (hollow-tests 11-24). Other tests keep the quiet WaitForMainMenu.</summary>
+		static IEnumerator MainMenuReported()
+		{
+			yield return WaitForMainMenu();
+			if (MenuNewGameBox() != null) Log("PASS: at the main menu");
+		}
+
 		static IEnumerator WaitForMainMenu()
 		{
 			float start = Time.realtimeSinceStartup, end = start + 60f;

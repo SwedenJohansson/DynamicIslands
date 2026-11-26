@@ -44,6 +44,14 @@ namespace DynamicIslands.Editor
 		/// <summary>Shows one of the plan's tabs (TabStory, TabOther, TabSettings).</summary>
 		public static void ShowTab(int t) { if (instance != null && instance.plan != null) instance.SelectTab(t); }
 		readonly List<InputField> fields = new List<InputField>();
+		/// <summary>Link fields the builder chose "custom..." for (rule + field): a text field instead of the island's list.</summary>
+		readonly HashSet<string> typing = new HashSet<string>();
+		/// <summary>The last option of a link's list: type the name instead (one the island doesn't have yet).</summary>
+		public const string CustomValue = "custom...";
+		/// <summary>Tests: the control the check report's "Show rule n" picked out last.</summary>
+		public static string LastShownField { get; private set; }
+		/// <summary>Tests: what the last Save added to its notice about problems ("" = none).</summary>
+		public static string LastSaveNotice { get; private set; }
 
 		public static void Create(Transform canvas)
 		{
@@ -559,7 +567,7 @@ namespace DynamicIslands.Editor
 			Text number = UIKit.Label(head, storyStep > 0 ? "STEP " + storyStep : r.Beside ? "BESIDE" : "RULE " + (index + 1), 14, UIKit.Accent, TextAnchor.MiddleLeft, FontStyle.Bold);
 			UIKit.Size(number.gameObject, SectionLabel - 6f);
 			UIKit.Size(UIKit.Label(head, "Name", 12, UIKit.TextMuted, TextAnchor.MiddleRight).gameObject, 40);
-			SmallField(head, "id", r.Id, 130, "The rule's name: other rules refer to the island it brings by it (e.g. camp)", v => r.Id = v.Replace("|", "").Replace(":", "").Replace(",", "").Replace(";", "").Trim());
+			SmallField(head, "id", r.Id, 130, "The rule's name: other rules refer to the island it brings by it (e.g. camp)", v => r.Id = v.Replace("|", "").Replace(":", "").Replace(",", "").Replace(";", "").Trim()).name = "Field_Id";
 			HelpMark(head, islandMode ? HelpIdIsland : HelpId);
 			UIKit.Size(UIKit.Label(head, "", 12).gameObject, -1, -1, 1);
 			// (TODO 5b: the island this rule brings, in the 3D editor - the editor's top bar then offers Back to the plan)
@@ -603,19 +611,34 @@ namespace DynamicIslands.Editor
 			if (needsRef)
 			{
 				Tag(when, r.When == "rule" ? "rule" : "island");
-				SmallField(when, r.When == "rule" ? "rule id" : islandMode ? "self" : "rule id / island", r.WhenRef, 130,
-					r.When == "rule" ? "The id of the rule to wait for" : "Which island: the id of the rule that brought it, or an island name" + (islandMode ? " (self = this island)" : ""), v => r.WhenRef = v.Trim());
-				Pick(when, "Pick_WhenRef", r.When == "rule" ? "Choose the rule to wait for" : "Choose the island: a rule of this plan, or one of your saved islands", () => WhenRefChoices(r),
-					r.When == "rule" ? "Rule to wait for" : "Island to wait for", v => r.WhenRef = v, () => r.When == "rule" ? "There are no other rules yet: + Add a rule first." : "No rules or saved islands yet.");
+				// (USE1: "right after a rule" - the plan's rules in a list, so the name can't be mistyped)
+				if (r.When != "rule" || !IdDrop(when, r, "whenref", "Drop_WhenRef", RuleChoices(r), r.WhenRef, v => r.WhenRef = v, 160, "The rule to wait for (its island appears first)"))
+				{
+					SmallField(when, r.When == "rule" ? "rule id" : islandMode ? "self" : "rule id / island", r.WhenRef, 130,
+						r.When == "rule" ? "The id of the rule to wait for" : "Which island: the id of the rule that brought it, or an island name (▾ lists them)" + (islandMode ? " (self = this island)" : ""), v => r.WhenRef = v.Trim()).name = "Field_WhenRef";
+					Pick(when, "Pick_WhenRef", r.When == "rule" ? "Choose the rule to wait for" : "Choose the island: a rule of this plan, or one of your saved islands", () => WhenRefChoices(r),
+						r.When == "rule" ? "Rule to wait for" : "Island to wait for", v => r.WhenRef = v, () => r.When == "rule" ? "There are no other rules yet: + Add a rule first." : "No rules or saved islands yet.");
+					LinkMark(when, r.WhenRef.Length == 0 && !islandMode, "Nothing chosen: choose " + (r.When == "rule" ? "the rule" : "the island") + " to wait for");
+				}
 			}
 			if (needsArg)
 			{
-				if (r.When == "step" || r.When == "zone" || r.When == "signal") Tag(when, r.When == "step" ? "steps" : r.When);
-				SmallField(when, r.When == "signal" ? "signal name" : r.When == "zone" ? "zone name" : r.When == "step" ? "steps" : r.When, r.WhenArg, r.When == "zone" || r.When == "signal" ? 120 : 56,
-					r.When == "zone" ? "The trigger zone's name on that island" : r.When == "step" ? "How many steps of the quest are done" : r.When == "km" ? "Km sailed in this world" : "In-game day", v => r.WhenArg = v.Trim());
-				if (r.When == "zone" || r.When == "signal" || r.When == "step")
-					Pick(when, "Pick_WhenArg", "Choose from the " + ThingsOf(r.When) + " of that island", () => ThingChoices(IslandOf(r.WhenRef), r.When),
-						Capital(ThingsOf(r.When)) + " of " + RefLabel(r.WhenRef), v => r.WhenArg = v, () => NoThings(r.WhenRef, IslandOf(r.WhenRef), r.When));
+				bool thing = r.When == "step" || r.When == "zone" || r.When == "signal";
+				if (thing) Tag(when, r.When == "step" ? "steps" : r.When);
+				// (USE1: the island is known - its zones, signals or quest steps in a list; "custom..." types a name)
+				string whenIsland = thing ? IslandOf(r.WhenRef) : null;
+				if (!thing || !IdDrop(when, r, "whenarg", "Drop_WhenArg", ThingChoices(whenIsland, r.When), r.WhenArg, v => r.WhenArg = v, r.When == "step" ? 150 : 170,
+					"Choose from the " + ThingsOf(r.When) + " of " + RefLabel(r.WhenRef)))
+				{
+					SmallField(when, r.When == "signal" ? "signal name" : r.When == "zone" ? "zone name" : r.When == "step" ? "steps" : r.When, r.WhenArg, r.When == "zone" || r.When == "signal" ? 120 : 56,
+						r.When == "zone" ? "The trigger zone's name on that island" : r.When == "signal" ? "The signal's name, as the island's object sends it" : r.When == "step" ? "How many steps of the quest are done" : r.When == "km" ? "Km sailed in this world" : "In-game day", v => r.WhenArg = v.Trim()).name = "Field_WhenArg";
+					if (thing)
+					{
+						Pick(when, "Pick_WhenArg", "Choose from the " + ThingsOf(r.When) + " of that island", () => ThingChoices(IslandOf(r.WhenRef), r.When),
+							Capital(ThingsOf(r.When)) + " of " + RefLabel(r.WhenRef), v => r.WhenArg = v, () => NoThings(r.WhenRef, IslandOf(r.WhenRef), r.When));
+						LinkMark(when, r.WhenArg.Trim().Length == 0, "Empty: the rule waits for nothing - choose the " + (r.When == "step" ? "number of steps" : r.When) + " (▾)");
+					}
+				}
 				if (r.When == "km") Tag(when, "km sailed", false);
 				if (r.When == "km" || r.When == "day")
 				{
@@ -630,9 +653,11 @@ namespace DynamicIslands.Editor
 			if (r.When == "quest")
 			{
 				// (which of the island's quests: empty = the main quest; ROADMAP CB6)
-				Tag(when, "quest no.");
-				SmallField(when, "main", r.WhenArg, 56, "Which of the island's quests: empty or 1 = the main quest, 2 = its Quest 2, and so on",
-					v => { v = v.Trim(); r.WhenArg = v == "1" ? "" : v; });
+				Tag(when, "which quest");
+				// (USE1: the island's quests in a list when it is known)
+				if (!IdDrop(when, r, "whenquest", "Drop_WhenQuest", QuestChoices(IslandOf(r.WhenRef)), r.WhenArg, v => r.WhenArg = v == "1" ? "" : v, 170, "Which of the island's quests must be done"))
+					SmallField(when, "main", r.WhenArg, 56, "Which of the island's quests: empty or 1 = the main quest, 2 = its Quest 2, and so on",
+						v => { v = v.Trim(); r.WhenArg = v == "1" ? "" : v; }).name = "Field_WhenQuest";
 			}
 			Fill(when);
 			HelpMark(when, islandMode ? HelpWhenIsland : HelpWhen);
@@ -651,7 +676,7 @@ namespace DynamicIslands.Editor
 			{
 				Tag(bring, r.What == "type" ? "map type" : r.What == "oneof" ? "islands" : "island");
 				SmallField(bring, r.What == "oneof" ? "island, island, ..." : r.What == "type" ? "map type" : "island name", r.WhatArg, -1,
-					r.What == "oneof" ? "Island names, separated by commas: one is picked (ones not in the world yet first)" : "Which one (▾ to choose)", v => r.WhatArg = v.Trim());
+					r.What == "oneof" ? "Island names, separated by commas: one is picked (ones not in the world yet first)" : "Which one (▾ to choose)", v => r.WhatArg = v.Trim()).name = "Field_WhatArg";
 				Button choose = UIKit.Button(bring, "▾", () =>
 				{
 					Keep();
@@ -678,18 +703,20 @@ namespace DynamicIslands.Editor
 				if (v == "receiver") r.Distance = Mathf.Max(r.Distance, 600f);
 				ShowRules();
 			}, 230, "Where the island comes: choose from the list");
-			SmallField(where, "300", r.Distance.ToString("0"), 60, "Metres (from the raft, or centre to centre from the island; at least clear of both)", v =>
+			InputField distance = SmallField(where, "300", r.Distance.ToString("0"), 60, "Metres (from the raft, or centre to centre from the island; at least clear of both)", v =>
 			{
 				float d;
 				if (float.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out d)) r.Distance = Mathf.Clamp(d, 50f, 5000f);
-			}).contentType = InputField.ContentType.IntegerNumber;
+			});
+			distance.contentType = InputField.ContentType.IntegerNumber;
+			distance.name = "Field_Distance";
 			Tag(where, r.Where == "near" ? "metres" : r.Where == "ahead" ? "metres ahead" : "metres away", false);
 			if (r.Where == "near")
 			{
 				DropList.Make(where, "Drop_Direction", DirectionOptions, r.Direction, v => { Keep(); r.Direction = v; ShowRules(); }, 110, "Which way from the island");
 				Tag(where, "of");
 				SmallField(where, islandMode ? "self" : "where it happened", r.WhereRef == IntroRule.Self && !islandMode ? "" : r.WhereRef, 130,
-					"Which island: the id of the rule that brought it, or an island name. Empty = the island where the rule's event happened" + (islandMode ? "; self = this island" : ""), v => r.WhereRef = v.Trim());
+					"Which island: the id of the rule that brought it, or an island name. Empty = the island where the rule's event happened" + (islandMode ? "; self = this island" : ""), v => r.WhereRef = v.Trim()).name = "Field_WhereRef";
 				Pick(where, "Pick_WhereRef", "Choose the island to put it near", () => WhereRefChoices(r), "Put it near", v => r.WhereRef = v, () => "No rules or saved islands yet.");
 			}
 			Fill(where);
@@ -801,11 +828,17 @@ namespace DynamicIslands.Editor
 				}, 200, "When the players find the NEXT island's coordinates: when this island counts as done in the story (then the next island of the story is unlocked)");
 				if (kind == "step" || kind == "zone" || kind == "signal" || kind == "note")
 				{
-					SmallField(c, kind == "step" ? "steps" : kind == "note" ? "note #" : kind + " name", arg, kind == "step" || kind == "note" ? 50 : 110,
-						kind == "step" ? "How many steps of its quest" : kind == "note" ? "The note's number on the island (▾ lists them)" : "The " + kind + "'s name on the island", v => r.StoryDone = kind + ":" + v.Trim());
 					string own = r.What == "island" ? r.WhatArg : null;
-					Pick(c, "Pick_DoneArg", "Choose from the " + ThingsOf(kind) + " of the island this rule brings", () => ThingChoices(own, kind),
-						Capital(ThingsOf(kind)) + " of " + (own ?? "its island"), v => r.StoryDone = kind + ":" + v, () => NoThings(r.Id, own, kind));
+					// (USE1: the island this rule brings is known - its zones, signals, steps or notes in a list)
+					if (!IdDrop(c, r, "donearg", "Drop_DoneArg", ThingChoices(own, kind), arg, v => r.StoryDone = kind + ":" + v, kind == "note" ? 200 : 150,
+						"Choose from the " + ThingsOf(kind) + " of the island this rule brings"))
+					{
+						SmallField(c, kind == "step" ? "steps" : kind == "note" ? "note #" : kind + " name", arg, kind == "step" || kind == "note" ? 50 : 110,
+							kind == "step" ? "How many steps of its quest" : kind == "note" ? "The note's number on the island (▾ lists them)" : "The " + kind + "'s name on the island", v => r.StoryDone = kind + ":" + v.Trim()).name = "Field_DoneArg";
+						Pick(c, "Pick_DoneArg", "Choose from the " + ThingsOf(kind) + " of the island this rule brings", () => ThingChoices(own, kind),
+							Capital(ThingsOf(kind)) + " of " + (own ?? "its island"), v => r.StoryDone = kind + ":" + v, () => NoThings(r.Id, own, kind));
+						LinkMark(c, arg.Trim().Length == 0, "Empty: the story never moves on from this island - choose the " + (kind == "step" ? "number of steps" : kind) + " (▾)");
+					}
 				}
 			}
 			Fill(c);
@@ -1158,7 +1191,17 @@ namespace DynamicIslands.Editor
 			if (string.IsNullOrEmpty(island)) return list;
 			if (kind == "zone") list.AddRange(IslandCache.ZonesOf(island).Select(z => new ChoiceWindow.Choice(z, z, "trigger zone on " + island)));
 			else if (kind == "signal") list.AddRange(IslandCache.SignalsOf(island).Select(s => new ChoiceWindow.Choice(s, s, "sent on " + island)));
-			else if (kind == "note") list.AddRange(IslandCache.NotesOf(island).Select(n => new ChoiceWindow.Choice(n.ToString(CultureInfo.InvariantCulture), "Note #" + n, "a note with a text on " + island)));
+			else if (kind == "note")
+			{
+				// (USE1: each note with its title, so the right one is easy to find; the value stays its number)
+				Dictionary<int, KeyValuePair<string, string>> texts = IslandCache.NoteTextsOf(island);
+				list.AddRange(IslandCache.NotesOf(island).Select(n =>
+				{
+					KeyValuePair<string, string> t;
+					string title = texts.TryGetValue(n, out t) ? LibraryInfo.Plain(t.Key ?? "", 40).Trim() : "";
+					return new ChoiceWindow.Choice(n.ToString(CultureInfo.InvariantCulture), "Note #" + n + (title.Length > 0 ? " '" + title + "'" : ""), "a note with a text on " + island);
+				}));
+			}
 			else
 			{
 				List<IslandQuest.Step> steps = IslandCache.QuestOf(island).Steps;
@@ -1178,7 +1221,67 @@ namespace DynamicIslands.Editor
 			return "'" + island + "' has no " + ThingsOf(kind) + (kind == "step" ? " (no quest)" : "") + ".";
 		}
 
-		/// <summary>Tests: what the ▼ of a rule's field lists (field: whenref, whenarg, whereref, donearg).</summary>
+		/// <summary>An island's quests (for "when a quest is done"): its main quest, then Quest 2, 3... - empty if the island
+		/// isn't a saved one or has no quest.</summary>
+		static List<ChoiceWindow.Choice> QuestChoices(string island)
+		{
+			var list = new List<ChoiceWindow.Choice>();
+			if (string.IsNullOrEmpty(island)) return list;
+			Dictionary<string, string> props = IslandCache.Props(island);
+			int count = IslandQuest.CountIn(props);
+			for (int n = 0; n < count; n++)
+			{
+				IslandQuest q = IslandQuest.From(props, n);
+				if (n == 0 && !q.Exists && count == 1) break;
+				string title = LibraryInfo.Plain(q.Title ?? "", 40).Trim();
+				list.Add(new ChoiceWindow.Choice(n == 0 ? "" : (n + 1).ToString(CultureInfo.InvariantCulture), (n == 0 ? "main quest" : "Quest " + (n + 1)) + (title.Length > 0 ? " '" + title + "'" : ""),
+					q.Steps.Count + " step" + (q.Steps.Count == 1 ? "" : "s")));
+			}
+			return list;
+		}
+
+		/// <summary>
+		/// A link field as a drop-down of what exists (USE1, 11-24): the island's zones, signals, quest steps, notes or
+		/// quests, or the plan's rules - picked, not typed, so the name can't be mistyped. A value that isn't in the list
+		/// (typed by hand, or from an older plan) is kept as it is and shown as "(custom)"; "custom..." gives the text field
+		/// back for a name the island doesn't have yet. False: nothing to list (an unknown island) - the caller shows the
+		/// text field and its ▾.
+		/// </summary>
+		bool IdDrop(Transform row, IntroRule r, string field, string name, List<ChoiceWindow.Choice> choices, string current, Action<string> set, float width, string hint)
+		{
+			if (choices.Count == 0 || typing.Contains(TypingKey(r, field))) return false;
+			current = current ?? "";
+			bool empty = current.Trim().Length == 0 && !choices.Any(ch => ch.Value.Length == 0);
+			var options = new List<DropList.Option>();
+			if (empty) options.Add(new DropList.Option(current, "- choose -", "Nothing chosen yet: this link points at nothing"));
+			options.AddRange(choices.Select(ch => new DropList.Option(ch.Value, ch.Label, ch.Detail)));
+			if (current.Trim().Length > 0 && !choices.Any(ch => ch.Value == current))
+				// (exactly as written: the list shows it, never a near match in its place)
+				options.Add(new DropList.Option(current, current + " (custom)", "Typed by hand and not found on the island: kept as it is (Check tells whether it works)"));
+			options.Add(new DropList.Option(CustomValue, "custom...", "Type a name yourself (e.g. one you will add to the island later)"));
+			DropList.Make(row, name, options, current, v =>
+			{
+				Keep();
+				if (v == CustomValue) typing.Add(TypingKey(r, field));
+				else set(v);
+				ShowRules();
+			}, width, hint);
+			LinkMark(row, empty, "Nothing chosen: pick one from the list");
+			return true;
+		}
+
+		static string TypingKey(IntroRule r, string field) { return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(r) + "|" + field; }
+
+		/// <summary>A red mark after a link that points at nothing yet (the card shows it at once; Check and Save say more).</summary>
+		static void LinkMark(Transform row, bool bad, string why)
+		{
+			if (!bad) return;
+			Text t = UIKit.Label(row, "\u2716", 13, PlanCheckWindow.ColorOf(PlanChecker.Level.Problem), TextAnchor.MiddleCenter, FontStyle.Bold, "LinkMark");
+			UIKit.Size(t.gameObject, 16);
+			UIKit.Hint(t.gameObject, why);
+		}
+
+		/// <summary>Tests: what the ▼ of a rule's field lists (field: whenref, whenarg, whereref, donearg, whenquest).</summary>
 		public static List<ChoiceWindow.Choice> FieldChoices(int rule, string field)
 		{
 			if (instance == null || instance.plan == null || rule < 0 || rule >= instance.plan.Rules.Count) return new List<ChoiceWindow.Choice>();
@@ -1189,6 +1292,7 @@ namespace DynamicIslands.Editor
 				case "whenarg": return ThingChoices(instance.IslandOf(r.WhenRef), r.When);
 				case "whereref": return instance.WhereRefChoices(r);
 				case "donearg": return ThingChoices(r.What == "island" ? r.WhatArg : null, r.StoryDone.Split(':')[0]);
+				case "whenquest": return QuestChoices(instance.IslandOf(r.WhenRef));
 			}
 			return new List<ChoiceWindow.Choice>();
 		}
@@ -1339,19 +1443,23 @@ namespace DynamicIslands.Editor
 		{
 			Keep();
 			List<PlanChecker.Finding> found = PlanChecker.Check(plan, islandMode, false, ownFacts);
-			string problems = found.Any(f => f.Level == PlanChecker.Level.Problem) ? "problems" : "";
+			// (USE2: Save still saves - an old plan is never refused - but says how many links are broken, and the report
+			// opens with "Show rule n" going to each faulty field)
+			int broken = found.Count(f => f.Level == PlanChecker.Level.Problem);
+			string problems = broken > 0 ? " - but " + broken + " problem" + (broken == 1 ? "" : "s") + " found: players can get stuck. The report shows each one (Show rule goes to the field to fix)" : "";
+			LastSaveNotice = problems;
 			if (islandMode)
 			{
 				IslandSettingsUndo.Change(() => WorldDirector.SetRulesInProps(DynamicIslands.currentIslandProps, plan.Rules));
 				MarkSaved();
 				EditorUI.RefreshIsland();
-				DynamicIslands.Notify("The island's " + plan.Rules.Count + " rule(s) are kept with it (save the island, Ctrl+S)" + (problems.Length > 0 ? " - Check found problems" : ""), problems.Length > 0);
+				DynamicIslands.Notify("The island's " + plan.Rules.Count + " rule(s) are kept with it (save the island, Ctrl+S)" + problems, problems.Length > 0);
 			}
 			else
 			{
 				try { plan.Save(); MarkSaved(); }
 				catch (Exception e) { DynamicIslands.Notify("Could not save the plan: " + e.Message, true); return; }
-				DynamicIslands.Notify("Saved plan '" + plan.Name + "' (" + plan.Rules.Count + " rules)" + (problems.Length > 0 ? " - Check found problems" : ""), problems.Length > 0);
+				DynamicIslands.Notify("Saved plan '" + plan.Name + "' (" + plan.Rules.Count + " rules)" + problems, problems.Length > 0);
 			}
 			RunCheck(true, problems.Length > 0);
 		}
@@ -1536,7 +1644,7 @@ namespace DynamicIslands.Editor
 			ShowFindings();
 			inCheck = true; // (the cards show these findings: no quick check again right after)
 			try { ShowRules(); } finally { inCheck = false; }
-			if (showReport) PlanCheckWindow.Open(plan.Name, findings, () => RunCheck(true, true), ShowRule);
+			if (showReport) PlanCheckWindow.Open(plan.Name, findings, () => RunCheck(true, true), ShowRule, ShowField);
 		}
 
 		/// <summary>The summary beside the map (and LastCheck for tests).</summary>
@@ -1574,6 +1682,37 @@ namespace DynamicIslands.Editor
 			scroll.verticalNormalizedPosition = Mathf.Clamp01(1f - top / (content - view));
 		}
 
+		/// <summary>The report's "Show rule n" for a finding about one field: the card in view, that field outlined in red
+		/// and selected (USE2, 11-24).</summary>
+		void ShowField(int index, string field)
+		{
+			ShowRule(index);
+			RectTransform card;
+			if (!cardOf.TryGetValue(index, out card) || card == null) return;
+			string[] names;
+			switch (field)
+			{
+				case "id": names = new[] { "Field_Id" }; break;
+				case "whenref": names = new[] { "Drop_WhenRef", "Field_WhenRef" }; break;
+				case "whenarg": names = new[] { "Drop_WhenArg", "Field_WhenArg" }; break;
+				case "whenquest": names = new[] { "Drop_WhenQuest", "Field_WhenQuest" }; break;
+				case "whatarg": names = new[] { "Field_WhatArg", "Drop_What" }; break;
+				case "whereref": names = new[] { "Field_WhereRef", "Drop_Direction" }; break;
+				case "distance": names = new[] { "Field_Distance" }; break;
+				case "place": names = new[] { "StoryPlace" }; break;
+				case "donearg": names = new[] { "Drop_DoneArg", "Field_DoneArg", "Drop_Done" }; break;
+				default: names = new string[0]; break;
+			}
+			Transform[] all = card.GetComponentsInChildren<Transform>(false);
+			Transform hit = names.Select(n => all.FirstOrDefault(t => t.name == n)).FirstOrDefault(t => t != null);
+			if (hit == null) return;
+			Outline o = hit.gameObject.GetComponent<Outline>() ?? hit.gameObject.AddComponent<Outline>();
+			o.effectColor = PlanCheckWindow.ColorOf(PlanChecker.Level.Problem);
+			o.effectDistance = new Vector2(2f, -2f);
+			if (UnityEngine.EventSystems.EventSystem.current != null) UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(hit.gameObject);
+			LastShownField = hit.name;
+		}
+
 		/// <summary>A card's findings, under its sentence (after the first Check).</summary>
 		void CardFindings(RectTransform card, int index, ref float height)
 		{
@@ -1583,7 +1722,7 @@ namespace DynamicIslands.Editor
 			if (mine.Count == 0 && tips == 0) return;
 			foreach (PlanChecker.Finding f in mine.Take(3))
 			{
-				Text t = UIKit.Label(card, (f.Level == PlanChecker.Level.Problem ? "\u2716 " : "\u26A0 ") + Short(f.Text.Replace(RuleLabel(index) + " ", ""), 170), 12, PlanCheckWindow.ColorOf(f.Level), TextAnchor.MiddleLeft, FontStyle.Normal, "Finding");
+				Text t = UIKit.Label(card, (f.Level == PlanChecker.Level.Problem ? "\u2716 " : "\u26A0 ") + Short(f.Text.Replace(PlanChecker.RuleName(plan, index) + ": ", "").Replace(PlanChecker.RuleName(plan, index) + " ", ""), 170), 12, PlanCheckWindow.ColorOf(f.Level), TextAnchor.MiddleLeft, FontStyle.Normal, "Finding");
 				t.horizontalOverflow = HorizontalWrapMode.Wrap;
 				UIKit.Size(t.gameObject, -1, 32);
 				height += 32f + 6f;
@@ -1596,7 +1735,6 @@ namespace DynamicIslands.Editor
 			}
 		}
 
-		string RuleLabel(int i) { IntroRule r = plan.Rules[i]; return "Rule " + (i + 1) + (r.Id.Length > 0 ? " '" + r.Id + "'" : ""); }
 
 		/// <summary>A rough top-down sketch: the raft in the middle, islands where their rules would put them.</summary>
 		void DrawMap()

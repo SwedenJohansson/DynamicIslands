@@ -65,7 +65,8 @@ namespace DynamicIslands.Editor
 
 		static TreasurePointManager Manager { get { return UnityEngine.Object.FindObjectOfType<TreasurePointManager>(); } }
 
-		/// <summary>Makes the island's treasure points, except those dug up and not grown back (after its state was applied).</summary>
+		/// <summary>Makes the island's treasure points, except those dug up and not grown back (after its state was applied).
+		/// Again on a client when the host frees a story treasure (RegrowForStory): the points made already are kept.</summary>
 		public static void OnIslandReady(IslandWorldState.Entry e)
 		{
 			if (e == null || e.Root == null) return;
@@ -76,6 +77,8 @@ namespace DynamicIslands.Editor
 			int made = 0;
 			foreach (BuriedTreasure b in all)
 			{
+				if (b.Made) continue;
+				RegrowForStory(e, b);
 				ObjectState s;
 				if (e.State.TryGetValue(Ordinal(e.Id, b.Number), out s) && !s.Active) continue;
 				if (DugForGood(e, b.Number)) continue;
@@ -92,6 +95,39 @@ namespace DynamicIslands.Editor
 				catch (Exception ex) { Debug.LogError("[CUSTOM ISLANDS] Buried treasure on '" + e.HostName + "': " + ex.Message); }
 			}
 			if (made > 0) Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': " + made + " buried treasure(s)");
+		}
+
+		/// <summary>Host: story treasures that can be dug again (the CI checks read it).</summary>
+		internal static int RegrownForStory;
+
+		/// <summary>
+		/// Host, the island loaded (quest softlock audit M6): a treasure dug up for good that holds a story item a check or a
+		/// survivor's cage still needs, while the crew holds fewer than needed (used up, or lost): it can be dug again - its
+		/// keys are freed, here and for the players. A story treasure never grows back, so the story waited for it for good.
+		/// </summary>
+		static void RegrowForStory(IslandWorldState.Entry e, BuriedTreasure b)
+		{
+			if (!Raft_Network.IsHost || !b.HoldsStory) return;
+			int keep = KeepBase + b.Number;
+			bool kept = ContentState.IsUsed(e, keep);
+			if (!kept && !DugForGood(e, b.Number)) return;
+			string id = null, where = null;
+			foreach (KeyValuePair<string, int> l in b.Loot)
+			{
+				if (!StoryItems.IsStory(l.Key)) continue;
+				string s = StoryItems.IdOf(l.Key), w;
+				if (StoryNeeds.Needed(s, out w) > StoryBook.Count(s)) { id = s; where = w; break; }
+			}
+			if (id == null) return;
+			// (the dug mark first, then the for-good one: a player's copy makes the point when the last one comes)
+			foreach (int k in new[] { Ordinal(e.Id, b.Number), kept ? keep : OldKeepBase + b.Number })
+			{
+				if (!e.State.ContainsKey(k)) continue;
+				ContentState.ApplyUsed(e.Id, k, -1);
+				IslandNetwork.SendUsed(e.Id, k, -1);
+			}
+			RegrownForStory++;
+			Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': buried treasure " + b.Number + " can be dug again: it holds '" + id + "', still needed on '" + where + "', and the crew has too few");
 		}
 
 		/// <summary>Records the dug-up treasures in the island's state (with IslandObjectState.Capture).</summary>

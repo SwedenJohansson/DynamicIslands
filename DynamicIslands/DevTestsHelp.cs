@@ -285,7 +285,10 @@ namespace DynamicIslands
 				"rule = st | type:sandbar | step:shrine:2 | ahead:300 | |\n" +                       // 4
 				"rule = after | type:wreck | rule:shrine | ahead:300 | |\n" +                        // 5
 				"rule = typed | type:sandbar | zone:next:x | ahead:300 | |\n" +                      // 6
-				"rule = story | island:" + PickShrine + " | start | receiver:600 | | Story | first | zone:altar\n"); // 7
+				"rule = story | island:" + PickShrine + " | start | receiver:600 | | Story | first | zone:altar\n" + // 7
+				"rule = hand | type:sandbar | zone:shrine:old gate | ahead:300 | |\n" +             // 8 (typed by hand, not on the island)
+				"rule = q3 | type:sandbar | quest:shrine:3 | ahead:300 | |\n" +                     // 9 (a quest number the island hasn't)
+				"rule = after2 | type:wreck | rule:shrine | ahead:300 | |\n");                      // 10
 			p.Save();
 			Transform window = EditorUI.Canvas.transform.Find("WorldPlanWindow");
 			try
@@ -318,10 +321,26 @@ namespace DynamicIslands
 				Transform card = WorldPlanWindow.CardFor(rule);
 				return card != null ? card.GetComponentsInChildren<Button>(false).FirstOrDefault(b => b.name == name) : null;
 			};
-			bool storyPick = pickButton(7, "Pick_DoneArg") != null;
-			Button zoneButton = pickButton(2, "Pick_WhenArg");
-			Check(ref ok, zoneButton != null && pickButton(1, "Pick_WhenRef") != null && pickButton(2, "Pick_WhereRef") != null && storyPick && pickButton(0, "Pick_WhenArg") == null,
-				"a ▾ after the fields that name something (none after 'the world starts')");
+			// (USE1 11-24: a known island's zones, signals, steps, quests and notes are a drop-down; an unknown one keeps the field and its ▾)
+			Func<int, string, DropdownButton> drop = (rule, name) =>
+			{
+				Transform card = WorldPlanWindow.CardFor(rule);
+				return card != null ? card.GetComponentsInChildren<DropdownButton>(false).FirstOrDefault(d => d.name == name) : null;
+			};
+			Func<int, string, List<string>> dropValues = (rule, name) => { DropdownButton d = drop(rule, name); return d != null ? d.Options.Select(o => o.Value).ToList() : new List<string>(); };
+			Check(ref ok, drop(2, "Drop_WhenArg") != null && drop(3, "Drop_WhenArg") != null && drop(4, "Drop_WhenArg") != null && drop(7, "Drop_DoneArg") != null && drop(1, "Drop_WhenQuest") != null
+				&& drop(5, "Drop_WhenRef") != null && pickButton(2, "Pick_WhenArg") == null && pickButton(6, "Pick_WhenArg") != null && drop(6, "Drop_WhenArg") == null
+				&& pickButton(1, "Pick_WhenRef") != null && pickButton(2, "Pick_WhereRef") != null && pickButton(0, "Pick_WhenArg") == null && drop(0, "Drop_WhenArg") == null,
+				"a known island's zone, signal, steps, quest and the story's done-when are lists; 'after a rule' lists the rules; a map-type island keeps the field and ▾; island fields keep ▾");
+			Check(ref ok, dropValues(2, "Drop_WhenArg").SequenceEqual(new[] { "altar", "cave", WorldPlanWindow.CustomValue }), "the zone list: the island's zones, then custom...: " + string.Join(", ", dropValues(2, "Drop_WhenArg").ToArray()));
+			Check(ref ok, dropValues(1, "Drop_WhenQuest").FirstOrDefault() == "" && drop(1, "Drop_WhenQuest").Options[0].Label.StartsWith("main quest"), "the quest list starts with the main quest");
+			Check(ref ok, dropValues(5, "Drop_WhenRef").Contains("shrine") && !dropValues(5, "Drop_WhenRef").Contains(PickShrine), "'right after a rule' lists the plan's rules");
+			// (hand-typed values kept as they are, shown as custom - never cleared - coordinator 11-24)
+			DropdownButton hand = drop(8, "Drop_WhenArg"), q3 = drop(9, "Drop_WhenQuest");
+			Check(ref ok, hand != null && hand.Value == "old gate" && hand.Options.Any(o => o.Value == "old gate" && o.Label.Contains("(custom)")) && WorldPlanWindow.Current.Rules[8].WhenArg == "old gate",
+				"a zone typed by hand that the island hasn't is kept and shown as custom");
+			Check(ref ok, q3 != null && q3.Value == "3" && q3.Options.Any(o => o.Value == "3" && o.Label.Contains("(custom)")) && WorldPlanWindow.Current.Rules[9].WhenArg == "3", "a quest number the island hasn't is kept and shown as custom");
+			Button zoneButton = drop(2, "Drop_WhenArg") != null ? drop(2, "Drop_WhenArg").GetComponent<Button>() : null;
 			if (zoneButton != null)
 			{
 				// (the card in view, as a player scrolls to it before clicking)
@@ -334,16 +353,30 @@ namespace DynamicIslands
 					rulesScroll.content.anchoredPosition += new Vector2(0f, gap / rulesScroll.content.lossyScale.y); // (up by how far its top is under the list's top)
 					yield return null;
 				}
-				zoneButton.onClick.Invoke();
-				yield return new WaitForSecondsRealtime(0.4f);
-				Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.Values.SequenceEqual(new[] { "altar", "cave" }) && ChoiceWindow.Title.Contains("TRIGGER ZONES"), "clicking it lists the zones: " + ChoiceWindow.Title);
-				Screenshot(new[] { "planpicks_zones" });
-				yield return new WaitForSecondsRealtime(0.6f);
-				ChoiceWindow.PickValue("cave");
+				Check(ref ok, DropList.Click(zoneButton, "cave"), "the zone list opens and 'cave' is clicked");
 				yield return null;
-				Transform card = WorldPlanWindow.CardFor(2);
-				bool shown = card != null && card.GetComponentsInChildren<InputField>(false).Any(f => f.text == "cave");
-				Check(ref ok, WorldPlanWindow.Current.Rules[2].WhenArg == "cave" && shown, "picking 'cave' fills the field and the rule");
+				DropdownButton after = drop(2, "Drop_WhenArg");
+				Check(ref ok, WorldPlanWindow.Current.Rules[2].WhenArg == "cave" && after != null && after.Value == "cave", "picking 'cave' sets the rule and the list shows it");
+				// custom...: the text field and its ▾ come back, with the value in it
+				Check(ref ok, DropList.Pick(WorldPlanWindow.CardFor(2).gameObject, "Drop_WhenArg", WorldPlanWindow.CustomValue), "custom... picked");
+				yield return null;
+				Button typedPick = pickButton(2, "Pick_WhenArg");
+				Transform card2 = WorldPlanWindow.CardFor(2);
+				Check(ref ok, typedPick != null && drop(2, "Drop_WhenArg") == null && card2 != null && card2.GetComponentsInChildren<InputField>(false).Any(f => f.name == "Field_WhenArg" && f.text == "cave"),
+					"custom... gives the text field (with 'cave') and its ▾ back");
+				if (typedPick != null)
+				{
+					typedPick.onClick.Invoke();
+					yield return new WaitForSecondsRealtime(0.4f);
+					Check(ref ok, ChoiceWindow.IsOpen && ChoiceWindow.Values.SequenceEqual(new[] { "altar", "cave" }) && ChoiceWindow.Title.Contains("TRIGGER ZONES"), "the ▾ lists the zones: " + ChoiceWindow.Title);
+					Screenshot(new[] { "planpicks_zones" });
+					yield return new WaitForSecondsRealtime(0.6f);
+					ChoiceWindow.PickValue("altar");
+					yield return null;
+					Transform card = WorldPlanWindow.CardFor(2);
+					bool shown = card != null && card.GetComponentsInChildren<InputField>(false).Any(f => f.text == "altar");
+					Check(ref ok, WorldPlanWindow.Current.Rules[2].WhenArg == "altar" && shown, "picking 'altar' fills the field and the rule");
+				}
 			}
 			Button refButton = pickButton(1, "Pick_WhenRef");
 			if (refButton != null) { refButton.onClick.Invoke(); yield return null; ChoiceWindow.PickValue(PickPlain); yield return null; }
@@ -351,8 +384,8 @@ namespace DynamicIslands
 			Button whereButton = pickButton(2, "Pick_WhereRef");
 			if (whereButton != null) { whereButton.onClick.Invoke(); yield return null; ChoiceWindow.PickValue(""); yield return null; }
 			Check(ref ok, WorldPlanWindow.Current.Rules[2].WhereRef == "", "picking 'where it happened' empties 'of'");
-			Button doneButton = pickButton(7, "Pick_DoneArg");
-			if (doneButton != null) { doneButton.onClick.Invoke(); yield return null; ChoiceWindow.PickValue("cave"); yield return null; }
+			DropdownButton doneDrop = drop(7, "Drop_DoneArg");
+			if (doneDrop != null) { DropList.Click(doneDrop.GetComponent<Button>(), "cave"); yield return null; }
 			Check(ref ok, WorldPlanWindow.Current.Rules[7].StoryDone == "zone:cave", "picking the story's zone: " + WorldPlanWindow.Current.Rules[7].StoryDone);
 			Button typedButton = pickButton(6, "Pick_WhenArg");
 			if (typedButton != null) { typedButton.onClick.Invoke(); yield return new WaitForSecondsRealtime(0.4f); }
@@ -361,6 +394,14 @@ namespace DynamicIslands
 			Screenshot(new[] { "planpicks_empty" });
 			yield return new WaitForSecondsRealtime(0.6f);
 			ChoiceWindow.Close();
+			// (Save from the window keeps hand-typed values exactly; it saves even with problems and says how many)
+			Check(ref ok, Click(window.gameObject, "Save"), "Save clicked");
+			yield return null;
+			if (PlanCheckWindow.IsOpen) PlanCheckWindow.Close();
+			WorldPlan back = WorldPlan.Load(PickPlan);
+			IntroRule backHand = back != null ? back.Rules.FirstOrDefault(x => x.Id == "hand") : null, backQ3 = back != null ? back.Rules.FirstOrDefault(x => x.Id == "q3") : null;
+			Check(ref ok, backHand != null && backHand.WhenArg == "old gate" && backQ3 != null && backQ3.WhenArg == "3" && WorldPlanWindow.LastSaveNotice.Contains("problem"),
+				"saved: the hand-typed zone and quest number are in the file as typed; the notice says problems were found: " + WorldPlanWindow.LastSaveNotice);
 			WorldPlanWindow.Close();
 
 			// The island's own rules: self first

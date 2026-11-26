@@ -305,7 +305,7 @@ namespace DynamicIslands.Editor
 				case "step": return arg + " step(s) of its quest are done";
 				case "zone": return "its zone '" + arg + "' fires";
 				case "signal": return "its signal '" + arg + "' is sent";
-				case "note": return "its note #" + arg + " is read";
+				case "note": return (arg.Trim().Length > 0 && arg.Trim().All(char.IsDigit) ? "its note #" + arg : "its note '" + arg + "'") + " is read";
 			}
 			return "its quest is done (or players reach it, if it has none)";
 		}
@@ -389,9 +389,13 @@ namespace DynamicIslands.Editor
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read world plan '" + name + "': " + e.Message); return null; }
 		}
 
+		/// <summary>At most this many rules in one plan.</summary>
+		public const int MaxPlanRules = 1000;
+
 		public static WorldPlan Parse(string name, string text)
 		{
 			var plan = new WorldPlan { Name = name, Random = false };
+			bool tooMany = false;
 			foreach (string raw in (text ?? "").Split('\n'))
 			{
 				string line = raw.Trim();
@@ -418,7 +422,9 @@ namespace DynamicIslands.Editor
 					case "id": plan.Id = value; break;
 					case "rule":
 						IntroRule r = IntroRule.Parse(value);
-						if (r != null) plan.Rules.Add(r);
+						// (a plan of 20,000 rules hung Raft making their ids distinct - audit 2026-10-06)
+						if (r != null && plan.Rules.Count >= MaxPlanRules) { if (!tooMany) Debug.LogWarning("[CUSTOM ISLANDS] World plan '" + name + "': more than " + MaxPlanRules + " rules - the rest are left out"); tooMany = true; }
+						else if (r != null) plan.Rules.Add(r);
 						else { plan.Kept.Add(line); plan.UnreadRules.Add(value); Debug.LogWarning("[CUSTOM ISLANDS] World plan '" + name + "': a rule this version can't read is kept as it is: " + value); }
 						break;
 					default: plan.Kept.Add(line); break;
@@ -520,6 +526,8 @@ namespace DynamicIslands.Editor
 			public List<string> EventPages;
 			/// <summary>Those pages' texts ("object number:title" -> text).</summary>
 			public Dictionary<string, string> EventPageTexts;
+			/// <summary>The story items its checks and survivor cages need (T8 guard, StoryNeeds).</summary>
+			public List<StoryNeeds.Need> Needs;
 		}
 
 		static readonly Dictionary<string, Info> cache = new Dictionary<string, Info>(StringComparer.OrdinalIgnoreCase);
@@ -569,6 +577,7 @@ namespace DynamicIslands.Editor
 				info.EventPageTexts = new Dictionary<string, string>();
 				foreach (KeyValuePair<string, string> kv in Enumerable.Range(0, f.Objects.Count).SelectMany(i => journalText(i, f.Objects[i].Props)).Concat(journalText(Behaviours.IslandIndex, f.Props)))
 					if (!info.EventPageTexts.ContainsKey(kv.Key)) info.EventPageTexts[kv.Key] = kv.Value;
+				info.Needs = StoryNeeds.FromFile(f);
 				info.CheckedAt = Time.unscaledTime;
 				cache[name] = info;
 				return info;
@@ -761,6 +770,9 @@ namespace DynamicIslands.Editor
 			IslandSettings s = e.Root != null ? e.Root.GetComponent<IslandSettings>() : null;
 			return s != null ? s.Props : Props(e.Name);
 		}
+
+		/// <summary>The story items the island's checks and survivor cages need (empty if the file is missing): the T8 guard.</summary>
+		internal static List<StoryNeeds.Need> NeedsOf(string name) { Info i = Get(name); return i != null && i.Needs != null ? i.Needs : new List<StoryNeeds.Need>(); }
 
 		/// <summary>The names of the island's trigger zones (empty if the file is missing): the plan editor's lists.</summary>
 		public static List<string> ZonesOf(string name) { Info i = Get(name); return i != null ? i.Zones.Where(z => !string.IsNullOrEmpty(z)).Distinct(StringComparer.OrdinalIgnoreCase).ToList() : new List<string>(); }

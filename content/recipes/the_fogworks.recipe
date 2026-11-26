@@ -481,4 +481,8 @@ prop treasure8828 treasure.loot=TitaniumOre*3
 place Creature_PufferFish puffers at 0 100 h=-3
 prop puffers creature.count=3
 
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save The Fogworks

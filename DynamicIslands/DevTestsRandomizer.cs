@@ -210,10 +210,13 @@ namespace DynamicIslands
 			Check(ref ok, findable, "Raft still finds every crate and clam by the place it knows (picking up, saving and the network use it)");
 			bool land = moved.All(m => { Vector3? o = WorldRandomizer.OriginalOf(islandOf[m.Key], m.Key); return !o.HasValue || (o.Value.y < -0.5f) == (m.Value.y < -0.5f); });
 			Check(ref ok, land, "crates on land stay on land, under-water ones under water");
+			int movedOnce = WorldRandomizer.MovedCount;
 			WorldRandomizer.Rehandle();
-			yield return new WaitForSeconds(3f);
+			yield return WaitFor(() => WorldRandomizer.MovedCount > movedOnce, 20f);
+			yield return new WaitForSeconds(1f);
 			float drift = moved.Count == 0 ? 0f : moved.Max(m => (m.Key.transform.position - m.Value).magnitude);
-			Check(ref ok, drift < 0.05f, "handled again (as after a reload or on another player's machine): the same spots (max difference " + drift.ToString("F3") + " m)");
+			// (the handling has to have run again: a drift of 0 says nothing if it never did)
+			Check(ref ok, (moved.Count == 0 || WorldRandomizer.MovedCount > movedOnce) && drift < 0.05f, "handled again (" + (WorldRandomizer.MovedCount - movedOnce) + " moved) (as after a reload or on another player's machine): the same spots (max difference " + drift.ToString("F3") + " m)");
 
 			// Extras over Raft's islands
 			List<IslandWorldState.Entry> extras = IslandWorldState.Islands.Where(WorldRandomizer.IsExtras).ToList();

@@ -586,4 +586,11 @@ clear at -51.9 -61.0 r=3 all body only=^BigRock_Low1_Sand
 clear at -1.8 -28.8 r=1.5 all only=^SmallBoulder2
 clear at -1.4 -19.2 r=1.5 all only=^SmallBoulder2
 
+# (lib 3.5.1 minor fixes 11-23: a bamboo stood on the coast's edge, 3 of 8 points round its foot up to 1.1 m over a drop -
+#     taken out)
+clear at -65.27 -78.8 r=1 all only=Bamboo_1
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save The Arena

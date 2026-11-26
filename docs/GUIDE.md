@@ -113,7 +113,7 @@ First: [Three things you can make](#three-things-you-can-make) (island, world pl
    - [9.4 Extra options](#94-extra-options)
    - [9.5 Islands while sailing](#95-islands-while-sailing)
    - [9.6 The level up system](#96-the-level-up-system)
-   - [9.7 SPAWN TO RAFT: the way out when you are stuck](#97-spawn-to-raft-the-way-out-when-you-are-stuck)
+   - [9.7 Spawn to raft: the way out when you are stuck](#97-spawn-to-raft-the-way-out-when-you-are-stuck)
 10. [Settings files](#10-settings-files)
 11. [Console commands](#11-console-commands)
 12. [Limitations: what can't be changed](#12-limitations-what-cant-be-changed)
@@ -399,17 +399,24 @@ you put it there and that is the shorter way), and goes back to its place when t
 
 **Stuck? Skip the current quest step.** If a step can no longer be done (a story key used up by the wrong lock, a
 lever that will not move), the host can skip it: **Esc > Custom Islands > Skip current quest step** (under **Stuck on a
-quest?**, which names the current quest and its step), or the console command `SkipStep` (F10). The button asks first -
+quest or in a hole?**, which names the current quest and its step; **Spawn to raft** sits beside it, [9.7](#97-spawn-to-raft-the-way-out-when-you-are-stuck)), or the console command `SkipStep` (F10). The button asks first -
 "Only if you are stuck: this step counts as done and the quest moves on. Can't be undone." - and **Skip step** then
 counts the step as done: the quest moves on as if you had done it (the next step, and the reward and the finished
 quest after the last one), and what the step would have given is given, so the steps after it can still be done: a
 **collect** step gives the crew the story items it is short of, a **signal** step sends its signal (or puts its object
-in the state it waits for, such as `Gate=open`). Other steps just count as done; their notes, chests and zones stay as
-they are. It works on the **current quest** - any quest: a storyline island's, a plan's or a random island's, main or
+in the state it waits for, such as `Gate=open`), and a **read**, **reach** or **talk** step sets off the note, zone or
+islander it names as if the host had read it, walked in or talked: what that gives or opens (items, a door, the next
+island's signal, a journal page) comes, and it counts as done, so doing it for real later gives nothing twice. On an
+island the host hasn't loaded this happens when the island loads. An open step opens its chest for the host (its loot and
+what opening it does), a set step finishes its set and a light-up step switches the group's lights on, each once. Other
+steps, a read step with no note named and a set or light-up step asking for only part of the group just count as done. It works on the **current quest** - any quest: a storyline island's, a plan's or a random island's, main or
 side quest: the one on the quest panel while it shows one, else the quest that last started or moved on (in a saved
-world just loaded, the one that moved on last). With no quest under way it says **No quest in progress**. Only the
-host can skip (players who joined don't get the button, and `SkipStep` tells them only the host can); everyone sees the
-quest move on, and it is saved with the world.
+world just loaded, the one that moved on last), else an open quest of an island near a player. Not the quest you are
+stuck on? **Other quest (1/3)** next to the buttons goes through every quest in progress, including a side quest while
+the main quest is still open, a quest still at its first step, and a quest on the island where another player is
+stuck (the host can skip that player's step). With no quest under way it says **No quest in progress**. Only the
+host can skip: players who joined see the button greyed with "Only the host can skip a step: ask the host" (and
+`SkipStep` tells them the same); everyone sees the quest move on, and it is saved with the world.
 
 **A reward lost with a save.** A reward follows Raft's saves: if Raft crashes, you quit without saving or you load an
 older save after a quest's reward was paid, the reward went with it - so when you finish the quest again, it is paid
@@ -462,7 +469,10 @@ Tab, Space, Backspace and mouse buttons are passed over). Raft's **Reset Keybind
   key (J: journal)"). An item that is **used up** (say a key a locked door takes) leaves the journal.
   An item its builder linked to one of Raft's own items has a **Take out: <item>** button over its description: it
   takes one out of the journal into your inventory as that Raft item (the crew has one less; the host decides, so two
-  players can't take out the last one twice). It can't be put back.
+  players can't take out the last one twice). It can't be put back, so the journal keeps what a quest still needs:
+  while a lock, check or survivor's cage on an island here (or one the story still brings) needs every one the crew
+  holds, the button is greyed out and says **Needed on <island>**. It works again once that note is read, that cage
+  opened or that island's quest done; spare ones beyond the need can always be taken out.
 - **Quest Pages** (bottom left), **by island** - each island's quest line: each island's pages under its name and its quest's title (**√ done** once the
   quest is done, the whole line in light green) and how many of its notes you have found, **(5/7 notes)** - so you know if some are still left on it - the island you were at last first, its newest page first - so notes of several islands don't get
   mixed up. They are every note you read on a custom island - the first time anyone reads it, once, with its title -
@@ -836,7 +846,8 @@ Select a buried treasure for its own settings: **Extra loot...** chooses items i
 treasure loot - Raft's items or the island's story items - once, to whoever picks the chest up (**None** takes them
 out again). Raft's shovel only digs where the detector has found the treasure, so without a detector players find
 nothing. A treasure that holds a **story item** never comes back once dug up: dug for one player, it is dug for the whole
-crew, and the story item goes to the crew.
+crew, and the story item goes to the crew. Only if the crew no longer holds that item (used up or lost) while a check or
+a survivor's cage still needs it can the treasure be dug again, from the next time the island loads on the host.
 
 **Keycard doors.** Raft's card reader door (**PlantationDoor**, the Tangaroa card reader) and its other key doors
 (Utopia's entrance and hut doors, Varuna's garage, Temperance's reactor door, the padlocked door) are ready pieces:
@@ -907,6 +918,12 @@ against a wall) stands up straight; a bigger lean - more than 25°, a boulder ly
   the Stamps tab, a stamp), type a new name and press **Rename**, or press **Delete** twice - it is moved to
   `Mods\DynamicIslands\deleted\groups` (or `...\stamps`), where you can get it back. Islands keep what was placed
   from a group: a placed group is separate objects.
+- **Raft buildings:** the category under **My groups** holds single buildings from Raft's own story islands
+  (Balboa: relay tower, stair tower, dish roof, relay antenna; Tangaroa: apartment floor, bookshelf; Temperance:
+  weather station room, lab shelf; Caravan Town: rocket wreck), ready to place like a group:
+  one click puts the whole building down, one Ctrl+Z takes it away, and its parts stay separate objects to move or
+  delete. A building loads from its Raft island the first time you pick it (a few seconds). **Vasagatan hull** is
+  the Vasagatan's hull and decks as one object (its furniture is among the Vasagatan's own objects).
 
 ![My groups and stamps](images/editor-groups-stamps.jpg)
 *My groups and stamps: the saved groups (or stamps), the name to rename to, Rename and Delete.*
@@ -1485,7 +1502,7 @@ library's example islands and plans.
 
 **Sharing yours in the library:** click **Submit yours...** at the top of the island library. It explains the three steps:
 1. **Export** your island or plan in the editor (above), with a title, summary, description and picture;
-2. **post the pack** (`.zip`) on the [Custom Islands Discord](https://discord.gg/U7DfKY9tN) with a few words about it;
+2. **post the pack** (`.zip`) on the [Custom Islands Discord](https://discord.gg/u9tkW9uSaQ) with a few words about it;
 3. it is **approved first**: every entry is looked at before it goes into the library, so it can take a while. Once it
    is in, every player sees it in the library.
 
@@ -1989,6 +2006,8 @@ Select any object → **Behaviour & events...**. No code needed:
   items, play a sound, teleport the player, send a signal, write a journal page, **unlock one of Raft's characters**
   for the player (its name or number; it is kept in the player's Raft profile, like Raft's own unlocks), or **wait**
   some seconds first: under each event, **+ Add an action** adds one, **+ Wait** a pause and **+ Only if...** a check.
+  The actions after a wait are kept with the world: if the island unloads, or the host saves and quits, before they run,
+  they run when it loads again.
   Each action is chosen from a **▼ list**
   that says what it does; **…** beside a name lists the names on this island. The actions that work on objects (show,
   hide, show/hide, open, close, open/close, teleport to) name them in the **name** field: leave it empty (or pick
@@ -2154,7 +2173,7 @@ for them; players find them in the journal (J), or in Raft's notebook (T) for a 
 beside an item links it to one of Raft's own items (**-** clears it): players can then **take it out** of the journal
 as that item, into their inventory ([3](#the-journal-j)) - a map piece that becomes a real blueprint, a log that
 becomes planks. Story items stay journal items (a saved world never holds an item Raft doesn't know); the link is
-only a way out. Raft's own quest item pickups (search "QuestItemPickup") work as story items too: picked up, the crew gets Raft's item (`story:raft-<type>`). The list has the pickups of Vasagatan (the bolt cutters, keys, the keycard...), Temperance and Utopia too.
+only a way out, and there is no way back: an item taken out no longer counts for a **has**/**take** check or a cage's key. So the journal keeps what a quest still needs: while a **has**/**take** check or a cage's key on an island in the world, or on one the story plan still brings, needs every one the crew holds, it can't be taken out (players see **Needed on <island>**; the spare ones can). A need ends once its note is read or its island's **arrive** has run, its once-only zone or its chest that doesn't fill again was used, its cage opened, or its island's quests are all done. A check on an event that runs again (an object's look or use, a repeating zone) on an island with no quest keeps the item for good, and an island that arrives from the library pool rather than the plan isn't known in advance, so where you can, link only items no check needs (a **Collect** step still counts it). Raft's own quest item pickups (search "QuestItemPickup") work as story items too: picked up, the crew gets Raft's item (`story:raft-<type>`). The list has the pickups of Vasagatan (the bolt cutters, keys, the keycard...), Temperance and Utopia too.
 
 **What ends up in the players' journal** ([3](#the-journal-j)), so you can plan a story with it:
 
@@ -3102,6 +3121,15 @@ your saved islands (with "quest, 4 steps" or "no quest"), and the zones, signals
 file. Picking one fills the field; typing still works. A new map-type island is only made in the world, so its zones and
 signals can't be listed: its list is empty and says so - type the name.
 
+**Lists instead of fields.** When the island is known (a rule of the plan bringing a saved island, or a saved island),
+its zone, signal, number of quest steps, quest (main quest first, then Quest 2...) and a main story island's "done when"
+zone, signal, step or note are a ▼ list of what the island really has, and "right after a rule" is a ▼ list of the
+plan's rules. The last choice, **custom...**, gives the text field and its ▾ back, to type a name yourself (one you will
+add to the island later). A name typed by hand that the island hasn't got is never cleared or changed: the list shows
+it as **(custom)**, and Check says whether it works. A link with nothing chosen yet has a red **✖** after it
+(hover it: "Nothing chosen yet"); hover a field's name for a short hint of what goes in it. The plan file is the same as
+before: old plans load and play as they did.
+
 ![The ▾ list of a rule](images/plan-picks.jpg)
 *The ▾ after the zone of "When a trigger zone fires" lists the zones of the island the rule waits for (here the saved island "shrine").*
 
@@ -3172,8 +3200,28 @@ doesn't know and skips), its trigger zones and signals, and - for new islands of
 - **Tip** (blue): good to know (no message, very far away, Raft's story...).
 
 After the first Check, every card shows its own problems and warnings in red and yellow under its sentence, and they
-follow as you change the plan. The box under the map sums up. **Save** checks too, and opens the report when there is a
-problem. The report's **Check again** checks after you changed something.
+follow as you change the plan. The box under the map sums up. **Save** checks too: it always saves, and when there is a
+problem its message says how many ("2 problems found: players can get stuck") and the report opens. The report's
+**Check again** checks after you changed something. **Show rule** closes the report, scrolls to the rule's card and
+outlines in red the field to fix (the zone list, the Name field, the "done when"...).
+
+**Storyline check messages.** Every message names the rule (its number, name, Receiver name and island:
+`Rule 3 'cave' ("Old Cave", island 'shrine')`), says what is wrong, and its "how to fix" starts with the part of the
+card to change (WHEN, BRING, WHERE, STORY > done when). The ones a storyline's links give:
+
+| The message says | What to do |
+|---|---|
+| has no name / has the same name as rule N | Type a (different) name in the rule's Name field |
+| waits for another rule but doesn't say which / waits for itself / waits for rule 'x', which isn't in the plan | WHEN: pick the rule from the list after "rule" |
+| doesn't say which island / waits for its own island / waits for "self" / no rule of this plan and no saved island has that name | WHEN: pick the island from the list after "island" |
+| waits for the saved island 'x', but no rule of this plan brings it | Add a rule that brings it, or pick a rule's island (with random islands off it never comes) |
+| waits for a distance / a day but has no number | WHEN: type the km or the day in the number box |
+| the number of steps isn't a number from 1 up / its quest has only N | WHEN (or STORY > done when): pick the steps from the list |
+| waits for quest N of ..., which has only its main quest / which has no quest | WHEN: pick the quest from the list, or wait for "players reach an island" |
+| waits for a trigger zone / a note / a signal but doesn't say which; waits for the zone 'x' / note 'x' / note #n the island hasn't; nothing there sends the signal | WHEN or STORY > done when: pick from the list, or add that zone, note (with a text) or signal to the island |
+| its place in Raft's story can't be read (problem) / its "done when" can't be read (warning) | STORY: pick the place or "done when" again from the list |
+| its distance isn't a number (warning) | WHERE: type the metres as a number |
+| brings an island but doesn't say which | BRING: pick a saved island from the list |
 
 Check walks the plan in **play order**, the order a player meets its islands, not the order of the cards. Raft's story
 chain comes first, with your islands in their places (first, after, instead of). Every other rule comes where its WHEN
@@ -3289,7 +3337,7 @@ rule = id | what | when | where | message | Receiver name
 | where | `ahead:<m>`, `near:<island>:<m>:<direction>`, `receiver:<m>`, `sailing:<m>`. In `near`, `self` = the island where the WHEN happened (the window writes it when **of** is empty); the direction can also be degrees. End with `:needs=<blueprint>` (`engine`, `steering`, `controls` or a Raft item name, e.g. `near:self:700:east:needs=engine`) to hold the Receiver dot and the side placing until the player has that blueprint (the DOT choice) |
 
 Two more parts put an island into the main story: `| first` / `after:<story island or rule id>` / `instead:<story island>` / `beside`
-and when it's done: `quest`, `visit`, `step:<n>`, `zone:<zone>`, `signal:<signal>`, `note:<note number>` (empty: its quest, or reaching it). Three more parts style its notebook tab: `| tab title | tab colour | tab intro`; the colour is a number, 1 pink, 2 sand, 4 purple, 5 teal, 6 olive, 7 red, 8 green, 9 blue, 10 light blue (there is no 3; empty or 0 = by the island's place in the story). Other lines: `description = ...`, `storyending = ...` (the last page; `\n` = a new line), `endingtitle = ...` and `credits = ...` (the credits' title and the makers' names, `\n` between names),
+and when it's done: `quest`, `visit`, `step:<n>`, `zone:<zone>`, `signal:<signal>`, `note:<note number or title>` (empty: its quest, or reaching it). Prefer the note's title (`note:Letter addressed to your raft`, any case): a note's number is its place in the island file and changes when the island is saved again with things added or taken away. A number that is no note with a text on the island any more is not a dead end: on an island with one note, reading that note finishes the step; otherwise the island's quest does (the log says `its note '...' is no note with a text on ...`). The plan check reports a title no note has, or a stale number, for a rule beside Raft's story too (its done-when marks its notebook chapter done). Three more parts style its notebook tab: `| tab title | tab colour | tab intro`; the colour is a number, 1 pink, 2 sand, 4 purple, 5 teal, 6 olive, 7 red, 8 green, 9 blue, 10 light blue (there is no 3; empty or 0 = by the island's place in the story). Other lines: `description = ...`, `storyending = ...` (the last page; `\n` = a new line), `endingtitle = ...` and `credits = ...` (the credits' title and the makers' names, `\n` between names),
 `random = on/off` (no line: off), `story = on/off`, `storyleaveout = Balboa, Tangaroa`. The mod writes two more lines itself, which you leave as they are: `id = <12 letters and digits>` (which plan this is, whatever its name: a world remembers it, so a new plan later given an old plan's name isn't taken for an edit of it; plans from before 2026-10-10 and library plans have none) and `modversion = 3.5` (the version of the mod that saved the plan: a plan saved by a newer version keeps the lines this version can't read, and when it has some you are told to update the mod). Lines this version can't read are kept as they are. Save the file; the World plan window and the New Game box read it the
 next time they open.
 
@@ -3309,6 +3357,13 @@ Up to eight players (Raft's maximum). **Every player needs the mod.**
   (each player hears them while near the island) and camera moments (each player within range sees them). Things
   that move follow a clock all players share, so everyone sees them in the same place. Carried pieces, collapses,
   moved objects and lures are the host's: every player sees who carries what, and a player who joins gets it.
+- **A use the host says no to costs nothing:** when a player's door, zone or note needs a story item and the host
+  refuses it (another player used the crew's last one at the same moment, or the island isn't loaded on the host), the
+  story item goes back to the crew's journal, so a keycard door can still be opened, and the zone, chest or story
+  pickup it used is ready again.
+- **Uses on an island far from the host are kept:** a player's use on an island the host hasn't loaded (the host far
+  away) is kept in the saved world - through a save and quit too, up to 256 per island - and done when the island loads
+  on the host.
 - **What grows back** is the host's decision: things come back when the island loads on the host after the regrow
   days; a player who has the island loaded sees it the next time it loads there.
 - **Joining:** use Steam's "Join Game" on a friend (Raft's own Join World list is empty in this Raft version). Big
@@ -3470,7 +3525,7 @@ final until you click **Create** in the New Game box.
 
 **In a world:** press **Esc → Custom Islands** (a button in Raft's pause menu). The world's own settings window
 opens: monster difficulty, build cost, the world randomizer, the extra options, the level up system and the islands
-while sailing, plus the world's plan and story (where each island's quest stands is in the quest book), and **Stuck on a quest?** with **Skip current quest step** (host; [Quests](#quests): "Stuck? Skip the current quest step"). The **host** changes them there, and every player gets the change at
+while sailing, plus the world's plan and story (where each island's quest stands is in the quest book), and **Stuck on a quest or in a hole?** with **Skip current quest step** (host; [Quests](#quests): "Stuck? Skip the current quest step") and **Spawn to raft** (every player, [9.7](#97-spawn-to-raft-the-way-out-when-you-are-stuck)) side by side. The **host** changes them there, and every player gets the change at
 once. Players who joined see the host's settings, greyed out. (While you try an island from the editor, the same
 window has **Back to the editor**, [4.9](#49-trying-the-island-in-a-world-test).)
 
@@ -3933,7 +3988,7 @@ late, as a grey shape that firms up as you sail closer, so the **Receiver's rada
   the same banks.
 - **It fades:** the fog thickens over about an in-game hour and thins out the same way at the end - never a jump. A
   message says when it rolls in.
-- **Raft's own sky draws it,** with a veil in the fog's colour over the whole view so the sea fades too, by day grey-white and at night dark, with Raft's colours of the hour; Raft's weather
+- **Raft's own sky draws it,** with a light veil in the fog's colour over the whole view so the sea fades too: by day a soft grey-white haze that lets near things keep their colours, at night a moonlit blue-grey in which you can still make out an island's shape close by; Raft's weather
   goes on as before underneath. **While a storm blows** (rain, rough snow, big waves - Raft's own or Storm days) the
   wind keeps the fog away. Under water it does nothing.
 - **Every player sees the same fog at the same time:** each machine works out the banks from the host's world seed and
@@ -4263,17 +4318,20 @@ small gold **Lv 5** under your name.
 
 ---
 
-### 9.7 SPAWN TO RAFT: the way out when you are stuck
+### 9.7 Spawn to raft: the way out when you are stuck
 
-If you have got stuck in a place you cannot get out of, open Raft's **Esc** menu. The **SPAWN TO RAFT** button sits
-just before **Exit**. It opens a box that says "Only use this if you have gotten stuck in a place you cannot get
-out of." with **Yes** and **No**:
+If you have got stuck in a place you cannot get out of, press **Esc > Custom Islands**. Under **Stuck on a quest or
+in a hole?** the **Spawn to raft** button sits next to **Skip current quest step**, so both ways out are in one place.
+It opens a box that says "Only use this if you have gotten stuck in a place you cannot get out of." with **Cancel**
+and **Spawn to raft**:
 
-- **No** takes you back to the menu.
-- **Yes** closes the menu and stands you on your raft.
+- **Cancel** takes you back to the window.
+- **Spawn to raft** closes the window and the menu and stands you on your raft.
 
-The button is greyed out while you are dead, asleep in a bed or on a zipline, or when no raft floor is found. In
-multiplayer each player moves only themselves: nobody else is taken to the raft.
+Every player can use it, the host and players who joined alike, and each player moves only themselves: nobody else
+is taken to the raft and the quests stay as they are. The button is greyed out while you are dead, asleep in a bed
+or on a zipline. If no raft floor is found at that moment, the box still opens and **Spawn to raft** tells you why
+it can't move you. (Until 11-24 this was a **SPAWN TO RAFT** button in Raft's own Esc menu.)
 
 ---
 
@@ -4281,8 +4339,10 @@ multiplayer each player moves only themselves: nobody else is taken to the raft.
 ## 10. Settings files
 
 In `<Raft>\Mods\DynamicIslands\`. Text files: open them with Notepad. They explain themselves, and changes are picked
-up while the game runs - but edit them with Raft closed where you can: the mod rewrites some files itself, and a change
-made while Raft runs can be lost or mixed in half-way. Never edit the files in `worlds\` (the mod rewrites them at every
+up while the game runs (`spawnpool.txt` a second after you save it, so a save still going on is not read half-way; a
+file another program holds locked keeps the values read before and is read again once it can be) - but edit them with
+Raft closed where you can: the mod rewrites some files itself (the Defaults... window, a rename, a library update), and
+when it does while the file is open in Notepad, the one that saves last wins. Never edit the files in `worlds\` (the mod rewrites them at every
 save, and Tidy up and host swaps read their first lines). You don't need to edit them by hand: **Defaults...** in the World settings window of Raft's
 New Game box ([9.1](#91-the-world-settings-window)) sets the `spawnpool.txt` values in a window. It is only there:
 **Esc > Custom Islands** in a world has the world's own settings, not these. In a world, the world's regrow days are the
@@ -4429,8 +4489,8 @@ Press **F10** for RML's console.
 | `Monsters` / `Monsters <level>` | World or main menu | The monster difficulty / change it (host; at the main menu: the next new world). The level is `timid`, `normal`, `fierce`, `savage` or `nightmare`; `easy`, `moderate`, `hard` and `impossible` (the words the levels were first called: they mean timid, fierce, savage and nightmare) and the numbers 0-4 (timid to nightmare) work too; any other word is refused and the five are listed |
 | `BuildCost` / `BuildCost <0-100>` | World or main menu | The build cost / change it (host; at the main menu: the next new world). Any whole number from 0 to 100, with or without `%` (`BuildCost 25%`); the slider in World settings moves in steps of 5 |
 | `AnimalLooks` / `AnimalLooks <level>` | World or main menu | Rare animal looks and the looks tamed per animal / change it (host; at the main menu: the next new world). The level is `Normal`, `More`, `Lots` or 0-2 |
-| `SkipStep` | World (host) | Stuck on a quest? The current quest's step counts as done and the quest moves on (a collect step's story items or a signal step's signal given first; the last step finishes the quest). The same as **Esc > Custom Islands > Skip current quest step**, without the question. No quest under way: "No quest in progress" |
-| `QuestTest` / `QuestTest step <n\|done> [quest]` / `signal <name>` / `give <story item> [count]` / `skip [quest]` / `reset` | World | Try the quest of the custom island nearest you: its quests and steps / jump to a step, back too / send a signal on it / give the crew a story item / skip the current step as `SkipStep` does (its story items or signal given) / the island back to new and made again (all but the list: host) |
+| `SkipStep` | World (host) | Stuck on a quest? The current quest's step counts as done and the quest moves on (a collect step's story items or a signal step's signal given first, a read, reach or talk step's note, zone or islander set off, an open step's chest opened, a set or light-up step's set or lights done; the last step finishes the quest). The same as **Esc > Custom Islands > Skip current quest step**, without the question. No quest under way: "No quest in progress" |
+| `QuestTest` / `QuestTest step <n\|done> [quest]` / `signal <name>` / `give <story item> [count]` / `skip [quest]` / `reset` | World | Try the quest of the custom island nearest you: its quests and steps / jump to a step, back too / send a signal on it / give the crew a story item / skip the current step as `SkipStep` does (its story items, signal, note, zone or talk) / the island back to new and made again (all but the list: host) |
 | `RegrowDays` / `RegrowDays <days>` | World | This world's days until things come back / change it (host; 0 = never; an island's own rule wins) |
 | `DailyQuest` / `DailyQuest new [gather/fish/monsters n [item]]` | World | Today's daily quest (option Daily quest): the task, how far you are, the reward / a new quest now (host; with a kind and a number: that quest, e.g. `DailyQuest new gather 20 Plank`) |
 | `UpgradeTable` | World | The upgrade research table (option Extra upgrades): what this world has researched and learned there |
@@ -4606,7 +4666,7 @@ before you stop.
 
 **I'm stuck in a cave or under water on a custom island.** Use Raft's **Unstuck** (Esc menu). Near a custom island it
 is there at once when you are under the sea or haven't got anywhere for 20 seconds (Raft itself waits 30 seconds),
-and it takes you back to your raft. If that doesn't help, **Esc > SPAWN TO RAFT** is the last way out: it asks
+and it takes you back to your raft. If that doesn't help, **Esc > Custom Islands > Spawn to raft** is the last way out: it asks
 "Only use this if you have gotten stuck in a place you cannot get out of", and **Yes** puts you on your raft.
 
 **I can't get onto a flying island (or a cliff island).** Build stairs or pillars up from the raft. The generator's
@@ -4773,7 +4833,7 @@ problem** button. It opens a box with the list above in short, and buttons that 
   [github.com/SwedenJohansson/DynamicIslands/issues](https://github.com/SwedenJohansson/DynamicIslands/issues)
   (**New issue**). Give it a short title that says what went wrong ("A chest on my island is empty again after
   loading"), write the report, and attach the files (zip them if there are many).
-- **Discord:** post it on the mod's Discord server, [discord.gg/U7DfKY9tN](https://discord.gg/U7DfKY9tN), with the
+- **Discord:** post it on the mod's Discord server, [discord.gg/u9tkW9uSaQ](https://discord.gg/u9tkW9uSaQ), with the
   same details and the files attached.
 
 A template to copy into the issue or the post:
@@ -5290,7 +5350,7 @@ Telegraph Narrows a telescope.
 
 | Island | What it is | What to look at |
 |---|---|---|
-| ![](images/library/dead_letter_office.jpg) **The Dead Letter Office** (first, 500) | A brick post office on a granite skerry, its clock stopped at nine | Done when the letter to your raft is read (`note:2567`), five dead letters as story items carried to later islands |
+| ![](images/library/dead_letter_office.jpg) **The Dead Letter Office** (first, 500) | A brick post office on a granite skerry, its clock stopped at nine | Done when the letter to your raft is read (`note:Letter addressed to your raft`), five dead letters as story items carried to later islands |
 | ![](images/library/pillarbox_pier.jpg) **Pillarbox Pier** (800) | A long pier with the ferry office and its sorting shed | Done when a zone is reached (`zone:sorting`), a dead letter posted with a `take` check |
 | ![](images/library/parcel_canopy.jpg) **Parcel Canopy** (900) | A jungle airstrip with the mail pilot's plane in the trees | Vines cut with the machete, a beacon whose **signal** finishes the island (`signal:beacon`) |
 | ![](images/library/pneumatic_heights.jpg) **Pneumatic Heights** (1000) | A terraced tube-post town round its exchange tower | Comes on day 10 (`day:10`), done after step 18 (`step:18`), valves, tubes and capsules, rats from the cellar |
@@ -5340,7 +5400,7 @@ sanatorium, a shoal of effigies that turn to watch you, terraces where the statu
 a causeway in the mist, a silent choir on a seabird cliff and a drowned children's dormitory. The end is a quarry of
 five listening mirrors. The islands show how far the rule kinds go in one plan: a quest (`quest:cannery`), a day
 (`day:8`), a side island that comes back every second day (`day:2:again`, `ahead:400`), a zone on an earlier island
-(`zone:effigy:circle`), a quest step (`step:terraces:4`), a landing (`visit:causeway`) and notes read (`note:3`).
+(`zone:effigy:circle`), a quest step (`step:terraces:4`), a landing (`visit:causeway`) and a note read (`note:Who made them`).
 Raft's story is on, so Raft's blueprints stay on Raft's islands and the plan has no **Blueprint** steps. Saint Agnes has
 Raft's vending machine and Tangaroa tokens; Gannet Cliff and The Listening Mirrors have a **Raft store**. Its main islands are about as big as Raft's own big islands: each has a hill to climb, a dive, a cave, a wreck or ruin to search, a buried treasure for the metal detector and notes read aloud, and its quest crosses the whole island.
 
@@ -5348,7 +5408,7 @@ Raft's vending machine and Tangaroa tokens; Gannet Cliff and The Listening Mirro
 |---|---|---|
 | ![](images/library/hollins_cannery.jpg) **Hollins Cannery** (first, 500) | A fish cannery on a rocky shore, its slipway and yard | A small quest; the first lullaby on the hall's radio |
 | ![](images/library/saint_agnes_sanatorium.jpg) **Saint Agnes Sanatorium** (800) | Wards, a day room and a cot veranda on a hill terrace | A locked ward, the hydrotherapy house, Raft's vending machine by the gate |
-| ![](images/library/effigy_shoals.jpg) **Effigy Shoals** (day 8, 700) | Sandbars of scarecrow effigies | Done when three notes are read (`note:3`); a second set of effigies, shown later, faces the landing |
+| ![](images/library/effigy_shoals.jpg) **Effigy Shoals** (day 8, 700) | Sandbars of scarecrow effigies | Done when its note 'Who made them' is read (`note:Who made them`); a second set of effigies, shown later, faces the landing |
 | ![](images/library/the_returning_islet.jpg) **The Returning Islet** (side, every 2nd day) | One palm and a hut on stilts with a candle lit | Comes back ahead of the raft (`day:2:again`); a timed `wait` step |
 | ![](images/library/stillwater_terraces.jpg) **Stillwater Terraces** (900) | Flooded rice terraces with a shrine at the top | Three sets of statues, one shown at a time (`show`/`hide` on zones); three Bell stones set in a stand open the stair |
 | ![](images/library/mistlock_causeway.jpg) **Mistlock Causeway** (900) | Plank decks on posts across a misty lagoon, two forks | A safe branch told by sound (`Zone_Sound`); the wrong one sends you back; a timed gate lever |

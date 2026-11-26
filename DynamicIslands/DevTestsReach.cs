@@ -259,12 +259,12 @@ namespace DynamicIslands
 			Log("PASS: reach controls " + (reachControls ? "on" : "off"));
 		}
 
-		[ConsoleCommand(name: "CIReachSwim", docs: "Dev, world: PQ11 - the reach walker's swim alone: the player put in the sea 150 m off, Walk held 3 s with and without a look pitch; the metres moved")]
 		/// <summary>Something solid on the line between two grid spots, from either end (a mesh is hit from its front only).</summary>
 		static bool Between(Vector3 a, Vector3 b, int mask)
 		{
 			return Physics.Linecast(a, b, mask, QueryTriggerInteraction.Ignore) || Physics.Linecast(b, a, mask, QueryTriggerInteraction.Ignore);
 		}
+		[ConsoleCommand(name: "CIReachSwim", docs: "Dev, world: PQ11 - the reach walker's swim alone: the player put in the sea 150 m off, Walk held 3 s with and without a look pitch; the metres moved")]
 		public static void ReachSwimCommand(string[] args) { StartTest(ReachSwimRoutine()); }
 
 		static IEnumerator ReachSwimRoutine()
@@ -354,9 +354,11 @@ namespace DynamicIslands
 				Vector3 from = e.Position + new Vector3(x, 60f, z);
 				var line = new System.Text.StringBuilder("  col " + x.ToString("F1") + " " + z.ToString("F1") + ":");
 				RaycastHit h; int hits = 0;
+				float lowHit = float.MaxValue, topHit = float.MinValue;
 				while (hits < 14 && Physics.Raycast(from, Vector3.down, out h, from.y - (e.Position.y - 40f), reachMask, QueryTriggerInteraction.Ignore))
 				{
 					hits++;
+					lowHit = Mathf.Min(lowHit, h.point.y); topHit = Mathf.Max(topHit, h.point.y);
 					string what = h.collider is TerrainCollider ? "terrain" : BlockerName(h.collider);
 					if (what.Length > 14) what = what.Substring(0, 14);
 					bool st = Stands(h.point), ins = InsideSolid(h.point + Vector3.up * 0.5f);
@@ -364,7 +366,12 @@ namespace DynamicIslands
 					from = h.point + Vector3.down * 0.03f;
 				}
 				var sw = new System.Text.StringBuilder();
-				for (float y = RSea - 1.5f; y > RSea - 12f; y -= 1f)
+				// (the grid's own 1 m swim cells, from the sea's surface down to the column's lowest surface: a sunken island's
+				// ground lies 45 m down - Hadal Commons, 11-24; the first one shown is the one 2 m over its top surface)
+				float yTop = RSea - 1.5f;
+				if (topHit != float.MinValue && topHit + 2f < yTop) yTop -= Mathf.Floor(yTop - (topHit + 2f));
+				if (yTop < RSea - 1.5f) sw.Append("(from " + (yTop - e.Position.y).ToString("F1") + ") ");
+				for (float y = yTop; y > (lowHit != float.MaxValue ? Mathf.Max(lowHit - 0.5f, RSea - 80f) : RSea - 12f); y -= 1f)
 				{
 					Vector3 p = new Vector3(e.Position.x + x, y, e.Position.z + z);
 					bool hit = Physics.CheckSphere(p, 0.4f, reachMask, QueryTriggerInteraction.Ignore), ins = InsideSolid(p);
@@ -1345,6 +1352,10 @@ namespace DynamicIslands
 			{
 				RaycastHit h;
 				if (!Physics.Raycast(o, Vector3.up, out h, dist, reachMask, QueryTriggerInteraction.Ignore)) return false;
+				// (a cave hill's skin met from behind is rock under the hill: its faces all look out of the hill, and the space
+				// between it and the terrain under it is the hill's inside - the grid walked into it and got stuck, Hadal Commons'
+				// dives and Utopia's supplies, 11-24; a cave or a dug mouth under it has its own roof met first)
+				if (h.normal.y > 0.02f && h.collider.name == CaveMountain.SkinName) { overTerrain = false; overWhy = "under the cave skin n" + h.normal.y.ToString("0.00") + " +" + (o.y + h.distance - p.y).ToString("0.0"); return true; }
 				if (h.normal.y <= 0.1f) return false;
 				if (h.normal.y > 0.3f) { overTerrain = h.collider is TerrainCollider; overWhy = BlockerName(h.collider) + " n" + h.normal.y.ToString("0.00") + " +" + (o.y + h.distance - p.y).ToString("0.0"); return true; }
 				float step = h.distance + 0.02f;

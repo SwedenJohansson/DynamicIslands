@@ -780,6 +780,9 @@ namespace DynamicIslands
 			}
 			Log("  Raft's land: small islands " + raftArea["small"].ToString("F0", inv) + " m², big " + raftArea["big"].ToString("F0", inv) + " m²; generated: small " + genArea["small"].ToString("F0", inv) + " m², big " + genArea["big"].ToString("F0", inv) + " m²");
 
+			// (without Raft's measures nothing above was judged)
+			Check(ref ok, raftArea["small"] > 0f && raftArea["big"] > 0f && raftSeaArea > 0f, "Raft's measures read: land of its small and big islands, its sea floor");
+
 			// The quick button per style
 			for (int st = 0; st < TerrainPainter.Styles.Length; st++)
 			{
@@ -790,11 +793,13 @@ namespace DynamicIslands
 			}
 
 			// Randomize existing: a variation of some of Raft's own islands is as thick with things as the island itself
+			int variations = 0;
 			foreach (string label in new[] { "Small island 3", "Small island 6", "Small island 10", "Big island OG", "Big", "Balboa Small 2", "Caravan Island Real Deal" })
 			{
 				RaftIsland isl = RaftIslands.All.FirstOrDefault(r => r.Label == label);
 				float[] own = RaftLand.IslandDensities(label);
 				if (isl == null || own == null) { Log("  " + label + ": not measured"); continue; }
+				variations++;
 				IslandGenSettings v = RaftIslands.VariationOf(isl, new IslandGenSettings { Seed = 77, Hostiles = 0, Friendly = 0, SeaLife = 0, Loot = 0 });
 				float sea = v.WaterLevel;
 				float[,] m = IslandGenerator.HeightsMetres(v, size, res);
@@ -823,6 +828,7 @@ namespace DynamicIslands
 				Log("  " + (fits ? "" : "OFF: ") + "a variation of " + label + " (" + TerrainPainter.StyleName(v.Style) + ", " + isl.Area.ToString("F0", inv) + " m² of land, here " + land.ToString("F0", inv) + "): " + string.Join(", ", parts.ToArray()) + " per 1000 m²");
 				yield return null;
 			}
+			Check(ref ok, variations > 0, variations + " of Raft's islands measured for a variation");
 			if (ok) Log("PASS: the generator's Like Raft is like Raft's islands"); else Fail("the generator's Like Raft is like Raft's islands");
 		}
 	}

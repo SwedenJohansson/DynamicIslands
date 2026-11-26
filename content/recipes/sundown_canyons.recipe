@@ -359,7 +359,9 @@ place Relay_Floor_deck - at 6.5 -76 h=-6.6 rot=14,40,0
 place Relay_Floor_deck - at 8 -70.5 h=-6.4 rot=-18,-30,6
 place "Box Big" fallenbox at 2.5 -79 h=-5 drop yaw=30
 place Loot_SunkenBarrel riverbarrel at 6.5 -82 h=-5.5 drop yaw=10
-place Creature_AnglerFish riverthing at 4 -86 h=-4
+# (lib 3.5.1 minor fixes 11-23: the cliffs step below sloped the river's west wall as talus, which buried the fish at
+#     x 4 - it swims in the channel left on the east side now)
+place Creature_AnglerFish riverthing at 7.5 -86 h=-4
 place Zone_Trigger trestlezone at -8 -75 h=5.5
 # (the railhead at the switchbacks' foot, three lengths: the last two ran on into the bank the switchbacks raised and
 # were buried in it, CIGroundIslands)
@@ -1011,4 +1013,9 @@ place Block_Ladder - at -25.62 -6.69 h=38.42 yaw=180
 place Block_Ladder - at -25.62 -6.69 h=40.84 yaw=180
 place Block_Pillar_Wood - at -25.62 -6.89 h=36.0
 
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth; the trestle's reach of the river kept as it was (keep=):
+#     the talus piled under its decks and boulders stood up against them)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=5,-75,13
 save Sundown Canyons

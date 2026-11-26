@@ -165,7 +165,7 @@ RECIPE_FORMAT.md and PLAY_FORMAT.md describe the content test files.
   - Add a `WorldPlan` field and handle it in `WorldPlan.Parse` / `WorldPlan.ToText`.
   - Store the world's copy in `WorldDirector.WriteLines` / `ReadLine` (`@plan...`).
   - Add a `WorldPlanWindow.Recipe...` hook and a `plan` verb in `DevTests.RecipeRoutine`.
-**Test**: `CIRuleTest`, `CIPlanTest`, `CIPlanWorld` (`DevTestsDirector.cs`), `CIStoryChainUnit`, `CIScCheckRuntime`. A plan `.play` can use `tune`, `arrive`, `sail` and `expect chain`.
+**Test**: `CIRuleTest`, `CIPlanTest`, `CIPlanWorld` (`DevTestsDirector.cs`), `CIStoryChainUnit`, `CIScCheckRuntime`, `CIStoryNoteStale` (`note:` done-whens, `DevTestsQuestSoftlock.cs`). A plan `.play` can use `tune`, `arrive`, `sail` and `expect chain`.
 **Docs**: GUIDE `### 7.3 A rule card, part by part`, `### 7.4 Everything a rule can do`, `### 7.5 Check: finding and fixing problems` and `### 7.7 The plan file`; README `## World plans`.
 
 ## New quest step kind

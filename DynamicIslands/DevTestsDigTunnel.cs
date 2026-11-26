@@ -1307,12 +1307,15 @@ namespace DynamicIslands
 			else Log("PASS: dug tunnels " + tuns.Count + ", " + seen + " points over the cut ground, the rock within " + max.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " m of the ground (" + opening + " in the opening left out)");
 		}
 
-		[ConsoleCommand(name: "CIDigMouthLook", docs: "Dev, in a world: every dug tunnel's mouths within 2000 m look as the ground round them (11-13 mouth fix) - the rim's top on a shader without shine (not Standard: a grey veil), the lining not out in the open in front of a face (a pale slab with a sawtooth edge: under 3% of its area), and each mouth's rim top, pictured, within 14 of the ground beside it in mean colour and at least 0.6 of its sharpness, on its faces no steeper than the ground beside and against the ground beside of its own colour (dig_mouthlook_<n>_<a|f|l>). 'standard': the same baked textures on Standard for the run instead, to compare; 'stdnormal': baked again on Standard with the mixed normal map; 'stdabs': baked again on Standard, the relief shaded in against flat ground")]
+		[ConsoleCommand(name: "CIDigMouthLook", docs: "Dev, in a world: every dug tunnel's mouths within 2000 m look as the ground round them (11-13 mouth fix) - the rim's top on a shader without shine (not Standard: a grey veil), the lining not out in the open in front of a face (a pale slab with a sawtooth edge: under 3% of its area), and each mouth's rim top, pictured, within 14 of the ground beside it in mean colour and at least 0.6 of its sharpness, on its faces no steeper than the ground beside and against the ground beside of its own colour (dig_mouthlook_<n>_<a|f|l>). 'standard': the same baked textures on Standard for the run instead, to compare; 'stdnormal': baked again on Standard with the mixed normal map; 'stdabs': baked again on Standard, the relief shaded in against flat ground; 'relief': baked again in the look before MF1 (11-24), the relief shaded in on legacy diffuse; 'flatlit': the game's look without the normal map. Add 'fastest' to check at Raft's lowest quality level, no shadows")]
 		public static void DigMouthLookCommand(string[] args)
 		{
-			string a = args.Length > 0 ? args[0] : "";
-			StartTest(DigMouthLookRoutine(a == "standard" || a == "stdnormal" || a == "stdabs", a == "stdnormal" ? 1 : a == "stdabs" ? 2 : 0));
+			mouthLookFastest = args.Contains("fastest");
+			string a = args.FirstOrDefault(x => x != "fastest") ?? "";
+			StartTest(DigMouthLookRoutine(a == "standard" || a == "stdnormal" || a == "stdabs" || a == "relief" || a == "flatlit", a == "stdnormal" ? 1 : a == "stdabs" ? 2 : a == "relief" ? 3 : a == "flatlit" ? 5 : 0));
 		}
+
+		static bool mouthLookFastest;
 
 		static IEnumerator DigMouthLookRoutine(bool standard, int cmpLook = 0)
 		{
@@ -1322,7 +1325,12 @@ namespace DynamicIslands
 			if (tuns.Count == 0) { Fail("dig mouth look: no dug tunnel's mouth within 2000 m"); yield break; }
 			// (CIGfx low: the user's quality for the whole check, and time for the rims to bake again at its texture limit - a
 			// player plays at one quality; a top baked under the test run's limit is soft until then)
-			bool gfx = GfxShotBegin();
+			// ('fastest': at Raft's lowest quality level instead, no shadows - after CIGfx low its whole low look, water, effects;
+			// MF1 11-24: a look that drew at Good was gone under CIGfx low)
+			bool gfx = !mouthLookFastest && GfxShotBegin();
+			bool setLow = mouthLookFastest && !gfxLow;
+			int wasLevel = QualitySettings.GetQualityLevel(); ShadowQuality wasShadows = QualitySettings.shadows;
+			if (setLow) { QualitySettings.SetQualityLevel(0, false); QualitySettings.shadows = ShadowQuality.Disable; }
 			yield return new WaitForSecondsRealtime(2.5f);
 			bool ok = true;
 			int n = 0;
@@ -1340,7 +1348,7 @@ namespace DynamicIslands
 					// (for comparing: the rim top baked again in another look, for this run only)
 					Material tb = t.BakeForTest(cmpLook);
 					if (tb != null) { kept = ms; mr.sharedMaterials = new[] { ms[0], ms[1], tb }; ms = mr.sharedMaterials; }
-					Log("  (comparison look " + cmpLook + ": " + (tb != null ? tb.shader.name + (tb.IsKeywordEnabled("_NORMALMAP") ? ", normal map" : "") + ", " + tb.mainTexture.name : "none") + ")");
+					Log("  (comparison look " + cmpLook + ": " + (tb != null ? tb.shader.name + (tb.IsKeywordEnabled("_NORMALMAP") ? ", normal map" : "") + ", " + tb.name : "none") + ")");
 				}
 				else if (standard && Shader.Find("Standard") != null)
 				{
@@ -1353,13 +1361,15 @@ namespace DynamicIslands
 					mr.sharedMaterials = new[] { ms[0], ms[1], sm };
 					ms = mr.sharedMaterials;
 				}
-				Log("  tunnel at " + t.transform.position.ToString("F0") + ": rim top " + t.RimTop + "; normal maps " + string.Join("/", land.terrainData.terrainLayers.Where(l => l != null).Select(l => l.normalMapTexture != null ? l.normalMapTexture.name + " x" + l.normalScale.ToString("0.##") : "none").ToArray()) + (kept != null ? " (STANDARD for comparison)" : ""));
+				Log("  tunnel at " + t.transform.position.ToString("F0") + ": rim top " + t.RimTop + "; ground " + (land.materialTemplate != null ? land.materialTemplate.shader.name : "default") + "; normal maps " + string.Join("/", land.terrainData.terrainLayers.Where(l => l != null).Select(l => l.normalMapTexture != null ? l.normalMapTexture.name + " x" + l.normalScale.ToString("0.##") : "none").ToArray()) + (kept != null ? " (STANDARD for comparison)" : ""));
 				string sh = ms[2].shader.name;
 				if (sh == "Standard" && kept == null) { ok = false; Log("  BAD: tunnel at " + t.transform.position.ToString("F0") + ": its rim top is on Standard (the grey veil)"); }
 				Texture bt = ms[2].mainTexture;
 				TerrainLayer[] tls = land.terrainData.terrainLayers;
 				Log("  (filtering: the rim top's " + (bt != null ? bt.width + "x" + bt.height + " aniso " + bt.anisoLevel : "none") + ", the ground's layers aniso "
-					+ string.Join("/", tls.Where(l => l != null && l.diffuseTexture != null).Select(l => l.diffuseTexture.anisoLevel.ToString()).ToArray()) + ", quality " + QualitySettings.anisotropicFiltering + ", texture limit " + QualitySettings.masterTextureLimit + ")");
+					+ string.Join("/", tls.Where(l => l != null && l.diffuseTexture != null).Select(l => l.diffuseTexture.anisoLevel.ToString()).ToArray()) + ", quality " + QualitySettings.anisotropicFiltering + ", texture limit " + QualitySettings.masterTextureLimit
+					+ "; level " + QualitySettings.GetQualityLevel() + ", pixel lights " + QualitySettings.pixelLightCount + ", shader LOD " + Shader.globalMaximumLOD + "/" + ms[2].shader.maximumLOD
+					+ ", basemap " + land.basemapDistance.ToString("0") + ", path " + (Camera.main != null ? Camera.main.actualRenderingPath.ToString() : "?") + ", shadows " + QualitySettings.shadows + ")");
 				// (the lining's faces whose air is out in the open: over the ground's own height a little way off the face)
 				var vs = new List<Vector3>(); var ns = new List<Vector3>();
 				mesh.GetVertices(vs); mesh.GetNormals(ns);
@@ -1516,6 +1526,7 @@ namespace DynamicIslands
 				if (kept != null) { Material sm = ms[2]; mr.sharedMaterials = kept; if (cmpLook > 0) DigTunnel.DropTestBake(sm); else Object.Destroy(sm); }
 			}
 			if (standard) Log("(standard: the rim tops were on Standard for comparison only)");
+			if (setLow) { QualitySettings.SetQualityLevel(wasLevel, false); QualitySettings.shadows = wasShadows; }
 			GfxShotEnd(gfx);
 			if (ok) Log("PASS: dig mouth look - " + n + " mouths of " + tuns.Count + " tunnels");
 			else Fail("dig mouth look: a mouth's rim or lining stands out (BAD lines)");
@@ -1525,7 +1536,7 @@ namespace DynamicIslands
 		/// lie FootDrop (0.5) under the ground on a steep cutting wall.</summary>
 		const float SeeThroughDip = 0.6f;
 
-		[ConsoleCommand(name: "CIDigSeeThrough", docs: "Dev, in a world, after a CIPlay on the island (CIDigSeeThrough <island> [norim]): no dug tunnel's cut ground is seen through, by the drawn faces (cv47: Pendulum Isle's tube showed in the cut beside its mouth while CIDigEars, CIDigHoleRock and CIDigMouthLook passed - the older looks go by colliders, where the rim's top is solid, and leave the opening and its lip out). Looks from each mouth's eye (9 m out, 3 m up; turned 30 and 60 degrees each way round the mouth; 15 m out) and from the last play picture's camera (its own 64x36 rays too) at points 0.8, 1.5 and 2.5 m under each cut cell's ground: a look that goes more than 0.6 m under the ground over a cut cell and then meets nothing, or anything but the tunnel's rock seen from its front, sees through the cut; one that passes the lining's outside (not drawn) and meets the rock's front behind it sees the tube through its own outside. FAIL over 5 such looks. 'norim': the rim's top left out, so the cut lies open - a check of the check: PASS when it sees the open cut, FAIL 'blind' when not")]
+		[ConsoleCommand(name: "CIDigSeeThrough", docs: "Dev, in a world, after a CIPlay on the island (CIDigSeeThrough <island> [norim]): no dug tunnel's cut ground is seen through, by the drawn faces (cv47: Pendulum Isle's tube showed in the cut beside its mouth while CIDigEars, CIDigHoleRock and CIDigMouthLook passed - the older looks go by colliders, where the rim's top is solid, and leave the opening and its lip out). Looks from each mouth's eye (9 m out, 3 m up; turned 30 and 60 degrees each way round the mouth; 15 m out) and from the last play picture's camera (its own 64x36 rays too) at points 0.8, 1.5 and 2.5 m under each cut cell's ground: a look that goes more than 0.6 m under the ground over a cut cell and then meets nothing, or anything but a dug tunnel's rock seen from its front (this one's or a tube joined to it), sees through the cut; one that passes the lining's outside (not drawn) and meets the rock's front behind it sees the tube through its own outside. FAIL over 5 such looks. 'norim': the rim's top left out, so the cut lies open - a check of the check: PASS when it sees the open cut, FAIL 'blind' when not")]
 		public static void DigSeeThroughCommand(string[] args)
 		{
 			var rest = (args ?? new string[0]).ToList();
@@ -1553,20 +1564,14 @@ namespace DynamicIslands
 			var byEye = new Dictionary<string, int>();
 			try
 			{
+				// (the rock's faces as drawn, of every dug tunnel here: tubes that join show each other's rock through the join (11-24:
+				// Cinderfall's lava tubes - looks down one tube's mouth met the branch tube's rock, which only its collider stood for)
+				var fr = new List<Vector3>(); var fr2 = new List<Vector3>(); var bk = new List<Vector3>();
 				foreach (DigTunnel t in tuns)
 				{
-					Terrain land = t.SkinLand;
-					TerrainData td = land.terrainData;
-					Vector3 lo = land.transform.position;
-					float cw = td.size.x / td.holesResolution, ch = td.size.z / td.holesResolution;
-					var cut = new HashSet<Vector2Int>();
-					t.CellsToCut(land, cut);
-					if (cut.Count == 0) { Log("  tunnel at " + t.transform.position.ToString("F0") + ": no cut ground - skipped"); continue; }
-					cutAll += cut.Count;
 					// (the rock's faces as drawn, in world space: the fronts (both sides where the material draws both), and the
 					// lining's backs - its outside, never drawn; a collider can't stand in: the rim's top is solid in DigRock's)
 					Transform rock = t.transform.Find(DigTunnel.RockName);
-					var fr = new List<Vector3>(); var fr2 = new List<Vector3>(); var bk = new List<Vector3>();
 					foreach (MeshFilter mf in rock.GetComponentsInChildren<MeshFilter>(false))
 					{
 						Mesh m = mf.sharedMesh;
@@ -1589,8 +1594,19 @@ namespace DynamicIslands
 							}
 						}
 					}
-					MeshCollider colF = SeeThroughFaces(fr, made), colF2 = SeeThroughFaces(fr2, made), colB = SeeThroughFaces(bk, made);
-					Physics.SyncTransforms();
+				}
+				MeshCollider colF = SeeThroughFaces(fr, made), colF2 = SeeThroughFaces(fr2, made), colB = SeeThroughFaces(bk, made);
+				Physics.SyncTransforms();
+				foreach (DigTunnel t in tuns)
+				{
+					Terrain land = t.SkinLand;
+					TerrainData td = land.terrainData;
+					Vector3 lo = land.transform.position;
+					float cw = td.size.x / td.holesResolution, ch = td.size.z / td.holesResolution;
+					var cut = new HashSet<Vector2Int>();
+					t.CellsToCut(land, cut);
+					if (cut.Count == 0) { Log("  tunnel at " + t.transform.position.ToString("F0") + ": no cut ground - skipped"); continue; }
+					cutAll += cut.Count;
 					// (the cut's box, for the way under its ground; the points under each cut cell's ground, 3 x 3 a cell)
 					int ix0 = int.MaxValue, ix1 = int.MinValue, iz0 = int.MaxValue, iz1 = int.MinValue;
 					foreach (Vector2Int q in cut) { ix0 = Mathf.Min(ix0, q.x); ix1 = Mathf.Max(ix1, q.x); iz0 = Mathf.Min(iz0, q.y); iz1 = Mathf.Max(iz1, q.y); }
@@ -1630,7 +1646,7 @@ namespace DynamicIslands
 						}
 					}
 					if (ours) eyes.Add(new KeyValuePair<string, Vector3>("play picture", pFrom));
-					Log("  tunnel at " + t.transform.position.ToString("F0") + ": " + cut.Count + " cut cells (" + cw.ToString("0.00") + " m), " + groups.Count + " mouth(s), " + fr.Count / 3 + " drawn faces" + (norim ? " (the rim's top left out)" : "") + ", " + eyes.Count + " eyes");
+					Log("  tunnel at " + t.transform.position.ToString("F0") + ": " + cut.Count + " cut cells (" + cw.ToString("0.00") + " m), " + groups.Count + " mouth(s), " + fr.Count / 3 + " drawn faces of all tunnels" + (norim ? " (the rim's top left out)" : "") + ", " + eyes.Count + " eyes");
 					var looks = new List<KeyValuePair<string, Ray>>();
 					foreach (KeyValuePair<string, Vector3> ey in eyes)
 						foreach (Vector3 aim in aims)
@@ -1650,7 +1666,7 @@ namespace DynamicIslands
 					}
 					for (int k = 0; k < looks.Count; k++)
 					{
-						string why = DigSeeThroughRay(looks[k].Value, 160f, t.transform, colF, colF2, colB, buf, cut, land, cw, ch, box);
+						string why = DigSeeThroughRay(looks[k].Value, 160f, colF, colF2, colB, buf, cut, land, cw, ch, box);
 						rays++;
 						if (why != null)
 						{
@@ -1697,16 +1713,16 @@ namespace DynamicIslands
 		}
 
 		/// <summary>CIDigSeeThrough's one look: null when it sees what it should, or what it sees through.</summary>
-		static string DigSeeThroughRay(Ray ray, float far, Transform tun, MeshCollider colF, MeshCollider colF2, MeshCollider colB, RaycastHit[] buf,
+		static string DigSeeThroughRay(Ray ray, float far, MeshCollider colF, MeshCollider colF2, MeshCollider colB, RaycastHit[] buf,
 			HashSet<Vector2Int> cut, Terrain land, float cw, float ch, Rect box)
 		{
-			// (the nearest other thing: colliders, but not the tunnel's own (its rim's top is solid there), players or creatures)
+			// (the nearest other thing: colliders, but not the dug tunnels' (their rims' tops are solid there; their drawn faces stand in), players or creatures)
 			float sD = float.PositiveInfinity; string sName = "";
 			int k = Physics.RaycastNonAlloc(ray, buf, far, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
 			for (int i = 0; i < k; i++)
 			{
 				Collider c = buf[i].collider;
-				if (c == null || buf[i].distance < 1f || buf[i].distance >= sD || c.transform.IsChildOf(tun)
+				if (c == null || buf[i].distance < 1f || buf[i].distance >= sD || c.GetComponentInParent<DigTunnel>() != null
 					|| c.GetComponentInParent<Network_Player>() != null || c.GetComponentInParent<AI_NetworkBehaviour>() != null) continue;
 				sD = buf[i].distance; sName = c.name;
 			}

@@ -122,7 +122,9 @@ place Zone_Trigger dendark at 1 -18 y=1.5
 place Creature_MamaBear denbear at 1 -18 y=0.8
 prop denbear creature.count=1
 prop denbear creature.respawn=0
-place Loot_Chest dencache at 1 -27 sit yaw=180
+# (11-24 REACH: 'sit' put it on the den piece's buried floor at 13.6, 0.6 m under the sand the world keeps here (14.1-14.4):
+# no spot to use it from - set on the sand)
+place Loot_Chest dencache at 1 -27 h=14.35 yaw=180
 place "Pickup_Landmark_Iron 1" - at -5 -11 sit
 place "Pickup_Landmark_Copper 1" - at -5.2 -18 sit
 place "Pickup_Landmark_Iron 2" - at 7.6 -22 sit
@@ -166,6 +168,31 @@ scatter "Pickup_Landmark_Flower_Red" 8 at 0 0 r=80 seed=11198 free=2
 
 # --- DEEP 10-24 (one-hour pass: a climb, a dive, more to find; RAFT_ISLAND_DESIGN 0b): the survey mast on the rocky top (climb, zipline down to the south beach), the Flooded Passage's deep end (oxygen gate), the survey team's last camp
 # the climb: the survey mast on the rocky top (38.5 m), 8 storeys more; the line down to the south beach
+# (11-24 REACH: rw_top and the Survey mast box were 'can't get there' - the rocky top round the 38.5 m pad is steep
+#     all round and no trail had been laid; the nearest reached spot was -11.7 10.7 at 34.8 m on the west shoulder. A
+#     path of flatten pads from there round the north side of the 45-47 m knob up to the pad)
+brush flatten at -11.7 10.7 r=2.6 s=20 frames=300 h=34.80
+brush flatten at -10.2 11.1 r=2.6 s=20 frames=300 h=35.02
+brush flatten at -8.6 11.4 r=2.6 s=20 frames=300 h=35.25
+brush flatten at -7.1 11.8 r=2.6 s=20 frames=300 h=35.47
+brush flatten at -5.5 12.1 r=2.6 s=20 frames=300 h=35.70
+brush flatten at -4.0 12.5 r=2.6 s=20 frames=300 h=35.92
+brush flatten at -2.6 12.6 r=2.6 s=20 frames=300 h=36.12
+brush flatten at -1.2 12.7 r=2.6 s=20 frames=300 h=36.32
+brush flatten at 0.2 12.8 r=2.6 s=20 frames=300 h=36.52
+brush flatten at 1.6 12.9 r=2.6 s=20 frames=300 h=36.72
+brush flatten at 3.0 13.0 r=2.6 s=20 frames=300 h=36.92
+brush flatten at 4.0 11.9 r=2.6 s=20 frames=300 h=37.13
+brush flatten at 5.0 10.8 r=2.6 s=20 frames=300 h=37.34
+brush flatten at 6.0 9.7 r=2.6 s=20 frames=300 h=37.56
+brush flatten at 7.0 8.6 r=2.6 s=20 frames=300 h=37.77
+brush flatten at 8.0 7.5 r=2.6 s=20 frames=300 h=37.98
+brush flatten at 8.8 5.8 r=2.6 s=20 frames=300 h=38.24
+brush flatten at 9.6 4.2 r=2.6 s=20 frames=300 h=38.50
+clear from -11.7 10.7 to -4 12.5 r=3
+clear from -4 12.5 to 3 13 r=3
+clear from 3 13 to 8 7.5 r=3
+clear from 8 7.5 to 9.6 4.2 r=3
 brush flatten at 11 2 r=3 s=20 frames=150 h=38.5
 clear at 11 2 r=4 all
 # the climb: a mountain (trail winding up from bearing 0), a 8-storey climbing tower on its top, the summit box
@@ -331,13 +358,15 @@ prop rwhut obj.name=rwhut
 prop rwtw obj.name=rwtw
 # (TRAP 11-01 N: two hollows in the caves a player drops into, their only side a 1.5 m step: a ladder up each)
 # (named, not `-`: a `-` piece under the cave roof counts as under the ground and is left out)
+# (no posts under them: a post under the cave roof reads as buried; the ladders stand on the hollow floor)
 place Block_Ladder nrwl1 at -15.3 -18.9 h=4.9 yaw=90
-place Block_Pillar_Wood nrwp1 at -15.1 -18.9 h=4.9
 # (11-11 c1111, REACH: nrwl2's foot at 5.8 was 1.2 m from the nearest floor spot (a hand reaches 1.0): lower, as nrwl1)
 # (11-11 w02fix, REACH columns: the Fungus Hall's floor runs level at 7.5 over x -14.1..-11.1, z -10.3..-8.3 here - no hollow
 #     left (the cave's floor came up over it); the ladder stood 2.4 m under that floor, inside the decor rock. Left out)
 #place Block_Ladder nrwl2 at -11.9 -8.9 h=5.1 yaw=180
 #place Block_Pillar_Wood nrwp2 at -11.9 -9.1 h=5.1
+# (GROUND 11-01 N: a generator palm on the hill sunk 4.9 m into it: taken off)
+clear at -12.26 -6.72 r=0.8 all only=Tree_Palm
 
 # (11-08) The Root Warrens (plan 02 row: big dug system, two levels, ramp, dead end, spikes): the grove's roots split the
 # north-east hill into a dug warren. Mouth C on the hill's flank over the den path (upper level) slopes down into the
@@ -421,4 +450,25 @@ clear at -23.39 55.0 r=2 all only=^Balboa_Bush_03
 # (c3z43: in the Flooded Passage's dead end, from a spot on its floor by the west wall, the look down met the back of the
 # rock's inner slab 2.6 m off - a hole in Raft's own rock there: a boulder on that spot)
 place SmallBoulder3 - at -27.2 -22.7 h=6.5 drop scale=1.6
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth; the hill over the Fungus Hall and Flooded Passage
+#     caves kept as it was (keep=): the step cut its cliff tops down by up to 13 m, to the caves' ceilings, and the
+#     ground check saw the ground from below from inside the dead end)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=-8,-18,18
+# (the rocks= stood three boulders in the waterline behind the flooded cave's back, seen through the ground from inside
+#     it (the ground check, lib 3.5.1 minor fixes 11-23) - taken out)
+clear at -46.9 -27.4 r=2.5 all only=^BigBoulder1_Low
+# (isl-fix-1124, CIFloating: the cliffs step cut the north-west cliff tops down after the second treasure and a red
+#     flower were set there - both hung 1.8 m over the cut ground; a white flower hung 8.5 m up on the west slope. Taken
+#     out; the treasure laid again beside its old spot on the cut ground, its loot as before)
+clear at -38.5 37.24 r=1.5 all only=^Treasure_Buried
+clear at -37.59 46.03 r=1.5 all only=^Pickup_Landmark_Flower_Red
+clear at -51.95 0.65 r=1.2 all only=^Pickup_Landmark_Flower_White
+call treasure x=-36 z=36 r=4 n=1 seed=11248
+prop treasure11248 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*2
+# (11-24 cave inside: from the Flooded Passage's mouth, high under its roof (-46.4 -11 at 9.6 m), a look south went out
+# through the piece's side into the earth and met the ground from below - a slit of sky (picture rw_seethru): a rock
+# in the earth there, south of the passage, closes it)
+place TP_BigRock02 - at -46 -17.5 h=10 scale=0.35 yaw=40
 save Rootweave Caves
