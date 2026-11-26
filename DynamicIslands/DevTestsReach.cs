@@ -956,6 +956,15 @@ namespace DynamicIslands
 					Vector3 lf = LadderRoot(ch[0]).forward; lf.y = 0f;
 					if (lf.sqrMagnitude > 0.01f) { lf.Normalize(); g.LadderF[node] = LadderRoom(lb, lf) || !LadderRoom(lb, -lf) && LadderFree(lb, lf) >= LadderFree(lb, -lf) ? lf : -lf; }
 				}
+				// (over its top end only when that end is open: a slab over a drowned building's roof hatch (Caisson Yard's cap, gone only
+				// when the crane key's lever is pulled) counted as the ladder's top, and the walker stood on it and never took hold, PQ11 s6t 11-26)
+				bool topOpen;
+				{
+					Bounds tb = ch.Select(c => c.bounds).OrderByDescending(cbx => cbx.max.y).First();
+					Vector3 tf = g.LadderF.ContainsKey(node) ? g.LadderF[node] * 0.3f : Vector3.zero;
+					Vector3 tc = new Vector3(tb.center.x, lb.max.y - 0.3f, tb.center.z);
+					topOpen = new[] { tc, tc + tf, tc - tf }.Any(tq => LadderClear(tq, tq + Vector3.up * 1.3f, ch));
+				}
 				int grabs = 0, tops = 0;
 				string why = null; float whyHd = float.MaxValue;
 				for (int k = 0; k < node; k++)
@@ -967,7 +976,7 @@ namespace DynamicIslands
 					float feet = g.Kind[k] == 2 ? p.y - 0.9f : p.y;
 					// (the top: a floor at the ladder's top beside it - where the climb ends)
 					// (or over its top end: a ladder up through a hole in a landing - the line to its middle crossed the landing, PQ11 10-27)
-					if (g.Kind[k] == 0 && feet >= lb.max.y - 1.0f && feet <= lb.max.y + 1.3f && (LadderClear(p + Vector3.up * 1.0f, flat, ch) || LadderClear(p + Vector3.up * 1.0f, new Vector3(flat.x, lb.max.y + 0.6f, flat.z), ch))) { g.Link(node, k); g.Link(k, node); tops++; continue; }
+					if (g.Kind[k] == 0 && feet >= lb.max.y - 1.0f && feet <= lb.max.y + 1.3f && (LadderClear(p + Vector3.up * 1.0f, flat, ch) || topOpen && LadderClear(p + Vector3.up * 1.0f, new Vector3(flat.x, lb.max.y + 0.6f, flat.z), ch))) { g.Link(node, k); g.Link(k, node); tops++; continue; }
 					// (the foot, and any spot beside it up its length: a hand reaches it with nothing solid in between)
 					if (hd <= LadderHandReach(g.Kind[k]) && feet >= lb.min.y - 1.8f && feet <= lb.max.y - 1.0f)
 					{
