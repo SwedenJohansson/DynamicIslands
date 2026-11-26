@@ -363,13 +363,26 @@ namespace DynamicIslands
 			if (e == null)
 			{
 				// (brought next to the raft when it is not in the world: cavecheckrun takes its island away after it)
-				Vector3? spot = CaveGapsLookIslandMissing(island) ? null : ScSpot(island, 400f);
-				if (!spot.HasValue) { Fail("CIReachColumns: '" + island + "' is not here and can't be brought"); yield break; }
+				// (brought as CIReach brings it: a half-loaded entry of the same name taken away first, the island's own
+				// elevation, a second try, settled before the columns - right after CIRecipe the first columns of sc7 and
+				// th1 failed "didn't come" while CIReach a minute later brought it fine, bugfix 11-26)
+				yield return EnsureAlive();
 				var made = new List<IslandWorldState.Entry>();
-				yield return ScBring(island, spot.Value, made);
-				e = made.LastOrDefault();
+				for (int attempt = 0; attempt < 2 && (e == null || e.Root == null); attempt++)
+				{
+					var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
+					if (left.Count > 0) yield return RemoveIslandsAndWait(left);
+					Vector3? spot = CaveGapsLookIslandMissing(island) ? null : ScSpot(island, 400f, IslandSpawner.ElevationOf(island));
+					if (!spot.HasValue) { Fail("CIReachColumns: '" + island + "' is not here and can't be brought"); yield break; }
+					made.Clear();
+					yield return ScBring(island, spot.Value, made);
+					e = made.LastOrDefault();
+					if (e == null || e.Root == null) yield return new WaitForSeconds(3f);
+				}
 				if (e == null || e.Root == null) { Fail("CIReachColumns: " + island + " didn't come"); yield break; }
-				yield return new WaitForSeconds(6f);
+				yield return WaitIslandSettled(e, 0.5f, 3f);
+				PlayerMove.To(RAPI.GetLocalPlayer(), e.Position + new Vector3(0f, 2f, -LandRadiusOf(e) - 20f));
+				yield return new WaitForSeconds(1f);
 			}
 			Physics.SyncTransforms();
 			if (reachMask == 0) reachMask = ~0;
