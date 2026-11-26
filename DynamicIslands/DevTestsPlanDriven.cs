@@ -99,7 +99,24 @@ namespace DynamicIslands
 			};
 			WorldDirector.Brought += onBrought;
 			// (this world may have met the rules already: a run after the plan's start rule)
-			foreach (string id in PdRules) if (WorldDirector.Done.Contains(id)) Log("  (rule '" + id + "' was done before the run)");
+			// (a start rule fires when the world begins - the New Game box world or the WorldPlan step - so it is checked from
+			// the world's state: its island is there, the Receiver knows the rule, the banner shown was this rule's)
+			for (int i = 0; i < PdRules.Length; i++)
+			{
+				string id = PdRules[i];
+				if (!WorldDirector.Done.Contains(id)) continue;
+				Log("  (rule '" + id + "' was done before the run)");
+				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => string.Equals(x.Name, PdIslands[i], StringComparison.OrdinalIgnoreCase));
+				IntroRule rule = WorldDirector.Plan.Rules.FirstOrDefault(r => r.Id == id);
+				if (e == null || rule == null) { Check(ref ok, false, "rule '" + id + "' was done before the run and its island '" + PdIslands[i] + "' is in the world"); continue; }
+				Vector3 off = Flat(e.Position - body.position);
+				brought[id] = new PdBring
+				{
+					Entry = e, Rule = rule, Sailed = WorldDirector.Sailed, Distance = off.magnitude,
+					At = Time.realtimeSinceStartup, AngleToSail = Vector3.Angle(off, Flat(CustomIslandSpawner.SailDirection())), AngleToMove = Vector3.Angle(off, dir),
+					Announcement = WorldDirector.LastAnnouncement ?? "", Loaded = e.Root != null
+				};
+			}
 
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player != null) player.transform.position = body.position + Vector3.up * 3f;
