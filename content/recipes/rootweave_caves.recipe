@@ -453,7 +453,9 @@ clear at -23.39 55.0 r=2 all only=^Balboa_Bush_03
 # rock's inner slab 2.6 m off - a hole in Raft's own rock there: a boulder on that spot)
 # (bugfix 11-25, CIFloating: 'drop' set it on a ledge of the piece's wall, its middle 0.9 m over the dead end's floor
 # (4.97) - set on the floor)
-place SmallBoulder3 - at -27.2 -22.7 h=4.9 sit scale=1.6
+# (bugfix 11-26, CIFloating ru5: on the floor its foot - the pivot, 1.1 m up in the rock - was still 1.02 m over the floor,
+# out of reach of the check's look down from the foot; sunk 0.5 m into the floor, foot 0.57 m over it)
+place SmallBoulder3 - at -27.2 -22.7 h=4.45 sit scale=1.6
 # (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth; the hill over the Fungus Hall and Flooded Passage
