@@ -62,15 +62,18 @@ namespace DynamicIslands
 			Log("PASS: reach only " + (reachOnly == "" ? "(all targets)" : "'" + reachOnly + "'"));
 		}
 
-		[ConsoleCommand(name: "CIReachDismountUnit", docs: "Dev, anywhere: the walker's jump off a ladder's top - after a climb up, a next floor 0.25 to 1.2 m above the feet (a hatch beside or behind the ladder) is jumped onto; one level with the feet, one out of a jump's reach, or a walk not off a ladder is walked")]
+		[ConsoleCommand(name: "CIReachDismountUnit", docs: "Dev, anywhere: the walker's jump off a ladder's top - after a climb up, a next floor 0.25 to 1.2 m above the feet (a hatch beside or behind the ladder) is jumped onto, and one level with the feet (-0.3 m) that is not ahead over the ladder's top; one ahead level with the feet, one out of a jump's reach, or a walk not off a ladder is walked")]
 		public static void CIReachDismountUnit()
 		{
 			bool ok = true;
 			Action<bool, string> chk = (c, w) => { Log((c ? "PASS: " : "FAIL: ") + w); ok &= c; };
 			chk(ReachLadderDismount(true, 31.25f, 31.73f), "headframe: feet 0.48 m under the deck at the ladder's top - jump onto it");
-			chk(!ReachLadderDismount(true, 31.7f, 31.73f), "feet level with the floor - walk off");
+			chk(!ReachLadderDismount(true, 31.7f, 31.73f), "feet level with the floor ahead, over the ladder's top - walk off");
+			chk(ReachLadderDismount(true, 40.1f, 40.12f, false), "Utopia's mast: feet level with the deck beside the ladder - jump onto it");
+			chk(!ReachLadderDismount(true, 40.6f, 40.12f, false), "the floor beside 0.5 m under the feet - walk off");
 			chk(!ReachLadderDismount(true, 30.0f, 31.73f), "the floor 1.7 m up - out of a jump's reach, no jump");
 			chk(!ReachLadderDismount(false, 31.25f, 31.73f), "not after a climb up - the walk's own jumps only");
+			chk(!ReachLadderDismount(false, 40.1f, 40.12f, false), "level beside, not after a climb up - no jump");
 			Log(ok ? "PASS: reach dismount unit" : "FAIL: reach dismount unit");
 		}
 
@@ -1638,10 +1641,11 @@ namespace DynamicIslands
 				// (sweeps miss a mesh's back faces whatever queriesHitBackfaces says - only rays honour it: a cave hill's skirt
 				// skin, its roof a back face from above, let the grid drop through it where Raft's walker stood on it, Old Mine
 				// Islet's wedge under Grey's den hill, round 4. Rays down the sphere's middle and its four sides as well)
-				// (a skin's roof met from above catches up to 50 deg: Utopia's ridge skin over the sea off the quarry, 46 deg (n -0.69), let
-				// the grid drop through it into the sea - the walker landed on it 2 m down and stuck there, bugfix 11-26 ua6)
+				// (a skin's roof met from above catches up to 50 deg, as the grid's floors (n 0.64): Utopia's ridge skin over the sea off the
+				// quarry, 46 deg, let the grid drop through it into the sea - the walker landed on it 2 m down and stuck there, bugfix 11-26
+				// ua6. A back face's normal comes back turned toward the ray (n +0.68 from above, -0.68 from below), so either sign counts - ua7)
 				foreach (Vector3 o in new[] { Vector3.zero, Vector3.right * r, Vector3.left * r, Vector3.forward * r, Vector3.back * r })
-					if (Physics.Raycast(top + o, Vector3.down, out h, dist + r, reachMask, QueryTriggerInteraction.Ignore) && (!floorOnly || h.normal.y > 0.7f || h.normal.y < -0.64f)) return true;
+					if (Physics.Raycast(top + o, Vector3.down, out h, dist + r, reachMask, QueryTriggerInteraction.Ignore) && (!floorOnly || Mathf.Abs(h.normal.y) >= 0.64f)) return true;
 				return false;
 			}
 			finally { Physics.queriesHitBackfaces = was; }
@@ -2376,7 +2380,7 @@ namespace DynamicIslands
 				return r;
 			};
 			// (set when a ladder was climbed to its top: the next floor may be one to jump onto - ReachLadderDismount)
-			bool ladderUpTop = false;
+			bool ladderUpTop = false; Vector3 ladderFace = Vector3.zero;
 			for (int i = 1; i < way.Count; i++)
 			{
 				wdWay = Time.realtimeSinceStartup; wdTried = false; wdMoved = 99f; hbProg++; wpAt = i;
@@ -2471,6 +2475,7 @@ namespace DynamicIslands
 						}
 					}
 					ladderUpTop = up && Climbing(pl);
+					ladderFace = pl.transform.forward; ladderFace.y = 0f;
 					mmJump = false;
 					continue;
 				}
@@ -2485,7 +2490,13 @@ namespace DynamicIslands
 				// (off a ladder's top onto a floor still above the feet - a hatch, the floor beside or behind the ladder: a player jumps
 				// off toward it. The walker walked off at the ladder's end 0.5 m under the deck and fell back down the hatch, Old Mine's
 				// headframe (hw_mast) 11-06; the jump is at once, not after 2.5 s stopped)
-				if (ReachLadderDismount(ladderUpTop, ReachFeet(pl).y, W(k).y)) { jumpT = 0.45f; hopFrom = ReachFeet(pl).y; }
+				// (and onto a floor level with the feet beside or behind the ladder: Raft holds a climber at the ladder's end and Walk
+				// turned away from it climbs down - Utopia's mast (hw_mast deckdrop 0.45) walker stood at the top level with the deck
+				// tile beside the hatch, turned to it and went down the whole ladder again, bugfix 11-26 ua7; ahead, over the ladder's
+				// top, walking off works - radar mast PQ11 10-27)
+				Vector3 offTo = W(k) - ReachFeet(pl); offTo.y = 0f;
+				bool ahead = ladderFace.sqrMagnitude < 0.01f || offTo.sqrMagnitude < 0.01f || Vector3.Dot(offTo.normalized, ladderFace.normalized) > 0.7f;
+				if (ReachLadderDismount(ladderUpTop, ReachFeet(pl).y, W(k).y, ahead)) { jumpT = 0.45f; hopFrom = ReachFeet(pl).y; }
 				ladderUpTop = false;
 				for (int n = 0; ; n++)
 				{
@@ -2583,11 +2594,12 @@ namespace DynamicIslands
 		static bool inWaterNow(Network_Player pl) { return pl.PersonController.controllerType == ControllerType.Water; }
 
 		/// <summary>After a climb to a ladder's top: jump off toward the next spot when its floor is still above the feet (0.25 to
-		/// 1.2 m: within a jump) - a hatch with its floor beside or behind the ladder. CIReachDismountUnit.</summary>
-		internal static bool ReachLadderDismount(bool afterLadderUp, float feetY, float floorY)
+		/// 1.2 m: within a jump) - a hatch with its floor beside or behind the ladder - or, not ahead over the ladder's top, level with
+		/// them (down to 0.3 m under). CIReachDismountUnit.</summary>
+		internal static bool ReachLadderDismount(bool afterLadderUp, float feetY, float floorY, bool ahead = true)
 		{
 			float up = floorY - feetY;
-			return afterLadderUp && up > 0.25f && up < 1.2f;
+			return afterLadderUp && up < 1.2f && (up > 0.25f || (!ahead && up > -0.3f));
 		}
 
 		/// <summary>The sea floor under a swimmer (where a player would stand), or far down when there is none within 3 m.</summary>
