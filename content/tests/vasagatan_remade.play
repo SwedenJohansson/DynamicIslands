@@ -3,7 +3,7 @@
 # the sunk stern on the ledge in the bay below (13.2 m down); the crew's camp on the west arm's dune shoulder (4 m),
 # up the dune from the lagoon's shore.
 island Vasagatan Remade
-offset 5.0341 5.0341
+offset 6.1759 8.7805
 expect step 0
 expect title Two Halves of a Ship
 

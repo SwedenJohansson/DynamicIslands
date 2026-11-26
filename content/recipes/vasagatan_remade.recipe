@@ -173,6 +173,9 @@ call rr_ruin x=58 z=-14 h=3 yaw=0 w=3 d=2 al=harbouroffice
 # C The west dunes (west): a low arm of sand past the camp, the smugglers' hole in its rock
 call rr_pad x=-60 z=16 h=3 r=14
 call ar_cave x=-60 z=12 h=3 yaw=0 al=smugglerrock chest=smugglerbox
+# (11-25 playfix: the den's dry dome capped - uncapped its hill reached 63 m back and 41 m aside, its skin over the
+# beached bow's dug-out doorway, standing the player 0.8 m over her cabin floor and between him and the captain's safe)
+prop smugglerrock cave.dome=14
 place SmallBoulder4 - at -61 33 ground yaw=40 scale=0.9
 place SmallBoulder4 - at -57.5 35.5 ground yaw=110 scale=0.8
 # (agent Q 10-30, REACH: the west dunes' pad stood 3 m over the sea on sheer sides and the walker never got onto it -
