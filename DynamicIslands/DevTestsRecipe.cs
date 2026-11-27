@@ -998,6 +998,13 @@ namespace DynamicIslands
 			// The land's and the sea's plants, rocks and corals (the generator's): their pivot is their foot - none above the
 			// ground under it (a stroke that lowered the ground under them, or a slope they were set on by their middle)
 			int nature = 0, lifted = 0;
+			// (the hill a world drapes over the island's cave pieces, built here to stand things on: OnCaveSkin looked for a skin
+			// the editor never had - only a stray measuring hill some earlier step left, so the check measured against a hill
+			// other than the world's. Rootweave's 22 flagged plants and rocks were not hill items: they hang over the trench a
+			// stroke lowered, and its recipe now clears them, bugfix 11-25)
+			GameObject floatHill = GameObject.Find(CaveMountain.PreviewName) == null && ground != null ? CaveMountain.Preview(PlacedEditorObjects(), ground.transform.position) : null;
+			if (floatHill != null) FLog("  (the cave hill a world builds over the island's caves is measured against too)");
+			try {
 			foreach (EditorGameObject e in PlacedEditorObjects())
 			{
 				string n = e.GameObjectName ?? "";
@@ -1011,6 +1018,10 @@ namespace DynamicIslands
 				// and what the generator set on the old ground stands on it - Rootweave's west side over the Flooded Passage, its
 				// palms and boulders 17 m over the trench under the hill, isl-fix 11-24)
 				if (OnCaveSkin(e, p)) continue;
+				// (set into a cave hill: the first thing over its foot is the hill's skin, met from below - it lies in the hill, under the
+				// ground a player walks on, as the rock set in the earth to close a slit seen from Rootweave's Flooded Passage dead end
+				// (bugfix 11-25); a rock hanging in a cave's room meets the room's roof first and still counts)
+				if (InCaveSkin(e, p)) continue;
 				// (set up on purpose: a standing stone reaches down to the ground, a flowerpot stands on a roof, a rockfall's
 				// boulder on the one under it - only what hangs over the ground with nothing under it is lifted)
 				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
@@ -1033,6 +1044,8 @@ namespace DynamicIslands
 				lifted++;
 				if (lifted <= floatDetail) FLog("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground" + UnderIt(e, p));
 			}
+			}
+			finally { if (floatHill != null) UnityEngine.Object.DestroyImmediate(floatHill); Physics.SyncTransforms(); }
 			// Objects in the air touching nothing, and objects buried whole under the ground (the user, 2026-10-02: the Stranded
 			// Gull's boat was set down by its middle and sank under the beach - its locker and crate hung in the air over it)
 			int all = 0, alone = 0, buried = 0;
@@ -4548,6 +4561,24 @@ namespace DynamicIslands
 				foreach (RaycastHit h in Physics.RaycastAll(from, Vector3.down, 1.4f, ~0, QueryTriggerInteraction.Ignore))
 					if (h.collider != null && h.collider.name == CaveMountain.SkinName) return true;
 			return false;
+		}
+
+		/// <summary>The thing's foot under a cave hill's skin (CaveMountain.SkinName): a ray up from it meets the skin's
+		/// underside before anything else that is not the thing itself.</summary>
+		static bool InCaveSkin(EditorGameObject e, Vector3 p)
+		{
+			bool was = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				foreach (RaycastHit h in Physics.RaycastAll(p, Vector3.up, 60f, ~0, QueryTriggerInteraction.Ignore).OrderBy(x => x.distance))
+				{
+					if (h.collider == null || h.collider.GetComponentInParent<EditorGameObject>() == e) continue;
+					return h.collider.name == CaveMountain.SkinName;
+				}
+				return false;
+			}
+			finally { Physics.queriesHitBackfaces = was; }
 		}
 
 		static bool ShowsAboveGround(Bounds b, Terrain ground)

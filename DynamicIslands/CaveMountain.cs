@@ -1205,7 +1205,11 @@ namespace DynamicIslands.Editor
 							// (fix-open 11-19: no new skin further to the side than the den's half width plus LoneRun: a lone den's cheeks went on
 							// along its front plane over the whole grid, 75 m out to the Arena's control room door, where a ramp of skin off
 							// the room's roof slab down to the floor closed the doorway's lower half - plan_silver_screen's walk stuck in it)
-							if (!on[i, k] && sl + m.ArchHalf + LoneSlot > m.HalfWidth + LoneRun) { Why[i, k] = 'n'; continue; }
+							// (bug-1125: and none on the hill's own cells out there either - another den's hill in the same mountain, 70 m to the side but
+							// within LoneRun out in front of this den's arch, was ramped down to the sand: Spirecrest's two dens face each other
+							// 40 m apart, and the skin in front of each arch sank to the ground and rose to the dome over one cell, a wall
+							// across the other den's way in - sc8 cave probes stuck at the CaveSkin)
+							if (sl + m.ArchHalf + LoneSlot > m.HalfWidth + LoneRun) { Why[i, k] = 'n'; continue; }
 							// (not out over the sea: there it stood as a flat square panel at the sea's foot, Caisson Yard and Shelter Atoll r48)
 							if (!on[i, k] && !(ground[i, k] > SeaLevel + DryBy)) { Why[i, k] = 'o'; continue; }
 							// (a den whose arch is under the sea: its cheeks fall to the seabed, not the sea's top - measured from the
@@ -1337,6 +1341,9 @@ namespace DynamicIslands.Editor
 						{
 							float past = ahead[j][i, k];
 							if (!on[i, k] || cut[i, k] || !(past > 0f) || past > LoneRun + LoneEdgeBand || !float.IsNaN(top[i, k]) || !float.IsNaN(corridor[i, k])) continue;
+							// (bug-1125: only round this den - no further to the side than its half width plus LoneRun, as its ramp: another den's
+							// hill out in front of it was capped down to the sand too, Spirecrest's facing dens)
+							if (Mathf.Abs(Vector3.Dot(new Vector3(x0 + i * Cell, 0f, z0 + k * Cell) - m.Pos, m.Side) - m.InsideSide) > m.HalfWidth + LoneRun) continue;
 							float cap = ground[i, k] - 0.6f + LoneEdgeRise * Mathf.Max(dist[i, k] - Cell, 0f);
 							if (height[i, k] > cap)
 							{

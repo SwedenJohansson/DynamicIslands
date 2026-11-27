@@ -262,7 +262,9 @@ call sk_pit x=-66 z=-48 h0=-6.15
 call sk_cave x=74 z=-22 h=2 yaw=0 al=hccave2 chest=hccave2chest
 # (isl-fix 11-24, REACH + cave gap: the second den's dome skin lay 0.6 m over its own way in and the warden's spare chest's
 # path - capped as the first)
-prop hccave2 cave.dome=14
+# (bugfix 11-25, REACH: at 14 the dome's front still reached only 4.3 m past the mouth and its skin (73.4 -5.7) closed the
+# way to the spare chest - 30 as the first den, whose front reaches 9 m)
+prop hccave2 cave.dome=30
 call sk_reef x=7.8 z=74 r=6 seed=24710
 call sk_reef x=-27.4 z=87.2 r=6 seed=24720
 call sk_reef x=-56 z=-42 r=5 seed=24730
@@ -305,7 +307,9 @@ place Loot_Chest hcdeep at -67.8 -50.5 h=-6 sit yaw=0
 place Placeable_Table_Basic - at -67.5 -47 h=-3 sit yaw=0
 # (fxT 11-01, REACH: on the table on storey 1 (all under water) the audit's swimmer ended 3.7 m from the note at 1x and 3x -
 # the inventory beside the strongbox on the ground floor, the step before it)
-place Note_Paper hcbldnote at -66.8 -50.6 h=-5.7 drop yaw=10
+# (bugfix 11-25, REACH: east of the strongbox the box stood between it and the swimmer, who comes in from the west (4.4 m
+# from the eye) - on the floor by the box's north side instead, in sight from where the box is opened)
+place Note_Paper hcbldnote at -67.9 -49.2 h=-5.7 drop yaw=10
 call airpocketat x=-66.5 z=-50 h=-3 id=hc_dair al=hcdair bub=hcdbub r=2.2 msg="Air trapped under the stairs of the drowned building. Breathe."
 call sk_zone x=-66 z=-59 al=hcdeepzone id=hc_deep r=4 msg="The pit floor: the drowned building stands below you."
 

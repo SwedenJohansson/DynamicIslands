@@ -45,3 +45,9 @@ wait 3
 expect step 15
 read Yard pump log
 expect done
+# jump course (11-26): teleport onto its last slab and the perch instead of jumping the hops
+at 40.70 56.79 h=9.30
+zone jump_cy_finale
+open Crew's dare
+at 47.12 62.02 h=8.70
+open Diver's perch

@@ -159,7 +159,9 @@ place BigBoulder2_Low rockfall at 3.8 -1.2 sit scale=0.6 yaw=-15
 # (10-25: the two small rockfall stones sunk by what they hung over the dug floor - drop alone left them up to 3.9 m up)
 place SmallBoulder2 rockfall at -1 1.5 sit drop y=-3.9 yaw=80
 place SmallBoulder3 rockfall at 4.5 2 sit drop y=-1.8 yaw=30
-place SmallBoulder4 rockface at 0.8 2.6 sit
+# (bugfix 11-25, CIGroundIslands: the rock face stood 1.46 m over the world's dug floor as the two small stones did - sunk
+# the same way)
+place SmallBoulder4 rockface at 0.8 2.6 sit drop y=-1.45
 place Note_Sign rocksign at -6.5 3.5 yaw=200
 place Zone_Trigger bearhall at 0 -10 y=1.5
 # (in front of the rockfall, outside the hall: a quest step)
