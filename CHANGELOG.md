@@ -11,6 +11,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ## Next (not released yet)
 
+- **Sunken Shelf islands: every chest, note and lookout in reach** (players): on Lumen Shelf the wind spar is a roomier shaft you can climb inside, and the mess hut stands on the shelf by the survey hut; on Sealkeeper Spire the orders board and Milo's card are on the dock's rim, the wrecked plane's chest is out on open ground and the west cove has a landing to climb out on; on Brinelab Tower the rock den sits further west, off the tower pit, with a clear way out to the shore; The Stalker's Hollow's lip rock has a ramp down into the sea.
 - **Hadal Commons: the Warden's spare chest and the Scavenger's note in reach** (players): the second den's cave hill no longer closes over the Warden's spare chest, and the Scavenger's inventory note lies where you can pick it up.
 - **Rootweave Caves: no plants or rocks hanging in the air** (players): 21 plants, bushes and boulders left hanging over the west trench and the cliff step are gone, the den's cache chest stands on the ground and the boulder in the Flooded Passage's dead end lies on its floor.
 - **Utopia Remade: a shore you can climb out on, and the Keeper's box in reach** (players): the east shore where you come up from the sea door and the quarry's sea door rose too steeply to climb out of the sea; it is now a gentle beach. The lighthouse mast's narrow door caught you and slid you round the outside wall; the door frame is gone, leaving an open gap to the ladder and the Keeper's box.

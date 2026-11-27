@@ -201,6 +201,7 @@ Use `ci.ps1` in the repo root to run this mod's console commands (the CI* test c
 - Worlds: a storyline gets a fresh world of its own; library islands go four to six to a fresh world (one `CIReach` run per island, each island removed before the next). Walks start 15 m off the shore (a teleport, no sailing); the walk itself never teleports.
 - Tools: `CIReachProbe` (the walker alone between two points, logging what is round its feet), `CIReachHeights` (a grid of heights to plan a ramp), `CIReachSwim`, `CIReachWhy` (the player's movement state). The mod logs `[CITEST] HB` every 10 s; a walker that moves under 0.5 m in 10 s is unstuck once, and after 30-90 s without a waypoint the walk fails as "stuck".
 - Plans, results and the open list: `_ProjectDocs/plans/REACH_AUDIT.md` (outside git).
+- Content lessons (biome7 11-27): a ladder shaft needs ladtower's 2x2-cell layout (ladder at 2.6 2.7 yaw 0); in a 1.5 m shaft the grid takes the rungs through the wall from outside and Raft never takes hold. A read or chest under a terrain rim (a pad dug below the ground beside it) is reached only from the rim - put it on the rim. A cave's apron raises a lip round its sand at load, after every recipe brush, which the grid does not see: recipe brushes can't remove it. Tall ladders (15-26 m) can hang mid-climb at any speed (tool issue, 11-27). `CIReachHeights` says "is not here" after `CIRecipe`/`CIReach` (tool issue, 11-27).
 
 ## Low graphics for test runs: CIGfx (`DevTestsGfx.cs`)
 
