@@ -395,7 +395,8 @@ scatter FL_Plank1 4 at 0 0 r=100 seed=10278 free=4 wet
 #  east waterline, 3 m over the sea to 13 m under it; a talus with rocks there only)
 cliffs at 70 52 r=14 rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 # (11-26 islandfix, CIReachTraps: a wet fill boulder on the sunken lane at 49 2 stood 0.8 m over the sea - a roofed pond with no way out; keep the lane clear)
-clear from 24 0 to 98 0 r=8 all only=(?i)^(bigboulder|smallboulder|reef_barrel|fl_plank|caravanisland_smallrock|treelog|bamboo|pickup_landmark_tree)
+# (11-27 bf13a: still a pond at 51.4 1.2 under 0.6-0.8 m lips - the shallows' wet pickups (rock, ore, clam, sand) also land on the lane; scrap stays, it lies flat)
+clear from 24 0 to 98 0 r=8 all only=(?i)^(bigboulder|smallboulder|reef_barrel|fl_plank|caravanisland_smallrock|treelog|bamboo|pickup_landmark_tree|pickup_landmark_(sand|clay|rock|iron|copper|giantclam)|seavine)
 # (11-26 islandfix, CIReach: the camp's pad kept free of the fill's rocks and logs)
 clear at 40 43 r=7 all only=(?i)^(bigboulder|smallboulder|caravanisland_smallrock|treelog|bamboo|pickup_landmark_tree)
 # (the culvert and its Flood store are walked to by overpass_shoal_caves.play: walk ... below=, air op_culvert here, open Flood store)
