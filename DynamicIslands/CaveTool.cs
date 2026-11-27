@@ -1308,8 +1308,8 @@ namespace DynamicIslands.Editor
 			foreach (int t in faces)
 			{
 				Vector3 a = w[st[t]], b = w[st[t + 1]], c = w[st[t + 2]];
-				int x0 = Mathf.FloorToInt(Mathf.Min(a.x, Mathf.Min(b.x, c.x)) / FrameInSlabCell), x1 = Mathf.FloorToInt(Mathf.Max(a.x, Mathf.Max(b.x, c.x)) / FrameInSlabCell);
-				int z0 = Mathf.FloorToInt(Mathf.Min(a.z, Mathf.Min(b.z, c.z)) / FrameInSlabCell), z1 = Mathf.FloorToInt(Mathf.Max(a.z, Mathf.Max(b.z, c.z)) / FrameInSlabCell);
+				int x0 = Mathf.FloorToInt((Mathf.Min(a.x, Mathf.Min(b.x, c.x)) - FrameInSlabReach) / FrameInSlabCell), x1 = Mathf.FloorToInt((Mathf.Max(a.x, Mathf.Max(b.x, c.x)) + FrameInSlabReach) / FrameInSlabCell);
+				int z0 = Mathf.FloorToInt((Mathf.Min(a.z, Mathf.Min(b.z, c.z)) - FrameInSlabReach) / FrameInSlabCell), z1 = Mathf.FloorToInt((Mathf.Max(a.z, Mathf.Max(b.z, c.z)) + FrameInSlabReach) / FrameInSlabCell);
 				for (int x = x0; x <= x1; x++)
 					for (int z = z0; z <= z1; z++)
 					{
@@ -1331,6 +1331,10 @@ namespace DynamicIslands.Editor
 		/// floor under it can show the ground through it).</summary>
 		public const float FrameInSlabMost = 1.5f;
 		const float FrameInSlabCell = 1f;
+		/// <summary>... and the face over it may stand this far aside (m, across the ground): the sill's foot lies at its top face's
+		/// edge, not under its middle (11-27 isl1126_e: only 41 points counted inside the slab when the face had to be straight over
+		/// them; SinkGroundUnder still raised the ground back 248 times and 417 rays met it lying in the apron's top, CIFrameRing).</summary>
+		public const float FrameInSlabReach = 0.3f;
 		/// <summary>Frame points left out of FrameUpPoints as inside the frame's own slab, all islands since Raft started.</summary>
 		public static int FramePointsInSlab;
 
@@ -1349,7 +1353,22 @@ namespace DynamicIslands.Editor
 				if (Mathf.Abs(det) < 1e-8f) continue;
 				float px = p.x - a.x, pz = p.z - a.z;
 				float bu = (px * e2z - e2x * pz) / det, bv = (e1x * pz - px * e1z) / det;
-				if (bu < 0f || bv < 0f || bu + bv > 1f) continue;
+				if (bu < 0f || bv < 0f || bu + bv > 1f)
+				{
+					// (outside the face: the nearest point of its edges, across the ground, within FrameInSlabReach)
+					Vector2 q = new Vector2(p.x, p.z), best = Vector2.zero; float bestD = float.MaxValue;
+					Vector2[] cs = { new Vector2(a.x, a.z), new Vector2(b.x, b.z), new Vector2(c.x, c.z) };
+					for (int e = 0; e < 3; e++)
+					{
+						Vector2 s0 = cs[e], s1 = cs[(e + 1) % 3], d = s1 - s0;
+						float f = d.sqrMagnitude < 1e-10f ? 0f : Mathf.Clamp01(Vector2.Dot(q - s0, d) / d.sqrMagnitude);
+						Vector2 m = s0 + d * f; float dd = (q - m).sqrMagnitude;
+						if (dd < bestD) { bestD = dd; best = m; }
+					}
+					if (bestD > FrameInSlabReach * FrameInSlabReach) continue;
+					px = best.x - a.x; pz = best.y - a.z;
+					bu = (px * e2z - e2x * pz) / det; bv = (e1x * pz - px * e1z) / det;
+				}
 				float over = a.y + bu * (b.y - a.y) + bv * (c.y - a.y) - p.y;
 				if (over >= FrameInSlabMin && over <= FrameInSlabMost) return true;
 			}
