@@ -358,7 +358,7 @@ namespace DynamicIslands
 				foreach (KeyValuePair<string, string> kv in p)
 				{
 					string v = (kv.Value ?? "").Replace("\\n", "\n");
-					if (kv.Key == ObjectProps.LootItems) addHave(o, v);
+					if (kv.Key == ObjectProps.LootItems || kv.Key == ObjectProps.TreasureLoot) addHave(o, v); // (11-26: buried treasure too - Pendulum's survey bolt)
 					else if (kv.Key.StartsWith(BehaviourProps.EventPrefix) || kv.Key.StartsWith(BehaviourProps.ElsePrefix))
 						foreach (string l in v.Split('\n')) { if (l.TrimStart().StartsWith("give|")) addHave(o, l); }
 					else if (kv.Key.StartsWith(BehaviourProps.CheckPrefix) && o != null)
@@ -407,7 +407,9 @@ namespace DynamicIslands
 						}
 						case "collect":
 						{
-							int h = have.ContainsKey(st.Target) ? have[st.Target] : 0;
+							// (11-26: the target keeps its "story:" prefix, the tally is by bare id - every collect step was MISSING)
+							string sid = StoryItems.IdOf(st.Target);
+							int h = have.ContainsKey(sid) ? have[sid] : 0;
 							if (h < st.Count) why = "only " + h + " of story item '" + st.Target + "' to be had (chests, give actions)";
 							break;
 						}

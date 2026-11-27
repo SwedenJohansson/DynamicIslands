@@ -20,6 +20,9 @@ picture op_bank -12 +4.5 41 -24 +1 37
 # Swim in: from the channel up the culvert into the room, and breathe there
 walk -24 -2 to -24 5 to -24 16 to -24 26 to -24 35 below=-1.5
 air op_culvert here
+# (11-26 islandfix: walked to the chest and checked from there - the reach check leaves the culvert and this chest to this play)
+walk -24 35 to -22.4 36.4
+reach Flood store
 
 # The room: dry, air, the crew's chest
 picture op_cave_in -24 4 28 -21 3.5 40
