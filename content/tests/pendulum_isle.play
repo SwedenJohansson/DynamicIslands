@@ -17,7 +17,7 @@ zone bobfoot
 expect step 4
 zone bobtop
 expect step 5
-read Halvard's sighting
+read Halvard's sighting log
 expect step 6
 dig
 expect story surveybolt 1
