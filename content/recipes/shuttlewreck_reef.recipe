@@ -24,6 +24,9 @@ brush flatten at 0 0 r=9 s=25 frames=260 h=1.95
 brush sand at 0 -9 r=4 s=20 frames=20
 brush flatten at -13.1 -23.6 r=4 s=8 frames=40
 origin
+# (b7_lt2: the floor's two end rows still 1 cm under the ground - those rows flattened again, after origin)
+brush flatten from -2.5 -5.4 to 2.5 -5.4 r=2 s=25 frames=300 h=1.95
+brush flatten from -2.5 5.1 to 2.5 5.1 r=2 s=25 frames=300 h=1.95
 clear at -13.1 -23.6 r=5
 clear at 0 0 r=8
 

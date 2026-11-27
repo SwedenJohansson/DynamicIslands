@@ -28,13 +28,6 @@ brush flatten at -24 -14 r=4.5 s=25 frames=260 h=2
 brush flatten at 24 -14 r=4.5 s=25 frames=260 h=2
 brush flatten at -11 13 r=5 s=25 frames=260 h=1.2
 brush flatten at 15 4 r=4 s=25 frames=260 h=1.5
-# (REACH 11-26: the west coast's water under the generated cliff (-95..-106, -25..+30) was a trap - every way out was a 0.7-1.1 m
-#     step up the bank at -96..-99 -22..-25: a notch cut in the bank there, a landing just over the water and a step up
-#     to the bank inland (east), as Old Mine Islet's)
-brush flatten at -97.8 -23.3 r=2.6 s=20 frames=600 h=0.4
-clear at -97.8 -23.3 r=3.4 body
-brush flatten at -95.2 -23.3 r=1.5 s=20 frames=600 h=0.8
-clear at -95.2 -23.3 r=2.5 body
 brush grass at -4 6 r=7 s=20 frames=20
 brush flatten at 23.2 -38.6 r=5 s=8 frames=40
 # (REACH 10-30 G1: since the resize the land round the door tower's rock and the dock stands 4 m and 2 m over them -
@@ -47,6 +40,17 @@ for k 0 4
 brush flatten at {-8.6-0.6*$k} {8.4+0.8*$k} r=1.8 s=20 frames=150 h={3.0-0.45*$k}
 next
 origin
+# (REACH 11-26: the west coast's water under the generated cliff (-95..-106, -25..+30) was a trap - every way out was a 0.7-1.1 m
+#     step up the bank at -96..-99 -22..-25: a notch cut in the bank there, a landing just over the water and a step up
+#     to the bank inland (east), as Old Mine Islet's)
+#     (b7_lt2: after origin now - before it the strokes sat in the generator's frame - and a second landing at the
+#     closest ways out it named, -102..-103 -16..-18, where the bank stands 0.8-0.9 over the water)
+brush flatten at -97.1 -22.9 r=2.6 s=20 frames=600 h=0.4
+clear at -97.1 -22.9 r=3.4 body
+brush flatten at -94.5 -22.9 r=1.5 s=20 frames=600 h=0.8
+clear at -94.5 -22.9 r=2.5 body
+brush flatten at -101.8 -16.6 r=2.2 s=20 frames=600 h=0.4
+clear at -101.8 -16.6 r=3.2 body
 clear at 23.2 -38.6 r=6
 clear at 0 0 r=13
 clear from 23.25 -17.6 to 23.25 -25.7 r=3 body
@@ -119,7 +123,8 @@ place Note_Paper milocard at -12.6 10.4 ground y=1.6 drop yaw=40
 place Placeable_Lantern_Metal skcam at 22.5 -15.5 h=9.475 sit
 # (CIFloating 11-26: since the 10-24 resize 45 25 is land - the lure lay 10 m under the ground and rose through it: it comes up
 #     the flooded sinkhole by the drowned office now, west of the building, from its floor (-14) to 4 m under the water)
-place Placeable_Lantern_Metal sklure at -55 -62 h=-12 scale=1.6
+#     (b7_lt2: hidden, it starts 4 m under its place - at h -12 it lay 2 m in the sinkhole's floor: 2.4 m higher)
+place Placeable_Lantern_Metal sklure at -55 -62 h=-9.6 scale=1.6
 ramp Block_Floor_Tier3 from -13 16 1.2 to -16 19 1.2 len=1.5 top=0
 call ladtower x=-8 z=-6 h0=3 lv=4 a=towers
 place Loot_Chest baselocker at -5.6 -4.2 ground sit yaw=90
