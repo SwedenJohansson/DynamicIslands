@@ -47,7 +47,8 @@ expect hidden vinewall
 # sticks on now and then (a player steps or jumps over it); CIRaySlice shows it - SL6 plan run, 2026-10-19)
 walk -62 -9.5 to -67.8 -9.5
 at -69.5 -9.5 h=6.6
-walk -69.5 -9.5 to -78 -9.5
+# (11-25: the walk no longer took -69.5 as under the den rock and started on its hill skin, 23.6 m: below= puts it on the floor)
+walk -69.5 -9.5 to -78 -9.5 below=12
 zone den
 expect step 11
 read Scrawled on a crate

@@ -65,6 +65,12 @@ namespace DynamicIslands
 					Check(ref ok, skip != null && skip.gameObject.activeInHierarchy && !skip.interactable, "client: Skip current quest step shows, greyed");
 					Check(ref ok, note != null && note.text.Contains("ask the host"), "client: the note says to ask the host ('" + (note != null ? note.text : "none") + "')");
 				}
+				else
+				{
+					// (20a648c1: the host's note names the two buttons, no F10 command any more)
+					Text note = WorldWindow.NoteText("SkipNote");
+					Check(ref ok, note != null && note.text.Contains("Spawn to raft") && !note.text.Contains("F10"), "host: the note names Skip and Spawn to raft, no F10 ('" + (note != null ? note.text : "none") + "')");
+				}
 				Screenshot(new[] { "spawn_window" });
 				yield return new WaitForSecondsRealtime(0.8f);
 

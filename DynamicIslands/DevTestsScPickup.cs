@@ -1,0 +1,113 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using DynamicIslands.Editor;
+using HMLLibrary;
+using RaftModLoader;
+using UnityEngine;
+
+namespace DynamicIslands
+{
+	// SC17 (AU65), the part one machine can do: with scrambled blueprints on, a blueprint of Raft's story island picked up in
+	// the first frames after the island appears - before the 1.5 s look has given its pickups their partners - is the partner.
+	public static partial class DevTests
+	{
+		[ConsoleCommand(name: "CIScFirstPickup", docs: "Dev, world (host, a test world 'CI ...' - it brings one of Raft's story islands): SC17/AU65 on one machine - scrambled blueprints on, the story island with the most movable blueprints brought and sailed to; the frame it appears, before the 1.5 s look, a movable blueprint is picked up through Raft's own Pickup.PickupItem: the player gets its partner, not Raft's own, and the island's other pickups have theirs too. The player-2 half (options arriving after the join) needs host + box")]
+		public static void ScFirstPickupCommand() { StartTest(ScFirstPickupRoutine()); }
+
+		/// <summary>The blueprint a pickup holds as its own item or in its yield (one of want; any blueprint when want is null), or null.</summary>
+		static string ScBlueprintIn(PickupItem p, List<string> want)
+		{
+			Func<Item_Base, bool> ok = i => i != null && (want != null ? want.Contains(i.UniqueName) : i.UniqueName.StartsWith("Blueprint_"));
+			if (p.itemInstance != null && ok(p.itemInstance.baseItem)) return p.itemInstance.baseItem.UniqueName;
+			List<Cost> y = p.yieldHandler != null ? HarmonyLib.Traverse.Create(p.yieldHandler).Field("yield").GetValue<List<Cost>>() : null;
+			Cost c = y != null ? y.FirstOrDefault(x => x != null && ok(x.item)) : null;
+			return c != null ? c.item.UniqueName : null;
+		}
+
+		static IEnumerator ScFirstPickupRoutine()
+		{
+			Network_Player me = RAPI.GetLocalPlayer();
+			if (me == null || !LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !(SaveAndLoad.CurrentGameFileName ?? "").StartsWith("CI ")) { Fail("first pickup: host, in a test world 'CI ...'"); yield break; }
+			yield return EnsureAlive();
+			bool ok = true;
+			var optionsBefore = new HashSet<string>(WorldOptions.Current);
+			IDictionary originals = HarmonyLib.Traverse.Create(typeof(ScrambledBlueprints)).Field("originals").GetValue<IDictionary>();
+			try
+			{
+				WorldOptions.Set(new HashSet<string>(optionsBefore) { WorldOptions.Blueprints });
+				List<string> movable = ScrambledBlueprints.Movable;
+				string island = StoryTypes.Keys.OrderByDescending(k => movable.Count(b => ScrambledBlueprints.OnIslands[b].Contains(k))).First();
+				var own = movable.Where(b => ScrambledBlueprints.OnIslands[b].Contains(island) && ScrambledBlueprints.Map(b) != b).ToList();
+				Check(ref ok, own.Count > 0 && originals != null, "scrambled blueprints on; " + island + " holds " + own.Count + " that move (" + string.Join(", ", own.Select(b => b.Replace("Blueprint_", "") + ">" + ScrambledBlueprints.Map(b).Replace("Blueprint_", "")).ToArray()) + ")");
+				if (own.Count == 0 || originals == null) yield break;
+				ChunkManager chunks = ComponentManager<ChunkManager>.Value ?? UnityEngine.Object.FindObjectOfType<ChunkManager>();
+				ChunkPoint point = chunks != null ? chunks.AddChunkPointForcibly(StoryTypes[island]) : null;
+				Check(ref ok, point != null, "Raft brings " + island + (point != null ? " " + Flat(point.worldPosition - CustomIslandSpawner.RaftPosition.Value).magnitude.ToString("F0") + " m away" : ""));
+				if (point == null) yield break;
+
+				// (sailed towards it; every frame looked at, so the pickup comes the frame the island is there)
+				Func<Landmark> find = () => WorldManager.AllLandmarks.FirstOrDefault(x => x != null && x.isSpawned && x.name.IndexOf(island, StringComparison.OrdinalIgnoreCase) >= 0);
+				// (a blueprint lies as the pickup's own item or in its yield - Tangaroa's are all in yields: SC17 run 11-26)
+				Func<Landmark, PickupItem> fresh = l => l == null ? null : l.GetComponentsInChildren<PickupItem>(true).FirstOrDefault(p => p != null && !originals.Contains(p) && ScBlueprintIn(p, own) != null);
+				Landmark land = null;
+				PickupItem pick = null;
+				Vector3 p0 = point.worldPosition, shifted = Vector3.zero;
+				Action<Vector3> onShift = s => shifted += s;
+				WorldShiftManager.OnWorldShift += onShift;
+				Func<Vector3> target = () => point.worldPosition != p0 ? point.worldPosition : p0 + shifted;
+				float seen = -1f;
+				// (the 1.5 s look held off while the island comes: which frame it falls on is chance, and when it comes first there
+				// is no unswapped pickup left to take - SC17 run 11-26. The pickup hook is what this row is about.)
+				HarmonyLib.Traverse tick = HarmonyLib.Traverse.Create(typeof(ScrambledBlueprints)).Field("nextTick");
+				Action hold = () => tick.SetValue(Time.unscaledTime + 5f);
+				try
+				{
+					for (int leg = 0; leg < 8 && land == null; leg++)
+					{
+						IEnumerator sail = SailTo(() => target() + (CustomIslandSpawner.RaftPosition.Value - target()).normalized * 200f, 60f);
+						hold();
+						while (land == null && sail.MoveNext()) { hold(); yield return sail.Current; hold(); land = find(); }
+						for (float t = 0f; land == null && t < 20f; t += Time.deltaTime) { hold(); yield return null; hold(); land = find(); }
+					}
+					if (land != null)
+					{
+						seen = Time.time;
+						// (the pickups may come a while after the landmark - a big island is built over many frames; the look is held
+						// off, so waiting costs nothing. 30 frames was too short: SC17 runs 11-25 and 11-26)
+						for (float w = 0f; w < 10f && (pick = fresh(land)) == null; w += Time.unscaledDeltaTime) { hold(); yield return null; hold(); }
+					}
+				}
+				finally { WorldShiftManager.OnWorldShift -= onShift; if (pick == null) tick.SetValue(0f); }
+				Check(ref ok, land != null, island + " appeared");
+				if (land == null) yield break;
+				if (pick == null)
+				{
+					PickupItem[] all = land.GetComponentsInChildren<PickupItem>(true);
+					int swappedAll = all.Count(p => p != null && originals.Contains(p));
+					string names = string.Join(", ", all.Where(p => p != null).Select(p => ScBlueprintIn(p, null)).Where(n => n != null).Select(n => n.Replace("Blueprint_", "")).Distinct().ToArray());
+					Log("  (no unswapped pickup of a moving blueprint 10 s after " + land.name + " appeared: " + all.Length + " pickups, " + swappedAll + " already swapped; blueprints there: " + (names.Length > 0 ? names : "none") + ")");
+					Check(ref ok, false, "a blueprint picked up before the look");
+					yield break;
+				}
+
+				string was = ScBlueprintIn(pick, own), partner = ScrambledBlueprints.Map(was);
+				int hadWas = me.Inventory.GetItemCount(was), hadPartner = me.Inventory.GetItemCount(partner);
+				float after = Time.time - seen;
+				me.PickupScript.PickupItem(pick, true, false);
+				tick.SetValue(0f); // (the look runs again)
+				yield return new WaitForSeconds(0.5f);
+				int gotWas = me.Inventory.GetItemCount(was) - hadWas, gotPartner = me.Inventory.GetItemCount(partner) - hadPartner;
+				Check(ref ok, gotPartner == 1 && gotWas == 0, "picked up " + Gf(after, "F2") + " s after the island appeared (Raft's own there: " + was.Replace("Blueprint_", "") + "): the player got " + partner.Replace("Blueprint_", "") + " x" + gotPartner + ", " + was.Replace("Blueprint_", "") + " x" + gotWas);
+				// (every pickup of the island that held a blueprint that moves: given its partner at the same time)
+				var left = land.GetComponentsInChildren<PickupItem>(true).Where(p => p != null && p != pick && (originals.Contains(p) || ScBlueprintIn(p, own) != null)).ToList();
+				int swapped = left.Count(p => originals.Contains(p));
+				Check(ref ok, swapped == left.Count, "the island's other moving blueprint pickups were given their partners at the same time: " + swapped + "/" + left.Count);
+				me.Inventory.RemoveItem(partner, gotPartner);
+			}
+			finally { WorldOptions.Set(optionsBefore); }
+			if (ok) Log("PASS: first pickup (SC17 on one machine)"); else Fail("first pickup (SC17): see the lines above");
+		}
+	}
+}

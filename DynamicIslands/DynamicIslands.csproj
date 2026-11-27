@@ -255,6 +255,7 @@
     <Compile Include="DevTestsGfx.cs" />
     <Compile Include="DevTestsReady.cs" />
     <Compile Include="DevTestsSaveSoon.cs" />
+    <Compile Include="DevTestsUntested1125.cs" />
     <Compile Include="StormSeas.cs" />
     <Compile Include="DevTestsStormSeas.cs" />
     <Compile Include="UfoSightings.cs" />
@@ -407,6 +408,9 @@
     <Compile Include="DevTestsFeat35b.cs" />
     <Compile Include="DevTestsGapHost.cs" />
     <Compile Include="DevTestsGapStory.cs" />
+    <Compile Include="DevTestsPlanDriven.cs" />
+    <Compile Include="DevTestsScRaftSize.cs" />
+    <Compile Include="DevTestsScPickup.cs" />
     <Compile Include="DevTestsStorylineMp.cs" />
     <Compile Include="DevTestsDirtHoney.cs" />
     <Compile Include="DevTestsShovelProbe.cs" />
