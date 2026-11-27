@@ -143,7 +143,10 @@ place Zone_Trigger dockzone at -11 13 h=2.2
 #     above with sit, so they settle on the rim's top)
 # (sk12 CIFloating: the board hung 4.3 m over the pad - since bs1 graded the dock there is no rim under it any more and
 #     sit found nothing: on the ground of the dock now, which bs1's slope makes walkable)
-place Note_Board orders at -12.1 11.2 ground yaw=135
+# (REACH 11-27 sk14: on the dock's pad (h 1.3) the walk still never came - it reached only the rim 2-3 m over it: the board
+#     and the card up on the base now, beside the top of the dock's steps, off the steps' line)
+clear at -4.4 8.9 r=1.6
+place Note_Board orders at -4.7 9.4 ground yaw=135
 # (REACH 11-27 bs1: the store at -10 12 stood in the way down to the dock, and the orders board 1.4 m from it had no spot
 #     to read it from - the store on the dock's far (north-west) side now)
 store spireshop at -14 16 ground
@@ -153,7 +156,7 @@ store spireshop at -14 16 ground
 # (REACH 11-27 sk11: no rim under -10.9 11.0 after all - the box hung 4.1 m over the pad (sit found nothing) and the
 #     card fell off it to the pad at h 1.5; the walk stands on the rim at -10.7 10.6 h 3.5: the card sits there, no box)
 # (sk12 CIFloating: the card hung 3.0 m over the ground - no rim there since bs1: on the ground beside the board)
-place Note_Paper milocard at -10.6 10.6 ground yaw=40
+place Note_Paper milocard at -3.9 8.3 ground yaw=40
 # STORY 10-24s: the fuse board lights the spire - and the Stalker's lure comes up the trench to look (seen from the door tower's deck)
 place Placeable_Lantern_Metal skcam at 22.5 -15.5 h=9.475 sit
 # (CIFloating 11-26: since the 10-24 resize 45 25 is land - the lure lay 10 m under the ground and rose through it: it comes up
