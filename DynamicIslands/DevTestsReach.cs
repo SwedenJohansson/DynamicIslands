@@ -1130,6 +1130,9 @@ namespace DynamicIslands
 				string where = "ladder " + LadderName(ch[0], e) + " at " + lr.x.ToString("F1") + " " + lr.z.ToString("F1") + " h=" + (lb.min.y - e.Position.y).ToString("F1") + ".." + (lb.max.y - e.Position.y).ToString("F1");
 				string facing = LadderFacing(ch, lb);
 				// (a ladder up to the sealed store's lid: its top is under the lid until the quest step takes it away)
+				// (the lid where it is now: a world shift (0 0 1000) during the grid build left the bounds taken before it 1000 m off,
+				// and Caisson's hatch ladder under cycap failed "no floor at its top" instead of SEALED, cy9 11-27)
+				if (grabs > 0 && tops == 0 && sealedNote != null) { HashSet<string> sn; ReachSealed(e, out sn, out sealedLid); }
 				if (grabs > 0 && tops == 0 && sealedNote != null && lb.max.y >= sealedLid.min.y - 2.5f && lb.max.y <= sealedLid.max.y + 0.5f
 					&& lb.max.x >= sealedLid.min.x - 1.5f && lb.min.x <= sealedLid.max.x + 1.5f && lb.max.z >= sealedLid.min.z - 1.5f && lb.min.z <= sealedLid.max.z + 1.5f)
 				{
