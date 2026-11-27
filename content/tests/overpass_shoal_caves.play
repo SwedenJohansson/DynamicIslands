@@ -21,7 +21,8 @@ picture op_bank -12 +4.5 41 -24 +1 37
 walk -24 -2 to -24 5 to -24 16 to -24 26 to -24 35 below=-1.5
 air op_culvert here
 # (11-26 islandfix: walked to the chest and checked from there - the reach check leaves the culvert and this chest to this play)
-walk -24 35 to -22.4 36.4
+# (11-27 f: without below= the step came out on the bank 15.6 m up, over the room - kept to the room's floor like the swim in)
+walk -24 35 to -22.4 36.4 below=-1.5
 reach Flood store
 
 # The room: dry, air, the crew's chest
