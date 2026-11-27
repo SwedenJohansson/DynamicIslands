@@ -241,7 +241,10 @@ quest reward=MetalIngot*3;Rope*4
 # cistern, the cage, Ada's house and the walks between them.
 origin
 clear at 9 -9 r=4 only=(?i)boulder|rock|tree|bush|bamboo
-call kit_st x=9 z=-9 yaw=135 len=14 slope=0 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=0 titanium=0 wet=1 as=smcellar
+# (11-27 isl1126_g, CIFrameRing: the frame's north-east leg lay along the mound's west slope, 2-3 cm in front of the
+#  ground (42 rays; the tool lets the ground down there but puts it back over the frame's buried points) - the mouth
+#  0.4 m further into the mound, so that leg goes under the slope)
+call kit_st x=9.4 z=-9.4 yaw=135 len=14 slope=0 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=0 titanium=0 wet=1 as=smcellar
 prop smcellar cave.rock=plain
 prop smcellar cave.dome=18
 place Zone_Trigger smcellarair at 26.7 -26.7 h=4.5

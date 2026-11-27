@@ -91,6 +91,7 @@ namespace DynamicIslands
 			chk(ByPlayFile("jump_om_finale") == "old_mine_islet.play", "a zone the play goes to: " + (ByPlayFile("jump_om_finale") ?? "none"));
 			chk(ByPlayFile("slag STACK prize") == "old_mine_islet.play", "a chest it opens, any case");
 			chk(ByPlayFile("No such chest anywhere 11-05") == null, "a target no play visits: none");
+			chk(ByPlayFile("op_dair") == "overpass_shoal.play", "an air zone the play breathes in (air <id>)");
 			var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Slag stack prize" };
 			chk(ByPlayNote(set, new ReachTarget { Name = "Slag stack prize" }).StartsWith("CHECKED BY PLAY"), "listed + played: checked by play");
 			chk(ByPlayNote(set, new ReachTarget { Name = "Ore barge's crate" }) == null, "not listed: the grid's own verdict");
@@ -702,6 +703,8 @@ namespace DynamicIslands
 					{
 						string[] w = l.Trim().Split(new[] { ' ' }, 2);
 						if (w.Length == 2 && (verb != null ? w[0] == verb : (w[0] == "zone" || w[0] == "open" || w[0] == "reach" || w[0] == "read")) &&string.Equals(w[1].Trim(), target, StringComparison.OrdinalIgnoreCase)) return Path.GetFileName(f);
+						// (an air zone the play breathes in: "air <id> [here]" - Overpass Shoal's op_culvert and op_dair, islandfix 11-27)
+						if (verb == null && w.Length == 2 && w[0] == "air" && string.Equals(w[1].Trim().Split(' ')[0], target, StringComparison.OrdinalIgnoreCase)) return Path.GetFileName(f);
 					}
 			}
 			catch (Exception) { }
@@ -842,20 +845,37 @@ namespace DynamicIslands
 			// hatch - a player uses it and it is gone; the grid saw it as a lid on the airlock, PQ11 10-28. A gated one (if./else.)
 			// stays: only the play's own steps open it)
 			{
-				int gone = 0;
+				int gone = 0, gatedGone = 0;
+				// (a self-hide gated only by a story token the island itself gives (if.use=has|story:X, and another object has
+				// give||story:X): the quest step that gives it comes first, so it is taken away as after that step - Overpass
+				// Shoal's capstone over the depot roof hatch kept the depot "can't get there", islandfix 11-26)
+				var given = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+				foreach (IslandObjectRef gr in e.Root.GetComponentsInChildren<IslandObjectRef>(true))
+					foreach (var kv in gr.Props)
+						foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(kv.Value ?? "", @"give\|[^|]*\|story:([A-Za-z0-9_]+)"))
+							given.Add(m.Groups[1].Value);
 				foreach (IslandObjectRef ir in e.Root.GetComponentsInChildren<IslandObjectRef>(false))
 				{
 					string onUse;
 					if (!ir.Props.TryGetValue("on.use", out onUse) || onUse.IndexOf("hide", StringComparison.Ordinal) < 0) continue;
-					if (ir.Props.Keys.Any(k => k.StartsWith("if.") || k.StartsWith("else."))) continue;
+					bool storyGated = false;
+					if (ir.Props.Keys.Any(k => k.StartsWith("if.") || k.StartsWith("else.")))
+					{
+						string gate;
+						if (ir.Props.Keys.Count(k => k.StartsWith("if.")) != 1 || !ir.Props.TryGetValue("if.use", out gate)) continue;
+						var gm = System.Text.RegularExpressions.Regex.Match((gate ?? "").Trim(), @"^has\|story:([A-Za-z0-9_]+)(\|\d+)?$");
+						if (!gm.Success || !given.Contains(gm.Groups[1].Value)) continue;
+						storyGated = true;
+					}
 					string own = ir.Name ?? "";
 					bool self = ObjAction.ParseLines(onUse.Replace("\\n", "\n")).Any(a => a.Verb == "hide"
 						&& (a.Target.Length == 0 || a.Target.Equals("self", StringComparison.OrdinalIgnoreCase) || (own.Length > 0 && a.Target == own)));
 					if (!self) continue;
 					ir.gameObject.SetActive(false);
-					gone++;
+					if (storyGated) gatedGone++; else gone++;
 				}
 				if (gone > 0) report.Add("REACH " + name + " | used-away | - | NOTE " + gone + " object(s) a player uses away (a hatch that hides itself) taken away as a player would");
+				if (gatedGone > 0) report.Add("REACH " + name + " | used-away | - | NOTE " + gatedGone + " object(s) gated by a story token the island gives, taken away as after that quest step");
 			}
 			// (a plain gate an islander's answer hides (on.choiceN ... hide|gate, the islander not gated by if./else.): Thalassa
 			// Mooring's sea gate - any player asks Harbourmistress Elaine and it is gone; the grid saw it shut and the dry room
@@ -1146,7 +1166,11 @@ namespace DynamicIslands
 					report.Add("REACH " + name + " | " + where + " | - | PASS a zipline's ladder: its top mounts the rope, no floor wanted (" + facing + ")");
 					continue;
 				}
-				if (grabs == 0 || tops == 0)
+				// (a zipline tower's ladder: its top is the line's start, no floor to step off onto - the line is the way on;
+				// Pendulum Isle's tower, islandfix 11-26. Only when the ladder is part of that zipline's own object)
+				string zipTop = grabs > 0 && tops == 0 ? ZiplineLadderTop(ch[0].transform, e.Root != null ? e.Root.transform : null, lb) : null;
+				if (zipTop != null) report.Add("REACH " + name + " | " + where + " | - | PASS " + grabs + " foot spots, its top is a zipline's start (" + zipTop + ")");
+				else if (grabs == 0 || tops == 0)
 				{
 					problems++;
 					report.Add("REACH " + name + " | " + where + " | - | FAIL " + (grabs == 0 ? "nothing can take hold of it from below" + (why != null ? " - " + why : " - no spot within 1.6 m") + LadderNearestSwim(g, lb, e) : "") + (grabs == 0 && tops == 0 ? ", " : "") + (tops == 0 ? "no floor to step off onto at its top" : "") + " (" + facing + ")");
@@ -1159,6 +1183,10 @@ namespace DynamicIslands
 			// into a vault - the grid can't walk it, and the whole colossus above the lift failed, PQ11 10-28. Every spot the
 			// object is used from links to the standing spot where the player lands. Use checks (a key) are taken as met, as
 			// the play left the island; the walker uses the object at that step, as a player would)
+			// (a teleport that lands where nobody stands - open air under a flying island, the sea: Pendulum Isle's keel shaft puts
+			// the player in the keel zone 12 m under the island, islandfix 11-26. The zone it lands in is reached when the object
+			// is: kept with the object's use spots for the targets' check below)
+			var teleOpen = new List<Tuple<string, Vector3, List<int>>>();
 			{
 				int links = 0, objs = 0;
 				foreach (IslandObjectRef r in e.Root.GetComponentsInChildren<IslandObjectRef>(false))
@@ -1177,12 +1205,18 @@ namespace DynamicIslands
 						float dl = (g.Pos[k] - land).sqrMagnitude;
 						if (dl < best) { best = dl; dst = k; }
 					}
-					if (dst < 0) { report.Add("REACH " + name + " | teleport '" + (r.Name.Length > 0 ? r.Name : r.ObjectName) + "' -> " + ta.Target + " | - | NOTE no standing spot within 3 m of where it puts the player"); continue; }
 					var ut = new ReachTarget { Kind = "use", Root = r.transform };
 					Renderer[] rs = r.GetComponentsInChildren<Renderer>(false).Where(x => (x.bounds.center - r.transform.position).sqrMagnitude < 900f).ToArray();
 					ut.B = new Bounds(r.transform.position, Vector3.one * 0.3f);
 					foreach (Renderer x in rs) ut.B.Encapsulate(x.bounds);
 					ut.Colliders = r.GetComponentsInChildren<Collider>(false).ToList();
+					if (dst < 0)
+					{
+						report.Add("REACH " + name + " | teleport '" + (r.Name.Length > 0 ? r.Name : r.ObjectName) + "' -> " + ta.Target + " | - | NOTE no standing spot within 3 m of where it puts the player");
+						var from = NearNodes(g, ut.B, RUse + 0.6f).Where(k => g.Kind[k] != 3 && CanUseFrom(g, k, ut)).ToList();
+						teleOpen.Add(Tuple.Create(r.Name.Length > 0 ? r.Name : r.ObjectName, land, from));
+						continue;
+					}
 					int n0 = links;
 					foreach (int k in NearNodes(g, ut.B, RUse + 0.6f))
 						if (k != dst && g.Kind[k] != 3 && CanUseFrom(g, k, ut)) { g.Link(k, dst); g.Tele.Add(ReachGrid.TeleKey(k, dst)); links++; }
@@ -1330,6 +1364,20 @@ namespace DynamicIslands
 				}
 				string playNote = ByPlayNote(byPlay, t) ?? (sealedNote != null && sealedNames.Contains(t.Name ?? "") ? sealedNote : null);
 				if (use.Count == 0 && playNote != null) { report.Add(head + playNote + " - the grid: no spot to use it from (" + WhyNoSpot(t) + ")"); continue; }
+				// (a zone a teleport lands in, where nothing stands (teleOpen above): reached when the teleporting object is)
+				if (use.Count == 0 && t.Kind == "zone")
+				{
+					Bounds zb = t.B; zb.Expand(2f);
+					var tl = teleOpen.FirstOrDefault(x => zb.Contains(x.Item2));
+					if (tl != null)
+					{
+						var miss = new List<string>();
+						for (int s = 0; s < 4; s++) if (!tl.Item3.Any(k => fwd[s][k])) miss.Add(sideNames[s]);
+						if (tl.Item3.Count > 0 && miss.Count == 0) report.Add(head + "PASS by the teleport '" + tl.Item1 + "', which lands in it (open air or sea, nothing to stand on); its " + tl.Item3.Count + " use spots reached from every side");
+						else { problems++; report.Add(head + "FAIL only the teleport '" + tl.Item1 + "' lands in it, and " + (tl.Item3.Count == 0 ? "there is no spot to use that from" : "that is not reached from " + string.Join("/", miss.ToArray()))); }
+						continue;
+					}
+				}
 				if (use.Count == 0)
 				{
 					problems++;
@@ -2029,6 +2077,23 @@ namespace DynamicIslands
 			foreach (Collider o in Physics.OverlapSphere(new Vector3(lb.center.x, lb.max.y, lb.center.z), 2.5f, ~0, QueryTriggerInteraction.Collide))
 				if (o != null && zip(o.transform)) return true;
 			return false;
+		}
+
+		/// <summary>The zipline a ladder belongs to: the first ancestor under the island root holding exactly one line, when that
+		/// line's near end is within 12 m of the ladder's top. Null otherwise (islandfix 11-26).</summary>
+		static string ZiplineLadderTop(Transform ladder, Transform islandRoot, Bounds lb)
+		{
+			for (Transform t = ladder; t != null && t != islandRoot; t = t.parent)
+			{
+				var lines = t.GetComponentsInChildren<MeshPath_Zipline_Landmark>(true);
+				if (lines.Length > 1) return null;
+				if (lines.Length == 0) continue;
+				Vector3 near, far;
+				if (!ZiplineEnds.Ends(t.gameObject, null, Vector3.zero, out near, out far)) return null;
+				float d = Vector3.Distance(near, new Vector3(lb.center.x, lb.max.y, lb.center.z));
+				return d <= 12f ? "line start " + d.ToString("F1") + " m from its top" : null;
+			}
+			return null;
 		}
 
 		static string LadderName(Collider c, IslandWorldState.Entry e)
@@ -2760,6 +2825,9 @@ namespace DynamicIslands
 			{
 				// (w10fix3 11-14: a player made a child of Raft's FirstPersonParent did not move at all - The Listening Mirrors' walks)
 				ReachUnparent(pl);
+				// (a zone's camera moment set off on the way holds the player (controller off) for its seconds: the walker
+				// skips it as a player presses Esc - Overpass Shoal's summit walk was held at the ladder top 10 s, islandfix 11-26)
+				if (CameraMoment.Active) { CameraMoment.Skip(); Log("  walk: a camera moment set off on the way - skipped (Esc), as a player would"); }
 				float now = Time.realtimeSinceStartup;
 				if (now - wdWin >= 10f)
 				{

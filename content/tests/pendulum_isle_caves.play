@@ -10,7 +10,7 @@ empty
 
 picture pi_cut_out -47.6 +2 -28.5 -49.4 5 -23.5
 walk -48.4 -26.3 to -49.4 -23.5 to -49.8 -21 to -51.1 -18.3 to -52.5 -15 to -53 -13.6 below=12
-picture pi_cut_in -51.3 6.6 -18.3 -53.6 5.8 -13 light=20
+picture pi_cut_in -51.3 5.3 -18.3 -53.6 5.8 -13 light=20
 open Bob-cutters' box
 wait 2
 expect item Nail 6
