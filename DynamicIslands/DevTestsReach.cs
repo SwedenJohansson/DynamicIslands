@@ -62,7 +62,7 @@ namespace DynamicIslands
 			Log("PASS: reach only " + (reachOnly == "" ? "(all targets)" : "'" + reachOnly + "'"));
 		}
 
-		[ConsoleCommand(name: "CIReachDismountUnit", docs: "Dev, anywhere: the walker's jump off a ladder's top - after a climb up, a next floor 0.25 to 1.2 m above the feet (a hatch beside or behind the ladder) is jumped onto, and one level with the feet (-0.3 m) that is not ahead over the ladder's top; one ahead level with the feet, one out of a jump's reach, or a walk not off a ladder is walked")]
+		[ConsoleCommand(name: "CIReachDismountUnit", docs: "Dev, anywhere: the walker's jump off a ladder's top - after a climb up, a next floor 0.25 to 1.2 m above the feet (a hatch beside or behind the ladder) is jumped onto, and one level with the feet (-0.3 m) that is not ahead over the ladder's top; one ahead level with the feet, one out of a jump's reach, or a walk not off a ladder is walked; a ladder and the step off its top run at 1x")]
 		public static void CIReachDismountUnit()
 		{
 			bool ok = true;
@@ -74,6 +74,7 @@ namespace DynamicIslands
 			chk(!ReachLadderDismount(true, 30.0f, 31.73f), "the floor 1.7 m up - out of a jump's reach, no jump");
 			chk(!ReachLadderDismount(false, 31.25f, 31.73f), "not after a climb up - the walk's own jumps only");
 			chk(!ReachLadderDismount(false, 40.1f, 40.12f, false), "level beside, not after a climb up - no jump");
+			chk(ReachLadderClock == 1, "a ladder and the step off its top at 1x, whatever the walk's speed");
 			Log(ok ? "PASS: reach dismount unit" : "FAIL: reach dismount unit");
 		}
 
@@ -356,34 +357,43 @@ namespace DynamicIslands
 			StartTest(ReachColumnsRoutine(string.Join(" ", args.Take(args.Length - 5).ToArray()), v[0], v[1], v[2], v[3], Mathf.Clamp((int)v[4], 1, 60)));
 		}
 
+		/// <summary>The island by its name, or brought next to the raft when it is not in the world (CIReach and cavecheckrun take
+		/// theirs away after them); got(null) after a Fail when it can't be had. CIReachColumns, CIReachHeights.</summary>
+		static IEnumerator ReachFindOrBring(string island, string who, Action<IslandWorldState.Entry> got)
+		{
+			got(null);
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase) && x.Root != null);
+			if (e != null) { got(e); yield break; }
+			// (brought next to the raft when it is not in the world: cavecheckrun takes its island away after it)
+			// (brought as CIReach brings it: a half-loaded entry of the same name taken away first, the island's own
+			// elevation, a second try, settled before the columns - right after CIRecipe the first columns of sc7 and
+			// th1 failed "didn't come" while CIReach a minute later brought it fine, bugfix 11-26)
+			yield return EnsureAlive();
+			var made = new List<IslandWorldState.Entry>();
+			for (int attempt = 0; attempt < 2 && (e == null || e.Root == null); attempt++)
+			{
+				var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
+				if (left.Count > 0) yield return RemoveIslandsAndWait(left);
+				Vector3? spot = CaveGapsLookIslandMissing(island) ? null : ScSpot(island, 400f, IslandSpawner.ElevationOf(island));
+				if (!spot.HasValue) { Fail(who + ": '" + island + "' is not here and can't be brought"); yield break; }
+				made.Clear();
+				yield return ScBring(island, spot.Value, made);
+				e = made.LastOrDefault();
+				if (e == null || e.Root == null) yield return new WaitForSeconds(3f);
+			}
+			if (e == null || e.Root == null) { Fail(who + ": " + island + " didn't come"); yield break; }
+			yield return WaitIslandSettled(e, 0.5f, 3f);
+			PlayerMove.To(RAPI.GetLocalPlayer(), e.Position + new Vector3(0f, 2f, -LandRadiusOf(e) - 20f));
+			yield return new WaitForSeconds(1f);
+			got(e);
+		}
+
 		static IEnumerator ReachColumnsRoutine(string island, float x0, float z0, float x1, float z1, int n)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("CIReachColumns: host, in a world"); yield break; }
-			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase) && x.Root != null);
-			if (e == null)
-			{
-				// (brought next to the raft when it is not in the world: cavecheckrun takes its island away after it)
-				// (brought as CIReach brings it: a half-loaded entry of the same name taken away first, the island's own
-				// elevation, a second try, settled before the columns - right after CIRecipe the first columns of sc7 and
-				// th1 failed "didn't come" while CIReach a minute later brought it fine, bugfix 11-26)
-				yield return EnsureAlive();
-				var made = new List<IslandWorldState.Entry>();
-				for (int attempt = 0; attempt < 2 && (e == null || e.Root == null); attempt++)
-				{
-					var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
-					if (left.Count > 0) yield return RemoveIslandsAndWait(left);
-					Vector3? spot = CaveGapsLookIslandMissing(island) ? null : ScSpot(island, 400f, IslandSpawner.ElevationOf(island));
-					if (!spot.HasValue) { Fail("CIReachColumns: '" + island + "' is not here and can't be brought"); yield break; }
-					made.Clear();
-					yield return ScBring(island, spot.Value, made);
-					e = made.LastOrDefault();
-					if (e == null || e.Root == null) yield return new WaitForSeconds(3f);
-				}
-				if (e == null || e.Root == null) { Fail("CIReachColumns: " + island + " didn't come"); yield break; }
-				yield return WaitIslandSettled(e, 0.5f, 3f);
-				PlayerMove.To(RAPI.GetLocalPlayer(), e.Position + new Vector3(0f, 2f, -LandRadiusOf(e) - 20f));
-				yield return new WaitForSeconds(1f);
-			}
+			IslandWorldState.Entry e = null;
+			yield return ReachFindOrBring(island, "CIReachColumns", x => e = x);
+			if (e == null) yield break;
 			Physics.SyncTransforms();
 			if (reachMask == 0) reachMask = ~0;
 			for (int c = 0; c < n; c++)
@@ -427,8 +437,11 @@ namespace DynamicIslands
 		static IEnumerator ReachHeightsRoutine(string island, float cx, float cz, float half, float step)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("CIReachHeights: host, in a world"); yield break; }
-			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => string.Equals(x.HostName, island, StringComparison.OrdinalIgnoreCase) && x.Root != null);
-			if (e == null) { Fail("CIReachHeights: '" + island + "' is not here"); yield break; }
+			// (brought as CIReachColumns brings it: CIReach takes its island away after it, so a CIReachHeights after a CIReach
+			// always failed "is not here" - Sealkeeper Spire sk6/sk7 11-27)
+			IslandWorldState.Entry e = null;
+			yield return ReachFindOrBring(island, "CIReachHeights", x => e = x);
+			if (e == null) yield break;
 			Physics.SyncTransforms();
 			int mask = reachMask != 0 ? reachMask : ~0;
 			var head = new System.Text.StringBuilder("  heights x:");
@@ -2295,6 +2308,8 @@ namespace DynamicIslands
 			{
 				reachWalked++;
 				why = null;
+				// (the 1x walk again starts clean: off any ladder the first walk left the player on, no key held - sk7 11-27)
+				if (attempt > 0) ReachUnclimb(pl);
 				ReachInputOn(speed);
 				try
 				{
@@ -2481,6 +2496,33 @@ namespace DynamicIslands
 			reachPaceOn = speed > 1 ? reachPace : 1f;
 		}
 
+		/// <summary>The walk's clock (game time a frame, clock/30 s) and pace for the next stretch: a ladder and the step off its top
+		/// run at ReachLadderClock, the rest at the walk's speed.</summary>
+		static void ReachClock(int clock, bool pace)
+		{
+			if (!mmFake) return;
+			Time.captureDeltaTime = clock / 30f;
+			reachPaceOn = pace && clock > 1 ? reachPace : 1f;
+		}
+
+		/// <summary>The clock on a ladder and the step off its top: 1x, a player's own frames, whatever the walk's speed. Raft holds a
+		/// climber's feet ~0.33 m under the ladder's end and a jump while climbing only climbs, so a floor more than ~0.3 m over the
+		/// held feet is out of a player's reach - but one frame of 3x or 4x carried the climber up to 0.5 m past the end: Sealkeeper
+		/// Spire's summit deck (0.55 m over the held feet) passed at 3x (sk6), failed at 4x pace 2.5 and at 1x (sk7 11-27).
+		/// A player who falls back down the shaft climbs again once (ReachWalkPath), stepping off at the nearest floor's edge
+		/// (LadderTopFloor) after a longer rise; a second fall is the walk's FAIL.</summary>
+		internal const int ReachLadderClock = 1;
+
+		/// <summary>Off any ladder (Raft's PersonController.DetachFromLadders) and no key held.</summary>
+		static void ReachUnclimb(Network_Player pl)
+		{
+			mmWalk = 0f; mmJump = false;
+			PersonController pc = pl != null ? pl.PersonController : null;
+			if (pc == null || !Climbing(pl)) return;
+			try { System.Reflection.MethodInfo m = AccessTools.Method(typeof(PersonController), "DetachFromLadders"); if (m != null) m.Invoke(pc, null); }
+			catch (Exception ex) { Log("(off the ladder: " + ex.Message + ")"); }
+		}
+
 		/// <summary>Each frame of a walk (from MmHold): Raft's walk and swim speeds at the pace - a player's in the air.</summary>
 		static void ReachPace(PersonController pc)
 		{
@@ -2611,12 +2653,17 @@ namespace DynamicIslands
 			};
 			// (set when a ladder was climbed to its top: the next floor may be one to jump onto - ReachLadderDismount)
 			bool ladderUpTop = false; Vector3 ladderFace = Vector3.zero;
+			// (the ladder last climbed - its waypoint, its top - and the tries at stepping off its top, see ReachLadderClock)
+			int ladI = -1, ladK = -1, dismountTry = 0; float ladTopY = 0f;
 			int backs = 0, bj;
 			for (int i = 1; i < way.Count; i++)
 			{
 				wdWay = Time.realtimeSinceStartup; wdTried = false; wdMoved = 99f; hbProg++; wpAt = i;
 				int k = way[i];
 				byte kind = g.Kind[k];
+				// (a ladder and the step off it at the ladder's clock, the rest at the walk's)
+				bool offLadder = i >= 2 && g.Kind[way[i - 1]] == 3 && kind != 3;
+				if (kind == 3 || offLadder) ReachClock(ReachLadderClock, false); else ReachClock(speed, true);
 				// (a teleport step: the player at the object uses it and is put where it puts them - the grid's link, see above)
 				if (g.Tele.Contains(ReachGrid.TeleKey(way[i - 1], k)))
 				{
@@ -2636,6 +2683,8 @@ namespace DynamicIslands
 					// the top ladder, and stood on it at the lobby hatch - Brinelab PQ11 s6t 11-26. It heads for the ladder at its height)
 					List<Bounds> lparts; g.LadderParts.TryGetValue(k, out lparts);
 					float ladTop = e.Position.y + (lb.max.y - g.Anchor.y);
+					if (k != ladK) { ladK = k; dismountTry = 0; }
+					ladI = i; ladTopY = ladTop;
 					float nextY = i + 1 < way.Count ? W(way[i + 1]).y : W(k).y;
 					bool up = nextY > ReachFeet(pl).y + 0.3f;
 					float held = 0f, since = 0f, bestY = ReachFeet(pl).y, walkSign = 1f;
@@ -2746,7 +2795,18 @@ namespace DynamicIslands
 				// (and off it backwards or sideways onto a floor above the feet: a player jumps up first and steps over once clear of the
 				// hatch's rim - the walker jumped and walked at once, its body met the rim 0.3 m under the roof and it fell back down two
 				// storeys: Brinelab's roof hatch, bugfix 11-26 bl8q)
-				if (ReachLadderDismount(ladderUpTop, ReachFeet(pl).y, W(k).y, ahead)) { jumpT = 0.45f; hopFrom = ReachFeet(pl).y; if (!ahead && W(k).y > ReachFeet(pl).y + 0.05f) riseT = 0.3f; }
+				// (Sealkeeper Spire's summit: the deck 0.3 m over the ladder's top all round its hatch, the grid's spot across the hatch's
+				// corner - the walker stepped off toward it, over the hatch, and fell back down the 14 m shaft, sk7 11-27. A player who
+				// fell climbs again and steps off at the nearest edge of the floor, rising longer first)
+				bool afterUp = ladderUpTop;
+				Vector3? edge = afterUp && dismountTry > 0 ? LadderTopFloor(ReachFeet(pl), W(k)) : null;
+				if (ReachLadderDismount(ladderUpTop, ReachFeet(pl).y, W(k).y, ahead))
+				{
+					hopFrom = ReachFeet(pl).y;
+					if (!ahead && W(k).y > ReachFeet(pl).y + 0.05f) riseT = dismountTry == 1 ? 0.6f : 0.3f;
+					jumpT = Mathf.Max(0.45f, riseT + 0.15f);
+				}
+				if (reachOnly != "" && afterUp) Log("  off the ladder's top (try " + (dismountTry + 1) + "): feet " + (ReachFeet(pl) - e.Position).ToString("F2") + ", floor " + (W(k).y - e.Position.y).ToString("F2") + ", ahead " + ahead + ", rise " + riseT.ToString("F2") + (edge.HasValue ? ", edge at " + (edge.Value - e.Position).ToString("F2") : ""));
 				ladderUpTop = false;
 				for (int n = 0; ; n++)
 				{
@@ -2759,6 +2819,22 @@ namespace DynamicIslands
 					Vector3 d = aim - p;
 					Vector3 flat = new Vector3(d.x, 0f, d.z);
 					float flatLen = flat.magnitude;
+					// (fell back down the ladder's shaft from its top: climb it again once, then the walk fails - see ReachLadderClock)
+					if (afterUp && !Climbing(pl) && p.y < ladTopY - 1.5f && aim.y > p.y + 1.5f && ladI >= 1 && dismountTry >= 1)
+					{
+						mmWalk = 0f; mmJump = false;
+						result("stuck: fell back down the ladder's shaft from its top (" + (ladTopY - e.Position.y).ToString("F1") + ") to " + (p - e.Position).ToString("F1") + " twice, stepping off to " + (aim - e.Position).ToString("F1") +
+							" - the floor " + (aim.y - (ladTopY - 0.33f)).ToString("F2") + " m over the feet Raft holds at the ladder's end (a player reaches ~0.3 m)");
+						yield break;
+					}
+					if (afterUp && !Climbing(pl) && p.y < ladTopY - 1.5f && aim.y > p.y + 1.5f && ladI >= 1)
+					{
+						dismountTry++;
+						Log("  fell back down the ladder from its top (" + (ladTopY - e.Position.y).ToString("F1") + ") to " + (p - e.Position).ToString("F1") + " stepping off to " + (aim - e.Position).ToString("F1") + " - climbing again, try " + (dismountTry + 1));
+						mmWalk = 0f; mmJump = false;
+						i = ladI - 1;
+						break;
+					}
 					// (progress counts the way down too: a drop's last metre is a fall, not a walk)
 					float dist = water ? d.magnitude : flatLen + Mathf.Max(0f, d.y - 0.6f) + Mathf.Max(0f, -d.y - 0.9f);
 					if (d.y < -0.9f && flatLen < 1.3f && seg.sqrMagnitude > 0.01f && !inWaterNow(pl)) flat = seg.normalized * Mathf.Max(flatLen, 0.8f);
@@ -2814,6 +2890,12 @@ namespace DynamicIslands
 					// (Raft's MouseLook pitch is positive looking down. Swimming up to the surface Jump is held too, as a player would)
 					mmJump = jumpT > 0f || (inWaterNow(pl) && d.y > 0.6f); jumpT -= Time.deltaTime;
 					float yaw = flat.sqrMagnitude > 0.0001f ? Mathf.Atan2(flat.x, flat.z) * Mathf.Rad2Deg : pl.transform.eulerAngles.y;
+					if (edge.HasValue)
+					{
+						Vector3 ef = edge.Value - p; ef.y = 0f;
+						if (ef.magnitude < 0.25f || (!Climbing(pl) && p.y > edge.Value.y - 0.15f)) edge = null;
+						else yaw = Mathf.Atan2(ef.x, ef.z) * Mathf.Rad2Deg;
+					}
 					if (turnLeft > 0f) { yaw += 60f * turnDir; turnLeft -= Time.deltaTime; }
 					bool inWater = pl.PersonController.controllerType == ControllerType.Water;
 					float pitch = inWater ? -Mathf.Clamp(Mathf.Atan2(d.y + (kind == 1 ? 0.3f : 0f), Mathf.Max(flat.magnitude, 0.3f)) * Mathf.Rad2Deg, -80f, 80f) : 0f;
@@ -2834,7 +2916,35 @@ namespace DynamicIslands
 				}
 			}
 			mmWalk = 0f; mmJump = false;
+			ReachClock(speed, true);
 			result(null);
+		}
+
+		/// <summary>After a climb to a ladder's top: the nearest spot of a floor at the next spot's height (within 0.35 m), at most
+		/// 1.8 m round the feet with nothing in the way at the floor's height - a point 0.35 m in past it, to step off toward;
+		/// of those at one distance, the one most toward the next spot.</summary>
+		static Vector3? LadderTopFloor(Vector3 feet, Vector3 aim)
+		{
+			int mask = reachMask != 0 ? reachMask : ~0;
+			Vector3 toAim = aim - feet; toAim.y = 0f;
+			for (float r = 0.4f; r <= 1.81f; r += 0.2f)
+			{
+				Vector3? best = null; float bestDot = -2f;
+				for (int a = 0; a < 16; a++)
+				{
+					Vector3 dir = Quaternion.Euler(0f, a * 22.5f, 0f) * Vector3.forward;
+					Vector3 q = feet + dir * r;
+					RaycastHit h;
+					if (!Physics.Raycast(new Vector3(q.x, aim.y + 1f, q.z), Vector3.down, out h, 1.5f, mask, QueryTriggerInteraction.Ignore)) continue;
+					if (h.normal.y < 0.64f || Mathf.Abs(h.point.y - aim.y) > 0.35f) continue;
+					Vector3 lo = new Vector3(feet.x, h.point.y + 0.5f, feet.z), hi = h.point + Vector3.up * 0.5f + dir * 0.35f;
+					if (Physics.Linecast(lo, hi, mask, QueryTriggerInteraction.Ignore)) continue;
+					float dot = toAim.sqrMagnitude > 0.01f ? Vector3.Dot(dir, toAim.normalized) : 0f;
+					if (dot > bestDot) { bestDot = dot; best = new Vector3(q.x, h.point.y, q.z) + dir * 0.35f; }
+				}
+				if (best.HasValue) return best;
+			}
+			return null;
 		}
 
 		/// <summary>The last spot before way[i] (at most 6 back) where the way is in the sea - a swim spot or a floor under the
