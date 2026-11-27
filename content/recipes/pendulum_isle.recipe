@@ -138,7 +138,13 @@ zipto zipdown 21 1
 place Zone_Trigger lowzone at 22 0 ground
 # (11-26 islandfix, CIReach: at 20 -3 the store and the zipline's far floor closed the way down from the top to the low
 #  end - only the zipline came in, nothing walked to the shaft or its warning; the store on the top's open south side)
-store pendshop at 13 -5 ground
+#  (11-27 pdfx2, CIReach on 6a6f087a: at 13 -5 Raft's trading post still stood over the new steps and the shed - the walk
+#  got no nearer the low end than its roof, 17.9 -1.0 at 8.8 m, and the shed's chest had no spot; the store off the walk now,
+#  south of the top on its own pad at the top's height, level with the top all the way to it)
+brush flatten from 0 -12 to 0 -27 r=8 s=25 frames=400 h=5
+brush smooth from 0 -14 to 0 -27 r=9 s=4 frames=20
+clear at 0 -27 r=8
+store pendshop at 0 -27 ground
 place Note_Sign shaftwarning at 24.5 2.5 ground sit yaw=270
 place TangaroaHatchRoom_Hatch shaft at 25 0 ground sit yaw=90
 # (the keel zone hangs in the open air beyond the south coast at the water line: under it a flying island leaves out
