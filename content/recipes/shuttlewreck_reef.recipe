@@ -18,10 +18,15 @@ gen Water=0.5 SeaRocks=0.5 SeaFinds=0.5 Sunken=0.4 Hostiles=0 Friendly=0 SeaLife
 generate
 elevation -10
 
-brush flatten at 0 0 r=7 s=25 frames=260 h=2
+# (CIFloating 11-26: the shuttle's floor (h 2) lay up to 0.28 m under the ground at its ends - the site flattened wider, a
+#     little lower)
+brush flatten at 0 0 r=9 s=25 frames=260 h=1.95
 brush sand at 0 -9 r=4 s=20 frames=20
 brush flatten at -13.1 -23.6 r=4 s=8 frames=40
 origin
+# (b7_lt2: the floor's two end rows still 1 cm under the ground - those rows flattened again, after origin)
+brush flatten from -2.5 -5.4 to 2.5 -5.4 r=2 s=25 frames=300 h=1.95
+brush flatten from -2.5 5.1 to 2.5 5.1 r=2 s=25 frames=300 h=1.95
 clear at -13.1 -23.6 r=5
 clear at 0 0 r=8
 
@@ -122,9 +127,12 @@ call sk_reef x=-25.4 z=-10 r=6 seed=25010
 call sk_reef x=-47.8 z=-1.6 r=6 seed=25020
 call sk_reef x=38 z=-26 r=5 seed=25030
 
-# the summit: the depot rock - the tower (ladder inside), the locker, the note, the zone
-call ladtower x=-38 z=-10 h0=12.5 lv=3 a=swtower
-place Loot_ChestSmall swlocker at -38.75 -9.25 h=19.97 sit yaw=180
+# the summit: the depot rock - the tower (ladder outside), the locker, the note, the zone
+# (REACH 11-26: with the ladder inside, the walk up stopped at the top - the Depot rock locker and the Shuttle timetable never reached: ladtowerout's ladder outside
+# the south wall comes up facing the deck, as Biome Seven's)
+call ladtowerout x=-38 z=-10 h0=12.5 lv=3 a=swtower
+# (CIFloating 11-26: set at 19.97 it hung 0.16 m over the deck (19.81) - dropped onto it, as Biome Seven's)
+place Loot_ChestSmall swlocker at -38.75 -9.25 h=20.2 drop yaw=180
 place Note_Paper swsumnote at -38.75 -10.75 h=20.07 drop yaw=20
 place Zone_Trigger swsummit at -38 -10 h=20.97
 place Loot_ChestSmall swledge at -45.7 -10 ground sit yaw=40
@@ -136,6 +144,10 @@ prop treasure25012 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
 
 # the drowned building: the shuttle depot, its ground floor 16 m down; the deep chest at the bottom, air on storey 1
 call sk_drowned x=28 z=-32 h0=-6 n=2 w=RT_WallWindowBroken a=swbld cap=0 cal=swcap
+# (REACH 11-26: the top ladder led up the hatch to a roof 10 m under the sea (elevation -10) with no floor beside the hatch
+# to step off onto - 'no floor at its top' in every run since 10-24; the building is under water and swum through: the top
+# one gone, as Hadal Commons' - the ground-floor ladder up to storey 1 stays)
+clear at 30.25 -27.8 r=0.6 all only=Block_Ladder above=-4 below=-2
 place Loot_Chest swdeep at 26.2 -34.5 h=-6 sit yaw=0
 place Placeable_Table_Basic - at 26.5 -31 h=-3 sit yaw=0
 place Note_Paper swbldnote at 26.5 -31 h=-1.7 drop yaw=10

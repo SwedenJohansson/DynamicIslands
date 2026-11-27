@@ -98,11 +98,15 @@ place Pickup_Landmark_Flower_Black - at -3.2 2.4 h=0 sit
 place Placeable_Table_Basic - at -2.4 4.3 h=0 sit yaw=0
 place Note_Paper rota at -2.4 4.3 h=1.3 drop yaw=15
 # STORY 10-24s: the hydrophone printout by the control desk; Wren's letter in a tin under the beds (shown when the beds are watered)
-place Note_Paper hydrolog at 3.3 3.5 h=0.8 drop yaw=200
+# (REACH 11-26 b7_r2: at 3.3 3.5 it fell under the console (3.6 3.6) - the console's collider stood between it and every eye:
+# on the floor in front of the console, toward the beds)
+place Note_Paper hydrolog at 2.6 2.6 h=0.8 drop yaw=200
 place Note_Paper wrenletter at -0.6 -1.6 h=0.6 drop yaw=10
 place TP_Selene_ComputerGeneric_01 - at 3.6 3.6 h=0 sit yaw=225
 place Loot_Chest controldesk at 2.1 4.6 h=0 sit yaw=180
-place Loot_ChestSmall gardenlocker at -4.9 2.2 h=0 sit yaw=90
+# (REACH 11-26 b7_r2: at -4.9 2.2, 1.8 m from the glass, the walk ended at the glass with a pane between the eye and it:
+# 1 m further in from the wall, out of reach through the panes)
+place Loot_ChestSmall gardenlocker at -3.9 1.4 h=0 sit yaw=90
 place Loot_Chest seedvault at -0.6 5.2 h=0 sit yaw=180
 place UT_DogCage_Medium02 goatcage at 4.3 -0.6 h=0 sit yaw=270
 place Creature_Goat labgoat at 4.3 -0.6 h=0.3
@@ -165,6 +169,10 @@ call sk_reef x=69 z=5 r=6 seed=10461
 call sk_reef x=72 z=22 r=5 seed=10471
 call sk_zone x=69 z=5 al=b7_ridge id=b7_ridge r=7 msg="The kelp ridge. The dome glows behind you like a lamp left on in an empty house."
 call sk_cave x=6 z=-68 h=2 yaw=0 al=b7_caverock chest=b7_cavechest
+# (REACH 11-26: this island stands 18 m under the sea; the den's dry-foot dome (23.5 m) rose about 5 m out of the water and
+# the reach walker walked over the sea on its skin (car park ticket, van crate, grower's chest never reached): the old wet
+# foot keeps the hill under the surface, as frostgold_creek/sundown_canyons/ironreef's sunken dens)
+prop b7_caverock cave.foot=wet
 call sk_zone x=6 z=-63 al=b7_cave id=b7_cave r=4 msg="A cave in the rock. The garden's overflow pipe ends here, still dripping silt."
 call sk_ruin x=-6 z=48 h=2 al=b7_ruin
 call sk_notebox x=-3.5 z=43.5 yaw=10 al=b7_ruinnote
@@ -177,8 +185,6 @@ call sk_notebox x=-38 z=58 yaw=70 al=b7_wrecknote
 # --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
 call vinecache x=60 z=-58 r=8 seed=10471 chest=b7vinechest vines=b7vines items=Rope*3;Nail*8;Seed_Flower_Red*2
 
-# --- Unique layer (10-24): the airlock garden's outer sluice: a crank on a post at the shed brings up the bed box
-call crankcache x=1 z=51 yaw=270 alias=sluicecrank sig=sluice chest=bedbox cx=-11 cz=52 cyaw=0 items=Seed_Watermelon*2;Seed_Pineapple*2;Dirt*2 title="Bed box"
 
 # --- DEEP 1-HOUR (10-24): the garden rock breaking the surface (20.5 m from the floor) and the drowned seed store in the west pit
 # the rock that breaks the surface (20.5 m up from the floor), a beacon tower on its dry top
@@ -191,12 +197,21 @@ brush flatten at -31.5 -62.5 r=1.8 s=20 frames=200 h=20
 brush smooth at -33.5 -62.5 r=3 s=4 frames=20
 call sk_pit x=-66 z=-30 h0=-8
 call sk_cave x=-12 z=72 h=2 yaw=180 al=b7cave2 chest=b7cave2chest
+# (REACH 11-26: as b7_caverock above - its dome's skin stood 18-20 m over the floor, out of the sea at the car park)
+prop b7cave2 cave.foot=wet
+# --- Unique layer (10-24): the airlock garden's outer sluice: a crank on a post at the shed brings up the bed box
+# (REACH 11-26: set down after the den above - its wet foot's apron lowers the ground here by about 1 m: placed before it,
+# the post stood 1 m over the ground; and one sea vine of the scatter left hanging 2.6 m up)
+call crankcache x=1 z=51 yaw=270 alias=sluicecrank sig=sluice chest=bedbox cx=-11 cz=52 cyaw=0 items=Seed_Watermelon*2;Seed_Pineapple*2;Dirt*2 title="Bed box"
+clear at 2.91 55.72 r=1 only=SeaVine3 all
 call sk_reef x=-6 z=-66 r=6 seed=24310
 call sk_reef x=-38 z=-54 r=6 seed=24320
 call sk_reef x=-56 z=-24 r=5 seed=24330
 
-# the summit: the garden rock - the tower (ladder inside), the locker, the note, the zone
-call ladtower x=-24 z=-66 h0=20.5 lv=3 a=b7tower
+# the summit: the garden rock - the tower (ladder outside on its south wall), the locker, the note, the zone
+# (REACH 11-26: with the ladder inside, the top came out beside the deck, not in front of it, and the step off missed the
+# deck and fell back down the shaft: the summit, the locker and the Seed keeper's list were never reached)
+call ladtowerout x=-24 z=-66 h0=20.5 lv=3 a=b7tower
 place Loot_ChestSmall b7locker at -24.75 -65.25 h=28.2 drop yaw=180
 place Note_Paper b7sumnote at -24.75 -66.75 h=28.07 drop yaw=20
 place Zone_Trigger b7summit at -24 -66 h=28.97
@@ -362,8 +377,12 @@ clear at -11.83 -58.04 r=1.5 only=SeaVine3 all
 # a straight tunnel to the root room - mushrooms, dirt, cave vines and an air pocket the pumps still feed. Lamps: the
 # farm's old lights. No rats: under water, no NavMesh floor. cavecheck: 6 m and more from the dome's things and the
 # walk from the buoy to the airlock.
-call kit_st x=-62 z=-4 yaw=90 len=22 slope=0 end=room size=0.7 hill=1 dirt=3 mush=5 stone=0 vines=2 light=1 gate=1 wet=1 as=bsroot
+# (REACH 11-26: level at the seabed, the room's dry-foot dome (18 m, reaching 42 m back) laid its skin over the whole dome
+# and the airlock (1-2 m over their floors: nobody fit inside) and broke the sea surface over the room (water-filled
+# craters, no way out): the tunnel now runs down 12 degrees, the room 4.7 m lower, and the dome capped at 16 m)
+call kit_st x=-62 z=-4 yaw=90 len=22 slope=-12 end=room size=0.7 hill=1 dirt=3 mush=5 stone=0 vines=2 light=1 gate=1 wet=1 as=bsroot
 prop bsroot cave.rock=plain
+prop bsroot cave.dome=16
 # (w03 11-09: CIFloating found the ground under the dome's west leaning glass up to h 2.2 - the root room's hill reached
 # the dome's rim: the rim set back to the garden floor)
 brush flatten at -8 -3.8 r=2.5 s=20 frames=200 h=0
@@ -373,7 +392,7 @@ brush flatten from -3.75 6.5 to -6.5 3.75 r=2.2 s=20 frames=200 h=0
 brush flatten from -6.5 3.75 to -7.5 0 r=2.2 s=20 frames=200 h=0
 brush flatten from -7.5 0 to -6.5 -3.75 r=2.2 s=20 frames=200 h=0
 brush flatten from -6.5 -3.75 to -3.75 -6.5 r=2.2 s=20 frames=200 h=0
-place Zone_Trigger bsrootair at -30 -4 h=4.5
+place Zone_Trigger bsrootair at -30 -4 h=1.5
 prop bsrootair obj.name=bsrootair
 prop bsrootair zone.id=bs_rootroom
 prop bsrootair zone.radius=9
