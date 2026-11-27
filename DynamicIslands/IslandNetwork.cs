@@ -1358,11 +1358,41 @@ namespace DynamicIslands.Editor
 			float at;
 			if (hashMissAt.TryGetValue(hash, out at) && Time.unscaledTime - at < 10f) return null;
 			List<string> all;
-			try { all = IslandSpawner.ListSavedIslands().ToList(); }
+			try { all = FilesWithHash(hash); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking for an island file by its content: " + e.Message); return null; }
+			// (each found one checked again: one changed since the folder was looked through isn't taken)
 			string found = all.Where(n => n.EndsWith("_" + hash, StringComparison.OrdinalIgnoreCase)).FirstOrDefault(n => HashOf(n) == hash) ?? all.FirstOrDefault(n => HashOf(n) == hash);
 			if (found == null) hashMissAt[hash] = Time.unscaledTime; else hashMissAt.Remove(hash);
 			return found;
+		}
+
+		static Dictionary<string, List<string>> byHash;
+		static DateTime byHashFolder;
+		static int byHashAt;
+
+		/// <summary>
+		/// The island files with this content, from every island file's hash - worked out once while the folder stays as it
+		/// is (5 minutes at most). Before, each island looked for went through every file: a world of 150 islands that
+		/// this PC has other versions of took 88 s to read on a PC with ~1,600 islands (IM43, 11-25).
+		/// </summary>
+		static List<string> FilesWithHash(string hash)
+		{
+			DateTime folder = Directory.Exists(DynamicIslands.assetpath) ? Directory.GetLastWriteTimeUtc(DynamicIslands.assetpath) : DateTime.MinValue;
+			if (byHash == null || folder != byHashFolder || Environment.TickCount - byHashAt > 300000)
+			{
+				var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+				foreach (string n in IslandSpawner.ListSavedIslands())
+				{
+					string h = HashOf(n);
+					if (h == null) continue;
+					List<string> list;
+					if (!map.TryGetValue(h, out list)) map[h] = list = new List<string>();
+					list.Add(n);
+				}
+				byHash = map; byHashFolder = folder; byHashAt = Environment.TickCount;
+			}
+			List<string> names;
+			return byHash.TryGetValue(hash, out names) ? names : new List<string>();
 		}
 
 		/// <summary>
