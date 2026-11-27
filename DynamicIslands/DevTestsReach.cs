@@ -62,7 +62,7 @@ namespace DynamicIslands
 			Log("PASS: reach only " + (reachOnly == "" ? "(all targets)" : "'" + reachOnly + "'"));
 		}
 
-		[ConsoleCommand(name: "CIReachDismountUnit", docs: "Dev, anywhere: the walker's jump off a ladder's top - after a climb up, a next floor 0.25 to 1.2 m above the feet (a hatch beside or behind the ladder) is jumped onto, and one level with the feet (-0.3 m) that is not ahead over the ladder's top; one ahead level with the feet, one out of a jump's reach, or a walk not off a ladder is walked; a ladder and the step off its top run at 1x")]
+		[ConsoleCommand(name: "CIReachDismountUnit", docs: "Dev, anywhere: the walker's jump off a ladder's top - after a climb up, a next floor 0.25 to 1.2 m above the feet (a hatch beside or behind the ladder) is jumped onto, and one level with the feet (-0.3 m) that is not ahead over the ladder's top; one ahead level with the feet, one out of a jump's reach, or a walk not off a ladder is walked; a next spot more than 0.75 m over the held feet is stepped to by the floor beside the ladder's top first; a ladder and the step off its top run at 1x")]
 		public static void CIReachDismountUnit()
 		{
 			bool ok = true;
@@ -74,6 +74,8 @@ namespace DynamicIslands
 			chk(!ReachLadderDismount(true, 30.0f, 31.73f), "the floor 1.7 m up - out of a jump's reach, no jump");
 			chk(!ReachLadderDismount(false, 31.25f, 31.73f), "not after a climb up - the walk's own jumps only");
 			chk(!ReachLadderDismount(false, 40.1f, 40.12f, false), "level beside, not after a climb up - no jump");
+			chk(ReachLadderStepFirst(36.07f, 37.2f), "Toll Hill: the locker's top 1.13 m over the held feet - onto the deck beside first");
+			chk(!ReachLadderStepFirst(36.07f, 36.74f), "Brinelab's/Toll Hill's deck 0.67 m over the held feet - jump straight onto it");
 			chk(ReachLadderClock == 1, "a ladder and the step off its top at 1x, whatever the walk's speed");
 			Log(ok ? "PASS: reach dismount unit" : "FAIL: reach dismount unit");
 		}
@@ -2808,14 +2810,22 @@ namespace DynamicIslands
 				// corner - the walker stepped off toward it, over the hatch, and fell back down the 14 m shaft, sk7 11-27. A player who
 				// fell climbs again and steps off at the nearest edge of the floor, rising longer first)
 				bool afterUp = ladderUpTop;
-				Vector3? edge = afterUp && dismountTry > 0 ? LadderTopFloor(ReachFeet(pl), W(k)) : null;
-				if (ReachLadderDismount(ladderUpTop, ReachFeet(pl).y, W(k).y, ahead))
+				// (Overpass Shoal's Toll Hill tower, cm1os 11-27: the grid's spot after the ladder was the locker's top on the deck,
+				// 1.1 m over the feet Raft holds at the ladder's end - out of a jump's reach from there; the walker jumped for it and
+				// fell back down the 14 m shaft twice. A player steps off onto the deck first and climbs onto the locker from it:
+				// a next spot too high to jump onto (ReachLadderStepFirst) sends the step off to the nearest floor within reach)
+				Vector3 hf = ReachFeet(pl);
+				bool tooHigh = afterUp && ReachLadderStepFirst(hf.y, W(k).y);
+				Vector3? edge = !afterUp ? (Vector3?)null : tooHigh ? LadderTopFloor(hf, W(k), hf.y - 0.3f, hf.y + 0.75f) : dismountTry > 0 ? LadderTopFloor(hf, W(k), W(k).y - 0.35f, W(k).y + 0.35f) : null;
+				float stepY = tooHigh && edge.HasValue ? edge.Value.y : W(k).y;
+				if (tooHigh && edge.HasValue) { offTo = edge.Value - hf; offTo.y = 0f; ahead = ladderFace.sqrMagnitude < 0.01f || offTo.sqrMagnitude < 0.01f || Vector3.Dot(offTo.normalized, ladderFace.normalized) > 0.7f; }
+				if (ReachLadderDismount(ladderUpTop, hf.y, stepY, ahead))
 				{
-					hopFrom = ReachFeet(pl).y;
-					if (!ahead && W(k).y > ReachFeet(pl).y + 0.05f) riseT = dismountTry == 1 ? 0.6f : 0.3f;
+					hopFrom = hf.y;
+					if (!ahead && stepY > hf.y + 0.05f) riseT = dismountTry == 1 ? 0.6f : 0.3f;
 					jumpT = Mathf.Max(0.45f, riseT + 0.15f);
 				}
-				if (reachOnly != "" && afterUp) Log("  off the ladder's top (try " + (dismountTry + 1) + "): feet " + (ReachFeet(pl) - e.Position).ToString("F2") + ", floor " + (W(k).y - e.Position.y).ToString("F2") + ", ahead " + ahead + ", rise " + riseT.ToString("F2") + (edge.HasValue ? ", edge at " + (edge.Value - e.Position).ToString("F2") : ""));
+				if (reachOnly != "" && afterUp) Log("  off the ladder's top (try " + (dismountTry + 1) + "): feet " + (ReachFeet(pl) - e.Position).ToString("F2") + ", floor " + (W(k).y - e.Position.y).ToString("F2") + ", ahead " + ahead + ", rise " + riseT.ToString("F2") + (edge.HasValue ? ", edge at " + (edge.Value - e.Position).ToString("F2") : "") + (tooHigh ? " (the next spot out of a jump's reach: onto the floor beside first)" : ""));
 				ladderUpTop = false;
 				for (int n = 0; ; n++)
 				{
@@ -2902,7 +2912,9 @@ namespace DynamicIslands
 					if (edge.HasValue)
 					{
 						Vector3 ef = edge.Value - p; ef.y = 0f;
-						if (ef.magnitude < 0.25f || (!Climbing(pl) && p.y > edge.Value.y - 0.15f)) edge = null;
+						// (landed on it, not just risen past its height mid-jump over the shaft)
+						CharacterController ecc = pl.GetComponent<CharacterController>();
+						if (ef.magnitude < 0.25f || (!Climbing(pl) && p.y > edge.Value.y - 0.15f && (ecc == null || ecc.isGrounded))) edge = null;
 						else yaw = Mathf.Atan2(ef.x, ef.z) * Mathf.Rad2Deg;
 					}
 					if (turnLeft > 0f) { yaw += 60f * turnDir; turnLeft -= Time.deltaTime; }
@@ -2929,10 +2941,10 @@ namespace DynamicIslands
 			result(null);
 		}
 
-		/// <summary>After a climb to a ladder's top: the nearest spot of a floor at the next spot's height (within 0.35 m), at most
-		/// 1.8 m round the feet with nothing in the way at the floor's height - a point 0.35 m in past it, to step off toward;
-		/// of those at one distance, the one most toward the next spot.</summary>
-		static Vector3? LadderTopFloor(Vector3 feet, Vector3 aim)
+		/// <summary>After a climb to a ladder's top: the nearest spot of a floor between lo and hi (the next spot's height within
+		/// 0.35 m, or what a jump off the ladder reaches), at most 1.8 m round the feet with nothing in the way at the floor's
+		/// height - a point 0.35 m in past it, to step off toward; of those at one distance, the one most toward the next spot.</summary>
+		static Vector3? LadderTopFloor(Vector3 feet, Vector3 aim, float lo, float hi)
 		{
 			int mask = reachMask != 0 ? reachMask : ~0;
 			Vector3 toAim = aim - feet; toAim.y = 0f;
@@ -2944,10 +2956,10 @@ namespace DynamicIslands
 					Vector3 dir = Quaternion.Euler(0f, a * 22.5f, 0f) * Vector3.forward;
 					Vector3 q = feet + dir * r;
 					RaycastHit h;
-					if (!Physics.Raycast(new Vector3(q.x, aim.y + 1f, q.z), Vector3.down, out h, 1.5f, mask, QueryTriggerInteraction.Ignore)) continue;
-					if (h.normal.y < 0.64f || Mathf.Abs(h.point.y - aim.y) > 0.35f) continue;
-					Vector3 lo = new Vector3(feet.x, h.point.y + 0.5f, feet.z), hi = h.point + Vector3.up * 0.5f + dir * 0.35f;
-					if (Physics.Linecast(lo, hi, mask, QueryTriggerInteraction.Ignore)) continue;
+					if (!Physics.Raycast(new Vector3(q.x, hi + 0.65f, q.z), Vector3.down, out h, hi - lo + 0.8f, mask, QueryTriggerInteraction.Ignore)) continue;
+					if (h.normal.y < 0.64f || h.point.y < lo || h.point.y > hi) continue;
+					Vector3 la = new Vector3(feet.x, h.point.y + 0.5f, feet.z), lb = h.point + Vector3.up * 0.5f + dir * 0.35f;
+					if (Physics.Linecast(la, lb, mask, QueryTriggerInteraction.Ignore)) continue;
 					float dot = toAim.sqrMagnitude > 0.01f ? Vector3.Dot(dir, toAim.normalized) : 0f;
 					if (dot > bestDot) { bestDot = dot; best = new Vector3(q.x, h.point.y, q.z) + dir * 0.35f; }
 				}
@@ -3000,6 +3012,11 @@ namespace DynamicIslands
 			float up = floorY - feetY;
 			return afterLadderUp && up < 1.2f && (up > 0.25f || (!ahead && up > -0.3f));
 		}
+
+		/// <summary>After a climb to a ladder's top: the next spot is more than 0.75 m over the feet Raft holds there - more than a
+		/// jump off the ladder reaches (Brinelab's deck 0.67 m up was made, Toll Hill's locker top 1.13 m up never) - so the
+		/// walker steps off onto the floor beside the ladder's top first. CIReachDismountUnit.</summary>
+		internal static bool ReachLadderStepFirst(float feetY, float nextY) { return nextY - feetY > 0.75f; }
 
 		/// <summary>The sea floor under a swimmer (where a player would stand), or far down when there is none within 3 m.</summary>
 		static float StandBed(Vector3 p)
@@ -3109,6 +3126,14 @@ namespace DynamicIslands
 					Collider o = Physics.OverlapCapsule(p1 + dir * 0.15f, p2 + dir * 0.15f, r, reachMask, QueryTriggerInteraction.Ignore).FirstOrDefault(x => x != null && !x.transform.IsChildOf(pl.transform));
 					if (o != null) found = BlockerName(o) + " (the body overlaps it 0.15 m ahead)";
 				}
+				// (what the controller meets that the grid's mask leaves out - a layer the players or the animals use)
+				if (found == null && reachMask != 0 && reachMask != ~0)
+				{
+					Func<Collider, bool> outside = x => x != null && !x.isTrigger && !x.transform.IsChildOf(pl.transform) && (reachMask & (1 << x.gameObject.layer)) == 0;
+					RaycastHit c = Physics.CapsuleCastAll(p1, p2, r, dir, 0.8f, ~0, QueryTriggerInteraction.Ignore).Where(h => outside(h.collider)).OrderBy(x => x.distance).FirstOrDefault();
+					Collider o = c.collider ?? Physics.OverlapCapsule(p1 + dir * 0.15f, p2 + dir * 0.15f, r, ~0, QueryTriggerInteraction.Ignore).FirstOrDefault(outside);
+					if (o != null) found = BlockerName(o) + " (layer " + LayerMask.LayerToName(o.gameObject.layer) + " " + o.GetType().Name + ", left out of the grid's mask" + (c.collider != null ? "," + at(c) : ", overlapped 0.15 m ahead") + ")";
+				}
 			}
 			finally { Physics.queriesHitBackfaces = was; }
 			return (found ?? "nothing found") + ReachGroundAhead(f, dir);
@@ -3130,7 +3155,16 @@ namespace DynamicIslands
 				foreach (float d in new[] { 0f, 0.2f, 0.4f, 0.6f, 1.0f, 1.5f })
 				{
 					Vector3 q = f + dir * d;
-					parts.Add("+" + d.ToString("0.0") + " " + (t.SampleHeight(q) + tp.y - f.y).ToString("+0.00;-0.00"));
+					// (and where the ground has a hole cut in it - a cave's room: SampleHeight reads the heightfield through it)
+					bool hole = false;
+					try
+					{
+						int hr = t.terrainData.holesResolution;
+						int hx = Mathf.Clamp((int)((q.x - tp.x) / ts.x * hr), 0, hr - 1), hz = Mathf.Clamp((int)((q.z - tp.z) / ts.z * hr), 0, hr - 1);
+						hole = !t.terrainData.GetHoles(hx, hz, 1, 1)[0, 0];
+					}
+					catch (Exception) { }
+					parts.Add("+" + d.ToString("0.0") + " " + (t.SampleHeight(q) + tp.y - f.y).ToString("+0.00;-0.00") + (hole ? " hole" : ""));
 				}
 				return " [the ground ahead, over the feet: " + string.Join(", ", parts.ToArray()) + "]";
 			}
