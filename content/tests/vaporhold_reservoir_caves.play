@@ -28,6 +28,7 @@ picture vr_service_out -95 10 -56 -82 5 -50
 # (11-16 w11F: the rat waits in its room until a player is in the passage (zone vr_service, 3 m in) - it roamed out
 # of the mouth before; so walk in first, then count it)
 walk -82.6 -50.4 to -81 -49.3 to -79.5 -48.3 below=8.5
+zone vr_service
 wait 3
 expect animals Rat 1
 expect animalsinside Rat 1
