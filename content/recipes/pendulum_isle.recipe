@@ -61,6 +61,20 @@ clear at 7.5 4 r=3
 brush flatten at 7.5 4.5 r=4.5 s=20 frames=200 h=5
 clear at -24 0 r=3
 clear at 22 0 r=6
+# (11-27 pdfx, CIReach on b882f9b5: the walk never got east of the hall at the top's height - the nearest it came to the
+#  low end was 17.9 -1.0 at 8.7 m, over a cliff down to the low end's 3.5 (zone low_end, the shaft warning unreached), and
+#  the shed's chest had no spot to open it from. The strokes before origin left the east top high: after origin now, the
+#  top levelled at 5 east of the frame, then three 0.45 m steps down to the low end, east to west (each row higher, so the
+#  next one keeps its own top)
+brush flatten at 6 0 r=6 s=25 frames=300 h=5
+brush flatten at 10 2 r=6 s=25 frames=300 h=5
+brush flatten at 14 0 r=3.5 s=25 frames=300 h=5
+for j -1 1
+brush flatten at 20.6 {3*$j} r=2 s=25 frames=200 h=3.65
+brush flatten at 19.2 {3*$j} r=2 s=25 frames=200 h=4.1
+brush flatten at 17.8 {3*$j} r=2 s=25 frames=200 h=4.55
+next
+clear from 14 0 to 21 0 r=4
 # --- DEEP 10-25 terrain: Bob Hill (west end, summit 28 m, base r 24) and its trail, the weather station's pad (north),
 # the watchman's hole (east), the survey plane's pad (south) ----------------------------------------------------------
 call hw_mount x=-58 z=0 b=24 h=28
@@ -130,6 +144,9 @@ place TangaroaHatchRoom_Hatch shaft at 25 0 ground sit yaw=90
 # (the keel zone hangs in the open air beyond the south coast at the water line: under it a flying island leaves out
 # everything below its own sea level, so it cannot sit under the island; OLDER4 10-26: 0 46 -> 0 -76, past the new coast)
 place Zone_Trigger keelzone at 0 -76 h=0
+# (11-27 pdfx: the shaft puts the player in the open air at the island's water line and he falls to the sea - nowhere to
+#  stand there by design, so the reach grid can't judge it; pendulum_isle.play uses the shaft and checks zone keel)
+island reach.byplay=keel
 place Placeable_Lantern_Metal - at 22 3.5 ground y=0.05 sit
 
 # --- Things to gather ------------------------------------------------------------------------------------------------
