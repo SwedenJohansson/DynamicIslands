@@ -1789,7 +1789,9 @@ namespace DynamicIslands
 			if (ka == 1 && kb == 1)
 			{
 				if (same) return;
-				if (!Blocked(pa, pb, RSea + 0.3f) && !Blocked(pa, pb, RSea - 0.6f)) g.Link(a, b);
+				// (and the swimmer's body swept, feet floating 1.3 m down, head ~0.5 m over the surface: Caisson Yard cy7 11-27 - a
+				// block's underside 0.3 m over the sea, between the two lines, stopped the 1x swimmer's head on a linked step)
+				if (!Blocked(pa, pb, RSea + 0.3f) && !Blocked(pa, pb, RSea - 0.6f) && !Swept(pa, pb, RSea + RSwimFeet)) g.Link(a, b);
 				return;
 			}
 			if (ka == 1 && kb == 0)
