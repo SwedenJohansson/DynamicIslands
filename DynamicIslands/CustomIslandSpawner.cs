@@ -676,9 +676,16 @@ namespace DynamicIslands.Editor
 			if (radiusFailedAt.TryGetValue(name, out failedAt) && Time.unscaledTime - failedAt < 30f) return -1f;
 			try
 			{
-				IslandFile file = IslandFile.Load(IslandSpawner.PathFor(name));
-				r = IslandSpawner.LandRadius(file);
-				elevationCache[name] = file.Elevation;
+				string path = IslandSpawner.PathFor(name);
+				// (a file not here yet - an island waiting for its download, one the host's world has and this PC doesn't - is no
+				// fault: it logged "Could not read island ... Could not find file" every 30 s, mphostswap -nojoin 11-25)
+				if (!File.Exists(path)) r = -1f;
+				else
+				{
+					IslandFile file = IslandFile.Load(path);
+					r = IslandSpawner.LandRadius(file);
+					elevationCache[name] = file.Elevation;
+				}
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read island '" + name + "': " + ex.Message); r = -1; }
 			if (r >= 0f) { radiusCache[name] = r; radiusFailedAt.Remove(name); }
@@ -902,7 +909,12 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Whether the island has a main quest (steps): finished, it never comes again by chance, notes left or not.
 		/// Without one it always may (ReturningIslands.Finished still counts it done once reached: no dot, no timed return).</summary>
-		static bool HasQuest(IslandWorldState.Entry e) { return IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count > 0; }
+		static bool HasQuest(IslandWorldState.Entry e)
+		{
+			// (a loaded one from its settings; else from a cache kept on disk, as TooEarly: a new session's first pick read every
+			// finished island's whole file)
+			return e.Root != null ? IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count > 0 : IslandCache.HasQuestSteps(e.Name);
+		}
 
 		/// <summary>Dev tests: the next pick, instead of a random one.</summary>
 		internal static string ForceNextPick;
