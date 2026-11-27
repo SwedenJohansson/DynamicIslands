@@ -45,12 +45,14 @@ push at 24.8 0
 clear at -7 0 r=18
 
 # --- The wind spar: a hollow stone pillar, a ladder inside, air in it, the turbine on top -------------------------------
+# (REACH 11-27 lu5: the ladder turned 180 against the north wall held the climber at 22-24 m and never took hold - it now
+#     stands as ladtower's does, yaw 0, 0.3 m out from the wall)
 push at -10 -4 h=0
 for k 0 10
 place Block_Wall_Tier3 spar at 0 0.75 y={$k*2.42}
 place Block_Wall_Tier3 spar at -0.75 0 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 spar at 0.75 0 y={$k*2.42} yaw=90
-place Block_Ladder_Tier3 - at 0 0.55 y={$k*2.42} yaw=180
+place Block_Ladder_Tier3 - at 0.35 0.45 y={$k*2.42} yaw=0
 next
 for k 1 10
 place Block_Wall_Tier3 spar at 0 -0.75 y={$k*2.42}
@@ -93,6 +95,9 @@ call shed w=3 d=2 door=1
 place Loot_Chest surveyhut at 3.6 2.2 y=0.2 sit yaw=180
 place Placeable_Lantern_Metal - at 0.6 2.3 y=0.2 sit
 pop
+# (REACH 11-27 lu5: the mess stood at the shelf flatten's rim - the ground rose 1.2-1.5 m inside it, through its floor and
+#     up into the door; nothing in it could be reached: the ground under it flattened to the shelf's level)
+brush flatten at 5.25 -10.75 r=5.5 s=20 frames=200 h=0
 push at 3 -13 h=0
 call shed w=3 d=3 door=1
 place Placeable_Table_Basic - at 2.25 2.6 y=0.2 sit yaw=0
@@ -211,7 +216,9 @@ next
 # the south wall comes up facing the deck, as Biome Seven's)
 # (REACH 11-26 (2): the walk up the north steps ended in the door beside the ladder and reached round the wall's corner for
 #     the rungs - the door on the north wall now; the ladder is taken from the steps' top in front of it)
-call ladtowerout x=-6 z=-66 h0=27.5 lv=3 a=lutower dz=3
+# (REACH 11-27 lu5: the grid's top of the ladder was the rope fence beside it (35.65), and the way down dropped over that
+#     fence into the corner - the deck's south edge beside the ladder left open, sf=0)
+call ladtowerout x=-6 z=-66 h0=27.5 lv=3 a=lutower dz=3 sf=0
 # (b7_lt2: the walk climbed toward the note's spot 1.3 m west of the ladder and slid off it: the note and the locker on
 #     the deck's east half, straight in from the ladder's top)
 place Loot_ChestSmall lulocker at -5.25 -65.25 h=35.2 drop yaw=180

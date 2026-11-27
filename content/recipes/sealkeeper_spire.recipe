@@ -55,6 +55,24 @@ clear at 23.2 -38.6 r=6
 clear at 0 0 r=13
 clear from 23.25 -17.6 to 23.25 -25.7 r=3 body
 clear from -8.6 8.4 to -11 11.6 r=2.8 body
+# (REACH 11-27 bs1: the dock still a pit - 1.4-1.8 m under the base's rim at -9.4 8.1, 3.6 m under the land north of it; the
+#     steps before origin sat in the generator's frame and their wide strokes ate each other. After origin now: the pad again,
+#     then a band 7 m wide of strokes 0.3 m up a row, 0.8 m apart, from the pad up into the base (each row higher than the
+#     last, so every point keeps the highest row that reaches it - a graded slope, no rim))
+brush flatten at -11.5 13.5 r=5.5 s=25 frames=300 h=1.2
+for k 0 6
+for j -1 1
+brush flatten at {-9.23+0.519*$k+1.9*$j} {10.84-0.609*$k+1.62*$j} r=1.5 s=20 frames=200 h={1.2+0.3*$k}
+next
+next
+clear at -11.5 13.5 r=6 body
+clear from -9.23 10.84 to -6.12 7.19 r=4 body
+# (REACH 11-27 bs1: the west coast's water under the cliff still a trap - its closest ways out a 0.7 m step at -104.3 -13.7
+#     and 0.8 m at -101.4 -19.4: landings there too)
+brush flatten at -104.3 -13.7 r=2.2 s=20 frames=600 h=0.4
+clear at -104.3 -13.7 r=3.2 body
+brush flatten at -101.4 -19.4 r=2.2 s=20 frames=600 h=0.4
+clear at -101.4 -19.4 r=3.2 body
 
 # --- The spire: six storeys of stone, a ladder up the inside, the control room on top ----------------------------------
 push at -2.25 -2.25 h=3
@@ -115,7 +133,9 @@ place Creature_StoneBird screechers at 0 0 h=24
 # --- The base: the dock, orders, store, the cable mast, its locker, the generator and status board ---------------------
 place Zone_Trigger dockzone at -11 13 h=2.2
 place Note_Board orders at -9 11 ground yaw=135
-store spireshop at -10 12 ground
+# (REACH 11-27 bs1: the store at -10 12 stood in the way down to the dock, and the orders board 1.4 m from it had no spot
+#     to read it from - the store on the dock's far (north-west) side now)
+store spireshop at -14 16 ground
 # STORY 10-24s: Milo's crayon card on the dock, where the children waited for the plane
 place "Box Small" - at -12.6 10.4 ground sit
 place Note_Paper milocard at -12.6 10.4 ground y=1.6 drop yaw=40
@@ -157,11 +177,13 @@ place WaterPipe_Short_1 pipes at -21.5 -14 h=2.4 rot=0,0,90
 # --- The door tower (east): three fuse lockers, the fuse board, the warning ---------------------------------------------
 call ladtower x=24 z=-14 h0=2 lv=3 a=towers
 # (CIFloating 11-26: set 0.16 m over its deck it touched nothing - dropped onto the deck)
-place Loot_ChestSmall fuselocker1 at 23.3 -14.7 h=9.8 drop yaw=180
+# (REACH 11-27 bs1: the walk used the zone from the fuse board's top beside the deck's ladder hole and was sent down the
+#     hole from there (8 m) - it stuck on the ladder's top: the board and this locker both in the deck's far (south-west) cell)
+place Loot_ChestSmall fuselocker1 at 23.3 -15.05 h=9.8 drop yaw=180
 place Loot_ChestSmall fuselocker2 at 23.2 -13.4 h=2 sit yaw=90
 place Loot_ChestSmall fuselocker3 at 26.6 -12 ground sit yaw=270
 # (CIFloating 11-26: 0.16 m over the deck - set down on it)
-place RT_PowerBox fuseboard at 24.7 -14.7 h=9.66 yaw=180
+place RT_PowerBox fuseboard at 23.1 -14.2 h=9.66 yaw=180
 place Note_Paper warning at 24.6 -12.4 h=2 drop yaw=200
 place Zone_Trigger doortowerzone at 24 -14 h=10.5
 
@@ -200,6 +222,10 @@ note dnote Castaway's note | DAY 12 ON THE SPIRE'S ROCKS\n\nThe plane went over 
 place BoatStranded dvan at -23.2 38.6 ground yaw=257
 prop dvan tint.color=#6b5a48
 prop dvan tint.amount=0.5
+# (REACH 11-27 bs1: the walk came no nearer than 4.2 m (from the west, -33.1 38.5) - the generator's rocks cleared round
+#     it and the ground smoothed)
+brush smooth at -30.5 40 r=3 s=8 frames=60
+clear at -29.5 40.5 r=4.5 body
 place Loot_ChestSmall dwreckchest at -27.2 41.6 ground sit yaw=197
 note dwreckchest Wreck's chest | A small chest from the wreck, its lid swollen shut by the salt: line, nails and scrap.
 loot dwreckchest Rope*3;Nail*8;Scrap*3
@@ -238,7 +264,9 @@ call sk_ruin x=0 z=-76 h=3 al=sk_ruin
 call sk_ruin x=-12 z=-74 h=3 al=sk_ruin2
 call sk_notebox x=2.5 z=-80.5 yaw=10 al=sk_ruinnote
 call sk_plane x=-70 z=-30 h=3 yaw=60 al=sk_plane crate=sk_wreckcrate
-call sk_notebox x=-75 z=-24.5 yaw=70 al=sk_wrecknote
+# (REACH 11-27 bs1: at x-5 z+5.5 the note box stood under the tipped plane's wing tip - its only use spot under the wing
+#     (h 3.0, the nearest reached the wing's top 1.6 m up): out past the wing, off its west side, now)
+call sk_notebox x=-78.5 z=-28 yaw=70 al=sk_wrecknote
 
 # --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
 clear from 77 0 to 52 0 r=3
