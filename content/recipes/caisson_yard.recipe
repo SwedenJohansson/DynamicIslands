@@ -212,7 +212,39 @@ next
 call sk_reef x=-20 z=66 r=5 seed=24630
 
 # the summit: Crane Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
-call ladtower x=12 z=-66 h0=22 lv=6 a=cytower
+# (REACH 11-27 bf13cy: the inside ladder topped out 0.47 m under the deck's edge - the walk up fell back down its shaft twice
+#  and never reached the locker, the card or the zone. As Sealkeeper's ladtowerout (not in this branch's lib): the ladder on
+#  the south wall's outside at 13.1 -67.8, stepping over the wall top onto a four-cell deck; door as before)
+clear at 13.1 -68.6 r=1.2
+push at 10.5 -67.5 h=22
+for k 0 5
+place Block_Wall_Tier3 cytower at 2.25 0 y={$k*2.42}
+place Block_Wall_Tier3 cytower at 0.75 3 y={$k*2.42}
+place Block_Wall_Tier3 cytower at 2.25 3 y={$k*2.42}
+place Block_Wall_Tier3 cytower at 0 0.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 cytower at 0 2.25 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 cytower at 3 0.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 cytower at 3 2.25 y={$k*2.42} yaw=90
+place Block_Ladder_Tier3 - at 2.6 -0.3 y={$k*2.42} yaw=0
+next
+place Block_Wall_Door_Tier3 cytower at 0.75 0 y=0
+for k 1 5
+place Block_Wall_Tier3 cytower at 0.75 0 y={$k*2.42}
+next
+place Block_Floor_Tier3 cytower at 0.75 0.75 y=14.57
+place Block_Floor_Tier3 cytower at 2.25 0.75 y=14.57
+place Block_Floor_Tier3 cytower at 0.75 2.25 y=14.57
+place Block_Floor_Tier3 cytower at 2.25 2.25 y=14.57
+place Block_Wall_Fence_Rope - at 0.75 0 y=14.57
+place Block_Wall_Fence_Rope - at 0.75 3 y=14.57
+place Block_Wall_Fence_Rope - at 2.25 3 y=14.57
+place Block_Wall_Fence_Rope - at 0 0.75 y=14.57 yaw=90
+place Block_Wall_Fence_Rope - at 0 2.25 y=14.57 yaw=90
+place Block_Wall_Fence_Rope - at 3 0.75 y=14.57 yaw=90
+place Block_Wall_Fence_Rope - at 3 2.25 y=14.57 yaw=90
+pop
+prop cytower tint.color=#6e6a64
+prop cytower tint.amount=0.55
 place Loot_ChestSmall cylocker at 11.25 -65.25 h=37.2 drop yaw=180
 place Note_Paper cysumnote at 11.25 -66.75 h=36.84 drop yaw=20
 place Zone_Trigger cysummit at 12 -66 h=37.73
@@ -238,6 +270,9 @@ call sk_dark x=66 z=-10 h=1 r=7 al=cycave2dark
 
 # the drowned building: the yard store (sealed: the roof hatch capped), its ground floor 10 m down; the deep chest at the bottom, air on storey 1
 call sk_drowned x=-30 z=60 h0=-10 n=3 w=RT_WallWindow1 a=cybld cap=1 cal=cycap
+# (11-27 bf13cy: the roof is at -0.9, so a player stands on it waist-deep, and the roof's railing hemmed him in - he swims in
+#  over it but walks into it on the way out (trap -30 59.9, 4x8 m): no railing on the drowned roof, as Overpass Shoal's)
+clear at -30 60 r=7 all only=(?i)^rt_fence above=-2 below=1
 place Loot_Chest cydeep at -31.8 57.5 h=-10 sit yaw=0
 place Placeable_Table_Basic - at -31.5 61 h=-7 sit yaw=0
 place Note_Paper cybldnote at -31.5 61 h=-5.7 drop yaw=10
