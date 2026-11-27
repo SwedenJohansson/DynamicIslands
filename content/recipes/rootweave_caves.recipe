@@ -124,7 +124,9 @@ prop denbear creature.count=1
 prop denbear creature.respawn=0
 # (11-24 REACH: 'sit' put it on the den piece's buried floor at 13.6, 0.6 m under the sand the world keeps here (14.1-14.4):
 # no spot to use it from - set on the sand)
-place Loot_Chest dencache at 1 -27 h=14.35 yaw=180
+# (bugfix 11-25, CIFloating: at 14.35 it stood 0.47 m over the editor's ground (13.88) with nothing under it - its bottom
+# at 14.15, 0.27 m over that and at most 0.25 m into the world's sand)
+place Loot_Chest dencache at 1 -27 h=14.15 sit yaw=180
 place "Pickup_Landmark_Iron 1" - at -5 -11 sit
 place "Pickup_Landmark_Copper 1" - at -5.2 -18 sit
 place "Pickup_Landmark_Iron 2" - at 7.6 -22 sit
@@ -449,7 +451,14 @@ clear at -16.24 47.33 r=2 all only=^Balboa_Bush_03
 clear at -23.39 55.0 r=2 all only=^Balboa_Bush_03
 # (c3z43: in the Flooded Passage's dead end, from a spot on its floor by the west wall, the look down met the back of the
 # rock's inner slab 2.6 m off - a hole in Raft's own rock there: a boulder on that spot)
-place SmallBoulder3 - at -27.2 -22.7 h=6.5 drop scale=1.6
+# (bugfix 11-25, CIFloating: 'drop' set it on a ledge of the piece's wall, its middle 0.9 m over the dead end's floor
+# (4.97) - set on the floor)
+# (bugfix 11-26, CIFloating ru5: on the floor its foot - the pivot, 1.1 m up in the rock - was still 1.02 m over the floor,
+# out of reach of the check's look down from the foot; sunk 0.5 m into the floor, foot 0.57 m over it)
+# (bugfix 11-26, CIFloating ru6: h=4.45 changed nothing - the save sets a rock the 9-point gap test reads floating down to
+# where it rests (1.70 m here, 2.15 m from 4.9), so the foot ended 1.02 m over the floor each time. Set 2.25 m lower than
+# 4.45, under where the save puts it: it reads resting and is left alone, its foot about 0.5 m over the floor)
+place SmallBoulder3 - at -27.2 -22.7 h=2.2 sit scale=1.6
 # (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth; the hill over the Fungus Hall and Flooded Passage
@@ -471,4 +480,29 @@ prop treasure11248 treasure.loot=TitaniumOre*1;MetalOre*2;TradeToken*2
 # through the piece's side into the earth and met the ground from below - a slit of sky (picture rw_seethru): a rock
 # in the earth there, south of the passage, closes it)
 place TP_BigRock02 - at -46 -17.5 h=10 scale=0.35 yaw=40
+# (bugfix 11-25, CIFloating: the Flooded Passage trench (lowered to -4, smoothed r=12, cleared only r=8) and the cliffs step
+#     left 21 of the generator's and the scatter's plants and rocks hanging 2-17 m over the ground on its banks and at the
+#     west coast - the world check never measures Pickup_ plants or rocks with a foot in the sea. Taken out. The log's spots
+#     are from the land centre, 1.88 0.65 off the recipe's; TP_BigRock02 at -46 -17.5 stays (closes the dead end's slit))
+clear at -46.90 5.05 r=1.5 all only=^Pickup_Landmark_Tree_Palm
+clear at -51.39 5.10 r=1.5 all only=^SmallBoulder3
+clear at -42.96 10.12 r=1.5 all only=^Banana_Bush_1
+clear at -34.09 -16.00 r=1.5 all only=^Bush2
+clear at -23.37 -35.95 r=1.5 all only=^Bush
+clear at -38.19 -16.50 r=1.5 all only=^Bush
+clear at -50.62 10.69 r=1.5 all only=^Pickup_Landmark_Flower_Blue
+clear at -45.23 -24.76 r=1.5 all only=^Monstera_1
+clear at -18.44 -42.10 r=1.5 all only=^Bush2
+clear at -25.60 -38.74 r=1.5 all only=^Banana_Bush_1
+clear at -46.23 -28.55 r=1.5 all only=^Banana_Bush_1
+clear at -44.96 -19.78 r=1.5 all only=^Pickup_Landmark_Flower_Red
+clear at -49.03 -18.72 r=1.5 all only=^Pickup_Landmark_Flower_Blue
+clear at -49.63 2.51 r=1.5 all only=^Pickup_Landmark_Flower_White
+clear at -17.61 -5.27 r=1.5 all only=^Balboa_Bush_03
+clear at -48.40 -13.00 r=1.5 all only=^BigBoulder4_Low
+clear at -34.73 -12.30 r=1.5 all only=^BigBoulder4_Low
+clear at -48.81 2.05 r=1.5 all only=^BigBoulder2_Low
+clear at -45.95 12.39 r=1.5 all only=^BigBoulder1_Low
+clear at -46.49 -24.74 r=1.5 all only=^BigBoulder2_Low
+clear at -45.79 -12.22 r=1.5 all only=^BigBoulder2_Low
 save Rootweave Caves

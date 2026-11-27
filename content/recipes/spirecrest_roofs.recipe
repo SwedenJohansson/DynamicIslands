@@ -26,7 +26,10 @@ elevation 0
 # --- Terrain: the drowned street level at -7 ---------------------------------------------------------------------------
 brush flatten at 0 0 r=46 s=20 frames=400 h=-7
 # discoveries: a level spot for the camp on the ring
-brush flatten at 4 63 r=5 s=8 frames=40
+# (11-26 REACH: that spot lay 3 m under the sea - the tent, the fire and the note's box on the lagoon floor, the note
+# out of reach: raised to a rubble mound 1.2 m over the water, its sides smoothed so a swimmer climbs out onto it)
+brush flatten at 4 63 r=6 s=20 frames=300 h=1.2
+brush smooth at 4 63 r=9 s=6 frames=20
 origin
 clear at 0 0 r=44
 clear at 4 63 r=6
@@ -76,15 +79,26 @@ ramp Block_Floor_Tier3 from 0 -5.25 5 to 0 -4.5 5 len=1.5 top=0
 # the wall, not the rungs) - the ladder moved onto the window panel, and a boat landing (a deck tile on two posts down to
 # the street) in front of its foot: climb out of the water onto it (0.3 m), then up the ladder; the ladder stands 0.5 m off
 # the wall, since at 0.2 m the window frame kept the walks from taking hold of it)
+# (11-26 REACH scp: the deck stood in front of the ladder, over the climber - a swimmer took hold under it and climbed
+# into its underside. The landings now stand beside the ladders, against the wall: the ladder's front is open water,
+# step off the deck sideways onto it. The west tower's ladder, 0.2 m off the wall and facing it as the coop's did before
+# fixA, its rungs walled in, now faces out 0.5 m off the window panel with its own landing)
 place LandmarkLadder_6m - at -1 -21.0 h=-1.2 yaw=180
-place Block_Floor_Tier3 - at -1 -21.85 h=0.3
-place Block_Pillar_Tier3 - at -1.6 -22.15 h=-7.6
-place Block_Pillar_Tier3 - at -1.6 -22.15 h=-5.05
-place Block_Pillar_Tier3 - at -1.6 -22.15 h=-2.5
-place Block_Pillar_Tier3 - at -0.4 -22.15 h=-7.6
-place Block_Pillar_Tier3 - at -0.4 -22.15 h=-5.05
-place Block_Pillar_Tier3 - at -0.4 -22.15 h=-2.5
-place LandmarkLadder_6m - at -18.2 0 h=-1.2 yaw=90
+place Block_Floor_Tier3 - at -2.5 -21.25 h=0.3
+place Block_Pillar_Tier3 - at -2.9 -21.55 h=-7.6
+place Block_Pillar_Tier3 - at -2.9 -21.55 h=-5.05
+place Block_Pillar_Tier3 - at -2.9 -21.55 h=-2.5
+place Block_Pillar_Tier3 - at -2.1 -21.55 h=-7.6
+place Block_Pillar_Tier3 - at -2.1 -21.55 h=-5.05
+place Block_Pillar_Tier3 - at -2.1 -21.55 h=-2.5
+place LandmarkLadder_6m - at -18.5 0 h=-1.2 yaw=270
+place Block_Floor_Tier3 - at -18.75 1.5 h=0.3
+place Block_Pillar_Tier3 - at -19.05 1.1 h=-7.6
+place Block_Pillar_Tier3 - at -19.05 1.1 h=-5.05
+place Block_Pillar_Tier3 - at -19.05 1.1 h=-2.5
+place Block_Pillar_Tier3 - at -19.05 1.9 h=-7.6
+place Block_Pillar_Tier3 - at -19.05 1.9 h=-5.05
+place Block_Pillar_Tier3 - at -19.05 1.9 h=-2.5
 
 # --- The beacon roof: the beacon hut (distress card, the Receiver plans), the beacon mast and its light ---------------
 push at -2.5 0.5 h=5
@@ -115,10 +129,11 @@ place Pickup_Landmark_Flower_Yellow - at 1.5 13.5 h=5.68 sit
 place Pickup_Landmark_Flower_Red - at -1.5 16 h=5.68 sit
 place Pickup_Landmark_BerryBush - at 1.8 16.2 h=5.05 sit
 place "Box Small" - at 2.2 19.8 h=5.05 sit
-place Note_Paper diary at 2.2 19.8 h=5.75 drop yaw=40
+place Note_Paper diary at 2.2 19.8 h=6.3 drop yaw=40
 # STORY 10-24s: Ines's first slate on the coop roof, by the hens
+# (11-26: notes drop from above the box top at 5.94 - from 5.75 they started inside it and fell into it)
 place "Box Small" - at -2.2 -19.6 h=5.05 sit
-place Note_Paper inesslate1 at -2.2 -19.6 h=5.75 drop yaw=-20
+place Note_Paper inesslate1 at -2.2 -19.6 h=6.3 drop yaw=-20
 
 # --- The hen coop (south tower): a roof on four posts, hens ---------------------------------------------------------
 push at -2.5 -15.5 h=5
@@ -146,14 +161,16 @@ call tower x=-24 z=26 h=-7 n=3 a=towers2
 prop towers2 tint.color=#7d8a8c
 prop towers2 tint.amount=0.35
 # (fixA 11-03, REACH: as the coop ladder - moved onto the window panel, a boat landing in front of its foot)
-place LandmarkLadder_6m - at -28.5 21.3 h=-4.2 yaw=180
-place Block_Floor_Tier3 - at -28.5 20.45 h=0.3
-place Block_Pillar_Tier3 - at -29.1 20.15 h=-7.6
-place Block_Pillar_Tier3 - at -29.1 20.15 h=-5.05
-place Block_Pillar_Tier3 - at -29.1 20.15 h=-2.5
-place Block_Pillar_Tier3 - at -27.9 20.15 h=-5.05
-place Block_Pillar_Tier3 - at -27.9 20.15 h=-7.6
-place Block_Pillar_Tier3 - at -27.9 20.15 h=-2.5
+# (11-26 REACH scp: still 0.2 m off the wall, where the window frame keeps a hand off the rungs - nothing took hold of it:
+# 0.5 m off as the coop's, its landing beside it against the wall)
+place LandmarkLadder_6m - at -28.5 21.0 h=-4.2 yaw=180
+place Block_Floor_Tier3 - at -27.0 20.75 h=0.3
+place Block_Pillar_Tier3 - at -27.4 20.45 h=-7.6
+place Block_Pillar_Tier3 - at -27.4 20.45 h=-5.05
+place Block_Pillar_Tier3 - at -27.4 20.45 h=-2.5
+place Block_Pillar_Tier3 - at -26.6 20.45 h=-5.05
+place Block_Pillar_Tier3 - at -26.6 20.45 h=-7.6
+place Block_Pillar_Tier3 - at -26.6 20.45 h=-2.5
 place Loot_Chest annexchest at -27.5 27.5 h=2.05 sit yaw=90
 place BoatStranded - at 26 -28 ground yaw=35
 place Loot_ChestSmall wreckchest at 22 -24 ground sit yaw=200
@@ -162,6 +179,10 @@ place campfire_1 - at 4 63 ground sit
 place Balboa_DecorationPrefabBase_SimpleTent - at 7 65 ground sit yaw=200
 place "Box Small" - at 2 65.5 ground sit
 place Note_Paper campnote at 2 65.5 ground y=1.6 drop yaw=20
+# (11-26 REACH sc3: the van stood in a fold of the slope - the hill over it on one side, the van's flank across the
+# fold's low end: a player who dropped into the 6 x 4 m gap had no way out. The ground under it is levelled first)
+brush flatten at -56 -34 r=6 s=20 frames=120 h=7
+clear at -56 -34 r=6
 place Van_5 ringvan at -56 -34 ground yaw=60
 prop ringvan tint.color=#6b4a32
 prop ringvan tint.amount=0.55
@@ -184,9 +205,16 @@ call sk_ridge x1=58 z1=-30 x2=72 z2=24 h=5 top=8 r=10
 call sk_plants x=65 z=-3 r=16 seed=10161
 call sk_zone x=65 z=-3 al=sc_ridge id=sc_ridge r=7 msg="The rubble ridge. Under the water the drowned rooftops lie in a grid - streets, once. Two masts still stand up here."
 call sk_cave x=-46 z=-4 h=3 yaw=0 al=sc_caverock chest=sc_cavechest
+# (11-26 REACH: the cave's dry dome, uncapped, ran 64 m back - over the scaffold of the jump course: capped at 30 m)
+prop sc_caverock cave.dome=30
 call sk_zone x=-46 z=1 al=sc_cave id=sc_cave r=4 msg="A cave in the rock. Somebody slept here and kept a mast by the door."
 call sk_ruin x=-8 z=-66 h=3 al=sc_ruin
 call sk_notebox x=-5.5 z=-70.5 yaw=10 al=sc_ruinnote
+# (11-26 REACH: the plane's pad sat in a bowl - Signal Hill's first terrace a cliff on one side, the ring's rubble higher
+# than a step all round the rest: a player who dropped in had no way out. The plane ploughed a gap out through the
+# rubble to the sea, at the pad's height)
+brush flatten from -46 58 to -64.6 81.4 r=4 s=20 frames=120 h=3
+clear from -46 58 to -64.6 81.4 r=4
 call sk_plane x=-46 z=58 h=3 yaw=60 al=sc_plane crate=sc_wreckcrate
 call sk_notebox x=-51 z=63.5 yaw=70 al=sc_wrecknote
 
@@ -207,19 +235,37 @@ place Loot_Chest mastbox at -10.5 -70.5 ground sit yaw=180
 call sk_peak x=-64 z=28 h=22 r=22
 call sk_pit x=36 z=-60 h0=-9
 call sk_cave x=24 z=36 h=3 yaw=180 al=sccave2 chest=sccave2chest
+# (11-26 REACH: the cave's dry dome, uncapped, ran 64 m back out over the north shore - two roofed pockets of sea a
+# swimmer got under and not out of, the ring camp under them: capped at 30 m)
+prop sccave2 cave.dome=30
 call sk_plants x=-64 z=28 r=24.2 seed=24010
 call sk_reef x=46 z=-54 r=5 seed=24030
+# (11-26 REACH sc3: the way up from the south shore to the ridge ran along the pit's east rim, a 45 degree slope with
+# the rim falling away at its side - a player slid off it into the pit's edge. Steps cut into it, 0.94 m each, a
+# 4 m wide stair from the shore at 1.2 m to the top at 7.8)
+for k 0 6
+brush flatten at 47 {-64.7+1.2*$k} r=2 s=20 frames=60 h={1.2+0.94*$k}
+next
 
 # the summit: Signal Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
 call ladtower x=-64 z=28 h0=22 lv=6 a=sctower
 place Loot_ChestSmall sclocker at -64.75 28.75 h=36.73 sit yaw=180
-place Note_Paper scsumnote at -64.75 27.25 h=36.84 drop yaw=20
-place Zone_Trigger scsummit at -64 28 h=37.73
+# (11-26 REACH sc3: the tower top is a 3 x 3 m deck round the ladder's hole, the locker, the zipline post and the slate
+# each on a tile of it; the slate, on the far tile behind the post, was 3 m from where the ladder lets a player off, the
+# zone's middle 2.7 m: the slate lies on the locker by the ladder's top, the zone's middle over the ladder's hole)
+place Note_Paper scsumnote at -64.75 28.75 h=37.6 drop yaw=20
+# (11-26 REACH sc4: the middle 1 m over the hole was 1.6 m from the nearest deck spot - a zone wants feet within 1.5 m of
+# it: on the deck tile beside the hole, a hand over the boards, still inside the zone from the ladder's top)
+place Zone_Trigger scsummit at -63.6 29.6 h=37.0
 place ZiplinePath_Landmark sczip at -63.25 27.25 h=36.73 yaw=0
 zipfrom sczip -63.25 27.25 h=36.73
 # (c3z37 11-21: the far end at -32 14 lay at the waterline, its rope 0.57 m in the shore in its last 3 m - on the dry shore 10 m back)
 zipto sczip -42 16
-place Loot_ChestSmall scledge at -73.33 37.33 ground sit yaw=40
+# (11-26 REACH scp: at -73.33 37.33 it stood on the second terrace's cliff, 6 m under the path's second round and its
+# first round pads 3-4 m below - no way to it from either: on the terrace's lip beside the path, still off it)
+# (11-26 REACH sc3: at -70.4 38.4 it slid off the pad's edge 1.7 m down the slope - on the second round's pad, 1.2 m
+# out from its middle, beside the way up)
+place Loot_ChestSmall scledge at -69.5 37.5 ground sit yaw=40
 place SmallRock_02 - at -39.34 34.51 ground sit scale=0.5
 place SmallRock_02 - at -39.34 34.51 ground y=0.6 sit scale=0.32 yaw=40
 call treasure x=-41.84 z=34.51 r=12 n=1 seed=24011
@@ -240,6 +286,7 @@ call sk_zone x=36 z=-71 al=scdeepzone id=sc_deep r=4 msg="The pit floor: the dro
 info title=Spirecrest Roofs
 info author=Custom Islands
 info description=Five drowned skyscraper tops in a clear sea, linked by fallen antenna masts: a beacon still blinking, a roof garden, a hen coop. The first island of The Sunken Kingdom.
+island reach.byplay=jump_sc_top;jump_sc_finale;Scaffold cap
 island on.arrive=message||Roofs. Five of them, standing out of the sea - and through the clear water, the streets below.
 
 note distresscard Pelagic Network distress card | PELAGIC NETWORK - AUTOMATED NOTICE\n\nThis is the Sealkeeper. The Commons are sealed and safe.\nStay where you are. Keep your lights low. Do not answer the deep.\nThis is the Sealkeeper. The Commons are sealed and safe...\n\n(A printout of the beacon's loop: the same three lines, again and again, down the whole page.)\n\nIn pencil at the bottom: "Then why is HIS light the only one still on? - T."\nUnder that, in a neat hand: "That is Director Rook's voice. He read the weather at the regatta once and nobody heard a word. He has found his volume now. - I.M."
@@ -386,6 +433,13 @@ quest reward=Plank*8;Rope*3;OxygenBottle*1;Flipper*1
 #     3 m, the rope 2.48 m up there - the shore under that last stretch taken down to 1.9 m and smoothed out)
 brush flatten from -41.2 14.4 to -37.9 12.4 r=1.6 s=20 frames=60 h=1.9
 brush smooth from -41.6 14.6 to -37.5 12.2 r=3 s=6 frames=12
+# (11-26 REACH sc6: the way out of the lagoon below the annex tower came up a bank 1.8 m high in 1.8 m - a swimmer the
+#     waves set a step east of the way met it head on and could not climb out: a 6 m wide ramp from 1.4 m under the
+#     water to the ring's top at 1.8, 0.53 m a step, its sides smoothed)
+for k 0 6
+brush flatten at {-12.6+1.0*$k} {45.0+1.0*$k} r=3 s=20 frames=60 h={-1.4+0.53*$k}
+next
+brush smooth from -13.2 44.4 to -6.2 51.4 r=4.5 s=6 frames=12
 # (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth)

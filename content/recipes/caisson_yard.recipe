@@ -166,6 +166,9 @@ call sk_ridge x1=-68 z1=-24 x2=-62 z2=12 h=3 top=5 r=8
 call sk_plants x=-65 z=-6 r=16 seed=10761
 call sk_zone x=-65 z=-6 al=cy_ridge id=cy_ridge r=7 msg="The spoil ridge - all the rock the yard dug out of the trench. The zipline at its north end runs down off it."
 call sk_cave x=-24 z=-56 h=2 yaw=180 al=cy_caverock chest=cy_cavechest
+# (11-26 REACH: the powder cave's dry dome, uncapped, reached 42 m to its sides - its skin lay 2.4 m over Crane Hill's
+# west ledge and buried the Rigger's cache; capped at 30 as Hadal's dens: sides 20 m, front 9 m, back 30 m)
+prop cy_caverock cave.dome=30
 call sk_zone x=-24 z=-61 al=cy_cave id=cy_cave r=4 msg="The powder cave: the yard kept its blasting charges in here, far from everything."
 call sk_ruin x=8 z=62 h=2 al=cy_ruin
 call sk_notebox x=10.5 z=57.5 yaw=10 al=cy_ruinnote
@@ -195,7 +198,17 @@ call sk_peak x=12 z=-66 h=22 r=24
 call sk_pit x=-30 z=60 h0=-10
 brush flatten at -27 60 r=8 s=40 frames=300 h=-10.05
 call sk_cave x=66 z=-12 h=3 yaw=0 al=cycave2 chest=cycave2chest
+# (11-26 REACH: the crane cave's dry dome, uncapped, reached 64 m back - its skin lay 3-4 m over the toppled crane 35 m
+# behind it and buried its toolbox and the driver's report; capped at 30: back 30 m, sides 20 m, front 9 m)
+prop cycave2 cave.dome=30
 call sk_plants x=12 z=-66 r=26.4 seed=24610
+# (11-26 REACH cy2: a trough 11x3 m along Crane Hill's south foot, under pad 9 (x 9..20, z -86..-83, h 4.6..6.6) - a player
+# dropped in from the pad and could not get out; its east end lay 2 m from the slope down to the shore at the same height but
+# did not link. A level cut at 5.85 runs from the trough to that slope, cleared of plants)
+for k 0 5
+brush flatten at {14+1.8*$k} {-84.6+0.4*$k} r=2 s=20 frames=60 h=5.85
+clear at {14+1.8*$k} {-84.6+0.4*$k} r=3
+next
 call sk_reef x=-20 z=66 r=5 seed=24630
 
 # the summit: Crane Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
@@ -206,8 +219,9 @@ place Zone_Trigger cysummit at 12 -66 h=37.73
 # (11-21: the zipline starts at the tower's foot, on its side towards the far end, as Thalassa Mooring's. From the top
 # its rope ran 5.5 m through the top's rope fence (a rider stopped 5 m out) and its floor shut the top ladder's climb side.
 # zipto raises this near end on a deck if the hill wants it)
-place ZiplinePath_Landmark cyzip at 11.35 -62.45 ground
-zipfrom cyzip 11.35 -62.45 ground
+# (11-26 s6t: the zipline base's own ladder faced the tower wall 1 m off - no room to climb it. The base 1 m further out along the rope)
+place ZiplinePath_Landmark cyzip at 11.17 -61.47 ground
+zipfrom cyzip 11.17 -61.47 ground
 prop cyzip zip.slack=-0.692
 # (11-21 c3z9: its last 6 m came down over the world's cave hill skin by the hill's foot - the rope 0.3 m into it, a rider
 # stopped 6.5 m short; the editor doesn't see that skin. The far end 4 m further out along the line, onto the flat yard, and a tight rope.
@@ -239,6 +253,11 @@ place VP_ConcretePipe02 cyweight at -31.5 60 h=-1 sit yaw=0
 info title=Caisson Yard
 info author=Custom Islands
 info description=Concrete caissons standing out of the sea over the trench edge, linked by stone footbridges, with two cranes, a zipline, a smelter and a store. The seventh island of The Sunken Kingdom.
+# (the jump course's hops are jumps the reach grid doesn't make: its play goes to them instead)
+island reach.byplay=Diver's perch;Crew's dare;jump_cy_finale
+# (11-26 cy4: the drowned store is sealed by design until the crane key's lever takes its cap away - the fresh reach marks
+# what lies behind the cap as sealed, the reach after the play (cap gone) judges them as any other target)
+island reach.sealed=cycap:Yard store chest;Yard pump log;cy_dair
 island on.arrive=message||Grey concrete blocks standing out of the sea, two cranes over them - and past them, dark water.
 
 note foremanboard Foreman's board | CAISSON YARD - FOREMAN (J. Achterberg)\n\nSmelter: on the yard, under the roof. Fuel: the little shed on the next caisson over.\nCrane 1 to crane 2 by the cable only - the footbridge is for carts, and for people who enjoy swimming.\nAnchor gear stays on the crane 2 caisson: we anchor over the trench. Chart of the trench on its table. Hadal is straight down.\n\nChalked across the bottom, big letters: "SHUTTLE KIDS - 12 - ALL FED, ALL COUNTED. Warden Fennick took them down to the Commons Tues. Doors shut from inside. Good."\nUnder it, smaller, a different chalk: "Counted them myself. - I.M."
