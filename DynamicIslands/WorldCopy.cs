@@ -379,13 +379,30 @@ namespace DynamicIslands.Editor
 				chunks.Add(text.Substring(at, len));
 				at += len;
 			}
+			// (a few parts a frame, as island files and Raft's save go: a big world's 61 parts in one loop never all reached
+			// the player when the host saved - its copy wasn't kept, IM43 11-25; a newer copy to everyone stops an older one
+			// still going out to everyone)
+			int gen = to.HasValue ? sendGeneration : ++sendGeneration;
+			if (chunks.Count <= IslandNetwork.ChunksPerFrame || IslandNetwork.Loopback != null || DynamicIslands.instance == null)
+				SendParts(key, id, chunks, to, gen, text.Length).MoveNext();
+			else DynamicIslands.instance.StartCoroutine(SendParts(key, id, chunks, to, gen, text.Length));
+		}
+
+		static int sendGeneration;
+
+		static System.Collections.IEnumerator SendParts(string key, string id, List<string> chunks, Network_UserId? to, int gen, int length)
+		{
 			int count = chunks.Count;
+			bool paced = count > IslandNetwork.ChunksPerFrame && IslandNetwork.Loopback == null && DynamicIslands.instance != null;
 			for (int i = 0; i < count; i++)
 			{
+				if (!to.HasValue && gen != sendGeneration) yield break;
+				if (!Raft_Network.IsHost) yield break;
 				var msg = new IslandNetMessage { Name = key, Hash = id, Index = i, Count = count, Data = chunks[i] };
 				IslandNetwork.SendWorldCopy(msg, to);
+				if (paced && (i + 1) % IslandNetwork.ChunksPerFrame == 0) yield return null;
 			}
-			Debug.Log("[CUSTOM ISLANDS] [net] Sent the world's copy (" + text.Length + " characters, " + count + " part(s)) to " + (to.HasValue ? to.Value.ToString() : "every player"));
+			Debug.Log("[CUSTOM ISLANDS] [net] Sent the world's copy (" + length + " characters, " + count + " part(s)) to " + (to.HasValue ? to.Value.ToString() : "every player"));
 		}
 
 		static readonly Dictionary<string, string[]> incoming = new Dictionary<string, string[]>();
@@ -509,7 +526,11 @@ namespace DynamicIslands.Editor
 				bool joining = checkedJoin.Add(guid.ToString());
 				bool keptNewer = joining && File.Exists(path) && KeepNewer(path, lines, guid);
 				// (never over a newer copy: a late message from an older save)
-				if (!keptNewer && File.Exists(path) && Newer(File.ReadAllLines(path), lines)) return;
+				if (!keptNewer && File.Exists(path) && Newer(File.ReadAllLines(path), lines))
+				{
+					Debug.Log("[CUSTOM ISLANDS] [net] The host's copy of this world (" + lines.Length + " lines) is older than the one kept here: not kept");
+					return;
+				}
 				Directory.CreateDirectory(Path.GetDirectoryName(path));
 				SafeFile.WriteAllLines(path, lines);
 				LastKept = guid + " " + lines.Length + " lines";
