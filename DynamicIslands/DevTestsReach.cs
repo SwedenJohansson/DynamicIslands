@@ -1499,9 +1499,24 @@ namespace DynamicIslands
 			if (d.magnitude < 0.01f) return false;
 			Vector3 p1 = new Vector3(a.x, y + 0.45f + r, a.z), p2 = new Vector3(a.x, y + RTop - r, a.z);
 			Vector3 q1 = new Vector3(b.x, y + 0.45f + r, b.z), q2 = new Vector3(b.x, y + RTop - r, b.z);
-			return Physics.CapsuleCast(p1, p2, r, d.normalized, d.magnitude, reachMask, QueryTriggerInteraction.Ignore) ||
-				Physics.CapsuleCast(q1, q2, r, -d.normalized, d.magnitude, reachMask, QueryTriggerInteraction.Ignore);
+			if (Physics.CapsuleCast(p1, p2, r, d.normalized, d.magnitude, reachMask, QueryTriggerInteraction.Ignore) ||
+				Physics.CapsuleCast(q1, q2, r, -d.normalized, d.magnitude, reachMask, QueryTriggerInteraction.Ignore)) return true;
+			// (the body standing at points along the way, as Stands does at the spots: a cast skips a mesh it starts in and a
+			// one-sided skin met from behind, an overlap does not. Brinelab's den mouth: the hill skin's sloping roof came down
+			// to ~1.76 m between two spots 1.9 m apart that both stood - the walker stopped there with 'nothing found' in every
+			// bf13 run while the grid's rays (to 1.7 m) and casts went through, bugfix 11-27)
+			int n = Mathf.FloorToInt(d.magnitude / 0.3f);
+			for (int i = 1; i <= n; i++)
+			{
+				float t = i / (n + 1f);
+				Vector3 m = Vector3.Lerp(a, b, t); m.y = Mathf.Lerp(a.y, b.y, t);
+				// (ground the feet may touch - a bump of terrain between the spots - is the walk's own business, not a roof)
+				int c = Physics.OverlapCapsuleNonAlloc(m + Vector3.up * (0.45f + r), m + Vector3.up * (RTop - r), r, sweptHits, reachMask, QueryTriggerInteraction.Ignore);
+				for (int j = 0; j < c; j++) if (!StandGround(sweptHits[j])) return true;
+			}
+			return false;
 		}
+		static readonly Collider[] sweptHits = new Collider[16];
 
 		/// <summary>A point inside a rock's mesh: a ray up from it meets the inside of a surface that faces up (a mesh
 		/// collider is a skin - a capsule wholly inside overlaps nothing; the grid swam inside Turtle Cave's rock, PQ11 10-27).
