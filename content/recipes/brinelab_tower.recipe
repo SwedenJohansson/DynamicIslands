@@ -50,6 +50,10 @@ brush flatten from 3 -4.5 to 3 4.5 r=3.8 s=20 frames=260 h=-15
 brush flatten at -36 30 r=5 s=8 frames=40
 brush flatten at 36 -36 r=6 s=8 frames=40
 origin
+# (CIFloating 11-26: the flooded storeys' west walls and floors (x -6..-5) stood 5-15 m deep in the pit's west side - the
+#     pit dug again under the tower's west side, after origin so it lands under the tower (a stroke before origin is in
+#     the generator's frame, b7_lt2: the first try at -5 dug the tower's middle))
+brush flatten from -6 -4.5 to -6 4.5 r=2.6 s=20 frames=400 h=-15
 clear at -1 0 r=10
 clear at 16 2 r=9
 clear at -36 30 r=6
@@ -207,18 +211,30 @@ call leverchest x=40 z=-60 yaw=200 alias=cranelever sig=cranelever chest=hookcra
 # the mountain: a stepped path spirals up from its east foot (46.08 66) to the summit tower
 call sk_peak x=24 z=66 h=24 r=24
 call sk_pit x=-30 z=-66 h0=-12
-call sk_cave x=-36 z=-6 h=3 yaw=0 al=blcave2 chest=blcave2chest
+# (11-27 bld1: the ground at the pit's west wall (x -9..-5) logged after each step - dug to -15 by line 56 and kept so until
+#     this den's apron ran, then +2: the den's apron (its floor slab's top carried out round its box) raised the pit's
+#     west side over the flooded storeys' west walls and floors (21 buried 5-15 m deep). The den 12 m further west)
+call sk_cave x=-48 z=-6 h=3 yaw=0 al=blcave2 chest=blcave2chest
 # (11-26 REACH bl4: the rock cave's dry dome, uncapped, reached 42 m to the side - its skin ran through the tower's flooded
 # storeys 36 m east at h -5.1..-5.5, a rock sheet across the stairwell that stopped a climber going down to the deep lab: capped at 30)
-prop blcave2 cave.dome=30
+# (11-27: capped at 22 too - its reach logged side 14 back 22 front 7; the pit's buried west side was the den's apron, not
+#     its dome, see above)
+# (REACH 11-27 bl8: the walk reached the sampler chest, then stuck on the way out where the grid turns west at the runway's
+#     end, -55..-58 9..12: the dome's west flank skin at knee height and a mango tree. Dome capped at 14 as the other
+#     sunken dens, and a cleared, flattened path west from the runway to the open shore at -64 14)
+prop blcave2 cave.dome=14
+brush flatten from -51 9 to -64 14 r=2.5 s=20 frames=120 h=3.4
+clear from -51 9 to -64 14 r=3 body
 call sk_plants x=24 z=66 r=26.4 seed=24210
 call sk_reef x=-20 z=-60 r=5 seed=24230
 # (REACH 11-02: a 5x5 m hollow on the hill's east flank, 35-37 77-79, h 6.4-11.3, had one way out, a 1.2 m step up: a mid-step pad)
 brush flatten at 33.37 75.77 r=0.9 s=20 frames=150 h=11.9
 clear at 33.37 75.77 r=1.9 body
 
-# the summit: Brine Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
-call ladtower x=24 z=66 h0=24 lv=6 a=bltower
+# the summit: Brine Hill - the tower (ladder outside), the locker, the note, the zone, the zipline down
+# (REACH 11-26: with the ladder inside, the walk up stopped at the top - the Weather mast locker never reached: ladtowerout's ladder outside
+# the south wall comes up facing the deck, as Biome Seven's)
+call ladtowerout x=24 z=66 h0=24 lv=6 a=bltower
 place Loot_ChestSmall bllocker at 23.25 66.75 h=38.6 sit yaw=180
 # (REACH 10-28: the zipline post and the note swapped cells - the tower's ladder now comes up onto the zipline's old cell)
 place Note_Paper blsumnote at 24.75 65.25 h=38.84 drop yaw=20
@@ -232,7 +248,7 @@ call treasure x=32.63 z=42.32 r=12 n=1 seed=24211
 prop treasure24211 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 call treasure x=-19.23 z=-3.21 r=5 n=1 seed=24212
 prop treasure24212 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
-call sk_dark x=-36 z=-4 h=1 r=7 al=blcave2dark
+call sk_dark x=-48 z=-4 h=1 r=7 al=blcave2dark
 
 # the drowned building: the lab's pump house, its ground floor 12 m down; the deep chest at the bottom, air on storey 1
 call sk_drowned x=-30 z=-66 h0=-11.94 n=3 w=RT_WallWindowBroken a=blbld cap=0 cal=blcap
@@ -382,4 +398,7 @@ for k 0 2
 place RT_PillarThick zipposts at 17.53 66.22 ground y={6*$k}
 next
 place RT_PillarThick zipposts at 17.53 66.22 ground y=18 sy=0.1467
+# (CIFloating 11-26: a generated blue flower north of the west cave hung 0.65 m over the ground the cave hill's apron left there)
+#     (b7_lt2: CIFloating names points from the land centre, 0.98 2.17 from the origin - the flower is at -32.5 14.55 here)
+clear at -32.5 14.55 r=1.2 only=Pickup_Landmark_Flower_Blue all
 save Brinelab Tower

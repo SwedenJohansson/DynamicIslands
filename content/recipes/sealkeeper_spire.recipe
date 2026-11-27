@@ -40,10 +40,42 @@ for k 0 4
 brush flatten at {-8.6-0.6*$k} {8.4+0.8*$k} r=1.8 s=20 frames=150 h={3.0-0.45*$k}
 next
 origin
+# (REACH 11-26: the west coast's water under the generated cliff (-95..-106, -25..+30) was a trap - every way out was a 0.7-1.1 m
+#     step up the bank at -96..-99 -22..-25: a notch cut in the bank there, a landing just over the water and a step up
+#     to the bank inland (east), as Old Mine Islet's)
+#     (b7_lt2: after origin now - before it the strokes sat in the generator's frame - and a second landing at the
+#     closest ways out it named, -102..-103 -16..-18, where the bank stands 0.8-0.9 over the water)
+brush flatten at -97.1 -22.9 r=2.6 s=20 frames=600 h=0.4
+clear at -97.1 -22.9 r=3.4 body
+brush flatten at -94.5 -22.9 r=1.5 s=20 frames=600 h=0.8
+clear at -94.5 -22.9 r=2.5 body
+brush flatten at -101.8 -16.6 r=2.2 s=20 frames=600 h=0.4
+clear at -101.8 -16.6 r=3.2 body
 clear at 23.2 -38.6 r=6
 clear at 0 0 r=13
 clear from 23.25 -17.6 to 23.25 -25.7 r=3 body
 clear from -8.6 8.4 to -11 11.6 r=2.8 body
+# (REACH 11-27 bs1: the dock still a pit - 1.4-1.8 m under the base's rim at -9.4 8.1, 3.6 m under the land north of it; the
+#     steps before origin sat in the generator's frame and their wide strokes ate each other. After origin now: the pad again,
+#     then a band 7 m wide of strokes 0.3 m up a row, 0.8 m apart, from the pad up into the base (each row higher than the
+#     last, so every point keeps the highest row that reaches it - a graded slope, no rim))
+brush flatten at -11.5 13.5 r=5.5 s=25 frames=300 h=1.2
+for k 0 6
+for j -1 1
+brush flatten at {-9.23+0.519*$k+1.9*$j} {10.84-0.609*$k+1.62*$j} r=1.5 s=20 frames=200 h={1.2+0.3*$k}
+next
+next
+clear at -11.5 13.5 r=6 body
+clear from -9.23 10.84 to -6.12 7.19 r=4 body
+# (REACH 11-27 bs1: the west coast's water under the cliff still a trap - its closest ways out a 0.7 m step at -104.3 -13.7
+#     and 0.8 m at -101.4 -19.4: landings there too)
+brush flatten at -104.3 -13.7 r=2.2 s=20 frames=600 h=0.4
+clear at -104.3 -13.7 r=3.2 body
+brush flatten at -101.4 -19.4 r=2.2 s=20 frames=600 h=0.4
+clear at -101.4 -19.4 r=3.2 body
+# (REACH 11-27 sk6: the cove at -93.8 -26.5 a trap - its closest way out a 0.7 m step at -96.1 -26.5: a landing there)
+brush flatten at -96.1 -26.5 r=2.2 s=20 frames=600 h=0.4
+clear at -96.1 -26.5 r=3.2 body
 
 # --- The spire: six storeys of stone, a ladder up the inside, the control room on top ----------------------------------
 push at -2.25 -2.25 h=3
@@ -103,14 +135,27 @@ place Creature_StoneBird screechers at 0 0 h=24
 
 # --- The base: the dock, orders, store, the cable mast, its locker, the generator and status board ---------------------
 place Zone_Trigger dockzone at -11 13 h=2.2
-place Note_Board orders at -9 11 ground yaw=135
-store spireshop at -10 12 ground
+# (REACH 11-27 sk6: the dock's south end (z 10-12) lay under the base's rim - the reads' spots there had the rim over them
+#     (the walk reached 2-3 m above them, nothing at the board): the board and Milo's card on the open dock, by its zone)
+# (REACH 11-27 sk7: on the open dock still no way to them - the walk reached only the dock's rim, 2.6 m over its pad
+#     (-11.6 11.5 and -10.7 12.5 at 3.8): the board and the card up on that rim, over the dock)
+# (REACH 11-27 sk8: "ground" set them on the pad again - the rim the walk stands on (3.8-4.1) overhangs it there: set from
+#     above with sit, so they settle on the rim's top)
+place Note_Board orders at -12.1 11.2 h=5.5 sit yaw=135
+# (REACH 11-27 bs1: the store at -10 12 stood in the way down to the dock, and the orders board 1.4 m from it had no spot
+#     to read it from - the store on the dock's far (north-west) side now)
+store spireshop at -14 16 ground
 # STORY 10-24s: Milo's crayon card on the dock, where the children waited for the plane
-place "Box Small" - at -12.6 10.4 ground sit
-place Note_Paper milocard at -12.6 10.4 ground y=1.6 drop yaw=40
+# (REACH 11-27 sk10: at -11.1 12.1 the box and card went past the rim's edge down to the pad (card at h 1.4); on the rim
+#     beside the board now, where the walk stands at h 3.7)
+place "Box Small" - at -10.9 11.0 h=5.5 sit
+place Note_Paper milocard at -10.9 11.0 h=6.5 drop yaw=40
 # STORY 10-24s: the fuse board lights the spire - and the Stalker's lure comes up the trench to look (seen from the door tower's deck)
 place Placeable_Lantern_Metal skcam at 22.5 -15.5 h=9.475 sit
-place Placeable_Lantern_Metal sklure at 45 25 h=-6 drop scale=1.6
+# (CIFloating 11-26: since the 10-24 resize 45 25 is land - the lure lay 10 m under the ground and rose through it: it comes up
+#     the flooded sinkhole by the drowned office now, west of the building, from its floor (-14) to 4 m under the water)
+#     (b7_lt2: hidden, it starts 4 m under its place - at h -12 it lay 2 m in the sinkhole's floor: 2.4 m higher)
+place Placeable_Lantern_Metal sklure at -55 -62 h=-9.6 scale=1.6
 ramp Block_Floor_Tier3 from -13 16 1.2 to -16 19 1.2 len=1.5 top=0
 call ladtower x=-8 z=-6 h0=3 lv=4 a=towers
 place Loot_Chest baselocker at -5.6 -4.2 ground sit yaw=90
@@ -130,26 +175,34 @@ call treasure x=-6 z=-14 r=16 n=1 seed=10053
 prop treasure10053 treasure.loot=TitaniumOre*3
 
 # --- The pump tower (west): crank and log on its deck -------------------------------------------------------------------
-call ladtower x=-24 z=-14 h0=2 lv=3 a=towers
-place RT_Pillar - at -24.8 -14.6 h=9.475 sy=0.6
-place TP_Selene_DoorCrankWheel pumpcrank at -24.8 -14.69 h=10.675
+# (REACH 11-26: with the ladder inside, the walk up stopped at the top - the pump tower's deck (Pump log, pump_tower) never reached: ladtowerout's ladder outside
+# the south wall comes up facing the deck, as Biome Seven's)
+call ladtowerout x=-24 z=-14 h0=2 lv=3 a=towers
+# (CIFloating 11-26: set 0.16 m over its deck it touched nothing - set down on the deck, the crank with it)
+place RT_Pillar - at -24.8 -14.6 h=9.33 sy=0.6
+place TP_Selene_DoorCrankWheel pumpcrank at -24.8 -14.69 h=10.53
 place Note_Paper pumplog at -23.3 -14.6 h=9.6 drop yaw=40
 place Zone_Trigger pumpzone at -24 -14 h=10.5
 place WaterPipe_Short_1 pipes at -21.5 -14 h=2.4 rot=0,0,90
 
 # --- The door tower (east): three fuse lockers, the fuse board, the warning ---------------------------------------------
 call ladtower x=24 z=-14 h0=2 lv=3 a=towers
-place Loot_ChestSmall fuselocker1 at 23.3 -14.7 h=9.475 sit yaw=180
+# (CIFloating 11-26: set 0.16 m over its deck it touched nothing - dropped onto the deck)
+# (REACH 11-27 bs1: the walk used the zone from the fuse board's top beside the deck's ladder hole and was sent down the
+#     hole from there (8 m) - it stuck on the ladder's top: the board and this locker both in the deck's far (south-west) cell)
+place Loot_ChestSmall fuselocker1 at 23.3 -15.05 h=9.8 drop yaw=180
 place Loot_ChestSmall fuselocker2 at 23.2 -13.4 h=2 sit yaw=90
 place Loot_ChestSmall fuselocker3 at 26.6 -12 ground sit yaw=270
-place RT_PowerBox fuseboard at 24.7 -14.7 h=9.82 yaw=180
+# (CIFloating 11-26: 0.16 m over the deck - set down on it)
+place RT_PowerBox fuseboard at 23.1 -14.2 h=9.66 yaw=180
 place Note_Paper warning at 24.6 -12.4 h=2 drop yaw=200
 place Zone_Trigger doortowerzone at 24 -14 h=10.5
 
 # --- The cable head: the cable into the sea, the two levers, the descend lever --------------------------------------
 place Block_Foundation cablepad at 15 4 h=1.6 sx=2 sz=2
-place Antenna_pole cable at 12 3 h=4 rot=0,0,-70 sy=1.4
-place Antenna_pole cable at 17 4.5 h=1.4 rot=0,0,-110 sy=1.6
+# (CIFloating 11-26: since the 10-24 resize the land runs on east of the cable head - the cable's sea end lay 5 m under the
+#     ground and its upper pole hung 2.3 m over the base's edge: one short end now, from the pad's edge down into the ground)
+place Antenna_pole cable at 16.6 4.3 h=1.6 rot=0,0,-110 sy=0.5
 place Zone_Trigger cablezone at 15 4 h=2.6
 place Note_Paper twoswitches at 14 5.2 h=1.6 drop yaw=0
 place RT_Pillar - at 14 2.6 h=1.6 sy=0.4
@@ -180,7 +233,12 @@ note dnote Castaway's note | DAY 12 ON THE SPIRE'S ROCKS\n\nThe plane went over 
 place BoatStranded dvan at -23.2 38.6 ground yaw=257
 prop dvan tint.color=#6b5a48
 prop dvan tint.amount=0.5
-place Loot_ChestSmall dwreckchest at -27.2 41.6 ground sit yaw=197
+# (REACH 11-27 bs1: the walk came no nearer than 4.2 m (from the west, -33.1 38.5) - the generator's rocks cleared round
+#     it and the ground smoothed)
+brush smooth at -30.5 40 r=3 s=8 frames=60
+clear at -29.5 40.5 r=4.5 body
+# (REACH 11-27 sk6: still 4.2 m short after that, from the same spot (-33.5 38.1) - the chest brought out to it, west of the wreck)
+place Loot_ChestSmall dwreckchest at -34.2 39.6 ground sit yaw=197
 note dwreckchest Wreck's chest | A small chest from the wreck, its lid swollen shut by the salt: line, nails and scrap.
 loot dwreckchest Rope*3;Nail*8;Scrap*3
 prop dwreckchest loot.refill=0
@@ -218,7 +276,9 @@ call sk_ruin x=0 z=-76 h=3 al=sk_ruin
 call sk_ruin x=-12 z=-74 h=3 al=sk_ruin2
 call sk_notebox x=2.5 z=-80.5 yaw=10 al=sk_ruinnote
 call sk_plane x=-70 z=-30 h=3 yaw=60 al=sk_plane crate=sk_wreckcrate
-call sk_notebox x=-75 z=-24.5 yaw=70 al=sk_wrecknote
+# (REACH 11-27 bs1: at x-5 z+5.5 the note box stood under the tipped plane's wing tip - its only use spot under the wing
+#     (h 3.0, the nearest reached the wing's top 1.6 m up): out past the wing, off its west side, now)
+call sk_notebox x=-78.5 z=-28 yaw=70 al=sk_wrecknote
 
 # --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
 clear from 77 0 to 52 0 r=3
@@ -252,7 +312,8 @@ call sk_reef x=-40 z=-56 r=5 seed=24830
 
 # the summit: Storm Crown - the tower (ladder inside), the locker, the note, the zone, the zipline down
 call ladtower x=44 z=-66 h0=26 lv=6 a=sktower
-place Loot_ChestSmall sklocker at 43.25 -65.25 h=40.73 sit yaw=180
+# (CIFloating 11-26: set 0.16 m over its deck it touched nothing - dropped onto the deck)
+place Loot_ChestSmall sklocker at 43.25 -65.25 h=41 drop yaw=180
 place Note_Paper sksumnote at 43.25 -66.75 h=40.84 drop yaw=20
 place Zone_Trigger sksummit at 44 -66 h=41.73
 # (10-26: the near floor, 5.7 m west and 1.3 m under the object, hung in the air off the tower and then inside it: now on the deck's south-east cell, 44.75 -66.75)
@@ -309,7 +370,7 @@ prop sklure obj.name=sklure
 prop sklure beh.hidden=1
 prop sklure tint.color=#2fd0c0
 prop sklure tint.amount=0.8
-prop sklure beh.move=-28,0,-14
+prop sklure beh.move=0,8,0
 prop sklure beh.moveTime=20
 prop sklure beh.moveMode=switch
 note orders Sealkeeper's orders | SEALKEEPER'S ORDERS - DIRECTOR H. ROOK\n\n1. Power first: the generator on the base.\n2. Prime the pumps from the pump tower. Fuses from the door tower.\n3. The control room is keyed with the Commons' code.\n4. Wind the cable. At the cable head: RESTORE, or SEAL. Not both. There is no both.\n5. Then go down. Somebody has to see it done.\n\nUnder it, in Fennick's capitals: "AND WIPE YOUR FEET." And under that, very small, in the Director's own hand: "Whoever you are - I am glad somebody came. I could not pull either lever. I tried for nine days."
