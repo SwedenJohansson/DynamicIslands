@@ -45,7 +45,10 @@ namespace DynamicIslands
 		// stuck at the same shore lip after 3 jumps, PQ11 10-28)
 		static List<Vector3> reachStuckAt = new List<Vector3>();
 		static List<int> reachStuckN = new List<int>();
-		static string reachBlocked;
+		// spots where 3+ walks stuck: later walks whose every way in passes one are not tried (cm1ss 11-27: one ladder at
+		// Sealkeeper's control room ended all 17 later walks, low ones with no ladder on their way among them)
+		static List<Vector3> reachBlockedAt = new List<Vector3>();
+		static List<string> reachBlockedWhy = new List<string>();
 
 		[ConsoleCommand(name: "CIReachSpeed", docs: "Dev, anywhere: PQ11 - the reach walker's speed: moves a frame, each one swept by Raft's own CharacterController (1 = a player's pace, 0 = no walks, the grid alone); pace: Raft's walk/swim speed times p on the ground and in the water (not in the air) while above 1x. CIReachSpeed <n> [pace]")]
 		public static void ReachSpeedCommand(string[] args)
@@ -817,7 +820,7 @@ namespace DynamicIslands
 			string name = e.HostName;
 			var report = new List<string>();
 			int problems = 0;
-			reachStuckAt.Clear(); reachStuckN.Clear(); reachBlocked = null; reachHoles.Clear();
+			reachStuckAt.Clear(); reachStuckN.Clear(); reachBlockedAt.Clear(); reachBlockedWhy.Clear(); reachHoles.Clear();
 			hbWhat = "reach " + name; // (from the start: the grid takes a minute, and the HB keeps the player alive while it is "reach")
 			// (a player opens a plain door with E: Raft's own doors (Door) with no use check of the island's on them are opened
 			// first - every drowned house's back room failed behind its closed Block_Wall_Door, PQ11 10-28; a gate or key door
@@ -1326,7 +1329,8 @@ namespace DynamicIslands
 					// alone; all else is walked by the player, in from the sea and out again
 					if (OpenTarget(g, use, fwd, back, parent)) { reachPrechecked++; report.Add(head + "PASS (precheck) (" + grid + ")"); continue; }
 					string walked = null;
-					if (reachSpeed > 0 && reachBlocked != null) walked = "FAIL not walked: " + reachBlocked + " - the island's walks ended there";
+					string blockedOn = reachSpeed > 0 ? ReachRouteBlocked(g, use, fwd, back, parent) : null;
+					if (blockedOn != null) walked = "FAIL not walked: " + blockedOn + " - every way in passes there";
 					else if (reachSpeed > 0) yield return ReachWalkTarget(e, g, t, use, fwd, back, parent, backParent, sideNames, r => walked = r);
 					if (walked == null) report.Add(head + "PASS grid only, not walked (" + grid + ")");
 					else if (walked.StartsWith("PASS")) report.Add(head + walked + " (" + grid + ")");
@@ -2035,6 +2039,28 @@ namespace DynamicIslands
 			return "nowhere to stand or swim within " + RUse + " m with a clear line to it";
 		}
 
+		/// <summary>A blocked spot (3+ walks stuck there) that the way in from every side passes (2 m flat, 3 m up/down), or null
+		/// when one side's way in misses them all - that target is walked.</summary>
+		static string ReachRouteBlocked(ReachGrid g, List<int> use, bool[][] fwd, bool[] back, int[][] parent)
+		{
+			if (reachBlockedAt.Count == 0) return null;
+			string first = null;
+			for (int s = 0; s < fwd.Length; s++)
+			{
+				int k0 = use.Where(k => fwd[s][k] && back[k]).DefaultIfEmpty(-1).First();
+				if (k0 < 0) continue;
+				int hit = -1, n = 0;
+				for (int a = k0; a >= 0 && hit < 0 && n < 100000; a = parent[s][a], n++)
+				{
+					Vector3 p = g.Pos[a] - g.Anchor;
+					hit = reachBlockedAt.FindIndex(q => ScFlat(q, p) < 2f && Mathf.Abs(q.y - p.y) < 3f);
+				}
+				if (hit < 0) return null;
+				if (first == null) first = reachBlockedWhy[hit];
+			}
+			return first;
+		}
+
 		static string RouteText(ReachGrid g, int[] parent, int k)
 		{
 			int swims = 0, dives = 0, ladders = 0, jumps = 0, n = 0;
@@ -2376,10 +2402,11 @@ namespace DynamicIslands
 				int i = reachStuckAt.FindIndex(q => ScFlat(q, at) < 2f);
 				if (i < 0) { reachStuckAt.Add(at); reachStuckN.Add(1); i = reachStuckAt.Count - 1; }
 				else reachStuckN[i]++;
-				if (reachStuckN[i] >= 3 && reachBlocked == null)
+				if (reachStuckN[i] >= 3 && !reachBlockedAt.Any(q => ScFlat(q, reachStuckAt[i]) < 2f && Mathf.Abs(q.y - reachStuckAt[i].y) < 3f))
 				{
-					reachBlocked = "blocked at " + reachStuckAt[i].x.ToString("F1", CultureInfo.InvariantCulture) + " " + reachStuckAt[i].z.ToString("F1", CultureInfo.InvariantCulture) + " (" + reachStuckN[i] + " targets)";
-					Log("  FAIL " + reachBlocked + " - the other walks of this island are not tried");
+					string b = "blocked at " + reachStuckAt[i].x.ToString("F1", CultureInfo.InvariantCulture) + " " + reachStuckAt[i].z.ToString("F1", CultureInfo.InvariantCulture) + " h=" + reachStuckAt[i].y.ToString("F1", CultureInfo.InvariantCulture) + " (" + reachStuckN[i] + " targets)";
+					reachBlockedAt.Add(reachStuckAt[i]); reachBlockedWhy.Add(b);
+					Log("  FAIL " + b + " - later walks whose every way in passes there are not tried");
 				}
 			}
 			result("FAIL walked at 1x: " + why);
