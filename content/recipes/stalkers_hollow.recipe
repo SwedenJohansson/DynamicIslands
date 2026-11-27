@@ -201,8 +201,10 @@ call sk_reef x=65.6 z=80 r=6 seed=24910
 call sk_reef x=27.2 z=94.4 r=6 seed=24920
 call sk_reef x=-40 z=-68 r=5 seed=24930
 
-# the summit: the lip rock - the tower (ladder inside), the locker, the note, the zone
-call ladtower x=44 z=80 h0=42.5 lv=3 a=shtower
+# the summit: the lip rock - the tower (ladder outside on its south wall), the locker, the note, the zone
+# (REACH 11-26 b7_sh2: with the ladder inside, the walk up never got onto the deck - Lip rock locker and Warden's last card
+# 'can't get there', nearest reached 14 m off: the ladder outside, as Biome Seven's)
+call ladtowerout x=44 z=80 h0=42.5 lv=3 a=shtower
 place Loot_ChestSmall shlocker at 43.25 80.75 h=50.2 drop yaw=180
 place Note_Paper shsumnote at 43.25 79.25 h=50.08 drop yaw=20
 place Zone_Trigger shsummit at 44 80 h=50.98
