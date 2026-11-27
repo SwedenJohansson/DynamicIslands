@@ -433,6 +433,6 @@ brush flatten at 33.5 99.1 r=2.0 s=20 frames=600 h=0.35
 brush smooth at 33.5 99.1 r=3 s=4 frames=10
 clear at 33.5 99.1 r=3.0 body
 # (vapor 11-27, cm1vr: the plays visit these - the flood gate opens by the valve, the jump course and the rats' passage)
-island reach.byplay=pump_hall;Spillway perch;Spillway top;vr_service
+island reach.byplay=pump_hall;Spillway perch;Spillway top;vr_service;vr_sump
 
 save Vaporhold Reservoir

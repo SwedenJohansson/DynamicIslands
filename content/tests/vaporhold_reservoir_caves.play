@@ -23,6 +23,14 @@ wait 2
 expect item Rope 2
 walk -55.5 -53.6 to -50.1 -51.6 to -45.2 -49.8 to -38.2 -47.3 below=6
 swim -32.6 -45.2 -0.9 to -25 -42.5 -2.5 to -17.5 -39.7 -4.1 to -10 -37 -5.8 to -6.5 -35.7 -3 to -4 -34.5 -1
+# (vapor 11-27, cm1vr REACH: the grid never got into the short intake - the sump room had no spot reached, the nearest
+# on the hill 12 m over it. The short intake leaves the lake at -8 -46 (kit_st yaw 225, its mouth at the waterline, the
+# floor 8.3 m up at its end): swim in from the lake, walk up the tunnel to the room, breathe, and back out the same way)
+swim -3 -41 -1.5 to -5.5 -43.5 -1 to -7.3 -45.3 -0.4
+walk -7.3 -45.3 to -10.1 -48.1 to -15.1 -53.1 to -22.1 -60.1 to -29.2 -67.2 to -37 -75 to -40 -78 to -42.6 -80.6 below=10
+air vr_sump here
+walk -42.6 -80.6 to -40 -78 to -37 -75 to -29.2 -67.2 to -22.1 -60.1 to -15.1 -53.1 to -10.1 -48.1 to -7.3 -45.3 below=10
+swim -7.3 -45.3 -0.4 to -5.5 -43.5 -1 to -3 -41 -1.5
 
 picture vr_service_out -95 10 -56 -82 5 -50
 # (11-16 w11F: the rat waits in its room until a player is in the passage (zone vr_service, 3 m in) - it roamed out
