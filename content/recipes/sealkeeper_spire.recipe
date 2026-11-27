@@ -310,6 +310,10 @@ call powerradio x=6 z=-72 yaw=0 alias=skgen ralias=skradio rx=-0.75 rz=-76 rh=5 
 # --- DEEP 1-HOUR (10-24): Storm Crown (26 m, the highest climb of the kingdom) and the 14 m archive in the south-west pit
 # the mountain: a stepped path spirals up from its east foot (66.08 -66) to the summit tower
 call sk_peak x=44 z=-66 h=26 r=24
+# (REACH 11-27 sk16: on the peak's north flank, between the path's steps at 44 -54.7 (17.3) and 38.7 -56.9 (18.4), a
+#     4x2 m hollow at 38.7 -53.0 sank to 15.1 - in from 17.7, but 1.9 m up out of it: filled to the flank's 17.3)
+brush flatten at 39 -52.6 r=2.4 s=20 frames=300 h=17.3
+brush smooth at 39 -52.6 r=3.5 s=4 frames=20
 call sk_pit x=-50 z=-62 h0=-14
 call sk_cave x=-78 z=16 h=3 yaw=0 al=skcave2 chest=skcave2chest
 # (lib 3.5.1 minor fixes 11-23: a 1.5 m gap under the second den rock's rim at its back corner, south-west: its underside
