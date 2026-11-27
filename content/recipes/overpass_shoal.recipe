@@ -215,6 +215,9 @@ call sk_drowned x=-60 z=42 h0=-10 n=3 w=RT_WallWindow1 a=opbld cap=1 cal=opcap
 # (11-27 islandfix, cm1os: the block stands under water, roof at -1 - Raft never takes hold of a ladder under water and
 #  the walker hung on them going down to the chest, the note and the air pocket; a player swims down the hatches: no ladders)
 clear at -57.75 46.2 r=0.8 all only=(?i)ladder below=0
+# (11-27 bf13c: the roof is at -0.9, so a player stands on it waist-deep, and the roof's railing hemmed him in - he swims in
+#  over it but walks into it on the way out (trap -62 42.9, 5x7 m): no railing on the drowned roof)
+clear at -60 42 r=7 all only=(?i)^rt_fence above=-2 below=1
 place Loot_Chest opdeep at -61.8 39.5 h=-10 sit yaw=0
 place Placeable_Table_Basic - at -61.5 43 h=-7 sit yaw=0
 place Note_Paper opbldnote at -61.5 43 h=-5.7 drop yaw=10
