@@ -73,6 +73,9 @@ brush flatten at -104.3 -13.7 r=2.2 s=20 frames=600 h=0.4
 clear at -104.3 -13.7 r=3.2 body
 brush flatten at -101.4 -19.4 r=2.2 s=20 frames=600 h=0.4
 clear at -101.4 -19.4 r=3.2 body
+# (REACH 11-27 sk6: the cove at -93.8 -26.5 a trap - its closest way out a 0.7 m step at -96.1 -26.5: a landing there)
+brush flatten at -96.1 -26.5 r=2.2 s=20 frames=600 h=0.4
+clear at -96.1 -26.5 r=3.2 body
 
 # --- The spire: six storeys of stone, a ladder up the inside, the control room on top ----------------------------------
 push at -2.25 -2.25 h=3
@@ -132,13 +135,15 @@ place Creature_StoneBird screechers at 0 0 h=24
 
 # --- The base: the dock, orders, store, the cable mast, its locker, the generator and status board ---------------------
 place Zone_Trigger dockzone at -11 13 h=2.2
-place Note_Board orders at -9 11 ground yaw=135
+# (REACH 11-27 sk6: the dock's south end (z 10-12) lay under the base's rim - the reads' spots there had the rim over them
+#     (the walk reached 2-3 m above them, nothing at the board): the board and Milo's card on the open dock, by its zone)
+place Note_Board orders at -11.5 14.4 ground yaw=135
 # (REACH 11-27 bs1: the store at -10 12 stood in the way down to the dock, and the orders board 1.4 m from it had no spot
 #     to read it from - the store on the dock's far (north-west) side now)
 store spireshop at -14 16 ground
 # STORY 10-24s: Milo's crayon card on the dock, where the children waited for the plane
-place "Box Small" - at -12.6 10.4 ground sit
-place Note_Paper milocard at -12.6 10.4 ground y=1.6 drop yaw=40
+place "Box Small" - at -9.9 13.6 ground sit
+place Note_Paper milocard at -9.9 13.6 ground y=1.6 drop yaw=40
 # STORY 10-24s: the fuse board lights the spire - and the Stalker's lure comes up the trench to look (seen from the door tower's deck)
 place Placeable_Lantern_Metal skcam at 22.5 -15.5 h=9.475 sit
 # (CIFloating 11-26: since the 10-24 resize 45 25 is land - the lure lay 10 m under the ground and rose through it: it comes up
@@ -226,7 +231,8 @@ prop dvan tint.amount=0.5
 #     it and the ground smoothed)
 brush smooth at -30.5 40 r=3 s=8 frames=60
 clear at -29.5 40.5 r=4.5 body
-place Loot_ChestSmall dwreckchest at -27.2 41.6 ground sit yaw=197
+# (REACH 11-27 sk6: still 4.2 m short after that, from the same spot (-33.5 38.1) - the chest brought out to it, west of the wreck)
+place Loot_ChestSmall dwreckchest at -34.2 39.6 ground sit yaw=197
 note dwreckchest Wreck's chest | A small chest from the wreck, its lid swollen shut by the salt: line, nails and scrap.
 loot dwreckchest Rope*3;Nail*8;Scrap*3
 prop dwreckchest loot.refill=0
