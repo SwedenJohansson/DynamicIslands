@@ -1194,8 +1194,10 @@ namespace DynamicIslands
 			// (GUIDE "Flying islands") - the arrivals and the ways back are the rim: a standing spot under the open sky with
 			// a drop of 5 m or more (or nothing at all) beside it. PQ11 10-27)
 			reachSky = e.Position.y > 6f;
+			var openSea = new List<int>();
 			if (reachSky)
 			{
+				openSea.AddRange(sea);
 				sea.Clear();
 				for (int k = 0; k < g.Pos.Count; k++)
 				{
@@ -1272,6 +1274,14 @@ namespace DynamicIslands
 			var back = new bool[g.Pos.Count];
 			var backParent = new int[g.Pos.Count];
 			Flood(g, sea, g.In, back, backParent);
+			// (a trap is a place with no way out at all: under a flying island the open sea is one too - a swimmer swims off to
+			// the raft. Pendulum's whole sea under the island, 263062 spots, was a 'roofed trap' at h=-12, isl1126_f 11-27)
+			bool[] outAny = back;
+			if (reachSky && openSea.Count > 0)
+			{
+				outAny = new bool[g.Pos.Count];
+				Flood(g, sea.Concat(openSea).ToList(), g.In, outAny, new int[g.Pos.Count]);
+			}
 			yield return null;
 
 			// the targets: what the quests point at, and everything a player uses
@@ -1352,7 +1362,7 @@ namespace DynamicIslands
 			if (reachControls && reachSpeed > 0) yield return ReachControls(e, g, fwd, report, n => problems += n);
 			// places a player gets into but not out of (from any side)
 			var trapped = new bool[g.Pos.Count];
-			for (int k = 0; k < g.Pos.Count; k++) trapped[k] = !back[k] && (fwd[0][k] || fwd[1][k] || fwd[2][k] || fwd[3][k]) && g.Kind[k] != 3;
+			for (int k = 0; k < g.Pos.Count; k++) trapped[k] = !outAny[k] &&(fwd[0][k] || fwd[1][k] || fwd[2][k] || fwd[3][k]) && g.Kind[k] != 3;
 			var seen = new bool[g.Pos.Count];
 			int traps = 0;
 			Bounds trapIsl;
@@ -1505,11 +1515,17 @@ namespace DynamicIslands
 			// one-sided skin met from behind, an overlap does not. Brinelab's den mouth: the hill skin's sloping roof came down
 			// to ~1.76 m between two spots 1.9 m apart that both stood - the walker stopped there with 'nothing found' in every
 			// bf13 run while the grid's rays (to 1.7 m) and casts went through, bugfix 11-27)
+			// (the feet at each point: a swimmer's at y; a walker's on the line between the spots, raised onto ground over it -
+			// Brinelab's walker stood on a 0.08 m bump of the den mouth's floor and its head met the roof the line's body passed
+			// under, bf13c 11-27)
+			bool swim = y < Mathf.Min(a.y, b.y) - 0.5f;
 			int n = Mathf.FloorToInt(d.magnitude / 0.3f);
 			for (int i = 1; i <= n; i++)
 			{
 				float t = i / (n + 1f);
-				Vector3 m = Vector3.Lerp(a, b, t); m.y = Mathf.Lerp(a.y, b.y, t);
+				Vector3 m = Vector3.Lerp(a, b, t); m.y = swim ? y : Mathf.Lerp(a.y, b.y, t);
+				if (!swim && Physics.Raycast(m + Vector3.up * RStepUp, Vector3.down, out RaycastHit gh, RStepUp + 0.3f, reachMask, QueryTriggerInteraction.Ignore) && gh.point.y > m.y)
+					m.y = gh.point.y;
 				// (ground the feet may touch - a bump of terrain between the spots - is the walk's own business, not a roof)
 				int c = Physics.OverlapCapsuleNonAlloc(m + Vector3.up * (0.45f + r), m + Vector3.up * (RTop - r), r, sweptHits, reachMask, QueryTriggerInteraction.Ignore);
 				for (int j = 0; j < c; j++) if (!StandGround(sweptHits[j])) return true;
@@ -1517,6 +1533,13 @@ namespace DynamicIslands
 			return false;
 		}
 		static readonly Collider[] sweptHits = new Collider[16];
+
+		/// <summary>A surface swimmer's way from a to b: lines at 0.3 m over and 0.6 m under the sea, and the body swept with
+		/// its feet 1.3 m down.</summary>
+		static bool SurfaceSwimBlocked(Vector3 a, Vector3 b)
+		{
+			return Blocked(a, b, RSea + 0.3f) || Blocked(a, b, RSea - 0.6f) || Swept(a, b, RSea + RSwimFeet);
+		}
 
 		/// <summary>A point inside a rock's mesh: a ray up from it meets the inside of a surface that faces up (a mesh
 		/// collider is a skin - a capsule wholly inside overlaps nothing; the grid swam inside Turtle Cave's rock, PQ11 10-27).
@@ -1791,7 +1814,7 @@ namespace DynamicIslands
 				if (same) return;
 				// (and the swimmer's body swept, feet floating 1.3 m down, head ~0.5 m over the surface: Caisson Yard cy7 11-27 - a
 				// block's underside 0.3 m over the sea, between the two lines, stopped the 1x swimmer's head on a linked step)
-				if (!Blocked(pa, pb, RSea + 0.3f) && !Blocked(pa, pb, RSea - 0.6f) && !Swept(pa, pb, RSea + RSwimFeet)) g.Link(a, b);
+				if (!SurfaceSwimBlocked(pa, pb)) g.Link(a, b);
 				return;
 			}
 			if (ka == 1 && kb == 0)
@@ -2538,7 +2561,10 @@ namespace DynamicIslands
 					// (and a swimmer's corner: no clear line (a 0.25 m ball) from the last waypoint to the next cell - the walker swam
 					// straight from over a sea cave's mouth to a cell 6 m in and stuck on the mouth's lip, Riverfork's den, cave check 11-08)
 					else if (!keep && i + 1 < path.Count && g.Kind[last] >= 1 && g.Kind[last] <= 2 && g.Kind[path[i + 1]] >= 1 && g.Kind[path[i + 1]] <= 2)
-						keep = SwimBlocked(g.Pos[last], g.Pos[path[i + 1]]) || (g.Kind[last] == 2 && g.Kind[path[i + 1]] == 2 && SwimBodyBlocked(g.Pos[last], g.Pos[path[i + 1]], reachMask));
+						keep = SwimBlocked(g.Pos[last], g.Pos[path[i + 1]]) || (g.Kind[last] == 2 && g.Kind[path[i + 1]] == 2 && SwimBodyBlocked(g.Pos[last], g.Pos[path[i + 1]], reachMask)) ||
+							// (a surface swim's straight line checked as its steps are: Sealkeeper's swimmer cut a corner past a block
+							// whose top stood 0.3 m over the sea and stuck on its side, sk13 11-27)
+							(g.Kind[last] == 1 && g.Kind[path[i + 1]] == 1 && SurfaceSwimBlocked(g.Pos[last], g.Pos[path[i + 1]]));
 				}
 				if (keep) { w.Add(k); lastI = i; }
 			}
@@ -2930,6 +2956,14 @@ namespace DynamicIslands
 					// (or once it comes no nearer: at 3x a step is 0.4 m and the spot itself may lie between two of them)
 					bool nearGround = flatLen < 0.5f && d.y < 0.9f && d.y > -0.9f && (flatLen < 0.15f || flatLen > lastFlat - 0.01f || i + 1 >= way.Count || g.Kind[way[i + 1]] != 0 ||
 						!Swept(p, W(way[i + 1]), Mathf.Max(p.y, W(way[i + 1]).y)));
+					// (off a ladder's top the floor counts only once stood on: Overpass's op_summit walker jumped off backwards, still
+					// 0.4 m under the deck over the hatch 0.4 m short of the spot, took it as reached and fell the 14 m shaft with its
+					// afterUp gone - no climb again, stuck at the foot, bf13c 11-27)
+					if (nearGround && afterUp)
+					{
+						CharacterController ucc = pl.GetComponent<CharacterController>();
+						nearGround = ucc != null && ucc.isGrounded && d.y < 0.35f;
+					}
 					lastFlat = flatLen;
 					if (water ? (kind == 1 ? flatLen < 0.8f && Mathf.Abs(d.y) < 1.4f : nearDive || (flatLen < 0.8f && d.y < 0f && pl.PersonController.controllerType == ControllerType.Water && pl.GetComponent<CharacterController>() != null && pl.GetComponent<CharacterController>().isGrounded && !Between(ReachFeet(pl) + Vector3.up * 0.1f, aim, reachMask) && !BodyDown(ReachFeet(pl), aim))) : nearGround) break;
 					if (dist < best - 0.15f) { best = dist; since2 = 0f; } else since2 += Time.deltaTime;
@@ -3163,7 +3197,8 @@ namespace DynamicIslands
 			float r = cc != null ? cc.radius : 0.2f, top = cc != null ? cc.height : 1.7f;
 			Vector3 p1 = f + Vector3.up * (0.12f + r), p2 = f + Vector3.up * Mathf.Max(0.12f + r, top - r);
 			Func<RaycastHit, bool> other = h => h.collider != null && !h.collider.transform.IsChildOf(pl.transform);
-			Func<RaycastHit, string> at = h => h.distance <= 0f ? " (overlapping where the cast starts)" : " hit " + (h.point - f).ToString("F2") + " from the feet, normal " + h.normal.ToString("F2");
+			// (a cast that starts in a collider gives distance 0 and point (0,0,0): sk13 printed minus the feet's world position as the hit)
+			Func<RaycastHit, string> at = h => h.distance <= 0f || h.point == Vector3.zero ?" (overlapping where the cast starts)" : " hit " + (h.point - f).ToString("F2") + " from the feet, normal " + h.normal.ToString("F2");
 			string found = null;
 			bool was = Physics.queriesHitBackfaces;
 			try
@@ -3196,7 +3231,27 @@ namespace DynamicIslands
 				}
 			}
 			finally { Physics.queriesHitBackfaces = was; }
-			return (found ?? "nothing found") + ReachGroundAhead(f, dir);
+			return (found ?? "nothing found") + ReachGroundAhead(f, dir) + ReachHeadRoom(f, dir, top);
+		}
+
+		/// <summary>(bugfix 11-27) The room over the feet here and ahead where it is under 2.2 m (rays up from 0.5 m, back faces
+		/// on): a roof a little over the body's top stops the controller (its skin 0.08 m) while every cast below it goes through.</summary>
+		static string ReachHeadRoom(Vector3 f, Vector3 dir, float top)
+		{
+			dir.y = 0f;
+			if (dir.sqrMagnitude < 1e-4f) return "";
+			dir.Normalize();
+			bool was = Physics.queriesHitBackfaces;
+			var parts = new List<string>();
+			try
+			{
+				Physics.queriesHitBackfaces = true;
+				foreach (float d in new[] { 0f, 0.2f, 0.4f, 0.6f, 1.0f })
+					if (Physics.Raycast(f + dir * d + Vector3.up * 0.5f, Vector3.up, out RaycastHit h, 1.7f, reachMask, QueryTriggerInteraction.Ignore))
+						parts.Add("+" + d.ToString("F1") + " " + (h.point.y - f.y).ToString("F2"));
+			}
+			finally { Physics.queriesHitBackfaces = was; }
+			return parts.Count == 0 ? "" : " [room over the feet (the body " + (top + 0.08f).ToString("F2") + " with its skin): " + string.Join(", ", parts) + "]";
 		}
 
 		/// <summary>(bugfix 11-27) The terrain's height ahead of the feet, as rises over them (a lip a heightfield raises reads here even
