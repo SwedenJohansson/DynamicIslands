@@ -59,6 +59,11 @@ place Block_Wall_Tier3 spar at 0 0.75 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 spar at 0 2.25 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 spar at 3 0.75 y={$k*2.42} yaw=90
 place Block_Wall_Tier3 spar at 3 2.25 y={$k*2.42} yaw=90
+next
+# (REACH 11-27 lu7/lu8: the walks still climbed the flooded shaft's ladder from outside its walls (east at 20.9, north at
+#     23.7, in the water) and Raft never took hold under water. The shaft is a swim with its two air pockets now: only the
+#     two top rungs, from 21.8 under the surface (25) up to the deck, to climb out of the water)
+for k 9 10
 place Block_Ladder_Tier3 - at 2.6 2.7 y={$k*2.42} yaw=0
 next
 for k 1 10
