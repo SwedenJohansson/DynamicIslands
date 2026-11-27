@@ -278,6 +278,11 @@ brush smooth at -58.7 42.6 r=6 s=4 frames=20
 brush flatten at -58.7 42.6 r=3 s=20 frames=300 h=7
 brush rock at -58.7 42.6 r=5 s=20 frames=30
 clear at -58.7 42.6 r=5
+# (REACH 11-27 sk15: west of the keepers' cave mouth the den's front wall stood 0.86 m out of the ground at -50.9 19.7 -
+#     the walk to the Wreck's chest stuck on that lip at 1x (at 3x it dropped through the den rock beside it): the ground there raised to the wall's foot, a ramp
+#     up to the den's west shoulder, clear of the way in at x -48.6..-43.4)
+brush flatten at -51.2 19.4 r=2.2 s=20 frames=300 h=4.5
+brush smooth at -51.2 19.4 r=3.5 s=4 frames=20
 call sk_zone x=-46 z=25 al=sk_cave id=sk_cave r=4 msg="The keepers' cave: where the Spire's crew sat out the worst storms."
 call sk_ruin x=0 z=-76 h=3 al=sk_ruin
 call sk_ruin x=-12 z=-74 h=3 al=sk_ruin2
