@@ -148,8 +148,9 @@ store spireshop at -14 16 ground
 # STORY 10-24s: Milo's crayon card on the dock, where the children waited for the plane
 # (REACH 11-27 sk10: at -11.1 12.1 the box and card went past the rim's edge down to the pad (card at h 1.4); on the rim
 #     beside the board now, where the walk stands at h 3.7)
-place "Box Small" - at -10.9 11.0 h=5.5 sit
-place Note_Paper milocard at -10.9 11.0 h=6.5 drop yaw=40
+# (REACH 11-27 sk11: no rim under -10.9 11.0 after all - the box hung 4.1 m over the pad (sit found nothing) and the
+#     card fell off it to the pad at h 1.5; the walk stands on the rim at -10.7 10.6 h 3.5: the card sits there, no box)
+place Note_Paper milocard at -10.6 10.6 h=4.6 sit yaw=40
 # STORY 10-24s: the fuse board lights the spire - and the Stalker's lure comes up the trench to look (seen from the door tower's deck)
 place Placeable_Lantern_Metal skcam at 22.5 -15.5 h=9.475 sit
 # (CIFloating 11-26: since the 10-24 resize 45 25 is land - the lure lay 10 m under the ground and rose through it: it comes up
