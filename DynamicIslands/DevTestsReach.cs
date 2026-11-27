@@ -1459,7 +1459,31 @@ namespace DynamicIslands
 			if (bt < 0) return " (no spot with a way out within 3 m)";
 			Vector3 a = e.Position + (g.Pos[bt] - g.Anchor) - e.Position, b = e.Position + (g.Pos[bo] - g.Anchor) - e.Position;
 			return " (closest way out: " + a.x.ToString("F1", CultureInfo.InvariantCulture) + " " + a.y.ToString("F1", CultureInfo.InvariantCulture) + " " + a.z.ToString("F1", CultureInfo.InvariantCulture) + " -> " +
-				b.x.ToString("F1", CultureInfo.InvariantCulture) + " " + b.y.ToString("F1", CultureInfo.InvariantCulture) + " " + b.z.ToString("F1", CultureInfo.InvariantCulture) + ", kinds " + g.Kind[bt] + "->" + g.Kind[bo] + ")";
+				b.x.ToString("F1", CultureInfo.InvariantCulture) + " " + b.y.ToString("F1", CultureInfo.InvariantCulture) + " " + b.z.ToString("F1", CultureInfo.InvariantCulture) + ", kinds " + g.Kind[bt] + "->" + g.Kind[bo] + TrapOutWhy(g, bt, bo) + ")";
+		}
+
+		/// <summary>Why the grid has no link along the trap's closest way out: the lines and the body sweep its moves use, and what
+		/// they meet (bugfix 11-27: Caisson Yard's drowned store roof, 0.9 m under the sea, a way in from the sea and none out -
+		/// the report named no cause).</summary>
+		static string TrapOutWhy(ReachGrid g, int a, int b)
+		{
+			Vector3 pa = g.Pos[a], pb = g.Pos[b];
+			byte ka = g.Kind[a], kb = g.Kind[b];
+			int ia = Mathf.FloorToInt((pa.x - g.X0) / g.Cell), ja = Mathf.FloorToInt((pa.z - g.Z0) / g.Cell), ib = Mathf.FloorToInt((pb.x - g.X0) / g.Cell), jb = Mathf.FloorToInt((pb.z - g.Z0) / g.Cell);
+			if (Mathf.Abs(ia - ib) > 1 || Mathf.Abs(ja - jb) > 1) return "; why not: not neighbouring cells";
+			var why = new List<string>();
+			float top = Mathf.Max(Mathf.Max(pa.y, pb.y), RSea);
+			foreach (float hy in new[] { top + 0.45f, top + 1.2f, RSea + 0.3f, RSea - 0.6f })
+			{
+				RaycastHit lh;
+				Vector3 la = new Vector3(pa.x, hy, pa.z), lb = new Vector3(pb.x, hy, pb.z);
+				if (Physics.Linecast(la, lb, out lh, reachMask, QueryTriggerInteraction.Ignore) || Physics.Linecast(lb, la, out lh, reachMask, QueryTriggerInteraction.Ignore))
+					why.Add("line at " + hy.ToString("F2") + " meets " + BlockerName(lh.collider));
+			}
+			float sy = ka == 1 && kb == 1 ? RSea + RSwimFeet : ka == 0 && kb == 1 ? Mathf.Max(pa.y, RSea) : Mathf.Max(pa.y, pb.y);
+			sweptLast = null;
+			if (Swept(pa, pb, sy) && sweptLast != null) why.Add(sweptLastAt + " meets " + BlockerName(sweptLast));
+			return "; why not: " + (why.Count == 0 ? "no line or body sweep meets anything - a step, drop or depth rule" : string.Join("; ", why.ToArray()));
 		}
 
 		static long VoxKey(int i, int j, int k) { return ((long)(i + 20000) << 40) | ((long)(j + 20000) << 20) | (long)k; }
@@ -1509,8 +1533,9 @@ namespace DynamicIslands
 			if (d.magnitude < 0.01f) return false;
 			Vector3 p1 = new Vector3(a.x, y + 0.45f + r, a.z), p2 = new Vector3(a.x, y + RTop - r, a.z);
 			Vector3 q1 = new Vector3(b.x, y + 0.45f + r, b.z), q2 = new Vector3(b.x, y + RTop - r, b.z);
-			if (Physics.CapsuleCast(p1, p2, r, d.normalized, d.magnitude, reachMask, QueryTriggerInteraction.Ignore) ||
-				Physics.CapsuleCast(q1, q2, r, -d.normalized, d.magnitude, reachMask, QueryTriggerInteraction.Ignore)) return true;
+			RaycastHit sh;
+			if (Physics.CapsuleCast(p1, p2, r, d.normalized, out sh, d.magnitude, reachMask, QueryTriggerInteraction.Ignore) ||
+				Physics.CapsuleCast(q1, q2, r, -d.normalized, out sh, d.magnitude, reachMask, QueryTriggerInteraction.Ignore)) { sweptLast = sh.collider; sweptLastAt = "cast with the feet at " + y.ToString("F2"); return true; }
 			// (the body standing at points along the way, as Stands does at the spots: a cast skips a mesh it starts in and a
 			// one-sided skin met from behind, an overlap does not. Brinelab's den mouth: the hill skin's sloping roof came down
 			// to ~1.76 m between two spots 1.9 m apart that both stood - the walker stopped there with 'nothing found' in every
@@ -1528,11 +1553,13 @@ namespace DynamicIslands
 					m.y = gh.point.y;
 				// (ground the feet may touch - a bump of terrain between the spots - is the walk's own business, not a roof)
 				int c = Physics.OverlapCapsuleNonAlloc(m + Vector3.up * (0.45f + r), m + Vector3.up * (RTop - r), r, sweptHits, reachMask, QueryTriggerInteraction.Ignore);
-				for (int j = 0; j < c; j++) if (!StandGround(sweptHits[j])) return true;
+				for (int j = 0; j < c; j++) if (!StandGround(sweptHits[j])) { sweptLast = sweptHits[j]; sweptLastAt = "body with the feet at " + m.y.ToString("F2") + ", " + (t * d.magnitude).ToString("F2") + " m along"; return true; }
 			}
 			return false;
 		}
 		static readonly Collider[] sweptHits = new Collider[16];
+		/// <summary>What the last Swept that found a way blocked met, and how (the trap report's why).</summary>
+		static Collider sweptLast; static string sweptLastAt = "";
 
 		/// <summary>A surface swimmer's way from a to b: lines at 0.3 m over and 0.6 m under the sea, and the body swept with
 		/// its feet 1.3 m down.</summary>
