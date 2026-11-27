@@ -311,8 +311,11 @@ clear at -87.6 2.5 r=5
 call sk_plants x=44 z=-66 r=26.4 seed=24810
 call sk_reef x=-40 z=-56 r=5 seed=24830
 
-# the summit: Storm Crown - the tower (ladder inside), the locker, the note, the zone, the zipline down
-call ladtower x=44 z=-66 h0=26 lv=6 a=sktower
+# the summit: Storm Crown - the tower (ladder outside), the locker, the note, the zone, the zipline down
+# (REACH 11-27 bf13a: the inside ladder topped out beside the deck, out of reach of the card and locker (tool fix 67c7148c) -
+#     ladtowerout: the ladder on the south wall's outside at 45.1 -67.8, stepping over the wall top onto the deck; door as before)
+clear at 45.1 -68.6 r=1.2
+call ladtowerout x=44 z=-66 h0=26 lv=6 a=sktower
 # (CIFloating 11-26: set 0.16 m over its deck it touched nothing - dropped onto the deck)
 place Loot_ChestSmall sklocker at 43.25 -65.25 h=41 drop yaw=180
 place Note_Paper sksumnote at 43.25 -66.75 h=40.84 drop yaw=20
