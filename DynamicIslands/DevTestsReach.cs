@@ -1109,7 +1109,9 @@ namespace DynamicIslands
 					float feet = g.Kind[k] == 2 ? p.y - 0.9f : p.y;
 					// (the top: a floor at the ladder's top beside it - where the climb ends)
 					// (or over its top end: a ladder up through a hole in a landing - the line to its middle crossed the landing, PQ11 10-27)
-					if (g.Kind[k] == 0 && feet >= lb.max.y - 1.0f && feet <= lb.max.y + 1.3f && (LadderClear(p + Vector3.up * 1.0f, flat, ch) || topOpen && LadderClear(p + Vector3.up * 1.0f, new Vector3(flat.x, lb.max.y + 0.6f, flat.z), ch))) { g.Link(node, k); g.Link(k, node); tops++; continue; }
+					// (and floor all the way from the ladder to it: Lumen Shelf's spar deck tile stood 1 m past the open shaft cell the
+					// ladder's top is in - the walker stepped off into the shaft's water and swam up into the tile's underside, lu9 11-27)
+					if (g.Kind[k] == 0 && feet >= lb.max.y - 1.0f && feet <= lb.max.y + 1.3f && LadderTopFloored(lb, p) && (LadderClear(p + Vector3.up * 1.0f, flat, ch) || topOpen && LadderClear(p + Vector3.up * 1.0f, new Vector3(flat.x, lb.max.y + 0.6f, flat.z), ch))) { g.Link(node, k); g.Link(k, node); tops++; continue; }
 					// (the foot, and any spot beside it up its length: a hand reaches it with nothing solid in between)
 					if (hd <= LadderHandReach(g.Kind[k]) && feet >= lb.min.y - 1.8f && feet <= lb.max.y - 1.0f)
 					{
@@ -1904,6 +1906,20 @@ namespace DynamicIslands
 				int a = q.Dequeue();
 				foreach (int b in edges[a]) if (!seen[b]) { seen[b] = true; parent[b] = a; q.Enqueue(b); }
 			}
+		}
+
+		/// <summary>A floor under every step from a ladder's top to a top spot past the first 0.8 m (a step off a ladder, not a jump
+		/// over a hole): rays down from 0.5 m over the spot's floor height, 1.1 m long.</summary>
+		static bool LadderTopFloored(Bounds lb, Vector3 p)
+		{
+			Vector3 a = lb.ClosestPoint(new Vector3(p.x, lb.max.y, p.z)); a.y = p.y;
+			Vector3 d = p - a; d.y = 0f;
+			float len = d.magnitude;
+			if (len <= 0.8f) return true;
+			d /= len;
+			for (float s = 0.8f; s < len - 0.1f; s += 0.2f)
+				if (!Physics.Raycast(a + d * s + Vector3.up * 0.5f, Vector3.down, 1.1f, reachMask, QueryTriggerInteraction.Ignore)) return false;
+			return true;
 		}
 
 		static bool LadderClear(Vector3 from, Vector3 to, List<Collider> ladder)
