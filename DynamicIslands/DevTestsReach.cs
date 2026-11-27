@@ -2010,6 +2010,17 @@ namespace DynamicIslands
 			return r != null ? r.transform : c.transform.parent ?? c.transform;
 		}
 
+		/// <summary>A ladder that is a zipline's: the ladder itself under a zipline object, or a zipline's part (its mount, its
+		/// rope's end) within 2.5 m of its top.</summary>
+		static bool LadderZipTop(Collider c, Bounds lb)
+		{
+			Func<Transform, bool> zip = t => { for (; t != null; t = t.parent) if (t.name.IndexOf("zipline", StringComparison.OrdinalIgnoreCase) >= 0) return true; return false; };
+			if (zip(c.transform)) return true;
+			foreach (Collider o in Physics.OverlapSphere(new Vector3(lb.center.x, lb.max.y, lb.center.z), 2.5f, ~0, QueryTriggerInteraction.Collide))
+				if (o != null && zip(o.transform)) return true;
+			return false;
+		}
+
 		static string LadderName(Collider c, IslandWorldState.Entry e)
 		{
 			IslandObjectRef r = c.GetComponentInParent<IslandObjectRef>();
