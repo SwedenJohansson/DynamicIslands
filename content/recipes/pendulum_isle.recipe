@@ -84,6 +84,11 @@ call ar_ruin x=-25 z=26 h=5 yaw=0 w=3 d=2 al=weatherstation
 # (cave at x 48 on a 6 m pad, not 62 on 4: the bear rock reaches 5.5 m under its pad and 15 m east of x; out at the
 # east rim the flying underside is too thin to hide it - it hung below the island as a light slab)
 call ar_cave x=48 z=6 h=6 yaw=180 al=watchrock chest=watchchest
+# (11-28 pdcol_18663, CIReachColumns 10..24 -1: the den's cave hill (dome 23.6 m, reach side 42 back 64 front 19) lay
+#  over the whole low end - skin at 5.3 m over the shed (x 10) rising to 12.2 at the shaft (x 24), the ground under it
+#  closed: zone low_end, the shaft warning and the shed's chest had no spot. Its reach capped at 16 m: the hill ends
+#  at x 32, 7 m east of the shaft)
+prop watchrock cave.dome=16
 call ar_plane x=20 z=-28 h=5 yaw=200 al=surveyplane crate=planecrate
 # --- OLDER4 10-26 terrain: the Iron Ridge (north, peak 12 m), Needle Knoll (south-west, 16 m) and its trail, the compass
 # garden's pad (south-east) --------------------------------------------------------------------------------------------
