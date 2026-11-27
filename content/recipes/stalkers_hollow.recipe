@@ -181,11 +181,15 @@ place Zone_Trigger shtrenchdark at 62 -61 ground y=1
 call sk_seamount x=44 z=80 top=42.5 r=24
 # REACH 11-09 (w03): the dry top stood 2.5 m over the water on a steep lip all round (surface probe: 39.8 -> 42.4 in 2 m;
 # no way out of the sea to the tower): a ramp up its west side, as on Biome Seven (the ledge chest stays 5 m off)
+# (11-27 b7_sh4d: the ramp's foot fell 3 m in 3 m into the sea (36.8 -> 40.1, too steep to stand on, too shallow to
+# swim over): no way from the water onto it, Lip rock locker 'can't get there'; the ramp carried on 2 m under the surface)
+brush flatten at 33.2 78 r=1.8 s=20 frames=200 h=37.9
+brush flatten at 34.6 78 r=1.8 s=20 frames=200 h=38.8
 brush flatten at 36 78 r=1.8 s=20 frames=200 h=39.6
 brush flatten at 37.5 78 r=1.8 s=20 frames=200 h=40.4
 brush flatten at 39 78 r=1.8 s=20 frames=200 h=41.2
 brush flatten at 40.3 78 r=1.6 s=20 frames=200 h=42
-brush smooth at 38.2 78 r=3 s=4 frames=20
+brush smooth at 37.2 78 r=4 s=4 frames=20
 call sk_pit x=-50 z=-74 h0=-6
 # (11-12 w03b: was a bear den (sk_cave x=86 z=-16 yaw=0) whose mouth reach could not get to; now a dug cave in a knoll,
 # the mouth north to the open floor, started 1.4 m out from the knoll's foot)
