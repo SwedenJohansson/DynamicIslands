@@ -2184,7 +2184,7 @@ namespace DynamicIslands
 		{
 			Network_Player pl = RAPI.GetLocalPlayer();
 			if (pl == null) { result(null); yield break; }
-			int bestS = -1, bestK = -1, bestLen = int.MaxValue;
+			int bestS = -1, bestK = -1, bestLen = int.MaxValue; float bestD = float.MaxValue;
 			for (int s = 0; s < 4; s++)
 				foreach (int k in use)
 				{
@@ -2193,7 +2193,11 @@ namespace DynamicIslands
 					int len = pi.Count + PathOut(backParent, k).Count;
 					// (a way past a spot a walk already stuck at comes last: another sea side, or round it)
 					if (reachStuckAt.Count > 0 && pi.Any(a => reachStuckAt.Any(q => ScFlat(g.Pos[a] - g.Anchor, q) < 2f))) len += 100000;
-					if (len < bestLen) { bestLen = len; bestS = s; bestK = k; }
+					// (ways of equal length: the spot nearest the target wins - the grid's west-first order chose a rope fence's
+					// end post 1.3 m off the Surveyor's card over the deck in front of it, and the walk off the ladder's top slid
+					// off the post, Lumen Shelf b7_lt3a 11-26)
+					float dk = (g.Pos[k] - t.B.center).sqrMagnitude;
+					if (len < bestLen || (len == bestLen && dk < bestD)) { bestLen = len; bestS = s; bestK = k; bestD = dk; }
 				}
 			if (bestK < 0) { result(null); yield break; }
 			List<int> pin = PathIn(parent[bestS], bestK), pout = PathOut(backParent, bestK);
