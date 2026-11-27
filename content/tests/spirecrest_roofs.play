@@ -41,5 +41,9 @@ expect step 14
 # U22 jump course (10-24): teleport onto its top A slab instead of jumping the hops
 at -48.38 -55.44 h=9.65
 zone jump_sc_top
+# the far slab (11-26): teleport beside its chest; the grid has no jumps, so these are checked here
+at -34.82 -50.81 h=9.95
+zone jump_sc_finale
+open Scaffold cap
 wait 2
 expect done

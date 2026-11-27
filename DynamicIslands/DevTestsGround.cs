@@ -140,6 +140,16 @@ namespace DynamicIslands
 				var made = new List<IslandWorldState.Entry>();
 				yield return ScBring(name, spot.Value, made);
 				IslandWorldState.Entry e = made.LastOrDefault();
+				// (bugfix 11-25: a brand-new world is noticed a few seconds after it is ready - Raft's "World ready" comes first -
+				// and its start clears the world's island list; an island asked for in between lost its entry and stopped
+				// loading ('Ironreef Caverns: didn't come', ir1). Asked for once more: its spawn never failed)
+				if (e != null && e.Root == null && !e.Failed && !IslandWorldState.Contains(e))
+				{
+					Log("  (" + name + ": its entry was dropped while it loaded - the new world was still starting: brought again)");
+					made.Clear();
+					Vector3? again = ScSpot(name, 400f);
+					if (again.HasValue) { yield return ScBring(name, again.Value, made); e = made.LastOrDefault(); }
+				}
 				if (e == null || e.Root == null) { Log("  " + name + ": didn't come"); report.AppendLine(name + ": NOT MEASURED - didn't come" + (e != null && e.Failed ? " (its spawn failed)" : "")); missed++; if (made.Count > 0) yield return RemoveIslandsAndWait(made.Select(x => x.Id).ToList()); continue; }
 				yield return WaitIslandSettled(e, 0.5f, 2f); // (the cave mountains and Raft's physics settle: until they have, 2 s at most)
 				// (a night ghost ship brought by day sinks away at once - IG5 run 11-18 threw on it, ending the check)
@@ -1470,7 +1480,8 @@ namespace DynamicIslands
 					Physics.SyncTransforms();
 				}
 			};
-			int notOwn = 0, filled = 0, shortN = 0;
+			int notOwn = 0, filled = 0, shortN = 0, propN = 0, hangN = 0;
+			var hanging = new List<string>();
 			var stillBare = new List<string>();
 			// (pass 0: a rock at each bare face no rock already covers; pass 1 (c3z67): at each face the sheet check would still
 			// find bare - the faces the first pass took as covered by a rock that missed them, or blocked for a full-size rock -
@@ -1598,6 +1609,78 @@ namespace DynamicIslands
 					}
 					if (!float.IsPositiveInfinity(shortCap)) shortN++;
 					foreach (Collider c in mineAll) own.Add(c);
+					// (down to what is under it: a rock's foot is 3 m under the sea at most, and over a pit dug deeper it hung in the
+					// water against the wall - Caisson Yard's 11 rocks 5-19 m over its dug channel's floor, bugfix 11-26. Rocks of
+					// its kind are set under it, each up into the one over it, to 4, till one stands on the ground or a placed piece;
+					// none in a dug tunnel's passage or in a placed piece - then the rock is counted as still hanging)
+					Renderer[] hr = PlacementOptions.ShapeRenderers(e.gameObject);
+					if (hr.Length > 0)
+					{
+						Bounds hb = hr[0].bounds;
+						foreach (Renderer x in hr) hb.Encapsulate(x.bounds);
+						Vector3 hc = hb.center;
+						float foot = hb.min.y;
+						var props = new HashSet<Collider>();
+						bool hangs = false;
+						for (int sN = 0; ; sN++)
+						{
+							float baseY = land != null ? land.SampleHeight(hc) + landY : foot;
+							RaycastHit[] downHits = Physics.RaycastAll(new Vector3(hc.x, foot + 0.05f, hc.z), Vector3.down, 60f, ~0, QueryTriggerInteraction.Ignore);
+							float nearest = float.PositiveInfinity;
+							foreach (RaycastHit dh in downHits)
+								if (!mineAll.Contains(dh.collider) && !props.Contains(dh.collider) && dh.distance < nearest) { nearest = dh.distance; baseY = dh.point.y; }
+							if (foot - baseY <= 0.4f) break;
+							if (sN >= 4) { hangs = true; break; }
+							Vector3 rs = Quaternion.Euler(0f, -tf.Yaw, 0f) * new Vector3(hc.x - tf.Origin.x, 0f, hc.z - tf.Origin.y);
+							EditorGameObject s;
+							Place(piece, rs.x, rs.z, opt, out s);
+							if (s == null) { hangs = true; break; }
+							shapeRock(s, hc, along, outward, baseY - 0.3f, foot + 0.3f, spin * 0.5f, 0f, size, 0f, float.PositiveInfinity);
+							Renderer[] sr = PlacementOptions.ShapeRenderers(s.gameObject);
+							Bounds sb = sr.Length > 0 ? sr[0].bounds : new Bounds(hc, Vector3.zero);
+							foreach (Renderer x in sr) sb.Encapsulate(x.bounds);
+							if (sb.max.y < foot + 0.3f)
+							{
+								s.transform.position += Vector3.up * (foot + 0.3f - sb.max.y);
+								Physics.SyncTransforms();
+								sb.center += Vector3.up * (foot + 0.3f - sb.max.y);
+							}
+							var its = new HashSet<Collider>(s.GetComponentsInChildren<Collider>(true));
+							// (clear of a tunnel's passage and of placed pieces other than rocks - its foot may sit in what it stands on)
+							bool inWay = false;
+							for (int ix = -1; ix <= 1 && !inWay; ix++)
+								for (int iy = -1; iy <= 1 && !inWay; iy++)
+									for (int iz = -1; iz <= 1 && !inWay; iz++)
+										inWay = DigTunnel.InsideAny(sb.center + Vector3.Scale(sb.extents * 0.8f, new Vector3(ix, iy, iz)), 0.3f, sN == 0 && ix == -1 && iy == -1 && iz == -1);
+							if (!inWay)
+							{
+								float lo = Mathf.Max(sb.min.y + 0.6f, baseY + 0.4f), hi = sb.max.y - 0.1f;
+								if (hi > lo)
+									inWay = Physics.OverlapBox(new Vector3(sb.center.x, (lo + hi) * 0.5f, sb.center.z), new Vector3(sb.extents.x * 0.8f, (hi - lo) * 0.5f, sb.extents.z * 0.8f), Quaternion.identity, ~0, QueryTriggerInteraction.Ignore)
+										.Any(x => !(x is TerrainCollider) && !its.Contains(x) && !mineAll.Contains(x) && !props.Contains(x) && !own.Contains(x) && !RockStandsBefore(x));
+							}
+							if (inWay)
+							{
+								s.gameObject.SetActive(false);
+								UnityEngine.Object.Destroy(s.gameObject);
+								Physics.SyncTransforms();
+								hangs = true;
+								break;
+							}
+							foreach (Collider c in its) { props.Add(c); own.Add(c); }
+							propN++;
+							foot = sb.min.y;
+						}
+						if (hangs)
+						{
+							hangN++;
+							if (hanging.Count < 6)
+							{
+								Vector3 rh = Quaternion.Euler(0f, -tf.Yaw, 0f) * new Vector3(hc.x - tf.Origin.x, 0f, hc.z - tf.Origin.y);
+								hanging.Add(Num(rh.x) + " " + Num(rh.z));
+							}
+						}
+					}
 					stood.Add(at);
 					if (!ownFace) notOwn++;
 					else if (pass == 0) covered++;
@@ -1609,6 +1692,7 @@ namespace DynamicIslands
 					}
 				}
 			rockFillNote = (filled > 0 ? "; " + filled + " smaller ones in the gaps left" : "") + (shortN > 0 ? " (" + shortN + " kept short under a rope or a piece)" : "") + (notOwn > 0 ? "; " + notOwn + " not covering their own face" : "") +
+				(propN > 0 ? "; " + propN + " set under rocks hanging over a deeper floor" : "") + (hangN > 0 ? "; " + hangN + " still hanging over the floor: " + string.Join(", ", hanging.ToArray()) : "") +
 				(stillBare.Count > 0 ? "; faces still bare: " + string.Join(", ", stillBare.ToArray()) : "");
 			return stood.Count;
 		}
@@ -1617,7 +1701,7 @@ namespace DynamicIslands
 
 		/// <summary>Everything a look meets, back faces too, nearest first: "name d m (back)" - what the see-through ray went
 		/// through and what it saw (c3 round 3, for the cave fixes).</summary>
-		static string LookHits(Vector3 eye, Vector3 look)
+		static string LookHits(Vector3 eye, Vector3 look, Vector3? mid = null)
 		{
 			bool backs = Physics.queriesHitBackfaces;
 			Physics.queriesHitBackfaces = true;
@@ -1625,7 +1709,9 @@ namespace DynamicIslands
 			{
 				RaycastHit[] hs = Physics.RaycastAll(eye, look.normalized, 60f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).Take(8).ToArray();
 				return "the worst look from " + eye.ToString("F1") + " meets " + (hs.Length == 0 ? "nothing (the sky)" : string.Join(", ", hs.Select(h => h.collider.name + " " + h.distance.ToString("F1") + " m" +
-					(Vector3.Dot(h.normal, look) > 0f ? " (back)" : "") + (h.collider is TerrainCollider ? "" : " [" + h.collider.GetType().Name.Replace("Collider", "") + "]")).ToArray()));
+					(Vector3.Dot(h.normal, look) > 0f ? " (back)" : "") + (h.collider is TerrainCollider ? "" : " [" + h.collider.GetType().Name.Replace("Collider", "") + "]" +
+					// (where the thing hit stands, as the problems print it - the Bear Hall's see-through named a BigBoulder2_Low, but which, bugfix 11-25)
+					(mid.HasValue ? " at " + Num(h.collider.transform.position.x - mid.Value.x) + " " + Num(h.collider.transform.position.z - mid.Value.z) + " h=" + Num(h.collider.transform.position.y - mid.Value.y) : ""))).ToArray()));
 			}
 			finally { Physics.queriesHitBackfaces = backs; }
 		}
@@ -2234,7 +2320,7 @@ namespace DynamicIslands
 					Vector3 eye, look;
 					if (CaveSeeThrough(o, RaftProps.Get(n), out at, out eye, out look) > 0)
 					{
-						lines.Add("cave seen through from inside: " + n + " - " + at + "; " + LookHits(eye, look));
+						lines.Add("cave seen through from inside: " + n + " - " + at + "; " + LookHits(eye, look, mid));
 						QueueCheckShot("cave_" + e.Name + "_" + n + "_look", eye, eye + look * 5f);
 					}
 					continue;

@@ -228,7 +228,7 @@ namespace DynamicIslands
 			TakeOffSuit(me);
 			bool ok = true, keep = false;
 			var made = new List<IslandWorldState.Entry>();
-			playEntry = null;
+			playEntry = null; nameEntry = null;
 			playBlueprints.Clear();
 			playHurtFrom = Hazards.Taken;
 			int checks = 0;
@@ -1485,9 +1485,10 @@ namespace DynamicIslands
 		static string BlockerName(Collider c)
 		{
 			if (c.GetComponent<Terrain>() != null) return "the ground (a step too high)";
-			Transform t = c.transform, island = playEntry != null && playEntry.Root != null ? playEntry.Root.transform : null;
+			IslandWorldState.Entry on = nameEntry != null && nameEntry.Root != null ? nameEntry : playEntry; // (a reach's own island: bugfix 11-27)
+			Transform t = c.transform, island = on != null && on.Root != null ? on.Root.transform : null;
 			while (t.parent != null && island != null && t.parent != island && t.parent.parent != island) t = t.parent;
-			return t.name + (t != c.transform ? " (" + c.name + ")" : "") + " at " + (c.bounds.center - (playEntry != null ? playEntry.Position : Vector3.zero)).ToString("F1");
+			return t.name + (t != c.transform ? " (" + c.name + ")" : "") + " at " + (c.bounds.center - (on != null ? on.Position : Vector3.zero)).ToString("F1");
 		}
 
 		/// <summary>A picture with Raft's own camera (its water and light, no HUD, no held tool) for the guide:
