@@ -725,7 +725,9 @@ namespace DynamicIslands
 
 		// ---------------------------------------------------------------- the grid
 
-		static int dbgShoreHigh, dbgShoreLow, dbgShoreBlocked, dbgShoreOk; static int dbgOutBlocked, dbgOutFall, dbgOutOk, dbgWetRoof, dbgFloatOut;
+		static int dbgShoreHigh, dbgShoreLow, dbgShoreBlocked, dbgShoreOk; static int dbgOutBlocked, dbgOutFall, dbgOutOk, dbgWetRoof, dbgFloatOut, dbgLadderDrop;
+		// (the island's ladders' climb colliders, for the drop rule in TryMove)
+		static List<Bounds> reachDropLadders = new List<Bounds>();
 		const float RSea = 0f, RStepUp = 0.55f, RJump = 1.1f, RDrop = 12f, RSwimFeet = -1.3f, RUse = 2.5f, RRadius = 0.3f, RHeight = 1.75f; // (RTop: the controller's top with its 0.08 m skin - a den mouth's sloping roof 1.68 m up stopped the walker where the grid stood, bugfix 11-26 bl8p Brinelab)
 		const float RTop = RHeight + 0.05f;
 
@@ -986,6 +988,7 @@ namespace DynamicIslands
 			// step=0 prog=0 all that time and the runner called it stalled and stopped the phase, bugfix 11-26 s6t)
 			// moves between neighbouring columns
 			int[] di = { 1, 0, 1, 1 }, dj = { 0, 1, 1, -1 };
+			reachDropLadders = e.Root.GetComponentsInChildren<Collider>(false).Where(c => c.enabled && c.name.IndexOf("climb", StringComparison.OrdinalIgnoreCase) >= 0).Select(c => c.bounds).ToList();
 			for (int i = 0; i < g.NX; i++)
 			{
 				for (int j = 0; j < g.NZ; j++)
@@ -1236,9 +1239,9 @@ namespace DynamicIslands
 				if (reachTrace != null) ReachTraceLog(e, g, fwd, offset);
 				int seaSwim = sea.Count(k => g.Kind[k] == 1);
 				report.Add("REACH " + name + " | shore links | - | NOTE out of the water: ok " + dbgShoreOk + ", too high " + dbgShoreHigh + ", too low " + dbgShoreLow + ", blocked " + dbgShoreBlocked);
-				report.Add("REACH " + name + " | shore links | - | NOTE into the water: ok " + dbgOutOk + ", blocked " + dbgOutBlocked + ", fall caught " + dbgOutFall + "; under water, floor to floor through a roof/floor " + dbgWetRoof + "; afloat over a floor, up too high for a swimmer " + dbgFloatOut);
+				report.Add("REACH " + name + " | shore links | - | NOTE into the water: ok " + dbgOutOk + ", blocked " + dbgOutBlocked + ", fall caught " + dbgOutFall + "; drops down a ladder's shaft left out " + dbgLadderDrop + "; under water, floor to floor through a roof/floor " + dbgWetRoof + "; afloat over a floor, up too high for a swimmer " + dbgFloatOut);
 				dbgShoreOk = dbgShoreHigh = dbgShoreLow = dbgShoreBlocked = 0;
-				dbgOutOk = dbgOutBlocked = dbgOutFall = dbgWetRoof = dbgFloatOut = 0;
+				dbgOutOk = dbgOutBlocked = dbgOutFall = dbgWetRoof = dbgFloatOut = dbgLadderDrop = 0;
 				report.Add("REACH " + name + " | walk-in | - | NOTE sea " + sea.Count + " spots (" + seaSwim + " swim), grid " + g.NX + "x" + g.NZ + "; floor reached per side n/e/s/w " + string.Join("/", gotS.Select(x => x.ToString()).ToArray()));
 			}
 			var back = new bool[g.Pos.Count];
@@ -1735,6 +1738,10 @@ namespace DynamicIslands
 				if (flat && dy > RStepUp && !wet && Physics.CheckCapsule(pa + Vector3.up * (dy + RRadius + 0.1f), pa + Vector3.up * (dy + RTop - RRadius), RRadius, reachMask, QueryTriggerInteraction.Ignore)) return;
 				// (a drop: nothing to land on on the way down - a floor that reaches over the spot below catches the player)
 				if (dy < -0.9f && !wet && FallCaught(pb, pa.y, pb.y)) return;
+				// (not down a ladder's shaft: the ladder is the way down there. A fall beside one brushes its rungs and the hatch's rim
+				// round it - the grid dropped 8 m from Sealkeeper's door tower deck into its ladder hole, 0.4 m from the climb collider,
+				// and the walker hung on the ladder's top or the rim instead (lt3b at 3x, bs1 both speeds), bugfix 11-27)
+				if (dy < -0.9f && !wet && DropDownLadder(pb, pa.y)) { dbgLadderDrop++; return; }
 				g.Link(a, b);
 				return;
 			}
@@ -1823,6 +1830,16 @@ namespace DynamicIslands
 			}
 			why = "ends " + (prev.y - b.y).ToString("0.00") + " m from b's floor";
 			return Mathf.Abs(prev.y - b.y) < 0.3f;
+		}
+
+		/// <summary>(bugfix 11-27) A fall in column at from the height from down whose body (its radius and 0.2 m) would pass a
+		/// ladder's climb collider below that height.</summary>
+		static bool DropDownLadder(Vector3 at, float from)
+		{
+			const float m = RRadius + 0.2f;
+			foreach (Bounds lb in reachDropLadders)
+				if (lb.max.y > at.y + 0.3f && lb.min.y < from - 0.3f && at.x > lb.min.x - m && at.x < lb.max.x + m && at.z > lb.min.z - m && at.z < lb.max.z + m) return true;
+			return false;
 		}
 
 		/// <summary>Something in column at between the heights from (over a floor) and to that a falling player lands on.</summary>
@@ -2790,7 +2807,7 @@ namespace DynamicIslands
 						{
 							string diag = ReachDiag(pl) + ReachCreatures(pl);
 							mmWalk = 0f; mmJump = false;
-							result("stuck at " + (p - e.Position).ToString("F1") + " on the way to " + (aim - e.Position).ToString("F1") + (hops > 0 ? " (" + hops + " jumps, rose up to " + hopPeak.ToString("F2") + " m)" : "") + " (in the way: " + ReachBlocker(pl, flat.sqrMagnitude > 0.01f ? flat.normalized : d.normalized) + ")" + diag + " [the grid's step: from " + (W(way[i - 1]) - e.Position).ToString("F1") + " kind " + g.Kind[way[i - 1]] + " to kind " + kind + LinkWhy(W(way[i - 1]), W(k)) + "; the way: " + string.Join(" ", Enumerable.Range(Mathf.Max(0, i - 8), Mathf.Min(way.Count, i + 3) - Mathf.Max(0, i - 8)).Select(q => (q == i ? "*" : "") + g.Kind[way[q]] + (W(way[q]) - e.Position).ToString("F1")).ToArray()) + "]");
+							result("stuck at " + (p - e.Position).ToString("F1") + " on the way to " + (aim - e.Position).ToString("F1") + (hops > 0 ? " (" + hops + " jumps, rose up to " + hopPeak.ToString("F2") + " m)" : "") + " (in the way: " + ReachBlocker(pl, flat.sqrMagnitude > 0.01f ? flat.normalized : d.normalized) + ")" + diag + ReachUnder(pl, e) + " [the grid's step: from " + (W(way[i - 1]) - e.Position).ToString("F1") + " kind " + g.Kind[way[i - 1]] + " to kind " + kind + LinkWhy(W(way[i - 1]), W(k)) + "; the way: " + string.Join(" ", Enumerable.Range(Mathf.Max(0, i - 8), Mathf.Min(way.Count, i + 3) - Mathf.Max(0, i - 8)).Select(q => (q == i ? "*" : "") + g.Kind[way[q]] + (W(way[q]) - e.Position).ToString("F1")).ToArray()) + "]");
 							yield break;
 						}
 					}
@@ -2917,6 +2934,19 @@ namespace DynamicIslands
 				if (dd < 6f) s += (s.Length > 0 ? ", " : "") + a.name + " " + dd.ToString("F1") + " m";
 			}
 			return s.Length > 0 ? " [creatures near: " + s + "]" : "";
+		}
+
+		/// <summary>(bugfix 11-27) What the stuck walker stands on: its name, the spot and the collider's box (island-local).</summary>
+		static string ReachUnder(Network_Player pl, IslandWorldState.Entry e)
+		{
+			Vector3 f = ReachFeet(pl);
+			foreach (RaycastHit h in Physics.SphereCastAll(f + Vector3.up * 0.5f, 0.19f, Vector3.down, 1.5f, reachMask, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+			{
+				if (h.collider.transform.IsChildOf(pl.transform)) continue;
+				Bounds b = h.collider.bounds;
+				return " [under the feet: " + BlockerName(h.collider) + " at " + (h.point - e.Position).ToString("F2") + ", its box " + (b.min - e.Position).ToString("F2") + ".." + (b.max - e.Position).ToString("F2") + "]";
+			}
+			return " [under the feet: nothing within 1 m]";
 		}
 
 		static string ReachDiag(Network_Player pl)
