@@ -1326,6 +1326,9 @@ namespace DynamicIslands
 			for (int k = 0; k < g.Pos.Count; k++) trapped[k] = !back[k] && (fwd[0][k] || fwd[1][k] || fwd[2][k] || fwd[3][k]) && g.Kind[k] != 3;
 			var seen = new bool[g.Pos.Count];
 			int traps = 0;
+			Bounds trapIsl;
+			bool haveTb = ReachBounds(e.Root, out trapIsl);
+			trapIsl.Expand(60f);
 			for (int k = 0; k < g.Pos.Count; k++)
 			{
 				if (!trapped[k] || seen[k]) continue;
@@ -1337,6 +1340,22 @@ namespace DynamicIslands
 					foreach (int b in g.Out[a].Concat(g.In[a])) if (trapped[b] && !seen[b]) { seen[b] = true; q.Enqueue(b); }
 				}
 				if (cluster.Count < 6) continue;
+				// (only the island's own: the grid reaches some 260 m out and takes in a neighbouring island or world object - a
+				// 'trap' 249 m east of Brinelab Tower (bl8q) and 257 m off Shuttlewreck Reef. A trap counts when one of its spots
+				// touches a collider under the island's root (its terrain, its pieces) or lies in the island's bounds 30 m out -
+				// pieces a world adds beside the island (a cave hill, a rope) stand there, bugfix 11-26)
+				Bounds tb = new Bounds(g.Pos[cluster[0]], Vector3.zero);
+				foreach (int a in cluster) tb.Encapsulate(g.Pos[a]);
+				bool ours = haveTb && trapIsl.Intersects(tb);
+				for (int ci = 0; ci < cluster.Count && !ours; ci += Mathf.Max(1, cluster.Count / 200))
+					foreach (Collider c in Physics.OverlapSphere(g.Pos[cluster[ci]], 0.6f, ~0, QueryTriggerInteraction.Ignore))
+						if (c.transform.IsChildOf(e.Root.transform)) { ours = true; break; }
+				if (!ours)
+				{
+					Vector3 nr = Rel(e, tb.center, offset);
+					report.Add("REACH " + name + " | info | a closed-in place at " + nr.x.ToString("F1") + " " + nr.z.ToString("F1") + " (" + cluster.Count + " spots) is not the island's - left out");
+					continue;
+				}
 				traps++;
 				problems++;
 				Bounds cb = new Bounds(g.Pos[cluster[0]], Vector3.zero);
