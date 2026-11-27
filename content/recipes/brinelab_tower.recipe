@@ -219,7 +219,12 @@ call sk_cave x=-48 z=-6 h=3 yaw=0 al=blcave2 chest=blcave2chest
 # storeys 36 m east at h -5.1..-5.5, a rock sheet across the stairwell that stopped a climber going down to the deep lab: capped at 30)
 # (11-27: capped at 22 too - its reach logged side 14 back 22 front 7; the pit's buried west side was the den's apron, not
 #     its dome, see above)
-prop blcave2 cave.dome=22
+# (REACH 11-27 bl8: the walk reached the sampler chest, then stuck on the way out where the grid turns west at the runway's
+#     end, -55..-58 9..12: the dome's west flank skin at knee height and a mango tree. Dome capped at 14 as the other
+#     sunken dens, and a cleared, flattened path west from the runway to the open shore at -64 14)
+prop blcave2 cave.dome=14
+brush flatten from -51 9 to -64 14 r=2.5 s=20 frames=120 h=3.4
+clear from -51 9 to -64 14 r=3 body
 call sk_plants x=24 z=66 r=26.4 seed=24210
 call sk_reef x=-20 z=-60 r=5 seed=24230
 # (REACH 11-02: a 5x5 m hollow on the hill's east flank, 35-37 77-79, h 6.4-11.3, had one way out, a 1.2 m step up: a mid-step pad)
