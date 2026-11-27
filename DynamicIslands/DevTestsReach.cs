@@ -804,9 +804,14 @@ namespace DynamicIslands
 		}
 
 		/// <summary>The reach-and-escape measure of one island in the world, as it stands now. done(n): problems found.</summary>
+		/// <summary>(bugfix 11-27) The island BlockerName measures from while a reach runs: from Play's island the reach logs gave
+		/// a blocker on Lumen Shelf at z -764 (lu7).</summary>
+		internal static IslandWorldState.Entry nameEntry;
+
 		static IEnumerator ReachAnalyze(IslandWorldState.Entry e, Vector2 offset, string state, Action<int> done)
 		{
 			var sw = System.Diagnostics.Stopwatch.StartNew();
+			nameEntry = e;
 			string name = e.HostName;
 			var report = new List<string>();
 			int problems = 0;
@@ -1899,11 +1904,14 @@ namespace DynamicIslands
 		{
 			Vector3 d = to - from;
 			if (d.magnitude < 0.05f) return true;
-			foreach (RaycastHit h in Physics.RaycastAll(from, d.normalized, d.magnitude, reachMask, QueryTriggerInteraction.Ignore))
-			{
-				if (ladder.Any(c => h.collider.transform.IsChildOf(c.transform.root == c.transform ? c.transform : LadderRoot(c)))) continue;
-				return false;
-			}
+			// (both ways: a ray starting inside a collider misses it - on Lumen Shelf's spar the eye stood in a wall block's helper
+			// box, and spots outside the shaft were linked as grabbing its ladder through the wall; the walker climbed outside it, lu7)
+			for (int way = 0; way < 2; way++)
+				foreach (RaycastHit h in Physics.RaycastAll(way == 0 ? from : to, (way == 0 ? d : -d).normalized, d.magnitude, reachMask, QueryTriggerInteraction.Ignore))
+				{
+					if (ladder.Any(c => h.collider.transform.IsChildOf(c.transform.root == c.transform ? c.transform : LadderRoot(c)))) continue;
+					return false;
+				}
 			return true;
 		}
 
@@ -2269,6 +2277,7 @@ namespace DynamicIslands
 		static IEnumerator ReachWalkTarget(IslandWorldState.Entry e, ReachGrid g, ReachTarget t, List<int> use, bool[][] fwd, bool[] back,
 			int[][] parent, int[] backParent, string[] sideNames, Action<string> result)
 		{
+			nameEntry = e;
 			Network_Player pl = RAPI.GetLocalPlayer();
 			if (pl == null) { result(null); yield break; }
 			int bestS = -1, bestK = -1, bestLen = int.MaxValue;
@@ -3069,10 +3078,63 @@ namespace DynamicIslands
 
 		static string ReachBlocker(Network_Player pl, Vector3 dir)
 		{
-			foreach (float up in new[] { 0.9f, 0.35f, 1.5f })
-				foreach (RaycastHit h in Physics.SphereCastAll(ReachFeet(pl) + Vector3.up * up, 0.25f, dir, 1.2f, reachMask, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
-					if (!h.collider.transform.IsChildOf(pl.transform)) return BlockerName(h.collider) + (up < 0.5f ? " (low)" : "") + " hit " + (h.point - ReachFeet(pl)).ToString("F2") + " from the feet, normal " + h.normal.ToString("F2"); // (bugfix 11-26: where, not just the collider's middle)
-			return "nothing found";
+			// (bugfix 11-27: then with back faces on, then as the controller's own capsule from just over the feet, then what it
+			// overlaps a little ahead - Brinelab's den mouth stopped the walker 3 times with 'nothing found' (bl7, bl9) - and the
+			// ground's height ahead, whatever was found)
+			Vector3 f = ReachFeet(pl);
+			CharacterController cc = pl.PersonController != null ? pl.PersonController.controller : null;
+			float r = cc != null ? cc.radius : 0.2f, top = cc != null ? cc.height : 1.7f;
+			Vector3 p1 = f + Vector3.up * (0.12f + r), p2 = f + Vector3.up * Mathf.Max(0.12f + r, top - r);
+			Func<RaycastHit, bool> other = h => h.collider != null && !h.collider.transform.IsChildOf(pl.transform);
+			Func<RaycastHit, string> at = h => h.distance <= 0f ? " (overlapping where the cast starts)" : " hit " + (h.point - f).ToString("F2") + " from the feet, normal " + h.normal.ToString("F2");
+			string found = null;
+			bool was = Physics.queriesHitBackfaces;
+			try
+			{
+				for (int backs = 0; backs < 2 && found == null; backs++)
+				{
+					Physics.queriesHitBackfaces = backs == 1;
+					string side = backs == 1 ? " (by its back face: a one-sided skin met from behind)" : "";
+					foreach (float up in new[] { 0.9f, 0.35f, 1.5f })
+					{
+						RaycastHit h = Physics.SphereCastAll(f + Vector3.up * up, 0.25f, dir, 1.2f, reachMask, QueryTriggerInteraction.Ignore).Where(other).OrderBy(x => x.distance).FirstOrDefault();
+						if (h.collider != null) { found = BlockerName(h.collider) + (up < 0.5f ? " (low)" : "") + at(h) + side; break; }
+					}
+					if (found != null) break;
+					RaycastHit c = Physics.CapsuleCastAll(p1, p2, r, dir, 0.8f, reachMask, QueryTriggerInteraction.Ignore).Where(other).OrderBy(x => x.distance).FirstOrDefault();
+					if (c.collider != null) { found = BlockerName(c.collider) + " (the body's capsule from " + (0.12f).ToString("F2") + " m up)" + at(c) + side; break; }
+				}
+				if (found == null)
+				{
+					Collider o = Physics.OverlapCapsule(p1 + dir * 0.15f, p2 + dir * 0.15f, r, reachMask, QueryTriggerInteraction.Ignore).FirstOrDefault(x => x != null && !x.transform.IsChildOf(pl.transform));
+					if (o != null) found = BlockerName(o) + " (the body overlaps it 0.15 m ahead)";
+				}
+			}
+			finally { Physics.queriesHitBackfaces = was; }
+			return (found ?? "nothing found") + ReachGroundAhead(f, dir);
+		}
+
+		/// <summary>(bugfix 11-27) The terrain's height ahead of the feet, as rises over them (a lip a heightfield raises reads here even
+		/// where no cast meets it).</summary>
+		static string ReachGroundAhead(Vector3 f, Vector3 dir)
+		{
+			dir.y = 0f;
+			if (dir.sqrMagnitude < 1e-4f) return "";
+			dir.Normalize();
+			foreach (Terrain t in Terrain.activeTerrains)
+			{
+				if (t == null || t.terrainData == null) continue;
+				Vector3 tp = t.transform.position, ts = t.terrainData.size;
+				if (f.x < tp.x || f.z < tp.z || f.x > tp.x + ts.x || f.z > tp.z + ts.z) continue;
+				var parts = new List<string>();
+				foreach (float d in new[] { 0f, 0.2f, 0.4f, 0.6f, 1.0f, 1.5f })
+				{
+					Vector3 q = f + dir * d;
+					parts.Add("+" + d.ToString("0.0") + " " + (t.SampleHeight(q) + tp.y - f.y).ToString("+0.00;-0.00"));
+				}
+				return " [the ground ahead, over the feet: " + string.Join(", ", parts.ToArray()) + "]";
+			}
+			return "";
 		}
 
 		/// <summary>Negative controls: the walker, at the reach speed, walks straight (Raft's own Walk, no jumps, no turning) from a
