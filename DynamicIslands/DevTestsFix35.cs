@@ -15,6 +15,34 @@ namespace DynamicIslands
 	/// banner over the level-up box (#13).</summary>
 	public static partial class DevTests
 	{
+		[ConsoleCommand(name: "CISaveShareTwo", docs: "Dev: two sends of the world's save in flight at once (a join and a newer one to everyone) each come whole; a late part of an older one is dropped; an older host's same-named sends still reset (X5 bug 1)")]
+		public static void SaveShareTwoCommand()
+		{
+			bool ok = true;
+			string w = Guid.NewGuid().ToString();
+			Func<string, int, int, string, IslandNetMessage> part = (id, i, n, d) => new IslandNetMessage { Name = w, Hash = id, Index = i, Count = n, Data = d };
+			string[] a = { "AA", "AB", "AC" }, b = { "BA", "BB", "BC", "BD" };
+			var got = new List<string>();
+			// (interleaved: a join send to this player (3 parts) and a newer one to everyone (4 parts))
+			for (int i = 0; i < 4; i++)
+			{
+				if (i < a.Length) { string r = WorldSaveShare.Take(part("x-Latest#1.9", i, a.Length, a[i])); if (r != null) got.Add(r); }
+				string q = WorldSaveShare.Take(part("x-Latest#2.12", i, b.Length, b[i])); if (q != null) got.Add(q);
+			}
+			Check(ref ok, got.Count == 2 && got[0] == "AAABAC" && got[1] == "BABBBCBD", "both sends whole: " + string.Join(" / ", got.ToArray()));
+			// (a newer send whole first: an older one still in flight is dropped, its late parts start no buffer)
+			got.Clear();
+			WorldSaveShare.Take(part("x-Latest#3.9", 0, 2, "C0"));
+			string n1 = WorldSaveShare.Take(part("x-Latest#4.9", 0, 1, "D0"));
+			string late = WorldSaveShare.Take(part("x-Latest#3.9", 1, 2, "C1"));
+			Check(ref ok, n1 == "D0" && late == null, "the newer one kept, the older one's late part dropped (" + (n1 ?? "null") + ", " + (late ?? "null") + ")");
+			// (an older host names every send by the folder: the same name again is a new send, never ignored)
+			string o1 = WorldSaveShare.Take(part("x-Latest", 0, 1, "E0"));
+			string o2 = WorldSaveShare.Take(part("x-Latest", 0, 1, "F0"));
+			Check(ref ok, o1 == "E0" && o2 == "F0", "an older host's sends by one name both kept (" + (o1 ?? "null") + ", " + (o2 ?? "null") + ")");
+			if (ok) Log("PASS: save share, two at once"); else Fail("save share, two at once");
+		}
+
 		[ConsoleCommand(name: "CIIndexClash", docs: "Dev, in game: every upgrade's live/declared index round-trips; an upgrade whose index another item holds moves to a free one (>= 29600), is listed as a clash, and the other item keeps its index")]
 		public static void IndexClashCommand() { StartTest(IndexClashRoutine()); }
 
