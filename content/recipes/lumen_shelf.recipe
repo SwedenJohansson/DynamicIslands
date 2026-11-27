@@ -70,7 +70,9 @@ for k 1 10
 place Block_Wall_Tier3 spar at 0.75 0 y={$k*2.42}
 next
 place Block_Floor_Tier3 spartop at 0.75 0.75 y=26.67
-place Block_Floor_Tier3 spartop at 2.25 0.75 y=26.67
+# (REACH 11-27 lu9: both air pockets' walks out swam straight up the shaft's south-east cell into this deck tile's
+#     underside at 26.6 - the grid had linked the water under it to the deck on it; the cell is open now, so the way out
+#     is the ladder's two top rungs or back down to the foot)
 place Block_Floor_Tier3 spartop at 0.75 2.25 y=26.67
 place Block_Floor_Tier3 spartop at 0.75 3.75 y=26.67
 place Block_Floor_Tier3 spartop at 2.25 3.75 y=26.67
