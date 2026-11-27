@@ -1136,6 +1136,13 @@ namespace DynamicIslands
 					report.Add("REACH " + name + " | " + where + " | - | " + sealedNote + " - the grid: no floor to step off onto at its top (" + facing + ")");
 					continue;
 				}
+				// (a zipline's own ladder: a climber takes the rope at its top, there is no floor there by design - Pendulum
+				// Isle's zipdown landmark, pdfx 11-27)
+				if (grabs > 0 && tops == 0 && LadderZipTop(ch[0], lb))
+				{
+					report.Add("REACH " + name + " | " + where + " | - | PASS a zipline's ladder: its top mounts the rope, no floor wanted (" + facing + ")");
+					continue;
+				}
 				if (grabs == 0 || tops == 0)
 				{
 					problems++;
