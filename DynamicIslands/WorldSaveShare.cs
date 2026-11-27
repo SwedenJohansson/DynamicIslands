@@ -76,19 +76,32 @@ namespace DynamicIslands.Editor
 			DynamicIslands.instance.StartCoroutine(SendParts(SaveAndLoad.WorldGuid.ToString(), Path.GetFileName(save), packed, to, gen));
 		}
 
+		static int sendSerial;
+
 		static IEnumerator SendParts(string guid, string saveName, byte[] packed, Network_UserId? to, int gen)
 		{
 			string text = Convert.ToBase64String(packed);
 			int count = Mathf.Max(1, (text.Length + ChunkChars - 1) / ChunkChars);
-			float started = Time.realtimeSinceStartup;
+			float started = Time.realtimeSinceStartup, waitedFrom = -1f;
+			bool stalled = false;
+			// (each send its own id: the save folder's name is the same "-Latest" every time, and a send to one player who
+			// joined and a newer one to everyone at the same time filled one buffer with parts of both)
+			string id = saveName + "#" + (++sendSerial) + "." + packed.Length;
 			for (int i = 0; i < count; i++)
 			{
+				// (the budget all transfers share, ahead of island files; never more than Steam's queue to the player holds)
+				while (!IslandNetwork.MaySend(to, true, stalled))
+				{
+					if (waitedFrom < 0f) waitedFrom = Time.realtimeSinceStartup;
+					else if (Time.realtimeSinceStartup - waitedFrom > IslandNetwork.StallSeconds) stalled = true;
+					yield return null;
+				}
+				waitedFrom = -1f;
 				if (!to.HasValue && gen != sendGeneration) yield break;
 				if (!Raft_Network.IsHost) yield break;
-				var msg = new IslandNetMessage { Name = guid, Hash = saveName, Index = i, Count = count, Data = text.Substring(i * ChunkChars, Mathf.Min(ChunkChars, text.Length - i * ChunkChars)) };
+				var msg = new IslandNetMessage { Name = guid, Hash = id, Index = i, Count = count, Data = text.Substring(i * ChunkChars, Mathf.Min(ChunkChars, text.Length - i * ChunkChars)) };
 				try { IslandNetwork.SendWorldSave(msg, to); }
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Sending the world's save, part " + i + ": " + e.Message); }
-				if ((i + 1) % IslandNetwork.ChunksPerFrame == 0) yield return null;
 			}
 			LastSent = saveName + ", " + packed.Length + " bytes";
 			Debug.Log("[CUSTOM ISLANDS] [net] Sent the world's save " + saveName + " (" + packed.Length + " bytes, " + count + " parts in " + (Time.realtimeSinceStartup - started).ToString("F1") + " s) to " + (to.HasValue ? to.Value.ToString() : "every player"));
@@ -132,6 +145,12 @@ namespace DynamicIslands.Editor
 		#region Player
 
 		static readonly Dictionary<string, string[]> incoming = new Dictionary<string, string[]>();
+		/// <summary>When each send's first part came, to drop the older ones of a world when a newer one is whole.</summary>
+		static readonly Dictionary<string, int> incomingOrder = new Dictionary<string, int>();
+		static int incomingSerial;
+		/// <summary>Sends done with (whole, or older than one that came whole): their late parts start no new buffer. Only a
+		/// send with its own id (name#n.length) - an older host names every send by the save folder alone.</summary>
+		static readonly HashSet<string> finished = new HashSet<string>();
 
 		/// <summary>A player: a part of the host's save; when all have come, it is filed in Raft's World folder.</summary>
 		public static void OnMessage(IslandNetMessage msg)
@@ -139,23 +158,38 @@ namespace DynamicIslands.Editor
 			if (Raft_Network.IsHost || string.IsNullOrEmpty(msg.Name) || msg.Count <= 0 || msg.Index < 0 || msg.Index >= msg.Count) return;
 			Guid guid;
 			if (!Guid.TryParse(msg.Name, out guid) || guid == Guid.Empty) return;
-			string key = msg.Name + "|" + msg.Hash;
-			string[] parts;
-			if (!incoming.TryGetValue(key, out parts) || parts.Length != msg.Count)
-			{
-				// (a newer save of this world: the parts of an older one won't be wanted)
-				foreach (string old in incoming.Keys.Where(k => k.StartsWith(msg.Name + "|") && k != key).ToList()) incoming.Remove(old);
-				incoming[key] = parts = new string[msg.Count];
-			}
-			parts[msg.Index] = msg.Data ?? "";
-			if (parts.Any(p => p == null)) return;
-			incoming.Remove(key);
+			string whole = Take(msg);
+			if (whole == null) return;
 			try
 			{
-				string where = File(Convert.FromBase64String(string.Concat(parts)), guid, SaveAndLoad.WorldPath);
+				string where = File(Convert.FromBase64String(whole), guid, SaveAndLoad.WorldPath);
 				Debug.Log("[CUSTOM ISLANDS] Kept the host's save of this world, to host it later: " + where);
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Could not keep the host's save of this world: " + e.Message); }
+		}
+
+		/// <summary>A part of a send into its buffer; the whole send's text when this was its last part, else null.</summary>
+		internal static string Take(IslandNetMessage msg)
+		{
+			string key = msg.Name + "|" + msg.Hash;
+			string[] parts;
+			if (finished.Contains(key)) return null;
+			if (!incoming.TryGetValue(key, out parts) || parts.Length != msg.Count)
+			{
+				// (each send fills its own buffer: two in flight at once - one to a player who joined, a newer one to
+				// everyone - used to drop each other's parts with every message, and neither ever came whole)
+				incoming[key] = parts = new string[msg.Count];
+				incomingOrder[key] = ++incomingSerial;
+				// (a world's buffers that never finish - the host left half way - don't pile up)
+				foreach (string old in incoming.Keys.Where(k => k.StartsWith(msg.Name + "|") && k != key).OrderByDescending(k => incomingOrder[k]).Skip(3).ToList()) { incoming.Remove(old); incomingOrder.Remove(old); }
+			}
+			parts[msg.Index] = msg.Data ?? "";
+			if (parts.Any(p => p == null)) return null;
+			// (this one is whole: older sends of the world are no longer wanted, newer ones still are)
+			int order = incomingOrder[key];
+			if (finished.Count > 64) finished.Clear();
+			foreach (string old in incoming.Keys.Where(k => k == key || (k.StartsWith(msg.Name + "|") && incomingOrder[k] < order)).ToList()) { incoming.Remove(old); incomingOrder.Remove(old); if (old.IndexOf('#') > 0) finished.Add(old); }
+			return string.Concat(parts);
 		}
 
 		/// <summary>Unpacks a pack into &lt;worldsRoot&gt;\&lt;world folder&gt;\&lt;save folder&gt; (see the class) and returns that folder.

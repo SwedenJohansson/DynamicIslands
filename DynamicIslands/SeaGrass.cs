@@ -62,6 +62,7 @@ namespace DynamicIslands.Editor
 
 		static void MakeTemplate(TerrainData raft)
 		{
+			ProbeSource = raft;
 			if (template != null) return;
 			try
 			{
@@ -82,6 +83,48 @@ namespace DynamicIslands.Editor
 				template = d;
 			}
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Sea grass: no terrain copy: " + e.Message); }
+		}
+
+		/// <summary>Dev probe (CIGrassProbe): the Raft terrain the template was copied from.</summary>
+		internal static TerrainData ProbeSource;
+
+		/// <summary>Dev probe: which ways of giving a copy of a Raft terrain one detail layer log Unity's "only implemented in editor".</summary>
+		internal static string Probe()
+		{
+			TerrainData src = ProbeSource;
+			if (src == null) src = Resources.FindObjectsOfTypeAll<TerrainData>().FirstOrDefault(x => x != null && !x.name.StartsWith(BornName) && x.detailPrototypes.Any(p => !p.usePrototypeMesh && p.prototypeTexture != null && p.prototypeTexture.name == RaftTexture));
+			if (src == null || learned == null) return "no Raft terrain with sea grass (learned " + (learned != null) + ")";
+			var sb = new System.Text.StringBuilder();
+			sb.Append("source " + src.name + ": " + src.detailPrototypes.Length + " layers (" + string.Join(", ", src.detailPrototypes.Select(p => p.usePrototypeMesh ? "mesh " + (p.prototype != null ? p.prototype.name : "?") : (p.prototypeTexture != null ? p.prototypeTexture.name : "?")).ToArray()) + "), detail res " + src.detailResolution);
+			foreach (TerrainData t in Resources.FindObjectsOfTypeAll<TerrainData>()) if (t != null) sb.Append("; td " + t.name + " " + t.detailPrototypes.Length);
+			int errors = 0;
+			Application.LogCallback count = (msg, trace, type) => { if (type == LogType.Error && msg.Contains("only implemented in editor")) errors++; };
+			Application.logMessageReceived += count;
+			try
+			{
+				string[] names = { "A one layer", "B res 0 first", "C same count", "D one less", "E new data", "F one by one" };
+				for (int v = 0; v < names.Length; v++)
+				{
+					errors = 0;
+					TerrainData d = v == 4 ? new TerrainData() : UnityEngine.Object.Instantiate(src);
+					int n = d.detailPrototypes.Length;
+					string err = "";
+					try
+					{
+						DetailPrototype one = Copy(learned, learned.prototypeTexture);
+						if (v == 0 || v == 4) d.detailPrototypes = new[] { one };
+						else if (v == 1) { d.SetDetailResolution(0, 8); d.detailPrototypes = new[] { one }; }
+						else if (v == 2) d.detailPrototypes = Enumerable.Range(0, n).Select(i => Copy(learned, learned.prototypeTexture)).ToArray();
+						else if (v == 3) d.detailPrototypes = d.detailPrototypes.Take(Math.Max(1, n - 1)).ToArray();
+						else if (v == 5) { for (int k = n - 1; k >= 1; k--) d.detailPrototypes = d.detailPrototypes.Take(k).ToArray(); d.detailPrototypes = new[] { one }; }
+					}
+					catch (Exception e) { err = " exception " + e.Message; }
+					sb.Append(" | " + names[v] + ": " + n + " -> " + d.detailPrototypes.Length + " layers, " + errors + " error(s)" + err);
+					UnityEngine.Object.Destroy(d);
+				}
+			}
+			finally { Application.logMessageReceived -= count; }
+			return sb.ToString();
 		}
 
 		/// <summary>

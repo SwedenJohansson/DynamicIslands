@@ -1426,6 +1426,7 @@ namespace DynamicIslands
 			for (float t = 0; t < 200f; t += Time.fixedDeltaTime)
 			{
 				yield return new WaitForFixedUpdate();
+				if (body == null) { Log("Sail stopped: the raft is gone (the world was left mid-sail)"); yield break; }
 				KeepAlive(player);
 				Vector3 to = Flat(target() - body.position);
 				if (to.magnitude < 3f) break;
@@ -1451,6 +1452,8 @@ namespace DynamicIslands
 			while (t < seconds)
 			{
 				yield return new WaitForFixedUpdate();
+				// The world can be left mid-sail (a tool that gave up waiting goes to the main menu): stop, don't throw
+				if (body == null) { Log("Sail stopped: the raft is gone (the world was left mid-sail)"); yield break; }
 				t += Time.fixedDeltaTime;
 				KeepAlive(player);
 				// Raft's own physics caps the raft's speed, so move the body directly (the player on it moves along)
@@ -1768,6 +1771,8 @@ namespace DynamicIslands
 			while (t < seconds)
 			{
 				yield return new WaitForFixedUpdate();
+				// The world can be left mid-sail (a tool that gave up waiting goes to the main menu): stop, don't throw
+				if (body == null) { Log("Sail stopped: the raft is gone (the world was left mid-sail)"); yield break; }
 				t += Time.fixedDeltaTime;
 				KeepAlive(player);
 				Vector3 before = body.position;

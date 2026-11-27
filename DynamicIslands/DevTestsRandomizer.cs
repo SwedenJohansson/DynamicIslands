@@ -1771,6 +1771,16 @@ namespace DynamicIslands
 			found(at());
 		}
 
+		/// <summary>The grotto test's farthest collider: its own object (the piece under Objects), where it is and the extras' middle, and whether physics moves it.</summary>
+		static string FarName(Collider c, IslandWorldState.Entry e)
+		{
+			Transform piece = c.transform;
+			while (piece.parent != null && piece.parent.name != "Objects" && piece.parent != e.Root.transform) piece = piece.parent;
+			Rigidbody body = c.attachedRigidbody;
+			return piece.name + (piece != c.transform ? "/" + c.name : "") + " at " + c.bounds.center.ToString("F0") + ", the extras' middle " + e.Position.ToString("F0") + ", its root " + e.Root.transform.position.ToString("F0") +
+				(body != null && !body.isKinematic ? ", moved by physics" : "") + ", '" + e.Name + "'";
+		}
+
 		static IEnumerator GrottoRoutine(bool keep)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
@@ -1817,7 +1827,7 @@ namespace DynamicIslands
 					if (e == null || e.Root == null) continue;
 					caves = e.Root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
 					if (caves.Count > 0 || !RandomizerIslands.CanBuildCaves) break;
-					Log("  (no den with roll " + salt + ": another)");
+					Log("  (no den with roll " + salt + " in '" + e.Name + "': another)");
 				}
 				if (caves.Count > 0 || !RandomizerIslands.CanBuildCaves) break;
 				Landmark last = big;
@@ -1838,7 +1848,7 @@ namespace DynamicIslands
 			// (everything of the extras over Raft's island and its reef: nothing far out at sea)
 			Collider farthest = e.Root.GetComponentsInChildren<Collider>().Where(c => !c.isTrigger).OrderByDescending(c => new Vector2(c.bounds.center.x - e.Position.x, c.bounds.center.z - e.Position.z).sqrMagnitude).FirstOrDefault();
 			float farOut = farthest != null ? new Vector2(farthest.bounds.center.x - e.Position.x, farthest.bounds.center.z - e.Position.z).magnitude : 0f;
-			Check(ref ok, farOut < 250f, "everything of the extras within 250 m of Raft's island's middle (the farthest: " + (farthest != null ? farthest.transform.parent != null ? farthest.transform.parent.name : farthest.name : "none") + ", " + farOut.ToString("F0") + " m)");
+			Check(ref ok, farOut < 250f, "everything of the extras within 250 m of Raft's island's middle (the farthest: " + (farthest != null ? FarName(farthest, e) : "none") + ", " + farOut.ToString("F0") + " m)");
 			int outpost = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Count(r => r.Props != null && r.Props.ContainsKey("set.piece") && !r.Props.ContainsKey("cave") && RaftProps.Get(r.ObjectName) != null && !RaftProps.Get(r.ObjectName).Name.Contains("Boulder"));
 			Log("  the extras hold: " + string.Join(", ", e.Root.GetComponentsInChildren<IslandObjectRef>(true).GroupBy(r => r.ObjectName + (r.Props != null && r.Props.ContainsKey("set.piece") ? " (set piece)" : "")).Select(g => g.Key + " x" + g.Count()).ToArray()));
 			Check(ref ok, caves.Count >= 1 || !RandomizerIslands.CanBuildCaves, "'" + big.name + "': " + (caves.Count > 0 ? "a den (" + caves[0].name + ")" : "no den") + (RandomizerIslands.CanBuildCaves ? "" : " (no measured cave pieces)") + ", " + outpost + " outpost props");
