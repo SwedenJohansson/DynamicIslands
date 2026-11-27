@@ -2734,7 +2734,11 @@ namespace DynamicIslands
 							// run 2026-10-20; only what is saved counts, the active objects)
 							string unplaced = UnplacedCreatures(island, GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>());
 							if (unplaced != null) { error = unplaced; break; }
-							if (!DynamicIslands.SaveIsland(island)) { error = "the island didn't save as '" + island + "'"; break; }
+							// (not through the saved worlds: a test build, and a box with thousands of old test worlds stalled there 20 min - op3 11-27)
+							bool savedIt;
+							DynamicIslands.NoSavedWorlds = true;
+							try { savedIt = DynamicIslands.SaveIsland(island); } finally { DynamicIslands.NoSavedWorlds = false; }
+							if (!savedIt) { error = "the island didn't save as '" + island + "'"; break; }
 							RecipeSaved = island;
 							recipeOutputs.Add(IslandSpawner.PathFor(island));
 							Log("  saved '" + island + "'");
