@@ -181,8 +181,40 @@ call sk_cave x=12 z=42 h=3 yaw=180 al=opcave2 chest=opcave2chest
 call sk_plants x=60 z=-42 r=24.2 seed=24110
 call sk_reef x=-50 z=48 r=5 seed=24130
 
-# the summit: Toll Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
-call ladtower x=60 z=-42 h0=22 lv=6 a=optower
+# the summit: Toll Hill - the tower (ladder outside), the locker, the note, the zone, the zipline down
+# (REACH 11-27 bf13d: the inside ladder topped out 0.47 m under the deck's edge - the walk fell back down its shaft and never
+#  reached the locker or the zone. As Caisson's crane tower / Sealkeeper's ladtowerout: the ladder on the south wall's outside
+#  at 61.1 -43.8, stepping over the wall top onto a four-cell deck; door, locker, note and zone as before)
+clear at 61.1 -44.6 r=1.2
+push at 58.5 -43.5 h=22
+for k 0 5
+place Block_Wall_Tier3 optower at 2.25 0 y={$k*2.42}
+place Block_Wall_Tier3 optower at 0.75 3 y={$k*2.42}
+place Block_Wall_Tier3 optower at 2.25 3 y={$k*2.42}
+place Block_Wall_Tier3 optower at 0 0.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 optower at 0 2.25 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 optower at 3 0.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 optower at 3 2.25 y={$k*2.42} yaw=90
+place Block_Ladder_Tier3 - at 2.6 -0.3 y={$k*2.42} yaw=0
+next
+place Block_Wall_Door_Tier3 optower at 0.75 0 y=0
+for k 1 5
+place Block_Wall_Tier3 optower at 0.75 0 y={$k*2.42}
+next
+place Block_Floor_Tier3 optower at 0.75 0.75 y=14.57
+place Block_Floor_Tier3 optower at 2.25 0.75 y=14.57
+place Block_Floor_Tier3 optower at 0.75 2.25 y=14.57
+place Block_Floor_Tier3 optower at 2.25 2.25 y=14.57
+place Block_Wall_Fence_Rope - at 0.75 0 y=14.57
+place Block_Wall_Fence_Rope - at 0.75 3 y=14.57
+place Block_Wall_Fence_Rope - at 2.25 3 y=14.57
+place Block_Wall_Fence_Rope - at 0 0.75 y=14.57 yaw=90
+place Block_Wall_Fence_Rope - at 0 2.25 y=14.57 yaw=90
+place Block_Wall_Fence_Rope - at 3 0.75 y=14.57 yaw=90
+place Block_Wall_Fence_Rope - at 3 2.25 y=14.57 yaw=90
+pop
+prop optower tint.color=#6e6a64
+prop optower tint.amount=0.55
 place Loot_ChestSmall oplocker at 59.25 -41.25 h=37.2 drop yaw=180
 place Note_Paper opsumnote at 59.25 -42.75 h=36.84 drop yaw=20
 place Zone_Trigger opsummit at 60 -42 h=37.73
