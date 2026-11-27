@@ -432,4 +432,14 @@ quest reward=MetalIngot*2;Bolt*4
 # (c3z61: two channel walls between the caissons' rock still bare - 20 faces between two walls the talus leaves open -
 #     so rock stood in their waterline band (rocks=), clear of the tunnels and pieces)
 cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
+# (cy-1127, cy6 CIFloating: nine of those rocks hung 5-20 m over the ground - over the dug caves' rock and off walls)
+clear at 7.13 10.84 r=1.0 only=BigBoulder2_Low all
+clear at 4.37 16.14 r=1.0 only=BigBoulder2_Low all
+clear at 2.16 21.67 r=1.0 only=BigBoulder2_Low all
+clear at 30.91 28.05 r=1.0 only=BigBoulder4_Low all
+clear at 63.44 34.36 r=1.0 only=BigBoulder1_Low all
+clear at -18.88 59.75 r=1.0 only=BigBoulder2_Low all
+clear at -18.47 61.43 r=1.0 only=BigBoulder1_Low all
+clear at 2.45 22.04 r=1.0 only=BigBoulder4_Low all
+clear at 2.90 24.30 r=1.0 only=BigBoulder1_Low all
 save Caisson Yard
