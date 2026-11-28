@@ -450,6 +450,7 @@ brush flatten at -36.5 -115.6 r=1.8 s=20 frames=300 h=-0.6
 brush flatten at -36.9 -114.9 r=1.8 s=20 frames=300 h=-0.1
 brush flatten at -37.3 -114.2 r=1.8 s=20 frames=300 h=0.4
 clear from -36.5 -115.6 to -37.3 -114.2 r=2.6 body
-island reach.byplay=pump_hall;Spillway perch;Spillway top;vr_service
+# (pfvr 11-28: the grid still found no way into the sump room - the caves play swims up the short intake to it again)
+island reach.byplay=pump_hall;Spillway perch;Spillway top;vr_service;vr_sump
 
 save Vaporhold Reservoir
