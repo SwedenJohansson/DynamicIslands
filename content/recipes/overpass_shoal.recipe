@@ -237,7 +237,10 @@ place Zone_Trigger opsummit at 60 -42 h=37.73
 place ZiplinePath_Landmark opzip at 55.74 -39.02 ground
 zipfrom opzip 55.74 -39.02 ground
 # STORY 10-24s: the Stalker's lure seen once, far off, sweeping the drowned road (from the summit lantern)
-place Placeable_Lantern_Metal opcam at 60.4 -43.4 h=36.73 sit
+# (islandfix 11-28 op5, CIFloating: at 60.4 -43.4 h=36.73 sit it stood 0.1 m in from the deck's south edge over the
+#  wall the outside ladder steps over, 0.16 m over the deck, touching nothing - dropped onto the deck in its north-east
+#  corner, clear of the ladder's step-off, still looking east over the lane at the lure)
+place Placeable_Lantern_Metal opcam at 61.1 -40.9 h=37.2 drop
 place Placeable_Lantern_Metal oplure at 104 -24 h=-5 drop scale=1.6
 place TP_Moontown_Barrel04 opscorch at 84 -4 ground scale=0.8
 # (c3 round 4, 11-21 c3z38: at 79 5 it stood on a steep wall, 2 of its corners over a 1.15 m drop - beside the other one now)
