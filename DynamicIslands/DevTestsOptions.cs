@@ -1081,12 +1081,23 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIRayLine", docs: "Dev, in game: what stands along a line on a custom island, for a walk that sticks - at <n> points from <x1> <z1> to <x2> <z2> (m from its middle, as play tests give them) everything a ray down from 40 m meets and its height above the sea: CIRayLine <island> <x1> <z1> <x2> <z2> <n>")]
 		public static void RayLineCommand(string[] args)
 		{
-			IslandWorldState.Entry e = LoadedIsland(args);
-			if (e == null) return;
-			if (args.Length < 6) { Fail("CIRayLine <island> <x1> <z1> <x2> <z2> <n>"); return; }
-			Func<int, float> num = i => float.Parse(args[i], System.Globalization.CultureInfo.InvariantCulture);
-			float x1 = num(1), z1 = num(2), x2 = num(3), z2 = num(4);
-			int n = Mathf.Max(2, Mathf.RoundToInt(num(5)));
+			// (11-28 op4_28321: the island's name may be several words - "Overpass Shoal" - so it is all before the 5 numbers at
+			// the end, as CIReachColumns takes it; and CIReach takes its island away after it, so the island is brought back
+			// like CIReachColumns does - every CIRayLine after a CIReach failed "no loaded island called 'Overpass'")
+			if (args == null || args.Length < 6) { Fail("CIRayLine <island> <x1> <z1> <x2> <z2> <n>"); return; }
+			float[] v = args.Skip(args.Length - 5).Select(x => float.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+			StartTest(RayLineRoutine(string.Join(" ", args.Take(args.Length - 5).ToArray()), v));
+		}
+
+		static IEnumerator RayLineRoutine(string island, float[] v)
+		{
+			IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(i => i.Root != null && ((i.Name ?? "").IndexOf(island, StringComparison.OrdinalIgnoreCase) >= 0
+				|| (i.HostName ?? "").IndexOf(island, StringComparison.OrdinalIgnoreCase) >= 0));
+			if (e == null) yield return ReachFindOrBring(island, "CIRayLine", x => e = x);
+			if (e == null) yield break;
+			Physics.SyncTransforms();
+			float x1 = v[0], z1 = v[1], x2 = v[2], z2 = v[3];
+			int n = Mathf.Max(2, Mathf.RoundToInt(v[4]));
 			for (int i = 0; i < n; i++)
 			{
 				float f = i / (float)(n - 1), x = Mathf.Lerp(x1, x2, f), z = Mathf.Lerp(z1, z2, f);
