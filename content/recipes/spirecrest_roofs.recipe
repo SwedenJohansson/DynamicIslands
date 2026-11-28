@@ -209,10 +209,12 @@ prop viewzone zone.message=From the rubble ring the whole drowned city lies belo
 call sk_ridge x1=58 z1=-30 x2=72 z2=24 h=5 top=8 r=10
 call sk_plants x=65 z=-3 r=16 seed=10161
 call sk_zone x=65 z=-3 al=sc_ridge id=sc_ridge r=7 msg="The rubble ridge. Under the water the drowned rooftops lie in a grid - streets, once. Two masts still stand up here."
-call sk_cave x=-46 z=-4 h=3 yaw=0 al=sc_caverock chest=sc_cavechest
+# (11-28 pfsc: the caves' hills ran 31-37 m out even with their domes at 18 m and raised the sunk street round the towers
+#  1.3-4 m - 30 walls, floors and pillars buried, 2 pillars stood over it: both caves 15 m further out, towers 44+ m off)
+call sk_cave x=-56 z=-16 h=3 yaw=0 al=sc_caverock chest=sc_cavechest
 # (11-26 REACH: the cave's dry dome, uncapped, ran 64 m back - over the scaffold of the jump course: capped at 30 m)
 prop sc_caverock cave.dome=18
-call sk_zone x=-46 z=1 al=sc_cave id=sc_cave r=4 msg="A cave in the rock. Somebody slept here and kept a mast by the door."
+call sk_zone x=-56 z=-11 al=sc_cave id=sc_cave r=4 msg="A cave in the rock. Somebody slept here and kept a mast by the door."
 call sk_ruin x=-8 z=-66 h=3 al=sc_ruin
 call sk_notebox x=-5.5 z=-70.5 yaw=10 al=sc_ruinnote
 # (11-26 REACH: the plane's pad sat in a bowl - Signal Hill's first terrace a cliff on one side, the ring's rubble higher
@@ -227,7 +229,7 @@ call sk_notebox x=-51 z=63.5 yaw=70 al=sc_wrecknote
 # pump-man's strongbox keypad on his ruin's wall
 place Antenna_pole - at 64 9 ground sy=0.5
 place Antenna_pole - at 68 1 ground sy=0.5
-place Antenna_pole - at -52 -2 ground sy=0.5
+place Antenna_pole - at -62 -14 ground sy=0.5
 place Antenna_pole - at -14 -62 ground sy=0.5
 place Antenna_pole - at -3 -61 ground sy=0.5
 place Antenna_pole - at -15 -70 ground sy=0.5
@@ -239,7 +241,7 @@ place Loot_Chest mastbox at -10.5 -70.5 ground sit yaw=180
 # the mountain: a stepped path spirals up from its east foot (-43.76 28) to the summit tower
 call sk_peak x=-64 z=28 h=22 r=22
 call sk_pit x=36 z=-60 h0=-9
-call sk_cave x=24 z=36 h=3 yaw=180 al=sccave2 chest=sccave2chest
+call sk_cave x=32 z=48 h=3 yaw=180 al=sccave2 chest=sccave2chest
 # (rg8a2 11-28, CIFloating: the two caves' pads at h=3 (-46 -4 and 24 36) raised the drowned street round the west,
 #  annex and garden towers to -2..-4.6, burying their lowest rooms up to 4 m (ground probe scgdiag 11-28: -7 after the
 #  street flatten, raised by each sk_cave) - the street is flattened back to -7 at those three towers)
@@ -299,7 +301,7 @@ call treasure x=-41.84 z=34.51 r=12 n=1 seed=24011
 prop treasure24011 treasure.loot=MetalIngot*2;CopperIngot*2;Bolt*2
 call treasure x=-52 z=12 r=14 n=1 seed=24012
 prop treasure24012 treasure.loot=Scrap*4;Nail*10;Plastic*4;Glass*2
-call sk_dark x=24 z=34 h=1 r=7 al=sccave2dark
+call sk_dark x=32 z=46 h=1 r=7 al=sccave2dark
 
 # the drowned building: the telephone exchange, its ground floor 9 m down; the deep chest at the bottom, air on storey 1
 call sk_drowned x=36 z=-60 h0=-9 n=2 w=RT_WallWindowBroken a=scbld cap=0 cal=sccap
