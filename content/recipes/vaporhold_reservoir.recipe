@@ -83,6 +83,9 @@ clear from -4 -20 to -10.5 -13.3 r=2.6 body
 # over its roof (h 1.9 at -10.4 -48.4) across its lower steps - and the lake was a trap again (got to the tower, the chamber, the pump hall: no
 # way back). A second beach on the east side, clear of the intakes and the bridge: from just under the water up to the
 # crest walk (4.5), 0.69 m a step)
+# (vapor 11-28, vr_1 REACH: the lake still a trap - from deep water a step out may stand at most 0.75 m under the
+# surface (the reach grid's swimmer), the beach's first step at -0.4 was too high: one more step under it at -0.93)
+brush flatten at 6.5 -10.60 r=2.2 s=20 frames=200 h=-0.93
 brush flatten at 6.5 -12.50 r=2 s=20 frames=200 h=-0.40
 brush flatten at 6.5 -14.15 r=2 s=20 frames=200 h=0.29
 brush flatten at 6.5 -15.80 r=2 s=20 frames=200 h=0.98
@@ -91,7 +94,7 @@ brush flatten at 6.5 -19.10 r=2 s=20 frames=200 h=2.36
 brush flatten at 6.5 -20.75 r=2 s=20 frames=200 h=3.05
 brush flatten at 6.5 -22.40 r=2 s=20 frames=200 h=3.74
 brush flatten at 6.5 -24.05 r=2 s=20 frames=200 h=4.43
-clear from 6.5 -12.5 to 6.5 -24 r=2.6 body
+clear from 6.5 -10.6 to 6.5 -24 r=2.6 body
 # (agent R 11-01: the column's round top rose through the floor plates as a ring - platform, pillars, roof, valve and
 # ladder 0.3 m higher, the plates now lie on the column's rim)
 place LandmarkLadder_6m - at -2.45 0 h=-1.0 yaw=90
@@ -425,14 +428,16 @@ clear at -64.76 -42.59 r=2.5 only=Pickup_Landmark_GiantClam all
 clear at -39.15 -111.15 r=2.5 only=SeaVine3 all
 clear at -48.67 -102.29 r=2.5 only=SeaVine3_klump all
 
-# (vapor 11-27, cm1vr: CIFloating - a loose rock 3 m over the long intake's mouth cut)
-clear at -8.16 -36.28 r=1.5 only=Pickup_Landmark_Rock all
+# (vapor 11-27, cm1vr: CIFloating - a loose generated rock 3 m over the ground; 11-28 vr_1: CIFloating prints from the
+# land centre, which is -6.07 -9.33 from this recipe's origin - the first clear (-8.16 -36.28) missed it: the lake's west rim)
+clear at -14.24 -45.56 r=1.5 only=Pickup_Landmark_Rock all body
 # (vapor 11-27, cm1vr REACH: the water off the north-east shore (59x71 m) was closed in by a low bank, 0.7-0.9 m over the
 # sea - too high to climb out; its nearest way out was at 33.0 99.1: a notch there, just over the water)
 brush flatten at 33.5 99.1 r=2.0 s=20 frames=600 h=0.35
 brush smooth at 33.5 99.1 r=3 s=4 frames=10
 clear at 33.5 99.1 r=3.0 body
 # (vapor 11-27, cm1vr: the plays visit these - the flood gate opens by the valve, the jump course and the rats' passage)
-island reach.byplay=pump_hall;Spillway perch;Spillway top;vr_service;vr_sump
+# (vapor 11-28, vr_1: the grid now gets into the short intake's sump room - vr_sump left to the grid and its walker)
+island reach.byplay=pump_hall;Spillway perch;Spillway top;vr_service
 
 save Vaporhold Reservoir

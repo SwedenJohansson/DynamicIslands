@@ -14,7 +14,9 @@ picture vr_intake_out 6 9 -22 -8 -5 -36
 picture vr_sump_out -3 6 -42 -10.4 -1 -48.4
 # (w11c: the first joint, 8 m in, has a step - swimming up, the next piece's floor; swimming down, this piece's roof:
 # rise early on the way in, keep low on the way out - the w11b way out, which got through)
-swim -4 -34.5 -1 to -6.5 -35.7 -3 to -10 -37 -5 to -14 -38.5 -3.6 to -17.5 -39.7 -3.3 to -25 -42.5 -1.9 to -32.6 -45.2 -0.5
+# (vapor 11-28, vr_1: the swimmer rose to -1.6 short of the mouth on the way down to it and stuck there - dive first in
+# open water by the tower, then in level at the mouth's depth, as the way out comes)
+swim -4 -34.5 -1 to -4.5 -34.8 -4.5 to -7 -35.9 -5.4 to -10 -37 -5.5 to -14 -38.5 -3.6 to -17.5 -39.7 -3.3 to -25 -42.5 -1.9 to -32.6 -45.2 -0.5
 walk -38.2 -47.3 to -45.2 -49.8 to -50.1 -51.6 to -55.5 -53.6 below=2.5
 air vr_valvechamber here
 picture vr_valve_in -47.6 3.6 -50.7 -56.5 2 -54 light=20
@@ -23,15 +25,8 @@ wait 2
 expect item Rope 2
 walk -55.5 -53.6 to -50.1 -51.6 to -45.2 -49.8 to -38.2 -47.3 below=6
 swim -32.6 -45.2 -0.9 to -25 -42.5 -2.5 to -17.5 -39.7 -4.1 to -10 -37 -5.8 to -6.5 -35.7 -3 to -4 -34.5 -1
-# (vapor 11-27, cm1vr REACH: the grid never got into the short intake - the sump room had no spot reached, the nearest
-# on the hill 12 m over it. The short intake leaves the lake at -8 -46 (kit_st yaw 225, its mouth at the waterline, the
-# floor 8.3 m up at its end): swim in from the lake, walk up the tunnel to the room, breathe, and back out the same way)
-swim -3 -41 -1.5 to -5.5 -43.5 -1 to -7.3 -45.3 -0.4
-walk -7.3 -45.3 to -10.1 -48.1 to -15.1 -53.1 to -22.1 -60.1 to -29.2 -67.2 to -37 -75 to -40 -78 to -42.6 -80.6 below=10
-air vr_sump here
-walk -42.6 -80.6 to -40 -78 to -37 -75 to -29.2 -67.2 to -22.1 -60.1 to -15.1 -53.1 to -10.1 -48.1 to -7.3 -45.3 below=10
-swim -7.3 -45.3 -0.4 to -5.5 -43.5 -1 to -3 -41 -1.5
-
+# (vapor 11-28, vr_1: the walk up the short intake from the water left the tunnel at its mouth and went over the hill;
+# the reach grid now gets into the sump room through the intake itself, so vr_sump is left to the grid and its walker)
 picture vr_service_out -95 10 -56 -82 5 -50
 # (11-16 w11F: the rat waits in its room until a player is in the passage (zone vr_service, 3 m in) - it roamed out
 # of the mouth before; so walk in first, then count it)
