@@ -361,7 +361,10 @@ prop rwtw obj.name=rwtw
 # (TRAP 11-01 N: two hollows in the caves a player drops into, their only side a 1.5 m step: a ladder up each)
 # (named, not `-`: a `-` piece under the cave roof counts as under the ground and is left out)
 # (no posts under them: a post under the cave roof reads as buried; the ladders stand on the hollow floor)
-place Block_Ladder nrwl1 at -15.3 -18.9 h=4.9 yaw=90
+# (11-28 rg8b REACH: nrwl1 had no floor to step off onto at its top - its climb box stood at -16.8 -19.2 against a rock
+#     that runs up to 11-12 m, the step it was for not beside it. The reach check finds no closed-in place left in these
+#     caves (0 traps) without its climb, as nrwl2: left out)
+#place Block_Ladder nrwl1 at -15.3 -18.9 h=4.9 yaw=90
 # (11-11 c1111, REACH: nrwl2's foot at 5.8 was 1.2 m from the nearest floor spot (a hand reaches 1.0): lower, as nrwl1)
 # (11-11 w02fix, REACH columns: the Fungus Hall's floor runs level at 7.5 over x -14.1..-11.1, z -10.3..-8.3 here - no hollow
 #     left (the cave's floor came up over it); the ladder stood 2.4 m under that floor, inside the decor rock. Left out)
@@ -468,6 +471,29 @@ cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=-8,-18,18
 # (the rocks= stood three boulders in the waterline behind the flooded cave's back, seen through the ground from inside
 #     it (the ground check, lib 3.5.1 minor fixes 11-23) - taken out)
 clear at -46.9 -27.4 r=2.5 all only=^BigBoulder1_Low
+# (11-28 rg8b REACH: rw_top and the Survey mast box 'can't get there' again - the nearest reached spot was -13.9 14.2 at
+#     31.5 m, under the west shoulder pad (-11.7 10.7, 34.8): the ground rose 2.2 m in 1.3 m to -13.4 13 and on past a
+#     boulder. A ramp of small pads from that spot round by -15.3 12.3 and -14.0 10.4 up to the pad, about 28 degrees, laid
+#     after the cliffs step so it stays as laid; top down, so each spot keeps the lowest pad over it - no lip at its foot)
+brush flatten at -11.7 10.7 r=1.2 s=20 frames=300 h=34.80
+brush flatten at -12.3 10.6 r=1.2 s=20 frames=300 h=34.62
+brush flatten at -12.8 10.6 r=1.2 s=20 frames=300 h=34.45
+brush flatten at -13.4 10.5 r=1.2 s=20 frames=300 h=34.27
+brush flatten at -14.0 10.4 r=1.2 s=20 frames=300 h=34.10
+brush flatten at -14.3 10.9 r=1.2 s=20 frames=300 h=33.80
+brush flatten at -14.7 11.4 r=1.2 s=20 frames=300 h=33.50
+brush flatten at -15.0 11.8 r=1.2 s=20 frames=300 h=33.20
+brush flatten at -15.3 12.3 r=1.2 s=20 frames=300 h=32.90
+brush flatten at -15.0 12.8 r=1.2 s=20 frames=300 h=32.58
+brush flatten at -14.6 13.2 r=1.2 s=20 frames=300 h=32.25
+brush flatten at -14.2 13.7 r=1.2 s=20 frames=300 h=31.93
+brush flatten at -13.9 14.2 r=1.2 s=20 frames=300 h=31.60
+clear from -13.9 14.2 to -15.3 12.3 r=2 body
+clear from -15.3 12.3 to -14.0 10.4 r=2 body
+clear from -14.0 10.4 to -11.7 10.7 r=2 body
+clear from -13.9 14.2 to -15.3 12.3 r=2 all body above=28 only=Boulder|Rock|Bush
+clear from -15.3 12.3 to -14.0 10.4 r=2 all body above=28 only=Boulder|Rock|Bush
+clear from -14.0 10.4 to -11.7 10.7 r=2 all body above=28 only=Boulder|Rock|Bush
 # (isl-fix-1124, CIFloating: the cliffs step cut the north-west cliff tops down after the second treasure and a red
 #     flower were set there - both hung 1.8 m over the cut ground; a white flower hung 8.5 m up on the west slope. Taken
 #     out; the treasure laid again beside its old spot on the cut ground, its loot as before)
