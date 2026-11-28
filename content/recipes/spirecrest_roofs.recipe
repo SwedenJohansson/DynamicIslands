@@ -150,7 +150,7 @@ call tower x=-24 z=26 h=-7 n=3 a=towers2
 prop towers2 tint.color=#7d8a8c
 prop towers2 tint.amount=0.35
 # (fixA 11-03, REACH: as the coop ladder - moved onto the window panel, a boat landing in front of its foot)
-place LandmarkLadder_6m - at -28.5 21.3 h=-4.2 yaw=180
+# (the ladder itself placed after the street flattens below - see there)
 # (11-28 scp1 CIFloating: the landing 17 cm over its pillars' tops (-0.08) - let down onto them)
 place Block_Floor_Tier3 - at -28.5 20.45 h=0.1
 place Block_Pillar_Tier3 - at -29.1 20.15 h=-7.6
@@ -227,6 +227,9 @@ brush flatten at 0 16 r=6.5 s=20 frames=300 h=-7.03
 brush flatten at 0 0 r=6.5 s=20 frames=300 h=-7.03
 brush flatten at 15 0 r=6.5 s=20 frames=300 h=-7.03
 brush flatten at 0 -16 r=6.5 s=20 frames=300 h=-7.03
+# (11-28 scp1 REACH: the annex ladder placed before these went down 4.6 m with the ground (f285a586's flatten):
+#  its top at -2.0 under the roof, 'no floor to step off onto at its top' - placed after them it stays at h=-4.2)
+place LandmarkLadder_6m - at -28.5 21.3 h=-4.2 yaw=180
 call sk_plants x=-64 z=28 r=24.2 seed=24010
 call sk_reef x=46 z=-54 r=5 seed=24030
 
