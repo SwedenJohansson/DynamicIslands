@@ -1562,8 +1562,12 @@ namespace DynamicIslands.Editor
 						float need = nearG[q];
 						if (!nearKeep[q])
 						{
-							Vector3 gn = d.GetInterpolatedNormal((p.x - o.x) / size.x, (p.z - o.z) / size.z);
-							need = Mathf.Min(need, p.y + (FrameSunk + 0.05f) / Mathf.Max(gn.y, 0.2f));
+							// (11-28 smring2: only a point the ground went down over into the lift band, as before 9e307be7 - raised
+							// back for every buried point, the ground came back up over the faces wherever it had been let down
+							// under them: 451 rays met it in Sinkmarket Floor's frame (42 before), with or without the second pass)
+							float g2; Vector3 gn;
+							if (!FrameLiftable(p, out g2, out gn)) continue;
+							need = Mathf.Min(need, p.y + (FrameSunk + 0.02f) / Mathf.Max(gn.y, 0.2f));
 						}
 						float w00 = (1f - ax) * (1f - az), w10 = ax * (1f - az), w01 = (1f - ax) * az, w11 = ax * az;
 						float now = (heights[cj, ci] * w00 + heights[cj, ci + 1] * w10 + heights[cj + 1, ci] * w01 + heights[cj + 1, ci + 1] * w11) * size.y + o.y;
