@@ -74,11 +74,13 @@ for px -18 -46 -4
 place RT_PillarThick - at $px -1.8 h=-3
 place RT_PillarThick - at $px 1.8 h=-3
 next
-ramp Block_Floor_Tier3 from -14.25 -1.5 3 to -46.25 -1.5 3 len=1.5 top=0
-ramp Block_Floor_Tier3 from -14.25 0 3 to -46.25 0 3 len=1.5 top=0
-ramp Block_Floor_Tier3 from -14.25 1.5 3 to -45.5 1.5 3 len=1.5 top=0
+ramp Block_Floor_Tier3 from -12.75 -1.5 3 to -46.25 -1.5 3 len=1.5 top=0
+ramp Block_Floor_Tier3 from -12.75 0 3 to -46.25 0 3 len=1.5 top=0
+ramp Block_Floor_Tier3 from -12.75 1.5 3 to -45.5 1.5 3 len=1.5 top=0
 ramp Block_Wall_Fence_Tier3 - from -14.25 -2.25 3 to -46.25 -2.25 3 len=1.5 top=-0.1
 ramp Block_Wall_Fence_Tier3 - from -14.25 2.25 3 to -44.75 2.25 3 len=1.5 top=-0.1
+# (11-28 opdiag2_28251, CIReachColumns: the deck's floor started at -14.25 and the booth's at -12.75 - a 1.5 m hole
+#  over a 5.5 m drop at -13.5; the floor now runs on from -12.75, the fences as they were)
 # (REACH 11-02 RA1: the sign faced the broken end, so its only use spot hung in the air past the deck's end - turned to
 # face the road and read from the deck)
 place Note_Sign endsign at -45.5 0 h=3 sit yaw=270
@@ -103,7 +105,10 @@ place Caravan_Yellow_01 wrecks at 19.2 -1 h=3 sit yaw=90
 # (on the overpass deck, lengthways: turned across the deck it stood past both edges, 2026-10-23)
 # (11-26 islandfix, CIReach: in the deck's middle it closed the deck - Road's end past it was never reached; to the south
 #  fence, the north lane open)
-place Van_4 wrecks at -24 -0.9 h=3 sit yaw=0
+# (11-28 opdiag2_28251, CIReachColumns -14..-48: on the deck Van_4 still closed it - the 3.0 floor under it nostand
+#  from z -1 to 3, the north fence beside it - and Road's end was never reached (nearest the channel under the deck,
+#  5.5 m below). The van rolled off instead: in the flooded channel south of the pillars, the deck left open
+place Van_4 wrecks at -30 -5.5 ground yaw=12
 place Caravan_Green_02 wrecks at 52.8 -7 ground yaw=20
 prop cars tint.color=#6b4a32
 prop cars tint.amount=0.55
@@ -158,6 +163,10 @@ call sk_ridge x1=-14 z1=66 x2=18 z2=72 h=5 top=4 r=8
 call sk_plants x=2 z=69 r=16 seed=10261
 call sk_zone x=2 z=69 al=op_ridge id=op_ridge r=7 msg="The old embankment. The road ran along here before the overpass went up; the toll lane is still painted on its stones."
 call sk_cave x=24 z=-42 h=3 yaw=180 al=op_caverock chest=op_cavechest
+# (11-28 opdiag2_28251: the rock's hill (dome 23.6, reach side 42.9 back 65.2) ran north over the sunken lane - its skin
+#  at 1.3 m over the lane at 50 falling to -0.5 at 58, over the vans and the glovebox: two traps under it and no way out
+#  from the glovebox. Capped at 16 m: its foot ends some 30 m north of the rock, the lane 42 m away)
+prop op_caverock cave.dome=16
 call sk_zone x=24 z=-47 al=op_cave id=op_cave r=4 msg="A cave under the rock -a road crew's store, its door long gone."
 call sk_ruin x=66 z=50 h=3 al=op_ruin
 call sk_notebox x=68.5 z=45.5 yaw=10 al=op_ruinnote
@@ -178,6 +187,10 @@ place QuestItemPickup_Tangaroa_Token - at -60 -19 ground
 call sk_peak x=60 z=-42 h=22 r=22
 call sk_pit x=-60 z=42 h0=-10
 call sk_cave x=12 z=42 h=3 yaw=180 al=opcave2 chest=opcave2chest
+# (11-28 opdiag2_28251, CIReachColumns 33..41 45.3: this rock's hill (dome 23.5, reach side 42.2) lay over the drivers'
+#  camp at 40 42 - its skin 12.9 m at 35 falling to 7.3 at 43, 4-10 m over the camp's 3.3 pad: the camp note had no
+#  spot (nearest 9.2 m up the skin). Capped at 12 m: its foot ends some 23 m out, the camp 26-31 m east)
+prop opcave2 cave.dome=12
 call sk_plants x=60 z=-42 r=24.2 seed=24110
 call sk_reef x=-50 z=48 r=5 seed=24130
 
@@ -224,7 +237,10 @@ place Zone_Trigger opsummit at 60 -42 h=37.73
 place ZiplinePath_Landmark opzip at 55.74 -39.02 ground
 zipfrom opzip 55.74 -39.02 ground
 # STORY 10-24s: the Stalker's lure seen once, far off, sweeping the drowned road (from the summit lantern)
-place Placeable_Lantern_Metal opcam at 60.4 -43.4 h=36.73 sit
+# (islandfix 11-28 op5, CIFloating: at 60.4 -43.4 h=36.73 sit it stood 0.1 m in from the deck's south edge over the
+#  wall the outside ladder steps over, 0.16 m over the deck, touching nothing - dropped onto the deck in its north-east
+#  corner, clear of the ladder's step-off, still looking east over the lane at the lure)
+place Placeable_Lantern_Metal opcam at 61.1 -40.9 h=37.2 drop
 place Placeable_Lantern_Metal oplure at 104 -24 h=-5 drop scale=1.6
 place TP_Moontown_Barrel04 opscorch at 84 -4 ground scale=0.8
 # (c3 round 4, 11-21 c3z38: at 79 5 it stood on a steep wall, 2 of its corners over a 1.15 m drop - beside the other one now)

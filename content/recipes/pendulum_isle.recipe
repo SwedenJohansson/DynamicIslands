@@ -84,6 +84,11 @@ call ar_ruin x=-25 z=26 h=5 yaw=0 w=3 d=2 al=weatherstation
 # (cave at x 48 on a 6 m pad, not 62 on 4: the bear rock reaches 5.5 m under its pad and 15 m east of x; out at the
 # east rim the flying underside is too thin to hide it - it hung below the island as a light slab)
 call ar_cave x=48 z=6 h=6 yaw=180 al=watchrock chest=watchchest
+# (11-28 pdcol_18663, CIReachColumns 10..24 -1: the den's cave hill (dome 23.6 m, reach side 42 back 64 front 19) lay
+#  over the whole low end - skin at 5.3 m over the shed (x 10) rising to 12.2 at the shaft (x 24), the ground under it
+#  closed: zone low_end, the shaft warning and the shed's chest had no spot. Its reach capped at 16 m: the hill ends
+#  at x 32, 7 m east of the shaft)
+prop watchrock cave.dome=16
 call ar_plane x=20 z=-28 h=5 yaw=200 al=surveyplane crate=planecrate
 # --- OLDER4 10-26 terrain: the Iron Ridge (north, peak 12 m), Needle Knoll (south-west, 16 m) and its trail, the compass
 # garden's pad (south-east) --------------------------------------------------------------------------------------------
@@ -138,9 +143,19 @@ zipto zipdown 21 1
 place Zone_Trigger lowzone at 22 0 ground
 # (11-26 islandfix, CIReach: at 20 -3 the store and the zipline's far floor closed the way down from the top to the low
 #  end - only the zipline came in, nothing walked to the shaft or its warning; the store on the top's open south side)
-store pendshop at 13 -5 ground
-place Note_Sign shaftwarning at 24.5 2.5 ground sit yaw=270
-place TangaroaHatchRoom_Hatch shaft at 25 0 ground sit yaw=90
+#  (11-27 pdfx2, CIReach on 6a6f087a: at 13 -5 Raft's trading post still stood over the new steps and the shed - the walk
+#  got no nearer the low end than its roof, 17.9 -1.0 at 8.8 m, and the shed's chest had no spot; the store off the walk now,
+#  south of the top on its own pad at the top's height, level with the top all the way to it)
+brush flatten from 0 -12 to 0 -27 r=8 s=25 frames=400 h=5
+brush smooth from 0 -14 to 0 -27 r=9 s=4 frames=20
+clear at 0 -27 r=8
+store pendshop at 0 -27 ground
+# (11-28 pdcol2_5915, CIReach: with the den's dome at 16 its hill's foot still runs west over the low end - its skin
+#  stands 0.7-1.3 m over the ground from x 21 (4.8 at x 24, the ground 3.5): the warning at 24.5 and the hatch at 25 sat
+#  under it, the walk on the skin at 5.1 1.8 m off and no spot to read it from. Both moved west onto the steps, where
+#  the ground lies over the skin (x 18-19.5: ground 4.5, skin 4.0-4.1 under it)
+place Note_Sign shaftwarning at 18.0 2.6 ground sit yaw=270
+place TangaroaHatchRoom_Hatch shaft at 19.4 0 ground sit yaw=90
 # (the keel zone hangs in the open air beyond the south coast at the water line: under it a flying island leaves out
 # everything below its own sea level, so it cannot sit under the island; OLDER4 10-26: 0 46 -> 0 -76, past the new coast)
 place Zone_Trigger keelzone at 0 -76 h=0
