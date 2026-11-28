@@ -1169,7 +1169,9 @@ namespace DynamicIslands.Editor
 				}
 				// (11-28 isl_l: and the ground under the faces turned up let down again - the points lifted onto it after the first
 				// pass laid their faces 1-3 cm over it, 38 rays on Sinkmarket Floor's legs, CIFrameRing; the rim kept under it)
-				GroundSunkUnderFrames += SinkGroundUnder(wv, st, FrameUpPoints(wv, st), tucked);
+				// (11-28 smring: not again - the second pass, the rim kept, put the ground back on the faces: 451 rays met it in
+				// Sinkmarket Floor's frame, and its rim stood 15 cm out on 1.23 m, CIFrameRim)
+				// GroundSunkUnderFrames += SinkGroundUnder(wv, st, FrameUpPoints(wv, st), tucked);
 				var rimOut = new List<bool>(st.Length);
 				var nv =new List<Vector3>(st.Length); var nn = new List<Vector3>(st.Length); var nu = new List<Vector2>(st.Length); var tri = new List<int>(st.Length);
 				for (int t = 0; t + 2 < st.Length; t += 3)
