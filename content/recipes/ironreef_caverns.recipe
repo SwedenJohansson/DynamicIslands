@@ -55,6 +55,9 @@ brush flatten from 0 0 to 0 10 r=9 s=20 frames=30
 clear from 0 6 to 0 -34 r=8
 brush sand from 0 2 to 0 -34 r=7 s=10 frames=40
 place BalboaCave_Bear irongatecave at 1.2 -18.4 y=5.2 scale=1.15
+# its hill keeps the old (wet) foot: the dry den foot (11-08) and the wider hill grid spread the
+# skin over the shoulder road, the gully and tunnel mouth A (fo11/fx1b: walks stuck on CaveSkin) - fo2 11-19
+prop irongatecave cave.foot=wet
 # the timbered portal at the mouth, rails along the floor, ore carts, lanterns on crates, veins of iron and copper
 place Relay_support_beam_wood - at -4.2 -1 rot=0,0,-90 sx=0.75
 place Relay_support_beam_wood - at 6.6 -1 rot=0,0,-90 sx=0.75
@@ -68,12 +71,14 @@ place VP_Wagon02 - at 1 -19 sit
 place VP_Wagon02 - at 5.6 -14 sit tilt=75 yaw=20
 # (the crates on the mine's floor, along the passage: at x -3.2 / 5.4 they stood on its steep banks and were set down
 # into them, buried, CIGroundIslands)
+# (the lanterns sat 0.45 m over the ground at their own spot - on the slope a crate goes down to the lowest ground under
+# it, and the first lantern hung 0.9 m over its crate, CIFloating fix-open 11-19: dropped onto the crates)
 place Crate_Big_01 - at -1.8 -6 sit yaw=95
-place Placeable_Lantern_Metal - at -1.8 -6 y=0.45 sit
+place Placeable_Lantern_Metal - at -1.8 -6 y=1 sit drop
 place Crate_Big_01 - at -1.8 -16 sit yaw=90
-place Placeable_Lantern_Metal - at -1.8 -16 y=0.45 sit
+place Placeable_Lantern_Metal - at -1.8 -16 y=1 sit drop
 place Crate_Big_01 - at -1.8 -25 sit yaw=80
-place Placeable_Lantern_Metal - at -1.8 -25 y=0.45 sit
+place Placeable_Lantern_Metal - at -1.8 -25 y=1 sit drop
 place "Pickup_Landmark_Iron 1" - at -5 -11 sit
 place "Pickup_Landmark_Iron 2" - at 7.6 -22 sit
 place "Pickup_Landmark_Copper 1" - at -5.2 -18 sit
@@ -101,6 +106,13 @@ clear from 0 6 to 0 -16 r=6
 brush sand from 0 2 to 0 -16 r=5 s=10 frames=25
 place BalboaCave_Vines vinecrawl at -1.2 -28.6 y=5.5 scale=1.3
 pop
+# (c3z43 11-21: a 1.8 m gap under the Vine Crawl rock's rim at its back corner, north of it: the rock's underside 30.5 m,
+# the hill's ground 28.3 - a rock mound up under it, smoothed and laid again on top)
+brush flatten at 26.8 11.8 r=4 s=20 frames=300 h=31
+brush smooth at 26.8 11.8 r=6 s=4 frames=20
+brush flatten at 26.8 11.8 r=3 s=20 frames=300 h=31
+brush rock at 26.8 11.8 r=5 s=20 frames=30
+clear at 26.8 11.8 r=5
 # (the shell's north side stood over the slope there, its rim 11 m off the ground at 30 15 - the ground brought up
 # under it, CIGroundIslands, 2026-10-12)
 brush flatten at 31 17.5 r=5 s=20 frames=40 h=29
@@ -108,6 +120,11 @@ brush flatten at 31 17.5 r=5 s=20 frames=40 h=29
 # 90 degrees - X7, 2026-10-13)
 brush flatten from 30 17.5 to 26.4 13 r=3.5 s=20 frames=40 h=31
 brush flatten from 27.2 8.6 to 26.4 11 r=3.5 s=20 frames=40 h=31
+# (c3z52 11-21: still "cave rim off the ground 1.9 m" - at the rock's piece point -1.9 -1.8 0.9, here 24.6 7.7 (the
+#     strokes above were placed from a misread spot, 2-4 m east): the rock's underside 30.5 m, the hill 28.2. A small mound
+#     just outside the rim, out along its way out (north), not under the shell)
+brush flatten at 24.88 8.83 r=1 s=20 frames=150 h=30.2
+brush rock at 24.88 8.83 r=1.8 s=10 frames=30
 # (and on round the NE side to the rim at 23.4 5.1 and south to 22 -1, still 2.5 m off the slope - X7, 2026-10-17)
 brush flatten from 27.2 8.6 to 22.2 5 r=3.5 s=20 frames=40 h=34.5
 brush flatten from 22.2 5 to 22 -1 r=3.5 s=20 frames=40 h=34.5
@@ -133,12 +150,18 @@ clear from 0 10 to 0 -40 r=10
 brush sand from 0 0 to 0 -40 r=9 s=10 frames=40
 brush rock from 0 -8 to 0 -38 r=6 s=10 frames=30
 place BalboaCave_DeadEnd bearhallcave at -1.7 -20.5 y=9.4 scale=1.25
+# (fo2 11-19: the sand at its mouth lay a step under its floor (4.6 m) - the walk into the hall stuck at the lip.
+# cave.foot=dry rounds it up; dome=6 keeps the hill off the north shore and the Vine Crawl (uncapped it spread 50+ m))
+prop bearhallcave cave.foot=dry
+prop bearhallcave cave.dome=6
 place BigBoulder2_Low rockfall at -3.8 -1.5 sit scale=0.6 yaw=10
 place BigBoulder2_Low rockfall at 3.8 -1.2 sit scale=0.6 yaw=-15
 # (10-25: the two small rockfall stones sunk by what they hung over the dug floor - drop alone left them up to 3.9 m up)
 place SmallBoulder2 rockfall at -1 1.5 sit drop y=-3.9 yaw=80
 place SmallBoulder3 rockfall at 4.5 2 sit drop y=-1.8 yaw=30
-place SmallBoulder4 rockface at 0.8 2.6 sit
+# (bugfix 11-25, CIGroundIslands: the rock face stood 1.46 m over the world's dug floor as the two small stones did - sunk
+# the same way)
+place SmallBoulder4 rockface at 0.8 2.6 sit drop y=-1.45
 place Note_Sign rocksign at -6.5 3.5 yaw=200
 place Zone_Trigger bearhall at 0 -10 y=1.5
 # (in front of the rockfall, outside the hall: a quest step)
@@ -541,7 +564,7 @@ place Loot_ChestSmall irdrift at -24.88 -20.05 h=20.5 drop yaw=174
 note irdrift Drift 4 tin | The last shift's tin, left when the floor went - and the foreman's machete, for the vines in the side gallery. Whoever reads this: you walked the planks. Good.
 loot irdrift Machete*1;MetalIngot*2;Rope*2;Bolt*1
 prop irdrift loot.refill=0
-# cavecheck inside irti irwarn irdrift irspike1 irspike2 irreef_vines
+# cavecheck inside irti irwarn irdrift irspike1 irspike2 irreef_vines bratsB bratsC bratzone
 # (11-05) Rats in the Reef Workings (the user: "in some caves there can be a monster, like a rat"): one in tunnel B (a pair's ring put one out at the mouth) and
 # one in tunnel C (a pair's ring, 3 m out, put one on the hill over the narrow tunnel), on the dug floor, 13 m and more from the drift's sign, tin and spikes, the vines and the titanium.
 # The hall has three ways in (A, B, C), so neither pair is the only way to anything. No respawn.
@@ -556,6 +579,14 @@ prop irdrift loot.refill=0
 place Creature_Rat bratsB at -25.8 -33.4 h=19.3
 prop bratsB creature.count=1
 prop bratsB creature.respawn=0
+# (FZ7, fix-open 11-19: in 1 of 2 runs the B rat still roamed out of the open mouth within 20 s - a rat roams round its
+# spot. It now waits in the hall end until a player is in tunnel B, 2.5 m past the open stretch (as Vaporhold's vr_service))
+# (the zone round the tunnel's floor there, 16.5 m over the sea - at the hall's 19.4 a player in the tunnel stood 2.9 m
+# under its middle, outside its 2 m, and the rat never came, fo10)
+place Zone_Trigger bratzone at -30.4 -40.2 h=17.2
+prop bratzone zone.id=ir_tunnelb
+prop bratzone zone.radius=2.5
+prop bratsB creature.zone=ir_tunnelb
 place Creature_Rat bratsC at -21.5 -30.2 h=19.6
 prop bratsC creature.count=1
 prop bratsC creature.respawn=0
@@ -570,4 +601,19 @@ clear at 8.76 12.65 r=1 only=SmallBoulder4
 clear at 27.53 -30.38 r=1 only=SmallBoulder4
 clear at -20.88 5.62 r=1 only=SmallBoulder3
 clear at 83.05 -57.57 r=1.5 only=BigBoulder2_Low
+# (more left in the air, CIFloating fix-open 11-19: by the Drowned Shaft, where its channel was lowered past the cleared
+# strip - plants and stones 12-17 m over the new ground - and two stones on the mountain's east side; CIFloating
+# prints points from the land centre: recipe point = printed + the centre's offset 1.91 0.24 that CIRecipe prints, fo3)
+clear at -62.92 -19.35 r=1.5 only=SmallBoulder1
+clear at -58.03 -20.22 r=1.5 only=BigBoulder1_Low
+clear at -58.47 -27.64 r=1.5 only=Bush
+clear at -55.20 -26.25 r=1.5 only=Bush
+clear at -58.98 -17.66 r=1.5 only=Bush2
+clear at -61.06 -16.54 r=1.5 only=Banana_Bush_2
+clear at 22.75 6.04 r=1.5 only=SmallBoulder4
+clear at 26.86 14.99 r=1.5 only=BigBoulder1_Low
+clear at 27.77 -4.05 r=1.5 only=Bush
+# (c3z43 11-21, CIGroundIslands: a generated bamboo on a drop's edge and a bush 9 m over the ground on the mountain)
+clear at -66.28 -19.72 r=2 all only=^Bamboo
+clear at -7.45 -20.69 r=2 all only=^Bush2
 save Ironreef Caverns

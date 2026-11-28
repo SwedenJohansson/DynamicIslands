@@ -79,6 +79,8 @@ call zipdeck y=2.6
 pop
 place ZiplinePath_Landmark zip23 at -2.03 12.78 h=8.07
 zipto zip23 8 12
+# (c3 round 8, 11-21 c3z44: 0.36 m over at 4.9 12.2, 3 m from the far end: cleared along the line)
+clear from -7.75 13.76 to 8 12 r=3 body
 push at 8 14 h=4
 call stilt_hut y=2.6
 place Note_Sign purpose at 2.25 3.9 y=2.7 sit
@@ -357,4 +359,11 @@ prop verdictspread obj.name=verdictspread
 # (box agent 10-25: names for the guide pictures' snap points)
 prop hhbox obj.name=hhbox
 prop hhwreck obj.name=hhwreck
+# (lib 3.5.1 minor fixes 11-23: the east cave was still seen through from beside its mouth - 2 looks from 58.3 -17.4,
+#     5.6 m up, into the shell's back 26 m on - a big boulder on that very spot, as at Shelter Atoll's mouth, RF2)
+place SmallBoulder3 - at 58.3 -17.4 ground y=-0.3 sit scale=1.7 yaw=20
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save The Heart of Green

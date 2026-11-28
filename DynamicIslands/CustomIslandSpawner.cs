@@ -74,6 +74,9 @@ namespace DynamicIslands.Editor
 		public const string TypePrefix = "type:";
 		static readonly List<KeyValuePair<string, float>> poolLines = new List<KeyValuePair<string, float>>();
 		static DateTime poolFileTime;
+		/// <summary>The number settings as built in (before spawnpool.txt was first read): a line taken out of the file while Raft runs
+		/// goes back to this, not the value of the line read before (UT2, 11-25).</summary>
+		static Dictionary<string, float> builtInNumbers;
 
 		/// <summary>Automatic spawning in the current world (stored in the world's island list).</summary>
 		public static bool Enabled = true;
@@ -673,9 +676,16 @@ namespace DynamicIslands.Editor
 			if (radiusFailedAt.TryGetValue(name, out failedAt) && Time.unscaledTime - failedAt < 30f) return -1f;
 			try
 			{
-				IslandFile file = IslandFile.Load(IslandSpawner.PathFor(name));
-				r = IslandSpawner.LandRadius(file);
-				elevationCache[name] = file.Elevation;
+				string path = IslandSpawner.PathFor(name);
+				// (a file not here yet - an island waiting for its download, one the host's world has and this PC doesn't - is no
+				// fault: it logged "Could not read island ... Could not find file" every 30 s, mphostswap -nojoin 11-25)
+				if (!File.Exists(path)) r = -1f;
+				else
+				{
+					IslandFile file = IslandFile.Load(path);
+					r = IslandSpawner.LandRadius(file);
+					elevationCache[name] = file.Elevation;
+				}
 			}
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Could not read island '" + name + "': " + ex.Message); r = -1; }
 			if (r >= 0f) { radiusCache[name] = r; radiusFailedAt.Remove(name); }
@@ -890,14 +900,21 @@ namespace DynamicIslands.Editor
 			{
 				if (WorldRandomizer.IsExtras(e) || !string.Equals(e.HostName ?? e.Name, name, StringComparison.OrdinalIgnoreCase)) continue;
 				if (e.Root != null || e.Loading || e.WaitingForFile) return true;
-				if (HasQuest(e) && ReturningIslands.Finished(e)) return true;
+				// (Finished first: it says no without reading the island's file for one never reached - HasQuest reads the whole
+				// file, every pool island's on a new session's first pick: 1.6-2.4 s with 150 islands, IM43 11-25)
+				if (ReturningIslands.Finished(e) && HasQuest(e)) return true;
 			}
 			return false;
 		}
 
 		/// <summary>Whether the island has a main quest (steps): finished, it never comes again by chance, notes left or not.
 		/// Without one it always may (ReturningIslands.Finished still counts it done once reached: no dot, no timed return).</summary>
-		static bool HasQuest(IslandWorldState.Entry e) { return IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count > 0; }
+		static bool HasQuest(IslandWorldState.Entry e)
+		{
+			// (a loaded one from its settings; else from a cache kept on disk, as TooEarly: a new session's first pick read every
+			// finished island's whole file)
+			return e.Root != null ? IslandQuest.From(IslandCache.PropsOf(e)).Steps.Count > 0 : IslandCache.HasQuestSteps(e.Name);
+		}
 
 		/// <summary>Dev tests: the next pick, instead of a random one.</summary>
 		internal static string ForceNextPick;
@@ -1037,6 +1054,14 @@ type:sunken 0.2
 				}
 				DateTime t = File.GetLastWriteTimeUtc(PoolPath);
 				if (!force && t == poolFileTime) return;
+				// (edited while Raft runs - TODO 6b: a file saved under a second ago waits for the next tick, so a save still
+				// going on is not read half-way; and it is read in full before anything changes, so a file another program
+				// holds open keeps the values read before and is tried again, instead of an empty pool until its next change)
+				double age = (DateTime.UtcNow - t).TotalSeconds;
+				if (!force && age >= 0 && age < 1) return;
+				if (builtInNumbers == null) builtInNumbers = NumberKeys.ToDictionary(k => k.ToLowerInvariant(), k => ValueOf(k));
+				string[] read = File.ReadAllLines(PoolPath);
+				foreach (var kv in builtInNumbers) SetValue(kv.Key, kv.Value);
 				poolFileTime = t;
 				// (islands may have been re-saved too; an island still being generated has no file yet - its estimated size and
 				// height stay, or it was spaced as unreadable and never moved clear once it came out bigger)
@@ -1044,7 +1069,7 @@ type:sunken 0.2
 				foreach (string n in elevationCache.Keys.ToList()) if (File.Exists(IslandSpawner.PathFor(n))) elevationCache.Remove(n);
 
 				poolLines.Clear();
-				foreach (string raw in File.ReadAllLines(PoolPath))
+				foreach (string raw in read)
 				{
 					string line = raw.Trim();
 					if (line.Length == 0 || line.StartsWith("#")) continue;

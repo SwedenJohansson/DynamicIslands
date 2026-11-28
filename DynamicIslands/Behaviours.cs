@@ -66,7 +66,13 @@ namespace DynamicIslands.Editor
 			string[] v = ObjectProps.Get(p, Move).Split(',');
 			float x, y, z;
 			if (v.Length == 3 && float.TryParse(v[0], NumberStyles.Float, CultureInfo.InvariantCulture, out x) && float.TryParse(v[1], NumberStyles.Float, CultureInfo.InvariantCulture, out y) &&
-				float.TryParse(v[2], NumberStyles.Float, CultureInfo.InvariantCulture, out z)) return new Vector3(x, y, z);
+				float.TryParse(v[2], NumberStyles.Float, CultureInfo.InvariantCulture, out z))
+			{
+				// (finite and at most 1 km: "NaN" or "3e38" moved a carried player there - audit 2026-10-06)
+				var o = new Vector3(x, y, z);
+				if (float.IsNaN(o.x) || float.IsNaN(o.y) || float.IsNaN(o.z) || float.IsInfinity(o.x) || float.IsInfinity(o.y) || float.IsInfinity(o.z)) return Vector3.zero;
+				return Vector3.ClampMagnitude(o, 1000f);
+			}
 			return Vector3.zero;
 		}
 
@@ -368,6 +374,8 @@ namespace DynamicIslands.Editor
 		static float offset;
 		static bool synced;
 		static int frame = -1;
+		static float lastFollow;
+		static Network_Water lastWater;
 
 		/// <summary>Seconds on the shared clock.</summary>
 		public static float Now { get { Follow(); return Time.time + offset; } }
@@ -380,13 +388,20 @@ namespace DynamicIslands.Editor
 			if (frame == Time.frameCount) return;
 			frame = Time.frameCount;
 			Network_Water water = ComponentManager<Network_Water>.Value;
-			if (water == null) { synced = false; offset = 0f; return; }
+			if (water == null) { synced = false; offset = 0f; lastWater = null; return; }
+			// (another world - left and loaded again without a read at the main menu - starts over: G23 11-25, the host kept the
+			// last world's offset, 1.79 s off, under the jump limit)
+			if (water != lastWater) { lastWater = water; synced = false; }
 			float target;
 			try { target = water.WaterTime - Time.time; }
 			catch { return; }
+			// (eased by the time since the last read, not by one frame's: read now and then, as only a test or a far mover does,
+			// a frame's step barely moved it)
+			float since = Time.unscaledTime - lastFollow;
+			lastFollow = Time.unscaledTime;
 			// A new game or a big correction: jump there; small differences (network delay) are eased out
 			if (!synced || Mathf.Abs(target - offset) > 2f) offset = target;
-			else offset = Mathf.Lerp(offset, target, Mathf.Min(1f, Time.deltaTime * 0.5f));
+			else offset = Mathf.Lerp(offset, target, Mathf.Clamp01(since * 0.5f));
 			synced = true;
 		}
 	}
@@ -582,6 +597,7 @@ namespace DynamicIslands.Editor
 				if (b != null && !b.Loop) b.Snap(open);
 			}
 			arrived.Remove(e.Id); arriveNotYet.Remove(e.Id);
+			WatchQueued(e);
 			try { ResumePending(e); } catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Actions after a wait on '" + e.HostName + "': " + ex.Message); }
 		}
 
@@ -710,7 +726,8 @@ namespace DynamicIslands.Editor
 				foreach (IGrouping<string, ObjCheck> g in passed.Where(x => x.IsItem && !x.Not && x.Target.Length > 0).GroupBy(x => x.Target, StringComparer.OrdinalIgnoreCase))
 				{
 					if (g.Count() < 2) continue;
-					int need = Math.Max(g.Where(x => x.Kind == "take").Sum(x => x.Count), g.Max(x => x.Count));
+					// (added up as long: two "take|Plank|2000000000" overflowed, and the event broke - audit 2026-10-06)
+					int need = (int)Math.Min(int.MaxValue, Math.Max(g.Where(x => x.Kind == "take").Sum(x => (long)x.Count), g.Max(x => x.Count)));
 					int have = StoryItems.IsStory(g.Key) ? StoryBook.Count(StoryItems.IdOf(g.Key)) : inv != null ? inv.GetItemCount(g.Key) : 0;
 					if (have < need) { LastFailedCheck = "the player has " + need + " × " + (StoryItems.IsStory(g.Key) ? StoryItems.Label(g.Key) : ContentCatalog.ItemLabel(g.Key)); return false; }
 				}
@@ -864,33 +881,152 @@ namespace DynamicIslands.Editor
 			signalLocks.Clear();
 			sharedAt.Clear();
 			LastTaken.Clear();
-			notLoadedYet.Clear();
+			queuedIslands.Clear();
+			queuedFrom.Clear();
+			toldFull.Clear();
 		}
 
-		/// <summary>Host (questfix 11-15): players' events of an island not built here yet (its file still coming, or still
-		/// loading), done once it is - their shared part (a quest step, a door, a signal) was lost before. At most 64,
-		/// each kept 10 minutes; a player who waits for the answer still gets the "otherwise" part at once (they may try
-		/// again).</summary>
-		class NotLoaded { public int Island, Index; public string Ev; public Network_UserId? From; public int Seed; public float At; }
-		static readonly List<NotLoaded> notLoadedYet = new List<NotLoaded>();
-		internal static int NotLoadedCount { get { return notLoadedYet.Count; } }
-		internal static int NotLoadedDone;
+		/// <summary>Host (questfix 11-15; quest softlock audit M5 11-23): players' events of an island not built here (its file
+		/// still coming, still loading, or far from the host), done once it is - their shared part (a quest step, a door, a
+		/// signal) was lost before. Kept in the island's saved state, so a save and quit or a long wait loses none (before:
+		/// 64 in all, 10 minutes, this session only - a player's last step far from the host was lost for good): QueuedBase +
+		/// a running number, Yield = the object, Day = the event's code (QueuedCode). At most MaxQueued per island (a warning
+		/// past it); the same event of the same object from the same player once. A player who waits for the answer still
+		/// gets the "otherwise" part at once (they may try again).</summary>
+		public const int QueuedBase = 0xC00000;
+		internal const int MaxQueued = 256;
+		const int QueuedNot = 0x10000, QueuedAnswer = 0x1000, QueuedSkip = 0x20000;
+		/// <summary>The events a queued key names by their place (append only: saved worlds keep the places).</summary>
+		static readonly string[] QueuedEvents = { "use", "enter", "read", "open", "defeat", LaserBeam.Event, BossPhases.Event, MechFeatures.StackEvent, "arrive", "quest",
+			Islanders.TalkEvent, Islanders.ChoicePrefix + "1", Islanders.ChoicePrefix + "2", Islanders.ChoicePrefix + "3", Islanders.ChoicePrefix + "4", Collectibles.SetEvent,
+			Lights.LitEvent, Lights.UnlitEvent, Lights.AllLitEvent, OrderPuzzle.SolvedEvent, OrderPuzzle.WrongEvent, GapWorld.CrowdEvent, GapWorld.CrowdLeftEvent, TradeStand.TradeEvent };
+		/// <summary>What the saved state can't hold - the player who sent it, their random pick, the event's name - this session
+		/// only (by island &lt;&lt; 32 | key); after a save and quit a queued event runs as the host's player's.</summary>
+		class QueuedFrom { public Network_UserId? From; public int Seed; public string Ev; }
+		static readonly Dictionary<long, QueuedFrom> queuedFrom = new Dictionary<long, QueuedFrom>();
+		/// <summary>Host: the islands that have queued events (looked at every half second while they do).</summary>
+		static readonly HashSet<int> queuedIslands = new HashSet<int>();
+		static readonly HashSet<int> toldFull = new HashSet<int>();
+		/// <summary>Host: queued events done, and ones left out because their island had MaxQueued (the CI checks read them).</summary>
+		internal static int NotLoadedDone, QueueFull;
+
+		internal static bool IsQueuedKey(int key) { return key >= QueuedBase && key < QueuedBase + 0x100000; }
+		static long QueuedId(int island, int key) { return ((long)island << 32) | (uint)key; }
+		static ulong Who(Network_UserId? u) { return u.HasValue ? u.Value.Id : 0UL; }
+
+		/// <summary>Host: players' events waiting for their islands, in every island's state.</summary>
+		internal static int NotLoadedCount { get { return IslandWorldState.Islands.Sum(e => e.State.Keys.Count(IsQueuedKey)); } }
+
+		/// <summary>A queued event's code: its place in QueuedEvents (QueuedAnswer + n: answer n; + QueuedNot: its "otherwise");
+		/// -1: one the save doesn't know (kept this session only).</summary>
+		internal static int QueuedCode(string ev)
+		{
+			string bare = (ev ?? "").TrimEnd('!');
+			int not = ev != null && ev.EndsWith("!") ? QueuedNot : 0, n = Array.IndexOf(QueuedEvents, bare), a;
+			if (n >= 0) return n + not;
+			if (bare.StartsWith(Islanders.AnswerPrefix) && int.TryParse(bare.Substring(Islanders.AnswerPrefix.Length), out a) && a > 0 && a < QueuedAnswer) return QueuedAnswer + a + not;
+			return -1;
+		}
+
+		internal static string QueuedEventOf(int code)
+		{
+			if (code < 0) return null;
+			string not = (code & QueuedNot) != 0 ? "!" : "";
+			code &= QueuedNot - 1;
+			if (code < QueuedEvents.Length) return QueuedEvents[code] + not;
+			if (code > QueuedAnswer && code < 2 * QueuedAnswer) return Islanders.AnswerPrefix + (code - QueuedAnswer) + not;
+			return null;
+		}
+
+		/// <summary>Host: a quest step skipped on an island not built here - its note's "read", its zone's "enter" or its
+		/// islander's "talk" (QuestSkip.ReplayLoaded) - kept in the island's saved state as a player's event is, and done
+		/// for the host's player once the island loads (quest softlock audit M8).</summary>
+		internal static void QueueSkipped(IslandWorldState.Entry e, int index, string ev)
+		{
+			if (e != null && Raft_Network.IsHost && QueuedCode(ev) >= 0) Queue(e, index, ev, null, QueuedSkip);
+		}
+
+		/// <summary>Host: a player's event kept until its island is built here (in its saved state).</summary>
+		static void Queue(IslandWorldState.Entry e, int index, string ev, Network_UserId? from, int flags = 0)
+		{
+			int code = QueuedCode(ev);
+			if (code >= 0) code |= flags;
+			List<KeyValuePair<int, ObjectState>> keys = e.State.Where(k => IsQueuedKey(k.Key)).OrderBy(k => k.Key).ToList();
+			QueuedFrom q;
+			foreach (KeyValuePair<int, ObjectState> k in keys)
+			{
+				if (k.Value.Yield != index || k.Value.Day != code) continue;
+				bool known = queuedFrom.TryGetValue(QueuedId(e.Id, k.Key), out q);
+				if ((code >= 0 || (known && q.Ev == ev)) && Who(known ? q.From : null) == Who(from))
+				{
+					Debug.Log("[CUSTOM ISLANDS] A player's '" + ev + "' on '" + e.HostName + "' waits for the island already");
+					return;
+				}
+			}
+			if (keys.Count >= MaxQueued)
+			{
+				QueueFull++;
+				if (toldFull.Add(e.Id))
+					Debug.LogWarning("[CUSTOM ISLANDS] '" + e.HostName + "': " + MaxQueued + " players' events already wait for the island to load on the host - more are left out (a player's '" + ev + "')");
+				return;
+			}
+			if (code < 0) Debug.LogWarning("[CUSTOM ISLANDS] '" + e.HostName + "': a player's '" + ev + "' waits for the island to load on the host, this session only (the save doesn't know the event)");
+			int seq = keys.Count == 0 ? 0 : keys[keys.Count - 1].Key - QueuedBase + 1;
+			if (seq >= 0x100000)
+			{
+				// (the running numbers used up: numbered again from 0, in order)
+				var moved = keys.Select(k => { QueuedFrom f; queuedFrom.TryGetValue(QueuedId(e.Id, k.Key), out f); return f; }).ToList();
+				foreach (KeyValuePair<int, ObjectState> k in keys) { e.State.Remove(k.Key); queuedFrom.Remove(QueuedId(e.Id, k.Key)); }
+				for (int i = 0; i < keys.Count; i++)
+				{
+					e.State[QueuedBase + i] = keys[i].Value;
+					if (moved[i] != null) queuedFrom[QueuedId(e.Id, QueuedBase + i)] = moved[i];
+				}
+				seq = keys.Count;
+			}
+			int key = QueuedBase + seq;
+			e.State[key] = new ObjectState { Active = true, Yield = index, Day = code };
+			queuedFrom[QueuedId(e.Id, key)] = new QueuedFrom { From = from, Seed = GapBehaviours.Seed, Ev = ev };
+			queuedIslands.Add(e.Id);
+		}
+
+		/// <summary>Host, an island loaded (or a saved world opened): its queued events are looked at.</summary>
+		static void WatchQueued(IslandWorldState.Entry e)
+		{
+			if (Raft_Network.IsHost && e != null && e.State.Keys.Any(IsQueuedKey)) queuedIslands.Add(e.Id);
+		}
 
 		static void DoNotLoadedYet()
 		{
-			if (notLoadedYet.Count == 0 || !Raft_Network.IsHost) return;
-			foreach (NotLoaded w in notLoadedYet.ToList())
+			if (queuedIslands.Count == 0 || !Raft_Network.IsHost) return;
+			foreach (int id in queuedIslands.ToList())
 			{
-				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == w.Island);
-				if (e == null || Time.unscaledTime - w.At > 600f) { notLoadedYet.Remove(w); continue; }
+				IslandWorldState.Entry e = IslandWorldState.Islands.FirstOrDefault(x => x.Id == id);
+				if (e == null) { queuedIslands.Remove(id); foreach (long k in queuedFrom.Keys.Where(k => (int)(k >> 32) == id).ToList()) queuedFrom.Remove(k); continue; }
 				if (e.Root == null) continue;
-				notLoadedYet.Remove(w);
-				NotLoadedDone++;
-				Debug.Log("[CUSTOM ISLANDS] A player's '" + w.Ev + "' on '" + e.HostName + "' is done now the island is loaded on the host");
-				int seed = GapBehaviours.Seed;
-				GapBehaviours.Seed = w.Seed;
-				try { OnEventMessage(w.Island, w.Index, w.Ev, false, w.From, false); }
-				finally { GapBehaviours.Seed = seed; }
+				queuedIslands.Remove(id);
+				toldFull.Remove(id);
+				foreach (KeyValuePair<int, ObjectState> kv in e.State.Where(k => IsQueuedKey(k.Key)).OrderBy(k => k.Key).ToList())
+				{
+					e.State.Remove(kv.Key);
+					QueuedFrom q;
+					if (queuedFrom.TryGetValue(QueuedId(id, kv.Key), out q)) queuedFrom.Remove(QueuedId(id, kv.Key)); else q = null;
+					string ev = q != null ? q.Ev : QueuedEventOf(kv.Value.Day);
+					if (ev == null) { Debug.LogWarning("[CUSTOM ISLANDS] '" + e.HostName + "': a player's event that waited for the island is left out (the save doesn't know it)"); continue; }
+					NotLoadedDone++;
+					if ((kv.Value.Day & QueuedSkip) != 0)
+					{
+						try { QuestSkip.ReplayLoaded(e, kv.Value.Yield, ev); }
+						catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] A skipped step's '" + ev + "' on '" + e.HostName + "': " + ex.Message); }
+						continue;
+					}
+					Debug.Log("[CUSTOM ISLANDS] A player's '" + ev + "' on '" + e.HostName + "' is done now the island is loaded on the host");
+					int seed = GapBehaviours.Seed;
+					if (q != null) GapBehaviours.Seed = q.Seed;
+					try { OnEventMessage(id, kv.Value.Yield, ev, false, q != null ? q.From : null, false); }
+					catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] A player's '" + ev + "' on '" + e.HostName + "': " + ex.Message); }
+					finally { GapBehaviours.Seed = seed; }
+				}
 			}
 		}
 
@@ -1126,12 +1262,20 @@ namespace DynamicIslands.Editor
 				if (index >= 0 && index != IslandIndex && e.Root == null)
 				{
 					Debug.Log("[CUSTOM ISLANDS] A player's '" + ev + "' on '" + e.HostName + "' isn't done: the island isn't loaded on the host" + (answer ? " (they get its \"otherwise\")" : ""));
-					if (answer && from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev.TrimEnd('!') + "!");
-					else if (notLoadedYet.Count < 64) notLoadedYet.Add(new NotLoaded { Island = e.Id, Index = index, Ev = ev, From = from, Seed = GapBehaviours.Seed, At = Time.unscaledTime });
+					if (answer && from.HasValue)
+					{
+						IslandNetwork.SendEventTo(from.Value, e.Id, index, ev.TrimEnd('!') + "!");
+						bool anyFile;
+						if (!ev.EndsWith("!")) GiveBackTakes(CheckedFromFile(e, index, ev, out anyFile), anyFile, from.Value.Id, null);
+						// (its zone, chest or pickup the player marked used is ready again - quest softlock audit M3/M4)
+						FreeRefused(e, index, ev, true);
+					}
+					else Queue(e, index, ev, from);
 					return;
 				}
 				string failed;
-				bool holds = StoryChecksHold(e, index, ev, from.HasValue ? from.Value.Id : 0UL, out failed);
+				HashSet<string> refusedTakes;
+				bool holds = StoryChecksHold(e, index, ev, from.HasValue ? from.Value.Id : 0UL, out failed, out refusedTakes);
 				// (tests: refused as when another player used the crew's item at the same moment - RK3, CIRk34 refuse)
 				if (holds && answer && RefuseForTests) { holds = false; failed = "the crew's check (a test refusal)"; }
 				if (!holds)
@@ -1140,6 +1284,7 @@ namespace DynamicIslands.Editor
 					// (the player who tried gets the event's "otherwise" part, as when their own check fails)
 					if (from.HasValue) IslandNetwork.SendEventTo(from.Value, e.Id, index, ev.TrimEnd('!') + "!");
 					FreeRefused(e, index, ev, true);
+					if (from.HasValue && !ev.EndsWith("!")) GiveBackTakes(ChecksOf(e, index, ev), AnyOf(e, index, ev), from.Value.Id, refusedTakes);
 					return;
 				}
 				int seed = GapBehaviours.Seed; // (the player's, from the message: their random pick)
@@ -1159,34 +1304,96 @@ namespace DynamicIslands.Editor
 			}
 		}
 
+		/// <summary>
+		/// Host, a player's event refused: the crew's story items its "take" checks used up are given back. The player's
+		/// machine took them before asking (StoryBook.Take reaches the host first), so a keycard door the host said no to
+		/// kept the card - the story's only one - and stayed shut for good (quest softlock audit 11-23). Takes the host
+		/// refused itself (refused, or StoryBook.TakeRefused when null) were never made. With "any" checks the player took
+		/// only the one that passed, not known here: given back only when the event has a single check.
+		/// </summary>
+		internal static void GiveBackTakes(List<ObjCheck> checks, bool any, ulong player, HashSet<string> refused)
+		{
+			if (!Raft_Network.IsHost || checks == null || (any && checks.Count > 1)) return;
+			foreach (ObjCheck c in checks)
+			{
+				if (c.Kind != "take" || c.Not || !StoryItems.IsStory(c.Target)) continue;
+				string id = StoryItems.IdOf(c.Target);
+				if (refused != null ? refused.Contains(id) : StoryBook.TakeRefused(player, id)) continue;
+				StoryBook.GiveBack(id, c.Count);
+				GivenBackOnRefusal++;
+			}
+		}
+
+		/// <summary>Host: story takes given back after a refusal (the CI checks read it).</summary>
+		internal static int GivenBackOnRefusal;
+
+		/// <summary>An event's checks from the island's saved file (an island not loaded here has no objects to read them from).</summary>
+		internal static List<ObjCheck> CheckedFromFile(IslandWorldState.Entry e, int index, string ev, out bool any)
+		{
+			any = false;
+			try
+			{
+				IslandFile f = IslandFile.Load(IslandSpawner.PathFor(e.Name));
+				if (f == null || index < 0 || index >= f.Objects.Count || f.Objects[index].Props == null) return new List<ObjCheck>();
+				string text = ObjectProps.Get(f.Objects[index].Props, BehaviourProps.CheckKey(ev));
+				any = ObjCheck.IsAny(text);
+				return ObjCheck.ParseLines(text);
+			}
+			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Reading '" + e.Name + "' for a refused event's checks: " + x.Message); return new List<ObjCheck>(); }
+		}
+
 		/// <summary>Host: zones and chests freed again after a refusal (the CI checks read it).</summary>
 		internal static int FreedOnRefusal;
 
 		/// <summary>
-		/// Host: a player's zone ("enter") or chest ("open") event refused (another player used the crew's story item at the
-		/// same moment): the zone or chest is ready again. The player marked it used before asking, so it stayed spent with
-		/// nothing done - a door the story needed never opened (questdeepA A1). Its used mark may come after the event: looked
-		/// at again 2 s later.
+		/// Host: a player's zone ("enter"), chest ("open") or pickup ("use": a story item's, a collectible piece's) event
+		/// refused (another player used the crew's story item at the same moment, or the island isn't loaded on the host):
+		/// the zone, chest or pickup is ready again. The player marked it used (or claimed it) before asking, so it stayed
+		/// spent with nothing done - a door the story needed never opened, a key never given (questdeepA A1; quest softlock
+		/// audit M3/M4: an island not loaded here, a pickup). Its used mark may come after the event: looked at again 2 s later.
 		/// </summary>
 		internal static void FreeRefused(IslandWorldState.Entry e, int index, string ev, bool again)
 		{
-			if (e == null || e.Root == null || (ev != "enter" && ev != "open")) return;
-			IslandObjectRef r = e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(x => x.Index == index);
-			if (r == null) return;
-			int key = -1;
-			TriggerZone z = ev == "enter" ? r.GetComponent<TriggerZone>() : null;
-			if (z != null && !z.Repeats) key = z.StateKey;
-			LootCrate c = ev == "open" ? r.GetComponentInChildren<LootCrate>(true) : null;
-			if (c != null) key = c.StateKey;
+			int key = RefusedKey(e, index, ev);
 			if (key < 0) return;
 			if (ContentState.IsUsed(e, key))
 			{
 				ContentState.ApplyUsed(e.Id, key, -1); // (its look too: a chest shown full again)
 				IslandNetwork.SendUsed(e.Id, key, -1);
 				FreedOnRefusal++;
-				Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': its " + (z != null ? "zone" : "chest") + " " + index + " is ready again (the player's '" + ev + "' was refused)");
+				Debug.Log("[CUSTOM ISLANDS] '" + e.HostName + "': its " + (ev == "enter" ? "zone" : ev == "open" ? "chest" : "pickup") + " " + index + " is ready again (the player's '" + ev + "' was refused)");
 			}
 			else if (again && DynamicIslands.instance != null) DynamicIslands.instance.StartCoroutine(Later(2f, () => FreeRefused(e, index, ev, false)));
+		}
+
+		/// <summary>The used mark a player's refused event left: a once-only zone's (enter), a chest's (open), a story item's
+		/// or a collectible piece's pickup claim (use); from the island's objects, or its saved file while it isn't loaded
+		/// here. -1: none.</summary>
+		internal static int RefusedKey(IslandWorldState.Entry e, int index, string ev)
+		{
+			if (e == null || index < 0 || index == IslandIndex || (ev != "enter" && ev != "open" && ev != "use")) return -1;
+			if (e.Root != null)
+			{
+				IslandObjectRef r = e.Root.GetComponentsInChildren<IslandObjectRef>(true).FirstOrDefault(x => x.Index == index);
+				if (r == null) return -1;
+				if (ev == "use") return QuestItemPickups.IsModel(r.ObjectName) ? QuestItemPickups.KeyBase + index : Collectibles.ClaimKey(r);
+				TriggerZone z = ev == "enter" ? r.GetComponent<TriggerZone>() : null;
+				if (z != null) return z.Repeats ? -1 : z.StateKey;
+				LootCrate c = ev == "open" ? r.GetComponentInChildren<LootCrate>(true) : null;
+				return c != null ? c.StateKey : -1;
+			}
+			try
+			{
+				IslandFile f = IslandFile.Load(IslandSpawner.PathFor(e.Name));
+				if (f == null || index >= f.Objects.Count) return -1;
+				IslandObject o = f.Objects[index];
+				if (ev == "use") return QuestItemPickups.IsModel(o.Name) ? QuestItemPickups.KeyBase + index : o.Props != null && Collectibles.IsPiece(o.Props) ? Collectibles.KeyBase + index : -1;
+				StableIds.Layout l = StableIds.LayoutOf(f, e.Position.y > IslandSpawner.FlyingThreshold);
+				if (ev == "enter") { int z = l.Zones.IndexOf(index); return z >= 0 && !ObjectProps.Repeats(o.Props) ? TriggerZone.KeyBase + z : -1; }
+				int n = l.Loot.IndexOf(index);
+				return n >= 0 ? ContentState.LootKeyBase + n : -1;
+			}
+			catch (Exception x) { Debug.LogWarning("[CUSTOM ISLANDS] Reading '" + e.Name + "' for a refused event's zone, chest or pickup: " + x.Message); return -1; }
 		}
 
 		/// <summary>
@@ -1196,9 +1403,10 @@ namespace DynamicIslands.Editor
 		/// what is left now. Other checks (a player's own items, states, signals) stay the player's. An event's "otherwise"
 		/// part ("use!") has nothing to make again.
 		/// </summary>
-		static bool StoryChecksHold(IslandWorldState.Entry e, int index, string ev, ulong player, out string failed)
+		static bool StoryChecksHold(IslandWorldState.Entry e, int index, string ev, ulong player, out string failed, out HashSet<string> refusedOut)
 		{
 			failed = null;
+			refusedOut = null;
 			if (ev.EndsWith("!")) return true;
 			List<ObjCheck> checks = ChecksOf(e, index, ev);
 			List<ObjCheck> story = checks.Where(c => (c.Kind == "has" || c.Kind == "take") && StoryItems.IsStory(c.Target)).ToList();
@@ -1207,6 +1415,7 @@ namespace DynamicIslands.Editor
 			if (any && story.Count < checks.Count) return true; // (another kind of check may be the one that passed: not known here)
 			var taken = new HashSet<string>(story.Where(c => c.Kind == "take" && !c.Not).Select(c => StoryItems.IdOf(c.Target)), StringComparer.OrdinalIgnoreCase);
 			var refused = new HashSet<string>(taken.Where(id => StoryBook.TakeRefused(player, id)).ToList(), StringComparer.OrdinalIgnoreCase);
+			refusedOut = refused;
 			bool passed = false;
 			foreach (ObjCheck c in story)
 			{
@@ -1301,14 +1510,25 @@ namespace DynamicIslands.Editor
 		/// <summary>The same for the story features' events (PlayerFeatures.ResumableEvents: talk, choice1-3, set, lit, unlit,
 		/// alllit), laid out alike: ObjectEvents' numbers are kept in saved worlds and their 4 bits are full.</summary>
 		public const int MorePendingBase = 0xA00000;
+		/// <summary>The same for the events that fit neither (quest softlock audit M7: their actions after a wait were lost when
+		/// the island unloaded or the host saved and quit): phase!, stack!, arrive! and quest! (16-19 in PendingEvents), an
+		/// order puzzle's solved/wrong, a zone's crowd/crowdleft, a trader's trade and a dialogue's choice 4 (and their "!").
+		/// Append only, at most 16 - a saved world keeps their numbers.</summary>
+		public const int ExtraPendingBase = 0xB00000;
+		internal static readonly string[] ExtraPendingEvents = { BossPhases.Event + "!", MechFeatures.StackEvent + "!", "arrive!", "quest!",
+			OrderPuzzle.SolvedEvent, OrderPuzzle.SolvedEvent + "!", OrderPuzzle.WrongEvent, OrderPuzzle.WrongEvent + "!", GapWorld.CrowdEvent, GapWorld.CrowdEvent + "!",
+			GapWorld.CrowdLeftEvent, GapWorld.CrowdLeftEvent + "!", TradeStand.TradeEvent, TradeStand.TradeEvent + "!", Islanders.ChoicePrefix + "4", Islanders.ChoicePrefix + "4!" };
+		/// <summary>The pending ranges, each 0x100000 keys (StableIds moves them with their objects).</summary>
+		internal static readonly int[] PendingBases = { PendingBase, MorePendingBase, ExtraPendingBase };
+		internal static int PendingBaseOf(int key) { foreach (int b in PendingBases) if (key >= b && key < b + 0x100000) return b; return -1; }
 		static int pendingTokens;
 		static readonly string[] PendingEvents = BehaviourProps.ObjectEvents.Concat(BehaviourProps.IslandEvents).ToArray();
 		static string[] MorePendingEvents { get { return PlayerFeatures.ResumableEvents; } }
 
 		/// <summary>Whether an event's shared actions after a wait are kept until they ran.</summary>
-		/// (the key keeps an event's number in 4 bits: phase!, stack!, arrive! and quest! - 16 to 19 - ran into the next object's
-		/// keys, so theirs are not kept - they run in this session only, as before pending keys)
-		static bool Resumable(string ev) { int n = PendingEventNo(ev); return (n >= 0 && n < 16) || Array.IndexOf(MorePendingEvents, (ev ?? "").TrimEnd('!')) >= 0; }
+		/// (the key keeps an event's number in 4 bits: phase!, stack!, arrive! and quest! - 16 to 19 - would run into the next
+		/// object's keys: theirs are under ExtraPendingBase; an event in no table - an answer's flags - runs this session only)
+		internal static bool Resumable(string ev) { int n = PendingEventNo(ev); return (n >= 0 && n < 16) || Array.IndexOf(MorePendingEvents, (ev ?? "").TrimEnd('!')) >= 0 || Array.IndexOf(ExtraPendingEvents, ev ?? "") >= 0; }
 
 		static int PendingEventNo(string ev)
 		{
@@ -1320,15 +1540,19 @@ namespace DynamicIslands.Editor
 		{
 			int m = Array.IndexOf(MorePendingEvents, (ev ?? "").TrimEnd('!'));
 			if (m >= 0) return MorePendingBase + ((index & 0xFFFF) << 4) + m + ((ev ?? "").EndsWith("!") ? MorePendingEvents.Length : 0);
-			return PendingBase + ((index & 0xFFFF) << 4) + PendingEventNo(ev);
+			int n = PendingEventNo(ev), x = Array.IndexOf(ExtraPendingEvents, ev ?? "");
+			if ((n < 0 || n >= 16) && x >= 0) return ExtraPendingBase + ((index & 0xFFFF) << 4) + x;
+			return PendingBase + ((index & 0xFFFF) << 4) + n;
 		}
 
 		/// <summary>A pending key's event (null: none).</summary>
 		static string PendingEventOf(int key)
 		{
-			bool more = key >= MorePendingBase;
-			string[] evs = more ? MorePendingEvents : PendingEvents;
-			int evNo = (key - (more ? MorePendingBase : PendingBase)) & 15;
+			int b = PendingBaseOf(key);
+			if (b < 0) return null;
+			int evNo = (key - b) & 15;
+			if (b == ExtraPendingBase) return evNo < ExtraPendingEvents.Length ? ExtraPendingEvents[evNo] : null;
+			string[] evs = b == MorePendingBase ? MorePendingEvents : PendingEvents;
 			return evNo < evs.Length ? evs[evNo] : evNo < evs.Length * 2 ? evs[evNo - evs.Length] + "!" : null;
 		}
 
@@ -1359,9 +1583,9 @@ namespace DynamicIslands.Editor
 		static void ResumePending(IslandWorldState.Entry e)
 		{
 			if (!Raft_Network.IsHost) return;
-			foreach (KeyValuePair<int, ObjectState> kv in e.State.Where(k => (k.Key >= PendingBase && k.Key < PendingBase + 0x100000) || (k.Key >= MorePendingBase && k.Key < MorePendingBase + 0x100000)).ToList())
+			foreach (KeyValuePair<int, ObjectState> kv in e.State.Where(k => PendingBaseOf(k.Key) >= 0).ToList())
 			{
-				int index = ((kv.Key - (kv.Key >= MorePendingBase ? MorePendingBase : PendingBase)) >> 4) & 0xFFFF;
+				int index = ((kv.Key - PendingBaseOf(kv.Key)) >> 4) & 0xFFFF;
 				string ev = PendingEventOf(kv.Key);
 				e.State.Remove(kv.Key);
 				if (ev == null) continue;

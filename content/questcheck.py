@@ -15,7 +15,7 @@ Sources (each optional; defaults are this PC's):
   --mods DIR      the installed mod folder: plans\\*.plan + *.island (built from content/recipes)
   --library DIR   the library deploy folder (index.json, plans\\<pack>, islands\\<entry>)
   --stage DIR     staged newer library files (searched recursively; a staged island/plan replaces the deploy copy;
-                  several folders split by ';')
+                  several folders split by ';'; default none)
 Run:  python -I content/questcheck.py [--json out.json] [--all] [--quiet]
 Prints one line per finding (ERROR/WARN; INFO with --all) and a count summary. Exit code 1 when there is an ERROR.
 """
@@ -29,8 +29,8 @@ ITEMS_TXT = os.path.join(HERE, 'objects', 'items.txt')
 RAFT_BP_TXT = os.path.join(REPO, 'DynamicIslands', 'raft_blueprints.txt')
 DAILY_CS = os.path.join(REPO, 'DynamicIslands', 'DailyQuest.cs')
 DEF_MODS = r'D:\Games\SteamLibrary\steamapps\common\Raft\Mods\DynamicIslands'
-DEF_LIBRARY = r'C:\Users\Johan\Desktop\RAFT_DRIVE_DEPLOY'
-DEF_STAGE = r'D:\Temp\scratch_8e762ddb\drive_stage'
+DEF_LIBRARY = r'D:\Source K2H Final\trunkRaft\Releases\Custom Islands library 3.5.1'  # newest built library (Desktop RAFT_DRIVE_DEPLOY = live 3.5)
+DEF_STAGE = ''  # none: old staging folders hold superseded islands and gave false errors
 
 # ---- the game's own lists (keep in step with the C#) ----
 WHAT = {'island', 'type', 'pool', 'oneof'}                                           # IntroRule.WhatKinds
@@ -58,6 +58,10 @@ STATES = {'open', 'closed', 'shown', 'hidden'}
 WEATHERS = {'clear', 'calm', 'fog', 'waves', 'rain', 'storm', 'snow'}
 FISH = {'Raw_Pomfret', 'Raw_Mackerel', 'Raw_Herring', 'Raw_Tilapia', 'Raw_Catfish', 'Raw_Salmon'}  # Raft's rod (FishNames)
 NEED_RX = re.compile(r'^(?:has|take)\|story:([^|;*\s]+)')
+RAFT_NEED_RX = re.compile(r'^(has|take)\|(?!story:)([^|;*\s]+)', re.I)
+# M9: Raft items a player uses up on their own - eaten or drunk (food, drinks), or learned (a blueprint is gone once
+# learned). A has/take check of one can be emptied before the player reaches it (quest softlock audit 11-23)
+EATEN_RX = re.compile(r'^(Raw_|Cooked_|Claybowl_(?!Empty$)|DrinkingGlass_|Jar_Honey$|Bucket_Milk$|Banana$|Berries_Red$|Coconut$|Mango$|Pineapple$|Watermelon$)', re.I)
 GIVE_RX = re.compile(r'story:([^|;*\s]+)(?:\*(\d+))?')
 COMPASS_RX = re.compile(r'\b(north|south|east|west)(ern|wards?|-?east|-?west)?\b|\b(NE|NW|SE|SW)\b')
 CONTAINER_RX = re.compile(r'\b(chest|crate|box|barrel|locker|safe|trunk|cabinet|cupboard|case|drawer|stash|coffer|strongbox|hold|shed|cache|wardrobe|bin|basket|sack|bag|hive|lockbox|tin|fridge)(e?s)?\b', re.I)
@@ -68,6 +72,7 @@ TITANIUM = {'TitaniumOre', 'TitaniumIngot'}
 F = []
 LIBRARY_NAMES = set()   # every island name the library ships (a single island's own rule may bring another entry)
 STATS = Counter()
+TAKEOUT, CHECKS = {}, {}   # story id -> islands that let it be taken out (raft=) / checks that need it held, every island read
 
 
 def add(level, scope, where, text):
@@ -218,10 +223,13 @@ def facts(path):
          'zones': set(), 'signals': set(), 'notes': set(), 'chests_full': set(), 'chests_empty': set(), 'notecount': 0,
          'pages': 0, 'chestcount': 0, 'emptychests': 0, 'creatures': {}, 'tamable': {}, 'needs': set(), 'gives': {},
          'loot_gives': set(), 'gives_free': {}, 'holders': {}, 'names': set(), 'islanders': set(), 'receivers': set(), 'receivercount': 0, 'sets': {},
-         'lights': {}, 'counters': set(), 'note_idx': [], 'targets': [], 'storydefs': set(), 'alltext': '',
-         'badverbs': [], 'raftitems': {}}
+         'lights': {}, 'counters': set(), 'note_idx': [], 'note_titles': set(), 'targets': [], 'storydefs': set(), 'alltext': '',
+         'badverbs': [], 'raftitems': {}, 'takeout': set(), 'checks': {}, 'usedup': {}}
     for line in (P.get('story.items') or '').split('\n'):
         if line.strip(): x['storydefs'].add(low(line.split('|')[0]))
+        # (T8: '|raft=' lets the crew take it out of the journal as that Raft item - its count drops, and has/take
+        # checks and cage keys read the count: quest softlock audit 11-23)
+        if re.search(r'\|\s*raft\s*=\s*\S', line): x['takeout'].add(low(line.split('|')[0]))
     text = [v for k, v in P.items() if k != 'story.items']
     owners = [{k: v for k, v in P.items() if k != 'story.items' and not re.match(r'^quest\d?\.steps$', k)}]
     for i, o in enumerate(O):
@@ -244,7 +252,7 @@ def facts(path):
             x['notecount'] += 1
             if p.get('note.title', '').strip(): x['notes'].add(low(p['note.title']))
             if p.get('note.text', '').strip():
-                x['pages'] += 1; x['note_idx'].append(i)
+                x['pages'] += 1; x['note_idx'].append(i); x['note_titles'].add(low(p.get('note.title', '')))
         if not nm.startswith('Zone_') and (nm.startswith('Loot_') or 'loot.items' in p):
             x['chestcount'] += 1; x['receivercount'] += 1
             t = low(p.get('note.title', ''))
@@ -305,6 +313,19 @@ def facts(path):
         sends.append(s)
     senders = Counter(g for s in sends for g in s)
     for i, p in enumerate(owners):
+        who = (O[i - 1]['props'].get('obj.name', '') or O[i - 1]['name']) if i > 0 else 'island'
+        for k, v in p.items():
+            if k.startswith('if.'):
+                for l in (v or '').split('\n'):
+                    m = NEED_RX.match(l.strip())
+                    if m: x['checks'].setdefault(low(m.group(1)), set()).add('%s %s' % (who, k))
+                    m = RAFT_NEED_RX.match(l.strip())
+                    if m and (m.group(2).startswith('Blueprint_') or EATEN_RX.match(m.group(2))):
+                        x['usedup'].setdefault(m.group(2), set()).add('%s %s' % (who, k))
+            elif k == 'trade.give':
+                for m in GIVE_RX.finditer(v or ''): x['checks'].setdefault(low(m.group(1)), set()).add('%s %s' % (who, k))
+            elif k == 'survivor.key' and (v or '').strip():
+                x['checks'].setdefault(low(re.sub(r'^story:', '', v.strip(), flags=re.I)), set()).add('%s cage key' % who)
         for k, v in p.items():
             if k.startswith('if.'):
                 lines = (v or '').split('\n')
@@ -328,6 +349,8 @@ def facts(path):
         x['quests'].append(st)
         x['dropped'] += [(n, d) for d in dr]; x['badcount'] += [(n, l, why) for l, why in bc]; x['cut'] += [(n, len(cut))] if cut else []
     while len(x['quests']) > 1 and not x['quests'][-1]: x['quests'].pop()
+    for sid in x['takeout']: TAKEOUT.setdefault(sid, set()).add(x['file'])
+    for sid, w in x['checks'].items(): CHECKS.setdefault(sid, set()).update("'%s' %s" % (x['file'], s) for s in w)
     return x
 
 
@@ -556,6 +579,16 @@ def check_plan(plan, islands, scope, storyline=True):
                 add('ERROR', scope, loc(r), "%s is placed near '%s': no rule or island of that name - never placed" % (rid(r), r['whereref']))
         elif r['where'] == 'near' and r['when'] in ('start', 'km', 'day'):
             add('ERROR', scope, loc(r), '%s is placed near "where it happened" but its WHEN happens at no island' % rid(r))
+    # beside Raft's story: the done-when marks the notebook chapter done (quest softlock audit 11-23: Effigy Shoals' note:3)
+    for r in rules:
+        if not r['beside']: continue
+        kind = r['done'].split(':')[0] if r['done'] else ''
+        arg = r['done'].split(':', 1)[1] if ':' in r['done'] else ''
+        for n in brings(r):
+            f = c.fx(n)
+            if not f or kind == '' and not f['quests'][0]: continue
+            if kind in ('', 'quest'): check_island_for(r, 'quest', '', f, 'BESIDE', loc(r), scope)
+            elif kind in ('step', 'zone', 'signal', 'note'): check_island_for(r, kind, arg, f, 'BESIDE', loc(r), scope)
     # story
     steps, unplaced = build_steps(plan)
     utopia_ends = plan['story'] and 'utopia' not in plan['leaveout'] and not any(x['place'] == 'instead:utopia' for x in rules)
@@ -588,9 +621,15 @@ def check_plan(plan, islands, scope, storyline=True):
     return c, steps
 
 
+def note_ok(arg, f):
+    # a note by its number on the island, or by its title (StoryChain.NoteRead: a title survives a rebuild)
+    a = arg.strip()
+    return int(a) in f['note_idx'] if a.isdigit() else bool(a) and low(a) in f['note_titles']
+
+
 def check_island_for(r, kind, arg, f, part, where, scope):
-    who = "rule '%s'%s" % (r['id'], ' (STORY done-when)' if part == 'STORY' else '')
-    eff = 'the story stops here' if part == 'STORY' else 'the rule never fires'
+    who = "rule '%s'%s" % (r['id'], ' (STORY done-when)' if part in ('STORY', 'BESIDE') else '')
+    eff = 'the story stops here' if part == 'STORY' else 'its notebook chapter never shows done' if part == 'BESIDE' else 'the rule never fires'
     nm = f['file']
     if kind == 'quest' and part != 'STORY' and arg.strip().isdigit() and int(arg) > 1:
         if int(arg) > len(f['quests']) or not f['quests'][int(arg) - 1]:
@@ -603,8 +642,8 @@ def check_island_for(r, kind, arg, f, part, where, scope):
     elif kind == 'zone':
         if low(arg) not in f['zones']: add('ERROR', scope, where, "%s waits for zone '%s' of '%s', which it doesn't have: %s" % (who, arg, nm, eff))
     elif kind == 'note':
-        if not arg.strip().isdigit() or int(arg) not in f['note_idx']:
-            add('ERROR', scope, where, "%s waits for note #%s of '%s', which is no note with a text: %s" % (who, arg, nm, eff))
+        if not note_ok(arg, f):
+            add('ERROR', scope, where, "%s waits for note %s of '%s', which is no note with a text: %s" % (who, '#' + arg if arg.strip().isdigit() else "'%s'" % arg.strip(), nm, eff))
     elif kind == 'signal':
         if low(arg) not in f['signals']: add('ERROR', scope, where, "%s waits for signal '%s' from '%s', which nothing there sends: %s" % (who, arg, nm, eff))
 
@@ -626,7 +665,7 @@ def simulate(c, ids, steps, utopia_ends):
             elif kind == 'step': ok = arg.isdigit() and int(arg) <= len(f['quests'][0])
             elif kind == 'zone': ok = low(arg) in f['zones']
             elif kind == 'signal': ok = low(arg) in f['signals']
-            elif kind == 'note': ok = arg.strip().isdigit() and int(arg) in f['note_idx']
+            elif kind == 'note': ok = note_ok(arg, f)
             if not ok: blocked.add(low(r['id']))
 
     def step_done(s):
@@ -698,6 +737,12 @@ def island_checks(f, scope, c, rule, fired):
             elif not item_ok(it): add('ERROR', scope, rloc(nm, qkey(qi, 'reward')), "'%s' %s reward '%s': Raft has no such item - it is dropped (players get nothing for it)" % (nm, qn(qi), it))
             elif ITEMS[it.lower()] != it: add('WARN', scope, rloc(nm, qkey(qi, 'reward')), "'%s' %s reward '%s': Raft's name is '%s' (case)" % (nm, qn(qi), it, ITEMS[it.lower()]))
         if not title.strip() and qi > 0: add('INFO', scope, rloc(nm), "'%s' %s has steps but no title" % (nm, qn(qi)))
+    # M9: a has/take check of a Raft item the player eats, drinks or learns on their own (quest softlock audit 11-23)
+    for it, where in sorted(f['usedup'].items()):
+        if it.startswith('Blueprint_'):
+            add('WARN', scope, rloc(nm, it), "'%s': %s check(s) for the Raft item '%s': a player who learns it no longer holds it, and a blueprint seldom comes twice - use a story item (the crew's) or a blueprint step" % (nm, ', '.join(sorted(where)[:3]), it))
+        else:
+            add('INFO', scope, rloc(nm, it), "'%s': %s check(s) for the Raft item '%s': players may eat or drink it first - fine while they can get more (fish, farm, cook), else use a story item (the crew's)" % (nm, ', '.join(sorted(where)[:3]), it))
     # loot / zone / give items that don't exist
     for it, src in f['raftitems'].items():
         if not item_ok(it): add('ERROR', scope, rloc(nm, it + '*'), "'%s': %s names '%s', which Raft doesn't have (given as nothing)" % (nm, src, it))
@@ -912,6 +957,11 @@ def main():
                 except Exception as e: add('ERROR', 'library-island', p, 'can not be read: %s' % e); continue
                 counts['library islands'] += 1
                 island_checks(f, 'library-island:' + os.path.basename(d), None, None, {})
+    # T8: a story item the crew can take out of the journal that a check needs held (quest softlock audit 11-23; the engine's
+    # StoryNeeds guard keeps it for islands here and the plan's - only an island from the pool isn't known in advance)
+    for sid in sorted(set(TAKEOUT) & set(CHECKS)):
+        for isl in sorted(TAKEOUT[sid]):
+            add('INFO', 'story-items', rloc(isl, sid + '|'), "story item '%s' has raft= (it can be taken out of the journal) and %s need it held: the journal keeps it while they need it (islands here or the plan still brings), not for an island from the library pool - drop raft= if one may" % (sid, ', '.join(sorted(CHECKS[sid])[:4])))
     order = {'ERROR': 0, 'WARN': 1, 'INFO': 2}
     # (one finding once: an island in two plans or packs is told for each scope - fold same text+where)
     seen, out = set(), []

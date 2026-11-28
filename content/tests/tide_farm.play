@@ -31,6 +31,7 @@ use wheel
 expect message wheel creaks
 expect story crowbar 0
 expect hidden wheel
+expect hidden jampost
 expect shown wheelturning
 expect spinsown wheelturning
 wait 2

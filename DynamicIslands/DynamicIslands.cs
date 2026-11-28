@@ -526,7 +526,7 @@ namespace DynamicIslands
 		/// </summary>
 		public void OnModUnload()
 		{
-			UnloadStep("Raft's build costs", () => Editor.BuildCost.RestoreAll());
+			UnloadStep("Raft's build costs", Editor.BuildCost.Unload);
 			UnloadStep("the extra upgrades", () => Editor.ExtraUpgrades.Unregister());
 			UnloadStep("the patches", () =>
 			{
@@ -822,6 +822,10 @@ namespace DynamicIslands
 			return island;
 		}
 
+		/// <summary>A test's recipe build saving: the saved worlds on this PC are not looked through (no kept copy, no carry, no
+		/// notice) - a box with thousands of old test worlds and their backups spent 20 min there and the build stalled (bf13 op3, 11-27).</summary>
+		internal static bool NoSavedWorlds;
+
 		public static bool SaveIsland(string name) { return SaveIsland(name, false); }
 
 		/// <summary>offerVersions (the Save button, Ctrl+S, Save as): saved worlds on an older copy of it get the choice of this version (R1c).</summary>
@@ -848,7 +852,7 @@ namespace DynamicIslands
 				StableIds.Prepare(island, before);
 				// (saved worlds with this island: a change that would mix up what was used there keeps them on their version)
 				bool carry = false;
-				bool kept = before != null && KeepForWorldsIfShifted(name, island, before, out carry);
+				bool kept = before != null && !NoSavedWorlds && KeepForWorldsIfShifted(name, island, before, out carry);
 				island.Save(IslandSpawner.PathFor(name));
 				UidsSaved(egos, island);
 				if (kept && carry) kept = !CarryWorlds(name);
@@ -856,7 +860,7 @@ namespace DynamicIslands
 				EditorUI.RefreshIsland();
 				Notify("Saved island '" + name + "' (" + island.Objects.Count + " objects)");
 				EditorAutosave.Saved(name);
-				if (overwrote && !kept) TellWorldsUsing(name);
+				if (overwrote && !kept && !NoSavedWorlds) TellWorldsUsing(name);
 				if (overwrote && offerVersions) OfferThisVersion(name, kept);
 				return true;
 			}

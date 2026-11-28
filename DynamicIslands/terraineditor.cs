@@ -279,6 +279,9 @@ namespace DynamicIslands
 				float before = Mathf.Lerp(Mathf.Lerp(strokeHeights[z0, x0], strokeHeights[z0, x0 + 1], fx), Mathf.Lerp(strokeHeights[z0 + 1, x0], strokeHeights[z0 + 1, x0 + 1], fx), fz) * size.y + o.y;
 				float now = terrain.SampleHeight(p) + o.y;
 				if (Mathf.Abs(now - before) < 0.02f || p.y > before + 0.6f || p.y < before - 8f) continue; // (a van set down on a slope by its base stands a few metres below the ground under its middle)
+				// (nor a cave piece sunk under the ground: it is set by its height, not stood on the ground over it - an islet's
+				// ramp flattened over The Drowned Labyrinth's first fork lifted the whole tunnel 14 m, out of the labyrinth, c3z53)
+				if (p.y < before - 2f && global::DynamicIslands.Editor.CaveMountain.Wants(e.GameObjectName ?? "")) continue;
 				var command = new RuntimeGizmos.TransformCommand(gizmo, e.transform);
 				e.transform.position = p + Vector3.up * (now - before);
 				command.StoreNewTransformValues();

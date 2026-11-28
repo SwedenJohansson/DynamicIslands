@@ -272,7 +272,9 @@ prop snspike cave.rock=plain
 # cavecheck inside snwarn snlever snstakes snstake1 snstake2 snstore
 place Note_Sign snwarn at -38.6 -2.6 h=5.8 sit drop yaw=150
 note snwarn THE STORE OF THE EMBALMERS | Who goes on to the store without the lever's word goes in among the dead. The stakes rise and fall with the breath of the sea.\n- the embalmers
-place UT_JumpPuzzle_LiftMechanism_Lever snlever at -39.4 -3.4 h=5.8 sit drop yaw=135
+# (c3z34 11-21: at -39.4 -3.4 it stood 1.3 m off the store passage's line, in its wall more than its air - the ground
+# check read it buried 6.2 m under the knoll; 0.6 m off the line now)
+place UT_JumpPuzzle_LiftMechanism_Lever snlever at -40 -3 h=5.8 sit drop yaw=135
 prop snlever obj.name=snlever
 prop snlever beh.use=Pull the embalmers' lever
 prop snlever on.use=hide|snstakes\nhide|snstake1\nhide|snstake2\nmessage||Stone grinds on stone deep in the rock. The stakes in the passage sink into the floor and stay down.
@@ -396,4 +398,8 @@ step read|Silas Grey's note|1|Read Silas Grey's note in the cave
 quest done=The Gear of the First Tide. The walls named the next one: a tower in the sky - a mast on a sea stack, 900 on the Receiver.
 quest reward=TradeToken*8;CopperIngot*4;Rope*4
 
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save Sandsunk Necropolis

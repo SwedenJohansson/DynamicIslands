@@ -130,6 +130,8 @@ place RT_Wall1 whalehull at 15 0.75 h=4 yaw=-56
 # (FIX-B 11-04: the ice falls away under the port plate's outer corner - it stood 2.1 m over it; a second plate under it,
 # 3 m lower, carries it down into the ice)
 place RT_Wall1 whalehull at 15 0.75 h=1 yaw=-56
+# (c3z29 11-21: the second plate's corner still stood 1 m over the ice at 14.4 -1.7 - a third, 3 m lower again)
+place RT_Wall1 whalehull at 15 0.75 h=-2 yaw=-56
 place RT_Wall1 whalehull at 15 8.25 h=4 yaw=56
 
 # --- The upper deck: the crew mess (vending machine, the captain's table and log, the safe and its keypad), the galley,

@@ -14,6 +14,7 @@
 include lib_huts
 include lib_sea
 include lib_features
+include lib_caves
 new
 # (nature: tropical, Like Raft - palms and jungle on the peaks as on Raft's own tropical islands, CIGenLikeRaft)
 gen Trees=0.28 Bushes=0.28 Rocks=0.43 Harvest=0.24 BeachThings=0.3
@@ -201,6 +202,47 @@ where campbarrel
 where blackflag
 where hens
 
+# --- 11-12 (w14 prep): the pirates' sea cave (plan 14 row: UW pirate cave, optional VINE land mouth; treasure in a chest,
+# stone 2). The crew's bolt-hole under the south headland: an underwater straight cave (kit_uw, the cave tool, plain rock) from
+# the sea floor off the south shore (14 -58), way in north-north-west (yaw 335), to a dry den under the headland (middle ~-3
+# -18.5); the crew's treasure chest in it. 12 m and more from the standing stones and the hoard, the lookout ladder and the
+# cook's cache. The optional VINE land mouth is NOT built: this world has no machete (plan 14), so a vine gate could not be cut.
+# The mouth on the sea floor, its pad flattened to 5 m down (smoothed out); the tunnel climbs 15 degrees for 4 pieces (size 0.7,
+# 29.1 m, +7.5 m) to the den (~22 m long; the cave tool raises the dome from the sea floor). HEIGHTS guessed: the pad -5 (the
+# natural sea floor there is not known: if it is much deeper the pad stands as a plinth - lower the pad or move the mouth in),
+# the den floor -5 + 7.5 = +2.5 m over the sea; air zone h 4, the chest dropped from 5.5 m. Sea caves get no monsters (11-12).
+# 11-17 FIX (jobs w14E/F): 14 -58 lies past the island's ground - flatten cannot lift Raft's own sea floor there (four passes
+# left it at -10.8), so the den lay under the sea (caveloot: no dry spot). The shelf rises fast inshore (10.2 -49.8 is -12.2,
+# 6 -40.8 is +5.6) and the line 335 inshore would put the den under the standing stones. Now the mouth is on the shelf at
+# 8.4 -46 (sea floor ~-4.5, pad -5) and the way in runs west-north-west (yaw 300) along the south shore: 4 pieces at 12
+# degrees (the tool's most; +6 m) as Tiki Lagoon's, den floor ~1, its middle ~-26.3 -25.9 - 37 m from the stones, 14 m and
+# more from the cook's camp. Zone h 4, chest 4 m on and 1.5 m right of the middle.
+brush flatten at 8.4 -46 r=6 s=20 frames=60 h=-5
+brush smooth at 8.4 -46 r=9 s=6 frames=20
+# 11-17 w14J CC: the shelf rises ~10 m in 6 m inshore, so over the first pieces the cave tool's cut left a pale sand face
+# across half the mouth and 5 of 147 roof rays reached the floor 3.3 m in. The way in's first 5 m are lowered under the sea
+# (h -4, the tunnel top stands ~3 m out of the sea floor there, under the water) so the mouth piece's rock covers them.
+# Result (w14M): roof rays 5 -> 2, but the pale panel stays - OPEN, the same as Thalassa's strip (CAVE_LESSONS 11-09): code.
+brush flatten from 8.4 -46 to 4.1 -43.5 r=4.5 s=20 frames=60 h=-4
+brush smooth from 8.4 -46 to 3.2 -43 r=7 s=6 frames=20
+# (w14G: the smooth left a generator bush 0.6 m over the lowered shelf at 7.3 -39.7 - the generator's plants round the mouth go)
+clear at 8.4 -46 r=10
+call kit_uw x=8.4 z=-46 yaw=300 len=29.1 slope=12 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=gsseacave
+prop gsseacave cave.rock=plain
+# cavecheck inside gsseacaveair gsseacavechest
+place Zone_Trigger gsseacaveair at -26.3 -25.9 h=4
+prop gsseacaveair obj.name=gsseacaveair
+prop gsseacaveair zone.id=gs_seacave
+prop gsseacaveair zone.radius=8
+prop gsseacaveair zone.repeat=1
+prop gsseacaveair zone.air=1
+prop gsseacaveair zone.message=The pirates' bolt-hole: dry, a tarred rope down to the water, the crew's marks cut in the rock.
+place Loot_ChestSmall gsseacavechest at -29 -22.6 h=5.5 drop yaw=300
+prop gsseacavechest obj.name=gsseacavechest
+prop gsseacavechest loot.refill=0
+note gsseacavechest Pirates' sea chest | The crew's own chest, hidden from their captain: a bag of coins with a skull on every one, a spyglass lens and a coil of good rope.
+loot gsseacavechest TradeToken*3;Glass*2;Rope*3;MetalIngot*2
+
 # --- Settings, story items, notes, behaviours, quest (7 steps) ---------------------------------------------------------
 # --- Raft's finds in the shallows round the island (sand, clay, stones, ores, scrap - every Raft island has them): lib_sea
 call shallows r=60 deep=5
@@ -306,5 +348,11 @@ clear at -14.44 -37.57 r=1.2 all only=SmallBoulder1
 clear at -13.08 -30.58 r=1.2 all only=SmallBoulder1
 clear at 16.1 9.44 r=1.2 all only=BigBoulder4_Low
 clear at 24.03 -7.27 r=1.2 all only=SmallBoulder3
+
+# (fo2 11-19: a bush clump and a boulder left standing where the cave ground came down - CIFloating fo11; printed points + offset -4.93 -4.44)
+clear at 11.97 -33.55 r=1.2 all only=SmallBoulder2
+clear at 4.63 -36.49 r=1.2 all only=Bush
+clear at 8.79 -35.72 r=1.2 all only=Bush2
+clear at 5.53 -34.60 r=1.2 all only=Bush
 
 save Gilded Skull Cove

@@ -239,6 +239,9 @@ namespace DynamicIslands
 			return sum;
 		}
 
+		[ConsoleCommand(name: "CIGrassProbe", docs: "Dev, in game after an island loaded: which ways of giving a copy of Raft's terrain one detail layer log Unity's 'only implemented in editor'")]
+		public static void GrassProbe() { Log("GRASS " + Editor.SeaGrass.Probe()); }
+
 		[ConsoleCommand(name: "CICreatureTest", docs: "Dev, in game (host): an island with creatures and notes 150 m ahead - spawning, stats, tint, NavMesh, an angler fish swimming its rounds, reading a note, the island banner, killing, unloading and reloading. CICreatureTest [keep]")]
 		public static void CreatureTest(string[] args)
 		{
@@ -424,6 +427,9 @@ namespace DynamicIslands
 				Check(ref ok, entry.State.TryGetValue(boars.StateKey, out s) && s.Yield == 1, "a killed warthog is remembered (" + (entry.State.ContainsKey(boars.StateKey) ? IslandObjectState.Encode(new Dictionary<int, ObjectState> { { boars.StateKey, entry.State[boars.StateKey] } }) : "no state") + ")");
 			}
 
+			// Back on the raft first: unloading the island under the player dropped them into the sea, where the shark (or, on the
+			// island, the tough warthogs) killed them during the minute-long reload wait - mpsettings' "player died (idle)" 11-25
+			OnRaftCommand();
 			// Unload: the animals go with the island; reload: the dead one stays dead
 			List<AI_NetworkBehaviour> all = points.SelectMany(p => p.Spawned).Where(a => a != null).ToList();
 			IslandObjectState.Capture(entry);
@@ -433,10 +439,10 @@ namespace DynamicIslands
 			Check(ref ok, all.All(a => a == null) && CreatureSpawner.LiveCount == 0, "unloading the island removes its " + all.Count + " animals (" + all.Count(a => a != null) + " left)");
 			// The automatic spawner loads it again (it is close to the raft)
 			t0 = Time.realtimeSinceStartup;
-			while (entry.Root == null && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
+			while (entry.Root == null && Time.realtimeSinceStartup - t0 < 60f) { KeepAlive(RAPI.GetLocalPlayer()); yield return new WaitForSeconds(0.5f); }
 			Check(ref ok, entry.Root != null && IslandSpawner.SpawnedRoots.Count(r => r != null && r.name == "CustomIsland_" + CreatureIsland) == 1, "the island comes back once (" + (Time.realtimeSinceStartup - t0).ToString("F1") + " s)");
 			t0 = Time.realtimeSinceStartup;
-			while (CreatureSpawner.LiveCount < 4 && Time.realtimeSinceStartup - t0 < 60f) yield return new WaitForSeconds(0.5f);
+			while (CreatureSpawner.LiveCount < 4 && Time.realtimeSinceStartup - t0 < 60f) { KeepAlive(RAPI.GetLocalPlayer()); yield return new WaitForSeconds(0.5f); }
 			yield return new WaitForSeconds(1f);
 			CreatureSpawnPoint boars2 = entry.Root != null ? entry.Root.GetComponentsInChildren<CreatureSpawnPoint>().FirstOrDefault(p => p.Kind.Type == AI_NetworkBehaviourType.Boar) : null;
 			Check(ref ok, boars2 != null && boars2.Spawned.Count == 1, "after reloading, one warthog (the other was killed): " + (boars2 != null ? boars2.Spawned.Count : -1));
@@ -930,7 +936,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: islands the players still need come back"); else Fail("islands the players still need come back");
 		}
 
-		[ConsoleCommand(name: "CIAgainUntilDone", docs: "Dev, in game (host, a test world 'CI ...'): SR1 - a 'day:N:again' rule's island comes back every N days until the players are done with it. A plan 'CI again' (day rules with again: an island with a two-step quest and one without; and one without again) brings three islands on day D; left behind unvisited, none is back the day before D+N; the world saved and read back (the plan's again, each island's clock, no second copies); on day D+N the two again islands come back ahead of the raft, the other stays; the plain one reached and the quest one begun, then left again: only the quest one comes back; its quest done, nothing comes back")]
+		[ConsoleCommand(name: "CIAgainUntilDone", docs: "Dev, in game (host, a test world 'CI ...'): SR1 - a 'day:N:again' rule's island comes back every N days until the players are done with it. A plan 'CI again' (day rules with again: an island with a two-step quest and one without; and one without again) brings three islands on day D; left behind unvisited, none is back the day before D+N; the world saved and read back (the plan's again, each island's clock, no second copies); on day D+N the two again islands come back ahead of the raft, the other stays; the plain one reached and the quest one begun, then left again: only the quest one comes back; QD8: the day counted back (a day reset) while it was away, it comes back N days after that day; its quest done, nothing comes back")]
 		public static void AgainUntilDoneTest() { StartTest(AgainUntilDoneRoutine()); }
 
 		[ConsoleCommand(name: "CISetDay", docs: "Dev, in game (host, a test world 'CI ...'): CISetDay <n> sets Raft's day counter to n, for plan tests with 'day:N' rules (run it before CIPlay)")]
@@ -1062,6 +1068,20 @@ namespace DynamicIslands
 				Check(ref ok, returned == 1 && from(entry("qa")) < behindBy - 300f && from(entry("pl")) > behindBy - 300f,
 					"day " + (d + 2 * n) + ": only the unfinished quest island came back (" + returned + "; quest " + from(entry("qa")).ToString("F0") + " m, plain " + from(entry("pl")).ToString("F0") + " m)");
 				Check(ref ok, QuestTracker.StepOf(entry("qa")) == 1, "its quest where it was (step " + QuestTracker.StepOf(entry("qa")) + ")");
+				// QD8 (11-19): the day counted back (a day reset) while it was away - its wait starts again from that day,
+				// not from the later day it last came: back on day d + n, not only on day d + 3n
+				yield return new WaitForSeconds(2.5f);
+				leave(new[] { "qa" });
+				returned = 0;
+				SetDay(d);
+				for (int i = 0; i < 6; i++) yield return new WaitForSeconds(1f);
+				ObjectState resetMark = null;
+				bool hasReset = entry("qa") != null && entry("qa").State.TryGetValue(ReturningIslands.AgainKey, out resetMark);
+				Check(ref ok, returned == 0 && hasReset && resetMark.Day == d, "day reset to " + d + ": not back, its clock counts from day " + (hasReset ? resetMark.Day.ToString() : "none") + " (" + returned + " came back)");
+				SetDay(d + n);
+				for (float t = 0f; t < 20f && returned < 1; t += 0.5f) yield return new WaitForSeconds(0.5f);
+				yield return new WaitForSeconds(2f);
+				Check(ref ok, returned == 1 && from(entry("qa")) < behindBy - 300f, "after the reset, day " + (d + n) + ": the unfinished quest island came back (" + returned + "; " + from(entry("qa")).ToString("F0") + " m)");
 				// Its quest done: nothing comes back any more
 				QuestTracker.Set(entry("qa"), 2, 0, false);
 				Check(ref ok, why("qa") == "no", "its quest done: not needed (" + why("qa") + ")");
@@ -2023,7 +2043,7 @@ namespace DynamicIslands
 		public static void Hierarchy(string[] args)
 		{
 			string name = args != null ? string.Join(" ", args) : "";
-			DynamicIslands.instance.StartCoroutine(HierarchyRoutine(name));
+			StartTest(HierarchyRoutine(name));   // (speedups 11-19: tracked, so it ends with IDLE - 4 steps waited 3600 s each)
 		}
 
 		static IEnumerator HierarchyRoutine(string name)
@@ -2106,18 +2126,26 @@ namespace DynamicIslands
 			{
 				Log("Leaving the editor");
 				UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
-				StartTest(WaitForMainMenu());
+				StartTest(MainMenuReported());
 				return;
 			}
 			// (already at the main menu: nothing to leave - LeaveGame threw a NullReferenceException there)
-			if (!LoadSceneManager.IsGameSceneLoaded || ComponentManager<Raft_Network>.Value == null) { Log("At the main menu already (not in a world or the editor)"); StartTest(WaitForMainMenu()); return; } // (a test, so IDLE follows: ci.ps1 -done waited its whole timeout - 11-06)
+			if (!LoadSceneManager.IsGameSceneLoaded || ComponentManager<Raft_Network>.Value == null) { Log("At the main menu already (not in a world or the editor)"); StartTest(MainMenuReported()); return; } // (a test, so IDLE follows: ci.ps1 -done waited its whole timeout - 11-06)
 			Log("Leaving the world");
 			ComponentManager<Raft_Network>.Value.LeaveGame((DisconnectReason)2, (SceneName)1, true, false);
-			StartTest(WaitForMainMenu());
+			StartTest(MainMenuReported());
 		}
 
 		/// <summary>CIMainMenu's end (10-20): "At the main menu" once the menu's New Game box is there (60 s at most), then
 		/// IDLE - so "CIMainMenu;CINewWorld ..." and scripts wait for the menu itself instead of sleeping.</summary>
+		/// <summary>CIMainMenu's own wait: a PASS line once the menu is there (WaitForMainMenu FAILs if not), so a job counts
+		/// a result (hollow-tests 11-24). Other tests keep the quiet WaitForMainMenu.</summary>
+		static IEnumerator MainMenuReported()
+		{
+			yield return WaitForMainMenu();
+			if (MenuNewGameBox() != null) Log("PASS: at the main menu");
+		}
+
 		static IEnumerator WaitForMainMenu()
 		{
 			float start = Time.realtimeSinceStartup, end = start + 60f;
@@ -2137,6 +2165,51 @@ namespace DynamicIslands
 			while (Time.realtimeSinceStartup < end && (GameManager.IsLeavingGame || LoadSceneManager.IsLoadingScene)) yield return new WaitForSecondsRealtime(0.1f);
 			if (GameManager.IsLeavingGame || LoadSceneManager.IsLoadingScene) Log("  (Raft still leaving the last world: IsLeavingGame=" + GameManager.IsLeavingGame + ", IsLoadingScene=" + LoadSceneManager.IsLoadingScene + ")");
 		}
+
+		[ConsoleCommand(name: "CIFreeMem", docs: "Dev, main menu only: Resources.UnloadUnusedAssets, then GC.Collect, and logs the memory before and after - freemem before=<MB> after=<MB> (the working set; the Mono heap in brackets). An experiment (speedups 11-19): a long-running Raft may give little back")]
+		public static void FreeMemCommand() { StartTest(FreeMemRoutine()); }
+
+		static IEnumerator FreeMemRoutine()
+		{
+			// (the menu only: a world or the editor holds what it uses, and an unload mid-load spoils it)
+			if (DynamicIslands.InEditor() || (LoadSceneManager.IsGameSceneLoaded && ComponentManager<Raft_Network>.Value != null) || LoadSceneManager.IsLoadingScene || MenuNewGameBox() == null)
+			{ Fail("freemem: only at the main menu (CIMainMenu first)"); yield break; }
+			float start = Time.realtimeSinceStartup;
+			long monoBefore = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong(), wsBefore = WorkingSet();
+			AsyncOperation unload = Resources.UnloadUnusedAssets();
+			System.GC.Collect();
+			System.GC.WaitForPendingFinalizers();
+			System.GC.Collect();
+			yield return unload;
+			yield return null;
+			long monoAfter = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong(), wsAfter = WorkingSet();
+			Log("freemem before=" + Mb(wsBefore) + " after=" + Mb(wsAfter) + " (working set MB; Mono used heap " + Mb(monoBefore) + " -> " + Mb(monoAfter) + " MB, took " + Took(start) + ")");
+		}
+
+		// (Mono's Process.WorkingSet64 gave 0 in Raft (box3, 11-19): ask Windows itself)
+		[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+		struct ProcessMemoryCounters
+		{
+			public uint cb, PageFaultCount;
+			public System.UIntPtr PeakWorkingSetSize, WorkingSetSize, QuotaPeakPagedPoolUsage, QuotaPagedPoolUsage,
+				QuotaPeakNonPagedPoolUsage, QuotaNonPagedPoolUsage, PagefileUsage, PeakPagefileUsage;
+		}
+		[System.Runtime.InteropServices.DllImport("kernel32.dll")] static extern System.IntPtr GetCurrentProcess();
+		[System.Runtime.InteropServices.DllImport("kernel32.dll")] static extern bool K32GetProcessMemoryInfo(System.IntPtr process, ref ProcessMemoryCounters counters, uint cb);
+
+		static long WorkingSet()
+		{
+			try
+			{
+				var c = new ProcessMemoryCounters { cb = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(ProcessMemoryCounters)) };
+				if (K32GetProcessMemoryInfo(GetCurrentProcess(), ref c, c.cb) && c.WorkingSetSize.ToUInt64() > 0) return (long)c.WorkingSetSize.ToUInt64();
+			}
+			catch (System.Exception) { }
+			try { using (var p = System.Diagnostics.Process.GetCurrentProcess()) { p.Refresh(); return p.WorkingSet64 > 0 ? p.WorkingSet64 : -1; } }
+			catch (System.Exception) { return -1; }
+		}
+
+		static string Mb(long bytes) { return bytes < 0 ? "?" : (bytes / (1024 * 1024)).ToString(); }
 
 		[ConsoleCommand(name: "CIModelCheck", docs: "Dev, editor (after a world): creatures show Raft's real models instead of markers; places a few and takes a screenshot")]
 		public static void ModelCheck()

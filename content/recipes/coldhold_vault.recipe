@@ -89,6 +89,13 @@ place ZiplinePath_Landmark vaultzip at 5.72 -20.27 h=5.35
 # (RESIZE 10-24 retest: the start's floor at the hall's door, level with the hall, on a post down into the crevasse's lip)
 place ReefHuts_Pillar3 - at 0 -19.3 h=-0.9
 zipto vaultzip 0 -6
+# (c3z57: the rope 0.03 m in the ground at 0 -10, 4 m before its far end (0.14 m wanted there), the zipto cut held by
+# the ice ring's rock at 150 degrees and the flood lever's box: the land under that stretch brought down to 3.3 m over
+# the sea - the rope is about 3.8 m there - short of the far end's floor at z -6)
+brush flatten from 0 -11 to 0 -9 r=1.5 s=20 frames=150 h=3.3
+# (c3z58 11-21: 0.39 m under the rope at 0 -11.7, 0.44 m wanted (the rope 3.71 m there) - the stretch before it lowered
+#     a little more, to 3.1 m)
+brush flatten from 0 -12.6 to 0 -10.6 r=1.5 s=20 frames=150 h=3.1
 call treasure x=14 z=-36 r=15 n=1 seed=12053
 
 # --- The far side: Oda's cage behind the collapsed door, her pack and notes; screechers under the cap --------------------
@@ -183,10 +190,17 @@ place UT_JumpPuzzle_LiftMechanism_Lever floodlever at 2.6 34.4 ground sit yaw=18
 place Zone_Trigger floodzone at 0 33 ground y=1
 
 # --- The ice cap: ice rock round the vault floor on ice-tinted pillars, frost inside, snow on the slope ------------------
-for ca 0 345 15
+# (c3z54: the ring's rocks at 165-210 degrees stand under vaultzip's line or its cut's sides and held the land there,
+# the rope 0.03 m in the ground at 1.2 -31.8: the ring left open where the line comes in; c3z57: the rock at 150 too)
+for ca 0 135 15
 place SmallRock_02 ice at {25*sin($ca)} {10+25*cos($ca)} ground y=-2 scale=3 yaw=$ca
 next
-for pa 0 300 60
+for ca 225 345 15
+place SmallRock_02 ice at {25*sin($ca)} {10+25*cos($ca)} ground y=-2 scale=3 yaw=$ca
+next
+# (c3 round 8, 11-21 c3z44: the pa=180 pillar stood at 0 -33, under vaultzip's line 8.8 m into its far stretch, and held the
+# shave off the ground under it: the ring turned 30 degrees, no pillar on the line or the flood door's path at 0 31)
+for pa 30 330 60
 place RT_PillarThick icepillar at {21*sin($pa)} {10+21*cos($pa)} ground
 next
 call icetint al=ice
@@ -209,11 +223,7 @@ call shallows x=0 z=22 r=100 deep=6 n=1 seed=12930
 pop
 
 # --- DISCOVERIES 10-24 (optional, no quest needs them): camp + note; BoatStranded + chest; hatch with a chest; buried treasure; viewpoint ---
-place campfire_1 - at -39.4 21.8 ground sit
-place Balboa_DecorationPrefabBase_SimpleTent - at -36.4 23.8 ground sit yaw=337
-place "Box Small" - at -41.4 24.3 ground sit
-place Note_Paper dnote at -41.4 24.3 ground y=1.6 drop yaw=20
-note dnote Survey note | ICE SURVEY, SHEET 4 (and on the back, a sealer's scrawl)\n\nPressure ridge moving 2 m a day. Crack under the tent this morning. Moved camp.\n\nHalvorsen here, borrowing the surveyors' paper because ours went in the sea. We came up the ice to trade seal oil for seed and found the vault's door shut and nobody answering. Ivo from the relay is with us, listening to his little set every night with his eyes closed, like a man in church. He says the stack never fell on its own. He heard sledge bells the night the mast bent, and there was no wind.\nWe are going back to the steam harbour. The sea under the ice is warmer than it should be.
+# (the camp - tent, fire, box, note - stands after the ice cap below: c3 round 8)
 place BoatStranded dvan at 39.4 -21.8 ground yaw=97
 prop dvan tint.color=#5a6670
 prop dvan tint.amount=0.5
@@ -236,6 +246,16 @@ prop dview zone.message=The Coldhold's entrance hall looks out over the landing,
 include lib_areas
 call fz_mount x=-42 z=55 h=34 r=8
 call ar_plants_snowy x=-42 z=55 r=30 seed=12961
+# (c3 round 8, 11-21 c3z44: the tent stood 0.74 m in the air at -34.9 23.3: fz_mount's flatten r=32 and smooth r=36.8 round
+# -42 55 reach the camp 31.7 m off and reshaped its pad after the tent sat. The camp now comes after the cap)
+# (c3z29 11-21: the tent's base stood 0.6 m over the slope - a level pad for the camp first)
+# (c3 round 4, 11-21 c3z38: still 0.66 m over at its east side, -34.55 22.54 - the pad wider, under the whole tent)
+brush flatten at -36.2 23.2 r=5 s=20 frames=150
+place campfire_1 - at -39.4 21.8 ground sit
+place Balboa_DecorationPrefabBase_SimpleTent - at -36.4 23.8 ground sit yaw=337
+place "Box Small" - at -41.4 24.3 ground sit
+place Note_Paper dnote at -41.4 24.3 ground y=1.6 drop yaw=20
+note dnote Survey note | ICE SURVEY, SHEET 4 (and on the back, a sealer's scrawl)\n\nPressure ridge moving 2 m a day. Crack under the tent this morning. Moved camp.\n\nHalvorsen here, borrowing the surveyors' paper because ours went in the sea. We came up the ice to trade seal oil for seed and found the vault's door shut and nobody answering. Ivo from the relay is with us, listening to his little set every night with his eyes closed, like a man in church. He says the stack never fell on its own. He heard sledge bells the night the mast bent, and there was no wind.\nWe are going back to the steam harbour. The sea under the ice is warmer than it should be.
 # (REACH 11-02 RA1: the cap's top is a 6.4 m pillar of ground standing 8 m over the slope round it - walks stopped at its
 # foot at 25.6 on every side. A ledge path winds up round it from its west foot, five-sixths of a turn; the 11-02 walk
 # still stops at h 26 - vent_top and the vent chest stay open)

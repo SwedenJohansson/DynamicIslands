@@ -45,7 +45,10 @@ push at -14 -12 h=7.1
 call stilt_hut y=2.6 foot=1.1
 place Loot_Chest towerchest at 3.6 3.6 y=2.7 sit yaw=180
 # REDO 10-24: the tower's map table (the island's machine) and Oda's map case it opens
-place MapTable maptable at 1.4 3.4 y=2.66 sit yaw=0
+# (c3z37 11-21: "floating 0.92 m" - its feet 4 cm inside the deck's top (2.7, where the chests stand): on the deck's top)
+# (c3z52 11-21: still "floating 1.46 m" - the table's pivot is 12.6 m from its middle (a Tangaroa landmark piece, 4.4 x 2.9 m):
+#     the table stood in the air over the ravine, not on the deck. Centred on the deck at half size, clear of the chest)
+place MapTable maptable at 1.5 3.4 y=2.7 sit centred yaw=0 scale=0.5
 place Loot_ChestSmall mapcase at 3.6 1.0 y=2.7 sit yaw=270
 pop
 # (zip deck beside the tower)
@@ -54,10 +57,52 @@ call zipdeck y=2.6
 pop
 # (11-10 w02, REACH: the zip deck ladder's foot hung 1.2 m over the ground - a hand could not reach it; a step of ground under it)
 brush flatten at -10.7 -12.3 r=2 s=20 frames=120 h=7.3
+# (c3 round 3 11-21: the zipline's rope cut through the cove terrace (8.4-9.4 m) - a rider dragged through the hill. A ravine
+#     under the line instead, from the tower's foot (6.3 m) down at 16 degrees to the cove pit's floor (1.2 m): the rope
+#     clear over it, and the pit, which had sheer 3-5 m walls and no way out, walked out of up the ravine)
+clear from -2.35 -15.25 to 1.50 -37.16 r=4.5
+brush flatten at -2.35 -15.25 r=3 s=20 frames=250 h=6.30
+brush flatten at -2.12 -16.54 r=3 s=20 frames=250 h=5.92
+brush flatten at -1.90 -17.83 r=3 s=20 frames=250 h=5.55
+brush flatten at -1.67 -19.12 r=3 s=20 frames=250 h=5.17
+brush flatten at -1.44 -20.41 r=3 s=20 frames=250 h=4.80
+brush flatten at -1.22 -21.70 r=3 s=20 frames=250 h=4.42
+brush flatten at -0.99 -22.99 r=3 s=20 frames=250 h=4.05
+brush flatten at -0.76 -24.27 r=3 s=20 frames=250 h=3.67
+brush flatten at -0.54 -25.56 r=3 s=20 frames=250 h=3.30
+brush flatten at -0.31 -26.85 r=3 s=20 frames=250 h=2.92
+brush flatten at -0.08 -28.14 r=3 s=20 frames=250 h=2.55
+brush flatten at 0.14 -29.43 r=3 s=20 frames=250 h=2.17
+brush flatten at 0.37 -30.72 r=3 s=20 frames=250 h=1.80
+brush flatten at 0.60 -32.01 r=3 s=20 frames=250 h=1.42
+brush flatten at 0.82 -33.30 r=3 s=20 frames=250 h=1.2
+brush flatten at 1.05 -34.59 r=3 s=20 frames=250 h=1.2
+brush flatten at 1.28 -35.88 r=3 s=20 frames=250 h=1.2
+brush flatten at 1.50 -37.16 r=3 s=20 frames=250 h=1.2
+# (its sides eased so they are not sheer, then the floor laid again; rock on the cut sides, sand on the floor)
+brush smooth from -2.35 -15.25 to 1.50 -37.16 r=4.5 s=4 frames=6
+brush flatten at -1.22 -21.70 r=1.8 s=20 frames=120 h=4.42
+brush flatten at -0.31 -26.85 r=1.8 s=20 frames=120 h=2.92
+brush flatten at 0.60 -32.01 r=1.8 s=20 frames=120 h=1.42
+brush rock from -2.35 -15.25 to 1.50 -37.16 r=5 s=10 frames=30
+brush sand from -2.12 -16.54 to 1.50 -37.16 r=1.5 s=10 frames=30
+ground -2.12 -16.54 -1.22 -21.70 -0.31 -26.85 0.60 -32.01 1.28 -35.88 3.0 -24.0 -4.0 -24.0
 place ZiplinePath_Landmark towerzip at -2.53 -14.22 h=10.07
 zipto towerzip 2 -40
-clear at -6 -17 r=2.5
-place Loot_Crate anchorbox at -6 -17 ground sit yaw=160
+# (c3z52 11-21: "zipline line in the ground 1.64 m" 4 m out from the zip deck - the hill there (9.3 m) over the rope (7.6 m),
+#     the save's cut held back by the zip deck's ladder beside it. The ground under the rope's first stretch lowered by hand,
+#     3-7.5 m out along it (the rope about 7.9-6.6 m there), the ladder's foot left; the anchor box off the line, 2.6 m west)
+brush flatten from -7.19 -16.05 to -6.48 -17.92 r=1.8 s=20 frames=150 h=6.7
+brush flatten from -6.48 -17.92 to -5.59 -20.25 r=1.8 s=20 frames=150 h=6.0
+brush rock from -7.19 -16.05 to -5.59 -20.25 r=2.5 s=10 frames=30
+# (c3z59 11-21: the rope 0.47 m over the ground 15.3 m out along it (frame -1.38 -31.33), 0.5 wanted - the rope 3.41 m
+#     there, the ground 2.94 m. That stretch lowered a little more.
+#     c3z61h: 0.28 m over the ground at frame -0.90 -32.60, where the rope is 3.07 m - that flatten, run on to -1.02 -32.26
+#     and reaching 2.7 m past its end, raised the lower ground there to 2.8 m. Now only the stretch at 3.41 m, to 2.5 m,
+#     reaching no further than r)
+brush flatten from -1.74 -30.40 to -1.38 -31.33 r=1.5 s=20 frames=150 h=2.5 line
+clear at -9.15 -18.18 r=2
+place Loot_Crate anchorbox at -9.15 -18.18 ground sit yaw=160
 
 # --- The meadow: the tracking guide, goats and llamas, Ranger log 5 on a crate by the lookout stone ------------------
 place Zone_Trigger meadowzone at 0 4 ground
@@ -357,4 +402,7 @@ brush smooth from -38.6 82.5 to -40.4 80.4 r=2 s=10 frames=12
 brush flatten at 21.6 90.7 r=1.2 s=20 frames=150 h=-0.2
 brush flatten at 22.6 90.7 r=1.2 s=20 frames=150 h=0.25
 brush smooth from 20.6 90.7 to 23.6 90.7 r=1.8 s=10 frames=12
+# (c3z43 11-21: CISheetIslands found two bare cliff walls on the open coast, at -52.5 -74.3 (11 m in one step) and
+#     7 -84.8 (14 m): sloped as rock talus to 10 m under the sea, as on the other islands)
+cliffs
 save Tracker's Rise

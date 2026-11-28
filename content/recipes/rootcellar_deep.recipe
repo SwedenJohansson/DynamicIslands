@@ -63,12 +63,16 @@ place Zone_Trigger wellzone at 2 -1.5 ground y=1
 call airpocket x=0 z=-4 id=well_air al=wellair bub=wellbub r=2.5
 
 # --- The orchard's roots: dead trees and driftwood twisting over the seabed to the root cave ------------------------
-place DeadTree1 roots at 5 -4 ground rot=0,30,82 scale=0.9
-place DeadTree2 roots at 7 3 ground rot=0,-50,80 scale=1.0
-place DeadTree3 roots at 9 -1 ground rot=0,110,84 scale=0.9
-place DeadTree1 roots at 14 1 ground rot=0,200,80 scale=1.1
-place DeadTree2 roots at 15 10 ground rot=0,260,82 scale=1.0
-place DeadTree3 roots at 9 11 ground rot=0,10,80 scale=1.0
+place DeadTree1 roots at 5 -4 h=2.9 rot=0,30,82 scale=0.9
+place DeadTree2 roots at 7 3 h=2.9 rot=0,-50,80 scale=1.0
+place DeadTree3 roots at 9 -1 h=2.9 rot=0,110,84 scale=0.9
+# (11-20 CP4) these three lay on their branch tips with the cut root end 2-4 m up in the water (`ground` rests a lying
+# tree on its lowest branch: the ground check's "trunk foot floating", and the pictures showed it): the root end set
+# 0.3 m into the seabed instead, as the first three at h=2.9 on the 3 m floor
+place DeadTree1 roots at 14 1 ground y=-0.3 rot=0,200,80 scale=1.1
+place DeadTree2 roots at 15 10 ground y=-0.3 rot=0,260,82 scale=1.0
+# (11-20 second build) 9 11 is on the cave hill's rise: at -0.3 its root end went all but under, a thin rim of the cut showing
+place DeadTree3 roots at 9 11 ground y=0 rot=0,10,80 scale=1.0
 place DeadTree_TreeStumps_1 - at 4 -1 ground sit
 place DeadTree_TreeStumps_2 - at 11 -3 ground sit
 prop roots tint.color=#4e4136
@@ -198,13 +202,16 @@ brush sand at -1.4 35 r=4.5 s=20 frames=30
 dig -7.15,22.15 -13.4,28.8 -17.2,34.3 r=1.75 slope=0 as=rcgal
 dig -1.44,34.96 -10.6,35.2 -17.2,34.3 r=1.75 slope=0 as=rcgal
 dig -17.2,34.3 -20.9,35.9 r=3.2 slope=0 as=rcgal
-# the upper level: a ramp up from the hall's far side, bending back east into the upper store (11 m and more from the
-# crown's tower straight over it, 10 m from the hall)
-dig -18.5,36.5 -19,41 -16.5,45 r=1.75 slope=22 as=rcgal
-dig -16.5,45 -14.5,46 r=2.8 slope=0 as=rcgal
+# the upper level: a ramp up from the hall's far side, bending back west into the upper store (about 10 m from the
+# stack's middle, under the crown's flank)
+# (11-21 cv35: the store moved 4-7 m in toward the stack's middle, 10 m from it: at -16.5 45 to -14.5 46, 14-16 m out, the
+# stack's flank had fallen to under the store's roof - the ground was 21.9 at 12.6 m out but cut at 14.4 m - and the
+# store broke out of its side, a big round hole to open water in its east wall)
+dig -18.5,36.5 -19.2,41 -20.6,44 r=1.75 slope=22 as=rcgal
+dig -20.6,44 -21.6,45.2 r=2.8 slope=0 as=rcgal
 caveloot rcgal dirt=5 mush=4 stone=2 vines=0 titanium=0 wet=1
 prop rcgal cave.rock=plain
-place Zone_Trigger rcgalair at -15.5 45.5 h=8.5
+place Zone_Trigger rcgalair at -21.1 44.6 h=8
 prop rcgalair obj.name=rcgalair
 prop rcgalair zone.id=rc_upperstore
 prop rcgalair zone.radius=4.5
@@ -212,7 +219,7 @@ prop rcgalair zone.repeat=1
 prop rcgalair zone.air=1
 prop rcgalair zone.message=The upper store, up the ramp: the last of the farm's air, held under the rock since the drowning. Breathe.
 # cavecheck inside rcgalair rcgalchest
-place Loot_ChestSmall rcgalchest at -14.2 46.6 h=7.5 drop yaw=240
+place Loot_ChestSmall rcgalchest at -21.9 45.9 h=7 drop yaw=240
 prop rcgalchest obj.name=rcgalchest
 prop rcgalchest loot.refill=0
 note rcgalchest Upper store crate | The farm's last crate in the upper store, carried up the ramp when the water came into the cellars. Chalked on the lid: SEED - FOR THE OTHER HALF.

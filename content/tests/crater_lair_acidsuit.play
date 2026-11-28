@@ -1,0 +1,26 @@
+# Crater Lair's coolant vat with a suit (CIPlay crater_lair_acidsuit, 11-12 w14 prep; in a test world 'CI ...'). The suit
+# box clvatsuits (14.6 -22.6) gives 180 s of suit; across the vat's zone cl_vat (18.5 -19.5) to the locker clvatlocker
+# (20.5 -18.6) and back, unhurt, the acid still there. Floors ~5 m (a guess).
+# Offline-written, never run; the offset is the old one - re-read it after the build (a new hill may move the land centre).
+island Crater Lair keep
+offset 0.5101 0.0433
+hour 11
+weather Calm
+
+# 11-17: the bear from the halls walks out to the player: kill it first
+wait 3
+kill Bear
+empty
+walk 9 -36 to 6 -30 to 6 -21 to 13 -21 to 14 -22
+use clvatsuits
+expect shown clvatacid
+# (w14I: a walk from the door stuck at 14.6 -20.3, at the step up from the branch into the room - the way back down
+# walks; a player hops it. The player is put in the room past the step)
+walk 16 -20.5 to 18.5 -19.5 to 19.8 -18.9
+wait 6
+expect unhurt
+open Vat room locker
+wait 2
+expect item TitaniumIngot 1
+walk 19.8 -18.9 to 18.5 -19.5 to 16 -20.5 to 13 -21
+expect unhurt

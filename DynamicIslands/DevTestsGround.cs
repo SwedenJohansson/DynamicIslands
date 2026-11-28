@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -61,6 +61,7 @@ namespace DynamicIslands
 			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
 			var report = new StringBuilder();
 			int islands = 0, bad = 0, problems = 0, objects = 0;
+			checkShots = false; // (no pictures here: this check runs in one frame)
 			foreach (IslandWorldState.Entry e in IslandWorldState.Islands.Where(x => x.Root != null && !x.Loading).ToList())
 			{
 				if (only.Length > 0 && (e.HostName ?? e.Name ?? "").IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
@@ -82,19 +83,30 @@ namespace DynamicIslands
 			else Log("PASS: " + c.Label + " - " + islands + " islands, " + objects + " objects, " + c.Pass);
 		}
 
-		[ConsoleCommand(name: "CIGroundIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIGroundWorld does, then taken away (IG2/IG3). <which>: part of the name (several joined by | - Geiger|Gannet_Rock, _ for a space), 'plans' (every island of every plan - the story lines), 'gen' (the saved generated ones) or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\ground_islands.txt. CIGroundIslands <which> [most] [skip the first n] [keep: left there, where each is logged - to look at it]")]
+		[ConsoleCommand(name: "CIGroundIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIGroundWorld does, then taken away (IG2/IG3). <which>: part of the name (several joined by | - Geiger|Gannet_Rock, _ for a space), 'plans' (every island of every plan - the story lines), 'gen' (the saved generated ones) or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\ground_islands.txt. CIGroundIslands <which> [most] [skip the first n] [keep: left there, where each is logged - to look at it] [shots: a picture of each cave rim gap (from outside and from the rim) and each see-through look, shot_cave_*.png, with what the look ray meets] [as=<tag>: the results copied to ground_islands_<tag>.txt too, so two runs in one job keep both]")]
 		public static void GroundIslandsCommand(string[] args) { IslandsCheck(args, GroundCheck); }
 
 		static void IslandsCheck(string[] args, IslandCheck c)
 		{
+			// (the word 'shots' anywhere: the pictures the check asks for - its worst sheets, cave looks - taken while each island is there)
+			checkShots = args != null && args.Contains("shots");
+			if (checkShots) args = args.Where(a => a != "shots").ToArray();
+			// (rocks=<piece>: with shots, CISheetIslands also pictures up to 4 of that piece standing in the waterline on each
+			// island - the cliffs step's rocks=, to see them standing, not floating or stretched oddly; c3z63 11-22)
+			checkRockShots = args == null ? null : args.Where(a => a.StartsWith("rocks=", StringComparison.Ordinal)).Select(a => a.Substring(6)).LastOrDefault();
+			if (checkRockShots != null) args = args.Where(a => !a.StartsWith("rocks=", StringComparison.Ordinal)).ToArray();
+			// (as=<tag>: the report also copied to <file>_islands_<tag>.txt - two phases of one job wrote the same file and the
+			// first one's lines were lost, c3z46 11-21)
+			string tag = args == null ? null : args.Where(a => a.StartsWith("as=", StringComparison.Ordinal)).Select(a => a.Substring(3)).LastOrDefault();
+			if (tag != null) { args = args.Where(a => !a.StartsWith("as=", StringComparison.Ordinal)).ToArray(); tag = new string(tag.Where(ch => char.IsLetterOrDigit(ch) || ch == '_' || ch == '-').ToArray()); if (tag.Length == 0) tag = null; }
 			string which = args != null && args.Length > 0 ? args[0] : "*";
 			int most = args != null && args.Length > 1 ? int.Parse(args[1]) : 9999;
 			int skip = args != null && args.Length > 2 ? int.Parse(args[2]) : 0;
 			bool keep = args != null && args.Length > 3 && args[3] == "keep";
-			StartTest(GroundIslandsRoutine(c, which, most, skip, keep));
+			StartTest(GroundIslandsRoutine(c, which, most, skip, keep, tag));
 		}
 
-		static IEnumerator GroundIslandsRoutine(IslandCheck c, string which, int most, int skip, bool keep = false)
+		static IEnumerator GroundIslandsRoutine(IslandCheck c, string which, int most, int skip, bool keep = false, string tag = null)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail(c.Label + " islands: host, in a world"); yield break; }
 			var kept = new System.Text.RegularExpressions.Regex("_[0-9a-f]{12}$");
@@ -109,22 +121,51 @@ namespace DynamicIslands
 			List<string> names = pick.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).Skip(skip).Take(most).ToList();
 			Log(c.Label + " check of " + names.Count + " saved islands (" + which + ", from " + skip + ")");
 			var report = new StringBuilder();
-			int done = 0, bad = 0, problems = 0, missed = 0;
+			int done = 0, bad = 0, problems = 0, missed = 0, at = 0;
 			foreach (string name in names)
 			{
-				var left = IslandWorldState.Islands.Where(x => string.Equals(x.HostName, name, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
+				// (IG8 11-20: progress for the heartbeat - a sweep of 200 islands runs half an hour, and ci.ps1 ends a wait
+				//  whose HB step/prog stands still for 20 min)
+				hbWhat = c.Label + " islands"; hbStep = at++; hbProg++;
+				// (the world left under the sweep - the runner moved on: every later island said "no open sea", 77 of them)
+				if (!LoadSceneManager.IsGameSceneLoaded || !CustomIslandSpawner.RaftPosition.HasValue)
+				{
+					Fail(c.Label + " islands: the world was left after " + (at - 1) + " of " + names.Count + " islands (" + done + " measured) - next was '" + name + "'");
+					yield break;
+				}
+				var left =IslandWorldState.Islands.Where(x => string.Equals(x.HostName, name, StringComparison.OrdinalIgnoreCase)).Select(x => x.Id).ToList();
 				if (left.Count > 0) yield return RemoveIslandsAndWait(left);
 				Vector3? spot = ScSpot(name, 400f);
-				if (!spot.HasValue) { Log("  " + name + ": no open sea near the raft"); missed++; continue; }
+				if (!spot.HasValue) { Log("  " + name + ": no open sea near the raft"); report.AppendLine(name + ": NOT MEASURED - no open sea near the raft"); missed++; continue; }
 				var made = new List<IslandWorldState.Entry>();
 				yield return ScBring(name, spot.Value, made);
 				IslandWorldState.Entry e = made.LastOrDefault();
-				if (e == null || e.Root == null) { Log("  " + name + ": didn't come"); missed++; continue; }
+				// (bugfix 11-25: a brand-new world is noticed a few seconds after it is ready - Raft's "World ready" comes first -
+				// and its start clears the world's island list; an island asked for in between lost its entry and stopped
+				// loading ('Ironreef Caverns: didn't come', ir1). Asked for once more: its spawn never failed)
+				if (e != null && e.Root == null && !e.Failed && !IslandWorldState.Contains(e))
+				{
+					Log("  (" + name + ": its entry was dropped while it loaded - the new world was still starting: brought again)");
+					made.Clear();
+					Vector3? again = ScSpot(name, 400f);
+					if (again.HasValue) { yield return ScBring(name, again.Value, made); e = made.LastOrDefault(); }
+				}
+				if (e == null || e.Root == null) { Log("  " + name + ": didn't come"); report.AppendLine(name + ": NOT MEASURED - didn't come" + (e != null && e.Failed ? " (its spawn failed)" : "")); missed++; if (made.Count > 0) yield return RemoveIslandsAndWait(made.Select(x => x.Id).ToList()); continue; }
 				yield return WaitIslandSettled(e, 0.5f, 2f); // (the cave mountains and Raft's physics settle: until they have, 2 s at most)
+				// (a night ghost ship brought by day sinks away at once - IG5 run 11-18 threw on it, ending the check)
+				if (e.Root == null) { Log("  " + name + ": went away again (a ghost ship by day)"); report.AppendLine(name + ": NOT MEASURED - went away again"); missed++; continue; }
 				int n;
+				checkShotQueue.Clear();
 				List<string> lines = c.Measure(e, out n);
 				done++;
 				report.AppendLine(name + ": " + n + " objects, " + lines.Count + " problems");
+				// (the pictures the measure asked for, before the island goes)
+				foreach (var s in checkShotQueue.ToList())
+				{
+					report.AppendLine("  (picture shot_" + s.Key + ".png from " + s.Value[0].ToString("F1") + " towards " + s.Value[1].ToString("F1") + ")");
+					yield return CameraShot(s.Value[0], s.Value[1], s.Key);
+				}
+				checkShotQueue.Clear();
 				foreach (string l in lines) report.AppendLine("  " + l);
 				if (lines.Count > 0)
 				{
@@ -136,10 +177,13 @@ namespace DynamicIslands
 				if (keep) { Log("  kept '" + name + "' at " + e.Root.transform.position.ToString("F1") + ", turned " + e.Root.transform.eulerAngles.y.ToString("F0") + "°"); continue; }
 				yield return RemoveIslandsAndWait(made.Select(x => x.Id).ToList());
 			}
+			hbWhat = "idle";
 			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, c.File + "_islands.txt"), report.ToString());
+			string reportName = c.File + "_islands.txt";
+			if (tag != null) { reportName = c.File + "_islands_" + tag + ".txt"; File.WriteAllText(Path.Combine(DynamicIslands.assetpath, reportName), report.ToString()); }
 			string sum = done + " of " + names.Count + " islands measured" + (missed > 0 ? " (" + missed + " didn't come)" : "");
 			if (names.Count == 0) Fail(c.Label + " islands: none matched '" + which + "'");
-			else if (bad > 0 || missed > 0) Fail(c.Label + " islands: " + bad + " with " + problems + " problems; " + sum + " (" + c.File + "_islands.txt)");
+			else if (bad > 0 || missed > 0) Fail(c.Label + " islands: " + bad + " with " + problems + " problems; " + sum + " (" + reportName + ")");
 			else Log("PASS: " + c.Label + " islands - " + sum + ", " + c.Pass);
 		}
 
@@ -148,6 +192,7 @@ namespace DynamicIslands
 
 		static void TypesCheck(string[] args, IslandCheck c)
 		{
+			checkShots = false;
 			string which = args != null && args.Length > 0 ? args[0] : "*";
 			int each = args != null && args.Length > 1 ? int.Parse(args[1]) : 2;
 			StartTest(GroundTypesRoutine(c, which, each));
@@ -164,6 +209,7 @@ namespace DynamicIslands
 			foreach (string type in types)
 				for (int i = 0; i < each; i++)
 				{
+					hbWhat = c.Label + " types"; hbStep = done + missed; hbProg++; // (progress for the heartbeat, as in GroundIslandsRoutine)
 					Network_Player player = RAPI.GetLocalPlayer();
 					Vector3 raft = CustomIslandSpawner.RaftPosition ?? (player != null ? player.transform.position : Vector3.zero);
 					IslandWorldState.Entry e = SpawnTypeNear(type, raft);
@@ -190,6 +236,7 @@ namespace DynamicIslands
 					}
 					yield return RemoveIslandsAndWait(new[] { e.Id });
 				}
+			hbWhat = "idle";
 			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, c.File + "_types.txt"), report.ToString());
 			string sum = done + " of " + types.Count * each + " new islands measured" + (missed > 0 ? " (" + missed + " didn't come)" : "");
 			if (bad > 0 || missed > 0) Fail(c.Label + " types: " + bad + " with " + problems + " problems; " + sum + " (" + c.File + "_types.txt)");
@@ -388,6 +435,1317 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIOneSidedIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIOneSidedWorld does, then taken away (IG8). Same arguments as CIOverlapIslands. Results in Mods\\DynamicIslands\\onesided_islands.txt.")]
 		public static void OneSidedIslandsCommand(string[] args) { IslandsCheck(args, OneSidedCheck); }
 
+		static readonly IslandCheck SheetCheck = new IslandCheck { Label = "sheet", File = "sheet", Pass = "no bare cliff sheet at the waterline", Measure = SheetProblems };
+
+		[ConsoleCommand(name: "CISheetIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one; no bare land cliff at the waterline - the land's own face rising 7 m or more in one heightmap step from under the sea to over it, nothing standing in front of it, along 3 or more 8 m cells: Raft draws it as one pale stretched sheet (Caisson Yard's yard rock, c3z37 11-21). Each line says whether the face is a pit's wall (seen from its rim) or the open coast (seen from the sea) and how it is painted. Fix: the recipe step cliffs. Same arguments as CIOverlapIslands, plus 'shots' (a picture of every sheet per island, largest first, from the low side, shot_sheet_<island>_<n>.png). Results in Mods\\DynamicIslands\\sheet_islands.txt.")]
+		public static void SheetIslandsCommand(string[] args) { IslandsCheck(args, SheetCheck); }
+
+		[ConsoleCommand(name: "CISheetWorld", docs: "Dev, in a world: CISheetIslands on the loaded custom islands. CISheetWorld [part of the island name]. Results in Mods\\DynamicIslands\\sheet_world.txt.")]
+		public static void SheetWorldCommand(string[] args) { WorldCheck(args, SheetCheck); }
+
+		[ConsoleCommand(name: "CISheetShotsUnit", docs: "Dev, anywhere: CISheetIslands' 'shots' picture every sheet, not just the 2 largest (lib 3.5.1 11-23: Take(2) left smaller new sheets unpictured) and past the 8-picture cap - a made-up terrain far off with 9 square plateaus 10 m over the sea in 20 m deep water: 9 sheets, 9 sheet pictures queued, largest first (_1 .. _9)")]
+		public static void CISheetShotsUnit()
+		{
+			var td = new TerrainData();
+			td.heightmapResolution = 129;
+			td.size = new Vector3(256f, 60f, 256f);
+			int res = td.heightmapResolution;
+			var h = new float[res, res];
+			float low = 10f / 60f, high = 40f / 60f; // (terrain at y -30: the sea floor 20 m under the sea, the plateaus 10 m over it)
+			for (int z = 0; z < res; z++) for (int x = 0; x < res; x++) h[z, x] = low;
+			int[] starts = { 14, 54, 94 };
+			int k = 0;
+			foreach (int bz in starts)
+				foreach (int bx in starts)
+				{
+					int side = 8 + 2 * k++; // (sizes 8..24 points: each sheet a different size, so 'largest first' is checkable)
+					for (int z = bz; z < bz + side && z < res; z++) for (int x = bx; x < bx + side && x < res; x++) h[z, x] = high;
+				}
+			td.SetHeights(0, 0, h);
+			GameObject go = Terrain.CreateTerrainGameObject(td);
+			go.transform.position = new Vector3(6000f, -30f, 6000f);
+			bool was = checkShots;
+			string wasRocks = checkRockShots;
+			try
+			{
+				Physics.SyncTransforms();
+				checkShots = true; checkRockShots = null; checkShotQueue.Clear();
+				var e = new IslandWorldState.Entry { Name = "ci sheet unit", Root = go, Position = go.transform.position + new Vector3(128f, 30f, 128f) };
+				int n;
+				List<string> lines = SheetProblems(e, out n);
+				var names = checkShotQueue.Select(s => s.Key).ToList();
+				var want = Enumerable.Range(1, 9).Select(i => "sheet_ci_sheet_unit_" + i).ToList();
+				var cells = lines.Select(l => int.Parse(Regex.Match(l, @", (\d+) cells of").Groups[1].Value)).ToList();
+				bool order = cells.Zip(cells.Skip(1), (a, b) => a >= b).All(x => x);
+				if (lines.Count == 9 && names.SequenceEqual(want) && order)
+					Log("PASS: sheet shots - 9 sheets (" + string.Join(" ", cells.Select(c => c.ToString()).ToArray()) + " cells, " + n + " faces), 9 pictures queued in that order");
+				else Fail("sheet shots: " + lines.Count + " sheets (cells " + string.Join(" ", cells.Select(c => c.ToString()).ToArray()) + ", largest first " + order + "), queued " + names.Count + ": " + string.Join(", ", names.ToArray()));
+			}
+			catch (Exception ex) { Fail("sheet shots: " + ex.GetType().Name + " " + ex.Message); }
+			finally
+			{
+				checkShotQueue.Clear(); checkShots = was; checkRockShots = wasRocks;
+				UnityEngine.Object.Destroy(go);
+			}
+		}
+
+		[ConsoleCommand(name: "CICliffsKeepUnit", docs: "Dev, the editor (opened when needed): the recipe's cliffs step keeps keep= circles as they are and carries the loot and creatures its talus would bury (lib 3.5.1 11-23: the talus filled Crater Lair's dock pool, buried the dive sites' boats and Sundown's angler). A generated island's ground is set to a 20 m deep sea floor with two 40 m plateaus 10 m over the sea; a crate and a puffer fish in front of plateau A, a fish far off, a sunk wall piece in front of A, cliffs keep= round plateau B: A sloped, nothing in B's circle changed, the crate on the new ground, the fish still in the water over it, the far fish and the wall not moved; a third plateau C in a walls= circle with rocks=BigBoulder4_Low: its ground not changed, its faces rocked (lib 3.5.1 11-23: keep had left the dive sites' pit walls bare sheets)")]
+		public static void CliffsKeepUnitCommand(string[] args) { StartTest(CliffsKeepUnitRoutine()); }
+
+		static IEnumerator CliffsKeepUnitRoutine()
+		{
+			bool ok = true;
+			string pa = Path.Combine(RecipeFolder, "ci_cliffkeep_a.recipe"), pb = Path.Combine(RecipeFolder, "ci_cliffkeep_b.recipe"), pc = Path.Combine(RecipeFolder, "ci_cliffkeep_c.recipe");
+			Func<float, string> inv = f => f.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+			try { Directory.CreateDirectory(RecipeFolder); File.WriteAllLines(pa, new[] { "# CICliffsKeepUnit: the island", "new", "gen Seed=4242 Radius=60 Height=20 Style=0", "generate" }); }
+			catch (Exception e) { Fail("cliffs keep: writing " + pa + ": " + e.Message); yield break; }
+			yield return RecipeRoutine("ci_cliffkeep_a");
+			yield return new WaitForSecondsRealtime(0.5f);
+			Terrain t = terraineditor.terrain;
+			if (t == null) { Fail("cliffs keep: no island after the first recipe"); yield break; }
+			TerrainData td = t.terrainData;
+			int res = td.heightmapResolution;
+			Vector3 tp = t.transform.position, size = td.size;
+			float sea = tp.y + DynamicIslands.EditorWaterLevel;
+			// (the ground: a sea floor 20 m under the sea, plateau A 300 m west of the middle and B 300 m east, 40 m square, 10 m over it)
+			Vector3 c = tp + new Vector3(size.x / 2f, 0f, size.z / 2f);
+			Vector2 A = new Vector2(c.x - 300f, c.z), B = new Vector2(c.x + 300f, c.z), C = new Vector2(c.x, c.z + 300f);
+			var h = new float[res, res];
+			for (int z = 0; z < res; z++)
+				for (int x = 0; x < res; x++)
+				{
+					float wx = tp.x + x * size.x / (res - 1), wz = tp.z + z * size.z / (res - 1);
+					bool up = (Mathf.Abs(wx - A.x) <= 20f && Mathf.Abs(wz - A.y) <= 20f) || (Mathf.Abs(wx - B.x) <= 20f && Mathf.Abs(wz - B.y) <= 20f) || (Mathf.Abs(wx - C.x) <= 20f && Mathf.Abs(wz - C.y) <= 20f);
+					h[z, x] = ((up ? sea + 10f : sea - 20f) - tp.y) / size.y;
+				}
+			td.SetHeights(0, 0, h);
+			Physics.SyncTransforms();
+			yield return null;
+			// (in front of A's east face: a crate on the floor 6 m out, a puffer fish 10 m out 14 m under the sea - the talus reaches 10 m out
+			// there, 3 m a point down to 10 m under the sea: the first test's crate 12 m out stood past it; the fish 8 m out (ground 5 m under
+			// the sea after) had no room under the sea for its box and sat on the new ground - 11-23 mnu3; one far off)
+			try
+			{
+				File.WriteAllLines(pb, new[]
+				{
+					"# CICliffsKeepUnit: the things on the sea floor",
+					"origin " + inv(c.x) + " " + inv(c.z),
+					"place Loot_Crate cikcrate at " + inv(A.x - c.x + 26f) + " 0",
+					"place Creature_PufferFish cikfish at " + inv(A.x - c.x + 30f) + " 6 h=-14",
+					"place Creature_PufferFish cikfar at 0 -200 h=-14",
+					"place Block_Wall_Tier3 cikwall at " + inv(A.x - c.x) + " 26",
+				});
+				File.WriteAllLines(pc, new[] { "# CICliffsKeepUnit: the cliffs step", "origin " + inv(c.x) + " " + inv(c.z), "cliffs keep=" + inv(B.x - c.x) + ",0,50 walls=0," + inv(C.y - c.z) + ",50 rocks=BigBoulder4_Low" });
+			}
+			catch (Exception e) { Fail("cliffs keep: writing the recipes: " + e.Message); yield break; }
+			yield return RecipeRoutine("ci_cliffkeep_b");
+			yield return null;
+			Func<string, Vector2, EditorGameObject> find = (n, near) => SelectionTools.Placed().Where(x => x != null && x.GameObjectName == n)
+				.OrderBy(x => new Vector2(x.transform.position.x - near.x, x.transform.position.z - near.y).sqrMagnitude).FirstOrDefault();
+			Func<EditorGameObject, Bounds> box = o =>
+			{
+				Renderer[] rs = o.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled).ToArray();
+				Bounds b = rs.Length > 0 ? rs[0].bounds : new Bounds(o.transform.position, Vector3.one);
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				return b;
+			};
+			EditorGameObject crate = find("Loot_Crate", A + new Vector2(26f, 0f)), fish = find("Creature_PufferFish", A + new Vector2(30f, 6f)), far = find("Creature_PufferFish", new Vector2(c.x, c.z - 200f));
+			if (crate == null || fish == null || far == null || fish == far) { Fail("cliffs keep: the crate and two fish not placed"); yield break; }
+			EditorGameObject wall = find("Block_Wall_Tier3", A + new Vector2(0f, 26f));
+			if (wall == null) { Fail("cliffs keep: the sunk wall not placed"); yield break; }
+			float wallY = wall.transform.position.y;
+			Bounds crate0 = box(crate), fish0 = box(fish);
+			float farY = far.transform.position.y, crateSunk = crate0.min.y - (t.SampleHeight(crate0.center) + tp.y), fishGap = fish0.min.y - (t.SampleHeight(fish0.center) + tp.y);
+			float[,] before = td.GetHeights(0, 0, res, res);
+			Func<Vector3, bool> nearC = q => new Vector2(q.x - C.x, q.z - C.y).magnitude <= 50f;
+			int facesC0 = BareFaces(t, sea, SheetRise, before).Count(f => nearC(f.Hi));
+			yield return RecipeRoutine("ci_cliffkeep_c");
+			yield return null;
+			try { File.Delete(pa); File.Delete(pb); File.Delete(pc); } catch { }
+			float[,] after = td.GetHeights(0, 0, res, res);
+			int inB = 0, changedB = 0, raisedA = 0, inC = 0, changedC = 0;
+			for (int z = 0; z < res; z++)
+				for (int x = 0; x < res; x++)
+				{
+					float wx = tp.x + x * size.x / (res - 1), wz = tp.z + z * size.z / (res - 1);
+					bool changed = Mathf.Abs(after[z, x] - before[z, x]) * size.y > 0.01f;
+					if (new Vector2(wx - B.x, wz - B.y).magnitude <= 50f) { inB++; if (changed) changedB++; }
+					else if (new Vector2(wx - C.x, wz - C.y).magnitude <= 50f) { inC++; if (changed) changedC++; }
+					else if (changed && new Vector2(wx - A.x, wz - A.y).magnitude <= 70f) raisedA++;
+				}
+			Check(ref ok, raisedA > 100, "plateau A's faces sloped: " + raisedA + " points raised");
+			Check(ref ok, inB > 1000 && changedB == 0, "nothing changed in B's keep circle: " + changedB + " of " + inB + " points");
+			Bounds crate1 = box(crate), fish1 = box(fish);
+			float g1 = t.SampleHeight(crate1.center) + tp.y, f1 = t.SampleHeight(fish1.center) + tp.y;
+			Check(ref ok, crate1.min.y > crate0.min.y + 3f && Mathf.Abs(crate1.min.y - g1 - crateSunk) < 0.5f,
+				"the crate on the new ground: " + inv(crate0.min.y - sea) + " -> " + inv(crate1.min.y - sea) + " m, the ground " + inv(g1 - sea) + " (its bottom " + inv(crateSunk) + " m from the ground before)" +
+				" (it stands at A + " + inv(crate1.center.x - A.x) + " " + inv(crate1.center.z - A.y) + "; the ground in front of A's east face, 2-16 m out, before -> after:" +
+				string.Join(",", Enumerable.Range(1, 8).Select(i => { int gx = Mathf.RoundToInt((A.x + 20f + 2f * i - tp.x) / (size.x / (res - 1))), gz = Mathf.RoundToInt((A.y - tp.z) / (size.z / (res - 1)));
+					return " " + inv(before[gz, gx] * size.y + tp.y - sea) + ">" + inv(after[gz, gx] * size.y + tp.y - sea); }).ToArray()) + ")");
+			Check(ref ok, fish1.min.y > fish0.min.y + 3f && fish1.min.y >= f1 && fish1.max.y < sea,
+				"the fish over the new ground, still in the water: bottom " + inv(fish0.min.y - sea) + " -> " + inv(fish1.min.y - sea) + " m, top " + inv(fish0.max.y - sea) + " -> " + inv(fish1.max.y - sea) + " m (it was " + inv(fishGap) + " m over the floor), the ground " + inv(f1 - sea));
+			Check(ref ok, Mathf.Abs(far.transform.position.y - farY) < 0.01f, "the far fish not moved");
+			// (a building piece on the sea floor holds the talus back, never rides up on it: Skyhook Mast's sunk room - 11-23)
+			Check(ref ok, Mathf.Abs(wall.transform.position.y - wallY) < 0.01f, "the sunk wall in front of A's north face not moved: " + inv(wallY - sea) + " -> " + inv(wall.transform.position.y - sea) + " m");
+			// (walls=: C's ground as it was, its faces rocked - the sheet check's rays now meet a rock)
+			int facesC1 = BareFaces(t, sea, SheetRise, after).Count(f => nearC(f.Hi));
+			int rocksC = SelectionTools.Placed().Count(x => x != null && x.GameObjectName == "BigBoulder4_Low" && nearC(x.transform.position));
+			Check(ref ok, inC > 1000 && changedC == 0, "nothing raised in C's walls circle: " + changedC + " of " + inC + " points");
+			Check(ref ok, facesC0 >= 8 && rocksC >= 4 && facesC1 * 5 <= facesC0, "C's faces rocked: " + facesC0 + " bare -> " + facesC1 + ", " + rocksC + " rocks stood");
+			if (ok) Log("PASS: cliffs keep - A sloped (" + raisedA + " points), B's circle as it was, the crate and the fish carried up, C's walls rocked (" + facesC0 + " -> " + facesC1 + " bare faces, " + rocksC + " rocks)");
+			else Fail("cliffs keep");
+		}
+
+		const float SheetRise = 7f;   // (one heightmap step this tall: the land's skin stretched up a wall)
+		const float SheetCellM = 8f;  // (faces are gathered in cells this wide; neighbouring cells make one sheet)
+		const int SheetCells = 3;     // (a sheet this many cells or more is a problem - a single steep notch is not)
+		const int SheetEncWays = 6;   // (land round the face's foot in this many of 8 ways or more: a pit's wall, not the open coast)
+
+		/// <summary>One bare cliff face: a heightmap step from Hx,Hz (high) to Lx,Lz (low); Top and Bot above the sea (m).</summary>
+		struct SheetFace { public int Hx, Hz, Lx, Lz; public float Top, Bot, Rise; public Vector3 Hi, Lo; }
+
+		/// <summary>The land's bare cliff faces at the waterline (SheetProblems, the recipe's cliffs step): one heightmap step
+		/// that rises minRise or more from under the sea (2 m down) to over it (0.5 m up), seen from its low side - a ray at
+		/// the waterline hits the land first, not a rock or a wall set in front of it. sea: the sea's world height.</summary>
+		static List<SheetFace> BareFaces(Terrain land, float sea, float minRise, float[,] hm)
+		{
+			var list = new List<SheetFace>();
+			TerrainData td = land.terrainData;
+			int res = td.heightmapResolution;
+			Vector3 tp = land.transform.position, size = td.size;
+			float sx = size.x / (res - 1), sz = size.z / (res - 1);
+			Physics.SyncTransforms();
+			for (int z = 0; z < res - 1; z++)
+				for (int x = 0; x < res - 1; x++)
+					for (int k = 0; k < 2; k++)
+					{
+						int nx = k == 0 ? x + 1 : x, nz = k == 0 ? z : z + 1;
+						float a = hm[z, x] * size.y + tp.y, b = hm[nz, nx] * size.y + tp.y;
+						float rise = Mathf.Abs(a - b), top = Mathf.Max(a, b) - sea, bot = Mathf.Min(a, b) - sea;
+						if (rise < minRise || top < 0.5f || bot > -2f) continue;
+						var f = new SheetFace { Hx = a >= b ? x : nx, Hz = a >= b ? z : nz, Lx = a >= b ? nx : x, Lz = a >= b ? nz : z, Top = top, Bot = bot, Rise = rise };
+						f.Hi = new Vector3(tp.x + f.Hx * sx, sea, tp.z + f.Hz * sz);
+						f.Lo = new Vector3(tp.x + f.Lx * sx, sea, tp.z + f.Lz * sz);
+						Vector3 outward = (f.Lo - f.Hi).normalized;
+						float y = sea + Mathf.Clamp(top * 0.5f, 0.25f, 3f);
+						Vector3 from = f.Lo + outward * 0.5f; from.y = y;
+						// (the low side's ground over the ray's start: a trench, not a face seen from the sea)
+						if (land.SampleHeight(from) + tp.y > y) continue;
+						if (FaceCover(from, -outward, sx + 1f, null) == null) list.Add(f);
+					}
+			return list;
+		}
+
+		/// <summary>What stands in front of a face: from the ray's start (0.5 m out of the face's low point, halfway up its part over
+		/// the sea) back towards the face for len m, the first collider before the land - or one the start lies in. A rock stood half
+		/// in the wall holds the start inside it, and a ray never meets the collider it starts in: c3z64 counted Caisson Yard's yard
+		/// rock bare where a stood rock (and the logs it stood over) covered it - a new 7-face sheet. So the colliders round the
+		/// start count, and with back faces on a mesh's inside does (a natural rock's or a log's only: a one-sided skin seen from
+		/// behind is no cover). counts: only these count (null: all but the land). Null when the face is bare.</summary>
+		static Collider FaceCover(Vector3 from, Vector3 back, float len, System.Func<Collider, bool> counts)
+		{
+			foreach (Collider c in Physics.OverlapSphere(from, 0.05f, ~0, QueryTriggerInteraction.Ignore))
+				if (!(c is TerrainCollider) && (counts != null ? counts(c) : CoversFromInside(c))) return c;
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				foreach (RaycastHit h in Physics.RaycastAll(from, back, len, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+				{
+					if (h.collider is TerrainCollider) return null;
+					bool inside = Vector3.Dot(h.normal, back) > 0f;
+					if (counts != null ? counts(h.collider) : !inside || CoversFromInside(h.collider)) return h.collider;
+				}
+				return null;
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+		}
+
+		/// <summary>A collider whose inside a face's ray may start in and still be cover: a natural rock's or a log's.</summary>
+		static bool CoversFromInside(Collider c)
+		{
+			string n = PieceName(c);
+			return NaturalRock(n) || Regex.IsMatch(n, @"^Log(_|\s|$)|Driftwood", RegexOptions.IgnoreCase);
+		}
+
+		/// <summary>The piece a collider belongs to: the editor's name, or in a spawned island the child of its Objects, "(Clone)" off.</summary>
+		static string PieceName(Collider c)
+		{
+			EditorGameObject by = c.GetComponentInParent<EditorGameObject>();
+			if (by != null) return (by.GameObjectName ?? by.name).Replace("(Clone)", "").Trim();
+			for (Transform t = c.transform; t != null; t = t.parent)
+				if (t.parent != null && t.parent.name == "Objects") return t.name.Replace("(Clone)", "").Trim();
+			return c.name.Replace("(Clone)", "").Trim();
+		}
+
+		/// <summary>In how many of 8 ways the land rises over the sea within 80 m of a face's foot: 6 or more is a pit's wall
+		/// (a blue hole, a dive shaft - seen from its rim), fewer the open coast (seen from the sea as the raft comes in).</summary>
+		static int SheetEnclosed(float[,] hm, int res, float sizeY, float tpY, float sea, int lx, int lz)
+		{
+			int ways = 0;
+			for (int w = 0; w < 8; w++)
+			{
+				float ang = w * Mathf.PI / 4f;
+				float dx = Mathf.Cos(ang), dz = Mathf.Sin(ang);
+				for (int s = 2; s <= 40; s++)
+				{
+					int x = lx + Mathf.RoundToInt(dx * s), z = lz + Mathf.RoundToInt(dz * s);
+					if (x < 0 || z < 0 || x >= res || z >= res) break;
+					if (hm[z, x] * sizeY + tpY > sea) { ways++; break; }
+				}
+			}
+			return ways;
+		}
+
+		/// <summary>The land's bare cliff faces at the waterline (BareFaces), gathered into sheets: Raft paints the land from
+		/// above, so such a face is drawn as the ground's texture smeared down a wall - Caisson Yard's crane-end picture showed a
+		/// pale sheet half the frame wide that no check caught (c3z37 11-21). Each sheet says whether it is the open coast or a
+		/// pit's wall (SheetEnclosed), how high it stands over the sea, and what the ground there is painted; with the check's
+		/// 'shots' word every one is pictured from its low side, largest first (shot_sheet_<island>_<n>). count = the faces measured.</summary>
+		static List<string> SheetProblems(IslandWorldState.Entry e, out int count)
+		{
+			var lines = new List<string>();
+			count = 0;
+			Terrain land = e.Root != null ? e.Root.GetComponentInChildren<Terrain>() : null;
+			if (land == null || land.terrainData == null) return lines;
+			TerrainData td = land.terrainData;
+			int res = td.heightmapResolution;
+			float[,] hm = td.GetHeights(0, 0, res, res);
+			Vector3 tp = land.transform.position, size = td.size, mid = e.Position;
+			float sea = 0f, sx = size.x / (res - 1);
+			int cell = Mathf.Max(1, Mathf.RoundToInt(SheetCellM / sx));
+			// (cell -> the faces in it)
+			var cells = new Dictionary<long, List<SheetFace>>();
+			foreach (SheetFace f in BareFaces(land, sea, SheetRise, hm))
+			{
+				count++;
+				long key = (long)(f.Lx / cell) * 100000L + (f.Lz / cell);
+				List<SheetFace> c;
+				if (!cells.TryGetValue(key, out c)) cells[key] = c = new List<SheetFace>();
+				c.Add(f);
+			}
+			// (the paint at a face: the alphamap halfway down it - what Raft stretches over the wall)
+			int ares = td.alphamapResolution, layers = td.alphamapLayers;
+			float[,,] alpha = layers > 0 ? td.GetAlphamaps(0, 0, ares, ares) : null;
+			string[] layerName = { "seabed", "sand", "grass", "rock" };
+			// (neighbouring cells, the corners too, make one sheet)
+			var seen = new HashSet<long>();
+			var sheets = new List<KeyValuePair<int, string>>();
+			var shots = new List<KeyValuePair<int, Vector3[]>>();
+			foreach (long start in cells.Keys)
+			{
+				if (seen.Contains(start)) continue;
+				var stack = new Stack<long>(); stack.Push(start); seen.Add(start);
+				int n = 0, faces = 0, encSum = 0;
+				float tallest = 0f, highest = 0f, deepest = 0f;
+				Vector3 sum = Vector3.zero, outSum = Vector3.zero;
+				var paint = new float[TerrainPainter.LayerCount];
+				var faceList = new List<string>(); // (each face's top point and its foot, from the island's middle: what to cover)
+				while (stack.Count > 0)
+				{
+					long q = stack.Pop(); List<SheetFace> c = cells[q];
+					n++;
+					foreach (SheetFace f in c)
+					{
+						faces++; faceList.Add(Num(f.Hi.x - mid.x) + "," + Num(f.Hi.z - mid.z) + ">" + Num(f.Lo.x - mid.x) + "," + Num(f.Lo.z - mid.z) + " h" + Num(f.Top)); tallest = Mathf.Max(tallest, f.Rise); highest = Mathf.Max(highest, f.Top); deepest = Mathf.Min(deepest, f.Bot);
+						sum += (f.Hi + f.Lo) * 0.5f; outSum += (f.Lo - f.Hi).normalized;
+						if (alpha != null)
+						{
+							Vector3 m = (f.Hi + f.Lo) * 0.5f;
+							int ax = Mathf.Clamp(Mathf.FloorToInt((m.x - tp.x) / size.x * ares), 0, ares - 1), az = Mathf.Clamp(Mathf.FloorToInt((m.z - tp.z) / size.z * ares), 0, ares - 1);
+							for (int l = 0; l < layers; l++) paint[l % TerrainPainter.LayerCount] += alpha[az, ax, l];
+						}
+					}
+					SheetFace one = c[0];
+					encSum += SheetEnclosed(hm, res, size.y, tp.y, sea, one.Lx, one.Lz);
+					long cx = q / 100000L, cz = q % 100000L;
+					for (long dx = -1; dx <= 1; dx++)
+						for (long dz = -1; dz <= 1; dz++)
+						{
+							long r = (cx + dx) * 100000L + cz + dz;
+							if (cells.ContainsKey(r) && seen.Add(r)) stack.Push(r);
+						}
+				}
+				if (n < SheetCells) continue;
+				Vector3 centre = sum / faces;
+				float enc = encSum / (float)n;
+				int best = 0;
+				for (int l = 1; l < paint.Length; l++) if (paint[l] > paint[best]) best = l;
+				float share = paint.Sum() > 0f ? paint[best] / paint.Sum() : 0f;
+				bool pit = enc >= SheetEncWays;
+				sheets.Add(new KeyValuePair<int, string>(n, "bare cliff sheet: the land's own face at the waterline round " + Num(centre.x - mid.x) + " " + Num(centre.z - mid.z) +
+					", " + n + " cells of " + Num(SheetCellM) + " m (" + faces + " faces), up to " + Num(tallest) + " m in one step, its top h=" + Num(highest) + ", its foot h=" + Num(deepest) +
+					"; " + (pit ? "a pit's wall (land round it in " + enc.ToString("F1") + " of 8 ways: a blue hole or a dive shaft, seen from its rim)" : "the open coast (land round it in " + enc.ToString("F1") + " of 8 ways: seen from the sea)") +
+					", painted " + layerName[best] + " " + Mathf.RoundToInt(share * 100f) + "%" +
+					" - drawn as the ground's texture stretched down a wall; slope it (the recipe step cliffs), or stand rock or a wall in front of it" +
+					" (faces, top > foot: " + string.Join("; ", faceList.ToArray()) + ")"));
+				// (a picture from its low side, 3.5 m over the sea, as far out as the land lets - 22 m, less in a pit)
+				Vector3 outward = new Vector3(outSum.x, 0f, outSum.z).normalized;
+				if (outward == Vector3.zero) outward = Vector3.forward;
+				Vector3 at = new Vector3(centre.x, sea + Mathf.Clamp(highest * 0.4f, 0.5f, 4f), centre.z);
+				Vector3 eye = SheetEye(land, tp, sea, centre, outward, at, null, null);
+				shots.Add(new KeyValuePair<int, Vector3[]>(n, new[] { eye, at }));
+			}
+			foreach (var s in sheets.OrderByDescending(s => s.Key)) lines.Add(s.Value);
+			// (every sheet pictured, largest first, past the queue's cap of 8: with only the 2 largest a new or changed smaller
+			// sheet went unpictured - lib 3.5.1 11-23, Varuna Point's 4 sheets, Balboa's 3)
+			int shot = 0;
+			foreach (var s in shots.OrderByDescending(s => s.Key)) QueueCheckShot("sheet_" + e.Name + "_" + ++shot, s.Value[0], s.Value[1], true);
+			if (checkShots && checkRockShots != null) foreach (var rs in RockShots(e, land, tp, sea, checkRockShots)) QueueCheckShot(rs.Key, rs.Value[0], rs.Value[1]);
+			return lines;
+		}
+
+		/// <summary>A natural rock (a sea stack, a boulder, coral, kelp), not a built piece of stone: the cliffs step may sink it
+		/// into its talus up to its middle.</summary>
+		static bool NaturalRock(string n)
+		{
+			string[] built = { "Wall", "Stair", "Floor", "Pillar", "Arch", "Bridge", "Cave", "Tunnel", "Foundation", "Block" };
+			string[] rock = { "Rock", "Boulder", "Stone", "Coral", "SeaVine", "Kelp", "Stack" };
+			return rock.Any(w => n.IndexOf(w, StringComparison.OrdinalIgnoreCase) >= 0) && !built.Any(w => n.IndexOf(w, StringComparison.OrdinalIgnoreCase) >= 0);
+		}
+
+		/// <summary>The recipe's cliffs step: every bare cliff face at the waterline (BareFaces, rise or more in one step)
+		/// sloped from its low side - the sea floor in front of it raised into a talus no steeper than `step` m per heightmap
+		/// point (1.95 m; 3 m = 57 degrees, which Raft paints rock and draws without the stretched sheet), from the face's top
+		/// down to `depth` m under the sea. Deeper the wall stays a wall: a blue hole or a dive shaft keeps its depth, only its
+		/// rim is sloped. A tall face's talus reaches past `reach` points as far as it needs to get down to `depth`. Only ground
+		/// at most 1 m over the sea is raised, nothing within 3 points of the terrain's edge, nothing a placed piece's body
+		/// stands in (its colliders; a piece without one, its bounds), so no piece is buried - a natural rock (NaturalRock) may
+		/// sink in up to its middle or 1 m under its top (a rock wholly under the sea may be buried; the talus stops at a rock's
+		/// cap rather than at its side) - and nothing between two opposite walls, judged in front of each face only (a narrow shaft
+		/// or channel stays open: it stays as it was and is still reported). A small thing wholly under the sea (4 m wide, 8 m
+		/// tall at most: coral, kelp, a sea-floor rock) is carried up onto the new ground instead. The log line names the pieces
+		/// that held most of the talus back and why each face left is still bare, with up to 3 of them in the recipe's
+		/// coordinates. at x z r=: only faces in that circle. rocks=piece: that rock stood in the waterline at the faces still
+		/// bare (StandCliffRocks - a pit's wall the talus can't slope). keep: circles (world x, z, radius) the talus leaves as
+		/// they are - no point raised in them, no face in them sloped or rocked (a dock pool, a dive site, a fish pool). walls:
+		/// circles no point is raised in either, their bare faces rocked (a dive site's pit walls; rocks stand even when nothing
+		/// was raised). Loot,
+		/// pickups, notes and creatures the talus would bury ride up with it, keeping their height over the ground (under the sea if they
+		/// were). The ground's hand paint
+		/// is dropped on the raised points and the area painted again (the steep talus goes rock); one undo step for the ground
+		/// (the carried things stay where they went).</summary>
+		static string CliffsStep(float rise, float step, float depth, int reach, Vector2? at, float atR, string rocks, List<Vector3> keep = null, List<Vector3> walls = null)
+		{
+			Terrain land = terraineditor.terrain;
+			if (land == null || land.terrainData == null) return "cliffs: no terrain";
+			TerrainData td = land.terrainData;
+			int res = td.heightmapResolution, ares = td.alphamapResolution;
+			Vector3 tp = land.transform.position, size = td.size;
+			float sea = tp.y + DynamicIslands.EditorWaterLevel, sx = size.x / (res - 1), sz = size.z / (res - 1);
+			float[,] before = td.GetHeights(0, 0, res, res);
+			List<SheetFace> faces = BareFaces(land, sea, rise, before);
+			if (at.HasValue) faces = faces.Where(f => (new Vector2(f.Hi.x, f.Hi.z) - at.Value).magnitude <= atR).ToList();
+			// (keep: what the island was built round at the waterline - a dock pool under a hangar door, a sunk boat on the sea floor,
+			// a fish pool - stays as it is: the talus filled Crater Lair's dock pool and buried the dive sites' boats - lib 3.5.1 11-23)
+			Func<float, float, bool> kept0 = (wx, wz) => keep != null && keep.Any(k => (wx - k.x) * (wx - k.x) + (wz - k.y) * (wz - k.y) <= k.z * k.z);
+			// (walls: circles no talus is raised in either, but their bare faces get the rocks - a dive site's pit wall rocked, its
+			// floor and the boat on it kept: keep left Cistern Hall's and four dive sites' pits as bare sheets - lib 3.5.1 11-23)
+			Func<float, float, bool> wall0 = (wx, wz) => walls != null && walls.Any(k => (wx - k.x) * (wx - k.x) + (wz - k.y) * (wz - k.y) <= k.z * k.z);
+			Func<SheetFace, bool> walled = f => !kept0(f.Hi.x, f.Hi.z) && !kept0(f.Lo.x, f.Lo.z) && (wall0(f.Hi.x, f.Hi.z) || wall0(f.Lo.x, f.Lo.z));
+			int keptFaces = faces.Count, wallFaces = faces.Count(walled);
+			faces = faces.Where(f => !kept0(f.Hi.x, f.Hi.z) && !kept0(f.Lo.x, f.Lo.z) && !walled(f)).ToList();
+			keptFaces -= faces.Count + wallFaces;
+			if (faces.Count == 0 && (wallFaces == 0 || rocks == null)) return "cliffs: no bare cliff face" + (at.HasValue ? " in the circle" : "") + (keptFaces > 0 ? " (" + keptFaces + " kept as they are)" : "");
+			// (what stands there keeps the ground under it as it is. A big piece with a body is measured by its body - a column of
+			// the talus that meets one of its colliders is left - not by its box: the boxes of sea stacks, wrecks and long rocks
+			// round a face left 1641-4853 points of the talus out and the faces bare (c3z43: Frontier Beacon's slab, The Abyss's
+			// band, Shelter Atoll's and Storm Spire's sheets, Old Mine Islet's cliffs round the boat). A small thing wholly under
+			// the sea - coral, kelp, a sea-floor rock, a pickup - does not hold the talus back: it rides up onto the new ground)
+			var keepBox = new List<KeyValuePair<Bounds, string>>();
+			var keepBody = new List<KeyValuePair<Bounds, string>>();
+			var bodyOf = new Dictionary<Collider, string>();
+			var keepBoxCap = new List<float>();
+			var rockCapOf = new Dictionary<Collider, float>();
+			var carry = new List<KeyValuePair<Transform, Bounds>>();
+			// (loot, pickups, notes and creatures the talus would bury ride up with it - Vasagatan's clay and mango tree, Cistern
+			// Hall's mushrooms, Sundown's angler, The Foundation Piles' notes on the pool floor went under the talus - lib 3.5.1 11-23)
+			var loose = new List<KeyValuePair<Transform, Bounds>>();
+			foreach (EditorGameObject o in UnityEngine.Object.FindObjectsOfType<EditorGameObject>())
+			{
+				if (o == null || !o.gameObject.activeInHierarchy) continue;
+				string n0 = (o.GameObjectName ?? o.name).Replace("(Clone)", "").Trim();
+				if (ContentCatalog.IsCreature(n0) || n0.StartsWith("Loot_", StringComparison.Ordinal) || n0.StartsWith("Pickup_", StringComparison.Ordinal) || n0.StartsWith("Note_", StringComparison.Ordinal))
+				{
+					Renderer[] lr = o.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled).ToArray();
+					Bounds lb = lr.Length > 0 ? lr[0].bounds : new Bounds(o.transform.position, Vector3.one);
+					foreach (Renderer r in lr) lb.Encapsulate(r.bounds);
+					loose.Add(new KeyValuePair<Transform, Bounds>(o.transform, lb));
+					continue;
+				}
+				Renderer[] rs = o.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled).ToArray();
+				Collider[] cs = o.GetComponentsInChildren<Collider>(false).Where(c => c.enabled && !c.isTrigger && !(c is TerrainCollider)).ToArray();
+				if (rs.Length == 0 && cs.Length == 0) continue;
+				Bounds b = rs.Length > 0 ? rs[0].bounds : cs[0].bounds;
+				foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+				foreach (Collider c in cs) b.Encapsulate(c.bounds);
+				string n = (o.GameObjectName ?? o.name).Replace("(Clone)", "").Trim();
+				// (zones, creatures, notes, loot, pickups and markers are no ground anyone stands on: a zone's editor box held 343 of
+				// Old Mine Islet's 486 kept points and left its sheets bare - c3z52/z57)
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_", StringComparison.Ordinal) || n.StartsWith("Note_", StringComparison.Ordinal) || n.StartsWith("Loot_", StringComparison.Ordinal) ||
+					n.StartsWith("Pickup_", StringComparison.Ordinal) || n == ContentCatalog.MarkerOnly || CameraPath.IsPoint(n)) continue;
+				bool fixedPiece = n.StartsWith("ZiplinePath", StringComparison.Ordinal) || n.StartsWith("VP_Skylift", StringComparison.Ordinal) || n == "Elevator" ||
+					n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || CaveBacks.Wants(n);
+				// (a building piece - a sunk room's walls, a pier's stairs - is never carried: it holds the talus back. Carried, Skyhook
+				// Mast's sunk room's walls rode up 0.1-1.1 m apart and its floor filled 2 m deep round the note - lib 3.5.1 11-23)
+				bool builtPiece = CaveTool.IsBuildingPiece(n) || n.StartsWith("Relay_", StringComparison.Ordinal) || n.StartsWith("Placeable_", StringComparison.Ordinal);
+				if (!fixedPiece && !builtPiece && b.max.y < sea - 0.3f && b.size.x <= 4f && b.size.z <= 4f && b.size.y <= 8f) { carry.Add(new KeyValuePair<Transform, Bounds>(o.transform, b)); continue; }
+				// (a natural rock - a sea stack, a boulder, coral - may sink into the talus up to its middle or 1 m under its top,
+				// whichever is higher, and one wholly under the sea may be buried: it then looks set in the slope. Whole, the big
+				// rocks round a face held its talus back and left it a sheet - c3z59: Old Mine Islet; c3z61: The Abyss's south coast
+				// behind a sunken BigSharpRock_5, 263 points)
+				float mid = !fixedPiece && NaturalRock(n) ? (b.max.y < sea ? float.PositiveInfinity : Mathf.Max(b.center.y, b.max.y - 1f)) : float.NaN;
+				b.Expand(new Vector3(2f, 0f, 2f));
+				if (cs.Length == 0) { keepBox.Add(new KeyValuePair<Bounds, string>(b, n)); keepBoxCap.Add(mid); continue; }
+				keepBody.Add(new KeyValuePair<Bounds, string>(b, n));
+				foreach (Collider c in cs) { bodyOf[c] = n; if (!float.IsNaN(mid)) rockCapOf[c] = mid; }
+			}
+			var blockers = new Dictionary<string, int>();
+			Physics.SyncTransforms();
+			// (the piece standing in the talus column at wx,wz from the old ground h0 up to the talus's top, or null)
+			// (rockLimit: after a call, the highest the talus may go there under the natural rocks that held it, or infinity)
+			float rockLimit = float.PositiveInfinity;
+			Func<float, float, float, float, string> standing = (wx, wz, h0, top) =>
+			{
+				rockLimit = float.PositiveInfinity;
+				string rockWho = null;
+				for (int k = 0; k < keepBox.Count; k++)
+				{
+					Bounds kb = keepBox[k].Key;
+					if (wx >= kb.min.x + 1f && wx <= kb.max.x - 1f && wz >= kb.min.z + 1f && wz <= kb.max.z - 1f && kb.min.y < top + 0.2f)
+					{
+						if (float.IsNaN(keepBoxCap[k])) return keepBox[k].Value;
+						if (top > keepBoxCap[k] && keepBoxCap[k] < rockLimit) { rockLimit = keepBoxCap[k]; rockWho = keepBox[k].Value; }
+					}
+				}
+				if (!keepBody.Any(k => wx >= k.Key.min.x && wx <= k.Key.max.x && wz >= k.Key.min.z && wz <= k.Key.max.z && k.Key.min.y < top + 0.2f)) return rockWho;
+				Vector3 half = new Vector3(sx * 0.5f + 1f, (top + 0.2f - h0) * 0.5f + 0.1f, sz * 0.5f + 1f);
+				foreach (Collider c in Physics.OverlapBox(new Vector3(wx, (h0 + top + 0.2f) * 0.5f, wz), half, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore))
+				{
+					string who;
+					float rm;
+					if (rockCapOf.TryGetValue(c, out rm))
+					{
+						if (top > rm && rm < rockLimit) { rockLimit = rm; bodyOf.TryGetValue(c, out rockWho); }
+						continue;
+					}
+					if (bodyOf.TryGetValue(c, out who)) return who;
+				}
+				return rockWho;
+			};
+			float[,] after = (float[,])before.Clone();
+			float floor = sea - depth;
+			int blocked = 0;
+			var raised = new HashSet<int>();
+			// (the way out of the wall each raised point was raised from; raised from two opposite walls it lies between them - a
+			// shaft or a channel - and stays as it was, with a point round it, so a narrow dive shaft is never plugged)
+			var from = new Dictionary<int, Vector2>();
+			var between = new HashSet<int>();
+			var blockedAt = new Dictionary<int, string>();
+			var keptAt = new HashSet<int>();
+			foreach (SheetFace f in faces)
+			{
+				float apex = sea + f.Top;
+				Vector2 way = new Vector2(f.Lo.x - f.Hi.x, f.Lo.z - f.Hi.z).normalized;
+				// (a tall face's talus reaches as far as it needs to get down to the floor: cut short at reach it would end in a new
+				// wall at the waterline)
+				int fr = Mathf.Clamp(Mathf.CeilToInt((apex - floor) / step) + 1, reach, 40);
+				for (int dz = -fr; dz <= fr; dz++)
+					for (int dx = -fr; dx <= fr; dx++)
+					{
+						int x = f.Hx + dx, z = f.Hz + dz;
+						if (x < 3 || z < 3 || x > res - 4 || z > res - 4) continue;
+						float d = Mathf.Sqrt(dx * dx + dz * dz);
+						if (d < 0.5f || d > fr) continue;
+						float target = apex - step * d;
+						if (target < floor) continue;
+						float h0 = before[z, x] * size.y + tp.y;
+						if (h0 > sea + 1f || target <= h0) continue;
+						if (kept0(tp.x + x * sx, tp.z + z * sz) || wall0(tp.x + x * sx, tp.z + z * sz)) continue;
+						// (only a point in front of the face - within 60 degrees of straight out - says which way it was raised from.
+						// The talus is a full disc round the face's top, so beside and behind a face its rim met the next face's talus
+						// coming the other way along every bay, cape and ridge: 574 of Old Mine Islet's points kept as "between", each
+						// leaving a fresh 8-10 m wall at the waterline - c3z59)
+						Vector2 had;
+						if (Vector2.Dot(new Vector2(dx, dz) / d, way) >= 0.5f)
+						{
+							if (from.TryGetValue(z * res + x, out had)) { if (Vector2.Dot(had, way) < -0.3f) between.Add(z * res + x); }
+							else from[z * res + x] = way;
+						}
+						if (target <= after[z, x] * size.y + tp.y) continue;
+						float wx = tp.x + x * sx, wz = tp.z + z * sz;
+						string who = standing(wx, wz, h0, target);
+						// (held by natural rocks only: raised as far as they let it - a lower column meets nothing the full one did not)
+						if (who != null && !float.IsPositiveInfinity(rockLimit) && rockLimit > h0 + 0.3f && rockLimit > after[z, x] * size.y + tp.y)
+						{
+							after[z, x] = (rockLimit - tp.y) / size.y;
+							raised.Add(z * res + x);
+							blockedAt[z * res + x] = who;
+							continue;
+						}
+						if (who != null) { blocked++; blockedAt[z * res + x] = who; int bn; blockers.TryGetValue(who, out bn); blockers[who] = bn + 1; continue; }
+						blockedAt.Remove(z * res + x);
+						after[z, x] = (target - tp.y) / size.y;
+						raised.Add(z * res + x);
+					}
+			}
+			int kept = 0;
+			foreach (int i in raised.ToList())
+			{
+				int x = i % res, z = i / res;
+				bool near = false;
+				for (int dz = -1; dz <= 1 && !near; dz++)
+					for (int dx = -1; dx <= 1 && !near; dx++) near = between.Contains((z + dz) * res + x + dx);
+				if (!near) continue;
+				after[z, x] = before[z, x];
+				raised.Remove(i);
+				keptAt.Add(i);
+				kept++;
+			}
+			string most3 = blockers.Count == 0 ? "" : " (most under " + string.Join(", ", blockers.OrderByDescending(k => k.Value).Take(4).Select(k => k.Key + " " + k.Value).ToArray()) + ")";
+			string noneNote = raised.Count == 0 ? "nothing raised (" + blocked + " points under objects" + most3 + ")" : "";
+			if (raised.Count == 0 && rocks == null) return "cliffs: " + faces.Count + " bare faces, " + noneNote;
+			// (nothing raised - Tide Engine's 27 faces all under its drawbridge, a pit's walls all in walls= - the rocks still stand)
+			int carried = 0, lifted = 0;
+			float most = 0f;
+			if (raised.Count > 0)
+			{
+				float[,,] alphaBefore = td.GetAlphamaps(0, 0, ares, ares);
+				float[,] maskBefore = terraineditor.paintMask != null ? (float[,])terraineditor.paintMask.Clone() : null;
+				// (the small things on the sea floor ride up with it: their ground before, at their middle)
+				var carryFrom = carry.Select(c => land.SampleHeight(c.Value.center) + tp.y).ToList();
+				var looseFrom = loose.Select(c => land.SampleHeight(c.Value.center) + tp.y).ToList();
+				td.SetHeights(0, 0, after);
+				for (int i = 0; i < carry.Count; i++)
+				{
+					Bounds cb = carry[i].Value;
+					float low = float.MaxValue;
+					foreach (Vector3 p in new[] { cb.center, new Vector3(cb.min.x, 0f, cb.min.z), new Vector3(cb.min.x, 0f, cb.max.z), new Vector3(cb.max.x, 0f, cb.min.z), new Vector3(cb.max.x, 0f, cb.max.z) })
+						low = Mathf.Min(low, land.SampleHeight(p) + tp.y);
+					float lift = low - carryFrom[i];
+					if (lift < 0.05f || carry[i].Key == null) continue;
+					carry[i].Key.position += Vector3.up * lift;
+					carried++;
+				}
+				// (a loose thing moves only where the ground at its middle rose and came up past its bottom, by as much as the ground
+				// rose there - a fish keeps its water under it, a crate or a tree sits in the new ground as it sat in the old)
+				for (int i = 0; i < loose.Count; i++)
+				{
+					Bounds lb = loose[i].Value;
+					float now = land.SampleHeight(lb.center) + tp.y;
+					if (now - looseFrom[i] < 0.05f || now <= lb.min.y + 0.05f || loose[i].Key == null) continue;
+					// (as far as the ground rose, but one under the sea stays under it if it can - only what keeping it no deeper in the
+					// ground than it was needs may lift it out)
+					float lift = now - looseFrom[i];
+					if (lb.max.y < sea) lift = Mathf.Min(lift, sea - 0.5f - lb.max.y);
+					lift = Mathf.Max(lift, now - lb.min.y - Mathf.Max(0f, looseFrom[i] - lb.min.y));
+					loose[i].Key.position += Vector3.up * lift;
+					lifted++;
+				}
+				carried += lifted;
+				if (carried > 0) Physics.SyncTransforms();
+				Vector3 min = new Vector3(float.MaxValue, 0f, float.MaxValue), max = new Vector3(float.MinValue, 0f, float.MinValue);
+				foreach (int i in raised)
+				{
+					int x = i % res, z = i / res;
+					float wx = tp.x + x * sx, wz = tp.z + z * sz;
+					most = Mathf.Max(most, (after[z, x] - before[z, x]) * size.y);
+					min = Vector3.Min(min, new Vector3(wx, 0f, wz)); max = Vector3.Max(max, new Vector3(wx, 0f, wz));
+					if (terraineditor.paintMask == null) continue;
+					int ax = Mathf.FloorToInt((wx - tp.x) / size.x * ares), az = Mathf.FloorToInt((wz - tp.z) / size.z * ares);
+					for (int az2 = az - 1; az2 <= az + 1; az2++)
+						for (int ax2 = ax - 1; ax2 <= ax + 1; ax2++)
+							if (ax2 >= 0 && az2 >= 0 && ax2 < terraineditor.paintMask.GetLength(1) && az2 < terraineditor.paintMask.GetLength(0)) terraineditor.paintMask[az2, ax2] = 0f;
+				}
+				min -= new Vector3(3f, 0f, 3f); max += new Vector3(3f, 0f, 3f);
+				TerrainPainter.PaintWorldArea(land, sea, min, max, terraineditor.paintMask);
+				CommandUndoRedo.UndoRedoManager.Insert(new TerrainStrokeCommand(td, new RectInt(0, 0, res, res), before, new RectInt(0, 0, ares, ares), alphaBefore, maskBefore, terraineditor.paintMask));
+			}
+			// (why each face left is still there, by its low point: kept open between two walls, under a piece, at the terrain's
+			// edge, at the talus's own side (its high point raised: the talus meets ground it could not raise), or other)
+			List<SheetFace> leftFaces = BareFaces(land, sea, rise, after).Where(f => (!at.HasValue || (new Vector2(f.Hi.x, f.Hi.z) - at.Value).magnitude <= atR) &&
+				!kept0(f.Hi.x, f.Hi.z) && !kept0(f.Lo.x, f.Lo.z)).ToList();
+			int lBetween = 0, lUnder = 0, lEdge = 0, lSide = 0, lOther = 0;
+			var lUnderBy = new Dictionary<string, int>();
+			var examples = new List<string>();
+			var toRock = new List<SheetFace>();
+			foreach (SheetFace f in leftFaces)
+			{
+				int li = f.Lz * res + f.Lx, hi = f.Hz * res + f.Hx;
+				string why, who;
+				if (keptAt.Contains(li) || between.Contains(li)) { lBetween++; why = "between"; }
+				else if (blockedAt.TryGetValue(li, out who)) { lUnder++; int un; lUnderBy.TryGetValue(who, out un); lUnderBy[who] = un + 1; why = "under " + who; }
+				else if (f.Lx < 3 || f.Lz < 3 || f.Lx > res - 4 || f.Lz > res - 4) { lEdge++; why = "edge"; }
+				else if (raised.Contains(hi)) { lSide++; why = "talus side"; }
+				else { lOther++; why = "other"; }
+				if (why != "edge") toRock.Add(f);
+				if (examples.Count < 3 && why != "edge")
+				{
+					Frame tf = frames.Count > 0 ? TopFrame : new Frame { Origin = recipeOrigin };
+					Vector3 r = Quaternion.Euler(0f, -tf.Yaw, 0f) * new Vector3(f.Hi.x - tf.Origin.x, 0f, f.Hi.z - tf.Origin.y);
+					examples.Add(why + " at " + Num(r.x) + " " + Num(r.z) + " (" + Num(f.Top) + " to " + Num(f.Bot) + " m)");
+				}
+			}
+			string whyLeft = leftFaces.Count == 0 ? "" : " (" + lBetween + " between two walls, " + lUnder + " under objects" +
+				(lUnderBy.Count == 0 ? "" : " [" + string.Join(", ", lUnderBy.OrderByDescending(k => k.Value).Take(4).Select(k => k.Key + " " + k.Value).ToArray()) + "]") +
+				", " + lEdge + " at the terrain's edge, " + lSide + " on the talus's side, " + lOther + " other; e.g. " + string.Join("; ", examples.ToArray()) + ")";
+			string rockNote = "";
+			if (rocks != null && toRock.Count > 0)
+			{
+				int covered;
+				var rockBlocked = new Dictionary<string, int>();
+				int stood = StandCliffRocks(rocks, toRock, sea, out covered, rockBlocked);
+				rockNote = "; " + stood + " " + rocks + " stood in the waterline at " + covered + " of the " + toRock.Count + " faces left (not at the terrain's edge)" +
+					(rockBlocked.Count == 0 ? "" : ", none where they would meet " + string.Join(", ", rockBlocked.OrderByDescending(k => k.Value).Take(4).Select(k => k.Key + " " + k.Value).ToArray())) + rockFillNote;
+			}
+			return "cliffs: " + faces.Count + " bare faces, " + (raised.Count == 0 ? noneNote + ", " : raised.Count + " points raised (up to " + Num(most) + " m), ") + carried + " small things on the sea floor carried up with it (" + lifted + " loot, pickups or creatures), " + blocked + " left under objects" + most3 + ", " + kept + " left open between two walls" + (keep == null ? "" : ", " + keptFaces + " faces kept as they are") + (walls == null ? "" : ", " + wallFaces + " in walls= left to the rocks") + "; " + leftFaces.Count + " bare faces left" + whyLeft + rockNote;
+		}
+
+		/// <summary>CISheetIslands' rocks=<piece> pictures (c3z63 11-22: the cliffs step's stood rocks are to be seen before a merge -
+		/// not floating, not see-through, not stretched oddly, not in a path): up to 4 of that piece reaching from under the sea to
+		/// over it - the tallest, then each the farthest from those already chosen - each from the way the land falls lowest 8 m
+		/// round it, the eye picked as a sheet's (the rock itself not counted in its way). The names say the island, the piece and
+		/// its top over the sea; the log lists them.</summary>
+		static List<KeyValuePair<string, Vector3[]>> RockShots(IslandWorldState.Entry e, Terrain land, Vector3 tp, float sea, string piece)
+		{
+			var list = new List<KeyValuePair<string, Vector3[]>>();
+			var rocks = new List<KeyValuePair<Transform, Bounds>>();
+			// (the island's Objects by name, "(Clone)" off: an IslandObjectRef is only on an object with props, and a plain rock
+			// has none - c3z64 found no rock on either island though 24 and 18 stood)
+			Transform objects = e.Root.transform.Find("Objects");
+			int named = 0;
+			float lowTop = float.MaxValue, highFoot = float.MinValue;
+			if (objects != null)
+				foreach (Transform r in objects)
+				{
+					if (r == null || !r.gameObject.activeInHierarchy || !piece.Split('|').Any(pc => string.Equals(r.name.Replace("(Clone)", "").Trim(), pc, StringComparison.OrdinalIgnoreCase))) continue;
+					named++;
+					Renderer[] rr = r.GetComponentsInChildren<Renderer>();
+					if (rr.Length == 0) continue;
+					Bounds b = rr[0].bounds;
+					foreach (Renderer x in rr) b.Encapsulate(x.bounds);
+					lowTop = Mathf.Min(lowTop, b.max.y - sea); highFoot = Mathf.Max(highFoot, b.min.y - sea);
+					// (the stood ones: their feet 2.3-3 m under the sea, where the cliffs step sets them - c3z67 pictured the
+					// generator's own BigBoulder1_Low on a dirt mound and on a sand shelf, once the step took them too)
+					if (b.min.y < sea - 3.05f || b.min.y > sea - 2.25f || b.max.y < sea + 1f) continue;
+					rocks.Add(new KeyValuePair<Transform, Bounds>(r, b));
+				}
+			if (rocks.Count == 0)
+			{
+				Log("  rock pictures: no " + piece + " standing in the waterline on " + e.Name + " (" + named + " of that name among " + (objects != null ? objects.childCount : 0) + " objects" +
+					(named > 0 ? "; tops from " + Num(lowTop) + " m, feet up to " + Num(highFoot) + " m over the sea" : "; e.g. " + string.Join(", ", (objects != null ? objects.Cast<Transform>() : Enumerable.Empty<Transform>())
+					.Select(t => t.name).Where(n => n.IndexOf("Boulder", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Rock", StringComparison.OrdinalIgnoreCase) >= 0).Distinct().Take(4).ToArray())) + ")");
+				return list;
+			}
+			// (the tallest, then each the farthest from those before it; up to 4 with a clear eye, the ones without one skipped -
+			// c3z68: 4 of 8 pictures were the fallback eye, a rock filling the frame; at most 20 tried - c3z69: The Abyss 2 of 12)
+			var order = new List<KeyValuePair<Transform, Bounds>> { rocks.OrderByDescending(k => k.Value.max.y).First() };
+			while (order.Count < 20 && order.Count < rocks.Count)
+				order.Add(rocks.Where(k => !order.Contains(k)).OrderByDescending(k => order.Min(q => (q.Value.center - k.Value.center).magnitude)).First());
+			var said = new List<string>();
+			var skipped = new List<string>();
+			foreach (var k in order)
+			{
+				if (list.Count >= 4) break;
+				Vector3 c = k.Value.center;
+				Vector3 at = new Vector3(c.x, Mathf.Clamp((k.Value.max.y + sea) * 0.5f, sea + 0.5f, sea + 6f), c.z);
+				bool clearEye, fromPit;
+				Vector3 eye = RockEye(land, tp, sea, k.Value, new HashSet<Collider>(k.Key.GetComponentsInChildren<Collider>(true)), at, out clearEye, out fromPit);
+				if (!clearEye) { skipped.Add(Num(c.x - e.Position.x) + " " + Num(c.z - e.Position.z)); continue; }
+				string name = "rock_" + e.Name + "_" + (list.Count + 1) + "_top" + Mathf.RoundToInt(k.Value.max.y - sea);
+				list.Add(new KeyValuePair<string, Vector3[]>(name, new[] { eye, at }));
+				said.Add(name + " at " + Num(c.x - e.Position.x) + " " + Num(c.z - e.Position.z) + " (" + Num(k.Value.size.x) + " x " + Num(k.Value.size.z) + " m, " + Num(k.Value.min.y - sea) + ".." + Num(k.Value.max.y - sea) + " m over the sea" + (fromPit ? ", from across the pit's own water" : "") + ")");
+			}
+			Log("  rock pictures: " + rocks.Count + " " + piece + " in the waterline on " + e.Name + "; " + (said.Count > 0 ? string.Join("; ", said.ToArray()) : "none with a clear eye") +
+				(skipped.Count > 0 ? "; no clear eye for the rock at " + string.Join(", ", skipped.ToArray()) : ""));
+			return list;
+		}
+
+		/// <summary>The eye for a stood rock's picture (RockShots): over open water out the way the water is most open round it
+		/// (8-16 m, farther for a big rock: 1-2.5 times as its width is 5-12.5 m), 4.5-12 m up looking down at it, turned up
+		/// to 80 degrees either way; clear when nothing is within 1.5 m, the rock itself is the first thing met on the looks at
+		/// its middle and its top, and nothing else lies in the near part of the view (looks 12 and 24 degrees aside and 8
+		/// up and down: nothing in their first 85%, the land not in their first 60%), each look with back faces on - an eye
+		/// inside another rock meets that rock's inside. (c3z65: the sheet's eye stood 4 m from the rock; c3z67: with the other
+		/// rocks not counted, they filled it; c3z68: 4 of 8 were the fallback, two of them just rock texture.) clear false:
+		/// the one with the least in the way. With none clear, a rock in a pit's waterline (The Abyss's blue hole - c3z69: 10 of its
+		/// 12 rocks had no clear eye; the land all round fills every side look) is seen across the pit from its own water: 55-85% of
+		/// the way to its far side (8 m of water at least, 6 m from the rock at least), 3-9 m up; clear when nothing is within 1.5 m,
+		/// the rock is the first thing met on the looks at its middle and its top, and the looks 12 degrees aside and 8 up and down
+		/// meet nothing placed in their first 85% and no land in their first 35% (fromPit true).</summary>
+		static Vector3 RockEye(Terrain land, Vector3 tp, float sea, Bounds b, HashSet<Collider> target, Vector3 at, out bool clear, out bool fromPit)
+		{
+			clear = false;
+			fromPit = false;
+			Vector3 c = b.center, outward = Vector3.forward;
+			float bestOpen = float.MinValue;
+			for (int a = 0; a < 360; a += 15)
+			{
+				Vector3 d = Quaternion.Euler(0f, a, 0f) * Vector3.forward;
+				float open = 0f;
+				foreach (float s in new[] { 4f, 8f, 12f, 16f })
+					if (land.SampleHeight(c + d * s) + tp.y < sea - 0.3f) open += 1f;
+				open -= (land.SampleHeight(c + d * 8f) + tp.y - sea) * 0.01f;
+				if (open > bestOpen) { bestOpen = open; outward = d; }
+			}
+			float far = Mathf.Clamp(Mathf.Max(b.size.x, b.size.z) / 5f, 1f, 2.5f);
+			Vector3 bestEye = Vector3.zero;
+			int bestScore = int.MaxValue;
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				foreach (float up in new[] { 6f, 9f, 4.5f, 12f })
+					foreach (float turn in new[] { 0f, 20f, -20f, 40f, -40f, 60f, -60f, 80f, -80f })
+						foreach (float d0 in new[] { 12f, 10f, 14f, 8f, 16f })
+						{
+							Vector3 way = Quaternion.Euler(0f, turn, 0f) * outward;
+							Vector3 p = new Vector3(c.x, sea + up, c.z) + way * d0 * far;
+							if (land.SampleHeight(p) + tp.y >= sea - 0.3f) continue;
+							int score = Physics.OverlapSphere(p, 1.5f, ~0, QueryTriggerInteraction.Ignore).Any(x => !(x is TerrainCollider)) ? 100 : 0;
+							foreach (Vector3 aim in new[] { at, new Vector3(c.x, b.max.y - 0.5f, c.z) })
+							{
+								Vector3 look = aim - p;
+								RaycastHit first = Physics.RaycastAll(p, look.normalized, look.magnitude + 2f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).FirstOrDefault();
+								if (first.collider != null && !target.Contains(first.collider)) score += first.collider is TerrainCollider ? 20 : 10;
+							}
+							Vector3 main = at - p;
+							float dist = main.magnitude;
+							Vector3 side = Vector3.Cross(Vector3.up, main).normalized;
+							foreach (var tilt in new[] { new Vector2(12f, 0f), new Vector2(-12f, 0f), new Vector2(24f, 0f), new Vector2(-24f, 0f), new Vector2(0f, 8f), new Vector2(0f, -8f) })
+							{
+								Vector3 dir = Quaternion.AngleAxis(tilt.y, side) * Quaternion.AngleAxis(tilt.x, Vector3.up) * main.normalized;
+								foreach (RaycastHit h in Physics.RaycastAll(p, dir, dist * 0.85f, ~0, QueryTriggerInteraction.Ignore))
+									if (!target.Contains(h.collider) && (!(h.collider is TerrainCollider) || h.distance < dist * 0.6f)) { score += 3; break; }
+							}
+							if (score < bestScore) { bestScore = score; bestEye = p; }
+							if (score == 0) { clear = true; return p; }
+						}
+				// (a pit: across it from its own water)
+				for (int a2 = 0; a2 < 360; a2 += 15)
+				{
+					Vector3 d = Quaternion.Euler(0f, a2, 0f) * Vector3.forward;
+					float span = 0f;
+					bool seen = false;
+					for (float s = 2f; s <= 40f; s += 1f)
+					{
+						if (land.SampleHeight(c + d * s) + tp.y < sea - 0.3f) { span = s; seen = true; }
+						else if (seen || s > 6f) break;
+					}
+					if (span < 8f) continue;
+					foreach (float up in new[] { 3f, 4.5f, 6f, 9f })
+						foreach (float fr in new[] { 0.7f, 0.85f, 0.55f })
+						{
+							Vector3 p = new Vector3(c.x, sea + up, c.z) + d * (span * fr);
+							if (new Vector2(p.x - c.x, p.z - c.z).magnitude < 6f || land.SampleHeight(p) + tp.y >= sea - 0.3f) continue;
+							if (Physics.OverlapSphere(p, 1.5f, ~0, QueryTriggerInteraction.Ignore).Any(x => !(x is TerrainCollider))) continue;
+							bool ok = true;
+							foreach (Vector3 aim in new[] { at, new Vector3(c.x, b.max.y - 0.5f, c.z) })
+							{
+								Vector3 look = aim - p;
+								RaycastHit first = Physics.RaycastAll(p, look.normalized, look.magnitude + 2f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).FirstOrDefault();
+								if (first.collider == null || !target.Contains(first.collider)) { ok = false; break; }
+							}
+							if (!ok) continue;
+							Vector3 main = at - p;
+							float dist = main.magnitude;
+							Vector3 side = Vector3.Cross(Vector3.up, main).normalized;
+							foreach (var tilt in new[] { new Vector2(12f, 0f), new Vector2(-12f, 0f), new Vector2(0f, 8f), new Vector2(0f, -8f) })
+							{
+								Vector3 dir = Quaternion.AngleAxis(tilt.y, side) * Quaternion.AngleAxis(tilt.x, Vector3.up) * main.normalized;
+								foreach (RaycastHit h in Physics.RaycastAll(p, dir, dist * 0.85f, ~0, QueryTriggerInteraction.Ignore))
+									if (!target.Contains(h.collider) && (!(h.collider is TerrainCollider) || h.distance < dist * 0.35f)) { ok = false; break; }
+								if (!ok) break;
+							}
+							if (ok) { clear = true; fromPit = true; return p; }
+						}
+				}
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+			return bestEye != Vector3.zero ? bestEye : new Vector3(c.x, sea + 6f, c.z) + outward * 12f * far;
+		}
+
+		/// <summary>The eye for a picture of a face (or a stood rock) at 'at', seen from 'outward' of centre over the sea: the first
+		/// clear one, else the one with the least in its view. ignore: colliders that don't count (the rock pictured).</summary>
+		static Vector3 SheetEye(Terrain land, Vector3 tp, float sea, Vector3 centre, Vector3 outward, Vector3 at, HashSet<Collider> ignore, float[] dists)
+		{
+			if (dists == null) dists = new[] { 22f, 16f, 11f, 7f, 4f };
+			// (the eye over open water with nothing built between it and the face - Shelter Atoll's second picture stood behind a
+			// metal wall (c3z52): straight out first, then turned up to 60 degrees either way; none clear, the first over water)
+			// (clear = nothing built in the view cone near the eye either: a post or pillar 1-3 m beside the eye filled a third of
+			// Caisson Yard's and The Abyss's pictures (c3z59) - any collider within 12 m whose nearest point lies within 45 degrees
+			// of the look, or within 1.5 m whichever way; the land across the look or beside the eye too (c3z61); none clear,
+			// the wet eye with the fewest)
+			// (c3z62: Caisson Yard's first picture still looked along a channel, a brown land face 3-6 m beside and across the
+			// look filling the frame - the 2 m check missed it. The land in the picture is counted too: dry ground in a 60
+			// degree fan between the eye and the face, the more the worse, and any rising over the eye's sight line; an eye 7 m
+			// up and turns of 90 degrees and 4 m out tried after the 3.5 m ones; none clear, the eye with the least in its view)
+			Vector3 eye = at;
+			Vector3 bestWet = Vector3.zero;
+			int bestCount = int.MaxValue;
+			bool found = false;
+			foreach (float up in new[] { 3.5f, 7f })
+			{
+				foreach (float turn in new[] { 0f, 30f, -30f, 60f, -60f, 90f, -90f })
+				{
+					Vector3 way = Quaternion.Euler(0f, turn, 0f) * outward;
+					foreach (float d in dists)
+					{
+						Vector3 p = centre + way * d; p.y = sea + up;
+						// (over the water: the ground under the eye under the sea - c3z64b: Shelter Atoll's picture was taken 7 m over
+						// grass, which passed the old test of land 1 m under the eye)
+						if (land.SampleHeight(p) + tp.y >= sea - 0.3f) continue;
+						Vector3 look = at - p;
+						float near = Mathf.Min(12f, look.magnitude - 2f);
+						int inCone = 0;
+						foreach (Collider c in Physics.OverlapSphere(p, 12f, ~0, QueryTriggerInteraction.Ignore))
+						{
+							if (c is TerrainCollider || (ignore != null && ignore.Contains(c))) continue;
+							Vector3 v = c.ClosestPointOnBounds(p) - p;
+							if (v.magnitude < 1.5f || (v.magnitude < near && Vector3.Angle(v, look) < 45f)) inCone += 1000;
+						}
+						foreach (RaycastHit h in Physics.RaycastAll(p, look.normalized, look.magnitude - 1.5f, ~0, QueryTriggerInteraction.Ignore))
+							if ((ignore == null || !ignore.Contains(h.collider)) && (!(h.collider is TerrainCollider) || h.distance < look.magnitude - 4f)) { inCone += 1000; break; }
+						// (nor the land itself: c3z61's Caisson Yard picture stood pressed against a channel's other wall - the ground
+						// across the look before the face, or a wall within 2 m of the eye, makes it not clear)
+						foreach (Vector3 side in new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right })
+							if (land.SampleHeight(p + side * 2f) + tp.y >= p.y - 0.5f) { inCone += 500; break; }
+						Vector3 flat = new Vector3(look.x, 0f, look.z);
+						float span = flat.magnitude - 3f;
+						flat.Normalize();
+						for (float a = -30f; a <= 30f; a += 10f)
+							for (float s = 1.5f; s <= Mathf.Min(span, 20f); s += 1.5f)
+							{
+								Vector3 q = p + Quaternion.Euler(0f, a, 0f) * flat * s;
+								float g = land.SampleHeight(q) + tp.y;
+								if (g >= p.y + (at.y - p.y) * s / Mathf.Max(1f, span + 3f) - 0.5f) inCone += 5;
+								else if (g >= sea + 0.3f) inCone += 1;
+							}
+						if (inCone < bestCount) { bestCount = inCone; bestWet = p; }
+						if (inCone > 0) continue;
+						eye = p; found = true; break;
+					}
+					if (found) break;
+				}
+				if (found) break;
+			}
+			if (!found) eye = bestWet != Vector3.zero ? bestWet : centre + outward * Mathf.Min(7f, dists[0]) + Vector3.up * (sea + 3.5f - centre.y);
+			return eye;
+		}
+
+		/// <summary>A piece a stood cliff rock may stand in front of (StandCliffRocks): a log, a natural rock, a bush.</summary>
+		static bool RockStandsBefore(Collider c)
+		{
+			string n = PieceName(c);
+			return Regex.IsMatch(n, @"^Log(_|\s|$)|Driftwood", RegexOptions.IgnoreCase) || NaturalRock(n) || Tuft.IsMatch(n);
+		}
+
+		/// <summary>The cliffs step's rocks=: a rock piece stood in the waterline at each bare face the talus could not reach
+		/// (a pit's or a shaft's wall, a channel, one held back by a piece - not at the terrain's edge), half in the wall, on its
+		/// longest side and its wide side along the wall, from 3 m under the sea (or the face's foot when that is higher) up to the
+		/// face's top (stretched up along the world's up, at most 3 times its height); one rock for the faces within 2 m of it, the
+		/// rocks overlapping each other, none where it would meet a placed piece (blocked: what it met, by name). Raft then draws a
+		/// rock at the waterline in front of the stretched wall (c3z61: The Abyss's blue hole; c3z62: the rocks lay on their side
+		/// as the placer turns them, 2.3 m tall, all under the water, and the ones beside a rock already stood were left out as
+		/// "meeting a piece"). How many were stood.</summary>
+		static int StandCliffRocks(string rocks, List<SheetFace> todo, float sea, out int covered, Dictionary<string, int> blocked)
+		{
+			covered = 0;
+			rockFillNote = "";
+			if (frames.Count == 0) return 0;
+			Frame tf = TopFrame;
+			// (rocks=A|B|C: the pieces taken in turn by place; each rock turned up to 25 degrees off the wall's line, leaned up to
+			// 8 degrees, 0.8-1.2 times its size and reaching 0-1.2 m over the face's top, from its place - c3z64b: Old Mine Islet's
+			// channel lined with one BigBoulder4_Low after another, all the same size and turn, read as a palisade)
+			string[] pieces = rocks.Split(new[] { '|' }, System.StringSplitOptions.RemoveEmptyEntries);
+			if (pieces.Length == 0) return 0;
+			var stood = new List<Vector3>();
+			var own = new HashSet<Collider>();
+			// (the ziplines' ropes, near end to far end (zip.to): a rock stretched up under one met the rope - c3z64: Caisson
+			// Yard's cyzip, its far end raised 3 m over a stood rock. A rock by a rope stays 2.5 m under it, else is left out)
+			var ropes = new List<KeyValuePair<Vector3, Vector3>>();
+			Vector3 landAt = terraineditor.terrain != null ? terraineditor.terrain.transform.position : Vector3.zero;
+			foreach (EditorGameObject z in UnityEngine.Object.FindObjectsOfType<EditorGameObject>())
+			{
+				Vector3 to;
+				if (z != null && z.Props != null && ZiplineEnds.TryParse(ObjectProps.Get(z.Props, ZiplineEnds.ZipTo), out to)) ropes.Add(new KeyValuePair<Vector3, Vector3>(z.transform.position, landAt + to));
+			}
+			System.Func<Vector3, float> ropeCap = q =>
+			{
+				float cap = float.PositiveInfinity;
+				foreach (var rp in ropes)
+				{
+					Vector2 a = new Vector2(rp.Key.x, rp.Key.z), ab = new Vector2(rp.Value.x, rp.Value.z) - a;
+					float u = ab.sqrMagnitude > 0.01f ? Mathf.Clamp01(Vector2.Dot(new Vector2(q.x, q.z) - a, ab) / ab.sqrMagnitude) : 0f;
+					if ((a + ab * u - new Vector2(q.x, q.z)).magnitude < 3.5f) cap = Mathf.Min(cap, Mathf.Lerp(rp.Key.y, rp.Value.y, u) - 2.5f);
+				}
+				return cap;
+			};
+			Terrain land = terraineditor.terrain;
+			float landY = land != null ? land.transform.position.y : 0f;
+			// (where a rock may stand: nothing placed in its box (a log, a natural rock or a bush it may stand in front of; the
+			// rocks this step stood), 1 m under a zipline's rope at least, and water in front of it - c3z65b: Shelter Atoll's rocks
+			// stood on a sand shelf over a hollow, high and dry. Null when it may, else what is in the way)
+			System.Func<Vector3, Quaternion, float, Vector3, string> standIn = (q, turn, half, outward) =>
+			{
+				Collider h = Physics.OverlapBox(new Vector3(q.x, sea + 0.5f, q.z), new Vector3(half, 3.4f, 1.1f), turn, ~0, QueryTriggerInteraction.Ignore)
+					.FirstOrDefault(c => !(c is TerrainCollider) && !own.Contains(c) && !RockStandsBefore(c));
+				if (h != null) return PieceName(h);
+				if (ropeCap(q) < sea + 1f) return "a zipline's rope";
+				if (land != null && land.SampleHeight(q + outward * 1.5f) + landY > sea - 0.5f) return "dry ground in front";
+				return null;
+			};
+			// (how high a short rock may reach at q: 1.2 m under a zipline's rope and 0.3 m under what is placed over the water there -
+			// a floor, a fence, a deck; never at a dug tunnel's mouth, which stays open; with water in front unless 'front' is false.
+			// c3z68: Caisson Yard's pit wall bare under its zipline's rope, a rope fence and a floor - a full rock would meet them)
+			System.Func<Vector3, Quaternion, float, Vector3, bool, float> shortRoom = (q, turn, half, outward, front) =>
+			{
+				if (front && land != null && land.SampleHeight(q + outward * 1.5f) + landY > sea - 0.5f) return float.NegativeInfinity;
+				float top = ropeCap(q) + 1.3f;
+				foreach (Collider c in Physics.OverlapBox(new Vector3(q.x, sea + 0.5f, q.z), new Vector3(half, 3.4f, 1.1f), turn, ~0, QueryTriggerInteraction.Ignore))
+				{
+					if (c is TerrainCollider || own.Contains(c) || RockStandsBefore(c)) continue;
+					if (PieceName(c).IndexOf("Tunnel", System.StringComparison.OrdinalIgnoreCase) >= 0) return float.NegativeInfinity;
+					top = Mathf.Min(top, c.bounds.min.y - 0.3f);
+				}
+				return top;
+			};
+			// (one rock shaped at its place: on its longest side, its wide side along the wall, turned and leaned, sized,
+			// stretched up to 'want' (at most 3 times) and wider by 'widen' of that, its middle at c, its foot at 'low')
+			System.Action<EditorGameObject, Vector3, Vector3, Vector3, float, float, float, float, float, float, float> shapeRock = (e, c, along, outward, low, want, spin, lean, size, widen, cap) =>
+			{
+				Renderer[] rr = PlacementOptions.ShapeRenderers(e.gameObject);
+				if (rr.Length == 0) return;
+				System.Func<Bounds> shape = () => { Bounds b = rr[0].bounds; foreach (Renderer x in rr) b.Encapsulate(x.bounds); return b; };
+				// (on its longest side: the placer stands a piece with its own axes the world's, which lays the _Low boulders
+				// down - 2.3 m tall; turned a quarter about the wall's line or the way out, whichever stands it tallest)
+				Quaternion best = e.transform.rotation;
+				float tall = shape().size.y;
+				foreach (Quaternion q in new[] { Quaternion.AngleAxis(90f, along) * best, Quaternion.AngleAxis(90f, outward) * best })
+				{
+					e.transform.rotation = q;
+					float hq = shape().size.y;
+					if (hq > tall + 0.01f) { tall = hq; best = q; }
+				}
+				// (its wide side along the wall, its thin side out)
+				e.transform.rotation = best;
+				Bounds b0 = shape();
+				float w0 = Mathf.Abs(along.x) * b0.size.x + Mathf.Abs(along.z) * b0.size.z;
+				e.transform.rotation = Quaternion.AngleAxis(90f, Vector3.up) * best;
+				Bounds b1 = shape();
+				if (Mathf.Abs(along.x) * b1.size.x + Mathf.Abs(along.z) * b1.size.z <= w0) e.transform.rotation = best;
+				// (each its own: turned off the wall's line, leaned, bigger or smaller)
+				e.transform.rotation = Quaternion.AngleAxis(lean, along) * Quaternion.AngleAxis(spin, Vector3.up) * e.transform.rotation;
+				e.transform.localScale *= size;
+				// (stretched up to the face's top where that is over the rock's - Old Mine Islet's channel walls stand 4-9 m over
+				// the sea, The Abyss's blue hole 17 m: along its own axis that points most up, at most 3 times)
+				Bounds sb = shape();
+				Transform t = e.transform;
+				if (want - low > sb.size.y && sb.size.y > 0.5f)
+				{
+					float k = Mathf.Min(3f, (want - low) / sb.size.y);
+					float ax = Mathf.Abs(t.right.y), ay = Mathf.Abs(t.up.y), az = Mathf.Abs(t.forward.y);
+					int upAxis = ax >= ay && ax >= az ? 0 : ay >= az ? 1 : 2;
+					Vector3 ls = t.localScale;
+					t.localScale = upAxis == 0 ? new Vector3(ls.x * k, ls.y, ls.z) : upAxis == 1 ? new Vector3(ls.x, ls.y * k, ls.z) : new Vector3(ls.x, ls.y, ls.z * k);
+					// (and wider along the wall by 'widen' of that, unless it then meets a piece or a rope: c3z65's stretched rocks
+					// stood like posts, one every 3-4 m; c3z67's at a third were 16 m monoliths - a quarter now)
+					float wk = 1f + (k - 1f) * widen;
+					if (wk > 1.05f)
+					{
+						float dx = upAxis == 0 ? -1f : Mathf.Abs(Vector3.Dot(t.right, along)), dy = upAxis == 1 ? -1f : Mathf.Abs(Vector3.Dot(t.up, along)), dz = upAxis == 2 ? -1f : Mathf.Abs(Vector3.Dot(t.forward, along));
+						Vector3 narrow = t.localScale;
+						t.localScale = dx >= dy && dx >= dz ? new Vector3(narrow.x * wk, narrow.y, narrow.z) : dy >= dz ? new Vector3(narrow.x, narrow.y * wk, narrow.z) : new Vector3(narrow.x, narrow.y, narrow.z * wk);
+						Bounds wb = shape();
+						t.position += new Vector3(c.x - wb.center.x, low - wb.min.y, c.z - wb.center.z);
+						Physics.SyncTransforms();
+						var mine = new HashSet<Collider>(e.GetComponentsInChildren<Collider>(true));
+						wb = shape();
+						if (Physics.OverlapBox(wb.center, wb.extents * 0.85f, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore)
+							.Any(x => !(x is TerrainCollider) && !mine.Contains(x) && !own.Contains(x) && !RockStandsBefore(x)) || ropeCap(wb.center) < wb.max.y)
+							t.localScale = narrow;
+					}
+				}
+				// (its middle at c, its foot at the low point)
+				Bounds nb = shape();
+				t.position += new Vector3(c.x - nb.center.x, low - nb.min.y, c.z - nb.center.z);
+				Physics.SyncTransforms();
+				// (a short rock: made smaller till its top is under 'cap' - under a rope or a piece over the water)
+				nb = shape();
+				if (nb.max.y > cap && nb.size.y > 0.1f)
+				{
+					t.localScale *= Mathf.Max(0.2f, (cap - low) / nb.size.y);
+					nb = shape();
+					t.position += new Vector3(c.x - nb.center.x, low - nb.min.y, c.z - nb.center.z);
+					Physics.SyncTransforms();
+				}
+			};
+			int notOwn = 0, filled = 0, shortN = 0, propN = 0, hangN = 0;
+			var hanging = new List<string>();
+			var stillBare = new List<string>();
+			// (pass 0: a rock at each bare face no rock already covers; pass 1 (c3z67): at each face the sheet check would still
+			// find bare - the faces the first pass took as covered by a rock that missed them, or blocked for a full-size rock -
+			// a smaller one, 0.55-0.7 times, half as far along and not widened: The Abyss's blue hole kept 8 faces bare between
+			// two rocks and a buoy, Caisson Yard's pit 3)
+			for (int pass = 0; pass < 2; pass++)
+				foreach (SheetFace f in todo)
+				{
+					Vector3 mid = (f.Hi + f.Lo) * 0.5f;
+					Vector3 outward = new Vector3(f.Lo.x - f.Hi.x, 0f, f.Lo.z - f.Hi.z).normalized;
+					if (outward.sqrMagnitude < 0.5f) continue;
+					// (a face a rock already stood covers - its ray meets the rock, as the sheet check's does; the faces between two
+					// rocks get one of their own - c3z64: Caisson Yard's 4.6 m wall bare for 2/3 of the width between two rocks)
+					Vector3 from = f.Lo + outward * 0.5f; from.y = sea + Mathf.Clamp(f.Top * 0.5f, 0.25f, 3f);
+					float len = (f.Lo - f.Hi).magnitude + 1f;
+					if (pass == 0 ? own.Count > 0 && FaceCover(from, -outward, len, c => own.Contains(c)) != null : FaceCover(from, -outward, len, null) != null)
+					{
+						if (pass == 0) covered++;
+						continue;
+					}
+					float yaw = Mathf.Atan2(outward.x, outward.z) * Mathf.Rad2Deg;
+					Quaternion turn = Quaternion.Euler(0f, yaw, 0f);
+					Vector3 along = turn * Vector3.right;
+					var rnd = new System.Random(Mathf.RoundToInt(mid.x * 10f) * 73856093 ^ Mathf.RoundToInt(mid.z * 10f) * 19349663 ^ pass);
+					string piece = pieces[rnd.Next(pieces.Length)];
+					float spin = (float)(rnd.NextDouble() * 50.0 - 25.0), lean = (float)(rnd.NextDouble() * 16.0 - 8.0);
+					float size = pass == 0 ? 0.8f + (float)rnd.NextDouble() * 0.4f : 0.55f + (float)rnd.NextDouble() * 0.15f;
+					float want = sea + f.Top + 0.3f + (float)rnd.NextDouble() * 1.2f;
+					// (up to 0.9 m along the wall from the face's middle, from its place: not evenly spaced (c3z65: The Abyss's pillar
+					// fronted by a straight row of 8 rocks) - kept only where the rock still covers its own face, below; where a
+					// piece is in or on the wall, along it up to 4 m either way, then 0.7 or 1.4 m out of it, still holding the face's
+					// ray start - c3z65: Caisson Yard's pit wall bare 10 m between two rocks, its faces all meeting a dug tunnel, a
+					// fence or a floor)
+					float jit = pass == 0 ? (float)(rnd.NextDouble() * 1.8 - 0.9) : 0f;
+					float half = 2.3f * size;
+					string hit = null;
+					Vector3 at = mid;
+					bool clear = false;
+					foreach (float push in new[] { 0f, 0.7f, 1.4f })
+					{
+						foreach (float off in pass == 0 ? new[] { 0f, 1.5f, -1.5f, 2.5f, -2.5f, 4f, -4f } : new[] { 0f, 0.8f, -0.8f, 1.6f, -1.6f })
+						{
+							Vector3 q = mid + along * (off + jit) + outward * push;
+							string why = standIn(q, turn, half, outward);
+							if (why == null) { at = q; clear = true; break; }
+							if (off == 0f && push == 0f) hit = why;
+						}
+						if (clear) break;
+					}
+					// (pass 1, where no full rock may stand: a short one, its top under the rope or the piece over the water, at the face
+					// or slid up to 2.5 m along the wall, or 0.7 m out - c3z68)
+					float shortCap = float.PositiveInfinity;
+					if (!clear && pass == 1)
+						foreach (float push in new[] { 0f, 0.7f })
+						{
+							foreach (float off in new[] { 0f, 0.8f, -0.8f, 1.6f, -1.6f, 2.5f, -2.5f })
+							{
+								Vector3 q = mid + along * off + outward * push;
+								float room = shortRoom(q, turn, half, outward, true);
+								if (room >= sea + 0.8f) { at = q; clear = true; shortCap = room; break; }
+							}
+							if (clear) break;
+						}
+					if (!clear)
+					{
+						if (pass == 0) { int bn; blocked.TryGetValue(hit, out bn); blocked[hit] = bn + 1; }
+						else if (stillBare.Count < 6)
+						{
+							Vector3 r0 = Quaternion.Euler(0f, -tf.Yaw, 0f) * new Vector3(mid.x - tf.Origin.x, 0f, mid.z - tf.Origin.y);
+							stillBare.Add(hit + " at " + Num(r0.x) + " " + Num(r0.z));
+						}
+						continue;
+					}
+					Vector3 plain = at - along * jit;
+					if (jit != 0f && standIn(plain, turn, half, outward) != null) plain = at;
+					float low = Mathf.Max(sea - 3f, sea + f.Bot - 0.3f);
+					foreach (Vector3 pt in new[] { at, plain }) want = Mathf.Min(want, ropeCap(pt));
+					want = Mathf.Min(want, shortCap);
+					Vector3 r = Quaternion.Euler(0f, -tf.Yaw, 0f) * new Vector3(at.x - tf.Origin.x, 0f, at.z - tf.Origin.y);
+					var opt = new Dictionary<string, string> { { "h", "-3" }, { "sit", "1" }, { "centred", "1" }, { "yaw", Num(yaw - tf.Yaw) } };
+					EditorGameObject e;
+					Place(piece, r.x, r.z, opt, out e);
+					if (e == null) continue;
+					// (the rock must cover its own face as the sheet check sees it: else again turned and leaned less and without the
+					// jitter, then straight at the face's middle, unwidened - c3z67: a 44 m wall in The Abyss bare between two
+					// rocks the first pass had counted as covering it; then 0.6 and 1.2 m in toward the wall, leaned 8 and 12 degrees
+					// to it, where nothing placed is in the way - c3z68: 15 of The Abyss's 45 rocks missed their own face. A rock no
+					// try covers its face with is left as the straight try stood it)
+					Quaternion rot0 = e.transform.rotation;
+					Vector3 sc0 = e.transform.localScale;
+					var mineAll = new HashSet<Collider>(e.GetComponentsInChildren<Collider>(true));
+					bool ownFace = false;
+					float bigger = Mathf.Max(size, pass == 0 ? 1f : size);
+					int lastTry = -1;
+					for (int tryN = 0; tryN < 5 && !ownFace; tryN++)
+					{
+						float v = tryN == 0 ? 1f : tryN == 1 ? 0.4f : 0f;
+						Vector3 c0 = tryN == 0 ? at : plain;
+						float wantN = want, capN = shortCap;
+						if (tryN >= 3)
+						{
+							c0 = plain - outward * (tryN == 3 ? 0.6f : 1.2f);
+							foreach (Collider mc in mineAll) mc.enabled = false;
+							if (float.IsPositiveInfinity(shortCap))
+							{
+								string w = standIn(c0, turn, half, outward);
+								if (w != null && w != "dry ground in front") { foreach (Collider mc in mineAll) mc.enabled = true; continue; }
+							}
+							else capN = Mathf.Min(shortCap, shortRoom(c0, turn, half, outward, false));
+							foreach (Collider mc in mineAll) mc.enabled = true;
+							if (capN < sea + 0.8f) continue;
+							wantN = Mathf.Min(want, Mathf.Min(capN, ropeCap(c0)));
+						}
+						e.transform.rotation = rot0;
+						e.transform.localScale = sc0;
+						shapeRock(e, c0, along, outward, low, wantN, tryN < 3 ? spin * v : 0f, tryN < 3 ? lean * v : tryN == 3 ? -8f : -12f, tryN >= 2 ? bigger : size, pass == 0 && tryN < 2 ? 0.25f : 0f, capN);
+						ownFace = FaceCover(from, -outward, len, c => mineAll.Contains(c)) != null;
+						lastTry = tryN;
+					}
+					if (!ownFace && lastTry != 2)
+					{
+						e.transform.rotation = rot0;
+						e.transform.localScale = sc0;
+						shapeRock(e, plain, along, outward, low, want, 0f, 0f, bigger, 0f, shortCap);
+					}
+					if (!float.IsPositiveInfinity(shortCap)) shortN++;
+					foreach (Collider c in mineAll) own.Add(c);
+					// (down to what is under it: a rock's foot is 3 m under the sea at most, and over a pit dug deeper it hung in the
+					// water against the wall - Caisson Yard's 11 rocks 5-19 m over its dug channel's floor, bugfix 11-26. Rocks of
+					// its kind are set under it, each up into the one over it, to 4, till one stands on the ground or a placed piece;
+					// none in a dug tunnel's passage or in a placed piece - then the rock is counted as still hanging)
+					Renderer[] hr = PlacementOptions.ShapeRenderers(e.gameObject);
+					if (hr.Length > 0)
+					{
+						Bounds hb = hr[0].bounds;
+						foreach (Renderer x in hr) hb.Encapsulate(x.bounds);
+						Vector3 hc = hb.center;
+						float foot = hb.min.y;
+						var props = new HashSet<Collider>();
+						bool hangs = false;
+						for (int sN = 0; ; sN++)
+						{
+							float baseY = land != null ? land.SampleHeight(hc) + landY : foot;
+							RaycastHit[] downHits = Physics.RaycastAll(new Vector3(hc.x, foot + 0.05f, hc.z), Vector3.down, 60f, ~0, QueryTriggerInteraction.Ignore);
+							float nearest = float.PositiveInfinity;
+							foreach (RaycastHit dh in downHits)
+								if (!mineAll.Contains(dh.collider) && !props.Contains(dh.collider) && dh.distance < nearest) { nearest = dh.distance; baseY = dh.point.y; }
+							if (foot - baseY <= 0.4f) break;
+							if (sN >= 4) { hangs = true; break; }
+							Vector3 rs = Quaternion.Euler(0f, -tf.Yaw, 0f) * new Vector3(hc.x - tf.Origin.x, 0f, hc.z - tf.Origin.y);
+							EditorGameObject s;
+							Place(piece, rs.x, rs.z, opt, out s);
+							if (s == null) { hangs = true; break; }
+							shapeRock(s, hc, along, outward, baseY - 0.3f, foot + 0.3f, spin * 0.5f, 0f, size, 0f, float.PositiveInfinity);
+							Renderer[] sr = PlacementOptions.ShapeRenderers(s.gameObject);
+							Bounds sb = sr.Length > 0 ? sr[0].bounds : new Bounds(hc, Vector3.zero);
+							foreach (Renderer x in sr) sb.Encapsulate(x.bounds);
+							if (sb.max.y < foot + 0.3f)
+							{
+								s.transform.position += Vector3.up * (foot + 0.3f - sb.max.y);
+								Physics.SyncTransforms();
+								sb.center += Vector3.up * (foot + 0.3f - sb.max.y);
+							}
+							var its = new HashSet<Collider>(s.GetComponentsInChildren<Collider>(true));
+							// (clear of a tunnel's passage and of placed pieces other than rocks - its foot may sit in what it stands on)
+							bool inWay = false;
+							for (int ix = -1; ix <= 1 && !inWay; ix++)
+								for (int iy = -1; iy <= 1 && !inWay; iy++)
+									for (int iz = -1; iz <= 1 && !inWay; iz++)
+										inWay = DigTunnel.InsideAny(sb.center + Vector3.Scale(sb.extents * 0.8f, new Vector3(ix, iy, iz)), 0.3f, sN == 0 && ix == -1 && iy == -1 && iz == -1);
+							if (!inWay)
+							{
+								float lo = Mathf.Max(sb.min.y + 0.6f, baseY + 0.4f), hi = sb.max.y - 0.1f;
+								if (hi > lo)
+									inWay = Physics.OverlapBox(new Vector3(sb.center.x, (lo + hi) * 0.5f, sb.center.z), new Vector3(sb.extents.x * 0.8f, (hi - lo) * 0.5f, sb.extents.z * 0.8f), Quaternion.identity, ~0, QueryTriggerInteraction.Ignore)
+										.Any(x => !(x is TerrainCollider) && !its.Contains(x) && !mineAll.Contains(x) && !props.Contains(x) && !own.Contains(x) && !RockStandsBefore(x));
+							}
+							if (inWay)
+							{
+								s.gameObject.SetActive(false);
+								UnityEngine.Object.Destroy(s.gameObject);
+								Physics.SyncTransforms();
+								hangs = true;
+								break;
+							}
+							foreach (Collider c in its) { props.Add(c); own.Add(c); }
+							propN++;
+							foot = sb.min.y;
+						}
+						if (hangs)
+						{
+							hangN++;
+							if (hanging.Count < 6)
+							{
+								Vector3 rh = Quaternion.Euler(0f, -tf.Yaw, 0f) * new Vector3(hc.x - tf.Origin.x, 0f, hc.z - tf.Origin.y);
+								hanging.Add(Num(rh.x) + " " + Num(rh.z));
+							}
+						}
+					}
+					stood.Add(at);
+					if (!ownFace) notOwn++;
+					else if (pass == 0) covered++;
+					else filled++;
+					if (pass == 1 && !ownFace && stillBare.Count < 6)
+					{
+						Vector3 r0 = Quaternion.Euler(0f, -tf.Yaw, 0f) * new Vector3(mid.x - tf.Origin.x, 0f, mid.z - tf.Origin.y);
+						stillBare.Add("a rock not covering it at " + Num(r0.x) + " " + Num(r0.z));
+					}
+				}
+			rockFillNote = (filled > 0 ? "; " + filled + " smaller ones in the gaps left" : "") + (shortN > 0 ? " (" + shortN + " kept short under a rope or a piece)" : "") + (notOwn > 0 ? "; " + notOwn + " not covering their own face" : "") +
+				(propN > 0 ? "; " + propN + " set under rocks hanging over a deeper floor" : "") + (hangN > 0 ? "; " + hangN + " still hanging over the floor: " + string.Join(", ", hanging.ToArray()) : "") +
+				(stillBare.Count > 0 ? "; faces still bare: " + string.Join(", ", stillBare.ToArray()) : "");
+			return stood.Count;
+		}
+		/// <summary>StandCliffRocks' second pass and what it could not cover, for the cliffs step's log line.</summary>
+		static string rockFillNote = "";
+
+		/// <summary>Everything a look meets, back faces too, nearest first: "name d m (back)" - what the see-through ray went
+		/// through and what it saw (c3 round 3, for the cave fixes).</summary>
+		static string LookHits(Vector3 eye, Vector3 look, Vector3? mid = null)
+		{
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				RaycastHit[] hs = Physics.RaycastAll(eye, look.normalized, 60f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).Take(8).ToArray();
+				return "the worst look from " + eye.ToString("F1") + " meets " + (hs.Length == 0 ? "nothing (the sky)" : string.Join(", ", hs.Select(h => h.collider.name + " " + h.distance.ToString("F1") + " m" +
+					(Vector3.Dot(h.normal, look) > 0f ? " (back)" : "") + (h.collider is TerrainCollider ? "" : " [" + h.collider.GetType().Name.Replace("Collider", "") + "]" +
+					// (where the thing hit stands, as the problems print it - the Bear Hall's see-through named a BigBoulder2_Low, but which, bugfix 11-25)
+					(mid.HasValue ? " at " + Num(h.collider.transform.position.x - mid.Value.x) + " " + Num(h.collider.transform.position.z - mid.Value.z) + " h=" + Num(h.collider.transform.position.y - mid.Value.y) : ""))).ToArray()));
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+		}
+
+		/// <summary>At DenRimGap's worst gap: the hits straight down through it from 4 m over the rim, and the land's height
+		/// there - whether the ground under the rim is the island's terrain, a hill's rock or nothing (c3 round 3).</summary>
+		static string RimDiagnosis(Transform den)
+		{
+			if (rimWorstUp <= 0f) return "no gap point";
+			Vector3 top = rimWorstAt + Vector3.up * (rimWorstUp + 4f);
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				RaycastHit[] hs = Physics.RaycastAll(top, Vector3.down, rimWorstUp + 12f, ~0, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).Take(8).ToArray();
+				return "the gap at " + rimWorstAt.ToString("F1") + " (in the piece " + den.InverseTransformPoint(rimWorstAt).ToString("F1") + "), the way out " + rimWorstOut.ToString("F2") +
+					", straight down from " + Num(top.y) + ": " + (hs.Length == 0 ? "nothing" : string.Join(", ", hs.Select(h => h.collider.name + " at " + Num(h.point.y) + (h.normal.y < 0f ? " (underside)" : "")).ToArray()));
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+		}
+
+		/// <summary>Pictures a check asks for (SheetProblems' sheets, GroundProblems' cave looks), taken by GroundIslandsRoutine
+		/// while the island is still there; only with the check's 'shots' word, at most 8 an island - but every sheet (all: a
+		/// sheet's picture is queued whatever the count).</summary>
+		static bool checkShots;
+		/// <summary>CISheetIslands' rocks=: the piece whose stood rocks it pictures too (RockShots), else null.</summary>
+		static string checkRockShots;
+		static readonly List<KeyValuePair<string, Vector3[]>> checkShotQueue = new List<KeyValuePair<string, Vector3[]>>();
+		static void QueueCheckShot(string name, Vector3 from, Vector3 at, bool all = false)
+		{
+			if (!checkShots || (!all && checkShotQueue.Count >= 8)) return;
+			checkShotQueue.Add(new KeyValuePair<string, Vector3[]>(Regex.Replace(name, "[^A-Za-z0-9_]+", "_"), new[] { from, at }));
+		}
+
 		/// <summary>A piece's look across its thinnest side, per mesh + materials: +1 drawn only towards +axis, -1 only towards -axis, 0 both (or too little drawn).</summary>
 		static readonly Dictionary<string, int> OneSidedLook = new Dictionary<string, int>();
 		static Camera sideCam;
@@ -550,10 +1908,73 @@ namespace DynamicIslands
 			if (ok) Log("PASS: one-sided self"); else Fail("one-sided self");
 		}
 
+		[ConsoleCommand(name: "CIWallTopsSelf", docs: "Dev, world (host, a test world 'CI ...'): the ground check (CIGroundWorld) on an island made for it: a stone house as the library's stonehouse macro builds it (lib_sunken.recipe: Block_Wall_Tier3 walls 2.42 m tall, a flat roof of Block_Floor_Tier3 tiles laid at 2.635 on their tops) - its roof tiles are held up by the walls, though the walls' colliders stop short of them and the rays down from the tiles' corners miss the walls at their edges (IG5: 102 such lines on 15 library islands, 11-18); a lone roof tile 4 m up, 10 m off, is still found. Taken away after.")]
+		public static void WallTopsSelfCommand(string[] args) { StartTest(WallTopsSelfRoutine()); }
+
+		static IEnumerator WallTopsSelfRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost || !CustomIslandSpawner.RaftPosition.HasValue) { Fail("wall tops self: host, in a world"); yield break; }
+			const string isl = "ciwalltops", wall = "Block_Wall_Tier3", tile = "Block_Floor_Tier3", door = "Block_Wall_Door_Tier3";
+			yield return PlaceableCatalog.EnsureLoaded(new[] { wall, tile, door });
+			if (PlaceableCatalog.Get(wall) == null || PlaceableCatalog.Get(tile) == null || PlaceableCatalog.Get(door) == null) { Fail("wall tops self: " + wall + ", " + tile + " or " + door + " isn't in this Raft's catalogue"); yield break; }
+			var made = new List<IslandWorldState.Entry>();
+			IslandFile f = ScIsland(isl, "Wall Tops Self");
+			f.Objects.Clear();
+			Vector3 b = ScDry(f, Vector2.zero, 1);
+			// (the house's floor at the highest ground under its four cells, as a recipe's push puts it)
+			float y0 = new[] { 0.75f, 2.25f }.SelectMany(x => new[] { 0.75f, 2.25f }.Select(z => ScGround(f, new Vector2(b.x + x, b.z + z)))).Max();
+			Func<string, float, float, float, float, IslandObject> put = (nm, x, z, y, yaw) =>
+			{
+				IslandObject o = ScObj(nm, new Vector3(b.x + x, y0 + y, b.z + z));
+				o.EulerRotation = new Vector3(0f, yaw, 0f);
+				return o;
+			};
+			// (a 2 x 2 stonehouse: floor and roof tiles, walls round it - the macro's door wall a plain wall here)
+			foreach (float x in new[] { 0.75f, 2.25f })
+				foreach (float z in new[] { 0.75f, 2.25f }) { f.Objects.Add(put(tile, x, z, 0f, 0f)); f.Objects.Add(put(tile, x, z, 2.635f, 0f)); }
+			foreach (float c in new[] { 0.75f, 2.25f })
+			{
+				f.Objects.Add(put(wall, c, 0f, 0f, 0f)); f.Objects.Add(put(wall, c, 3f, 0f, 0f));
+				f.Objects.Add(put(wall, 0f, c, 0f, 90f)); f.Objects.Add(put(wall, 3f, c, 0f, 90f));
+			}
+			// (a tower's side as Sealkeeper Spire's: a door wall across the house's floor, two plain walls stacked on it up through
+			// the roof - the rays down from the upper ones slip through to the floor, IG5 11-19)
+			f.Objects.Add(put(door, 0.75f, 1.5f, 0f, 0f));
+			f.Objects.Add(put(wall, 0.75f, 1.5f, 2.42f, 0f)); f.Objects.Add(put(wall, 0.75f, 1.5f, 4.84f, 0f));
+			// (a lone roof tile 4 m up, 10 m off: nothing under it)
+			f.Objects.Add(put(tile, 12f, 1.5f, 4f, 0f));
+			// (a lift 4 m up, clear of everything: a lift rides, it is never "floating")
+			f.Objects.Add(put("VP_Skylift", 12f, 10f, 4f, 0f));
+			f.Save(IslandSpawner.PathFor(isl));
+			Vector3? spot = ScSpot(isl, 400f);
+			if (!spot.HasValue) { ScRemove(made, isl); Fail("wall tops self: no open sea near the raft"); yield break; }
+			yield return ScBring(isl, spot.Value, made);
+			IslandWorldState.Entry e = made.LastOrDefault();
+			if (e == null || e.Root == null) { ScRemove(made, isl); Fail("wall tops self: the island didn't come"); yield break; }
+			int n = 0;
+			bool lift = false;
+			List<string> lines;
+			try
+			{
+				yield return WaitIslandSettled(e, 0.5f, 2f);
+				Physics.SyncTransforms();
+				lines = GroundProblems(e, out n);
+				lift = e.Root.GetComponentsInChildren<Transform>(true).Any(x => x.name.StartsWith("VP_Skylift", StringComparison.Ordinal));
+			}
+			finally { ScRemove(made, isl); }
+			foreach (string l in lines) Log("  " + l);
+			bool ok = true;
+			Check(ref ok, lift && !lines.Any(l => l.IndexOf("VP_Skylift", StringComparison.Ordinal) >= 0), "the lift 4 m up is not floating (" + (lift ? "there" : "not there") + ")");
+			Check(ref ok, n >= 20, "the house, the tower and the lone tile measured (" + n + " objects)");
+			Check(ref ok, !lines.Any(l => l.IndexOf(wall, StringComparison.Ordinal) >= 0 || l.IndexOf(door, StringComparison.Ordinal) >= 0), "the walls stand, the ones stacked on the door wall too");
+			Check(ref ok, lines.Count(l => l.IndexOf(tile, StringComparison.Ordinal) >= 0) == 1, "the roof on the walls' tops is held up; only the lone tile 4 m up is found (" + lines.Count(l => l.IndexOf(tile, StringComparison.Ordinal) >= 0) + " tile lines)");
+			if (ok) Log("PASS: wall tops self"); else Fail("wall tops self");
+		}
+
 		[ConsoleCommand(name: "CIOverlapWorld", docs: "Dev, in a world: nothing on the loaded custom islands passes through anything else - no post, pillar, wall, floor or roof piece more than 6 cm inside a piece of furniture, a prop, a chest, a machine, a tree or a plant (IG7; the user 2026-10-18: posts through a piano and a pool table). Things resting on floors, roofs on their posts, things on tables don't count. Also no themed scene's prop, chest or note more than 6 cm into another of the scenes (their collider boxes as they stand turned; lines 'scene <theme>: ...'; two metal crates, gen-large-37435). Problems per island; all in Mods\\DynamicIslands\\overlap_world.txt. CIOverlapWorld [part of the island name]")]
 		public static void OverlapWorldCommand(string[] args) { WorldCheck(args, OverlapCheck); }
 
-		[ConsoleCommand(name: "CIOverlapIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIOverlapWorld does, then taken away (IG7). <which>: part of the name, 'plans' (every island of every plan), 'gen' or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\overlap_islands.txt. CIOverlapIslands <which> [most] [skip] [keep]")]
+		[ConsoleCommand(name: "CIOverlapIslands", docs: "Dev, world (host, a test world 'CI ...'): saved islands brought next to the raft one by one and measured as CIOverlapWorld does, then taken away (IG7). <which>: part of the name, 'plans' (every island of every plan), 'gen' or * (all but the test islands, kept copies and randomizer extras). Results in Mods\\DynamicIslands\\overlap_islands.txt. CIOverlapIslands <which> [most] [skip] [keep] [as=<tag>: the results copied to overlap_islands_<tag>.txt too - the other Islands checks take it as well]")]
 		public static void OverlapIslandsCommand(string[] args) { IslandsCheck(args, OverlapCheck); }
 
 		[ConsoleCommand(name: "CIOverlapTypes", docs: "Dev, world (host, a test world 'CI ...'): brand-new islands of each map type made next to the raft by the generator as it is now, measured as CIOverlapWorld does, then taken away (IG7). Results in Mods\\DynamicIslands\\overlap_types.txt. CIOverlapTypes [types, comma-separated, or *] [islands of each, 2]")]
@@ -845,6 +2266,11 @@ namespace DynamicIslands
 		static readonly Regex OnAMount =new Regex("Sattelite|Satellite|Dish|Antenna|Tower_EndRoom", RegexOptions.IgnoreCase);
 		/// <summary>What stands on one trunk: its pivot is its foot (the generator's trees and palms).</summary>
 		static readonly Regex Trunk = new Regex("^(?!Placeable_)(?!.*(Ladder|Zipline|Spine|Street)).*(Tree|Palm|Bamboo|Pine|Birch)", RegexOptions.IgnoreCase);
+		/// <summary>Named like a tree but not standing on a trunk foot at its pivot: a lying log (its pivot mid-log, half its
+		/// thickness up) and a stump (its pivot 0.6 m over its bottom). Measured by their base as any object instead - Timberline
+		/// Haul's log piles and Twin Forges' vice stump read "trunk foot floating" 0.45-1.3 m, resting where they were put, c3z34.</summary>
+		static readonly Regex NotATrunk = new Regex(@"^(TreeLog_\d+|Log|Tree_Stump)$");
+		static bool OnATrunk(string n) { return Trunk.IsMatch(n) && !NotATrunk.IsMatch(n); }
 
 		/// <summary>What on a spawned island doesn't stand on anything: one line per problem; <paramref name="count"/> = the objects measured.</summary>
 		static List<string> GroundProblems(IslandWorldState.Entry e, out int count)
@@ -873,16 +2299,30 @@ namespace DynamicIslands
 				bool structural = ChainLink.IsMatch(n), banner = n.IndexOf("Banner", StringComparison.OrdinalIgnoreCase) >= 0;
 				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Note_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") ||
 					n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || (Hangs.IsMatch(n) && !structural && !banner)) continue;
+				// (a lift rides: its platform hangs in a deck's hole clear of the deck round it, held by its own works - Thalassa
+				// Mooring's diving bell over its shaft read "floating, 24 m over what is under it", IG5 11-18)
+				if (n.StartsWith("VP_Skylift", StringComparison.Ordinal) || n == "Elevator") continue;
 				// (cave pieces: their rim, as CICaveRims - AU83)
 				if (RaftProps.Get(n) != null && RaftProps.Get(n).IsCave)
 				{
 					count++;
 					string at;
 					float gap = DenRimGap(o, out at);
-					if (gap >= 0.6f) lines.Add("cave rim off the ground: " + n + " - " + at);
+					if (gap >= 0.6f)
+					{
+						// (c3 round 3: what is at the gap - the hits down through it - and pictures from outside and from the den)
+						lines.Add("cave rim off the ground: " + n + " - " + at + "; " + RimDiagnosis(o));
+						Vector3 gapAt = rimWorstAt + Vector3.up * (rimWorstUp * 0.5f);
+						QueueCheckShot("cave_" + e.Name + "_" + n + "_rim_out", rimWorstAt + rimWorstOut * 6f + Vector3.up * 1.6f, gapAt);
+						QueueCheckShot("cave_" + e.Name + "_" + n + "_rim_in", new Vector3(rimMid.x, gapAt.y + 0.3f, rimMid.z), gapAt);
+					}
 					// (and from inside: nothing seen through its walls or roof - X7)
 					Vector3 eye, look;
-					if (CaveSeeThrough(o, RaftProps.Get(n), out at, out eye, out look) > 0) lines.Add("cave seen through from inside: " + n + " - " + at);
+					if (CaveSeeThrough(o, RaftProps.Get(n), out at, out eye, out look) > 0)
+					{
+						lines.Add("cave seen through from inside: " + n + " - " + at + "; " + LookHits(eye, look, mid));
+						QueueCheckShot("cave_" + e.Name + "_" + n + "_look", eye, eye + look * 5f);
+					}
 					continue;
 				}
 				Renderer[] rs = o.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
@@ -911,7 +2351,12 @@ namespace DynamicIslands
 				if (structural) continue;
 				float groundMid = land != null ? land.SampleHeight(b.center) + land.transform.position.y : float.MinValue;
 				// Buried whole: its top under the land (not Raft's rocks and corals, which are set into it; not what is under the sea)
-				if (!NotABase.IsMatch(n) && land != null && whole.max.y < groundMid - 0.05f && whole.max.y > sea - 1f)
+				// (nor what stands in a dug passage, under the land but in its air: Stalker's Hollow's cave lanterns, IG5 11-18)
+				// (nor Selene's interior pieces, built into a cave kit's tunnel under its hill like the cave pieces: Thalassa Mooring's
+				// sea-gate bars read "buried" 11-21)
+				// (nor what stands where the ground is cut away for a cave piece's room: SampleHeight reads the cut cell's old height,
+				// the hill over the den - Marrow Key Museum's vault hatch read "buried 12.2 m" in its den, z32 11-21)
+				if (!NotABase.IsMatch(n) && !CaveBacks.Wants(n) && land != null && whole.max.y < groundMid - 0.05f && whole.max.y > sea - 1f && !InDugPassage(whole) && !GroundCutAt(land, b.center) && !UnderCaveRoof(whole, groundMid))
 				{ node.Reported = node.Direct = true; lines.Add("buried: " + n + " at " + where + ", its top " + Num(groundMid - whole.max.y) + " m under the ground"); continue; }
 				// A zipline: each end on its own (its base reaches from one end's floor to the other's, over the dip between them -
 				// the Lodestone Array's lines read "partly in the air" 3.7 m over their moat, 2026-10-20): every piece no wider than
@@ -933,26 +2378,18 @@ namespace DynamicIslands
 				// apart from them (Coldhold Vault, 2026-10-23)
 				if (LooseRock.IsMatch(n) && b.min.y > sea + 0.3f)
 				{
-					int seen = 0, high = 0; float most = 0f;
-					float allow = 0.3f + 0.15f * Mathf.Max(b.extents.x, b.extents.z);
-					for (int k = 0; k < 9; k++)
-					{
-						float px = Mathf.Lerp(b.min.x, b.max.x, 0.25f + 0.25f * (k % 3)), pz = Mathf.Lerp(b.min.z, b.max.z, 0.25f + 0.25f * (k / 3));
-						float g = RockGap(o, px, pz, b, land);
-						if (float.IsNaN(g)) continue;
-						seen++;
-						if (g > allow) { high++; most = Mathf.Max(most, g); }
-					}
-					if (seen > 0 && (high >= 3 || high * 2 > seen))
+					int seen, high; float most, least;
+					if (RockFloats(o, b, land, out seen, out high, out most, out least))
 					{ node.Reported = true; lines.Add("floating rock: " + n + " at " + where + ", its underside up to " + Num(most) + " m over what is under it (" + high + " of " + seen + " points)"); continue; }
 				}
 				// A trunk over a drop: its foot on a pit's or a cliff's rim, the trunk hanging out over the slope - a stroke lowered
 				// the ground beside it (the user, 2026-10-30: Reefmachine Atoll's palm over its valve-bank pit; the foot itself was
 				// on the ground). Eight points round the foot, a trunk's width out: three or more 0.8 m over what is under them
-				if (Trunk.IsMatch(n) && land != null && o.position.y > sea + 0.3f)
+				if (OnATrunk(n) && land != null && o.position.y > sea + 0.3f)
 				{
 					Vector3 foot = o.position;
-					foot.y = Mathf.Max(foot.y, land.SampleHeight(foot) + land.transform.position.y);
+					float tg = TrunkGround(foot, land);
+					if (!float.IsNaN(tg)) foot.y = Mathf.Max(foot.y, tg);
 					float rt = 0.6f * Mathf.Max(0.5f, o.lossyScale.x);
 					int over = 0;
 					float most = 0f;
@@ -1007,6 +2444,10 @@ namespace DynamicIslands
 					}
 				}
 				bool own = lmin.x <= lmax.x && lmin.z <= lmax.z;
+				// (a wall on a floor's edge, as Raft builds: half of it over the floor, half over the drop outside - its middle
+				// line is the floor's edge, where a ray down slips past the floor. Held by the face over the floor, as a railing
+				// below: Brinelab Tower's and Sealkeeper Spire's walls read 2.4-15 m "in the air", IG5 11-18)
+				float thinX = own ? (lmax.x - lmin.x) * Mathf.Abs(o.lossyScale.x) : 9f, thinZ = own ? (lmax.z - lmin.z) * Mathf.Abs(o.lossyScale.z) : 9f;
 				for (int i = 0; i <= steps; i++)
 					for (int j = 0; j <= steps; j++)
 					{
@@ -1017,14 +2458,29 @@ namespace DynamicIslands
 							p = new Vector3(w.x, b.min.y, w.z);
 						}
 						float g = GapUnder(o, p, land);
+						if (own && (thinX < 0.5f || thinZ < 0.5f))
+						{
+							Vector3 sx = lmax - lmin, l = o.InverseTransformPoint(p);
+							Vector3 f1 = l, f2 = l;
+							if (thinX < 0.5f) { f1.x = lmin.x + sx.x * 0.1f; f2.x = lmax.x - sx.x * 0.1f; }
+							else { f1.z = lmin.z + sx.z * 0.1f; f2.z = lmax.z - sx.z * 0.1f; }
+							Vector3 w1 = o.TransformPoint(f1), w2 = o.TransformPoint(f2);
+							g = Mathf.Min(GapUnder(o, new Vector3(w1.x, b.min.y, w1.z), land), GapUnder(o, new Vector3(w2.x, b.min.y, w2.z), land));
+						}
 						// (a railing straddling a deck's edge, as Raft's own towers: held by the face over the deck)
 						if (b.size.x < 0.3f) g = Mathf.Min(GapUnder(o, new Vector3(b.min.x, p.y, p.z), land), GapUnder(o, new Vector3(b.max.x, p.y, p.z), land));
 						if (b.size.z < 0.3f) g = Mathf.Min(GapUnder(o, new Vector3(p.x, p.y, b.min.z), land), GapUnder(o, new Vector3(p.x, p.y, b.max.z), land));
+						g = GapToWater(g, p.y, sea);
 						if (g < lowest) lowest = g;
 						if (g > highest) { highest = g; worst = p; }
 					}
+				// (a wall stacked on a wall, as Raft builds a tower: held by the one under it all along its foot, though the rays down
+				// slip through that one's collider - over a door wall's opening, or past the plain wall's open-topped mesh to the floor
+				// 2.4-9.7 m down: Sealkeeper Spire's walls over its door, Highmoor Lodge's, IG5 11-19)
+				if (lowest <= 0.4f && highest > 0.6f && own && (thinX < 0.5f || thinZ < 0.5f) && Structural.IsMatch(n) && OnABuiltPiece(o, lmin, lmax)) continue;
 				if (lowest <= 0.4f && highest > 0.6f)
-					lines.Add("partly in the air: " + n + " at " + where + ", its base up to " + (highest > 999f ? "over nothing" : Num(highest) + " m over the ground") + " (at " + Num(worst.x - mid.x) + " " + Num(worst.z - mid.z) + ")");
+					lines.Add("partly in the air: " + n + " at " + where + ", its base up to " + (highest > 999f ? "over nothing" : Num(highest) + " m over the ground") + " (at " + Num(worst.x - mid.x) + " " + Num(worst.z - mid.z) + ")"
+						+ " [base " + (own ? Num(thinX) + " x " + Num(thinZ) + " own" : Num(b.size.x) + " x " + Num(b.size.z)) + "; under it: " + WhatIsUnder(o, worst) + "; under its middle: " + WhatIsUnder(o, new Vector3(b.center.x, b.min.y, b.center.z)) + "]");
 			}
 			// The chain of supports: grounded = on the land, the sea or the island's rock, or on something grounded (what isn't
 			// measured - a ladder, a lamp, a cave piece - counts as grounded)
@@ -1100,6 +2556,10 @@ namespace DynamicIslands
 				Transform r = PlacedRoot(c.transform, objects);
 				if (r == null) node.Direct = true; else node.Under.Add(r);
 			}
+			// (a floor or roof laid on the tops of walls round its edges: what shows of a wall's top within 0.35 m under its base -
+			// the walls' colliders stop 0.1-0.2 m short of a storey's roof tiles, and the rays down from its corners miss the
+			// walls at its edges: Biome Seven's lab roofs and The Stalker's Hollow's stone houses read "held up by nothing", IG5)
+			if (node.Link) foreach (Transform r in TopsUnder(o, b, objects)) node.Under.Add(r);
 			// (right under its middle and its corners: the land within 0.5 m, or the first thing there)
 			for (int i = 0; i < 5; i++)
 			{
@@ -1119,6 +2579,34 @@ namespace DynamicIslands
 				Transform r = PlacedRoot(best.collider.transform, objects);
 				if (r == null) node.Direct = true; else node.Under.Add(r);
 			}
+		}
+
+		static readonly List<KeyValuePair<Transform, Bounds>> tops = new List<KeyValuePair<Transform, Bounds>>();
+		static Transform topsOf;
+		static int topsFrame = -1;
+
+		/// <summary>The placed objects (children of <paramref name="objects"/>) that reach up under <paramref name="b"/>'s base
+		/// from below: a shown mesh whose top is from 0.35 m under its base to 0.3 m over it, over its ground plan, and whose
+		/// bottom is more than 0.3 m under its base (a wall under a roof tile - not the tile beside it).</summary>
+		static List<Transform> TopsUnder(Transform o, Bounds b, Transform objects)
+		{
+			if (topsOf != objects || topsFrame != Time.frameCount)
+			{
+				tops.Clear(); topsOf = objects; topsFrame = Time.frameCount;
+				foreach (Transform root in objects)
+					foreach (MeshRenderer r in root.GetComponentsInChildren<MeshRenderer>(false))
+						if (r.enabled) tops.Add(new KeyValuePair<Transform, Bounds>(root, r.bounds));
+			}
+			var found = new List<Transform>();
+			foreach (KeyValuePair<Transform, Bounds> t in tops)
+			{
+				Bounds r = t.Value;
+				if (t.Key == o || found.Contains(t.Key) || t.Key.IsChildOf(o)) continue;
+				if (r.max.y < b.min.y - 0.35f || r.max.y > b.min.y + 0.3f || r.min.y > b.min.y - 0.3f) continue;
+				if (r.min.x > b.max.x + 0.05f || r.max.x < b.min.x - 0.05f || r.min.z > b.max.z + 0.05f || r.max.z < b.min.z - 0.05f) continue;
+				found.Add(t.Key);
+			}
+			return found;
 		}
 
 		/// <summary>A banner's two rope ends (the ends of its top edge, along its long side) and what each is tied to: a collider
@@ -1407,6 +2895,20 @@ namespace DynamicIslands
 			Log("PASS: shot from " + at.ToString("F1"));
 		}
 
+		/// <summary>A cave piece's rock straight over the top of this box, under the land's height there: it stands in the cave's
+		/// room, not in the ground (Rootweave Caves' hollow ladder pillar read "buried 10.4 m" under the Fungus Hall's roof, the
+		/// land cell there whole, c3z37 11-21).</summary>
+		static bool UnderCaveRoof(Bounds whole, float groundY)
+		{
+			Vector3 from = new Vector3(whole.center.x, whole.max.y + 0.05f, whole.center.z);
+			float len = groundY - from.y - 0.3f; // (short of the land's top: not the mountain skin laid on it)
+			if (len <= 0f) return false;
+			bool backs0 = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try { return Physics.RaycastAll(from, Vector3.up, len, ~0, QueryTriggerInteraction.Ignore).Any(h => CaveRock(h.collider)); }
+			finally { Physics.queriesHitBackfaces = backs0; }
+		}
+
 		/// <summary>A collider of a cave piece's rock (any piece's).</summary>
 		static bool CaveRock(Collider c)
 		{
@@ -1567,8 +3069,50 @@ namespace DynamicIslands
 			return bad;
 		}
 
-		/// <summary>A rock's underside over what is under it at x z: NaN where the rock isn't over that point or is set into
-		/// the ground there; else the gap in metres (the land or the first other thing under it).</summary>
+		/// <summary>A loose rock in the air: its underside over what is under it at nine points (25/50/75 % of its base),
+		/// more than 0.3 m + 0.15 m per metre of its half width over it at most of the points where it is over something.
+		/// (Not "3 points high": a round boulder resting on flat ground curves up 0.29 r at its box's quarter points, and every
+		/// big one read floating - IG5 11-18.) least: the smallest gap measured (0 where it is set in).</summary>
+		/// <summary>An object in a dug passage's air: its middle, its top or its foot within half a metre of the passage (a lantern
+		/// hung on its wall, a beam holding its roof). The land's height there is the hill over the cave, so "buried" asked
+		/// the wrong question (IG5 11-18: Stalker's Hollow's lanterns read 10-11 m under the ground).</summary>
+		/// <summary>The land's hole cell at p is cut (no ground there: a cave piece's room or a dug passage).</summary>
+		internal static bool GroundCutAt(Terrain land, Vector3 p)
+		{
+			if (land == null) return false;
+			TerrainData td = land.terrainData;
+			int res = td.holesResolution;
+			Vector3 l = p - land.transform.position;
+			int hx = Mathf.FloorToInt(l.x / td.size.x * res), hz = Mathf.FloorToInt(l.z / td.size.z * res);
+			if (hx < 0 || hz < 0 || hx >= res || hz >= res) return false;
+			return !td.GetHoles(hx, hz, 1, 1)[0, 0];
+		}
+
+		static bool InDugPassage(Bounds whole)
+		{
+			Vector3 c = whole.center;
+			return DigTunnel.InPassage(c, -0.5f) || DigTunnel.InPassage(new Vector3(c.x, whole.max.y - 0.05f, c.z), -0.5f) ||
+				DigTunnel.InPassage(new Vector3(c.x, whole.min.y + 0.05f, c.z), -0.5f);
+		}
+
+		static bool RockFloats(Transform o, Bounds b, Terrain land, out int seen, out int high, out float most, out float least)
+		{
+			seen = 0; high = 0; most = 0f; least = float.MaxValue;
+			float allow = 0.3f + 0.15f * Mathf.Max(b.extents.x, b.extents.z);
+			for (int k = 0; k < 9; k++)
+			{
+				float px = Mathf.Lerp(b.min.x, b.max.x, 0.25f + 0.25f * (k % 3)), pz = Mathf.Lerp(b.min.z, b.max.z, 0.25f + 0.25f * (k / 3));
+				float g = RockGap(o, px, pz, b, land);
+				if (float.IsNaN(g)) continue;
+				seen++;
+				least = Mathf.Min(least, g);
+				if (g > allow) { high++; most = Mathf.Max(most, g); }
+			}
+			return seen > 0 && high * 2 > seen;
+		}
+
+		/// <summary>A rock's underside over what is under it at x z: NaN where the rock isn't over that point; 0 where it is set
+		/// into the ground there; else the gap in metres (the land or the first other thing under it).</summary>
 		static float RockGap(Transform self, float x, float z, Bounds b, Terrain land)
 		{
 			float under = float.MinValue;
@@ -1579,8 +3123,27 @@ namespace DynamicIslands
 			float underside = float.MaxValue;
 			foreach (RaycastHit h in Physics.RaycastAll(new Vector3(x, under + 0.01f, z), Vector3.up, b.max.y - under + 0.1f, ~0, QueryTriggerInteraction.Ignore))
 				if (h.collider.transform.IsChildOf(self) && h.point.y < underside) underside = h.point.y;
-			if (underside == float.MaxValue) return float.NaN; // (not over this point, or into the ground here: the ray starts inside it)
+			if (underside == float.MaxValue)
+			{
+				// (not over this point, or set into the ground here: the ray up starts inside it. Set in, it rests there - a gap of
+				// 0, not a point left out: a boulder sunk into a slope with one corner over the dip read "1 of 1 points" floating,
+				// 241 of the 504 floating rocks of the ground check 11-14, IG5)
+				foreach (RaycastHit h in Physics.RaycastAll(new Vector3(x, b.max.y + 0.1f, z), Vector3.down, b.size.y + 0.2f, ~0, QueryTriggerInteraction.Ignore))
+					if (h.collider.transform.IsChildOf(self)) return 0f;
+				return float.NaN;
+			}
 			return Mathf.Max(0f, underside - under);
+		}
+
+		/// <summary>The ground a trunk's foot stands on: the land's height there, or - its foot in a dug passage's air, the land's
+		/// height there being the hill over the cave - the passage's floor under it (NaN: none found, not measured). The land's
+		/// height ignores the ground's holes, so a tree on a dug cave's floor read sunk by the hill over it (11-21).</summary>
+		static float TrunkGround(Vector3 foot, Terrain land)
+		{
+			float ground = land.SampleHeight(foot) + land.transform.position.y;
+			if (ground - foot.y <= 1f || !DigTunnel.InPassage(foot + Vector3.up * 0.6f, -0.5f)) return ground;
+			RaycastHit fh;
+			return DigFloor(foot + Vector3.up * 1.5f, out fh) ? fh.point.y : float.NaN;
 		}
 
 		/// <summary>A tree's or a palm's trunk foot (its pivot) more than 1 m under the land at it ("sunk trunk": set down by the
@@ -1589,9 +3152,10 @@ namespace DynamicIslands
 		/// floating"); null when it is fine, or its foot is over the sea.</summary>
 		static string TrunkFootProblem(Transform o, string n, Terrain land, float sea, Vector3 mid)
 		{
-			if (land == null || !Trunk.IsMatch(n)) return null;
+			if (land == null || !OnATrunk(n)) return null;
 			Vector3 foot = o.position;
-			float ground = land.SampleHeight(foot) + land.transform.position.y;
+			float ground = TrunkGround(foot, land);
+			if (float.IsNaN(ground)) return null;
 			Vector3 lp = land.transform.position, ls = land.terrainData.size;
 			if (foot.x < lp.x || foot.x > lp.x + ls.x || foot.z < lp.z || foot.z > lp.z + ls.z || ground <= sea) return null;
 			string at = n + " at " + Num(foot.x - mid.x) + " " + Num(foot.z - mid.z) + " h=" + Num(foot.y - sea);
@@ -1602,6 +3166,16 @@ namespace DynamicIslands
 				if (g > 0.4f) return "trunk foot floating: " + at + ", " + (g > 999f ? "nothing under it" : Num(g) + " m over what is under it");
 			}
 			return null;
+		}
+
+		/// <summary>A base's gap <paramref name="g"/> at height <paramref name="y"/> over the sea with only the sea's bed under
+		/// it: to the water's top, which holds it there (a sluice's low end in a creek: Frostgold Creek's half walls read
+		/// 1.2-2.2 m "in the air" over the creek's bed, IG5 11-18).</summary>
+		internal static float GapToWater(float g, float y, float sea)
+		{
+			// (a base a little under the water's top: afloat in it - Fleetbreak's filter-crate rafts, foundations 0.3 m down over
+			// a sea cave 2-6 m under, read "partly in the air", IG5 11-19)
+			return y - g < sea ? Mathf.Max(0f, y - sea) : g;
 		}
 
 		static float GapUnder(Transform self, Vector3 foot, Terrain land)
@@ -1619,6 +3193,33 @@ namespace DynamicIslands
 				if (g <= -0.3f && foot.x >= lp.x && foot.x <= lp.x + ls.x && foot.z >= lp.z && foot.z <= lp.z + ls.z) best = 0f;
 			}
 			return best == float.MaxValue ? 9999f : best;
+		}
+
+		/// <summary>Whether a building piece (not <paramref name="self"/>) fills the space just under <paramref name="self"/>'s base
+		/// (its own-frame box <paramref name="lmin"/>..<paramref name="lmax"/>): a box 0.3 m tall under the middle 80 % of its foot.</summary>
+		static bool OnABuiltPiece(Transform self, Vector3 lmin, Vector3 lmax)
+		{
+			Vector3 c = self.TransformPoint(new Vector3((lmin.x + lmax.x) * 0.5f, lmin.y, (lmin.z + lmax.z) * 0.5f)) + Vector3.down * 0.2f;
+			Vector3 s = Vector3.Scale(lmax - lmin, new Vector3(Mathf.Abs(self.lossyScale.x), 0f, Mathf.Abs(self.lossyScale.z))) * 0.4f;
+			s.y = 0.15f;
+			foreach (Collider k in Physics.OverlapBox(c, s, self.rotation, ~0, QueryTriggerInteraction.Ignore))
+			{
+				if (k.transform.IsChildOf(self)) continue;
+				// (the piece itself or up to two parents up: not the island's root, whose name may hold "wall")
+				Transform t = k.transform;
+				for (int up = 0; up < 3 && t != null && t != self.parent; up++, t = t.parent)
+					if (Structural.IsMatch(t.name) && !LooseRock.IsMatch(t.name)) return true;
+			}
+			return false;
+		}
+
+		/// <summary>The nearest thing under a point (not <paramref name="self"/>) and how far down it is - a ground line's detail.</summary>
+		static string WhatIsUnder(Transform self, Vector3 foot)
+		{
+			RaycastHit best = default(RaycastHit); bool any = false;
+			foreach (RaycastHit h in Physics.RaycastAll(foot + Vector3.up * 0.3f, Vector3.down, 400f, ~0, QueryTriggerInteraction.Ignore))
+				if (!h.collider.transform.IsChildOf(self) && (!any || h.point.y > best.point.y)) { best = h; any = true; }
+			return any ? best.collider.name + " " + Num(foot.y - best.point.y) + " m" : "nothing";
 		}
 
 		/// <summary>Whether <paramref name="self"/>'s base touches a collider of something else (stands on it, or hangs on a wall).</summary>

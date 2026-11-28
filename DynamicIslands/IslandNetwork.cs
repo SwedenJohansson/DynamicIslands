@@ -157,6 +157,9 @@ namespace DynamicIslands.Editor
 	{
 		/// <summary>Raw bytes per file chunk (base64 makes it about a third bigger).</summary>
 		const int ChunkBytes = 3000;
+		/// <summary>At most this many chunks in one file (64 MB): a chunk's Count is the size of what the receiver allocates
+		/// for the file's parts (audit 2026-10-06).</summary>
+		const int MaxChunks = 64 * 1024 * 1024 / ChunkBytes;
 		const float SyncRetrySeconds = 5f;
 		const int SyncMaxTries = 12;
 
@@ -883,7 +886,7 @@ namespace DynamicIslands.Editor
 						}
 						// (Ids[1]: the event's seed - its random choice picks the same here; an older version sends none)
 						if (msg.Ids != null && msg.Ids.Length > 1) GapBehaviours.Seed = msg.Ids[1]; else GapBehaviours.NewSeed();
-						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList, from, msg.Count == 1);
+						if (msg.Ids != null && msg.Ids.Length > 0) Behaviours.OnEventMessage(msg.Ids[0], msg.Index, msg.Name ?? "", msg.FullList && !Raft_Network.IsHost, from, msg.Count == 1); // (a player's "from the host" skipped the host's checks - audit 2026-10-06)
 						break;
 					case IslandNetMessage.Story:
 						StoryBook.OnMessage(msg, from.Id, from);
@@ -1235,7 +1238,8 @@ namespace DynamicIslands.Editor
 
 		internal static void ReceiveChunk(IslandNetMessage msg)
 		{
-			if (!requested.Contains(msg.Hash) || msg.Count <= 0 || msg.Index < 0 || msg.Index >= msg.Count) return;
+			if (!requested.Contains(msg.Hash) || msg.Count <= 0 || msg.Count > MaxChunks || msg.Index < 0 || msg.Index >= msg.Count) return;
+			if (msg.Data != null && msg.Data.Length > ChunkBytes * 2) return; // (base64 of a chunk is 4000 characters)
 			// (the name the host sends with it is the saved file's - AU41)
 			string problem = ReceivedProblem(msg.Name, msg.Hash);
 			if (problem != null) { Debug.LogWarning("[CUSTOM ISLANDS] [net] An island file from the host isn't saved: " + problem); return; }
@@ -1354,11 +1358,41 @@ namespace DynamicIslands.Editor
 			float at;
 			if (hashMissAt.TryGetValue(hash, out at) && Time.unscaledTime - at < 10f) return null;
 			List<string> all;
-			try { all = IslandSpawner.ListSavedIslands().ToList(); }
+			try { all = FilesWithHash(hash); }
 			catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] Looking for an island file by its content: " + e.Message); return null; }
+			// (each found one checked again: one changed since the folder was looked through isn't taken)
 			string found = all.Where(n => n.EndsWith("_" + hash, StringComparison.OrdinalIgnoreCase)).FirstOrDefault(n => HashOf(n) == hash) ?? all.FirstOrDefault(n => HashOf(n) == hash);
 			if (found == null) hashMissAt[hash] = Time.unscaledTime; else hashMissAt.Remove(hash);
 			return found;
+		}
+
+		static Dictionary<string, List<string>> byHash;
+		static DateTime byHashFolder;
+		static int byHashAt;
+
+		/// <summary>
+		/// The island files with this content, from every island file's hash - worked out once while the folder stays as it
+		/// is (5 minutes at most). Before, each island looked for went through every file: a world of 150 islands that
+		/// this PC has other versions of took 88 s to read on a PC with ~1,600 islands (IM43, 11-25).
+		/// </summary>
+		static List<string> FilesWithHash(string hash)
+		{
+			DateTime folder = Directory.Exists(DynamicIslands.assetpath) ? Directory.GetLastWriteTimeUtc(DynamicIslands.assetpath) : DateTime.MinValue;
+			if (byHash == null || folder != byHashFolder || Environment.TickCount - byHashAt > 300000)
+			{
+				var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+				foreach (string n in IslandSpawner.ListSavedIslands())
+				{
+					string h = HashOf(n);
+					if (h == null) continue;
+					List<string> list;
+					if (!map.TryGetValue(h, out list)) map[h] = list = new List<string>();
+					list.Add(n);
+				}
+				byHash = map; byHashFolder = folder; byHashAt = Environment.TickCount;
+			}
+			List<string> names;
+			return byHash.TryGetValue(hash, out names) ? names : new List<string>();
 		}
 
 		/// <summary>
@@ -1421,7 +1455,8 @@ namespace DynamicIslands.Editor
 			string key = hash + "|" + to;
 			float since;
 			if (sending.TryGetValue(key, out since) && Time.realtimeSinceStartup - since < SendingSeconds) { Log("Island file '" + name + "' is still being sent to " + to + ": not sent twice"); return; }
-			if (sending.Count >= 64) sending.Clear();
+			// (only stalled ones are forgotten: clearing them all at 64 let a player asking again get a second copy)
+			if (sending.Count >= 64) foreach (string old in sending.Where(kv => Time.realtimeSinceStartup - kv.Value >= SendingSeconds).Select(kv => kv.Key).ToList()) sending.Remove(old);
 			sending[key] = Time.realtimeSinceStartup;
 			byte[] bytes = File.ReadAllBytes(path);
 			System.Collections.IEnumerator send = SendChunks(name, hash, bytes, to, key);
@@ -1429,7 +1464,7 @@ namespace DynamicIslands.Editor
 			else if (DynamicIslands.instance != null) DynamicIslands.instance.StartCoroutine(send);
 		}
 
-		/// <summary>Host: the files going out now, by hash and player, with when they started.</summary>
+		/// <summary>Host: the files going out now, by hash and player, with when one last sent a chunk or waited its turn.</summary>
 		static readonly Dictionary<string, float> sending = new Dictionary<string, float>();
 		const float SendingSeconds = 60f;
 		/// <summary>Tests: how many files are going out now.</summary>
@@ -1439,16 +1474,76 @@ namespace DynamicIslands.Editor
 		/// a slow connection dropped messages of).</summary>
 		internal const int ChunksPerFrame = 6;
 
+		/// <summary>No more parts go to a player while Steam still has this much to send them.</summary>
+		internal const int QueuedBytesMax = 256 * 1024;
+		/// <summary>A wait for Steam's queue longer than this: the line is taken as dead and the gate no longer holds the send.</summary>
+		internal const float StallSeconds = 30f;
+		static int budgetFrame = -1, budgetUsed;
+		static float urgentUntil;
+
+		/// <summary>
+		/// Host: whether one more part of a transfer (an island file, the world's copy, Raft's save) may go out now. All
+		/// transfers share one budget of ChunksPerFrame a frame, and none goes to a player Steam still has QueuedBytesMax for.
+		/// Each file used to send 6 a frame on its own: a player asking for 28 islands at once got ~13 MB in two seconds, Steam
+		/// dropped what didn't fit, and the last files - and the world's copy behind them - never came (X5, IM43 11-25).
+		/// The world's copy and save (urgent) go first: island files wait while one of those is waiting.
+		/// </summary>
+		internal static bool MaySend(Network_UserId? to, bool urgent, bool ignoreQueue)
+		{
+			if (Loopback != null) return true;
+			float now = Time.realtimeSinceStartup;
+			if (urgent) urgentUntil = now + 1f;
+			else if (now < urgentUntil) return false;
+			if (Time.frameCount != budgetFrame) { budgetFrame = Time.frameCount; budgetUsed = 0; }
+			if (budgetUsed >= ChunksPerFrame) return false;
+			if (!ignoreQueue && QueuedBytes(to) > QueuedBytesMax) return false;
+			budgetUsed++;
+			return true;
+		}
+
+		/// <summary>The bytes Steam still has to send to a player (no player: the most of any); 0 when not on line.</summary>
+		internal static int QueuedBytes(Network_UserId? to)
+		{
+			if (Loopback != null || !InMultiplayerGame) return 0;
+			try
+			{
+				if (to.HasValue) return QueuedFor(to.Value.Id);
+				Raft_Network network = ComponentManager<Raft_Network>.Value;
+				if (network == null || network.remoteUsers == null) return 0;
+				int most = 0;
+				foreach (Network_UserId id in network.remoteUsers.Keys) most = Math.Max(most, QueuedFor(id.Id));
+				return most;
+			}
+			catch { return 0; }
+		}
+
+		static int QueuedFor(ulong id)
+		{
+			P2PSessionState_t state;
+			return SteamNetworking.GetP2PSessionState(new CSteamID(id), out state) ? state.m_nBytesQueuedForSend : 0;
+		}
+
 		static System.Collections.IEnumerator SendChunks(string name, string hash, byte[] bytes, Network_UserId to, string key)
 		{
 			int count = Mathf.Max(1, (bytes.Length + ChunkBytes - 1) / ChunkBytes);
-			float started = Time.realtimeSinceStartup;
+			float started = Time.realtimeSinceStartup, waitedFrom = -1f;
+			bool stalled = false;
 			for (int i = 0; i < count; i++)
 			{
+				// (its turn: the shared budget, Steam's queue to the player; while waiting it still counts as being sent)
+				while (!MaySend(to, false, stalled))
+				{
+					float now = Time.realtimeSinceStartup;
+					if (waitedFrom < 0f) waitedFrom = now;
+					else if (now - waitedFrom > StallSeconds && !stalled) { stalled = true; Log("Island file '" + name + "': Steam's queue to " + to + " hasn't moved in " + StallSeconds + " s: sending on"); }
+					sending[key] = now;
+					yield return null;
+				}
+				waitedFrom = -1f;
+				sending[key] = Time.realtimeSinceStartup;
 				int len = Mathf.Min(ChunkBytes, bytes.Length - i * ChunkBytes);
 				try { SendToPlayer(new IslandNetMessage { Kind = IslandNetMessage.FileChunk, Name = name, Hash = hash, Index = i, Count = count, Data = Convert.ToBase64String(bytes, i * ChunkBytes, len) }, to); }
 				catch (Exception e) { Debug.LogWarning("[CUSTOM ISLANDS] [net] Sending '" + name + "' chunk " + i + ": " + e.Message); }
-				if ((i + 1) % ChunksPerFrame == 0) yield return null;
 			}
 			sending.Remove(key);
 			Log("Sent island file '" + name + "' (" + bytes.Length + " bytes, " + count + " chunks in " + (Time.realtimeSinceStartup - started).ToString("F1") + " s) to " + to);

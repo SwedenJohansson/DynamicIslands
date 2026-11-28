@@ -987,9 +987,11 @@ namespace DynamicIslands
 			bool ok = true;
 			RaftIsland radar = RaftIslands.All.FirstOrDefault(i => i.Scene.Contains("Landmark_Radar"));
 			if (radar == null) { Fail("no measured Radio Tower (raft_islands.txt)"); yield break; }
+			int designs = 0;
 			foreach (Remakes.Design d in Remakes.For(radar.Scene))
 			{
 				if (only != null && d.Id != only) continue;
+				designs++;
 				foreach (int seed in new[] { 11, 12 })
 				{
 					IslandGenSettings gs = RaftIslands.LikeIt(radar, new IslandGenSettings { Seed = seed });
@@ -1021,7 +1023,7 @@ namespace DynamicIslands
 					}
 				}
 			}
-			if (ok) Log("PASS: remakes of Raft's islands"); else Fail("remakes of Raft's islands");
+			if (ok && designs > 0) Log("PASS: remakes of Raft's islands (" + designs + ")"); else Fail("remakes of Raft's islands (" + designs + " designs)");
 		}
 
 		[ConsoleCommand(name: "CIStoryRemake", docs: "Dev, editor: ROADMAP CW1 - Rebuild it for Raft's other story islands: each design (or those whose id has <part>) generated on its island's ground with seed [seed] (11): built, every piece loaded, its loot container there, the pieces standing on the ground (none more than 0.4 m over it); a picture shot_sr_<id>.png. CIStoryRemake [part] [seed]")]

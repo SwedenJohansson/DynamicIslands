@@ -41,7 +41,7 @@ origin
 # boathouse ruin's pad (west), the mail plane's pad (north-west), the tide office's basin off the south-west (-9 m) --
 call hw_mount x=10 z=40 b=30 h=34
 call hw_trail x=10 z=40 b=30 h=34 a0=200 turn=300 n=42 h0=7
-call ar_cave x=52 z=-14 h=4 yaw=0 al=seamrock chest=seamchest
+call ar_cave x=52 z=-14 h=4 yaw=0 al=seamrock chest=seamchest cy=0.15
 brush flatten at -48 -12 r=12 s=20 frames=700 h=4.5
 clear at -48 -12 r=13
 call ar_ruin x=-48 z=-12 h=4.5 yaw=20 w=3 d=2 al=boathouse
@@ -110,7 +110,7 @@ call treasure x=15 z=35 r=4 n=1 seed=9541 kind=0
 prop treasure9541 treasure.loot=MetalOre*3;CopperOre*2
 # --- The seam cave (east): harbour master Brandt's tide book -------------------------------------------------------
 call hw_zone x=52 z=-9 al=seamz id=seamcave r=4 msg="A cave in a dark rock that pulls at the iron in your pockets: the lodestone seam."
-place Note_Paper brandtbook at 51 -7.5 h=4.45 drop yaw=30
+place Note_Paper brandtbook at 51 -7.5 ground y=0.05 sit yaw=30
 loot seamchest MetalOre*3;Bolt*2;Scrap*2
 prop seamchest loot.refill=0
 note seamchest Seam cave box | A small box in the seam cave: lumps of ore that cling together, and something that sticks to everything.
@@ -243,4 +243,8 @@ brush flatten from 40.8 -31.5 to 40.3 -25 r=4 s=20 frames=300 h=5.0
 brush smooth from 40.8 -31.5 to 40.3 -25 r=4.5 s=10 frames=12
 clear from 40.8 -31.5 to 40.3 -25 r=4.5 body
 
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save Lodestone Quay

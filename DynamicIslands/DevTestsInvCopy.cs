@@ -72,7 +72,7 @@ namespace DynamicIslands
 			if (what == "check" || what == "again")
 			{
 				if (Raft_Network.IsHost) { Fail("CIInvCopy " + what + ": run on player 2"); return; }
-				DynamicIslands.instance.StartCoroutine(InvCopyCheck(what == "again"));
+				StartTest(InvCopyCheck(what == "again")); // (a test: a file of plain commands now ends with IDLE at once)
 				return;
 			}
 			if (what == "restore")

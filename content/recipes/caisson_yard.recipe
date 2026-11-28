@@ -37,6 +37,9 @@ brush flatten at 13.5 7.5 r=3.5 s=60 frames=400 h=1.6
 # reaches under their ends)
 brush flatten at 6.5 5 r=2.5 s=60 frames=300 h=1.6
 brush flatten at 10 10 r=2.5 s=60 frames=300 h=1.6
+# (11-21 c3z27: the forklift by the store stood with its front over the yard rock's south edge, 0.96 m over the ground there -
+# "partly in the air": the rock reaches on under its front)
+brush flatten at 14.4 -0.4 r=2.5 s=60 frames=300 h=1.6
 brush flatten at 10 16 r=5.5 s=40 frames=300 h=-8
 brush flatten at 1 -3 r=5 s=40 frames=300 h=-8
 brush flatten at 34 4 r=12 s=20 frames=240 h=-25
@@ -85,19 +88,32 @@ place "Pickup_Landmark_Sand" - at 16.5 7.5 ground sit
 place "Pickup_Landmark_Sand" - at 17.5 6.2 ground sit
 place "Pickup_Landmark_Clay 1" - at 15.5 8.8 ground sit
 place "Pickup_Landmark_Clay 2" - at 17.8 8.6 ground sit
-store yardshop at 14 4 ground
+# (11-21 c3z36: at 14 4 the tent (x 11.7..16.8, z 1.9..8.8) stood over the smelter roof, its pillars through the canvas;
+# now south of the roof, its south corners a little over the rock's edge, and the forklift on the yard's west side)
+store yardshop at 14 0.8 ground
 place TP_Moontown_Barrel01 - at 9.5 0.5 ground sit
 place TP_Moontown_Barrel01 - at 10.2 -0.2 ground sit
-# the yard's machines: a forklift by the store, the excavator that slid off the yard into the sea
-place VP_Forklift - at 14.8 1.2 ground yaw=200
+# the yard's machines: a forklift between the board and the smelter, the excavator that slid off the yard into the sea
+place VP_Forklift - at 10.4 6 ground yaw=0
 place VP_Excavator - at 1 -3 ground yaw=30
 call treasure x=13 z=4 r=24 n=1 seed=10052
 prop treasure10052 treasure.loot=TitaniumOre*3
 
 # --- The cranes and the zipline (S to N) -------------------------------------------------------------------------------
 place UT_ElectricityIsland_Crane02 crane1 at -7 -7 h=1.9 sit scale=0.25 yaw=45
-place ZiplinePath_Landmark zipcrane at -0.6 -7.2 h=3.25 yaw=0
-zipto zipcrane 9 16
+# crane 1's stair tower: a one-cell concrete tower two storeys up on the south caisson's cap, ladders up its south face;
+# the zipline from its top down to the yard's rock by the barrels
+# (11-21: its near floor stood in the air over the sea at -0.6 -7.2 h=3.25, off every caisson, and its far end at 9 16 went
+# to the seabed under crane 2's caisson: the rope ran 4.6 m inside the caisson and a rider stopped 18 m short (c3z7). A line
+# from crane 1 to crane 2 crosses the west footbridge's rope fence midway, so it ends on the yard instead)
+call caisson x=-4.75 z=-4.75 w=1 h0=1.9 lv=2 a=caissons
+place Block_Ladder_Tier3 - at -4.75 -5.8 h=1.9 yaw=0
+place Block_Ladder_Tier3 - at -4.75 -5.8 h=4.34 yaw=0
+# (11-21 c3z11: from the roof's middle its rope ran out through the roof's edge and the wall's top - it stands at the roof's
+# edge towards the far end, so the rope leaves over open air)
+place ZiplinePath_Landmark zipcrane at -4.2 -4.51 h=6.96 yaw=0
+zipfrom zipcrane -4.2 -4.51 h=6.96
+zipto zipcrane 8.5 1
 place UT_ElectricityIsland_Crane02 crane2 at 11 17 h=1.9 sit scale=0.25 yaw=225
 place Zone_Trigger crane2zone at 9.5 15.5 h=3
 
@@ -148,8 +164,11 @@ prop dview zone.message=From here the caissons stand in a row like stepping ston
 # the yard office in the north (its vending machine), the fallen mobile crane in the south-east
 call sk_ridge x1=-68 z1=-24 x2=-62 z2=12 h=3 top=5 r=8
 call sk_plants x=-65 z=-6 r=16 seed=10761
-call sk_zone x=-65 z=-6 al=cy_ridge id=cy_ridge r=7 msg="The spoil ridge - all the rock the yard dug out of the trench. The zipline from the top runs down to the yard."
+call sk_zone x=-65 z=-6 al=cy_ridge id=cy_ridge r=7 msg="The spoil ridge - all the rock the yard dug out of the trench. The zipline at its north end runs down off it."
 call sk_cave x=-24 z=-56 h=2 yaw=180 al=cy_caverock chest=cy_cavechest
+# (11-26 REACH: the powder cave's dry dome, uncapped, reached 42 m to its sides - its skin lay 2.4 m over Crane Hill's
+# west ledge and buried the Rigger's cache; capped at 30 as Hadal's dens: sides 20 m, front 9 m, back 30 m)
+prop cy_caverock cave.dome=30
 call sk_zone x=-24 z=-61 al=cy_cave id=cy_cave r=4 msg="The powder cave: the yard kept its blasting charges in here, far from everything."
 call sk_ruin x=8 z=62 h=2 al=cy_ruin
 call sk_notebox x=10.5 z=57.5 yaw=10 al=cy_ruinnote
@@ -160,9 +179,14 @@ place VP_Wagon01 - at 44 -40 ground sit yaw=30
 call sk_notebox x=60 z=-50 yaw=70 al=cy_wrecknote
 
 # --- Tools in use (10-24: a tool or item given earlier in the storyline opens extras here, never the main path)
-clear from -65 -6 to -42 -8 r=3
-place ZiplinePath_Landmark cyridgezip at -65 -6 ground
-zipto cyridgezip -42 -8
+# (11-21 c3z11: east to -42 -8 its rope ran 6 m into the cave hill a world builds behind the powder cave - that hill reaches
+# from the cave up to about z 8 and x -65. c3z13: north to -57 18 from the peak it ran 2.8 m into the ridge's own 3 m spine
+# (x -68..-62, z -24..12) and took the tool's full 8 m. It starts at the spine's north end and runs down off it, north
+# past the hill's back and the ridge's foot)
+clear from -63.5 9 to -60 32 r=3
+place ZiplinePath_Landmark cyridgezip at -63.5 9 ground
+zipfrom cyridgezip -63.5 9 ground
+zipto cyridgezip -60 32
 call vinecache x=-46 z=36 r=8 seed=10771 chest=cyvinechest vines=cyvines items=Rope*3;Nail*8;Bolt*2
 
 # --- Unique layer (10-24): the yard office's vending machine: it takes the Tangaroa tokens of the Overpass toll run
@@ -174,16 +198,67 @@ call sk_peak x=12 z=-66 h=22 r=24
 call sk_pit x=-30 z=60 h0=-10
 brush flatten at -27 60 r=8 s=40 frames=300 h=-10.05
 call sk_cave x=66 z=-12 h=3 yaw=0 al=cycave2 chest=cycave2chest
+# (11-26 REACH: the crane cave's dry dome, uncapped, reached 64 m back - its skin lay 3-4 m over the toppled crane 35 m
+# behind it and buried its toolbox and the driver's report; capped at 30: back 30 m, sides 20 m, front 9 m)
+prop cycave2 cave.dome=30
 call sk_plants x=12 z=-66 r=26.4 seed=24610
+# (11-26 REACH cy2: a trough 11x3 m along Crane Hill's south foot, under pad 9 (x 9..20, z -86..-83, h 4.6..6.6) - a player
+# dropped in from the pad and could not get out; its east end lay 2 m from the slope down to the shore at the same height but
+# did not link. A level cut at 5.85 runs from the trough to that slope, cleared of plants)
+for k 0 5
+brush flatten at {14+1.8*$k} {-84.6+0.4*$k} r=2 s=20 frames=60 h=5.85
+clear at {14+1.8*$k} {-84.6+0.4*$k} r=3
+next
 call sk_reef x=-20 z=66 r=5 seed=24630
 
 # the summit: Crane Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
-call ladtower x=12 z=-66 h0=22 lv=6 a=cytower
+# (REACH 11-27 bf13cy: the inside ladder topped out 0.47 m under the deck's edge - the walk up fell back down its shaft twice
+#  and never reached the locker, the card or the zone. As Sealkeeper's ladtowerout (not in this branch's lib): the ladder on
+#  the south wall's outside at 13.1 -67.8, stepping over the wall top onto a four-cell deck; door as before)
+clear at 13.1 -68.6 r=1.2
+push at 10.5 -67.5 h=22
+for k 0 5
+place Block_Wall_Tier3 cytower at 2.25 0 y={$k*2.42}
+place Block_Wall_Tier3 cytower at 0.75 3 y={$k*2.42}
+place Block_Wall_Tier3 cytower at 2.25 3 y={$k*2.42}
+place Block_Wall_Tier3 cytower at 0 0.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 cytower at 0 2.25 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 cytower at 3 0.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 cytower at 3 2.25 y={$k*2.42} yaw=90
+place Block_Ladder_Tier3 - at 2.6 -0.3 y={$k*2.42} yaw=0
+next
+place Block_Wall_Door_Tier3 cytower at 0.75 0 y=0
+for k 1 5
+place Block_Wall_Tier3 cytower at 0.75 0 y={$k*2.42}
+next
+place Block_Floor_Tier3 cytower at 0.75 0.75 y=14.57
+place Block_Floor_Tier3 cytower at 2.25 0.75 y=14.57
+place Block_Floor_Tier3 cytower at 0.75 2.25 y=14.57
+place Block_Floor_Tier3 cytower at 2.25 2.25 y=14.57
+place Block_Wall_Fence_Rope - at 0.75 0 y=14.57
+place Block_Wall_Fence_Rope - at 0.75 3 y=14.57
+place Block_Wall_Fence_Rope - at 2.25 3 y=14.57
+place Block_Wall_Fence_Rope - at 0 0.75 y=14.57 yaw=90
+place Block_Wall_Fence_Rope - at 0 2.25 y=14.57 yaw=90
+place Block_Wall_Fence_Rope - at 3 0.75 y=14.57 yaw=90
+place Block_Wall_Fence_Rope - at 3 2.25 y=14.57 yaw=90
+pop
+prop cytower tint.color=#6e6a64
+prop cytower tint.amount=0.55
 place Loot_ChestSmall cylocker at 11.25 -65.25 h=37.2 drop yaw=180
 place Note_Paper cysumnote at 11.25 -66.75 h=36.84 drop yaw=20
 place Zone_Trigger cysummit at 12 -66 h=37.73
-place ZiplinePath_Landmark cyzip at 12.75 -66.75 h=36.73 yaw=0
-zipto cyzip 6 -33
+# (11-21: the zipline starts at the tower's foot, on its side towards the far end, as Thalassa Mooring's. From the top
+# its rope ran 5.5 m through the top's rope fence (a rider stopped 5 m out) and its floor shut the top ladder's climb side.
+# zipto raises this near end on a deck if the hill wants it)
+# (11-26 s6t: the zipline base's own ladder faced the tower wall 1 m off - no room to climb it. The base 1 m further out along the rope)
+place ZiplinePath_Landmark cyzip at 11.17 -61.47 ground
+zipfrom cyzip 11.17 -61.47 ground
+prop cyzip zip.slack=-0.692
+# (11-21 c3z9: its last 6 m came down over the world's cave hill skin by the hill's foot - the rope 0.3 m into it, a rider
+# stopped 6.5 m short; the editor doesn't see that skin. The far end 4 m further out along the line, onto the flat yard, and a tight rope.
+# 11-21 c3z11, measured over the hill: still 0.1 m into it 3 m before that end - 4.5 m further out again)
+zipto cyzip 4.5 -24.7
 place Loot_ChestSmall cyledge at 1.82 -55.82 ground sit yaw=40
 place SmallRock_02 - at -4.89 -49.9 ground sit scale=0.5
 place SmallRock_02 - at -4.89 -49.9 ground y=0.6 sit scale=0.32 yaw=40
@@ -195,6 +270,9 @@ call sk_dark x=66 z=-10 h=1 r=7 al=cycave2dark
 
 # the drowned building: the yard store (sealed: the roof hatch capped), its ground floor 10 m down; the deep chest at the bottom, air on storey 1
 call sk_drowned x=-30 z=60 h0=-10 n=3 w=RT_WallWindow1 a=cybld cap=1 cal=cycap
+# (11-27 bf13cy: the roof is at -0.9, so a player stands on it waist-deep, and the roof's railing hemmed him in - he swims in
+#  over it but walks into it on the way out (trap -30 59.9, 4x8 m): no railing on the drowned roof, as Overpass Shoal's)
+clear at -30 60 r=7 all only=(?i)^rt_fence above=-2 below=1
 place Loot_Chest cydeep at -31.8 57.5 h=-10 sit yaw=0
 place Placeable_Table_Basic - at -31.5 61 h=-7 sit yaw=0
 place Note_Paper cybldnote at -31.5 61 h=-5.7 drop yaw=10
@@ -210,6 +288,11 @@ place VP_ConcretePipe02 cyweight at -31.5 60 h=-1 sit yaw=0
 info title=Caisson Yard
 info author=Custom Islands
 info description=Concrete caissons standing out of the sea over the trench edge, linked by stone footbridges, with two cranes, a zipline, a smelter and a store. The seventh island of The Sunken Kingdom.
+# (the jump course's hops are jumps the reach grid doesn't make: its play goes to them instead)
+island reach.byplay=Diver's perch;Crew's dare;jump_cy_finale
+# (11-26 cy4: the drowned store is sealed by design until the crane key's lever takes its cap away - the fresh reach marks
+# what lies behind the cap as sealed, the reach after the play (cap gone) judges them as any other target)
+island reach.sealed=cycap:Yard store chest;Yard pump log;cy_dair
 island on.arrive=message||Grey concrete blocks standing out of the sea, two cranes over them - and past them, dark water.
 
 note foremanboard Foreman's board | CAISSON YARD - FOREMAN (J. Achterberg)\n\nSmelter: on the yard, under the roof. Fuel: the little shed on the next caisson over.\nCrane 1 to crane 2 by the cable only - the footbridge is for carts, and for people who enjoy swimming.\nAnchor gear stays on the crane 2 caisson: we anchor over the trench. Chart of the trench on its table. Hadal is straight down.\n\nChalked across the bottom, big letters: "SHUTTLE KIDS - 12 - ALL FED, ALL COUNTED. Warden Fennick took them down to the Commons Tues. Doors shut from inside. Good."\nUnder it, smaller, a different chalk: "Counted them myself. - I.M."
@@ -378,4 +461,21 @@ step read|Yard pump log|1|Read the night shift's pump log in the drowned store
 quest done=The Spire flooded the Yard with its own men below. Hadal Commons is the last lit room - the Receiver finds its doors on band 800.
 quest reward=MetalIngot*2;Bolt*4
 
+# (c3 round 3 11-21: the yard rock's sea side was one bare 28 m wall from 4.6 m over the sea down - Raft drew it as a pale
+#     stretched sheet in the crane-end picture (c3z37). Its foot sloped as a rock talus down to 10 m under the sea; the yard
+#     itself and everything standing in the water keep their ground)
+# (c3z61: two channel walls between the caissons' rock still bare - 20 faces between two walls the talus leaves open -
+#     so rock stood in their waterline band (rocks=), clear of the tunnels and pieces)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
+# (cy-1127, cy6 CIFloating: nine of those rocks hung 5-20 m over the ground - over the dug caves' rock and off walls)
+# (cy7: CIFloating reports the land-centre frame, here recipe origin + (-3.1951, -5.5731) - the first clears used it as is and missed; these are in the recipe frame)
+clear at 3.93 5.27 r=1.0 only=BigBoulder2_Low all
+clear at 1.17 10.57 r=1.0 only=BigBoulder2_Low all
+clear at -1.04 16.10 r=1.0 only=BigBoulder2_Low all
+clear at 27.71 22.48 r=1.0 only=BigBoulder4_Low all
+clear at 60.24 28.79 r=1.0 only=BigBoulder1_Low all
+clear at -22.08 54.18 r=1.0 only=BigBoulder2_Low all
+clear at -21.67 55.86 r=1.0 only=BigBoulder1_Low all
+clear at -0.75 16.47 r=1.0 only=BigBoulder4_Low all
+clear at -0.30 18.73 r=1.0 only=BigBoulder1_Low all
 save Caisson Yard

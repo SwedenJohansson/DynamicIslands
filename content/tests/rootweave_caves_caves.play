@@ -4,7 +4,7 @@
 # The thorn drift walked along its planks to the survey kit at its end and back. Run under CIGapsWatchHealth: no walk
 # here may cost health.
 island Rootweave Caves keep
-offset 0 0
+offset 1.2266 0.3427
 hour 11
 weather Calm
 where Loot_ChestSmall
@@ -16,6 +16,12 @@ where Creature_Rat
 # Mouth C: in, down to the hall
 picture rw_c_out 8.2 +1.7 44 9.3 15 38
 walk 8.5 42 to 9 39.5 to 10 33 to 11 29 to 14.5 27.5
+# (bugfix 11-25: the two warren rats followed the player down the ramp and into the drift - on Nightmare (x2 damage) they
+# killed them at the survey kit (f25b), on easier worlds they did not: the rats are rootweave_caves_rats' test, this one
+# walks the warren - killed here as other cave plays do)
+wait 3
+expect animals Rat 2
+kill Rat
 picture rw_hall 11 14.5 29.5 15 13 27
 # down the ramp to the lower level, out by mouth A
 walk 14.5 27.5 below=16 to 17 24.5 to 22 23.5

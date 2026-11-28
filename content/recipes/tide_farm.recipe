@@ -140,6 +140,8 @@ pop
 place UT_WaterChallengeWheel1 wheel at 20 7.4 h=0.6 tilt=90
 place UT_WaterChallengeWheel1 wheelturning at 20 7.4 h=0.6 tilt=90
 place UT_CoveredCrate02 jam at 21.4 7.3 h=-0.5 tilt=25 yaw=15
+# (the crate sat in the sea with nothing under it - CIFloating w15E: a post from the sea floor holds it up; fix-open 11-19)
+place Relay_support_beam_wood jampost at 21.45 7.5 h=-9.25 rot=0,0,-90 sx=0.9
 place Relay_support_beam_wood - at 18 6.4 h=-10 rot=0,0,-90 sx=1.13
 place Relay_support_beam_wood - at 22 6.4 h=-10 rot=0,0,-90 sx=1.13
 place Zone_Sound wheelsound at 20 6 h=1
@@ -169,13 +171,14 @@ prop harvest loot.refill=0
 prop wheel obj.name=wheel
 prop wheel beh.use=Pry the jammed crate loose
 prop wheel if.use=take|story:crowbar|1
-prop wheel on.use=message||The crate splinters free and drifts away. The wheel creaks, then turns - water splashes over the beds, and the glasshouse doors slide open.\nhide|wheel\nhide|jam\nshow|wheelturning\nshow|wheelsound\nopen|ghdoor\nsound||event:/raft/engine/controller_on
+prop wheel on.use=message||The crate splinters free and drifts away. The wheel creaks, then turns - water splashes over the beds, and the glasshouse doors slide open.\nhide|wheel\nhide|jam\nhide|jampost\nshow|wheelturning\nshow|wheelsound\nopen|ghdoor\nsound||event:/raft/engine/controller_on
 prop wheel else.use=message||A crate is wedged tight in the paddles. You need something to pry it with.
 prop wheelturning obj.name=wheelturning
 prop wheelturning beh.hidden=1
 prop wheelturning beh.spin=30
 prop wheelturning beh.spinOwn=1
 prop jam obj.name=jam
+prop jampost obj.name=jampost
 prop wheelsound obj.name=wheelsound
 prop wheelsound beh.hidden=1
 prop wheelsound sound.event=event:/raft/engine/waterwheel

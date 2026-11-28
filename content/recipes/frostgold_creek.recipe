@@ -120,20 +120,25 @@ macro sluice x1 x2 z
 ramp Block_Floor_Wood from $x1 $z 3 to $x2 $z 0.2 len=1.5 top=0
 ramp Block_HalfWall_Wood from $x1 {$z-0.65} 3 to $x2 {$z-0.65} 0.2 len=0.75 top=-0.15
 ramp Block_HalfWall_Wood from $x1 {$z+0.65} 3 to $x2 {$z+0.65} 0.2 len=0.75 top=-0.15
-place Block_Pillar_Wood - at $x1 {$z-0.6} ground sy=0.25
-place Block_Pillar_Wood - at $x1 {$z+0.6} ground sy=0.25
 place ReefHuts_Pillar3 - at $x2 {$z-0.65} ground sy=0.54
 place ReefHuts_Pillar3 - at $x2 {$z+0.65} ground sy=0.54
 place ReefHuts_Pillar3 - at {$x2+($x1-$x2)*0.12} {$z-0.65} ground sy=0.54
 place ReefHuts_Pillar3 - at {$x2+($x1-$x2)*0.12} {$z+0.65} ground sy=0.54
 end
 call sluice 1.5 -4 -34
+place Block_Pillar_Wood - at 1.5 -34.6 ground sy=0.25
+place Block_Pillar_Wood - at 1.5 -33.4 ground sy=0.25
 place "Box Small" sluice1 at 2.5 -35.6 ground yaw=10
 place TangaroaBucket - at 3.5 -36 ground
 call sluice -11 -5.5 -20
+place Block_Pillar_Wood - at -11 -20.6 ground sy=0.25
+place Block_Pillar_Wood - at -11 -19.4 ground sy=0.25
 place "Box Small" sluice2 at -10 -21.8 ground yaw=-15
 place TangaroaBucket - at -9 -22.2 ground
 call sluice 4.3 -1.2 -6
+# (its top end on the bank, no posts - they stood buried in it; a post under its low middle over the bank's foot, IG5 11-18)
+place ReefHuts_Pillar3 - at 0.2 -6.65 ground sy=0.9
+place ReefHuts_Pillar3 - at 0.2 -5.35 ground sy=0.9
 place "Box Small" sluice3 at 5.3 -7.6 ground yaw=20
 place TangaroaBucket - at 6.3 -8 ground
 # (Abbie's cabin on the valley floor west of the creek: 2 x 2 cells of Raft's wooden building, its doorway towards the
@@ -169,11 +174,15 @@ place Creature_Turtle turtles at -6 -58 h=-1.5
 # (Balboa's bear cave set into the peak, its mouth south onto the ledge (floor 9 m), its gallery north; timber props at
 # the mouth, rails, a tub, lanterns on crates; the nugget's box at the back; the white bear; the dark inside)
 place BalboaCave_Bear minecave at 20.93 12 h=13.55 yaw=180
+# (cave.foot=wet: a dry-foot den's raised sand spread 14 m round it down the hill and buried the upper sluices' walls 1-6 m in game -
+# the saved ground there is the den-less bank (2.8 m), IG5 11-18)
+prop minecave cave.foot=wet
 place Relay_support_beam_wood - at 16.2 -4.6 h=9 rot=0,0,-90 sx=0.75
 place Relay_support_beam_wood - at 27.8 -4.6 h=9 rot=0,0,-90 sx=0.75
 place Relay_support_beam_wood - at 27.8 -4.6 h=16 rot=0,0,0 sx=1.23
-line Beam_Long_01 from 21.5 -5 to 21.5 24 step=3.6 ends yaw=180 rot=0,0,0
-line Beam_Long_01 from 22.5 -5 to 22.5 24 step=3.6 ends yaw=180 rot=0,0,0
+# (y 0.25: at 0.15 a rail by the den's mouth had its top 7 cm in the bank, IG5 11-19)
+line Beam_Long_01 from 21.5 -5 to 21.5 24 step=3.6 ends yaw=180 rot=0,0,0 y=0.25
+line Beam_Long_01 from 22.5 -5 to 22.5 24 step=3.6 ends yaw=180 rot=0,0,0 y=0.25
 place VP_Wagon01 - at 22 5 sit
 place Crate_Big_01 - at 18.5 2 h=9 sit yaw=10
 place Placeable_Lantern_Metal - at 18.5 2 h=9.45 sit
@@ -312,4 +321,8 @@ quest reward=Plank*10;Leather*3;Cooked_GenericMeat*3
 # --- A Raft store down the creek: the outfitter's, still trading with the diggers (Raft's goods, and plans the crew missed) --
 store outfitter at 30 -44 ground
 
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save Frostgold Creek

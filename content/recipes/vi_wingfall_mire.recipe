@@ -5,7 +5,7 @@
 # deep pool to the van's chest.
 #
 # Built by the recipe player (CIRecipe vi_wingfall_mire) through the editor's own operations. Points: the crash scar
-# from -18 -26 to 2 -8 (1.6 m), the plane at 4 -5; the pools (0.6 m under the sea) round -18 -2, 16 -14 and 4 18; the
+# from -18 -26 to 2 -8 (1.6 m), the plane at 4 -5; the pools (1.5 m under the sea) round -18 -2, 16 -14 and 4 18; the
 # hermit's knoll (2.5 m, r 9 round -20 16); the deep pool (3.5 m under the sea, r 6 round 22 6) at the
 # track's end, the van on its floor at 22 6, its chest at 24.5 8.
 include lib_huts
@@ -23,12 +23,30 @@ gen Water=0.6 SeaRocks=0.2 SeaFinds=0.3 Sunken=0.4 Hostiles=0 Friendly=0.1 SeaLi
 generate
 
 # ===== Terrain: the crash scar, the pools, the hermit's knoll, the deep pool at the track's end ==================
+# (w16I: the boat pools sat in sheer 4 m pits, a plank slipway flat on a sand ledge in each. Now each pool lies in a
+# low marsh shelf (0.9 m, just over the sea) whose outer edge is smoothed into the land, its own rim smoothed into a
+# shore you can walk out of all round; only the middle stays 1.5 m deep for the boat. The shelves go first, so the
+# scar, the plane's pad, the knoll and the bog keep their own ground)
+brush flatten at -18 -2 r=10 s=20 frames=120 h=0.9
+brush flatten at 16 -14 r=10 s=20 frames=120 h=0.9
+brush flatten at 2 17.5 r=8 s=20 frames=120 h=0.9
+brush smooth at -18 -2 r=13 s=6 frames=12
+brush smooth at 16 -14 r=14 s=6 frames=14
+brush smooth at 2 17.5 r=11.5 s=6 frames=14
 brush flatten from -18 -26 to 2 -8 r=3.5 s=10 frames=80 h=1.6
 brush sand from -18 -26 to 2 -8 r=2.5 s=20 frames=20
 brush flatten at 4 -5 r=7 s=20 frames=80 h=1.6
-brush flatten at -18 -2 r=6 s=20 frames=80 h=-0.6
-brush flatten at 16 -14 r=5 s=20 frames=80 h=-0.6
-brush flatten at 4 18 r=5 s=20 frames=60 h=-0.6
+# (11-17 w16: the three boat pools were 0.6 m deep - Raft's sea showed near-white and foamy in them, a pale sheet from
+# player height. 1.5 m deep reads as water; the boats now float at the surface instead of sitting on the floor)
+brush flatten at -18 -2 r=6 s=20 frames=80 h=-1.5
+brush flatten at 16 -14 r=5 s=20 frames=80 h=-1.5
+brush flatten at 4 18 r=5 s=20 frames=60 h=-1.5
+brush smooth at -18 -2 r=7.5 s=6 frames=16
+brush smooth at 16 -14 r=6.5 s=6 frames=16
+brush smooth at 4 18 r=6.5 s=6 frames=16
+brush flatten at -18 -2 r=3 s=20 frames=60 h=-1.5
+brush flatten at 16 -14 r=2.5 s=20 frames=60 h=-1.5
+brush flatten at 4 18 r=2.5 s=20 frames=60 h=-1.5
 brush seabed at -18 -2 r=5 s=20 frames=15
 brush seabed at 16 -14 r=4 s=20 frames=15
 brush seabed at 4 18 r=4 s=20 frames=15
@@ -36,11 +54,19 @@ brush flatten at -20 16 r=9 s=20 frames=100 h=2.5
 brush grass at -20 16 r=8 s=20 frames=20
 brush flatten from 10 -2 to 16 1 r=3 s=10 frames=60 h=1.4
 brush flatten at 22 6 r=6 s=20 frames=100 h=-3.5
+# (lib 3.5.1 MUST-FIX 11-23: the deep pool's only low edge was the track's end at 1.4 m, over a swimmer's climb - the
+# track now runs on down into the pool as a ramp: 0.9, 0.5, 0 m at the water, then -0.7 and -1.2 m under it, on the
+# pool's south-west side, 4.4 m and more from the van. Rock stood in the pool's pale waterline band)
+brush flatten at 14 -0.2 r=1.4 s=20 frames=120 h=0.9
+brush flatten at 15.5 0.6 r=1.4 s=20 frames=120 h=0.5
+brush flatten at 17 1.4 r=1.4 s=20 frames=120 h=0
+brush flatten at 18.3 2.1 r=1.3 s=20 frames=120 h=-0.7
+brush flatten at 19.3 2.7 r=1.2 s=20 frames=120 h=-1.2
 brush seabed at 22 6 r=5 s=20 frames=15
 clear from -18 -26 to 4 -5 r=6
-clear at -18 -2 r=7
-clear at 16 -14 r=6
-clear at 4 18 r=6
+clear at -18 -2 r=12
+clear at 16 -14 r=10
+clear at 4 18 r=10
 clear at -20 16 r=10
 clear from 10 -2 to 16 1 r=4
 clear at 22 6 r=7
@@ -56,9 +82,9 @@ place "Box Small" - at -1 -11 ground sit yaw=25
 place Loot_Chest planechest at 8 -9 ground sit yaw=210
 
 # ===== Boats in the pools and on the bank, the van sunk on the track ======================================================
-place RT_PlasticBoat - at -18 -1 ground sit rot=0,0,0 yaw=60 roll=5
-place RT_PlasticBoat - at 16 -14 ground sit rot=0,0,0 yaw=200
-place RT_PlasticBoat - at 3 19 ground sit rot=0,0,0 yaw=310 roll=-6
+place RT_PlasticBoat - at -18 -1 h=-0.4 rot=0,0,0 yaw=60 roll=5
+place RT_PlasticBoat - at 16 -14 h=-0.4 rot=0,0,0 yaw=200
+place RT_PlasticBoat - at 3 19 h=-0.4 rot=0,0,0 yaw=310 roll=-6
 place BoatMini - at -13 6 ground sit scale=14 yaw=100 roll=10
 place Van3 sunkvan at 22 6 ground sit yaw=30 roll=8
 place Loot_Chest vanchest at 24.5 8 ground sit yaw=210
@@ -94,6 +120,96 @@ call shallows r=76 deep=5 n=2 seed=865
 place Creature_Turtle turtles at -40 -30 h=-2
 prop turtles creature.count=2
 
+# ===== 11-12 (w16 prep): the acid bog (plan 16 row: ACID bog pools, safe=suit, planks across). Where the airliner's fuel
+# and battery acid drained: a long bog (from 8 26 to 24 18, 0.6 m under the sea like the other pools) on the knoll-side of
+# the deep pool's track, planks across its middle on posts (deck ~1 m, rope rails); acid in the water on both sides of the
+# planks (four zones r 2 at -0.4 m, 2.45 m and more from the planks' edge: on the planks you are out of it), a green tint
+# and mist. On the far side the plane's lost engine cowling and the cargo locker it shook loose. The suit box and a sign
+# at the near end. Side only (the island has no quest).
+# HEIGHTS: guesses - the banks at ~1 m (the planks' deck 1.0; if the banks are higher the planks' ends sit in them); the
+# bog floor -0.6 (the recipe's pool depth).
+# (11-17 w16: the first build left a 5 m deep trench with sheer sides - no way out of the bog - and the planks at 1 m ran
+# into its far wall. Now the bog sits in steps (2.6, 1.6, 0.6, -0.6) smoothed into slopes you can walk out of, the
+# planks' deck is at 2.7 between the banks (near bank ~4.4, far ~3), and the pale planes lie square to the bog at 0.05 m
+# with their side edges in the slopes)
+brush flatten from 8 26 to 24 18 r=6.5 s=20 frames=80 h=2.6
+brush smooth from 8 26 to 24 18 r=9 s=6 frames=20
+brush flatten from 8 26 to 24 18 r=5 s=20 frames=80 h=1.6
+brush flatten from 8 26 to 24 18 r=3.5 s=20 frames=80 h=0.6
+brush flatten from 8 26 to 24 18 r=2.2 s=20 frames=80 h=-0.6
+brush smooth from 8 26 to 24 18 r=7 s=4 frames=12
+brush flatten from 8 26 to 24 18 r=1.5 s=20 frames=60 h=-0.6
+brush seabed at 10 25 r=2.5 s=20 frames=15
+brush seabed at 16 22 r=2.5 s=20 frames=15
+brush seabed at 22 19 r=2.5 s=20 frames=15
+clear from 8 26 to 24 18 r=4
+clear at 19.5 28.5 r=3 
+push at 13.99 16.31 h=-1.6 yaw=-63.4
+call boardwalk n=8 wide=1 y=4.3
+pop
+place TP_SeleneReactor_Water_Radiated wmpoolD at 8 26 h=0.05 scale=0.25 yaw=-63.4
+place TP_SeleneReactor_Water_Radiated wmpoolB at 13.36 23.32 h=0.05 scale=0.25 yaw=26.6
+place TP_SeleneReactor_Water_Radiated wmpoolA at 18.73 20.64 h=0.05 scale=0.25 yaw=116.6
+place TP_SeleneReactor_Water_Radiated wmpoolC at 24.09 17.95 h=0.05 scale=0.25 yaw=206.6
+place Zone_Trigger wmacidA at 18.86 20.57 h=-0.4
+prop wmacidA obj.name=wmacidA
+prop wmacidA zone.id=wm_bogA
+prop wmacidA zone.radius=2
+prop wmacidA zone.hazard=acid
+prop wmacidA zone.damage=4
+prop wmacidA zone.safe=suit
+prop wmacidA zone.hazardMsg=The bog water burns - fuel and battery acid from the wreck. Keep to the planks, or wear a suit.
+place Zone_Trigger wmacidB at 13.14 23.43 h=-0.4
+prop wmacidB obj.name=wmacidB
+prop wmacidB zone.id=wm_bogB
+prop wmacidB zone.radius=2
+prop wmacidB zone.hazard=acid
+prop wmacidB zone.damage=4
+prop wmacidB zone.safe=suit
+prop wmacidB zone.hazardMsg=The bog water burns - fuel and battery acid from the wreck. Keep to the planks, or wear a suit.
+place Zone_Trigger wmacidC at 22.08 18.96 h=-0.4
+prop wmacidC obj.name=wmacidC
+prop wmacidC zone.id=wm_bogC
+prop wmacidC zone.radius=2
+prop wmacidC zone.hazard=acid
+prop wmacidC zone.damage=4
+prop wmacidC zone.safe=suit
+prop wmacidC zone.hazardMsg=The bog water burns - fuel and battery acid from the wreck. Keep to the planks, or wear a suit.
+place Zone_Trigger wmacidD at 9.92 25.04 h=-0.4
+prop wmacidD obj.name=wmacidD
+prop wmacidD zone.id=wm_bogD
+prop wmacidD zone.radius=2
+prop wmacidD zone.hazard=acid
+prop wmacidD zone.damage=4
+prop wmacidD zone.safe=suit
+prop wmacidD zone.hazardMsg=The bog water burns - fuel and battery acid from the wreck. Keep to the planks, or wear a suit.
+place Zone_Atmosphere wmmistA at 19.5 20.3 h=0.6
+prop wmmistA zone.radius=4.5
+prop wmmistA atmo.particles=steam
+prop wmmistA atmo.fog=#a0b040
+prop wmmistA atmo.fogAmount=0.3
+prop wmmistA atmo.light=#d8f070
+prop wmmistA atmo.lightAmount=0.25
+place Zone_Atmosphere wmmistB at 12.5 23.7 h=0.6
+prop wmmistB zone.radius=4.5
+prop wmmistB atmo.particles=steam
+prop wmmistB atmo.fog=#a0b040
+prop wmmistB atmo.fogAmount=0.3
+prop wmmistB atmo.light=#d8f070
+prop wmmistB atmo.lightAmount=0.25
+place VP_Rubble_MetalPiece02 - at 20.8 29.2 ground sit yaw=75
+place Loot_ChestSmall wmcowlchest at 19.6 29 y=0.5 drop yaw=200
+prop wmcowlchest obj.name=wmcowlchest
+prop wmcowlchest loot.refill=0
+note wmcowlchest Cargo locker | A cargo locker shaken out of the wing when the engine tore off: tools in oilcloth, wire and the spares for an engine nobody will fix.
+loot wmcowlchest MetalIngot*2;CopperIngot*2;Bolt*3;Hinge*1
+place "Box Big" wmsuits at 11.73 14.46 y=0.5 drop yaw=30
+prop wmsuits obj.name=wmsuits
+prop wmsuits beh.use=Put on a salvage suit
+prop wmsuits on.use=suit||180\nmessage||The salvage crew's rubber suit, still folded in its box - three minutes before the bog finds the seams.
+place Note_Sign wmbogsign at 13.13 14.06 ground yaw=30
+note wmbogsign BOG - ACID | Fuel and acid from the wreck in the water. Planks across. Suits in the box. - Salvage crew
+
 info title=Wingfall Mire
 info author=Custom Islands
 info description=A low swamp of pools, bamboo and birch where a small airliner came down on its belly. A van sunk in a deep pool, three plastic boats left in the pools, and a hermit in a blue caravan on the dry knoll.
@@ -108,4 +224,7 @@ note vanchest Chest by the sunk van | The van's cargo box, thrown out when it we
 loot vanchest Scrap*4;Glass*2;MetalIngot*2;Plastic*3
 prop vanchest loot.refill=0
 
+cliffs at 22 6 r=9 rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
+# (the stood rocks that reach the ramp out - one of them 5x a boulder - taken off it again: the way out stays clear)
+clear from 13 -0.7 to 20 3 r=1.6 body all only=BigBoulder
 save Wingfall Mire

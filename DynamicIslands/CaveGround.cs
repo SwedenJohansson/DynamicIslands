@@ -25,6 +25,8 @@ namespace DynamicIslands.Editor
 
 		/// <summary>Tests: how many ground cells the last cut took out, and how many points of the ground it let down.</summary>
 		public int LastCut, LastDug;
+		/// <summary>Tests: how many points the last cut's mouth aprons moved (the editor's too).</summary>
+		internal static int LastApron;
 
 		/// <summary>A cave piece spawned in a world under this island's objects.</summary>
 		public static void Add(Transform objects, GameObject piece, string name, IDictionary<string, string> props = null)
@@ -44,7 +46,7 @@ namespace DynamicIslands.Editor
 		{
 			EditorGameObject e = t.GetComponent<EditorGameObject>();
 			string name;
-			return e != null ? CaveMountain.DryFootFor(e.Props, names.TryGetValue(t.GetInstanceID(), out name) ? name : null) : dryFoot.Contains(t.GetInstanceID());
+			return e != null ? CaveMountain.DryFootFor(e.Props, e.GameObjectName ?? (names.TryGetValue(t.GetInstanceID(), out name) ? name : null)) : dryFoot.Contains(t.GetInstanceID());
 		}
 
 		// (a world's cave pieces' names, for their measures: the editor's are on their EditorGameObject)
@@ -119,6 +121,19 @@ namespace DynamicIslands.Editor
 			return editorCut.Count;
 		}
 
+		/// <summary>The editor's cut made now if the caves or the ground in their reach changed since the last one (a recipe's
+		/// place on the ground: a cave piece placed a moment before is not cut for a second or two, and what was put on the
+		/// ground beside it then floated in the world once its cut let the ground down - Geiger Isle's pillars, IG5 11-18).</summary>
+		public static void EditorCatchUp(Terrain land)
+		{
+			if (land == null) return;
+			List<Transform> caves = EditorCaves();
+			if (caves.Count == 0 && editorCut.Count == 0 && editorDug.Count == 0) return;
+			if (land == lastLand && !changed && Look(land, caves) == lastLook) return; // (changed: the tick saw a change and waits to cut)
+			int dug;
+			EditorNow(land, out dug);
+		}
+
 		/// <summary>The editor's island was just replaced (a new one, one loaded): its heights are its own, the ones let down are forgotten; cut again soon.</summary>
 		public static void EditorForget()
 		{
@@ -136,6 +151,38 @@ namespace DynamicIslands.Editor
 				int z = d.Key / res, x = d.Key % res;
 				if (z < res && x < res && Mathf.Abs(heights[z, x] - d.Value.y) < 1e-6f) heights[z, x] = d.Value.x;
 			}
+		}
+
+		/// <summary>
+		/// The editor's cave pieces' rooms, measured once: whether a point is in one of them (Inside: the piece's own floor
+		/// under it and its own roof over it, both seen from the room's side). The save's settle step asks it - the land under a
+		/// den's floor is not the ground there (the world cuts it out of the room): Old Mine Islet's rails, carts and crates on
+		/// its dead-end den's 4.25 m floor were set up onto the uncut land at 6-6.8 m and floated in the world (c3z40 11-21).
+		/// </summary>
+		internal static Func<Vector3, bool> EditorRoomTest()
+		{
+			var rooms = new List<KeyValuePair<HashSet<Collider>, Bounds>>();
+			foreach (Transform cave in EditorCaves())
+			{
+				var own = new HashSet<Collider>(cave.GetComponentsInChildren<Collider>().Where(c => c.enabled && !c.isTrigger && c.name != CaveTool.MouthName && c.name != CaveTool.JoinName));
+				if (own.Count == 0) continue;
+				Bounds b = own.First().bounds;
+				foreach (Collider c in own) b.Encapsulate(c.bounds);
+				rooms.Add(new KeyValuePair<HashSet<Collider>, Bounds>(own, b));
+			}
+			return p =>
+			{
+				if (rooms.Count == 0) return false;
+				bool backs = Physics.queriesHitBackfaces;
+				try
+				{
+					float under, over;
+					foreach (KeyValuePair<HashSet<Collider>, Bounds> r in rooms)
+						if (r.Value.Contains(p) && Inside(p, r.Key, r.Value, out under, out over)) return true;
+					return false;
+				}
+				finally { Physics.queriesHitBackfaces = backs; }
+			};
 		}
 
 		static List<Transform> EditorCaves()
@@ -303,7 +350,10 @@ namespace DynamicIslands.Editor
 					}
 				}
 			}
-			foreach (KeyValuePair<Transform, List<int>> a in aprons) dug += Apron(land, a.Key, a.Value, inside, floor, dugTo, apronBoth.Contains(a.Key));
+			int aproned = 0;
+			foreach (KeyValuePair<Transform, List<int>> a in aprons) aproned += Apron(land, a.Key, a.Value, inside, floor, dugTo, apronBoth.Contains(a.Key), caves);
+			dug += aproned;
+			LastApron = aproned;
 			// (and the cells whose ground still runs steeply through a room between their corners)
 			var across = new List<Vector2Int>();
 			var roomAt = new Dictionary<int, Vector2>();
@@ -376,10 +426,11 @@ namespace DynamicIslands.Editor
 		/// that point's floor less 5 cm, all the way at the room and none at ApronReach, on a smooth curve - a rounded slope in.
 		/// How many points it moved.
 		/// </summary>
-		static int Apron(Terrain land, Transform cave, List<int> pts, bool[,] inside, Dictionary<int, float> floor, Dictionary<int, Vector2> dugTo, bool raise = true)
+		static int Apron(Terrain land, Transform cave, List<int> pts, bool[,] inside, Dictionary<int, float> floor, Dictionary<int, Vector2> dugTo, bool raise = true, List<Transform> caves = null)
 		{
-			string name;
-			PropInfo info = cave != null && names.TryGetValue(cave.GetInstanceID(), out name) ? RaftProps.Get(name) : null;
+			// (InfoOf: the editor's pieces are named on their EditorGameObject, not in names - the editor made no apron, so a recipe's
+			// "ground" there was the den-less ground and its pieces floated or were buried in the world: Geiger Isle, IG5 11-18)
+			PropInfo info = cave != null ? InfoOf(cave) : null;
 			if (info == null || !info.IsCave || pts.Count == 0 || !(info.OpenPlus || info.OpenMinus)) return 0;
 			Vector3 along = cave.rotation * (info.Axis == 0 ? Vector3.right : Vector3.forward);
 			along.y = 0f;
@@ -403,10 +454,20 @@ namespace DynamicIslands.Editor
 			Vector3 boxMid = cave.position + cave.rotation * Vector3.Scale(info.Centre, sc);
 			float boxS = Vector3.Dot(new Vector3(boxMid.x, 0f, boxMid.z) - mid, along), boxL = Vector3.Dot(new Vector3(boxMid.x, 0f, boxMid.z) - mid, sideDir);
 			float halfLen = Mathf.Abs(info.Size[ax] * sc[ax]) * 0.5f, halfW = Mathf.Abs(info.Size[sideAx] * sc[sideAx]) * 0.5f;
+			// (an open end joined to another cave piece is no way in, and gets no apron: The Drowned Labyrinth's first fork, joined
+			// at both ends to tunnels 18 m under the reef, dug the smallest islet over its end down to the tunnel's floor - the box
+			// under its bush stood 14 m down, c3z53)
+			bool[] open = { info.OpenPlus && !JoinedEnd(cave, caves, boxMid, along, sideDir, halfLen, halfW, 1f),
+				info.OpenMinus && !JoinedEnd(cave, caves, boxMid, along, sideDir, halfLen, halfW, -1f) };
+			if (!open[0] && !open[1])
+			{
+				Debug.Log("[CUSTOM ISLANDS] Apron " + cave.name + ": its open ends joined to other cave pieces, none");
+				return 0;
+			}
 			// (and over the box's open ends with their reach round them)
 			for (int e = 0; e < 2; e++)
 			{
-				if (!(e == 0 ? info.OpenPlus : info.OpenMinus)) continue;
+				if (!open[e]) continue;
 				for (int c = -1; c <= 1; c += 2)
 				{
 					Vector3 w = boxMid + along * ((e == 0 ? 1f : -1f) * halfLen) + sideDir * (c * halfW);
@@ -415,14 +476,13 @@ namespace DynamicIslands.Editor
 					z0 = Mathf.Max(0, Mathf.Min(z0, gz - rz)); z1 = Mathf.Min(res - 1, Mathf.Max(z1, gz + rz));
 				}
 			}
-			float[,] h = data.GetHeights(x0, z0, x1 - x0 + 1, z1 - z0 + 1);
+			float[,] h = data.GetHeights(x0, z0, x1 - x0 + 1, z1 - z0 + 1), h0 = (float[,])h.Clone();
 			// (ahead of an open end, the distance from the room's end - a straight end with rounded corners - not from the nearest
 			// room point: those stand on the ground's grid, and the sand met the floor along their staircase, a notched lip,
 			// gen-large and Caisson Yard's raised tongue with hard sides, 11-08 r26/r31 user; the floor it eases to from the room
 			// points at the room's end)
 			float[] endAt = { float.NegativeInfinity, float.NegativeInfinity }, latLo = { float.PositiveInfinity, float.PositiveInfinity },
 				latHi = { float.NegativeInfinity, float.NegativeInfinity }, endFloor = { float.PositiveInfinity, float.PositiveInfinity };
-			bool[] open = { info.OpenPlus, info.OpenMinus };
 			float[] endSum = { 0f, 0f }; int[] endN = { 0, 0 };
 			foreach (int k in pts)
 			{
@@ -542,7 +602,7 @@ namespace DynamicIslands.Editor
 					float ahead = Vector3.Dot(away / best, along);
 					// (eased in round the sides too, less the further to the side: a cone cut off at 60 degrees left the eased sand a raised
 					// tongue with hard sides, Caisson Yard, and the sand beside it a notched lip over the den's floor, gen-large, 11-08 r26 user)
-					float side = Mathf.Max(info.OpenPlus ? ahead : -1f, info.OpenMinus ? -ahead : -1f);
+					float side = Mathf.Max(open[0] ? ahead : -1f, open[1] ? -ahead : -1f);
 					float turn = byBox ? 1f : Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(ApronSide, 0.6f, side));
 					if (turn <= 0f) { offSide++; continue; }
 					float own = h[z - z0, x - x0], target = Mathf.Clamp01((to - (slab ? (under ? sinkBy : SlabSink) : raise ? 0.05f : OpenSink) - o.y) / sy);
@@ -657,6 +717,8 @@ namespace DynamicIslands.Editor
 				return 0;
 			}
 			data.SetHeights(x0, z0, h);
+			int eased = EaseRock(land, x0, z0, h0, dugTo != null);
+			if (eased > 0) Debug.Log("[CUSTOM ISLANDS] Apron " + cave.name + ": rock paint eased off " + eased + " ground pixels it reshaped");
 			if (!raise && dugTo == null) Skirt(land, cave, cols, mid, along, sideDir, open, endAt, endFloor, latLo, latHi);
 			if (dugTo != null)
 			{
@@ -672,6 +734,57 @@ namespace DynamicIslands.Editor
 			return moved;
 		}
 
+		/// <summary>
+		/// The ground an apron reshaped keeps the paint it had: the rock its steep sides wore before they were eased (a recipe's
+		/// flattened tongue before a den) stood as a pale blue-white mound right in front of Gravewell Shaft's diver den, cave round 4
+		/// 11-20. On each paint pixel over a moved point the rock is cut back to what the slope there now wears by the automatic paint,
+		/// the rest going to its sea floor, sand and grass as that paint shares them out. Only less rock: hand-painted sand or grass
+		/// stays as it is. before: the heights from (x0, z0) as they were. How many pixels it changed.
+		/// </summary>
+		static int EaseRock(Terrain land, int x0, int z0, float[,] before, bool editor)
+		{
+			TerrainData data = land.terrainData;
+			if (data.alphamapLayers < TerrainPainter.LayerCount) return 0;
+			int cells = data.heightmapResolution - 1, ar = data.alphamapWidth, d = before.GetLength(0), w = before.GetLength(1);
+			float[,] now = data.GetHeights(x0, z0, w, d);
+			var moved = new bool[d, w];
+			int any = 0;
+			for (int z = 0; z < d; z++)
+				for (int x = 0; x < w; x++)
+					if (Mathf.Abs(now[z, x] - before[z, x]) > 1e-5f) { moved[z, x] = true; any++; }
+			if (any == 0) return 0;
+			// (the sea: the world's at 0, the editor's at its own level over the island's terrain)
+			float water = editor ? land.transform.position.y + DynamicIslands.EditorWaterLevel : 0f;
+			float per = (float)ar / cells; // (paint pixels per height cell)
+			int ax0 = Mathf.Clamp(Mathf.FloorToInt((x0 - 1) * per), 0, ar - 1), ax1 = Mathf.Clamp(Mathf.CeilToInt((x0 + w) * per), 0, ar - 1);
+			int az0 = Mathf.Clamp(Mathf.FloorToInt((z0 - 1) * per), 0, ar - 1), az1 = Mathf.Clamp(Mathf.CeilToInt((z0 + d) * per), 0, ar - 1);
+			int aw = ax1 - ax0 + 1, ad = az1 - az0 + 1;
+			float[,,] maps = data.GetAlphamaps(ax0, az0, aw, ad);
+			var auto = new float[TerrainPainter.LayerCount];
+			int eased = 0;
+			for (int z = 0; z < ad; z++)
+				for (int x = 0; x < aw; x++)
+				{
+					int cx = Mathf.FloorToInt((ax0 + x + 0.5f) / per) - x0, cz = Mathf.FloorToInt((az0 + z + 0.5f) / per) - z0;
+					bool hit = false;
+					for (int a = cz; a <= cz + 1 && !hit; a++)
+						for (int c = cx; c <= cx + 1 && !hit; c++)
+							hit = a >= 0 && c >= 0 && a < d && c < w && moved[a, c];
+					if (!hit) continue;
+					float rock = maps[z, x, TerrainPainter.Rock];
+					TerrainPainter.AutoWeights(land, water, ax0 + x, az0 + z, auto);
+					if (rock <= auto[TerrainPainter.Rock] + 0.02f) continue;
+					float free = rock - auto[TerrainPainter.Rock], rest = auto[TerrainPainter.Seabed] + auto[TerrainPainter.Sand] + auto[TerrainPainter.Grass];
+					maps[z, x, TerrainPainter.Rock] = auto[TerrainPainter.Rock];
+					if (rest < 1e-4f) maps[z, x, TerrainPainter.Sand] += free;
+					else
+						for (int l = TerrainPainter.Seabed; l <= TerrainPainter.Grass; l++) maps[z, x, l] += free * auto[l] / rest;
+					eased++;
+				}
+			if (eased > 0) data.SetAlphamaps(ax0, az0, maps);
+			return eased;
+		}
+
 		/// <summary>An open cave's sand skirt (a child of the cave piece).</summary>
 		public const string SkirtName = "CaveSkirt";
 		/// <summary>How far a skirt reaches in over an open floor from where the sand comes up through it, how far out it lies on top,
@@ -680,7 +793,15 @@ namespace DynamicIslands.Editor
 		// (r82: the strip on out to SkirtWide past the edge, the sand under it held SkirtUnder below it - the sand's own grid
 		// points just past the edge, raised or let down every way, poked up through the narrow strip in teeth, gen-large r81)
 		const float SkirtWide = 2.6f, SkirtUnder = 0.08f;
+		// (a strip whose middle is this far under the sea wears Raft's rock, which the water fogs)
+		const float SkirtSea = -0.5f;
 		static readonly float[] SkirtRows = { 0.9f, 1.5f, 2.1f };
+		/// <summary>How far a skirt's row across the edge may climb over the floor's edge (m): where the sand beside a floor's end
+		/// rises as a wall, the row hugging it stood up as a tall strip of baked sand on the rock - Sinkmarket Floor's yellow column,
+		/// sm_cave_out 11-19. Such rows are left out (the sand there is a wall, no seam to hide).</summary>
+		public const float SkirtClimb = 2f;
+		/// <summary>Rows left out by SkirtClimb at the last skirts built (tests and the log).</summary>
+		public static int SkirtClimbed;
 
 		/// <summary>
 		/// A strip of sand laid over an open cave's floor's front edge (11-11 user, gen-large r68): the sand's grid triangles cut the
@@ -700,6 +821,9 @@ namespace DynamicIslands.Editor
 				if (oldLook != null && oldLook.name == "DigTunnelGroundBaked") { if (oldLook.mainTexture != null) UnityEngine.Object.DestroyImmediate(oldLook.mainTexture); UnityEngine.Object.DestroyImmediate(oldLook); }
 				UnityEngine.Object.DestroyImmediate(old.gameObject);
 			}
+			// (11-21 cv54: none under a mouth frame drawn as the hill - it lies over the floor's edge, FramesLikeHill)
+			foreach (Transform ch in cave) if (ch.name == CaveTool.MouthName && ch.GetComponent<CaveTool.HillWall>() != null) return;
+			int climbed0 = SkirtClimbed;
 			GameObject rock = PlaceableCatalog.Get(CaveTool.WallRock);
 			MeshRenderer rockLook = rock != null ? rock.GetComponentInChildren<MeshRenderer>(true) : null;
 			if (rockLook == null || rockLook.sharedMaterial == null) return;
@@ -793,6 +917,8 @@ namespace DynamicIslands.Editor
 						// (between the edge and the sand out there: the straight line, or the sand evened out where that is higher)
 						yv[r] = Mathf.Max(Mathf.Lerp(yv[1], yOut, f), even(pt(sv[r], l)) + 0.04f);
 					}
+					// (a row that climbs a wall of sand beside the floor's end: left out, 11-19 cave1119)
+					if (yv.Max() - Mathf.Min(yv[0], yv[1]) > SkirtClimb) { SkirtClimbed++; continue; }
 					rowS[j] = sv; rowY[j] = yv;
 				}
 				int prev = -1;
@@ -889,6 +1015,10 @@ namespace DynamicIslands.Editor
 			var uv = verts.Select(v => new Vector2((v.x - lo.x) / size.x, (v.z - lo.z) / size.z)).ToList();
 			float u0 = uv.Min(q => q.x), u1 = uv.Max(q => q.x), v0 = uv.Min(q => q.y), v1 = uv.Max(q => q.y);
 			Material look = null;
+			// (under the sea, Raft's rock: the baked look is a plain Unity shader the water's fog never reaches - a bright yellow
+			// strip and sheet down an underwater tunnel's floor, Sinkmarket Floor sm_cave_out 11-19)
+			bool underSea = verts.Average(v => v.y) < SkirtSea;
+			if (!underSea)
 			try { look = DigTunnel.BakedGround(land, Rect.MinMaxRect(u0, v0, Mathf.Max(u1, u0 + 1e-4f), Mathf.Max(v1, v0 + 1e-4f)), ref look); }
 			catch (Exception ex) { Debug.LogWarning("[CUSTOM ISLANDS] Skirt " + cave.name + ": the ground's look - " + ex.Message); look = null; }
 			if (look != null) mesh.SetUVs(0, uv);
@@ -898,7 +1028,24 @@ namespace DynamicIslands.Editor
 			var mr = go.AddComponent<MeshRenderer>();
 			mr.sharedMaterial = look ?? rockLook.sharedMaterial;
 			mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-			Debug.Log("[CUSTOM ISLANDS] Skirt " + cave.name + ": " + strips + " pieces over its open floor's edge");
+			Debug.Log("[CUSTOM ISLANDS] Skirt " + cave.name + ": " + strips + " pieces over its open floor's edge" + (SkirtClimbed > climbed0 ? ", " + (SkirtClimbed - climbed0) + " row(s) up a wall of sand left out" : ""));
+		}
+
+		/// <summary>A built skirt's tallest row across the edge: how far its points climb over the floor's edge, world metres (rows of SkirtRows + 4 points,
+		/// the last the dive under the sand, not counted). 0 for no mesh.</summary>
+		public static float SkirtTallestRow(MeshFilter mf)
+		{
+			if (mf == null || mf.sharedMesh == null) return 0f;
+			Vector3[] v = mf.sharedMesh.vertices;
+			int per = SkirtRows.Length + 4, nr = per - 1;
+			float tallest = 0f;
+			for (int s = 0; s + per <= v.Length; s += per)
+			{
+				float lo = Mathf.Min(mf.transform.TransformPoint(v[s]).y, mf.transform.TransformPoint(v[s + 1]).y), hi = float.MinValue;
+				for (int r = 0; r < nr; r++) hi = Mathf.Max(hi, mf.transform.TransformPoint(v[s + r]).y);
+				tallest = Mathf.Max(tallest, hi - lo);
+			}
+			return tallest;
 		}
 
 		/// <summary>
@@ -1006,6 +1153,26 @@ namespace DynamicIslands.Editor
 			if (name == null) names.TryGetValue(t.GetInstanceID(), out name);
 			PropInfo p = RaftProps.Get(name ?? "");
 			return p != null && p.IsCave ? p : null;
+		}
+
+		/// <summary>Whether a cave piece's open end (sign: +1 its +axis end, -1 its -axis) runs into another cave piece of caves:
+		/// a point just past it, across its middle or a quarter of its width either side, in the other's measured box.</summary>
+		static bool JoinedEnd(Transform cave, List<Transform> caves, Vector3 boxMid, Vector3 along, Vector3 sideDir, float halfLen, float halfW, float sign)
+		{
+			if (caves == null) return false;
+			foreach (Transform other in caves)
+			{
+				if (other == null || other == cave) continue;
+				PropInfo p = InfoOf(other);
+				if (p == null) continue;
+				for (int k = -1; k <= 1; k++)
+				{
+					Vector3 w = boxMid + along * (sign * (halfLen + 0.6f)) + sideDir * (k * halfW * 0.5f);
+					Vector3 m = InMeasures(other, p, w) - p.Centre;
+					if (Mathf.Abs(m.x) <= p.Size.x * 0.5f + 0.3f && Mathf.Abs(m.y) <= p.Size.y * 0.5f + 0.3f && Mathf.Abs(m.z) <= p.Size.z * 0.5f + 0.3f) return true;
+				}
+			}
+			return false;
 		}
 
 		/// <summary>A point (world) in a cave piece's own measures (raft_props', at the size it was measured at).</summary>

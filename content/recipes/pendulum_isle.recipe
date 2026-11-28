@@ -41,7 +41,8 @@ brush auto from $x1 $z1 to $x2 $z2 r={$r*2.8} s=10 frames=25
 clear from $x1 $z1 to $x2 $z2 r={$r*2.6}
 end
 new
-gen Trees=0.08 Bushes=0.3 Rocks=0.3 Harvest=0.3 BeachThings=0
+# (11-26 islandfix: Harvest 0.3 -> 0.15 - harvestables were DENSE against Raft's islands, 1.0 per 1000 m2 to 0.5)
+gen Trees=0.08 Bushes=0.3 Rocks=0.3 Harvest=0.25 BeachThings=0
 gen Seed=9601 Radius=75 Height=8 Roughness=0.4 Peaks=1 Shape=0 Style=0 BeachWidth=0.5 Cliffs=0.3 PeakShape=0.5
 gen Stretch=1.3 StretchAngle=0
 gen Water=0 SeaRocks=0 SeaFinds=0 Sunken=0 Hostiles=0 Friendly=0 SeaLife=0
@@ -56,8 +57,24 @@ brush grass from -20 0 to 20 0 r=6 s=20 frames=20
 origin
 clear at 0 0 r=5
 clear at 7.5 4 r=3
+# (11-26 islandfix, CIReach: the shed chest stood half in the hill - level the shed ground)
+brush flatten at 7.5 4.5 r=4.5 s=20 frames=200 h=5
 clear at -24 0 r=3
 clear at 22 0 r=6
+# (11-27 pdfx, CIReach on b882f9b5: the walk never got east of the hall at the top's height - the nearest it came to the
+#  low end was 17.9 -1.0 at 8.7 m, over a cliff down to the low end's 3.5 (zone low_end, the shaft warning unreached), and
+#  the shed's chest had no spot to open it from. The strokes before origin left the east top high: after origin now, the
+#  top levelled at 5 east of the frame, then three 0.45 m steps down to the low end, east to west (each row higher, so the
+#  next one keeps its own top)
+brush flatten at 6 0 r=6 s=25 frames=300 h=5
+brush flatten at 10 2 r=6 s=25 frames=300 h=5
+brush flatten at 14 0 r=3.5 s=25 frames=300 h=5
+for j -1 1
+brush flatten at 20.6 {3*$j} r=2 s=25 frames=200 h=3.65
+brush flatten at 19.2 {3*$j} r=2 s=25 frames=200 h=4.1
+brush flatten at 17.8 {3*$j} r=2 s=25 frames=200 h=4.55
+next
+clear from 14 0 to 21 0 r=4
 # --- DEEP 10-25 terrain: Bob Hill (west end, summit 28 m, base r 24) and its trail, the weather station's pad (north),
 # the watchman's hole (east), the survey plane's pad (south) ----------------------------------------------------------
 call hw_mount x=-58 z=0 b=24 h=28
@@ -67,6 +84,11 @@ call ar_ruin x=-25 z=26 h=5 yaw=0 w=3 d=2 al=weatherstation
 # (cave at x 48 on a 6 m pad, not 62 on 4: the bear rock reaches 5.5 m under its pad and 15 m east of x; out at the
 # east rim the flying underside is too thin to hide it - it hung below the island as a light slab)
 call ar_cave x=48 z=6 h=6 yaw=180 al=watchrock chest=watchchest
+# (11-28 pdcol_18663, CIReachColumns 10..24 -1: the den's cave hill (dome 23.6 m, reach side 42 back 64 front 19) lay
+#  over the whole low end - skin at 5.3 m over the shed (x 10) rising to 12.2 at the shaft (x 24), the ground under it
+#  closed: zone low_end, the shaft warning and the shed's chest had no spot. Its reach capped at 16 m: the hill ends
+#  at x 32, 7 m east of the shaft)
+prop watchrock cave.dome=16
 call ar_plane x=20 z=-28 h=5 yaw=200 al=surveyplane crate=planecrate
 # --- OLDER4 10-26 terrain: the Iron Ridge (north, peak 12 m), Needle Knoll (south-west, 16 m) and its trail, the compass
 # garden's pad (south-east) --------------------------------------------------------------------------------------------
@@ -119,12 +141,27 @@ call treasure x=-12 z=0 r=6 n=1 seed=9611
 place ZiplinePath_Landmark zipdown at -20.28 -0.97 h=7.35
 zipto zipdown 21 1
 place Zone_Trigger lowzone at 22 0 ground
-store pendshop at 20 -3 ground
-place Note_Sign shaftwarning at 24.5 2.5 ground sit yaw=270
-place TangaroaHatchRoom_Hatch shaft at 25 0 ground sit yaw=90
+# (11-26 islandfix, CIReach: at 20 -3 the store and the zipline's far floor closed the way down from the top to the low
+#  end - only the zipline came in, nothing walked to the shaft or its warning; the store on the top's open south side)
+#  (11-27 pdfx2, CIReach on 6a6f087a: at 13 -5 Raft's trading post still stood over the new steps and the shed - the walk
+#  got no nearer the low end than its roof, 17.9 -1.0 at 8.8 m, and the shed's chest had no spot; the store off the walk now,
+#  south of the top on its own pad at the top's height, level with the top all the way to it)
+brush flatten from 0 -12 to 0 -27 r=8 s=25 frames=400 h=5
+brush smooth from 0 -14 to 0 -27 r=9 s=4 frames=20
+clear at 0 -27 r=8
+store pendshop at 0 -27 ground
+# (11-28 pdcol2_5915, CIReach: with the den's dome at 16 its hill's foot still runs west over the low end - its skin
+#  stands 0.7-1.3 m over the ground from x 21 (4.8 at x 24, the ground 3.5): the warning at 24.5 and the hatch at 25 sat
+#  under it, the walk on the skin at 5.1 1.8 m off and no spot to read it from. Both moved west onto the steps, where
+#  the ground lies over the skin (x 18-19.5: ground 4.5, skin 4.0-4.1 under it)
+place Note_Sign shaftwarning at 18.0 2.6 ground sit yaw=270
+place TangaroaHatchRoom_Hatch shaft at 19.4 0 ground sit yaw=90
 # (the keel zone hangs in the open air beyond the south coast at the water line: under it a flying island leaves out
 # everything below its own sea level, so it cannot sit under the island; OLDER4 10-26: 0 46 -> 0 -76, past the new coast)
 place Zone_Trigger keelzone at 0 -76 h=0
+# (11-27 pdfx: the shaft puts the player in the open air at the island's water line and he falls to the sea - nowhere to
+#  stand there by design, so the reach grid can't judge it; pendulum_isle.play uses the shaft and checks zone keel)
+island reach.byplay=keel
 place Placeable_Lantern_Metal - at 22 3.5 ground y=0.05 sit
 
 # --- Things to gather ------------------------------------------------------------------------------------------------
@@ -135,7 +172,9 @@ call dirt x=12 z=-2 r=4 n=2 seed=9613
 call hw_zone x=-33 z=0 al=bobfootz id=bobfoot r=5 msg="Bob Hill. A path winds round it to a tower - the Institute's sighting tower."
 call hw_zone x=-58 z=0 al=bobtopz id=bobtop r=8 h=1 msg="The top of Bob Hill, 40 m over the sea. From here the pendulum's frame looks like a toy."
 call hw_mast x=-58 z=0 h0=28 lv=4 a=sighttower chest=sightbox top=Placeable_Lantern_Metal
-place Note_Paper halvardlog at -62 -3.5 h=28.1 drop yaw=10
+# (11-26 islandfix, CIReach: at -62 -3.5 the log lay on the summit's rim, its use spot over the steep west flank - the
+#  walker stuck there at 3x and 1x; now by the tower's door on the flat top)
+place Note_Paper halvardlog at -60 -3 h=28.1 drop yaw=10
 scatter "Pickup_Landmark_Tree_Palm 3" 3 at -58 0 r=26 seed=9621 free=3
 scatter Bamboo_1 4 at -58 0 r=26 seed=9622 free=2
 scatter Bush 8 at -56 0 r=20 seed=9623 free=1
@@ -194,7 +233,7 @@ scatter "Pickup_Landmark_Tree_Palm 4" 2 at 38 -40 r=14 seed=9652 free=4
 # --- The survey pilot's five lost photographs (a set): all five show his film case by the plane -----------------------
 call lp_piece x=24 z=46 al=pi_photo1 set="Survey photographs"
 call lp_piece x=-26 z=-38 al=pi_photo2 set="Survey photographs"
-call lp_piece x=54 z=-14 al=pi_photo3 set="Survey photographs"
+call lp_piece x=57 z=-14 al=pi_photo3 set="Survey photographs"
 call lp_piece x=-42 z=14 al=pi_photo4 set="Survey photographs"
 call lp_piece x=8 z=30 al=pi_photo5 set="Survey photographs"
 prop pi_photo1 on.set=show|pi_setchest\nmessage||Five photographs of the Gravity Sea from 300 m - laid side by side, every island points at one spot. By the survey plane, the pilot's film case has turned up.
@@ -275,6 +314,26 @@ quest reward=Battery*2;CopperIngot*2
 call treasure x=0 z=0 r=14 n=1 seed=8830
 prop treasure8830 treasure.loot=TitaniumOre*3
 
+# --- FILL 11-26 (islandfix, CIDensityIslands): trees and rocks were thin against Raft's islands (trees 3.5 per 1000 m2
+#     to Raft's 6.8, rocks 2.3 to 6.9); the whole island at Raft-like density, free= keeps them off the quest's pieces and
+#     paths, and the zipline's line is cleared again after
+origin
+scatter Bamboo_1 12 at 0 0 r=90 seed=9671 free=5
+scatter Bamboo_2 12 at 0 0 r=90 seed=9672 free=5
+scatter "Pickup_Landmark_Tree_Palm 3" 8 at 0 0 r=90 seed=9673 free=5
+scatter "Pickup_Landmark_Tree_Palm 4" 8 at 0 0 r=90 seed=9674 free=5
+scatter Pickup_Landmark_Tree_Mango 4 at 0 0 r=90 seed=9675 free=5
+scatter Pickup_Landmark_Tree_Pine 4 at 0 0 r=90 seed=9676 free=5
+scatter SmallBoulder1 14 at 0 0 r=90 seed=9677 free=3
+scatter SmallBoulder2 14 at 0 0 r=90 seed=9678 free=3
+scatter SmallBoulder3 14 at 0 0 r=90 seed=9679 free=3
+scatter SmallBoulder4 10 at 0 0 r=90 seed=9680 free=3
+scatter BigBoulder1_Low 5 at 0 0 r=90 seed=9681 free=4
+scatter BigBoulder4_Low 5 at 0 0 r=90 seed=9682 free=4
+scatter CaravanIsland_SmallRock_1 8 at 0 0 r=90 seed=9683 free=3 ground y=-0.6
+scatter TreeLog_01 2 at 0 0 r=90 seed=9684 free=3
+clear from -20.28 -0.97 to 21 1 r=3 all only=(?i)^(bamboo|smallboulder|bigboulder|caravanisland_smallrock|treelog|pickup_landmark_tree|bush)
+
 # --- 11-11 (w06): the bob-cutters' drift - optional (plan 06 row: ST through the rock base; dirt 2, mushrooms 2). No
 # quest step needs it. The iron for the pendulum's bob was cut out of Bob Hill's foot: the cutters drove a short
 # drift into the hill's south-east flank, below the trail's first turn, and opened a working room at its end where
@@ -305,5 +364,8 @@ prop pibobbox obj.name=pibobbox
 prop pibobbox loot.refill=0
 note pibobbox Bob-cutters' box | The cutters' box, left in the cut when the bob was hoisted: wedges, a worn hammer head, and the offcuts of the lodestone iron. Scratched inside the lid: 412 KG - SHE SWINGS.
 loot pibobbox MetalOre*2;Bolt*2;Nail*6;Rope*1
+
+# (11-26 islandfix, CIGroundIslands: fill rocks that rolled onto the underside, below the sea line)
+clear at 0 0 r=120 all below=0 only=(?i)^(smallboulder|bigboulder|caravanisland_smallrock|bamboo|pickup_landmark_tree|treelog)
 
 save Pendulum Isle

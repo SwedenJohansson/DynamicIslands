@@ -170,6 +170,16 @@ namespace DynamicIslands.Editor
 			bulb = bt != null ? bt.GetComponent<Renderer>() : null;
 		}
 
+		/// <summary>Its state shown now without telling the host of a change (QuestSkip switching it on tells Lights.Changed itself).</summary>
+		internal void Sync()
+		{
+			IslandWorldState.Entry e = ContentState.EntryOf(transform);
+			if (e == null || Ref == null) return;
+			shown = Lights.Lit(e, Ref);
+			ready = true;
+			Show(shown);
+		}
+
 		void Update()
 		{
 			if (Time.time < next || Ref == null) return;

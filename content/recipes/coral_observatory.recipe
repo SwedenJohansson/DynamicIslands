@@ -18,6 +18,7 @@ include lib_selene
 include lib_features
 include lib_areas
 include lib_highwater
+include lib_caves
 include lib_lastpost
 new
 # (nature: Like Raft (as thick on the land as Raft's own tropical islands) - Raft's islands as the generator's Like Raft has them, CIGenLikeRaft)
@@ -94,6 +95,35 @@ place UT_LightBottle03 - at -25 -6.6 ground sit
 place Creature_AnglerFish lanternjaw at -26 -8 h=-8
 place Zone_Trigger edge at -26 -8 h=-4
 
+# --- 11-12 (w15 prep): the viewing room (plan 15 row: UW, ST to a viewing room under the reef; chest, stone 2). The
+# observers' old viewing room: an underwater straight cave (kit_uw, the cave tool, plain rock) from the lagoon floor in the
+# ring's empty quarter (18 18), way in yaw 45, to a dry room (middle ~48.4 48.4) under the ring's reef; the observers' chest
+# in it. 30 m and more from Survey Hill, the divers' cave and the blue hole; off every walk line.
+# The sea mouth's pad flattened to 5 m down (smoothed out); the tunnel climbs 15 degrees for 4 pieces (size 0.7, 29.1 m,
+# +7.5 m) to the den (~22 m long; the cave tool raises the dome from the sea floor). HEIGHTS guessed: the pad -5 (if the
+# natural sea floor is much deeper the pad stands as a plinth - lower it or move the mouth in), the den floor ~+2.5 m; the
+# air zone h 4, the chest dropped from 5.5 m. Sea caves get no monsters (11-12).
+brush flatten at 18 18 r=6 s=20 frames=60 h=-5
+brush smooth at 18 18 r=9 s=6 frames=20
+call kit_uw x=18 z=18 yaw=45 len=29.1 slope=15 size=0.7 dirt=0 mush=0 stone=2 vines=0 titanium=0 light=0 as=coviewroom
+prop coviewroom cave.rock=plain
+# (11-17 w15E) the sea room's dry dome capped (CAVE_LESSONS 11-10 cave.dome): uncapped it reached 66-82 m back over the island,
+# walled the den mouth and buried the boardwalk / shore walk
+prop coviewroom cave.dome=18
+# cavecheck inside coviewroomair coviewroomchest
+place Zone_Trigger coviewroomair at 48.4 48.4 h=4
+prop coviewroomair obj.name=coviewroomair
+prop coviewroomair zone.id=co_viewroom
+prop coviewroomair zone.radius=8
+prop coviewroomair zone.repeat=1
+prop coviewroomair zone.air=1
+prop coviewroomair zone.message=The old viewing room under the reef: a bench, a cracked port in the rock, the logbook's last page still pinned up.
+place Loot_ChestSmall coviewroomchest at 50.9 50.9 h=5.5 drop yaw=45
+prop coviewroomchest obj.name=coviewroomchest
+prop coviewroomchest loot.refill=0
+note coviewroomchest Observers' chest | The observers' chest from the first survey: a spare lens, sample tubes, copper wire and a tin of biscuits gone to dust.
+loot coviewroomchest Glass*2;CopperIngot*2;Plastic*3;Rope*1
+
 # --- Settings, notes, behaviours, quest ------------------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, bananas, palms ----------
 scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=61.6 seed=4175 free=5
@@ -107,14 +137,38 @@ call shallows r=108 deep=5 n=2
 call hw_zone x=-49.01 z=23.5 al=surveyfootz id=surveyfoot r=5 msg="Steps cut into the hill, and a rope rail - the observatory's path up Survey Hill. A mast stands on the top."
 call hw_zone x=-62 z=16 al=surveytopz id=surveytop r=7 h=1 msg="Survey Hill. The whole ring lies below you, the platform in its lagoon - and beyond the ring the sea has a different colour, a cold grey-green band."
 call hw_mast x=-62 z=16 h0=22 lv=2 a=surveymast chest=surveychest top=Placeable_Lantern_Metal
-place Note_Paper inesnote at -58.5 14 h=22.1 drop yaw=200
+# (11-18 w15P) the dropped notes stood on edge (spawn turn straightened up its long side): own flat turn
+place Note_Paper inesnote at -58.5 14 h=22.1 drop rot=0,0,0 yaw=200
 loot surveychest Rope*2;Glass*3;Plastic*2;Battery*1
 note surveychest Survey box | The survey box on the mast: a thermometer on a long line, glass sample jars, rope - and a battery for the beacon.
 scatter Bush 3 at -62 16 r=14 seed=32034 free=1
 # --- DEEP 10-25: the divers' cave on the east ring, Tomas Reyes's letter and box ---------------------------------------
-call ar_cave x=66 z=18 h=6 yaw=180 al=diverock chest=divebox
-call hw_zone x=66 z=13 al=divecavez id=divecave r=4 msg="A cave in the ring, a wetsuit hung up to dry in its mouth years ago and never taken down."
-place Note_Paper tomasnote at 67.5 12.5 h=6.45 drop yaw=0
+# (11-18 w15I) the den moved 16 m north along the ring (66 18 -> 64 34; its mouth z 2 -> 18): capped at 18 and at 6 alike
+# its hill stood over the footbridge's east end (quest walk stuck on CaveSkin at 47.4 1.2 on the bridge, w15H) - the
+# mouth now 18 m from the bridge; its clear r 19 stops short of the viewroom's chest and zone (21 m)
+# (11-18 w15J) ar_cave's pad (r 14 round 64 34) left the ring's slope under the den's front half: its sand stood up as a
+# pale strip beside the mouth (w15I picture) - the whole body's ground first
+brush flatten from 64 34 to 64 18 r=10 s=20 frames=300 h=6
+# (11-18 w15K) a thin strip of it still stood beside the mouth's east side (co_dive_cave, w15J): a round flatten there
+brush flatten at 66.5 28.5 r=6 s=20 frames=300 h=6
+call ar_cave x=64 z=34 h=6 yaw=180 al=diverock chest=divebox
+# (11-18 w15N) a bright band of grass round the den's back wall (co_dive_inside): the island's ground standing a little
+# over the den's own brown floor there. Painted rock it reads as a ledge of the wall (sand and seabed stayed pale);
+# the ground itself still shows (lowered under the den: w15U below)
+brush rock at 62 37 r=8 s=10 frames=40
+# (11-18 w15U) the island's ground stood up inside the den: a pale shard from its ceiling, a green panel through its left
+# wall and a pale strip on its floor were all the ring's own ground (still there with the den and its hill hidden). The
+# pads above stop at z 44-48 and ar_cave's own r 14 pad (h 6) undid w15P's lower one laid before it: the den's whole
+# body let down under its floor here, after ar_cave; r 8 keeps it under the hill (it reaches 6 m past the den's back)
+# (w15V: a small pale piece of it still came through the floor at its left and a green sliver through the left wall: 0.5 m
+# lower and 1 m wider)
+brush flatten from 64 30 to 64 46 r=9 s=20 frames=300 h=4.8
+# (11-17 w15F) the diver's den dome capped (CAVE_LESSONS 11-10 cave.dome): uncapped it reached 41 m to the sides and
+# 20 m in front and its skin stood across the shore walk to the platform (quest walk stuck, w15D/E)
+# (11-17 w15G) 18 still buried the shore start of the quest walk (stuck on CaveSkin at 59.8 -3.8)
+prop diverock cave.dome=6
+call hw_zone x=64 z=29 al=divecavez id=divecave r=4 msg="A cave in the ring, a wetsuit hung up to dry in its mouth years ago and never taken down."
+place Note_Paper tomasnote at 65.5 28.5 h=6.45 drop rot=0,0,0 yaw=0
 loot divebox Rope*2;Scrap*3;Bolt*2;OxygenBottle*1
 prop divebox loot.refill=0
 note divebox Diver's box | Tomas's box at the back of the cave: rope, scrap, a few bolts - and a full oxygen bottle, his spare.

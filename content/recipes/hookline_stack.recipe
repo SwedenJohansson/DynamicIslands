@@ -28,10 +28,11 @@ generate
 push at -42.3 -24.9
 
 # --- Terrain: the hall's and the yard's levels -------------------------------------------------------------------------
-brush flatten at 0 -14 r=11 s=20 frames=300 h=2
+brush flatten at 0 -14 r=11 s=20 frames=300 h=1.94
 brush flatten at 18 10 r=12 s=20 frames=300 h=2
 # (REACH 10-24: the office storey with the flare store stood in the slope - a pad cut for it)
-brush flatten at 2 2 r=8 s=20 frames=300 h=2
+# (11-19 cn4: at h=2 the sand came 0.04 m over the hall's and the office's slabs: the pads 6 cm lower)
+brush flatten at 2 2 r=8 s=20 frames=300 h=1.94
 pop
 # --- DEEP 10-24 terrain: Scrapjaw Heights (south, summit 36 m, base r 27), its trail, the drowned Union strongroom (-16 m) ------------
 call hw_mount x=-4 z=-52 b=27 h=36
@@ -62,9 +63,13 @@ place Zone_Trigger hallzone at -3 0 y=0.1
 place Placeable_Lantern_Metal - at -3 -2.5 y=0.9 drop
 place UT_ElectricityIsland_Crane02 crane1 at -3.5 3 y=3.05 sit scale=0.25 yaw=225
 # (Raft's zipline brings its floor 5.72 m west, 0.97 m north and 1.35 m under the landmark: that floor on the roof at -2 -1.5)
-place ZiplinePath_Landmark crane1zip at 3.72 -0.53 y=4.4
+# (c3z54: the rope sagged into the roof's floor 2.3 m out from its floor, past the check's end stretch: the floor 1.3 m
+# east, near the roof's edge, so the rope is off the roof within its first 1.5 m)
+place ZiplinePath_Landmark crane1zip at 5.02 -0.53 y=4.4
 pop
 zipto crane1zip 22 12
+# (c3 round 8, 11-21 c3z44: 0.18 m over at -22.9 -16.3, 3 m from the far end: cleared along the line)
+clear from 1.04 -18.83 to 22 12 r=3 body
 ramp Block_Floor_Wood from 4.5 -26 2 to 4.5 -18 5 len=1.5 top=0
 ramp Block_Wall_Fence_Rope from 5.25 -26 2 to 5.25 -18 5 len=1.5 top=-0.1
 
@@ -106,13 +111,13 @@ line Block_Foundation from 20.37 -70.42 to 24.87 -70.42 step=1.5 h=0.35
 line Block_Foundation from 20.37 -68.92 to 24.87 -68.92 step=1.5 h=0.35
 line Block_Foundation from 20.37 -67.42 to 24.87 -67.42 step=1.5 h=0.35
 line Block_Foundation from 20.37 -65.92 to 24.87 -65.92 step=1.5 h=0.35
-# (the barge's deck, unrolled 10-24b)
+# (the barge's deck, unrolled 10-24b; 11-19 cn4: the clay and sand dropped onto it - set 0.1 m over it they touched nothing)
 
-place "Pickup_Landmark_Clay 1" - at 21.12 -69.17 h=1.05 sit
-place "Pickup_Landmark_Clay 2" - at 22.62 -68.17 h=1.05 sit
-place "Pickup_Landmark_Clay 3" - at 24.12 -69.67 h=1.05 sit
-place "Pickup_Landmark_Sand" - at 21.12 -66.67 h=1.05 sit
-place "Pickup_Landmark_Sand" - at 23.12 -66.17 h=1.05 sit
+place "Pickup_Landmark_Clay 1" - at 21.12 -69.17 h=1.3 drop
+place "Pickup_Landmark_Clay 2" - at 22.62 -68.17 h=1.3 drop
+place "Pickup_Landmark_Clay 3" - at 24.12 -69.67 h=1.3 drop
+place "Pickup_Landmark_Sand" - at 21.12 -66.67 h=1.3 drop
+place "Pickup_Landmark_Sand" - at 23.12 -66.17 h=1.3 drop
 place RT_Pillar - at 19.12 -68.17 ground sy=0.6
 
 # --- The jetty and the dive rope; the street below and its salvage tags ------------------------------------------------
@@ -421,10 +426,23 @@ clear at 61.25 46.23 r=1.2 only=SmallBoulder4 all
 origin
 call kit_st x=42.5 z=0.5 yaw=33 len=28 slope=-2 end=open size=0.7 hill=1 dirt=2 mush=0 stone=0 vines=2 gate=1 as=hkcut
 prop hkcut cave.rock=plain
+# (11-19 cn4: the cut's mound left a palm and two bamboos standing 2 m over the ground east of it)
+clear at 58 14 r=4 only=(?i)palm|bamboo|tree|bush|plant|boulder|rock all
+# (11-19 cn4: CIGroundIslands - a palm 0.46 m and a hill rock 0.85 m over the slope north of the cut)
+clear at 50.75 27.89 r=1 only=(?i)palm all
+clear at 52.53 32.57 r=1 only=SmallBoulder4 all
+# (11-19 cat2: CIGroundIslands - a bamboo 0.46 m over the slope there too)
+clear at 62.14 28.84 r=1 only=(?i)bamboo all
 # cavecheck inside hkcutbox
 place Loot_ChestSmall hkcutbox at 51.1 11.5 h=3.4 drop yaw=300
 prop hkcutbox obj.name=hkcutbox
 prop hkcutbox loot.refill=0
 note hkcutbox Barrow cut box | A salvager's box left in the cut under the spoil heap: a crowbar's worth of scrap, nails, a roll of tape. Chalked on the lid: CUT CLOSED - VINES. TAKE A BLADE.
 loot hkcutbox Scrap*4;Nail*8;Rope*1;MetalIngot*1
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+# (keep=, lib 3.5.1 minor fixes 11-23: the talus filled or buried the Union strongroom's dive site - the sunk block, the boat, its crate and the puffers - left as built)
+# (walls=, lib 3.5.1 extra fixes 11-23: the kept walls still showed as bare sheets - no talus there, so the pit keeps its depth, but rock is stood on its faces)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low walls=71,-23,16
 save Hookline Stack

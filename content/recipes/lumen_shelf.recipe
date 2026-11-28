@@ -7,9 +7,9 @@
 # anglers hunting the dark below. Quest "The Glowing Shelf" (19 steps).
 #
 # Points (metres over the island's own water line; in the world it all lies 25 m lower): the shelf at 0 (x -26..12),
-# the drop past x 14 down to -14; the spar round -10 -4 (walls 0..26.6, its platform at 26.8, the surface at 25), air in
+# the drop past x 14 down to -14; the spar round -10 -4 (a 3 m shaft x -11.5..-8.5, z -5.5..-2.5, walls 0..26.6, its deck at 26.7, the surface at 25), air in
 # it at 8 and 17; the survey line of five lamps along z 2 from x -16 to 12 (lamp 3 at 0 2, an air pocket there); the
-# survey hut x -6..-1.5, z -14..-11; the mess x 3..7.5, z -13..-9; the arch at 11.5 8 by the edge (air under it).
+# survey hut x -6..-1.5, z -14..-11; the mess x -1..3.5, z -11..-6.5; the arch at 11.5 8 by the edge (air under it).
 include lib_features
 include lib_sea
 include lib_gravity
@@ -33,31 +33,51 @@ brush sand at -9.5 0 r=14 s=20 frames=20
 pop
 brush flatten at -28.9 16 r=4 s=8 frames=40
 origin
+# (CIFloating 11-26/b7_lt2: cliffs' rocks hung 2.5-13 m over the drop at its north and east rim (46-60, 6-14), stood at
+#     its sheer faces with nothing under them - that rim smoothed into a slope, so no bare face is left there)
+brush smooth from 61.6 -6.25 to 63.3 0 r=4 s=10 frames=120
+brush smooth from 63.3 0 to 61.6 6.25 r=4 s=10 frames=120
+brush smooth from 61.6 6.25 to 57 10.8 r=4 s=10 frames=120
+brush smooth from 57 10.8 to 50.8 12.5 r=4 s=10 frames=120
+brush smooth from 50.8 12.5 to 45.5 11.3 r=4 s=10 frames=120
 clear at -28.9 16 r=5
 push at 24.8 0
 clear at -7 0 r=18
 
 # --- The wind spar: a hollow stone pillar, a ladder inside, air in it, the turbine on top -------------------------------
-push at -10 -4 h=0
+# (REACH 11-27 lu5/lu6: the 1.5 m shaft left no room in front of its ladder - the grid took the rungs through the walls from
+#     outside (lu5 from the north at 22 m, lu6 from the east at 21 m) and Raft never took hold; the spar is now 2 x 2 cells
+#     (3 m inside), ladtower's ladder in its north-east cell (yaw 0, 0.3 m off the north wall), its foot open in the south
+#     wall's first cell, the deck over the shaft open above the ladder and a landing over the north wall straight ahead of
+#     the ladder's top (the deck 0.165 m lower, ladtower's, so the ladder's top reaches it))
+push at -11.5 -5.5 h=0
 for k 0 10
-place Block_Wall_Tier3 spar at 0 0.75 y={$k*2.42}
-place Block_Wall_Tier3 spar at -0.75 0 y={$k*2.42} yaw=90
-place Block_Wall_Tier3 spar at 0.75 0 y={$k*2.42} yaw=90
-place Block_Ladder_Tier3 - at 0 0.55 y={$k*2.42} yaw=180
+place Block_Wall_Tier3 spar at 0.75 3 y={$k*2.42}
+place Block_Wall_Tier3 spar at 2.25 3 y={$k*2.42}
+place Block_Wall_Tier3 spar at 2.25 0 y={$k*2.42}
+place Block_Wall_Tier3 spar at 0 0.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 spar at 0 2.25 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 spar at 3 0.75 y={$k*2.42} yaw=90
+place Block_Wall_Tier3 spar at 3 2.25 y={$k*2.42} yaw=90
+next
+# (REACH 11-27 lu7/lu8: the walks still climbed the flooded shaft's ladder from outside its walls (east at 20.9, north at
+#     23.7, in the water) and Raft never took hold under water. The shaft is a swim with its two air pockets now: only the
+#     two top rungs, from 21.8 under the surface (25) up to the deck, to climb out of the water)
+for k 9 10
+place Block_Ladder_Tier3 - at 2.6 2.7 y={$k*2.42} yaw=0
 next
 for k 1 10
-place Block_Wall_Tier3 spar at 0 -0.75 y={$k*2.42}
+place Block_Wall_Tier3 spar at 0.75 0 y={$k*2.42}
 next
-place Block_Floor_Tier3 spartop at -1.5 -1.5 y=26.8
-place Block_Floor_Tier3 spartop at 0 -1.5 y=26.8
-place Block_Floor_Tier3 spartop at 1.5 -1.5 y=26.8
-place Block_Floor_Tier3 spartop at -1.5 0 y=26.8
-place Block_Floor_Tier3 spartop at 1.5 0 y=26.8
-place Block_Floor_Tier3 spartop at -1.5 1.5 y=26.8
-place Block_Floor_Tier3 spartop at 0 1.5 y=26.8
-place Block_Floor_Tier3 spartop at 1.5 1.5 y=26.8
-place Placeable_WindTurbine - at 1.0 1.6 y=26.8 sit
-place Loot_ChestSmall sparchest at -1.5 1.5 y=26.8 sit yaw=90
+place Block_Floor_Tier3 spartop at 0.75 0.75 y=26.67
+# (REACH 11-27 lu9: both air pockets' walks out swam straight up the shaft's south-east cell into this deck tile's
+#     underside at 26.6 - the grid had linked the water under it to the deck on it; the cell is open now, so the way out
+#     is the ladder's two top rungs or back down to the foot)
+place Block_Floor_Tier3 spartop at 0.75 2.25 y=26.67
+place Block_Floor_Tier3 spartop at 0.75 3.75 y=26.67
+place Block_Floor_Tier3 spartop at 2.25 3.75 y=26.67
+place Placeable_WindTurbine - at 1.0 0.9 y=26.67 sit
+place Loot_ChestSmall sparchest at 0.6 2.25 y=26.67 sit yaw=90
 pop
 prop spar tint.color=#6e6a64
 prop spar tint.amount=0.55
@@ -65,7 +85,7 @@ prop spartop tint.color=#5b6266
 prop spartop tint.amount=0.45
 call airpocketat x=-10 z=-4 h=8 id=spar_air1 al=sparair1 bub=sparbub1 r=1.5 msg="Air, trapped in the spar."
 call airpocketat x=-10 z=-4 h=17 id=spar_air2 al=sparair2 bub=sparbub2 r=1.5 msg="Air again, higher up the spar."
-place Zone_Trigger sparfoot at -10 -6.5 h=1.5
+place Zone_Trigger sparfoot at -10.75 -6.5 h=1.5
 place Placeable_Table_Basic - at -12.5 -7 h=0 sit yaw=20
 place Note_Paper surveynotes at -12.5 -7 h=1.3 drop yaw=30
 
@@ -86,12 +106,16 @@ call shed w=3 d=2 door=1
 place Loot_Chest surveyhut at 3.6 2.2 y=0.2 sit yaw=180
 place Placeable_Lantern_Metal - at 0.6 2.3 y=0.2 sit
 pop
-push at 3 -13 h=0
+# (REACH 11-27 lu5: the mess stood at the shelf flatten's rim - the ground rose 1.2-1.5 m inside it, through its floor and
+#     up into the door; lu6: flattened there it still could not be entered - the mess now stands on the shelf beside the
+#     survey hut (x -1..3.5, z -11..-6.5), its table off the door's line)
+brush flatten at 1.25 -8.75 r=4.5 s=20 frames=200 h=0
+push at -1 -11 h=0
 call shed w=3 d=3 door=1
-place Placeable_Table_Basic - at 2.25 2.6 y=0.2 sit yaw=0
+place Placeable_Table_Basic - at 0.9 2.6 y=0.2 sit yaw=90
 place Loot_Chest messchest at 3.7 3.7 y=0.2 sit yaw=180
-place Note_Paper lastnote at 2.25 2.6 y=1.5 drop yaw=15
-place "Box Small" - at 0.7 3.8 y=0.2 sit
+place Note_Paper lastnote at 0.9 2.6 y=1.5 drop yaw=15
+place "Box Small" - at 3.8 0.7 y=0.2 sit
 pop
 place Loot_SunkenBarrel - at 9 -4 ground sit
 place Loot_Chest sledbox at 8 -6 ground sit yaw=300
@@ -106,6 +130,9 @@ place Antenna_pole - at 7 -5 ground rot=0,0,-80 sy=0.5
 place SmallRock_02 - at 10 7.9 ground sit scale=2.9
 place SmallRock_02 - at 13.2 8.2 ground sit scale=2.6 yaw=120
 place Block_Foundation archtop at 11.5 8 h=2.15 sx=2.8 sz=1.25 yaw=5
+# (c3z31/z40: the deck's west end still 1.9 m over the ground falling away under it (the rocks aren't ground to the
+# check) - the ground under the deck's west half levelled to its middle's round the rocks, CIGroundIslands 11-21)
+brush flatten from 11.5 8 to 9.2 7.8 r=1.5 s=20 frames=60
 prop archtop tint.color=#56514a
 prop archtop tint.amount=0.75
 call airpocket x=11.5 z=8 id=edge al=edgeair bub=edgebub r=2.5 msg="Under the arch, at the very edge: air. Below, nothing but dark."
@@ -197,9 +224,17 @@ next
 for k 0 10 1
 brush flatten at -6.5 {-78+$k} r=2.4 s=20 frames=200 h={22.4+0.5*$k}
 next
-call ladtower x=-6 z=-66 h0=27.5 lv=3 a=lutower
-place Loot_ChestSmall lulocker at -6.75 -65.25 h=35.2 drop yaw=180
-place Note_Paper lusumnote at -6.75 -66.75 h=35.08 drop yaw=20
+# (REACH 11-26: with the ladder inside, the walk up stopped at the top - the Surveyor's card never reached: ladtowerout's ladder outside
+# the south wall comes up facing the deck, as Biome Seven's)
+# (REACH 11-26 (2): the walk up the north steps ended in the door beside the ladder and reached round the wall's corner for
+#     the rungs - the door on the north wall now; the ladder is taken from the steps' top in front of it)
+# (REACH 11-27 lu5: the grid's top of the ladder was the rope fence beside it (35.65), and the way down dropped over that
+#     fence into the corner - the deck's south edge beside the ladder left open, sf=0)
+call ladtowerout x=-6 z=-66 h0=27.5 lv=3 a=lutower dz=3 sf=0
+# (b7_lt2: the walk climbed toward the note's spot 1.3 m west of the ladder and slid off it: the note and the locker on
+#     the deck's east half, straight in from the ladder's top)
+place Loot_ChestSmall lulocker at -5.25 -65.25 h=35.2 drop yaw=180
+place Note_Paper lusumnote at -5.25 -66.75 h=35.08 drop yaw=20
 place Zone_Trigger lusummit at -6 -66 h=35.98
 place Loot_ChestSmall luledge at -18.1 -66 ground sit yaw=40
 place SmallRock_02 - at -1 -64 ground sit scale=0.5
@@ -380,4 +415,8 @@ prop lugalair zone.repeat=1
 prop lugalair zone.air=1
 prop lugalair zone.message=The fitters' gallery under the survey rock. Their lamps still burn, and the air they pumped down is still here.
 
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save Lumen Shelf

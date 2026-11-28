@@ -67,7 +67,10 @@ call floors w=2 d=2 y=0.1
 call corners w=2 d=2 y=0.1
 roof 2 2 at 0 0 y=0.1 wood
 place "Box Small" - at 2.2 2.2 y=0.1 sit
-place Note_Paper belllog at 2.2 2.2 y=1.7 drop yaw=20
+# (11-27 isl1126_j: dropped onto the box, the log was out of sight from every spot the walk found, 1.5 m off - now on
+#  the bell's floor beside the box, open to the pavilion's middle; 11-28 isl1126_k: there the walk ended 2.9 m off it -
+#  now in the pavilion's middle, in the air pocket the walk goes to)
+place Note_Paper belllog at 1.4 1.6 y=0.6 drop yaw=20
 pop
 call airpocket x=-8.5 z=-4.5 id=bell al=bellair bub=bellbub r=2.5 msg="The diving bell's air pocket. Breathe."
 
@@ -79,7 +82,9 @@ place RT_PillarThick - at 0 4.5 y=0 sy=0.5
 place RT_PillarThick - at 4.5 4.5 y=0 sy=0.5
 call floors w=3 d=3 y=0.1
 roof 3 3 at 0 0 y=0.1 wood
-place TP_SeleneReactor_Water_Radiated cisternwater at 2.25 2.25 y=1.2 scale=0.19
+# (11-27 isl1126_j: at y=1.2 the pool's sheet filled the hall half way up - the cistern's air zone had no spot from any
+#  side, the nearest on the roof; the cistern is drained, so its last water is a skin on the floor)
+place TP_SeleneReactor_Water_Radiated cisternwater at 2.25 2.25 y=0.3 scale=0.19
 place Loot_ChestLarge cisternstore at 2.25 3.8 y=0.1 sit yaw=180
 pop
 place WaterPipe_Short_1 valve at 4 7.25 ground sit yaw=90
@@ -107,8 +112,8 @@ scatter VP_CoralFoliose03 5 at -12 -2 r=3 seed=9583 free=1
 scatter TinyCoral 6 at -12 -2 r=3 seed=9584 free=1
 scatter VP_CoralDigitate03 5 at 2 13 r=3 seed=9585 free=1
 scatter VP_CoralBulb03 4 at 2 13 r=3 seed=9586 free=1
-scatter SeaVine3 30 at 0 0 r=26 seed=9587 free=2
-scatter SeaVine3_klump 10 at 0 0 r=26 seed=9588 free=2
+scatter SeaVine3 30 at -14 10 r=22 seed=9587 free=2
+scatter SeaVine3_klump 10 at -14 10 r=22 seed=9588 free=2
 call shallows x=0 z=0 r=90 deep=8 n=2 seed=9589
 scatter SeaVine3 40 at 0 0 r=70 seed=9590 free=2
 call hw_reef x=-30 z=-40 r=5 seed=9591
@@ -129,7 +134,9 @@ note signalbox Signal mast deck box | The signalman's box: a spare air bottle, r
 call hw_zone x=-55 z=-5 al=saltz id=saltcellar r=4 msg="The salt cellar, dug into the rock. Sacks of salt, gone to slush - and a valve wheel on a hook."
 # (REACH 10-29: at -53.5 -4.5 h=3.45 the note sat in the sacks with no spot to read it from - now on the cellar floor
 # in the zone's middle)
-place Note_Paper adanote at -55 -5.4 ground y=0.05 drop yaw=30
+# (11-27 isl1126_j: at ground+0.05 the note lay 0.7 m under the den's floor (h 3.45, the chest's) and dropped through the
+#  terrain to -27 - now dropped from over that floor)
+place Note_Paper adanote at -55 -5.4 h=4.3 drop yaw=30
 loot saltchest story:valvewheel*1;Rope*2;Scrap*2
 prop saltchest loot.refill=0
 note saltchest Salt cellar box | Ada's box: the cistern valve's wheel, wrapped in an oilcloth, and a coil of rope.
@@ -154,6 +161,11 @@ info title=Sinkmarket Floor
 info author=Custom Islands
 info description=Altitude Market's lower town on the seabed, 30 m down and as big as Raft's own big islands: Lookout Rock climbing out of the sea, a salt cellar, a drowned house, a wrecked fishing boat, stalls in the silt, the ballast stone that fell from the sky, a diving bell, a flooded cistern hall, a scientist in a cage and the cable car's bottom station. The fifth island of The Gravity Sea - dive.
 island on.arrive=message||Down there, 30 m under the keel: a square of stalls in the silt - and the ballast stone, cracked, in the middle of it.
+# (11-28 isl1126_k: the cistern's air shows only once the valve is turned - the walk found no spot in the hidden zone;
+#  the bonded cellar and the salt cellar: the walk stuck once on the cave hill's skin over the cellar room and over the
+#  salt rock's mouth while its grid found a way - the plays swim into all three: sinkmarket_floor (air cistern, zone
+#  saltcellar) and sinkmarket_floor_caves (air sm_bondedcellar here))
+island reach.byplay=cistern;sm_bondedcellar;saltcellar
 
 story drained|Cistern drained|Placeable_Lantern_Metal|You opened the cistern valve: the hall drained and filled with air.
 story valvewheel|Cistern valve wheel|Bolt|The cistern valve's wheel, which the salt merchant took off and hid in her salt cellar.
@@ -241,6 +253,13 @@ quest reward=MetalIngot*3;Rope*4
 # cistern, the cage, Ada's house and the walks between them.
 origin
 clear at 9 -9 r=4 only=(?i)boulder|rock|tree|bush|bamboo
+# (11-27 isl1126_g, CIFrameRing: the frame's north-east leg lay along the mound's west slope, 1-3 cm under it (42 rays
+#  at 9.2-9.7 -3.9..-5.0, h 3.7-4.1: points 0-0.5 m under the ground are laid on it). 592a728b moved the mouth 0.4 m
+#  into the mound: 62 rays there and its back seen from the square (cvp_smo 32 rays) - back at 9 -9, and the slope over
+#  that leg raised to a shoulder at 4.8: 78 rays, the ground there the same as without it - the cave tool sets the
+#  ground round its frame. 11-28 isl1126_l: a flatten at 8 -8 r=5 h=3 under the mouth took the rays to 38 (still a FAIL,
+#  the north-east leg's 42 deg slope is the kit's own mound) but let the bore's floor down 0.8 m (-25.6 to -26.4) and the
+#  caves play stuck on the way out at 19.5 -19.5 - taken out again; the leg's fight is left to the cave tool)
 call kit_st x=9 z=-9 yaw=135 len=14 slope=0 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=0 titanium=0 wet=1 as=smcellar
 prop smcellar cave.rock=plain
 prop smcellar cave.dome=18
@@ -252,7 +271,9 @@ prop smcellarair zone.air=1
 prop smcellarair zone.repeat=1
 prop smcellarair zone.message=The bonded cellar under the mound - air, held in since the market went down. Crates with the dues still unpaid.
 # cavecheck inside smcellarair smcellarchest
-place Loot_ChestSmall smcellarchest at 28.2 -28.2 h=3.6 drop yaw=315
+# (11-27 isl1126_j: at 28.2 -28.2, against the room's end, no spot within 2.5 m had a clear line to it - now 0.9 m from
+#  the room's middle)
+place Loot_ChestSmall smcellarchest at 27.3 -27.3 h=3.6 drop yaw=315
 prop smcellarchest obj.name=smcellarchest
 prop smcellarchest loot.refill=0
 note smcellarchest Bonded goods | Market goods held for unpaid dues, each with a tag: STALL 4 - OWES 3 DAYS. STALL 9 - OWES A WEEK. The dues were never paid; the market went down first.

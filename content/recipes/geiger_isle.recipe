@@ -35,11 +35,12 @@ brush grass at 22 -22 r=9 s=20 frames=20
 brush sand from -18 -38 to 18 -40 r=6 s=20 frames=20
 brush rock at 24 12 r=9 s=20 frames=20
 clear at 0 -7 r=21
-clear at -1 22 r=18
+# (r 21, d 24: the bunker's cut at its mouth left a grass tuft 2.9 m in the air at 14 11, and the fence's north side 0.9 m over its edge, IG5 11-18)
+clear at -1 22 r=21
 clear from 0 -24 to 0 -46 r=3
 
 # ===== The fence round the yard, warning plates by the gate, a sign to read ===============================================
-call fencesquare x=-13 z=-20 w=26 d=27 gw=5 ngw=6
+call fencesquare x=-13 z=-20 w=26 d=24 gw=5 ngw=6
 place Note_Sign gatesign at -4.5 -21.5 ground sit yaw=180
 
 # ===== The yard: the guard's hut, the decontamination tent, barrel heaps, the radio mast, a crate ==========================

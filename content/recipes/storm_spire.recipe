@@ -484,4 +484,7 @@ store supplypost at -34 -8 ground
 call treasure x=0 z=0 r=42 n=1 seed=8856
 prop treasure8856 treasure.loot=TitaniumOre*2
 
+# (c3 round 3 11-21: CISheetIslands found bare cliff walls at the waterline here, drawn as stretched sheets. Their feet
+#     sloped as rock talus down to 10 m under the sea - a pit or a dive shaft keeps its depth, a narrow one is left open)
+cliffs
 save Storm Spire

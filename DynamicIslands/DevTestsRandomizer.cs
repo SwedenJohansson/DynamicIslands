@@ -210,10 +210,13 @@ namespace DynamicIslands
 			Check(ref ok, findable, "Raft still finds every crate and clam by the place it knows (picking up, saving and the network use it)");
 			bool land = moved.All(m => { Vector3? o = WorldRandomizer.OriginalOf(islandOf[m.Key], m.Key); return !o.HasValue || (o.Value.y < -0.5f) == (m.Value.y < -0.5f); });
 			Check(ref ok, land, "crates on land stay on land, under-water ones under water");
+			int movedOnce = WorldRandomizer.MovedCount;
 			WorldRandomizer.Rehandle();
-			yield return new WaitForSeconds(3f);
+			yield return WaitFor(() => WorldRandomizer.MovedCount > movedOnce, 20f);
+			yield return new WaitForSeconds(1f);
 			float drift = moved.Count == 0 ? 0f : moved.Max(m => (m.Key.transform.position - m.Value).magnitude);
-			Check(ref ok, drift < 0.05f, "handled again (as after a reload or on another player's machine): the same spots (max difference " + drift.ToString("F3") + " m)");
+			// (the handling has to have run again: a drift of 0 says nothing if it never did)
+			Check(ref ok, (moved.Count == 0 || WorldRandomizer.MovedCount > movedOnce) && drift < 0.05f, "handled again (" + (WorldRandomizer.MovedCount - movedOnce) + " moved) (as after a reload or on another player's machine): the same spots (max difference " + drift.ToString("F3") + " m)");
 
 			// Extras over Raft's islands
 			List<IslandWorldState.Entry> extras = IslandWorldState.Islands.Where(WorldRandomizer.IsExtras).ToList();
@@ -1551,8 +1554,14 @@ namespace DynamicIslands
 		/// there: a wall that meets the ground (a ray along the ground hits it: no gap), or rock overhead (the gap up to
 		/// it - its rim floating over the ground, where you saw into the shell). The largest gap (m).
 		/// </summary>
+		/// <summary>DenRimGap's worst gap: the ground point under it, the way out from the den there, the den's middle and
+		/// how high the rim stands over that ground - for the ground check's picture and its ray log (c3 round 3).</summary>
+		static Vector3 rimWorstAt, rimWorstOut, rimMid;
+		static float rimWorstUp;
+
 		static float DenRimGap(Transform den, out string detail)
 		{
+			rimWorstAt = rimWorstOut = rimMid = Vector3.zero; rimWorstUp = 0f;
 			PropInfo p = RaftProps.Get(den.name);
 			List<Collider> cols = den.GetComponentsInChildren<Collider>(true).Where(c => c.enabled && !c.isTrigger).ToList();
 			if (p == null || !p.IsCave || cols.Count == 0) { detail = "not measured or no colliders"; return 99f; }
@@ -1604,7 +1613,7 @@ namespace DynamicIslands
 						if (up < float.MaxValue)
 						{
 							sides++;
-							if (up > worst) { worst = up; at = " (worst " + up.ToString("F1") + " m, " + (a * Mathf.Rad2Deg).ToString("F0") + "° round, at " + here.ToString("F0") + ")"; }
+							if (up > worst) { worst = up; rimWorstAt = here; rimWorstOut = new Vector3(dir.x, 0f, dir.y); rimWorstUp = up; rimMid = b.center; at = " (worst " + up.ToString("F1") + " m, " + (a * Mathf.Rad2Deg).ToString("F0") + "° round, at " + here.ToString("F0") + ")"; }
 							break;
 						}
 						// (the shell under the ground here: the hill covers that side - no rim to see, no gap)
@@ -1762,6 +1771,16 @@ namespace DynamicIslands
 			found(at());
 		}
 
+		/// <summary>The grotto test's farthest collider: its own object (the piece under Objects), where it is and the extras' middle, and whether physics moves it.</summary>
+		static string FarName(Collider c, IslandWorldState.Entry e)
+		{
+			Transform piece = c.transform;
+			while (piece.parent != null && piece.parent.name != "Objects" && piece.parent != e.Root.transform) piece = piece.parent;
+			Rigidbody body = c.attachedRigidbody;
+			return piece.name + (piece != c.transform ? "/" + c.name : "") + " at " + c.bounds.center.ToString("F0") + ", the extras' middle " + e.Position.ToString("F0") + ", its root " + e.Root.transform.position.ToString("F0") +
+				(body != null && !body.isKinematic ? ", moved by physics" : "") + ", '" + e.Name + "'";
+		}
+
 		static IEnumerator GrottoRoutine(bool keep)
 		{
 			if (!LoadSceneManager.IsGameSceneLoaded || !Raft_Network.IsHost) { Fail("host, in a world"); yield break; }
@@ -1808,7 +1827,7 @@ namespace DynamicIslands
 					if (e == null || e.Root == null) continue;
 					caves = e.Root.GetComponentsInChildren<Transform>(true).Where(t => RaftProps.Get(t.name) != null && RaftProps.Get(t.name).IsCave).ToList();
 					if (caves.Count > 0 || !RandomizerIslands.CanBuildCaves) break;
-					Log("  (no den with roll " + salt + ": another)");
+					Log("  (no den with roll " + salt + " in '" + e.Name + "': another)");
 				}
 				if (caves.Count > 0 || !RandomizerIslands.CanBuildCaves) break;
 				Landmark last = big;
@@ -1829,7 +1848,7 @@ namespace DynamicIslands
 			// (everything of the extras over Raft's island and its reef: nothing far out at sea)
 			Collider farthest = e.Root.GetComponentsInChildren<Collider>().Where(c => !c.isTrigger).OrderByDescending(c => new Vector2(c.bounds.center.x - e.Position.x, c.bounds.center.z - e.Position.z).sqrMagnitude).FirstOrDefault();
 			float farOut = farthest != null ? new Vector2(farthest.bounds.center.x - e.Position.x, farthest.bounds.center.z - e.Position.z).magnitude : 0f;
-			Check(ref ok, farOut < 250f, "everything of the extras within 250 m of Raft's island's middle (the farthest: " + (farthest != null ? farthest.transform.parent != null ? farthest.transform.parent.name : farthest.name : "none") + ", " + farOut.ToString("F0") + " m)");
+			Check(ref ok, farOut < 250f, "everything of the extras within 250 m of Raft's island's middle (the farthest: " + (farthest != null ? FarName(farthest, e) : "none") + ", " + farOut.ToString("F0") + " m)");
 			int outpost = e.Root.GetComponentsInChildren<IslandObjectRef>(true).Count(r => r.Props != null && r.Props.ContainsKey("set.piece") && !r.Props.ContainsKey("cave") && RaftProps.Get(r.ObjectName) != null && !RaftProps.Get(r.ObjectName).Name.Contains("Boulder"));
 			Log("  the extras hold: " + string.Join(", ", e.Root.GetComponentsInChildren<IslandObjectRef>(true).GroupBy(r => r.ObjectName + (r.Props != null && r.Props.ContainsKey("set.piece") ? " (set piece)" : "")).Select(g => g.Key + " x" + g.Count()).ToArray()));
 			Check(ref ok, caves.Count >= 1 || !RandomizerIslands.CanBuildCaves, "'" + big.name + "': " + (caves.Count > 0 ? "a den (" + caves[0].name + ")" : "no den") + (RandomizerIslands.CanBuildCaves ? "" : " (no measured cave pieces)") + ", " + outpost + " outpost props");

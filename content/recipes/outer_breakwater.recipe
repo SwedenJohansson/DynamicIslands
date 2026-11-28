@@ -138,11 +138,19 @@ beside ChoppableVines vinewall14341 vinechest14341 d=1.6
 prop vinewall14341 on.use=hide|\nshow|vinechest14341\nmessage||The machete bites through the vines. Something was hidden behind them.
 call ar_plants_tropical x=-56 z=44 r=14 seed=14321
 call ar_plants_tropical x=-24 z=64 r=14 seed=14331
+# (11-20 IG5) two of the scattered big boulders (10 m slabs) stood on an edge with their underside 3 m in the air: one
+# tipped over the ridge's crest beside the zipline's start, one over the bank by the masons' notice (ground check
+# "floating rock", pictures): taken out
+clear at 57.44 7.6 r=3 all only=^SmallBoulder2$
+clear at -36.86 59.36 r=3 all only=^SmallBoulder2$
+# (11-20 second build) with that one gone, the next boulder along the same bank stood out the same way: 2.6 m over the sea
+clear at -29.82 58.33 r=3 all only=^SmallBoulder2$
 
 # --- Tools in use (10-24: a tool given earlier in the storyline is used again here, for optional finds): the
 # machete from Triangulation Rocks cuts the vines over a hidden chest, and a zipline from the ridge top is the quick way back down
 clear from 61 4 to 76 4 r=2.5
 place ZiplinePath_Landmark ridgezip at 57 4 ground
+zipfrom ridgezip 57 4 ground
 zipto ridgezip 76 4
 
 # --- Unique layer (10-24): outer_breakwater device - see SL14_progress.md UNIQUE ISLANDS
@@ -170,11 +178,19 @@ loot wallcavechest Scrap*4;Nail*10;Rope*2;CopperOre*1;TitaniumOre*2
 # dive - a flooded pit with a wreck, an air bell, a chest and a sunk secret, a ramp out (lib_deep14)
 call dp_ground tx=45 tz=60 hb=4.1 sx=52.8 sz=70.4 hs=25.7
 call dp_tower ox=45.45 oz=56.85 hb=4.1 yaw=-53.13 al=obtower top=obtop stash=obstash zal=obtopzone zid=ob_top msg="The top of the watch tower, high over the wall. On one side the storm, on the other the garden, and a cable down to the gate house."
+# (11-20 IG5) the bridge's lowest post on the summit side stands inside the peak, its top 2.6 m under the ground (ground
+# check "buried"): taken out (its pivot 3.3 m up; the posts over it stand from 10 m)
+clear at 49 64.5 r=0.6 all only=^RT_PillarThick$ below=6
 call tzone x=50.7 z=67.6 al=obsummit id=ob_summit r=4 msg="The garden peak beside the watch tower." h=1
 call notebox x=50 z=72.5 yaw=36.87 al=obcairn
 call treasure x=54.4 z=69.2 r=1.5 n=1 seed=14941
 prop treasure14941 treasure.loot=TitaniumOre*2;Battery*1
-place ZiplinePath_Landmark obzip at 44.7 62.1 h=40.1
+# (11-21 c3z6: the line starts on the top's edge tile on its side (the tower's local 0.75 2.25), and the rope fence piece it
+# leaves through is gone. From the far corner (local 3.75 3.75) a rider hung under the top floor for 3.4 m and the rope ran
+# 4.5 m through the fence)
+clear at 43.68 58.24 r=0.4 all only=^Block_Wall_Fence_Rope$ above=39
+place ZiplinePath_Landmark obzip at 44.1 58.8 h=40.1
+zipfrom obzip 44.1 58.8 h=40.1
 zipto obzip 18 24
 place Creature_Goat obgoats at 34.8 56.4 ground
 prop obgoats creature.count=2
@@ -196,6 +212,11 @@ place TangaroaBucket ob_weight2 at 21.9 -55.4 ground sit
 prop ob_weight2 obj.name=Counterweight
 prop ob_weight2 beh.use=Pick up the counterweight
 prop ob_weight2 on.use=carry|
+# (11-20 IG5) on the hill's slope the scales were set down to the lowest ground under them, their top under the ground at
+# their middle (ground check "buried"): a small level pad for the scales, the pan and the crate
+brush flatten at 24.5 -2.5 r=3 s=20 frames=120
+clear at 24.5 -2.5 r=4
+clear at 24.5 -2.5 r=4 all only=(?i)boulder|bush|bamboo|palm|mango
 place TangaroaScaleModel ob_scales at 24 -3 ground sit yaw=90
 prop ob_scales obj.name=ob_scales
 prop ob_scales on.use=message||The wall crew's counterweight scales. A brass plate: BOTH WEIGHTS ON THE PAN - CW 1 IN THE WALL CAVE, CW 2 WITH THE SMUGGLERS.

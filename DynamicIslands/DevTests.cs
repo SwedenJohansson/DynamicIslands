@@ -32,6 +32,10 @@ namespace DynamicIslands
 		// (ci.ps1 -done used to stop at CIA's IDLE while CIB ran on, and the next run's test overlapped it)
 		static int pendingCommands;
 		static bool idleOwed;
+		// (speedups 11-19: counts IDLE lines, so a command file that started no test - a setter, a fail-fast, a typo - still
+		//  ends with one IDLE and ci.ps1 -done stops at once instead of waiting out its timeout: 8.4 h in 5 days)
+		static int idleSerial;
+		static void LogIdle() { idleSerial++; Log("IDLE (all tests done)"); }
 		static Coroutine StartTest(IEnumerator e)
 		{
 			if (exclusiveTest != null && exclusiveTest != e) StopExclusive();
@@ -69,7 +73,7 @@ namespace DynamicIslands
 				if (--runningTests < 0) runningTests = 0;
 			}
 			Log("Stopped " + names.Count + " running test(s)" + (names.Count > 0 ? ": " + string.Join(", ", names.ToArray()) : ""));
-			if (runningTests == 0) { if (pendingCommands > 0) idleOwed = true; else Log("IDLE (all tests done)"); }
+			if (runningTests == 0) { if (pendingCommands > 0) idleOwed = true; else LogIdle(); }
 		}
 
 		/// <summary>A test routine's name from its iterator class ("&lt;RoundTripRoutine&gt;d__12" -> RoundTripRoutine).</summary>
@@ -150,7 +154,7 @@ namespace DynamicIslands
 			if (exclusiveTest == e) { exclusiveTest = null; exclusiveRun = null; }
 			runningIds.Remove(id);
 			runningRuns.Remove(id);
-			if (--runningTests <= 0) { runningTests = 0; if (pendingCommands > 0) idleOwed = true; else Log("IDLE (all tests done)"); }
+			if (--runningTests <= 0) { runningTests = 0; if (pendingCommands > 0) idleOwed = true; else LogIdle(); }
 		}
 
 		[ConsoleCommand(name: "CITest", docs: "Dev: automated editor test (sculpt, place, save, load, verify)")]
@@ -1058,7 +1062,7 @@ namespace DynamicIslands
 			int low = fly.Root.GetComponentsInChildren<EditorGameObject>(true).Length + fly.Root.transform.Find("Objects").Cast<Transform>().Count(t => t.position.y < Flying - 1f);
 			Check(ref ok, low == 0, "no objects hang below the flying island (" + fly.Root.transform.Find("Objects").childCount + " objects)");
 
-			yield return StandRoutine(); // puts the player on the nearest island's peak and logs PASS/FAIL
+			yield return StandRoutine(fly.Root); // puts the player on the flying island's peak and logs PASS/FAIL
 
 			// Under water, 250 m to the side
 			pos = raftPos.Value + Vector3.right * 300f; pos.y = Sunken;
@@ -1355,13 +1359,15 @@ namespace DynamicIslands
 			StartTest(PushTowards(new Vector3(x, 0, z), seconds, "(" + x + ", " + z + ")"));
 		}
 
-		[ConsoleCommand(name: "CISail", docs: "Dev, in game (host, Normal world): sails the raft straight ahead for <seconds> (default 120) at <m/s> (default 15) and logs custom islands spawning / unloading")]
+		[ConsoleCommand(name: "CISail", docs: "Dev, in game (host, Normal world): sails the raft straight ahead for <seconds> (default 120) at <m/s> (default 15) and logs custom islands spawning / unloading; an optional <heading> (degrees, 0 = +z) fixes the line, so a leg at -15 and one at 15 on the same heading come back (without it the leg follows the raft's own drift, which after a push points anywhere)")]
 		public static void Sail(string[] args)
 		{
 			float seconds = args != null && args.Length > 0 ? float.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture) : 120f;
 			float speed = args != null && args.Length > 1 ? float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) : 15f;
+			float? heading = null;
+			if (args != null && args.Length > 2) heading = float.Parse(args[2], System.Globalization.CultureInfo.InvariantCulture);
 			RunInBackground();
-			StartTest(SailRoutine(seconds, speed));
+			StartTest(SailRoutine(seconds, speed, heading));
 		}
 
 		[ConsoleCommand(name: "CICloseRmlMenu", docs: "Dev: closes RML's own menu (the one F9 opens, open when Raft starts) without a key press - tests with Raft minimised (tools\\quiet.ps1)")]
@@ -1420,6 +1426,7 @@ namespace DynamicIslands
 			for (float t = 0; t < 200f; t += Time.fixedDeltaTime)
 			{
 				yield return new WaitForFixedUpdate();
+				if (body == null) { Log("Sail stopped: the raft is gone (the world was left mid-sail)"); yield break; }
 				KeepAlive(player);
 				Vector3 to = Flat(target() - body.position);
 				if (to.magnitude < 3f) break;
@@ -1428,12 +1435,13 @@ namespace DynamicIslands
 			body.velocity = Vector3.zero; body.angularVelocity = Vector3.zero; // (a raft dragged at test speed through the sea keeps no spin either)
 			Log("Sailed back: the raft " + Flat(target() - body.position).magnitude.ToString("F0") + " m from where it was");
 		}
-		static IEnumerator SailRoutine(float seconds, float speed)
+		static IEnumerator SailRoutine(float seconds, float speed, float? heading = null)
 		{
 			Raft raft = UnityEngine.Object.FindObjectOfType<Raft>();
 			if (raft == null || raft.body == null) { Fail("no raft"); yield break; }
 			Rigidbody body = raft.body;
-			Vector3 dir = Flat(body.velocity).sqrMagnitude > 0.04f ? Flat(body.velocity).normalized : (Flat(Raft.direction).sqrMagnitude > 0.01f ? Flat(Raft.direction).normalized : Vector3.forward);
+			Vector3 dir = heading.HasValue ? Quaternion.Euler(0f, heading.Value, 0f) * Vector3.forward
+				: Flat(body.velocity).sqrMagnitude > 0.04f ? Flat(body.velocity).normalized : (Flat(Raft.direction).sqrMagnitude > 0.01f ? Flat(Raft.direction).normalized : Vector3.forward);
 			int startCount = IslandWorldState.Islands.Count;
 			Log("Sailing " + dir + " at " + speed + " m/s for " + seconds + " s; custom islands in the world: " + startCount + ", auto " + (CustomIslandSpawner.Enabled ? "on" : "off"));
 			float t = 0, sailed = 0, nextLog = 10f;
@@ -1444,6 +1452,8 @@ namespace DynamicIslands
 			while (t < seconds)
 			{
 				yield return new WaitForFixedUpdate();
+				// The world can be left mid-sail (a tool that gave up waiting goes to the main menu): stop, don't throw
+				if (body == null) { Log("Sail stopped: the raft is gone (the world was left mid-sail)"); yield break; }
 				t += Time.fixedDeltaTime;
 				KeepAlive(player);
 				// Raft's own physics caps the raft's speed, so move the body directly (the player on it moves along)
@@ -1761,6 +1771,8 @@ namespace DynamicIslands
 			while (t < seconds)
 			{
 				yield return new WaitForFixedUpdate();
+				// The world can be left mid-sail (a tool that gave up waiting goes to the main menu): stop, don't throw
+				if (body == null) { Log("Sail stopped: the raft is gone (the world was left mid-sail)"); yield break; }
 				t += Time.fixedDeltaTime;
 				KeepAlive(player);
 				Vector3 before = body.position;
@@ -2146,6 +2158,12 @@ namespace DynamicIslands
 		// a watcher reads the log's tail - no HB for 30 s = Raft hung or crashed, HB without prog for 90 s = a test stuck.
 		internal static string hbWhat = "idle";
 		internal static int hbStep, hbProg;
+		/// <summary>The newest running test's routine name (for the heartbeat), "running" when none is listed.</summary>
+		static string RunningTestName()
+		{
+			if (runningRuns.Count == 0) return "running";
+			return TestName(runningRuns[runningRuns.Keys.Max()].Key);
+		}
 		static IEnumerator HeartbeatLoop()
 		{
 			while (true)
@@ -2165,7 +2183,11 @@ namespace DynamicIslands
 					}
 				}
 				catch { }
-				Log("HB " + (runningTests > 0 ? hbWhat.Replace(' ', '_') : "idle") + " step=" + hbStep + " prog=" + hbProg + " pos=" + pos + " hp=" + hp + " dead=" + (dead ? 1 : 0));
+				// (IG8 11-20: a running test that never set hbWhat said "HB idle", so ci.ps1 -done took four of them for "the
+				//  command started no test" and the runner's next CIMainMenu left the world under CIOneSidedIslands - its last
+				//  77 islands found "no open sea". Running: never "idle" - the test's own name when it set none)
+				string what = runningTests > 0 ? (hbWhat != "idle" ? hbWhat : "test " + RunningTestName()) : "idle";
+				Log("HB " + what.Replace(' ', '_') + " step=" + hbStep + " prog=" + hbProg + " pos=" + pos + " hp=" + hp + " dead=" + (dead ? 1 : 0));
 				// (PQ11 10-28: the box's player starved on its drifting raft while it stood idle for half an hour, and the next
 				// play's results came from a dead player. Idle in a world: kept fed and well. Dead: a FAIL line, then up again)
 				if (pl != null && dead)
@@ -2250,7 +2272,7 @@ namespace DynamicIslands
 				Application.runInBackground = true; // commands arrive while Raft is in the background
 				// One line after another: a line waits until the tests the earlier lines started have ended (two tests
 				// that both generate or load islands at once spoil each other - CIGenRaftFeatures next to CIGenParity, 10-16)
-				List<string> todo = lines.Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith("#")).ToList();
+				List<string> todo = lines.Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith("#")).ToList(); int idles0 = idleSerial;
 				// (only the tests this file's lines start: a test left running from before - one that never ended - held
 				// every later file's second line for good, RUN1 10-20; CIPollerWait)
 				int firstTest = testSerial + 1;
@@ -2276,7 +2298,7 @@ namespace DynamicIslands
 					catch (Exception e) { Fail("command '" + line + "': " + (e.InnerException ?? e)); }
 				}
 				pendingCommands = 0;
-				if (idleOwed && runningTests == 0) Log("IDLE (all tests done)");
+				if (runningTests == 0 && (idleOwed || idleSerial == idles0)) LogIdle();
 				idleOwed = false;
 			}
 		}
@@ -2287,6 +2309,24 @@ namespace DynamicIslands
 		static int pollerMarks;
 		[ConsoleCommand(name: "CIPollerMark", docs: "Dev, helper of CIPollerWait: counts one mark")]
 		public static void PollerMarkCommand() { pollerMarks++; Log("poller mark " + pollerMarks); }
+
+		[ConsoleCommand(name: "CIPlainIdle", docs: "Dev: a command file of plain commands only (no test) ends with IDLE too - CICaveCell and CIDownRays left ci.ps1 -done waiting its whole timeout. Not a test itself (it waits for no test to run): run it without -done, it ends at PASS or FAIL")]
+		public static void PlainIdleCommand() { DynamicIslands.instance.StartCoroutine(PlainIdleRoutine()); }
+
+		static IEnumerator PlainIdleRoutine()
+		{
+			float end = Time.realtimeSinceStartup + 30f;
+			while ((runningTests > 0 || File.Exists(CommandFile)) && Time.realtimeSinceStartup < end) yield return null;
+			// (the file that ran this command has had its IDLE by now)
+			yield return new WaitForSecondsRealtime(0.5f);
+			if (runningTests > 0) { Fail("plain idle: a test still runs after 30 s"); yield break; }
+			int idles = idleSerial, marks = pollerMarks;
+			File.WriteAllLines(CommandFile, new[] { "CIPollerMark" });
+			end = Time.realtimeSinceStartup + 5f;
+			while (idleSerial == idles && Time.realtimeSinceStartup < end) yield return null;
+			if (pollerMarks == marks + 1 && idleSerial == idles + 1) Log("PASS: plain idle (a file of one plain command ran and logged IDLE)");
+			else Fail("plain idle: the plain command ran " + (pollerMarks - marks) + " time(s), IDLE after it " + (idleSerial - idles) + " time(s) in 5 s");
+		}
 
 		static IEnumerator PollerWaitRoutine()
 		{
@@ -2368,6 +2408,16 @@ namespace DynamicIslands
 
 		static IEnumerator WaitForEditor(bool report)
 		{
+			// (in a world, leave it for the main menu first, as CIMainMenu does: the editor opens only from the menu, and a reseat
+			// run after a play waited 120 s, then failed every island "the editor didn't load it" - 38 of them, IG5 11-18)
+			if (!DynamicIslands.InEditor() && LoadSceneManager.IsGameSceneLoaded && ComponentManager<Raft_Network>.Value != null)
+			{
+				Log("In a world: leaving it for the main menu before the editor");
+				StopExclusive();
+				Claims.TestAnswerDelay = 0f; CustomIslandSpawner.TestGenerateDelay = 0f;
+				ComponentManager<Raft_Network>.Value.LeaveGame((DisconnectReason)2, (SceneName)1, true, false);
+				yield return WaitForMainMenu();
+			}
 			if (!DynamicIslands.InEditor()) DynamicIslands.LoadEditor(new string[0]);
 			float timeout = Time.realtimeSinceStartup + 120f;
 			while (!(DynamicIslands.InEditor() && PlaceableCatalog.IsBuilt && DynamicIslands.EditorGizmoHandler != null && EditorUI.Canvas != null))
@@ -2382,7 +2432,8 @@ namespace DynamicIslands
 				for (float until = Time.realtimeSinceStartup + 5f; !ChoiceWindow.IsOpen && Time.realtimeSinceStartup < until; ) yield return new WaitForSecondsRealtime(0.25f);
 				if (ChoiceWindow.IsOpen) { ChoiceWindow.Close(); Log("The offer of unsaved work closed (tests): " + string.Join(", ", EditorAutosave.Waiting().ToArray())); }
 			}
-			if (report) Log("Editor ready: " + PlaceableCatalog.Names.Count() + " objects loaded");
+			// (CIEditor reports a result, so a job counts it: hollow-tests 11-24)
+			if (report) Log("PASS: editor ready: " + PlaceableCatalog.Names.Count() + " objects loaded");
 		}
 
 		[ConsoleCommand(name: "CITab", docs: "Dev, editor: switches the editor tab: CITab terrain|objects|island")]
@@ -2604,12 +2655,21 @@ namespace DynamicIslands
 				yield return null;
 				Log("Game mode " + want);
 			}
-			box.inputfield_GameName.text = name;
-			box.GameNameEndEdit(name);
-			string solo = Editor.IslandTest.SoloWhenOffline(box);
-			if (solo != null) Log(solo);
-			for (float t = 0; t < 5f && box.createGameButton != null && !box.createGameButton.interactable; t += 0.5f) yield return new WaitForSecondsRealtime(0.5f);
-			if (box.createGameButton != null && !box.createGameButton.interactable) { Fail("Create is disabled (name taken or invalid, or offline: PlayFab signed in " + Raft_Network.SignedIntoPlayfab + ")"); yield break; }
+			// (a name a world already has leaves Create disabled: the name with b, c ... after it instead, said in the log - 11-21 c3z20:
+			// three batches of one job each asked for 'cat3z20', the first made it, the others stayed at the menu and their checks
+			// failed "host, in a world" in a second, 39 islands unmeasured)
+			string asked = name;
+			for (int k = 1; ; k++)
+			{
+				box.inputfield_GameName.text = name;
+				box.GameNameEndEdit(name);
+				if (k == 1) { string solo = Editor.IslandTest.SoloWhenOffline(box); if (solo != null) Log(solo); }
+				for (float t = 0; t < 5f && box.createGameButton != null && !box.createGameButton.interactable; t += 0.5f) yield return new WaitForSecondsRealtime(0.5f);
+				if (box.createGameButton == null || box.createGameButton.interactable) break;
+				if (k >= 6) { Fail("Create is disabled (name taken or invalid, or offline: PlayFab signed in " + Raft_Network.SignedIntoPlayfab + "); tried '" + asked + "' and '" + asked + "b' to '" + name + "'"); yield break; }
+				name = asked + (char)('a' + k);
+			}
+			if (name != asked) Log("World name '" + asked + "' taken: '" + name + "' instead");
 			Log("Creating world '" + name + "'");
 			MadeWorld = name;
 			// (a test world gets defaultPlan unless a test chose one: not the plan the last world was made with, ROADMAP CB5)

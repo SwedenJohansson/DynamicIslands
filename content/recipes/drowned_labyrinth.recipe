@@ -271,4 +271,6 @@ prop treasure8843 treasure.loot=TitaniumOre*2
 
 # (box agent 10-24: generated rocks left hanging over the ground check - cleared)
 clear at -19.15 -7.02 r=1.2 all only=CaravanIsland_SmallRock_1
+# (c3z43 11-21, CIGroundIslands: a generated bushy tree on the edge of a drop, all its foot over it)
+clear at 20.7 -3.68 r=2 all only=^SmallBushyTree
 save The Drowned Labyrinth

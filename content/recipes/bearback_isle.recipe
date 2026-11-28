@@ -32,7 +32,10 @@ place Creature_Bear bear at 1 10 h=2.1
 # ===== Things to gather: mangoes and pineapples round the hump; a buried treasure; Raft's finds in the shallows ============
 scatter "Pickup_Landmark_Tree_Mango" 2 at 0 0 r=22 seed=7413 free=6
 scatter "Pickup_Landmark_PineappleLandmark" 2 at 0 0 r=22 seed=7423 free=4
-call treasure x=0 z=-12 r=8 n=1 seed=7403
+# (placed, not scattered: south of the rock every free spot within 8 m was taken by the rock or the bushes)
+clear at 0 -17 r=3
+place Treasure_Buried treasure7403 at 0 -17 ground
+prop treasure7403 treasure.kind=0
 call shallows r=42 deep=5 n=1 seed=743
 
 info title=Bearback Isle

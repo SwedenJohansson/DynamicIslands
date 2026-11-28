@@ -19,9 +19,13 @@ include lib_features
 include lib_highwater
 include lib_areas
 include lib_raft_remade
+include lib_caves
 new
 # (nature and the life under water: as on Raft's island itself - Randomize existing measures them)
 randomize Utopia like Seed=7108 Radius=55 Height=22 Cliffs=0.25 BeachWidth=0.5 Hostiles=0 Friendly=0 SeaLife=0.3 Trees=0.4 Bushes=0.5 Rocks=0.75 Harvest=0.7 Water=0.5
+# (U 11-01: REACH - Randomize's drowned tower east of the island had a roofed ledge 1.8 m under the water: a swimmer got
+# onto it and not off - taken out)
+clear at 115 53 r=8 all only=UT_Set_Tower
 
 # --- Terrain: the quay on the north beach (1.8 m), the prison house's flats (6 m), the warden's yard on the summit
 # (18 m) and the path from the quay up to its gate ----------------------------------------------------------------------
@@ -35,6 +39,12 @@ for i 0 10 1
 brush flatten at {4-$i*1.05} {41-$i*3.6} r=2.8 s=20 frames=30 h={2.5+$i*1.51}
 next
 brush smooth from 4 41 to -6.5 5 r=3 s=10 frames=20
+# (U 11-01: REACH - the path's flanks stood 3.5 m over the flat beside its foot: the walker went up one and stuck short of
+# the yard - the path made wider and its flanks smoothed)
+for i 1 9 1
+brush flatten at {4-$i*1.05} {41-$i*3.6} r=4.2 s=20 frames=30 h={2.5+$i*1.51}
+next
+brush smooth from 3 37.4 to -5.5 8.6 r=5 s=10 frames=25
 origin
 clear from -2 45 to 18 45 r=8
 clear at 22 12 r=20
@@ -128,7 +138,12 @@ clear at 0 -74 r=30 all body
 call hw_mount x=0 z=-74 b=24 h=26
 call hw_trail x=0 z=-74 b=24 h=26 a0=0 turn=300 n=30 h0=3
 brush flatten at 0 -74 r=8 s=20 frames=400 h=26
-call hw_mast x=0 z=-74 h0=26 lv=6 a=lighthousemast chest=keeperbox top=Placeable_Lantern_Metal
+# (11-24 REACH: the deck sunk 0.45 m under the ladder's top, as Old Mine's headframe: the climber could not step off it)
+call hw_mast x=0 z=-74 h0=26 lv=6 a=lighthousemast chest=keeperbox top=Placeable_Lantern_Metal deckdrop=0.45
+# (bugfix 11-25, REACH: the walker that came round the summit to the mast's 0.9 m door from its south-west corner
+# caught the door's frame and slid off round the west wall (11-24 and 11-25 runs alike, the keeper's box out of reach):
+# the door piece taken out, a 1.5 m gap in the bottom storey's front wall)
+clear at -0.75 -75.5 r=0.6 all only=Block_Wall_Door_Tier3
 # B Olof's crew camp (west): their stone hut, a tent, a fire, their boxes
 call rr_pad x=-72 z=4 h=3 r=14
 call rr_ruin x=-72 z=8 h=3 yaw=0 w=3 d=2 al=crewhut
@@ -142,7 +157,9 @@ call ar_cave x=62 z=-36 h=3 yaw=180 al=quarryrock chest=quarrybox
 call ar_plane x=-48 z=46 h=3 yaw=150 al=wardenplane crate=planecrate
 # E The cargo yard (south-east): containers the storm threw up, the yard's crate
 call rr_containers x=42 z=-54 h=3 yaw=-20 n=3 al=yardcontainer
-place Loot_Crate yardcrate at 34 -46 ground sit yaw=10
+# (11-24 REACH: at 34 -46 a cave hill's skin lay 0.6 m under the yard's ground and the crate was 'can't get there', the
+# nearest reached spot 3.5 m off at 30.9 -48.3 - moved there)
+place Loot_Crate yardcrate at 31.2 -48.2 ground sit yaw=10
 # (agent Q 10-30, REACH: sea lay between the cargo yard and the quarry cave's mouth path - the cave and the quarrymen's
 # strongbox had no way in on foot: a strip of land joins them)
 brush flatten from 52 -52.2 to 60.5 -52 r=3.5 s=20 frames=200 h=3.2
@@ -156,6 +173,263 @@ brush flatten at 40.8 -27.8 r=1.4 s=20 frames=200 h=-0.2
 brush flatten at 41.2 -28.6 r=1.4 s=20 frames=200 h=-0.9
 brush flatten at 41.6 -29.4 r=1.4 s=20 frames=200 h=-1.6
 clear from 40.4 -27.0 to 41.6 -29.4 r=2.4 body
+# (U 11-01: REACH - the steps still left the bay a trap (the bank 1 m over the water where a swimmer comes to it): wide
+# beaches from the bank down under the water, under 0.5 m a step, on the bay's two land sides)
+for i 0 7 1
+brush flatten at {38.6+$i*0.75} {-26.6-$i*0.8} r=2.8 s=20 frames=200 h={1.0-$i*0.45}
+next
+for i 0 10 1
+brush flatten at {38.0+$i*0.8} -36.0 r=2.6 s=20 frames=200 h={1.4-$i*0.5}
+next
+for i 0 9 1
+brush flatten at {43.6+$i*0.3} {-43.6+$i*0.42} r=2.6 s=20 frames=200 h={2.4-$i*0.5}
+next
+clear from 38 -26 to 44 -32.5 r=3.5 body
+clear from 38 -36 to 46 -36 r=3 body
+clear from 43.6 -43.6 to 46.3 -39.8 r=3 body
+# (U 11-01: REACH - two small traps were left where the bay runs in under the quarry ridge's cave rock: the rock's skirt
+# hangs 0-2 m over the water there and a swimmer under it has no room to climb out - the floor under the skirt brought
+# up level with the sea, so whoever comes in there wades out to the bay's shallows)
+brush flatten from 40.9 -28.3 to 42.4 -36.6 r=2.2 s=20 frames=200 h=0
+# (that cut off the deep pool further in under the rock, at the third beach's foot, from the water it left by: it is
+# brought up level with the sea too, and joined to the rest, so the third beach and the shallows lead out of it)
+brush flatten from 42.4 -36.6 to 46.7 -40.5 r=2.2 s=20 frames=200 h=0
+brush flatten at 46.7 -40.5 r=3.2 s=20 frames=200 h=0
+# (U 11-01: REACH - the quarry cave's rock hangs out over the bay on its west side, and the ground under that skirt drops
+# away, so thin roofed pockets were left between the sand and the rock that a swimmer could get into and not out of; they
+# moved from build to build. The ground under the skirt is raised to just under the rock's top (never lowered, at most
+# 6 m), measured on a 1 m grid with and without the rock, so nothing is left between them.)
+brush flatten at 43.58 -18.99 r=0.9 s=20 frames=200 h=2.9
+brush flatten at 44.58 -18.99 r=0.9 s=20 frames=200 h=3.8
+brush flatten at 45.58 -18.99 r=0.9 s=20 frames=200 h=4.5
+brush flatten at 46.58 -18.99 r=0.9 s=20 frames=200 h=5.1
+brush flatten at 47.58 -18.99 r=0.9 s=20 frames=200 h=5.8
+brush flatten at 48.58 -18.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -19.99 r=0.9 s=20 frames=200 h=2.6
+brush flatten at 43.58 -19.99 r=0.9 s=20 frames=200 h=3.5
+brush flatten at 44.58 -19.99 r=0.9 s=20 frames=200 h=4.4
+brush flatten at 45.58 -19.99 r=0.9 s=20 frames=200 h=5.1
+brush flatten at 46.58 -19.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -19.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -19.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -20.99 r=0.9 s=20 frames=200 h=3.0
+brush flatten at 43.58 -20.99 r=0.9 s=20 frames=200 h=4.1
+brush flatten at 44.58 -20.99 r=0.9 s=20 frames=200 h=5.1
+brush flatten at 45.58 -20.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -20.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -20.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -20.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -21.99 r=0.9 s=20 frames=200 h=2.4
+brush flatten at 42.58 -21.99 r=0.9 s=20 frames=200 h=3.5
+brush flatten at 43.58 -21.99 r=0.9 s=20 frames=200 h=4.8
+brush flatten at 44.58 -21.99 r=0.9 s=20 frames=200 h=5.9
+brush flatten at 45.58 -21.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -21.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -21.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -21.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -22.99 r=0.9 s=20 frames=200 h=2.7
+brush flatten at 42.58 -22.99 r=0.9 s=20 frames=200 h=3.9
+brush flatten at 43.58 -22.99 r=0.9 s=20 frames=200 h=5.3
+brush flatten at 44.58 -22.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -22.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -22.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -22.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -22.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 40.58 -23.99 r=0.9 s=20 frames=200 h=1.8
+brush flatten at 41.58 -23.99 r=0.9 s=20 frames=200 h=2.7
+brush flatten at 42.58 -23.99 r=0.9 s=20 frames=200 h=3.9
+brush flatten at 43.58 -23.99 r=0.9 s=20 frames=200 h=5.6
+brush flatten at 44.58 -23.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -23.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -23.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -23.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -23.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 40.58 -24.99 r=0.9 s=20 frames=200 h=1.6
+brush flatten at 41.58 -24.99 r=0.9 s=20 frames=200 h=2.6
+brush flatten at 42.58 -24.99 r=0.9 s=20 frames=200 h=4.1
+brush flatten at 43.58 -24.99 r=0.9 s=20 frames=200 h=5.8
+brush flatten at 44.58 -24.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -24.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -24.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -24.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -24.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 39.58 -25.99 r=0.9 s=20 frames=200 h=0.8
+brush flatten at 40.58 -25.99 r=0.9 s=20 frames=200 h=1.5
+brush flatten at 41.58 -25.99 r=0.9 s=20 frames=200 h=2.6
+brush flatten at 42.58 -25.99 r=0.9 s=20 frames=200 h=4.1
+brush flatten at 43.58 -25.99 r=0.9 s=20 frames=200 h=5.8
+brush flatten at 44.58 -25.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -25.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -25.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -25.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -25.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 39.58 -26.99 r=0.9 s=20 frames=200 h=0.7
+brush flatten at 40.58 -26.99 r=0.9 s=20 frames=200 h=1.5
+brush flatten at 41.58 -26.99 r=0.9 s=20 frames=200 h=2.5
+brush flatten at 42.58 -26.99 r=0.9 s=20 frames=200 h=4.0
+brush flatten at 43.58 -26.99 r=0.9 s=20 frames=200 h=5.7
+brush flatten at 44.58 -26.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -26.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -26.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -26.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -26.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 39.58 -27.99 r=0.9 s=20 frames=200 h=0.6
+brush flatten at 40.58 -27.99 r=0.9 s=20 frames=200 h=1.4
+brush flatten at 41.58 -27.99 r=0.9 s=20 frames=200 h=2.5
+brush flatten at 42.58 -27.99 r=0.9 s=20 frames=200 h=4.0
+brush flatten at 43.58 -27.99 r=0.9 s=20 frames=200 h=5.7
+brush flatten at 44.58 -27.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -27.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -27.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -27.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -27.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 39.58 -28.99 r=0.9 s=20 frames=200 h=0.6
+brush flatten at 40.58 -28.99 r=0.9 s=20 frames=200 h=1.4
+brush flatten at 41.58 -28.99 r=0.9 s=20 frames=200 h=2.5
+brush flatten at 42.58 -28.99 r=0.9 s=20 frames=200 h=3.9
+brush flatten at 43.58 -28.99 r=0.9 s=20 frames=200 h=5.5
+brush flatten at 44.58 -28.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -28.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -28.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -28.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -28.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 39.58 -29.99 r=0.9 s=20 frames=200 h=0.5
+brush flatten at 40.58 -29.99 r=0.9 s=20 frames=200 h=1.2
+brush flatten at 41.58 -29.99 r=0.9 s=20 frames=200 h=2.3
+brush flatten at 42.58 -29.99 r=0.9 s=20 frames=200 h=3.6
+brush flatten at 43.58 -29.99 r=0.9 s=20 frames=200 h=5.1
+brush flatten at 44.58 -29.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -29.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -29.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -29.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -29.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 40.58 -30.99 r=0.9 s=20 frames=200 h=1.0
+brush flatten at 41.58 -30.99 r=0.9 s=20 frames=200 h=2.0
+brush flatten at 42.58 -30.99 r=0.9 s=20 frames=200 h=3.2
+brush flatten at 43.58 -30.99 r=0.9 s=20 frames=200 h=4.6
+brush flatten at 44.58 -30.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 45.58 -30.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -30.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -30.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -30.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 40.58 -31.99 r=0.9 s=20 frames=200 h=0.7
+brush flatten at 41.58 -31.99 r=0.9 s=20 frames=200 h=1.7
+brush flatten at 42.58 -31.99 r=0.9 s=20 frames=200 h=2.8
+brush flatten at 43.58 -31.99 r=0.9 s=20 frames=200 h=4.1
+brush flatten at 44.58 -31.99 r=0.9 s=20 frames=200 h=5.2
+brush flatten at 45.58 -31.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -31.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -31.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -31.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -32.99 r=0.9 s=20 frames=200 h=1.2
+brush flatten at 42.58 -32.99 r=0.9 s=20 frames=200 h=2.2
+brush flatten at 43.58 -32.99 r=0.9 s=20 frames=200 h=3.2
+brush flatten at 44.58 -32.99 r=0.9 s=20 frames=200 h=4.3
+brush flatten at 45.58 -32.99 r=0.9 s=20 frames=200 h=5.3
+brush flatten at 46.58 -32.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -32.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -32.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -33.99 r=0.9 s=20 frames=200 h=0.7
+brush flatten at 42.58 -33.99 r=0.9 s=20 frames=200 h=1.6
+brush flatten at 43.58 -33.99 r=0.9 s=20 frames=200 h=2.3
+brush flatten at 44.58 -33.99 r=0.9 s=20 frames=200 h=3.3
+brush flatten at 45.58 -33.99 r=0.9 s=20 frames=200 h=4.4
+brush flatten at 46.58 -33.99 r=0.9 s=20 frames=200 h=5.3
+brush flatten at 47.58 -33.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -33.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -34.99 r=0.9 s=20 frames=200 h=0.4
+brush flatten at 42.58 -34.99 r=0.9 s=20 frames=200 h=1.1
+brush flatten at 43.58 -34.99 r=0.9 s=20 frames=200 h=1.7
+brush flatten at 44.58 -34.99 r=0.9 s=20 frames=200 h=2.7
+brush flatten at 45.58 -34.99 r=0.9 s=20 frames=200 h=3.6
+brush flatten at 46.58 -34.99 r=0.9 s=20 frames=200 h=4.6
+brush flatten at 47.58 -34.99 r=0.9 s=20 frames=200 h=5.8
+brush flatten at 48.58 -34.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -35.99 r=0.9 s=20 frames=200 h=0.8
+brush flatten at 43.58 -35.99 r=0.9 s=20 frames=200 h=1.5
+brush flatten at 44.58 -35.99 r=0.9 s=20 frames=200 h=2.4
+brush flatten at 45.58 -35.99 r=0.9 s=20 frames=200 h=3.4
+brush flatten at 46.58 -35.99 r=0.9 s=20 frames=200 h=4.5
+brush flatten at 47.58 -35.99 r=0.9 s=20 frames=200 h=5.7
+brush flatten at 48.58 -35.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -36.99 r=0.9 s=20 frames=200 h=0.9
+brush flatten at 43.58 -36.99 r=0.9 s=20 frames=200 h=1.6
+brush flatten at 44.58 -36.99 r=0.9 s=20 frames=200 h=2.5
+brush flatten at 45.58 -36.99 r=0.9 s=20 frames=200 h=3.5
+brush flatten at 46.58 -36.99 r=0.9 s=20 frames=200 h=4.7
+brush flatten at 47.58 -36.99 r=0.9 s=20 frames=200 h=5.9
+brush flatten at 48.58 -36.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -37.99 r=0.9 s=20 frames=200 h=0.6
+brush flatten at 42.58 -37.99 r=0.9 s=20 frames=200 h=1.1
+brush flatten at 43.58 -37.99 r=0.9 s=20 frames=200 h=1.9
+brush flatten at 44.58 -37.99 r=0.9 s=20 frames=200 h=2.9
+brush flatten at 45.58 -37.99 r=0.9 s=20 frames=200 h=3.9
+brush flatten at 46.58 -37.99 r=0.9 s=20 frames=200 h=5.2
+brush flatten at 47.58 -37.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -37.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -38.99 r=0.9 s=20 frames=200 h=1.5
+brush flatten at 43.58 -38.99 r=0.9 s=20 frames=200 h=2.4
+brush flatten at 44.58 -38.99 r=0.9 s=20 frames=200 h=3.4
+brush flatten at 45.58 -38.99 r=0.9 s=20 frames=200 h=4.6
+brush flatten at 46.58 -38.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -38.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -38.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -39.99 r=0.9 s=20 frames=200 h=2.1
+brush flatten at 43.58 -39.99 r=0.9 s=20 frames=200 h=2.9
+brush flatten at 44.58 -39.99 r=0.9 s=20 frames=200 h=3.9
+brush flatten at 45.58 -39.99 r=0.9 s=20 frames=200 h=5.3
+brush flatten at 46.58 -39.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -39.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -39.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -40.99 r=0.9 s=20 frames=200 h=2.5
+brush flatten at 43.58 -40.99 r=0.9 s=20 frames=200 h=3.3
+brush flatten at 44.58 -40.99 r=0.9 s=20 frames=200 h=4.4
+brush flatten at 45.58 -40.99 r=0.9 s=20 frames=200 h=5.9
+brush flatten at 46.58 -40.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -40.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -40.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -41.99 r=0.9 s=20 frames=200 h=2.8
+brush flatten at 43.58 -41.99 r=0.9 s=20 frames=200 h=3.6
+brush flatten at 44.58 -41.99 r=0.9 s=20 frames=200 h=4.8
+brush flatten at 45.58 -41.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -41.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -41.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -41.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -42.99 r=0.9 s=20 frames=200 h=2.5
+brush flatten at 42.58 -42.99 r=0.9 s=20 frames=200 h=3.0
+brush flatten at 43.58 -42.99 r=0.9 s=20 frames=200 h=3.8
+brush flatten at 44.58 -42.99 r=0.9 s=20 frames=200 h=5.2
+brush flatten at 45.58 -42.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -42.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -42.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -42.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -43.99 r=0.9 s=20 frames=200 h=3.3
+brush flatten at 43.58 -43.99 r=0.9 s=20 frames=200 h=3.9
+brush flatten at 44.58 -43.99 r=0.9 s=20 frames=200 h=5.2
+brush flatten at 45.58 -43.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -43.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -43.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -43.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 41.58 -44.99 r=0.9 s=20 frames=200 h=2.8
+brush flatten at 42.58 -44.99 r=0.9 s=20 frames=200 h=3.4
+brush flatten at 43.58 -44.99 r=0.9 s=20 frames=200 h=4.1
+brush flatten at 44.58 -44.99 r=0.9 s=20 frames=200 h=5.3
+brush flatten at 45.58 -44.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -44.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -44.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -44.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 42.58 -45.99 r=0.9 s=20 frames=200 h=3.5
+brush flatten at 43.58 -45.99 r=0.9 s=20 frames=200 h=4.2
+brush flatten at 44.58 -45.99 r=0.9 s=20 frames=200 h=5.3
+brush flatten at 45.58 -45.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 46.58 -45.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 47.58 -45.99 r=0.9 s=20 frames=200 h=6.0
+brush flatten at 48.58 -45.99 r=0.9 s=20 frames=200 h=6.0
+# (U 11-01: REACH - the crew's journal: a swimmer coming to the camp's north shore stood in water a metre deep under a
+# bank a metre over the sea and could not climb it - a beach from the water up the bank, under 0.5 m a step)
+for i 0 7 1
+brush flatten at {-60.9-$i*0.1} {14.2-$i*0.8} r=2.2 s=20 frames=200 h={-1.2+$i*0.35}
+next
 # --- JUMP COURSE ut (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
 # JUMP ut pad=3 at=66 32
 push at 66 32
@@ -197,6 +471,14 @@ prop jput tint.color=#857a68
 prop jput tint.amount=0.35
 prop jpput tint.color=#857a68
 prop jpput tint.amount=0.35
+# (U 11-01: REACH - the stack-top chest, the guards' tin and the finale stood on slabs only a run of hops reaches, and
+# nobody who can't make them gets up (or, once up, down but by a drop): a ladder up the stack-top slab's west side and
+# one up the tin's slab's east side, their tops just over the slabs, their feet in the pad; a Block_Ladder is climbed
+# from its back looking along its forward, so each faces its slab - turned the other way the walker never took hold)
+for k 0 3 1
+place Block_Ladder jladut at -7.08 -2.02 h={0.8+$k*2.42} yaw=90
+place Block_Ladder jladut at 2.46 3.21 h={1.2+$k*2.42} yaw=-90
+next
 place Loot_Chest jcut at -5.12 -2.02 h=9.40 sit yaw=0
 note jcut Stack-top chest | On top of the slab stacks: what the warden's guards hid from him.
 loot jcut CopperIngot*2;TitaniumOre*1;Bolt*3
@@ -212,6 +494,56 @@ prop jyut zone.repeat=never
 prop jyut zone.message=You topped the slab stacks.
 pop
 # --- end of jump course ut ---
+# --- 11-12 (w13): the quarrymen's sea door - optional, no quest step (plan 13 row: UW, a straight cave from under the water
+# up to an air room; stone 2, a chest). The quarrymen cut a lower gallery below the quarry cave; the sea took it, and what
+# is left is a drowned passage whose far end stands dry: a culvert from the sea floor off the ridge's last rock, climbing
+# (kit_st slope 18, hill=1) to a small dry chamber under a rock islet. Swim in, breathe in the room (zone.air), take the
+# chest, swim out. No rats (reached only under water). The quarry cave (62 -36) keeps 15 m+ from the room, the cargo yard
+# and its strip 25 m+.
+# HEIGHTS (guess, need a surface probe in Raft): the sea floor round the mouth is flattened to -5 m below the sea (so the
+# mouth is 5 m down, known); the room floor then lies about -5 + 36 * sin 18 = +6.1 m; the room sits 9-10 m past the cave's
+# end (as Colossus' bolt store, size 0.7): zone at 8 m, the chest dropped from 8 m. The EAST shore depth, whether the flat
+# at -5 meets the shelf without a step, and the islet's dome (16 m) are not known offline.
+brush flatten at 90 -8 r=6 s=20 frames=200 h=-5
+brush smooth at 90 -8 r=9 s=6 frames=20
+brush flatten at 90 -8 r=3.5 s=20 frames=200 h=-5
+# (bugfix 11-25, REACH: the east shore at 108-114 -32..-42, where the swimmer from the sea door and the quarry sea door
+# comes to land, rose 1 m in 1 m from the water (-0.9 to 0.8): the swimmer, afloat at -1.1, rose 0.07 m and stayed in
+# the sea. A beach 10 m wide from 1.6 m under the water up to the bank, 0.3 m a step to above the water, then 0.45 m)
+for i 0 7 1
+brush flatten from {116.4-$i*0.8} -31.5 to {116.4-$i*0.8} -42.5 r=0.9 s=20 frames=200 h={-1.6+$i*0.3}
+next
+for i 0 3 1
+brush flatten from {110.0-$i*0.8} -31.5 to {110.0-$i*0.8} -42.5 r=0.9 s=20 frames=200 h={0.65+$i*0.45}
+next
+brush smooth from 116 -37 to 108 -37 r=6 s=3 frames=10
+clear from 116.4 -37 to 107.6 -37 r=6 body
+# (11-16 w13 build: the islet was hill mesh only, over open sea - the room showed the sea through its wall and the
+# islet's side had a hole. A low terrain pad under the room and dome gives the mesh ground to stand on.)
+call rr_pad x=90 z=-50 h=2 r=12
+call kit_st x=90 z=-8 yaw=180 len=36 slope=18 end=room size=0.7 hill=1 dirt=0 mush=1 stone=2 vines=0 titanium=0 as=utsea
+prop utsea cave.rock=plain
+prop utsea cave.dome=16
+# (11-16 w13Q: the hill's skin past the drowned way in's cut stood up out of the sea as a thin brown plate off the
+# mouth - play_ut_ov_e/top. cave.seacut (w13T) left it and cut the whole hill to sheer faces, so it is not used. The
+# dry foot (w13U) closed the arch the cut left in the hill above the mouth; the plate past the cut's end is still
+# there - OPEN (code: the hill skin past the cut's end, CaveMountain). w13V-Y: a sea stack (BigBoulder2_Low) stood on
+# the bowl floor over it never showed: scale 2.4 and 1.6 came back from the save at ~1, top under the sea - dropped.)
+prop utsea cave.foot=dry
+place Zone_Trigger utseaair at 90 -53 h=8
+prop utseaair obj.name=utseaair
+prop utseaair zone.id=ut_seadoor
+prop utseaair zone.radius=9
+prop utseaair zone.repeat=1
+prop utseaair zone.air=1
+prop utseaair zone.message=A dry chamber at the top of the drowned gallery - air. The quarrymen kept their lower store here, above the swell.
+# cavecheck inside utseachest
+place Loot_ChestSmall utseachest at 90 -54 h=8 drop yaw=0
+prop utseachest obj.name=utseachest
+prop utseachest loot.refill=0
+note utseachest Quarrymen's lower store | The store of the quarrymen's lower gallery, kept above the sea until the sea came up: spare drill steel, a rope coil, a stone mason's mark on the lid.
+loot utseachest Bolt*4;MetalIngot*2;CopperIngot*2;Rope*2
+call hw_zone x=73 z=-12 al=utseahint id=quarryseadoor r=5 msg="Off the ridge's last rock the swell runs dark: the quarrymen's sea door, a drowned passage on the sea floor."
 # The new land planted (mangoes, bananas, palms as on the island)
 call rr_plants_hill x=0 z=-74 r=26 seed=27001
 call rr_plants_tropical x=0 z=-50 r=9 seed=27011
@@ -233,7 +565,8 @@ call shallows r=75 deep=5 n=2
 
 # --- RAFT REMADE 10-26: the new areas' zones and notes, the gate's third key, the secrets ------------------------------
 call hw_zone x=-70 z=2 al=crewz id=crewcamp r=9 h=1 msg="Olof's crew camp. A stone hut, a tent, a fire long cold - they waited here for the warden to fall."
-place Note_Paper crewjournal at -72.75 8 h=4.45 drop yaw=20
+# (U 11-01: REACH - the journal lay mid-table, out of reach from beside it: at the table's door end)
+place Note_Paper crewjournal at -72.95 7.3 h=4.45 drop yaw=20
 note crewjournal Crew's journal | OLOF'S CREW - THE JOURNAL\n\nThe warden had a third lock put on his gate after we tried it the first time. The third key went to the old lighthouse keeper - he'd never come down.\nThe keeper's box is up the lighthouse mast on Lighthouse Head, the hill with the old mast.\nThe rest of us are marking our tokens round the island. Find all six and you'll know we were here.
 call hw_zone x=0 z=-56 al=headfootz id=headfoot r=6 msg="Lighthouse Head. A path cut round the hill to the old lighthouse mast on its top."
 call hw_zone x=0 z=-74 al=headtopz id=lighthouse r=8 h=1 msg="The top of Lighthouse Head. The mast's ladder runs up inside it - the keeper's box hangs on the deck."
@@ -250,7 +583,7 @@ call rr_piece x=30 z=-40 al=token5 set="Crew tokens" nm="Crew token 5"
 call rr_piece x=52 z=30 al=token6 set="Crew tokens" nm="Crew token 6"
 prop token1 on.set=give||TitaniumIngot*2;CopperIngot*2\nmessage||All six crew tokens: Olof's crew were all here, to the last one.
 # The quarry cave, the plane, the cargo yard
-note quarrybox Quarrymen's strongbox | The quarrymen's strongbox in the cave under the ridge: their pay from the warden, never spent.
+note quarrybox Quarrymen's strongbox | The quarrymen's strongbox in the cave under the ridge: their pay from the warden, never spent. Scratched on its lid: the lower gallery flooded, the sea door is off the ridge's last rock.
 loot quarrybox TitaniumOre*3;CopperIngot*2;Bolt*3
 prop quarrybox loot.refill=0
 call hw_zone x=62 z=-40 al=quarryz id=quarrycave r=4 msg="A cave cut into the quarry ridge - picks, a lamp, a strongbox."
@@ -265,6 +598,11 @@ info title=Utopia Remade
 info author=Custom Islands
 info description=Raft's Utopia made anew - the end of the voyage, on an island as big as Raft's own: docks with Utopia's market, Lighthouse Head, Olof's crew camp, a quarry, the warden's prison house on its stilts, and on the summit his yard behind a thatch palisade, its gate locked with two keys. His hyenas wait inside. Raft Remade's eighth and last island.
 island on.arrive=message||Docks, market stalls, a prison house on stilts - and on the summit a thatch palisade, its gate shut. Somewhere behind it, hyenas laugh.
+# (isl-fix 11-24, REACH: the warden's yard is shut behind the three-key gate (a quest gate, not a door the measure opens) -
+#     its four targets are checked by the island's play, which unlocks the gate and opens each)
+# (and the Quarrymen's lower store: utopia_remade_cave.play walks the sea door's tunnel in to it and opens it; the grid
+# can't see the way through the kit_st tunnel's rock, 11-24)
+island reach.byplay=Warden's table;Warden's pot;Warden's jar;Warden's chest;Quarrymen's lower store
 
 story dockkey|Dock master's key|quest:Utopia_KeyEntrance|One of the two keys to the warden's gate - the dock master's.
 story prisonkey|Prison clerk's key|quest:Utopia_KeyPrison|One of the two keys to the warden's gate - the prison clerk's.
@@ -408,5 +746,20 @@ clear at -60.07 -0.98 r=0.5 all body only=BigBoulder1_Low
 clear at -62.66 4.63 r=0.5 all body only=SmallBoulder2
 clear at -75.57 12.49 r=0.5 all body only=SmallBoulder2
 clear at -78.82 5.18 r=0.5 all body only=SmallBoulder2
+# (U 11-01: GROUND - the check found 9 trunks wrong: 7 trees and bamboo sunk 1.3-4.1 m in slopes the strokes raised
+# (set back on the land at the save), a bamboo 0.5 m over the ground by the warden's plane and one on a rim over the
+# drop by the quarry ridge's foot (taken out; the report is from the land centre 2.5616 -7.998, added here))
+clear at -38.07 26.10 r=0.8 all only=Bamboo
+clear at 47.52 -4.77 r=0.8 all only=Bamboo
+# (a second check found three more bamboo: two on rims over drops - by the keeper's cliff and the west shore - and one
+# sunk 2.8 m in the quarry ridge's flank that the reseat could not lift; taken out)
+clear at 1.21 -65.89 r=0.8 all only=Bamboo
+clear at -69.91 14.99 r=0.8 all only=Bamboo
+clear at 58.66 -24.19 r=0.8 all only=Bamboo
+reseat trees
 
+# (11-24 REACH: two of the generator's supply chests stood in the hollow under a cave hill's skin, in its rock -
+# 'can't get there' from all sides; taken off)
+clear at 29.7 -33.5 r=1.5 all
+clear at 29.7 -14 r=1.5 all
 save Utopia Remade

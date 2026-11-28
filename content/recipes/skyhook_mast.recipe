@@ -123,10 +123,11 @@ place QuestItemPickup_Tangaroa_Token - at -3 -3 ground
 place QuestItemPickup_Tangaroa_Token - at 2 -30 ground
 
 # --- The zipline down from the stack's edge to the wreck's shore -------------------------------------------------------
-# (its near floor - 5.72 m west, 0.97 m north of where it is put, 1.35 m under its h - on the flat top at -7 -1)
-place ZiplinePath_Landmark zipdown at -1.28 -1.97 h=19.35
-zipto zipdown -12 -38
-place Zone_Trigger wreckshore at -12 -40 ground
+# (its near floor - 5.72 m west, 0.97 m north of where it is put, 1.35 m under its h - on the flat top at -9 -28.5, the
+# stack's south edge; 11-21 c3z30: from -7 -1 the rope ran 30 m along the top and 15 m through its edge)
+place ZiplinePath_Landmark zipdown at -3.28 -29.47 h=18.78
+zipto zipdown -12 -45
+place Zone_Trigger wreckshore at -12 -42 ground
 
 # --- Kett's airship, wrecked in the shallows: the plane's body as the envelope's nose, broken wings standing as ribs, a
 # caravan on its side as the gondola ------------------------------------------------------------------------------------
@@ -319,4 +320,8 @@ clear at 25.6 18.39 r=0.8 all only=Pineapple
 
 # (11-03 fixC, CIFloatingSweep: a scattered bush hung over the ground, cleared the stray scatter)
 clear at 32.81 -0.95 r=1.5 only=Banana_Bush_3 all
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save Skyhook Mast

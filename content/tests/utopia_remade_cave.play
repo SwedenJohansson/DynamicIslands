@@ -1,0 +1,20 @@
+# Utopia Remade's quarrymen's sea door (CIPlay utopia_remade_cave, 11-12 w13; in a test world 'CI ...'; 11-16: in by walking, out by swimming (a walk up the mouth's lip sticks).
+# Points as in its recipe: the mouth on the sea floor at 90 -8 (flattened to -5 m), kit_st yaw 180 len 36 slope 18 size 0.7 -
+# the culvert climbs to the dry chamber round 90 -53 (air zone ut_seadoor, chest at 90 -54). Swim in, breathe, take the chest,
+# swim out. HEIGHT GUESSES (need a Raft surface probe): mouth floor -5, chamber floor ~+6, zone/chest h 8. The offset is the old one.
+island Utopia Remade keep
+offset 17.8504 -15.6342
+hour 11
+weather Calm
+
+zone quarryseadoor
+picture ut_sea_out 100 6 8 78 0 -14
+walk 90 -4 to 90 -8 to 90 -22 to 90 -36 to 90 -46 to 90 -53 below=8
+air ut_seadoor here
+picture ut_sea_in 90 9 -46 90 7 -54 light=20
+open Quarrymen's lower store
+wait 2
+expect item Bolt 4
+air ut_seadoor
+walk 90 -53 to 90 -46 to 90 -36 to 90 -22 below=8
+swim 90 -22 0.2 to 90 -14 -2 to 90 -8 -3.6 to 90 -4 -3.8 to 90 1 -1.5 to 90 4 -0.5

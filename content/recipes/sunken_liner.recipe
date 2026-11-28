@@ -461,4 +461,8 @@ clear at 32.7 30.3 r=1.5 all only=^TP_BigRock04
 
 # (11-03 fixC, CIFloatingSweep: a scattered sand pickup hung over the ground, cleared the stray scatter)
 clear at 12.45 76.95 r=1.5 only=Pickup_Landmark_Sand all
+# (c3z40: a snowy pine on the edge of a 1.5 m drop - taken off, CIGroundIslands 11-21)
+# (c3z46: still there - that clear used the report's point, from the land centre; the recipe's is that plus the save's
+# offset (-4.57 -4.06))
+clear at 11.95 69.28 r=2 all only=^TP_PineTreeSnowy
 save The Sunken Liner

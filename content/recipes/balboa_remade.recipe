@@ -18,6 +18,7 @@ include lib_features
 include lib_highwater
 include lib_areas
 include lib_raft_remade
+include lib_caves
 new
 # (nature like Raft's Balboa - the generator's "something new like" it - with fewer cliffs and wider beaches than its
 # own: like Balboa as it is, it was a plateau ringed by cliffs with no beach to land on, 2026-10-03)
@@ -108,6 +109,19 @@ brush flatten from 99.6 -35.3 to 100.8 -35.5 r=1.6 s=20 frames=60 h=0.4
 call hw_wreck x=104 z=-30 h=1.5 yaw=70 obj=BoatStranded al=poacherboat crate=boatcrate r=8
 # (its mouth turned inland: facing the sea it opened over 6 m of water with no way up, PQ11 10-27)
 call ar_cave x=-40 z=-84 h=2.5 yaw=0 al=caverock chest=cavebox
+# (c3z40: the rock's back corner (west, 16 m out) 3.3 m over ground left just wet (0.27 m) past the pad - brought up
+# dry to under its rim so the hill closes round it, CIGroundIslands 11-21)
+# (c3z46 11-21: still a gap under the rock's back corner, 4.9 m: the hill's skin 4.3 m up there, the rock's outer slab's underside 9.2 m - the smooth after the small flatten
+# had taken the mound back down. Now a wider rock mound up under the rock's overhang, smoothed and laid again on top)
+brush flatten at -54.7 -90.9 r=7 s=20 frames=300 h=9.7
+brush smooth at -54.7 -90.9 r=10 s=4 frames=20
+brush flatten at -54.7 -90.9 r=4.5 s=20 frames=300 h=9.7
+brush rock at -54.7 -90.9 r=9 s=20 frames=30
+clear at -54.7 -90.9 r=9
+# (c3z59 11-21: the rim gap 1.0 m was here, not at the Mama bear den: the cave rock's outer slab on its west side (world
+#     -55 9 164) 1.0 m over the hill. A small rock mound up under the slab there, just outside the mouth)
+brush flatten at -55.2 -87.8 r=2.5 s=20 frames=300 h=10.9
+brush rock at -55.2 -87.8 r=3.5 s=20 frames=30
 # --- JUMP COURSE bb (Raft Remade pass 10-26): kz-style hop course of floor slabs on its own pad ---
 # JUMP bb pad=2.5 at=46 -86
 push at 46 -86
@@ -165,6 +179,37 @@ prop jybb zone.message=You topped the slab stacks.
 pop
 # --- end of jump course bb ---
 
+# --- 11-12 (w13): the rangers' old gravel adit - optional, no quest step (plan 13 row: SYS, Raft-like: mushrooms 5, dirt 4,
+# stone 3, cave vines; a VINE mouth). The rangers once dug for road gravel into a knoll on the north lowlands: two mouths,
+# one passage bending to a chamber, a branch with the rangers' cache. Its west mouth was never cleared of the forest's
+# vines (gate=1: cut them with the machete from the tool locker; the east mouth stays open, so nothing is locked out).
+# The knoll is raised here (hw_mount, known heights) on the north lowlands, 30 m and more from every quest thing, the
+# poachers' camp and the badges; the cave is far off the main walk line (station - den - summit). Floor = the knoll's foot.
+# HEIGHTS (guess, need a surface probe in Raft): the foot ring is 0.22 * 28 = 6.2 m (the shelves below are cut level at
+# 6.2); the ground over the branch chamber ~11.5 m (r 26 from the knoll's centre), the trunk's end ~28 m (the peak).
+call hw_mount x=-10 z=42 b=32 h=28
+brush flatten at -2 75.4 r=4 s=20 frames=60 h=6.2
+# (11-16 CC: r=4 left the vine mouth's hood standing out of lower ground beside it - loose rim; widened to 6.5)
+brush flatten at -18 75.4 r=6.5 s=20 frames=60 h=6.2
+brush smooth at -10 77 r=7 s=6 frames=20
+clear at -2 76 r=3 only=(?i)boulder|rock|tree|bush
+clear at -18 76 r=3 only=(?i)boulder|rock|tree|bush
+call kit_sys x=-2 z=75 yaw=180 side=1 len=24 bend=10 branch=12 blen=4 gap=16 in2=14 r=1.75 roomr=2.5 dirt=4 mush=5 stone=3 vines=3 titanium=0 gate=1 as=bagravel
+prop bagravel cave.rock=plain
+place Zone_Trigger bagravelzone at -10 80.5 h=6.4
+prop bagravelzone zone.id=ba_gravel
+prop bagravelzone zone.radius=5
+prop bagravelzone zone.message=A gravel adit in the knoll: two mouths, one of them choked with vines. The rangers' cache is in the back.
+place Note_Sign bagravelnote at -10 82 ground sit yaw=0
+note bagravelnote Rangers' gravel plan | GRAVEL ADIT - the knoll behind the low flats. Two ways in, one passage between. One mouth grew over; a blade will clear it.\n- Hayes
+# cavecheck inside bagravelchest
+# (the chamber at the branch's end: floor ~6.2, a drop from 6.8; guess, probe)
+place Loot_ChestSmall bagravelchest at 6.6 63.1 h=6.8 drop yaw=250
+prop bagravelchest obj.name=bagravelchest
+prop bagravelchest loot.refill=0
+note bagravelchest Rangers' gravel cache | The rangers' cache from the adit: spare picks, a coil of rope, the road money tin - and Hayes' note, "if the bear takes the station, we dig in here".
+loot bagravelchest Rope*2;Nail*8;CopperIngot*2;Scrap*3
+
 # --- Settings, story items, notes, behaviours, quest ------------------------------------------------------------------
 # --- Things to gather, as suits the island (the user, 2026-10-05): mangoes, flowers, pineapples ----------
 scatter "Pickup_Landmark_Tree_Mango" 6 at 0 0 r=77.0 seed=4165 free=5
@@ -184,11 +229,11 @@ note poacherschest Poachers' chest | The poachers' chest: what they took off the
 loot poacherschest TitaniumIngot*1;CopperIngot*2;Leather*3;BioFuel*2
 prop poacherschest loot.refill=0
 prop poacherschest if.open=has|story:poacherkey|1
-prop poacherschest else.open=message||Padlocked. The poachers came by sea - their boat may still be on the east beach.
-note cavebox Hermit's strongbox | A box in the cave in the south lowlands: an old hermit's savings, long before the rangers came.
+prop poacherschest else.open=message||Padlocked. The poachers came by sea - their boat may still be on the beach below the station.
+note cavebox Hermit's strongbox | A box in the cave in the lowlands by the beach: an old hermit's savings, long before the rangers came.
 loot cavebox TitaniumOre*2;CopperIngot*2;Bolt*3
 prop cavebox loot.refill=0
-call hw_zone x=-40 z=-80 al=cavez id=hiddencave r=4 msg="A cave in a rock by the south beach - a strongbox at the back."
+call hw_zone x=-40 z=-80 al=cavez id=hiddencave r=4 msg="A cave in a rock by the beach - a strongbox at the back."
 # Ranger badges: five of the rangers' badges, lost round the island (a set)
 call rr_piece x=95 z=-20 al=badge1 set="Ranger badges" nm="Ranger badge 1"
 call rr_piece x=-30 z=-80 al=badge2 set="Ranger badges" nm="Ranger badge 2"
@@ -249,7 +294,7 @@ prop vinewall on.use=message||The machete bites into the vines. They fall away -
 prop vinewall else.use=message||Thick vines over the rangers' plank barricade. You'd need a blade.
 prop mastradio obj.name=mastradio
 prop mastradio beh.use=Call out on the rangers' radio
-prop mastradio on.use=message||The radio crackles to life. Far away, a voice answers: "Balboa? We hear you. Follow the traders' jingle south."\nsignal||ranger
+prop mastradio on.use=message||The radio crackles to life. Far away, a voice answers: "Balboa? We hear you. Follow the traders' jingle."\nsignal||ranger
 # (Raft's comm radio as a ready piece only works with power (a running generator or Raft's battery charger part), which this island has none of: the rangers' radio worked for anyone and the radio desk - quest step 7 - stayed shut for good. The ready piece's lock taken off)
 prop mastradio if.use=
 prop mastradio else.use=
@@ -320,4 +365,8 @@ clear at 62.76 40.63 r=0.5 all body only=SmallRock_02
 clear at 7.40 -3.27 r=0.5 all body only=SmallRock_01
 clear at 89.65 46.61 r=0.5 all body only=SmallRock_01
 
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save Balboa Remade

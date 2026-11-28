@@ -96,6 +96,7 @@
     <Compile Include="DevTestsQuestWait.cs" />
     <Compile Include="DevTestsStateWatch.cs" />
     <Compile Include="DevTestsContent.cs" />
+    <Compile Include="DevTestsRaftBuildings.cs" />
     <Compile Include="DevTestsStableIds.cs" />
     <Compile Include="DevTestsBugHunt1030.cs" />
     <Compile Include="DevTestsNextFixes.cs" />
@@ -121,6 +122,7 @@
     <Compile Include="DevTestsRandomizer.cs" />
     <Compile Include="DevTestsReach.cs" />
     <Compile Include="DevTestsRecipe.cs" />
+    <Compile Include="DevTestsRecipeCache.cs" />
     <Compile Include="DevTestsPlay.cs" />
     <Compile Include="DevTestsRelease.cs" />
     <Compile Include="DevTestsOptions.cs" />
@@ -129,6 +131,7 @@
     <Compile Include="DevTestsWorldIslands.cs" />
     <Compile Include="DevTestsIslandPicker.cs" />
     <Compile Include="DevTestsStoryChain.cs" />
+    <Compile Include="DevTestsStorySteps.cs" />
     <Compile Include="DevTestsQuestBook.cs" />
     <Compile Include="QuestBook.cs" />
     <Compile Include="QuestBookPreview.cs" />
@@ -252,6 +255,7 @@
     <Compile Include="DevTestsGfx.cs" />
     <Compile Include="DevTestsReady.cs" />
     <Compile Include="DevTestsSaveSoon.cs" />
+    <Compile Include="DevTestsUntested1125.cs" />
     <Compile Include="StormSeas.cs" />
     <Compile Include="DevTestsStormSeas.cs" />
     <Compile Include="UfoSightings.cs" />
@@ -346,6 +350,7 @@
     <Compile Include="DevTestsLevels.cs" />
     <Compile Include="DevTestsLevelsMore.cs" />
     <Compile Include="DevTestsUpgradeShots.cs" />
+    <Compile Include="DevTestsShowcase.cs" />
     <Compile Include="DevTestsMoreB.cs" />
     <Compile Include="ChoiceWindow.cs" />
     <Compile Include="IslandDifficulty.cs" />
@@ -366,6 +371,7 @@
     <Compile Include="WorldRules.cs" />
     <Compile Include="DevTestsDifficulty.cs" />
     <Compile Include="DevTestsHostSettings.cs" />
+    <Compile Include="DevTestsSettingsFixes.cs" />
     <Compile Include="DefaultsWindow.cs" />
     <Compile Include="DevTestsSettingsWindow.cs" />
     <Compile Include="PlaceableCatalog.cs" />
@@ -402,6 +408,9 @@
     <Compile Include="DevTestsFeat35b.cs" />
     <Compile Include="DevTestsGapHost.cs" />
     <Compile Include="DevTestsGapStory.cs" />
+    <Compile Include="DevTestsPlanDriven.cs" />
+    <Compile Include="DevTestsScRaftSize.cs" />
+    <Compile Include="DevTestsScPickup.cs" />
     <Compile Include="DevTestsStorylineMp.cs" />
     <Compile Include="DevTestsDirtHoney.cs" />
     <Compile Include="DevTestsShovelProbe.cs" />
@@ -415,6 +424,8 @@
     <Compile Include="DevTestsPlanProgress.cs" />
     <Compile Include="DevTestsQuestTraps.cs" />
     <Compile Include="DevTestsCopiesIndex.cs" />
+    <Compile Include="DevTestsQuestSoftlock.cs" />
+    <Compile Include="DevTestsQuestSoftlockMp.cs" />
     <Compile Include="DevTestsX5.cs" />
     <Compile Include="DevTestsGapsA.cs" />
     <Compile Include="DevTestsGenSweep.cs" />
@@ -432,6 +443,7 @@
     <Compile Include="DevTestsFix3.cs" />
     <Compile Include="DevTestsNoteCarry.cs" />
     <Compile Include="DevTestsIssueSweep.cs" />
+    <Compile Include="DevTestsSweep.cs" />
     <Compile Include="ScatterTool.cs" />
     <Compile Include="StableIds.cs" />
     <Compile Include="ObjectThumbnails.cs" />
@@ -462,6 +474,7 @@
     <Compile Include="TerrainStamps.cs" />
     <Compile Include="TextPromptWindow.cs" />
     <Compile Include="GroupLibrary.cs" />
+    <Compile Include="RaftBuildings.cs" />
     <Compile Include="TerrainBrushes.cs" />
     <Compile Include="TerrainPainter.cs" />
     <Compile Include="UnityScripts\TabSelector.cs" />

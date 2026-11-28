@@ -2,7 +2,7 @@
 # Tunnel 1 on Copper Knob: in by the shore adit, up the side drift to the powder room and the miner's chest, out by
 # the man-way on the knob's south strip. The back drift into the rock mound: in to the cavern and out again.
 island Old Mine Islet keep
-offset 2.7895 -1.945
+offset 3.2214 0.96
 hour 11
 weather Calm
 
@@ -31,4 +31,4 @@ picture om_t1_manway_out 69 8 -22 64.7 6.5 -19.4
 picture om_back_out -12 7 30 -12 3.5 22
 walk -12 26 to -12 22 to -12 14 to -12 5
 picture om_back_cavern -12 4 12 -12 3 0
-walk -12 5 to -12 14 to -12 22 to -12 27
+walk -12 5 to -12 14 to -12 22 to -12 27 below=6

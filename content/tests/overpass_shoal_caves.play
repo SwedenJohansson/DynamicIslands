@@ -8,13 +8,22 @@ hour 11
 weather Calm
 
 # Outside: the channel under the overpass and the mouth from the water, the bank over the room
-picture op_cave_out -24 1 -8 -24 -2 5
+# (cv50: at z -8 the eye was 1.1 m inside the south bank's soft edge, under its ground skin by the water; 309 rays left
+# the ground 1.6 m out, past the 1.5 m eye-skin rule - plain sea floor, no hole. Now 4 m north, over the flat -2.5 bed)
+picture op_cave_out -24 1 -4 -24 -2 5
 picture op_cave_mouth -24 -1.5 -2 -24 -2.5 6
-picture op_bank -10 6 37 -24 4 37
+# (cv48: on the bank, 1.7 m over its ground - at 6 m it stood 5 m inside the hill beside the room, and showed the room
+# through its outside and the sky through the ground; cv50: 1.7 m up a banana plant filled the picture - now 4.5 m up,
+# 4 m further north, over the plants)
+picture op_bank -12 +4.5 41 -24 +1 37
 
 # Swim in: from the channel up the culvert into the room, and breathe there
 walk -24 -2 to -24 5 to -24 16 to -24 26 to -24 35 below=-1.5
 air op_culvert here
+# (11-26 islandfix: walked to the chest and checked from there - the reach check leaves the culvert and this chest to this play)
+# (11-27 f: without below= the step came out on the bank 15.6 m up, over the room - kept to the room's floor like the swim in)
+walk -24 35 to -22.4 36.4 below=-1.5
+reach Flood store
 
 # The room: dry, air, the crew's chest
 picture op_cave_in -24 4 28 -21 3.5 40

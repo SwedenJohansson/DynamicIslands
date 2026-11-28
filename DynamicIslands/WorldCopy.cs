@@ -90,7 +90,7 @@ namespace DynamicIslands.Editor
 
 		/// <summary>The world's settings (the rules, options, levels on/off, randomizer, islands left out...): a crash doesn't
 		/// take them back to Raft's save - they aren't loot or progress (AU3).</summary>
-		static readonly string[] SettingKeys = { "auto", "monsters", "buildcost", "regrow", "options", "optionsused", "levels", "randomizer", "islandsoff", "raftgap" };
+		static readonly string[] SettingKeys = { "auto", "monsters", "buildcost", "regrow", "options", "optionsused", "optionseed", "levels", "randomizer", "islandsoff", "raftgap", "rarelooks" };
 
 		static bool IsSetting(string line)
 		{
@@ -99,7 +99,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The state of one copy with the settings of another (AU3).</summary>
-		static string[] Merge(string[] state, string[] settings)
+		internal static string[] Merge(string[] state, string[] settings)
 		{
 			return state.TakeWhile(l => l.StartsWith("#")).Concat(settings.Where(IsSetting)).Concat(state.SkipWhile(l => l.StartsWith("#")).Where(l => !IsSetting(l))).ToArray();
 		}
@@ -379,13 +379,40 @@ namespace DynamicIslands.Editor
 				chunks.Add(text.Substring(at, len));
 				at += len;
 			}
+			// (a few parts a frame, as island files and Raft's save go: a big world's 61 parts in one loop never all reached
+			// the player when the host saved - its copy wasn't kept, IM43 11-25; a newer copy to everyone stops an older one
+			// still going out to everyone)
+			int gen = to.HasValue ? sendGeneration : ++sendGeneration;
+			if (chunks.Count <= IslandNetwork.ChunksPerFrame || IslandNetwork.Loopback != null || DynamicIslands.instance == null)
+				SendParts(key, id, chunks, to, gen, text.Length).MoveNext();
+			else DynamicIslands.instance.StartCoroutine(SendParts(key, id, chunks, to, gen, text.Length));
+		}
+
+		static int sendGeneration;
+
+		static System.Collections.IEnumerator SendParts(string key, string id, List<string> chunks, Network_UserId? to, int gen, int length)
+		{
 			int count = chunks.Count;
+			bool paced = count > IslandNetwork.ChunksPerFrame && IslandNetwork.Loopback == null && DynamicIslands.instance != null;
+			float waitedFrom = -1f;
+			bool stalled = false;
 			for (int i = 0; i < count; i++)
 			{
+				// (paced: the budget all transfers share, ahead of island files, and never more than Steam's queue to the
+				// player holds - a big world's copy sent while 28 island files went to the player never came, X5 IM43)
+				while (paced && !IslandNetwork.MaySend(to, true, stalled))
+				{
+					if (waitedFrom < 0f) waitedFrom = Time.realtimeSinceStartup;
+					else if (Time.realtimeSinceStartup - waitedFrom > IslandNetwork.StallSeconds) stalled = true;
+					yield return null;
+				}
+				waitedFrom = -1f;
+				if (!to.HasValue && gen != sendGeneration) yield break;
+				if (!Raft_Network.IsHost) yield break;
 				var msg = new IslandNetMessage { Name = key, Hash = id, Index = i, Count = count, Data = chunks[i] };
 				IslandNetwork.SendWorldCopy(msg, to);
 			}
-			Debug.Log("[CUSTOM ISLANDS] [net] Sent the world's copy (" + text.Length + " characters, " + count + " part(s)) to " + (to.HasValue ? to.Value.ToString() : "every player"));
+			Debug.Log("[CUSTOM ISLANDS] [net] Sent the world's copy (" + length + " characters, " + count + " part(s)) to " + (to.HasValue ? to.Value.ToString() : "every player"));
 		}
 
 		static readonly Dictionary<string, string[]> incoming = new Dictionary<string, string[]>();
@@ -479,12 +506,17 @@ namespace DynamicIslands.Editor
 		/// <summary>A player: a part of the host's world file; when all have come, it is kept as worlds\&lt;world id&gt;.txt.</summary>
 		public static void OnMessage(IslandNetMessage msg)
 		{
-			if (Raft_Network.IsHost || string.IsNullOrEmpty(msg.Name) || msg.Count <= 0 || msg.Index < 0 || msg.Index >= msg.Count) return;
+			// (Count sizes what is allocated: at most 64 MB of text - audit 2026-10-06)
+			if (Raft_Network.IsHost || string.IsNullOrEmpty(msg.Name) || msg.Count <= 0 || msg.Count > 64 * 1024 * 1024 / ChunkChars || msg.Index < 0 || msg.Index >= msg.Count) return;
 			Guid guid;
 			if (!Guid.TryParse(msg.Name, out guid) || guid == Guid.Empty) return;
 			string key = msg.Name + "|" + msg.Hash;
 			string[] parts;
-			if (!incoming.TryGetValue(key, out parts) || parts.Length != msg.Count) incoming[key] = parts = new string[msg.Count];
+			if (!incoming.TryGetValue(key, out parts) || parts.Length != msg.Count)
+			{
+				if (incoming.Count >= 4) incoming.Clear(); // (copies that never finished aren't kept for good)
+				incoming[key] = parts = new string[msg.Count];
+			}
 			parts[msg.Index] = msg.Data ?? "";
 			if (parts.Any(p => p == null)) return;
 			incoming.Remove(key);
@@ -504,7 +536,11 @@ namespace DynamicIslands.Editor
 				bool joining = checkedJoin.Add(guid.ToString());
 				bool keptNewer = joining && File.Exists(path) && KeepNewer(path, lines, guid);
 				// (never over a newer copy: a late message from an older save)
-				if (!keptNewer && File.Exists(path) && Newer(File.ReadAllLines(path), lines)) return;
+				if (!keptNewer && File.Exists(path) && Newer(File.ReadAllLines(path), lines))
+				{
+					Debug.Log("[CUSTOM ISLANDS] [net] The host's copy of this world (" + lines.Length + " lines) is older than the one kept here: not kept");
+					return;
+				}
 				Directory.CreateDirectory(Path.GetDirectoryName(path));
 				SafeFile.WriteAllLines(path, lines);
 				LastKept = guid + " " + lines.Length + " lines";

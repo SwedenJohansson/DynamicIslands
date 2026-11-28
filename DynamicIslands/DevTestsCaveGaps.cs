@@ -652,7 +652,9 @@ namespace DynamicIslands
 		/// <summary>One cave's way: mouth first, floor points, the room's or the far end's last; In: the way in, level.
 		/// Open: the first point is a mouth to the outside (a closed start - a dug room's far end - is walked from and back to
 		/// itself, 11-08). Shaft: a dug ladder shaft's middle line (foot first) past the walked floor's last point, or null.</summary>
-		class GapWay { public string Kind; public List<Vector3> Floor = new List<Vector3>(); public Vector3 In; public bool Open = true; public List<Vector3> Shaft; public float ShaftR; }
+		class GapWay { public string Kind; public List<Vector3> Floor = new List<Vector3>(); public Vector3 In; public bool Open = true; public List<Vector3> Shaft; public float ShaftR;
+			// (m of floor line before the mouth: a lone den's way starts 3 m out in front of it - its roof is looked for from the mouth, c3z54)
+			public float Lead; }
 		/// <summary>The point s m along a floor line (by its length); false past its end.</summary>
 		static bool PointAlong(List<Vector3> f, float s, out Vector3 p)
 		{
@@ -813,9 +815,18 @@ namespace DynamicIslands
 			Func<Transform, float, Vector3> pass = (tr, z) => tr.position + tr.rotation * (new Vector3(CaveTool.PassX, CaveTool.Floor, z) * sizeOf(tr));
 			List<Transform> tunnels = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name == CaveTool.Tunnel).ToList();
 			List<Transform> rooms = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name == CaveTool.Room).ToList();
-			foreach (Transform first in tunnels.Where(x => { IslandObjectRef r = refOf(x); return r != null && r.Props.ContainsKey(ObjectProps.CaveMouth); }))
+			// (a lone straight piece placed as it is, not by the cave tool - no mouth, join or end marks and no other cave piece
+			// at either end: Raft's swim-through rock tunnel, open at both ends. Deepwatch Station's, 11-20: "0 ways in", as
+			// only the tool's mouths and dug strokes were ways; a piece with no settings has no IslandObjectRef - Attach skips it -
+			// so not "has a ref": it left Deepwatch's tunnel out still)
+			Func<Transform, bool> marked = x => { IslandObjectRef r = refOf(x); return r != null && (r.Props.ContainsKey(ObjectProps.CaveMouth) || r.Props.ContainsKey(ObjectProps.CaveJoin) || r.Props.ContainsKey(ObjectProps.CaveEnd)); };
+			List<Transform> pieces = e.Root.GetComponentsInChildren<Transform>(true).Where(x => x.name.StartsWith("TP_UnderwaterCaveTunnel", StringComparison.Ordinal) || x.name.StartsWith("BalboaCave", StringComparison.Ordinal)).ToList();
+			Func<Transform, bool> lone = x => !marked(x) && !pieces.Any(o => o != x && !o.IsChildOf(x) && !x.IsChildOf(o)
+				&& Mathf.Min((o.position - pass(x, CaveTool.FaceMin)).magnitude, (o.position - pass(x, CaveTool.FaceMin + CaveTool.Step)).magnitude) < CaveTool.Step * sizeOf(x));
+			var swimThrough = new HashSet<Transform>(tunnels.Where(x => !tunnels.Any(o => o != x && x.IsChildOf(o)) && lone(x)));
+			foreach (Transform first in tunnels.Where(x => { IslandObjectRef r = refOf(x); return r != null && r.Props.ContainsKey(ObjectProps.CaveMouth); }).Concat(swimThrough))
 			{
-				var w = new GapWay { Kind = "cave" };
+				var w = new GapWay { Kind = swimThrough.Contains(first) ? "cave, swim-through" : "cave" };
 				Transform cur = first;
 				var used = new HashSet<Transform>();
 				Vector3 exit = Vector3.zero;
@@ -830,7 +841,8 @@ namespace DynamicIslands
 				}
 				w.In = exit - pass(first, CaveTool.FaceMin); w.In.y = 0f; w.In.Normalize();
 				Transform room = rooms.Where(x => (x.position - exit).magnitude < 25f).OrderBy(x => (x.position - exit).magnitude).FirstOrDefault();
-				if (room != null) { w.Kind = "cave+room"; w.Floor.Add(GapFloor(exit + w.In * 4f)); w.Floor.Add(GapFloor(exit + w.In * 8f)); }
+				if (swimThrough.Contains(first)) w.Floor.Add(GapFloor(exit + w.In * 4f, 2f, 8f));
+				else if (room != null) { w.Kind = "cave+room"; w.Floor.Add(GapFloor(exit + w.In * 4f)); w.Floor.Add(GapFloor(exit + w.In * 8f)); }
 				else { w.Kind = "cave, open end"; w.Floor.Add(GapFloor(exit + w.In * 4f, 2f, 8f)); }
 				w.Floor.Insert(0, GapFloor(pass(first, CaveTool.FaceMin) - w.In * 0.5f));
 				ways.Add(w);
@@ -869,6 +881,26 @@ namespace DynamicIslands
 					ways.Add(w);
 				}
 			}
+			// a lone den (a room placed with no tunnel to it - Engine Decks', c3z47: "0 ways in ()"): walked in from its own
+			// mouth, over the lip and on to its middle
+			foreach (Transform x in rooms)
+			{
+				if (marked(x) || rooms.Any(o => o != x && x.IsChildOf(o))) continue;
+				Vector3 m = x.position + x.rotation * Vector3.forward * (CaveTool.RoomMouthZ * CaveMountain.OverMeasured(x, CaveTool.Room).x);
+				if (tunnels.Any(t => (t.position - m).magnitude < 25f) || ways.Any(w => w.Floor.Count > 0 && (w.Floor.Last() - x.position).magnitude < 25f)) continue;
+				var w2 = new GapWay { Kind = "den", Lead = 3f };
+				w2.In = x.position - m; w2.In.y = 0f;
+				if (w2.In.sqrMagnitude < 0.01f) w2.In = x.rotation * Vector3.back;
+				w2.In.Normalize();
+				foreach (float f in new[] { -3f, -0.5f, 4f, 8f }) w2.Floor.Add(GapFloor(m + w2.In * f, 2f, 8f));
+				ways.Add(w2);
+			}
+			// (none: what the cave pieces were taken for - Deepwatch Station's lone tunnel still read "0 ways in", 11-20)
+			if (ways.Count == 0)
+				foreach (Transform x in pieces)
+					Log("  cave piece " + x.name + " (parent " + (x.parent != null ? x.parent.name : "-") + "): ref " + (refOf(x) != null) + ", tunnel " + tunnels.Contains(x)
+						+ ", marked " + marked(x) + ", near " + string.Join("/", pieces.Where(o => o != x && !o.IsChildOf(x) && !x.IsChildOf(o)
+						&& Mathf.Min((o.position - pass(x, CaveTool.FaceMin)).magnitude, (o.position - pass(x, CaveTool.FaceMin + CaveTool.Step)).magnitude) < CaveTool.Step * sizeOf(x)).Select(o => o.name).ToArray()));
 			return ways;
 		}
 
@@ -885,11 +917,106 @@ namespace DynamicIslands
 			if (ok) Log("PASS: gap ways"); else Fail("gap ways");
 		}
 
+		/// <summary>The clear-way cast between two floor points of a cave way: a walker's body 0.35 m round, knee to head
+		/// (0.35-1.95 m over the floor); where both points are 1 m or more under the sea, a swimmer's (0.2-1.3 m: it swims low
+		/// under a roof a walker hits - RM4's Vaporhold intake, CaveMouth 1.6 m over the floor, which swimmers pass both ways;
+		/// fix-open 11-19). Players, animals, faces under 50 degrees (floor) and cave loot a player picks up by hand
+		/// (CaveLootByHand: Vaporhold's intake way stopped at a titanium lump in the valve chamber, fix-open 11-19) don't count.</summary>
+		internal static bool WayBlocked(Vector3 p, Vector3 q, float sea, out RaycastHit h)
+		{
+			h = default(RaycastHit);
+			Vector3 d = q - p;
+			if (d.magnitude < 0.2f) return false;
+			bool swim = Mathf.Max(p.y, q.y) < sea - 1f;
+			Vector3 a = p + Vector3.up * (swim ? 0.55f : 0.7f);
+			return Physics.CapsuleCast(a, a + Vector3.up * (swim ? 0.4f : 0.9f), 0.35f, d.normalized, out h, d.magnitude, ~0, QueryTriggerInteraction.Ignore)
+				&& h.collider.GetComponentInParent<Network_Player>() == null && h.collider.GetComponentInParent<AI_NetworkBehaviour>() == null
+				&& Vector3.Angle(h.normal, Vector3.up) > 50f
+				&& !CaveLootByHand.Contains(h.collider.GetComponentInParent<IslandObjectRef>()?.ObjectName ?? "") && !CaveLootByHand.Contains(h.collider.name);
+		}
+
+		/// <summary>The hazard zone whose dressing <paramref name="hit"/> is: a placed object (not the cave's own rock - a tunnel,
+		/// a den or a wall rock) standing inside a hazard zone (zone.hazard; its radius + 0.5 m), like Gravewell's stakes in the
+		/// staked side pit. Such a thing bars its branch on purpose; null for anything else. (cavelay 11-20)</summary>
+		internal static TriggerZone HazardDressing(Collider hit, Vector3 point, List<TriggerZone> hazards)
+		{
+			if (hit == null || hazards == null || hazards.Count == 0) return null;
+			// (a placed object without settings has no IslandObjectRef - Attach adds one only to objects with props, and the
+			// stakes have none: then its own and its parents' names tell it from the cave's rock, and the hit point is measured)
+			IslandObjectRef r = hit.GetComponentInParent<IslandObjectRef>();
+			string on = r != null ? r.ObjectName ?? "" : "";
+			if (on == CaveTool.Tunnel || on == CaveTool.Room || on == CaveTool.WallRock) return null;
+			if (r == null || on.Length == 0)
+				for (Transform t = hit.transform; t != null; t = t.parent)
+					if (CaveRockName(t.name)) return null;
+			Vector3 at = r != null && on.Length > 0 ? r.transform.position : point;
+			foreach (TriggerZone z in hazards)
+				if (z != null && (at - z.transform.position).sqrMagnitude <= (z.Radius + 0.5f) * (z.Radius + 0.5f)) return z;
+			return null;
+		}
+
+		static bool CaveRockName(string n)
+		{
+			n = n ?? "";
+			return n.StartsWith(CaveTool.Tunnel) || n.StartsWith(CaveTool.Room) || n.StartsWith(CaveTool.WallRock) || n.StartsWith("Cave")
+				|| n.IndexOf("Dig", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Terrain", StringComparison.OrdinalIgnoreCase) >= 0;
+		}
+
+		/// <summary>For a block's message: the hit's ancestors (up to 4) and the nearest hazard zone, to tell why it was not taken
+		/// as a hazard's dressing.</summary>
+		static string HazardWhyNot(Collider hit, Vector3 point, List<TriggerZone> hazards)
+		{
+			string path = "";
+			int n = 0;
+			for (Transform t = hit != null ? hit.transform : null; t != null && n < 4; t = t.parent, n++) path += (n > 0 ? "<" : "") + t.name;
+			float best = float.MaxValue; TriggerZone bz = null;
+			if (hazards != null) foreach (TriggerZone z in hazards) if (z != null) { float d = Vector3.Distance(point, z.transform.position); if (d < best) { best = d; bz = z; } }
+			return "; " + path + (bz != null ? ", nearest hazard zone " + bz.Id + " " + best.ToString("0.0") + " m (radius " + bz.Radius.ToString("0.0") + ")" : ", no hazard zones");
+		}
+
+		/// <summary>The cave kits' loot (caveloot) a player takes with a press: not a block on a cave's way.</summary>
+		static readonly HashSet<string> CaveLootByHand = new HashSet<string> { "Pickup_Landmark_DirtPickup", "Pickup_Landmark_Mushroom 1",
+			"Pickup_Landmark_Mushroom 2", "Pickup_Landmark_Mushroom 3", "Pickup_Landmark_Rock_2_Land", "Pickup_Landmark_Titanium_Land" };
+
+		[ConsoleCommand(name: "CIClearWayUnit", docs: "Dev, anywhere: the cave look's clear-way cast (WayBlocked) - a roof 1.5 m over the floor stops a walker on dry ground but not a swimmer 5 m under the sea; a roof 1 m over the floor stops both")]
+		public static void CIClearWayUnit()
+		{
+			bool ok = true;
+			Action<bool, string> chk = (c, w) => { Log((c ? "PASS: " : "FAIL: ") + w); ok &= c; };
+			Vector3 o = new Vector3(0f, 900f, 0f), p = o + Vector3.left * 3f, q = o + Vector3.right * 3f;
+			GameObject roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			try
+			{
+				RaycastHit h;
+				Func<float, float, bool> blocked = (bottom, sea) =>
+				{
+					roof.transform.position = o + Vector3.up * (bottom + 1f);
+					roof.transform.localScale = new Vector3(1f, 2f, 3f);
+					Physics.SyncTransforms();
+					return WayBlocked(p, q, sea, out h);
+				};
+				chk(blocked(1.5f, o.y - 5f), "a roof 1.5 m over dry ground stops a walker");
+				chk(!blocked(1.5f, o.y + 5f), "a roof 1.5 m over the floor 5 m under the sea lets a swimmer by (RM4)");
+				chk(blocked(1f, o.y + 5f), "a roof 1 m over the floor stops a swimmer too");
+				chk(blocked(1.5f, o.y + 0.5f), "only 0.5 m under the sea it is a walker's way: stopped");
+				chk(!blocked(2.2f, o.y - 5f), "a roof 2.2 m up lets a walker by");
+				IslandObjectRef r = roof.AddComponent<IslandObjectRef>();
+				r.ObjectName = "Pickup_Landmark_Titanium_Land";
+				chk(!blocked(0f, o.y - 5f), "a titanium lump of the cave loot across the way lets a walker by (taken by hand; Vaporhold intake)");
+				r.ObjectName = "Placeable_Lantern_Metal";
+				chk(blocked(0f, o.y - 5f), "any other object across the way stops a walker");
+			}
+			finally { UnityEngine.Object.DestroyImmediate(roof); }
+			Log((ok ? "PASS" : "FAIL") + ": clear way unit");
+		}
+
 		[ConsoleCommand(name: "CICaveGapsLook", docs: "Dev, a world (host): one cave gaps test island or any saved island with caves (CICaveGapsLook <cgaps-dig|cgaps-st|cgaps-uw|island name, spaces allowed> [noshots]), the kept one or brought next to the raft: each cave's way in (cave tool tunnels to the room or the far end, each dug stroke) - pictures from outside at the mouth and over the hill, from inside looking in, looking out, at the walls and roof at its end, by day and by night (shot_cg_<island>_<n>_<view>.png); a clear way along it (no rock across it); walked in with Raft's controller and back out past the mouth where it is dry; where it is under the sea: water there (Raft's swimming, the breath going down) and, in a room above the sea, dry ground with the breath coming back")]
 		public static void CaveGapsLookCommand(string[] args)
 		{
 			string name = CaveGapsLookName(args);
 			if (name.Length == 0) { Fail("CICaveGapsLook <island>"); return; }
+			string keep = args == null ? null : args.FirstOrDefault(a => a.StartsWith("keep=", StringComparison.OrdinalIgnoreCase));
+			GapsKeep = keep != null ? keep.Substring(5) : "";
 			StartTest(CaveGapsLookRoutine(name, args == null || !args.Contains("noshots")));
 		}
 
@@ -899,7 +1026,21 @@ namespace DynamicIslands
 		static string CaveGapsLookName(string[] args)
 		{
 			if (args == null) return "";
-			return string.Join(" ", args.Where(a => !string.Equals(a, "noshots", StringComparison.OrdinalIgnoreCase)).ToArray()).Trim().Trim('"', '\'').Trim();
+			return string.Join(" ", args.Where(a => !string.Equals(a, "noshots", StringComparison.OrdinalIgnoreCase) && !a.StartsWith("keep=", StringComparison.OrdinalIgnoreCase)).ToArray()).Trim().Trim('"', '\'').Trim();
+		}
+
+		/// <summary>CICaveGapsLook keep=<n>_<shot> (1_out, 3_endroof): that picture's camera kept as the last play picture's, so
+		/// CIRayLook at=u,v picture can ask what one odd bit in it is (cave1119 r4: Vaporhold 1's pale blades in front of its
+		/// mouth under the sea, and the dug tunnel's window in its roof, were only ever seen in these pictures).</summary>
+		static string GapsKeep = "";
+
+		static IEnumerator GapsShot(IslandWorldState.Entry e, Vector3 from, Vector3 at, string name)
+		{
+			yield return CameraShot(from, at, name);
+			if (GapsKeep.Length == 0 || !name.EndsWith("_" + GapsKeep, StringComparison.OrdinalIgnoreCase) || e == null || e.Root == null) yield break;
+			Quaternion back = Quaternion.Inverse(e.Root.transform.rotation);
+			LastPictureFrom = back * (from - e.Position); LastPictureLook = back * (at - e.Position); LastPictureIsland = e.Name;
+			Log("  " + name + "'s camera kept for CIRayLook picture: " + LastPictureFrom.Value.ToString("F2") + " toward " + LastPictureLook.Value.ToString("F2"));
 		}
 
 		[ConsoleCommand(name: "CICaveGapsLookName", docs: "Dev, anywhere: CICaveGapsLook's island name from the console's words - a name with spaces, with or without quotes, with noshots after it; a name with no saved island is refused before anything is brought into the world")]
@@ -986,6 +1127,8 @@ namespace DynamicIslands
 
 		/// <summary>How far down GapWalkOut looks for the ground beside a mouth (from 3 m over the floor).</summary>
 		const float GapWalkDown = 30f;
+		const float LoneHeadMax = 1.5f; // (CICaveGapsLook: m the hill over a lone den's arch may stand over the plane cap just behind it, 11-19 cave1119)
+		const float LoneSheerMax = 5f; // (CICaveGapsLook: m a cell beside a lone den's way in may stand over its neighbour past the arch's own height, 11-18 w15L; 5 from w15M: Wreckers' Cove 4.9, Signal Rock 3.3, Coral Observatory 3.2 after the plane cap - a regression guard, not a look pass)
 
 		/// <summary>The ground's height beside a mouth less its floor; no ground under the probe (a cliff, the sea far
 		/// below) is a drop past the probe's reach, never level ground.</summary>
@@ -1103,8 +1246,42 @@ namespace DynamicIslands
 				int shards = dt.RimTop == "" ? 0 : dt.RimShards(out at);
 				Check(ref ok, shards == 0, name + ": dug tunnel " + dt.name + "'s rim (" + dt.RimColumns + " columns, its top " + (dt.RimTop == "" ? "rock" : "the ground's") + "): " + shards + " rock shards on the ground" + (shards > 0 ? " at " + at : ""));
 			}
+			// The cave hill beside a lone den's way in: no cell standing over its neighbour or the way's floor much more than the
+			// arch's height - the dome stood full height at the den's plane, sheer cuts down the way in's sides and a flat cut face
+			// beside the arch (Signal Rock's rig den, Wreckers' Cove's den, 11-18 w15L)
+			// (no sand skirt's row standing up a wall of sand beside a floor's end: a tall strip of baked sand on the rock, Sinkmarket
+			// Floor's yellow column sm_cave_out 11-19 cave1119)
+			var skirts = e.Root.GetComponentsInChildren<MeshFilter>(false).Where(f => f.name == CaveGround.SkirtName).Select(f => new { f, h = CaveGround.SkirtTallestRow(f) }).OrderByDescending(x => x.h).ToList();
+			if (skirts.Count > 0)
+				Check(ref ok, skirts[0].h <= CaveGround.SkirtClimb + 0.05f, name + ": sand skirts at open floors' ends: tallest row climbs " + skirts[0].h.ToString("0.0") + " m (at most " + CaveGround.SkirtClimb.ToString("0.0") + ", " + skirts.Count + " skirts, " + skirts[0].f.transform.parent.name + ")");
+			foreach (CaveMountain cm in e.Root.GetComponentsInChildren<CaveMountain>(true))
+			{
+				Vector3 at = cm.LoneSheerAt - e.Position;
+				Check(ref ok, cm.LoneSheer <= LoneSheerMax, name + ": cave hill beside its lone dens' ways in: tallest step " + cm.LoneSheer.ToString("0.0") + " m over the arch's height (at most " + LoneSheerMax.ToString("0.0") + ")" + (cm.LoneSheer > 0f ? " at " + at.x.ToString("0.0") + " " + at.z.ToString("0.0") + ", " + cm.LoneSheerAt.y.ToString("0.0") + " m high (" + cm.LoneSheerNote + ")" : ""));
+				// (and over the arch and the den's roof just behind its plane, no higher than the plane cap: the dome's full height
+				// stood there as a sheer wall with the way in a slot cut into it, Vaporhold's Seep Cave 11-19 cave1119 FO-S1)
+				Vector3 hat = cm.LoneHeadAt - e.Position;
+				Check(ref ok, cm.LoneHead <= LoneHeadMax, name + ": cave hill over its lone dens' arches: " + cm.LoneHead.ToString("0.0") + " m over the plane cap (at most " + LoneHeadMax.ToString("0.0") + ")" + (cm.LoneHead > 0f ? " at " + hat.x.ToString("0.0") + " " + hat.z.ToString("0.0") : ""));
+				// (tunnels' mouth frames drawn as the hill, not in the tunnel's pale ravine rock: a white slab and steps in the hill's
+				// face, Old Mine Islet and Gilded Skull Cove 11-19 cave1119)
+				if (cm.Skin != null)
+				{
+					var pale = e.Root.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.name == CaveTool.MouthName && r.sharedMaterial != cm.Skin.sharedMaterial && cm.Skin.bounds.Contains(r.bounds.center)).ToList();
+					Check(ref ok, pale.Count == 0, name + ": tunnel mouth frames drawn as the cave hill: " + pale.Count + " not" + (pale.Count > 0 ? " (" + pale[0].transform.parent.name + ", " + (pale[0].sharedMaterial != null ? pale[0].sharedMaterial.name : "none") + ")" : ""));
+					// (and no tunnel piece left in its pale ice-ravine rock: a pale blue ring round the far opening, Sinkmarket Floor round 3)
+					var ice = e.Root.GetComponentsInChildren<MeshRenderer>(true).Where(r => r.sharedMaterials.Any(x => x != null && x.name.Contains(CaveTool.IceRock))
+						&& (r.name.StartsWith("TP_UnderwaterCaveTunnel") || (r.name == CaveBacks.Name || r.name == CaveTool.JoinName) && r.transform.parent != null && r.transform.parent.name.StartsWith("TP_UnderwaterCaveTunnel"))).ToList();
+					Check(ref ok, ice.Count == 0, name + ": tunnel pieces in the hill's rock, not the pale ice-ravine rock: " + ice.Count + " not" + (ice.Count > 0 ? " (" + ice[0].name + " " + (ice[0].transform.position - e.Position).ToString("0") + ")" : ""));
+					// (no join plate left lying on a floor: a pale flat sheet at a tunnel's end into a den, Upfall Orchard 11-19 cave1119)
+					Physics.SyncTransforms();
+					var lying = e.Root.GetComponentsInChildren<MeshFilter>(false).Where(f => f.name == CaveTool.JoinName && cm.Skin.bounds.Contains(f.transform.position) && CaveTool.JoinLiesOnFloor(f.transform)).ToList();
+					Check(ref ok, lying.Count == 0, name + ": join plates lying on a floor: " + lying.Count + (lying.Count > 0 ? " (" + lying[0].transform.parent.name + ")" : ""));
+				}
+				if (cm.LastMap != null) File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "cavemap_" + name + ".txt"), cm.LastMap); // (its map, as CICaveLook writes it: what set each cell)
+			}
 			Vector3 eyeUp = Vector3.up * 1.6f;
 			Vector3 home = me.transform.position;
+			List<TriggerZone> hazards = e.Root.GetComponentsInChildren<TriggerZone>(true).Where(z => !string.IsNullOrEmpty(z.Hazard)).ToList();
 			int n = 0;
 			try
 			{
@@ -1117,21 +1294,36 @@ namespace DynamicIslands
 					Vector3 mouth = f[0], end = f.Last();
 					int c = f.Count;
 					bool wet = mouth.y < sea - 0.5f;
-					// A clear way: nothing solid across the passage between its points (a body 0.35 m round, knee to head)
-					int blocked = 0;
-					string where = "";
+					// A clear way: nothing solid across the passage between its points (WayBlocked: a walker's body, a swimmer's deep under the sea)
+					int blocked = 0, staked = 0;
+					string where = "", stakedAt = "";
 					for (int i = 1; i < c; i++)
 					{
-						Vector3 a = f[i - 1] + Vector3.up * 0.7f, b = f[i] + Vector3.up * 0.7f;
-						Vector3 d = b - a;
-						if (d.magnitude < 0.2f) continue;
+						Vector3 d = f[i] - f[i - 1];
 						RaycastHit h;
-						if (Physics.CapsuleCast(a, a + Vector3.up * 0.9f, 0.35f, d.normalized, out h, d.magnitude, ~0, QueryTriggerInteraction.Ignore)
-							&& h.collider.GetComponentInParent<Network_Player>() == null && h.collider.GetComponentInParent<AI_NetworkBehaviour>() == null
-							&& Vector3.Angle(h.normal, Vector3.up) > 50f)
-						{ blocked++; if (where.Length == 0) where = " - first at point " + i + " (" + h.collider.name + ", " + (f[i].y - sea).ToString("0.0") + " m)"; }
+						if (WayBlocked(f[i - 1], f[i], sea, out h))
+						{
+							// (an object set inside a hazard zone - the stakes of Gravewell's staked side pit - bars that branch on
+							// purpose: told, not counted; cave rock across a hazard is still a block. cavelay 11-20)
+							TriggerZone hz = HazardDressing(h.collider, h.point, hazards);
+							if (hz != null)
+							{
+								if (staked++ == 0) stakedAt = " (from point " + i + ": " + Hazards.Label(hz.Hazard).ToLowerInvariant() + " zone " + hz.Id + ", " + (h.collider.GetComponentInParent<IslandObjectRef>()?.ObjectName ?? h.collider.name) + " - meant to bar it)";
+								continue;
+							}
+							blocked++;
+							// (where it hit, over the floor between the two points and across: RM4's Vaporhold intake stopped at CaveMouth
+							// with no more said - fix-open 11-19)
+							if (where.Length == 0)
+							{
+								Vector3 hp = h.point - e.Position;
+								where = " - first at point " + i + " (" + h.collider.name + ", " + (f[i].y - sea).ToString("0.0") + " m; hit at " + hp.x.ToString("0.0") + " " + (h.point.y - sea).ToString("0.0") + " " + hp.z.ToString("0.0")
+									+ ", " + (h.point.y - Mathf.Lerp(f[i - 1].y, f[i].y, Mathf.Clamp01(Vector3.Dot(h.point - f[i - 1], d) / d.sqrMagnitude))).ToString("0.0") + " m over the floor, "
+									+ h.distance.ToString("0.0") + " of " + d.magnitude.ToString("0.0") + " m, normal " + Vector3.Angle(h.normal, Vector3.up).ToString("0") + " deg" + HazardWhyNot(h.collider, h.point, hazards) + ")";
+							}
+						}
 					}
-					Check(ref ok, blocked == 0, label + ": a clear way along it, " + c + " points" + (blocked > 0 ? ": " + blocked + " blocked" + where : ""));
+					Check(ref ok, blocked == 0, label + ": a clear way along it, " + c + " points" + (blocked > 0 ? ": " + blocked + " blocked" + where : "") + (staked > 0 ? "; " + staked + " barred by a hazard's dressing" + stakedAt : ""));
 					// A ladder shaft (11-08): its middle line clear (the ladders aside) and ladders up it from its foot to near its top
 					if (w.Shaft != null && w.Shaft.Count > 1)
 					{
@@ -1170,14 +1362,32 @@ namespace DynamicIslands
 					for (float s = 1f; s <= 6f && !w.Kind.StartsWith("dug"); s += 0.25f)
 					{
 						Vector3 p;
-						if (!PointAlong(f, s, out p)) break;
+						if (!PointAlong(f, s + w.Lead, out p)) break;
 						for (float x = -0.6f; x <= 0.61f; x += 0.2f)
 						{
 							rays++;
 							RaycastHit top;
 							if (!Physics.Raycast(p + across * x + Vector3.up * 40f, Vector3.down, out top, 41f, ~0, QueryTriggerInteraction.Ignore)
 								|| top.point.y < p.y + 1.3f)
-							{ sky++; if (skyAt.Length == 0) skyAt = " - first " + s.ToString("0.0") + " m in, " + x.ToString("0.0") + " across"; }
+							{
+								sky++;
+								if (skyAt.Length == 0)
+								{
+									// (and where on the island, and what the ray met: the hole's own place, to look at with CIDownRays)
+									Vector3 at = p + across * x, isl = at - e.Position;
+									bool met = Physics.Raycast(at + Vector3.up * 40f, Vector3.down, out top, 41f, ~0, QueryTriggerInteraction.Ignore);
+									skyAt = " - first " + s.ToString("0.0") + " m in, " + x.ToString("0.0") + " across (island " + isl.x.ToString("0.00") + " " + isl.z.ToString("0.00") + ", the way's floor " + (p.y - e.Position.y).ToString("0.00")
+										+ ": " + (met ? "met " + top.collider.name + " at " + (top.point.y - e.Position.y).ToString("0.00") : "met nothing");
+									// (every collider on that ray, and on the one 0.4 m nearer the way's middle: what roofs the way beside the hole)
+									for (int rr = 0; rr < 2; rr++)
+									{
+										Vector3 ra = at + across * (rr * (x < 0f ? 0.4f : -0.4f));
+										skyAt += (rr == 0 ? "; on it: " : "; 0.4 m in from it: ") + string.Join(", ", Physics.RaycastAll(ra + Vector3.up * 40f, Vector3.down, 60f, ~0, QueryTriggerInteraction.Ignore)
+											.OrderByDescending(h => h.point.y).Take(7).Select(h => h.collider.name + " " + (h.point.y - e.Position.y).ToString("0.00")).ToArray());
+									}
+									skyAt += ")";
+								}
+							}
 						}
 					}
 					if (rays > 0) Check(ref ok, sky == 0, label + ": a whole roof over the way in, " + rays + " rays down" + (sky > 0 ? ": " + sky + " reach the floor" + skyAt : ""));
@@ -1190,13 +1400,13 @@ namespace DynamicIslands
 							SetHour(night ? 23f : 12f);
 							yield return new WaitForSeconds(0.6f);
 							string tod = night ? "night_" : "";
-							yield return CameraShot(outside, mouth + Vector3.up * 1.5f, shot + tod + "out");
-							if (!night) yield return CameraShot(mouth - w.In * 2f + Vector3.up * 26f, mouth + w.In * 12f, shot + "above");
-							yield return CameraShot(f[c / 3] + eyeUp, f[Mathf.Min(c - 1, 2 * c / 3 + 1)] + eyeUp, shot + tod + "in");
-							yield return CameraShot(f[Mathf.Max(1, 2 * c / 3)] + eyeUp, mouth + eyeUp, shot + tod + "lookout");
+							yield return GapsShot(e, outside, mouth + Vector3.up * 1.5f, shot + tod + "out");
+							if (!night) yield return GapsShot(e, mouth - w.In * 2f + Vector3.up * 26f, mouth + w.In * 12f, shot + "above");
+							yield return GapsShot(e, f[c / 3] + eyeUp, f[Mathf.Min(c - 1, 2 * c / 3 + 1)] + eyeUp, shot + tod + "in");
+							yield return GapsShot(e, f[Mathf.Max(1, 2 * c / 3)] + eyeUp, mouth + eyeUp, shot + tod + "lookout");
 							Vector3 dEnd = end - f[Mathf.Max(0, c - 3)]; dEnd.y = 0f;
 							if (dEnd.sqrMagnitude < 0.01f) dEnd = w.In;
-							yield return CameraShot(f[Mathf.Max(0, c - 2)] + eyeUp, end + dEnd.normalized * 3f + Vector3.up * 4.5f, shot + tod + "endroof");
+							yield return GapsShot(e, f[Mathf.Max(0, c - 2)] + eyeUp, end + dEnd.normalized * 3f + Vector3.up * 4.5f, shot + tod + "endroof");
 						}
 						SetHour(12f);
 					}
@@ -1507,6 +1717,38 @@ namespace DynamicIslands
 			return lines;
 		}
 
+		/// <summary>
+		/// A cave loot piece set down on the lowest floor under its corners and middle, at most half its height: "sit" puts its
+		/// bottom on the floor under its middle, and on a sloping floor its low side stood in the air - Rootcellar Deep's stone on
+		/// its gallery's 22 degree ramp (11-21 cv38). True when it was moved down.
+		/// </summary>
+		/// <summary>How far under its lowest corner's floor caveloot sets a piece's bottom (m): the world's floor is a hair off the editor's.</summary>
+		const float LootSink = 0.04f;
+		static bool LootDown(GameObject go)
+		{
+			Renderer[] rs = PlacementOptions.ShapeRenderers(go);
+			if (rs.Length == 0) return false;
+			Bounds b = rs[0].bounds;
+			foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+			Physics.SyncTransforms();
+			float low = float.MaxValue;
+			foreach (Vector2 c in new[] { Vector2.zero, new Vector2(-1f, -1f), new Vector2(1f, -1f), new Vector2(-1f, 1f), new Vector2(1f, 1f) })
+			{
+				Vector3 from = new Vector3(b.center.x + c.x * b.extents.x * 0.8f, b.max.y + 0.3f, b.center.z + c.y * b.extents.z * 0.8f);
+				RaycastHit[] under = Physics.RaycastAll(from, Vector3.down, b.size.y + 2.3f, ~0, QueryTriggerInteraction.Ignore)
+					.Where(h => !h.collider.transform.IsChildOf(go.transform) && h.collider.GetComponentInParent<Network_Player>() == null)
+					.OrderBy(h => h.distance).ToArray();
+				if (under.Length > 0) low = Mathf.Min(low, under[0].point.y);
+			}
+			if (low == float.MaxValue) return false;
+			// (11-21 cv40: set LootSink under its lowest corner's floor, and a flat piece down to 0.3 m: a dirt pile 0.25 m high on a
+			// ramp stopped at half its height and stood 0.14 m over the floor on its low side, Rootcellar Deep)
+			float down = Mathf.Min(b.min.y - low + LootSink, Mathf.Max(b.size.y * 0.5f, 0.3f));
+			if (down < 0.02f) return false;
+			go.transform.position += Vector3.down * down;
+			return true;
+		}
+
 		static RaycastHit? FirstSolid(Vector3 from, Vector3 dir, float range)
 		{
 			RaycastHit[] hits = Physics.RaycastAll(from, dir, range, ~0, QueryTriggerInteraction.Ignore).Where(h => h.collider.GetComponentInParent<Network_Player>() == null).OrderBy(h => h.distance).ToArray();
@@ -1586,7 +1828,7 @@ namespace DynamicIslands
 			var kinds = new List<string>();
 			while (left.Any(x => x > 0))
 				for (int k = 0; k < left.Length; k++) if (left[k] > 0) { kinds.Add(kind[k]); left[k]--; }
-			int made = 0, mushN = 0, vineN = 0, skipped = 0;
+			int made = 0, mushN = 0, vineN = 0, skipped = 0, grounded = 0;
 			for (int k = 0; k < kinds.Count; k++)
 			{
 				var s = spots[Mathf.Min(spots.Count - 1, (int)((k + 0.5f) / kinds.Count * spots.Count))];
@@ -1604,6 +1846,7 @@ namespace DynamicIslands
 				string err = Place(obj, f.x, f.y, o, out e);
 				if (err != null) return "caveloot: " + err;
 				if (e == null) { skipped++; continue; }
+				if (LootDown(e.gameObject)) grounded++;
 				AddToGroup(group + "_loot", e);
 				made++;
 			}
@@ -1665,7 +1908,7 @@ namespace DynamicIslands
 				made++;
 			}
 			placed += made;
-			Log("  caveloot " + group + ": " + made + " placed on " + spots.Count + " dry spots inside" + (skipped > 0 ? ", " + skipped + " left out (no floor or roof)" : ""));
+			Log("  caveloot " + group + ": " + made + " placed on " + spots.Count + " dry spots inside" + (grounded > 0 ? ", " + grounded + " set down onto a sloping floor" : "") + (skipped > 0 ? ", " + skipped + " left out (no floor or roof)" : ""));
 			return null;
 		}
 

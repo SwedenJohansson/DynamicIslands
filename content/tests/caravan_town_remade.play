@@ -1,7 +1,7 @@
 # Play test of Caravan Town Remade (CIPlay caravan_town_remade, in a test world 'CI ...'). Points as in its recipe: the
 # market in the inlet (1.6 m), the lift's ladders on its south face, the upper town and the mayor's pillar (21.9 m).
 island Caravan Town Remade
-offset -5.2865 -0.4248
+offset -5.3098 -0.4348
 expect step 0
 expect title The Mayor's Toll
 

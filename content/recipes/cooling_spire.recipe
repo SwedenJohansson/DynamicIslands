@@ -146,6 +146,9 @@ prop roofbear creature.zone=spire_top
 # --- The cable down to the lookout on the south shore; what Hedda saw -------------------------------------------------
 place ZiplinePath_Landmark zipdown at 11.15 -3.32 h=13.45
 zipto zipdown -0.41 -55.78
+# (c3 round 8, 11-21 c3z44: 0.76 m under at 3.1 -16.8; no recipe object stands there, so the island's own
+# rocks and plants held the land off the shave: cleared along the line)
+clear from 5.43 -2.34 to -0.41 -55.78 r=3 body
 call tzone x=-0.41 z=-57.78 al=lookzone id=court_view r=4 msg="The lookout. Over the sea to the south: a ring of iron, wider than any island, and three waves cut across it."
 place Note_Sign hedda2 at 1.09 -59.28 ground sit yaw=0
 place Note_Paper keepercs at -2.6 -56.2 ground drop yaw=80
@@ -228,7 +231,11 @@ call treasure x=36.02 z=-76.52 r=1.5 n=1 seed=14971
 prop treasure14971 treasure.loot=TitaniumOre*2;Battery*1
 # (G2 10-30: pivot moved so the near end's floor sits on the tower's deck, between the lantern and the ladder hole)
 place ZiplinePath_Landmark cszip at 37.93 -63.01 h=41.55
-zipto cszip 11.88 -23.75
+# (c3 round 4, 11-21: the far end where the save moved it back in c3z38 - its rope was in the ground between the ends)
+# (c3z54: that far end was set on the ground as the recipe ran, and zipdown's cut (its sides reach 10 m from its rope)
+# then took 1.5 m of ground from under it: 3.3 m back along the line, 11.7 m from zipdown's rope, out of that cut's reach)
+zipto cszip 14.3 -28.6
+prop cszip zip.slack=-3.46
 place Creature_Goat csgoats at 33.34 -53.27 ground
 prop csgoats creature.count=2
 # (REACH 10-28: the ramp out rose 8.5 m in 8 m - too steep to walk up: now 15 m long on the same line)

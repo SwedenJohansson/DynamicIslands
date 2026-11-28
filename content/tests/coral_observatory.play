@@ -3,6 +3,7 @@
 # blue hole in the lagoon's west part. Quest "The Reef Remembers", 11 steps: platform, log, dive locker, cases A
 # and B, the hole's edge, the puffer fish, the angler, case C, the samples, the safe.
 island Coral Observatory
+offset 2.1653 2.3374
 expect step 0
 expect title The Reef Remembers
 

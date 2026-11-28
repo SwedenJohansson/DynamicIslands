@@ -64,6 +64,7 @@ expect message isn't whole
 | `use` | `<name> [stay]` | Fires `use` on the object (`Behaviours.Fire`). The player is put next to it (`ScUse`); with `stay`, used from where they stand (a lift carries them). A survivor cage is opened as a player's E opens it (`SurvivorCage.Use`); an islander is talked to and a collectible (`collect.set`) is claimed as E does. |
 | `use ... pick` | `<islander> pick <n>` | Talks to the islander (the player put next to it) and picks answer n (1-3) of its dialogue as a click does: passes when the dialogue opened, closed with that answer and `Islanders.Talked` ran, so its `on.choice<n>` effects (`show`, `message`...) are checked in the same play (a `CITalk` after the play cannot be: the next play spawns the island again). |
 | `code` | `<name> <digits> [wrong]` | Opens the object's keypad code lock (`lock.code`) as a player does, types the digits and OK; passes when the keypad closed and the lock is open (`CodeLock`). With `wrong`: passes when the digits did not open it. |
+| `zipride` | `<x> <z> [seconds=15]` | Rides the zipline line whose near end is nearest x z (11-20): gives the zipline tool, puts the player on the near floor and hooks on as Raft's zipline does (`ZiplinePlayer.AttachToZipline`). Logs the line's length, how far its rope sags, how far the player hangs under the rope at the most, the lowest height over the ground on the way, where the player let go (`IsAttachedToZipline` false) and `ZiplinePlayer`'s ground settings; checks that the line carries the player to its far end and that the player stays over the ground. Two checks. |
 | `dig` | `[n]` | Digs up the island's buried treasure n (0, the first: `treasure` / `Treasure_Buried`) as a player's shovel does, three digs, and picks up its chest (`BuriedTreasure`, `TreasurePoint`); its `treasure.loot` is given then. |
 | `kill` | `<label>` | Waits up to 15 s for the island's animals of that label, then defeats all of them (`ScKill`), the player moved to each, and puts the player back where it stood. |
 | `catch` | `<label> [n]` | Catches n (default 1) of the island's own spawner animals (`ScCarryHome`). |
@@ -80,7 +81,7 @@ expect message isn't whole
 | `empty` | | In a `CI ` world or one `CINewWorld` made this session: the player's inventory emptied (its blueprints noted first), as a player makes room before a chest whose loot would drop for a full bag. |
 | `storespot` | `[x z] [count] [size]` | Logs up to `count` (6) clear squares of `size` m (8) on the island's own ground for a Raft store, nearest to x z first, as ready `store - at X Z ground` lines: level within 0.6 m, at least 1 m above the sea, nothing of the island in the square up to 5 m high (`DevTests.StoreSpots` in `DevTestsStore.cs`). |
 | `where` | `<name>` | Logs where the island's objects whose name starts with it are, in test coordinates, and their solid colliders' x and z extent. |
-| `surface` | `<x0> <z0> <x1> <z1> [step]` | Logs the top surface's height on a grid (`step` m, 4), one `surface z=` line per row from z1 down, x0 to x1 left to right, in the island frame (as `expect stand`). Shows where a den's dome really lies before a pit or dig goes near it. |
+| `surface` | `<x0> <z0> <x1> <z1> [step] [paint]` | Logs the top surface's height on a grid (`step` m, 4), one `surface z=` line per row from z1 down, x0 to x1 left to right, in the island frame (as `expect stand`). Shows where a den's dome really lies before a pit or dig goes near it. `paint`: each height also names the strongest ground texture there and its weight (`h/<texture>:<w>`) - a pale patch in a picture, paint or light. |
 | `hide` / `show` | `<name>` | Turns off (or on) the island's renderers on objects of that exact name (`<name>/`: and everything under them) - which piece draws an odd look in a picture. |
 | `picture` | `<file> <x> <h> <z> <lx> <lh> <lz> [aim=<label>] [light[=m]]` | A 1280x720 picture with Raft's camera to `recipes\play_<file>.jpg`. Heights above `Position.y`, or `+h` above what is below. Logs three `FRAME top/mid/low:` lines: the first solid thing (parent/name and metres) through 5 points across each row of the frame - to name a piece seen in a shot. `aim=`: turned to the middle of that label's living animals within 30 m (they move). `light`: a spot light from the camera along the look (range m, default 25), as a flashlight in a dark tunnel. |
 | `beam` | `<emitter>` | Traces a laser emitter's beam now and logs it: where it starts, its points, the mirrors, what it ends on, and the emitter's renderers (their middle is the beam's start). Diagnostics only: checks just that the emitter is there |
@@ -107,6 +108,7 @@ expect message isn't whole
 | `expect stand <x> <z> h=<h> [below=<m>]` | What is at the point is within 0.6 m of h above `Position.y`. |
 | `expect spinsown <name>` | The object turns about its own up axis. |
 | `expect chain <rule\|Raft story island> [done\|unlocked\|locked]` | Its place in the story chain (default `done`), allowing up to 15 s. |
+| `expect quests <n> [sidetrips]` | The journal's quest count: the plan's story islands with `n` done, allowing up to 15 s; `sidetrips` also checks the plan's other islands are counted before they come. |
 
 ## Pass and fail in the log
 
@@ -122,7 +124,7 @@ expect message isn't whole
 
 ## Traps
 
-- Before an island, only `island`, `log`, `wait`, `hour`, `plan`, `note`, `tune`, `arrive`, `sail` and `expect chain` may run.
+- Before an island, only `island`, `log`, `wait`, `hour`, `plan`, `note`, `tune`, `arrive`, `sail`, `expect chain` and `expect quests` may run.
 - `island`, `tune` and `arrive` reset the offset to 0. Put `offset` after them.
 - `wait` is seconds here; in a recipe it is frames.
 - `read` matches part of a note title. `open` and `reach` match a chest's `note.title` setting whole (any case).

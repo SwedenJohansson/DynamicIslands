@@ -153,7 +153,7 @@ namespace DynamicIslands
 			if (ok) Log("PASS: under sea shift"); else Fail("under sea shift");
 		}
 
-		[ConsoleCommand(name: "CISpawnBoxStays", docs: "Dev, in game: RK16 - SPAWN TO RAFT clicked as a mouse does it (pointer down, up, click): its yes/no box and the Esc menu stay open until answered; No closes only the box")]
+		[ConsoleCommand(name: "CISpawnBoxStays", docs: "Dev, in game: RK16 - Spawn to raft (Esc > Custom Islands) clicked as a mouse does it (pointer down, up, click): its yes/no box, the window and the Esc menu stay open until answered; Cancel closes only the box")]
 		public static void SpawnBoxStaysCommand() { StartTest(SpawnBoxStaysRoutine()); }
 
 		static void PointerClick(GameObject g)
@@ -181,30 +181,29 @@ namespace DynamicIslands
 			bool ok = true;
 			PauseMenu menu = UnityEngine.Object.FindObjectOfType<PauseMenu>();
 			if (menu == null || RAPI.GetLocalPlayer() == null) { Fail("spawn box stays: no player or pause menu"); yield break; }
-			SpawnToRaft.TraceClose = true;
 			try
 			{
 				CallPrivate(menu, "Pause");
 				yield return new WaitForSecondsRealtime(0.6f);
-				UnityEngine.UI.Button b = SpawnToRaft.Button;
-				if (b == null || !b.gameObject.activeInHierarchy) { Fail("spawn box stays: no SPAWN TO RAFT button in the menu"); yield break; }
-				Log("  button parts: " + string.Join(", ", b.GetComponents<Component>().Select(x => x.GetType().Name).ToArray()));
-				Log("  button's children: " + string.Join("; ", b.GetComponentsInChildren<Transform>(true).Where(x => x != b.transform).Select(x => x.name + "[" + string.Join(",", x.GetComponents<Component>().Select(y => y.GetType().Name).ToArray()) + "]").ToArray()));
-				Log("  box parts: " + string.Join(", ", SpawnToRaft.Box.GetComponentsInChildren<Component>(true).Select(x => x.GetType().Name).Distinct().ToArray()));
+				WorldWindow.Open();
+				yield return new WaitForSecondsRealtime(1.2f);
+				UnityEngine.UI.Button b = WorldWindow.ButtonNamed("SpawnToRaft");
+				if (b == null || !b.gameObject.activeInHierarchy) { Fail("spawn box stays: no Spawn to raft button in the window"); yield break; }
 				if (!b.interactable) { Fail("spawn box stays: the button is greyed (" + SpawnToRaft.WhyNot() + ")"); yield break; }
 				PointerClick(b.gameObject);
 				yield return new WaitForSecondsRealtime(3f);
-				Check(ref ok, SpawnToRaft.Asking && CanvasHelper.ActiveMenu == MenuType.PauseMenu, "clicked with the mouse: 3 s later the box and the menu are still open (box " + SpawnToRaft.Asking + ", menu " + CanvasHelper.ActiveMenu + ")");
-				if (SpawnToRaft.NoButton != null && SpawnToRaft.Asking)
+				Check(ref ok, QuestSkip.AskingSpawn && WorldWindow.IsOpen && CanvasHelper.ActiveMenu == MenuType.PauseMenu, "clicked with the mouse: 3 s later the box, the window and the menu are still open (box " + QuestSkip.AskingSpawn + ", window " + WorldWindow.IsOpen + ", menu " + CanvasHelper.ActiveMenu + ")");
+				if (QuestSkip.CancelButton != null && QuestSkip.AskingSpawn)
 				{
-					PointerClick(SpawnToRaft.NoButton.gameObject);
+					PointerClick(QuestSkip.CancelButton.gameObject);
 					yield return new WaitForSecondsRealtime(1f);
-					Check(ref ok, !SpawnToRaft.Asking && CanvasHelper.ActiveMenu == MenuType.PauseMenu && menu.buttonHolderPanel.activeSelf, "No clicked: only the box closes, the menu stays");
+					Check(ref ok, !QuestSkip.ConfirmShown && WorldWindow.IsOpen && CanvasHelper.ActiveMenu == MenuType.PauseMenu, "Cancel clicked: only the box closes, the window and the menu stay");
 				}
 			}
 			finally
 			{
-				SpawnToRaft.TraceClose = false;
+				QuestSkip.CloseConfirm();
+				WorldWindow.Close();
 				try { if (CanvasHelper.ActiveMenu == MenuType.PauseMenu) menu.ContinuePlaying(); } catch { }
 			}
 			if (ok) Log("PASS: spawn box stays"); else Fail("spawn box stays");

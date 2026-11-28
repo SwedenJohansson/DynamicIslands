@@ -15,6 +15,7 @@ include lib_huts
 include lib_areas
 include lib_highwater
 include lib_rain
+include lib_caves
 # RESIZE 10-26 (the user: Raft-big, one-hour islands): Radius 64 -> 88; the old island moved 24 m south (push frames), so its south shore stays on the coast and the new land is north
 # RAIN 10-26: the new land - Spark Bluff with storm watch mast, Basalt Cave, Signe Lund at the ruined house (a lamp puzzle), a crashed plane, a jump course, a set of five fulgurites
 new
@@ -246,6 +247,14 @@ call rn_piece x=-54 z=-21 al=ta_piece2 set="Fulgurites"
 call rn_piece x=42 z=28 al=ta_piece3 set="Fulgurites"
 call rn_piece x=-6 z=62 al=ta_piece4 set="Fulgurites"
 call rn_piece x=76 z=-14 al=ta_piece5 set="Fulgurites"
+
+# --- 11-12 (w11 prep): the cable cave under the array (plan 11 row: ST under the array, optional VINE mouth; dirt 2,
+# mushrooms 2) - the array's earth cables ran down the cliff into a cave off the beach east of the landing; the vines
+# have grown over its mouth since (machete, from The Kite Meadow: optional - no quest step). hill=0: the cliff and the
+# plateau over it are the rock.
+# (prep, offline only: not yet seen in Raft - check the cliff foot at the mouth and the plateau's height over the room)
+call kit_st x=35 z=-70 yaw=0 len=26 slope=0 end=room size=0.8 hill=0 dirt=2 mush=2 stone=0 vines=2 gate=1 as=tacablecave
+prop tacablecave cave.rock=plain
 prop ta_piece1 on.set=show|ta_setchest\nmessage||All five fulgurites found.
 call rn_hidden x=5 z=26 al=ta_setchest kind=Loot_Chest
 call treasure x=36 z=72 r=5 n=1 seed=26678 kind=0
@@ -255,6 +264,11 @@ call ar_plants_hill x=30 z=22 r=14 seed=26692
 call ar_plants_hill x=-30 z=4 r=14 seed=26693
 call ar_plants_hill x=40 z=-40 r=14 seed=26694
 call ar_plants_hill x=66 z=36 r=10 seed=26695
+# 11-13 w11: the cable cave cut the ground under these (CIFloating) - take them off
+clear at 34.0 -42.1 r=1 all body only=Pickup_Landmark_Tree_Palm
+clear at 36.0 -39.6 r=1.2 all body only=SmallBoulder4
+clear at 38.0 -36.2 r=0.8 all body only=Bush2
+clear at 35.2 -64.0 r=0.8 all body only=Pickup_Landmark_DirtPickup
 call hw_machine x=0 z=30 yaw=180 al=ta_machine nm="Earthing switch" obj=TP_LaserControlPanel_lever sc=3 a=ta_top b=ta_cave done=ta_fixed rew=ta_rewchest rnote=ta_rewnote msg="It works." hint="It wants the storm meter from Spark Bluff and the earth spike from Basalt Cave."
 call hw_note x=-2.6 z=31.2 yaw=200 al=ta_hint
 
@@ -428,4 +442,7 @@ call treasure x=0 z=0 r=48 n=1 seed=8860
 pop
 prop treasure8860 treasure.loot=TitaniumOre*2
 
+# (lib 3.5.1 11-23: CISheetIslands found the west coast cliff round -74 -38 near-black (16 m step) - drawn as the ground's texture stretched down
+#     a wall. Sloped as rock talus where it can be; rock stood in the waterline band where it can't (rocks=))
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save Thunderhead Array

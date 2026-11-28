@@ -179,6 +179,9 @@ call hw_zone x=5.5 z=25.69 al=fp_trailz id=fp_trail r=5 msg="The trail up Pile-d
 call hw_zone x=12 z=56 al=fp_summitz id=fp_summit r=8 h=1 msg="The top of Pile-driver's Hump. The whole island below, the city beyond it, and the pile-driver's derrick still higher."
 call hw_mast x=8.62 z=58.14 h0=42 lv=11 a=fp_mast chest=fp_topchest top=Placeable_Lantern_Metal
 place ZiplinePath_Landmark fp_zip at 17.4 53.91 h=43.35
+# (c3 round 8, 11-21 c3z44: 3.97 m into the ground at 20.4 50.2, h=38: the line crossed hw_mount's plateau
+# edge 7-10 m from its floor. The floor now stands 7 m from the mount's centre toward the far end)
+zipfrom fp_zip 17.95 52.31 ground
 zipto fp_zip 46.62 34.14
 place Loot_ChestSmall fp_ledge at 7.36 70.37 ground sit yaw=162.09
 call treasure x=9.86 z=52.62 r=5 n=1 seed=14028 kind=0
@@ -364,8 +367,9 @@ call ar_plants_hill x=-72 z=-24 r=12 seed=5620
 # (a generator boulder left 1.4 m over a brushed slope, CIGroundIslands 10-25)
 clear at 26.1 21 r=1.5 only=SmallBoulder2
 # (G2 10-30: two bamboos on the rim of a drop, their trunks over it - CIGroundIslands 10-30)
-clear at -37.74 -62.31 r=1 only=Bamboo
-clear at 72.92 -46.36 r=1 only=Bamboo
+# (11-19 cn4: the bamboo is the hill-plants macro's, so the clear needs "all"; it still stood 1.2 m sunk)
+clear at -37.74 -62.31 r=1 only=Bamboo all
+clear at 72.92 -46.36 r=1 only=Bamboo all
 
 # --- 11-11 (w04): the old pile-drivers' drift (plan 04 row: DIG between the piles, UW mouth at the low end; stone 3,
 # dirt 2). No quest step. When the piles were driven the gangs cut a drift from the west bank down to the basin floor
@@ -383,4 +387,10 @@ dig -6.819,9.026 -29.372,17.234 r=1.75 slope=25 as=fpdrift
 caveloot fpdrift dirt=2 mush=0 stone=3 vines=0 titanium=0 light=0 wet=1
 prop fpdrift cave.rock=plain
 
+# (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
+#     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
+#     as on Caisson Yard; a pit or a dive shaft keeps its depth)
+# (keep=, lib 3.5.1 minor fixes 11-23: the talus raised the floor of the piles' pool 9 m - over its notes, the jacks' air
+#     pockets and the body - and buried the sunk house's dive site - left as built)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=83,31,16|10.4,0,25
 save The Foundation Piles

@@ -3,6 +3,7 @@
 # stones (6 m), along the saddle's east ridge to the lookout's pad on the east peak's shoulder (9 m; the hut's deck 15.5 m,
 # its ladder from the pad), the wreck in the cove's mouth (her bed 10 m down).
 island Gilded Skull Cove
+offset -4.9326 -4.437
 expect step 0
 expect title The Gilded Skull's Hoard
 wait 3

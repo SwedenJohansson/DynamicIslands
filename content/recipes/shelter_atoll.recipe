@@ -324,9 +324,12 @@ place RT_Floor - at 3 -10 y=-0.07 sx=0.993 sz=0.778
 place RT_Floor - at -3 -10 y=-0.07 sx=0.993 sz=0.778
 # (11-04: the lagoon cave's approach is cut down to its mouth's floor, about 7 m, under the landing's middle: its
 # pillars go 3 m deeper now, so they stand in the cut and not over it - CIFloating)
-for lx -8.7 8.7 5.8
-place RT_PillarThick - at $lx -16.7 y=-9 sy=1.5
-next
+# (c3 round 5, 11-21 c3z39: the one at -2.9 stood in the lagoon cave's way in, its axis crossing this row about -1.5 -
+# the cave kept it; it stands 3.1 m west, off the way in)
+place RT_PillarThick - at -8.7 -16.7 y=-9 sy=1.5
+place RT_PillarThick - at -6 -16.7 y=-9 sy=1.5
+place RT_PillarThick - at 2.9 -16.7 y=-9 sy=1.5
+place RT_PillarThick - at 8.7 -16.7 y=-9 sy=1.5
 place "Box Small" - at -7.6 -11.3 sit yaw=15
 place "Box Small" - at -6.4 -11.1 sit yaw=-10
 place Zone_Trigger outside at 0 -13 y=1.5
@@ -759,6 +762,14 @@ place SmallBoulder3 - at 2.65 -26.2 ground sit scale=0.65 yaw=160
 # a second at -6.8 -26 stood in the tunnel's way down)
 # (on the very spot CICaveInside stands at, -7.9 -22.7: one beside it left the look free)
 place SmallBoulder3 - at -8.1 -22.8 ground y=-0.3 sit scale=1.7 yaw=20
+# (c3z45: the den's back (south-west, away from the tunnel) hung over the bay: its rim 4.4 m over the sea, the sea floor
+# 14 m down under it and no hill there - a 16.7 m gap seen into the shell from outside, and from inside a hole in its back
+# wall to the sky (CIGroundIslands 11-21). A rock foot raised under its back, 1.5-3.5 m out from its back wall (its
+# line along the den's width, yaw 25), up over the rim so the shell's foot sits in it; the room's own floor is cut free.)
+brush flatten from -35.9 -73.2 to -21.4 -79.9 r=6 s=20 frames=300 h=6
+brush smooth from -35.9 -73.2 to -21.4 -79.9 r=9 s=5 frames=20
+brush rock from -35.9 -73.2 to -21.4 -79.9 r=9 s=20 frames=30
+clear at -28.6 -76.5 r=9 all only=Pickup_Landmark
 # (a palm the den's rock grew round stood out of the sea stack's side, its crown inside: cleared)
 clear at -23.6 -64 r=16 all body only=Tree
 place Zone_Trigger shelair at -23.6 -64 h=3.6
@@ -786,4 +797,9 @@ clear at 62 80 r=11 all only=Palm|Tree|Bamboo|Banana|Mango below=9
 place Creature_Rat_Tangaroa ammorats at 63 79 h=4.5
 prop ammorats creature.count=2
 prop ammorats creature.respawn=0
+# (c3 round 3 11-21: CISheetIslands found bare cliff walls at the waterline here, drawn as stretched sheets. Their feet
+#     sloped as rock talus down to 10 m under the sea - a pit or a dive shaft keeps its depth, a narrow one is left open)
+# (c3z61: the lagoon's channels still sheer walls seen from a raft - 106 faces between two walls the talus leaves open -
+#     so rock stood in their waterline band (rocks=), clear of the wreck and the cave tunnels)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 save Shelter Atoll

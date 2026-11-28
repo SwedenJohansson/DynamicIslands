@@ -99,6 +99,23 @@ namespace DynamicIslands
 		static bool planMode;
 
 		/// <summary>A point of the played island (metres from its land middle) in the world.</summary>
+		/// <summary>The strongest terrain ground texture under a world point (its name), or "-" off every terrain.</summary>
+		static string GroundPaintAt(Vector3 p)
+		{
+			foreach (Terrain t in Terrain.activeTerrains)
+			{
+				TerrainData td = t.terrainData;
+				if (td == null || td.terrainLayers == null || td.alphamapLayers == 0) continue;
+				float u = (p.x - t.transform.position.x) / td.size.x, v = (p.z - t.transform.position.z) / td.size.z;
+				if (u < 0f || u > 1f || v < 0f || v > 1f) continue;
+				int ar = td.alphamapResolution, ax = Mathf.Clamp((int)(u * ar), 0, ar - 1), az = Mathf.Clamp((int)(v * ar), 0, ar - 1), best = 0;
+				float[,,] a = td.GetAlphamaps(ax, az, 1, 1);
+				for (int l = 1; l < td.alphamapLayers; l++) if (a[0, 0, l] > a[0, 0, best]) best = l;
+				TerrainLayer tl = best < td.terrainLayers.Length ? td.terrainLayers[best] : null;
+				return (tl != null && tl.diffuseTexture != null ? tl.diffuseTexture.name : "layer" + best) + ":" + a[0, 0, best].ToString("F2", CultureInfo.InvariantCulture);
+			}
+			return "-";
+		}
 		static Vector3 PlayPoint(float x, float z) { return playEntry.Position + new Vector3(x - playOffset.x, 0f, z - playOffset.y); }
 
 		/// <summary>How far the island's land centre lies from its recipe's origin ("offset" step; the recipe logs it when it
@@ -172,6 +189,30 @@ namespace DynamicIslands
 			return false;
 		}
 
+		/// <summary>Ends the mod's timed suit and takes off Raft's hazmat suit (a play starts without one).</summary>
+		static void TakeOffSuit(Network_Player p)
+		{
+			Hazards.SuitUntil = 0f;
+			try { if (p != null && p.HazmatSuit != null && p.HazmatSuit.Equipped) p.HazmatSuit.UnEquip(); } catch (Exception ex) { Log("  (hazmat suit off: " + ex.Message + ")"); }
+		}
+
+		[ConsoleCommand(name: "CIPlaySuitReset", docs: "Dev, in a world: a suit put on before a play is off when the next play starts (w16F: a 180 s suit carried from one play into the next)")]
+		public static void PlaySuitResetCommand() { StartTest(PlaySuitResetRoutine()); }
+
+		static IEnumerator PlaySuitResetRoutine()
+		{
+			if (!LoadSceneManager.IsGameSceneLoaded) { Fail("play suit reset: in a world"); yield break; }
+			Network_Player p = RAPI.GetLocalPlayer();
+			Hazards.PutOnSuit("180");
+			yield return null;
+			bool before = Hazards.SuitOn(p);
+			TakeOffSuit(p);
+			yield return null;
+			bool after = Hazards.SuitOn(p);
+			if (before && !after && Hazards.SuitUntil == 0f) Log("PASS: play suit reset (a 180 s suit was on, and off after a play's start)");
+			else Fail("play suit reset: on before " + before + ", on after " + after);
+		}
+
 		static IEnumerator PlayRoutine(string name)
 		{
 			string path = Path.Combine(RecipeFolder, name.EndsWith(".play") ? name : name + ".play");
@@ -182,9 +223,12 @@ namespace DynamicIslands
 			catch (Exception e) { Fail("play " + name + ": " + e.Message); yield break; }
 			yield return EnsureAlive();
 			Network_Player me = RAPI.GetLocalPlayer();
+			// (each play starts without a suit: sulphur_vent_acidsuit's 180 s suit carried into the next play in the world,
+			// vi_wingfall_mire_acid's bog pools hurt nobody - w16F; fix-open 11-19)
+			TakeOffSuit(me);
 			bool ok = true, keep = false;
 			var made = new List<IslandWorldState.Entry>();
-			playEntry = null;
+			playEntry = null; nameEntry = null;
 			playBlueprints.Clear();
 			playHurtFrom = Hazards.Taken;
 			int checks = 0;
@@ -218,7 +262,7 @@ namespace DynamicIslands
 					settleAllFalse = settleGroup.Count > 0 && settleGroup.All(g => !PlayQuiet(g));
 				}
 				// (sail only counts distance: a plan whose first rule wants km sails before any island - Relic of the Seventh Tide)
-				bool storyStep = verb == "plan" || verb == "note" || verb == "tune" || verb == "arrive" || verb == "sail" || (verb == "expect" && t.Length > 1 && t[1] == "chain");
+				bool storyStep = verb == "plan" || verb == "note" || verb == "tune" || verb == "arrive" || verb == "sail" || (verb == "expect" && t.Length > 1 && (t[1] == "chain" || t[1] == "quests"));
 				if (verb != "island" && verb != "log" && verb != "wait" && verb != "hour" && !storyStep && playEntry == null) { Fail("play " + name + ", " + rl.Where + ": no island yet"); yield break; }
 				// (the island step goes to a plan's island that isn't loaded yet - one a tuned frequency brought beyond the load distance)
 				if (playEntry != null && playEntry.Root == null && verb != "log" && verb != "island" && !storyStep) { Fail("play " + name + ", " + rl.Where + ": the island isn't loaded"); yield break; }
@@ -342,6 +386,85 @@ namespace DynamicIslands
 						yield return PlaySwim(me, spts.Skip(1).ToList(), (g, w) => { sGot = g; sWhere = w; });
 						Check(ref ok, sGot, "swam " + line.Substring(5) + ": " + sWhere);
 						checks++;
+						break;
+					}
+					case "zipride":
+					{
+						// zipride <x> <z> [seconds]: the zipline line whose near end is nearest x z, ridden with Raft's zipline tool from
+						// that end: it must carry the player to within FarSkip+2 m of its far end, and the player must stay over the
+						// ground on the way (but the far end's own stretch) - a line inside a ridge's shoulder (Outer Breakwater, 11-20)
+						Vector3 zAt = PlayPoint(F(t[1]), F(t[2]));
+						float zSecs = t.Length > 3 ? F(t[3]) : 15f;
+						MeshPath_Zipline_Landmark zl = null;
+						Vector3 zNear = Vector3.zero, zFar = Vector3.zero, zn, zf;
+						foreach (MeshPath_Zipline_Landmark c in playEntry.Root.GetComponentsInChildren<MeshPath_Zipline_Landmark>(true))
+							if (ZiplineEnds.Ends(c.gameObject, null, Vector3.zero, out zn, out zf) && (zl == null || (new Vector2(zn.x - zAt.x, zn.z - zAt.z)).sqrMagnitude < (new Vector2(zNear.x - zAt.x, zNear.z - zAt.z)).sqrMagnitude))
+							{ zl = c; zNear = zn; zFar = zf; }
+						if (zl == null) { Check(ref ok, false, "zipride: no zipline line on the island"); checks++; break; }
+						ZiplinePlayer zp = me.GetComponentInChildren<ZiplinePlayer>(true);
+						if (zp == null) { Check(ref ok, false, "zipride: the player has no ZiplinePlayer"); checks++; break; }
+						me.Inventory.AddItem(ContentCatalog.ZiplineItem, 1);
+						Vector3 zFloor = ZiplineEnds.NearFloor(zl.gameObject) ?? zNear;
+						PlayerMove.To(me, zFloor + Vector3.up * 1.2f, ControllerType.Ground);
+						yield return new WaitForSeconds(1f);
+						Vector3 z0 = me.transform.position;
+						Func<Vector3, float> zGround = p => { RaycastHit h; return Physics.Raycast(new Vector3(p.x, p.y + 40f, p.z), Vector3.down, out h, 120f, 1 << IslandSpawner.TerrainLayer) ? h.point.y : float.MinValue; };
+						try { zp.DetachFromCurrentZipline(); } catch { }
+						zp.AttachToZipline(zl, 0);
+						float zLen = new Vector2(zFar.x - zNear.x, zFar.z - zNear.z).magnitude, zLow = 999f, zHang = -999f, zSag = 0f;
+						Vector3 zLowAt = z0, zLast = z0, zOffAt = Vector3.zero;
+						// (the rope as Raft made it: the rider hangs under it, and it sags under the straight line between the ends)
+						List<Vector3> zRope = ZiplineEnds.Rope(zl);
+						if (zRope.Count > 1)
+						{
+							Vector3 zi = playEntry.Position - new Vector3(playOffset.x, 0f, playOffset.y), zra; float zrt;
+							Func<Vector3, string> zx = v => (v.x - zi.x).ToString("F2", CultureInfo.InvariantCulture) + " " + (v.z - zi.z).ToString("F2", CultureInfo.InvariantCulture) + " h=" + (v.y - zi.y).ToString("F2", CultureInfo.InvariantCulture);
+							float zrl = ZiplineEnds.RopeLowest(zRope, zNear, zFar, (x, z) => { float g = zGround(new Vector3(x, 0f, z)); return g > float.MinValue ? g : -999f; }, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out zra, out zrt);
+							RaycastHit zwh; string zWhat = Physics.Raycast(new Vector3(zra.x, zra.y + 40f, zra.z), Vector3.down, out zwh, 120f, 1 << IslandSpawner.TerrainLayer) && !(zwh.collider is TerrainCollider) ? " (on " + zwh.collider.transform.root.name + "'s " + zwh.collider.name + ")" : "";
+							Log("  zipride rope: " + zRope.Count + " points, " + zx(zRope[0]) + " .. " + zx(zRope[zRope.Count / 2]) + " .. " + zx(zRope[zRope.Count - 1]) + "; near " + zx(zNear) + ", far " + zx(zFar) +
+								", slack " + ZiplineEnds.Slack(zl).ToString("F3", CultureInfo.InvariantCulture) + "; lowest " + zrl.ToString("F2", CultureInfo.InvariantCulture) + " m over the ground at " + zx(zra) + zWhat);
+						}
+						foreach (Vector3 rp in zRope)
+						{
+							float rt = Mathf.Clamp01(new Vector2(rp.x - zNear.x, rp.z - zNear.z).magnitude / Mathf.Max(0.1f, zLen));
+							zSag = Mathf.Max(zSag, Mathf.Lerp(zNear.y, zFar.y, rt) - rp.y);
+						}
+						System.Reflection.PropertyInfo zAttached = typeof(ZiplinePlayer).GetProperty("IsAttachedToZipline", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+						Func<bool> zOn = () => { try { return zAttached == null || (bool)zAttached.GetValue(zp, null); } catch { return true; } };
+						string zParams = "";
+						foreach (string fn in new[] { "zipplineYOffset", "minDistanceFromGround", "AbortGroundOffset", "AbortCollision" })
+						{
+							System.Reflection.FieldInfo fi = typeof(ZiplinePlayer).GetField(fn, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+							if (fi != null) try { zParams += " " + fn + "=" + Convert.ToString(fi.GetValue(fi.IsStatic ? null : zp), CultureInfo.InvariantCulture); } catch { }
+						}
+						for (float s = 0f; s < zSecs; s += 0.25f)
+						{
+							yield return new WaitForSeconds(0.25f);
+							Vector3 p = me.transform.position;
+							zLast = p;
+							float left = new Vector2(zFar.x - p.x, zFar.z - p.z).magnitude;
+							if (left < ZiplineEnds.FarSkip + 2f) break;
+							// (not the first NearSkip m, as the save's zipto: the rider sets off hanging under the rope's start, under his own deck's
+							// floor and posts - 11-21, Engine Court's tower lines read -3 m there, their riders carried on)
+							float g = new Vector2(p.x - zNear.x, p.z - zNear.z).magnitude < ZiplineEnds.NearSkip ? float.MinValue : zGround(p);
+							if (g > float.MinValue && p.y - g < zLow) { zLow = p.y - g; zLowAt = p; }
+							if (zRope.Count > 1)
+							{
+								Vector3 rq = zRope.OrderBy(rp => new Vector2(rp.x - p.x, rp.z - p.z).sqrMagnitude).First();
+								zHang = Mathf.Max(zHang, rq.y - p.y);
+							}
+							if (s > 0.5f && !zOn()) { zOffAt = p; break; }
+						}
+						try { zp.DetachFromCurrentZipline(); } catch { }
+						float zLeft = new Vector2(zFar.x - zLast.x, zFar.z - zLast.z).magnitude;
+						Vector3 zIsl = playEntry.Position - new Vector3(playOffset.x, 0f, playOffset.y);
+						Log("  zipride: line " + zLen.ToString("F1", CultureInfo.InvariantCulture) + " m, its rope " + zRope.Count + " points sagging " + zSag.ToString("F2", CultureInfo.InvariantCulture) + " m, the player hangs " + zHang.ToString("F2", CultureInfo.InvariantCulture) + " m under the rope at the most; lowest over the ground " +
+							zLow.ToString("F2", CultureInfo.InvariantCulture) + " m at " + (zLowAt.x - zIsl.x).ToString("F1", CultureInfo.InvariantCulture) + " " + (zLowAt.z - zIsl.z).ToString("F1", CultureInfo.InvariantCulture) +
+							(zOffAt != Vector3.zero ? "; let go of the line at " + (zOffAt.x - zIsl.x).ToString("F1", CultureInfo.InvariantCulture) + " " + (zOffAt.z - zIsl.z).ToString("F1", CultureInfo.InvariantCulture) + " " + (zOffAt.y - zGround(zOffAt)).ToString("F2", CultureInfo.InvariantCulture) + " m over the ground" : "") + ";" + zParams);
+						Check(ref ok, zLeft < ZiplineEnds.FarSkip + 2.5f, "zipride " + t[1] + " " + t[2] + ": carried " + Vector3.Distance(z0, zLast).ToString("F1", CultureInfo.InvariantCulture) + " m, " + zLeft.ToString("F1", CultureInfo.InvariantCulture) + " m short of the far end");
+						Check(ref ok, zLow > -0.2f, "zipride " + t[1] + " " + t[2] + ": the rider stays over the ground (lowest " + zLow.ToString("F2", CultureInfo.InvariantCulture) + " m)");
+						checks += 2;
+						yield return new WaitForSeconds(1f);
 						break;
 					}
 					case "climb":
@@ -666,6 +789,25 @@ namespace DynamicIslands
 							Check(ref ok, holds(), "the story: " + StoryChain.StepName(key) + " " + state + " (" + string.Join(" > ", StoryChain.Steps.Select(x => StoryChain.StepName(x) + (StoryChain.Done.Contains(x) ? " (done)" : StoryChain.Unlocked.Contains(x) ? " (unlocked)" : "")).ToArray()) + ")");
 							break;
 						}
+						if (t.Length > 2 && t[1] == "quests")
+						{
+							// expect quests <story steps done> [sidetrips]: the journal's count (QC5) - the plan's story group with that many
+							// done; sidetrips: the plan's other islands counted already, before they come
+							int want = (int)F(t[2]), sd = -1, sn = 0, on = 0;
+							for (float w = 0f; w < 15f; w += 0.5f)
+							{
+								List<QuestCount.Quest> qs = QuestCount.All();
+								sd = qs.Count(x => x.Group == QuestCount.PlanStory && x.Done); sn = qs.Count(x => x.Group == QuestCount.PlanStory);
+								on = qs.Count(x => x.Group == QuestCount.PlanIslands);
+								if (sd == want) break;
+								StoryChain.Tick(); yield return new WaitForSeconds(0.5f);
+							}
+							int qd, qt;
+							QuestCount.Count(QuestCount.All(), out qd, out qt);
+							Check(ref ok, sd == want, "the journal's count: the plan's story " + sd + " of " + sn + " done (expected " + want + "), all " + qd + "/" + qt);
+							if (t.Length > 3 && t[3] == "sidetrips") Check(ref ok, on > 0, "the journal counts the plan's side trips from the start (" + on + ")");
+							break;
+						}
 						if (t.Length > 2 && t[1] == "spinsown")
 						{
 							// (turning around its own up axis: that axis stays put while the object turns - a water wheel)
@@ -732,12 +874,16 @@ namespace DynamicIslands
 					{
 						// surface <x0> <z0> <x1> <z1> [step]: logs the top surface's height (island frame, as stand) on a grid - where
 						// a cave hill's dome really lies before a pit or a dig goes near it (w03 11-09: the bone pit was buried)
-						float sx0 = F(t[1]), sz0 = F(t[2]), sx1 = F(t[3]), sz1 = F(t[4]), sst = t.Length > 5 ? F(t[5]) : 4f;
+						// (a last word paint: each height also names the terrain's strongest ground texture there - a pale patch in a
+						// picture: seabed paint or only bright sand, 11-18 w15P)
+						bool paint = t[t.Length - 1] == "paint";
+						int tn = paint ? t.Length - 1 : t.Length;
+						float sx0 = F(t[1]), sz0 = F(t[2]), sx1 = F(t[3]), sz1 = F(t[4]), sst = tn > 5 ? F(t[5]) : 4f;
 						for (float sz = sz1; sz >= sz0 - 0.01f; sz -= sst)
 						{
 							var row = new System.Text.StringBuilder("  surface z=" + sz.ToString("F1", CultureInfo.InvariantCulture) + ":");
 							for (float sx = sx0; sx <= sx1 + 0.01f; sx += sst)
-								row.Append(" " + (PlaySurface(PlayPoint(sx, sz), 400f) - playEntry.Position.y).ToString("F1", CultureInfo.InvariantCulture));
+								row.Append(" " + (PlaySurface(PlayPoint(sx, sz), 400f) - playEntry.Position.y).ToString("F1", CultureInfo.InvariantCulture) + (paint ? "/" + GroundPaintAt(PlayPoint(sx, sz)) : ""));
 							Log(row.ToString());
 						}
 						break;
@@ -796,6 +942,16 @@ namespace DynamicIslands
 						}
 						float lightM = opt.ContainsKey("light") ? (opt["light"] == "" ? 25f : F(opt["light"])) : 0f;
 						yield return PlayPicture(file, from, look, lightM);
+						// (cv48: and nothing in it seen through the island - Overpass Shoal's op_bank stood inside the hill, the
+						// room seen through its outside and the sky through the ground, and the play passed)
+						if (playEntry != null && playEntry.Root != null)
+						{
+							var seeLines = new List<string>();
+							int seeBad = PictureSeeThrough(playEntry, from, look, seeLines);
+							if (seeBad > 0) foreach (string sl in seeLines) Log("  picture " + file + ": " + sl);
+							Check(ref ok, seeBad <= PictureSeeThroughAllowed, "picture " + file + ": " + seeBad + " of 64x36 rays see through the island (" + PictureSeeThroughAllowed + " allowed; CIPictureSeeThrough)");
+							checks++;
+						}
 						break;
 					}
 					case "beam":
@@ -1329,9 +1485,10 @@ namespace DynamicIslands
 		static string BlockerName(Collider c)
 		{
 			if (c.GetComponent<Terrain>() != null) return "the ground (a step too high)";
-			Transform t = c.transform, island = playEntry != null && playEntry.Root != null ? playEntry.Root.transform : null;
+			IslandWorldState.Entry on = nameEntry != null && nameEntry.Root != null ? nameEntry : playEntry; // (a reach's own island: bugfix 11-27)
+			Transform t = c.transform, island = on != null && on.Root != null ? on.Root.transform : null;
 			while (t.parent != null && island != null && t.parent != island && t.parent.parent != island) t = t.parent;
-			return t.name + (t != c.transform ? " (" + c.name + ")" : "") + " at " + (c.bounds.center - (playEntry != null ? playEntry.Position : Vector3.zero)).ToString("F1");
+			return t.name + (t != c.transform ? " (" + c.name + ")" : "") + " at " + (c.bounds.center - (on != null ? on.Position : Vector3.zero)).ToString("F1");
 		}
 
 		/// <summary>A picture with Raft's own camera (its water and light, no HUD, no held tool) for the guide:
@@ -1404,8 +1561,18 @@ namespace DynamicIslands
 			foreach (string r in rows) Log(r);
 		}
 
+		/// <summary>The last play picture's camera, from its island's land centre in the island's turn, and the island's name
+		/// (CIRayLook picture: what one odd bit of it is - the play's island is gone by then, so it is brought again).</summary>
+		internal static Vector3? LastPictureFrom, LastPictureLook;
+		internal static string LastPictureIsland;
+
 		static IEnumerator PlayPicture(string file, Vector3 from, Vector3 look, float lightM = 0f)
 		{
+			if (playEntry != null && playEntry.Root != null)
+			{
+				Quaternion back = Quaternion.Inverse(playEntry.Root.transform.rotation);
+				LastPictureFrom = back * (from - playEntry.Position); LastPictureLook = back * (look - playEntry.Position); LastPictureIsland = playEntry.Name;
+			}
 			Camera cam = Camera.main;
 			if (cam == null) yield break;
 			// (CIGfx low: the user's quality for the picture, two frames for the water to follow)

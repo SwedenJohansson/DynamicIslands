@@ -157,6 +157,15 @@ call ar_plane x=42 z=34 h=3 yaw=200 al=assayplane crate=assaycrate
 call hw_wreck x=50 z=-34 h=2 yaw=30 obj=BoatStranded al=orebarge crate=bargecrate r=9
 # G Grey's second claim (north-west): a rock with a hole in it, its mouth to the sea, boulders across it
 call ar_cave x=-48 z=34 h=3 yaw=0 al=greyrock chest=greyclaim
+# (c3z40: the rock's back corner (west, 16 m out) hung 11.3 m over the wet beach past the pad - the ground brought up
+# dry under it so the hill closes round it, CIGroundIslands 11-21)
+# (c3z46 11-21: still a gap under the rock's back corner, 11.5 m: the ground at -1.8, the rock's outer slab's underside 9.7 m - the smooth after the small flatten
+# had taken the mound back down. Now a wider rock mound up under the rock's overhang, smoothed and laid again on top)
+brush flatten at -63 27.1 r=7 s=20 frames=300 h=10.2
+brush smooth at -63 27.1 r=10 s=4 frames=20
+brush flatten at -63 27.1 r=4.5 s=20 frames=300 h=10.2
+brush rock at -63 27.1 r=9 s=20 frames=30
+clear at -63 27.1 r=9
 place SmallBoulder4 - at -49 47 ground yaw=40 scale=0.9
 place SmallBoulder4 - at -45.5 51 ground yaw=110 scale=0.8
 # H Powder Hill (north-east, by the plane): the company's powder store on its top, away from the men
@@ -204,6 +213,10 @@ call ab_plants_forest x=-80 z=0 r=12 seed=26211
 place BalboaCave_DeadEnd mine at 0 -18 h=11.7 yaw=90
 # (its hill is cut where it would stand over deep sea: the mound closed pools of sea under it at the south shore)
 prop mine cave.seacut=1
+# (fo2 11-19: the sand in front of the mouth lay 2-3 m under its floor (4.25 m): a step no player could climb.
+# cave.foot=dry rounds it up to the floor; dome=6 keeps the hill off the minehead yard (uncapped it spread 50+ m))
+prop mine cave.foot=dry
+prop mine cave.dome=6
 
 # --- The portal: timber posts and a lintel at the mouth, and timbering further in ------------------------------
 for tx -5 6 11
@@ -212,23 +225,35 @@ place Relay_support_beam_wood - at $tx -14.6 h=1 rot=0,0,-90
 place Relay_support_beam_wood - at $tx -24.6 h=10 rot=0,0,0 yaw=90
 next
 # (the mouth frame at x 17: its south post stood 1.7 m short of the lintel - round 5, CIFloating; raised to meet it)
-place Relay_support_beam_wood - at 17 -24.3 h=2.7 rot=0,0,-90
+# (11-19: on the IG5 ground its foot stood 0.8 m over the ground - CIFloating fix-open; down to the ground, a little longer so its top stays)
+place Relay_support_beam_wood - at 17 -24.3 h=1.85 rot=0,0,-90 sx=1.09
 place Relay_support_beam_wood - at 17 -14.6 h=1 rot=0,0,-90
 place Relay_support_beam_wood - at 17 -24.6 h=10 rot=0,0,0 yaw=90
 
 # --- Inside: rails of beams on the floor, ore carts, lanterns on crates --------------------------------------------
-for rx 14 -10 -3.4
-place Beam_Long_01 - at $rx -19.9 h=4.25 rot=0,0,0
-place Beam_Long_01 - at $rx -18.9 h=4.25 rot=0,0,0
-next
+# (rails of beams every 3.4 m from 14 to -9.8, gaps where the den's room ground is not cut level with its floor. The
+# ground check gives a beam's place by its middle, 3.62 m west and 0.55 m north of its pivot (the beam runs west from
+# it), so c3z46/47 took out the wrong four. The ones it meant, from the saved island: 10.6 -18.9 set up 1.8 m by the
+# save's settle (floating 1.6 m), 7.2 -19.9 0.37 m under the ground, both at 0.4 set up 1.7-1.8 m (floating 1.1-1.3 m);
+# -3 set up 1.0-1.1 m: those five not placed. 7.2 -18.9 and 3.8 -19.9 were never out of place: back in - c3z57)
+place Beam_Long_01 - at 14 -19.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at 14 -18.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at 10.6 -19.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at 7.2 -18.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at 3.8 -19.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at 3.8 -18.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at -6.4 -19.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at -6.4 -18.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at -9.8 -19.9 h=4.25 rot=0,0,0
+place Beam_Long_01 - at -9.8 -18.9 h=4.25 rot=0,0,0
 place VP_Wagon02 - at 9 -19.4 h=4.25 sit yaw=90
 place VP_Wagon02 - at -1 -19.4 h=4.25 sit yaw=90
 place VP_Wagon02 orecart at -11 -19.4 h=4.25 sit yaw=90
 # (the near crate 4 m further in and off the south wall: at 12 -23.6 the den's floor doesn't reach under it by the mouth - it stood 1.24 m over the ground let down under the rock, 2026-10-21; its lantern on its top, 0.433 m up)
 place Crate_Big_01 - at 8 -23.2 h=4.2 sit yaw=10
 place Placeable_Lantern_Metal - at 8 -23.2 h=4.65 sit
-place Crate_Big_01 - at 2.5 -23.4 h=4.2 sit yaw=80
-place Placeable_Lantern_Metal - at 2.5 -23.4 h=4.65 sit
+# (c3z47: at 2.5 -23.4 it stood in the den's south wall, its top 0.74 m under the ground; c3z54: 1.2 m further in it was
+# still 0.46 m under - the room's ground rises there to the wall: that crate and its lantern taken out, two crates left)
 place Crate_Big_01 - at -6 -23.6 h=4.2 sit yaw=20
 place Placeable_Lantern_Metal - at -6 -23.6 h=4.65 sit
 place VP_Cable_Roll01 - at 8 -15.2 h=4.2 sit
@@ -244,7 +269,9 @@ place "Balboa_DecorationPrefabBase_SmallLocker" locker at 22.4 -13.2 sit yaw=270
 place Note_Sign notice at 22.5 -24.5 yaw=60
 place Balboa_DecorationPrefabBase_SimpleTent - at 25 -7.5 sit yaw=200
 place campfire_1 - at 22 -8.2 sit
-place VP_RubblePile_Medium02 - at 27 -17 sit yaw=40
+# (c3z40: its 11 m base stood 0.78 m over the ground falling away at its south-west end - set 0.5 m into the yard)
+place VP_RubblePile_Medium02 - at 27 -17 sit y=-0.5 yaw=40
+# (c3z47: the old line beside it was left in - a second heap 0.64 m in the air there; taken out)
 place Cableroll_01 - at 24.5 -26 sit
 place VP_Wagon02 - at 25.5 -12.5 sit yaw=30 tilt=8
 place Zone_Trigger minehead at 22 -19 y=1.5
@@ -437,7 +464,7 @@ place Creature_Rat oldrats at 59.0 -15.8 h=6.0 drop
 prop oldrats creature.count=2
 prop oldrats creature.respawn=0
 caveloot oldwork dirt=3 mush=2 stone=2 vines=2
-# cavecheck inside minerchest
+# cavecheck inside minerchest oldrats
 place Loot_ChestSmall minerchest at 53.0 -0.7 h=5.5 drop yaw=240
 prop minerchest obj.name=minerchest
 prop minerchest loot.refill=0
@@ -468,5 +495,19 @@ quest reward=MetalIngot*3;Nail*10
 call treasure x=0 z=0 r=29 n=1 seed=8951
 prop treasure8951 treasure.loot=TitaniumOre*2
 
+# (generator rock and bushes left standing 1.4-7.4 m over the ground the mine's hill and cuts lowered at its north end - CIFloating fix-open 11-19)
+clear at -7.89 15.77 r=1 only=SmallRock_01
+clear at -6.93 17.71 r=1 only=Balboa_Bush_02
+clear at -6.73 20.76 r=1 only=Balboa_Bush_01
+clear at -5.08 15.18 r=1 only=Balboa_BigBush_01
+# (c3 round 3 11-21: CISheetIslands found bare cliff walls at the waterline here, drawn as stretched sheets. Their feet
+#     sloped as rock talus down to 10 m under the sea - a pit or a dive shaft keeps its depth, a narrow one is left open)
+# (c3z61: the sea channels and inlets between the islet's rocks still sheer 10-50 m walls seen from a raft - 140 faces
+#     between two walls the talus leaves open - so rock stood in their waterline band (rocks=), up to their tops)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
 reseat trees
+# (c3z40: eight generator trees north of the mine (12 -1..21 17) stood 1.8-6.2 m deep in the ground round them, past what
+# the save's reseat sets back - taken off, CIGroundIslands 11-21)
+clear at 13 9 r=13 only=(?i)Tree
+
 save Old Mine Islet

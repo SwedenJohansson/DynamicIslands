@@ -275,12 +275,18 @@ namespace DynamicIslands
 			if (n > 0) Log("PASS: pictures of " + n + " cave pieces"); else Fail("no cave pieces on the loaded islands");
 		}
 
-		[ConsoleCommand(name: "CICaveIslands", docs: "Dev, world (host, a test world 'CI ...'): every saved island with cave pieces or dug tunnels brought next to the raft in turn - its rock mountain over the caves (AU83) is there, mapped (cavemap_<island>.txt) and pictured from four sides and above (shot_caveisl_<n>_<side>.png; each side picture must have the island in 15 % of it), nothing seen through from inside (CICaveInside's look round, a picture of the worst look: shot_caveisl_<n>_inside_<k>.png, a dug tunnel's shot_caveisl_<n>_dug_<k>.png), then the island is taken away again: CICaveIslands [part of the name] [most]")]
+		static string CaveShotPre = "caveisl_";
+		[ConsoleCommand(name: "CICaveIslands", docs: "Dev, world (host, a test world 'CI ...'; as=<tag> names its pictures caveisl_<tag>_...): every saved island with cave pieces or dug tunnels brought next to the raft in turn - its rock mountain over the caves (AU83) is there, mapped (cavemap_<island>.txt) and pictured from four sides and above (shot_caveisl_<n>_<side>.png; each side picture must have the island in view: half its framed box on the screen, a fifth of the rays through that box on its land - CIIslandFramed), nothing seen through from inside (CICaveInside's look round, a picture of the worst look: shot_caveisl_<n>_inside_<k>.png, a dug tunnel's shot_caveisl_<n>_dug_<k>.png), then the island is taken away again: CICaveIslands [part of the name] [most]")]
 		public static void CaveIslandsCommand(string[] args)
 		{
 			// (the name may have spaces - "CICaveIslands Old Mine Islet" read "Mine" as the count and threw (11-05): the count
 			// and "keep" are taken off the end, the rest is the name)
 			var rest = new List<string>(args ?? new string[0]);
+			// (as=<tag>: the pictures named caveisl_<tag>_<n>_... - two phases in one job each numbered their islands from 1 and
+			// the second's pictures overwrote the first's, c3z51)
+			string tag = rest.Where(a => a.StartsWith("as=", StringComparison.Ordinal)).Select(a => a.Substring(3)).LastOrDefault();
+			rest.RemoveAll(a => a.StartsWith("as=", StringComparison.Ordinal));
+			CaveShotPre = string.IsNullOrEmpty(tag) ? "caveisl_" : "caveisl_" + tag + "_";
 			bool keep = rest.Count > 0 && rest[rest.Count - 1] == "keep"; // (the islands stay, for player 2 to see: CICaveIslands <name> 1 keep)
 			if (keep) rest.RemoveAt(rest.Count - 1);
 			int most = 99, n;
@@ -292,6 +298,64 @@ namespace DynamicIslands
 
 		/// <summary>What a shot shows, as a grid of rays (12 x 7, 60 degrees, 16:9): the object hit, its normal's height and the
 		/// distance - names the parts in a picture (a stretched pillar, a slab before a mouth).</summary>
+		/// <summary>The eye for a cave mouth's picture: close (q 0: 7 m out, 2.2 m up) or three-quarter (q 1: 16 m out turned 40
+		/// degrees, 7 m up), 1.7 m over what is under it. Kept when it sees the mouth: it stands in nothing solid (nothing within
+		/// 0.4 m) and the look at the mouth meets nothing, or first meets something within 2.5 m of the mouth from the front (back
+		/// faces on), and so do at least 3 of the looks 1 m to each side, 0.8 m over and 0.6 m under it - the opening, not a
+		/// pin-hole. Else other turns, distances and heights, the same test (c3z54: Old Mine Islet's q picture from inside the rock;
+		/// c3z70: its high mouths 3-5 pictured as walls of rock, a rock between eye and mouth had passed). Vector3.zero when none;
+		/// 'how' says where the eye was moved.</summary>
+		static Vector3 MouthEye(Vector3 at, Vector3 outDir, int q, Vector3 look, out string how)
+		{
+			how = "";
+			System.Func<float, float, float, Vector3> eyeAt = (turn, dist, up) =>
+			{
+				Vector3 p = at + (Quaternion.Euler(0f, turn, 0f) * outDir) * dist + Vector3.up * up;
+				RaycastHit gh;
+				if (Physics.Raycast(new Vector3(p.x, p.y + 40f, p.z), Vector3.down, out gh, 80f, ~0, QueryTriggerInteraction.Ignore)) p.y = Mathf.Max(p.y, gh.point.y + 1.7f);
+				p.y = Mathf.Max(p.y, 1.5f);
+				return p;
+			};
+			bool backs = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				System.Func<Vector3, Vector3, bool> seen = (p, aim) =>
+				{
+					Vector3 d = aim - p;
+					RaycastHit h;
+					if (!Physics.Raycast(p, d.normalized, out h, d.magnitude, ~0, QueryTriggerInteraction.Ignore)) return true;
+					return Vector3.Dot(h.normal, d) <= 0f && h.distance >= d.magnitude - 2.5f;
+				};
+				System.Func<Vector3, bool> fits = p =>
+				{
+					if (Physics.OverlapSphere(p, 0.4f, ~0, QueryTriggerInteraction.Ignore).Length > 0) return false;
+					if (!seen(p, look)) return false;
+					Vector3 side = Vector3.Cross(Vector3.up, look - p).normalized;
+					int ok = 0;
+					foreach (Vector3 aim in new[] { look + side, look - side, look + Vector3.up * 0.8f, look - Vector3.up * 0.6f })
+						if (seen(p, aim)) ok++;
+					return ok >= 3;
+				};
+				Vector3 first = q == 0 ? eyeAt(0f, 7f, 2.2f) : eyeAt(40f, 16f, 7f);
+				if (fits(first)) return first;
+				float[] turns = q == 0 ? new[] { 0f, 20f, -20f, 40f, -40f, 60f, -60f } : new[] { 40f, -40f, 25f, -25f, 55f, -55f, 0f, 70f, -70f };
+				float[] dists = q == 0 ? new[] { 7f, 5f, 9f, 4f, 11f } : new[] { 16f, 12f, 20f, 9f };
+				float[] ups = q == 0 ? new[] { 2.2f, 1.2f, 3.5f, 5f } : new[] { 7f, 10f, 5f, 3.5f };
+				foreach (float u in ups)
+					foreach (float t in turns)
+						foreach (float d in dists)
+						{
+							Vector3 p = eyeAt(t, d, u);
+							if (!fits(p)) continue;
+							how = "eye moved to " + t.ToString("F0") + " degrees, " + d.ToString("F0") + " m out, " + u.ToString("F1") + " m up";
+							return p;
+						}
+				return Vector3.zero;
+			}
+			finally { Physics.queriesHitBackfaces = backs; }
+		}
+
 		static void PickGrid(Vector3 eye, Vector3 look, string label)
 		{
 			Quaternion rot = Quaternion.LookRotation(look - eye);
@@ -411,6 +475,8 @@ namespace DynamicIslands
 				string map = m != null ? m.LastMap ?? "" : "";
 				Log("  " + n + " " + name + ": " + caves.Count + " cave piece(s), mountain " + (skin != null ? "there" : caves.Count == 0 ? "none (no cave pieces)" : map.Count(c => c == 'R') == 0 ? "none needed (the ground covers the caves)" : "MISSING") + " - roof " + map.Count(c => c == 'R') + ", sides " + map.Count(c => c == 's') + ", ways in " + map.Count(c => c == 'c') + "; " + (map.Split('\n').FirstOrDefault() ?? ""));
 				if (skin == null && caves.Count > 0 && map.Count(c => c == 'R') > 0) bad++; // (no roof cell: the ground is over every cave piece, nothing to cover - a cave tool hill, 11-04)
+				// (the ground round its foot gone sandy, no hard cut where the skin meets it - 11-21 c3z21; none over the sea)
+				if (skin != null) Log("    foot band: " + m.FootPainted + " ground paint texel(s) sanded round the hill's foot");
 				// (its ways in clear: a play walking into a den stuck on the hill across its mouth - AU83)
 				List<string> blocked = m != null ? m.BlockedWays() : new List<string>();
 				foreach (string w in blocked.Take(6)) Log("    way in blocked: " + w);
@@ -481,13 +547,27 @@ namespace DynamicIslands
 						Vector3 from = b.center + dir * (d * 0.94f) + Vector3.up * (d * 0.34f);
 						RaycastHit hit;
 						float g = Physics.Raycast(new Vector3(from.x, 300f, from.z), Vector3.down, out hit, 600f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
+						// (over the island's own land - its box misses a long low spit or beach - the picture was taken from over it, the
+						// trees right in front filling it: Old Mine Islet's side 30, c3z47. Moved out along its side until over the sea)
+						for (int step = 0; step < 8 && g > 0f; step++)
+						{
+							from += dir * (d * 0.25f) + Vector3.up * (d * 0.085f);
+							g = Physics.Raycast(new Vector3(from.x, 300f, from.z), Vector3.down, out hit, 600f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
+						}
 						from.y = Mathf.Max(from.y, Mathf.Max(g, 0.5f) + 3f);
 						float fill;
 						if (!drowned)
 						{
-							// (the island fills the picture: rays through it that end on the island above the sea)
-							fill = IslandInView(from, b.center, e.Root.transform, null);
-							fills.Add((i * 90 + 30) + ": " + Mathf.RoundToInt(fill * 100f) + " %");
+							// (the island in view: its framed box on the screen and the rays through that box ending on the island above
+							// the sea - not a share of the whole picture: Weatherglass Deep, whole in all four pictures, scored 10-22 % on
+							// three sides, small and far on one, and was failed, c3z32 11-21. Its share of the picture is still logged)
+							// (and against what else is solid there, not the whole box: a ring island's lagoon and the sea round a low,
+							// wide island are in its box - Varuna Point, the whole island plain in its side picture, scored 13-24 % of
+							// its box land, c3z34 11-21. A hill or wall of something else in front is what hides it)
+							float onScreen, other, whole = IslandInView(from, b.center, e.Root.transform, null);
+							float inBox = IslandFramed(from, b.center, e.Root.transform, b, out onScreen, out other);
+							fill = FramedInView(inBox, onScreen, other) ? 1f : 0f;
+							fills.Add((i * 90 + 30) + ": " + Mathf.RoundToInt(inBox * 100f) + " % of its box land, " + Mathf.RoundToInt(other * 100f) + " % something else, " + Mathf.RoundToInt(onScreen * 100f) + " % of the box on screen (" + Mathf.RoundToInt(whole * 100f) + " % of the picture)");
 						}
 						else if (g < -4f)
 						{
@@ -513,11 +593,11 @@ namespace DynamicIslands
 						else { fill = 1f; fills.Add((i * 90 + 30) + ": over land or shallows " + g.ToString("F1") + " m, not measured"); measured--; }
 						measured++;
 						if (fill < 0.15f) empty = true;
-						yield return CameraShot(from, b.center, "caveisl_" + n + "_" + (i * 90 + 30));
+						yield return CameraShot(from, b.center, CaveShotPre + n + "_" + (i * 90 + 30));
 					}
 					Log("    the island in the side pictures: " + string.Join(", ", fills.ToArray()) + (empty ? " - a side without the island in view" : measured == 0 ? " - flooded, no side over open water to picture it from (not measured)" : ""));
 					if (empty) { bad++; framedIslands++; }
-					yield return CameraShot(b.center + new Vector3(0.01f, b.size.y + d, -d * 0.6f), b.center, "caveisl_" + n + "_above");
+					yield return CameraShot(b.center + new Vector3(0.01f, b.size.y + d, -d * 0.6f), b.center, CaveShotPre + n + "_above");
 					// (every way in from outside: a close look into the mouth and a three-quarter view of it, its arch and the ground in
 					// front - user 11-08: one rock, no black stair-stepped frame, nothing seen through, no square slab before it)
 					var views = m != null ? m.MouthViews() : new List<KeyValuePair<Vector3, Vector3>>();
@@ -535,15 +615,15 @@ namespace DynamicIslands
 						Vector3 at = v.Key, outDir = v.Value;
 						foreach (int q in new[] { 0, 1 })
 						{
-							Vector3 eye = q == 0 ? at + outDir * 7f + Vector3.up * 2.2f : at + (Quaternion.Euler(0f, 40f, 0f) * outDir) * 16f + Vector3.up * 7f;
-							RaycastHit gh;
-							if (Physics.Raycast(new Vector3(eye.x, eye.y + 40f, eye.z), Vector3.down, out gh, 80f, ~0, QueryTriggerInteraction.Ignore)) eye.y = Mathf.Max(eye.y, gh.point.y + 1.7f);
-							eye.y = Mathf.Max(eye.y, 1.5f);
-							yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
-							PickGrid(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
+							string eyeHow;
+							Vector3 eye = MouthEye(at, outDir, q, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), out eyeHow);
+							if (eye == Vector3.zero) { Log("    mouth " + mv + (q == 0 ? " close" : " three-quarter") + " view: no eye tried sees the mouth (in a solid thing, or something more than 2.5 m before it) - skipped"); continue; }
+							if (eyeHow != "") Log("    mouth " + mv + (q == 0 ? " close" : " three-quarter") + " view: " + eyeHow);
+							yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), CaveShotPre + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
+							PickGrid(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), CaveShotPre + n + "_mouth" + mv + (q == 0 ? "_close" : "_q"));
 							// (r84 test: the same with the sun's shadows off - is a jagged line a shadow?)
 							Light sunL = UnityEngine.Object.FindObjectsOfType<Light>().FirstOrDefault(x => x.type == LightType.Directional && x.isActiveAndEnabled);
-							if (sunL != null) { LightShadows was = sunL.shadows; sunL.shadows = LightShadows.None; yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), "caveisl_" + n + "_mouth" + mv + (q == 0 ? "_closens" : "_qns")); sunL.shadows = was; }
+							if (sunL != null) { LightShadows was = sunL.shadows; sunL.shadows = LightShadows.None; yield return CameraShot(eye, at + Vector3.up * (q == 0 ? 1.5f : 2.5f), CaveShotPre + n + "_mouth" + mv + (q == 0 ? "_closens" : "_qns")); sunL.shadows = was; }
 						}
 						Log("    mouth " + mv + " at " + (at - e.Root.transform.position).ToString("F1") + " facing " + outDir.ToString("F1"));
 						mv++;
@@ -559,7 +639,7 @@ namespace DynamicIslands
 						if (seen > 0 || t == caves[0]) Log("    inside " + t.name + " at " + t.position.ToString("F0") + ": " + detail);
 						if (seen == 0) continue;
 						seenThrough = true;
-						yield return CameraShot(eye, eye + look * 5f, "caveisl_" + n + "_inside_" + caves.IndexOf(t));
+						yield return CameraShot(eye, eye + look * 5f, CaveShotPre + n + "_inside_" + caves.IndexOf(t));
 					}
 					foreach (DigTunnel dt in digs)
 					{
@@ -569,7 +649,7 @@ namespace DynamicIslands
 						Log("    inside the dug tunnel at " + dt.transform.position.ToString("F0") + ": " + detail);
 						if (seen == 0) continue;
 						seenThrough = true;
-						yield return CameraShot(eye, eye + look * 5f, "caveisl_" + n + "_dug_" + digs.IndexOf(dt));
+						yield return CameraShot(eye, eye + look * 5f, CaveShotPre + n + "_dug_" + digs.IndexOf(dt));
 					}
 					if (seenThrough) { bad++; insideIslands++; }
 				}
@@ -581,6 +661,113 @@ namespace DynamicIslands
 			if (names.Count == 0) Fail("no saved island with cave pieces");
 			else if (bad > 0) Fail(bad + " of " + Math.Min(most, names.Count) + " islands without their mountain, with a way in blocked (" + blockedIslands + "), seen through from inside (" + insideIslands + ") or a side picture without the island in view (" + framedIslands + ", above)");
 			else Log("PASS: " + Math.Min(most, names.Count) + " islands with caves, each with its mountain, its ways in clear, nothing seen through from inside, each side picture with the island in view");
+		}
+
+		[ConsoleCommand(name: "CIIslandFramed", docs: "Dev test, anywhere: CICaveIslands' side-picture check (c3z32) - a 20 m block 2 km up seen from 400 m: a few % of the picture (the old 15 % cut failed it) but in view by its framed box; a wall between the camera and it hides it; a box mostly off the screen is not in view")]
+		public static void IslandFramedCommand(string[] args) { StartTest(IslandFramedRoutine()); }
+
+		static IEnumerator IslandFramedRoutine()
+		{
+			bool ok = true;
+			var root = new GameObject("citest_framed_island");
+			root.transform.position = new Vector3(0f, 2000f, 0f);
+			GameObject land = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			land.transform.SetParent(root.transform, false);
+			land.transform.localScale = new Vector3(20f, 20f, 20f);
+			GameObject wall = null;
+			try
+			{
+				yield return null;
+				Physics.SyncTransforms();
+				Bounds box = new Bounds(land.transform.position, Vector3.one * 20f);
+				Vector3 from = box.center + new Vector3(0f, 0f, -400f);
+				float onScreen, other, whole = IslandInView(from, box.center, root.transform, null), framed = IslandFramed(from, box.center, root.transform, box, out onScreen, out other);
+				Check(ref ok, whole < 0.15f && FramedInView(framed, onScreen, other),
+					"small and far: " + Mathf.RoundToInt(whole * 100f) + " % of the picture, but " + Mathf.RoundToInt(framed * 100f) + " % of its box land and " + Mathf.RoundToInt(onScreen * 100f) + " % of the box on screen - in view");
+				wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+				wall.transform.position = box.center + new Vector3(0f, 0f, -200f);
+				wall.transform.localScale = new Vector3(60f, 60f, 1f);
+				yield return null;
+				Physics.SyncTransforms();
+				float hidden = IslandFramed(from, box.center, root.transform, box, out onScreen, out other);
+				Check(ref ok, !FramedInView(hidden, onScreen, other), "a wall between: " + Mathf.RoundToInt(hidden * 100f) + " % of its box land, " + Mathf.RoundToInt(other * 100f) + " % the wall - not in view");
+				UnityEngine.Object.Destroy(wall); wall = null;
+				yield return null;
+				Physics.SyncTransforms();
+				// (one side of a ring of land round open water, its box mostly the lagoon: a 1 m wall along the far side of a 60 m
+				// box, seen from 100 m off and 30 m up - a small share of the box, nothing else in it: in view)
+				Bounds ringBox = new Bounds(box.center, new Vector3(60f, 4f, 60f));
+				land.transform.localScale = new Vector3(60f, 4f, 1f);
+				land.transform.localPosition = new Vector3(0f, 0f, 29.5f);
+				yield return null;
+				Physics.SyncTransforms();
+				float ring = IslandFramed(box.center + new Vector3(0f, 30f, -100f), box.center, root.transform, ringBox, out onScreen, out other);
+				Check(ref ok, ring < 0.2f && FramedInView(ring, onScreen, other), "a thin ring round open water: " + Mathf.RoundToInt(ring * 100f) + " % of its box land, " + Mathf.RoundToInt(other * 100f) + " % something else - in view");
+				land.transform.localScale = new Vector3(20f, 20f, 20f);
+				land.transform.localPosition = Vector3.zero;
+				yield return null;
+				Physics.SyncTransforms();
+				// (the camera inside the box's corner, looking at its middle: most of the box off the screen)
+				Bounds big = new Bounds(box.center, new Vector3(400f, 400f, 400f));
+				IslandFramed(box.center + new Vector3(-150f, 0f, -150f), box.center, root.transform, big, out onScreen, out other);
+				Check(ref ok, onScreen < FramedOnScreen, "from inside a big box: " + Mathf.RoundToInt(onScreen * 100f) + " % of it on screen - not framed");
+			}
+			finally
+			{
+				if (wall != null) UnityEngine.Object.Destroy(wall);
+				UnityEngine.Object.Destroy(root);
+			}
+			Log((ok ? "PASS" : "FAIL") + ": island framed");
+		}
+
+		/// <summary>The island is in a side picture when this much of its framed box is on the screen, at least this much of the rays
+		/// through the box's part on the screen end on it above the sea, and at least <see cref="FramedOwn"/> of those that end on
+		/// anything above the sea end on it (the rest: sea or sky - a lagoon, the water round a low island). Until c3z34 (11-21)
+		/// 20 % of the box had to be land, which failed low, wide islands and ring islands plainly in view.</summary>
+		const float FramedOnScreen = 0.5f, FramedLand = 0.06f, FramedOwn = 0.6f;
+
+		static bool FramedInView(float land, float onScreen, float other)
+		{
+			return onScreen >= FramedOnScreen && land >= FramedLand && land >= FramedOwn * (land + other);
+		}
+
+		/// <summary>Is the island under <root> in a picture from <from> towards <at> (60 degrees high, 16:9): the box <box> (what the
+		/// picture is framed on) put on the screen as the rectangle round its 8 corners; <onScreen> the share of that rectangle inside
+		/// the picture, the result the share of a 16 x 12 grid of rays through the rectangle's part on the screen that end on the island
+		/// above the sea (-1.5 m); <other> the share that end above the sea on something else. Unlike <see cref="IslandInView"/>
+		/// a small, far island counts in full.</summary>
+		static float IslandFramed(Vector3 from, Vector3 at, Transform root, Bounds box, out float onScreen, out float other)
+		{
+			onScreen = 0f;
+			other = 0f;
+			Quaternion rot = Quaternion.LookRotation(at - from), inv = Quaternion.Inverse(rot);
+			float tanV = Mathf.Tan(30f * Mathf.Deg2Rad), tanH = tanV * 16f / 9f;
+			float x0 = float.MaxValue, x1 = float.MinValue, y0 = float.MaxValue, y1 = float.MinValue;
+			for (int c = 0; c < 8; c++)
+			{
+				Vector3 corner = box.center + Vector3.Scale(box.extents, new Vector3((c & 1) == 0 ? -1f : 1f, (c & 2) == 0 ? -1f : 1f, (c & 4) == 0 ? -1f : 1f));
+				Vector3 v = inv * (corner - from);
+				if (v.z < 0.5f) v.z = 0.5f; // (a corner behind the camera: as far out as it can be)
+				float sx = v.x / v.z / tanH, sy = v.y / v.z / tanV; // (-1..1 on the screen)
+				x0 = Mathf.Min(x0, sx); x1 = Mathf.Max(x1, sx); y0 = Mathf.Min(y0, sy); y1 = Mathf.Max(y1, sy);
+			}
+			float area = (x1 - x0) * (y1 - y0);
+			float cx0 = Mathf.Max(x0, -1f), cx1 = Mathf.Min(x1, 1f), cy0 = Mathf.Max(y0, -1f), cy1 = Mathf.Min(y1, 1f);
+			if (area <= 0f || cx1 <= cx0 || cy1 <= cy0) return 0f;
+			onScreen = (cx1 - cx0) * (cy1 - cy0) / area;
+			int on = 0, off = 0, all = 0;
+			for (int x = 0; x < 16; x++)
+				for (int y = 0; y < 12; y++)
+				{
+					float sx = Mathf.Lerp(cx0, cx1, (x + 0.5f) / 16f), sy = Mathf.Lerp(cy0, cy1, (y + 0.5f) / 12f);
+					Vector3 ray = rot * new Vector3(tanH * sx, tanV * sy, 1f);
+					RaycastHit hit;
+					all++;
+					if (!Physics.Raycast(from, ray.normalized, out hit, 2500f, ~0, QueryTriggerInteraction.Ignore) || hit.point.y <= -1.5f) continue;
+					if (hit.collider.transform.IsChildOf(root)) on++; else off++;
+				}
+			other = (float)off / all;
+			return (float)on / all;
 		}
 
 		/// <summary>How much of a picture from <from> towards <at> (60 degrees high, 16:9) is the island under <root>: a 16 x 9 grid of
@@ -673,12 +860,14 @@ namespace DynamicIslands
 			if (ok) Log("PASS: table seen (" + (Raft_Network.IsHost ? "host" : "client") + ")"); else Fail("table seen");
 		}
 
-		[ConsoleCommand(name: "CILookAt", docs: "Dev, editor: pictures of the first placed object whose name contains <text>, from four sides a little above (shot_lookat_<n>_<side>.png): CILookAt <text> [distance]")]
+		[ConsoleCommand(name: "CILookAt", docs: "Dev, editor: pictures of the object the last recipe labelled <text> (place <obj> <label>), else the first placed object whose name contains <text>, from four sides a little above (shot_lookat_<n>_<side>.png): CILookAt <text> [distance]")]
 		public static void LookAtCommand(string[] args)
 		{
 			string text = args != null && args.Length > 0 ? args[0] : "";
 			float dist = args != null && args.Length > 1 ? F(args[1]) : 0f;
-			EditorGameObject e = PlacedEditorObjects().FirstOrDefault(o => (o.GameObjectName ?? "").IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0);
+			// a label the last recipe gave an object (place <obj> <label>) first, then the first object whose name contains the text
+			EditorGameObject e;
+			if (!RecipeObjects.TryGetValue(text, out e) || e == null) e = PlacedEditorObjects().FirstOrDefault(o => (o.GameObjectName ?? "").IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0);
 			if (e == null || text.Length == 0) { Fail("look at: no placed object with '" + text + "'"); return; }
 			StartTest(LookAtRoutine(e, dist));
 		}

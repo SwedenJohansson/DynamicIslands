@@ -144,12 +144,15 @@ namespace DynamicIslands.Editor
 			Network_Player player = RAPI.GetLocalPlayer();
 			if (player == null) return;
 			Vector3 at = spot.Value;
-			// (moved far off since the last frame's Put - Raft's Unstuck, the pause menu's Spawn to raft, a console gotoraft: the
+			// (moved far off since the last frame's Put - Raft's Unstuck, Spawn to raft (Esc > Custom Islands), a console gotoraft: the
 			//  player asked to go there. Put back every frame, they hung in the air until the hold timed out - UR2)
 			if (holding && Flat(player.transform.position - at) > Misplaced) { Release(null, "was moved " + Flat(player.transform.position - at).ToString("F0") + " m away while held: let go"); return; }
 			// (hurt while held - a shark biting a player frozen over the water: let go at once - AU82)
 			float health = Health();
-			if (heldHealth > 0f && health > 0f && health < heldHealth - 0.5f) { Release(null, "was hurt while held: let go"); return; }
+			// (not before the world is in: a player held at loading read a full 100 before Raft gave them their saved
+			//  health, 25, which looked like a bite - let go at once, they dropped into the sea - UW11. Healing moves it up)
+			if (!LoadSceneManager.IsGameSceneLoaded || health > heldHealth) heldHealth = health;
+			else if (heldHealth > 0f && health > 0f && health < heldHealth - 0.5f) { Release(null, "was hurt while held (" + heldHealth.ToString("F0") + " -> " + health.ToString("F0") + "): let go"); return; }
 			// The island under them is there (its own ground, loaded): set them down where they were, and watch a moment
 			IslandWorldState.Entry under = IslandUnder(at);
 			if (under != null)

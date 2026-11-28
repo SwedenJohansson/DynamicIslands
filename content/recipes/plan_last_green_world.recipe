@@ -18,7 +18,7 @@ plan rule rise | island:Tracker's Rise | step:delta:12 | receiver:700 | Upriver,
 plan rule grove | island:Hollowtrunk Grove | quest:rise | receiver:900 | On 900, wind in very tall trees and a watering rota read aloud: Hollowtrunk Grove. | Hollowtrunk Grove | after:rise | zone:roots
 plan rule caves | island:Rootweave Caves | zone:grove:roots | receiver:600 | Down among the roots the Receiver picks up a survey team's beacon on 600, from under a hill. | Rootweave Caves | after:grove | quest
 plan rule mire | island:Blightmire | quest:caves | receiver:1000:needs=engine | On 1000, far off and faint, a smelter camp's call: "Blightmire. Bring fire." | Blightmire | after:caves | signal:cleansed
-plan rule canopy | island:Canopy Stair | rule:mire | receiver:900 | With the marsh clean, the Seedkeepers' last camp answers on 900: a stair of roots, north. | Canopy Stair | after:mire | quest
+plan rule canopy | island:Canopy Stair | rule:mire | receiver:900 | With the marsh clean, the Seedkeepers' last camp answers on 900: a stair of giant roots up a great cliff. | Canopy Stair | after:mire | quest
 plan rule heart | island:The Heart of Green | quest:canopy | receiver:1200 | On 1200, a slow hum like a heartbeat - the Heart of Green, at the centre of Verdance. | The Heart of Green | after:canopy | step:23
 plan rule rootcore | island:The Rootcore | signal:heart:below | receiver:400 | Under the Heart, on 400, warm static: the Rootcore, breathing. | The Rootcore | after:heart | quest
 plan rule ridge | island:Thornback Ridge | day:6 | ahead:500 | Ahead, a thorny ridge with a thin line of smoke from a ledge halfway up. | Thornback Ridge

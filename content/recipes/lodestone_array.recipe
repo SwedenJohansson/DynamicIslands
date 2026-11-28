@@ -80,7 +80,9 @@ place Loot_Chest westcache at -21 3 ground sit yaw=90
 
 # --- The ziplines: the landing ring to the north arm, then round the arms ------------------------------------------
 place ZiplinePath_Landmark zipring at 15 -15 h=17.05
-zipto zipring -1 19
+# (c3 round 4, 11-21: the far end where the save moved it back in c3z38 - its rope was in the ground between the ends)
+zipto zipring -0.55 17.31
+prop zipring zip.slack=-0.692
 place ZiplinePath_Landmark zipnorth at 1 19 h=17.05
 zipto zipnorth 19 1
 place ZiplinePath_Landmark zipeast at 19 -1 h=17.05
@@ -362,4 +364,6 @@ quest reward=TitaniumIngot*3;MetalIngot*4;Battery*2;Bolt*4
 call treasure x=0 z=0 r=18 n=1 seed=8817
 prop treasure8817 treasure.loot=TitaniumOre*3
 
+# (c3 round 4, 11-21 c3z38: a Bush2 by the west shore stood 0.74 m under the island's sea level - a flying island leaves it out)
+clear at -60 45 r=34 all only=^(Bush2?|SmallBush_\d+)$ below=-0.45
 save The Lodestone Array

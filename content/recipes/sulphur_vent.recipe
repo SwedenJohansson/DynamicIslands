@@ -88,6 +88,93 @@ scatter "Pickup_Landmark_Tree_Palm 3" 3 at 0 0 r=31.5 seed=4304 free=5
 scatter "Pickup_Landmark_Tree_Mango" 3 at 0 0 r=31.5 seed=4314 free=5
 scatter "Pickup_Landmark_PineappleLandmark" 3 at 0 0 r=31.5 seed=4324 free=3
 
+# --- 11-12 (w16 prep): the vent pools (plan 16 row: ACID vent pools on the side paths, safe=suit, a visible way round).
+# (11-18 w16I: the pools first lay on the works' shoulder at ~9 m with Raft's reactor-pool plane for water - a flat,
+# glowing square that no tint, size, depth or bank could make read as liquid. They now lie on the cone's low east flats
+# (2-3 m over the sea), dug under the sea like The Abyss's vent pool, so Raft's own sea water fills them. Each is a round
+# bowl: a low shelf at 1.2 m whose outer edge is smoothed into the flats, the bowl smoothed so you can walk out of the
+# water on every side, only its middle (r 2.5) 1.4 m under the sea (wide strokes: the terrain grid is ~2 m); four
+# sulphur-stained stones on the bowl's slope between the ways in, green steam over the water.)
+# The diggers' path (16.5 10 to 35.5 10) runs straight through pool A (26 10), the samplers' path (16.5 -10 to 35.5 -10)
+# through pool B (26 -10); round each pool the shelf is a plain way round on the far side from the other pool (z 17 /
+# z -17). A chest at each path's east end; the suit box between the paths' west ends; a sign at each path's start.
+# Side only: no quest needs them; the timed run (vent - works - boathouse) stays 20 m and more away.
+macro svpool x z
+brush flatten at $x $z r=9 s=20 frames=200 h=1.2
+brush smooth at $x $z r=12 s=6 frames=12
+brush flatten at $x $z r=5 s=20 frames=200 h=-1.4
+brush smooth at $x $z r=6.5 s=6 frames=16
+brush flatten at $x $z r=2.5 s=20 frames=60 h=-1.4
+clear at $x $z r=11
+end
+call svpool x=26 z=10
+call svpool x=26 z=-10
+# (w16K/L: pool B's west bank, where the cone's foot comes down close, rose 1.6 m at the water's edge and ~3 m more by
+# x 16 - too steep to climb out of the water. A shallow ledge at the edge, then a graded ramp up to the path, smoothed)
+brush flatten at 22.6 -10 r=1.8 s=20 frames=80 h=0
+brush flatten at 20.4 -10 r=1.8 s=20 frames=80 h=1
+brush flatten at 18.2 -10 r=1.8 s=20 frames=80 h=2
+brush flatten at 16.2 -10 r=1.8 s=20 frames=80 h=3
+brush smooth from 15.5 -10 to 23 -10 r=2.5 s=4 frames=15
+macro svrim x z al
+place SmallRock_02 $al at {$x+3.9} {$z+3.9} ground sit yaw=20 scale=0.8
+place SmallRock_02 $al at {$x-3.9} {$z+3.9} ground sit yaw=140 scale=0.7
+place SmallRock_02 $al at {$x-3.9} {$z-3.9} ground sit yaw=250 scale=0.8
+place SmallRock_02 $al at {$x+3.9} {$z-3.9} ground sit yaw=310 scale=0.7
+end
+call svrim x=26 z=10 al=svrock
+call svrim x=26 z=-10 al=svrock
+prop svrock tint.color=#b8a838
+prop svrock tint.amount=0.5
+place Zone_Atmosphere svmistA at 26 10 h=0.1
+prop svmistA zone.radius=5
+prop svmistA atmo.particles=steam
+prop svmistA atmo.fog=#8cc030
+prop svmistA atmo.fogAmount=0.35
+prop svmistA atmo.light=#c8ff70
+prop svmistA atmo.lightAmount=0.3
+place Zone_Trigger svacidA at 26 10 h=0.3
+prop svacidA obj.name=svacidA
+prop svacidA zone.id=sv_poolA
+prop svacidA zone.radius=3
+prop svacidA zone.hazard=acid
+prop svacidA zone.damage=4
+prop svacidA zone.safe=suit
+prop svacidA zone.hazardMsg=A vent pool - the water is hot acid. Go round it on the shelf, or put on a suit from the box between the paths.
+place Zone_Atmosphere svmistB at 26 -10 h=0.1
+prop svmistB zone.radius=5
+prop svmistB atmo.particles=steam
+prop svmistB atmo.fog=#8cc030
+prop svmistB atmo.fogAmount=0.35
+prop svmistB atmo.light=#c8ff70
+prop svmistB atmo.lightAmount=0.3
+place Zone_Trigger svacidB at 26 -10 h=0.3
+prop svacidB obj.name=svacidB
+prop svacidB zone.id=sv_poolB
+prop svacidB zone.radius=3
+prop svacidB zone.hazard=acid
+prop svacidB zone.damage=4
+prop svacidB zone.safe=suit
+prop svacidB zone.hazardMsg=A vent pool - the water is hot acid. Go round it on the shelf, or put on a suit from the box between the paths.
+place Loot_ChestSmall svdigchest at 37 10 ground sit yaw=270
+prop svdigchest obj.name=svdigchest
+prop svdigchest loot.refill=0
+note svdigchest Diggers' crate | The sulphur diggers' crate at the end of their path: ore they never carried up, scrap from their picks, a jar of glass beads.
+loot svdigchest MetalOre*2;Scrap*3;Glass*1
+place Loot_ChestSmall svsamplechest at 37 -10 ground sit yaw=270
+prop svsamplechest obj.name=svsamplechest
+prop svsamplechest loot.refill=0
+note svsamplechest Samplers' tin | Dr. Varga's samplers left their tin by the shore: copper wire, bolts, a coil of rope for the lowering line.
+loot svsamplechest CopperIngot*1;Bolt*2;Rope*1
+place "Box Big" svsuits at 18.5 0 ground sit yaw=90
+prop svsuits obj.name=svsuits
+prop svsuits beh.use=Put on a works acid suit
+prop svsuits on.use=suit||180\nmessage||A rubber works suit with a hood and gauntlets - three minutes before the fumes find the seams.
+place Note_Sign svsignA at 15.5 8 ground yaw=270
+note svsignA DIGGINGS PATH - VENT POOL | The pool on the path is acid since the vent woke. Go round it on the shelf, or take a suit from the box. - Works manager
+place Note_Sign svsignB at 15.5 -8 ground yaw=270
+note svsignB SAMPLERS' PATH - VENT POOL | Acid in the pool on the path. Round it on the shelf, or suit up first. - Works manager
+
 # ===== Settings, story items, notes, behaviours, quest (5 steps) ==========================================================
 info title=Sulphur Vent
 info author=Custom Islands

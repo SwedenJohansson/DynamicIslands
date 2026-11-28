@@ -94,6 +94,33 @@ place Relay_Fence_pole - at -10.3 -5.6 ground
 place Note_Paper tollnotice at -10.3 -5.6 y=1.1 drop
 place PulauKafilahFlag - at -17.6 -4.6 ground
 place Zone_Trigger market at -11 -1 y=1.2
+# --- 11-12 (w13): Trader Johnny and his crate - optional, no quest step. A trader leaning on a crate by the market, at the
+# lift's foot side, 5 m and more from the ledger, the toll notice and the jammed crate. His second answer sends the
+# player to Utopia's quarry (a journal page with landmarks only). The trader's own crate stays nailed until someone talked
+# to him; his first answer gives rope. (ground = the inlet's 1.6 m; Johnny faces the market)
+# (c3z34 11-21: at z 4.2-4.6 both crates stood on the bank up to the 21.9 m path - Johnny's buried 2.9 m in it, the
+# trader's crate over the drop; 1.8 m south, on the inlet's flat)
+place Crate_Big_01 - at -14.2 2.8 ground sit yaw=20
+place Story_Islander tcjohnny at -14.8 2.0 ground yaw=200
+prop tcjohnny obj.name=Trader Johnny
+prop tcjohnny islander.character=Johnny
+prop tcjohnny islander.pose=lean
+prop tcjohnny talk.text=Caravan Town ran on trade. Now it runs on whatever floats in.\n> What is for trade?\n> Where is the quarry?\n> Later.
+prop tcjohnny on.choice1=give||Rope*2\nmessage||Johnny slides two coils of rope across the crate. "On the house. The mayor never needs to know."
+prop tcjohnny on.choice2=journal|Trader Johnny: the quarry|The quarry is on the last island of the long road, Utopia. Land at the docks with the market stalls, pass the warden's prison house on its stilts and go round the foot of the warden's hill. The quarry is the long grey ridge with a cave in its foot, facing the cargo yard where the storm threw the containers. The quarrymen kept a store lower down than the cave, and the sea took it: off the ridge's last rock the swell runs dark. Bring a deep breath.\nmessage||Johnny scratches a map on the crate lid with a nail: ridge, containers, dark water.
+prop tcjohnny on.choice3=message||Johnny tips his hat. "Trade is patient. It will wait."
+place Crate_Big_02 tccrate at -17.6 2.4 ground sit yaw=-20
+prop tccrate obj.name=tccrate
+prop tccrate beh.use=Open the trader's crate
+prop tccrate if.use=talked|Trader Johnny
+prop tccrate on.use=hide|tccrate\nshow|tcchest\nmessage||The nails give. Johnny's own stock, packed in straw.
+prop tccrate else.use=message||Nailed shut, and Johnny's name burnt into the lid. Ask the trader leaning on the crate beside it.
+place Loot_ChestSmall tcchest at -17.6 2.4 ground sit yaw=-20
+prop tcchest obj.name=tcchest
+prop tcchest beh.hidden=1
+prop tcchest loot.refill=0
+note tcchest Johnny's stock | Johnny's own stock, packed in straw: nails, a coil of plank-tie and a few scrap fittings - "samples, mind, not gifts".
+loot tcchest Nail*8;Scrap*3;Plank*3
 # the market's jammed crate (TODO 4c): its lid nailed down - the crowbar from Vasagatan (rule 2; kept) prises it open;
 # nothing in the quest needs it
 place Loot_ChestSmall jammedcrate at -13.2 -3.4 ground yaw=20
@@ -225,7 +252,7 @@ scatter "Pickup_Landmark_Flower_Yellow" 4 at 0 0 r=42.0 seed=4416 free=3
 call shallows r=80 deep=5 n=2
 
 # --- RAFT REMADE 10-26: the secrets - the smugglers' cave, the toll tokens, the drovers' lanterns ---------------------
-note cavebox Smugglers' cache | A box in the cave on the west flats: what the drovers kept back from the mayor's toll.
+note cavebox Smugglers' cache | A box in the cave on the flats past the slab stacks: what the drovers kept back from the mayor's toll.
 loot cavebox TitaniumIngot*1;CopperIngot*2;Bolt*3
 prop cavebox loot.refill=0
 call hw_zone x=-88 z=2 al=cavez id=smugglerscave r=4 msg="A cave in a rock out on the flats - a cold fire outside, a box within."

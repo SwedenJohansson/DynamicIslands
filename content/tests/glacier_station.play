@@ -5,6 +5,7 @@
 # fuse 3, the reactor restarted (7 pages), its vault, the chimneys. (The basin is reached as the player is put by its
 # controls.)
 island Glacier Station
+offset -0.3671 0.4314
 expect step 0
 expect title The Long Night
 

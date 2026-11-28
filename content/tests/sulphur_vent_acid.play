@@ -1,0 +1,44 @@
+# Sulphur Vent's vent pools (CIPlay sulphur_vent_acid; in a test world 'CI ...'). Since 11-18 (w16I) the two pools are
+# sea-filled hollows on the low east flats: pool A (acid zone sv_poolA at 26 10, r 3, safe=suit) on the diggers' path
+# (16.5 10 to the Diggers' crate at 37 10), pool B (sv_poolB at 26 -10) on the samplers' path (to the Samplers' tin at
+# 37 -10). Each path's bypass runs round the pool's outer shelf (z 17 / z -17). Without a suit: through each pool hurt;
+# round each by the shelf unhurt; a chest at each end.
+# (11-17 w16: a tick while leaving a pool counts, so the check after walking out is `expect hurt 0`, which resets it)
+island Sulphur Vent keep
+offset 0 0
+hour 11
+weather Calm
+
+empty
+at 16.5 10 h=6
+read DIGGINGS PATH
+picture sv_poolA 16.5 +2.5 10 26 +0 10
+walk 16.5 10 to 26 10
+wait 5
+expect message vent pool
+expect hurt 4
+walk 26 10 to 16.5 10
+wait 2
+expect hurt 0
+walk 16.5 10 to 20 17 to 32 17 to 35.5 10
+wait 3
+expect unhurt
+open Diggers' crate
+wait 2
+expect item MetalOre 2
+walk 35.5 10 to 32 17 to 20 17 to 16.5 10 to 16.5 -10
+read SAMPLERS' PATH
+picture sv_poolB 16.5 +2.5 -10 26 +0 -10
+walk 16.5 -10 to 26 -10
+wait 5
+expect message vent pool
+expect hurt 4
+walk 26 -10 to 16.5 -10
+wait 2
+expect hurt 0
+walk 16.5 -10 to 20 -17 to 32 -17 to 35.5 -10
+wait 3
+expect unhurt
+open Samplers' tin
+wait 2
+expect item CopperIngot 1

@@ -68,7 +68,7 @@ The optional systems of a world: world rules (monster difficulty, build cost), t
 | Defaults window fields | `DefaultsWindow.Sailing`, `Shared`, `Generated`; written through `CustomIslandSpawner.SetPoolValues` |
 
 ## Traps
-- Host/client: `WorldRules`, `WorldOptions` and `WorldRandomizer` `OnMessage` return at once on the host; `PlayerLevels.OnMessage` handles `mine` only on the host. Commands and `WorldWindow` refuse non-hosts (`Raft_Network.IsHost`); of the `Set` methods only `PlayerLevels.SetEnabled` checks itself.
+- Host/client: `WorldRules`, `WorldOptions` and `WorldRandomizer` `OnMessage` return at once on the host; `PlayerLevels.OnMessage` handles `mine` only on the host. Commands and `WorldWindow` refuse non-hosts (`Raft_Network.IsHost`; `Refresh` greys every button for a client except `BuildCost_Value` and, in `RefreshStuck`, `SpawnToRaft` (any player) and `OtherQuest`); of the `Set` methods only `PlayerLevels.SetEnabled` checks itself.
 - `WorldRules.Reset` and `WorldOptions.Reset` do nothing to the rules/options on a client. Loading a saved world (host) clears `PlayerLevels.Pending`, `WorldRandomizer.Pending` and calls `NewWorldRulesBox.Forget()` (in `WorldOptions.Reset`). `HeadStart.Reset` nulls `HeadStart.Pending` on every load; the Monster/Build/Looks `Pending` are nulled when used. Head start, islands left out and the gap are the host's alone (no net message).
 - Whole New Game box test (DevTestsNewWorld.cs): `CINewWorldPick monsters= build= looks= levels= headstart= rnd= gap= off=` (main menu; options with `CIWorldSettingsBox`), then `CINewWorldSettingsCheck [client] <same args>` in the world, after a reload, and on a joiner.
 - New world test: `Reset` uses `GameManager.IsInNewGame`; `WorldDirector.OnWorldLoaded` also needs `Sailed <= 0`, no islands and `Done.Count == 0` before `WorldRandomizer.OnNewWorld`.
@@ -83,5 +83,7 @@ The optional systems of a world: world rules (monster difficulty, build cost), t
 - A joiner's `WorldOptions.Reset` returns early; its option resets run in `WorldOptions.OnWorldReceived` (not `UfoSightings`/`FogBanks`: a late call would undo what the host just sent).
 - World-load resets go through `IslandWorldState.ResetStep`: one failing reset is logged, the rest and the island list still load.
 - `WorldOptions.WriteLines` always writes the feature lines; only `@options`/`@optionseed`/`@optionsused` need options or a seed.
+- `WorldCopy.SettingKeys` holds every setting line the host can change in play (also `rarelooks`, `optionseed`): one missing comes back from the older copy after a crash (AU3).
+- `BuildCost` has a `DontDestroyOnLoad` keeper calling `Refresh` 4x a second: `OnModUnload` calls `BuildCost.Unload` (keeper destroyed, `unloaded` set, then `RestoreAll`), never `RestoreAll` alone.
 - C# 7.3 only: RML compiles the mod in game.
 - Docs: README "World settings: more ways to play Raft again", "World rules: monster difficulty and build cost", "World randomizer", "The level up system", "Console commands (F10)", "Source overview"; `docs/GUIDE.md` chapters 9, 10 (settings files) and 11 (console commands).

@@ -33,6 +33,49 @@ namespace DynamicIslands
 		}
 
 		/// <summary>Whether a collider is something that holds (the land, the island's rock, or a placed object that shows).</summary>
+		/// <summary>The first placed object (shown, solid, not the line itself) a zipline's rope passes through between its first
+		/// NearSkip and last FarSkip m (where it comes down to its floors): "name's collider", at: where. Null when none.</summary>
+		static string RopeThrough(List<Vector3> rope, Vector3 near, Vector3 far, Transform self, Transform objects, out Vector3 at)
+		{
+			Transform hit;
+			return RopeThrough(rope, near, far, self, objects, out at, out hit);
+		}
+
+		/// <summary>RopeThrough, with the placed object it passes through (null when none).</summary>
+		static string RopeThrough(List<Vector3> rope, Vector3 near, Vector3 far, Transform self, Transform objects, out Vector3 at, out Transform hit)
+		{
+			at = near; hit = null;
+			float len = new Vector2(far.x - near.x, far.z - near.z).magnitude;
+			if (rope == null || rope.Count < 2 || len < 0.5f) return null;
+			Func<Vector3, bool> inside = p =>
+			{
+				float fromNear = new Vector2(p.x - near.x, p.z - near.z).magnitude, toFar = new Vector2(far.x - p.x, far.z - p.z).magnitude;
+				return fromNear >= ZiplineEnds.NearSkip && toFar >= ZiplineEnds.FarSkip;
+			};
+			for (int i = 0; i + 1 < rope.Count; i++)
+			{
+				Vector3 a = rope[i], b = rope[i + 1];
+				int steps = Mathf.Max(1, Mathf.CeilToInt((b - a).magnitude / 0.25f));
+				for (int k = 0; k < steps; k++)
+				{
+					Vector3 p = Vector3.Lerp(a, b, k / (float)steps), q = Vector3.Lerp(a, b, (k + 1) / (float)steps), d = q - p;
+					float dist = d.magnitude;
+					if (dist < 0.0001f || !inside(p) || !inside(q)) continue;
+					// (both ways: a cast does not see the face of a collider it starts inside)
+					foreach (RaycastHit h in Physics.RaycastAll(p, d / dist, dist, ~0, QueryTriggerInteraction.Ignore).Concat(Physics.RaycastAll(q, -d / dist, dist, ~0, QueryTriggerInteraction.Ignore)))
+					{
+						Collider c = h.collider;
+						if (c == null || c is TerrainCollider || c.name == CaveMountain.SkinName || c.transform.IsChildOf(self)) continue;
+						Transform r = PlacedRoot(c.transform, objects);
+						if (r == null || r == self || !Shows(r)) continue;
+						at = h.point; hit = r;
+						return r.name + "'s " + c.name;
+					}
+				}
+			}
+			return null;
+		}
+
 		static bool Holds(Collider c, Transform self, Transform objects)
 		{
 			if (c == null || c.isTrigger || c.transform.IsChildOf(self)) return false;
@@ -98,6 +141,7 @@ namespace DynamicIslands
 		static List<string> HangProblems(Transform objects, Terrain land, Vector3 mid, float sea)
 		{
 			var lines = new List<string>();
+			List<Collider> skins = null;
 			Func<Vector3, string> at = p => Num(p.x - mid.x) + " " + Num(p.z - mid.z) + " h=" + Num(p.y - sea);
 			foreach (Transform o in objects)
 			{
@@ -129,6 +173,34 @@ namespace DynamicIslands
 								(gap > 999f ? "over nothing" : Num(gap) + " m over the top of what is under it"));
 						else if (p.y - top > 3f)
 							lines.Add("zipline end over its floor: " + n + " " + (f == ZipPointA ? "far" : "near") + " end at " + at(p) + ", " + Num(p.y - top) + " m over it");
+					}
+					// The rope between them as Raft made it (sagging): over the ground all along but the ends' own stretches (11-20:
+					// Outer Breakwater's ridge line ran 1.1 m inside the ridge's shoulder with both ends on their floors)
+					Vector3 zn, zf, low; float lt;
+					MeshPath rope = o.GetComponentInChildren<MeshPath>(true);
+					if (land != null && rope != null && ZiplineEnds.Ends(o.gameObject, null, Vector3.zero, out zn, out zf))
+					{
+						// (over the cave hill's skin too where it covers the land - 11-21 c3z9: Caisson Yard's summit rope ran 0.32 m into it, ground PASS)
+						if (skins == null) skins = ZiplineEnds.CaveSkins(objects.parent != null ? objects.parent : objects);
+						Func<float, float, float> zg = ZiplineEnds.OverSkins((x, z) => land.SampleHeight(new Vector3(x, 0f, z)) + land.transform.position.y, skins);
+						List<Vector3> zr = ZiplineEnds.Rope(rope);
+						// (the room wanted comes down from LineLow to FarEndLow over the metres before the far stretch: ZiplineEnds.LineWant, c3 round 8)
+						float over = ZiplineEnds.RopeLowest(zr, zn, zf, zg, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, ZiplineEnds.CheckWant, out low, out lt);
+						if (over < ZiplineEnds.LineLow)
+						{
+							float real = low.y - zg(low.x, low.z), wanted = ZiplineEnds.LineWant(new Vector2(zf.x - low.x, zf.z - low.z).magnitude);
+							lines.Add("zipline line in the ground: " + n + " " + (real < 0f ? Num(-real) + " m under" : Num(real) + " m over") + " the ground at " + at(low) + " (its rope; " + Num(wanted) + " m wanted)");
+						}
+						// (its last metres down to the far end too - 11-21 c3z13: Caisson Yard's summit rope ended in the cave hill's sand)
+						float endOver = ZiplineEnds.FarStretchLowest(zr, zn, zf, zg, out low);
+						if (endOver < ZiplineEnds.FarEndLow)
+							lines.Add("zipline far end in the ground: " + n + " its rope " + Num(-endOver) + " m under the ground at " + at(low) + " in its last " + Num(ZiplineEnds.FarSkip) + " m");
+						// (and not through what is placed on the island - c3 round 8, 11-21 c3z44: Overpass Shoal's summit rope left its
+						// tower's deck through the rope fence and the top storey's wall; the land check above sees only the land)
+						Vector3 thruAt;
+						string thru = RopeThrough(zr, zn, zf, o, objects, out thruAt);
+						if (thru != null)
+							lines.Add("zipline rope through an object: " + n + " its rope through " + thru + " at " + at(thruAt));
 					}
 					continue;
 				}

@@ -33,11 +33,13 @@ namespace DynamicIslands
 	/// </summary>
 	public static partial class DevTests
 	{
-		[ConsoleCommand(name: "CIRecipe", docs: "Dev, the editor (opened when needed): builds an island (or a world plan, in World plans) from Mods\\DynamicIslands\\recipes\\<name>.recipe through the editor's operations (generator, terrain strokes, placer, properties, notes, quests, story items, rules, Save) - the library content's builder. CIRecipe <name>")]
+		[ConsoleCommand(name: "CIRecipe", docs: "Dev, the editor (opened when needed): builds an island (or a world plan, in World plans) from Mods\\DynamicIslands\\recipes\\<name>.recipe through the editor's operations (generator, terrain strokes, placer, properties, notes, quests, story items, rules, Save) - the library content's builder. Loads the saved island instead when the recipe, its includes and the mod build are what the last build saved (CIRecipeCache; 'fresh' builds anyway). A patch recipe starts with \"load <island name>\" (the saved island opened, a few ops, save <same name>) instead of new + generate. CIRecipe <name> [fresh]")]
 		public static void RecipeCommand(string[] args)
 		{
 			if (args == null || args.Length == 0) { Fail("recipe: name a recipe (Mods\\DynamicIslands\\recipes\\<name>.recipe)"); return; }
-			StartTest(RecipeRoutine(string.Join(" ", args)));
+			// (the last word 'fresh': built even when the cache holds it - speedups 11-19)
+			bool fresh = args.Length > 1 && args[args.Length - 1].Equals("fresh", StringComparison.OrdinalIgnoreCase);
+			StartTest(CachedRecipeRoutine(string.Join(" ", fresh ? args.Take(args.Length - 1).ToArray() : args), fresh));
 		}
 
 		public static string RecipeFolder { get { return Path.Combine(DynamicIslands.assetpath, "recipes"); } }
@@ -111,9 +113,14 @@ namespace DynamicIslands
 				float turn = e.transform.eulerAngles.y % 90f;
 				bool square = turn < 3f || turn > 87f;
 				float inX = square ? 0.1f : whole.size.x * 0.3f, inZ = square ? 0.1f : whole.size.z * 0.3f;
+				// (turned, a long floor's corners are its own: the box's 30 %-in corners of a 6 x 9 m roof turned 59 degrees lie
+				// outside it, over nothing - Twin Forges' rotated radio tower rooms, their roofs on their walls read "over nothing"
+				// x3, w16 11-04; IG5 11-18)
+				Vector3[] turnedAt = square ? null : TurnedCorners(e, parts, 0.15f);
 				for (int c = 0; c < 4; c++)
 				{
-					var p = new Vector3(c % 2 == 0 ? whole.min.x + inX : whole.max.x - inX, whole.min.y, c < 2 ? whole.min.z + inZ : whole.max.z - inZ);
+					var p = turnedAt != null ? new Vector3(turnedAt[c].x, whole.min.y, turnedAt[c].z) :
+						new Vector3(c % 2 == 0 ? whole.min.x + inX : whole.max.x - inX, whole.min.y, c < 2 ? whole.min.z + inZ : whole.max.z - inZ);
 					float land = ground.SampleHeight(p) + ground.transform.position.y;
 					bool ok = p.y - land <= gap + 0.2f;
 					if (!ok)
@@ -125,6 +132,9 @@ namespace DynamicIslands
 							// into it, read "held nowhere", w03 11-09; a wall standing on it starts above its underside)
 							Bounds hb = h.collider.bounds;
 							if (o == e || (hb.min.y > p.y - 0.1f && !(hb.max.y <= p.y + 0.06f && hb.min.y < p.y - 0.02f))) continue;
+							// (nor the ladders zipto stood up a raised deck's side: 11-21 c3y9, Engine Court's 6.6 m ridge deck read as held
+							// by them - a small floor needs one held corner - and stood on its ladders alone)
+							if (o != null && zipDeckLadders.Contains(o.gameObject)) continue;
 							if (o != null && FloorLike.IsMatch(o.GameObjectName ?? "") && Mathf.Abs(h.collider.bounds.max.y - whole.max.y) < 0.3f) continue;
 							ok = true;
 							break;
@@ -167,9 +177,37 @@ namespace DynamicIslands
 			}
 			return over;
 		}
+		/// <summary>A turned piece's four corners in its own frame (its meshes' bounds, <paramref name="inset"/> m in from its
+		/// edges), in the world; null when a part has no mesh to read.</summary>
+		static Vector3[] TurnedCorners(EditorGameObject e, Renderer[] parts, float inset)
+		{
+			Transform f = e.transform;
+			bool any = false;
+			Vector3 lo = Vector3.zero, hi = Vector3.zero;
+			foreach (Renderer r in parts)
+			{
+				MeshFilter mf = r.GetComponent<MeshFilter>();
+				if (mf == null || mf.sharedMesh == null) return null;
+				Bounds mb = mf.sharedMesh.bounds;
+				for (int k = 0; k < 8; k++)
+				{
+					Vector3 c = new Vector3((k & 1) == 0 ? mb.min.x : mb.max.x, (k & 2) == 0 ? mb.min.y : mb.max.y, (k & 4) == 0 ? mb.min.z : mb.max.z);
+					Vector3 l = f.InverseTransformPoint(r.transform.TransformPoint(c));
+					if (!any) { lo = hi = l; any = true; } else { lo = Vector3.Min(lo, l); hi = Vector3.Max(hi, l); }
+				}
+			}
+			if (!any) return null;
+			Vector3 s = f.lossyScale;
+			float ix = Mathf.Min(inset / Mathf.Max(1e-3f, Mathf.Abs(s.x)), (hi.x - lo.x) / 2f), iz = Mathf.Min(inset / Mathf.Max(1e-3f, Mathf.Abs(s.z)), (hi.z - lo.z) / 2f);
+			var corners = new Vector3[4];
+			for (int c = 0; c < 4; c++)
+				corners[c] = f.TransformPoint(new Vector3(c % 2 == 0 ? lo.x + ix : hi.x - ix, lo.y, c < 2 ? lo.z + iz : hi.z - iz));
+			return corners;
+		}
+
 		static readonly Regex Hangs = new Regex("Buoy|Water|Pipe|Chain|Rope|Cable|Lamp|Light|Flag|Banner|Floor|Deck|Plank|Bridge|Ramp|Stair|Crane|Roof|Scaffold", RegexOptions.IgnoreCase);
 
-		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it)")]
+		[ConsoleCommand(name: "CIGroundingTest", docs: "Dev, editor: nothing stands in the air on a slope - the generator's rocks and bushes go down to the lowest ground under their base and its snow drifts lie along gentle slopes only; Ground and placing put a wide object down by its base; objects go up and down with the ground a brush stroke changes (one undo step with it); the save sets a rock in the air down and a buried barrel up; a zipline rope is measured over the cave hill a world builds; a rope no raise clears gets the most room zipto can give it; a zipto far end under the cave hill goes onto its skin and the ground check sees a rope's last metres; a deck ladder's climbing side is cleared of the generator's boulders; a rope into the hill's slope before its far end gets that end raised on a deck; a rope touching its own far floor by a few mm is no cut and gets no deck")]
 		public static void GroundingTestCommand()
 		{
 			StartTest(GroundingTestRoutine());
@@ -266,6 +304,380 @@ namespace DynamicIslands
 			Check(ref ok, lowered < before - 1f && Mathf.Abs(van.transform.position.y - before) < 0.01f, "lowering the ground under it took the van down " + (before - lowered).ToString("F2") + " m with it; Ctrl+Z put the ground and the van back (" + (van.transform.position.y - before).ToString("F3") + ")");
 			terraineditor.modificationAction = terraineditor.TerrainModificationAction.Raise;
 			UnityEngine.Object.Destroy(van);
+
+			// 4. The save's settle step (11-21): a boulder 0.7 m in the air over flat ground goes down onto it; a barrel buried
+			// 0.4 m under the ground goes up onto it
+			Vector3 flat = Vector3.zero;
+			for (float x = -30f; x <= 30f && flat == Vector3.zero; x += 3f)
+				for (float z = -30f; z <= 30f; z += 3f)
+				{
+					Vector3 point, normal;
+					if (PlacementOptions.GroundAt(new Vector3(mid.x + x, 0f, mid.y + z), out point, out normal) && point.y > sea + 3f && Vector3.Angle(normal, Vector3.up) < 6f) { flat = point; break; }
+				}
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "SmallBoulder2", "TP_Moontown_Barrel01" });
+			GameObject boulder = PlaceableCatalog.Spawn("SmallBoulder2", GameObject.Find("PlacedObjects").transform);
+			GameObject barrel = PlaceableCatalog.Spawn("TP_Moontown_Barrel01", GameObject.Find("PlacedObjects").transform);
+			GameObject treasure = PlaceableCatalog.Spawn(ContentCatalog.BuriedTreasure, GameObject.Find("PlacedObjects").transform);
+			if (flat == Vector3.zero || boulder == null || barrel == null || treasure == null) { Fail("grounding test: no flat ground, SmallBoulder2, TP_Moontown_Barrel01 or " + ContentCatalog.BuriedTreasure); yield break; }
+			EditorGameObject.Attach(boulder, "SmallBoulder2");
+			EditorGameObject.Attach(barrel, "TP_Moontown_Barrel01");
+			EditorGameObject.Attach(treasure, ContentCatalog.BuriedTreasure);
+			boulder.transform.position = flat;
+			barrel.transform.position = flat + new Vector3(6f, 0f, 0f);
+			treasure.transform.position = flat + new Vector3(0f, -0.6f, 6f);
+			Vector3 treasureAt = treasure.transform.position;
+			Physics.SyncTransforms();
+			Bounds rb = MeshBox(boulder), bb = MeshBox(barrel);
+			boulder.transform.position += Vector3.up * (GroundY(rb.center.x, rb.center.z) + 0.7f - rb.min.y);
+			barrel.transform.position += Vector3.up * (GroundY(bb.center.x, bb.center.z) - 0.4f - bb.max.y);
+			Physics.SyncTransforms();
+			int seen, high; float most, least;
+			bool floatedBefore = RockFloats(boulder.transform, MeshBox(boulder), ground, out seen, out high, out most, out least);
+			SettleAtSave(sea);
+			Physics.SyncTransforms();
+			rb = MeshBox(boulder); bb = MeshBox(barrel);
+			bool floatsAfter = RockFloats(boulder.transform, rb, ground, out seen, out high, out most, out least);
+			Check(ref ok, floatedBefore && !floatsAfter && boulder.activeSelf, "the save sets a boulder in the air down: it floated " + floatedBefore + ", after the settle it floats " + floatsAfter + " (shown " + boulder.activeSelf + ", its underside " + (rb.min.y - GroundY(rb.center.x, rb.center.z)).ToString("F2") + " m over the ground)");
+			Check(ref ok, bb.max.y > GroundY(bb.center.x, bb.center.z) + 0.05f, "the save sets a buried barrel up on the ground: its top " + (bb.max.y - GroundY(bb.center.x, bb.center.z)).ToString("F2") + " m over it");
+			Check(ref ok, (treasure.transform.position - treasureAt).magnitude < 0.01f, "the save leaves buried treasure under the ground: moved " + (treasure.transform.position - treasureAt).magnitude.ToString("F2") + " m");
+			// (a barrel on a den's floor 1 m under the land round it stays on the floor: the land there is the room's, cut in the
+			// world - Old Mine Islet's carts and crates were set up onto it and floated, c3z40 11-21)
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "BalboaCave_DeadEnd" });
+			GameObject mineDen = PlaceableCatalog.Spawn("BalboaCave_DeadEnd", GameObject.Find("PlacedObjects").transform);
+			GameObject denBarrel = PlaceableCatalog.Spawn("TP_Moontown_Barrel01", GameObject.Find("PlacedObjects").transform);
+			if (mineDen == null || denBarrel == null) { Fail("grounding test: no BalboaCave_DeadEnd"); yield break; }
+			EditorGameObject.Attach(mineDen, "BalboaCave_DeadEnd");
+			EditorGameObject.Attach(denBarrel, "TP_Moontown_Barrel01");
+			foreach (Collider c in mineDen.GetComponentsInChildren<Collider>(true)) if (!c.isTrigger) c.enabled = true;
+			mineDen.transform.position = flat + new Vector3(-14f, 0f, 14f);
+			Physics.SyncTransforms();
+			var denOwn = new HashSet<Collider>(mineDen.GetComponentsInChildren<Collider>().Where(c => c.enabled && !c.isTrigger && c.name != CaveTool.MouthName && c.name != CaveTool.JoinName));
+			Bounds mineBox = denOwn.Count > 0 ? denOwn.First().bounds : new Bounds(mineDen.transform.position, Vector3.zero);
+			foreach (Collider c in denOwn) mineBox.Encapsulate(c.bounds);
+			// (the mineDen's floor: the room point with the most room over a floor near the middle of the piece)
+			Vector3 denFloor = Vector3.zero; float bestRoom = 0f;
+			for (float fx = 0.2f; fx <= 0.8f; fx += 0.1f)
+				for (float fz = 0.2f; fz <= 0.8f; fz += 0.1f)
+					for (float fy = 0.15f; fy <= 0.6f; fy += 0.15f)
+					{
+						Vector3 p = new Vector3(Mathf.Lerp(mineBox.min.x, mineBox.max.x, fx), Mathf.Lerp(mineBox.min.y, mineBox.max.y, fy), Mathf.Lerp(mineBox.min.z, mineBox.max.z, fz));
+						float fUnder, fOver;
+						bool backs = Physics.queriesHitBackfaces;
+						bool inside = CaveGround.Inside(p, denOwn, mineBox, out fUnder, out fOver);
+						Physics.queriesHitBackfaces = backs;
+						if (inside && fUnder < 1.5f && fOver > 2.5f && fOver > bestRoom) { bestRoom = fOver; denFloor = p - Vector3.up * fUnder; }
+					}
+			Check(ref ok, denFloor != Vector3.zero, "the test den has a floor to stand a barrel on (" + denOwn.Count + " colliders, room over it " + bestRoom.ToString("F2") + " m)");
+			if (denFloor != Vector3.zero)
+			{
+				denBarrel.transform.position = denFloor;
+				Physics.SyncTransforms();
+				Bounds db = MeshBox(denBarrel);
+				denBarrel.transform.position += Vector3.up * (denFloor.y - db.min.y);
+				// (the den and its barrel moved up or down together till the barrel's top is 1 m under the land there)
+				Physics.SyncTransforms();
+				db = MeshBox(denBarrel);
+				Vector3 shift = Vector3.up * (GroundY(db.center.x, db.center.z) - 1f - db.max.y);
+				mineDen.transform.position += shift;
+				denBarrel.transform.position += shift;
+				Physics.SyncTransforms();
+				Vector3 denBarrelAt = denBarrel.transform.position;
+				db = MeshBox(denBarrel);
+				float buried = GroundY(db.center.x, db.center.z) - db.max.y;
+				SettleAtSave(sea);
+				Physics.SyncTransforms();
+				float moved = (denBarrel.transform.position - denBarrelAt).magnitude;
+				Check(ref ok, moved < 0.01f && denBarrel.activeSelf, "the save leaves a barrel on a den's floor under the land round it (its top " + buried.ToString("F2") + " m under the land before the den's cut): moved " + moved.ToString("F2") + " m, shown " + denBarrel.activeSelf);
+			}
+			mineDen.SetActive(false);
+			int denDug;
+			CaveGround.EditorNow(ground, out denDug);
+			UnityEngine.Object.Destroy(denBarrel);
+			UnityEngine.Object.Destroy(mineDen);
+			// (a deck 6 m up over a lower floor 1 m up: its posts stand on that floor's top, not left out - 11-21 c3y11, Engine Court's
+			// ridge deck over the court's posts stood on its ladders alone)
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Block_Floor_Wood", "RT_Pillar" });
+			Transform root = GameObject.Find("PlacedObjects").transform;
+			var pillarsBefore = new HashSet<GameObject>(root.GetComponentsInChildren<EditorGameObject>().Where(x => x.GameObjectName == "RT_Pillar").Select(x => x.gameObject));
+			GameObject deckHi = PlaceableCatalog.Spawn("Block_Floor_Wood", root), deckLo = PlaceableCatalog.Spawn("Block_Floor_Wood", root);
+			if (deckHi == null || deckLo == null) { Fail("grounding test: no Block_Floor_Wood"); yield break; }
+			EditorGameObject.Attach(deckHi, "Block_Floor_Wood");
+			EditorGameObject.Attach(deckLo, "Block_Floor_Wood");
+			foreach (GameObject f in new[] { deckHi, deckLo }) { Collider fc = f.GetComponent<Collider>(); if (fc != null) fc.enabled = true; }
+			Vector3 deckAt = flat + new Vector3(-6f, 0f, -6f);
+			deckHi.transform.position = deckAt;
+			deckLo.transform.position = deckAt + new Vector3(0.6f, 0f, 0f);
+			Physics.SyncTransforms();
+			Bounds hb = MeshBox(deckHi), lb = MeshBox(deckLo);
+			deckHi.transform.position += Vector3.up * (GroundY(hb.center.x, hb.center.z) + 6f - hb.min.y);
+			deckLo.transform.position += Vector3.up * (GroundY(lb.center.x, lb.center.z) + 1f - lb.min.y);
+			Physics.SyncTransforms();
+			hb = MeshBox(deckHi); lb = MeshBox(deckLo);
+			StandPosts();
+			Physics.SyncTransforms();
+			List<GameObject> newPillars = root.GetComponentsInChildren<EditorGameObject>().Where(x => x.GameObjectName == "RT_Pillar" && !pillarsBefore.Contains(x.gameObject)).Select(x => x.gameObject).ToList();
+			int onLow = newPillars.Count(x => { Bounds pb = MeshBox(x); return Mathf.Abs(pb.max.y - hb.min.y) < 0.15f && Mathf.Abs(pb.min.y - lb.max.y) < 0.15f; });
+			int deckPosts = newPillars.Count(x => { Bounds pb = MeshBox(x); return Mathf.Abs(pb.max.y - hb.min.y) < 0.15f; });
+			Check(ref ok, onLow >= 1 && deckPosts >= 4, "a deck 6 m up over a lower floor gets its posts, those over the floor on its top: " + deckPosts + " posts under the deck, " + onLow + " on the lower floor");
+			foreach (GameObject x in newPillars) UnityEngine.Object.Destroy(x);
+			UnityEngine.Object.Destroy(deckHi);
+			UnityEngine.Object.Destroy(deckLo);
+			// (a raised zipline deck stands its own four posts into the ground when it is made - 11-21 c3y11/c3y12)
+			var pillarsBefore2 = new HashSet<GameObject>(root.GetComponentsInChildren<EditorGameObject>().Where(x => x.GameObjectName == "RT_Pillar").Select(x => x.gameObject));
+			GameObject zipDeck = PlaceableCatalog.Spawn("Block_Floor_Wood", root);
+			if (zipDeck == null) { Fail("grounding test: no Block_Floor_Wood"); yield break; }
+			EditorGameObject.Attach(zipDeck, "Block_Floor_Wood");
+			zipDeck.transform.position = flat + new Vector3(-6f, 0f, 6f);
+			Physics.SyncTransforms();
+			Bounds zb = MeshBox(zipDeck);
+			zipDeck.transform.position += Vector3.up * (GroundY(zb.center.x, zb.center.z) + 4f - zb.min.y);
+			Physics.SyncTransforms();
+			zb = MeshBox(zipDeck);
+			string zipPosts = ZipDeckPosts(zb, root);
+			Physics.SyncTransforms();
+			List<GameObject> zipPillars = root.GetComponentsInChildren<EditorGameObject>().Where(x => x.GameObjectName == "RT_Pillar" && !pillarsBefore2.Contains(x.gameObject)).Select(x => x.gameObject).ToList();
+			int grounded = zipPillars.Count(x => { Bounds pb = MeshBox(x); return Mathf.Abs(pb.max.y - zb.min.y) < 0.15f && pb.min.y < GroundY(pb.center.x, pb.center.z); });
+			Check(ref ok, grounded == 4, "a raised zipline deck 4 m up stands four posts into the ground: " + grounded + " (" + zipPosts.TrimStart(',', ' ') + ")");
+			foreach (GameObject x in zipPillars) UnityEngine.Object.Destroy(x);
+			UnityEngine.Object.Destroy(zipDeck);
+			UnityEngine.Object.Destroy(boulder);
+			UnityEngine.Object.Destroy(barrel);
+			UnityEngine.Object.Destroy(treasure);
+			// 5. A zipline rope over a cave piece is measured over the hill a world builds over it (11-21 c3z9: Caisson Yard's summit
+			// rope ran 0.32 m into the world's hill and stopped riders 6.5 m short; the editor and the ground check measured the land only)
+			yield return null;
+			GameObject den = PlaceableCatalog.Spawn(CaveTool.Room, root);
+			if (den == null) { Fail("grounding test: no " + CaveTool.Room); yield break; }
+			EditorGameObject.Attach(den, CaveTool.Room);
+			Vector3 dp = flat; // (the test's other things are gone by now)
+			den.transform.position = new Vector3(dp.x, GroundY(dp.x, dp.z), dp.z);
+			Physics.SyncTransforms();
+			Bounds denBox = MeshBox(den);
+			GameObject hill = CaveMountain.Preview(new[] { den.GetComponent<EditorGameObject>() }, terraineditor.terrain.transform.position);
+			Check(ref ok, hill != null && hill.transform.Find(CaveMountain.SkinName) != null, "the editor builds the cave hill a world builds over a bear den, to measure ropes against");
+			if (hill != null)
+			{
+				float cx = denBox.center.x, cz = denBox.center.z, landY = GroundY(cx, cz);
+				List<Collider> skins = ZiplineEnds.CaveSkins(hill.transform);
+				Func<float, float, float> landOnly = (x, z) => GroundY(x, z), withHill = ZiplineEnds.OverSkins(landOnly, skins);
+				float hillY = withHill(cx, cz), zipY = ZipGround(null)(cx, cz);
+				Check(ref ok, skins.Count == 1 && hillY > landY + 1f, "the hill's skin over the den's middle stands over the land: " + Num(hillY - landY) + " m");
+				Check(ref ok, Mathf.Abs(zipY - hillY) < 0.3f, "zipto's ground there is the hill's top: " + Num(zipY - landY) + " m over the land (the skin " + Num(hillY - landY) + ")");
+				// (a rope 0.5 m under the hill's top over the den: in the ground by the hill, clear of the land)
+				var rope = new List<Vector3> { new Vector3(cx - 3f, hillY - 0.5f, cz), new Vector3(cx + 3f, hillY - 0.5f, cz) };
+				Vector3 la; float lt;
+				float overLand = ZiplineEnds.RopeLowest(rope, rope[0], rope[1], landOnly, 0f, 0f, null, out la, out lt);
+				float overHill = ZiplineEnds.RopeLowest(rope, rope[0], rope[1], withHill, 0f, 0f, null, out la, out lt);
+				Check(ref ok, overHill < 0f && overLand > overHill + 0.5f, "a rope through the cave hill counts as in the ground: " + Num(overHill) + " m over the hill (" + Num(overLand) + " m over the land alone)");
+				UnityEngine.Object.DestroyImmediate(hill);
+				Physics.SyncTransforms();
+				Check(ref ok, GameObject.Find(CaveMountain.PreviewName) == null && skins.All(c => c == null), "the measuring hill is gone after (zipto's ground there now " + Num(ZipGround(null)(cx, cz) - landY) + " m over the land)");
+			}
+			UnityEngine.Object.Destroy(den);
+			// 6. zipto when no raise nor tighter rope clears (11-21 c3z11: Caisson Yard's ridge line was left at Raft's slack, 3.2 m
+			// into the hill, where a partial raise had nearly cleared it): the best partial raise and rope, more room than as it is
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "ZiplinePath_Landmark" });
+			GameObject zl = PlaceableCatalog.Spawn("ZiplinePath_Landmark", root);
+			MeshPath_Zipline_Landmark zline = zl != null ? zl.GetComponentInChildren<MeshPath_Zipline_Landmark>(true) : null;
+			if (zline == null) { Fail("grounding test: no ZiplinePath_Landmark line"); yield break; }
+			Vector3 zn = new Vector3(flat.x, GroundY(flat.x, flat.z) + 3f, flat.z), zf = new Vector3(flat.x + 24f, GroundY(flat.x + 24f, flat.z), flat.z);
+			Vector2 zm = new Vector2(flat.x + 12f, flat.z);
+			// (a wall 5 m thick midway, 3 m over the highest the near end can go: nothing clears it)
+			float wallTop = Mathf.Max(zn.y + ZiplineEnds.MaxRaise, zf.y) + 3f;
+			Func<float, float, float> wall = (x, z) => Vector2.Distance(new Vector2(x, z), zm) < 2.5f ? wallTop : GroundY(x, z);
+			float zown = ZiplineEnds.Slack(zline);
+			float[] zsl = !float.IsNaN(zown) && zown != 0f ? new[] { zown, zown * 0.5f, zown * 0.25f, zown * 0.1f } : new[] { zown };
+			Vector3 za; float zt;
+			float asIs = ZiplineEnds.RopeLowest(ZiplineEnds.RopeBetween(zline, zf, zn, zown), zn, zf, wall, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out za, out zt);
+			float pr, ps, pl; Vector3 pa;
+			ZipBestPartial(zline, zn, zf, wall, zsl, ZiplineEnds.MaxRaise, out pr, out ps, out pl, out pa);
+			Check(ref ok, pl < ZiplineEnds.LineClear && pl > asIs + 1f && (pr > 0f || ps != zown), "a rope through a wall no raise clears gets the most room it can: raised " + Num(pr) + " m, slack " + Num(ps) + " (own " + Num(zown) + "), the least " + Num(pl) + " m over the wall's top (" + Num(asIs) + " as it was)");
+			// 6b. ...and then its far end goes back along the line, short of a hump the rope runs through (11-21 c3z29: lines on 15
+			// islands ran into a hump between their ends, only warned), but not past a hump by its near end
+			EditorGameObject ze6 = EditorGameObject.Attach(zl, "ZiplinePath_Landmark");
+			if (ze6 != null)
+			{
+				float g6 = GroundY(flat.x, flat.z);
+				Vector3 n6 = new Vector3(flat.x, g6 + 6f, flat.z), fl6 = new Vector3(flat.x + 24f, GroundY(flat.x + 24f, flat.z), flat.z), f6 = fl6 + Vector3.up * 2f;
+				PropsCommand.Change(ze6, ObjectProps.With(ze6.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(fl6)));
+				Vector3 to6;
+				ZiplineEnds.TryParse(ObjectProps.Get(ze6.Props, ZiplineEnds.ZipTo), out to6);
+				f6 = to6 + Vector3.up * 2f;
+				Vector2 hump6 = new Vector2(flat.x + 18f, flat.z), wall6 = new Vector2(flat.x + 4f, flat.z);
+				// (the hump's top over the straight line there, whatever the land does: 4.5 m over the near end's ground left the rope
+				// 0.94 m over it where the far end's ground stood higher, c3z47 - the test's rope never ran through it)
+				float humpTop = Mathf.Max(g6 + 4.5f, Mathf.Lerp(n6.y, f6.y, 0.75f) + 0.5f);
+				Func<float, float, float> humped = (x, z) => Vector2.Distance(new Vector2(x, z), hump6) < 2.5f ? humpTop : GroundY(x, z);
+				Func<float, float, float> walled = (x, z) => Vector2.Distance(new Vector2(x, z), wall6) < 2.5f ? n6.y + 3f : GroundY(x, z);
+				Vector3 nt6, nf6, a6, za6; float part6, r6, s6, l6, zt6; bool rd6;
+				float before6 = ZiplineEnds.RopeLowest(ZiplineEnds.RopeBetween(zline, f6, n6, zsl[zsl.Length - 1]), n6, f6, humped, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out za6, out zt6);
+				bool pulled6 = ZipPullIn(ze6, zline, Vector3.zero, n6, f6, humped, zsl, false, out nt6, out nf6, out part6, out r6, out s6, out l6, out a6, out rd6);
+				float after6 = pulled6 ? ZiplineEnds.RopeLowest(ZiplineEnds.RopeBetween(zline, nf6, n6, s6), n6, nf6, humped, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out za6, out zt6) : float.NaN;
+				Check(ref ok, before6 < 0f && pulled6 && part6 > 0f && part6 <= ZiplineEnds.PullMost + 0.001f && Vector2.Distance(new Vector2(nf6.x, nf6.z), hump6) > 2.5f && nf6.x < hump6.x && after6 >= ZiplineEnds.LineLow &&
+					Mathf.Abs(nt6.y - GroundY(nt6.x, nt6.z)) < 0.05f,
+					"a rope through a hump by its far end (" + Num(before6) + " m over it at the tightest) gets its far end pulled back " + Num(part6 * 24f) + " m, short of the hump, its floor on the ground (" + Num(nt6.y - GroundY(nt6.x, nt6.z)) + " m), the rope " + Num(after6) + " m over the ground");
+				Check(ref ok, !ZipPullIn(ze6, zline, Vector3.zero, n6, f6, walled, zsl, false, out nt6, out nf6, out part6, out r6, out s6, out l6, out a6, out rd6), "a rope through a hump by its near end keeps its far end (no pull clears it)");
+			}
+			else Check(ref ok, false, "grounding test: no ZiplinePath_Landmark for part 6b");
+			UnityEngine.Object.Destroy(zl);
+			// 7. A zipto far end over the cave hill goes onto the hill's skin, and the ground check sees a rope's last metres in the
+			// ground (11-21 c3z13: Caisson Yard's summit line ended in the hill's sand, its far floor on the land under the skin)
+			yield return null;
+			GameObject den7 = PlaceableCatalog.Spawn(CaveTool.Room, root);
+			GameObject zl7 = PlaceableCatalog.Spawn("ZiplinePath_Landmark", root);
+			if (den7 == null || zl7 == null) { Fail("grounding test: no " + CaveTool.Room + " or ZiplinePath_Landmark"); yield break; }
+			EditorGameObject.Attach(den7, CaveTool.Room);
+			EditorGameObject ze7 = EditorGameObject.Attach(zl7, "ZiplinePath_Landmark");
+			den7.transform.position = new Vector3(flat.x, GroundY(flat.x, flat.z), flat.z);
+			zl7.transform.position = new Vector3(flat.x + 30f, GroundY(flat.x + 30f, flat.z), flat.z);
+			Physics.SyncTransforms();
+			Bounds d7 = MeshBox(den7);
+			GameObject hill7 = CaveMountain.Preview(new[] { den7.GetComponent<EditorGameObject>() }, terraineditor.terrain.transform.position);
+			if (hill7 != null && ze7 != null)
+			{
+				Physics.SyncTransforms();
+				Vector3 org = terraineditor.terrain.transform.position;
+				float fx = d7.center.x, fz = d7.center.z, land7 = GroundY(fx, fz), skin7 = ZiplineEnds.OverSkins((x, z) => GroundY(x, z), ZiplineEnds.CaveSkins(hill7.transform))(fx, fz);
+				PropsCommand.Change(ze7, ObjectProps.With(ze7.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(new Vector3(fx, land7, fz) - org)));
+				bool moved = ZipFarOnSkin(ze7, org);
+				Vector3 to7;
+				float now7 = ZiplineEnds.TryParse(ObjectProps.Get(ze7.Props, ZiplineEnds.ZipTo), out to7) ? to7.y + org.y : float.NaN;
+				Check(ref ok, moved && skin7 > land7 + 1f && Mathf.Abs(now7 - skin7) < 0.1f, "a zipto far end under the cave hill's skin goes onto it: " + Num(now7 - land7) + " m over the land (the skin " + Num(skin7 - land7) + ")");
+				Check(ref ok, !ZipFarOnSkin(ze7, org), "a zipto far end on the skin stays there");
+				// 9. Its rope's last metres clear of the hill's slope (11-21 c3z15: Caisson Yard's summit rope, its far end on the skin,
+				// ran 0.24 m into the dune just before it): the near end as high as the hill's top, its rope sagging into the slope
+				// before the far end; zipto raises the far end on a deck till the last metres clear it, as the ground check measures
+				zl7.transform.position += Vector3.up * (skin7 - zl7.transform.position.y);
+				Physics.SyncTransforms();
+				Func<float, float, float> g9 = ZiplineEnds.OverSkins((x, z) => GroundY(x, z), ZiplineEnds.CaveSkins(hill7.transform));
+				MeshPath_Zipline_Landmark line9 = zl7.GetComponentInChildren<MeshPath_Zipline_Landmark>(true);
+				Func<float> end9 = () => { Vector3 n9, f9, a9; Physics.SyncTransforms(); return line9 != null && ZiplineEnds.Ends(zl7, ze7.Props, org, out n9, out f9) ? ZiplineEnds.FarStretchLowest(ZiplineEnds.RopeBetween(line9, f9, n9, Slack9(ze7)), n9, f9, g9, out a9) : float.NaN; };
+				float before9 = end9();
+				GameObject deck9, again9;
+				var lad9 = new HashSet<GameObject>(zipDeckLadders);
+				string w9 = ZipFarClear(ze7, out deck9);
+				float after9 = end9();
+				Check(ref ok, before9 < ZiplineEnds.FarEndLow && w9 != null && after9 >= ZiplineEnds.FarEndLow && after9 > before9, "a zipto rope into the hill's slope before its far end: its last " + Num(ZiplineEnds.FarSkip) + " m " + Num(before9) + " -> " + Num(after9) + " m over the ground" + (w9 != null ? " (" + w9.Trim() + ")" : ""));
+				Check(ref ok, deck9 != null, "the raised far end stands on a deck");
+				Check(ref ok, ZipFarClear(ze7, out again9) == null && again9 == null, "a zipto far end clear stays as it is");
+				foreach (GameObject x in zipDeckLadders.Where(y => y != null && !lad9.Contains(y)).ToList()) { zipDeckLadders.Remove(x); UnityEngine.Object.Destroy(x); }
+				if (deck9 != null) { recipePlaced.Remove(deck9); UnityEngine.Object.Destroy(deck9); }
+				UnityEngine.Object.DestroyImmediate(hill7);
+				Physics.SyncTransforms();
+			}
+			else Check(ref ok, false, "the editor builds the cave hill over a bear den for a zipto far end");
+			UnityEngine.Object.Destroy(zl7);
+			UnityEngine.Object.Destroy(den7);
+			{
+				Func<float, float, float> g7 = (x, z) => GroundY(x, z);
+				Vector3 n7 = new Vector3(flat.x, GroundY(flat.x, flat.z) + 6f, flat.z), fIn = new Vector3(flat.x + 12f, GroundY(flat.x + 12f, flat.z) - 0.6f, flat.z), fOn = new Vector3(fIn.x, fIn.y + 1.6f, fIn.z);
+				Vector3 a7;
+				float inEnd = ZiplineEnds.FarStretchLowest(new List<Vector3> { fIn, n7 }, n7, fIn, g7, out a7), onEnd = ZiplineEnds.FarStretchLowest(new List<Vector3> { fOn, n7 }, n7, fOn, g7, out a7);
+				Check(ref ok, inEnd < ZiplineEnds.FarEndLow && onEnd >= ZiplineEnds.FarEndLow, "the ground check sees a rope's last " + Num(ZiplineEnds.FarSkip) + " m: ending 0.6 m in the ground " + Num(inEnd) + ", ending 1 m over it " + Num(onEnd));
+				// 10. A rope touching its own far floor by a few mm is no cut (11-21 c3z17/18: Thalassa Mooring 0.0096 m, Engine Court
+				// 0.0038 m under at the floor itself): the ground check passes it, a 0.24 m cut still fails (c3z15 Caisson Yard)
+				Vector3 fTouch = new Vector3(fIn.x, fIn.y + 0.6f - 0.01f, fIn.z), fCut = new Vector3(fIn.x, fIn.y + 0.6f - 0.24f, fIn.z);
+				float touchEnd = ZiplineEnds.FarStretchLowest(new List<Vector3> { fTouch, n7 }, n7, fTouch, g7, out a7), cutEnd = ZiplineEnds.FarStretchLowest(new List<Vector3> { fCut, n7 }, n7, fCut, g7, out a7);
+				Check(ref ok, touchEnd >= ZiplineEnds.FarEndLow && cutEnd < ZiplineEnds.FarEndLow, "the ground check: a rope touching its far floor " + Num(touchEnd) + " m passes, one 0.24 m in " + Num(cutEnd) + " fails");
+			}
+			// 10c. A rider's room never asks less than the ground check's rope room outside the last FarSkip m (11-21 c3z30: The Rain
+			// Engine's raised lines, their last 5 m left out of it, came 0.03 and 0.35 m over the ground 3.2 m before their far ends)
+			{
+				float wFlat = 999f, wFall = 999f;
+				Func<float, float> rwFlat = ZiplineEnds.RiderWant(0f, 20f), rwFall = ZiplineEnds.RiderWant(2.2f, 16f);
+				for (float d = ZiplineEnds.FarSkip; d <= 12f; d += 0.25f) { wFlat = Mathf.Min(wFlat, rwFlat(d)); wFall = Mathf.Min(wFall, rwFall(d)); }
+				Check(ref ok, wFlat > ZiplineEnds.LineLow && wFall > ZiplineEnds.LineLow && Mathf.Abs(rwFlat(20f) - ZiplineEnds.RiderClear) < 0.01f,
+					"a rider's room asks at least the rope's " + Num(ZiplineEnds.LineLow) + " m from " + Num(ZiplineEnds.FarSkip) + " m before the far end: a flat line " + Num(wFlat) + ", Rain Engine's east line's fall " + Num(wFall) + " (full " + Num(rwFlat(20f)) + " m further back)");
+			}
+			// 10b. ... and zipto builds no deck for a flat-ground far end whose rope touches its floor by a few mm
+			yield return null;
+			GameObject zl10 = PlaceableCatalog.Spawn("ZiplinePath_Landmark", root);
+			EditorGameObject ze10 = zl10 != null ? EditorGameObject.Attach(zl10, "ZiplinePath_Landmark") : null;
+			if (ze10 != null)
+			{
+				Vector3 org = terraineditor.terrain.transform.position;
+				zl10.transform.position = new Vector3(flat.x + 30f, GroundY(flat.x + 30f, flat.z) + 4f, flat.z);
+				Physics.SyncTransforms();
+				MeshPath_Zipline_Landmark line10 = zl10.GetComponentInChildren<MeshPath_Zipline_Landmark>(true);
+				Func<float, float, float> g10 = ZipGround(ze10);
+				Vector3 to10 = new Vector3(flat.x + 12f, GroundY(flat.x + 12f, flat.z), flat.z) - org;
+				Func<float> end10 = () => { Vector3 n, f, a; Physics.SyncTransforms(); return line10 != null && ZiplineEnds.Ends(zl10, ze10.Props, org, out n, out f) ? ZiplineEnds.FarStretchLowest(ZiplineEnds.RopeBetween(line10, f, n), n, f, g10, out a) : float.NaN; };
+				// (the far end set so its rope touches the ground 8 mm under, as Raft's own floor contact)
+				for (int i = 0; i < 3; i++)
+				{
+					PropsCommand.Change(ze10, ObjectProps.With(ze10.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(to10)));
+					float l10 = end10();
+					if (float.IsNaN(l10) || Mathf.Abs(l10 + 0.008f) < 0.002f) break;
+					to10.y -= l10 + 0.008f;
+				}
+				PropsCommand.Change(ze10, ObjectProps.With(ze10.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(to10)));
+				float touch10 = end10();
+				string set10 = ObjectProps.Get(ze10.Props, ZiplineEnds.ZipTo);
+				GameObject deck10;
+				var lad10 = new HashSet<GameObject>(zipDeckLadders);
+				string w10 = ZipFarClear(ze10, out deck10);
+				Check(ref ok, touch10 < 0f && touch10 >= ZiplineEnds.FarEndLow && w10 == null && deck10 == null && ObjectProps.Get(ze10.Props, ZiplineEnds.ZipTo) == set10, "a flat-ground zipto far end whose rope touches its floor " + Num(touch10) + " m keeps its place, no deck" + (w10 != null ? " (" + w10.Trim() + ")" : ""));
+				foreach (GameObject x in zipDeckLadders.Where(y => y != null && !lad10.Contains(y)).ToList()) { zipDeckLadders.Remove(x); UnityEngine.Object.Destroy(x); }
+				if (deck10 != null) { recipePlaced.Remove(deck10); UnityEngine.Object.Destroy(deck10); }
+			}
+			else Check(ref ok, false, "grounding test: no ZiplinePath_Landmark for part 10");
+			if (zl10 != null) UnityEngine.Object.Destroy(zl10);
+			// 10d. A near floor buried in the land goes up onto it before the rope is measured (11-21 c3z30: The Rootcore's
+			// mouth-ledge line, its floor 8.3 m under the ledge, came out on a deck 0.6 m under the ground, its rope through the ledge)
+			yield return null;
+			GameObject zl11 = PlaceableCatalog.Spawn("ZiplinePath_Landmark", root);
+			EditorGameObject ze11 = zl11 != null ? EditorGameObject.Attach(zl11, "ZiplinePath_Landmark") : null;
+			if (ze11 != null)
+			{
+				zl11.transform.position = new Vector3(flat.x + 30f, GroundY(flat.x + 30f, flat.z) + 1.35f, flat.z);
+				Physics.SyncTransforms();
+				Vector3 nf0 = ZiplineEnds.NearFloor(zl11) ?? zl11.transform.position;
+				float sink = 3f + (nf0.y - GroundY(nf0.x, nf0.z));
+				zl11.transform.position += Vector3.down * sink;
+				Physics.SyncTransforms();
+				Vector3 nf1 = ZiplineEnds.NearFloor(zl11) ?? zl11.transform.position;
+				float under1 = GroundY(nf1.x, nf1.z) - nf1.y;
+				var placed11 = new HashSet<GameObject>(recipePlaced);
+				var lad11 = new HashSet<GameObject>(zipDeckLadders);
+				float lift11 = ZipNearOutOfLand(ze11, terraineditor.terrain);
+				Vector3 nf2 = ZiplineEnds.NearFloor(zl11) ?? zl11.transform.position;
+				float under2 = GroundY(nf2.x, nf2.z) - nf2.y;
+				Check(ref ok, under1 > 2.5f && lift11 > 2.5f && Mathf.Abs(under2) < 0.1f, "zipto lifts a near floor buried " + Num(under1) + " m in the land onto it: lifted " + Num(lift11) + " m, now " + Num(-under2) + " m over it");
+				// (and one on the land is left where it is)
+				Check(ref ok, ZipNearOutOfLand(ze11, terraineditor.terrain) == 0f, "zipto leaves a near floor on the land where it is");
+				foreach (GameObject x in recipePlaced.Where(y => y != null && !placed11.Contains(y)).ToList()) { recipePlaced.Remove(x); UnityEngine.Object.Destroy(x); }
+				foreach (GameObject x in zipDeckLadders.Where(y => y != null && !lad11.Contains(y)).ToList()) { zipDeckLadders.Remove(x); UnityEngine.Object.Destroy(x); }
+			}
+			else Check(ref ok, false, "grounding test: no ZiplinePath_Landmark for part 10d");
+			if (zl11 != null) UnityEngine.Object.Destroy(zl11);
+			// 8. zipto's deck ladders: a boulder of the generator's on a ladder's climbing side is removed (11-21 c3z13: Caisson Yard's
+			// ridge deck ladder shut by a SmallBoulder2, CILadderSide FAIL), the recipe's own kept
+			yield return PlaceableCatalog.EnsureLoaded(new List<string> { "Block_Floor_Wood", "Block_Ladder", "SmallBoulder2" });
+			GameObject deck8 = PlaceableCatalog.Spawn("Block_Floor_Wood", root);
+			GameObject rock8 = PlaceableCatalog.Spawn("SmallBoulder2", root);
+			if (deck8 == null || rock8 == null) { Fail("grounding test: no Block_Floor_Wood or SmallBoulder2"); yield break; }
+			EditorGameObject.Attach(deck8, "Block_Floor_Wood");
+			EditorGameObject.Attach(rock8, "SmallBoulder2");
+			foreach (Collider c in rock8.GetComponentsInChildren<Collider>(true)) if (!c.isTrigger) c.enabled = true;
+			Vector3 p8 = flat + new Vector3(8f, 0f, -8f);
+			deck8.transform.position = p8;
+			Physics.SyncTransforms();
+			Bounds b8 = MeshBox(deck8);
+			deck8.transform.position += Vector3.up * (GroundY(b8.center.x, b8.center.z) + 3f - b8.min.y);
+			Physics.SyncTransforms();
+			b8 = MeshBox(deck8);
+			// (the ladders go up its +x side: a boulder 1 m out from that edge, at the ground)
+			Bounds r8 = MeshBox(rock8);
+			Vector3 at8 = new Vector3(b8.max.x + 1f, 0f, b8.center.z);
+			rock8.transform.position += new Vector3(at8.x - r8.center.x, GroundY(at8.x, at8.z) + 0.3f - r8.min.y, at8.z - r8.center.z);
+			Physics.SyncTransforms();
+			var ladBefore = new HashSet<GameObject>(zipDeckLadders);
+			string lad8 = ZipDeckLadders(b8, Vector3.right, root);
+			List<GameObject> made8 = zipDeckLadders.Where(x => x != null && !ladBefore.Contains(x)).ToList();
+			Check(ref ok, made8.Count > 0 && !rock8.activeInHierarchy, "a deck ladder's climbing side is cleared of the generator's boulder: " + (rock8.activeInHierarchy ? "still there" : "removed") + " (" + lad8.TrimStart(',', ' ') + ")");
+			foreach (GameObject x in made8) { zipDeckLadders.Remove(x); UnityEngine.Object.Destroy(x); }
+			UnityEngine.Object.Destroy(rock8);
+			UnityEngine.Object.Destroy(deck8);
 			if (ok) Log("PASS: grounding test"); else Fail("grounding test");
 		}
 
@@ -279,8 +691,12 @@ namespace DynamicIslands
 		[ConsoleCommand(name: "CIFloatingSweep", docs: "Dev, editor: CIFloating on every saved island (ROADMAP CA30) - each opened in the editor and measured; the islands with problems are named with their first <details> (3) lines; all of them in Mods\\DynamicIslands\\floating_sweep.txt. Leaves out the test islands (ci...), the world-kept copies and the randomizer's extras (rnd-...). CIFloatingSweep [part of the name|*] [details]")]
 		public static void FloatingSweepCommand(string[] args)
 		{
-			string only = args != null && args.Length > 0 && args[0] != "*" ? args[0] : "";
-			int details = args != null && args.Length > 1 ? (int)F(args[1]) : 3;
+			// (a name may have spaces: "CIFloatingSweep Old Vine" read "Vine" as the details count and threw - hollow-tests 11-24;
+			//  a number last is the details count, the words before it the name)
+			var parts = args ?? new string[0];
+			int details = 3, n;
+			if (parts.Length > 1 && int.TryParse(parts[parts.Length - 1], out n)) { details = n; parts = parts.Take(parts.Length - 1).ToArray(); }
+			string only = parts.Length > 0 && parts[0] != "*" ? string.Join(" ", parts) : "";
 			StartTest(FloatingSweepRoutine(only, details));
 		}
 
@@ -294,14 +710,15 @@ namespace DynamicIslands
 				(only.Length == 0 || n.IndexOf(only, StringComparison.OrdinalIgnoreCase) >= 0)).OrderBy(n => n).ToList();
 			var report = new StringBuilder();
 			int bad = 0, problems = 0;
+			var unread = new List<string>();
 			foreach (string name in names)
 			{
 				DynamicIslands.currentIslandName = "";
 				bool loaded = false;
-				try { loaded = DynamicIslands.LoadIsland(name); } catch (Exception e) { Log("  " + name + ": loading failed: " + e.Message); continue; }
-				if (!loaded) { Log("  " + name + ": the editor didn't load it"); continue; }
+				try { loaded = DynamicIslands.LoadIsland(name); } catch (Exception e) { Log("  " + name + ": loading failed: " + e.Message); unread.Add(name); continue; }
+				if (!loaded) { Log("  " + name + ": the editor didn't load it"); unread.Add(name); continue; }
 				for (float t = 0; t < 120f && DynamicIslands.currentIslandName != name; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
-				if (DynamicIslands.currentIslandName != name) { Log("  " + name + ": still not loaded after 2 minutes"); continue; }
+				if (DynamicIslands.currentIslandName != name) { Log("  " + name + ": still not loaded after 2 minutes"); unread.Add(name); continue; }
 				yield return null; yield return null;
 				var lines = new List<string>();
 				floatLines = lines;
@@ -318,7 +735,8 @@ namespace DynamicIslands
 				foreach (string l in lines.Where(l => l.StartsWith("  ")).Take(details)) Log("  " + l);
 			}
 			File.WriteAllText(Path.Combine(DynamicIslands.assetpath, "floating_sweep.txt"), report.ToString());
-			Log((bad == 0 ? "PASS" : "FAIL") + ": floating sweep - " + bad + " of " + names.Count + " islands with " + problems + " problems (floating_sweep.txt)");
+			Log((bad == 0 && unread.Count == 0 && names.Count > 0 ? "PASS" : "FAIL") + ": floating sweep - " + bad + " of " + names.Count + " islands with " + problems + " problems (floating_sweep.txt)" +
+				(unread.Count > 0 ? "; not measured: " + string.Join(", ", unread.ToArray()) : ""));
 		}
 
 		[ConsoleCommand(name: "CIRemoveBuried", docs: "Dev, editor: takes out the objects buried whole under the ground (CIFloating's \"buried\" ones: nobody sees them) of the named islands and saves each; the old file goes to Mods\\DynamicIslands\\deleted\\ first (ROADMAP CA30): CIRemoveBuried <island>[,<island>...]")]
@@ -437,6 +855,48 @@ namespace DynamicIslands
 			}
 		}
 
+		[ConsoleCommand(name: "CIReseat", docs: "Dev, editor: <names joined by |, _ for space | *> [most] [skip] [except=names|...] - the saved islands' sunk and floating trees set back on the ground, as a recipe's save does since IG5 (11-18), and saved; the old file goes to 'deleted'")]
+		public static void ReseatCommand(string[] args)
+		{
+			string which = args != null && args.Length > 0 ? args[0] : "*";
+			int most = args != null && args.Length > 1 ? int.Parse(args[1]) : 9999, skip = args != null && args.Length > 2 ? int.Parse(args[2]) : 0;
+			string except = args != null && args.Length > 3 && args[3].StartsWith("except=") ? args[3].Substring(7) : "";
+			Func<string, string[]> split = w => w.Split('|').Select(x => x.Replace('_', ' ').Trim()).Where(x => x.Length > 0).ToArray();
+			string[] parts = split(which), outs = split(except);
+			var kept = new Regex("_[0-9a-f]{12}$");
+			List<string> names = IslandSpawner.ListSavedIslands().Where(n => !n.StartsWith("ci", StringComparison.Ordinal) && !kept.IsMatch(n) &&
+				!n.StartsWith(WorldRandomizer.ExtrasPrefix, StringComparison.OrdinalIgnoreCase) && (which == "*" || parts.Any(x => n.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0)) &&
+				!outs.Any(x => n.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).Skip(skip).Take(most).ToList();
+			StartTest(ReseatRoutine(names));
+		}
+
+		static IEnumerator ReseatRoutine(List<string> names)
+		{
+			yield return WaitForEditor(false);
+			string backup = Path.Combine(DynamicIslands.assetpath, "deleted");
+			Directory.CreateDirectory(backup);
+			int changed = 0, trees = 0;
+			Log("reseat of " + names.Count + " saved islands");
+			foreach (string name in names)
+			{
+				DynamicIslands.currentIslandName = "";
+				if (!DynamicIslands.LoadIsland(name)) { Fail(name + ": the editor didn't load it"); continue; }
+				for (float t = 0; t < 120f && DynamicIslands.currentIslandName != name; t += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+				if (DynamicIslands.currentIslandName != name) { Fail(name + ": not loaded after 2 minutes"); continue; }
+				yield return null; yield return null;
+				Physics.SyncTransforms();
+				string file = IslandSpawner.PathFor(name);
+				byte[] old = File.ReadAllBytes(file);
+				int n = ReseatSunkTrees(DynamicIslands.EditorWaterLevel);
+				if (n == 0) continue;
+				File.WriteAllBytes(Path.Combine(backup, Path.GetFileNameWithoutExtension(file) + "-reseat-" + DateTime.Now.ToString("yyyyMMddHHmmss") + IslandFile.Extension), old);
+				bool saved = DynamicIslands.SaveIsland(name);
+				Log((saved ? "  " : "FAIL: ") + name + ": " + n + " trees reseated" + (saved ? "" : ", not saved"));
+				if (saved) { changed++; trees += n; }
+			}
+			Log("PASS: reseat - " + trees + " trees on " + changed + " of " + names.Count + " islands set back on the ground");
+		}
+
 		[ConsoleCommand(name: "CIFloating", docs: "Dev, editor: legs, posts and pillars of the island's objects that don't reach down to anything - a slim upright part whose foot is more than <gap> m (default 0.3) above the ground or what is under it - and objects that stand on the ground with part of their base only (a stilt house set on a slope: the legs over its low side end in the air), floors and decks over nothing (a big deck needs every corner held, a small floor one corner or a held neighbour) and chests and crates with nothing under them (ROADMAP CA30): CIFloating [gap] [name part]")]
 		public static void FloatingConsoleCommand(string[] args) { StartTest(OnceAsTest(() => FloatingCommand(args))); }
 
@@ -497,7 +957,7 @@ namespace DynamicIslands
 			{
 				string n = e.GameObjectName ?? "";
 				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
-				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") || n.StartsWith("Note_") || NotABase.IsMatch(n) || Hangs.IsMatch(n)) continue;
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") || n.StartsWith("Note_") || NotABase.IsMatch(n) || Hangs.IsMatch(n) || CameraPath.IsPoint(n)) continue; // (camera points: unseen in a world)
 				// (a zipline with a zip.to: the editor shows Raft's own far end, which ZiplineEnds moves when the island is spawned -
 				// the Lodestone Array's north line read "partly in the air" off the cliff where Raft's 27 m line ends, 2026-10-20;
 				// CIGroundIslands measures each of its ends in the world)
@@ -538,6 +998,13 @@ namespace DynamicIslands
 			// The land's and the sea's plants, rocks and corals (the generator's): their pivot is their foot - none above the
 			// ground under it (a stroke that lowered the ground under them, or a slope they were set on by their middle)
 			int nature = 0, lifted = 0;
+			// (the hill a world drapes over the island's cave pieces, built here to stand things on: OnCaveSkin looked for a skin
+			// the editor never had - only a stray measuring hill some earlier step left, so the check measured against a hill
+			// other than the world's. Rootweave's 22 flagged plants and rocks were not hill items: they hang over the trench a
+			// stroke lowered, and its recipe now clears them, bugfix 11-25)
+			GameObject floatHill = GameObject.Find(CaveMountain.PreviewName) == null && ground != null ? CaveMountain.Preview(PlacedEditorObjects(), ground.transform.position) : null;
+			if (floatHill != null) FLog("  (the cave hill a world builds over the island's caves is measured against too)");
+			try {
 			foreach (EditorGameObject e in PlacedEditorObjects())
 			{
 				string n = e.GameObjectName ?? "";
@@ -547,6 +1014,14 @@ namespace DynamicIslands
 				Vector3 p = e.transform.position;
 				float land = ground.SampleHeight(p) + ground.transform.position.y;
 				if (p.y - land <= 0.5f) continue;
+				// (a cave hill's skin is the ground where it lies: a world's mountain over a cave piece is draped over the cut terrain,
+				// and what the generator set on the old ground stands on it - Rootweave's west side over the Flooded Passage, its
+				// palms and boulders 17 m over the trench under the hill, isl-fix 11-24)
+				if (OnCaveSkin(e, p)) continue;
+				// (set into a cave hill: the first thing over its foot is the hill's skin, met from below - it lies in the hill, under the
+				// ground a player walks on, as the rock set in the earth to close a slit seen from Rootweave's Flooded Passage dead end
+				// (bugfix 11-25); a rock hanging in a cave's room meets the room's roof first and still counts)
+				if (InCaveSkin(e, p)) continue;
 				// (set up on purpose: a standing stone reaches down to the ground, a flowerpot stands on a roof, a rockfall's
 				// boulder on the one under it - only what hangs over the ground with nothing under it is lifted)
 				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
@@ -567,8 +1042,10 @@ namespace DynamicIslands
 						on.collider.GetComponentInParent<EditorGameObject>() != e) continue;
 				}
 				lifted++;
-				if (lifted <= floatDetail) FLog("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground");
+				if (lifted <= floatDetail) FLog("  above the ground: " + n + " at " + Num(p.x - mid.x) + " " + Num(p.z - mid.y) + ": h=" + Num(p.y - sea) + ", " + Num(p.y - land) + " m above the ground" + UnderIt(e, p));
 			}
+			}
+			finally { if (floatHill != null) UnityEngine.Object.DestroyImmediate(floatHill); Physics.SyncTransforms(); }
 			// Objects in the air touching nothing, and objects buried whole under the ground (the user, 2026-10-02: the Stranded
 			// Gull's boat was set down by its middle and sank under the beach - its locker and crate hung in the air over it)
 			int all = 0, alone = 0, buried = 0;
@@ -582,7 +1059,8 @@ namespace DynamicIslands
 			{
 				string n = e.GameObjectName ?? "";
 				if (only.Length > 0 && n.IndexOf(only, StringComparison.OrdinalIgnoreCase) < 0) continue;
-				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n == ContentCatalog.MarkerOnly || ground == null) continue;
+				// (a fly-through's camera points hang in the air on purpose: unseen in play, never set down - w11, The Rain Engine)
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n == ContentCatalog.MarkerOnly || CameraPath.IsPoint(n) || ground == null) continue;
 				Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
 				if (parts.Length == 0) continue;
 				Bounds whole = parts[0].bounds;
@@ -591,7 +1069,9 @@ namespace DynamicIslands
 				float land = ground.SampleHeight(whole.center) + ground.transform.position.y;
 				// (things on the water - a buoy, a raft's foundation - float; the sea holds them)
 				bool onWater = whole.min.y < sea && whole.max.y > sea - 0.3f;
-				bool ladder = n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0;
+				// (a string of lights hangs the same way: each light's collider is a trigger, so the middle of a laundry line touched
+				// nothing - held when it meets a held light or a post, cn4 11-19, Raft Row Bazaar and Rookery Stacks)
+				bool ladder = n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("StringLight", StringComparison.OrdinalIgnoreCase) >= 0;
 				bool inAir = false;
 				if (!onWater && whole.min.y - land > 0.5f)
 				{
@@ -1140,8 +1620,15 @@ namespace DynamicIslands
 		/// <summary>The cave tool's caves laid by this recipe, by their as= group (caveloot, cavegate).</summary>
 		static readonly Dictionary<string, CaveTool.Layout> recipeCaves = new Dictionary<string, CaveTool.Layout>(StringComparer.OrdinalIgnoreCase);
 		static readonly HashSet<GameObject> recipePlaced = new HashSet<GameObject>();
+		static readonly HashSet<GameObject> recipeScattered = new HashSet<GameObject>();
 		/// <summary>The quest the recipe is writing (the quest window's fields before Save).</summary>
 		static IslandQuest pendingQuest;
+		/// <summary>The ziplines zipto aimed, cleared of the ground at the island's save, once every stroke and kit has shaped the land
+		/// (11-20: Thalassa Mooring's ridge line was clear at its zipto, then kit_st's hill came up 6 m round its middle).</summary>
+		static readonly List<EditorGameObject> zipPending = new List<EditorGameObject>();
+		/// <summary>The ladders zipto's raise stood up its decks: not a building that holds the deck (PostBuilding) - a Block_'s
+		/// box is the whole block, and 11-21 Engine Court's 6.6 m ridge deck stood on its ladders alone, its posts left out.</summary>
+		static readonly HashSet<GameObject> zipDeckLadders = new HashSet<GameObject>();
 		static readonly Dictionary<int, IslandQuest> pendingMore = new Dictionary<int, IslandQuest>();
 
 		/// <summary>The recipe's quest n (0 = the main one), kept until it has steps.</summary>
@@ -1163,6 +1650,7 @@ namespace DynamicIslands
 		static List<RLine> ReadRecipe(string path)
 		{
 			string[] lines = File.ReadAllLines(path);
+			recipeFilesRead.Add(path);
 			string file = Path.GetFileName(path);
 			return lines.Select((l, i) => new RLine { Text = l, Where = file + ":" + (i + 1) }).ToList();
 		}
@@ -1170,6 +1658,7 @@ namespace DynamicIslands
 		static List<RLine> ExpandRecipe(string path)
 		{
 			recipeRandom = new System.Random(Path.GetFileNameWithoutExtension(path).Aggregate(17, (h, c) => h * 31 + c));
+			recipeFilesRead.Clear();
 			var output = new List<RLine>();
 			ExpandLines(ReadRecipe(path), new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase), new Dictionary<string, Macro>(StringComparer.OrdinalIgnoreCase), output, 0);
 			return output;
@@ -1411,6 +1900,7 @@ namespace DynamicIslands
 			if (opt.ContainsKey("h")) return DynamicIslands.EditorWaterLevel + F(opt["h"]);
 			float y = opt.ContainsKey("y") ? F(opt["y"]) : 0f;
 			if (TopFrame.HasFloor && !opt.ContainsKey("ground")) return TopFrame.FloorY + y;
+			CaveGround.EditorCatchUp(terraineditor.terrain); // (the ground as the world will have it: the caves' cut made)
 			return GroundY(w.x, w.y) + y;
 		}
 
@@ -1434,6 +1924,59 @@ namespace DynamicIslands
 						missing.Add("'" + t + "' (" + kv.Key + " of " + o.GameObjectName + ")");
 				}
 			return missing.Count == 0 ? null : "no object is named " + string.Join(", ", missing.Distinct().Take(6).ToArray()) + (missing.Distinct().Count() > 6 ? " and more" : "") + ": give it obj.name";
+		}
+
+		/// <summary>The plays (name, text) whose 'offset' under 'island &lt;this island&gt;' is more than 0.5 m from the land
+		/// centre's (none written counts as 0 0), each as "name (offset x z, d m out)", or empty. (fix-open 11-19: the land of
+		/// Old Mine, Ranger's Rest and Ironreef moved after their plays' offsets were set; their walks ran 0.6-3.7 m off and
+		/// stuck on posts and a den wall - the recipe printed the new offset each time but nothing compared it.)</summary>
+		internal static List<string> StaleOffsetPlays(string island, Vector2 moved, IEnumerable<KeyValuePair<string, string>> plays)
+		{
+			var stale = new List<string>();
+			foreach (var play in plays)
+			{
+				bool ours = false, seen = false; Vector2 off = Vector2.zero;
+				foreach (string raw in play.Value.Split('\n'))
+				{
+					string line = raw.Trim();
+					if (line.StartsWith("island ", StringComparison.OrdinalIgnoreCase))
+					{
+						if (ours) break; // (a second island: its offset is that island's)
+						ours = string.Equals(line.Substring(7).Replace(" keep", "").Trim(), island, StringComparison.OrdinalIgnoreCase);
+						continue;
+					}
+					string[] t = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+					float x, z;
+					if (ours && t.Length >= 3 && t[0] == "offset" && float.TryParse(t[1], NumberStyles.Float, CultureInfo.InvariantCulture, out x)
+						&& float.TryParse(t[2], NumberStyles.Float, CultureInfo.InvariantCulture, out z)) { off = new Vector2(x, z); seen = true; break; }
+				}
+				if (!ours) continue;
+				float d = (off - moved).magnitude;
+				if (d > 0.5f) stale.Add(play.Key + " (offset " + (seen ? Num(off.x) + " " + Num(off.y) : "none") + ", " + d.ToString("0.0", CultureInfo.InvariantCulture) + " m out)");
+			}
+			return stale;
+		}
+
+		[ConsoleCommand(name: "CIStaleOffsetUnit", docs: "Dev, anywhere: CIRecipe's stale-offset check - a play of the island whose 'offset' is over 0.5 m from the land centre's is named, a close one, another island's and an island's second play section are not")]
+		public static void CIStaleOffsetUnit()
+		{
+			bool ok = true;
+			Action<bool, string> chk = (c, w) => { Log((c ? "PASS: " : "FAIL: ") + w); ok &= c; };
+			var plays = new[]
+			{
+				new KeyValuePair<string, string>("om_caves.play", "# test\r\nisland Old Mine Islet keep\r\noffset 2.7895 -1.945\r\nwalk 1 2 to 3 4\r\n"),
+				new KeyValuePair<string, string>("om_pics.play", "island Old Mine Islet\noffset -0.1 0.6\n"),
+				new KeyValuePair<string, string>("om_none.play", "island Old Mine Islet\nwalk 1 2 to 3 4\n"),
+				new KeyValuePair<string, string>("other.play", "island Tide Farm\noffset 5 5\n"),
+				new KeyValuePair<string, string>("two.play", "island Tide Farm\nwalk 0 0 to 1 1\nisland Old Mine Islet\noffset -0.0075 0.5381\n"),
+			};
+			var stale = StaleOffsetPlays("Old Mine Islet", new Vector2(-0.0075f, 0.5381f), plays);
+			chk(stale.Count == 2, "two stale plays: " + string.Join("; ", stale.ToArray()));
+			chk(stale.Any(s => s.StartsWith("om_caves.play (offset 2.7895 -1.945, 3.7 m out")), "the old Old Mine offset, 3.7 m out");
+			chk(stale.Any(s => s.StartsWith("om_none.play (offset none")), "no offset line while the centre moved 0.5 m+");
+			chk(!stale.Any(s => s.StartsWith("om_pics") || s.StartsWith("other") || s.StartsWith("two")), "a close offset, another island's, a second section's right one: not named");
+			chk(StaleOffsetPlays("Tide Farm", Vector2.zero, plays).Count == 1, "Tide Farm: only its 5 5 play (the two-island play's Tide part has none, 0 0 is right)");
+			Log(ok ? "PASS: stale offset unit" : "FAIL: stale offset unit");
 		}
 
 		/// <summary>The island's quest steps "kill|kind" and "catch|kind", and the 'kill kind' lines of the plays (in the recipe
@@ -1461,7 +2004,9 @@ namespace DynamicIslands
 			{
 				foreach (string play in Directory.Exists(RecipeFolder) ? Directory.GetFiles(RecipeFolder, "*.play") : new string[0])
 				{
-					if (File.ReadAllText(play).IndexOf(island, StringComparison.OrdinalIgnoreCase) < 0) continue;
+					string playText;
+					try { playText = File.ReadAllText(play); } catch (IOException) { continue; } // (a play deleted while the folder is read)
+					if (playText.IndexOf(island, StringComparison.OrdinalIgnoreCase) < 0) continue;
 					List<RLine> lines;
 					try { lines = ExpandRecipe(play); } catch (Exception) { continue; }
 					string at = null;
@@ -1494,20 +2039,29 @@ namespace DynamicIslands
 			try { lines = ExpandRecipe(path); }
 			catch (Exception e) { Fail("recipe " + name + ": " + e.Message); yield break; }
 			RecipeSaved = null;
+			recipePassed = false;
+			recipeOutputs.Clear();
+			recipeLandLine = null;
 			RecipeObjects.Clear();
 			recipeGroups.Clear();
 			recipeCaves.Clear();
 			recipePlaced.Clear();
+			recipeScattered.Clear();
 			recipeNoPosts = false;
-			recipeReseat = false;
+			recipeReseat = true;
 			leftOutBuried = 0;
+			CaveTool.KeptBuilding = 0;
+			CaveTool.KeptBuildingNames.Clear();
 			pendingQuest = null;
 			pendingMore.Clear();
+			zipPending.Clear();
+			zipDeckLadders.Clear();
 			yield return WaitForEditor(false);
 			if (!DynamicIslands.InEditor()) { Fail("recipe " + name + ": the editor didn't open"); yield break; }
 			SetOrigin(new Vector2(500f, 500f));
 			// (the objects the recipe places, loaded first - Raft's scenes for the on-demand ones)
 			var wanted = lines.Select(l => Tokens(l.Text)).Where(t => t.Length > 1 && (t[0] == "place" || t[0] == "scatter" || t[0] == "line" || t[0] == "ramp" || t[0] == "beside")).Select(t => t[1])
+				.Concat(lines.Select(l => Tokens(l.Text)).Where(t => t.Length > 1 && t[0] == "cliffs").SelectMany(t => t.Where(w => w.StartsWith("rocks=", StringComparison.Ordinal)).SelectMany(w => w.Substring(6).Split('|'))))
 				.Concat(lines.Any(l => Tokens(l.Text).FirstOrDefault() == "store") ? new[] { RaftStore.ObjectName } : new string[0])
 				.Concat(lines.Any(l => Tokens(l.Text).FirstOrDefault() == "vending") ? new[] { RaftVending.ObjectName } : new string[0]).Where(n => n != "none").Distinct().ToList();
 			yield return PlaceableCatalog.EnsureLoaded(wanted);
@@ -1584,6 +2138,27 @@ namespace DynamicIslands
 					yield return null;
 					continue;
 				}
+				if (verb == "load")
+				{
+					// load <island name>: a patch recipe - the saved island opened in the editor (its land, objects, quests, notes,
+					// story items as saved), a few ops on it, then save <same name> writes it back; no ~9 min rebuild for a small fix.
+					// The origin is the saved land centre (a recipe's origin after generate/randomize); a recipe without them adds
+					// "origin 500 500", one whose build said "the land centre is dx dz from the recipe's origin" adds "origin shift -dx -dz"
+					string island = Rest(line, 1).Trim();
+					if (island.Length == 0) { Fail("recipe " + name + ", " + rl.Where + ": load <island name>"); yield break; }
+					pendingQuest = null;
+					pendingMore.Clear();
+					gen.Length = 0;
+					DynamicIslands.currentIslandName = "";
+					if (!DynamicIslands.LoadIsland(island)) { Fail("recipe " + name + ", " + rl.Where + ": no saved island '" + island + "' (or the editor didn't load it)"); yield break; }
+					for (float w = 0; w < 120f && DynamicIslands.currentIslandName != island; w += 0.25f) yield return new WaitForSecondsRealtime(0.25f);
+					if (DynamicIslands.currentIslandName != island) { Fail("recipe " + name + ", " + rl.Where + ": '" + island + "' not loaded after 2 minutes"); yield break; }
+					yield return null; yield return null;
+					Physics.SyncTransforms();
+					SetOrigin(EditorLandCentre());
+					Log("  loaded '" + island + "': " + PlacedEditorObjects().Count() + " objects - origin (the land centre) " + Num(recipeOrigin.x) + " " + Num(recipeOrigin.y));
+					continue;
+				}
 				// (a generate with buildings or caves: their objects of Raft's islands loaded first)
 				if (verb == "generate") yield return PlaceableCatalog.EnsureLoaded(GenBuildings.NeededNames(IslandGenSettings.FromText(gen.ToString())));
 				try
@@ -1593,6 +2168,7 @@ namespace DynamicIslands
 						case "new":
 							pendingQuest = null;
 							pendingMore.Clear();
+							zipPending.Clear();
 							DynamicIslands.NewIsland();
 							SetOrigin(new Vector2(500f, 500f));
 							break;
@@ -1629,7 +2205,9 @@ namespace DynamicIslands
 							break;
 						}
 						case "origin":
-							SetOrigin(t.Length > 2 ? new Vector2(F(t[1]), F(t[2])) : EditorLandCentre());
+							// (origin shift dx dz: the origin moved - a patch recipe's land centre to the full recipe's origin)
+							if (t.Length > 3 && t[1].ToLowerInvariant() == "shift") SetOrigin(recipeOrigin + new Vector2(F(t[2]), F(t[3])));
+							else SetOrigin(t.Length > 2 ? new Vector2(F(t[1]), F(t[2])) : EditorLandCentre());
 							break;
 						case "push":
 						{
@@ -1823,6 +2401,9 @@ namespace DynamicIslands
 								error = Place(t[1], px, pz, o, out e);
 								if (error != null) break;
 								made++; placed++;
+								// (a scattered one with no alias is the recipe's dressing: zipto clears it from a rider's way like the
+								// generator's - 11-21, Caisson Yard's ridge line ran 7.4 m under an sk_plants boulder)
+								if (e != null && !opt.ContainsKey("as")) recipeScattered.Add(e.gameObject);
 								// (as=<alias>: the scattered objects can be given settings, loot and behaviours like placed ones)
 								if (e != null && opt.ContainsKey("as"))
 								{
@@ -1937,6 +2518,23 @@ namespace DynamicIslands
 							}
 							break;
 						}
+						case "zipfrom":
+						{
+							// zipfrom <alias> <x> <z> [h=|y=|ground] - moves a zipline line placed by this recipe so its near end's floor (where
+							// players step onto it) stands at x z, as the editor's "Near end: where I look": the line's pivot is not that floor -
+							// placed by its pivot on a tower's deck, the floor hung 3-7 m off the deck in the air (IG5, 11-18)
+							List<EditorGameObject> zg = Group(t[1]);
+							if (zg.Count == 0 || t.Length < 4) { error = "zipfrom <alias> <x> <z> [h=|y=|ground] (a zipline placed by this recipe)"; break; }
+							Vector2 zw = WorldXZ(F(t[2]), F(t[3]));
+							Vector3 zat = new Vector3(zw.x, HeightAt(zw, Options(t.Skip(4))), zw.y);
+							foreach (EditorGameObject e in zg)
+							{
+								Vector3? nf = ZiplineEnds.NearFloor(e.gameObject);
+								if (!nf.HasValue) { error = "zipfrom: " + t[1] + " is not a zipline line"; break; }
+								e.transform.position += zat - nf.Value;
+							}
+							break;
+						}
 						case "zipto":
 						{
 							// zipto <alias> <x> <z> - a zipline line's far end (its lower floor) on the ground at x z (ZiplineEnds)
@@ -1944,7 +2542,11 @@ namespace DynamicIslands
 							if (group.Count == 0 || t.Length < 4) { error = "zipto <alias> <x> <z> (a zipline placed by this recipe)"; break; }
 							Vector2 w = WorldXZ(F(t[2]), F(t[3]));
 							Vector3 end = new Vector3(w.x, GroundY(w.x, w.y), w.y) - terraineditor.terrain.transform.position;
-							foreach (EditorGameObject e in group) PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(end)));
+							foreach (EditorGameObject e in group)
+							{
+								PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(end)));
+								if (!zipPending.Contains(e)) zipPending.Add(e);
+							}
 							break;
 						}
 						case "loot":
@@ -2051,9 +2653,12 @@ namespace DynamicIslands
 						}
 						case "reseat":
 						{
-							// reseat trees - at the save, trees and palms whose trunk foot is more than 1 m under the land set back on it
-							if (t.Length < 2 || t[1].ToLowerInvariant() != "trees") { error = "reseat trees"; break; }
-							recipeReseat = true;
+							// reseat trees | off - at the save, trees and palms whose trunk foot is more than 1 m under the land or more than
+							// 0.4 m over it set back on it. Every recipe does it since IG5 (11-18: 905 sunk trunks on 152 saved islands);
+							// "off" keeps them where the recipe put them
+							string rw = t.Length < 2 ? "" : t[1].ToLowerInvariant();
+							if (rw != "trees" && rw != "off") { error = "reseat trees | off"; break; }
+							recipeReseat = rw == "trees";
 							break;
 						}
 						case "save":
@@ -2062,6 +2667,26 @@ namespace DynamicIslands
 							string island = Rest(line, 1).Trim();
 							string why = FileNames.IslandProblem(island);
 							if (why != null) { error = why; break; }
+							// (the ziplines zipto aimed: their ropes over the land as it ends up - ZipClearGround)
+							// (over the cave hill a world builds over the island's cave pieces, made now to measure against - 11-21 c3z9)
+							// (a far end set on the ground before a later step raised it - the cliffs talus under Caisson Yard's crane line
+							// left its last 3 m of rope 0.07 m in the ground, c3z61 - goes back up onto the ground as it ends up)
+							foreach (EditorGameObject ze in zipPending)
+							{
+								if (ze == null || terraineditor.terrain == null) continue;
+								Vector3? zf = ZiplineEnds.FarEnd(ze.Props);
+								if (!zf.HasValue) continue;
+								Vector3 ztp = terraineditor.terrain.transform.position, zw = zf.Value + ztp;
+								float zg = GroundY(zw.x, zw.z);
+								if (zg <= zw.y + 0.02f) continue;
+								PropsCommand.Change(ze, ObjectProps.With(ze.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(new Vector3(zw.x, zg, zw.z) - ztp)));
+								Log("  zipto: " + ze.GameObjectName + "'s far end raised " + Num(zg - zw.y) + " m onto the ground a later step raised");
+							}
+							GameObject zipHill = zipPending.Any(ze => ze != null) ? CaveMountain.Preview(PlacedEditorObjects(), terraineditor.terrain != null ? terraineditor.terrain.transform.position : Vector3.zero) : null;
+							if (zipHill != null) Log("  zipto: ropes measured over the cave hill a world builds over the island's caves too");
+							try { foreach (EditorGameObject ze in zipPending) if (ze != null) { ZipClearGround(ze); GameObject fd; ZipFarClear(ze, out fd); ZipShaveGround(ze, zipHill); ZipClearThrough(ze); } }
+							finally { if (zipHill != null) UnityEngine.Object.DestroyImmediate(zipHill); Physics.SyncTransforms(); }
+							zipPending.Clear();
 							// (Raft's sea finds the recipe's own terrain strokes carried out of the water - a mountain raised over the shelf
 							// the generator had dressed: Ironreef's ore lay 30-57 m up its slope - are the sea's: removed, the review 2026-10-03)
 							float seaY = DynamicIslands.EditorWaterLevel;
@@ -2076,7 +2701,7 @@ namespace DynamicIslands
 							// (and trees and palms whose trunk foot ended more than 1 m under the land - the generator's, set down by the
 							// lowest ground under their crown, then the recipe's strokes raised the ground round them: Old Mine Islet's pines
 							// and birches 1-3 m into the slope, the ground check 2026-10-31; up to the ground round the pivot, as Place sets them)
-							// Only with "reseat trees" in the recipe: every other island saves as before (the release 2026-10-31)
+							// (every recipe since IG5, 11-18 - before it only with "reseat trees", the release 2026-10-31; "reseat off" keeps them)
 							if (recipeReseat) ReseatSunkTrees(seaY);
 							// (and plants, rocks, corals and finds the recipe's own strokes buried whole - a footing flattened over the shelf:
 							// Signal Rock's table coral 0.3 m under its platform's sea floor; nothing showed of them, the review 2026-10-03)
@@ -2090,9 +2715,15 @@ namespace DynamicIslands
 								CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(covered, false));
 								Log("  " + covered.Count + " plants, rocks, corals or finds under the ground (buried by the recipe's strokes) left out");
 							}
+							// (building pieces a cave laid after them would have cleared - the cave tool keeps them now and counts them; a
+							// deck or rail in a cave's way usually means the cave line belongs before the deck, as Overpass Shoal, c3z29 11-21)
+							if (CaveTool.KeptBuilding > 0) Log("  WARNING: " + CaveTool.KeptBuilding + " building pieces in a cave's way kept (placed before the cave): " + string.Join(" | ", CaveTool.KeptBuildingNames.ToArray()));
 							if (KeptByMiddle.Count > 0) Log("  " + KeptByMiddle.Count + " kept though under the ground, their middle in a dug passage: " + string.Join("; ", KeptByMiddle.Take(12).ToArray()));
 							// (and posts under the floors and decks over nothing - CA30: the corners nothing holds, down to the ground or
 							// the sea floor; "posts off" in the recipe leaves them out)
+							// (and loose rocks in the air set down, things buried in the ground set up on it - what the ground check would
+							// call floating rocks and buried things: SettleAtSave, 11-21)
+							SettleAtSave(seaY);
 							if (!recipeNoPosts) StandPosts();
 							// (actions and checks that name an object nothing is called: Rig Seventeen's lever looked at three valves
 							// with no obj.name and could never pass, the review 2026-10-10)
@@ -2103,15 +2734,31 @@ namespace DynamicIslands
 							// run 2026-10-20; only what is saved counts, the active objects)
 							string unplaced = UnplacedCreatures(island, GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>());
 							if (unplaced != null) { error = unplaced; break; }
-							if (!DynamicIslands.SaveIsland(island)) { error = "the island didn't save as '" + island + "'"; break; }
+							// (not through the saved worlds: a test build, and a box with thousands of old test worlds stalled there 20 min - op3 11-27)
+							bool savedIt;
+							DynamicIslands.NoSavedWorlds = true;
+							try { savedIt = DynamicIslands.SaveIsland(island); } finally { DynamicIslands.NoSavedWorlds = false; }
+							if (!savedIt) { error = "the island didn't save as '" + island + "'"; break; }
 							RecipeSaved = island;
+							recipeOutputs.Add(IslandSpawner.PathFor(island));
 							Log("  saved '" + island + "'");
 							// (a world puts an island's land centre - the land above the sea, as saved - where it spawns; the recipe's
 							// points are from its origin, the land centre when it was generated: land changed since moves them)
-							Vector2 moved = EditorLandCentre() - frames[0].Origin;
+							Vector2 moved = EditorLandCentre(true) - frames[0].Origin;
 							// (logged however small: land added under 0.5 m from the origin made it say nothing, and the island's plays
 							// kept an old 'offset' 1 m out - The Abyss's vent pool, 11-05)
-							Log("  the land centre is " + Num(moved.x) + " " + Num(moved.y) + " from the recipe's origin: play tests of '" + island + "' need 'offset " + Num(moved.x) + " " + Num(moved.y) + "'" + (moved.magnitude > 0.5f ? "" : " (or none: under 0.5 m)"));
+							recipeLandLine = "  the land centre is " + Num(moved.x) + " " + Num(moved.y) + " from the recipe's origin: play tests of '" + island + "' need 'offset " + Num(moved.x) + " " + Num(moved.y) + "'" + (moved.magnitude > 0.5f ? "" : " (or none: under 0.5 m)");
+							Log(recipeLandLine);
+							// (and names the plays that still have another: they walk and aim that far off - fix-open 11-19)
+							var playTexts = new List<KeyValuePair<string, string>>();
+							foreach (string pf in Directory.Exists(RecipeFolder) ? Directory.GetFiles(RecipeFolder, "*.play") : new string[0])
+							{
+								string pt;
+								try { pt = File.ReadAllText(pf); } catch (IOException) { continue; }
+								if (pt.IndexOf(island, StringComparison.OrdinalIgnoreCase) >= 0) playTexts.Add(new KeyValuePair<string, string>(Path.GetFileName(pf), pt));
+							}
+							var stalePlays = StaleOffsetPlays(island, moved, playTexts);
+							if (stalePlays.Count > 0) Log("  WARNING: plays whose offset is not the land centre (if their points are the recipe's, set 'offset " + Num(moved.x) + " " + Num(moved.y) + "'; a play passing with it wrote its points in an older frame): " + string.Join("; ", stalePlays.ToArray()));
 							break;
 						}
 						case "plan":
@@ -2163,6 +2810,7 @@ namespace DynamicIslands
 									if (!File.Exists(WorldPlan.PathFor(planName))) { error = "the plan didn't save as '" + planName + "'"; break; }
 									WorldPlanWindow.Close();
 									RecipeSaved = planName;
+									recipeOutputs.Add(WorldPlan.PathFor(planName));
 									Log("  saved plan '" + planName + "' (" + WorldPlan.Load(planName).Rules.Count + " rules)");
 									break;
 								}
@@ -2173,6 +2821,56 @@ namespace DynamicIslands
 						case "log":
 							Log("  " + Rest(line, 1));
 							break;
+						case "ground":
+						{
+							// ground x z [x z ...]: logs the land's height above the sea at those points (where a stroke's h= did or didn't reach)
+							// (ground cut x z ...: the caves' ground cut made first, as a world spawns it)
+							int g0 = 1, gd;
+							if (t.Length > 1 && t[1] == "cut") { g0 = 2; CaveGround.EditorNow(terraineditor.terrain, out gd); }
+							var sb = new System.Text.StringBuilder(g0 == 2 ? "  ground (cut):" : "  ground:");
+							for (int gi = g0; gi + 1 < t.Length; gi += 2)
+							{
+								Vector2 gp = WorldXZ(F(t[gi]), F(t[gi + 1]));
+								sb.Append(" " + t[gi] + "," + t[gi + 1] + "=" + Num(GroundY(gp.x, gp.y) - DynamicIslands.EditorWaterLevel));
+							}
+							Log(sb.ToString());
+							break;
+						}
+						case "cliffs":
+						{
+							// cliffs [rise=7] [step=3] [depth=10] [reach=12] [at x z r=20] [rocks=piece] [keep=x,z,r|..] [walls=x,z,r|..]: bare cliff faces at the waterline
+							// sloped from their low side (CliffsStep, c3 round 3 - Raft draws them as one stretched sheet; CISheetIslands
+							// finds them); rocks=: that rock piece stood in the waterline at the faces the slope can't reach (a pit's wall)
+							var co = Options(t.Skip(1).Where(w => w.Contains("=")));
+							float crise = co.ContainsKey("rise") ? F(co["rise"]) : SheetRise, cstep = co.ContainsKey("step") ? F(co["step"]) : 3f;
+							float cdepth = co.ContainsKey("depth") ? F(co["depth"]) : 10f, cr = co.ContainsKey("r") ? F(co["r"]) : 20f;
+							int creach = co.ContainsKey("reach") ? Mathf.Clamp(int.Parse(co["reach"]), 1, 40) : 12;
+							int cat = Array.IndexOf(t, "at");
+							Vector2? cwhere = null;
+							if (cat > 0 && cat + 2 < t.Length) cwhere = WorldXZ(F(t[cat + 1]), F(t[cat + 2]));
+							if (cstep < 0.5f || crise < 2f) { error = "cliffs: step= 0.5 or more, rise= 2 or more"; break; }
+							// (keep=x,z,r|x,z,r: circles in the recipe's coordinates the talus leaves as they are - a dock pool, a dive site)
+							// (walls=x,z,r|..: circles no talus is raised in either, but whose bare faces get the rocks= - a dive site's pit walls
+							// rocked, its floor and the boat on it kept - lib 3.5.1 11-23: keep left Cistern Hall's and the dive sites' pits bare sheets)
+							List<Vector3> ckeep = null, cwalls = null;
+							foreach (string ck in new[] { "keep", "walls" })
+							{
+								if (!co.ContainsKey(ck)) continue;
+								var circles = new List<Vector3>();
+								foreach (string kc in co[ck].Split('|'))
+								{
+									string[] kp = kc.Split(',');
+									if (kp.Length != 3) { error = "cliffs: " + ck + "=x,z,r|x,z,r (" + kc + ")"; break; }
+									Vector2 kw = WorldXZ(F(kp[0]), F(kp[1]));
+									circles.Add(new Vector3(kw.x, kw.y, F(kp[2])));
+								}
+								if (ck == "keep") ckeep = circles; else cwalls = circles;
+							}
+							if (error != null) break;
+							if (cwalls != null && !co.ContainsKey("rocks")) { error = "cliffs: walls= needs rocks="; break; }
+							Log("  " + CliffsStep(crise, cstep, cdepth, creach, cwhere, cr, co.ContainsKey("rocks") ? co["rocks"] : null, ckeep, cwalls));
+							break;
+						}
 						case "where":
 						{
 							// where <alias>: logs where the objects placed under it ended up (island x z, height above the sea, turn)
@@ -2194,6 +2892,7 @@ namespace DynamicIslands
 				if (steps % 40 == 0) yield return null;
 			}
 			EditorUI.RefreshIsland();
+			recipePassed = true;
 			Log("PASS: recipe " + name + " (" + steps + " steps, " + placed + " objects placed, " + (leftOutBuried > 0 ? leftOutBuried + " left out under the ground, " : "") + (Time.realtimeSinceStartup - started).ToString("F0") + " s" + (RecipeSaved != null ? ", saved '" + RecipeSaved + "'" : "") + ")");
 		}
 
@@ -2278,11 +2977,15 @@ namespace DynamicIslands
 		}
 
 		/// <summary>The middle of the editor's land (above the sea), as the spawner centres a saved island.</summary>
-		static Vector2 EditorLandCentre()
+		static Vector2 EditorLandCentre(bool asSaved = false)
 		{
 			TerrainData data = terraineditor.terrain.terrainData;
 			int res = data.heightmapResolution;
 			float[,] h = data.GetHeights(0, 0, res, res);
+			// (asSaved: the ground's own heights, not as cut in its dug caves - the world finds the land centre from the file's;
+			// Gravewell Shaft said 'offset 0 0' while its plays stood 2.8 m off, the walk into the bore met the pit wall and the
+			// stakes' zone was never reached, CP10/CP11 11-20. Not for 'origin' and the rest: their points stay where they were)
+			if (asSaved) CaveGround.EditorOwnHeights(terraineditor.terrain, h);
 			float water = (DynamicIslands.EditorWaterLevel - terraineditor.terrain.transform.position.y) / data.size.y;
 			double sx = 0, sz = 0; long count = 0;
 			for (int y = 0; y < res; y++)
@@ -2319,6 +3022,690 @@ namespace DynamicIslands
 		{
 			List<EditorGameObject> group;
 			return recipeGroups.TryGetValue(alias, out group) ? group.Where(e => e != null).ToList() : new List<EditorGameObject>();
+		}
+
+		/// <summary>
+		/// zipto's ground check of the line (11-20): a line whose near end stands on the ground and whose rope (as Raft makes it
+		/// in a world, sagging between its ends) runs too near the ground (a ridge's shoulder bulging over it: Outer Breakwater's
+		/// ridge line ran 1.1 m inside the ridge, its floors both on the ground) has its near end raised, its floor on a wooden
+		/// deck with ladders up to it (the save stands the deck's posts on the ground): first for a rider's room
+		/// (ZiplineEnds.RiderClear, less near the far end, where the rope comes down to its floor), and when that would take
+		/// more than ZiplineEnds.MaxRaise, for the rope alone (ZiplineEnds.LineClear). A near end that is not on the ground (a
+		/// tower's deck) is only logged. Returns the metres raised.
+		/// </summary>
+		static float ZipClearGround(EditorGameObject e)
+		{
+			Terrain land = terraineditor.terrain;
+			Vector3 near, far, at = Vector3.zero, lineAt;
+			MeshPath_Zipline_Landmark line = e.GetComponentInChildren<MeshPath_Zipline_Landmark>(true);
+			if (land == null || line == null || !ZiplineEnds.Ends(e.gameObject, e.Props, land.transform.position, out near, out far)) return 0f;
+			// (the far end's floor on the cave hill's skin where a world builds the hill over it - 11-21 c3z13: Caisson Yard's summit
+			// line's far end stood on the land 0.7 m under the skin, its rope ending in the sand)
+			if (ZipFarOnSkin(e, land.transform.position)) ZiplineEnds.Ends(e.gameObject, e.Props, land.transform.position, out near, out far);
+			// (a near floor buried in the land - the land raised round it after its place - goes up onto the land first, unless it
+			// stands in a dug passage's mouth (a hole in the land): 11-21 c3z30, The Rootcore's mouth-ledge line, its floor 8.3 m
+			// under the ledge, was raised 8 m for a rider's room onto a deck still 0.6 m under the ground, its rope through the ledge)
+			float lifted = ZipNearOutOfLand(e, land);
+			if (lifted > 0f) ZiplineEnds.Ends(e.gameObject, e.Props, land.transform.position, out near, out far);
+			// (the ground under the rope: the land, or what stands solid on it - a rock, a cliff, a block - as a world's rider meets
+			// it: 11-20, Caisson Yard's line ran into a rock pillar the land's own height left out)
+			Func<float, float, float> ground = ZipGround(e);
+			float len = Mathf.Max(1f, new Vector2(far.x - near.x, far.z - near.z).magnitude), atT, lt;
+			// (the recipe's own slack, when it set one (prop zip.slack, which Apply sets in a world): the rope starts from it and is never
+			// made looser - 11-21, Engine Court's tower lines set -0.692 and the save loosened them to -3.46 from Raft's -6.92)
+			float setSlack;
+			if (!float.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipSlack) ?? "", NumberStyles.Float, CultureInfo.InvariantCulture, out setSlack) || float.IsNaN(setSlack) || float.IsInfinity(setSlack) || setSlack == 0f) setSlack = float.NaN;
+			List<Vector3> rope0 = ZiplineEnds.RopeBetween(line, far, near, setSlack);
+			if (rope0.Count < 2) return 0f;
+			ZipClearStrays(e, rope0, near, far);
+			float lineLow =ZiplineEnds.RopeLowest(rope0, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out lineAt, out lt);
+			Func<Vector3, string> xyz = v => Num(v.x - TopFrame.Origin.x) + " " + Num(v.z - TopFrame.Origin.y) + " h=" + Num(v.y);
+			Log("  zipto rope: " + rope0.Count + " points, " + xyz(rope0[0]) + " .. " + xyz(rope0[rope0.Count / 2]) + " .. " + xyz(rope0[rope0.Count - 1]) + "; near " + xyz(near) + ", far " + xyz(far) +
+				", slack " + Num(float.IsNaN(setSlack) ? ZiplineEnds.Slack(line) : setSlack) + "; lowest " + Num(lineLow) + " m over the ground (" + Num(ground(lineAt.x, lineAt.z)) + "" + ZipGroundWhat(e, lineAt.x, lineAt.z) + ") at " + xyz(lineAt));
+			Vector3 corner = new Vector3(TopFrame.Origin.x, 0f, TopFrame.Origin.y);
+			Vector3 floor = ZiplineEnds.NearFloor(e.gameObject) ?? near;
+			if (floor.y - GroundY(floor.x, floor.z) > 0.6f)
+			{
+				// (a tower's line, whose rope sags under its far floor where the tower is low: a tighter rope - 11-20, Engine Court's
+				// tower lines dipped 1.4 m into the court's flat ground before their far ends)
+				if (lineLow >= ZiplineEnds.LineClear)
+				{
+					// (the rope clear, a rider under it maybe not: logged - 11-20 review, the tower lines' riders were only checked once tightened)
+					Vector3 oa; float ot;
+					float ol = ZiplineEnds.RopeLowest(rope0, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.RiderFarSkip, ZiplineEnds.RiderWant(near.y - far.y, len), out oa, out ot);
+					if (ol < 0f)
+						Log("  WARNING: zipto: a rider on that rope comes " + Num(-ol) + " m short of a rider's room at " + Num(oa.x - corner.x) + " " + Num(oa.z - corner.z) + " (ground " + Num(ground(oa.x, oa.z)) + ZipGroundWhat(e, oa.x, oa.z) + "): move what is under it or an end");
+					return 0f;
+				}
+				float own0 = float.IsNaN(setSlack) ? ZiplineEnds.Slack(line) : setSlack;
+				if (!float.IsNaN(own0) && own0 != 0f)
+					foreach (float sl in new[] { own0 * 0.5f, own0 * 0.25f, own0 * 0.1f })
+					{
+						Vector3 ta; float tt;
+						float tl = ZiplineEnds.RopeLowest(ZiplineEnds.RopeBetween(line, far, near, sl), near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, d => ZiplineEnds.LineClear, out ta, out tt);
+						if (tl < 0f) continue;
+						PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipSlack, sl.ToString("0.###", CultureInfo.InvariantCulture)));
+						// (a rider hangs about 1.2-2.3 m under the rope: the rope's 1 m can still leave a rider walking into what is
+						// under it - 11-20, Engine Court's middle tower line, tightened, stopped its rider at a loot chest under it)
+						float tlen = Mathf.Max(1f, new Vector2(far.x - near.x, far.z - near.z).magnitude);
+						Vector3 ra; float rt;
+						float rl = ZiplineEnds.RopeLowest(ZiplineEnds.RopeBetween(line, far, near, sl), near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.RiderFarSkip, ZiplineEnds.RiderWant(near.y - far.y, tlen), out ra, out rt);
+						Log("  zipto: the rope came " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " (its near end on a deck) - its rope tightened to slack " +
+							sl.ToString("0.###", CultureInfo.InvariantCulture) + " (Raft's " + own0.ToString("0.###", CultureInfo.InvariantCulture) + "), the least now " + Num(tl + ZiplineEnds.LineClear) + " m over the ground");
+						if (rl < 0f)
+							Log("  WARNING: zipto: a rider on that rope comes " + Num(-rl) + " m short of a rider's room at " + Num(ra.x - corner.x) + " " + Num(ra.z - corner.z) + " (ground " + Num(ground(ra.x, ra.z)) + ZipGroundWhat(e, ra.x, ra.z) + "): move what is under it or an end");
+						return 0f;
+					}
+				// (none clears: its far end back along the line, short of the hump the rope runs through - 11-21 c3z29: tower lines
+				// on 9 islands ran 0.03-3.3 m into the ground between their ends, only warned)
+				{
+					float[] sl0 = !float.IsNaN(own0) && own0 != 0f ? new[] { own0, own0 * 0.5f, own0 * 0.25f, own0 * 0.1f } : new[] { own0 };
+					Vector3 nt, nfar, pa; float part, pr, ps, pl; bool prider;
+					if (ZipPullIn(e, line, land.transform.position, near, far, ground, sl0, false, out nt, out nfar, out part, out pr, out ps, out pl, out pa, out prider))
+					{
+						ZipPullSet(e, line, land, far, nt, ps, own0, "the rope came " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " (its near end on a deck) and no tighter rope clears it",
+							prider, pa, corner);
+						return 0f;
+					}
+				}
+				// (none clears: the tightest rope that leaves it more room than its own, still warned - 11-21 c3z11, Caisson Yard's
+				// lines left as they were came out worse than a partial fix)
+				float bestL = lineLow, bestS = float.NaN; Vector3 bestA = lineAt;
+				if (!float.IsNaN(own0) && own0 != 0f)
+					foreach (float sl in new[] { own0 * 0.5f, own0 * 0.25f, own0 * 0.1f })
+					{
+						Vector3 ta; float tt;
+						float tl = ZiplineEnds.RopeLowest(ZiplineEnds.RopeBetween(line, far, near, sl), near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out ta, out tt);
+						if (tl > bestL + 0.05f) { bestL = tl; bestS = sl; bestA = ta; }
+					}
+				if (!float.IsNaN(bestS))
+				{
+					PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipSlack, bestS.ToString("0.###", CultureInfo.InvariantCulture)));
+					ZiplineEnds.RopeBetween(line, far, near, bestS);
+					Log("  WARNING: zipto: the rope comes " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " and its near end is not on the ground (so not raised), nor does a tighter rope keep it " + Num(ZiplineEnds.LineClear) + " m over it: move an end. The tightest that helps set: slack " +
+						bestS.ToString("0.###", CultureInfo.InvariantCulture) + " (Raft's " + own0.ToString("0.###", CultureInfo.InvariantCulture) + "), the least now " + Num(bestL) + " m over the ground at " + Num(bestA.x - corner.x) + " " + Num(bestA.z - corner.z));
+				}
+				else
+					Log("  WARNING: zipto: the rope comes " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " and its near end is not on the ground (so not raised), nor does a tighter rope keep it " + Num(ZiplineEnds.LineClear) + " m over it, nor give it more room: move an end. Left as it is");
+				return 0f;
+			}
+			// (the room a rider wants d m before the far end: RiderClear, less where the rope's own fall to its floor gives less;
+			// the last RiderFarSkip m left out - zipride counts a rider stopped there as carried)
+			Func<float, Func<float, float>> riderWant = rr => ZiplineEnds.RiderWant(near.y + rr - far.y, len);
+			Func<float, Func<float, float>> ropeWant = rr => d => ZiplineEnds.LineClear;
+			// (Raft's own rope first; a tighter one - zip.slack, which Apply sets in a world - when the own one would want a
+			// tower: its rope sags about 3.4 m on a 20 m line, so a raise lifts it little where the ground bulges midway)
+			float own = float.IsNaN(setSlack) ? ZiplineEnds.Slack(line) : setSlack, r = 0f, low = 0f, slack = own, best = 999f;
+			string why = null, tried = "";
+			float[] slacks = !float.IsNaN(own) && own != 0f ? new[] { own, own * 0.5f, own * 0.25f, own * 0.1f } : new[] { own };
+			for (int pass = 0; pass < 2 && why == null; pass++)
+				foreach (float sl in slacks)
+				{
+					float rr, rl, rt; Vector3 ra;
+					// (a rider's room too down to the ground check's last FarSkip m - RiderWant asks LineLow there at least: 11-21 c3z30,
+					// The Rain Engine's lines, raised with their last 5 m left out, came 0.03 m over the ground 3.2 m before their far ends)
+					bool ok = ZipRaise(line, near, far, ground, pass == 0 ? riderWant : ropeWant, ZiplineEnds.FarSkip, sl, out rr, out rl, out ra, out rt);
+					if (!ok) tried += (tried.Length > 0 ? "; " : "") + (pass == 0 ? "rider" : "rope") + " slack " + Num(sl) + ": " + Num(rl) + " m short at " + Num(ra.x - corner.x) + " " + Num(ra.z - corner.z) + " h=" + Num(ra.y) + " (ground " + Num(ground(ra.x, ra.z)) + ZipGroundWhat(e, ra.x, ra.z) + ")";
+					if (!ok || rr >= best) continue;
+					best = rr; r = rr; low = rl; at = ra; slack = sl;
+					why = pass == 0 ? "a rider's room (" + Num(ZiplineEnds.RiderClear) + " m)" : "the rope's " + Num(ZiplineEnds.LineClear) + " m (a rider's room would take over " + Num(ZiplineEnds.MaxRaise) + " m)";
+					if (rr <= ZiplineEnds.MaxRaise / 2f) break;
+				}
+			if (why == null)
+			{
+				// (no raise clears it where it is: its far end back along the line, short of the hump - 11-21 c3z29: lines on 8
+				// islands ran 1-4 m into a hill between their ends with their near ends raised the most)
+				Vector3 nt, nfar, pa2; float part, pr2, ps2, pl2; bool prider;
+				if (ZipPullIn(e, line, land.transform.position, near, far, ground, slacks, true, out nt, out nfar, out part, out pr2, out ps2, out pl2, out pa2, out prider))
+				{
+					float wasFar = far.y;
+					ZipPullSet(e, line, land, far, nt, float.NaN, own, "the rope came " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " and no raise of its near end up to " +
+						Num(ZiplineEnds.MaxRaise) + " m clears it", prider, pa2, corner);
+					ZiplineEnds.Ends(e.gameObject, e.Props, land.transform.position, out near, out far);
+					r = pr2; slack = ps2; low = pl2; at = pa2;
+					why = (prider ? "a rider's room (" + Num(ZiplineEnds.RiderClear) + " m)" : "the rope's " + Num(ZiplineEnds.LineClear) + " m") + " with its far end moved back (" + Num(far.y - wasFar) + " m higher)";
+				}
+			}
+			if (why == null)
+			{
+				// (none clears: the raise and rope that leave it the most room, still warned - 11-21 c3z11, Caisson Yard's ridge
+				// line left as it was rode 3.2 m into the hill where c3z9's partial raise had cleared it)
+				float pr, ps, pl; Vector3 pa;
+				ZipBestPartial(line, near, far, ground, slacks, ZiplineEnds.MaxRaise, out pr, out ps, out pl, out pa);
+				if (pl <= lineLow + 0.05f)
+				{
+					Log("  WARNING: zipto: the rope comes " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " and no raise of its near end up to " + Num(ZiplineEnds.MaxRaise) +
+						" m, nor a tighter rope, keeps it " + Num(ZiplineEnds.LineClear) + " m over it or gives it more room - a line through a hill: move an end. Left as it is (raised " + Num(ZiplineEnds.MaxRaise) + " m: " + tried + ")");
+					return 0f;
+				}
+				Log("  WARNING: zipto: the rope comes " + Num(lineLow) + " m over the ground at " + Num(lineAt.x - corner.x) + " " + Num(lineAt.z - corner.z) + " and no raise of its near end up to " + Num(ZiplineEnds.MaxRaise) +
+					" m, nor a tighter rope, keeps it " + Num(ZiplineEnds.LineClear) + " m over it - a line through a hill: move an end. The most room it can get set: raised " + Num(pr) + " m, slack " + Num(ps) +
+					", the least " + Num(pl) + " m over the ground at " + Num(pa.x - corner.x) + " " + Num(pa.z - corner.z) + " (" + tried + ")");
+				r = pr; slack = ps; low = pl; at = pa;
+				why = "the most room it can get (short of the rope's " + Num(ZiplineEnds.LineClear) + " m)";
+			}
+			if (!float.IsNaN(slack) && slack != own)
+			{
+				PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipSlack, slack.ToString("0.###", CultureInfo.InvariantCulture)));
+				ZiplineEnds.RopeBetween(line, far, near, slack);
+				why += ", its rope tightened to slack " + slack.ToString("0.###", CultureInfo.InvariantCulture) + " (Raft's " + own.ToString("0.###", CultureInfo.InvariantCulture) + ")";
+			}
+			if (r <= 0f) return 0f;
+			// (the floor's underside, where the deck's top goes: the line's own small pieces around the near floor)
+			float bottom = floor.y - 0.05f;
+			foreach (Renderer rd in e.gameObject.GetComponentsInChildren<Renderer>(true))
+				if (rd.bounds.size.x < 2f && rd.bounds.size.z < 2f && new Vector2(rd.bounds.center.x - floor.x, rd.bounds.center.z - floor.z).magnitude < 0.8f && rd.bounds.max.y < floor.y + 0.6f)
+					bottom = Mathf.Min(bottom, rd.bounds.min.y);
+			e.transform.position += Vector3.up * r;
+			bottom += r;
+			string deck = "";
+			Transform placedRoot = GameObject.Find("PlacedObjects").transform;
+			GameObject go = ObjectLimit.Allow(1) ? PlaceableCatalog.Spawn("Block_Floor_Wood", placedRoot) : null;
+			if (go != null)
+			{
+				go.transform.rotation = PlacementOptions.Straight(go.transform.rotation, true);
+				Renderer[] rs = PlacementOptions.ShapeRenderers(go);
+				if (rs.Length > 0)
+				{
+					Bounds b = rs[0].bounds;
+					foreach (Renderer rr in rs) b.Encapsulate(rr.bounds);
+					go.transform.position += new Vector3(floor.x - b.center.x, bottom - b.max.y, floor.z - b.center.z);
+					Collider deckCol = go.GetComponent<Collider>();
+					if (deckCol != null) deckCol.enabled = true;
+					EditorGameObject.Attach(go, "Block_Floor_Wood");
+					recipePlaced.Add(go);
+					CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { go }, true));
+					deck = ", its floor on a deck " + Num(bottom - GroundY(floor.x, floor.z)) + " m over the ground";
+					// (a way up: ladders at the deck's back edge, away from the line, from the deck's top down into the ground)
+					Bounds db = rs[0].bounds;
+					foreach (Renderer rr in rs) db.Encapsulate(rr.bounds);
+					deck += ZipDeckPosts(db, placedRoot);
+					deck += ZipDeckLadders(db, new Vector3(near.x - far.x, 0f, near.z - far.z), placedRoot);
+				}
+				else UnityEngine.Object.Destroy(go);
+			}
+			Log("  zipto: the rope came " + Num(lineLow) + " m over the ground - its near end raised " + Num(r) + " m for " + why + ", the least now " + Num(low) + " m over that at " + Num(at.x - corner.x) + " " + Num(at.z - corner.z) + deck);
+			return r;
+		}
+
+		/// <summary>A zipline's near floor more than NearBuried m under the land (a hole in the land - a dug passage's mouth - aside)
+		/// goes up onto it, the whole line with it (its far end stays at zip.to); logged. Returns the metres lifted (0: none).</summary>
+		static float ZipNearOutOfLand(EditorGameObject e, Terrain land)
+		{
+			Vector3? nf = ZiplineEnds.NearFloor(e.gameObject);
+			if (nf == null || land == null) return 0f;
+			Vector3 f = nf.Value;
+			float buried = GroundY(f.x, f.z) - f.y;
+			if (buried <= NearBuried) return 0f;
+			TerrainData td = land.terrainData;
+			int hn = td.holesResolution, hx = Mathf.FloorToInt((f.x - land.transform.position.x) / td.size.x * hn), hz = Mathf.FloorToInt((f.z - land.transform.position.z) / td.size.z * hn);
+			if (hx >= 0 && hz >= 0 && hx < hn && hz < hn && !td.GetHoles(hx, hz, 1, 1)[0, 0]) return 0f;
+			e.transform.position += Vector3.up * buried;
+			Physics.SyncTransforms();
+			Log("  zipto: its near floor stood " + Num(buried) + " m under the land at " + Num(f.x - TopFrame.Origin.x) + " " + Num(f.z - TopFrame.Origin.y) + " - the line lifted onto it");
+			return buried;
+		}
+
+		/// <summary>How far under the land a zipline's near floor may stand before zipto lifts it (ZipNearOutOfLand).</summary>
+		const float NearBuried = 0.5f;
+
+		/// <summary>zipto's far end clear for its whole last stretch (11-21 c3z15: Caisson Yard's summit line, its far end set on the
+		/// cave hill's skin, still ran 0.24 m into the dune's slope just before it and ended in the sand): when the rope's last
+		/// FarSkip m cut the ground (the land, what stands solid on it: under FarEndLow m over it) or come under FarEndClear m over
+		/// the cave hill's skin, zip.to goes up until they don't (FarMaxRaise at most; the rope tightened when no raise does), its
+		/// floor on a deck on posts to the ground - the rope not through that deck either - ladders down its far side when it
+		/// stands over 1 m up. Null when it was clear; else the log's words. deck: the deck made (null when none).</summary>
+		/// <summary>The grounding test: a zipline's zip.slack (NaN: none set - the line's own).</summary>
+		static float Slack9(EditorGameObject e)
+		{
+			float s;
+			return float.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipSlack) ?? "", NumberStyles.Float, CultureInfo.InvariantCulture, out s) && s != 0f ? s : float.NaN;
+		}
+
+		/// <summary>Half the width of the deck ZipFarClear stands a raised far floor on (Raft's floor block, 1.5 m), a little over.</summary>
+		const float FarDeckHalf = 0.8f;
+
+		/// <summary>How far before its last FarSkip m ZipFarClear also wants the ground check's LineLow over the cave hill's skin.</summary>
+		const float FarSkinBefore = 3f;
+
+		static string ZipFarClear(EditorGameObject e, out GameObject deck)
+		{
+			deck = null;
+			Terrain land = terraineditor.terrain;
+			MeshPath_Zipline_Landmark line = e != null ? e.GetComponentInChildren<MeshPath_Zipline_Landmark>(true) : null;
+			Vector3 near, far, to, at;
+			if (land == null || line == null || !ZiplineEnds.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipTo), out to)) return null;
+			Vector3 origin = land.transform.position;
+			Physics.SyncTransforms();
+			if (!ZiplineEnds.Ends(e.gameObject, e.Props, origin, out near, out far)) return null;
+			Func<float, float, float> ground = ZipGround(e);
+			float slack;
+			if (!float.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipSlack) ?? "", NumberStyles.Float, CultureInfo.InvariantCulture, out slack) || float.IsNaN(slack) || float.IsInfinity(slack) || slack == 0f) slack = float.NaN;
+			float low0 = ZiplineEnds.FarStretchLowest(ZiplineEnds.RopeBetween(line, far, near, slack), near, far, ground, out at), low = low0, r = 0f;
+			// The room the rope's last FarSkip m want (11-21 c3z21): over the cave hill's skin FarEndClear m (a world's hill comes out
+			// a little off the measuring one: Caisson Yard's summit floor, set on the measuring skin, stood 0.2 m in the world's
+			// sand, its rope ending in it), so an end on the skin always stands on a deck; over the land and what stands on it only
+			// no cut (FarEndLow, the ground check's own: a rope meeting its floor on flat ground or a roof touches it by a few mm -
+			// 11-21 c3z17/18 Thalassa Mooring, Engine Court - and is left as it is); over the deck a raise stands the floor on, no
+			// cut either (c3z21: a rope rising into its far end ran 0.4 m through the deck made under it - a tighter rope then).
+			Vector3 fw = origin + to;
+			Func<List<Vector3>, Vector3, float, float> worst = (rope, f, deckTop) =>
+			{
+				float w = float.PositiveInfinity, len = new Vector2(f.x - near.x, f.z - near.z).magnitude;
+				for (int i = 0; i + 1 < rope.Count; i++)
+				{
+					int steps = Mathf.Max(1, Mathf.CeilToInt(new Vector2(rope[i + 1].x - rope[i].x, rope[i + 1].z - rope[i].z).magnitude / 0.25f));
+					for (int k = 0; k <= steps; k++)
+					{
+						Vector3 p = Vector3.Lerp(rope[i], rope[i + 1], k / (float)steps);
+						float dn = new Vector2(p.x - near.x, p.z - near.z).magnitude;
+						if (dn < len - ZiplineEnds.FarSkip - FarSkinBefore) continue;
+						Collider c;
+						float g = ZipGroundAt(e, p.x, p.z, out c);
+						bool skin = c != null && c.name == CaveMountain.SkinName;
+						// (the FarSkinBefore m before them, over the cave hill's skin: the ground check's LineLow - ZipShaveGround cuts
+						// the land under a rope, never the hill; 11-21 c3z38 Highpine's rope 0.36 m over the skin 3 m from its end)
+						if (dn < len - ZiplineEnds.FarSkip) { if (skin) w = Mathf.Min(w, p.y - g - ZiplineEnds.LineLow - 0.05f); continue; }
+						w = Mathf.Min(w, p.y - g - (skin ? ZiplineEnds.FarEndClear : ZiplineEnds.FarEndLow));
+						if (!float.IsNaN(deckTop) && Mathf.Abs(p.x - fw.x) <= FarDeckHalf && Mathf.Abs(p.z - fw.z) <= FarDeckHalf) w = Mathf.Min(w, p.y - deckTop - ZiplineEnds.FarEndLow);
+					}
+				}
+				return w;
+			};
+			float w0 = worst(ZiplineEnds.RopeBetween(line, far, near, slack), far, float.NaN);
+			if (w0 >= 0f) return null;
+			Vector3 corner = new Vector3(TopFrame.Origin.x, 0f, TopFrame.Origin.y), at0 = at;
+			string where0 = Num(at0.x - corner.x) + " " + Num(at0.z - corner.z) + " (ground " + Num(ground(at0.x, at0.z)) + ZipGroundWhat(e, at0.x, at0.z) + ")";
+			// (the least raise that gives the room, the deck it then stands on counted; the rope tightened step by step when none
+			// does - a rope sagging into its far end rises into it from under, and a raise lifts the deck with it)
+			float slack0 = !float.IsNaN(slack) ? slack : ZiplineEnds.Slack(line), bestW = float.NegativeInfinity, bestR = 0f, bestS = slack0, under0 = ground(fw.x, fw.z);
+			float[] tighter = float.IsNaN(slack0) ? new[] { float.NaN } : new[] { slack0, slack0 * 0.5f, slack0 * 0.25f, slack0 * 0.1f };
+			bool found = false;
+			foreach (float sl in tighter)
+			{
+				for (float rr = 0.05f; rr <= ZiplineEnds.FarMaxRaise + 0.001f; rr += 0.05f)
+				{
+					Vector3 f2 = far + Vector3.up * rr;
+					float wr = worst(ZiplineEnds.RopeBetween(line, f2, near, sl), f2, fw.y + rr - under0 > 0.15f ? fw.y + rr - 0.05f : float.NaN);
+					if (wr > bestW + 0.005f) { bestW = wr; bestR = rr; bestS = sl; }
+					if (wr >= 0f) { found = true; break; }
+				}
+				if (found) break;
+			}
+			r = Mathf.Round(bestR * 20f) / 20f;
+			low = ZiplineEnds.FarStretchLowest(ZiplineEnds.RopeBetween(line, far + Vector3.up * r, near, bestS), near, far + Vector3.up * r, ground, out at);
+			Vector3 floorW = origin + to + Vector3.up * r;
+			float under = ground(floorW.x, floorW.z);
+			PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(to + Vector3.up * r)));
+			bool tightened = !float.IsNaN(bestS) && !Mathf.Approximately(bestS, slack0);
+			if (tightened) PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipSlack, bestS.ToString("0.###", CultureInfo.InvariantCulture)));
+			string words = "  zipto: its rope came " + Num(low0) + " m over the ground in its last " + Num(ZiplineEnds.FarSkip) + " m at " + where0 + " (" + Num(-w0) + " m short of its room there) - its far end raised " + Num(r) + " m" +
+				(tightened ? ", its rope tightened to slack " + Num(bestS) + " (was " + Num(slack0) + ")" : "") + ", the least there now " + Num(low) + " m";
+			if (!found)
+				words = "  WARNING:" + words.Substring(1) + ", still " + Num(-bestW) + " m short of its room (" + Num(ZiplineEnds.FarEndClear) + " m over the cave hill, no cut elsewhere) with the most raise (" + Num(ZiplineEnds.FarMaxRaise) + " m) and the tightest rope: move the far end onto the top or the flat";
+			// (its floor on a deck where it stands off the ground: nothing floating - the far pieces stand on its top)
+			GameObject placedGo = GameObject.Find("PlacedObjects");
+			if (floorW.y - under > 0.15f && placedGo != null && ObjectLimit.Allow(1))
+			{
+				Transform placedRoot = placedGo.transform;
+				GameObject go = PlaceableCatalog.Spawn("Block_Floor_Wood", placedRoot);
+				Renderer[] rs = go != null ? PlacementOptions.ShapeRenderers(go) : new Renderer[0];
+				if (go != null && rs.Length > 0)
+				{
+					go.transform.rotation = PlacementOptions.Straight(go.transform.rotation, true);
+					Bounds b = rs[0].bounds;
+					foreach (Renderer rr in rs) b.Encapsulate(rr.bounds);
+					float top = floorW.y - 0.05f;
+					go.transform.position += new Vector3(floorW.x - b.center.x, top - b.max.y, floorW.z - b.center.z);
+					Collider deckCol = go.GetComponent<Collider>();
+					if (deckCol != null) deckCol.enabled = true;
+					EditorGameObject.Attach(go, "Block_Floor_Wood");
+					recipePlaced.Add(go);
+					CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { go }, true));
+					Physics.SyncTransforms();
+					Bounds db = rs[0].bounds;
+					foreach (Renderer rr in rs) db.Encapsulate(rr.bounds);
+					words += ", its floor on a deck " + Num(top - under) + " m over the ground" + ZipDeckPosts(db, placedRoot);
+					if (top - under > 1f) words += ZipDeckLadders(db, new Vector3(far.x - near.x, 0f, far.z - near.z), placedRoot);
+					deck = go;
+				}
+				else if (go != null) UnityEngine.Object.Destroy(go);
+			}
+			Log(words);
+			return words;
+		}
+
+		/// <summary>zipto's far end on the cave hill (11-21 c3z13): when the ground at its floor (zip.to) is the skin of the cave
+		/// hill a world builds over the island's cave pieces (CaveMountain.Preview, made by the save to measure against), zip.to
+		/// goes up onto the skin's top. True when it moved.</summary>
+		static bool ZipFarOnSkin(EditorGameObject e, Vector3 origin)
+		{
+			Vector3 to;
+			if (e == null || !ZiplineEnds.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipTo), out to)) return false;
+			Physics.SyncTransforms();
+			Vector3 w = origin + to;
+			Collider c;
+			float g = ZipGroundAt(e, w.x, w.z, out c);
+			if (c == null || c.name != CaveMountain.SkinName || g <= w.y + 0.05f) return false;
+			PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(new Vector3(to.x, g - origin.y, to.z))));
+			Log("  zipto: its far end's floor stood " + Num(g - w.y) + " m under the skin of the cave hill a world builds over it: set on the skin's top");
+			return true;
+		}
+
+		/// <summary>
+		/// zipto when no raise of its near end (none for a near end on a deck) nor a tighter rope clears (11-21 c3z29: lines on 15
+		/// islands ran through a hump of the ground between their ends, the save only warning "move an end"): its far end moved
+		/// back along the line toward the near end (ZiplineEnds.PullStep of it at a time, at most PullMost), its floor on the
+		/// ground there, never nearer the near end than PullShortest m nor less than PullDrop m under it - the first spot where the
+		/// rope clears: a rider's room, else the rope's LineClear (with a raise of the near end up to MaxRaise when raise). True
+		/// with the new zip.to (island frame), far end, part pulled, raise, slack, room left (over the want) and where; false
+		/// leaves the rope as Raft makes it at slacks[0].
+		/// </summary>
+		static bool ZipPullIn(EditorGameObject e, MeshPath_Zipline_Landmark line, Vector3 origin, Vector3 near, Vector3 far, Func<float, float, float> ground, float[] slacks, bool raise,
+			out Vector3 newTo, out Vector3 newFar, out float part, out float r, out float slack, out float low, out Vector3 at, out bool rider)
+		{
+			newTo = Vector3.zero; newFar = far; part = 0f; r = 0f; slack = slacks.Length > 0 ? slacks[0] : float.NaN; low = 0f; at = near; rider = false;
+			Vector3 to;
+			if (e == null || line == null || !ZiplineEnds.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipTo), out to)) return false;
+			// (the rope's end stands off its floor: the floor goes onto the ground, the rope's end with it)
+			Vector3 off = far - (origin + to);
+			Vector2 n2 = new Vector2(near.x, near.z), f2 = new Vector2(far.x, far.z);
+			for (int k = 1; k * ZiplineEnds.PullStep <= ZiplineEnds.PullMost + 0.001f; k++)
+			{
+				float s = k * ZiplineEnds.PullStep;
+				Vector2 p = Vector2.Lerp(f2, n2, s);
+				float len = Vector2.Distance(p, n2);
+				if (len < ZiplineEnds.PullShortest) break;
+				float fx = p.x - off.x, fz = p.y - off.z;
+				Vector3 fl = new Vector3(fx, ground(fx, fz), fz), f = fl + off;
+				if (near.y - f.y < ZiplineEnds.PullDrop) continue;
+				for (int pass = 0; pass < 2; pass++)
+					foreach (float sl in slacks)
+					{
+						Func<float, Func<float, float>> want = pass == 0 ? (Func<float, Func<float, float>>)(x => ZiplineEnds.RiderWant(near.y + x - f.y, len)) : x => d => ZiplineEnds.LineClear;
+						float rr = 0f, rl = -1f, rt = 0f; Vector3 ra = near;
+						bool ok;
+						if (raise) ok = ZipRaise(line, near, f, ground, want, ZiplineEnds.FarSkip, sl, out rr, out rl, out ra, out rt);
+						else
+						{
+							List<Vector3> rope = ZiplineEnds.RopeBetween(line, f, near, sl);
+							if (rope.Count >= 2) rl = ZiplineEnds.RopeLowest(rope, near, f, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, want(0f), out ra, out rt);
+							ok = rope.Count >= 2 && rl >= 0f;
+						}
+						if (!ok) continue;
+						newTo = fl - origin; newFar = f; part = s; r = rr; slack = sl; low = rl; at = ra; rider = pass == 0;
+						return true;
+					}
+			}
+			ZiplineEnds.RopeBetween(line, far, near, slacks.Length > 0 ? slacks[0] : float.NaN);
+			return false;
+		}
+
+		/// <summary>ZipPullIn's far end set (zip.to; zip.slack too when slack is given and not the line's own) and logged.</summary>
+		static void ZipPullSet(EditorGameObject e, MeshPath_Zipline_Landmark line, Terrain land, Vector3 oldFar, Vector3 newTo, float slack, float own, string what, bool rider, Vector3 at, Vector3 corner)
+		{
+			Vector3 org = land.transform.position, near, far;
+			PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipTo, ZiplineEnds.Text(newTo)));
+			string tight = "";
+			if (!float.IsNaN(slack) && slack != own)
+			{
+				PropsCommand.Change(e, ObjectProps.With(e.Props, ZiplineEnds.ZipSlack, slack.ToString("0.###", CultureInfo.InvariantCulture)));
+				tight = ", its rope tightened to slack " + slack.ToString("0.###", CultureInfo.InvariantCulture) + " (Raft's " + own.ToString("0.###", CultureInfo.InvariantCulture) + ")";
+			}
+			if (!ZiplineEnds.Ends(e.gameObject, e.Props, org, out near, out far)) far = oldFar;
+			else if (!float.IsNaN(slack)) ZiplineEnds.RopeBetween(line, far, near, slack);
+			Log("  zipto: " + what + " - its far end moved back " + Num(new Vector2(far.x - oldFar.x, far.z - oldFar.z).magnitude) + " m along the line to " + Num(far.x - corner.x) + " " + Num(far.z - corner.z) +
+				" (zip.to " + ZiplineEnds.Text(newTo) + ", its floor on the ground " + Num(far.y - oldFar.y) + " m higher than before)" + tight + ", for " + (rider ? "a rider's room" : "the rope's " + Num(ZiplineEnds.LineClear) + " m") +
+				" (the least at " + Num(at.x - corner.x) + " " + Num(at.z - corner.z) + "): set the recipe's zipto there");
+		}
+
+		/// <summary>zipto when no raise up to maxRaise nor a tighter rope clears (11-21): the raise (0.5 m steps) and slack of
+		/// <paramref name="slacks"/> that leave the rope the most room over the ground (the first NearSkip m and last FarSkip m
+		/// left out), the smaller raise and the earlier slack when within 5 cm. low: that room (under 0 when in the ground), at: where.</summary>
+		static void ZipBestPartial(MeshPath_Zipline_Landmark line, Vector3 near, Vector3 far, Func<float, float, float> ground, float[] slacks, float maxRaise, out float r, out float slack, out float low, out Vector3 at)
+		{
+			r = 0f; slack = slacks.Length > 0 ? slacks[0] : float.NaN; low = float.NegativeInfinity; at = near;
+			foreach (float sl in slacks)
+				for (int i = 0; i * 0.5f <= maxRaise + 0.01f; i++)
+				{
+					float rr = i * 0.5f;
+					List<Vector3> rope = ZiplineEnds.RopeBetween(line, far, near + Vector3.up * rr, sl);
+					if (rope.Count < 2) continue;
+					Vector3 a; float t;
+					float l = ZiplineEnds.RopeLowest(rope, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, null, out a, out t);
+					if (l > low + 0.05f) { low = l; r = rr; slack = sl; at = a; }
+				}
+		}
+
+		/// <summary>zipto's raise: how far the near end goes up (0.1 m steps of at most 1 m, to ZiplineEnds.MaxRaise) for the
+		/// rope Raft makes to leave want(raise)(metres to the far end) over the ground, leaving out the first NearSkip m and the
+		/// last farSkip m. False when MaxRaise isn't enough (r is then MaxRaise). low, at, atT: the least room left, where.</summary>
+		static bool ZipRaise(MeshPath_Zipline_Landmark line, Vector3 near, Vector3 far, Func<float, float, float> ground, Func<float, Func<float, float>> want, float farSkip, float slack, out float r, out float low, out Vector3 at, out float atT)
+		{
+			r = 0f; low = 0f; at = near; atT = 0f;
+			for (int i = 0; i < 80; i++)
+			{
+				List<Vector3> rope = ZiplineEnds.RopeBetween(line, far, near + Vector3.up * r, slack);
+				if (rope.Count < 2) return false;
+				low = ZiplineEnds.RopeLowest(rope, near, far, ground, ZiplineEnds.NearSkip, farSkip, want(r), out at, out atT);
+				if (low >= 0f) { r = Mathf.Ceil(r * 10f) / 10f; return true; }
+				if (r >= ZiplineEnds.MaxRaise) return false;
+				r = Mathf.Min(ZiplineEnds.MaxRaise, r + Mathf.Clamp(-low / Mathf.Max(0.05f, 1f - atT), 0.1f, 1f));
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// zipto's clearing (11-20): the generator's objects (not this recipe's) that stand in a rider's way under the rope Raft
+		/// makes - their top within a rider's room (ZiplineEnds.RiderClear; the rope's own 1 m near the far end, where a rider
+		/// comes down to its floor) - are removed as the recipe's clear removes them. A clear along the line takes them by their
+		/// pivots, and a big boulder's pivot can stand metres off its body: Caisson Yard's ridge line ran into a 5 m
+		/// SmallBoulder2 the clear r=3 left. Bodies over 10 m across stay (the island's own cliffs). Returns the count removed.
+		/// </summary>
+		static int ZipClearStrays(EditorGameObject e, List<Vector3> rope, Vector3 near, Vector3 far)
+		{
+			Transform root = GameObject.Find("PlacedObjects")?.transform;
+			if (root == null) return 0;
+			var gone = new List<GameObject>();
+			var names = new List<string>();
+			var kept = new HashSet<GameObject>();
+			var keptNames = new List<string>();
+			Vector2 n2 = new Vector2(near.x, near.z), f2 = new Vector2(far.x, far.z);
+			for (int round = 0; round < 4; round++)
+			{
+				Physics.SyncTransforms();
+				var now = new List<GameObject>();
+				for (int i = 0; i + 1 < rope.Count; i++)
+				{
+					Vector3 a = rope[i], b = rope[i + 1];
+					int steps = Mathf.Max(1, Mathf.CeilToInt(new Vector2(b.x - a.x, b.z - a.z).magnitude / 0.5f));
+					for (int s = 0; s <= steps; s++)
+					{
+						Vector3 p = Vector3.Lerp(a, b, s / (float)steps);
+						Vector2 p2 = new Vector2(p.x, p.z);
+						float toNear = Vector2.Distance(p2, n2), toFar = Vector2.Distance(p2, f2);
+						if (toNear < ZiplineEnds.NearSkip || toFar < ZiplineEnds.FarSkip) continue;
+						Collider c;
+						float g = ZipGroundAt(e, p.x, p.z, out c);
+						if (c == null || p.y - g >= (toFar < ZiplineEnds.RiderFarSkip ? ZiplineEnds.LineClear : ZiplineEnds.RiderClear)) continue;
+						EditorGameObject owner = c.GetComponentInParent<EditorGameObject>();
+						if (owner == null || owner == e || (recipePlaced.Contains(owner.gameObject) && !recipeScattered.Contains(owner.gameObject)) || !owner.transform.IsChildOf(root) || now.Contains(owner.gameObject)) continue;
+						Bounds bb = c.bounds;
+						foreach (Renderer rd in owner.GetComponentsInChildren<Renderer>()) bb.Encapsulate(rd.bounds);
+						// (a boulder goes whatever its size: 11-21 c3z5, Caisson Yard's ridge line still ran 7.4 m under a scaled-up
+						// SmallBoulder2 the 10 m rule kept as a cliff - logged once when a body that big is kept)
+						bool boulder = (owner.GameObjectName ?? "").IndexOf("Boulder", StringComparison.OrdinalIgnoreCase) >= 0;
+						if (!boulder && Mathf.Max(bb.size.x, bb.size.z) > 10f)
+						{
+							if (!kept.Contains(owner.gameObject)) { kept.Add(owner.gameObject); keptNames.Add(owner.GameObjectName + " (" + Num(Mathf.Max(bb.size.x, bb.size.z)) + " m across)"); }
+							continue;
+						}
+						now.Add(owner.gameObject);
+						Vector3 op = owner.transform.position;
+						names.Add(owner.GameObjectName + " at " + Num(op.x - TopFrame.Origin.x) + " " + Num(op.z - TopFrame.Origin.y) + " (the rope " + Num(p.y - g) + " m over its top)");
+					}
+				}
+				if (now.Count == 0) break;
+				CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(now, false));
+				gone.AddRange(now);
+			}
+			if (gone.Count > 0)
+				Log("  zipto: " + gone.Count + " of the generator's (or the recipe's scattered) objects in a rider's way under the rope removed: " + string.Join("; ", names.ToArray()));
+			if (keptNames.Count > 0)
+				Log("  zipto: kept in a rider's way under the rope (over 10 m across, taken for the island's own cliffs): " + string.Join("; ", keptNames.ToArray()));
+			return gone.Count;
+		}
+
+		/// <summary>The ground under a zipline's rope at x z (world): the land's height, or the top of what stands solid on it on the
+		/// land's layer higher up (a rock, a cliff, a block: what a world's rider meets), the line's own object left out.</summary>
+		static Func<float, float, float> ZipGround(EditorGameObject e)
+		{
+			Physics.SyncTransforms();
+			return (x, z) => { Collider c; return ZipGroundAt(e, x, z, out c); };
+		}
+
+		static float ZipGroundAt(EditorGameObject e, float x, float z, out Collider what)
+		{
+			float g = GroundY(x, z);
+			what = null;
+			foreach (RaycastHit h in Physics.RaycastAll(new Vector3(x, g + 60f, z), Vector3.down, 60.5f, 1 << IslandSpawner.TerrainLayer, QueryTriggerInteraction.Ignore))
+				if (h.point.y > g + 0.05f && (e == null || !h.transform.IsChildOf(e.transform)) && !(h.collider is TerrainCollider)) { g = h.point.y; what = h.collider; }
+			return g;
+		}
+
+		/// <summary>For the log: ", on <object>" when the ground at x z is something standing on the land.</summary>
+		static string ZipGroundWhat(EditorGameObject e, float x, float z)
+		{
+			Collider c;
+			ZipGroundAt(e, x, z, out c);
+			if (c == null) return "";
+			EditorGameObject owner = c.GetComponentInParent<EditorGameObject>();
+			return ", on " + (owner != null ? owner.GameObjectName : c.transform.root.name) + "'s " + c.name;
+		}
+
+		/// <summary>One of Raft's posts (RT_Pillar) stretched from <paramref name="foot"/> up to <paramref name="top"/> (StandPosts,
+		/// a raised zipline deck's corners). False when none was stood; <paramref name="spawned"/> false when the catalog had none.</summary>
+		static bool StandPost(Transform placedRoot, Vector3 top, float foot, out bool spawned)
+		{
+			GameObject go = PlaceableCatalog.Spawn("RT_Pillar", placedRoot);
+			spawned = go != null;
+			if (go == null) return false;
+			go.transform.rotation = PlacementOptions.Straight(go.transform.rotation, true);
+			Renderer[] rs = PlacementOptions.ShapeRenderers(go);
+			if (rs.Length == 0) { UnityEngine.Object.Destroy(go); return false; }
+			Bounds b = rs[0].bounds;
+			foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+			go.transform.localScale = new Vector3(go.transform.localScale.x, go.transform.localScale.y * (top.y - foot) / Mathf.Max(0.1f, b.size.y), go.transform.localScale.z);
+			b = rs[0].bounds;
+			foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+			go.transform.position += new Vector3(top.x - b.center.x, foot - b.min.y, top.z - b.center.z);
+			Collider ownCollider = go.GetComponent<Collider>();
+			if (ownCollider != null) ownCollider.enabled = true;
+			EditorGameObject.Attach(go, "RT_Pillar");
+			recipePlaced.Add(go);
+			CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { go }, true));
+			return true;
+		}
+
+		/// <summary>Posts at a raised zipline deck's four corners, from its underside into the ground, stood when the deck is made
+		/// (11-21 c3y11/c3y12: Engine Court's and Thalassa Mooring's ridge decks were left to the save's StandPosts and stood
+		/// on their ladders alone). A corner whose post would go through a thing is left to the save's StandPosts, which moves it in.</summary>
+		static string ZipDeckPosts(Bounds deck, Transform placedRoot)
+		{
+			List<Bounds> things = PostObstacles(placedRoot);
+			int n = 0;
+			const float inset = 0.1f;
+			foreach (Vector3 c in new[] { new Vector3(deck.min.x + inset, deck.min.y, deck.min.z + inset), new Vector3(deck.max.x - inset, deck.min.y, deck.min.z + inset),
+				new Vector3(deck.min.x + inset, deck.min.y, deck.max.z - inset), new Vector3(deck.max.x - inset, deck.min.y, deck.max.z - inset) })
+			{
+				float foot = GroundY(c.x, c.z) - 0.3f;
+				if (c.y - foot < 0.5f || PostBlocked(things, c, foot) || !ObjectLimit.Allow(1)) continue;
+				bool spawned;
+				if (StandPost(placedRoot, c, foot, out spawned)) n++;
+				else if (!spawned) break;
+			}
+			return ", " + n + " post" + (n == 1 ? "" : "s") + " under it";
+		}
+
+		/// <summary>Ladders (Block_Ladder) up a raised zipline deck's side that faces away (back: the axis nearest it) from the
+		/// line, stacked from the deck's top down until the lowest reaches the ground; their climb side (the climb trigger,
+		/// Block_Ladder's local -z, CILadderSide) out from the deck. Returns the log's words.</summary>
+		static string ZipDeckLadders(Bounds deck, Vector3 back, Transform placedRoot)
+		{
+			Vector3 d = Mathf.Abs(back.x) >= Mathf.Abs(back.z) ? new Vector3(Mathf.Sign(back.x), 0f, 0f) : new Vector3(0f, 0f, Mathf.Sign(back.z));
+			Vector3 edge = deck.center + Vector3.Scale(d, deck.extents);
+			float top = deck.max.y, foot = GroundY(edge.x, edge.z), climbed = 0f;
+			int n = 0;
+			var made = new List<GameObject>();
+			while (top - climbed > foot + 0.3f && n < 6 && ObjectLimit.Allow(1))
+			{
+				GameObject l = PlaceableCatalog.Spawn("Block_Ladder", placedRoot);
+				if (l == null) break;
+				// (its local -z, the climb side, out from the deck)
+				l.transform.rotation = Quaternion.LookRotation(-d, Vector3.up);
+				Renderer[] lr = PlacementOptions.ShapeRenderers(l);
+				if (lr.Length == 0) { UnityEngine.Object.Destroy(l); break; }
+				Bounds b = lr[0].bounds;
+				foreach (Renderer rr in lr) b.Encapsulate(rr.bounds);
+				float h = Mathf.Max(0.5f, b.size.y), out_ = Mathf.Abs(Vector3.Dot(b.extents, d));
+				Vector3 want = edge + d * out_;
+				l.transform.position += new Vector3(want.x - b.center.x, top - climbed - b.max.y, want.z - b.center.z);
+				foreach (Collider c in l.GetComponentsInChildren<Collider>(true)) if (!c.isTrigger) c.enabled = true;
+				EditorGameObject.Attach(l, "Block_Ladder");
+				recipePlaced.Add(l);
+				zipDeckLadders.Add(l);
+				made.Add(l);
+				CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { l }, true));
+				climbed += h;
+				n++;
+			}
+			return n > 0 ? ", " + n + " ladder" + (n > 1 ? "s" : "") + " up its " + (d.x > 0 ? "east" : d.x < 0 ? "west" : d.z > 0 ? "north" : "south") + " side" + ZipClearLadderSides(made, d) : ", no ladder (" + Num(top - foot) + " m up)";
+		}
+
+		/// <summary>
+		/// zipto's deck ladders (11-21 c3z13: a ladder up Caisson Yard's ridge deck had its climbing side shut by a SmallBoulder2,
+		/// CILadderSide): the generator's objects (not the recipe's, except what a scatter placed) in the way of a player on each
+		/// ladder's climbing side (<paramref name="side"/>: balls 0.3 m and 0.8 m out from its face, up its height, as CILadderSide
+		/// looks) are removed, as ZipClearStrays removes them under the rope: bodies over 10 m across stay (the island's own cliffs)
+		/// but boulders go whatever their size. The recipe's own rocks there are kept and warned. Returns the log's words.
+		/// </summary>
+		static string ZipClearLadderSides(List<GameObject> ladders, Vector3 side)
+		{
+			Transform root = GameObject.Find("PlacedObjects")?.transform;
+			if (root == null || ladders.Count == 0) return "";
+			Physics.SyncTransforms();
+			var gone = new List<GameObject>();
+			var names = new List<string>();
+			var kept = new List<string>();
+			foreach (GameObject l in ladders)
+			{
+				if (l == null) continue;
+				Bounds b = MeshBox(l);
+				float face = Mathf.Abs(Vector3.Dot(b.extents, side));
+				for (float y = b.min.y + 0.4f; y <= b.max.y - 0.2f; y += 0.4f)
+					foreach (float o in new[] { 0.3f, 0.8f })
+						foreach (Collider c in Physics.OverlapSphere(new Vector3(b.center.x, y, b.center.z) + side * (face + o), 0.3f, ~0, QueryTriggerInteraction.Ignore))
+						{
+							EditorGameObject owner = c.GetComponentInParent<EditorGameObject>();
+							if (owner == null || !owner.transform.IsChildOf(root) || gone.Contains(owner.gameObject) || ladders.Contains(owner.gameObject)) continue;
+							string nm = owner.GameObjectName ?? "";
+							bool rock = Regex.IsMatch(nm, "Boulder|Rock|Stone", RegexOptions.IgnoreCase);
+							if (recipePlaced.Contains(owner.gameObject) && !recipeScattered.Contains(owner.gameObject))
+							{
+								if (rock && !kept.Contains(nm)) kept.Add(nm);
+								continue;
+							}
+							Bounds bb = c.bounds;
+							foreach (Renderer rd in owner.GetComponentsInChildren<Renderer>()) bb.Encapsulate(rd.bounds);
+							if (nm.IndexOf("Boulder", StringComparison.OrdinalIgnoreCase) < 0 && Mathf.Max(bb.size.x, bb.size.z) > 10f) continue;
+							gone.Add(owner.gameObject);
+							Vector3 op = owner.transform.position;
+							names.Add(nm + " at " + Num(op.x - TopFrame.Origin.x) + " " + Num(op.z - TopFrame.Origin.y));
+						}
+			}
+			if (gone.Count > 0) CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(gone, false));
+			if (kept.Count > 0) Log("  WARNING: zipto: the recipe's own " + string.Join(", ", kept.ToArray()) + " on a deck ladder's climbing side - kept: move it");
+			return gone.Count > 0 ? " (" + gone.Count + " of the generator's objects off their climbing side removed: " + string.Join("; ", names.ToArray()) + ")" : "";
 		}
 
 		static float GroundY(float x, float z)
@@ -2453,32 +3840,357 @@ namespace DynamicIslands
 		/// <summary>Place's option (set by the place step for an unnamed object, and by line): leave it out if it is under the ground whole.</summary>
 		const string SkipBuried = "\u0001skipburied";
 
+		/// <summary>The cut ZipShaveGround makes under a rope: the land LineClear m under the rope within ShaveCore m of it, its
+		/// sides rising ShaveSide m a metre out from there, never more than ShaveMost m deep (c3 round 4, 11-21).</summary>
+		const float ShaveCore = 1.5f, ShaveSide = 0.7f, ShaveMost = 6f;
+
+		/// <summary>What lies loose on the land and rides ZipShaveGround's cut down instead of holding the land (c3z48, 11-21).</summary>
+		static readonly Regex ShaveRiders = new Regex(@"^(Pickup_|QuestItemPickup|Note_|Loot_)");
+
+		/// <summary>A lever's or a mechanism's works reach far from where it stands; land under the rope more than ShaveFarPart m
+		/// from such an object isn't held by it (c3z58: The Coldhold Vault's floodlever, UT_JumpPuzzle_LiftMechanism_Lever, held 10-11
+		/// points 44 m off).</summary>
+		static readonly Regex ShaveFarOwner = new Regex(@"Lever|Mechanism");
+		const float ShaveFarPart = 12f;
+
+		/// <summary>
+		/// zipto's last step (c3 round 4, 11-21 c3z38: ropes on 10 islands 0.03-3.97 m into a hump between their ends, or 0.1-0.4 m
+		/// short of the ground check's LineLow, after ZipClearGround had raised their near ends the most it does or found them on a
+		/// tower, and pulled their far ends in as far as they go): the land under the rope, measured as the ground check measures it
+		/// (the land and the cave hill a world builds - not what stands on them - its first NearSkip and last FarSkip m left out),
+		/// is cut down to LineClear m under the rope where it comes nearer than LineLow: a pass through the hump, its sides sloping
+		/// out, painted as the painter paints a slope. The land under what stands on it (the line's own floors, decks, posts, a cave,
+		/// a building) and under the cave hill's skin stays as it is - trees and bushes don't hold it when the recipe reseats them
+		/// (their reseat after this sets them on the cut); nothing goes under the sea. Null when the rope was clear; else the log's
+		/// words (a WARNING when the rope still comes under LineLow).
+		/// </summary>
+		static string ZipShaveGround(EditorGameObject e, GameObject hill)
+		{
+			Terrain land = terraineditor.terrain;
+			MeshPath_Zipline_Landmark line = e != null ? e.GetComponentInChildren<MeshPath_Zipline_Landmark>(true) : null;
+			Vector3 near, far;
+			if (land == null || land.terrainData == null || line == null) return null;
+			Physics.SyncTransforms();
+			if (!ZiplineEnds.Ends(e.gameObject, e.Props, land.transform.position, out near, out far)) return null;
+			float slack;
+			if (!float.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipSlack) ?? "", NumberStyles.Float, CultureInfo.InvariantCulture, out slack) || float.IsNaN(slack) || float.IsInfinity(slack) || slack == 0f) slack = float.NaN;
+			List<Vector3> rope = ZiplineEnds.RopeBetween(line, far, near, slack);
+			if (rope.Count < 2) return null;
+			List<Collider> skins = hill != null ? ZiplineEnds.CaveSkins(hill.transform) : new List<Collider>();
+			Func<float, float, float> landY = (x, z) => land.SampleHeight(new Vector3(x, 0f, z)) + land.transform.position.y;
+			Func<float, float, float> ground = ZiplineEnds.OverSkins(landY, skins);
+			Vector3 at; float atT;
+			// (measured by the ground check's rule: LineLow, coming down to FarEndLow over the metres before the far stretch - c3 round 8)
+			float low0 = ZiplineEnds.RopeLowest(rope, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, ZiplineEnds.CheckWant, out at, out atT);
+			if (low0 >= ZiplineEnds.LineLow + 0.1f) return null;
+			float real0 = at.y - ground(at.x, at.z);
+			TerrainData td = land.terrainData;
+			int res = td.heightmapResolution, ares = td.alphamapResolution;
+			Vector3 tp = land.transform.position, size = td.size;
+			float sea = tp.y + DynamicIslands.EditorWaterLevel, sx = size.x / (res - 1), sz = size.z / (res - 1), core = Mathf.Max(ShaveCore, 1.5f * Mathf.Max(sx, sz));
+			int reachX = Mathf.CeilToInt((core + ShaveMost / ShaveSide) / sx) + 1, reachZ = Mathf.CeilToInt((core + ShaveMost / ShaveSide) / sz) + 1;
+			// (what stands on the land holds it: every shown object whose foot is at or in the land, its bounds widened 1 m (a
+			// heightmap step and a half when that is more; 2 m till c3 round 8, which held a cut 1.5 m off a sign) - the line's own
+			// rope left out, its small pieces (floors, posts) not; trees and bushes left out when the reseat follows. Each kept
+			// box knows its object, so a cut held off the rope can say by what - c3 round 8)
+			float margin = Mathf.Max(1f, 1.5f * Mathf.Max(sx, sz));
+			var keep = new List<KeyValuePair<Bounds, EditorGameObject>>();
+			var keepPart = new List<string>();
+			// (what lies loose on the land - a pickup, a find, a note, a crate - rides the cut down instead of holding it, and a
+			// zone or a creature's spawn (nothing a world shows) never holds it: 11-21 c3z48, the cuts under 5 islands' ropes were held
+			// by Zone_Trigger, Zone_Sound, Zone_Atmosphere and the quests' token pickups, leaving the ropes 0.03-0.76 m in the ground)
+			var riders = new List<KeyValuePair<EditorGameObject, float>>();
+			foreach (EditorGameObject o in UnityEngine.Object.FindObjectsOfType<EditorGameObject>())
+			{
+				if (o == null || !o.gameObject.activeInHierarchy) continue;
+				if (recipeReseat && o != e && (Tuft.IsMatch(o.GameObjectName ?? "") || (Trunk.IsMatch(o.GameObjectName ?? "") && o.transform.up.y >= 0.5f))) continue;
+				string on = o.GameObjectName ?? "";
+				if (o != e && (on.StartsWith("Zone_") || ContentCatalog.IsCreature(on))) continue;
+				if (o != e && ShaveRiders.IsMatch(on))
+				{
+					Vector3 op = o.transform.position;
+					riders.Add(new KeyValuePair<EditorGameObject, float>(o, landY(op.x, op.z)));
+					continue;
+				}
+				IEnumerable<Renderer> rs = o.GetComponentsInChildren<Renderer>(false).Where(r => r.enabled);
+				if (o == e) rs = rs.Where(r => Mathf.Max(r.bounds.size.x, r.bounds.size.z) < 4f);
+				IEnumerable<Collider> cs = o == e ? Enumerable.Empty<Collider>() : o.GetComponentsInChildren<Collider>(false).Where(c => c.enabled && !c.isTrigger);
+				foreach (KeyValuePair<Bounds, Component> pb in rs.Select(r => new KeyValuePair<Bounds, Component>(r.bounds, r)).Concat(cs.Select(c => new KeyValuePair<Bounds, Component>(c.bounds, c))))
+				{
+					Bounds b = pb.Key;
+					if (b.min.y > landY(b.center.x, b.center.z) + 0.5f) continue;
+					b.Expand(new Vector3(2f * margin, 0f, 2f * margin));
+					keep.Add(new KeyValuePair<Bounds, EditorGameObject>(b, o));
+					keepPart.Add(pb.Value.GetType().Name + " " + pb.Value.name + " " + Num(b.size.x) + " x " + Num(b.size.z) + " m");
+				}
+			}
+			float[,] before = td.GetHeights(0, 0, res, res), after = (float[,])before.Clone();
+			float len = new Vector2(far.x - near.x, far.z - near.z).magnitude;
+			int onHill = 0;
+			var deep = new HashSet<int>();
+			var cut = new HashSet<int>();
+			var held = new HashSet<int>();
+			var free = new HashSet<int>();
+			var holders = new Dictionary<EditorGameObject, int>();
+			var holderPart = new Dictionary<EditorGameObject, string>();
+			var farParts = new Dictionary<string, int>();
+			for (int i = 0; i + 1 < rope.Count; i++)
+			{
+				Vector3 a = rope[i], b = rope[i + 1];
+				int steps = Mathf.Max(1, Mathf.CeilToInt(new Vector2(b.x - a.x, b.z - a.z).magnitude / 0.5f));
+				for (int k = 0; k <= steps; k++)
+				{
+					Vector3 p = Vector3.Lerp(a, b, k / (float)steps);
+					float fromNear = new Vector2(p.x - near.x, p.z - near.z).magnitude;
+					if (fromNear < ZiplineEnds.NearSkip || fromNear > len - ZiplineEnds.FarSkip) continue;
+					float top = p.y - ZiplineEnds.LineClear;
+					if (ground(p.x, p.z) <= p.y - ZiplineEnds.LineWant(new Vector2(far.x - p.x, far.z - p.z).magnitude) - 0.1f) continue;
+					if (ground(p.x, p.z) > landY(p.x, p.z) + 0.01f) { onHill++; continue; }
+					int cx = Mathf.RoundToInt((p.x - tp.x) / sx), cz = Mathf.RoundToInt((p.z - tp.z) / sz);
+					for (int dz = -reachZ; dz <= reachZ; dz++)
+						for (int dx = -reachX; dx <= reachX; dx++)
+						{
+							int x = cx + dx, z = cz + dz, id = z * res + x;
+							if (x < 1 || z < 1 || x > res - 2 || z > res - 2 || held.Contains(id)) continue;
+							float wx = tp.x + x * sx, wz = tp.z + z * sz, d = new Vector2(wx - p.x, wz - p.z).magnitude;
+							float h0 = before[z, x] * size.y + tp.y, now = after[z, x] * size.y + tp.y;
+							float target = Mathf.Max(top + Mathf.Max(0f, d - core) * ShaveSide, sea + 0.3f);
+							if (h0 - target > ShaveMost) { target = h0 - ShaveMost; deep.Add(id); }
+							if (target >= now - 0.005f) continue;
+							if (!free.Contains(id))
+							{
+								EditorGameObject by = null;
+								for (int ki = 0; ki < keep.Count; ki++)
+								{
+									KeyValuePair<Bounds, EditorGameObject> kb = keep[ki];
+									if (wx < kb.Key.min.x || wx > kb.Key.max.x || wz < kb.Key.min.z || wz > kb.Key.max.z) continue;
+									Vector3 op = kb.Value.transform.position;
+									if (kb.Value != e && ShaveFarOwner.IsMatch(kb.Value.GameObjectName ?? "") && new Vector2(wx - op.x, wz - op.z).magnitude > ShaveFarPart)
+									{
+										string fk = kb.Value.GameObjectName + "'s " + keepPart[ki];
+										int fn; farParts.TryGetValue(fk, out fn); farParts[fk] = fn + 1;
+										continue;
+									}
+									by = kb.Value;
+									if (!holderPart.ContainsKey(by)) holderPart[by] = keepPart[ki];
+									break;
+								}
+								if (by != null) { held.Add(id); int hn; holders.TryGetValue(by, out hn); holders[by] = hn + 1; continue; }
+								free.Add(id);
+							}
+							after[z, x] = (target - tp.y) / size.y;
+							cut.Add(id);
+						}
+				}
+			}
+			Vector3 corner = new Vector3(TopFrame.Origin.x, 0f, TopFrame.Origin.y);
+			string where0 = Num(at.x - corner.x) + " " + Num(at.z - corner.z);
+			// (which objects held the land, the most first: the recipe's own, its scattered ones, or the island's - c3 round 8)
+			string heldBy = holders.Count == 0 ? "" : " - held by " + string.Join("; ", holders.OrderByDescending(kv => kv.Value).Take(4).Select(kv => kv.Key.GameObjectName + " at " +
+				Num(kv.Key.transform.position.x - corner.x) + " " + Num(kv.Key.transform.position.z - corner.z) + " (" + kv.Value + " points, " +
+				(recipePlaced.Contains(kv.Key.gameObject) ? "the recipe's" : recipeScattered.Contains(kv.Key.gameObject) ? "the recipe's scattered" : kv.Key == e ? "the line's own" : "the island's") +
+				(holderPart.ContainsKey(kv.Key) ? ", its " + holderPart[kv.Key] : "") + ")").ToArray()) +
+				(holders.Count > 4 ? " and " + (holders.Count - 4) + " more" : "");
+			string farNote = farParts.Count == 0 ? "" : "; not held by " + string.Join("; ", farParts.OrderByDescending(kv => kv.Value).Take(3).Select(kv => kv.Key + " (" + kv.Value + " points, over " + Num(ShaveFarPart) + " m off it)").ToArray());
+			if (cut.Count == 0)
+				return LogWords("  WARNING: zipto: its rope comes " + Num(real0) + " m over the ground at " + where0 + " and the land under it can't be cut (" + held.Count + " points under objects, " + onHill +
+					" rope points over the cave hill's skin)" + heldBy + farNote + ": move an end");
+			float[,,] alphaBefore = td.GetAlphamaps(0, 0, ares, ares);
+			float[,] maskBefore = terraineditor.paintMask != null ? (float[,])terraineditor.paintMask.Clone() : null;
+			td.SetHeights(0, 0, after);
+			Vector3 min = new Vector3(float.MaxValue, 0f, float.MaxValue), max = new Vector3(float.MinValue, 0f, float.MinValue);
+			float most = 0f;
+			foreach (int i in cut)
+			{
+				int x = i % res, z = i / res;
+				float wx = tp.x + x * sx, wz = tp.z + z * sz;
+				most = Mathf.Max(most, (before[z, x] - after[z, x]) * size.y);
+				min = Vector3.Min(min, new Vector3(wx, 0f, wz)); max = Vector3.Max(max, new Vector3(wx, 0f, wz));
+				if (terraineditor.paintMask == null) continue;
+				int ax = Mathf.FloorToInt((wx - tp.x) / size.x * ares), az = Mathf.FloorToInt((wz - tp.z) / size.z * ares);
+				for (int az2 = az - 1; az2 <= az + 1; az2++)
+					for (int ax2 = ax - 1; ax2 <= ax + 1; ax2++)
+						if (ax2 >= 0 && az2 >= 0 && ax2 < terraineditor.paintMask.GetLength(1) && az2 < terraineditor.paintMask.GetLength(0)) terraineditor.paintMask[az2, ax2] = 0f;
+			}
+			TerrainPainter.PaintWorldArea(land, sea, min - new Vector3(3f, 0f, 3f), max + new Vector3(3f, 0f, 3f), terraineditor.paintMask);
+			CommandUndoRedo.UndoRedoManager.Insert(new TerrainStrokeCommand(td, new RectInt(0, 0, res, res), before, new RectInt(0, 0, ares, ares), alphaBefore, maskBefore, terraineditor.paintMask));
+			// (the loose things on the cut down with it: by the land's drop under their pivot, when they lay on it - within 0.5 m)
+			int rode = 0;
+			foreach (KeyValuePair<EditorGameObject, float> kr in riders)
+			{
+				Vector3 op = kr.Key.transform.position;
+				float drop = kr.Value - landY(op.x, op.z);
+				if (drop < 0.01f || op.y > kr.Value + 0.5f || op.y < kr.Value - 1f) continue;
+				kr.Key.transform.position = op - Vector3.up * drop;
+				rode++;
+			}
+			if (rode > 0) Log("  zipto: " + rode + " pickup(s), note(s) or crate(s) on the cut under the rope set down with it");
+			Physics.SyncTransforms();
+			Vector3 at1; float t1;
+			float low1 = ZiplineEnds.RopeLowest(rope, near, far, ground, ZiplineEnds.NearSkip, ZiplineEnds.FarSkip, ZiplineEnds.CheckWant, out at1, out t1);
+			float real1 = at1.y - ground(at1.x, at1.z);
+			string words = "zipto: its rope came " + Num(real0) + " m over the ground at " + where0 + " - the land under it cut down up to " + Num(most) + " m (" + cut.Count + " points, " +
+				Num(min.x - corner.x) + " " + Num(min.z - corner.z) + " .. " + Num(max.x - corner.x) + " " + Num(max.z - corner.z) + ")" + (held.Count > 0 ? ", " + held.Count + " points held by objects on them" + heldBy : "") +
+				(onHill > 0 ? ", " + onHill + " rope points over the cave hill's skin" : "") + (deep.Count > 0 ? ", " + deep.Count + " points held at " + Num(ShaveMost) + " m deep" : "") + farNote + "; the least now " + Num(real1) + " m at " + Num(at1.x - corner.x) + " " + Num(at1.z - corner.z);
+			return LogWords(low1 < ZiplineEnds.LineLow ? "  WARNING: " + words + ": still under the ground check's " + Num(ZiplineEnds.LineWant(new Vector2(far.x - at1.x, far.z - at1.z).magnitude)) + " m there - move an end" : "  " + words);
+		}
+
+		static string LogWords(string words) { Log(words); return words; }
+
+		/// <summary>A building's thin pieces a rope may pass out through: a wall, fence, rail, window or door piece.</summary>
+		static readonly Regex ThinPiece = new Regex("Wall|Fence|Rail|Window|Door|Banister", RegexOptions.IgnoreCase);
+
+		/// <summary>
+		/// zipto's very last step (11-21 c3z48: Cooling Spire's and Hookline Stack's tower ropes left their decks through the
+		/// top storey's RT_Wall1 3.5 m out, which the ground check fails as a rope through an object): the rope as it ends up
+		/// (its zip.slack), tested as the ground check tests it (DevTestsHang.RopeThrough - its first NearSkip and last FarSkip m
+		/// left out); a wall, fence, rail, window or door piece it passes through is left out, an opening where it leaves (up to
+		/// 6). Anything else it passes through is warned. Returns the pieces left out.
+		/// </summary>
+		static int ZipClearThrough(EditorGameObject e)
+		{
+			Terrain land = terraineditor.terrain;
+			MeshPath_Zipline_Landmark line = e != null ? e.GetComponentInChildren<MeshPath_Zipline_Landmark>(true) : null;
+			Transform root = GameObject.Find("PlacedObjects")?.transform;
+			Vector3 near, far;
+			if (land == null || line == null || root == null || !ZiplineEnds.Ends(e.gameObject, e.Props, land.transform.position, out near, out far)) return 0;
+			float slack;
+			if (!float.TryParse(ObjectProps.Get(e.Props, ZiplineEnds.ZipSlack) ?? "", NumberStyles.Float, CultureInfo.InvariantCulture, out slack) || float.IsNaN(slack) || float.IsInfinity(slack) || slack == 0f) slack = float.NaN;
+			Vector3 corner = new Vector3(TopFrame.Origin.x, 0f, TopFrame.Origin.y);
+			var gone = new List<string>();
+			for (int round = 0; round < 6; round++)
+			{
+				Physics.SyncTransforms();
+				List<Vector3> rope = ZiplineEnds.RopeBetween(line, far, near, slack);
+				Vector3 at = near; Transform hit = null;
+				string what = rope.Count >= 2 ? RopeThrough(rope, near, far, e.transform, root, out at, out hit) : null;
+				if (what == null) break;
+				EditorGameObject owner = hit.GetComponent<EditorGameObject>();
+				string n = owner != null ? owner.GameObjectName ?? hit.name : hit.name;
+				string where = Num(at.x - corner.x) + " " + Num(at.z - corner.z) + " h=" + Num(at.y);
+				// (a building's piece, not a cliff or a rock wall: at most 7 m across and 5 m high)
+				Renderer[] hr = hit.GetComponentsInChildren<Renderer>(false);
+				Bounds hb = hr.Length > 0 ? hr[0].bounds : new Bounds(hit.position, Vector3.zero);
+				foreach (Renderer rd in hr) hb.Encapsulate(rd.bounds);
+				if (owner == null || !ThinPiece.IsMatch(n) || Mathf.Max(hb.size.x, hb.size.z) > 7f || hb.size.y > 5f)
+				{
+					Log("  WARNING: zipto: its rope runs through " + what + " at " + where + ": move an end or that");
+					break;
+				}
+				CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(new[] { hit.gameObject }, false));
+				gone.Add(n + " at " + where);
+			}
+			if (gone.Count > 0) Log("  zipto: " + gone.Count + " wall or fence piece(s) its rope ran through left out (an opening where it passes): " + string.Join("; ", gone.ToArray()));
+			return gone.Count;
+		}
+
 		/// <summary>Pieces the recipe left out because they were under the ground whole (this run).</summary>
 		static int leftOutBuried;
 		static bool recipeNoPosts, recipeReseat;
 
-		/// <summary>"reseat trees" at the save: trees and palms whose trunk foot is more than 1 m under the land (the ground
-		/// check's "sunk trunk") set back on the ground round their pivot, as Place sets them. The foot stays within 1 m under
-		/// the land (lower ground under it is a cave floor or a ledge: the land then), and a tree whose foot would be inside a
-		/// placed rock or building stays where it is.</summary>
-		static void ReseatSunkTrees(float seaY)
+		/// <summary>Grass tufts and bushes the generator scattered: a recipe's strokes lowered the ground under some (Firedance Isle's
+		/// pits: tufts 0.5-1 m in the air; Ironreef's peak: Monstera 6-9 m up, IG5 11-18) - the reseat drops the floating ones onto the ground too, and a zipline's cut under the rope goes under them (c3z62: a scattered Balboa_Bush_03 held 13 points of Tracker's Rise's cut, its rope 0.12 m in the ground).</summary>
+		static readonly Regex Tuft = new Regex(@"^(CaravanIsland_\w*Grass|Bush2?|SmallBush_\d+|Balboa_Bush_0[13] Variant|Monstera_\d+|Banana_Bush_\d+)$");
+
+		/// <summary>At a recipe's save (unless "reseat off"): trees and palms whose trunk foot is more than 1 m under the land (the
+		/// ground check's "sunk trunk") or more than 0.4 m over it with nothing placed under it ("trunk foot floating": the
+		/// recipe's strokes lowered the ground under it) set back on the ground round their pivot, as Place sets them. The foot
+		/// stays within 1 m under the land (lower ground under it is a cave floor or a ledge: the land then), and a tree whose
+		/// foot would be inside a placed rock or building stays where it is - unless it is sunk: then it is left out (The General
+		/// Post Office's two snowy pines 1.4-1.5 m into Postmaster's Hill, their foot in a rock's bounds, c3z29 11-21). A tree whose foot is on a steep drop's rim
+		/// (the ground check's "trunk over a drop": 3 of 8 points a trunk's width round it 0.8 m or more lower) moves up to 3 m
+		/// onto the nearest spot that is not (27 such trees on 20 islands, IG5 11-18).</summary>
+		static int ReseatSunkTrees(float seaY)
 		{
 			EditorGameObject[] all = GameObject.Find("PlacedObjects").transform.GetComponentsInChildren<EditorGameObject>();
-			int reseated = 0, kept = 0;
+			int reseated = 0, kept = 0, moved = 0;
+			var sunkKept = new List<GameObject>();
 			foreach (EditorGameObject e in all)
 			{
-				if (!Trunk.IsMatch(e.GameObjectName ?? "")) continue;
+				if (!e.gameObject.activeSelf) continue;
+				bool tuft = Tuft.IsMatch(e.GameObjectName ?? "");
+				if (!tuft && !Trunk.IsMatch(e.GameObjectName ?? "")) continue;
+				// (a trunk laid down by the recipe - tilted more than 60 degrees - is no standing tree: its pivot is its cut end, not a
+				// foot, and "on its bottom" stands it on its branch tips. Rootcellar Deep's root trees, laid with their cut end in
+				// the seabed, went back up 2-4 m into the water at the save - CP4 11-20)
+				if (!tuft && e.transform.up.y < 0.5f) continue;
 				Vector3 p = e.transform.position;
 				float land = GroundY(p.x, p.z);
-				if (land <= seaY || land - p.y <= 1f) continue;
+				if (land <= seaY) continue;
+				bool sunk = !tuft && land - p.y > 1f, floating = p.y - land > 0.4f && !PlacedUnder(e, p, land, all);
+				float rt = 0.6f * Mathf.Max(0.5f, e.transform.lossyScale.x);
+				bool rim = !tuft && !floating && OnDropRim(p.x, p.z, rt);
+				if (rim)
+				{
+					Vector2? off = OffDropRim(p.x, p.z, rt, seaY);
+					if (off.HasValue) { p = new Vector3(off.Value.x, p.y, off.Value.y); land = GroundY(p.x, p.z); sunk = true; }
+				}
+				if (!sunk && !floating) continue;
 				float foot = PlacementOptions.LowestGroundUnder(new Bounds(p, new Vector3(1f, 0f, 1f)));
 				if (foot > land || foot < land - 1f) foot = land;
 				Vector3 to = new Vector3(p.x, foot + PlacementOptions.PivotAboveBottom(e.gameObject), p.z);
-				if (InsidePlaced(to, e, all)) { kept++; continue; }
+				if (InsidePlaced(to, e, all))
+				{
+					// (sunk more than 1 m with nowhere to stand it: the ground check fails it - left out, as a buried plant is)
+					if (!tuft && GroundY(e.transform.position.x, e.transform.position.z) - e.transform.position.y > 1f) sunkKept.Add(e.gameObject);
+					else kept++;
+					continue;
+				}
 				e.transform.position = to;
 				reseated++;
+				if (rim) moved++;
 			}
-			if (reseated + kept > 0) Log("  reseat trees: " + reseated + " sunk trees and palms set back on the ground" + (kept > 0 ? ", " + kept + " left (their foot would be inside a placed object)" : ""));
+			if (sunkKept.Count > 0)
+			{
+				CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(sunkKept, false));
+				Log("  reseat trees: " + sunkKept.Count + " sunk trees whose foot would be inside a placed object left out");
+			}
+			if (reseated + kept > 0) Log("  reseat trees: " + reseated + " sunk or floating trees and palms (and floating grass tufts and bushes) set back on the ground" + (moved > 0 ? ", " + moved + " of them moved off a drop's rim" : "") + (kept > 0 ? ", " + kept + " left (their foot would be inside a placed object)" : ""));
+			return reseated;
+		}
+
+		/// <summary>3 or more of 8 points round x z, <paramref name="rt"/> out, 0.8 m or more under the land at x z (the ground
+		/// check's "trunk over a drop", by the land alone).</summary>
+		static bool OnDropRim(float x, float z, float rt)
+		{
+			float y = GroundY(x, z);
+			int over = 0;
+			for (int k = 0; k < 8; k++)
+			{
+				float a = k * Mathf.PI / 4f;
+				if (y - GroundY(x + rt * Mathf.Cos(a), z + rt * Mathf.Sin(a)) > 0.8f) over++;
+			}
+			return over >= 3;
+		}
+
+		/// <summary>The nearest spot within 3 m of x z (rings 0.5 m apart, 16 ways) over the sea and off a drop's rim; null = none.</summary>
+		static Vector2? OffDropRim(float x, float z, float rt, float seaY)
+		{
+			for (float d = 0.5f; d <= 3.01f; d += 0.5f)
+				for (int k = 0; k < 16; k++)
+				{
+					float a = k * Mathf.PI / 8f, nx = x + d * Mathf.Cos(a), nz = z + d * Mathf.Sin(a);
+					if (GroundY(nx, nz) > seaY + 0.3f && !OnDropRim(nx, nz, rt)) return new Vector2(nx, nz);
+				}
+			return null;
+		}
+
+		/// <summary>Something placed (a deck, a rock, a planter) under a tree's foot, above the land: it stands on that, not on the land.</summary>
+		static bool PlacedUnder(EditorGameObject self, Vector3 foot, float land, EditorGameObject[] all)
+		{
+			foreach (RaycastHit h in Physics.RaycastAll(foot + Vector3.up * 0.3f, Vector3.down, foot.y - land + 0.3f, ~0, QueryTriggerInteraction.Ignore))
+				if (!h.collider.transform.IsChildOf(self.transform) && h.collider.GetComponent<Terrain>() == null) return true;
+			// (and by what shows, its colliders maybe switched off in the editor: a deck, a roof garden's planter)
+			foreach (EditorGameObject o in all)
+			{
+				if (o == self || !o.gameObject.activeInHierarchy || Trunk.IsMatch(o.GameObjectName ?? "")) continue;
+				foreach (Renderer c in o.GetComponentsInChildren<Renderer>())
+				{
+					Bounds b = c.bounds;
+					if (foot.x >= b.min.x && foot.x <= b.max.x && foot.z >= b.min.z && foot.z <= b.max.z && b.max.y > land + 0.1f && b.max.y <= foot.y + 0.3f) return true;
+				}
+			}
+			return false;
 		}
 
 		/// <summary>A point inside the bounds of a placed object's solid colliders (not a tree's or a palm's).</summary>
@@ -2523,7 +4235,18 @@ namespace DynamicIslands
 					// (not down through a building under the floor: a roof slab's corner over a room's ceiling with no collider
 					// read as over nothing, and its post went through the room from the roof to the pit's floor - Shelter
 					// Atoll's storeroom, RF5 11-05. The building holds the floor there; no post)
-					if (PostBlocked(building.Where(bb => bb.max.y < corner.y - 0.3f).ToList(), corner, foot)) { overBuilding++; continue; }
+					// (only a building whose top comes within 1.5 m of the floor holds it, as FloorsOverNothing reads it; one lower down
+					// takes the post on its top instead - 11-21 c3y11, Engine Court's 6.6 m ridge deck over the court's posts had all four
+					// posts left out and stood on its ladders alone)
+					List<Bounds> under = building.Where(bb => bb.max.y < corner.y - 0.3f && PostBlocked(new List<Bounds> { bb }, corner, foot)).ToList();
+					float standOn = float.MinValue;
+					if (under.Count > 0)
+					{
+						float onTop = under.Max(bb => bb.max.y);
+						if (onTop > corner.y - 1.5f) { overBuilding++; continue; }
+						foot = standOn = onTop;
+						if (corner.y - foot < 0.5f) continue;
+					}
 					// (not through a thing: in under the floor, towards its middle, until the post's line is clear)
 					Vector3 p = corner;
 					if (PostBlocked(things, p, foot))
@@ -2535,29 +4258,15 @@ namespace DynamicIslands
 							{
 								Vector3 c = corner + dir * step;
 								if (found || c.x < d.Box.min.x + 0.05f || c.x > d.Box.max.x - 0.05f || c.z < d.Box.min.z + 0.05f || c.z > d.Box.max.z - 0.05f) continue;
-								float f = GroundY(c.x, c.z) - 0.3f;
+								float f = Mathf.Max(GroundY(c.x, c.z) - 0.3f, standOn);
 								if (PostBlocked(things, c, f)) continue;
 								p = c; foot = f; found = true;
 							}
 						if (!found) { blocked++; continue; }
 						dodged++;
 					}
-					GameObject go = PlaceableCatalog.Spawn("RT_Pillar", placedRoot);
-					if (go == null) return stood.Count;
-					go.transform.rotation = PlacementOptions.Straight(go.transform.rotation, true);
-					Renderer[] rs = PlacementOptions.ShapeRenderers(go);
-					if (rs.Length == 0) { UnityEngine.Object.Destroy(go); continue; }
-					Bounds b = rs[0].bounds;
-					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
-					go.transform.localScale = new Vector3(go.transform.localScale.x, go.transform.localScale.y * (p.y - foot) / Mathf.Max(0.1f, b.size.y), go.transform.localScale.z);
-					b = rs[0].bounds;
-					foreach (Renderer r in rs) b.Encapsulate(r.bounds);
-					go.transform.position += new Vector3(p.x - b.center.x, foot - b.min.y, p.z - b.center.z);
-					Collider ownCollider = go.GetComponent<Collider>();
-					if (ownCollider != null) ownCollider.enabled = true;
-					EditorGameObject.Attach(go, "RT_Pillar");
-					recipePlaced.Add(go);
-					CommandUndoRedo.UndoRedoManager.Insert(new ObjectVisibilityCommand(new[] { go }, true));
+					bool spawned;
+					if (!StandPost(placedRoot, p, foot, out spawned)) { if (!spawned) return stood.Count; continue; }
 					stood.Add(p);
 				}
 			if (stood.Count > 0) Log("  " + stood.Count + " posts stood under " + gaps.Count + " floors and decks over nothing" + (dodged > 0 ? ", " + dodged + " moved off things" : ""));
@@ -2612,7 +4321,7 @@ namespace DynamicIslands
 			foreach (EditorGameObject e in placed)
 			{
 				string n = e.GameObjectName ?? "";
-				if (!e.gameObject.activeInHierarchy || n.StartsWith("Zone_") || OverlapIgnore.IsMatch(n) || n.IndexOf("Pillar", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				if (!e.gameObject.activeInHierarchy || zipDeckLadders.Contains(e.gameObject) || n.StartsWith("Zone_") || OverlapIgnore.IsMatch(n) || n.IndexOf("Pillar", StringComparison.OrdinalIgnoreCase) >= 0 ||
 					!(Structural.IsMatch(n) || FloorLike.IsMatch(n) || n.IndexOf("Ceiling", StringComparison.OrdinalIgnoreCase) >= 0)) continue;
 				foreach (Renderer r in e.GetComponentsInChildren<Renderer>(false))
 					if (r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly) boxes.Add(r.bounds);
@@ -2631,6 +4340,96 @@ namespace DynamicIslands
 				if (top.x + r > b.min.x + OverlapMargin && top.x - r < b.max.x - OverlapMargin && top.z + r > b.min.z + OverlapMargin && top.z - r < b.max.z - OverlapMargin) return true;
 			}
 			return false;
+		}
+
+		/// <summary>The box round an object's shown meshes, as the ground check measures it.</summary>
+		static Bounds MeshBox(GameObject go)
+		{
+			Renderer[] rs = go.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
+			if (rs.Length == 0) return new Bounds(go.transform.position, Vector3.zero);
+			Bounds b = rs[0].bounds;
+			foreach (Renderer r in rs) b.Encapsulate(r.bounds);
+			return b;
+		}
+
+		/// <summary>
+		/// The save's last grounding step (11-21): what the ground check would call a floating rock or a buried thing, set right
+		/// in the editor. A loose rock or boulder whose underside is over what is under it (RockFloats) goes down till most of
+		/// its nine points rest - or is left out when that would sink it more than half its height; a prop whose whole top is
+		/// under the ground (the check's "buried" rule) goes up onto the ground at its middle, when it is no more than 2.5 m
+		/// down (deeper is a thing set in a cave or a tunnel on purpose: left, the check reports it). Strokes after the scatter
+		/// or the place moved the ground under them: Engine Court's, Thalassa Mooring's and Caisson Yard's boulders hung 0.5-2 m
+		/// in the air, Caisson Yard's barrels and forklift 0.2-1.4 m in the yard (the ground check 11-21).
+		/// </summary>
+		static void SettleAtSave(float sea)
+		{
+			Terrain land = terraineditor.terrain;
+			GameObject placed = GameObject.Find("PlacedObjects");
+			if (land == null || placed == null) return;
+			// (the ground as the world will have it - the caves' rooms cut - and a thing in a cave piece's room left alone: the
+			// land under a den's floor is not its ground. Old Mine Islet's rails, carts and crates on its den's 4.25 m floor were
+			// set up 1.8-2.6 m onto the land the editor had not cut yet, and floated in the world, c3z40 11-21)
+			CaveGround.EditorCatchUp(land);
+			Physics.SyncTransforms();
+			Func<Vector3, bool> inRoom = CaveGround.EditorRoomTest();
+			var lowered = new List<string>(); var lifted = new List<string>(); var hide = new List<GameObject>();
+			int inRooms = 0;
+			foreach (EditorGameObject e in placed.transform.GetComponentsInChildren<EditorGameObject>())
+			{
+				if (e == null || !e.gameObject.activeInHierarchy) continue;
+				Transform o = e.transform;
+				string n = (e.GameObjectName ?? o.name).Replace("(Clone)", "").Trim();
+				bool rock = LooseRock.IsMatch(n);
+				if (!rock && NotABase.IsMatch(n)) continue;
+				if (ContentCatalog.IsCreature(n) || n.StartsWith("Zone_") || n.StartsWith("Note_") || n.StartsWith("Loot_") || n.StartsWith("Pickup_") ||
+					n.IndexOf("Ladder", StringComparison.OrdinalIgnoreCase) >= 0 || Hangs.IsMatch(n) || ChainLink.IsMatch(n) || n.StartsWith("ZiplinePath", StringComparison.Ordinal) ||
+					n.StartsWith("VP_Skylift", StringComparison.Ordinal) || n == "Elevator" || CaveBacks.Wants(n) || Trunk.IsMatch(n) ||
+					ContentCatalog.IsTreasure(n)) continue; // (buried treasure is meant to be under the ground: Outer Breakwater's two were lifted 11-21)
+				Renderer[] rs = o.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled && r.name != ContentCatalog.MarkerOnly).ToArray();
+				if (rs.Length == 0) continue;
+				float bottom = rs.Min(r => r.bounds.min.y);
+				Bounds whole = rs[0].bounds;
+				foreach (Renderer r in rs) whole.Encapsulate(r.bounds);
+				Renderer[] baseParts = rs.Where(r => r.bounds.min.y < bottom + 0.6f).ToArray();
+				Bounds b = baseParts[0].bounds;
+				foreach (Renderer r in baseParts) b.Encapsulate(r.bounds);
+				string at = n + " at " + Num(b.center.x) + " " + Num(b.center.z);
+				if (rock)
+				{
+					int seen, high; float most, least;
+					if (b.min.y <= sea + 0.3f || !RockFloats(o, b, land, out seen, out high, out most, out least)) continue;
+					var gaps = new List<float>();
+					for (int k = 0; k < 9; k++)
+					{
+						float g = RockGap(o, Mathf.Lerp(b.min.x, b.max.x, 0.25f + 0.25f * (k % 3)), Mathf.Lerp(b.min.z, b.max.z, 0.25f + 0.25f * (k / 3)), b, land);
+						if (!float.IsNaN(g)) gaps.Add(g);
+					}
+					gaps.Sort();
+					float allow = 0.3f + 0.15f * Mathf.Max(b.extents.x, b.extents.z);
+					float d = gaps.Count == 0 ? 0f : Mathf.Max(0f, gaps[gaps.Count / 2] - allow * 0.5f);
+					if (d > 0f && d <= 0.5f * whole.size.y)
+					{
+						o.position += Vector3.down * d;
+						Physics.SyncTransforms();
+						if (!RockFloats(o, new Bounds(b.center + Vector3.down * d, b.size), land, out seen, out high, out most, out least)) { lowered.Add(at + " (" + Num(d) + " m)"); continue; }
+						o.position += Vector3.up * d;
+						Physics.SyncTransforms();
+					}
+					hide.Add(e.gameObject);
+					continue;
+				}
+				float ground = GroundY(b.center.x, b.center.z);
+				float under = ground - whole.max.y;
+				if (under <= 0.05f || whole.max.y <= sea - 1f || under > 2.5f || InDugPassage(whole)) continue;
+				if (inRoom(whole.center) || inRoom(new Vector3(b.center.x, b.min.y + 0.1f, b.center.z)) || inRoom(new Vector3(b.center.x, whole.max.y - 0.05f, b.center.z))) { inRooms++; continue; }
+				o.position += Vector3.up * (ground - b.min.y);
+				lifted.Add(at + " (" + Num(ground - b.min.y) + " m)");
+			}
+			if (hide.Count > 0) CommandUndoRedo.UndoRedoManager.Execute(new ObjectVisibilityCommand(hide, false));
+			if (lowered.Count + hide.Count > 0) Log("  " + lowered.Count + " rocks in the air set down on what is under them" + (lowered.Count > 0 ? ": " + string.Join("; ", lowered.Take(12).ToArray()) : "") + (hide.Count > 0 ? "; " + hide.Count + " left out (too far up to set down)" : ""));
+			if (lifted.Count > 0) Log("  " + lifted.Count + " things under the ground set up on it: " + string.Join("; ", lifted.Take(12).ToArray()));
+			if (inRooms > 0) Log("  " + inRooms + " things under the land but in a cave piece's room left on its floor");
+			Physics.SyncTransforms();
 		}
 
 		/// <summary>What BuriedWhole kept only because its middle is in a dug passage (its top in the rock): the save logs them.</summary>
@@ -2655,7 +4454,35 @@ namespace DynamicIslands
 				if (!ShowsAboveGround(b, ground)) KeptByMiddle.Add(go.name + " at " + Num(b.center.x) + " " + Num(b.center.y) + " " + Num(b.center.z));
 				return false;
 			}
+			// (or in a placed cave's room: a cave piece's roof over its middle and its floor under it - Sinkmarket's bonded cellar,
+			// kit_st under the raised mound, lost both its caveloot stones at the save as buried, cv43 11-21)
+			if (!ShowsAboveGround(b, ground) && InPlacedCave(b.center))
+			{
+				KeptByMiddle.Add(go.name + " at " + Num(b.center.x) + " " + Num(b.center.y) + " " + Num(b.center.z) + " (in a placed cave)");
+				return false;
+			}
 			return !ShowsAboveGround(b, ground);
+		}
+
+		/// <summary>Whether a point is in a placed cave piece's passage: the nearest cave piece met going up is a roof (facing down,
+		/// within 12 m) and the nearest going down a floor (facing up, within 3 m).</summary>
+		static bool InPlacedCave(Vector3 p)
+		{
+			System.Func<Collider, bool> cave = c =>
+			{
+				EditorGameObject eg = c.GetComponentInParent<EditorGameObject>();
+				string n = eg != null ? eg.GameObjectName ?? "" : "";
+				return n.IndexOf("Cave", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Tunnel", StringComparison.OrdinalIgnoreCase) >= 0;
+			};
+			System.Func<Vector3, float, RaycastHit?> first = (d, len) =>
+			{
+				RaycastHit? best = null;
+				foreach (RaycastHit h in Physics.RaycastAll(p, d, len, ~0, QueryTriggerInteraction.Ignore))
+					if (cave(h.collider) && (!best.HasValue || h.distance < best.Value.distance)) best = h;
+				return best;
+			};
+			RaycastHit? up = first(Vector3.up, 12f), down = first(Vector3.down, 3f);
+			return up.HasValue && up.Value.normal.y < -0.3f && down.HasValue && down.Value.normal.y > 0.3f;
 		}
 
 		/// <summary>
@@ -2716,6 +4543,46 @@ namespace DynamicIslands
 				if (!held) return false;
 			}
 			return true;
+		}
+
+		// (what is under a lifted plant, for the log: the first thing below its foot that is not itself, and how far down)
+		static string UnderIt(EditorGameObject e, Vector3 p)
+		{
+			foreach (RaycastHit h in Physics.RaycastAll(new Vector3(p.x, p.y + 0.3f, p.z), Vector3.down, 40f, ~0, QueryTriggerInteraction.Ignore).OrderBy(x => x.distance))
+				if (h.collider != null && h.collider.GetComponentInParent<EditorGameObject>() != e) return " (under it: " + h.collider.name + " " + Num(h.distance - 0.3f) + " m down)";
+			return " (under it: nothing in 40 m)";
+		}
+
+		/// <summary>The thing's foot or its body's bottom over a cave hill's skin (CaveMountain.SkinName) within 1.1 m (rays from
+		/// 0.3 m over them): it stands on the mountain the world drapes over the island's caves - ground to a player, though the
+		/// terrain under it lies lower.</summary>
+		static bool OnCaveSkin(EditorGameObject e, Vector3 p)
+		{
+			float bottom = p.y;
+			Renderer[] parts = e.GetComponentsInChildren<Renderer>(false).Where(r => r is MeshRenderer && r.enabled).ToArray();
+			if (parts.Length > 0) { Bounds whole = parts[0].bounds; foreach (Renderer r in parts) whole.Encapsulate(r.bounds); bottom = Mathf.Min(bottom, whole.min.y); }
+			foreach (Vector3 from in new[] { new Vector3(p.x, p.y + 0.3f, p.z), new Vector3(p.x, bottom + 0.3f, p.z) })
+				foreach (RaycastHit h in Physics.RaycastAll(from, Vector3.down, 1.4f, ~0, QueryTriggerInteraction.Ignore))
+					if (h.collider != null && h.collider.name == CaveMountain.SkinName) return true;
+			return false;
+		}
+
+		/// <summary>The thing's foot under a cave hill's skin (CaveMountain.SkinName): a ray up from it meets the skin's
+		/// underside before anything else that is not the thing itself.</summary>
+		static bool InCaveSkin(EditorGameObject e, Vector3 p)
+		{
+			bool was = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				foreach (RaycastHit h in Physics.RaycastAll(p, Vector3.up, 60f, ~0, QueryTriggerInteraction.Ignore).OrderBy(x => x.distance))
+				{
+					if (h.collider == null || h.collider.GetComponentInParent<EditorGameObject>() == e) continue;
+					return h.collider.name == CaveMountain.SkinName;
+				}
+				return false;
+			}
+			finally { Physics.queriesHitBackfaces = was; }
 		}
 
 		static bool ShowsAboveGround(Bounds b, Terrain ground)
@@ -2925,7 +4792,9 @@ namespace DynamicIslands
 
 		static float F(string s) { return float.Parse(s.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture); }
 
-		static string Unescape(string s) { return (s ?? "").Replace("\\n", "\n"); }
+		// (\\n stays a written \n: a new line inside a journal or dialogue text in an event, whose actions a real
+		// line break splits - quest softlock audit 11-23: three islanders' journal pages were cut after their first line)
+		static string Unescape(string s) { return (s ?? "").Replace("\\\\n", "\u0001").Replace("\\n", "\n").Replace("\u0001", "\\n"); }
 
 		static Dictionary<string, string> Options(IEnumerable<string> tokens)
 		{

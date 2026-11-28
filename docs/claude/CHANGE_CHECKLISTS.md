@@ -165,7 +165,7 @@ RECIPE_FORMAT.md and PLAY_FORMAT.md describe the content test files.
   - Add a `WorldPlan` field and handle it in `WorldPlan.Parse` / `WorldPlan.ToText`.
   - Store the world's copy in `WorldDirector.WriteLines` / `ReadLine` (`@plan...`).
   - Add a `WorldPlanWindow.Recipe...` hook and a `plan` verb in `DevTests.RecipeRoutine`.
-**Test**: `CIRuleTest`, `CIPlanTest`, `CIPlanWorld` (`DevTestsDirector.cs`), `CIStoryChainUnit`, `CIScCheckRuntime`. A plan `.play` can use `tune`, `arrive`, `sail` and `expect chain`.
+**Test**: `CIRuleTest`, `CIPlanTest`, `CIPlanWorld` (`DevTestsDirector.cs`), `CIStoryChainUnit`, `CIScCheckRuntime`, `CIStoryNoteStale` (`note:` done-whens, `DevTestsQuestSoftlock.cs`). A plan `.play` can use `tune`, `arrive`, `sail` and `expect chain`.
 **Docs**: GUIDE `### 7.3 A rule card, part by part`, `### 7.4 Everything a rule can do`, `### 7.5 Check: finding and fixing problems` and `### 7.7 The plan file`; README `## World plans`.
 
 ## New quest step kind
@@ -293,7 +293,7 @@ This is the most common change in history. It does not touch any `.cs` file.
   Place furniture between columns; under a big flat roof of floor plates give it deliberate columns clear of the
   furniture, or let `save`/`posts` stand its posts (they now move off things, or are left out).
 **Test**: `CIRecipe <name>`, `CIFloating` in the editor (0 problems), then `CIPlay <name>`, and in a test world
-`CIGroundIslands <name>`, `CIOverlapIslands <name>` and `CIOneSidedIslands <name>` (TEST_CATALOGUE §G, IG7/IG8/IG9 - the ground check also reports zipline and wire ends in the air and props that hang from nothing; a one-sided facade piece used as a wall needs a twin turned round, its face to the room). A new plan: both with `plans`.
+`CIGroundIslands <name>`, `CIOverlapIslands <name>`, `CIOneSidedIslands <name>` and `CISheetIslands <name>` (bare land cliffs 7 m+ in one step at the waterline, drawn as a stretched pale sheet; fix with the recipe step `cliffs`; add `shots` to either command for pictures of sheets, cave rim gaps and see-through looks; `CISheetIslands <name> shots rocks=<piece>` (or `A|B|C`) also pictures up to 4 of that piece standing in the waterline per island (only the stood ones: feet 2.3-3 m under the sea), each from 8-16 m out over the most open water, 4.5-12 m up, turned up to 80 degrees, with the rock itself the first thing met on the look and nothing else in the near part of the view; with none, a rock in a pit's waterline is seen across the pit from its own water (55-85% of the way to the far side, 8 m of water at least, 3-9 m up; side looks clear of placed things and of land in their first 35%; logged `from across the pit's own water`, c3z70); a rock with no such eye is skipped for the next (`no clear eye for the rock at x z`), up to 4 of at most 20 tried - the `cliffs rocks=` rocks, files `shot_rock_<island>_<n>_top<m>.png`, listed in the log as `rock pictures:`) (TEST_CATALOGUE §G, IG7/IG8/IG9 - the ground check also reports zipline and wire ends in the air, a zipline's line within 0.5 m of the ground (`zipline line in the ground`; less over the 3 m before its landing's last 3 m), a rope through a placed object (`zipline rope through an object`: a fence, a wall, a deck) and props that hang from nothing; a one-sided facade piece used as a wall needs a twin turned round, its face to the room). A new plan: both with `plans`.
 
 ## Every feature
 - Update the docs in the same commit (README `## Documentation`):
