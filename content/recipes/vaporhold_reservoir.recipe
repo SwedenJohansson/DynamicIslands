@@ -160,7 +160,7 @@ pop
 # a jump course, five survey pegs about the island (a set), and at the hub the outflow gate that wants the level float and the outflow gate key
 call hw_zone x=-17.87 z=31.17 al=vr_trailz id=vr_trail r=5 msg="The trail up Spillway Hill starts here - round and up."
 call hw_zone x=-38 z=46 al=vr_summitz id=vr_summit r=8 h=1 msg="The top of Spillway Hill. The whole island below you."
-call hw_mast x=-41 z=48 h0=22 lv=6 a=vr_mast chest=vr_topchest top=RT_Spotlight
+call hw_mast x=-41 z=48 h0=22 lv=6 a=vr_mast chest=vr_topchest top=RT_Spotlight deckdrop=0.45
 place ZiplinePath_Landmark vr_zip at -34.8 43.4 h=23.35
 zipto vr_zip -1.83 21.56
 place Creature_Goat vr_goats at -13.87 34.17 ground
