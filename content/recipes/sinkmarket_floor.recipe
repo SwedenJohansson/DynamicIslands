@@ -36,7 +36,6 @@ elevation -30
 brush flatten at 0 0 r=14 s=20 frames=200 h=3
 brush flatten at -13 11 r=5 s=20 frames=60 h=3
 brush flatten at 7.25 7.25 r=5 s=20 frames=200 h=3
-brush flatten at 8 -8 r=5 s=20 frames=200 h=3
 origin
 clear at 0 0 r=4
 clear at -8.5 -4.5 r=3.5
@@ -258,8 +257,9 @@ clear at 9 -9 r=4 only=(?i)boulder|rock|tree|bush|bamboo
 #  at 9.2-9.7 -3.9..-5.0, h 3.7-4.1: points 0-0.5 m under the ground are laid on it). 592a728b moved the mouth 0.4 m
 #  into the mound: 62 rays there and its back seen from the square (cvp_smo 32 rays) - back at 9 -9, and the slope over
 #  that leg raised to a shoulder at 4.8: 78 rays, the ground there the same as without it - the cave tool sets the
-#  ground round its frame. The mouth now stands on the square's flat seabed, flattened out to it before the cave: no slope
-#  round its legs to lie along)
+#  ground round its frame. 11-28 isl1126_l: a flatten at 8 -8 r=5 h=3 under the mouth took the rays to 38 (still a FAIL,
+#  the north-east leg's 42 deg slope is the kit's own mound) but let the bore's floor down 0.8 m (-25.6 to -26.4) and the
+#  caves play stuck on the way out at 19.5 -19.5 - taken out again; the leg's fight is left to the cave tool)
 call kit_st x=9 z=-9 yaw=135 len=14 slope=0 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=0 titanium=0 wet=1 as=smcellar
 prop smcellar cave.rock=plain
 prop smcellar cave.dome=18
