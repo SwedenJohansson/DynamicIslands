@@ -172,7 +172,8 @@ end
 # feet 0.33 m under its end, and a jump off a ladder rises 0.2 m: the deck tiles beside the hatch, 0.47 m over the feet, were
 # out of reach and the player fell back down the shaft (Old Mine's headframe, reach trace 11-06). 0.45 puts the deck at the
 # climber's feet, so stepping sideways off the ladder lands on it.
-macro hw_mast x=0 z=0 h0=30 lv=9 a=mast chest=mastchest top=none deckdrop=0
+# (11-28: 0.45 is the default - the walker's ladder-top step now runs at 1x, as a player's, and mast decks at 0 failed reach)
+macro hw_mast x=0 z=0 h0=30 lv=9 a=mast chest=mastchest top=none deckdrop=0.45
 push at {$x-1.5} {$z-1.5} h=$h0
 for k 0 {$lv-1}
 place Block_Wall_Tier3 $a at 2.25 0 y={$k*2.42}
