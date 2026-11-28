@@ -556,6 +556,12 @@ note crewjournal Crew's journal | OLOF'S CREW - THE JOURNAL\n\nThe warden had a 
 call hw_zone x=0 z=-56 al=headfootz id=headfoot r=6 msg="Lighthouse Head. A path cut round the hill to the old lighthouse mast on its top."
 call hw_zone x=0 z=-74 al=headtopz id=lighthouse r=8 h=1 msg="The top of Lighthouse Head. The mast's ladder runs up inside it - the keeper's box hangs on the deck."
 story keeperkey|Lighthouse keeper's key|quest:Utopia_KeyEntrance|The third key to the warden's gate - the old lighthouse keeper's.
+# (11-28 rg8d REACH: the Keeper's box still 'stuck at the ladder' - the climber reached the mast's top, but the lantern
+#     (the macro's top=, on the deck tile at its +x -z, behind the ladder) stood on the tile a climber steps back onto; the
+#     walker stepped off across the hatch's corner to the far tile, fell down the shaft and stuck in the corner at its
+#     foot. The lamp moved to the far corner of the -x +z tile, clear of the hatch, and the tile behind the ladder left free)
+clear at 0.75 -74.75 r=0.6 all above=35 only=^Placeable_Lantern_Metal
+place Placeable_Lantern_Metal - at -1.15 -72.85 h=40.97 drop
 note keeperbox Keeper's box | The lighthouse keeper's box on the mast deck: the warden's third key, a lamp wick, his pipe.
 loot keeperbox story:keeperkey*1;Rope*2;Bolt*2
 prop keeperbox loot.refill=0
