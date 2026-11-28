@@ -162,7 +162,7 @@ call rr_land x1=30 z1=-12 x2=50 z2=-14 h=3 r=8
 call hw_mount x=48 z=58 b=18 h=22
 call hw_trail x=48 z=58 b=18 h=22 a0=225 turn=300 n=24 h0=3
 brush flatten at 48 58 r=8 s=20 frames=400 h=22
-call hw_mast x=48 z=58 h0=22 lv=5 a=lighthouse chest=lampbox top=Placeable_Lantern_Metal
+call hw_mast x=48 z=58 h0=22 lv=5 a=lighthouse chest=lampbox top=Placeable_Lantern_Metal deckdrop=0.45
 # B The container yard (east): the ship's deck cargo washed up and stacked where it fell; the harbour office beside it
 call rr_containers x=60 z=4 h=3 yaw=80 n=3 al=containers
 place Loot_Crate pursercrate at 54 -2 ground sit yaw=20
