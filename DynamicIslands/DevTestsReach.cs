@@ -1434,6 +1434,7 @@ namespace DynamicIslands
 			GC.Collect();
 			shiftGrid = null; shiftTargets = null;
 			ReachCreaturesBack();
+			ReachRaftsBack();
 			done(problems);
 		}
 
@@ -2708,6 +2709,54 @@ namespace DynamicIslands
 			reachAway.Clear();
 		}
 
+		// (the walker's collisions with a raft that is not the island's, turned off while a reach runs, see ReachWalkPath)
+		static readonly List<KeyValuePair<Collider, Collider>> reachRaftIgnored = new List<KeyValuePair<Collider, Collider>>();
+
+		static CharacterController ReachCC(Network_Player pl)
+		{
+			return pl.PersonController != null && pl.PersonController.controller != null ? pl.PersonController.controller : pl.GetComponent<CharacterController>();
+		}
+
+		/// <summary>A raft's block (a Block not the island's) round the walker's body or just over its head, not yet passed
+		/// through; null when none.</summary>
+		static Collider ReachForeignRaft(Network_Player pl, IslandWorldState.Entry e)
+		{
+			CharacterController cc = ReachCC(pl);
+			if (cc == null || e.Root == null) return null;
+			Vector3 f = ReachFeet(pl);
+			foreach (Collider c in Physics.OverlapCapsule(f + Vector3.up * 0.2f, f + Vector3.up * (cc.height + 0.6f), 1.0f, reachMask, QueryTriggerInteraction.Ignore))
+				if (c != null && !c.transform.IsChildOf(pl.transform) && !c.transform.IsChildOf(e.Root.transform) && c.GetComponentInParent<Block>() != null && !Physics.GetIgnoreCollision(cc, c))
+					return c;
+			return null;
+		}
+
+		/// <summary>The walker passes through the raft c belongs to (its blocks' colliders within 40 m); how many.</summary>
+		static int ReachIgnoreRaft(Network_Player pl, IslandWorldState.Entry e, Collider c)
+		{
+			CharacterController cc = ReachCC(pl);
+			Block b = c.GetComponentInParent<Block>();
+			if (cc == null || b == null) return 0;
+			Transform top = b.transform;
+			for (Transform t = b.transform.parent; t != null; t = t.parent) if (t.GetComponent<Block>() != null) top = t;
+			Transform holder = top.parent != null ? top.parent : top;
+			int n = 0;
+			foreach (Collider o in holder.GetComponentsInChildren<Collider>())
+			{
+				if (o == null || o.isTrigger || (e.Root != null && o.transform.IsChildOf(e.Root.transform)) || o.GetComponentInParent<Block>() == null) continue;
+				if ((o.bounds.center - cc.transform.position).sqrMagnitude > 1600f || Physics.GetIgnoreCollision(cc, o)) continue;
+				Physics.IgnoreCollision(cc, o, true);
+				reachRaftIgnored.Add(new KeyValuePair<Collider, Collider>(cc, o));
+				n++;
+			}
+			return n;
+		}
+
+		static void ReachRaftsBack()
+		{
+			foreach (var p in reachRaftIgnored) if (p.Key != null && p.Value != null) Physics.IgnoreCollision(p.Key, p.Value, false);
+			reachRaftIgnored.Clear();
+		}
+
 		/// <summary>The player through a path of the grid, moved by Raft itself: the first point is the start in the sea (the
 		/// one teleport); then the walker looks at the next point and holds Walk (swimming and diving look up or down at it),
 		/// jumps at a ledge it doesn't get over, turns aside a little when stuck, and on a ladder looks up or down and holds Walk.
@@ -2804,7 +2853,8 @@ namespace DynamicIslands
 			bool ladderUpTop = false; Vector3 ladderFace = Vector3.zero;
 			// (the ladder last climbed - its waypoint, its top - and the tries at stepping off its top, see ReachLadderClock)
 			int ladI = -1, ladK = -1, dismountTry = 0; float ladTopY = 0f;
-			int backs = 0, bj;
+			int backs = 0, bj, rafts = 0;
+			Collider fr;
 			for (int i = 1; i < way.Count; i++)
 			{
 				wdWay = Time.realtimeSinceStartup; wdTried = false; wdMoved = 99f; hbProg++; wpAt = i;
@@ -3021,8 +3071,18 @@ namespace DynamicIslands
 					if (dist < best - 0.15f) { best = dist; since2 = 0f; } else since2 += Time.deltaTime;
 					if (since2 > 2.5f)
 					{
+						// (a raft that is not the island's over the walker or in its way - a trader raft or a stray drifting by: on
+						// Spirecrest's drowned exchange the swimmer came up under a 'Scene Prefabs' block 20 m south of the pit, at a
+						// different spot each walk, the grid's way clear when it was made, rg8a2 11-28. A player swims round it; the
+						// walker passes through it, as the frame check already lets it, noted)
+						if (rafts < 3 && (fr = ReachForeignRaft(pl, e)) != null)
+						{
+							rafts++;
+							Log("  (a raft not the island's in the way at " + (p - e.Position).ToString("F1") + ": " + BlockerName(fr) + "; the walker passes through its " + ReachIgnoreRaft(pl, e, fr) + " colliders)");
+							since2 = 0f;
+						}
 						// (a jump at whatever stops it - a ledge, a rock's lip at the shore - as a player would)
-						if (hops < 3 && d.y > -0.9f) { hops++; hopFrom = p.y; jumpT = 0.4f; since2 = 1.2f; }
+						else if (hops < 3 && d.y > -0.9f) { hops++; hopFrom = p.y; jumpT = 0.4f; since2 = 1.2f; }
 						// (a swimmer at a lip: a player climbs out where the lip top is near the surface (up to 0.6 m over the sea, within
 						// 1.6 m of the feet), or stands on the bed by the lip (standing depth, 0.8 m short of it) and steps or jumps up
 						// (RJump). Raft's water controller cannot rise out of the sea, so the walker lifts the feet onto the lip - varuna and
