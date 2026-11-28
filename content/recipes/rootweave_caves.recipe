@@ -199,6 +199,31 @@ brush flatten at 11 2 r=3 s=20 frames=150 h=38.5
 clear at 11 2 r=4 all
 # the climb: a mountain (trail winding up from bearing 0), a 8-storey climbing tower on its top, the summit box
 call vd_tower x=11 z=2 h0=38.5 lv=8 a=rwtw box=rwbox zal=rwtopz zid=rw_top msg="The survey mast, the highest point of Verdance. The wind sings in the rope rail."
+# (pfrw 11-28 REACH: rw_top and the Survey mast box - the walker fell back down the shaft from the ladder's top (57.8) three
+# times, each way off: vd_tower's deck lies 0.47 m over the feet Raft holds a climber at, at a ladder's top, out of reach -
+# as hw_mast before its deckdrop. The deck, its landing over the back wall, the landing's fences, the box and the flag
+# re-laid 0.45 lower, as hw_mast deckdrop=0.45 does; the shaft's top walls stay a low parapet. lib_verdance stays as it is)
+clear at 11 2 r=2.5 all only=Block_Floor_Tier3|Loot_ChestSmall|Placeable_Flag_05 above=57.5
+clear at 11.75 5 r=0.3 all only=Fence_Rope above=57.5
+clear at 10.25 5 r=0.3 all only=Fence_Rope above=57.5
+clear at 9.5 4.25 r=0.3 all only=Fence_Rope above=57.5
+clear at 12.5 4.25 r=0.3 all only=Fence_Rope above=57.5
+push at 9.5 0.5 h=38.5
+place Block_Floor_Tier3 rwtw at 0.75 0.75 y=18.96
+place Block_Floor_Tier3 rwtw at 2.25 0.75 y=18.96
+place Block_Floor_Tier3 rwtw at 0.75 2.25 y=18.96
+place Block_Floor_Tier3 rwtw at 2.25 3.75 y=18.96
+place Block_Floor_Tier3 rwtw at 0.75 3.75 y=18.96
+place Block_Wall_Fence_Rope - at 2.25 4.5 y=18.96
+place Block_Wall_Fence_Rope - at 0.75 4.5 y=18.96
+place Block_Wall_Fence_Rope - at 0 3.75 y=18.96 yaw=90
+place Block_Wall_Fence_Rope - at 3 3.75 y=18.96 yaw=90
+place Loot_ChestSmall rwbox at 0.75 2.25 y=19.075 yaw=180
+place Placeable_Flag_05 - at 2.5 0.5 y=19.075
+pop
+prop rwtw tint.color=#6e6a64
+prop rwtw tint.amount=0.55
+prop rwbox loot.refill=0
 note rwbox Survey mast box | SURVEY - MAST. Every cave mouth on this hill is in sight from here: the Fungus Hall camp, the bees, the drowned one, the den.
 loot rwbox Battery*1;Rope*3;Bolt*3
 place ZiplinePath_Landmark rwzip at 15.97 0.28 h=59.55

@@ -2352,7 +2352,9 @@ namespace DynamicIslands
 						// (an item a step wants may come from a creature, a dig, or a behaviour's give - not a fault of reach)
 						// (a note a behaviour shows later - hidden at the start, so not here now - that the island's own play reads:
 						// checked by play, not a fault of reach; Rootcore, Tracker's Rise, Rootweave 11-09)
-						string readBy = st.Type == "read" ? ByPlayFile(tg, "read") : null;
+						// (a chest a behaviour shows when its machine runs, opened by the island's play, the same: the Abyss's Compressor chest
+						// (hw_machine's reward, beh.hidden), pfab 11-28)
+						string readBy = st.Type == "read" || st.Type == "open" ? ByPlayFile(tg, st.Type) : null;
 						report.Add("REACH " + e.HostName + " | step target '" + tg + "' | " + label + " | " + (st.Type == "collect" || st.Type == "blueprint" ? "NOTE not in a chest or object found now (a behaviour, creature or dig gives it)" : readBy != null ? "NOTE hidden now (a behaviour shows it): CHECKED BY PLAY (" + readBy + " reads it)" : "FAIL not found on the island now"));
 						if (st.Type != "collect" && st.Type != "blueprint" && readBy == null) problems++;
 						continue;
@@ -3008,13 +3010,16 @@ namespace DynamicIslands
 				// spot and the least of the shaft to cross: the walker stepped straight at the grid's spot - over the hatch's corner -
 				// and fell; alone it made it on the second try with the edge (utdiag1), but in the full run it fell 2 m onto a ledge
 				// in the shaft and never took the ladder again: Utopia's Keeper's box utfix1, Rootweave's vd_tower rwfix2 11-28)
-				Vector3? edge = !afterUp ? (Vector3?)null : tooHigh ? LadderTopFloor(hf, W(k), hf.y - 0.3f, hf.y + 0.75f) : (dismountTry > 0 || !ahead) ? LadderTopFloor(hf, W(k), W(k).y - 0.35f, W(k).y + 0.35f, true) : null;
+				// (but both tries at that edge fell at the Abyss's peak mast, pfab 11-28, which the old order had made: each try steps off
+				// another way - straight at the spot, the nearest floor edge, the edge with floor on to the spot - three tries, not two)
+				int offWay = tooHigh ? -1 : !ahead ? (dismountTry == 0 ? 2 : dismountTry == 1 ? 1 : 0) : (dismountTry == 0 ? 0 : dismountTry == 1 ? 1 : 2);
+				Vector3? edge = !afterUp ? (Vector3?)null : tooHigh ? LadderTopFloor(hf, W(k), hf.y - 0.3f, hf.y + 0.75f) : offWay > 0 ? LadderTopFloor(hf, W(k), W(k).y - 0.35f, W(k).y + 0.35f, offWay == 2) : null;
 				float stepY = tooHigh && edge.HasValue ? edge.Value.y : W(k).y;
 				if (tooHigh && edge.HasValue) { offTo = edge.Value - hf; offTo.y = 0f; ahead = ladderFace.sqrMagnitude < 0.01f || offTo.sqrMagnitude < 0.01f || Vector3.Dot(offTo.normalized, ladderFace.normalized) > 0.7f; }
 				if (ReachLadderDismount(ladderUpTop, hf.y, stepY, ahead))
 				{
 					hopFrom = hf.y;
-					if (!ahead && stepY > hf.y + 0.05f) riseT = dismountTry == 1 ? 0.6f : 0.3f;
+					if (!ahead && stepY > hf.y + 0.05f) riseT = dismountTry >= 1 ? 0.6f : 0.3f;
 					jumpT = Mathf.Max(0.45f, riseT + 0.15f);
 				}
 				if (reachOnly != "" && afterUp) Log("  off the ladder's top (try " + (dismountTry + 1) + "): feet " + (ReachFeet(pl) - e.Position).ToString("F2") + ", floor " + (W(k).y - e.Position.y).ToString("F2") + ", ahead " + ahead + ", rise " + riseT.ToString("F2") + (edge.HasValue ? ", edge at " + (edge.Value - e.Position).ToString("F2") : "") + (tooHigh ? " (the next spot out of a jump's reach: onto the floor beside first)" : ""));
@@ -3030,11 +3035,11 @@ namespace DynamicIslands
 					Vector3 d = aim - p;
 					Vector3 flat = new Vector3(d.x, 0f, d.z);
 					float flatLen = flat.magnitude;
-					// (fell back down the ladder's shaft from its top: climb it again once, then the walk fails - see ReachLadderClock)
-					if (afterUp && !Climbing(pl) && p.y < ladTopY - 1.5f && aim.y > p.y + 1.5f && ladI >= 1 && dismountTry >= 1)
+					// (fell back down the ladder's shaft from its top: climb it again twice, each time stepping off another way, then the walk fails - see ReachLadderClock)
+					if (afterUp && !Climbing(pl) && p.y < ladTopY - 1.5f && aim.y > p.y + 1.5f && ladI >= 1 && dismountTry >= 2)
 					{
 						mmWalk = 0f; mmJump = false;
-						result("stuck: fell back down the ladder's shaft from its top (" + (ladTopY - e.Position.y).ToString("F1") + ") to " + (p - e.Position).ToString("F1") + " twice, stepping off to " + (aim - e.Position).ToString("F1") +
+						result("stuck: fell back down the ladder's shaft from its top (" + (ladTopY - e.Position.y).ToString("F1") + ") to " + (p - e.Position).ToString("F1") + " three times, stepping off to " + (aim - e.Position).ToString("F1") +
 							" - the floor " + (aim.y - (ladTopY - 0.33f)).ToString("F2") + " m over the feet Raft holds at the ladder's end (a player reaches ~0.3 m)");
 						yield break;
 					}
