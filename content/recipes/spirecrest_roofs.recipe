@@ -169,13 +169,13 @@ prop towers2 tint.amount=0.35
 # 0.5 m off as the coop's, its landing beside it against the wall)
 # (the ladder itself placed after the street flattens below - see there)
 # (11-28 scp1 CIFloating: the landing 17 cm over its pillars' tops (-0.08) - let down onto them, h=0.1)
-place Block_Floor_Tier3 - at -27.0 20.75 h=0.1
-place Block_Pillar_Tier3 - at -27.4 20.45 h=-7.6
-place Block_Pillar_Tier3 - at -27.4 20.45 h=-5.05
-place Block_Pillar_Tier3 - at -27.4 20.45 h=-2.5
-place Block_Pillar_Tier3 - at -26.6 20.45 h=-5.05
-place Block_Pillar_Tier3 - at -26.6 20.45 h=-7.6
-place Block_Pillar_Tier3 - at -26.6 20.45 h=-2.5
+place Block_Floor_Tier3 - at -26.5 20.75 h=0.1
+place Block_Pillar_Tier3 - at -26.9 20.45 h=-7.6
+place Block_Pillar_Tier3 - at -26.9 20.45 h=-5.05
+place Block_Pillar_Tier3 - at -26.9 20.45 h=-2.5
+place Block_Pillar_Tier3 - at -26.1 20.45 h=-5.05
+place Block_Pillar_Tier3 - at -26.1 20.45 h=-7.6
+place Block_Pillar_Tier3 - at -26.1 20.45 h=-2.5
 place Loot_Chest annexchest at -27.5 27.5 h=2.05 sit yaw=90
 place BoatStranded - at 26 -28 ground yaw=35
 place Loot_ChestSmall wreckchest at 22 -24 ground sit yaw=200
@@ -259,7 +259,10 @@ brush flatten at 15 0 r=6.5 s=20 frames=300 h=-7.03
 brush flatten at 0 -16 r=6.5 s=20 frames=300 h=-7.03
 # (11-28 scp1 REACH: the annex ladder placed before these went down 4.6 m with the ground (f285a586's flatten):
 #  its top at -2.0 under the roof, 'no floor to step off onto at its top' - placed after them it stays at h=-4.2)
-place LandmarkLadder_6m - at -28.5 21.0 h=-4.2 yaw=180
+# (11-28 scp3 REACH: that ladder stood at the tower's south-west corner, half past the roof's west edge - up worked, but
+#  down from the roof Raft took hold with the player still on the roof and the body ran into it: on the window panel
+#  1 m west of the middle now, as the coop ladder, its landing beside it)
+place LandmarkLadder_6m - at -25.0 21.0 h=-4.2 yaw=180
 call sk_plants x=-64 z=28 r=24.2 seed=24010
 call sk_reef x=46 z=-54 r=5 seed=24030
 # (11-26 REACH sc3: the way up from the south shore to the ridge ran along the pit's east rim, a 45 degree slope with
