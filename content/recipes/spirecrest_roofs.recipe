@@ -151,7 +151,8 @@ prop towers2 tint.color=#7d8a8c
 prop towers2 tint.amount=0.35
 # (fixA 11-03, REACH: as the coop ladder - moved onto the window panel, a boat landing in front of its foot)
 place LandmarkLadder_6m - at -28.5 21.3 h=-4.2 yaw=180
-place Block_Floor_Tier3 - at -28.5 20.45 h=0.3
+# (11-28 scp1 CIFloating: the landing 17 cm over its pillars' tops (-0.08) - let down onto them)
+place Block_Floor_Tier3 - at -28.5 20.45 h=0.1
 place Block_Pillar_Tier3 - at -29.1 20.15 h=-7.6
 place Block_Pillar_Tier3 - at -29.1 20.15 h=-5.05
 place Block_Pillar_Tier3 - at -29.1 20.15 h=-2.5
@@ -214,9 +215,18 @@ call sk_cave x=24 z=36 h=3 yaw=180 al=sccave2 chest=sccave2chest
 # (rg8a2 11-28, CIFloating: the two caves' pads at h=3 (-46 -4 and 24 36) raised the drowned street round the west,
 #  annex and garden towers to -2..-4.6, burying their lowest rooms up to 4 m (ground probe scgdiag 11-28: -7 after the
 #  street flatten, raised by each sk_cave) - the street is flattened back to -7 at those three towers)
-brush flatten at -15 0 r=6.5 s=20 frames=300 h=-7
-brush flatten at -27 26 r=6.5 s=20 frames=300 h=-7
-brush flatten at 0 16 r=6.5 s=20 frames=300 h=-7
+# (11-28 scp1 CIFloating: 43 buried after that, up to 7 m - the hill the world builds over the two caves (Cave mountain,
+#  uncapped: reach side 40.7 back 63.9 front 18.6) covered the west, annex and garden towers; the caves' domes capped at
+#  30 m as on Brinelab and Caisson Yard (cave.dome). The street flattens brought it to -6.988 only, 5 mm over the lowest
+#  floors' tops at all five city towers: the pads under all six towers go to -7.03)
+prop sc_caverock cave.dome=30
+prop sccave2 cave.dome=30
+brush flatten at -15 0 r=6.5 s=20 frames=300 h=-7.03
+brush flatten at -27 26 r=6.5 s=20 frames=300 h=-7.03
+brush flatten at 0 16 r=6.5 s=20 frames=300 h=-7.03
+brush flatten at 0 0 r=6.5 s=20 frames=300 h=-7.03
+brush flatten at 15 0 r=6.5 s=20 frames=300 h=-7.03
+brush flatten at 0 -16 r=6.5 s=20 frames=300 h=-7.03
 call sk_plants x=-64 z=28 r=24.2 seed=24010
 call sk_reef x=46 z=-54 r=5 seed=24030
 
