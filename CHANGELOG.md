@@ -9,7 +9,7 @@ The last public release on raftmodding.com is **v1.1.1** by FranzFischer78 (2022
 
 ---
 
-## Next (not released yet)
+## 3.6 alpha - 2026-11-28
 
 - **An island teleport works while a boar carries you**: a player a boar had charged and was carrying on its tusks stayed with the boar when an island moved them (a teleport, a cave exit). The boar now lets go and the player arrives.
 - **Many island files at once reach the player** (multiplayer): a player joining a world with dozens of islands they lack got them all at once, faster than Steam could carry; the last files, and the world's copy and save behind them, never came. All transfers now share one pace, wait while Steam still has a lot to send to that player, and the world's copy and save go ahead of island files. Two saves of the world going to a player at once no longer spoil each other.
