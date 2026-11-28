@@ -60,7 +60,7 @@ place Placeable_Lantern_Metal - at -1.0 3.7 y=1.14 sit
 place Zone_Trigger bow at 0 -4.5 y=1
 place Creature_Rat rats at 0.6 -5.5 y=0.3
 place Creature_Rat ratking at -1.2 -6.5 y=0.3
-place RT_WallWindowBroken2 - at 2.8 -9.6 ground tilt=65 yaw=15
+place RT_WallWindowBroken2 - at 3.0 -13.2 ground tilt=65 yaw=15
 place "VG_DecorationPrefabBase_WoodenBoxes_ShortRect Variant" - at -2.8 -9.4 ground yaw=35
 place Reef_Barrel2 - at 1.0 -10.8 ground tilt=80 yaw=60
 place VG_DoorPlastic_Broken - at -4.3 -6 ground tilt=80 yaw=200
@@ -160,7 +160,8 @@ call rr_land x1=14 z1=-38 x2=30 z2=-48 h=3 r=9
 call rr_land x1=30 z1=-12 x2=50 z2=-14 h=3 r=8
 # A Gannet Head (north-east): summit 22 m, base r 18, the trail from its south-west foot, the lighthouse on top
 call hw_mount x=48 z=58 b=18 h=22
-call hw_trail x=48 z=58 b=18 h=22 a0=225 turn=300 n=24 h0=3
+# (11-28 pfvs: 24 pads rose 0.79 m each - over a walker's 0.55 m step, Gannet's top and the lamp room unreached: 40 pads, 0.48 m)
+call hw_trail x=48 z=58 b=18 h=22 a0=225 turn=300 n=40 h0=3
 brush flatten at 48 58 r=8 s=20 frames=400 h=22
 call hw_mast x=48 z=58 h0=22 lv=5 a=lighthouse chest=lampbox top=Placeable_Lantern_Metal deckdrop=0.45
 # B The container yard (east): the ship's deck cargo washed up and stacked where it fell; the harbour office beside it
@@ -173,6 +174,10 @@ call rr_ruin x=58 z=-14 h=3 yaw=0 w=3 d=2 al=harbouroffice
 # C The west dunes (west): a low arm of sand past the camp, the smugglers' hole in its rock
 call rr_pad x=-60 z=16 h=3 r=14
 call ar_cave x=-60 z=12 h=3 yaw=0 al=smugglerrock chest=smugglerbox
+# (11-28 pfvs: since 11-08 every den is dry-footed - this one's dome reached 63 m back and 41 m to the side, its raised sand
+#  over the camp's floor and the bow's aft deck: the camp tool chest and the captain's safe out of reach, both play walks stuck;
+#  cave.foot=wet keeps the old foot, as on Frostgold Creek and Ironreef Caverns)
+prop smugglerrock cave.foot=wet
 place SmallBoulder4 - at -61 33 ground yaw=40 scale=0.9
 place SmallBoulder4 - at -57.5 35.5 ground yaw=110 scale=0.8
 # (agent Q 10-30, REACH: the west dunes' pad stood 3 m over the sea on sheer sides and the walker never got onto it -
@@ -430,5 +435,14 @@ clear at 49.74 -24.87 r=1.5 only=LeafCoral_1 all
 # (11-28 vsold/rg8f: the step closed small sea pockets at the lagoon shore and the west reef - a player swam in, not out
 #  (0.5-0.8 m up to the land) -, stood 3 boulders on boulders over deep water, buried 3 finds and carried a wall of the
 #  sunk stern 6 m up under the bow: those spots kept out of it too, the stern's circle 12 m)
+# (11-28 pfvs: the keeps left the three pockets as they were - still traps: sea-level holes in 0.5-0.6 m land at the west
+#  reef and the lagoon shore, a swimmer's step out at most 0.55 m (the reach grid's swim-out rule): filled to the land round them;
+#  the torn wall (RT_WallWindowBroken2) moved 3.6 m aft, off the sea floor under the bow's hull)
+brush flatten from -85 -13.3 to -83 -15.8 r=2.6 s=20 frames=200 h=0.6
+brush flatten at -27.2 -11.9 r=2.4 s=20 frames=200 h=0.6
 cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=-24,-42,12|-27,-10,8|-80,-18,10|26,-61,5|-57.6,44.8,4|-34,32,5
+# (11-28 pfvs: three of randomize's sea-floor finds buried under the north-west shore's slope - cleared)
+clear at -34.74 30.31 r=1.2 all only=Pickup_Landmark_Sand
+clear at -32.19 34.26 r=1.2 all only=Pickup_Landmark_Clay
+clear at -35.64 32.46 r=1.2 all only=Pickup_Landmark_Scrap
 save Vasagatan Remade
