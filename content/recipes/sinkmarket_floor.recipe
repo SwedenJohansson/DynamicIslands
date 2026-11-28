@@ -123,7 +123,7 @@ call hw_reef x=-50 z=30 r=4 seed=9593
 # --- DEEP 10-25: Lookout Rock - its foot and dry crown as zones, the signal mast, the signalman's log -------------------
 call hw_zone x=20.9 z=10.9 al=rockfootz id=rockfoot r=5 msg="Lookout Rock: the town's old signal rock. A path winds up round it - towards the light."
 call hw_zone x=40 z=30 al=rocktopz id=rocktop r=8 h=1 msg="The crown of Lookout Rock - out of the sea, in the air. The signal mast still stands."
-call hw_mast x=40 z=30 h0=34 lv=3 a=signalmast chest=signalbox top=Placeable_Flag_03
+call hw_mast x=40 z=30 h0=34 lv=3 a=signalmast chest=signalbox top=Placeable_Flag_03 deckdrop=0.45
 place Note_Paper tomaslog at 36 27 h=34.1 drop yaw=20
 call treasure x=45 z=34 r=3 n=1 seed=9594 kind=0
 prop treasure9594 treasure.loot=MetalOre*3;CopperOre*2
