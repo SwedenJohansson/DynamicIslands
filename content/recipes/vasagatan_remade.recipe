@@ -317,6 +317,7 @@ info title=Vasagatan Remade
 info author=Custom Islands
 info description=Raft's Vasagatan, made anew on an island as big as Raft's own: Gannet Head and its lighthouse, a container yard, the harbour office and the west dunes round a ship broke in two on the reef of the island's lagoon - her bow run up on a sandbar and full of rats, her stern sunk in the bay below, her crew's camp in the dunes above. The captain's safe still holds the ship's papers and two blueprints the raft needs. Raft Remade's second island.
 island on.arrive=message||A broken ship: her bow run up on a sandbar, her stern gone under the bay. In the dunes above, a camp's tents - and no one.
+island reach.byplay=Crane hook chest;Docker's tin;jump_vs_finale
 
 story crowbar|Crowbar|quest:Vasagatan_Crowbar|The crew's crowbar, from their camp's tool chest: it opens what is jammed.
 story chart|Salvage chart|Placeable_PaperBundle|The lighthouse keeper's chart of the reef, from Gannet Head: the sunk stern's place marked in red.
@@ -426,5 +427,8 @@ clear at 49.74 -24.87 r=1.5 only=LeafCoral_1 all
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth; the sunk stern's ledge in the bay kept as it was (keep=):
 #     the step piled talus 2-5 m over her rails, the engine pipe and the broken-off propeller on the sand)
-cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=-24,-42,10
+# (11-28 vsold/rg8f: the step closed small sea pockets at the lagoon shore and the west reef - a player swam in, not out
+#  (0.5-0.8 m up to the land) -, stood 3 boulders on boulders over deep water, buried 3 finds and carried a wall of the
+#  sunk stern 6 m up under the bow: those spots kept out of it too, the stern's circle 12 m)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=-24,-42,12|-27,-10,8|-80,-18,10|26,-61,5|-57.6,44.8,4|-34,32,5
 save Vasagatan Remade

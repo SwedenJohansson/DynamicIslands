@@ -59,6 +59,7 @@ expect item TitaniumIngot 1
 zone smugglershole
 open Smugglers' hole
 open Cargo plane's crate
+open Crane hook chest
 zone jump_vs_finale
 open Docker's tin
 
