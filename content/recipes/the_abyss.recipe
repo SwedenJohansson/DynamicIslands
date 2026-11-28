@@ -374,6 +374,7 @@ info title=The Abyss
 info author=Custom Islands
 info description=A volcanic island as big as Raft's own: a ring of black sea stacks round a lagoon and a trench that falls away into the dark, the expedition's raft moored over its edge. On the shore the divers' camp and the last diver who stayed; Black Peak, Wreck Cove, an ash ridge with a lava tube - and at the bottom of the trench, the lair of the thing the expedition came to find. The Abyss Expedition's end.
 island on.arrive=message||Black stacks around a circle of dark water - a trench, falling away to nothing. A raft is moored over its edge, its lamps still lit.
+island reach.byplay=Stack runner's perch;Stack run prize;jump_ab_finale
 
 story gauge|Pressure gauge|CircuitBoard|The compressor's pressure gauge, from Black Peak's signal mast.
 story piston|Compressor piston|Bolt|The compressor's piston, from the supply boat sunk in Wreck Cove.
@@ -500,5 +501,7 @@ clear at 40.78 -18.27 r=1.5 only=BigSharpRock
 #     sloped as rock talus down to 10 m under the sea - a pit or a dive shaft keeps its depth, a narrow one is left open)
 # (c3z61h: the blue hole's inner wall round 4.56 -5.91 still a dark sheet on both sides of the buoy - a pit's wall can't be
 #     sloped - so rock stood in its waterline band (rocks=), wherever it meets no placed piece (the air pockets, the buoy))
-cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
+# (11-28 rg8e: the talus raised the sea floor round the moored raft so reach swam under it (camp chest, leader's log), made
+#     an 11x13 m water trap east of the stacks, and six waterline rocks plus one over the floodlight hung over the trench: keep=)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=18.5,-5,7|52,-17.2,9|-6.7,-3.3,1.5|2.4,8.2,1.5|5.9,-6.9,1.5|-2.4,0.8,1.5|0.9,8,1.5|2.9,7.4,1.5|3.8,-1.5,1.5
 save The Abyss

@@ -3004,7 +3004,11 @@ namespace DynamicIslands
 				// a next spot too high to jump onto (ReachLadderStepFirst) sends the step off to the nearest floor within reach)
 				Vector3 hf = ReachFeet(pl);
 				bool tooHigh = afterUp && ReachLadderStepFirst(hf.y, W(k).y);
-				Vector3? edge = !afterUp ? (Vector3?)null : tooHigh ? LadderTopFloor(hf, W(k), hf.y - 0.3f, hf.y + 0.75f) : dismountTry > 0 ? LadderTopFloor(hf, W(k), W(k).y - 0.35f, W(k).y + 0.35f) : null;
+				// (and a step off not ahead goes to the floor's nearest edge on the first try too, an edge with floor on to the next
+				// spot and the least of the shaft to cross: the walker stepped straight at the grid's spot - over the hatch's corner -
+				// and fell; alone it made it on the second try with the edge (utdiag1), but in the full run it fell 2 m onto a ledge
+				// in the shaft and never took the ladder again: Utopia's Keeper's box utfix1, Rootweave's vd_tower rwfix2 11-28)
+				Vector3? edge = !afterUp ? (Vector3?)null : tooHigh ? LadderTopFloor(hf, W(k), hf.y - 0.3f, hf.y + 0.75f) : (dismountTry > 0 || !ahead) ? LadderTopFloor(hf, W(k), W(k).y - 0.35f, W(k).y + 0.35f, true) : null;
 				float stepY = tooHigh && edge.HasValue ? edge.Value.y : W(k).y;
 				if (tooHigh && edge.HasValue) { offTo = edge.Value - hf; offTo.y = 0f; ahead = ladderFace.sqrMagnitude < 0.01f || offTo.sqrMagnitude < 0.01f || Vector3.Dot(offTo.normalized, ladderFace.normalized) > 0.7f; }
 				if (ReachLadderDismount(ladderUpTop, hf.y, stepY, ahead))
@@ -3149,11 +3153,39 @@ namespace DynamicIslands
 
 		/// <summary>After a climb to a ladder's top: the nearest spot of a floor between lo and hi (the next spot's height within
 		/// 0.35 m, or what a jump off the ladder reaches), at most 1.8 m round the feet with nothing in the way at the floor's
-		/// height - a point 0.35 m in past it, to step off toward; of those at one distance, the one most toward the next spot.</summary>
-		static Vector3? LadderTopFloor(Vector3 feet, Vector3 aim, float lo, float hi)
+		/// height - a point 0.35 m in past it, to step off toward; of those at one distance, the one most toward the next spot.
+		/// With viaFloor: first the edge with floor on from it to the next spot whose step from the feet crosses the least open
+		/// shaft (then the nearest) - an edge across the hatch from the next spot sent the walk back over it.</summary>
+		static Vector3? LadderTopFloor(Vector3 feet, Vector3 aim, float lo, float hi, bool viaFloor = false)
 		{
 			int mask = reachMask != 0 ? reachMask : ~0;
 			Vector3 toAim = aim - feet; toAim.y = 0f;
+			if (viaFloor)
+			{
+				Vector3? pick = null; float pickGap = float.MaxValue, pickR = float.MaxValue;
+				for (float r = 0.4f; r <= 1.81f; r += 0.2f)
+					for (int a = 0; a < 16; a++)
+					{
+						Vector3 dir = Quaternion.Euler(0f, a * 22.5f, 0f) * Vector3.forward;
+						Vector3 q = feet + dir * r;
+						RaycastHit h;
+						if (!Physics.Raycast(new Vector3(q.x, hi + 0.65f, q.z), Vector3.down, out h, hi - lo + 0.8f, mask, QueryTriggerInteraction.Ignore)) continue;
+						if (h.normal.y < 0.64f || h.point.y < lo || h.point.y > hi) continue;
+						Vector3 la = new Vector3(feet.x, h.point.y + 0.5f, feet.z), lb = h.point + Vector3.up * 0.5f + dir * 0.35f;
+						if (Physics.Linecast(la, lb, mask, QueryTriggerInteraction.Ignore)) continue;
+						Vector3 c = new Vector3(q.x, h.point.y, q.z) + dir * 0.35f;
+						if (!LadderTopFloorRun(c, aim, mask)) continue;
+						float gap = 0f;
+						for (float t = 0.1f; t < r; t += 0.1f)
+						{
+							Vector3 s = feet + dir * t;
+							RaycastHit sh;
+							if (!Physics.Raycast(new Vector3(s.x, hi + 0.65f, s.z), Vector3.down, out sh, hi - lo + 0.8f, mask, QueryTriggerInteraction.Ignore) || sh.point.y < lo) gap += 0.1f;
+						}
+						if (gap < pickGap - 0.05f || (Mathf.Abs(gap - pickGap) <= 0.05f && r < pickR - 0.01f)) { pick = c; pickGap = gap; pickR = r; }
+					}
+				if (pick.HasValue) return pick;
+			}
 			for (float r = 0.4f; r <= 1.81f; r += 0.2f)
 			{
 				Vector3? best = null; float bestDot = -2f;
@@ -3172,6 +3204,24 @@ namespace DynamicIslands
 				if (best.HasValue) return best;
 			}
 			return null;
+		}
+
+		/// <summary>Floor all the way from a (an edge at a ladder's top) toward b, its first 3 m in 0.25 m steps: ground or a
+		/// floor under each point, none more than 0.45 m under the lower end - no open shaft or hatch on the way.</summary>
+		static bool LadderTopFloorRun(Vector3 a, Vector3 b, int mask)
+		{
+			Vector3 f = b - a; f.y = 0f;
+			float len = Mathf.Min(f.magnitude, 3f);
+			if (len < 0.05f) return true;
+			f.Normalize();
+			float top = Mathf.Max(a.y, b.y) + 0.65f, low = Mathf.Min(a.y, b.y) - 0.45f;
+			for (float t = 0.25f; t <= len + 0.001f; t += 0.25f)
+			{
+				Vector3 s = a + f * t;
+				RaycastHit h;
+				if (!Physics.Raycast(new Vector3(s.x, top, s.z), Vector3.down, out h, top - low, mask, QueryTriggerInteraction.Ignore)) return false;
+			}
+			return true;
 		}
 
 		/// <summary>The last spot before way[i] (at most 6 back) where the way is in the sea - a swim spot or a floor under the

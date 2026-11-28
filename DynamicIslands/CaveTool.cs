@@ -1142,7 +1142,7 @@ namespace DynamicIslands.Editor
 				{
 					float g; Vector3 n;
 					if (!up[i] || !FrameLiftable(wv[i], out g, out n)) continue;
-					wv[i] = OnGround(wv[i], Vector3.zero, Vector3.zero, 0f, out gn[i]);
+					wv[i] = OnGround(wv[i], Vector3.zero, Vector3.zero, 0f, out gn[i], FrameOverRelift);
 					FrameRelifted++;
 				}
 				// (11-21 cv52: and the frame's rim tucked under the ground - where a face turned aside goes on down into the ground
@@ -1163,7 +1163,7 @@ namespace DynamicIslands.Editor
 					{
 						float g; Vector3 n;
 						if (tucked[i] || !up2[i] || !FrameLiftable(wv[i], out g, out n)) continue;
-						wv[i] = OnGround(wv[i], Vector3.zero, Vector3.zero, 0f, out gn[i]);
+						wv[i] = OnGround(wv[i], Vector3.zero, Vector3.zero, 0f, out gn[i], FrameOverRelift);
 						FrameRelifted++; lifted++;
 					}
 					if (lifted == 0) break;
@@ -1680,6 +1680,11 @@ namespace DynamicIslands.Editor
 		/// triangles bulge between the frame's points, and at FrameOver they stood 2-4 cm in front of Sinkmarket Floor's frame
 		/// faces as pale sheets at the picture's edge (CIFrameRing 5 rays, 11-21 cv44).</summary>
 		public const float FrameOverSteep = 0.12f;
+		/// <summary>How far over the ground (m, across it) a frame point is laid when it is lifted again after the ground under the
+		/// faces was let down (the relift and tuck rounds): that ground is not let down again, and its triangles bulge up to 3 cm
+		/// between the points - at FrameOver the legs' faces on Sinkmarket Floor's 45 degree mounds lay 0-1.4 cm over it, 65 rays,
+		/// CIFrameRing smring4 11-28 (CIFrameRing counts ground within 5 cm).</summary>
+		public const float FrameOverRelift = 0.09f;
 		/// <summary>Mouth frame points lifted onto the ground, all islands since Raft started.</summary>
 		public static int FramePointsLifted;
 		/// <summary>How far in front of a mouth frame's face, along its own normal, the island ground may stand and the face is still
@@ -1766,7 +1771,7 @@ namespace DynamicIslands.Editor
 		/// A world point 0-FrameSunk under the island ground (not over a hole cut in it) laid FrameOver over it, its normal then the
 		/// ground's (gn; zero when not lifted).
 		/// </summary>
-		static Vector3 OnGround(Vector3 w, Vector3 fn, Vector3 wn, float reach, out Vector3 gn)
+		static Vector3 OnGround(Vector3 w, Vector3 fn, Vector3 wn, float reach, out Vector3 gn, float over = FrameOver)
 		{
 			float g;
 			if (!FrameLiftable(w, out g, out gn))
@@ -1782,7 +1787,7 @@ namespace DynamicIslands.Editor
 			}
 			FramePointsLifted++;
 			// (FrameOver measured across the slope, not straight up: on a steep wall 3 cm up is a hair off the ground and flickers)
-			return new Vector3(w.x, g + (gn.y < FrameCoverSteep ? FrameOverSteep : FrameOver) / Mathf.Max(gn.y, 0.2f), w.z);
+			return new Vector3(w.x, g + (gn.y < FrameCoverSteep ? Mathf.Max(FrameOverSteep, over) : over) / Mathf.Max(gn.y, 0.2f), w.z);
 		}
 
 		/// <summary>
