@@ -1153,7 +1153,9 @@ namespace DynamicIslands.Editor
 				bool[] tucked = TuckRim(wv, st, new bool[mv.Length]);
 				// (11-21 cv56: and a point the tuck left just under the ground on a face it turned up lifted onto it, then tucked
 				// again where that makes a rim - 1 of Overpass Shoal's and Sinkmarket Floor's each showed through, CIFrameSunk)
-				for (int round = 0; round < 3; round++)
+				// (11-26 islandfix: 6 rounds, the tuck 16 passes, not 3 and 6 - Sinkmarket Floor's hilltop rim still had 0.78 m of
+				// strips 11 cm out with their third point tucked, CIFrameRim; each stops once nothing more moves)
+				for (int round = 0; round < 6; round++)
 				{
 					bool[] up2 = FrameUpPoints(wv, st);
 					int lifted = 0;
@@ -1290,17 +1292,92 @@ namespace DynamicIslands.Editor
 		public const float FrameUpFace = 0.2f;
 
 		/// <summary>Which of a mouth frame's points (world points w, triangles st as drawn) are on a face turned up (FrameUpFace):
-		/// the ones the ground can show through. FramesLikeHill and CIFrameSunk.</summary>
+		/// the ones the ground can show through - not one inside the frame's own slab, another of its faces turned up straight over
+		/// it FrameInSlabMin-FrameInSlabMost higher (FrameInSlab). FramesLikeHill and CIFrameSunk.</summary>
 		public static bool[] FrameUpPoints(Vector3[] w, int[] st)
 		{
 			var up = new bool[w.Length];
+			var faces = new List<int>();
 			for (int t = 0; t + 2 < st.Length; t += 3)
 			{
 				Vector3 n = Vector3.Cross(w[st[t + 1]] - w[st[t]], w[st[t + 2]] - w[st[t]]);
 				if (n.sqrMagnitude < 1e-10f || n.normalized.y < FrameUpFace) continue;
 				up[st[t]] = up[st[t + 1]] = up[st[t + 2]] = true;
+				faces.Add(t);
 			}
+			// (11-26 islandfix: Sinkmarket Floor's apron lies flat on its flat square; the points along the sill's foot, 0.5-0.6 m under
+			// its top, counted as able to show, so SinkGroundUnder put back 172 of the 185 ground points it let down from under the
+			// top, and the ground lay in the frame's faces again - 553 rays, CIFrameRing, since cave round 4. Under the frame's own
+			// face turned up they never show: the top hides them, and the ground let down 0.1 m under the top still covers them.)
+			var grid = new Dictionary<long, List<int>>();
+			foreach (int t in faces)
+			{
+				Vector3 a = w[st[t]], b = w[st[t + 1]], c = w[st[t + 2]];
+				int x0 = Mathf.FloorToInt((Mathf.Min(a.x, Mathf.Min(b.x, c.x)) - FrameInSlabReach) / FrameInSlabCell), x1 = Mathf.FloorToInt((Mathf.Max(a.x, Mathf.Max(b.x, c.x)) + FrameInSlabReach) / FrameInSlabCell);
+				int z0 = Mathf.FloorToInt((Mathf.Min(a.z, Mathf.Min(b.z, c.z)) - FrameInSlabReach) / FrameInSlabCell), z1 = Mathf.FloorToInt((Mathf.Max(a.z, Mathf.Max(b.z, c.z)) + FrameInSlabReach) / FrameInSlabCell);
+				for (int x = x0; x <= x1; x++)
+					for (int z = z0; z <= z1; z++)
+					{
+						long key = ((long)x << 32) ^ (uint)z;
+						List<int> l;
+						if (!grid.TryGetValue(key, out l)) grid[key] = l = new List<int>();
+						l.Add(t);
+					}
+			}
+			for (int v = 0; v < w.Length; v++)
+				if (up[v] && FrameInSlab(w, st, grid, v)) { up[v] = false; FramePointsInSlab++; }
 			return up;
+		}
+
+		/// <summary>A frame point with another of its faces turned up straight over it at least this much higher (m) lies inside the
+		/// frame's own slab (FrameUpPoints): not a point the ground can show through.</summary>
+		public const float FrameInSlabMin = 0.15f;
+		/// <summary>... and at most this much higher (m): a face further up is a roof over the passage, not the slab's top (the passage
+		/// floor under it can show the ground through it).</summary>
+		public const float FrameInSlabMost = 1.5f;
+		const float FrameInSlabCell = 1f;
+		/// <summary>... and the face over it may stand this far aside (m, across the ground): the sill's foot lies at its top face's
+		/// edge, not under its middle (11-27 isl1126_e: only 41 points counted inside the slab when the face had to be straight over
+		/// them; SinkGroundUnder still raised the ground back 248 times and 417 rays met it lying in the apron's top, CIFrameRing).</summary>
+		public const float FrameInSlabReach = 0.3f;
+		/// <summary>Frame points left out of FrameUpPoints as inside the frame's own slab, all islands since Raft started.</summary>
+		public static int FramePointsInSlab;
+
+		static bool FrameInSlab(Vector3[] w, int[] st, Dictionary<long, List<int>> grid, int v)
+		{
+			Vector3 p = w[v];
+			List<int> l;
+			if (!grid.TryGetValue(((long)Mathf.FloorToInt(p.x / FrameInSlabCell) << 32) ^ (uint)Mathf.FloorToInt(p.z / FrameInSlabCell), out l)) return false;
+			foreach (int t in l)
+			{
+				int ia = st[t], ib = st[t + 1], ic = st[t + 2];
+				if (ia == v || ib == v || ic == v) continue;
+				Vector3 a = w[ia], b = w[ib], c = w[ic];
+				float e1x = b.x - a.x, e1z = b.z - a.z, e2x = c.x - a.x, e2z = c.z - a.z;
+				float det = e1x * e2z - e2x * e1z;
+				if (Mathf.Abs(det) < 1e-8f) continue;
+				float px = p.x - a.x, pz = p.z - a.z;
+				float bu = (px * e2z - e2x * pz) / det, bv = (e1x * pz - px * e1z) / det;
+				if (bu < 0f || bv < 0f || bu + bv > 1f)
+				{
+					// (outside the face: the nearest point of its edges, across the ground, within FrameInSlabReach)
+					Vector2 q = new Vector2(p.x, p.z), best = Vector2.zero; float bestD = float.MaxValue;
+					Vector2[] cs = { new Vector2(a.x, a.z), new Vector2(b.x, b.z), new Vector2(c.x, c.z) };
+					for (int e = 0; e < 3; e++)
+					{
+						Vector2 s0 = cs[e], s1 = cs[(e + 1) % 3], d = s1 - s0;
+						float f = d.sqrMagnitude < 1e-10f ? 0f : Mathf.Clamp01(Vector2.Dot(q - s0, d) / d.sqrMagnitude);
+						Vector2 m = s0 + d * f; float dd = (q - m).sqrMagnitude;
+						if (dd < bestD) { bestD = dd; best = m; }
+					}
+					if (bestD > FrameInSlabReach * FrameInSlabReach) continue;
+					px = best.x - a.x; pz = best.y - a.z;
+					bu = (px * e2z - e2x * pz) / det; bv = (e1x * pz - px * e1z) / det;
+				}
+				float over = a.y + bu * (b.y - a.y) + bv * (c.y - a.y) - p.y;
+				if (over >= FrameInSlabMin && over <= FrameInSlabMost) return true;
+			}
+			return false;
 		}
 
 		/// <summary>A frame point standing up to this (m, straight up) over the ground, on a face turned aside that goes on down into
@@ -1388,7 +1465,7 @@ namespace DynamicIslands.Editor
 		}
 
 		/// <summary>The most passes TuckRim makes (each pass the faces turned by the last one's points).</summary>
-		public const int FrameRimPasses = 6;
+		public const int FrameRimPasses = 16;
 
 		/// <summary>A rim face's lowest point lies at least this far (m, straight down) under the ground: it goes on down into it.</summary>
 		public const float FrameRimIn = 0.02f;
