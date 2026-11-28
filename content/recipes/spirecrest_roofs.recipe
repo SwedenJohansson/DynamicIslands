@@ -467,5 +467,7 @@ brush smooth from -13.2 44.4 to -6.2 51.4 r=4.5 s=6 frames=12
 # (lib 3.5.1 minor fixes 11-23: CISheetIslands still found bare cliff walls at the waterline here, drawn as stretched
 #     sheets - sloped as rock talus to 10 m under the sea, and rock stood in the waterline at the faces still bare (rocks=),
 #     as on Caisson Yard; a pit or a dive shaft keeps its depth)
-cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low
+# (11-28 scp3 CIFloating: 40 buried, 2 floating, 1 under a deck - the talus refilled the towers' -7.03 pads (pits to it)
+#  up to 4-7 m over the lowest floors and the landing pillars: the six pads kept out of it, keep= circles r=10)
+cliffs rocks=BigBoulder4_Low|BigBoulder1_Low|BigBoulder2_Low keep=0,0,10|15,0,10|-15,0,10|0,16,10|0,-16,10|-27,26,10
 save Spirecrest Roofs
