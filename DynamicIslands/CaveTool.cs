@@ -1167,6 +1167,9 @@ namespace DynamicIslands.Editor
 					if (lifted == 0) break;
 					TuckRim(wv, st, tucked);
 				}
+				// (11-28 isl_l: and the ground under the faces turned up let down again - the points lifted onto it after the first
+				// pass laid their faces 1-3 cm over it, 38 rays on Sinkmarket Floor's legs, CIFrameRing; the rim kept under it)
+				GroundSunkUnderFrames += SinkGroundUnder(wv, st, FrameUpPoints(wv, st), tucked);
 				var rimOut = new List<bool>(st.Length);
 				var nv =new List<Vector3>(st.Length); var nn = new List<Vector3>(st.Length); var nu = new List<Vector2>(st.Length); var tri = new List<int>(st.Length);
 				for (int t = 0; t + 2 < st.Length; t += 3)
@@ -1444,7 +1447,7 @@ namespace DynamicIslands.Editor
 		/// it - the frame's laid points sit on the ground, but between them the ground's own triangles bulged into its faces. By
 		/// the frame's mesh and the terrain only (not the hill's grid). Returns how many heightmap points were let down.
 		/// </summary>
-		static int SinkGroundUnder(Vector3[] wv, int[] st, bool[] up)
+		static int SinkGroundUnder(Vector3[] wv, int[] st, bool[] up, bool[] keep = null)
 		{
 			int sunk = 0;
 			foreach (Terrain t in Terrain.activeTerrains)
@@ -1510,14 +1513,19 @@ namespace DynamicIslands.Editor
 				// that band only because the ground under it went down is the frame under the hill on purpose laid bare: 3563 of
 				// Sinkmarket Floor's frame points showed through it, CIFrameSunk)
 				// (11-21 cv49: only points of faces turned up - a point on the sill's underside never shows)
-				var near = new List<int>();
+				// (11-28 isl_l: and the rim TuckRim laid under the ground, on the second pass - kept as deep as it was)
+				var near = new List<int>(); var nearG = new List<float>(); var nearKeep = new List<bool>();
 				for (int v = 0; v < wv.Length; v++)
 				{
-					if (!up[v]) continue;
+					bool kp = keep != null && keep[v];
+					if (!up[v] && !kp) continue;
 					Vector3 p = wv[v];
 					if (p.x < o.x + x0 * sx - sx || p.x > o.x + x1 * sx + sx || p.z < o.z + z0 * sz - sz || p.z > o.z + z1 * sz + sz) continue;
+					if (LiftTerrain(p) != t) continue;
 					float g; Vector3 gn;
-					if (!FrameLiftable(p, out g, out gn) && p.y < g) near.Add(v);
+					bool lift = FrameLiftable(p, out g, out gn);
+					if (p.y >= g || (lift && !kp)) continue;
+					near.Add(v); nearG.Add(g); nearKeep.Add(kp);
 				}
 				for (int j = 0; j < h; j++)
 					for (int i = 0; i < w; i++)
@@ -1531,30 +1539,45 @@ namespace DynamicIslands.Editor
 					}
 				if (!any) continue;
 				d.SetHeights(x0, z0, heights);
-				// (any buried point now in the lift band: the heightmap points of its cell raised back only as far as keeps it just
+				// (any buried point the ground went down over: its cell's heightmap points raised back only as far as keeps it just
 				// under the band - FrameSunk and a little across the slope - never over where they were. 11-21 cv47: putting them
 				// all the way back undid 47 of 49: the sill's underside 0.6 m under its top came into the band wherever the ground
 				// under the top went down 0.1 m, and 573 rays met the ground lying in Sinkmarket Floor's frame faces again)
+				// (11-28 isl_l: each corner raised by its share of the point's height - the ground there between them - not all four
+				// to the point's need: on the north-east leg's 42 degree mound that put the low corners, under the faces laid on the
+				// ground next to it, all the way back - 41 raised back over 36 let down, 38 rays met the ground in the frame's faces)
 				for (int round = 0; round < 4; round++)
 				{
 					bool back = false;
-					foreach (int v in near)
+					for (int q = 0; q < near.Count; q++)
 					{
-						float g; Vector3 gn;
-						if (!FrameLiftable(wv[v], out g, out gn)) continue;
-						float need = wv[v].y + (FrameSunk + 0.02f) / Mathf.Max(gn.y, 0.2f);
-						float needH = Mathf.Clamp01((need - o.y) / size.y);
-						int ci = Mathf.FloorToInt((wv[v].x - o.x) / sx) - x0, cj = Mathf.FloorToInt((wv[v].z - o.z) / sz) - z0;
-						for (int dj = 0; dj <= 1; dj++)
-							for (int di = 0; di <= 1; di++)
-							{
-								int ii = ci + di, jj = cj + dj;
-								if (ii < 0 || jj < 0 || ii >= w || jj >= h || heights[jj, ii] >= was[jj, ii]) continue;
-								float to = Mathf.Min(was[jj, ii], Mathf.Max(heights[jj, ii], needH));
-								if (to <= heights[jj, ii]) continue;
-								heights[jj, ii] = to; back = true; FrameSinkKeptBack++;
-								if (to >= was[jj, ii]) sunk--;
-							}
+						Vector3 p = wv[near[q]];
+						float fx = (p.x - o.x) / sx, fz = (p.z - o.z) / sz;
+						int ci = Mathf.FloorToInt(fx), cj = Mathf.FloorToInt(fz);
+						float ax = fx - ci, az = fz - cj;
+						ci -= x0; cj -= z0;
+						if (ci < 0 || cj < 0 || ci + 1 >= w || cj + 1 >= h) continue;
+						float need = nearG[q];
+						if (!nearKeep[q])
+						{
+							Vector3 gn = d.GetInterpolatedNormal((p.x - o.x) / size.x, (p.z - o.z) / size.z);
+							need = Mathf.Min(need, p.y + (FrameSunk + 0.05f) / Mathf.Max(gn.y, 0.2f));
+						}
+						float w00 = (1f - ax) * (1f - az), w10 = ax * (1f - az), w01 = (1f - ax) * az, w11 = ax * az;
+						float now = (heights[cj, ci] * w00 + heights[cj, ci + 1] * w10 + heights[cj + 1, ci] * w01 + heights[cj + 1, ci + 1] * w11) * size.y + o.y;
+						float D = need - now;
+						if (D <= 1e-3f) continue;
+						float s2 = w00 * w00 + w10 * w10 + w01 * w01 + w11 * w11;
+						for (int k = 0; k < 4; k++)
+						{
+							int ii = ci + (k & 1), jj = cj + (k >> 1);
+							float wk = k == 0 ? w00 : k == 1 ? w10 : k == 2 ? w01 : w11;
+							if (wk <= 0f || heights[jj, ii] >= was[jj, ii]) continue;
+							float to = Mathf.Min(was[jj, ii], heights[jj, ii] + wk * D / s2 / size.y);
+							if (to <= heights[jj, ii]) continue;
+							heights[jj, ii] = to; back = true; FrameSinkKeptBack++;
+							if (to >= was[jj, ii]) sunk--;
+						}
 					}
 					if (!back) break;
 					d.SetHeights(x0, z0, heights);
