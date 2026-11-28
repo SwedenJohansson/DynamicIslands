@@ -90,7 +90,8 @@ namespace DynamicIslands
 			Action<bool, string> chk = (c, w) => { Log((c ? "PASS: " : "FAIL: ") + w); ok &= c; };
 			chk(ByPlayFile("jump_om_finale") == "old_mine_islet.play", "a zone the play goes to: " + (ByPlayFile("jump_om_finale") ?? "none"));
 			chk(ByPlayFile("slag STACK prize") == "old_mine_islet.play", "a chest it opens, any case");
-			chk(ByPlayFile("No such chest anywhere 11-05") == null, "a target no play visits: none");			var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Slag stack prize" };
+			chk(ByPlayFile("No such chest anywhere 11-05") == null, "a target no play visits: none");
+			var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Slag stack prize" };
 			chk(ByPlayNote(set, new ReachTarget { Name = "Slag stack prize" }).StartsWith("CHECKED BY PLAY"), "listed + played: checked by play");
 			chk(ByPlayNote(set, new ReachTarget { Name = "Ore barge's crate" }) == null, "not listed: the grid's own verdict");
 			chk(ByPlayNote(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "No such chest anywhere 11-05" }, new ReachTarget { Name = "No such chest anywhere 11-05" }) == null, "listed, no play visits it: the grid's own verdict");
