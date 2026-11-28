@@ -90,8 +90,7 @@ namespace DynamicIslands
 			Action<bool, string> chk = (c, w) => { Log((c ? "PASS: " : "FAIL: ") + w); ok &= c; };
 			chk(ByPlayFile("jump_om_finale") == "old_mine_islet.play", "a zone the play goes to: " + (ByPlayFile("jump_om_finale") ?? "none"));
 			chk(ByPlayFile("slag STACK prize") == "old_mine_islet.play", "a chest it opens, any case");
-			chk(ByPlayFile("No such chest anywhere 11-05") == null, "a target no play visits: none");
-			var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Slag stack prize" };
+			chk(ByPlayFile("No such chest anywhere 11-05") == null, "a target no play visits: none");			var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Slag stack prize" };
 			chk(ByPlayNote(set, new ReachTarget { Name = "Slag stack prize" }).StartsWith("CHECKED BY PLAY"), "listed + played: checked by play");
 			chk(ByPlayNote(set, new ReachTarget { Name = "Ore barge's crate" }) == null, "not listed: the grid's own verdict");
 			chk(ByPlayNote(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "No such chest anywhere 11-05" }, new ReachTarget { Name = "No such chest anywhere 11-05" }) == null, "listed, no play visits it: the grid's own verdict");
@@ -701,7 +700,11 @@ namespace DynamicIslands
 					foreach (string l in File.ReadAllLines(f))
 					{
 						string[] w = l.Trim().Split(new[] { ' ' }, 2);
-						if (w.Length == 2 && (verb != null ? w[0] == verb : (w[0] == "zone" || w[0] == "open" || w[0] == "reach" || w[0] == "read")) &&string.Equals(w[1].Trim(), target, StringComparison.OrdinalIgnoreCase)) return Path.GetFileName(f);
+						// (11-28 op4_28321: "air <zone> [here]" - the play breathes in that air pocket, so it got there: Overpass's
+						// op_culvert and op_dair, both in reach.byplay, still failed)
+						string tw = w.Length == 2 ? w[1].Trim() : "";
+						if (w.Length == 2 && w[0] == "air" && tw.EndsWith(" here", StringComparison.OrdinalIgnoreCase)) tw = tw.Substring(0, tw.Length - 5).Trim();
+						if (w.Length == 2 && (verb != null ? w[0] == verb : (w[0] == "zone" || w[0] == "open" || w[0] == "reach" || w[0] == "read" || w[0] == "air")) && string.Equals(tw, target, StringComparison.OrdinalIgnoreCase)) return Path.GetFileName(f);
 					}
 			}
 			catch (Exception) { }
