@@ -36,6 +36,7 @@ elevation -30
 brush flatten at 0 0 r=14 s=20 frames=200 h=3
 brush flatten at -13 11 r=5 s=20 frames=60 h=3
 brush flatten at 7.25 7.25 r=5 s=20 frames=200 h=3
+brush flatten at 8 -8 r=5 s=20 frames=200 h=3
 origin
 clear at 0 0 r=4
 clear at -8.5 -4.5 r=3.5
@@ -68,8 +69,9 @@ call corners w=2 d=2 y=0.1
 roof 2 2 at 0 0 y=0.1 wood
 place "Box Small" - at 2.2 2.2 y=0.1 sit
 # (11-27 isl1126_j: dropped onto the box, the log was out of sight from every spot the walk found, 1.5 m off - now on
-#  the bell's floor beside the box, open to the pavilion's middle)
-place Note_Paper belllog at 2.3 1.1 y=0.6 drop yaw=20
+#  the bell's floor beside the box, open to the pavilion's middle; 11-28 isl1126_k: there the walk ended 2.9 m off it -
+#  now in the pavilion's middle, in the air pocket the walk goes to)
+place Note_Paper belllog at 1.4 1.6 y=0.6 drop yaw=20
 pop
 call airpocket x=-8.5 z=-4.5 id=bell al=bellair bub=bellbub r=2.5 msg="The diving bell's air pocket. Breathe."
 
@@ -160,6 +162,11 @@ info title=Sinkmarket Floor
 info author=Custom Islands
 info description=Altitude Market's lower town on the seabed, 30 m down and as big as Raft's own big islands: Lookout Rock climbing out of the sea, a salt cellar, a drowned house, a wrecked fishing boat, stalls in the silt, the ballast stone that fell from the sky, a diving bell, a flooded cistern hall, a scientist in a cage and the cable car's bottom station. The fifth island of The Gravity Sea - dive.
 island on.arrive=message||Down there, 30 m under the keel: a square of stalls in the silt - and the ballast stone, cracked, in the middle of it.
+# (11-28 isl1126_k: the cistern's air shows only once the valve is turned - the walk found no spot in the hidden zone;
+#  the bonded cellar and the salt cellar: the walk stuck once on the cave hill's skin over the cellar room and over the
+#  salt rock's mouth while its grid found a way - the plays swim into all three: sinkmarket_floor (air cistern, zone
+#  saltcellar) and sinkmarket_floor_caves (air sm_bondedcellar here))
+island reach.byplay=cistern;sm_bondedcellar;saltcellar
 
 story drained|Cistern drained|Placeable_Lantern_Metal|You opened the cistern valve: the hall drained and filled with air.
 story valvewheel|Cistern valve wheel|Bolt|The cistern valve's wheel, which the salt merchant took off and hid in her salt cellar.
@@ -250,12 +257,12 @@ clear at 9 -9 r=4 only=(?i)boulder|rock|tree|bush|bamboo
 # (11-27 isl1126_g, CIFrameRing: the frame's north-east leg lay along the mound's west slope, 1-3 cm under it (42 rays
 #  at 9.2-9.7 -3.9..-5.0, h 3.7-4.1: points 0-0.5 m under the ground are laid on it). 592a728b moved the mouth 0.4 m
 #  into the mound: 62 rays there and its back seen from the square (cvp_smo 32 rays) - back at 9 -9, and the slope over
-#  that leg raised to a shoulder at 4.8, so the leg stays buried more than 0.5 m)
+#  that leg raised to a shoulder at 4.8: 78 rays, the ground there the same as without it - the cave tool sets the
+#  ground round its frame. The mouth now stands on the square's flat seabed, flattened out to it before the cave: no slope
+#  round its legs to lie along)
 call kit_st x=9 z=-9 yaw=135 len=14 slope=0 end=room size=0.7 hill=1 dirt=0 mush=0 stone=2 vines=0 titanium=0 wet=1 as=smcellar
 prop smcellar cave.rock=plain
 prop smcellar cave.dome=18
-brush flatten at 9.4 -4.4 r=1.8 s=20 frames=300 h=4.8
-brush smooth at 9.4 -4.4 r=2.8 s=4 frames=20
 place Zone_Trigger smcellarair at 26.7 -26.7 h=4.5
 prop smcellarair obj.name=smcellarair
 prop smcellarair zone.id=sm_bondedcellar

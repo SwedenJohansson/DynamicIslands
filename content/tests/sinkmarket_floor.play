@@ -22,6 +22,7 @@ expect step 6
 read Signalman Tomas
 expect step 7
 read Salt merchant Ada
+zone saltcellar
 expect step 8
 open Salt cellar box
 wait 3
