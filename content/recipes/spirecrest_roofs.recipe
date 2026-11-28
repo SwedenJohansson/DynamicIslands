@@ -56,10 +56,14 @@ call rt_railing y=0 bm=none fm=none
 pop
 
 # --- Fallen masts as footbridges from the beacon tower to the four others ------------------------------------------
+# (push at h=0: the mast poles use y=, which at top level is above the ground - the street at -7 - so they hung 7.5 m
+# under the decks; inside a push at the sea line y= is the same height as h=, rg8a2 11-28)
+push at 0 0 h=0
 call mastbridge x1=3 x2=12 z=0 h=5
 call mastbridge x1=-12 x2=-3 z=0 h=5
 call mastbridgez z1=4.5 z2=11.5 x=0 h=5
 call mastbridgez z1=-11.5 z2=-4.5 x=0 h=5
+pop
 # (each mast deck stops 0.75 m short of the roofs at both ends - a gap a walker falls through to the street: a short
 # deck piece closes each, G1 10-31)
 ramp Block_Floor_Tier3 from 3 0 5 to 3.75 0 5 len=1.5 top=0
@@ -212,7 +216,9 @@ call sk_reef x=46 z=-54 r=5 seed=24030
 
 # the summit: Signal Hill - the tower (ladder inside), the locker, the note, the zone, the zipline down
 call ladtower x=-64 z=28 h0=22 lv=6 a=sctower
-place Loot_ChestSmall sclocker at -64.75 28.75 h=36.73 sit yaw=180
+# (rg8a2 11-28, CIFloating: at h=36.73 sit the locker stood 0.16 m over the top floor (its top is 36.57), touching
+#  nothing, as the Overpass lantern did - now dropped onto the floor)
+place Loot_ChestSmall sclocker at -64.75 28.75 h=37.2 drop yaw=180
 place Note_Paper scsumnote at -64.75 27.25 h=36.84 drop yaw=20
 place Zone_Trigger scsummit at -64 28 h=37.73
 place ZiplinePath_Landmark sczip at -63.25 27.25 h=36.73 yaw=0
